@@ -1,7 +1,6 @@
 MongoDB as a Service (MongoDBaaS)
 ============================================
 
-This project claim to be a Amazon RDS "like" for MongoDB.
 
 
 ## To setup your local environment
