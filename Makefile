@@ -1,0 +1,36 @@
+
+.PHONY: default clean pip test run
+
+define CHECK_SCRIPT
+import sys
+if sys.getdefaultencoding() != "utf-8":
+	print "Configure python default encoding to UTF-8"
+	sys.exit(1)
+endef
+export CHECK_SCRIPT
+
+default:
+	@cat Makefile | egrep '[a-z]+:' | grep -v 'default:' | egrep --color=never "^[a-z]+"
+
+clean: # remove temporary files
+	@find . -name \*.pyc -delete
+	@find . -name \*.orig -delete
+	@find . -name \*.bak -delete
+	@find . -name __pycache__ -delete
+	@find . -name coverage.xml -delete
+	@find . -name test-report.xml -delete
+	@find . -name .coverage -delete
+
+check_environment: # check if your local environment is ok to running this project
+	@echo "$$CHECK_SCRIPT" | python -
+
+
+pip: check_environment # install pip libraries
+
+	@pip install -r requirements.txt
+	@pip install -r requirements_test.txt
+
+test: clean  # run tests using sqlite
+
+run:
+	@python manage.py runserver
