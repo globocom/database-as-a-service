@@ -26,11 +26,13 @@ check_environment: # check if your local environment is ok to running this proje
 
 
 pip: check_environment # install pip libraries
-
 	@pip install -r requirements.txt
 	@pip install -r requirements_test.txt
 
-test: clean  # run tests using sqlite
+compile:
+	@find . -name "*.py" -exec python -m py_compile {} +
+
+test: # run tests using sqlite
 
 run:
 	@python manage.py runserver
