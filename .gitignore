@@ -1,5 +1,6 @@
 *.pyc
 *.orig
+*.log
 .DS_Store
 *~
 .coverage
