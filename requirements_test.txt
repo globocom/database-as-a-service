@@ -1,0 +1,1 @@
+django-jenkins==0.13.0
