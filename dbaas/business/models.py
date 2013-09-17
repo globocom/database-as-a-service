@@ -1,4 +1,5 @@
 # coding=utf-8
+import simple_audit
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
@@ -30,3 +31,5 @@ class PlanAttribute(BaseModel):
     name = models.CharField(verbose_name=_("plan_attribute_name"), max_length=200)
     value = models.CharField(verbose_name=_("plan_attribute_value"), max_length=200)
     plan = models.ForeignKey('business.Plan', related_name="plan_attributes")
+
+simple_audit.register(Product, Plan, PlanAttribute)

@@ -1,4 +1,5 @@
 # coding=utf-8
+import simple_audit
 from datetime import datetime
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
@@ -63,16 +64,19 @@ class Instance(BaseModel):
 
 class Database(BaseModel):
     name = models.CharField(verbose_name=_("database_name"), max_length=100, unique=True)
+    instance = models.ForeignKey('Instance', related_name="databases")
 
     def __unicode__(self):
         return u"%s" % self.name
 
 
 class Credential(BaseModel):
-    user = models.CharField(verbose_name=_("credentials_user"), max_length=100, unique=True)
-    password = models.CharField(verbose_name=_("credentials_password"), max_length=255)
-    database = models.ForeignKey('base.Database', related_name="credentials")
+    user = models.CharField(verbose_name=_("User name"), max_length=100, unique=True)
+    password = models.CharField(verbose_name=_("User password"), max_length=255)
+    database = models.ForeignKey('Database', related_name="credentials")
 
     def __unicode__(self):
         return u"%s" % self.user
 
+
+simple_audit.register(Host, Environment, Instance, Database, Credential)

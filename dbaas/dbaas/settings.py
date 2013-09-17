@@ -132,6 +132,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.messages.middleware.MessageMiddleware',
     # Uncomment the next line for simple clickjacking protection:
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'simple_audit.middleware.TrackingRequestOnThreadLocalMiddleware',
 )
 
 ROOT_URLCONF = 'dbaas.urls'
@@ -153,13 +154,15 @@ INSTALLED_APPS = (
     'django.contrib.sites',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django.contrib.admin',
-    'django.contrib.admindocs',
+    'admin',
     'base',
     'business',
+    'simple_audit',
     'django_services',
     'rest_framework',
-    # Uncomment the next line to enable admin documentation:
+    'bootstrap_admin',
+    'django.contrib.admin',
+    'django.contrib.admindocs',
 )
 
 SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'

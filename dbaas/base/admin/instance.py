@@ -5,3 +5,5 @@ from ..service import InstanceService
 
 class InstanceAdmin(admin.DjangoServicesAdmin):
     service_class = InstanceService
+    search_fields = ["name"]
+

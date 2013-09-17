@@ -1,0 +1,10 @@
+{% extends "admin/base.html" %}
+{% load i18n %}
+
+{% block title %}{{ title }} | DBaaS{% endblock %}
+
+{% block branding %}
+    <a href="{% url 'admin:index' %}" class="brand" id="site-name">DBaaS</a>
+{% endblock %}
+
+{% block nav-global %}{% endblock %}
