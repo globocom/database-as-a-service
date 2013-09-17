@@ -33,7 +33,8 @@ compile:
 	@find . -name "*.py" -exec python -m py_compile {} +
 
 db_drop_and_create: #drop and create database
-	@mysqladmin -uroot -f drop dbaas; mysqladmin -uroot create dbaas;
+	@mysqladmin -uroot -f drop dbaas; mysqladmin -uroot create dbaas
+	@cd dbaas && python manage.py syncdb
 
 db_drop: #drops database
 	@mysqladmin -uroot -f drop dbaas;
@@ -44,4 +45,4 @@ db_create: #creates database
 test: # run tests using sqlite
 
 run:
-	@python manage.py runserver
+	@cd dbaas && python manage.py runserver

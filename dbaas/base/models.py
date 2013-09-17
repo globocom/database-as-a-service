@@ -20,4 +20,7 @@ class Instance(BaseModel):
     user = models.CharField(verbose_name=_("instance_user"), max_length=100, unique=True)
     port = models.IntegerField(verbose_name=_("instance_port"))
     password = models.CharField(verbose_name=_("instance_password"), max_length=255)
+
+    def uri(self):
+        return 'mongodb://%s:%s' % (self.name, self.port)
     
