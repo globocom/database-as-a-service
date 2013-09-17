@@ -4,4 +4,6 @@ from django.contrib import admin
 from base.models import Host
 
 class HostAdmin(admin.ModelAdmin):
-    pass
+    search_fields = ["fqdn"]
+    list_filter = ("is_active", )
+    save_on_top = True

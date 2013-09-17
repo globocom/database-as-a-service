@@ -3,4 +3,5 @@ from django.contrib import admin
 
 
 class ProductAdmin(admin.ModelAdmin):
-    pass
+    prepopulated_fields = {"slug": ("name",)}
+    list_display = ("name", "is_active", "slug")
