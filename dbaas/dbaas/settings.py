@@ -156,6 +156,8 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     'django.contrib.admindocs',
     'base',
+    'django_services',
+    'rest_framework',
     # Uncomment the next line to enable admin documentation:
 )
 
@@ -221,5 +223,9 @@ LOGGING = {
         'django.db.backends': {
             'level': 'INFO'
         },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'DEBUG',
     }
 }

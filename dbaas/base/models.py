@@ -50,8 +50,12 @@ class Instance(BaseModel):
     user = models.CharField(verbose_name=_("instance_user"), max_length=100, unique=True)
     password = models.CharField(verbose_name=_("instance_password"), max_length=255)
     port = models.IntegerField(verbose_name=_("instance_port"))
-    host = models.OneToOneField('base.Host',)
+    password = models.CharField(verbose_name=_("instance_password"), max_length=255)
+    host = models.OneToOneField(Host,)
 
+    def uri(self):
+        return 'mongodb://%s:%s' % (self.name, self.port)
+    
     def __unicode__(self):
         return u"%s" % self.name
 

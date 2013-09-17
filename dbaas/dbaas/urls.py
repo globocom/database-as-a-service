@@ -4,6 +4,8 @@ from django.conf.urls import patterns, include, url
 from django.contrib import admin
 admin.autodiscover()
 
+import django_services.api.urls
+
 urlpatterns = patterns('',
     # Examples:
     # url(r'^$', 'dbaas.views.home', name='home'),
@@ -14,4 +16,6 @@ urlpatterns = patterns('',
 
     # Uncomment the next line to enable the admin:
     url(r'^admin/', include(admin.site.urls)),
+    url('^api/', include(django_services.api.urls))
+
 )
