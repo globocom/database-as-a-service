@@ -8,4 +8,4 @@ djangorestframework==2.3.8
 django-nose==1.1
 nose==1.3.0
 gunicorn==0.17.2
-django-services==0.0.3
+django-services==0.0.4
