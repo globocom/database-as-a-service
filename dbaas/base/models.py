@@ -14,6 +14,15 @@ class BaseModel(models.Model):
         abstract = True
 
 
+class Environment(BaseModel):
+
+    name = models.CharField(verbose_name=_("environment_name"), max_length=100, unique=True)
+    is_active = models.BooleanField(verbose_name=_("environment_is_active"), default=True)
+
+    def __unicode__(self):
+        return u"%s" % self.name
+
+
 class Host(BaseModel):
 
     VIRTUAL = '1'
@@ -33,15 +42,6 @@ class Host(BaseModel):
 
     def __unicode__(self):
         return u"%s" % self.fqdn
-
-
-class Environment(BaseModel):
-
-    name = models.CharField(verbose_name=_("environment_name"), max_length=100, unique=True)
-    is_active = models.BooleanField(verbose_name=_("environment_is_active"), default=True)
-
-    def __unicode__(self):
-        return u"%s" % self.name
 
 
 class Instance(BaseModel):

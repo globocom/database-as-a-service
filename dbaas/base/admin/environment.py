@@ -1,9 +1,10 @@
 # encoding: utf-8
-from django.contrib import admin
+from django_services import admin
+from ..service import EnvironmentService
 
-from base.models import Environment
 
-class EnvironmentAdmin(admin.ModelAdmin):
+class EnvironmentAdmin(admin.DjangoServicesAdmin):
+    service_class = EnvironmentService
     search_fields = ["name"]
     list_filter = ("is_active", )
     save_on_top = True

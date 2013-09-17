@@ -1,8 +1,7 @@
 # encoding: utf-8
-from django.contrib import admin
+from django_services import admin
+from ..service import DatabaseService
 
-from base.models import Database
 
-
-class DatabaseAdmin(admin.ModelAdmin):
-    pass
+class DatabaseAdmin(admin.DjangoServicesAdmin):
+    service_class = DatabaseService

@@ -1,8 +1,10 @@
 # encoding: utf-8
-from django.contrib import admin
+from django_services import admin
+from ..service import CredentialService
 
 
-class CredentialAdmin(admin.ModelAdmin):
+class CredentialAdmin(admin.DjangoServicesAdmin):
+    service_class = CredentialService
     search_fields = ['user', 'database__name', 'database__instance__name']
     list_filter = ["database",]
     list_display = ['user', 'database_name', 'instance_name']
