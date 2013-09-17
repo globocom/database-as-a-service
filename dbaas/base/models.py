@@ -1,6 +1,7 @@
 # coding=utf-8
 from datetime import datetime
 from django.db import models
+from django.utils.translation import ugettext_lazy as _
 
 
 class BaseModel(models.Model):
@@ -11,3 +12,12 @@ class BaseModel(models.Model):
 
     class Meta:
         abstract = True
+        
+
+class Instance(BaseModel):
+    
+    name = models.CharField(verbose_name=_("instance_name"), max_length=100, unique=True)
+    user = models.CharField(verbose_name=_("instance_user"), max_length=100, unique=True)
+    port = models.IntegerField(verbose_name=_("instance_port"))
+    password = models.CharField(verbose_name=_("instance_password"), max_length=255)
+    
