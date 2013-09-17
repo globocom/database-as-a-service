@@ -3,7 +3,6 @@ from datetime import datetime
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
-
 class BaseModel(models.Model):
     """Base model class"""
 
@@ -51,7 +50,9 @@ class Instance(BaseModel):
     password = models.CharField(verbose_name=_("instance_password"), max_length=255)
     port = models.IntegerField(verbose_name=_("instance_port"))
     password = models.CharField(verbose_name=_("instance_password"), max_length=255)
-    host = models.OneToOneField(Host,)
+    host = models.OneToOneField("base.Host",)
+    product = models.ForeignKey("business.Product", related_name="instances")
+    plan = models.ForeignKey("business.Plan", related_name="instances")
 
     def uri(self):
         return 'mongodb://%s:%s' % (self.name, self.port)
@@ -75,12 +76,3 @@ class Credential(BaseModel):
     def __unicode__(self):
         return u"%s" % self.user
 
-
-class Product(BaseModel):
-
-    name = models.CharField(verbose_name=_("product_name"), max_length=100, unique=True)
-    is_active = models.BooleanField(verbose_name=_("product_is_active"), default=True)
-    slug = models.SlugField()
-
-    def __unicode__(self):
-        return u"%s" % self.name
