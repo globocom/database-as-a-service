@@ -1,7 +1,9 @@
 # encoding: utf-8
-from django.contrib import admin
+from django_services import admin
+from ..service import ProductService
 
 
-class ProductAdmin(admin.ModelAdmin):
+class ProductAdmin(admin.DjangoServicesAdmin):
+    service_class = ProductService
     prepopulated_fields = {"slug": ("name",)}
     list_display = ("name", "is_active", "slug")

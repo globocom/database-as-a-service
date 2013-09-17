@@ -1,14 +1,16 @@
 # encoding: utf-8
 from django.contrib import admin
-
-from business.models import PlanAttribute
+from django_services import admin as services_admin
+from ..service import PlanService
+from ..models import PlanAttribute
 
 
 class PlanAttributeInline(admin.TabularInline):
     model = PlanAttribute
 
 
-class PlanAdmin(admin.ModelAdmin):
+class PlanAdmin(services_admin.DjangoServicesAdmin):
+    service_class = PlanService
     search_fields = ["name"]
     list_filter = ("is_active", )
     list_display = ("name", "is_active")
