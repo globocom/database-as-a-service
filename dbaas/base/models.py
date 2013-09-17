@@ -24,8 +24,9 @@ class Host(BaseModel):
     )
 
     fqdn = models.CharField(verbose_name=_("host_fqdn"), max_length=200, unique=True)
+    environment = models.ForeignKey('base.Environment', related_name="hosts")
     is_active = models.BooleanField(verbose_name=_("host_is_active"), default=True)
-    type = models.CharField(verbose_name=_("host_type"), 
+    type = models.CharField(verbose_name=_("host_type"),
                             max_length=2,
                             choices=HOST_TYPE_CHOICES,
                             default=PHYSICAL)
@@ -33,14 +34,49 @@ class Host(BaseModel):
     def __unicode__(self):
         return u"%s" % self.fqdn
 
-class Instance(BaseModel):
-    
-    name = models.CharField(verbose_name=_("instance_name"), max_length=100, unique=True)
-    user = models.CharField(verbose_name=_("instance_user"), max_length=100, unique=True)
-    port = models.IntegerField(verbose_name=_("instance_port"))
-    password = models.CharField(verbose_name=_("instance_password"), max_length=255)
-    host = models.OneToOneField(Host,)
-    
+
+class Environment(BaseModel):
+
+    name = models.CharField(verbose_name=_("environment_name"), max_length=100, unique=True)
+    is_active = models.BooleanField(verbose_name=_("environment_is_active"), default=True)
+
     def __unicode__(self):
         return u"%s" % self.name
-    
+
+
+class Instance(BaseModel):
+
+    name = models.CharField(verbose_name=_("instance_name"), max_length=100, unique=True)
+    user = models.CharField(verbose_name=_("instance_user"), max_length=100, unique=True)
+    password = models.CharField(verbose_name=_("instance_password"), max_length=255)
+    port = models.IntegerField(verbose_name=_("instance_port"))
+    host = models.OneToOneField('base.Host',)
+
+    def __unicode__(self):
+        return u"%s" % self.name
+
+
+class Database(BaseModel):
+    name = models.CharField(verbose_name=_("database_name"), max_length=100, unique=True)
+
+    def __unicode__(self):
+        return u"%s" % self.name
+
+
+class Credential(BaseModel):
+    user = models.CharField(verbose_name=_("credentials_user"), max_length=100, unique=True)
+    password = models.CharField(verbose_name=_("credentials_password"), max_length=255)
+    database = models.ForeignKey('base.Database', related_name="credentials")
+
+    def __unicode__(self):
+        return u"%s" % self.user
+
+
+class Product(BaseModel):
+
+    name = models.CharField(verbose_name=_("product_name"), max_length=100, unique=True)
+    is_active = models.BooleanField(verbose_name=_("product_is_active"), default=True)
+    slug = models.SlugField()
+
+    def __unicode__(self):
+        return u"%s" % self.name
