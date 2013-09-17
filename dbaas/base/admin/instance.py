@@ -1,7 +1,7 @@
 # encoding: utf-8
-from django.contrib import admin
+from django_services import admin
 
-from base.models import Instance
+from ..service import InstanceService
 
-class InstanceAdmin(admin.ModelAdmin):
-    pass
+class InstanceAdmin(admin.DjangoServicesAdmin):
+    service_class = InstanceService
