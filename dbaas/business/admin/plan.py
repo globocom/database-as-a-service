@@ -11,10 +11,11 @@ class PlanAttributeInline(admin.TabularInline):
 
 class PlanAdmin(services_admin.DjangoServicesAdmin):
     service_class = PlanService
+    save_on_top = True
     search_fields = ["name"]
     list_filter = ("is_active", )
     list_display = ("name", "is_active")
-    save_on_top = True
+    filter_horizontal = ('environment',)
     inlines = [
         PlanAttributeInline,
     ]
