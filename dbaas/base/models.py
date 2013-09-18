@@ -32,7 +32,7 @@ class Node(BaseModel):
         (PHYSICAL, 'Physical Node'),
     )
 
-    address = models.CharField(verbose_name=_("Node address"), max_length=200, unique=True)
+    address = models.CharField(verbose_name=_("Node address"), max_length=200)
     port = models.IntegerField(verbose_name=_("Node port"))
     environment = models.ForeignKey('Environment', related_name="nodes")
     is_active = models.BooleanField(verbose_name=_("Is node active"), default=True)
@@ -40,6 +40,12 @@ class Node(BaseModel):
                             max_length=2,
                             choices=HOST_TYPE_CHOICES,
                             default=PHYSICAL)
+
+
+    class Meta:
+        unique_together = (
+            ('address', 'port', )
+        )
 
     def __unicode__(self):
         return u"%s" % self.connection
@@ -58,12 +64,34 @@ class Environment(BaseModel):
         return u"%s" % self.name
 
 
+class EngineType(BaseModel):
+
+    name = models.CharField(verbose_name=_("Engine name"), max_length=100, unique=True)
+    
+    def __unicode__(self):
+        return u"%s" % self.name
+
+class Engine(BaseModel):
+
+    version = models.CharField(verbose_name=_("Engine version"), max_length=100, )
+    engine_type = models.ForeignKey("EngineType", verbose_name=_("Engine types"), related_name="engines")
+    
+    class Meta:
+        unique_together = (
+            ('version', 'engine_type', )
+        )
+
+    def __unicode__(self):
+        return u"%s_%s" % (self.engine_type.name, self.version)
+
+
 class Instance(BaseModel):
 
     name = models.CharField(verbose_name=_("Instance name"), max_length=100, unique=True)
     user = models.CharField(verbose_name=_("Instance user"), max_length=100)
     password = models.CharField(verbose_name=_("Instance password"), max_length=255)
     node = models.OneToOneField("Node",)
+    engine = models.ForeignKey("Engine", related_name="instances")
     product = models.ForeignKey("business.Product", related_name="instances")
     plan = models.ForeignKey("business.Plan", related_name="instances")
 
