@@ -43,6 +43,10 @@ class Node(BaseModel):
 
     def __unicode__(self):
         return u"%s" % self.fqdn
+    
+    @property
+    def connection(self):
+        return u"%s:%s" % (self.address, self.port)
 
 
 class Environment(BaseModel):
