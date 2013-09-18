@@ -1,16 +1,18 @@
 # -*- coding:utf-8 -*-
 from django.contrib import admin
 
-from base.models import Instance, Host, Environment, Database, Credential
+from ..models import Instance, Node, Environment, Database, Credential, Engine
 
-from base.admin.instance import InstanceAdmin
-from base.admin.host import HostAdmin
-from base.admin.environment import EnvironmentAdmin
-from base.admin.database import DatabaseAdmin
-from base.admin.credential import CredentialAdmin
+from ..admin.instance import InstanceAdmin
+from ..admin.node import NodeAdmin
+from ..admin.environment import EnvironmentAdmin
+from ..admin.database import DatabaseAdmin
+from ..admin.credential import CredentialAdmin
+from ..admin.engine import EngineAdmin
 
 admin.site.register(Instance, InstanceAdmin)
-admin.site.register(Host, HostAdmin)
+admin.site.register(Node, NodeAdmin)
 admin.site.register(Environment, EnvironmentAdmin)
 admin.site.register(Database, DatabaseAdmin)
 admin.site.register(Credential, CredentialAdmin)
+admin.site.register(Engine, EngineAdmin)

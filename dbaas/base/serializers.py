@@ -1,6 +1,6 @@
 from django_services.api import DjangoServiceSerializer
 from rest_framework import serializers
-from .models import Environment, Host, Instance, Database, Credential
+from .models import Environment, Node, Instance, Database, Credential
 
 
 class EnvironmentSerializer(DjangoServiceSerializer):
@@ -9,10 +9,10 @@ class EnvironmentSerializer(DjangoServiceSerializer):
         model = Environment
 
 
-class HostSerializer(DjangoServiceSerializer):
+class NodeSerializer(DjangoServiceSerializer):
 
     class Meta:
-        model = Host
+        model = Node
 
 
 class InstanceSerializer(DjangoServiceSerializer):

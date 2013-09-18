@@ -16,32 +16,43 @@ class BaseModel(models.Model):
 
 class Environment(BaseModel):
 
-    name = models.CharField(verbose_name=_("environment_name"), max_length=100, unique=True)
-    is_active = models.BooleanField(verbose_name=_("environment_is_active"), default=True)
+    name = models.CharField(verbose_name=_("Environment name"), max_length=100, unique=True)
+    is_active = models.BooleanField(verbose_name=_("Is environment active"), default=True)
 
     def __unicode__(self):
         return u"%s" % self.name
 
 
-class Host(BaseModel):
+class Node(BaseModel):
 
     VIRTUAL = '1'
     PHYSICAL = '2'
     HOST_TYPE_CHOICES = (
         (VIRTUAL, 'Virtual Machine'),
-        (PHYSICAL, 'Physical Host'),
+        (PHYSICAL, 'Physical Node'),
     )
 
-    fqdn = models.CharField(verbose_name=_("Host fqdn"), max_length=200, unique=True)
-    environment = models.ForeignKey('Environment', related_name="hosts")
-    is_active = models.BooleanField(verbose_name=_("Is host active"), default=True)
-    type = models.CharField(verbose_name=_("host_type"),
+    address = models.CharField(verbose_name=_("Node address"), max_length=200)
+    port = models.IntegerField(verbose_name=_("Node port"))
+    environment = models.ForeignKey('Environment', related_name="nodes")
+    is_active = models.BooleanField(verbose_name=_("Is node active"), default=True)
+    type = models.CharField(verbose_name=_("Node type"),
                             max_length=2,
                             choices=HOST_TYPE_CHOICES,
                             default=PHYSICAL)
 
+
+    class Meta:
+        unique_together = (
+            ('address', 'port', )
+        )
+
     def __unicode__(self):
-        return u"%s" % self.fqdn
+        return u"%s" % self.connection
+    
+    @property
+    def connection(self):
+        return u"%s:%s" % (self.address, self.port)
 
 
 class Environment(BaseModel):
@@ -53,13 +64,34 @@ class Environment(BaseModel):
         return u"%s" % self.name
 
 
+class EngineType(BaseModel):
+
+    name = models.CharField(verbose_name=_("Engine name"), max_length=100, unique=True)
+    
+    def __unicode__(self):
+        return u"%s" % self.name
+
+class Engine(BaseModel):
+
+    version = models.CharField(verbose_name=_("Engine version"), max_length=100, )
+    engine_type = models.ForeignKey("EngineType", verbose_name=_("Engine types"), related_name="engines")
+    
+    class Meta:
+        unique_together = (
+            ('version', 'engine_type', )
+        )
+
+    def __unicode__(self):
+        return u"%s_%s" % (self.engine_type.name, self.version)
+
+
 class Instance(BaseModel):
 
     name = models.CharField(verbose_name=_("Instance name"), max_length=100, unique=True)
-    user = models.CharField(verbose_name=_("Instance user"), max_length=100, unique=True)
+    user = models.CharField(verbose_name=_("Instance user"), max_length=100)
     password = models.CharField(verbose_name=_("Instance password"), max_length=255)
-    port = models.IntegerField(verbose_name=_("Instance port"))
-    host = models.OneToOneField("Host",)
+    node = models.OneToOneField("Node",)
+    engine = models.ForeignKey("Engine", related_name="instances")
     product = models.ForeignKey("business.Product", related_name="instances")
     plan = models.ForeignKey("business.Plan", related_name="instances")
 
@@ -87,4 +119,4 @@ class Credential(BaseModel):
         return u"%s" % self.user
 
 
-simple_audit.register(Host, Environment, Instance, Database, Credential)
+simple_audit.register(Node, Environment, Instance, Database, Credential)

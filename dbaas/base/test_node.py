@@ -6,35 +6,38 @@ from django.utils import simplejson
 from django.test.client import RequestFactory
 from django.db import IntegrityError
 
-from .models import Host
+from .models import Node
 
 
-class HostTestCase(TestCase):
+class NodeTestCase(TestCase):
 
     def setUp(self):
         self.client = Client()
         self.factory = RequestFactory()
-        self.new_host = Host.objects.create(fqdn="new_host.localhost", 
+        self.new_node = Node.objects.create(address="new_node.localnode",
+                                    port=123,
                                     environment_id=1,
                                     is_active=True,
                                     type='1')
 
     def tearDown(self):
-        self.new_host.delete()
+        self.new_node.delete()
 
-    def test_create_host(self):
+    def test_create_node(self):
         
-        host = Host.objects.create(fqdn="test.localhost", 
+        node = Node.objects.create(address="test.localnode",
+                                    port=123,
                                     environment_id=1,
                                     is_active=True,
                                     type='1')
         
-        self.assertTrue(host.id)
+        self.assertTrue(node.id)
 
 
-    def test_error_duplicate_host(self):
+    def test_error_duplicate_node(self):
         
-        self.assertRaises(IntegrityError, Host.objects.create, fqdn="new_host.localhost", 
+        self.assertRaises(IntegrityError, Node.objects.create, address="new_node.localnode",
+                                                                port=123,
                                                                 environment_id=1, 
                                                                 is_active=True, 
                                                                 type='1')

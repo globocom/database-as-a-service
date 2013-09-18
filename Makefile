@@ -44,7 +44,7 @@ db_create: # creates database
 	@cd dbaas && python manage.py syncdb
 
 test: # run tests
-	@cd dbaas && CI=1 REUSE_DB=1 python manage.py test
+	@cd dbaas && CI=1 python manage.py test
 
 run: # run local server
 	@cd dbaas && python manage.py runserver
