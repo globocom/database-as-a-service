@@ -32,18 +32,21 @@ pip: check_environment # install pip libraries
 compile:
 	@find . -name "*.py" -exec python -m py_compile {} +
 
-db_drop_and_create: #drop and create database
+db_drop_and_create: # drop and create database
 	@mysqladmin -uroot -f drop dbaas; mysqladmin -uroot create dbaas
 	@cd dbaas && python manage.py syncdb
 
-db_drop: #drops database
+db_drop: # drops database
 	@mysqladmin -uroot -f drop dbaas
     	
-db_create: #creates database
+db_create: # creates database
 	@mysqladmin -uroot create dbaas
 	@cd dbaas && python manage.py syncdb
 
 test: # run tests using sqlite
 
-run:
+run: # run local server
 	@cd dbaas && python manage.py runserver
+
+shell: # run django shell
+	@cd dbaas && python manage.py shell
