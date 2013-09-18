@@ -38,12 +38,13 @@ db_drop_and_create: # drop and create database
 
 db_drop: # drops database
 	@mysqladmin -uroot -f drop dbaas
-    	
+		
 db_create: # creates database
 	@mysqladmin -uroot create dbaas
 	@cd dbaas && python manage.py syncdb
 
-test: # run tests using sqlite
+test: # run tests
+	@cd dbaas && CI=1 REUSE_DB=1 python manage.py test
 
 run: # run local server
 	@cd dbaas && python manage.py runserver
