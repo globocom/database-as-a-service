@@ -1,7 +1,7 @@
 Django==1.5.4
 pymongo==2.1.1
 MySQL-python==1.2.3
-django-simple-audit==0.1.4
+django-simple-audit==0.1.5
 wsgiref==0.1.2
 simple-db-migrate==1.5.3
 djangorestframework==2.3.8
