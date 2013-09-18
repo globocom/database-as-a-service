@@ -56,7 +56,7 @@ class Environment(BaseModel):
 class Instance(BaseModel):
 
     name = models.CharField(verbose_name=_("Instance name"), max_length=100, unique=True)
-    user = models.CharField(verbose_name=_("Instance user"), max_length=100, unique=True)
+    user = models.CharField(verbose_name=_("Instance user"), max_length=100)
     password = models.CharField(verbose_name=_("Instance password"), max_length=255)
     port = models.IntegerField(verbose_name=_("Instance port"))
     host = models.OneToOneField("Host",)
