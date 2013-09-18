@@ -1,6 +1,6 @@
 # encoding: utf-8
 from django_services import admin
-from ..service import ProductService
+from ..service.product import ProductService
 
 
 class ProductAdmin(admin.DjangoServicesAdmin):

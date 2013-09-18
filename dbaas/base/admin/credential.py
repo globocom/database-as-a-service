@@ -1,6 +1,6 @@
 # encoding: utf-8
 from django_services import admin
-from ..service import CredentialService
+from ..service.credential import CredentialService
 
 
 class CredentialAdmin(admin.DjangoServicesAdmin):

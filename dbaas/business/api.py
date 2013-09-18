@@ -1,5 +1,6 @@
 from django_services.api import DjangoServiceAPI, register
-from .service import ProductService, PlanService
+from .service.product import ProductService
+from .service.plan import PlanService
 from .serializers import ProductSerializer, PlanSerializer
 
 

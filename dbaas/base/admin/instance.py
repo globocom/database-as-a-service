@@ -1,6 +1,6 @@
 # encoding: utf-8
 from django_services import admin
-from ..service import InstanceService
+from ..service.instance import InstanceService
 
 class InstanceAdmin(admin.DjangoServicesAdmin):
     service_class = InstanceService

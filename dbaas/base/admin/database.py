@@ -1,6 +1,6 @@
 # encoding: utf-8
 from django_services import admin
-from ..service import DatabaseService
+from ..service.database import DatabaseService
 
 
 class DatabaseAdmin(admin.DjangoServicesAdmin):

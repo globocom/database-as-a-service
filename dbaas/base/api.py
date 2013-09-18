@@ -1,5 +1,10 @@
 from django_services.api import DjangoServiceAPI, register
-from .service import EnvironmentService, HostService, InstanceService, DatabaseService, CredentialService
+
+from .service.environment import EnvironmentService
+from .service.host import HostService
+from .service.instance import InstanceService
+from .service.database import DatabaseService
+from .service.credential import CredentialService
 from .serializers import EnvironmentSerializer, HostSerializer, InstanceSerializer, DatabaseSerializer, CredentialSerializer
 
 

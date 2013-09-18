@@ -1,7 +1,7 @@
 # encoding: utf-8
 from django.contrib import admin
 from django_services import admin as services_admin
-from ..service import PlanService
+from ..service.plan import PlanService
 from ..models import PlanAttribute
 
 

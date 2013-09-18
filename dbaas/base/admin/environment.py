@@ -1,6 +1,6 @@
 # encoding: utf-8
 from django_services import admin
-from ..service import EnvironmentService
+from ..service.environment import EnvironmentService
 
 
 class EnvironmentAdmin(admin.DjangoServicesAdmin):

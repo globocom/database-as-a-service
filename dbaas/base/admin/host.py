@@ -1,6 +1,6 @@
 # encoding: utf-8
 from django_services import admin
-from ..service import HostService
+from ..service.host import HostService
 
 
 class HostAdmin(admin.DjangoServicesAdmin):
