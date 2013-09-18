@@ -1,6 +1,6 @@
 from django_services import service
-from ..models import Host
+from ..models import Node
 
 
-class HostService(service.CRUDService):
-    model_class = Host
+class NodeService(service.CRUDService):
+    model_class = Node

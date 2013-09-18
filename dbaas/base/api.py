@@ -1,11 +1,11 @@
 from django_services.api import DjangoServiceAPI, register
 
 from .service.environment import EnvironmentService
-from .service.host import HostService
+from .service.node import NodeService
 from .service.instance import InstanceService
 from .service.database import DatabaseService
 from .service.credential import CredentialService
-from .serializers import EnvironmentSerializer, HostSerializer, InstanceSerializer, DatabaseSerializer, CredentialSerializer
+from .serializers import EnvironmentSerializer, NodeSerializer, InstanceSerializer, DatabaseSerializer, CredentialSerializer
 
 
 class EnvironmentAPI(DjangoServiceAPI):
@@ -13,9 +13,9 @@ class EnvironmentAPI(DjangoServiceAPI):
     service_class = EnvironmentService
 
 
-class HostAPI(DjangoServiceAPI):
-    serializer_class = HostSerializer
-    service_class = HostService
+class NodeAPI(DjangoServiceAPI):
+    serializer_class = NodeSerializer
+    service_class = NodeService
 
 
 class InstanceAPI(DjangoServiceAPI):
@@ -36,7 +36,7 @@ class CredentialAPI(DjangoServiceAPI):
 
 
 register('environment', EnvironmentAPI)
-register('host', HostAPI)
+register('node', NodeAPI)
 register('instance', InstanceAPI)
 register('database', DatabaseAPI)
 register('credential', CredentialAPI)

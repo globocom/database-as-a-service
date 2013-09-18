@@ -23,19 +23,19 @@ class Environment(BaseModel):
         return u"%s" % self.name
 
 
-class Host(BaseModel):
+class Node(BaseModel):
 
     VIRTUAL = '1'
     PHYSICAL = '2'
     HOST_TYPE_CHOICES = (
         (VIRTUAL, 'Virtual Machine'),
-        (PHYSICAL, 'Physical Host'),
+        (PHYSICAL, 'Physical Node'),
     )
 
-    fqdn = models.CharField(verbose_name=_("Host fqdn"), max_length=200, unique=True)
-    environment = models.ForeignKey('Environment', related_name="hosts")
-    is_active = models.BooleanField(verbose_name=_("Is host active"), default=True)
-    type = models.CharField(verbose_name=_("host_type"),
+    fqdn = models.CharField(verbose_name=_("Node fqdn"), max_length=200, unique=True)
+    environment = models.ForeignKey('Environment', related_name="nodes")
+    is_active = models.BooleanField(verbose_name=_("Is node active"), default=True)
+    type = models.CharField(verbose_name=_("node_type"),
                             max_length=2,
                             choices=HOST_TYPE_CHOICES,
                             default=PHYSICAL)
@@ -59,7 +59,7 @@ class Instance(BaseModel):
     user = models.CharField(verbose_name=_("Instance user"), max_length=100)
     password = models.CharField(verbose_name=_("Instance password"), max_length=255)
     port = models.IntegerField(verbose_name=_("Instance port"))
-    host = models.OneToOneField("Host",)
+    node = models.OneToOneField("Node",)
     product = models.ForeignKey("business.Product", related_name="instances")
     plan = models.ForeignKey("business.Plan", related_name="instances")
 
@@ -87,4 +87,4 @@ class Credential(BaseModel):
         return u"%s" % self.user
 
 
-simple_audit.register(Host, Environment, Instance, Database, Credential)
+simple_audit.register(Node, Environment, Instance, Database, Credential)
