@@ -16,8 +16,8 @@ class BaseModel(models.Model):
 
 class Environment(BaseModel):
 
-    name = models.CharField(verbose_name=_("environment_name"), max_length=100, unique=True)
-    is_active = models.BooleanField(verbose_name=_("environment_is_active"), default=True)
+    name = models.CharField(verbose_name=_("Environment name"), max_length=100, unique=True)
+    is_active = models.BooleanField(verbose_name=_("Is environment active"), default=True)
 
     def __unicode__(self):
         return u"%s" % self.name
@@ -32,10 +32,11 @@ class Node(BaseModel):
         (PHYSICAL, 'Physical Node'),
     )
 
-    fqdn = models.CharField(verbose_name=_("Node fqdn"), max_length=200, unique=True)
+    address = models.CharField(verbose_name=_("Node address"), max_length=200, unique=True)
+    port = models.IntegerField(verbose_name=_("Node port"))
     environment = models.ForeignKey('Environment', related_name="nodes")
     is_active = models.BooleanField(verbose_name=_("Is node active"), default=True)
-    type = models.CharField(verbose_name=_("node_type"),
+    type = models.CharField(verbose_name=_("Node type"),
                             max_length=2,
                             choices=HOST_TYPE_CHOICES,
                             default=PHYSICAL)
@@ -58,7 +59,6 @@ class Instance(BaseModel):
     name = models.CharField(verbose_name=_("Instance name"), max_length=100, unique=True)
     user = models.CharField(verbose_name=_("Instance user"), max_length=100)
     password = models.CharField(verbose_name=_("Instance password"), max_length=255)
-    port = models.IntegerField(verbose_name=_("Instance port"))
     node = models.OneToOneField("Node",)
     product = models.ForeignKey("business.Product", related_name="instances")
     plan = models.ForeignKey("business.Plan", related_name="instances")
