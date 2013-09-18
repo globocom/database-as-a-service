@@ -14,7 +14,8 @@ class NodeTestCase(TestCase):
     def setUp(self):
         self.client = Client()
         self.factory = RequestFactory()
-        self.new_node = Node.objects.create(fqdn="new_node.localnode", 
+        self.new_node = Node.objects.create(address="new_node.localnode",
+                                    port=123,
                                     environment_id=1,
                                     is_active=True,
                                     type='1')
@@ -24,7 +25,8 @@ class NodeTestCase(TestCase):
 
     def test_create_node(self):
         
-        node = Node.objects.create(fqdn="test.localnode", 
+        node = Node.objects.create(address="test.localnode",
+                                    port=123,
                                     environment_id=1,
                                     is_active=True,
                                     type='1')
@@ -34,7 +36,8 @@ class NodeTestCase(TestCase):
 
     def test_error_duplicate_node(self):
         
-        self.assertRaises(IntegrityError, Node.objects.create, fqdn="new_node.localnode", 
+        self.assertRaises(IntegrityError, Node.objects.create, address="new_node.localnode",
+                                                                port=123,
                                                                 environment_id=1, 
                                                                 is_active=True, 
                                                                 type='1')

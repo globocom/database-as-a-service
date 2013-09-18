@@ -42,7 +42,7 @@ class Node(BaseModel):
                             default=PHYSICAL)
 
     def __unicode__(self):
-        return u"%s" % self.fqdn
+        return u"%s" % self.connection
     
     @property
     def connection(self):
