@@ -1,4 +1,6 @@
 from django.conf.urls import patterns, include, url
+from django.conf.urls.static import static
+import settings
 
 # Uncomment the next two lines to enable the admin:
 from django.contrib import admin
@@ -18,4 +20,4 @@ urlpatterns = patterns('',
     url(r'^admin/', include(admin.site.urls)),
     url('^api/', include(django_services.api.urls))
 
-)
+) + static(settings.ADMIN_STATIC_URL, document_root=settings.STATIC_ROOT)
