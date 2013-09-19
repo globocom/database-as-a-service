@@ -14,8 +14,10 @@ class BaseEngine(object):
         
         engine_name = name.lower()
         
+        # TODO: import Engines dynamically
         if engine_name == "mongodb":
             if BaseEngine.is_engine_available(engine_name):
+                from mongodb import MongoDB
                 return MongoDB()
             else:
                 raise NotImplementedError()
