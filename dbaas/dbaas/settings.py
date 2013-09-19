@@ -163,6 +163,7 @@ INSTALLED_APPS = (
     'admin',
     'base',
     'business',
+    'mongodb',
     'simple_audit',
     'django_services',
     'rest_framework',
