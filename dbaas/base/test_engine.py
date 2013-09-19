@@ -9,7 +9,6 @@ from django.db import IntegrityError
 from .models import Engine, EngineType
 from .engine import BaseEngine
 
-
 class EngineTestCase(TestCase):
     """
     Tests Engine and EngineType
@@ -33,7 +32,7 @@ class EngineTestCase(TestCase):
         
         self.assertRaises(IntegrityError, EngineType.objects.create, name="Test")
 
-    def test_create_engine(self):
+    def test_create_engine_in_bd(self):
         
         engine_type = EngineType.objects.create(name="Maria")
         
@@ -47,5 +46,11 @@ class EngineTestCase(TestCase):
     def test_mongodb_app_installed(self):
         
         self.assertTrue(BaseEngine.is_engine_available("mongodb")) 
+        
+    def test_instantiate_mongodb(self):
+        
+        mongo_db = BaseEngine.factory("mongodb")
+        
+        self.assertIsNotNone(mongo_db)
 
 

@@ -11,9 +11,14 @@ class BaseEngine(object):
 
     @staticmethod
     def factory(name):
-
-        if name.lower() == "mongodb": 
-            return MongoDB()
+        
+        engine_name = name.lower()
+        
+        if engine_name == "mongodb":
+            if BaseEngine.is_engine_available(engine_name):
+                return MongoDB()
+            else:
+                raise NotImplementedError()
 
         assert 0, "Bad Engine Type: " + name
 
