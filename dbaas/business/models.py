@@ -21,6 +21,7 @@ class Plan(BaseModel):
     name = models.CharField(verbose_name=_("Plan name"), max_length=100, unique=True)
     is_active = models.BooleanField(verbose_name=_("Is plan active"), default=True)
     environment = models.ManyToManyField("base.Environment", related_name="plans")
+    engine_type = models.ForeignKey("base.EngineType", verbose_name=u'Engine Type', related_name='plans')
 
     def __unicode__(self):
         return u"%s" % self.name
