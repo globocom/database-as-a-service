@@ -18,7 +18,7 @@ def LOCAL_FILES(path):
 try:
     from version import RELEASE
 except ImportError:
-    RELEASE = ''
+    RELEASE = None
 
 # Armazena a raiz do projeto.
 SITE_ROOT = LOCAL_FILES('../')
@@ -92,15 +92,17 @@ MEDIA_URL = '/media/'
 # Don't put anything in this directory yourself; store your static files
 # in apps' "static/" subdirectories and in STATICFILES_DIRS.
 # Example: "/var/www/example.com/static/"
+
 if RELEASE:
     STATIC_ROOT = os.path.join(SITE_ROOT, 'static/%s/' % RELEASE)
+    # URL prefix for static files.
+    # Example: "http://example.com/static/", "http://static.example.com/"
+    STATIC_URL = '/static/%s/' % RELEASE
 else:
     STATIC_ROOT = os.path.join(SITE_ROOT, 'static/')
-
-# URL prefix for static files.
-# Example: "http://example.com/static/", "http://static.example.com/"
-STATIC_URL = '/static/%s/' % RELEASE
-ADMIN_STATIC_URL = '/admin/static/%s/' % RELEASE
+    # URL prefix for static files.
+    # Example: "http://example.com/static/", "http://static.example.com/"
+    STATIC_URL = '/static/'
 
 # Additional locations of static files
 STATICFILES_DIRS = (
