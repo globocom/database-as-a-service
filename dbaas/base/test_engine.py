@@ -60,4 +60,10 @@ class EngineTestCase(TestCase):
         
         self.assertIsNotNone(mongo_db)
 
+    def test_mongodb_url(self):
+        
+        mongo_db = BaseEngine.factory("mongodb", self.node)
+        
+        self.assertRaises(NotImplementedError, mongo_db.url)
+
 
