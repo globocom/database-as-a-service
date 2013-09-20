@@ -1,1 +1,1 @@
-db.serverStatus();
+printjson(db.serverStatus())
