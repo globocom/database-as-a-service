@@ -53,37 +53,37 @@ exec_time=$(/bin/date "+[%d/%b/%Y %H:%M:%S]")
 action=$1
 case $action in
     adduser)
-        [[ -z $CREDENTIALS_USER || -z $CREDENTIALS_PASSWORD || -z $DATABASE_NAME ]] && die "Missing the env variables: DATABASE_NAME CREDENTIALS_USER CREDENTIALS_PASSWORD"
-        log_msg="The user $CREDENTIALS_USER was successfully added on $INSTANCE_NAME/$DATABASE_NAME by $INSTANCE_USER."
-        my_params="var user_to_create='$CREDENTIALS_USER', user_password='$CREDENTIALS_PASSWORD'"
+        [[ -z $CREDENTIAL_USER || -z $CREDENTIAL_PASSWORD || -z $DATABASE_NAME ]] && die "Missing the env variables: DATABASE_NAME CREDENTIAL_USER CREDENTIAL_PASSWORD"
+        log_msg="Trying to add user $CREDENTIAL_USER on $INSTANCE_NAME/$DATABASE_NAME by $INSTANCE_USER."
+        my_params="var db_name='$DATABASE_NAME', user_to_create='$CREDENTIAL_USER', user_password='$CREDENTIAL_PASSWORD'"
         my_js='addUser.js';;
     dropuser)
-        [[ -z $CREDENTIALS_USER || -z $DATABASE_NAME ]] && die "Missing the env variable: DATABASE_NAME CREDENTIALS_USER"
-        log_msg="The user $CREDENTIALS_USER was successfully removed from $INSTANCE_NAME/$DATABASE_NAME by $INSTANCE_USER."
-        my_params="var user_to_remove='$CREDENTIALS_USER'"
+        [[ -z $CREDENTIAL_USER || -z $DATABASE_NAME ]] && die "Missing the env variable: DATABASE_NAME CREDENTIAL_USER"
+        log_msg="Trying to remove user $CREDENTIAL_USER from $INSTANCE_NAME/$DATABASE_NAME by $INSTANCE_USER."
+        my_params="var db_name='$DATABASE_NAME', user_to_remove='$CREDENTIAL_USER'"
         my_js='removeUser.js';;
     createdatabase)
         [[ -z $DATABASE_NAME ]] && die "Missing the env variable: DATABASE_NAME"
-        log_msg="The database $INSTANCE_NAME/$DATABASE_NAME has been created by $INSTANCE_USER."
-        my_params="var db_to_create='$DATABASE_NAME'"
+        log_msg="Trying to create the database $INSTANCE_NAME/$DATABASE_NAME by $INSTANCE_USER."
+        my_params="var db_name='$DATABASE_NAME'"
         my_js='createDatabase.js';;
     dropdatabase)
         [[ -z $DATABASE_NAME ]] && die "Missing the env variable: DATABASE_NAME"
-        log_msg="The database $INSTANCE_NAME/$DATABASE_NAME was successfully dropped by $INSTANCE_USER."
-        my_params="var my_database='$DATABASE_NAME'"
+        log_msg="Trying to drop the database $INSTANCE_NAME/$DATABASE_NAME by $INSTANCE_USER."
+        my_params="var db_name='$DATABASE_NAME'"
         my_js='dropDatabase.js';;
     status|healthcheck)
-        log_msg="The $INSTANCE_NAME healthy looks good."
+        log_msg="Checking the $INSTANCE_NAME healthy."
         my_js='healthCheck.js';;
     serverstatus)
         log_msg="Getting the statistics data from $INSTANCE_NAME."
         my_js='serverStatus.js';;
     listcollections)
-        echo "collections:"
-        my_js='getCollectionNames.js';;
+        die "not implemented yet";;
+        # my_js='getCollectionNames.js';;
     listdatabases)
-        echo "databases:"
-        my_js='listDatabases.js';;
+        die "not implemented yet";;
+        # my_js='listDatabases.js';;
     *)
         usage;;
 esac
@@ -97,18 +97,16 @@ js_file="${JSDIR}/${my_js}"
 [[ -f $js_file ]] || die "The file ${js_file} does not exist, please check it."
 
 # Action!
-#-u $INSTANCE_USER -p $INSTANCE_PASSWORD ssl
-[[ $verbose -eq 1 ]] && echo "$mongo_client $MONGO_DEFAULT_OPTS $INSTANCE_CONNECTION/$DATABASE_NAME --eval \"$my_params\" $js_file"
+#ssl
+[[ $verbose -eq 1 ]] && echo "$exec_time [DEBUG] Exec: $mongo_client $MONGO_DEFAULT_OPTS -u $INSTANCE_USER -p xxx $INSTANCE_CONNECTION/admin --eval \"$my_params\" $js_file"
 
-echo "$mongo_client $MONGO_DEFAULT_OPTS $INSTANCE_CONNECTION/$DATABASE_NAME --eval "$my_params" $js_file"
-output_cmd=`$mongo_client $MONGO_DEFAULT_OPTS $INSTANCE_CONNECTION/$DATABASE_NAME --eval "$my_params" $js_file`
+output_cmd=`$mongo_client $MONGO_DEFAULT_OPTS -u $INSTANCE_USER -p $INSTANCE_PASSWORD $INSTANCE_CONNECTION/admin --eval "$my_params" $js_file`
 exit_code=$?
 
-if [[ $exit_code -eq 0 ]]; then
-    echo "$exec_time [INFO] $log_msg"
-else
-    echo "$exec_time [ERROR] $output_cmd"
-fi
+[[ $exit_code -eq 0 ]] && severity='INFO' || severity='ERROR'
 
-[[ $verbose -eq 1 ]] && echo -ne "$output_cmd \n\nexit code: $exit_code\n\n"
+echo "$exec_time [$severity] $log_msg"
+echo $output_cmd
+
+[[ $verbose -eq 1 ]] && echo -ne "$exec_time [DEBUG] exit code: $exit_code, output: $output_cmd\n"
 exit $exit_code
