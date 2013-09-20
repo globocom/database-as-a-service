@@ -6,7 +6,10 @@ from django.utils import simplejson
 from django.test.client import RequestFactory
 from django.db import IntegrityError
 
-from .models import Engine, EngineType, Node, Environment
+from .models import Engine, EngineType, Node, Environment, Instance
+
+from business.models import Product, Plan
+
 from engine.factory import EngineFactory
 
 class EngineTestCase(TestCase):
@@ -14,6 +17,8 @@ class EngineTestCase(TestCase):
     Tests Engine and EngineType
     """
 
+    fixtures = ['config_business.yaml']
+    
     def setUp(self):
         self.client = Client()
         self.factory = RequestFactory()
@@ -23,10 +28,21 @@ class EngineTestCase(TestCase):
                                     port=27017, 
                                     environment=self.environment,
                                     type="1")
+        self.product = Product.objects.create(name="supimpa")
+        
+        self.instance = Instance.objects.create(name="matrix",
+                                                user="neo",
+                                                password="trinity",
+                                                node=self.node,
+                                                engine=Engine.objects.get(id=1),
+                                                product=self.product,
+                                                plan=Plan.objects.get(name="small"))
 
     def tearDown(self):
         self.new_engine_type.delete()
         self.node.delete()
+        self.product.delete()
+        self.instance.delete()
 
     def test_create_engine_type(self):
 
