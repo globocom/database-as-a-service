@@ -15,16 +15,21 @@ function die() {
 function usage() {
 cat << EOF
 
-Usage: $0 [OPTION]
+Usage: $0 [option]
 
-OPTION:
-    -h			Show this message
-    adduser		Create a database credential
-    dropuser		Remove specific username from the database
-    createdatabase	Initialize a database
-    dropdatabase	Drop database and the associated files
-    status/healthcheck	Its a kind of healthcheck
-    serverstatus	Statistics data
+Options:
+
+    -h			    Show this message
+    adduser		    Create a database credential
+    dropuser		    Remove specific username from the database
+    createdatabase	    Initialize a database
+    dropdatabase	    Drop database and the associated files
+    status/healthcheck	    It is a kind of healthcheck
+    serverstatus	    Statistics data
+
+Environment variables required:
+
+    INSTANCE_NAME INSTANCE_USER INSTANCE_PASS INSTANCE_PORT
 
 EOF
 exit 1
