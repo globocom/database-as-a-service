@@ -65,12 +65,12 @@ case $action in
         my_js='removeUser.js';;
     createdatabase)
         [[ -z $DATABASE_NAME ]] && die "Missing the env variable: DATABASE_NAME"
-        log_msg="The database $DATABASE_NAME has been created on $INSTANCE_NAME/$DATABASE_NAME by $INSTANCE_USER."
+        log_msg="The database $INSTANCE_NAME/$DATABASE_NAME has been created by $INSTANCE_USER."
         my_params="var db_to_create='$DATABASE_NAME'"
         my_js='createDatabase.js';;
     dropdatabase)
         [[ -z $DATABASE_NAME ]] && die "Missing the env variable: DATABASE_NAME"
-        log_msg="The database $DATABASE_NAME was successfully dropped from $INSTANCE_NAME/$DATABASE_NAME by $INSTANCE_USER."
+        log_msg="The database $INSTANCE_NAME/$DATABASE_NAME was successfully dropped by $INSTANCE_USER."
         my_params="var my_database='$DATABASE_NAME'"
         my_js='dropDatabase.js';;
     status|healthcheck)
