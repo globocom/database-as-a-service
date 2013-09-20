@@ -52,13 +52,13 @@ class BaseEngine(object):
     def create_user(self, credential, database):
         raise NotImplementedError()
 
-    def delete_user(self, credential):
+    def remove_user(self, credential):
         raise NotImplementedError()
 
     def create_database(self, database):
         raise NotImplementedError()
 
-    def delete_database(self, database):
+    def remove_database(self, database):
         raise NotImplementedError()
 
     def list_databases(self, instance):
