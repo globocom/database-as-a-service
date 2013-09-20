@@ -7,7 +7,7 @@ from django.test.client import RequestFactory
 from django.db import IntegrityError
 
 from .models import Engine, EngineType, Node, Environment
-from .engine import BaseEngine
+from engine.factory import EngineFactory
 
 class EngineTestCase(TestCase):
     """
@@ -33,37 +33,101 @@ class EngineTestCase(TestCase):
         engine_type = EngineType.objects.create(name="John...1..2..3..")
 
         self.assertTrue(engine_type.id)
-    
+
     def test_error_duplicate_engine_type(self):
-        
+
         self.assertRaises(IntegrityError, EngineType.objects.create, name="Test")
 
     def test_create_engine_in_bd(self):
-        
+
         engine_type = EngineType.objects.create(name="Maria")
-        
+
         self.assertTrue(engine_type.id)
-        
+
         engine = Engine.objects.create(version="1.2.3", engine_type=engine_type)
-        
+
         self.assertTrue(engine.id)
-        
+
     def test_mongodb_app_installed(self):
-        
-        self.assertTrue(BaseEngine.is_engine_available("mongodb")) 
-        
+
+        self.assertTrue(EngineFactory.is_engine_available("mongodb")) 
+
     def test_instantiate_mongodb(self):
-        
+
         self.assertTrue(self.node.id)
-        
-        mongo_db = BaseEngine.factory("mongodb", self.node)
-        
+
+        mongo_db = EngineFactory.factory("mongodb", self.node)
+
         self.assertIsNotNone(mongo_db)
 
+        self.assertEqual(mongo_db.node.address, 'localhost')
+
     def test_mongodb_url(self):
-        
-        mongo_db = BaseEngine.factory("mongodb", self.node)
-        
+
+        mongo_db = EngineFactory.factory("mongodb", self.node)
+
         self.assertRaises(NotImplementedError, mongo_db.url)
 
+    def test_mongodb_port(self):
 
+        mongo_db = EngineFactory.factory("mongodb", self.node)
+
+        self.assertRaises(NotImplementedError, mongo_db.port)
+
+    def test_mongodb_address(self):
+
+        mongo_db = EngineFactory.factory("mongodb", self.node)
+
+        self.assertRaises(NotImplementedError, mongo_db.address)
+
+    def test_mongodb_user(self):
+
+        mongo_db = EngineFactory.factory("mongodb", self.node)
+
+        self.assertRaises(NotImplementedError, mongo_db.user)
+
+    def test_mongodb_password(self):
+
+        mongo_db = EngineFactory.factory("mongodb", self.node)
+
+        self.assertRaises(NotImplementedError, mongo_db.password)
+
+    def test_mongodb_status(self):
+
+        mongo_db = EngineFactory.factory("mongodb", self.node)
+
+        self.assertRaises(NotImplementedError, mongo_db.status, instance=None)
+
+    def test_mongodb_create_user(self):
+
+        mongo_db = EngineFactory.factory("mongodb", self.node)
+
+        self.assertRaises(NotImplementedError, mongo_db.create_user, credential=None, database=None)
+
+
+    def test_mongodb_remove_user(self):
+
+        mongo_db = EngineFactory.factory("mongodb", self.node)
+
+        self.assertRaises(NotImplementedError, mongo_db.remove_user, credential=None)
+
+    def test_mongodb_create_database(self):
+
+        mongo_db = EngineFactory.factory("mongodb", self.node)
+
+        self.assertRaises(NotImplementedError, mongo_db.create_database, database=None)
+
+
+    def test_mongodb_remove_database(self):
+
+        mongo_db = EngineFactory.factory("mongodb", self.node)
+
+        self.assertRaises(NotImplementedError, mongo_db.remove_database, database=None)
+
+
+    def test_mongodb_list_databases(self):
+
+        mongo_db = EngineFactory.factory("mongodb", self.node)
+
+        self.assertRaises(NotImplementedError, mongo_db.list_databases, instance=None)
+    
