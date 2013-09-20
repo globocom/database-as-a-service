@@ -4,9 +4,9 @@ Database as a Service (DBaas)
 Introduction
 ============
 
-This is an implementation of a database as service api written in python + django. We will try to follow some hypermedia concepts throughout the api calls.
+This is an implementation of a database as a service api written in python + django. It will try to follow some hypermedia concepts throughout the api calls.
 
-Initially we will only support MongoDB.
+Initially it will only support MongoDB.
 
 Status
 =======
@@ -39,7 +39,7 @@ Create the tables structure (see the next item)
 
 ## DB
 
-We will be using simple-db-migrate to maintain the migrations used by the project. However, for now, you can
+DBaaS uses simple-db-migrate to maintain the migrations up-to-date. However, for now, you can
 just run syncdb to create the table structures. There is a make shortcut to help you with that
 
     make db_drop_and_create
@@ -48,5 +48,5 @@ just run syncdb to create the table structures. There is a make shortcut to help
 
     make run
     
-Point your browser to http://localhost:8000/admin/
+In your browser open the URL: http://localhost:8000/admin/
 
