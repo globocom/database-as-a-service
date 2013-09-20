@@ -78,8 +78,8 @@ class Engine(BaseModel):
 class Instance(BaseModel):
 
     name = models.CharField(verbose_name=_("Instance name"), max_length=100, unique=True)
-    user = models.CharField(verbose_name=_("Instance user"), max_length=100)
-    password = models.CharField(verbose_name=_("Instance password"), max_length=255)
+    user = models.CharField(verbose_name=_("Instance user"), max_length=100, blank=True, null=False)
+    password = models.CharField(verbose_name=_("Instance password"), max_length=255, blank=True, null=False)
     node = models.OneToOneField("Node",)
     engine = models.ForeignKey("Engine", related_name="instances")
     product = models.ForeignKey("business.Product", related_name="instances")
