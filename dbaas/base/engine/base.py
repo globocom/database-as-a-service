@@ -7,25 +7,28 @@ class BaseEngine(object):
 
     def __init__(self, *args, **kwargs):
 
-        if 'node' in kwargs:
-            self.node = kwargs.get('node')
+        if 'instance' in kwargs:
+            self.instance = kwargs.get('instance')
+            self.node = self.instance.node
+        else:
+            raise TypeError(_("Instance is not defined"))
 
     def url(self):
         raise NotImplementedError()
 
     def port(self):
-        raise NotImplementedError()
+        return self.node.port
 
     def address(self):
-        raise NotImplementedError()
+        return self.node.address
 
     def user(self):
-        raise NotImplementedError()
+        return self.instance.user
 
     def password(self):
-        raise NotImplementedError()
+        return self.instance.password
 
-    def status(self, instance):
+    def status(self):
         raise NotImplementedError()
 
     def create_user(self, credential, database):
@@ -40,7 +43,7 @@ class BaseEngine(object):
     def remove_database(self, database):
         raise NotImplementedError()
 
-    def list_databases(self, instance):
+    def list_databases(self):
         """list databases in a instance"""
         raise NotImplementedError()
 

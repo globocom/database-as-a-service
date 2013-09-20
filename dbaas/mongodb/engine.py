@@ -13,7 +13,11 @@ LOG = logging.getLogger(__name__)
 
 
 class MongoDB(BaseEngine):
-
+    
+    def url(self):
+        return u"mongodb://%s:%s" % (self.instance.name, self.port)
+    
+    #TODO: Move call_script to BaseEngine or a more base class
     def call_script(self, script_name, args=[], envs={}):
         working_dir = "./scripts"
         working_dir = os.path.abspath(working_dir)

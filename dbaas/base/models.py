@@ -85,11 +85,12 @@ class Instance(BaseModel):
     product = models.ForeignKey("business.Product", related_name="instances")
     plan = models.ForeignKey("business.Plan", related_name="instances")
 
-    def uri(self):
-        return 'mongodb://%s:%s' % (self.name, self.port)
-    
     def __unicode__(self):
         return u"%s" % self.name
+
+    @property
+    def engine_name(self):
+        return self.engine.engine_type.name
 
 
 class Database(BaseModel):
