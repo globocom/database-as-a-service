@@ -1,4 +1,4 @@
-# from base.engine import BaseEngine
+from base.engine import BaseEngine
 import logging
 import subprocess
 import os.path
@@ -12,7 +12,7 @@ DEFAULT_OUTPUT_BUFFER_SIZE = 4096
 LOG = logging.getLogger(__name__)
 
 
-class MongoDB(object):
+class MongoDB(BaseEngine):
 
     def call_script(self, script_name, args=[], envs={}):
         working_dir = "./scripts"
