@@ -33,37 +33,37 @@ class EngineTestCase(TestCase):
         engine_type = EngineType.objects.create(name="John...1..2..3..")
 
         self.assertTrue(engine_type.id)
-    
+
     def test_error_duplicate_engine_type(self):
-        
+
         self.assertRaises(IntegrityError, EngineType.objects.create, name="Test")
 
     def test_create_engine_in_bd(self):
-        
+
         engine_type = EngineType.objects.create(name="Maria")
-        
+
         self.assertTrue(engine_type.id)
-        
+
         engine = Engine.objects.create(version="1.2.3", engine_type=engine_type)
-        
+
         self.assertTrue(engine.id)
-        
+
     def test_mongodb_app_installed(self):
-        
+
         self.assertTrue(EngineFactory.is_engine_available("mongodb")) 
-        
+
     def test_instantiate_mongodb(self):
-        
+
         self.assertTrue(self.node.id)
-        
+
         mongo_db = EngineFactory.factory("mongodb", self.node)
-        
+
         self.assertIsNotNone(mongo_db)
 
+        self.assertEqual(mongo_db.node.address, 'localhost')
+
     def test_mongodb_url(self):
-        
+
         mongo_db = EngineFactory.factory("mongodb", self.node)
-        
+
         self.assertRaises(NotImplementedError, mongo_db.url)
-
-
