@@ -49,23 +49,23 @@ exec_time=$(/bin/date "+[%d/%b/%Y %H:%M:%S]")
 action=$1
 case $action in
     adduser)
-        [[ -z $CREDENTIALS_USER || -z $CREDENTIALS_PASSWORD ]] && die "Missing the env variables: CREDENTIALS_USER CREDENTIALS_PASSWORD"
-        log_msg="The user $CREDENTIALS_USER was successfully added on $INSTANCE_NAME by $INSTANCE_USER."
+        [[ -z $CREDENTIALS_USER || -z $CREDENTIALS_PASSWORD || -z $DATABASE_NAME ]] && die "Missing the env variables: DATABASE_NAME CREDENTIALS_USER CREDENTIALS_PASSWORD"
+        log_msg="The user $CREDENTIALS_USER was successfully added on $INSTANCE_NAME/$DATABASE_NAME by $INSTANCE_USER."
         my_params="var user_to_create='$CREDENTIALS_USER', user_password='$CREDENTIALS_PASSWORD'"
         my_js='addUser.js';;
     dropuser)
-        [[ -z $CREDENTIALS_USER ]] && die "Missing the env variable: CREDENTIALS_USER"
-        log_msg="The user $CREDENTIALS_USER was successfully removed from $INSTANCE_NAME by $INSTANCE_USER."
+        [[ -z $CREDENTIALS_USER || -z $DATABASE_NAME ]] && die "Missing the env variable: DATABASE_NAME CREDENTIALS_USER"
+        log_msg="The user $CREDENTIALS_USER was successfully removed from $INSTANCE_NAME/$DATABASE_NAME by $INSTANCE_USER."
         my_params="var user_to_remove='$CREDENTIALS_USER'"
         my_js='removeUser.js';;
     createdatabase)
         [[ -z $DATABASE_NAME ]] && die "Missing the env variable: DATABASE_NAME"
-        log_msg="The database $DATABASE_NAME has been created on $INSTANCE_NAME by $INSTANCE_USER."
+        log_msg="The database $DATABASE_NAME has been created on $INSTANCE_NAME/$DATABASE_NAME by $INSTANCE_USER."
         my_params="var db_to_create='$DATABASE_NAME'"
         my_js='createDatabase.js';;
     dropdatabase)
         [[ -z $DATABASE_NAME ]] && die "Missing the env variable: DATABASE_NAME"
-        log_msg="The database $DATABASE_NAME was successfully dropped from $INSTANCE_NAME by $INSTANCE_USER."
+        log_msg="The database $DATABASE_NAME was successfully dropped from $INSTANCE_NAME/$DATABASE_NAME by $INSTANCE_USER."
         my_params="var my_database='$DATABASE_NAME'"
         my_js='dropDatabase.js';;
     status|healthcheck)
@@ -94,9 +94,9 @@ js_file="${JSDIR}/${my_js}"
 
 # Action!
 #-u $INSTANCE_USER -p $INSTANCE_PASS ssl
-[[ $verbose -eq 1 ]] && echo "$mongo_client $MONGO_DEFAULT_OPTS $INSTANCE_CONNECTION/admin --eval \"$my_params\" $js_file"
+[[ $verbose -eq 1 ]] && echo "$mongo_client $MONGO_DEFAULT_OPTS $INSTANCE_CONNECTION/$DATABASE_NAME --eval \"$my_params\" $js_file"
 
-output_cmd=`$mongo_client $MONGO_DEFAULT_OPTS $INSTANCE_CONNECTION/admin --eval "$my_params" $js_file`
+output_cmd=`$mongo_client $MONGO_DEFAULT_OPTS $INSTANCE_CONNECTION/$DATABASE_NAME --eval "$my_params" $js_file`
 exit_code=$?
 
 if [[ $exit_code -eq 0 ]]; then
