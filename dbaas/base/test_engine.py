@@ -7,7 +7,7 @@ from django.test.client import RequestFactory
 from django.db import IntegrityError
 
 from .models import Engine, EngineType, Node, Environment
-from .engine import BaseEngine
+from engine.factory import EngineFactory
 
 class EngineTestCase(TestCase):
     """
@@ -50,19 +50,19 @@ class EngineTestCase(TestCase):
         
     def test_mongodb_app_installed(self):
         
-        self.assertTrue(BaseEngine.is_engine_available("mongodb")) 
+        self.assertTrue(EngineFactory.is_engine_available("mongodb")) 
         
     def test_instantiate_mongodb(self):
         
         self.assertTrue(self.node.id)
         
-        mongo_db = BaseEngine.factory("mongodb", self.node)
+        mongo_db = EngineFactory.factory("mongodb", self.node)
         
         self.assertIsNotNone(mongo_db)
 
     def test_mongodb_url(self):
         
-        mongo_db = BaseEngine.factory("mongodb", self.node)
+        mongo_db = EngineFactory.factory("mongodb", self.node)
         
         self.assertRaises(NotImplementedError, mongo_db.url)
 
