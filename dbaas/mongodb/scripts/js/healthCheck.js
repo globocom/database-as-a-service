@@ -1,1 +1,1 @@
-db.test.getName()
+db.getName()
