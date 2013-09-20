@@ -1,0 +1,17 @@
+- fields: {created_at: !!timestamp '2013-09-20 19:00:25+00:00', is_active: true, name: teste,
+    slug: teste, updated_at: !!timestamp '2013-09-20 19:00:25+00:00'}
+  model: business.product
+  pk: 1
+- fields:
+    created_at: 2013-09-20 19:01:22+00:00
+    engine_type: 1
+    environment: [1]
+    is_active: true
+    name: small
+    updated_at: 2013-09-20 19:01:22+00:00
+  model: business.plan
+  pk: 1
+- fields: {created_at: !!timestamp '2013-09-20 19:01:22+00:00', name: disk-size, plan: 1,
+    updated_at: !!timestamp '2013-09-20 19:01:22+00:00', value: '10'}
+  model: business.planattribute
+  pk: 1
