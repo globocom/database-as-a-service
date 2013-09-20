@@ -31,7 +31,7 @@ class BaseEngine(object):
     def status(self):
         raise NotImplementedError()
 
-    def create_user(self, credential, database):
+    def create_user(self, credential):
         raise NotImplementedError()
 
     def remove_user(self, credential):

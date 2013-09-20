@@ -120,7 +120,7 @@ class EngineTestCase(TestCase):
 
         mongo_db = EngineFactory.factory(self.instance)
 
-        self.assertRaises(NotImplementedError, mongo_db.create_user, credential=None, database=None)
+        self.assertRaises(NotImplementedError, mongo_db.create_user, credential=None, )
 
 
     def test_mongodb_remove_user(self):
