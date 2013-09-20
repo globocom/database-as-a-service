@@ -38,8 +38,7 @@ class EngineTestCase(TestCase):
         
         self.assertTrue(engine_type.id)
         
-        engine = Engine.objects.create(version="1.2.3",
-                                    engine_type=engine_type)
+        engine = Engine.objects.create(version="1.2.3", engine_type=engine_type)
         
         self.assertTrue(engine.id)
         
