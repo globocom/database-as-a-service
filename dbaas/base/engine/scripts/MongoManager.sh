@@ -87,16 +87,16 @@ esac
 # Global vars
 BASEDIR=$(dirname $0)
 JSDIR="${BASEDIR}/js"
-# timeout
-# usar SSL
-DEFAULT_OPTS='--norc --quiet'
+MONGO_DEFAULT_OPTS='--norc --quiet'
 js_file="${JSDIR}/${my_js}"
 
-# Action!
-#-u $INSTANCE_USER -p $INSTANCE_PASS
-[[ $verbose -eq 1 ]] && echo "$mongo_client $DEFAULT_OPTS $INSTANCE_CONNECTION/admin --eval \"$my_params\" $js_file"
+[[ -f $js_file ]] || die "The file ${js_file} does not exist, please check it."
 
-output_cmd=`$mongo_client $DEFAULT_OPTS $INSTANCE_CONNECTION/admin --eval "$my_params" $js_file`
+# Action!
+#-u $INSTANCE_USER -p $INSTANCE_PASS ssl
+[[ $verbose -eq 1 ]] && echo "$mongo_client $MONGO_DEFAULT_OPTS $INSTANCE_CONNECTION/admin --eval \"$my_params\" $js_file"
+
+output_cmd=`$mongo_client $MONGO_DEFAULT_OPTS $INSTANCE_CONNECTION/admin --eval "$my_params" $js_file`
 exit_code=$?
 
 if [[ $exit_code -eq 0 ]]; then
