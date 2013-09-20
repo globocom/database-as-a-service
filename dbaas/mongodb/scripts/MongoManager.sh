@@ -28,7 +28,7 @@ Options:
     serverstatus	    Statistics data
 
 Environment variables required:
-    INSTANCE_CONNECTION INSTANCE_USER INSTANCE_PASS
+    INSTANCE_CONNECTION INSTANCE_USER INSTANCE_PASSWORD
 
 EOF
 exit 1
@@ -40,11 +40,11 @@ mongo_client='/usr/local/mongodb-osx-x86_64-2.4.6/bin/mongo'
 [[ -x $mongo_client ]] || die "Mongo client ($mongo_client) does not exist or it is not executable."
 
 # Check and set the required environment variables
-if [[ -n $INSTANCE_CONNECTION || -n $INSTANCE_USER || -n $INSTANCE_PASS ]]; then
-    ADM_USER=$INSTANCE_USER; ADM_PASS=$INSTANCE_PASS;
+if [[ -n $INSTANCE_CONNECTION || -n $INSTANCE_USER || -n $INSTANCE_PASSWORD ]]; then
+    ADM_USER=$INSTANCE_USER; ADM_PASS=$INSTANCE_PASSWORD;
 else
     die "You must provide at least these environment variables:\
-    INSTANCE_CONNECTION INSTANCE_USER INSTANCE_PASS"
+    INSTANCE_CONNECTION INSTANCE_USER INSTANCE_PASSWORD"
     
 fi
 
@@ -97,9 +97,10 @@ js_file="${JSDIR}/${my_js}"
 [[ -f $js_file ]] || die "The file ${js_file} does not exist, please check it."
 
 # Action!
-#-u $INSTANCE_USER -p $INSTANCE_PASS ssl
+#-u $INSTANCE_USER -p $INSTANCE_PASSWORD ssl
 [[ $verbose -eq 1 ]] && echo "$mongo_client $MONGO_DEFAULT_OPTS $INSTANCE_CONNECTION/$DATABASE_NAME --eval \"$my_params\" $js_file"
 
+echo "$mongo_client $MONGO_DEFAULT_OPTS $INSTANCE_CONNECTION/$DATABASE_NAME --eval "$my_params" $js_file"
 output_cmd=`$mongo_client $MONGO_DEFAULT_OPTS $INSTANCE_CONNECTION/$DATABASE_NAME --eval "$my_params" $js_file`
 exit_code=$?
 
