@@ -54,16 +54,6 @@ class Node(BaseModel):
     def connection(self):
         return u"%s:%s" % (self.address, self.port)
 
-
-class Environment(BaseModel):
-
-    name = models.CharField(verbose_name=_("Environment name"), max_length=100, unique=True)
-    is_active = models.BooleanField(verbose_name=_("Is environment active"), default=True)
-
-    def __unicode__(self):
-        return u"%s" % self.name
-
-
 class EngineType(BaseModel):
 
     name = models.CharField(verbose_name=_("Engine name"), max_length=100, unique=True)
