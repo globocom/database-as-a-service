@@ -6,7 +6,7 @@ from django.utils import simplejson
 from django.test.client import RequestFactory
 from django.db import IntegrityError
 
-from .models import Engine, EngineType
+from .models import Engine, EngineType, Node, Environment
 from .engine import BaseEngine
 
 class EngineTestCase(TestCase):
@@ -18,9 +18,15 @@ class EngineTestCase(TestCase):
         self.client = Client()
         self.factory = RequestFactory()
         self.new_engine_type = EngineType.objects.create(name="Test")
+        self.environment = Environment.objects.get(id=1)
+        self.node = Node.objects.create(address="localhost", 
+                                    port=27017, 
+                                    environment=self.environment,
+                                    type="1")
 
     def tearDown(self):
         self.new_engine_type.delete()
+        self.node.delete()
 
     def test_create_engine_type(self):
 
@@ -48,8 +54,16 @@ class EngineTestCase(TestCase):
         
     def test_instantiate_mongodb(self):
         
-        mongo_db = BaseEngine.factory("mongodb")
+        self.assertTrue(self.node.id)
+        
+        mongo_db = BaseEngine.factory("mongodb", self.node)
         
         self.assertIsNotNone(mongo_db)
+
+    def test_mongodb_url(self):
+        
+        mongo_db = BaseEngine.factory("mongodb", self.node)
+        
+        self.assertRaises(NotImplementedError, mongo_db.url)
 
 

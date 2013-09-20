@@ -1,5 +1,2 @@
-from base.engine import BaseEngine
+from .engine import MongoDB
 
-
-class MongoDB(BaseEngine):
-    pass
