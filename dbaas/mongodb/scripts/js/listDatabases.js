@@ -1,0 +1,1 @@
+db.adminCommand('listDatabases');
