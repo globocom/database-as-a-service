@@ -33,17 +33,18 @@ compile:
 	@find . -name "*.py" -exec python -m py_compile {} +
 
 db_drop_and_create: # drop and create database
-	@mysqladmin -uroot -f drop dbaas; mysqladmin -uroot create dbaas
+	@mysql -uroot -e "DROP DATABASE IF EXISTS dbaas"; mysqladmin -uroot create dbaas
 	@cd dbaas && python manage.py syncdb
 
 db_drop: # drops database
-	@mysqladmin -uroot -f drop dbaas
+	@mysql -uroot -e "DROP DATABASE IF EXISTS dbaas"
 		
 db_create: # creates database
 	@mysqladmin -uroot create dbaas
 	@cd dbaas && python manage.py syncdb
 
 test: # run tests
+	@mysql -uroot -e "DROP DATABASE IF EXISTS test_dbaas"
 	@cd dbaas && CI=1 python manage.py test
 
 run: # run local server
