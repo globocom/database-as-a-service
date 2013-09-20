@@ -28,8 +28,7 @@ Options:
     serverstatus	    Statistics data
 
 Environment variables required:
-
-    INSTANCE_NAME INSTANCE_USER INSTANCE_PASS INSTANCE_PORT
+    INSTANCE_CONNECTION INSTANCE_USER INSTANCE_PASS
 
 EOF
 exit 1
@@ -41,11 +40,11 @@ mongo_client='/usr/local/mongodb-osx-x86_64-2.4.6/bin/mongo'
 [[ -x $mongo_client ]] || die "Mongo client ($mongo_client) does not exist or it is not executable."
 
 # Check and set the required environment variables
-if [[ -n $INSTANCE_NAME || -n $INSTANCE_USER || -n $INSTANCE_PASS || -n $INSTANCE_PORT ]]; then
+if [[ -n $INSTANCE_CONNECTION || -n $INSTANCE_USER || -n $INSTANCE_PASS ]]; then
     ADM_USER=$INSTANCE_USER; ADM_PASS=$INSTANCE_PASS;
 else
     die "You must provide at least these environment variables:\
-    INSTANCE_NAME INSTANCE_USER INSTANCE_PASS INSTANCE_PORT"
+    INSTANCE_CONNECTION INSTANCE_USER INSTANCE_PASS"
     
 fi
 
