@@ -84,31 +84,31 @@ class EngineTestCase(TestCase):
 
         mongo_db = EngineFactory.factory(self.instance)
 
-        self.assertRaises(NotImplementedError, mongo_db.url)
+        self.assertEqual(mongo_db.url(), "mongodb://%s:%s" % (self.instance.name, mongo_db.port))
 
     def test_mongodb_port(self):
 
         mongo_db = EngineFactory.factory(self.instance)
 
-        self.assertRaises(NotImplementedError, mongo_db.port)
+        self.assertEqual(mongo_db.port(), 27017)
 
     def test_mongodb_address(self):
 
         mongo_db = EngineFactory.factory(self.instance)
 
-        self.assertRaises(NotImplementedError, mongo_db.address)
+        self.assertEqual(mongo_db.address(), "localhost")
 
     def test_mongodb_user(self):
 
         mongo_db = EngineFactory.factory(self.instance)
 
-        self.assertRaises(NotImplementedError, mongo_db.user)
+        self.assertEqual(mongo_db.user(), 'neo')
 
     def test_mongodb_password(self):
 
         mongo_db = EngineFactory.factory(self.instance)
 
-        self.assertRaises(NotImplementedError, mongo_db.password)
+        self.assertEqual(mongo_db.password(), "trinity")
 
     def test_mongodb_status(self):
 
