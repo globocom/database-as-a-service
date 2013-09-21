@@ -58,7 +58,7 @@ class BaseEngine(object):
         raise NotImplementedError()
 
     def call_script(self, script_name, args=[], envs={}):
-        working_dir = "./scripts"
+        working_dir = "./mongodb/scripts"
         working_dir = os.path.abspath(working_dir)
 
         logging_cmdline = "%s %s %s" % (
@@ -102,6 +102,9 @@ class BaseEngine(object):
 
         envs = {}
         for field in obj._meta.fields:
-            envs["%s_%s" % (obj_name, field.name.upper())] = field.value_to_string(obj)
+            if field.name in ['created_at', 'updated_at']:
+                continue
+            value = field.value_to_string(obj)
+            envs["%s_%s" % (obj_name, field.name.upper())] = value
         return envs
 

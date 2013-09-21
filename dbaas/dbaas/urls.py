@@ -1,6 +1,7 @@
 from django.conf.urls import patterns, include, url
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.conf import settings
+from django.views.generic.base import RedirectView
 
 # Uncomment the next two lines to enable the admin:
 from django.contrib import admin
@@ -10,7 +11,7 @@ import django_services.api.urls
 
 urlpatterns = patterns('',
     # Examples:
-    # url(r'^$', 'dbaas.views.home', name='home'),
+    url(r'^$', RedirectView.as_view(url='/admin'), name='home'),
     # url(r'^dbaas/', include('dbaas.foo.urls')),
 
     # Uncomment the admin/doc line below to enable admin documentation:
