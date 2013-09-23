@@ -40,12 +40,13 @@ mongo_client='/usr/local/mongodb-osx-x86_64-2.4.6/bin/mongo'
 [[ -x $mongo_client ]] || die "Mongo client ($mongo_client) does not exist or it is not executable."
 
 # Check and set the required environment variables
-if [[ -n $INSTANCE_CONNECTION || -n $INSTANCE_USER || -n $INSTANCE_PASSWORD ]]; then
-    ADM_USER=$INSTANCE_USER; ADM_PASS=$INSTANCE_PASSWORD;
+if [[ -n $INSTANCE_CONNECTION || ${INSTANCE_USER+x} || ${INSTANCE_PASSWORD+x} ]]; then
+    # if the user/passoword is blank, supress the user/pass parameters
+    [[ -n ${INSTANCE_USER} ]] && INSTANCE_USER_OPTION="-u $INSTANCE_USER"
+    [[ -n ${INSTANCE_PASSWORD+x} ]] && INSTANCE_PASSWORD_OPTION="-p $INSTANCE_PASSWORD"
 else
     die "You must provide at least these environment variables:\
     INSTANCE_CONNECTION INSTANCE_USER INSTANCE_PASSWORD"
-    
 fi
 
 # Main
@@ -98,9 +99,9 @@ js_file="${JSDIR}/${my_js}"
 
 # Action!
 #ssl
-[[ $verbose -eq 1 ]] && echo "$exec_time [DEBUG] Exec: $mongo_client $MONGO_DEFAULT_OPTS -u $INSTANCE_USER -p xxx $INSTANCE_CONNECTION/admin --eval \"$my_params\" $js_file"
+[[ $verbose -eq 1 ]] && echo "$exec_time [DEBUG] Exec: $mongo_client $MONGO_DEFAULT_OPTS $INSTANCE_USER_OPTION $INSTANCE_CONNECTION/admin --eval \"$my_params\" $js_file"
 
-output_cmd=`$mongo_client $MONGO_DEFAULT_OPTS -u $INSTANCE_USER -p $INSTANCE_PASSWORD $INSTANCE_CONNECTION/admin --eval "$my_params" $js_file`
+output_cmd=`$mongo_client $MONGO_DEFAULT_OPTS $INSTANCE_USER_OPTION $INSTANCE_PASSWORD_OPTION $INSTANCE_CONNECTION/admin --eval "$my_params" $js_file`
 exit_code=$?
 
 [[ $exit_code -eq 0 ]] && severity='INFO' || severity='ERROR'
