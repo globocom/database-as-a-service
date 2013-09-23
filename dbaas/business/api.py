@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+from __future__ import absolute_import, unicode_literals
 from django_services.api import DjangoServiceAPI, register
 from .service.product import ProductService
 from .service.plan import PlanService

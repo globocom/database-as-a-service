@@ -1,5 +1,5 @@
-- fields: {created_at: !!timestamp '2013-09-20 19:00:25+00:00', is_active: true, name: teste,
-    slug: teste, updated_at: !!timestamp '2013-09-20 19:00:25+00:00'}
+- fields: {created_at: !!timestamp '2013-09-20 19:00:25+00:00', is_active: true, name: Test,
+    slug: test, updated_at: !!timestamp '2013-09-20 19:00:25+00:00'}
   model: business.product
   pk: 1
 - fields:

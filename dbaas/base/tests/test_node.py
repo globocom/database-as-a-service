@@ -1,12 +1,11 @@
-# -*- coding:utf-8 -*-
-from django.utils import unittest
+# -*- coding: utf-8 -*-
+from __future__ import absolute_import, unicode_literals
 from django.test.client import Client
 from django.test import TestCase
-from django.utils import simplejson
 from django.test.client import RequestFactory
 from django.db import IntegrityError
 
-from .models import Node
+from ..models import Node
 
 
 class NodeTestCase(TestCase):

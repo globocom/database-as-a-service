@@ -1,0 +1,33 @@
+# -*- coding: utf-8 -*-
+from __future__ import absolute_import, unicode_literals
+import factory
+from .. import models
+
+
+class EngineFactory(factory.Factory):
+    FACTORY_FOR = models.Engine
+
+    version = '2.4.5'
+    engine_type_id = 1 # use fixture
+
+class NodeFactory(factory.DjangoModelFactory):
+    FACTORY_FOR = models.Node
+
+    address = '127.0.0.1'
+    port = 27017
+    environment_id = 1
+    is_active = True
+
+
+class InstanceFactory(factory.DjangoModelFactory):
+    FACTORY_FOR = models.Instance
+
+    name = factory.Sequence(lambda n: 'instance-{0}'.format(n))
+    user = 'root'
+    password = '123456'
+    node = factory.SubFactory(NodeFactory)
+    engine_id = 1
+    product = None
+    plan_id = 1 # use fixture
+
+

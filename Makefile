@@ -45,7 +45,7 @@ db_create: # creates database
 
 test: # run tests
 	@mysql -uroot -e "DROP DATABASE IF EXISTS test_dbaas"
-	@cd dbaas && CI=1 python manage.py test
+	@cd dbaas && python manage.py test $(filter-out $@,$(MAKECMDGOALS))
 
 run: # run local server
 	@cd dbaas && python manage.py runserver
