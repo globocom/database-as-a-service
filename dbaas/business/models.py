@@ -31,7 +31,7 @@ class Plan(BaseModel):
 class PlanAttribute(BaseModel):
 
     name = models.CharField(verbose_name=_("Plan attribute name"), max_length=200)
-    value = models.CharField(verbose_name=_("Plan attribuge value"), max_length=200)
+    value = models.CharField(verbose_name=_("Plan attribute value"), max_length=200)
     plan = models.ForeignKey('business.Plan', related_name="plan_attributes")
 
 simple_audit.register(Product, Plan, PlanAttribute)
