@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+from __future__ import absolute_import, unicode_literals
 import logging
 import subprocess
 import os.path
@@ -98,13 +100,17 @@ class BaseEngine(object):
 
     def to_envs(self, obj):
         """ Create a dictionary with object variable, to be used as environment variables to script """
+
+        if not obj:
+            return {}
+
         obj_name = obj._meta.object_name.upper()
 
         envs = {}
         for field in obj._meta.fields:
-            if field.name in ['created_at', 'updated_at']:
+            if field.name in ['created_at', 'updated_at'] or hasattr(field, 'related'):
                 continue
             value = field.value_to_string(obj)
-            envs["%s_%s" % (obj_name, field.name.upper())] = value
+            envs["%s_%s" % (obj_name, field.name.upper())] = '' if value is None else str(value)
         return envs
 

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 WSGI config for dbaas project.
 
@@ -13,6 +14,7 @@ middleware here, or combine a Django application with an application of another
 framework.
 
 """
+from __future__ import absolute_import, unicode_literals
 import os
 
 # We defer to a DJANGO_SETTINGS_MODULE already in the environment. This breaks
