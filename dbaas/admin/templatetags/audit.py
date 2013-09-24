@@ -44,4 +44,8 @@ def get_audit_log(parser, token):
 
 @register.filter
 def short_description(value, size):
+<<<<<<< HEAD
     return ' '.join(value.split()[:size])
+=======
+    return value.split()[:size]
+>>>>>>> 4185bf004695ec6a8d2a6083b02f4f0d0583b527
