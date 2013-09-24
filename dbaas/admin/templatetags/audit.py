@@ -13,12 +13,12 @@ class AdminAuditNode(template.Node):
 
     def render(self, context):
         if self.user is None:
-            context[self.varname] = Audit.objects.all()[:self.limit]
+            context[self.varname] = Audit.objects.order_by('-date').all()[:self.limit]
         else:
             user_id = self.user
             if not user_id.isdigit():
                 user_id = context[self.user].id
-            context[self.varname] = Audit.objects.filter(audit_request__user_id=user_id)[:int(self.limit)]
+            context[self.varname] = Audit.objects.filter(audit_request__user_id=user_id).order_by('-date')[:int(self.limit)]
         return ''
 
 
