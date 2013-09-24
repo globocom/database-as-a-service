@@ -8,7 +8,7 @@ from ..models import Instance
 
 # See http://docs.python.org/2/library/subprocess.html#popen-constructor if you
 # have questions about this variable
-DEFAULT_OUTPUT_BUFFER_SIZE = 4096
+DEFAULT_OUTPUT_BUFFER_SIZE = 4096000
 
 LOG = logging.getLogger(__name__)
 
@@ -56,18 +56,28 @@ class BaseEngine(object):
         """list databases in a instance"""
         raise NotImplementedError()
 
+    def get_script_path(self):
+        """ Return PATH environment variable for this engine """
+
     def call_script(self, script_name, args=[], envs={}):
         working_dir = "./mongodb/scripts"
         working_dir = os.path.abspath(working_dir)
 
-        logging_cmdline = "%s %s %s" % (
+        logging_cmdline = "%s %s" % (
             " ".join([ "%s=%s" % (k, "xxx" if k.endswith("_PASSWORD") else v) for (k,v) in envs.items()]),
-            script_name,
-            " ".join(args),
+            " ".join([script_name] + args),
         )
         return_code = None
         try:
             LOG.info('Running on path %s command: %s', working_dir, logging_cmdline)
+
+            if self.instance.engine.path:
+                envs_with_path = {'PATH': self.instance.engine.path}
+            else:
+                envs_with_path = {'PATH': os.getenv("PATH")}
+
+            if envs:
+                envs_with_path.update(envs)
 
             # For future, if scripts have lot of output can be better
             # create a temporary file for stdout. Scripts with lot of output and subprocess.PIPE
@@ -80,7 +90,7 @@ class BaseEngine(object):
                 stderr=subprocess.STDOUT, # stderr and stdout are the same
                 close_fds=True,
                 cwd=working_dir,
-                env=envs,
+                env=envs_with_path,
                 universal_newlines=True)
             process.wait()
 
