@@ -1,4 +1,5 @@
-# -*- coding:utf-8 -*-
+# -*- coding: utf-8 -*-
+from __future__ import absolute_import, unicode_literals
 from django.utils import unittest
 from django.test.client import Client
 from django.test import TestCase

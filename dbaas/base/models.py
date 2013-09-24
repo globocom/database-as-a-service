@@ -1,4 +1,5 @@
-# coding=utf-8
+# -*- coding: utf-8 -*-
+from __future__ import absolute_import, unicode_literals
 import simple_audit
 from datetime import datetime
 from django.db import models
@@ -82,7 +83,7 @@ class Instance(BaseModel):
     password = models.CharField(verbose_name=_("Instance password"), max_length=255, blank=True, null=False)
     node = models.OneToOneField("Node",)
     engine = models.ForeignKey("Engine", related_name="instances")
-    product = models.ForeignKey("business.Product", related_name="instances")
+    product = models.ForeignKey("business.Product", related_name="instances", null=True)
     plan = models.ForeignKey("business.Plan", related_name="instances")
 
     def __unicode__(self):
