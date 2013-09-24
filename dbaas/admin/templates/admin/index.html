@@ -44,7 +44,7 @@
                         {% if not entry %}
                             <span class="mini quiet">{% trans 'Unknown content' %}</span>
                         {% else %}
-                            {{ entry.date }}
+                            {{ entry.date }}</br>
                             {% for simple_audit in app_list %}
                                 {% if "Audit" in simple_audit.name %}
                                     <a href="{{ admin_root_url }}{{ simple_audit.models.0.admin_url }}{{ entry.id }}">{{ entry.description|short_description:2 }}</a>
