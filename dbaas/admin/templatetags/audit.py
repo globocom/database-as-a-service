@@ -24,23 +24,7 @@ class AdminAuditNode(template.Node):
 
 @register.tag
 def get_audit_log(parser, token):
-    """
-    Populates a template variable with the admin log for the given criteria.
 
-    Usage::
-
-        {% get_audit_log [limit] as [varname] for_user [context_var_containing_user_obj] %}
-
-    Examples::
-
-        {% get_audit_log 10 as admin_log for_user 23 %}
-        {% get_audit_log 10 as admin_log for_user user %}
-        {% get_audit_log 10 as admin_log %}
-
-    Note that ``context_var_containing_user_obj`` can be a hard-coded integer
-    (user ID) or the name of a template context variable containing the user
-    object whose ID you want.
-    """
     tokens = token.contents.split()
     if len(tokens) < 4:
         raise template.TemplateSyntaxError(
@@ -60,4 +44,10 @@ def get_audit_log(parser, token):
 
 @register.filter
 def short_description(value, size):
-    return value.split()[:size]
+    return ' '.join(value.split()[:size])
+
+
+@register.filter
+def changed_filter(value, size):
+    new_field = ''.join(value.split()[-1:])
+    return ' '.join(value.split()[:size]).rstrip(':') + ' changed to ' + new_field

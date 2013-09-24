@@ -41,13 +41,25 @@
                     <ul class="action-list">
                     {% for entry in admin_log %}
                         <li>
+                        {% if entry.operation == 0 %}
+                            <i class="icon-plus"></i>
+                        {% elif entry.operation == 1 %}
+                            <i class="icon-pencil"></i>
+                        {% elif entry.operation == 2 %}
+                            <i class="icon-minus"></i>
+                        {% endif %}
+
                         {% if not entry %}
                             <span class="mini quiet">{% trans 'Unknown content' %}</span>
                         {% else %}
-                            {{ entry.date }}
+                            {{ entry.date }}</br>
                             {% for simple_audit in app_list %}
                                 {% if "Audit" in simple_audit.name %}
-                                    <a href="{{ admin_root_url }}{{ simple_audit.models.0.admin_url }}{{ entry.id }}">{{ entry.description }}</a>
+                                    {% if entry.operation != 1 %}
+                                        <a href="{{ admin_root_url }}{{ simple_audit.models.0.admin_url }}{{ entry.id }}">{{ entry.description|short_description:2 }}</a>
+                                    {% else %}
+                                        <a href="{{ admin_root_url }}{{ simple_audit.models.0.admin_url }}{{ entry.id }}">{{ entry.description|changed_filter:2 }}</a>
+                                    {% endif %}
                                 {% endif %}
                             {% endfor %}
                         </li>
