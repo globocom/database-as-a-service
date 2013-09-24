@@ -8,7 +8,7 @@ from ..models import Instance
 
 # See http://docs.python.org/2/library/subprocess.html#popen-constructor if you
 # have questions about this variable
-DEFAULT_OUTPUT_BUFFER_SIZE = 4096
+DEFAULT_OUTPUT_BUFFER_SIZE = 4096000
 
 LOG = logging.getLogger(__name__)
 
@@ -74,7 +74,7 @@ class BaseEngine(object):
             if self.instance.engine.path:
                 envs_with_path = {'PATH': self.instance.engine.path}
             else:
-                envs_with_path = os.getenv("PATH")
+                envs_with_path = {'PATH': os.getenv("PATH")}
 
             if envs:
                 envs_with_path.update(envs)
