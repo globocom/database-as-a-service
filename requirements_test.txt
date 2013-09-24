@@ -1,2 +1,4 @@
 django-jenkins==0.13.0
 factory-boy==2.0.2
+PyHamcrest==1.7.2
+mock==1.0.1
