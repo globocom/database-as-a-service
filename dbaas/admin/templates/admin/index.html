@@ -45,7 +45,11 @@
                             <span class="mini quiet">{% trans 'Unknown content' %}</span>
                         {% else %}
                             {{ entry.date }}
-                            <a href="{{ admin_root_url }}/admin/simple_audit/audit/{{ entry.id }}">{{ entry.description }}</a>
+                            {% for simple_audit in app_list %}
+                                {% if "Audit" in simple_audit.name %}
+                                    <a href="{{ admin_root_url }}{{ simple_audit.models.0.admin_url }}{{ entry.id }}">{{ entry.description }}</a>
+                                {% endif %}
+                            {% endfor %}
                         </li>
                         {% endif %}<br/>
                     {% endfor %}
