@@ -56,3 +56,8 @@ def get_audit_log(parser, token):
             raise template.TemplateSyntaxError(
                 "Fourth argument to 'get_audit_log' must be 'for_user'")
     return AdminAuditNode(limit=tokens[1], varname=tokens[3], user=(len(tokens) > 5 and tokens[5] or None))
+
+
+@register.filter
+def short_description(value, size):
+    return value.split()[:size]
