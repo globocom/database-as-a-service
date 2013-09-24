@@ -1,17 +1,20 @@
 #!/bin/bash
 ## ======================================================
-##
+##  Manage the mongodb using mongo
 ##
 ## ======================================================
 
-# --------------------------------------------------------
+# --------------------- function (BEGIN) ----------------------
 
 function die() {
+    # call this function to exit the script
+    # and print a customized message
     echo $@
     exit 1
 }
 
 function usage() {
+    # print the help w/ the avaliable parameters to use.
 cat << EOF
 
 Usage: $0 [option]
@@ -35,10 +38,10 @@ EOF
 exit 1
 }
 
-# --------------------------------------------------------
+# ---------------------- function (END) ----------------------
 
 # mongo client exists and is executable?
-mongo_client='/usr/local/mongodb-osx-x86_64-2.4.6/bin/mongo'
+mongo_client=$(which mongo)
 [[ -x $mongo_client ]] || die "Mongo client ($mongo_client) does not exist or it is not executable."
 
 # Check and set the required environment variables
