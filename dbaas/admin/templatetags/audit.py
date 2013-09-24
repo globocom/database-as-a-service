@@ -45,3 +45,9 @@ def get_audit_log(parser, token):
 @register.filter
 def short_description(value, size):
     return ' '.join(value.split()[:size])
+
+
+@register.filter
+def changed_filter(value, size):
+    new_field = ''.join(value.split()[-1:])
+    return ' '.join(value.split()[:size]).rstrip(':') + ' changed to ' + new_field
