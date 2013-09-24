@@ -83,9 +83,10 @@ case $action in
         my_js='serverStatus.js';;
     listcollections)
         [[ -z $DATABASE_NAME ]] && die "Missing the env variable: DATABASE_NAME"
-        log_msg="Listing all collections on $INSTANCE_NAME."
+        log_msg="Listing all collections at $INSTANCE_NAME/$DATABASE_NAME."
         my_js='getCollectionNames.js';;
     listdatabases)
+        log_msg="Listing all databases on $INSTANCE_NAME."
         my_js='showDatabases.js';;
     *)
         usage;;
