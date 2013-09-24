@@ -4,14 +4,13 @@
 ##
 ## ======================================================
 
-#--------------------------------------------------------
+# --------------------------------------------------------
 
 function die() {
     echo $@
     exit 1
 }
 
-# Don't forget to add new option/commands on this function!
 function usage() {
 cat << EOF
 
@@ -24,6 +23,8 @@ Options:
     dropuser		    Remove specific username from the database
     createdatabase	    Initialize a database
     dropdatabase	    Drop database and the associated files
+    listdatabases           List databases per instance
+    listcollections         List collections per database
     status/healthcheck	    It is a kind of healthcheck
     serverstatus	    Statistics data
 
@@ -33,6 +34,7 @@ Environment variables required:
 EOF
 exit 1
 }
+
 # --------------------------------------------------------
 
 # mongo client exists and is executable?
@@ -80,11 +82,11 @@ case $action in
         log_msg="Getting the statistics data from $INSTANCE_NAME."
         my_js='serverStatus.js';;
     listcollections)
-        die "not implemented yet";;
-        # my_js='getCollectionNames.js';;
+        [[ -z $DATABASE_NAME ]] && die "Missing the env variable: DATABASE_NAME"
+        log_msg="Listing all collections on $INSTANCE_NAME."
+        my_js='getCollectionNames.js';;
     listdatabases)
-        die "not implemented yet";;
-        # my_js='listDatabases.js';;
+        my_js='showDatabases.js';;
     *)
         usage;;
 esac
@@ -99,15 +101,15 @@ js_file="${JSDIR}/${my_js}"
 
 # Action!
 #ssl
-[[ $verbose -eq 1 ]] && echo "$exec_time [DEBUG] Exec: $mongo_client $MONGO_DEFAULT_OPTS $INSTANCE_USER_OPTION $INSTANCE_CONNECTION/admin --eval \"$my_params\" $js_file"
+[[ $verbose -eq 1 ]] && echo "$exec_time [DEBUG] [$$] Exec: $mongo_client $MONGO_DEFAULT_OPTS $INSTANCE_USER_OPTION $INSTANCE_CONNECTION/admin --eval \"$my_params\" $js_file"
 
 output_cmd=`$mongo_client $MONGO_DEFAULT_OPTS $INSTANCE_USER_OPTION $INSTANCE_PASSWORD_OPTION $INSTANCE_CONNECTION/admin --eval "$my_params" $js_file`
 exit_code=$?
 
 [[ $exit_code -eq 0 ]] && severity='INFO' || severity='ERROR'
 
-echo "$exec_time [$severity] $log_msg"
+echo "$exec_time [$severity] [$$] $log_msg"
 echo $output_cmd
 
-[[ $verbose -eq 1 ]] && echo -ne "$exec_time [DEBUG] exit code: $exit_code, output: $output_cmd\n"
+[[ $verbose -eq 1 ]] && echo -ne "$exec_time [DEBUG] [$$] exit code: $exit_code, output: $output_cmd\n"
 exit $exit_code
