@@ -1,17 +1,20 @@
 #!/bin/bash
 ## ======================================================
-##
+##  Manage the mongodb using mongo
 ##
 ## ======================================================
 
-# --------------------------------------------------------
+# --------------------- function (BEGIN) ----------------------
 
 function die() {
+    # call this function to exit the script
+    # and print a customized message
     echo $@
     exit 1
 }
 
 function usage() {
+    # print the help w/ the avaliable parameters to use.
 cat << EOF
 
 Usage: $0 [option]
@@ -35,11 +38,11 @@ EOF
 exit 1
 }
 
-# --------------------------------------------------------
+# ---------------------- function (END) ----------------------
 
 # mongo client exists and is executable?
-mongo_client='/usr/local/mongodb-osx-x86_64-2.4.6/bin/mongo'
-[[ -x $mongo_client ]] || die "Mongo client ($mongo_client) does not exist or it is not executable."
+mongo_client=$(which mongo)
+[[ -x $mongo_client ]] || die "Mongo client ($mongo_client) does not exist in path $PATH or it is not executable."
 
 # Check and set the required environment variables
 if [[ -n $INSTANCE_CONNECTION || ${INSTANCE_USER+x} || ${INSTANCE_PASSWORD+x} ]]; then
@@ -83,9 +86,10 @@ case $action in
         my_js='serverStatus.js';;
     listcollections)
         [[ -z $DATABASE_NAME ]] && die "Missing the env variable: DATABASE_NAME"
-        log_msg="Listing all collections on $INSTANCE_NAME."
+        log_msg="Listing all collections at $INSTANCE_NAME/$DATABASE_NAME."
         my_js='getCollectionNames.js';;
     listdatabases)
+        log_msg="Listing all databases on $INSTANCE_NAME."
         my_js='showDatabases.js';;
     *)
         usage;;
