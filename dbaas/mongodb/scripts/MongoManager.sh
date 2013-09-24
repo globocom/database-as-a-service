@@ -42,7 +42,7 @@ exit 1
 
 # mongo client exists and is executable?
 mongo_client=$(which mongo)
-[[ -x $mongo_client ]] || die "Mongo client ($mongo_client) does not exist or it is not executable."
+[[ -x $mongo_client ]] || die "Mongo client ($mongo_client) does not exist in path $PATH or it is not executable."
 
 # Check and set the required environment variables
 if [[ -n $INSTANCE_CONNECTION || ${INSTANCE_USER+x} || ${INSTANCE_PASSWORD+x} ]]; then
