@@ -47,7 +47,7 @@
                             {{ entry.date }}
                             {% for simple_audit in app_list %}
                                 {% if "Audit" in simple_audit.name %}
-                                    <a href="{{ admin_root_url }}{{ simple_audit.models.0.admin_url }}{{ entry.id }}">{{ entry.description }}</a>
+                                    <a href="{{ admin_root_url }}{{ simple_audit.models.0.admin_url }}{{ entry.id }}">{{ entry.description|short_description:2 }}</a>
                                 {% endif %}
                             {% endfor %}
                         </li>
