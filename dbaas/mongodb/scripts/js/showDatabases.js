@@ -1,0 +1,1 @@
+printjson(db.adminCommand('listDatabases'));
