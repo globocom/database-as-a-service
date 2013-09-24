@@ -5,9 +5,12 @@ from django.test import TestCase
 from base.engine import base
 from base.tests import factory
 
+CONNECTION_TEST = 'connection-url'
 
 class FakeEngine(base.BaseEngine):
-    pass
+    
+    def get_connection(self):
+        return CONNECTION_TEST
 
 
 class EngineTestCase(TestCase):
@@ -32,6 +35,7 @@ class EngineTestCase(TestCase):
             'INSTANCE_NAME': self.instance.name,
             'INSTANCE_PASSWORD': self.instance.password,
             'INSTANCE_USER': self.instance.user,
+            'INSTANCE_CONNECTION': CONNECTION_TEST,
             }, self.engine.to_envs(self.instance))
 
     @unittest.skip("I didn't implement this method because he is not completed.")

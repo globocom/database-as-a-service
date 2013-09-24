@@ -8,9 +8,11 @@ LOG = logging.getLogger(__name__)
 
 
 class MongoDB(BaseEngine):
+
+    SCRIPT = "./MongoManager.sh"
     
-    def url(self):
-        return u"mongodb://%s:%s" % (self.instance.name, self.port)
+    def get_connection(self):
+        return u"%s:%s" % (self.instance.node.address, self.instance.node.port)
 
     def status(self):
         raise NotImplementedError()
@@ -38,6 +40,5 @@ class MongoDB(BaseEngine):
         # put plan attributes
         for plan_attribute in self.instance.plan.plan_attributes.all():
             envs['PLAN_ATTRIBUTE_%s' % plan_attribute.name.upper()] = plan_attribute.value
-        envs['INSTANCE_CONNECTION'] = "%s:%s" % (self.instance.node.address, self.instance.node.port)
-        self.call_script("./MongoManager.sh", [operation], envs=envs)
+        self.call_script(MongoDB.SCRIPT, [operation], envs=envs)
 

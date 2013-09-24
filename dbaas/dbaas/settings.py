@@ -219,7 +219,7 @@ else:
 
 LOGGING = {
     'version': 1,
-    'disable_existing_loggers': False,
+    'disable_existing_loggers': True,
     'formatters': {
         'simple': {
             'format': '%(asctime)-23s %(levelname)-7s %(name)s \t %(message)s'
@@ -254,6 +254,9 @@ LOGGING = {
             'level': 'INFO'
         },
         'simple_audit.signal': {
+            'level': 'INFO'
+        },
+        'factory': {
             'level': 'INFO'
         }
     },
