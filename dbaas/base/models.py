@@ -64,7 +64,12 @@ class EngineType(BaseModel):
 
 class Engine(BaseModel):
 
-    version = models.CharField(verbose_name=_("Engine version"), max_length=100, )
+    version = models.CharField(verbose_name=_("Engine version"), max_length=100,)
+    path = models.CharField(verbose_name=_("Engine path"), 
+                            max_length=255, 
+                            blank=True, 
+                            null=True,
+                            help_text=_("Path to look for the engine's executable file."))
     engine_type = models.ForeignKey("EngineType", verbose_name=_("Engine types"), related_name="engines")
     
     class Meta:
