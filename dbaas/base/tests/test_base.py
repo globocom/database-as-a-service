@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
+import os
 from django.test import TestCase
 from base.engine import base
 from base.tests import factory
@@ -40,5 +41,10 @@ class EngineTestCase(TestCase):
     def test_call_script_will_put_engine_path_as_environment_variable(self):
         PATH = '/bin:/bin/path1:/bin/path2'
         self.engine.instance.engine.path = PATH
+        result = self.engine.call_script("/bin/bash", ["-c", 'echo $PATH'])
+        self.assertEquals(PATH, result.strip())
+
+    def test_call_script_will_export_os_getenv_path_if_engine_path_is_not_set(self):
+        PATH = os.getenv("PATH")
         result = self.engine.call_script("/bin/bash", ["-c", 'echo $PATH'])
         self.assertEquals(PATH, result.strip())
