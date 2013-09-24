@@ -4,6 +4,7 @@ import logging
 import subprocess
 import os.path
 from django.utils.translation import ugettext_lazy as _
+from ..models import Instance
 
 # See http://docs.python.org/2/library/subprocess.html#popen-constructor if you
 # have questions about this variable
@@ -16,6 +17,7 @@ class BaseEngine(object):
     """
     BaseEngine interface
     """
+    ENV_CONNECTION = 'INSTANCE_CONNECTION'
 
     def __init__(self, *args, **kwargs):
 
@@ -25,19 +27,14 @@ class BaseEngine(object):
         else:
             raise TypeError(_("Instance is not defined"))
 
-    def url(self):
+    def get_connection(self):
+        """ Connection string passed to script as INSTANCE_CONNECTION environment variable. """
         raise NotImplementedError()
 
-    def port(self):
-        return self.node.port
-
-    def address(self):
-        return self.node.address
-
-    def user(self):
+    def get_user(self):
         return self.instance.user
 
-    def password(self):
+    def get_password(self):
         return self.instance.password
 
     def status(self):
@@ -112,5 +109,8 @@ class BaseEngine(object):
                 continue
             value = field.value_to_string(obj)
             envs["%s_%s" % (obj_name, field.name.upper())] = '' if value is None else str(value)
+
+        if isinstance(obj, Instance):
+            envs[BaseEngine.ENV_CONNECTION] = self.get_connection()
         return envs
 

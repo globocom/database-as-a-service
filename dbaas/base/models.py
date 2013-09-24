@@ -64,7 +64,12 @@ class EngineType(BaseModel):
 
 class Engine(BaseModel):
 
-    version = models.CharField(verbose_name=_("Engine version"), max_length=100, )
+    version = models.CharField(verbose_name=_("Engine version"), max_length=100,)
+    path = models.CharField(verbose_name=_("Engine path"), 
+                            max_length=255, 
+                            blank=True, 
+                            null=True,
+                            help_text=_("Path to look for the engine's executable file."))
     engine_type = models.ForeignKey("EngineType", verbose_name=_("Engine types"), related_name="engines")
     
     class Meta:
@@ -78,12 +83,19 @@ class Engine(BaseModel):
 
 class Instance(BaseModel):
 
-    name = models.CharField(verbose_name=_("Instance name"), max_length=100, unique=True)
-    user = models.CharField(verbose_name=_("Instance user"), max_length=100, blank=True, null=False)
+    name = models.CharField(verbose_name=_("Instance name"), 
+                            max_length=100, 
+                            unique=True,
+                            help_text=_("This could be the fqdn associated to the instance."))
+    user = models.CharField(verbose_name=_("Instance user"), 
+                            max_length=100,
+                            help_text=_("Administrative user with permission to manage databases, create users and etc."),
+                            blank=True, 
+                            null=False)
     password = models.CharField(verbose_name=_("Instance password"), max_length=255, blank=True, null=False)
     node = models.OneToOneField("Node",)
     engine = models.ForeignKey("Engine", related_name="instances")
-    product = models.ForeignKey("business.Product", related_name="instances", null=True)
+    product = models.ForeignKey("business.Product", related_name="instances", null=True, blank=True)
     plan = models.ForeignKey("business.Plan", related_name="instances")
 
     def __unicode__(self):

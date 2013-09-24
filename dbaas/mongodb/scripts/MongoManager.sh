@@ -1,18 +1,20 @@
 #!/bin/bash
 ## ======================================================
-##
+##  Manage the mongodb using mongo
 ##
 ## ======================================================
 
-#--------------------------------------------------------
+# --------------------- function (BEGIN) ----------------------
 
 function die() {
+    # call this function to exit the script
+    # and print a customized message
     echo $@
     exit 1
 }
 
-# Don't forget to add new option/commands on this function!
 function usage() {
+    # print the help w/ the avaliable parameters to use.
 cat << EOF
 
 Usage: $0 [option]
@@ -24,6 +26,8 @@ Options:
     dropuser		    Remove specific username from the database
     createdatabase	    Initialize a database
     dropdatabase	    Drop database and the associated files
+    listdatabases           List databases per instance
+    listcollections         List collections per database
     status/healthcheck	    It is a kind of healthcheck
     serverstatus	    Statistics data
 
@@ -33,15 +37,16 @@ Environment variables required:
 EOF
 exit 1
 }
-# --------------------------------------------------------
+
+# ---------------------- function (END) ----------------------
 
 # mongo client exists and is executable?
-mongo_client='/usr/local/mongodb-osx-x86_64-2.4.6/bin/mongo'
-[[ -x $mongo_client ]] || die "Mongo client ($mongo_client) does not exist or it is not executable."
+mongo_client=$(which mongo)
+[[ -x $mongo_client ]] || die "Mongo client ($mongo_client) does not exist in path $PATH or it is not executable."
 
 # Check and set the required environment variables
 if [[ -n $INSTANCE_CONNECTION || ${INSTANCE_USER+x} || ${INSTANCE_PASSWORD+x} ]]; then
-    # if the user/passoword is blank, supress the user/pass parameters
+    # if the user/password is blank, supress the user/pass parameters
     [[ -n ${INSTANCE_USER} ]] && INSTANCE_USER_OPTION="-u $INSTANCE_USER"
     [[ -n ${INSTANCE_PASSWORD+x} ]] && INSTANCE_PASSWORD_OPTION="-p $INSTANCE_PASSWORD"
 else
@@ -80,11 +85,12 @@ case $action in
         log_msg="Getting the statistics data from $INSTANCE_NAME."
         my_js='serverStatus.js';;
     listcollections)
-        die "not implemented yet";;
-        # my_js='getCollectionNames.js';;
+        [[ -z $DATABASE_NAME ]] && die "Missing the env variable: DATABASE_NAME"
+        log_msg="Listing all collections at $INSTANCE_NAME/$DATABASE_NAME."
+        my_js='getCollectionNames.js';;
     listdatabases)
-        die "not implemented yet";;
-        # my_js='listDatabases.js';;
+        log_msg="Listing all databases on $INSTANCE_NAME."
+        my_js='showDatabases.js';;
     *)
         usage;;
 esac
@@ -99,15 +105,15 @@ js_file="${JSDIR}/${my_js}"
 
 # Action!
 #ssl
-[[ $verbose -eq 1 ]] && echo "$exec_time [DEBUG] Exec: $mongo_client $MONGO_DEFAULT_OPTS $INSTANCE_USER_OPTION $INSTANCE_CONNECTION/admin --eval \"$my_params\" $js_file"
+[[ $verbose -eq 1 ]] && echo "$exec_time [DEBUG] [$$] Exec: $mongo_client $MONGO_DEFAULT_OPTS $INSTANCE_USER_OPTION $INSTANCE_CONNECTION/admin --eval \"$my_params\" $js_file"
 
 output_cmd=`$mongo_client $MONGO_DEFAULT_OPTS $INSTANCE_USER_OPTION $INSTANCE_PASSWORD_OPTION $INSTANCE_CONNECTION/admin --eval "$my_params" $js_file`
 exit_code=$?
 
 [[ $exit_code -eq 0 ]] && severity='INFO' || severity='ERROR'
 
-echo "$exec_time [$severity] $log_msg"
+echo "$exec_time [$severity] [$$] $log_msg"
 echo $output_cmd
 
-[[ $verbose -eq 1 ]] && echo -ne "$exec_time [DEBUG] exit code: $exit_code, output: $output_cmd\n"
+[[ $verbose -eq 1 ]] && echo -ne "$exec_time [DEBUG] [$$] exit code: $exit_code, output: $output_cmd\n"
 exit $exit_code

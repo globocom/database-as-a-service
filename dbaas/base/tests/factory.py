@@ -31,3 +31,18 @@ class InstanceFactory(factory.DjangoModelFactory):
     plan_id = 1 # use fixture
 
 
+class DatabaseFactory(factory.DjangoModelFactory):
+    FACTORY_FOR = models.Database
+
+    name = factory.Sequence(lambda n: 'db-{0}'.format(n))
+    instance = factory.SubFactory(InstanceFactory)
+
+
+class CredentialFactory(factory.DjangoModelFactory):
+    FACTORY_FOR = models.Credential
+
+    user = factory.Sequence(lambda n: 'usr_{0}'.format(n))
+    password = '123456'
+    database = factory.SubFactory(DatabaseFactory)
+
+
