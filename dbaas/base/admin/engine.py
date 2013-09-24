@@ -5,6 +5,7 @@ from ..service.engine import EngineService
 
 class EngineAdmin(admin.DjangoServicesAdmin):
     service_class = EngineService
-    search_fields = ["engine_type__name", ]
+    search_fields = ("engine_type__name",)
     list_display = ("engine_type", "version", )
+    list_filter = ("engine_type",)
     save_on_top = True
