@@ -78,8 +78,15 @@ class Engine(BaseModel):
 
 class Instance(BaseModel):
 
-    name = models.CharField(verbose_name=_("Instance name"), max_length=100, unique=True)
-    user = models.CharField(verbose_name=_("Instance user"), max_length=100, blank=True, null=False)
+    name = models.CharField(verbose_name=_("Instance name"), 
+                            max_length=100, 
+                            unique=True,
+                            help_text=_("This could be the fqdn associated to the instance."))
+    user = models.CharField(verbose_name=_("Instance user"), 
+                            max_length=100,
+                            help_text=_("Administrative user with permission to manage databases, create users and etc."),
+                            blank=True, 
+                            null=False)
     password = models.CharField(verbose_name=_("Instance password"), max_length=255, blank=True, null=False)
     node = models.OneToOneField("Node",)
     engine = models.ForeignKey("Engine", related_name="instances")
