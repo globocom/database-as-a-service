@@ -46,7 +46,7 @@ mongo_client=$(which mongo)
 
 # Check and set the required environment variables
 if [[ -n $INSTANCE_CONNECTION || ${INSTANCE_USER+x} || ${INSTANCE_PASSWORD+x} ]]; then
-    # if the user/passoword is blank, supress the user/pass parameters
+    # if the user/password is blank, supress the user/pass parameters
     [[ -n ${INSTANCE_USER} ]] && INSTANCE_USER_OPTION="-u $INSTANCE_USER"
     [[ -n ${INSTANCE_PASSWORD+x} ]] && INSTANCE_PASSWORD_OPTION="-p $INSTANCE_PASSWORD"
 else
