@@ -1,1 +1,1 @@
-db.collection_names
+printjson(db.getCollectionNames())
