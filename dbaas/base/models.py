@@ -2,10 +2,12 @@
 from __future__ import absolute_import, unicode_literals
 import simple_audit
 from datetime import datetime
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from django.utils.translation import ugettext_lazy as _
+from .helper import slugify
 
 class BaseModel(models.Model):
     """Base model class"""
@@ -52,17 +54,19 @@ class Node(BaseModel):
 
     def __unicode__(self):
         return u"%s" % self.connection
-    
+
     @property
     def connection(self):
         return u"%s:%s" % (self.address, self.port)
 
+
 class EngineType(BaseModel):
 
     name = models.CharField(verbose_name=_("Engine name"), max_length=100, unique=True)
-    
+
     def __unicode__(self):
         return u"%s" % self.name
+
 
 class Engine(BaseModel):
 
@@ -73,7 +77,7 @@ class Engine(BaseModel):
                             null=True,
                             help_text=_("Path to look for the engine's executable file."))
     engine_type = models.ForeignKey("EngineType", verbose_name=_("Engine types"), related_name="engines")
-    
+
     class Meta:
         unique_together = (
             ('version', 'engine_type', )
@@ -109,15 +113,31 @@ class Instance(BaseModel):
 
 
 class Database(BaseModel):
+
+    RESERVED_DATABASES_NAME = ('admin', 'config', 'local')
+
     name = models.CharField(verbose_name=_("Database name"), max_length=100, unique=True)
     instance = models.ForeignKey('Instance', related_name="databases")
 
     def __unicode__(self):
         return u"%s" % self.name
 
+    def clean(self):
+
+        if self.name in self.__get_database_reserved_names():
+            raise ValidationError(_("%s is a reserved database name" % self.name))
+
+    def __get_database_reserved_names(self):
+        return Database.RESERVED_DATABASES_NAME
+
+
 @receiver(pre_save, sender=Database)
 def database_pre_save(sender, **kwargs):
     instance = kwargs.get('instance')
+    
+    #slugify name
+    instance.name = slugify(instance.name)
+    
     if instance.id:
         saved_object = Database.objects.get(id=instance.id)
         if instance.name != saved_object.name:
@@ -136,6 +156,10 @@ class Credential(BaseModel):
 @receiver(pre_save, sender=Credential)
 def credential_pre_save(sender, **kwargs):
     instance = kwargs.get('instance')
+    
+    #slugify user
+    instance.user = slugify(instance.user)
+    
     if instance.id:
         saved_object = Credential.objects.get(id=instance.id)
         if instance.user != saved_object.user:
