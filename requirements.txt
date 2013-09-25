@@ -11,3 +11,4 @@ gunicorn==0.17.2
 django-services==0.0.5
 bootstrap-admin==0.2.2
 PyYAML==3.10
+python-slugify==0.0.6
