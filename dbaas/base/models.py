@@ -3,6 +3,8 @@ from __future__ import absolute_import, unicode_literals
 import simple_audit
 from datetime import datetime
 from django.db import models
+from django.db.models.signals import pre_save
+from django.dispatch import receiver
 from django.utils.translation import ugettext_lazy as _
 
 class BaseModel(models.Model):
@@ -112,6 +114,14 @@ class Database(BaseModel):
 
     def __unicode__(self):
         return u"%s" % self.name
+
+@receiver(pre_save, sender=Database)
+def database_pre_save(sender, **kwargs):
+    instance = kwargs.get('instance')
+    if instance.id:
+        saved_object = Database.objects.get(id=instance.id)
+        if instance.name != saved_object.name:
+            raise AttributeError(_("Attribute name cannot be edited"))
 
 
 class Credential(BaseModel):
