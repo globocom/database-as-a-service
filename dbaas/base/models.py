@@ -133,4 +133,15 @@ class Credential(BaseModel):
         return u"%s" % self.user
 
 
+@receiver(pre_save, sender=Credential)
+def credential_pre_save(sender, **kwargs):
+    instance = kwargs.get('instance')
+    if instance.id:
+        saved_object = Credential.objects.get(id=instance.id)
+        if instance.user != saved_object.user:
+            raise AttributeError(_("Attribute user cannot be edited"))
+
+        if instance.database != saved_object.database:
+            raise AttributeError(_("Attribute database cannot be edited"))
+
 simple_audit.register(Node, Environment, Instance, Database, Credential)
