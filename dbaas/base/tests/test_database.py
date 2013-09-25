@@ -38,6 +38,11 @@ class DatabaseTestCase(TestCase):
         
         self.assertTrue(database.id)
         self.assertEqual(database.name, 'w_h_a_t')
+        
+        database2 = Database.objects.create(name="w.h.e.r.e", instance=self.instance)
+        
+        self.assertTrue(database2.id)
+        self.assertEqual(database2.name, 'w_h_e_r_e')
 
     def test_cannot_edit_database_name(self):
         
