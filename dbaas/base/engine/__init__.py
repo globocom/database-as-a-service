@@ -1,3 +1,3 @@
-from .base import BaseEngine
+from .base import BaseEngine, ErrorRunningScript
 
 
