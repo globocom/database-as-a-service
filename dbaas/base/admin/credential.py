@@ -13,4 +13,12 @@ class CredentialAdmin(admin.DjangoServicesAdmin):
 
     def instance_name(self, credential):
         return credential.database.instance.name
+    
     instance_name.admin_order_field = "database__instance__name"
+
+    def get_readonly_fields(self, request, obj = None):
+
+        if obj: #In edit mode
+            return ('user', 'database',) + self.readonly_fields
+
+        return self.readonly_fields
