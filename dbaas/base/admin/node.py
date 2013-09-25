@@ -6,7 +6,7 @@ from ..service.node import NodeService
 
 class NodeAdmin(admin.DjangoServicesAdmin):
     service_class = NodeService
-    search_fields = ["address", "port"]
-    list_display = ("address", "port", "environment", "is_active")
-    list_filter = ("is_active", )
+    search_fields = ("address", "port", "instance__name", "environment__name")
+    list_display = ("address", "port", "is_active", "instance", "environment",)
+    list_filter = ("is_active", "environment", "instance")
     save_on_top = True
