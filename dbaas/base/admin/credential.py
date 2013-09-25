@@ -19,6 +19,6 @@ class CredentialAdmin(admin.DjangoServicesAdmin):
     def get_readonly_fields(self, request, obj = None):
 
         if obj: #In edit mode
-            return ('user',) + self.readonly_fields
+            return ('user', 'database',) + self.readonly_fields
 
         return self.readonly_fields
