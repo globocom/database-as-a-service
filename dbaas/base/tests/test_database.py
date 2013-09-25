@@ -32,6 +32,13 @@ class DatabaseTestCase(TestCase):
         
         self.assertTrue(database.id)
 
+    def test_slugify_database_name(self):
+        
+        database = Database.objects.create(name="w h a t", instance=self.instance)
+        
+        self.assertTrue(database.id)
+        self.assertEqual(database.name, 'w_h_a_t')
+
     def test_cannot_edit_database_name(self):
         
         database = Database.objects.create(name="super2", instance=self.instance)

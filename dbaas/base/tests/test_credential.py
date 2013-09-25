@@ -34,6 +34,21 @@ class DatabaseTestCase(TestCase):
         
         self.assertTrue(credential.id)
 
+    def test_slugify_user_credential(self):
+        
+        credential = Credential.objects.create(user="a b c", password="super", database=self.database)
+        
+        self.assertTrue(credential.id)
+        self.assertEqual(credential.user, 'a_b_c')
+
+
+    def test_underscore_in_slugged_user_credential(self):
+        
+        credential = Credential.objects.create(user="a_b_c_d", password="super", database=self.database)
+        
+        self.assertTrue(credential.id)
+        self.assertEqual(credential.user, "a_b_c_d")
+
     def test_cannot_edit_user_credential(self):
         
         credential = Credential.objects.create(user="super2", password="super2", database=self.database)
