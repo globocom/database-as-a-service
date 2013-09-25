@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
+import logging
 import simple_audit
 from datetime import datetime
 from django.core.exceptions import ValidationError
@@ -8,6 +9,9 @@ from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from django.utils.translation import ugettext_lazy as _
 from .helper import slugify
+
+LOG = logging.getLogger(__name__)
+
 
 class BaseModel(models.Model):
     """Base model class"""
@@ -39,7 +43,7 @@ class Node(BaseModel):
 
     address = models.CharField(verbose_name=_("Node address"), max_length=200)
     port = models.IntegerField(verbose_name=_("Node port"))
-    environment = models.ForeignKey('Environment', related_name="nodes")
+    environment = models.ForeignKey('Environment', related_name="nodes", on_delete=models.PROTECT)
     is_active = models.BooleanField(verbose_name=_("Is node active"), default=True)
     type = models.CharField(verbose_name=_("Node type"),
                             max_length=2,
@@ -76,7 +80,7 @@ class Engine(BaseModel):
                             blank=True, 
                             null=True,
                             help_text=_("Path to look for the engine's executable file."))
-    engine_type = models.ForeignKey("EngineType", verbose_name=_("Engine types"), related_name="engines")
+    engine_type = models.ForeignKey("EngineType", verbose_name=_("Engine types"), related_name="engines", on_delete=models.PROTECT)
 
     class Meta:
         unique_together = (
@@ -99,13 +103,13 @@ class Instance(BaseModel):
                             blank=True, 
                             null=False)
     password = models.CharField(verbose_name=_("Instance password"), max_length=255, blank=True, null=False)
-    node = models.OneToOneField("Node",)
-    engine = models.ForeignKey("Engine", related_name="instances")
-    product = models.ForeignKey("business.Product", related_name="instances", null=True, blank=True)
-    plan = models.ForeignKey("business.Plan", related_name="instances")
+    node = models.OneToOneField("Node", on_delete=models.PROTECT)
+    engine = models.ForeignKey("Engine", related_name="instances", on_delete=models.PROTECT)
+    product = models.ForeignKey("business.Product", related_name="instances", null=True, blank=True, on_delete=models.PROTECT)
+    plan = models.ForeignKey("business.Plan", related_name="instances", on_delete=models.PROTECT)
 
     def __unicode__(self):
-        return u"%s" % self.name
+        return self.name
 
     @property
     def engine_name(self):
@@ -117,7 +121,7 @@ class Database(BaseModel):
     RESERVED_DATABASES_NAME = ('admin', 'config', 'local')
 
     name = models.CharField(verbose_name=_("Database name"), max_length=100, unique=True)
-    instance = models.ForeignKey('Instance', related_name="databases")
+    instance = models.ForeignKey('Instance', related_name="databases", on_delete=models.PROTECT)
 
     def __unicode__(self):
         return u"%s" % self.name
