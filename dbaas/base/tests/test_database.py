@@ -32,6 +32,14 @@ class DatabaseTestCase(TestCase):
         
         self.assertTrue(database.id)
 
+    def test_create_duplicate_database_error(self):
+        
+        database = Database.objects.create(name="super", instance=self.instance)
+        
+        self.assertTrue(database.id)
+        
+        self.assertRaises(IntegrityError, Database.objects.create, name="super", instance=self.instance)
+
     def test_slugify_database_name(self):
         
         database = Database.objects.create(name="w h a t", instance=self.instance)
