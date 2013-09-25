@@ -16,3 +16,10 @@ class CredentialAdmin(admin.DjangoServicesAdmin):
 
     def instance_name(self, credential):
         return credential.database.instance.name
+
+    def get_readonly_fields(self, request, obj = None):
+
+        if obj: #In edit mode
+            return ('user',) + self.readonly_fields
+
+        return self.readonly_fields
