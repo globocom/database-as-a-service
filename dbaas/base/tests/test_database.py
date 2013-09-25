@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
-from django.test.client import Client
 from django.test import TestCase
-from django.test.client import RequestFactory
-from django.db import IntegrityError
 
 from ..models import Database
 
@@ -14,7 +11,7 @@ from base.engine import base
 class FakeEngine(base.BaseEngine):
     
     def get_connection(self):
-        return CONNECTION_TEST
+        return "a"
 
 class DatabaseTestCase(TestCase):
 
@@ -29,8 +26,9 @@ class DatabaseTestCase(TestCase):
     def test_create_database(self):
         
         database = Database.objects.create(name="super", instance=self.instance)
-        
+
         self.assertTrue(database.id)
+        database.delete()
 
     def test_slugify_database_name(self):
         
@@ -38,6 +36,7 @@ class DatabaseTestCase(TestCase):
         
         self.assertTrue(database.id)
         self.assertEqual(database.name, 'w_h_a_t')
+        database.delete()
 
     def test_cannot_edit_database_name(self):
         
@@ -48,6 +47,7 @@ class DatabaseTestCase(TestCase):
         database.name = "super3"
         
         self.assertRaises(AttributeError, database.save)
+        database.delete()
 
 
 

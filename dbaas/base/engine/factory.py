@@ -2,7 +2,6 @@
 from __future__ import absolute_import, unicode_literals
 from django.utils.translation import ugettext_lazy as _
 from django.conf import settings
-from mongodb import MongoDB
 
 
 class EngineFactory(object):
@@ -20,6 +19,7 @@ class EngineFactory(object):
         # TODO: import Engines dynamically
         if instance.engine_name.lower() == "mongodb":
             if EngineFactory.is_engine_available(instance.engine_name.lower()):
+                from mongodb import MongoDB
                 return MongoDB(instance=instance)
             else:
                 raise NotImplementedError()

@@ -115,6 +115,22 @@ class Instance(BaseModel):
     def engine_name(self):
         return self.engine.engine_type.name
 
+    def clean(self, *args, **kwargs):
+        LOG.debug('Checking instance status...')
+        try:
+            from base.engine import EngineFactory, GenericEngineError, ConnectionError, AuthenticationError
+            engine = EngineFactory.factory(self)
+            engine.check_status()
+            LOG.debug('Instance %s is ok', self)
+        except AuthenticationError, e:
+            # at django 1.5, model validation throught form doesn't use field name in ValidationError.
+            # I put here, because I expected this problem can be solved in next versions
+            raise ValidationError({'user': e.message})
+        except ConnectionError, e:
+            raise ValidationError({'node': e.message})
+        except GenericEngineError, e:
+            raise ValidationError(e.message)
+
 
 class Database(BaseModel):
 

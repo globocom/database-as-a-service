@@ -14,14 +14,27 @@ DEFAULT_OUTPUT_BUFFER_SIZE = 16384
 LOG = logging.getLogger(__name__)
 
 
-class ErrorRunningScript(InternalException):
+class GenericEngineError(InternalException):
+    """ Exception raises when any kind of problem happens when executing operations on instance """
+    pass
+
+
+class ErrorRunningScript(GenericEngineError):
     """ Exception raise when same error happen running a command line script """
 
     def __init__(self, script_name, exit_code, stdout):
         self.exit_code = exit_code
         self.stdout = stdout
         self.script_name = script_name
-        super(ErrorRunningScript, self).__init__(message='Error running script %s. Exit code %s: %s' % (self.script_name, self.exit_code, self.stdout))
+        super(ErrorRunningScript, self).__init__(message='%s. Exit code=%s: stdout=%s' % (self.script_name, self.exit_code, self.stdout))
+
+class ConnectionError(GenericEngineError):
+    """ Raised when there is any problem to connect on instance """
+    pass
+
+class AuthenticationError(ConnectionError):
+    """ Raised when there is any problem authenticating on instance """
+    pass
 
 
 class BaseEngine(object):
@@ -52,7 +65,12 @@ class BaseEngine(object):
     def get_password(self):
         return self.instance.password
 
-    def status(self):
+    def check_status(self):
+        """ Check if instance is working. If not working, raises subclass of GenericEngineError """
+        raise NotImplementedError()
+
+    def info(self):
+        """ Returns a mapping with same attributes of instance """
         raise NotImplementedError()
 
     def create_user(self, credential):
@@ -70,9 +88,6 @@ class BaseEngine(object):
     def list_databases(self):
         """list databases in a instance"""
         raise NotImplementedError()
-
-    def get_script_path(self):
-        """ Return PATH environment variable for this engine """
 
     def call_script(self, script_name, args=[], envs={}):
         working_dir = "./mongodb/scripts"
