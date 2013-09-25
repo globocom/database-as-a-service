@@ -27,6 +27,10 @@ class BaseEngine(object):
         else:
             raise TypeError(_("Instance is not defined"))
 
+    def test_connection(self, credential=None):
+        """ Tests the connection to the database """
+        raise NotImplementedError()
+
     def get_connection(self):
         """ Connection string passed to script as INSTANCE_CONNECTION environment variable. """
         raise NotImplementedError()
@@ -106,7 +110,7 @@ class BaseEngine(object):
             raise
 
     def to_envs(self, obj):
-        """ Create a dictionary with object variable, to be used as environment variables to script """
+        """ Creates a dictionary with an object to be used as environment variables to script """
 
         if not obj:
             return {}
