@@ -5,12 +5,23 @@ import subprocess
 import os.path
 from django.utils.translation import ugettext_lazy as _
 from ..models import Instance
+from django_services.service.exceptions import InternalException
 
 # See http://docs.python.org/2/library/subprocess.html#popen-constructor if you
 # have questions about this variable
-DEFAULT_OUTPUT_BUFFER_SIZE = 4096000
+DEFAULT_OUTPUT_BUFFER_SIZE = 16384
 
 LOG = logging.getLogger(__name__)
+
+
+class ErrorRunningScript(InternalException):
+    """ Exception raise when same error happen running a command line script """
+
+    def __init__(self, script_name, exit_code, stdout):
+        self.exit_code = exit_code
+        self.stdout = stdout
+        self.script_name = script_name
+        super(ErrorRunningScript, self).__init__(message='Error running script %s. Exit code %s: %s' % (self.script_name, self.exit_code, self.stdout))
 
 
 class BaseEngine(object):
@@ -99,10 +110,14 @@ class BaseEngine(object):
             process.wait()
 
             output = process.stdout.read()
+            if output[-1] == '\n':
+                # remove last end line
+                output = output[:-1]
+
             return_code = process.returncode
 
             if return_code != 0:
-                raise RuntimeError("Error executing %s, exit code = %d: '%s'" % (script_name, return_code, output))
+                raise ErrorRunningScript(script_name, return_code, output)
             return output
         except:
             # if any error happen, log cmdline to error
