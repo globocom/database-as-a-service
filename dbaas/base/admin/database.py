@@ -11,6 +11,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     form = DatabaseForm
     search_fields = ("name", "instance__name")
     list_display = ("name", "instance",)
+    list_filter = ("instance", "instance__product",)
+    save_on_top = True
     
     def get_readonly_fields(self, request, obj = None):
         """
