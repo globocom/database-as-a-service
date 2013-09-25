@@ -39,6 +39,12 @@ exit 1
 }
 
 # ---------------------- function (END) ----------------------
+# Global vars
+# /dev/null, /dev/tty, 
+LOGFILE='/dev/null'
+BASEDIR=$(dirname $0)
+JSDIR="${BASEDIR}/js"
+MONGO_DEFAULT_OPTS='--norc --quiet'
 
 # mongo client exists and is executable?
 mongo_client=$(which mongo)
@@ -95,25 +101,20 @@ case $action in
         usage;;
 esac
 
-# Global vars
-BASEDIR=$(dirname $0)
-JSDIR="${BASEDIR}/js"
-MONGO_DEFAULT_OPTS='--norc --quiet'
 js_file="${JSDIR}/${my_js}"
-
 [[ -f $js_file ]] || die "The file ${js_file} does not exist, please check it."
 
 # Action!
 #ssl
-[[ $verbose -eq 1 ]] && echo "$exec_time [DEBUG] [$$] Exec: $mongo_client $MONGO_DEFAULT_OPTS $INSTANCE_USER_OPTION $INSTANCE_CONNECTION/admin --eval \"$my_params\" $js_file"
+[[ $verbose -eq 1 ]] && echo "$exec_time [DEBUG] [$$] Exec: $mongo_client $MONGO_DEFAULT_OPTS $INSTANCE_USER_OPTION $INSTANCE_CONNECTION/admin --eval \"$my_params\" $js_file" >> $LOGFILE 2>&1
 
 output_cmd=`$mongo_client $MONGO_DEFAULT_OPTS $INSTANCE_USER_OPTION $INSTANCE_PASSWORD_OPTION $INSTANCE_CONNECTION/admin --eval "$my_params" $js_file`
 exit_code=$?
 
+[[ $verbose -eq 1 ]] && echo -ne "$exec_time [DEBUG] [$$] exit code: $exit_code, output: $output_cmd\n" >> $LOGFILE 2>&1
 [[ $exit_code -eq 0 ]] && severity='INFO' || severity='ERROR'
+echo "$exec_time [$severity] [$$] $log_msg" >> $LOGFILE 2>&1
 
-echo "$exec_time [$severity] [$$] $log_msg"
+# output to STDOUT & exit code
 echo $output_cmd
-
-[[ $verbose -eq 1 ]] && echo -ne "$exec_time [DEBUG] [$$] exit code: $exit_code, output: $output_cmd\n"
 exit $exit_code
