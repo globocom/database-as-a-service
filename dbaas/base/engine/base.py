@@ -14,12 +14,12 @@ DEFAULT_OUTPUT_BUFFER_SIZE = 16384
 LOG = logging.getLogger(__name__)
 
 
-class GenericEngineError(InternalException):
+class GenericDriverError(InternalException):
     """ Exception raises when any kind of problem happens when executing operations on instance """
     pass
 
 
-class ErrorRunningScript(GenericEngineError):
+class ErrorRunningScript(GenericDriverError):
     """ Exception raise when same error happen running a command line script """
 
     def __init__(self, script_name, exit_code, stdout):
@@ -28,7 +28,7 @@ class ErrorRunningScript(GenericEngineError):
         self.script_name = script_name
         super(ErrorRunningScript, self).__init__(message='%s. Exit code=%s: stdout=%s' % (self.script_name, self.exit_code, self.stdout))
 
-class ConnectionError(GenericEngineError):
+class ConnectionError(GenericDriverError):
     """ Raised when there is any problem to connect on instance """
     pass
 
@@ -37,9 +37,9 @@ class AuthenticationError(ConnectionError):
     pass
 
 
-class BaseEngine(object):
+class BaseDriver(object):
     """
-    BaseEngine interface
+    BaseDriver interface
     """
     ENV_CONNECTION = 'INSTANCE_CONNECTION'
 
@@ -66,7 +66,7 @@ class BaseEngine(object):
         return self.instance.password
 
     def check_status(self):
-        """ Check if instance is working. If not working, raises subclass of GenericEngineError """
+        """ Check if instance is working. If not working, raises subclass of GenericDriverError """
         raise NotImplementedError()
 
     def info(self):
@@ -155,6 +155,6 @@ class BaseEngine(object):
             envs["%s_%s" % (obj_name, field.name.upper())] = '' if value is None else str(value)
 
         if isinstance(obj, Instance):
-            envs[BaseEngine.ENV_CONNECTION] = self.get_connection()
+            envs[BaseDriver.ENV_CONNECTION] = self.get_connection()
         return envs
 

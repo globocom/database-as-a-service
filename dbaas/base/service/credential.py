@@ -2,14 +2,14 @@
 from __future__ import absolute_import, unicode_literals
 from django_services import service
 from ..models import Credential
-from base.engine.factory import EngineFactory
+from base.engine.factory import DriverFactory
 
 
 class CredentialService(service.CRUDService):
     model_class = Credential
 
     def __get_engine__(self, credential):
-        return EngineFactory.factory(credential.database.instance)
+        return DriverFactory.factory(credential.database.instance)
 
     def create(self, credential):
         super(CredentialService, self).create(credential)

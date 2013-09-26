@@ -4,7 +4,7 @@ import mock
 from hamcrest import has_entries
 from hamcrest.library.integration import match_equality
 from django.test import TestCase
-from base.engine.factory import EngineFactory
+from base.engine.factory import DriverFactory
 from base.tests import factory
 from ..engine import MongoDB
 
@@ -22,11 +22,11 @@ class MongoDBEngineTestCase(TestCase):
         self.engine = self.instance = None
 
     def test_mongodb_app_installed(self):
-        self.assertTrue(EngineFactory.is_engine_available("mongodb")) 
+        self.assertTrue(DriverFactory.is_driver_available("mongodb")) 
 
     #test mongo methods
     def test_instantiate_mongodb_using_engine_factory(self):
-        mongodb_engine = EngineFactory.factory(self.instance)
+        mongodb_engine = DriverFactory.factory(self.instance)
         self.assertEqual(MongoDB, type(mongodb_engine))
         self.assertEqual(self.instance, mongodb_engine.instance)
 
@@ -39,8 +39,8 @@ class MongoDBEngineTestCase(TestCase):
     def test_get_password(self):
         self.assertEqual(self.instance.password, self.engine.get_password())
 
-    # def test_mongodb_status(self):
-    #     self.assertRaises(NotImplementedError, self.engine.check_status)
+    def test_mongodb_status(self):
+        self.assertRaises(NotImplementedError, self.engine.status)
 
 
 class ManageDatabaseMongoDBTestCase(TestCase):

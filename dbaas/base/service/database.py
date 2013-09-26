@@ -2,19 +2,19 @@
 from __future__ import absolute_import, unicode_literals
 from django_services import service
 from ..models import Database
-from base.engine.factory import EngineFactory
+from base.engine.factory import DriverFactory
 
 
 class DatabaseService(service.CRUDService):
     model_class = Database
 
-    def __get_engine__(self, database):
-        return EngineFactory.factory(database.instance)
+    def get_engine(self, database):
+        return DriverFactory.factory(database.instance)
 
     def create(self, database):
         super(DatabaseService, self).create(database)
 
-        engine = self.__get_engine__(database)
+        engine = self.get_engine(database)
         engine.create_database(database)
 
     def update(self, database):
@@ -24,5 +24,5 @@ class DatabaseService(service.CRUDService):
     def delete(self, database):
         super(DatabaseService, self).delete(database)
 
-        engine = self.__get_engine__(database)
+        engine = self.get_engine(database)
         engine.remove_database(database)

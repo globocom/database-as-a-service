@@ -118,8 +118,8 @@ class Instance(BaseModel):
     def clean(self, *args, **kwargs):
         LOG.debug('Checking instance status...')
         try:
-            from base.engine import EngineFactory, GenericEngineError, ConnectionError, AuthenticationError
-            engine = EngineFactory.factory(self)
+            from base.engine import DriverFactory, GenericDriverError, ConnectionError, AuthenticationError
+            engine = DriverFactory.factory(self)
             engine.check_status()
             LOG.debug('Instance %s is ok', self)
         except AuthenticationError, e:
@@ -128,7 +128,7 @@ class Instance(BaseModel):
             raise ValidationError({'user': e.message})
         except ConnectionError, e:
             raise ValidationError({'node': e.message})
-        except GenericEngineError, e:
+        except GenericDriverError, e:
             raise ValidationError(e.message)
 
 
