@@ -125,7 +125,7 @@ class BaseDriver(object):
             process.wait()
 
             output = process.stdout.read()
-            if output[-1] == '\n':
+            if len(output) > 1 and output[-1] == '\n':
                 # remove last end line
                 output = output[:-1]
 
@@ -161,21 +161,63 @@ class BaseDriver(object):
 class SizeUnitsMixin(object):
 
     @property
-    def size_in_mb(self):
-        """ Size in megabytes (float) """
-        return self.size_in_bytes / 1024. / 1024.
+    def size_in_bytes(self):
+        """ Size in bytes (long) """
+        return self.__size
+
+    @size_in_bytes.setter
+    def size_in_bytes(self, size):
+        try:
+            self.__size = int(size)
+        except TypeError:
+            self.__size = -1
 
     @property
-    def size_in_gb(self):
+    def size_in_kbytes(self):
+        """ Size in kbytes (float) """
+        return self.size_in_bytes / 1024.
+
+    @size_in_kbytes.setter
+    def size_in_kbytes(self, size):
+        self.size_in_bytes = size * 1024
+
+    @property
+    def size_in_mbytes(self):
+        """ Size in megabytes (float) """
+        return self.size_in_kbytes / 1024.
+
+    @size_in_mbytes.setter
+    def size_in_mbytes(self, size):
+        self.size_in_kbytes = size * 1024
+
+    @property
+    def size_in_gbytes(self):
         """ Size in gigabytes (float) """
-        return self.size_in_mb / 1024.
+        return self.size_in_mbytes / 1024.
+
+    @size_in_gbytes.setter
+    def size_in_gbytes(self, size):
+        self.size_in_mbytes = size * 1024
+
+    @property
+    def size_in_pbytes(self):
+        """ Size in pentabytes (float) """
+        return self.size_in_gbytes / 1024.
+
+    @size_in_pbytes.setter
+    def size_in_pbytes(self, size):
+        self.size_in_gbytes = size * 1024
 
 
 class DatabaseStatus(SizeUnitsMixin):
 
     def __init__(self, database_model):
         self.database_model = database_model
-        self.size_in_bytes = None
+        self.size_in_bytes = -1
+
+    @property
+    def name(self):
+        return self.database_model.name
 
 
 class InstanceStatus(SizeUnitsMixin):
@@ -183,7 +225,7 @@ class InstanceStatus(SizeUnitsMixin):
     def __init__(self, instance_model):
         self.instance_model = instance_model
         self.version = None
-        self.size_in_bytes = None
+        self.size_in_bytes = -1
         self.databases_status = {}
 
     def get_database_status(self, database_name):

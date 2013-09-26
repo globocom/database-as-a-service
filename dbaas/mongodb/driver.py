@@ -27,21 +27,35 @@ class MongoDB(BaseDriver):
     def info(self):
         instance_status = InstanceStatus(instance_model=self.instance)
 
-        stdout = unicode(self.run_mongo("serverstatus")).strip()
-        LOG.debug('Server status return:\n%s', stdout)
-        json_status = load_mongo_json(stdout)
+        # gambiarra, precisa acertar isto!
+        import pymongo
+        from pprint import pprint
+        client = pymongo.MongoClient(self.instance.node.address, int(self.instance.node.port))
+        json_status = client.server_info()
+
+        print "** GERAL"
+        pprint(json_status)
+
+        # stdout = unicode(self.run_mongo("serverstatus")).strip()
+        # LOG.debug('Server status return:\n%s', stdout)
+        # json_status = load_mongo_json(stdout)
         instance_status.version = json_status.get('version', None)
 
-        stdout = unicode(self.run_mongo("listdatabases")).strip()
-        LOG.debug('List Databases return:\n%s', stdout)
-        json_status = load_mongo_json(stdout)
-        instance_status.size_in_bytes = json_status.get('totalSize', None)
 
-        for database in json_status.get("databases", []):
-            database_name = database["name"]
-            db_status = DatabaseStatus(self.instance.databases.get(name=database_name))
-            db_status.size_in_bytes = database.get("sizeOnDisk")
+        # stdout = unicode(self.run_mongo("listdatabases")).strip()
+        # LOG.debug('List Databases return:\n%s', stdout)
+        # json_status = load_mongo_json(stdout)
+        instance_status.size_in_bytes = json_status.get('fileSize', 0)
+
+        for database in self.instance.databases.all():
+            database_name = database.name
+            db_json_status = getattr(client, database_name).command('dbStats')
+            db_status = DatabaseStatus(database)
+            pprint(db_json_status)
+            db_status.size_in_bytes = db_json_status.get("fileSize")
             instance_status.databases_status[database_name] = db_status
+
+        client.disconnect()
 
         return instance_status
 
