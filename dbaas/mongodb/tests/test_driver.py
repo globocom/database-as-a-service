@@ -162,7 +162,7 @@ class StatusAndInfoMongoDBTestCase(TestCase):
         database_base1 = factory.DatabaseFactory(instance=self.instance, name="base1")
 
         results = [
-            '  { "host": "xxx", \n"version": "2.4.6" } ',
+            '  { "host": "xxx", \n"version": "2.4.6", "localTime" : ISODate("2013-09-26T20:47:56.766Z") } ',
             ' { "databases": [ { "name": "base1", "sizeOnDisk": 67108864 } ], "totalSize": 100663296 } '
         ]
         def sequence_calls(*a, **kw):

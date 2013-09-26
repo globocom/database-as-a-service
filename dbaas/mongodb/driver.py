@@ -5,8 +5,13 @@ import collections
 from base.driver import BaseDriver, ErrorRunningScript, ConnectionError, \
     AuthenticationError, InstanceStatus, DatabaseStatus
 import json
+# import pymongo.json_util
 
 LOG = logging.getLogger(__name__)
+
+def load_mongo_json(json_string):
+    return json.loads(json_string)
+    # return json.loads(json_string, object_hook=pymongo.json_util.object_hook)
 
 
 class MongoDB(BaseDriver):
@@ -23,11 +28,13 @@ class MongoDB(BaseDriver):
         instance_status = InstanceStatus(instance_model=self.instance)
 
         stdout = unicode(self.run_mongo("serverstatus")).strip()
-        json_status = json.loads(stdout)
+        LOG.debug('Server status return:\n%s', stdout)
+        json_status = load_mongo_json(stdout)
         instance_status.version = json_status.get('version', None)
 
         stdout = unicode(self.run_mongo("listdatabases")).strip()
-        json_status = json.loads(stdout)
+        LOG.debug('List Databases return:\n%s', stdout)
+        json_status = load_mongo_json(stdout)
         instance_status.size_in_bytes = json_status.get('totalSize', None)
 
         for database in json_status.get("databases", []):

@@ -4,6 +4,7 @@ import logging
 from django_services import service
 from ..models import Instance
 from base.driver.factory import DriverFactory
+from django_services.service import checkpermission
 
 LOG = logging.getLogger(__name__)
 
@@ -14,3 +15,6 @@ class InstanceService(service.CRUDService):
     def __get_engine__(self, instance):
         return DriverFactory.factory(instance)
 
+    @checkpermission(prefix="view")
+    def get_instance_status(self, instance):
+        return self.__get_engine__(instance).info()
