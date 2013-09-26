@@ -2,14 +2,14 @@
 from __future__ import absolute_import, unicode_literals
 from django_services import service
 from ..models import Database
-from base.engine.factory import EngineFactory
+from base.driver.factory import DriverFactory
 
 
 class DatabaseService(service.CRUDService):
     model_class = Database
 
     def get_engine(self, database):
-        return EngineFactory.factory(database.instance)
+        return DriverFactory.factory(database.instance)
 
     def create(self, database):
         super(DatabaseService, self).create(database)

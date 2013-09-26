@@ -4,7 +4,7 @@ import factory
 from .. import models
 
 
-class EngineFactory(factory.Factory):
+class DriverFactory(factory.Factory):
     FACTORY_FOR = models.Engine
 
     version = '2.4.5'

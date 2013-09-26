@@ -5,17 +5,41 @@ import subprocess
 import os.path
 from django.utils.translation import ugettext_lazy as _
 from ..models import Instance
+from django_services.service.exceptions import InternalException
 
 # See http://docs.python.org/2/library/subprocess.html#popen-constructor if you
 # have questions about this variable
-DEFAULT_OUTPUT_BUFFER_SIZE = 4096000
+DEFAULT_OUTPUT_BUFFER_SIZE = 16384
 
 LOG = logging.getLogger(__name__)
 
 
-class BaseEngine(object):
+class GenericDriverError(InternalException):
+    """ Exception raises when any kind of problem happens when executing operations on instance """
+    pass
+
+
+class ErrorRunningScript(GenericDriverError):
+    """ Exception raise when same error happen running a command line script """
+
+    def __init__(self, script_name, exit_code, stdout):
+        self.exit_code = exit_code
+        self.stdout = stdout
+        self.script_name = script_name
+        super(ErrorRunningScript, self).__init__(message='%s. Exit code=%s: stdout=%s' % (self.script_name, self.exit_code, self.stdout))
+
+class ConnectionError(GenericDriverError):
+    """ Raised when there is any problem to connect on instance """
+    pass
+
+class AuthenticationError(ConnectionError):
+    """ Raised when there is any problem authenticating on instance """
+    pass
+
+
+class BaseDriver(object):
     """
-    BaseEngine interface
+    BaseDriver interface
     """
     ENV_CONNECTION = 'INSTANCE_CONNECTION'
 
@@ -27,6 +51,10 @@ class BaseEngine(object):
         else:
             raise TypeError(_("Instance is not defined"))
 
+    def test_connection(self, credential=None):
+        """ Tests the connection to the database """
+        raise NotImplementedError()
+
     def get_connection(self):
         """ Connection string passed to script as INSTANCE_CONNECTION environment variable. """
         raise NotImplementedError()
@@ -37,7 +65,12 @@ class BaseEngine(object):
     def get_password(self):
         return self.instance.password
 
-    def status(self):
+    def check_status(self):
+        """ Check if instance is working. If not working, raises subclass of GenericDriverError """
+        raise NotImplementedError()
+
+    def info(self):
+        """ Returns a mapping with same attributes of instance """
         raise NotImplementedError()
 
     def create_user(self, credential):
@@ -55,9 +88,6 @@ class BaseEngine(object):
     def list_databases(self):
         """list databases in a instance"""
         raise NotImplementedError()
-
-    def get_script_path(self):
-        """ Return PATH environment variable for this engine """
 
     def call_script(self, script_name, args=[], envs={}):
         working_dir = "./mongodb/scripts"
@@ -95,10 +125,14 @@ class BaseEngine(object):
             process.wait()
 
             output = process.stdout.read()
+            if output[-1] == '\n':
+                # remove last end line
+                output = output[:-1]
+
             return_code = process.returncode
 
             if return_code != 0:
-                raise RuntimeError("Error executing %s, exit code = %d: '%s'" % (script_name, return_code, output))
+                raise ErrorRunningScript(script_name, return_code, output)
             return output
         except:
             # if any error happen, log cmdline to error
@@ -106,7 +140,7 @@ class BaseEngine(object):
             raise
 
     def to_envs(self, obj):
-        """ Create a dictionary with object variable, to be used as environment variables to script """
+        """ Creates a dictionary with an object to be used as environment variables to script """
 
         if not obj:
             return {}
@@ -121,6 +155,23 @@ class BaseEngine(object):
             envs["%s_%s" % (obj_name, field.name.upper())] = '' if value is None else str(value)
 
         if isinstance(obj, Instance):
-            envs[BaseEngine.ENV_CONNECTION] = self.get_connection()
+            envs[BaseDriver.ENV_CONNECTION] = self.get_connection()
         return envs
+
+
+class DatabaseStatus(object):
+
+    def __init__(self, size):
+        self.size = size
+
+
+class InstanceStatus(object):
+
+    def __init__(self):
+        self.version = None
+        self.size_in_bytes = 1
+        self.database = {
+            'db1': DatabaseStatus(10),
+            'db2': DatabaseStatus(20),
+        }
 

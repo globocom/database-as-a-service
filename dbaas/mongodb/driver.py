@@ -2,12 +2,12 @@
 from __future__ import absolute_import, unicode_literals
 import logging
 import collections
-from base.engine import BaseEngine
+from base.driver import BaseDriver
 
 LOG = logging.getLogger(__name__)
 
 
-class MongoDB(BaseEngine):
+class MongoDB(BaseDriver):
 
     SCRIPT = "./MongoManager.sh"
     

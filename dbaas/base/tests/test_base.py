@@ -2,12 +2,12 @@
 from __future__ import absolute_import, unicode_literals
 import os
 from django.test import TestCase
-from base.engine import base
+from base.driver import base
 from base.tests import factory
 
 CONNECTION_TEST = 'connection-url'
 
-class FakeEngine(base.BaseEngine):
+class FakeDriver(base.BaseDriver):
     
     def get_connection(self):
         return CONNECTION_TEST
@@ -20,7 +20,7 @@ class EngineTestCase(TestCase):
 
     def setUp(self):
         self.instance = factory.InstanceFactory()
-        self.engine = FakeEngine(instance=self.instance)
+        self.engine = FakeDriver(instance=self.instance)
 
     def tearDown(self):
         self.instance.delete()

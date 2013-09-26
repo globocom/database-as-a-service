@@ -10,19 +10,6 @@ class JSONHalRenderer(renderers.UnicodeJSONRenderer):
         """
         Render `data` into JSON.
         """
-        from pprint import pprint
-        print '\n\n****'
-        print accepted_media_type, type(data)
-        print "renderer_context="
-        pprint(renderer_context)
-        print "obj="
-        pprint(renderer_context['response'].__dict__)
-        print "view=", type(renderer_context['view'])
-        pprint(renderer_context['view'].__dict__)
-        print 'data=', type(data)
-        pprint(data)
-        print '****\n\n'
-
         if data is None:
             return bytes()
 

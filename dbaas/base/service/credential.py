@@ -2,33 +2,33 @@
 from __future__ import absolute_import, unicode_literals
 from django_services import service
 from ..models import Credential
-from base.engine.factory import EngineFactory
+from base.driver.factory import DriverFactory
 
 
 class CredentialService(service.CRUDService):
     model_class = Credential
 
-    def get_engine(self, credential):
-        return EngineFactory.factory(credential.database.instance)
+    def __get_engine__(self, credential):
+        return DriverFactory.factory(credential.database.instance)
 
     def create(self, credential):
         super(CredentialService, self).create(credential)
 
-        engine = self.get_engine(credential)
+        engine = self.__get_engine__(credential)
         engine.create_user(credential)
 
     def update(self, credential):
         old_credential = self.get(credential.pk)
 
         # FIXME
-        engine = self.get_engine(old_credential)
+        engine = self.__get_engine__(old_credential)
         engine.remove_user(old_credential)
 
         super(CredentialService, self).update(credential)
         engine.create_user(credential)
 
     def delete(self, credential):
-        engine = self.get_engine(credential)
+        engine = self.__get_engine__(credential)
         engine.remove_user(credential)
 
         super(CredentialService, self).delete(credential)
