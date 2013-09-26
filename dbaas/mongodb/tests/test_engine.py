@@ -4,9 +4,9 @@ import mock
 from hamcrest import has_entries
 from hamcrest.library.integration import match_equality
 from django.test import TestCase
-from base.engine.factory import DriverFactory
+from base.driver.factory import DriverFactory
 from base.tests import factory
-from ..engine import MongoDB
+from ..driver import MongoDB
 
 class MongoDBEngineTestCase(TestCase):
     """

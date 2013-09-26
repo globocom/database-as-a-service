@@ -8,7 +8,7 @@ from django.db import IntegrityError
 from ..models import Database
 
 from base.tests import factory
-from base.engine import base
+from base.driver import base
 
 
 class FakeDriver(base.BaseDriver):

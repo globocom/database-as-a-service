@@ -2,7 +2,7 @@
 from __future__ import absolute_import, unicode_literals
 from django_services import service
 from ..models import Database
-from base.engine.factory import DriverFactory
+from base.driver.factory import DriverFactory
 
 
 class DatabaseService(service.CRUDService):

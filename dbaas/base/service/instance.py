@@ -3,7 +3,7 @@ from __future__ import absolute_import, unicode_literals
 import logging
 from django_services import service
 from ..models import Instance
-from base.engine.factory import DriverFactory
+from base.driver.factory import DriverFactory
 
 LOG = logging.getLogger(__name__)
 

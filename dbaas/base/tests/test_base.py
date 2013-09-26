@@ -2,7 +2,7 @@
 from __future__ import absolute_import, unicode_literals
 import os
 from django.test import TestCase
-from base.engine import base
+from base.driver import base
 from base.tests import factory
 
 CONNECTION_TEST = 'connection-url'
