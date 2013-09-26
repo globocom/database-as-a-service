@@ -158,3 +158,20 @@ class BaseDriver(object):
             envs[BaseDriver.ENV_CONNECTION] = self.get_connection()
         return envs
 
+
+class DatabaseStatus(object):
+
+    def __init__(self, size):
+        self.size = size
+
+
+class InstanceStatus(object):
+
+    def __init__(self):
+        self.version = None
+        self.size_in_bytes = 1
+        self.database = {
+            'db1': DatabaseStatus(10),
+            'db2': DatabaseStatus(20),
+        }
+
