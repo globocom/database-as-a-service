@@ -158,20 +158,35 @@ class BaseDriver(object):
             envs[BaseDriver.ENV_CONNECTION] = self.get_connection()
         return envs
 
+class SizeUnitsMixin(object):
 
-class DatabaseStatus(object):
+    @property
+    def size_in_mb(self):
+        """ Size in megabytes (float) """
+        return self.size_in_bytes / 1024. / 1024.
 
-    def __init__(self, size):
-        self.size = size
+    @property
+    def size_in_gb(self):
+        """ Size in gigabytes (float) """
+        return self.size_in_mb / 1024.
 
 
-class InstanceStatus(object):
+class DatabaseStatus(SizeUnitsMixin):
 
-    def __init__(self):
+    def __init__(self, database_model):
+        self.database_model = database_model
+        self.size_in_bytes = None
+
+
+class InstanceStatus(SizeUnitsMixin):
+
+    def __init__(self, instance_model):
+        self.instance_model = instance_model
         self.version = None
-        self.size_in_bytes = 1
-        self.database = {
-            'db1': DatabaseStatus(10),
-            'db2': DatabaseStatus(20),
-        }
+        self.size_in_bytes = None
+        self.databases_status = {}
+
+    def get_database_status(self, database_name):
+        """ Return DatabaseStatus of one specific database """
+        return self.databases_status.get(database_name, None)
 
