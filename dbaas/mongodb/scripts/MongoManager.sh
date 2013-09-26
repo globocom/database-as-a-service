@@ -116,5 +116,5 @@ exit_code=$?
 echo "$exec_time [$severity] [$$] $log_msg" >> $LOGFILE 2>&1
 
 # output to STDOUT & exit code
-echo $output_cmd
+echo -ne "$output_cmd"
 exit $exit_code
