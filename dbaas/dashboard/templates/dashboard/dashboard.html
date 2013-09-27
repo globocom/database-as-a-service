@@ -1,0 +1,32 @@
+
+
+<h1>Dashboard</h1>
+
+{% if not instances %}
+    <h2>No instances found</h2>
+{% else %}
+
+<table border="1">
+<tr>
+    <th>Instance Name</th>
+    <th>Instance Version</th>
+    <th>Instance Size (MB)</th>
+    <th>Database Name</th>
+    <th>Database Size (MB)</th>
+<tr>
+<tbody>  
+{% for instance in instances %}
+    {% for database in instance.databases %}
+        <tr>
+            <td>{{ instance.name }}</td>
+            <td>{{ instance.version }}</td>
+            <td>{{ instance.size }}</td>
+            <td>{{ database.name }}</td>
+            <td>{{ database.size }}</td>
+        </tr>
+    {% endfor %}
+</tbody>
+</table>
+{% endfor %}
+
+{% endif %}

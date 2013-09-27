@@ -204,6 +204,7 @@ REST_FRAMEWORK = {
     'MAX_PAGINATE_BY': 100             # Maximum limit allowed when using `?page_size=xxx`.
 }
 
+LOGIN_URL="/admin/"
 
 # A sample logging configuration. The only tangible logging
 # performed by this configuration is to send an email to
