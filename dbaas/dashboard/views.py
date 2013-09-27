@@ -7,15 +7,20 @@ from django.http import HttpResponseRedirect
 from django.conf import settings
 from django.shortcuts import render_to_response
 from django.template.loader import render_to_string
+from django.contrib.auth.decorators import login_required
 from base.service.instance import InstanceService
 
 LOG = logging.getLogger(__name__)
 
+@login_required
 def dashboard(request, *args, **kwargs):
-
     instance_service = InstanceService(request)
     html = "<h1>Dashboard</h1>"
-    for instance in instance_service.list():
+    instances = instance_service.list()
+    if not instances:
+        LOG.info("No instance found")
+
+    for instance in instances:
         instance_status = instance_service.get_instance_status(instance)
         html += '<h2>%s</h2>' % instance.name
         html += '<p>version = %s</p>' % instance_status.version
