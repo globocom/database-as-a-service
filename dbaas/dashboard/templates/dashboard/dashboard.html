@@ -1,0 +1,21 @@
+<h1>Dashboard</h1>
+
+{% if not instances %}
+    <h2>No instances found</h2>
+{% endif %}
+
+{% for instance in instances %}
+<h2>{{instance.name}}</h2>
+{% endfor %}
+
+
+
+<!-- for instance in instances:
+    instance_status = instance_service.get_instance_status(instance)
+    html += '<h2>%s</h2>' % instance.name
+    html += '<p>version = %s</p>' % instance_status.version
+    html += '<p>size (mb) = %s</p>' % instance_status.size_in_mbytes
+
+    for database_status in instance_status.databases_status.values():
+        html += '<h3>%s</h3>' % database_status.name
+        html += '<p>size (mb) = %s</p>' % (database_status.size_in_mbytes) -->
