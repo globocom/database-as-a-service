@@ -30,6 +30,7 @@ Options:
     listcollections         List collections per database
     status/healthcheck	    It is a kind of healthcheck
     serverstatus	    Statistics data
+    version                 MongoDB Server version
 
 Environment variables required:
     INSTANCE_CONNECTION INSTANCE_USER INSTANCE_PASSWORD
@@ -97,6 +98,9 @@ case $action in
     listdatabases)
         log_msg="Listing all databases on $INSTANCE_NAME."
         my_js='showDatabases.js';;
+    version)
+        log_msg="Getting the mongoDB server version"
+        my_js='getServerVersion.js';;
     *)
         usage;;
 esac
