@@ -1,8 +1,10 @@
+
+
 <h1>Dashboard</h1>
 
 {% if not instances %}
     <h2>No instances found</h2>
-{% endif %}
+{% else %}
 
 <table border="1">
 <tr>
@@ -26,3 +28,5 @@
 </tbody>
 </table>
 {% endfor %}
+
+{% endif %}
