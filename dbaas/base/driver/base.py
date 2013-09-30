@@ -16,7 +16,18 @@ LOG = logging.getLogger(__name__)
 
 class GenericDriverError(InternalException):
     """ Exception raises when any kind of problem happens when executing operations on instance """
-    pass
+
+    def __init__(self, message=None):
+        self.message = message
+
+    def __unicode__(self):
+        return "%s: %s" % (type(self).__name__, self.message)
+
+    def __str__(self):
+        return b"%s: %s" % (type(self).__name__, self.message)
+
+    def __repr__(self):
+        return b"%s: %s" % (type(self).__name__, self.message)        
 
 
 class ErrorRunningScript(GenericDriverError):

@@ -3,34 +3,54 @@ from __future__ import absolute_import, unicode_literals
 import logging
 import pymongo
 from contextlib import contextmanager
-from base.driver import BaseDriver, InstanceStatus, DatabaseStatus
-    #AuthenticationError, ErrorRunningScript, ConnectionError
+from base.driver import BaseDriver, InstanceStatus, DatabaseStatus, \
+    AuthenticationError, ConnectionError
 
 LOG = logging.getLogger(__name__)
 
 
 class MongoDB(BaseDriver):
 
-    SCRIPT = "./MongoManager.sh"
-    
     def get_connection(self):
         return u"%s:%s" % (self.instance.node.address, self.instance.node.port)
 
     @contextmanager
     def pymongo(self, database=None):
+        client = None
         try:
             client = pymongo.MongoClient(self.instance.node.address, int(self.instance.node.port))
+            if self.instance.user and self.instance.password:
+                LOG.debug('Authenticating instance %s', self.instance)
+                client.admin.authenticate(self.instance.user, self.instance.password)
+
             if database is None:
                 return_value = client
             else:
                 return_value = getattr(client, database.name)
             yield return_value
+        except pymongo.errors.OperationFailure, e:
+            if e.code == 18:
+                raise AuthenticationError('Invalid credentials to instance %s' % self.instance)
+            raise ConnectionError('Error connecting to instance %s: %s' % (self.instance, e.message))
+        except pymongo.errors.PyMongoError, e:
+            raise ConnectionError('Error connecting to instance %s: %s' % (self.instance, e.message))
         finally:
-            client.disconnect()
+            try:
+                if client:
+                    client.disconnect()
+            except:
+                LOG.warn('Error disconnecting from instance %s. Ignoring...', self.instance, exc_info=True)
+
 
     def check_status(self):
         with self.pymongo() as client:
-            LOG.debug("ping=", client.admin.command('ping'))
+            try:
+                ok = client.admin.command('ping')
+            except pymongo.errors.PyMongoError, e:
+                raise ConnectionError('Error connection to instance %s: %s' % (self.instance, e.message))
+
+            if isinstance(ok, dict) and ok.get('ok', 0) != 1.0:
+                raise ConnectionError('Invalid status for ping command to instance %s' % self.instance)
 
     def info(self):
         instance_status = InstanceStatus(instance_model=self.instance)
@@ -48,7 +68,10 @@ class MongoDB(BaseDriver):
                 database_name = database.name
                 json_db_status = json_databases.get(database_name, {})
                 db_status = DatabaseStatus(database)
-                db_status.size_in_bytes = json_db_status.get("sizeOnDisk") or 0
+                if json_db_status.get('empty', False):
+                    db_status.size_in_bytes = 0
+                else:
+                    db_status.size_in_bytes = json_db_status.get("sizeOnDisk") or 0
                 instance_status.databases_status[database_name] = db_status
 
         return instance_status
@@ -63,8 +86,7 @@ class MongoDB(BaseDriver):
 
     def create_database(self, database):
         with self.pymongo(database) as mongo_database:
-            mongo_database.create_collection("teste-collection")
-            mongo_database.drop_collection("teste-collection")
+            mongo_database.collection_names()
 
     def remove_database(self, database):
         with self.pymongo() as client:
