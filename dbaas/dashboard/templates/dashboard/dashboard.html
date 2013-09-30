@@ -1,4 +1,23 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_static admin_list %}
+{% load admin_urls %}
 
+{% if not is_popup %}
+    {% block breadcrumbs %}
+        <ul class="breadcrumb">
+            <li>
+                <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+                <span class="divider">/</span>
+            </li>
+            <li>
+                <a href="{% url 'dashboard.index' %}">{% trans 'Dashboard' %}</a>
+                <span class="divider">/</span>
+            </li>
+        </ul>
+    {% endblock %}
+{% endif %}
+
+{% block content %}
 
 <h1>Dashboard</h1>
 
@@ -6,7 +25,7 @@
     <h2>No instances found</h2>
 {% else %}
 
-<table border="1">
+<table class="table table-striped">
 <tr>
     <th>Instance Name</th>
     <th>Instance Version</th>
@@ -30,3 +49,5 @@
 {% endfor %}
 
 {% endif %}
+
+{% endblock %}

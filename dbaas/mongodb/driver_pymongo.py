@@ -31,7 +31,7 @@ class MongoDB(BaseDriver):
 
     def check_status(self):
         with self.pymongo() as client:
-            print "ping=", client.admin.command('ping')
+            LOG.debug("ping=", client.admin.command('ping'))
 
     def info(self):
         instance_status = InstanceStatus(instance_model=self.instance)
