@@ -39,9 +39,9 @@
         <tr>
             <td>{{ instance.name }}</td>
             <td>{{ instance.version }}</td>
-            <td>{{ instance.size }}</td>
+            <td>{{ instance.size|floatformat:0 }}</td>
             <td>{{ database.name }}</td>
-            <td>{{ database.size }}</td>
+            <td>{{ database.size|floatformat:0 }}</td>
         </tr>
     {% endfor %}
 </tbody>
