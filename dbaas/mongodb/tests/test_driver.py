@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 import mock
+import unittest
 from hamcrest import has_entries
 from hamcrest.library.integration import match_equality
 from django.test import TestCase
@@ -8,6 +9,7 @@ from base.driver import DriverFactory, AuthenticationError, ErrorRunningScript, 
 from base.tests import factory
 from ..driver import MongoDB
 
+@unittest.skip('Using test_driver_pymongo')
 class MongoDBEngineTestCase(TestCase):
     """
     Tests MongoDB Engine
@@ -40,6 +42,7 @@ class MongoDBEngineTestCase(TestCase):
         self.assertEqual(self.instance.password, self.driver.get_password())
 
 
+@unittest.skip('Using test_driver_pymongo')
 class ManageDatabaseMongoDBTestCase(TestCase):
     """ Test case to managing database in mongodb engine """
 
@@ -78,6 +81,7 @@ class ManageDatabaseMongoDBTestCase(TestCase):
         call_script.assert_called_once_with(MongoDB.SCRIPT, ['dropdatabase'], envs=match_equality(has_entries(required_envs)))
 
 
+@unittest.skip('Using test_driver_pymongo')
 class ManageCredentialsMongoDBTestCase(TestCase):
     """ Test cases for managing credentials in mongodb engine """
 
@@ -121,6 +125,7 @@ class ManageCredentialsMongoDBTestCase(TestCase):
 
 
 
+@unittest.skip('Using test_driver_pymongo')
 class StatusAndInfoMongoDBTestCase(TestCase):
     """ Test cases for get status and informations from mongodb """
 
