@@ -2,7 +2,7 @@
 from __future__ import absolute_import, unicode_literals
 from django_services.api import DjangoServiceSerializer
 from rest_framework import serializers
-from .models import Environment, Node, Instance, Database, Credential
+from .models import Environment, Node, Instance, Database, Credential, Engine, EngineType
 
 
 class EnvironmentSerializer(DjangoServiceSerializer):
@@ -36,4 +36,15 @@ class CredentialSerializer(DjangoServiceSerializer):
     class Meta:
         model = Credential
 
+
+class EngineSerializer(DjangoServiceSerializer):
+
+    class Meta:
+        model = Engine
+
+
+class EngineTypeSerializer(DjangoServiceSerializer):
+
+    class Meta:
+        model = EngineType
 
