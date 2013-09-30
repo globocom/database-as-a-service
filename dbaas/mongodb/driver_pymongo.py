@@ -5,7 +5,6 @@ import pymongo
 from contextlib import contextmanager
 from base.driver import BaseDriver, InstanceStatus, DatabaseStatus
     #AuthenticationError, ErrorRunningScript, ConnectionError
-from pprint import pprint
 
 LOG = logging.getLogger(__name__)
 
@@ -37,27 +36,19 @@ class MongoDB(BaseDriver):
         instance_status = InstanceStatus(instance_model=self.instance)
 
         with self.pymongo() as client:
-            json_status = client.server_info()
-            print "** GERAL"
-            pprint(json_status)
+            json_server_info = client.server_info()
+            json_list_databases = client.admin.command('listDatabases')
 
-            # stdout = unicode(self.run_mongo("serverstatus")).strip()
-            # LOG.debug('Server status return:\n%s', stdout)
-            # json_status = load_mongo_json(stdout)
-            instance_status.version = json_status.get('version', None)
+            instance_status.version = json_server_info.get('version', None)
+            instance_status.size_in_bytes = json_list_databases.get('totalSize', 0)
 
-
-            # stdout = unicode(self.run_mongo("listdatabases")).strip()
-            # LOG.debug('List Databases return:\n%s', stdout)
-            # json_status = load_mongo_json(stdout)
-            instance_status.size_in_bytes = json_status.get('fileSize', 0)
+            json_databases = dict([(json_db['name'], json_db) for json_db in json_list_databases.get('databases', [])])
 
             for database in self.instance.databases.all():
                 database_name = database.name
-                db_json_status = getattr(client, database_name).command('dbStats')
+                json_db_status = json_databases.get(database_name, {})
                 db_status = DatabaseStatus(database)
-                pprint(db_json_status)
-                db_status.size_in_bytes = db_json_status.get("fileSize")
+                db_status.size_in_bytes = json_db_status.get("sizeOnDisk") or 0
                 instance_status.databases_status[database_name] = db_status
 
         return instance_status
