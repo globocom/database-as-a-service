@@ -7,7 +7,9 @@ from .service.node import NodeService
 from .service.instance import InstanceService
 from .service.database import DatabaseService
 from .service.credential import CredentialService
-from .serializers import EnvironmentSerializer, NodeSerializer, InstanceSerializer, DatabaseSerializer, CredentialSerializer
+from .service.engine import EngineService, EngineTypeService
+from .serializers import EnvironmentSerializer, NodeSerializer, InstanceSerializer, \
+                        DatabaseSerializer, CredentialSerializer, EngineSerializer, EngineTypeSerializer
 
 
 class EnvironmentAPI(DjangoServiceAPI):
@@ -37,9 +39,21 @@ class CredentialAPI(DjangoServiceAPI):
     service_class = CredentialService
 
 
+class EngineAPI(DjangoServiceAPI):
+    serializer_class = EngineSerializer
+    service_class = EngineService
+
+
+class EngineTypeAPI(DjangoServiceAPI):
+    serializer_class = EngineTypeSerializer
+    service_class = EngineTypeService
+
+
 register('environment', EnvironmentAPI)
 register('node', NodeAPI)
 register('instance', InstanceAPI)
 register('database', DatabaseAPI)
 register('credential', CredentialAPI)
+register('engine', EngineAPI)
+register('enginetype', EngineTypeAPI)
 
