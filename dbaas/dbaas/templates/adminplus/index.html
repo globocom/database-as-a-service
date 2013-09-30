@@ -3,16 +3,25 @@
 {% block sidebar %}
   {{ block.super }}
 
-  {% if custom_list %}
-  <div class="module" style="float: left; width: 498px">
-    <table style="width: 100%">
-      <caption>Custom Views</caption>
-      <tbody>
-        {% for path, name in custom_list %}
-          <tr><td><a href="{{ path }}">{{ name }}</a></td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-  {% endif %}
+{% if custom_list %}
+  <!--div class="module" style="float: left; width: 498px"-->
+<div class="container-fluid">
+    <div class="span3"></div>
+    <div class="span9 app-list">
+        <table class="table table-striped table-bordered table-condensed">
+            <thead>
+                <tr>
+                    <th><h3>Custom Views</h3></th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for path, name in custom_list %}
+              <tr><td><a href="{{ path }}">{{ name }}</a></td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>  
+  <!--/div-->
+{% endif %}
 {% endblock %}
