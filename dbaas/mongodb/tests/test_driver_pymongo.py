@@ -57,6 +57,8 @@ class ManageDatabaseMongoDBTestCase(AbstractTestDriverMongo):
     def setUp(self):
         super(ManageDatabaseMongoDBTestCase, self).setUp()
         self.database = factory.DatabaseFactory(instance=self.instance)
+        # ensure database is dropped
+        self.mongo_client.drop_database(self.database.name)
 
     def tearDown(self):
         self.database.delete()
