@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
-import pymongo
+import json
 from django_services.api import DjangoServiceAPI, register
 from django.http import HttpResponse
 from django.http import Http404
 from rest_framework.decorators import link
-from base.models import Database, Instance
+from rest_framework.response import Response
+from base.models import Database
 from base.driver.factory import DriverFactory
 from .service.environment import EnvironmentService
 from .service.node import NodeService
@@ -45,18 +46,17 @@ class DatabaseAPI(DjangoServiceAPI):
             db = Database.objects.get(pk=pk)
             instance = db.instance
             DriverFactory.factory(instance)
-            response = HttpResponse('WORKING', content_type='text/plain')
-            response.status_code = '200'
-            return response
+            return Response(
+                {'status': 'WORKING'},
+                status='200')
         except Database.DoesNotExist:
-            response = HttpResponse('DB not found', content_type='text/plain')
-            response.status_code = '404'
-            return response
+            return Response(
+                {'status': 'Database does not exist.'},
+                status='404')
         except Exception as e:
-            '%s (%s)' % (e.message, type(e))
-            response = HttpResponse('Unknown Error - %s, (%s)', content_type='text/plain') % (e.message, type(e))
-            response.status_code = '500'
-            return response
+            return Response(
+                {'status': 'Unknown error. %s (%s)' % (e.message, type(e))},
+                status='500')
 
 
 class CredentialAPI(DjangoServiceAPI):
