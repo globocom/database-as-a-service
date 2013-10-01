@@ -271,7 +271,7 @@ LOGGING = {
 
 LOGFILE = os.getenv('DBAAS_LOGFILE', None)
 if LOGFILE:
-    # added logging to a file
+    # log only to file
     LOGGING['handlers']['logfile'] = {
             'class': 'logging.handlers.WatchedFileHandler',
             'formatter': 'simple',
@@ -279,7 +279,7 @@ if LOGFILE:
             'encoding': 'utf-8',
             'mode': 'a'
     }
-    LOGGING['root']['handlers'] += ('logfile',)
+    LOGGING['root']['handlers'] = ['logfile']
 
 
 
