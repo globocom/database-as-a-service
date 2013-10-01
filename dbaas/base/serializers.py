@@ -18,11 +18,9 @@ class NodeSerializer(DjangoServiceSerializer):
 
 
 class InstanceSerializer(DjangoServiceSerializer):
-    uri = serializers.Field(source='uri')
 
     class Meta:
         model = Instance
-        fields = ('name', 'port', 'uri')
 
 
 class DatabaseSerializer(DjangoServiceSerializer):
