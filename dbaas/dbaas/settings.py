@@ -25,7 +25,7 @@ except ImportError:
 # Armazena a raiz do projeto.
 SITE_ROOT = LOCAL_FILES('../')
 
-DEBUG = os.getenv('DBAAS_DEBUG', '1') == '1'
+DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
 ADMINS = (
@@ -219,6 +219,7 @@ if os.path.exists('/var/run/syslog'):
 else:
     SYSLOG_FILE = '/dev/log'
 
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': True,
@@ -245,22 +246,6 @@ LOGGING = {
             'class': 'logging.StreamHandler',
             'formatter': 'simple',
         },
-        'logfile': {
-            'class': 'logging.handlers.WatchedFileHandler',
-            'formatter': 'simple',
-            'filename': '/opt/logs/dbaas/dbaas.log',
-            'encoding': 'utf-8',
-            'mode': 'a'
-        },
-        'syslog': {
-            'class': 'logging.handlers.SysLogHandler',
-            'formatter': 'syslog_formatter',
-            'address': SYSLOG_FILE,
-        },
-        'sentry': {
-            'level': 'ERROR',
-            'class': 'raven.contrib.django.raven_compat.handlers.SentryHandler',
-        },
     },
     'loggers': {
         'django.request': {
@@ -271,24 +256,15 @@ LOGGING = {
         'django.db.backends': {
             'level': 'INFO'
         },
-        'orquestra': {
-            'level': 'DEBUG'
+        'simple_audit.signal': {
+            'level': 'INFO'
         },
-        'integration': {
-            'level': 'DEBUG'
-        },
-        'infrastructure.cache': {
-            'level': 'WARN'
-        },
-        'application': {
-            'level': 'DEBUG'
-        },
-        'queue': {
-            'level': 'DEBUG'
+        'factory': {
+            'level': 'INFO'
         }
     },
     'root': {
-        'handlers': ['logfile', 'syslog', 'sentry'],
-        'level': 'DEBUG'
+        'handlers': ['console'],
+        'level': 'DEBUG',
     }
 }
