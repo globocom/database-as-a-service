@@ -42,7 +42,7 @@ exit 1
 # ---------------------- function (END) ----------------------
 # Global vars
 # /dev/null, /dev/tty, 
-LOGFILE='/dev/null'
+LOGFILE='/dev/tty'
 BASEDIR=$(dirname $0)
 JSDIR="${BASEDIR}/js"
 MONGO_DEFAULT_OPTS='--norc --quiet'
@@ -110,9 +110,9 @@ js_file="${JSDIR}/${my_js}"
 
 # Action!
 #ssl
-[[ $verbose -eq 1 ]] && echo "$exec_time [DEBUG] [$$] Exec: $mongo_client $MONGO_DEFAULT_OPTS $INSTANCE_USER_OPTION $INSTANCE_CONNECTION/admin --eval \"$my_params\" $js_file" >> $LOGFILE 2>&1
+[[ $verbose -eq 1 ]] && echo "$exec_time [DEBUG] [$$] Exec: $mongo_client $MONGO_DEFAULT_OPTS $INSTANCE_USER_OPTION --eval \"$my_params\" $INSTANCE_CONNECTION/admin $js_file" >> $LOGFILE 2>&1
 
-output_cmd=`$mongo_client $MONGO_DEFAULT_OPTS $INSTANCE_USER_OPTION $INSTANCE_PASSWORD_OPTION $INSTANCE_CONNECTION/admin --eval "$my_params" $js_file`
+output_cmd=$($mongo_client $MONGO_DEFAULT_OPTS $INSTANCE_USER_OPTION $INSTANCE_PASSWORD_OPTION --eval "$my_params" $INSTANCE_CONNECTION/admin $js_file)
 exit_code=$?
 
 [[ $verbose -eq 1 ]] && echo -ne "$exec_time [DEBUG] [$$] exit code: $exit_code, output: $output_cmd\n" >> $LOGFILE 2>&1
