@@ -117,6 +117,7 @@ class Instance(BaseModel):
 
     def clean(self, *args, **kwargs):
         LOG.debug('Checking instance status...')
+        self.clean_fields()
         from base.driver import DriverFactory, GenericDriverError, ConnectionError, AuthenticationError
         try:
             engine = DriverFactory.factory(self)
