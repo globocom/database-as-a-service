@@ -4,7 +4,6 @@ from django.test import TestCase
 from base.driver import DriverFactory
 from base.tests import factory
 from ..driver_pymongo import MongoDB
-import pymongo
 
 
 class AbstractTestDriverMongo(TestCase):
@@ -23,7 +22,7 @@ class AbstractTestDriverMongo(TestCase):
     @property
     def mongo_client(self):
         if self._mongo_client is None:
-            self._mongo_client = pymongo.MongoClient(self.instance.node.address, self.instance.node.port)
+            self._mongo_client = self.driver.__mongo_client__()
         return self._mongo_client
 
 
@@ -95,7 +94,7 @@ class ManageCredentialsMongoDBTestCase(AbstractTestDriverMongo):
         return getattr(self.mongo_client, credential.database.name).system.users.find_one({"user": credential.user})
 
     def test_mongodb_create_credential(self):
-        self.assertIsNone(self.__find_user__(self.credential))
+        self.assertIsNone(self.__find_user__(self.credential), "User %s already exists. Invalid test" % self.credential)
         self.driver.create_user(self.credential)
         user = self.__find_user__(self.credential)
         self.assertIsNotNone(user)
@@ -103,7 +102,7 @@ class ManageCredentialsMongoDBTestCase(AbstractTestDriverMongo):
 
     def test_mongodb_remove_credential(self):
         self.driver.create_user(self.credential)
-        self.assertIsNotNone(self.__find_user__(self.credential))
+        self.assertIsNotNone(self.__find_user__(self.credential), "Error creating user %s. Invalid test" % self.credential)
         self.driver.remove_user(self.credential)
         self.assertIsNone(self.__find_user__(self.credential))
 

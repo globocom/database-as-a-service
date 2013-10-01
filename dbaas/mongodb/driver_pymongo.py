@@ -14,14 +14,19 @@ class MongoDB(BaseDriver):
     def get_connection(self):
         return u"%s:%s" % (self.instance.node.address, self.instance.node.port)
 
+    def __mongo_client__(self):
+        client = pymongo.MongoClient(self.instance.node.address, int(self.instance.node.port))
+        if self.instance.user and self.instance.password:
+            LOG.debug('Authenticating instance %s', self.instance)
+            client.admin.authenticate(self.instance.user, self.instance.password)
+        return client
+
+
     @contextmanager
     def pymongo(self, database=None):
         client = None
         try:
-            client = pymongo.MongoClient(self.instance.node.address, int(self.instance.node.port))
-            if self.instance.user and self.instance.password:
-                LOG.debug('Authenticating instance %s', self.instance)
-                client.admin.authenticate(self.instance.user, self.instance.password)
+            client = self.__mongo_client__()
 
             if database is None:
                 return_value = client
