@@ -219,7 +219,6 @@ if os.path.exists('/var/run/syslog'):
 else:
     SYSLOG_FILE = '/dev/log'
 
-
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': True,
@@ -246,6 +245,22 @@ LOGGING = {
             'class': 'logging.StreamHandler',
             'formatter': 'simple',
         },
+        'logfile': {
+            'class': 'logging.handlers.WatchedFileHandler',
+            'formatter': 'simple',
+            'filename': '/opt/logs/dbaas/dbaas.log',
+            'encoding': 'utf-8',
+            'mode': 'a'
+        },
+        'syslog': {
+            'class': 'logging.handlers.SysLogHandler',
+            'formatter': 'syslog_formatter',
+            'address': SYSLOG_FILE,
+        },
+        'sentry': {
+            'level': 'ERROR',
+            'class': 'raven.contrib.django.raven_compat.handlers.SentryHandler',
+        },
     },
     'loggers': {
         'django.request': {
@@ -256,15 +271,24 @@ LOGGING = {
         'django.db.backends': {
             'level': 'INFO'
         },
-        'simple_audit.signal': {
-            'level': 'INFO'
+        'orquestra': {
+            'level': 'DEBUG'
         },
-        'factory': {
-            'level': 'INFO'
+        'integration': {
+            'level': 'DEBUG'
+        },
+        'infrastructure.cache': {
+            'level': 'WARN'
+        },
+        'application': {
+            'level': 'DEBUG'
+        },
+        'queue': {
+            'level': 'DEBUG'
         }
     },
     'root': {
-        'handlers': ['console'],
-        'level': 'DEBUG',
+        'handlers': ['logfile', 'syslog', 'sentry'],
+        'level': 'DEBUG'
     }
 }
