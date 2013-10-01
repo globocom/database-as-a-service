@@ -53,8 +53,8 @@ class DatabaseAPI(DjangoServiceAPI):
                 status='404')
         except Exception as e:
             return Response(
-                {'status': 'Unknown error. %s (%s)' % (e.message, type(e))},
-                status='500')
+                {'status': 'Error. %s (%s)' % (e.message, type(e))},
+                status='400')
 
 
 class CredentialAPI(DjangoServiceAPI):
