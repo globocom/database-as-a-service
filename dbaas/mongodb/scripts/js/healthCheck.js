@@ -1,1 +1,1 @@
-db.getName()
+db.adminCommand('ping');
