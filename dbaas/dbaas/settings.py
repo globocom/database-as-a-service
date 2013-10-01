@@ -25,7 +25,7 @@ except ImportError:
 # Armazena a raiz do projeto.
 SITE_ROOT = LOCAL_FILES('../')
 
-DEBUG = True
+DEBUG = os.getenv('DBAAS_DEBUG', '1') == '1'
 TEMPLATE_DEBUG = DEBUG
 
 ADMINS = (
