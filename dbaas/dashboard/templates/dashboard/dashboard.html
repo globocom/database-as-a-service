@@ -26,27 +26,30 @@
 {% else %}
 
 <table class="table table-striped">
-<tr>
-    <th>Instance Name</th>
-    <th>Instance Version</th>
-    <th>Instance Size (MB)</th>
-    <th>Database Name</th>
-    <th>Database Size (MB)</th>
-<tr>
-<tbody>  
-{% for instance in instances %}
-    {% for database in instance.databases %}
+    <thead>
         <tr>
-            <td>{{ instance.name }}</td>
-            <td>{{ instance.version }}</td>
-            <td>{{ instance.size|floatformat:0 }}</td>
-            <td>{{ database.name }}</td>
-            <td>{{ database.size|floatformat:0 }}</td>
-        </tr>
+            <th>Instance Name</th>
+            <th>Instance Version</th>
+            <th>Instance Size (MB)</th>
+            <th>Database Name</th>
+            <th>Database Size (MB)</th>
+        <tr>
+    </thead>
+    <tbody>
+
+    {% for instance in instances %}
+        {% for database in instance.databases %}
+            <tr>
+                <td>{{ instance.name }}</td>
+                <td>{{ instance.version }}</td>
+                <td>{{ instance.size|floatformat:0 }}</td>
+                <td>{{ database.name }}</td>
+                <td>{{ database.size|floatformat:0 }}</td>
+            </tr>
+        {% endfor %}
     {% endfor %}
-</tbody>
+    </tbody>
 </table>
-{% endfor %}
 
 {% endif %}
 
