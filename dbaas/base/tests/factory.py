@@ -23,7 +23,7 @@ class InstanceFactory(factory.DjangoModelFactory):
     FACTORY_FOR = models.Instance
 
     name = factory.Sequence(lambda n: 'instance-{0}'.format(n))
-    user = 'root'
+    user = 'admin'
     password = '123456'
     node = factory.SubFactory(NodeFactory)
     engine_id = 1
