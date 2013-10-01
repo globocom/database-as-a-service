@@ -2,8 +2,6 @@
 from __future__ import absolute_import, unicode_literals
 import json
 from django_services.api import DjangoServiceAPI, register
-from django.http import HttpResponse
-from django.http import Http404
 from rest_framework.decorators import link
 from rest_framework.response import Response
 from base.models import Database
