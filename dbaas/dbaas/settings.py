@@ -25,7 +25,7 @@ except ImportError:
 # Armazena a raiz do projeto.
 SITE_ROOT = LOCAL_FILES('../')
 
-DEBUG = True
+DEBUG = os.getenv('DBAAS_DEBUG', '1') == '1'
 TEMPLATE_DEBUG = DEBUG
 
 ADMINS = (
@@ -56,7 +56,7 @@ DATABASES = {
 
 # Hosts/domain names that are valid for this site; required if DEBUG is False
 # See https://docs.djangoproject.com/en/1.5/ref/settings/#allowed-hosts
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [os.getenv('DBAAS_HOST', None)]
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
@@ -213,7 +213,6 @@ LOGIN_URL="/admin/"
 # more details on how to customize your logging configuration.
 
 LOGGING_APP = os.getenv('LOGGING_APP', 'dbaas')
-SYSLOG_FILE = None
 if os.path.exists('/var/run/syslog'):
     SYSLOG_FILE = '/var/run/syslog'
 else:
@@ -268,3 +267,19 @@ LOGGING = {
         'level': 'DEBUG',
     }
 }
+
+
+LOGFILE = os.getenv('DBAAS_LOGFILE', None)
+if LOGFILE:
+    # log only to file
+    LOGGING['handlers']['logfile'] = {
+            'class': 'logging.handlers.WatchedFileHandler',
+            'formatter': 'simple',
+            'filename': LOGFILE,
+            'encoding': 'utf-8',
+            'mode': 'a'
+    }
+    LOGGING['root']['handlers'] = ['logfile']
+
+
+
