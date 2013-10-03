@@ -10,6 +10,8 @@ from django.dispatch import receiver
 from django.utils.translation import ugettext_lazy as _
 from .helper import slugify
 
+from django_extensions.db.fields.encrypted import EncryptedCharField
+
 LOG = logging.getLogger(__name__)
 
 
@@ -102,7 +104,7 @@ class Instance(BaseModel):
                             help_text=_("Administrative user with permission to manage databases, create users and etc."),
                             blank=True, 
                             null=False)
-    password = models.CharField(verbose_name=_("Instance password"), max_length=255, blank=True, null=False)
+    password = EncryptedCharField(verbose_name=_("Instance password"), max_length=255, blank=True, null=False)
     node = models.OneToOneField("Node", on_delete=models.PROTECT)
     engine = models.ForeignKey("Engine", related_name="instances", on_delete=models.PROTECT)
     product = models.ForeignKey("business.Product", related_name="instances", null=True, blank=True, on_delete=models.PROTECT)
@@ -167,7 +169,7 @@ def database_pre_save(sender, **kwargs):
 
 class Credential(BaseModel):
     user = models.CharField(verbose_name=_("User name"), max_length=100, unique=True)
-    password = models.CharField(verbose_name=_("User password"), max_length=255)
+    password = EncryptedCharField(verbose_name=_("User password"), max_length=255)
     database = models.ForeignKey('Database', related_name="credentials")
 
     def __unicode__(self):
