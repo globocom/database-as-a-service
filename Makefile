@@ -51,4 +51,4 @@ run: # run local server
 	@cd dbaas && python manage.py runserver
 
 shell: # run django shell
-	@cd dbaas && python manage.py shell
+	@cd dbaas && python manage.py shell_plus
