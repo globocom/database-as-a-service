@@ -100,6 +100,10 @@ class BaseDriver(object):
         """list databases in a instance"""
         raise NotImplementedError()
 
+    def import_databases(self, instance):
+        """import databases already created in a instance"""
+        raise NotImplementedError()
+
     def call_script(self, script_name, args=[], envs={}):
         working_dir = "./mongodb/scripts"
         working_dir = os.path.abspath(working_dir)
