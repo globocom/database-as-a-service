@@ -172,6 +172,7 @@ INSTALLED_APPS = (
     'django_services',
     'rest_framework',
     'bootstrap_admin',
+    'django_extensions',
     'django.contrib.admin',
     'django.contrib.admindocs',
 )
