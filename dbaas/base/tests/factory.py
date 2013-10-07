@@ -10,14 +10,6 @@ class DriverFactory(factory.Factory):
     version = '2.4.5'
     engine_type_id = 1 # use fixture
 
-class NodeFactory(factory.DjangoModelFactory):
-    FACTORY_FOR = models.Node
-
-    address = '127.0.0.1'
-    port = 27017
-    environment_id = 1
-    is_active = True
-
 
 class InstanceFactory(factory.DjangoModelFactory):
     FACTORY_FOR = models.Instance
@@ -25,10 +17,19 @@ class InstanceFactory(factory.DjangoModelFactory):
     name = factory.Sequence(lambda n: 'instance-{0}'.format(n))
     user = 'admin'
     password = '123456'
-    node = factory.SubFactory(NodeFactory)
     engine_id = 1
     product = None
+    environment_id = 1
     plan_id = 1 # use fixture
+
+
+class NodeFactory(factory.DjangoModelFactory):
+    FACTORY_FOR = models.Node
+
+    address = '127.0.0.1'
+    port = 27017
+    is_active = True
+    instance = factory.SubFactory(InstanceFactory)
 
 
 class DatabaseFactory(factory.DjangoModelFactory):

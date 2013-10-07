@@ -10,6 +10,7 @@ class AbstractTestDriverMongo(TestCase):
 
     def setUp(self):
         self.instance = factory.InstanceFactory()
+        self.node = factory.NodeFactory(instance=self.instance)
         self.driver = MongoDB(instance=self.instance)
         self._mongo_client = None
 
@@ -22,7 +23,7 @@ class AbstractTestDriverMongo(TestCase):
     @property
     def mongo_client(self):
         if self._mongo_client is None:
-            self._mongo_client = self.driver.__mongo_client__()
+            self._mongo_client = self.driver.__mongo_client__(self.node)
         return self._mongo_client
 
 

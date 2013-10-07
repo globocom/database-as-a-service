@@ -6,6 +6,7 @@ from django.test.client import RequestFactory
 from django.db import IntegrityError
 
 from ..models import Node
+from .factory import InstanceFactory
 
 
 class NodeTestCase(TestCase):
@@ -13,10 +14,11 @@ class NodeTestCase(TestCase):
     def setUp(self):
         self.client = Client()
         self.factory = RequestFactory()
+        self.instance = InstanceFactory()
         self.new_node = Node.objects.create(address="new_node.localnode",
                                     port=123,
-                                    environment_id=1,
                                     is_active=True,
+                                    instance=self.instance,
                                     type='1')
 
     def tearDown(self):
@@ -26,8 +28,8 @@ class NodeTestCase(TestCase):
         
         node = Node.objects.create(address="test.localnode",
                                     port=123,
-                                    environment_id=1,
                                     is_active=True,
+                                    instance=self.instance,
                                     type='1')
         
         self.assertTrue(node.id)
@@ -37,6 +39,6 @@ class NodeTestCase(TestCase):
         
         self.assertRaises(IntegrityError, Node.objects.create, address="new_node.localnode",
                                                                 port=123,
-                                                                environment_id=1, 
                                                                 is_active=True, 
+                                                                instance=self.instance,
                                                                 type='1')

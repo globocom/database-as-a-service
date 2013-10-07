@@ -45,7 +45,7 @@ class Node(BaseModel):
 
     address = models.CharField(verbose_name=_("Node address"), max_length=200)
     port = models.IntegerField(verbose_name=_("Node port"))
-    instance = models.ForeignKey("base.Instance", related_name="nodes", on_delete=models.PROTECT)
+    instance = models.ForeignKey("base.Instance", related_name="nodes", on_delete=models.CASCADE)
     is_active = models.BooleanField(verbose_name=_("Is node active"), default=True)
     type = models.CharField(verbose_name=_("Node type"),
                             max_length=2,
@@ -70,6 +70,9 @@ class Node(BaseModel):
         # self.clean_fields()
         from base.driver import DriverFactory, GenericDriverError, ConnectionError, AuthenticationError
         try:
+            if not self.instance or not self.instance.pk:
+                return
+
             engine = DriverFactory.factory(self.instance)
             engine.check_status(node=self)
             LOG.debug('Node %s is ok', self)
