@@ -58,7 +58,6 @@ class BaseDriver(object):
 
         if 'instance' in kwargs:
             self.instance = kwargs.get('instance')
-            self.node = self.instance.node
         else:
             raise TypeError(_("Instance is not defined"))
 

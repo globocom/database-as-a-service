@@ -14,8 +14,8 @@ class MongoDB(BaseDriver):
     def get_connection(self):
         return u"%s:%s" % (self.instance.node.address, self.instance.node.port)
 
-    def __mongo_client__(self):
-        client = pymongo.MongoClient(self.instance.node.address, int(self.instance.node.port))
+    def __mongo_client__(self, node):
+        client = pymongo.MongoClient(node.address, int(node.port))
         if self.instance.user and self.instance.password:
             LOG.debug('Authenticating instance %s', self.instance)
             client.admin.authenticate(self.instance.user, self.instance.password)
@@ -23,10 +23,11 @@ class MongoDB(BaseDriver):
 
 
     @contextmanager
-    def pymongo(self, database=None):
+    def pymongo(self, node=None, database=None):
         client = None
         try:
-            client = self.__mongo_client__()
+            node = node or self.instance.node
+            client = self.__mongo_client__(node)
 
             if database is None:
                 return_value = client
@@ -47,8 +48,8 @@ class MongoDB(BaseDriver):
                 LOG.warn('Error disconnecting from instance %s. Ignoring...', self.instance, exc_info=True)
 
 
-    def check_status(self):
-        with self.pymongo() as client:
+    def check_status(self, node=None):
+        with self.pymongo(node=node) as client:
             try:
                 ok = client.admin.command('ping')
             except pymongo.errors.PyMongoError, e:
@@ -82,15 +83,15 @@ class MongoDB(BaseDriver):
         return instance_status
 
     def create_user(self, credential):
-        with self.pymongo(credential.database) as mongo_database:
+        with self.pymongo(database=credential.database) as mongo_database:
             mongo_database.add_user(credential.user, password=credential.password, roles = [ "readWrite", "dbAdmin" ])
 
     def remove_user(self, credential):
-        with self.pymongo(credential.database) as mongo_database:
+        with self.pymongo(database=credential.database) as mongo_database:
             mongo_database.remove_user(credential.user)
 
     def create_database(self, database):
-        with self.pymongo(database) as mongo_database:
+        with self.pymongo(database=database) as mongo_database:
             mongo_database.collection_names()
 
     def remove_database(self, database):

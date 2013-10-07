@@ -45,7 +45,7 @@ class Node(BaseModel):
 
     address = models.CharField(verbose_name=_("Node address"), max_length=200)
     port = models.IntegerField(verbose_name=_("Node port"))
-    environment = models.ForeignKey('Environment', related_name="nodes", on_delete=models.PROTECT)
+    instance = models.ForeignKey("base.Instance", related_name="nodes", on_delete=models.PROTECT)
     is_active = models.BooleanField(verbose_name=_("Is node active"), default=True)
     type = models.CharField(verbose_name=_("Node type"),
                             max_length=2,
@@ -64,6 +64,26 @@ class Node(BaseModel):
     @property
     def connection(self):
         return u"%s:%s" % (self.address, self.port)
+
+    def clean(self, *args, **kwargs):
+        LOG.debug('Checking node %s (%s) status...', self.connection, self.instance)
+        # self.clean_fields()
+        from base.driver import DriverFactory, GenericDriverError, ConnectionError, AuthenticationError
+        try:
+            engine = DriverFactory.factory(self.instance)
+            engine.check_status(node=self)
+            LOG.debug('Node %s is ok', self)
+        except AuthenticationError, e:
+            # at django 1.5, model validation throught form doesn't use field name in ValidationError.
+            # I put here, because I expected this problem can be solved in next versions
+            raise ValidationError({'user': e.message})
+        except ConnectionError, e:
+            raise ValidationError({'node': e.message})
+        except GenericDriverError, e:
+            raise ValidationError(e.message)
+
+
+
 
 
 class EngineType(BaseModel):
@@ -105,34 +125,22 @@ class Instance(BaseModel):
                             blank=True, 
                             null=False)
     password = EncryptedCharField(verbose_name=_("Instance password"), max_length=255, blank=True, null=False)
-    node = models.OneToOneField("Node", on_delete=models.PROTECT)
     engine = models.ForeignKey("Engine", related_name="instances", on_delete=models.PROTECT)
     product = models.ForeignKey("business.Product", related_name="instances", null=True, blank=True, on_delete=models.PROTECT)
     plan = models.ForeignKey("business.Plan", related_name="instances", on_delete=models.PROTECT)
+    environment = models.ForeignKey('Environment', related_name="nodes", on_delete=models.PROTECT)
 
     def __unicode__(self):
         return self.name
 
     @property
+    def node(self):
+        # temporary
+        return self.nodes.all()[0]
+
+    @property
     def engine_name(self):
         return self.engine.engine_type.name
-
-    def clean(self, *args, **kwargs):
-        LOG.debug('Checking instance status...')
-        self.clean_fields()
-        from base.driver import DriverFactory, GenericDriverError, ConnectionError, AuthenticationError
-        try:
-            engine = DriverFactory.factory(self)
-            engine.check_status()
-            LOG.debug('Instance %s is ok', self)
-        except AuthenticationError, e:
-            # at django 1.5, model validation throught form doesn't use field name in ValidationError.
-            # I put here, because I expected this problem can be solved in next versions
-            raise ValidationError({'user': e.message})
-        except ConnectionError, e:
-            raise ValidationError({'node': e.message})
-        except GenericDriverError, e:
-            raise ValidationError(e.message)
 
 
 class Database(BaseModel):
