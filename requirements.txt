@@ -3,7 +3,7 @@ MySQL-python==1.2.3
 PyYAML==3.10
 Unidecode==0.04.14
 astroid==1.0.0
-bootstrap-admin==0.2.2
+bootstrap-admin==0.2.3
 distribute==0.7.3
 django-adminplus==0.2.0
 django-services==0.0.8
