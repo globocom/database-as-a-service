@@ -1,0 +1,14 @@
+- fields: 
+    name: "mongodb"
+    created_at: !!timestamp '2013-01-01 00:00:00+00:00'
+    updated_at: !!timestamp '2013-01-01 00:00:00+00:00'
+  model: physical.EngineType
+  pk: 1
+
+- fields:
+    engine_type: 1
+    version: "2.4.5"
+    created_at: !!timestamp '2013-01-01 00:00:00+00:00'
+    updated_at: !!timestamp '2013-01-01 00:00:00+00:00'
+  model: physical.Engine
+  pk: 1

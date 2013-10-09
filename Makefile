@@ -32,16 +32,16 @@ pip: check_environment # install pip libraries
 compile:
 	@find . -name "*.py" -exec python -m py_compile {} +
 
-db_drop_and_create: # drop and create database
-	@mysql -uroot -e "DROP DATABASE IF EXISTS dbaas"; mysqladmin -uroot create dbaas
-	@cd dbaas && python manage.py syncdb --migrate --noinput
+db_drop_and_create: db_drop db_create  # drop and create database
 
 db_drop: # drops database
 	@mysql -uroot -e "DROP DATABASE IF EXISTS dbaas"
 		
 db_create: # creates database
 	@mysqladmin -uroot create dbaas
-	@cd dbaas && python manage.py syncdb
+	@cd dbaas && python manage.py syncdb --migrate --noinput
+	@echo "\n\n---------- Creating admin user..."
+	@cd dbaas && python manage.py createsuperuser --username='admin' --email='admin@admin.com'
 
 test: # run tests
 	@mysql -uroot -e "DROP DATABASE IF EXISTS test_dbaas"

@@ -1,7 +1,0 @@
-- fields: {name: "mongodb", }
-  model: base.EngineType
-  pk: 1
-
-- fields: {engine_type: 1, version: "2.4.5" }
-  model: base.Engine
-  pk: 1

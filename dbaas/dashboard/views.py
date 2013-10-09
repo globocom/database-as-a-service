@@ -10,7 +10,7 @@ from django.template.loader import render_to_string
 from django.contrib.auth.decorators import login_required
 from django.utils.datastructures import SortedDict
 
-from base.service.instance import InstanceService
+from physical.service.instance import InstanceService
 
 LOG = logging.getLogger(__name__)
 
