@@ -44,7 +44,7 @@ class InstanceAdmin(admin.DjangoServicesAdmin):
     service_class = InstanceService
     search_fields = ("name", "user", "product__name", "nodes__address",)
     list_display = ("name", "user", "node", "product")
-    list_filter = ("environment", "product", "engine", "plan")
+    list_filter = ("product", "engine", "plan")
     save_on_top = True
 
     inlines = [

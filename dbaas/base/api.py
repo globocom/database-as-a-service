@@ -1,24 +1,17 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
-import json
 from django_services.api import DjangoServiceAPI, register
 from rest_framework.decorators import link
 from rest_framework.response import Response
 from base.models import Database
 from base.driver.factory import DriverFactory
-from .service.environment import EnvironmentService
 from .service.node import NodeService
 from .service.instance import InstanceService
 from .service.database import DatabaseService
 from .service.credential import CredentialService
 from .service.engine import EngineService, EngineTypeService
-from .serializers import EnvironmentSerializer, NodeSerializer, InstanceSerializer, \
+from .serializers import NodeSerializer, InstanceSerializer, \
                         DatabaseSerializer, CredentialSerializer, EngineSerializer, EngineTypeSerializer
-
-
-class EnvironmentAPI(DjangoServiceAPI):
-    serializer_class = EnvironmentSerializer
-    service_class = EnvironmentService
 
 
 class NodeAPI(DjangoServiceAPI):
@@ -72,7 +65,6 @@ class EngineTypeAPI(DjangoServiceAPI):
     service_class = EngineTypeService
 
 
-register('environment', EnvironmentAPI)
 register('node', NodeAPI)
 register('instance', InstanceAPI)
 register('database', DatabaseAPI)

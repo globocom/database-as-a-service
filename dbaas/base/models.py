@@ -25,15 +25,6 @@ class BaseModel(models.Model):
         abstract = True
 
 
-class Environment(BaseModel):
-
-    name = models.CharField(verbose_name=_("Environment name"), max_length=100, unique=True)
-    is_active = models.BooleanField(verbose_name=_("Is environment active"), default=True)
-
-    def __unicode__(self):
-        return u"%s" % self.name
-
-
 class Node(BaseModel):
 
     VIRTUAL = '1'
@@ -131,7 +122,6 @@ class Instance(BaseModel):
     engine = models.ForeignKey("Engine", related_name="instances", on_delete=models.PROTECT)
     product = models.ForeignKey("business.Product", related_name="instances", null=True, blank=True, on_delete=models.PROTECT)
     plan = models.ForeignKey("business.Plan", related_name="instances", on_delete=models.PROTECT)
-    environment = models.ForeignKey('Environment', related_name="nodes", on_delete=models.PROTECT)
 
     def __unicode__(self):
         return self.name
@@ -202,4 +192,4 @@ def credential_pre_save(sender, **kwargs):
         if instance.database != saved_object.database:
             raise AttributeError(_("Attribute database cannot be edited"))
 
-simple_audit.register(Node, Environment, Instance, Database, Credential)
+simple_audit.register(Node, Instance, Database, Credential)

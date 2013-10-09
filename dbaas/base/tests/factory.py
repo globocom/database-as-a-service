@@ -19,7 +19,6 @@ class InstanceFactory(factory.DjangoModelFactory):
     password = '123456'
     engine_id = 1
     product = None
-    environment_id = 1
     plan_id = 1 # use fixture
 
 

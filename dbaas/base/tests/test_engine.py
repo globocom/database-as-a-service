@@ -5,7 +5,7 @@ from django.test import TestCase
 from django.test.client import RequestFactory
 from django.db import IntegrityError
 
-from ..models import Engine, EngineType, Environment
+from ..models import Engine, EngineType
 
 class EngineTestCase(TestCase):
     """
@@ -16,7 +16,6 @@ class EngineTestCase(TestCase):
         self.client = Client()
         self.factory = RequestFactory()
         self.new_engine_type = EngineType.objects.create(name="Test")
-        self.environment = Environment.objects.get(id=1)
 
     def tearDown(self):
         self.new_engine_type.delete()

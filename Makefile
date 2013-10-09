@@ -34,7 +34,7 @@ compile:
 
 db_drop_and_create: # drop and create database
 	@mysql -uroot -e "DROP DATABASE IF EXISTS dbaas"; mysqladmin -uroot create dbaas
-	@cd dbaas && python manage.py syncdb
+	@cd dbaas && python manage.py syncdb --migrate --noinput
 
 db_drop: # drops database
 	@mysql -uroot -e "DROP DATABASE IF EXISTS dbaas"
