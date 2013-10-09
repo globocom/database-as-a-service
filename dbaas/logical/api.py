@@ -8,7 +8,7 @@ from .service.credential import CredentialService
 from .serializers import ProductSerializer, DatabaseSerializer, CredentialSerializer
 from .models import Database
 from rest_framework.response import Response
-from base.driver.factory import DriverFactory
+from drivers import factory_for
 
 
 class ProductAPI(DjangoServiceAPI):
@@ -26,7 +26,7 @@ class DatabaseAPI(DjangoServiceAPI):
         try:
             db = Database.objects.get(pk=pk)
             instance = db.instance
-            DriverFactory.factory(instance)
+            factory_for(instance).check_status()
             return Response(
                 {'status': 'WORKING'},
                 status='200')

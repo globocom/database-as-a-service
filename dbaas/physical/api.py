@@ -36,8 +36,9 @@ class NodeAPI(DjangoServiceAPI):
     service_class = NodeService
 
 
+register('enginetype', EngineTypeAPI)
+register('engine', EngineAPI)
+register('plan', PlanAPI)
 register('node', NodeAPI)
 register('instance', InstanceAPI)
-register('engine', EngineAPI)
-register('enginetype', EngineTypeAPI)
 
