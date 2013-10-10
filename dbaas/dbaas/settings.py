@@ -44,6 +44,7 @@ DB_USER = os.getenv('DBAAS_DATABASE_USER', 'root')
 DB_PASSWORD = os.getenv('DBAAS_DATABASE_PASSWORD', '')
 DB_HOST = os.getenv('DBAAS_DATABASE_HOST', '')
 DB_PORT = os.getenv('DBAAS_DATABASE_PORT', '')
+SENTRY = os.getenv('DBAAS_SENTRY', None)
 
 DATABASES = {
     'default': {
@@ -214,7 +215,7 @@ LOGIN_URL="/admin/"
 
 # sentry configuration
 RAVEN_CONFIG = {
-    'dsn': os.getenv('DBAAS_SENTRY', None),
+    'dsn': SENTRY
 }
 
 # A sample logging configuration. The only tangible logging
@@ -256,6 +257,15 @@ LOGGING = {
             'class': 'logging.StreamHandler',
             'formatter': 'simple',
         },
+        'syslog': {
+            'class': 'logging.handlers.SysLogHandler',
+            'formatter': 'syslog_formatter',
+            'address': SYSLOG_FILE,
+        },
+        'sentry': {
+            'level': 'ERROR',
+            'class': 'raven.contrib.django.raven_compat.handlers.SentryHandler',
+        }
     },
     'loggers': {
         'django.request': {
@@ -277,12 +287,15 @@ LOGGING = {
         }
     },
     'root': {
-        'handlers': ['console'],
+        'handlers': ['console', 'syslog'],
         'level': 'DEBUG',
     }
 }
 
+if SENTRY:
+    LOGGING['root']['handlers'] += ['sentry']    
 
+# logging to file
 LOGFILE = os.getenv('DBAAS_LOGFILE', None)
 if LOGFILE:
     # log only to file
@@ -293,7 +306,6 @@ if LOGFILE:
             'encoding': 'utf-8',
             'mode': 'a'
     }
-    LOGGING['root']['handlers'] = ['logfile']
-
-
+    LOGGING['root']['handlers'].remove('console')
+    LOGGING['root']['handlers'] += ['logfile']
 
