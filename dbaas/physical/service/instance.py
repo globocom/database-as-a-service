@@ -3,7 +3,7 @@ from __future__ import absolute_import, unicode_literals
 import logging
 from django_services import service
 from ..models import Instance
-from drivers import factory
+from drivers import factory_for
 from django_services.service import checkpermission
 
 LOG = logging.getLogger(__name__)
