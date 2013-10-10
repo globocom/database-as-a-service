@@ -4,6 +4,7 @@ PyYAML==3.10
 South==0.8.2
 Unidecode==0.04.14
 astroid==1.0.0
+boto==2.14.0
 bootstrap-admin==0.2.3
 distribute==0.7.3
 django-adminplus==0.2.0
