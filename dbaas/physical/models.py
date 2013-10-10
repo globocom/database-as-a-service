@@ -28,6 +28,15 @@ class Engine(BaseModel):
                             blank=True, 
                             null=True,
                             help_text=_("Path to look for the engine's executable file."))
+    template_name = models.CharField(verbose_name=_("Template Name"), 
+                                    max_length=200,
+                                    blank=True,
+                                    null=True,
+                                    help_text="Template name registered in your provision system")
+    user_data_script = models.TextField(verbose_name=_("User data script"), 
+                                    blank=True,
+                                    null=True,
+                                    help_text="Script that will be sent as an user-data to provision the virtual machine")
 
     class Meta:
         unique_together = (
