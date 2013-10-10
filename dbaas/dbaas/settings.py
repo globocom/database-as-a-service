@@ -179,6 +179,7 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     'django.contrib.admindocs',
     'south',
+    'raven.contrib.django.raven_compat',
 )
 
 SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'
@@ -210,6 +211,11 @@ REST_FRAMEWORK = {
 }
 
 LOGIN_URL="/admin/"
+
+# sentry configuration
+RAVEN_CONFIG = {
+    'dsn': os.getenv('DBAAS_SENTRY', None),
+}
 
 # A sample logging configuration. The only tangible logging
 # performed by this configuration is to send an email to
