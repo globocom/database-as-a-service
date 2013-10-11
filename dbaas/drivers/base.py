@@ -56,6 +56,9 @@ class BaseDriver(object):
     """
     ENV_CONNECTION = 'INSTANCE_CONNECTION'
 
+    # must be overwrited by subclasses
+    default_port = 0
+
     def __init__(self, *args, **kwargs):
 
         if 'instance' in kwargs:
