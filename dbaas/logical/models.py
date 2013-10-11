@@ -90,4 +90,4 @@ def credential_pre_save(sender, **kwargs):
 
 
 
-simple_audit.register(Product, Database, Credential)
+simple_audit.register(Product, Database, Credential, Bind)

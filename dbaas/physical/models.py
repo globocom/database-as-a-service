@@ -2,8 +2,11 @@
 from __future__ import absolute_import, unicode_literals
 import logging
 import simple_audit
+from django.db.models.signals import pre_save
+from django.dispatch import receiver
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db import transaction
 from django.utils.translation import ugettext_lazy as _
 from django_extensions.db.fields.encrypted import EncryptedCharField
 from util.models import BaseModel
@@ -145,6 +148,23 @@ class Node(BaseModel):
             raise ValidationError({'node': e.message})
         except GenericDriverError, e:
             raise ValidationError(e.message)
+
+
+@receiver(pre_save, sender=Plan)
+def plan_pre_save(sender, **kwargs):
+    instance = kwargs.get('instance')
+    LOG.debug("plan pre-save triggered")
+    if instance.is_default:
+        LOG.debug("looking for other plans marked as default (they will be marked as false) with engine type %s" % instance.engine_type)
+        plans = Plan.objects.filter(is_default=True, engine_type=instance.engine_type)
+        if plans:
+            with transaction.commit_on_success():
+                for plan in plans:
+                    LOG.info("marking plan %s is_default=False" % plan)
+                    plan.is_default=False
+                    plan.save(update_fields=['is_default'])
+        else:
+            LOG.debug("No plan found")
 
 
 simple_audit.register(EngineType, Engine, Plan, PlanAttribute, Instance, Node)
