@@ -12,6 +12,15 @@ from util.models import BaseModel
 from physical.models import Instance
 
 
+class Bind(BaseModel):
+
+    service_name = models.CharField(verbose_name=_("Service Name"), max_length=200)
+    service_hostname = models.CharField(verbose_name=_("Service Hostname"), max_length=200)
+    instance = models.ForeignKey(Instance, related_name="binds", on_delete=models.PROTECT, null=True, blank=True)
+
+    def __unicode__(self):
+        return "%s" % self.service_name
+
 class Product(BaseModel):
 
     name = models.CharField(verbose_name=_("Product name"), max_length=100, unique=True)
@@ -54,10 +63,10 @@ class Credential(BaseModel):
 @receiver(pre_save, sender=Database)
 def database_pre_save(sender, **kwargs):
     instance = kwargs.get('instance')
-    
+
     #slugify name
     instance.name = slugify(instance.name)
-    
+
     if instance.id:
         saved_object = Database.objects.get(id=instance.id)
         if instance.name != saved_object.name:
@@ -67,10 +76,10 @@ def database_pre_save(sender, **kwargs):
 @receiver(pre_save, sender=Credential)
 def credential_pre_save(sender, **kwargs):
     instance = kwargs.get('instance')
-    
+
     #slugify user
     instance.user = slugify(instance.user)
-    
+
     if instance.id:
         saved_object = Credential.objects.get(id=instance.id)
         if instance.user != saved_object.user:
@@ -81,4 +90,4 @@ def credential_pre_save(sender, **kwargs):
 
 
 
-simple_audit.register(Product, Database, Credential)
+simple_audit.register(Product, Database, Credential, Bind)

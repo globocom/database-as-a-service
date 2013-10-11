@@ -2,8 +2,11 @@
 from __future__ import absolute_import, unicode_literals
 import logging
 import simple_audit
+from django.db.models.signals import pre_save
+from django.dispatch import receiver
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db import transaction
 from django.utils.translation import ugettext_lazy as _
 from django_extensions.db.fields.encrypted import EncryptedCharField
 from util.models import BaseModel
@@ -28,6 +31,15 @@ class Engine(BaseModel):
                             blank=True, 
                             null=True,
                             help_text=_("Path to look for the engine's executable file."))
+    template_name = models.CharField(verbose_name=_("Template Name"), 
+                                    max_length=200,
+                                    blank=True,
+                                    null=True,
+                                    help_text="Template name registered in your provision system")
+    user_data_script = models.TextField(verbose_name=_("User data script"), 
+                                    blank=True,
+                                    null=True,
+                                    help_text="Script that will be sent as an user-data to provision the virtual machine")
 
     class Meta:
         unique_together = (
@@ -42,6 +54,9 @@ class Plan(BaseModel):
 
     name = models.CharField(verbose_name=_("Plan name"), max_length=100, unique=True)
     is_active = models.BooleanField(verbose_name=_("Is plan active"), default=True)
+    is_default = models.BooleanField(verbose_name=_("Is plan default"), 
+                                    default=False,
+                                    help_text=_("Check this option if this the default plan. There can be only one..."))
     engine_type = models.ForeignKey(EngineType, verbose_name=_("Engine Type"), related_name='plans')
 
     def __unicode__(self):
@@ -133,6 +148,23 @@ class Node(BaseModel):
             raise ValidationError({'node': e.message})
         except GenericDriverError, e:
             raise ValidationError(e.message)
+
+
+@receiver(pre_save, sender=Plan)
+def plan_pre_save(sender, **kwargs):
+    instance = kwargs.get('instance')
+    LOG.debug("plan pre-save triggered")
+    if instance.is_default:
+        LOG.debug("looking for other plans marked as default (they will be marked as false) with engine type %s" % instance.engine_type)
+        plans = Plan.objects.filter(is_default=True, engine_type=instance.engine_type)
+        if plans:
+            with transaction.commit_on_success():
+                for plan in plans:
+                    LOG.info("marking plan %s is_default=False" % plan)
+                    plan.is_default=False
+                    plan.save(update_fields=['is_default'])
+        else:
+            LOG.debug("No plan found")
 
 
 simple_audit.register(EngineType, Engine, Plan, PlanAttribute, Instance, Node)

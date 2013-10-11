@@ -25,6 +25,5 @@ class ProviderFactory(object):
         # if instance is None:
         #     raise TypeError(_("Instance is not defined"))
 
-        driver_name = instance.engine_name.lower()
-        driver_class = cls.get_provider_class(driver_name)
-        return driver_class(instance=instance)
+        provider_class = cls.get_provider_class("ec2")
+        return provider_class()

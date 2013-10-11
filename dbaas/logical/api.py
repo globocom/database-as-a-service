@@ -5,19 +5,20 @@ from rest_framework.decorators import link
 from .service.product import ProductService
 from .service.database import DatabaseService
 from .service.credential import CredentialService
-from .serializers import ProductSerializer, DatabaseSerializer, CredentialSerializer
+from .service.bind import BindService
+from . import serializers
 from .models import Database
 from rest_framework.response import Response
 from drivers import factory_for
 
 
 class ProductAPI(DjangoServiceAPI):
-    serializer_class = ProductSerializer
+    serializer_class = serializers.ProductSerializer
     service_class = ProductService
 
 
 class DatabaseAPI(DjangoServiceAPI):
-    serializer_class = DatabaseSerializer
+    serializer_class = serializers.DatabaseSerializer
     service_class = DatabaseService
 
     @link()
@@ -41,11 +42,17 @@ class DatabaseAPI(DjangoServiceAPI):
 
 
 class CredentialAPI(DjangoServiceAPI):
-    serializer_class = CredentialSerializer
+    serializer_class = serializers.CredentialSerializer
     service_class = CredentialService
+
+
+class BindAPI(DjangoServiceAPI):
+    serializer_class = serializers.BindSerializer
+    service_class = BindService
 
 
 register('product', ProductAPI)
 register('database', DatabaseAPI)
 register('credential', CredentialAPI)
+register('bind', BindAPI)
 
