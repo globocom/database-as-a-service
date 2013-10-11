@@ -3,9 +3,31 @@ from __future__ import absolute_import, unicode_literals
 import logging
 from django.utils.translation import ugettext_lazy as _
 from django import forms
+from .. import models
 
 log = logging.getLogger(__name__)
 
+class PlanForm(forms.ModelForm):
+    
+    class Meta:
+        model = models.Plan
+
+
+    def clean(self):
+        """Validates the form to make sure that there is at least one default plan"""
+
+        cleaned_data = super(PlanForm, self).clean()
+        is_default = cleaned_data.get("is_default")
+        engine_type = cleaned_data.get("engine_type")
+
+        if not is_default:
+            plans = models.Plan.objects.filter(is_default=True, engine_type=engine_type)
+            if not plans:
+                msg = _("At least one plan must be default")
+                log.warning(u"%s" % msg)
+                raise forms.ValidationError(msg)
+
+        return cleaned_data
 
 class PlanAttributeInlineFormset(forms.models.BaseInlineFormSet):
 
