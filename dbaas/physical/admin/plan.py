@@ -17,7 +17,7 @@ class PlanAdmin(services_admin.DjangoServicesAdmin):
     save_on_top = True
     search_fields = ["name"]
     list_filter = ("is_active", )
-    list_display = ("name", "is_active")
+    list_display = ("name", "is_active", "is_default")
     inlines = [
         PlanAttributeInline,
     ]
