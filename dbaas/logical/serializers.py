@@ -21,6 +21,7 @@ class CredentialSerializer(DjangoServiceSerializer):
     class Meta:
         model = models.Credential
 
+
 class BindSerializer(DjangoServiceSerializer):
 
     class Meta:
