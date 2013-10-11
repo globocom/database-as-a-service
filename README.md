@@ -50,3 +50,21 @@ just run syncdb to create the table structures. There is a make shortcut to help
     
 In your browser open the URL: http://localhost:8000/admin/
 
+## Running the tests
+
+Before running the test, makes sure that you have mongod running and a user admin created with password 123456.
+
+    db = db.getSiblingDB('admin')
+
+    db.addUser( { user: "admin",
+                  pwd: "123456",
+                  roles: [ "userAdminAnyDatabase" ] } )
+
+Then install all the required packages
+
+    make pip
+    
+Run it!
+
+    make test
+
