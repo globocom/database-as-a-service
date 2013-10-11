@@ -38,9 +38,8 @@ class MongoDBEngineTestCase(AbstractTestDriverMongo):
 
     #test mongo methods
     def test_instantiate_mongodb_using_engine_factory(self):
-        mongodb_engine = DriverFactory.factory(self.instance)
-        self.assertEqual(MongoDB, type(mongodb_engine))
-        self.assertEqual(self.instance, mongodb_engine.instance)
+        self.assertEqual(MongoDB, type(self.driver))
+        self.assertEqual(self.instance, self.driver.instance)
 
     def test_connection_string(self):
         self.assertEqual("%s:%s" % (self.instance.node.address, self.instance.node.port), self.driver.get_connection())
@@ -50,6 +49,9 @@ class MongoDBEngineTestCase(AbstractTestDriverMongo):
 
     def test_get_password(self):
         self.assertEqual(self.instance.password, self.driver.get_password())
+
+    def test_get_default_port(self):
+        self.assertEqual(27017, self.driver.default_port)
 
 
 class ManageDatabaseMongoDBTestCase(AbstractTestDriverMongo):
