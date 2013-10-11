@@ -51,6 +51,9 @@ class Plan(BaseModel):
 
     name = models.CharField(verbose_name=_("Plan name"), max_length=100, unique=True)
     is_active = models.BooleanField(verbose_name=_("Is plan active"), default=True)
+    is_default = models.BooleanField(verbose_name=_("Is plan default"), 
+                                    default=False,
+                                    help_text=_("Check this option if this the default plan. There can be only one..."))
     engine_type = models.ForeignKey(EngineType, verbose_name=_("Engine Type"), related_name='plans')
 
     def __unicode__(self):

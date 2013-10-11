@@ -1,6 +1,6 @@
 from django_services import service
-from ..models import Product
+from .. import models
 
 
 class ProductService(service.CRUDService):
-    model_class = Product
+    model_class = models.Product

@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 from django_services import service
-from ..models import Credential
+from .. import models
 from drivers import factory_for
 
 
 class CredentialService(service.CRUDService):
-    model_class = Credential
+    model_class = models.Credential
 
     def __get_engine__(self, credential):
         return factory_for(credential.database.instance)
