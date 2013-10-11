@@ -11,6 +11,8 @@ LOG = logging.getLogger(__name__)
 
 class MongoDB(BaseDriver):
 
+    default_port = 27017
+
     def get_connection(self):
         return "%s:%s" % (self.instance.node.address, self.instance.node.port)
 

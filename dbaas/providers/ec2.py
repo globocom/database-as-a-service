@@ -4,6 +4,9 @@ from urlparse import urlparse
 import boto.ec2.regioninfo
 import boto.ec2.connection
 from django.conf import settings
+from physical import models
+from drivers import factory_for
+
 
 def get_ec2_api():
     # if you want to setup proxy and other custom configurations, see http://boto.readthedocs.org/en/latest/boto_config_tut.html
@@ -32,8 +35,20 @@ class Ec2Provider(object):
         # reservation = ec2_api.run_instances('ami-001', subnet_id='n-1145')
         reservation = ec2_api.run_instances('ami-001')
         i = reservation.instances[0]
-        i.dns_name
-        i.ip_address
+
+        # due a bug in moto, I put this call to allow get instance.ip_address
+        i.update()
+
+        node = models.Node()
+        node.address = i.ip_address
+        # node.address = i.public_dns_name
+        # node.address = i.dns_name
+        node.port = factory_for(instance).default_port
+        node.instance = instance
+        node.is_active = False
+        node.type = models.Node.VIRTUAL
+        node.save()
+        return node
 
 # >>> pprint(i.__dict__)
 # {'_in_monitoring_element': False,

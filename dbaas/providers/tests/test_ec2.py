@@ -11,7 +11,7 @@ from physical.tests import factory as factory_physical
 # from ..driver_pymongo import MongoDB
 from .. import ec2
 from moto import mock_ec2
-from moto.ec2 import ec2_backend
+# from moto.ec2 import ec2_backend
 
 class Ec2ProviderTestCase(TestCase):
     """
@@ -37,11 +37,11 @@ class Ec2ProviderTestCase(TestCase):
     @override_settings(EC2_URL='https://myprovider.com/with/any/path')
     def test_get_ec2_api_must_support_a_connection_with_specific_providers(self):
         conn = ec2.get_ec2_api()
-        self.assertEquals(443, conn.port)
-        self.assertEquals('test-key', conn.access_key)
-        self.assertEquals('test-secret-key', conn.secret_key)
-        self.assertEquals('myprovider.com', conn.host)
-        self.assertEquals('/with/any/path', conn.path)
+        self.assertEqual(443, conn.port)
+        self.assertEqual('test-key', conn.access_key)
+        self.assertEqual('test-secret-key', conn.secret_key)
+        self.assertEqual('myprovider.com', conn.host)
+        self.assertEqual('/with/any/path', conn.path)
 
     @mock_ec2
     @override_settings(EC2_ACCESS_KEY='test-key')
@@ -50,17 +50,21 @@ class Ec2ProviderTestCase(TestCase):
     @override_settings(EC2_REGION="us-west-2")
     def test_get_ec2_api_must_support_a_connection_with_aws_region(self):
         conn = ec2.get_ec2_api()
-        self.assertEquals(443, conn.port)
-        self.assertEquals('test-key', conn.access_key)
-        self.assertEquals('test-secret-key', conn.secret_key)
-        self.assertEquals('ec2.us-west-2.amazonaws.com', conn.host)
-        self.assertEquals('/', conn.path)
+        self.assertEqual(443, conn.port)
+        self.assertEqual('test-key', conn.access_key)
+        self.assertEqual('test-secret-key', conn.secret_key)
+        self.assertEqual('ec2.us-west-2.amazonaws.com', conn.host)
+        self.assertEqual('/', conn.path)
 
     @mock_ec2
     @override_settings(EC2_URL=None)
     @override_settings(EC2_REGION="us-west-2")
     def test_create_node(self):
         node = self.provider.create_node(self.instance)
-        print "####", node
-        # self.assertIsNotNone(node)
+        self.assertIsNotNone(node)
+        self.assertEqual(self.instance, node.instance)
+        self.assertEqual(False, node.is_active)
+        self.assertEqual(node.VIRTUAL, node.type)
+        self.assertIsNotNone(node.address)
+        self.assertEqual(27017, node.port)
 

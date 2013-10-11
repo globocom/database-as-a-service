@@ -16,15 +16,6 @@ class BaseProvider(object):
     #     else:
     #         raise TypeError(_("Instance is not defined"))
 
-    def provision_instance(self, instance):
-        """
-        Provision's the instance
-        """
-        raise NotImplementedError()
-    
-    def destroy_instance(self, instance):
-        raise NotImplementedError()
-
     def create_node(self, instance):
         raise NotImplementedError()
 
