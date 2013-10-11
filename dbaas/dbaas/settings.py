@@ -309,3 +309,10 @@ if LOGFILE:
     LOGGING['root']['handlers'].remove('console')
     LOGGING['root']['handlers'] += ['logfile']
 
+# Credentials for EC2 Provider (I keep compliance with eucatools)
+EC2_ACCESS_KEY = os.getenv('EC2_ACCESS_KEY', None)
+EC2_SECRET_KEY = os.getenv('EC2_SECRET_KEY', None)
+EC2_URL = os.getenv('EC2_URL', None)
+EC2_REGION = os.getenv('EC2_REGION', None)
+
+

@@ -2,8 +2,8 @@
 from __future__ import absolute_import, unicode_literals
 import logging
 
-
 LOG = logging.getLogger(__name__)
+
 
 class BaseProvider(object):
     """
