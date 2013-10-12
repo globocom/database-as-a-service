@@ -22,7 +22,10 @@ def get_ec2_api():
             region=region,
             port=url.port)
     else:
-        conn = boto.ec2.connect_to_region(getattr(settings, "EC2_REGION", None))
+        conn = boto.ec2.connect_to_region(
+            getattr(settings, "EC2_REGION", None),
+            aws_access_key_id=settings.EC2_ACCESS_KEY,
+            aws_secret_access_key=settings.EC2_SECRET_KEY)
         assert conn is not None, "EC2_REGION is invalid. Valid values are: %s" % \
             ', '.join([ r.name for r in boto.ec2.regions() ])
     return conn
@@ -32,8 +35,8 @@ class Ec2Provider(object):
 
     def create_node(self, instance):
         ec2_api = get_ec2_api()
-        # reservation = ec2_api.run_instances('ami-001', subnet_id='n-1145')
-        reservation = ec2_api.run_instances('ami-001')
+        reservation = ec2_api.run_instances('ami-001', subnet_id='vpc-1212')
+        # reservation = ec2_api.run_instances('ami-001')
         i = reservation.instances[0]
 
         # due a bug in moto, I put this call to allow get instance.ip_address
