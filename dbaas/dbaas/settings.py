@@ -313,6 +313,7 @@ if LOGFILE:
 EC2_ACCESS_KEY = os.getenv('EC2_ACCESS_KEY', None)
 EC2_SECRET_KEY = os.getenv('EC2_SECRET_KEY', None)
 EC2_URL = os.getenv('EC2_URL', None)
-EC2_REGION = os.getenv('EC2_REGION', None)
-
+EC2_REGION = os.getenv('EC2_REGION', None) #us-east-1
+EC2_AMI_ID = 'ami-b91043d0'
+EC2_SUBNET_ID = None #'vpc-1212'
 

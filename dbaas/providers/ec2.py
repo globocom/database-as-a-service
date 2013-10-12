@@ -1,12 +1,16 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
+import logging
 from urlparse import urlparse
 import boto.ec2.regioninfo
 import boto.ec2.connection
 from django.conf import settings
 from physical import models
 from drivers import factory_for
+import time
 
+
+LOG = logging.getLogger(__name__)
 
 def get_ec2_api():
     # if you want to setup proxy and other custom configurations, see http://boto.readthedocs.org/en/latest/boto_config_tut.html
@@ -35,12 +39,14 @@ class Ec2Provider(object):
 
     def create_node(self, instance):
         ec2_api = get_ec2_api()
-        reservation = ec2_api.run_instances('ami-001', subnet_id='vpc-1212')
-        # reservation = ec2_api.run_instances('ami-001')
+        reservation = ec2_api.run_instances(settings.EC2_AMI_ID, subnet_id=settings.EC2_SUBNET_ID)
         i = reservation.instances[0]
 
         # due a bug in moto, I put this call to allow get instance.ip_address
-        i.update()
+        while not i.ip_address:
+            LOG.debug('Refresh instance status')
+            time.sleep(1)
+            i.update()
 
         node = models.Node()
         node.address = i.ip_address
