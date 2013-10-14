@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
+import time
 import logging
 import simple_audit
 from django.db.models.signals import pre_save
@@ -99,6 +100,61 @@ class Instance(BaseModel):
     @property
     def engine_name(self):
         return self.engine.engine_type.name
+
+    @classmethod
+    def get_unique_instance_name(self, base_name):
+        """
+        try diferent names if first exists, like NAME-1, NAME-2, ...
+        """
+        i = 0
+        name=base_name
+        while Instance.objects.filter(name=name).exists():
+            i += 1
+            name = "%s-%d" % (base_name, i)
+        LOG.info("instance unique name to be returned: %s" % name)
+        return name
+    
+    @classmethod
+    def provision(self, engine=None, plan=None, name=None):
+        # create new instance
+        print "*" * 50
+        print "engine: %s | plan: %s | name: %s" % (engine, plan, name)
+        print "*" * 50
+        instance = Instance()
+        instance.name = Instance.get_unique_instance_name(name)
+        instance.engine = engine
+        instance.plan = plan
+        instance.save()
+
+        # now, create a node
+        
+        # hardcode!!!
+        from providers import ProviderFactory
+        provider = ProviderFactory.factory()
+        node = provider.create_node(instance)
+
+        from drivers import factory_for
+        driver = factory_for(instance)
+        max_retries = 5
+        retry = 0
+        while True:
+            #TODO: timeout
+            # if retry == max_retries:
+            #     raise Exception(_("Max retries (%d) reached when trying to create a node." % max_retries))
+            time.sleep(10)
+            try:
+                LOG.debug('Waiting for node %s...', node)
+                driver.check_status(node=node)
+                break
+            except:
+                LOG.warning('Node %s not ready...', node, exc_info=True)
+                retry += 1
+
+        node.is_active = True
+        node.save()
+        
+        #returns the instance
+        return instance
 
 
 class Node(BaseModel):
