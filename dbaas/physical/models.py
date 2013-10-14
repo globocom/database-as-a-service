@@ -135,7 +135,7 @@ class Instance(BaseModel):
 
         from drivers import factory_for
         driver = factory_for(instance)
-        max_retries = 5
+        max_retries = 15
         retry = 0
         while True:
             #TODO: timeout
@@ -149,7 +149,8 @@ class Instance(BaseModel):
             except:
                 LOG.warning('Node %s not ready...', node, exc_info=True)
                 retry += 1
-
+        
+        LOG.info('Retries until node creation for instance %s: %s' %(instance, retry))
         node.is_active = True
         node.save()
         
