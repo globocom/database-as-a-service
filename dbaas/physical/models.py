@@ -138,7 +138,7 @@ class Instance(BaseModel):
         max_retries = 15
         retry = 0
         while True:
-            #TODO: timeout
+            #TODO: timeout or use some async job
             # if retry == max_retries:
             #     raise Exception(_("Max retries (%d) reached when trying to create a node." % max_retries))
             time.sleep(10)
@@ -150,7 +150,7 @@ class Instance(BaseModel):
                 LOG.warning('Node %s not ready...', node, exc_info=True)
                 retry += 1
         
-        LOG.info('Retries until node creation for instance %s: %s' %(instance, retry))
+        LOG.info('Retries until the node creation for instance %s: %s' % (instance, retry))
         node.is_active = True
         node.save()
         
