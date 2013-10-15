@@ -37,7 +37,7 @@ class Database(BaseModel):
 
     name = models.CharField(verbose_name=_("Database name"), max_length=100, unique=True)
     instance = models.ForeignKey(Instance, related_name="databases", on_delete=models.PROTECT)
-    product = models.ForeignKey(Product, related_name="databases", on_delete=models.PROTECT)
+    product = models.ForeignKey(Product, related_name="databases", on_delete=models.PROTECT, null=True, blank=True)
 
     def __unicode__(self):
         return u"%s" % self.name
