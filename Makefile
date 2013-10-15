@@ -43,6 +43,9 @@ db_create: # creates database
 	@echo "\n\n---------- Creating admin user..."
 	@cd dbaas && python manage.py createsuperuser --username='admin' --email='admin@admin.com'
 
+logical_migrate: # create migration to logical app
+    @cd dbaas && python manage.py schemamigration logical --auto
+
 test: # run tests
 	@mysql -uroot -e "DROP DATABASE IF EXISTS test_dbaas"
 	@cd dbaas && python manage.py test $(filter-out $@,$(MAKECMDGOALS))
