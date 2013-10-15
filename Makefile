@@ -36,7 +36,7 @@ db_drop_and_create: db_drop db_create  # drop and create database
 
 db_drop: # drops database
 	@mysql -uroot -e "DROP DATABASE IF EXISTS dbaas"
-		
+
 db_create: # creates database
 	@mysqladmin -uroot create dbaas
 	@cd dbaas && python manage.py syncdb --migrate --noinput
@@ -44,7 +44,10 @@ db_create: # creates database
 	@cd dbaas && python manage.py createsuperuser --username='admin' --email='admin@admin.com'
 
 logical_migrate: # create migration to logical app
-    @cd dbaas && python manage.py schemamigration logical --auto
+	@cd dbaas && python manage.py schemamigration logical --auto
+
+run_migrate: # run all migrate
+	@cd dbaas && python manage.py migrate
 
 test: # run tests
 	@mysql -uroot -e "DROP DATABASE IF EXISTS test_dbaas"
