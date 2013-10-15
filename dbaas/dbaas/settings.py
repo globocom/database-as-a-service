@@ -45,6 +45,8 @@ DB_PASSWORD = os.getenv('DBAAS_DATABASE_PASSWORD', '')
 DB_HOST = os.getenv('DBAAS_DATABASE_HOST', '')
 DB_PORT = os.getenv('DBAAS_DATABASE_PORT', '')
 SENTRY = os.getenv('DBAAS_SENTRY', None)
+MONGODB_DEFAULT_USER = os.getenv('DBAAS_MONGODB_DEFAULT_USER', 'admin')
+MONGODB_DEFAULT_PASSWORD = os.getenv('DBAAS_MONGODB_DEFAULT_PASSWORD', 'adminpwd')
 
 DATABASES = {
     'default': {

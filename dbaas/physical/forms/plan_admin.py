@@ -19,9 +19,11 @@ class PlanForm(forms.ModelForm):
         cleaned_data = super(PlanForm, self).clean()
         is_default = cleaned_data.get("is_default")
         engine_type = cleaned_data.get("engine_type")
-
         if not is_default:
-            plans = models.Plan.objects.filter(is_default=True, engine_type=engine_type)
+            if self.instance.id:
+                plans = models.Plan.objects.filter(is_default=True, engine_type=engine_type).exclude(id=self.instance.id)
+            else:
+                plans = models.Plan.objects.filter(is_default=True, engine_type=engine_type)
             if not plans:
                 msg = _("At least one plan must be default")
                 log.warning(u"%s" % msg)
