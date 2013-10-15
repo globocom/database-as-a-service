@@ -117,9 +117,9 @@ class Instance(BaseModel):
     @classmethod
     def provision(self, engine=None, plan=None, name=None):
         # create new instance
-        print "*" * 50
-        print "engine: %s | plan: %s | name: %s" % (engine, plan, name)
-        print "*" * 50
+
+        LOG.debug("provisioning instance with engine: %s | plan: %s | name: %s" % (engine, plan, name))
+
         instance = Instance()
         instance.name = Instance.get_unique_instance_name(name)
         instance.engine = engine
