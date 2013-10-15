@@ -28,8 +28,11 @@ def dashboard(request, *args, **kwargs):
         data["databases"] = []
     
         for database_status in instance_status.databases_status.values():
-            data["databases"].append({"name" : database_status.name, "size" : database_status.size_in_mbytes})
+            data["databases"].append({
+                "name" : database_status.name,
+                "size" : database_status.size_in_mbytes,
+                "usage": round(100 * database_status.size_in_mbytes / instance_status.size_in_mbytes)
+            })
         
         instances.append(data)
-    
     return render_to_response("dashboard/dashboard.html", locals(), context_instance=RequestContext(request))

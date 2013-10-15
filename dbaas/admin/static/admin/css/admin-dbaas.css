@@ -1,3 +1,36 @@
+#content {
+    font-family: 'Titillium Web', sans-serif;
+}
+
 .historylink {
     display: none;
+}
+
+.box {
+    font-family: 'Titillium Web', sans-serif;
+    /*#border: 1px solid #000;*/
+    padding: 11px;
+    background: #f9f9f9;
+    margin-left: 0;
+    margin-bottom: 10px;
+}
+
+.boxtitle {
+    margin-top: 0;
+}
+
+.icon-magnet {
+    margin-top: 4px;
+    margin-right: 3px;
+}
+
+.size-total {
+    float: right;
+}
+.status {
+    margin-top: 10px;
+}
+
+.status hr {
+    margin: 12px 0;
 }
