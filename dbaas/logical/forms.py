@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
+from django.utils.translation import ugettext_lazy as _
 import logging
 from django.forms import models
 from django import forms
@@ -31,8 +32,10 @@ class DatabaseForm(models.ModelForm):
                                                                     name=self.cleaned_data['name'])
                 LOG.info("provisioned instance: %s" % instance)
                 self.cleaned_data['instance'] = instance
+                self.cleaned_data['plan'] = instance.plan
             except Exception, e:
-                LOG.error("Erro validating database form: %s" % e)
+                LOG.error("Erro validating inputed data: %s" % e)
+                raise forms.ValidationError(e)
         # else:
             # if not cleaned_data.get('instance', None):
             #     ## TODO MELHORAR ISTO

@@ -21,6 +21,10 @@ class EngineType(BaseModel):
 
     def __unicode__(self):
         return self.name
+        
+    @property
+    def default_plan(self):
+        return Plan.objects.get(is_default=True, engine_type=self)
 
 
 class Engine(BaseModel):
@@ -102,7 +106,7 @@ class Instance(BaseModel):
         return self.engine.engine_type.name
 
     @classmethod
-    def get_unique_instance_name(self, base_name):
+    def get_unique_instance_name(cls, base_name):
         """
         try diferent names if first exists, like NAME-1, NAME-2, ...
         """
@@ -115,7 +119,7 @@ class Instance(BaseModel):
         return name
     
     @classmethod
-    def provision(self, engine=None, plan=None, name=None):
+    def provision(cls, engine=None, plan=None, name=None):
         # create new instance
 
         LOG.debug("provisioning instance with engine: %s | plan: %s | name: %s" % (engine, plan, name))
@@ -123,7 +127,11 @@ class Instance(BaseModel):
         instance = Instance()
         instance.name = Instance.get_unique_instance_name(name)
         instance.engine = engine
-        instance.plan = plan
+        #if plan is none, then default plan is set via signal.
+        if plan:
+            instance.plan = plan
+        else:
+            instance.plan = instance.engine.engine_type.default_plan
         instance.save()
 
         # now, create a node
@@ -206,18 +214,39 @@ class Node(BaseModel):
         except GenericDriverError, e:
             raise ValidationError(e.message)
 
+#####################################################################################################
+# SIGNALS
+#####################################################################################################
+@receiver(pre_save, sender=Instance)
+def instance_pre_save(sender, **kwargs):
+    """
+    instance pre save
+    """
+    instance = kwargs.get('instance')
+    LOG.debug("instance pre-save triggered")
+    if not instance.plan:
+        instance.plan = instance.engine.engine_type.default_plan
+        LOG.warning("No plan specified, using default plan (%s) for engine %s" % (instance, instance.engine))
 
 @receiver(pre_save, sender=Plan)
 def plan_pre_save(sender, **kwargs):
+    """
+    plan pre save
+    instance is a plan object and not an implementation from Instance's model
+    """
+    
     instance = kwargs.get('instance')
     LOG.debug("plan pre-save triggered")
     if instance.is_default:
         LOG.debug("looking for other plans marked as default (they will be marked as false) with engine type %s" % instance.engine_type)
-        plans = Plan.objects.filter(is_default=True, engine_type=instance.engine_type)
+        if instance.id:
+            plans = Plan.objects.filter(is_default=True, engine_type=instance.engine_type).exclude(id=instance.id)
+        else:
+            plans = Plan.objects.filter(is_default=True, engine_type=instance.engine_type)
         if plans:
             with transaction.commit_on_success():
                 for plan in plans:
-                    LOG.info("marking plan %s is_default=False" % plan)
+                    LOG.info("marking plan %s(%s) attr is_default to False" % (plan, plan.engine_type))
                     plan.is_default=False
                     plan.save(update_fields=['is_default'])
         else:
