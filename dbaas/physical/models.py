@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from django.conf import settings
 from __future__ import absolute_import, unicode_literals
 import time
 import logging
@@ -127,6 +128,8 @@ class Instance(BaseModel):
         instance = Instance()
         instance.name = Instance.get_unique_instance_name(name)
         instance.engine = engine
+        instance.user = getattr(settings, "DB_DEFAULT_USER", "")
+        instance.password = getattr(settings, "DB_DEFAULT_PASSWORD", "")
         #if plan is none, then default plan is set via signal.
         if plan:
             instance.plan = plan
