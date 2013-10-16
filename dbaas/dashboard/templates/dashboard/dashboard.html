@@ -19,37 +19,39 @@
 
 {% block content %}
 
-<h1>Dashboard</h1>
+<div id="content" class="page-header">
+	<h1>Dashboard</h1>
+</div>
 
 {% if not instances %}
     <h2>No instances found</h2>
 {% else %}
 
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>Instance Name</th>
-            <th>Instance Version</th>
-            <th>Instance Size (MB)</th>
-            <th>Database Name</th>
-            <th>Database Size (MB)</th>
-        <tr>
-    </thead>
-    <tbody>
+<div class="row-fluid">
+	{% for instance in instances %}
+	<div class="span4 box">
+		<div class='boxtitle'>
+			 <i class="icon-magnet"></i>Instance Name - {{ instance.name }}
+		</div>
+		<div class="status">
+			<ul>
+				<li>Version: {{ instance.version }}</li>
+				<li>Total instance Size: {{ instance.size|floatformat:0 }}(MB)</li>
+				{% for database in instance.databases %}
+					<li><hr />Database Name: {{ database.name }}</li>
+					<div class="size-total">{{ database.size|floatformat:0 }}(MB)</div>
+					<li>Database Size (MB)
+						<div class="progress">
+							<div class="bar bar-danger" style="width: {{ database.usage }}%;">{{ database.usage }}%</div>
+						</div>
+					</li>
+				{% endfor %}
+			</ul>
+		</div>
+	</div> <!-- .each box -->
+	{% endfor %}
+</div> <!-- .row-fluid -->
 
-    {% for instance in instances %}
-        {% for database in instance.databases %}
-            <tr>
-                <td>{{ instance.name }}</td>
-                <td>{{ instance.version }}</td>
-                <td>{{ instance.size|floatformat:0 }}</td>
-                <td>{{ database.name }}</td>
-                <td>{{ database.size|floatformat:0 }}</td>
-            </tr>
-        {% endfor %}
-    {% endfor %}
-    </tbody>
-</table>
 
 {% endif %}
 
