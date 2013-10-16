@@ -5,7 +5,7 @@ from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.conf import settings
 from django.views.generic.base import RedirectView
 from rest_framework import routers
-from .resources import ResourcesViewSet
+from .resources import TsuruViewSet
 # Uncomment the next two lines to enable the admin:
 from django.contrib import admin
 from adminplus.sites import AdminSitePlus
@@ -30,7 +30,7 @@ urlpatterns = patterns('',
 )
 
 router = routers.DefaultRouter(trailing_slash=False)
-router.register(r'resources', ResourcesViewSet, base_name="resources")
+router.register(r'tsuru', TsuruViewSet, base_name="tsuru")
 
 urlpatterns += router.urls
 
