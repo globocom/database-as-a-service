@@ -52,7 +52,7 @@ class Ec2ProviderTestCase(TestCase):
         self.assertEqual(443, conn.port)
         self.assertEqual('test-key', conn.access_key)
         self.assertEqual('test-secret-key', conn.secret_key)
-        self.assertEqual('ec2.us-west-2.amazonaws.com', conn.host)
+        self.assertEqual('myprovider.com', conn.host)
         self.assertEqual('/', conn.path)
 
     @mock_ec2
