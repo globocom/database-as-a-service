@@ -29,7 +29,7 @@ urlpatterns = patterns('',
 
 )
 
-router = routers.DefaultRouter()
+router = routers.DefaultRouter(trailing_slash=False)
 router.register(r'resources', ResourcesViewSet, base_name="resources")
 
 urlpatterns += router.urls
