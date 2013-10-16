@@ -312,10 +312,15 @@ if LOGFILE:
     LOGGING['root']['handlers'] += ['logfile']
 
 # Credentials for EC2 Provider (I keep compliance with eucatools)
-EC2_ACCESS_KEY = os.getenv('EC2_ACCESS_KEY', None)
-EC2_SECRET_KEY = os.getenv('EC2_SECRET_KEY', None)
-EC2_URL = os.getenv('EC2_URL', None)
-EC2_REGION = os.getenv('EC2_REGION', None) #us-east-1
+# EC2_ACCESS_KEY = os.getenv('EC2_ACCESS_KEY', None)
+EC2_ACCESS_KEY = os.getenv('EC2_ACCESS_KEY', 'test-key')
+
+# EC2_SECRET_KEY = os.getenv('EC2_SECRET_KEY', None)
+EC2_SECRET_KEY = os.getenv('EC2_SECRET_KEY', 'test-secret-key')
+# EC2_URL = os.getenv('EC2_URL', None)
+EC2_URL = os.getenv('EC2_URL', 'https://myprovider.com/with/any/path')
+# EC2_REGION = os.getenv('EC2_REGION', None) #us-east-1
+EC2_REGION = os.getenv('EC2_REGION', 'us-east-1') #us-east-1
 EC2_AMI_ID = 'ami-b91043d0'
-EC2_SUBNET_ID = os.getenv('EC2_SUBNET_ID', None) #'vpc-1212'
+EC2_SUBNET_ID = os.getenv('EC2_SUBNET_ID', 'subnet-00001145') #'vpc-1212'
 

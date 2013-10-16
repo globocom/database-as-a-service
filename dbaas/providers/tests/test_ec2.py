@@ -23,18 +23,17 @@ class Ec2ProviderTestCase(TestCase):
         # self.node = factory_physical.NodeFactory(instance=self.instance)
         self.provider = ec2.Ec2Provider()
 
+
     def tearDown(self):
         self.instance.delete()
         self.driver = self.instance = None
 
     @mock_ec2
+    @override_settings(EC2_REGION="us-west-2")
     def test_get_ec2_api_must_return_a_EC2Connection(self):
         self.assertTrue(isinstance(ec2.get_ec2_api(), boto.ec2.connection.EC2Connection))
 
     @mock_ec2
-    @override_settings(EC2_ACCESS_KEY='test-key')
-    @override_settings(EC2_SECRET_KEY='test-secret-key')
-    @override_settings(EC2_URL='https://myprovider.com/with/any/path')
     def test_get_ec2_api_must_support_a_connection_with_specific_providers(self):
         conn = ec2.get_ec2_api()
         self.assertEqual(443, conn.port)
@@ -59,8 +58,9 @@ class Ec2ProviderTestCase(TestCase):
     @mock_ec2
     @override_settings(EC2_URL=None)
     @override_settings(EC2_REGION="us-west-2")
+    @override_settings(EC2_SUBNET_ID="subnet-00001145")
     def test_create_node(self):
-        node = self.provider.create_node(self.instance)
+        node = ec2.create_node(self.instance)
         self.assertIsNotNone(node)
         self.assertEqual(self.instance, node.instance)
         self.assertEqual(False, node.is_active)
