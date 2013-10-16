@@ -4,15 +4,15 @@ from django.conf.urls import patterns, include, url
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.conf import settings
 from django.views.generic.base import RedirectView
-
+from rest_framework import routers
+from .resources import ResourcesViewSet
 # Uncomment the next two lines to enable the admin:
 from django.contrib import admin
 from adminplus.sites import AdminSitePlus
+import django_services.api.urls
 
 admin.site = AdminSitePlus()
 admin.autodiscover()
-
-import django_services.api.urls
 
 urlpatterns = patterns('',
     # Examples:
@@ -28,6 +28,11 @@ urlpatterns = patterns('',
     url('^api/', include(django_services.api.urls))
 
 )
+
+router = routers.SimpleRouter()
+router.register(r'resources', ResourcesViewSet, base_name="resources")
+
+urlpatterns += router.urls
 
 if settings.DEBUG:
     urlpatterns += staticfiles_urlpatterns()
