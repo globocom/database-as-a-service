@@ -60,7 +60,7 @@ class Ec2ProviderTestCase(TestCase):
     @override_settings(EC2_REGION="us-west-2")
     @override_settings(EC2_SUBNET_ID="subnet-00001145")
     def test_create_node(self):
-        node = ec2.create_node(self.instance)
+        node = ec2.Ec2Provider().create_node(self.instance)
         self.assertIsNotNone(node)
         self.assertEqual(self.instance, node.instance)
         self.assertEqual(False, node.is_active)
