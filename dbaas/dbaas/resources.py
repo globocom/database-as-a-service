@@ -7,7 +7,10 @@ from rest_framework.response import Response
 from rest_framework.decorators import action, link
 
 class ResourcesViewSet(viewsets.ViewSet):
-
+    
+    def list(self, request):
+        return Response({"status": "list"})
+        
     @action()
     def resources(self, request, pk=None):
         return Response({"status": "ok"})
