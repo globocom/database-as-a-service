@@ -12,6 +12,13 @@ class ResourcesViewSet(viewsets.ViewSet):
         return Response({"status": "list"})
     
     def create(self, request):
+        """
+         Creates a new instance
+
+         Return codes:
+         201: when the instance is successfully created. You don’t need to include any content in the response body.
+         500: in case of any failure in the creation process. Make sure you include an explanation for the failure in the response body.
+         """
         return Response({"status": "create"})
             
     @action()
