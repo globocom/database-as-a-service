@@ -28,6 +28,7 @@ class Ec2ProviderTestCase(TestCase):
         self.driver = self.instance = None
 
     @mock_ec2
+    @override_settings(EC2_REGION="us-west-2")
     def test_get_ec2_api_must_return_a_EC2Connection(self):
         self.assertTrue(isinstance(ec2.get_ec2_api(), boto.ec2.connection.EC2Connection))
 
