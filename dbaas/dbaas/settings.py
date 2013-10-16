@@ -322,5 +322,5 @@ EC2_URL = os.getenv('EC2_URL', 'https://myprovider.com/with/any/path')
 # EC2_REGION = os.getenv('EC2_REGION', None) #us-east-1
 EC2_REGION = os.getenv('EC2_REGION', 'us-east-1') #us-east-1
 EC2_AMI_ID = 'ami-b91043d0'
-EC2_SUBNET_ID = os.getenv('EC2_SUBNET_ID', None) #'vpc-1212'
+EC2_SUBNET_ID = os.getenv('EC2_SUBNET_ID', 'subnet-00001145') #'vpc-1212'
 
