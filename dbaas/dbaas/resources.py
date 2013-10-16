@@ -10,7 +10,10 @@ class ResourcesViewSet(viewsets.ViewSet):
     
     def list(self, request):
         return Response({"status": "list"})
-        
+    
+    def create(self, request):
+        return Response({"status": "create"})
+            
     @action()
     def resources(self, request, pk=None):
         return Response({"status": "ok"})
