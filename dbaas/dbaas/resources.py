@@ -13,8 +13,6 @@ LOG = logging.getLogger(__name__)
 
 class TsuruViewSet(viewsets.ViewSet):
     
-    AVAILABLES_APIS = ['mongodb']
-    
     def list(self, request):
         return Response({"status": "list"})
     
@@ -38,13 +36,10 @@ class TsuruViewSet(viewsets.ViewSet):
         500: in case of any failure in the creation process. Make sure you include an explanation for the failure in the response body.
         """
         LOG.info("Call for %s api" % pk)
-        if pk not in TsuruViewSet.AVAILABLES_APIS:
-            return Response(data={"error": "endpoint not available for %s" % pk}, status=500)
-        
         try:
             engine_type = EngineType.objects.get(name=pk)
-        except EngineType.DoesNotExists:
-            return Response(data={"error": "endpoint not found" % pk}, status=404)
+        except EngineType.DoesNotExist:
+            return Response(data={"error": "endpoint not available for %s" % pk}, status=500)
         
         return Response({"status": "ok", "engine_type": engine_type.name})
     
