@@ -13,6 +13,22 @@ LOG = logging.getLogger(__name__)
 
 class TsuruViewSet(viewsets.ViewSet):
     
+    def __check_service_availability(self, service_name):
+        """
+        Checks the availability of the service.
+        Returns engine_type for the service or a response error 500 if not found.
+        
+        """
+        engine_type = None
+        try:
+            engine_type = EngineType.objects.get(name=service_name)
+            return engine_type
+        except EngineType.DoesNotExist:
+            LOG.warning("endpoint not available for %s" % service_name)
+        
+        return engine_type
+
+
     def list(self, request):
         return Response({"status": "list"})
     
@@ -36,14 +52,17 @@ class TsuruViewSet(viewsets.ViewSet):
         500: in case of any failure in the creation process. Make sure you include an explanation for the failure in the response body.
         """
         LOG.info("Call for %s api" % pk)
-        try:
-            engine_type = EngineType.objects.get(name=pk)
-        except EngineType.DoesNotExist:
+        engine_type = self.__check_service_availability(pk)
+        if not engine_type:
             return Response(data={"error": "endpoint not available for %s" % pk}, status=500)
-        
-        return Response({"status": "ok", "engine_type": engine_type.name})
+
+        return Response({"status": "ok", "engine_type": engine_type.name}, status=201)
     
     @link()
     def status(self, request, pk=None):
-        return Response({"status": "ok"})
+        engine_type = self.__check_service_availability(pk)
+        if not engine_type:
+            return Response(data={"error": "endpoint not available for %s" % pk}, status=500)
+
+        return Response(data={"status": "ok"}, status=204)
     
