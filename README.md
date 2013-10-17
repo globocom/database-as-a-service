@@ -58,7 +58,7 @@ Before running the test, makes sure that you have mongod running and a user admi
 
     db.addUser( { user: "admin",
                   pwd: "123456",
-                  roles: [ "userAdminAnyDatabase" ] } )
+                  roles: [ "userAdminAnyDatabase", "clusterAdmin", "readWriteAnyDatabase", "dbAdminAnyDatabase" ] } )
 
 Then install all the required packages
 
