@@ -13,6 +13,7 @@ from django.utils.translation import ugettext_lazy as _
 from django_extensions.db.fields.encrypted import EncryptedCharField
 from util.models import BaseModel
 
+
 LOG = logging.getLogger(__name__)
 
 
@@ -143,6 +144,17 @@ class Instance(BaseModel):
         return name
     
     @classmethod
+    def provision_database(cls, instance=None):
+        from logical.models import Database
+        from drivers import factory_for
+        
+        database = Database.objects.get_or_create(name=instance.name, instance=instance)
+        # engine = factory_for(instance)
+        # engine.create_database(database)
+
+        return database
+        
+    @classmethod
     def provision(cls, engine=None, plan=None, name=None):
         # create new instance
 
@@ -161,7 +173,6 @@ class Instance(BaseModel):
         instance.save()
 
         # now, create a node
-        
         # hardcode!!!
         from providers import ProviderFactory
         provider = ProviderFactory.factory()
@@ -187,6 +198,9 @@ class Instance(BaseModel):
         LOG.info('Retries until the node creation for instance %s: %s' % (instance, retry))
         node.is_active = True
         node.save()
+        
+        #now creates the database
+        Instance.provision_database(instance=instance)
         
         #returns the instance
         return instance
