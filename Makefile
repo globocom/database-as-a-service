@@ -54,7 +54,7 @@ test: # run tests
 	@cd dbaas && python manage.py test $(filter-out $@,$(MAKECMDGOALS))
 
 run: # run local server
-	@cd dbaas && python manage.py runserver
+	@cd dbaas && python manage.py runserver 0.0.0.0:8000
 
 shell: # run django shell
 	@cd dbaas && python manage.py shell_plus
