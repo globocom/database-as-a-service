@@ -43,7 +43,7 @@ class TsuruViewSet(viewsets.ViewSet):
         return Response({"status": "create"})
             
     @action()
-    def resources(self, request, pk=None):
+    def resources(self, request, pk=None, version=None):
         """
         Creates a new instance. The pk is the name of the engine
         
@@ -52,11 +52,22 @@ class TsuruViewSet(viewsets.ViewSet):
         500: in case of any failure in the creation process. Make sure you include an explanation for the failure in the response body.
         """
         LOG.info("Call for %s api" % pk)
+        LOG.debug("request DATA: %s" % request.DATA)
+        LOG.debug("request QUERY_PARAMS: %s" % request.QUERY_PARAMS)
+        LOG.debug("request content-type: %s" % request.content_type)
+        # LOG.debug("request meta: %s" % request.META)
         engine_type = self.__check_service_availability(pk)
         if not engine_type:
             return Response(data={"error": "endpoint not available for %s" % pk}, status=500)
-
-        return Response({"status": "ok", "engine_type": engine_type.name}, status=201)
+        
+        data = request.DATA
+        service_name = data['name']
+        LOG.info("creating service %s" % (service_name))
+        try:
+            #Instance.provision(engine=,name=service_name)
+            return Response({"status": "ok", "engine_type": engine_type.name}, status=201)
+        except Exception, e:
+            LOG.error("error provisioning instance %s: %s" % (service_name, e))
     
     @link()
     def status(self, request, pk=None):
