@@ -96,7 +96,30 @@ class Instance(BaseModel):
 
     def __unicode__(self):
         return self.name
-
+    
+    @property
+    def env_variables(self):
+        """
+        Returns a dictionary with the variables to be exported in users environment
+        
+        Example: {
+            "MYSQL_HOST":"10.10.10.10",
+            "MYSQL_PORT":3306,
+            "MYSQL_USER":"ROOT",
+            "MYSQL_PASSWORD":"s3cr3t",
+            "MYSQL_DATABASE_NAME":"myapp"
+        }
+        """
+        envs = {}
+        prefix = self.engine.engine_type.name.upper()
+        envs["%s_HOST" % prefix] = self.node.address
+        envs["%s_PORT" % prefix] = self.node.port
+        envs["%s_USER" % prefix] = self.user
+        envs["%s_PASSWORD" % prefix] = self.password
+        #For now, we can only have one database per instance
+        envs["%s_DATABASE_NAME" % prefix] = self.name
+        
+        return envs
     @property
     def node(self):
         # temporary
