@@ -63,7 +63,7 @@ def service_add(request, engine_name=None, engine_version=None):
     LOG.info("creating service %s" % (service_name))
     try:
         instance = Instance.provision(engine=engine,name=service_name)
-        return Response({"status": "ok", 
+        return Response({"hostname": instance.node.address, 
                         "engine_type" : engine.engine_type.name,
                         "version" : engine.version,
                         "instance_name" : instance.name}, 
