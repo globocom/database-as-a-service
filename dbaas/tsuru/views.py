@@ -8,7 +8,7 @@ from rest_framework.response import Response
 # from rest_framework.decorators import action, link
 from rest_framework.decorators import api_view
 
-from physical.models import Engine, EngineType
+from physical.models import Engine, EngineType, Instance
 
 LOG = logging.getLogger(__name__)
 
@@ -48,7 +48,7 @@ def service_add(request, engine_name=None, engine_version=None):
     201: when the instance is successfully created. You don’t need to include any content in the response body.
     500: in case of any failure in the creation process. Make sure you include an explanation for the failure in the response body.
     """
-    LOG.info("Call for %s(%s) api" % (engine_name, engine_version))
+    LOG.info("service_add for %s(%s)" % (engine_name, engine_version))
     
     LOG.debug("request DATA: %s" % request.DATA)
     LOG.debug("request QUERY_PARAMS: %s" % request.QUERY_PARAMS)
@@ -62,10 +62,32 @@ def service_add(request, engine_name=None, engine_version=None):
     service_name = data.get('name', None)
     LOG.info("creating service %s" % (service_name))
     try:
-        #Instance.provision(engine=,name=service_name)
+        instance = Instance.provision(engine=engine,name=service_name)
         return Response({"status": "ok", 
                         "engine_type" : engine.engine_type.name,
-                        "version" : engine.version}, status=201)
+                        "version" : engine.version,
+                        "instance_name" : instance.name}, 
+                        status=201)
     except Exception, e:
         LOG.error("error provisioning instance %s: %s" % (service_name, e))
 
+@api_view(['POST'])
+def service_bind(request, engine_name=None, engine_version=None, service_name=None):
+    """
+    In the bind action, tsuru calls your service via POST on /resources/<service_name>/ with the "app-hostname" 
+    that represents the app hostname and the "unit-hostname" that represents the unit hostname on body.
+
+    If the app is successfully binded to the instance, you should return 201 as status code with the variables 
+    to be exported in the app environment on body with the json format.
+    """
+    LOG.info("service_bind for %s > %s(%s)" % (service_name, engine_name, engine_version))
+    
+    LOG.debug("request DATA: %s" % request.DATA)
+    LOG.debug("request QUERY_PARAMS: %s" % request.QUERY_PARAMS)
+    LOG.debug("request content-type: %s" % request.content_type)
+    # LOG.debug("request meta: %s" % request.META)
+    engine = __check_service_availability(engine_name, engine_version)
+    if not engine:
+        return Response(data={"error": "endpoint not available for %s(%s)" % (engine_name, engine_version)}, status=500)
+    
+    data = request.DATA
