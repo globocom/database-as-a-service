@@ -35,18 +35,10 @@ compile:
 db_drop_and_create: db_drop db_create  # drop and create database
 
 db_drop: # drops database
-ifeq ($(DBAAS_DATABASE_HOST),)
 	@mysql -uroot -e "DROP DATABASE IF EXISTS dbaas"
-else
-	@mysql -uroot -e "DROP DATABASE IF EXISTS dbaas" -h$(DBAAS_DATABASE_HOST)
-endif
 
 db_create: # creates database
-ifeq ($(DBAAS_DATABASE_HOST),)
 	@mysqladmin -uroot create dbaas
-else
-	@mysqladmin -uroot create dbaas -h$(DBAAS_DATABASE_HOST)
-endif
 	@cd dbaas && python manage.py syncdb --migrate --noinput
 	@echo "\n\n---------- Creating admin user..."
 	@cd dbaas && python manage.py createsuperuser --username='admin' --email='admin@admin.com'
@@ -58,11 +50,7 @@ run_migrate: # run all migrate
 	@cd dbaas && python manage.py migrate
 
 test: # run tests
-ifeq ($(DBAAS_DATABASE_HOST),)
 	@mysql -uroot -e "DROP DATABASE IF EXISTS test_dbaas"
-else
-	@mysql -uroot -e "DROP DATABASE IF EXISTS test_dbaas" -h$(DBAAS_DATABASE_HOST)
-endif
 	@cd dbaas && python manage.py test $(filter-out $@,$(MAKECMDGOALS))
 
 run: # run local server

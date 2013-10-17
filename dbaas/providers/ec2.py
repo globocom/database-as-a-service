@@ -4,8 +4,7 @@ import logging
 from urlparse import urlparse
 import boto.ec2.regioninfo
 import boto.ec2.connection
-# from django.conf import settings
-from dbaas import settings
+from django.conf import settings
 from physical import models
 from drivers import factory_for
 import time
