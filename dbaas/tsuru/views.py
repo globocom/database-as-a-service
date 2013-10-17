@@ -15,7 +15,7 @@ LOG = logging.getLogger(__name__)
 def __check_service_availability(engine_name, engine_version):
     """
     Checks the availability of the service.
-    Returns engine_type for the service or a response error 500 if not found.
+    Returns the engine.
     
     """
     engine = None
