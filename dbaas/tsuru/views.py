@@ -8,7 +8,9 @@ from rest_framework.response import Response
 # from rest_framework.decorators import action, link
 from rest_framework.decorators import api_view
 
-from physical.models import Engine, EngineType, Instance
+from physical.models import Engine, EngineType, Instance, Node
+from drivers import factory_for
+
 
 LOG = logging.getLogger(__name__)
 
@@ -41,9 +43,16 @@ def status(request, engine_name=None, engine_version=None, service_name=None):
     
     data = request.DATA
     LOG.info("status for service %s" % (service_name))
-    
-    # TODO: do some stuff that actually test the service status
-    return Response(data={"status": "ok"}, status=204)
+    try:
+        instance = Instance.objects.get(name=service_name)
+        factory_for(instance).check_status()
+        return Response(data={"status": "ok"}, status=204)
+    except Instance.DoesNotExist:
+        LOG.warning("instance not found for service %s" % (service_name))
+        return Response(data={"status": "not_found"}, status=404)
+    except Exception, e:
+        return Response(data={"error": "%s" % e}, status=500)
+
         
 @api_view(['POST'])
 def service_add(request, engine_name=None, engine_version=None):
