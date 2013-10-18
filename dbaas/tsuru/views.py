@@ -30,11 +30,19 @@ def __check_service_availability(engine_name, engine_version):
     return engine
 
 @api_view(['GET'])
-def status(request, engine_name=None, engine_version=None):
+def status(request, engine_name=None, engine_version=None, service_name=None):
+    """
+    To check the status of an instance, tsuru uses the url /resources/<service_name>/status. 
+    If the instance is ok, this URL should return 204.
+    """
     engine = __check_service_availability(engine_name, engine_version)
     if not engine:
         return Response(data={"error": "endpoint not available for %s(%s)" % (engine_name, engine_version)}, status=500)
-
+    
+    data = request.DATA
+    LOG.info("status for service %s" % (service_name))
+    
+    # TODO: do some stuff that actually test the service status
     return Response(data={"status": "ok"}, status=204)
         
 @api_view(['POST'])
@@ -85,7 +93,8 @@ def service_bind(request, engine_name=None, engine_version=None, service_name=No
     LOG.debug("request DATA: %s" % request.DATA)
     LOG.debug("request QUERY_PARAMS: %s" % request.QUERY_PARAMS)
     LOG.debug("request content-type: %s" % request.content_type)
-    #print("request meta: %s" % request.META)
+    print "*" * 50
+    print("request meta: %s" % request.META)
     engine = __check_service_availability(engine_name, engine_version)
     if not engine:
         return Response(data={"error": "endpoint not available for %s(%s)" % (engine_name, engine_version)}, status=500)
