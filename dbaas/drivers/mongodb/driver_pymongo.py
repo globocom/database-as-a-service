@@ -5,6 +5,7 @@ import pymongo
 from contextlib import contextmanager
 from .. import BaseDriver, InstanceStatus, DatabaseStatus, \
     AuthenticationError, ConnectionError
+from django.contrib.auth.models import User
 
 LOG = logging.getLogger(__name__)
 
@@ -22,7 +23,6 @@ class MongoDB(BaseDriver):
             LOG.debug('Authenticating instance %s', self.instance)
             client.admin.authenticate(self.instance.user, self.instance.password)
         return client
-
 
     @contextmanager
     def pymongo(self, node=None, database=None):
@@ -48,7 +48,6 @@ class MongoDB(BaseDriver):
                     client.disconnect()
             except:
                 LOG.warn('Error disconnecting from instance %s. Ignoring...', self.instance, exc_info=True)
-
 
     def check_status(self, node=None):
         with self.pymongo(node=node) as client:
@@ -86,7 +85,7 @@ class MongoDB(BaseDriver):
 
     def create_user(self, credential):
         with self.pymongo(database=credential.database) as mongo_database:
-            mongo_database.add_user(credential.user, password=credential.password, roles = [ "readWrite", "dbAdmin" ])
+            mongo_database.add_user(credential.user, password=credential.password, roles=["readWrite", "dbAdmin"])
 
     def remove_user(self, credential):
         with self.pymongo(database=credential.database) as mongo_database:
@@ -100,3 +99,8 @@ class MongoDB(BaseDriver):
         with self.pymongo() as client:
             client.drop_database(database.name)
 
+    def change_default_pwd(self, node):
+        with self.pymongo(node=node) as client:
+            new_password = User.objects.make_random_password()
+            client.admin.add_user(name=node.instance.user, password=new_password)
+            return new_password
