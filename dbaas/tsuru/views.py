@@ -157,7 +157,7 @@ def service_bind(request, engine_name=None, engine_version=None, service_name=No
     return Response({"action": "service_bind"}, 
                     status=201)
 
-@api_view(['DELETE','GET'])
+@api_view(['DELETE'])
 def service_unbind(request, engine_name=None, engine_version=None, service_name=None, host=None):
     """
     In the unbind action, tsuru calls your service via DELETE on /resources/<hostname>/hostname/<unit_hostname>/.
