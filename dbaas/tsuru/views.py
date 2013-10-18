@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 from django.utils.translation import ugettext_lazy as _
+from django.views.decorators.csrf import csrf_exempt
 import logging
 
 from rest_framework import viewsets
@@ -32,7 +33,7 @@ def __check_service_availability(engine_name, engine_version):
     return engine
 
 @api_view(['GET'])
-def status(request, engine_name=None, engine_version=None, service_name=None):
+def service_status(request, engine_name=None, engine_version=None, service_name=None):
     """
     To check the status of an instance, tsuru uses the url /resources/<service_name>/status. 
     If the instance is ok, this URL should return 204.
@@ -53,7 +54,7 @@ def status(request, engine_name=None, engine_version=None, service_name=None):
     except Exception, e:
         return Response(data={"error": "%s" % e}, status=500)
 
-        
+
 @api_view(['POST'])
 def service_add(request, engine_name=None, engine_version=None):
     """
@@ -88,6 +89,50 @@ def service_add(request, engine_name=None, engine_version=None):
     except Exception, e:
         LOG.error("error provisioning instance %s: %s" % (service_name, e))
 
+
+@api_view(['POST','DELETE',])
+def service_bind_remove(request, engine_name=None, engine_version=None, service_name=None):
+    """
+    Service bind and service bind shares the same url structure
+    """
+    if request.method == "POST":
+        return service_bind(request, engine_name=engine_name, engine_version=engine_version, service_name=service_name)
+    elif request.method == "DELETE":
+        return service_remove(request, engine_name=engine_name, engine_version=engine_version, service_name=service_name)
+
+
+@api_view(['DELETE'])
+def service_remove(request, engine_name=None, engine_version=None, service_name=None):
+    """
+    In the destroy action, tsuru calls your service via DELETE on /resources/<service_name>/.
+
+    If the service instance is successfully removed you should return 200 as status code.
+    """
+    LOG.info("service_remove for service %s using %s(%s)" % (service_name, engine_name, engine_version))
+    
+    LOG.debug("request DATA: %s" % request.DATA)
+    LOG.debug("request QUERY_PARAMS: %s" % request.QUERY_PARAMS)
+    LOG.debug("request content-type: %s" % request.content_type)
+    # LOG.debug("request meta: %s" % request.META)
+    engine = __check_service_availability(engine_name, engine_version)
+    if not engine:
+        return Response(data={"error": "endpoint not available for %s(%s)" % (engine_name, engine_version)}, status=500)
+    
+    data = request.DATA
+
+    LOG.info("removing service %s" % (service_name))
+    try:
+        instance = Instance.objects.get(name=service_name)
+        driver = factory_for(instance)
+        instance.delete()
+        return Response(data={"status": "ok"}, status=200)
+    except Instance.DoesNotExist:
+        LOG.warning("instance not found for service %s" % (service_name))
+        return Response(data={"status": "not_found"}, status=404)
+    except Exception, e:
+        return Response(data={"error": "%s" % e}, status=500)
+
+
 @api_view(['POST'])
 def service_bind(request, engine_name=None, engine_version=None, service_name=None):
     """
@@ -102,8 +147,7 @@ def service_bind(request, engine_name=None, engine_version=None, service_name=No
     LOG.debug("request DATA: %s" % request.DATA)
     LOG.debug("request QUERY_PARAMS: %s" % request.QUERY_PARAMS)
     LOG.debug("request content-type: %s" % request.content_type)
-    print "*" * 50
-    print("request meta: %s" % request.META)
+
     engine = __check_service_availability(engine_name, engine_version)
     if not engine:
         return Response(data={"error": "endpoint not available for %s(%s)" % (engine_name, engine_version)}, status=500)
@@ -113,8 +157,7 @@ def service_bind(request, engine_name=None, engine_version=None, service_name=No
     return Response({"action": "service_bind"}, 
                     status=201)
 
-
-@api_view(['DELETE'])
+@api_view(['DELETE','GET'])
 def service_unbind(request, engine_name=None, engine_version=None, service_name=None, host=None):
     """
     In the unbind action, tsuru calls your service via DELETE on /resources/<hostname>/hostname/<unit_hostname>/.
