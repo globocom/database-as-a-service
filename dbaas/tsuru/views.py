@@ -85,9 +85,35 @@ def service_bind(request, engine_name=None, engine_version=None, service_name=No
     LOG.debug("request DATA: %s" % request.DATA)
     LOG.debug("request QUERY_PARAMS: %s" % request.QUERY_PARAMS)
     LOG.debug("request content-type: %s" % request.content_type)
-    # LOG.debug("request meta: %s" % request.META)
+    #print("request meta: %s" % request.META)
     engine = __check_service_availability(engine_name, engine_version)
     if not engine:
         return Response(data={"error": "endpoint not available for %s(%s)" % (engine_name, engine_version)}, status=500)
     
     data = request.DATA
+    
+    return Response({"action": "service_bind"}, 
+                    status=201)
+
+
+@api_view(['DELETE'])
+def service_unbind(request, engine_name=None, engine_version=None, service_name=None, host=None):
+    """
+    In the unbind action, tsuru calls your service via DELETE on /resources/<hostname>/hostname/<unit_hostname>/.
+
+    If the app is successfully unbinded from the instance you should return 200 as status code.
+    """
+    LOG.info("service_unbind for %s at %s > %s(%s)" % (service_name, host, engine_name, engine_version))
+    
+    LOG.debug("request DATA: %s" % request.DATA)
+    LOG.debug("request QUERY_PARAMS: %s" % request.QUERY_PARAMS)
+    LOG.debug("request content-type: %s" % request.content_type)
+    #print("request meta: %s" % request.META)
+    engine = __check_service_availability(engine_name, engine_version)
+    if not engine:
+        return Response(data={"error": "endpoint not available for %s(%s)" % (engine_name, engine_version)}, status=500)
+    
+    data = request.DATA
+    
+    return Response({"action": "service_unbind"}, 
+                    status=200)
