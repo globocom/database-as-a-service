@@ -23,7 +23,7 @@ class EngineType(BaseModel):
 
     def __unicode__(self):
         return self.name
-        
+
     @property
     def default_plan(self):
         return Plan.objects.get(is_default=True, engine_type=self)
@@ -33,20 +33,20 @@ class Engine(BaseModel):
 
     engine_type = models.ForeignKey(EngineType, verbose_name=_("Engine types"), related_name="engines", on_delete=models.PROTECT)
     version = models.CharField(verbose_name=_("Engine version"), max_length=100,)
-    path = models.CharField(verbose_name=_("Engine path"), 
-                            max_length=255, 
-                            blank=True, 
+    path = models.CharField(verbose_name=_("Engine path"),
+                            max_length=255,
+                            blank=True,
                             null=True,
                             help_text=_("Path to look for the engine's executable file."))
-    template_name = models.CharField(verbose_name=_("Template Name"), 
-                                    max_length=200,
-                                    blank=True,
-                                    null=True,
-                                    help_text="Template name registered in your provision system")
-    user_data_script = models.TextField(verbose_name=_("User data script"), 
-                                    blank=True,
-                                    null=True,
-                                    help_text="Script that will be sent as an user-data to provision the virtual machine")
+    template_name = models.CharField(verbose_name=_("Template Name"),
+                                     max_length=200,
+                                     blank=True,
+                                     null=True,
+                                     help_text="Template name registered in your provision system")
+    user_data_script = models.TextField(verbose_name=_("User data script"),
+                                        blank=True,
+                                        null=True,
+                                        help_text="Script that will be sent as an user-data to provision the virtual machine")
 
     class Meta:
         unique_together = (
@@ -61,9 +61,9 @@ class Plan(BaseModel):
 
     name = models.CharField(verbose_name=_("Plan name"), max_length=100, unique=True)
     is_active = models.BooleanField(verbose_name=_("Is plan active"), default=True)
-    is_default = models.BooleanField(verbose_name=_("Is plan default"), 
-                                    default=False,
-                                    help_text=_("Check this option if this the default plan. There can be only one..."))
+    is_default = models.BooleanField(verbose_name=_("Is plan default"),
+                                     default=False,
+                                     help_text=_("Check this option if this the default plan. There can be only one..."))
     engine_type = models.ForeignKey(EngineType, verbose_name=_("Engine Type"), related_name='plans')
 
     def __unicode__(self):
@@ -82,14 +82,14 @@ class PlanAttribute(BaseModel):
 
 class Instance(BaseModel):
 
-    name = models.CharField(verbose_name=_("Instance name"), 
-                            max_length=100, 
+    name = models.CharField(verbose_name=_("Instance name"),
+                            max_length=100,
                             unique=True,
                             help_text=_("This could be the fqdn associated to the instance."))
-    user = models.CharField(verbose_name=_("Instance user"), 
+    user = models.CharField(verbose_name=_("Instance user"),
                             max_length=100,
                             help_text=_("Administrative user with permission to manage databases, create users and etc."),
-                            blank=True, 
+                            blank=True,
                             null=False)
     password = EncryptedCharField(verbose_name=_("Instance password"), max_length=255, blank=True, null=False)
     engine = models.ForeignKey(Engine, related_name="instances", on_delete=models.PROTECT)
@@ -97,12 +97,12 @@ class Instance(BaseModel):
 
     def __unicode__(self):
         return self.name
-    
+
     @property
     def env_variables(self):
         """
         Returns a dictionary with the variables to be exported in users environment
-        
+
         Example: {
             "MYSQL_HOST":"10.10.10.10",
             "MYSQL_PORT":3306,
@@ -119,8 +119,9 @@ class Instance(BaseModel):
         envs["%s_PASSWORD" % prefix] = self.password
         #For now, we can only have one database per instance
         envs["%s_DATABASE_NAME" % prefix] = self.name
-        
+
         return envs
+
     @property
     def node(self):
         # temporary
@@ -136,24 +137,23 @@ class Instance(BaseModel):
         try diferent names if first exists, like NAME-1, NAME-2, ...
         """
         i = 0
-        name=base_name
+        name = base_name
         while Instance.objects.filter(name=name).exists():
             i += 1
             name = "%s-%d" % (base_name, i)
         LOG.info("instance unique name to be returned: %s" % name)
         return name
-    
+
     @classmethod
     def provision_database(cls, instance=None):
         from logical.models import Database
-        from drivers import factory_for
-        
+
         database = Database.objects.get_or_create(name=instance.name, instance=instance)
         # engine = factory_for(instance)
         # engine.create_database(database)
 
         return database
-        
+
     @classmethod
     def provision(cls, engine=None, plan=None, name=None):
         # create new instance
@@ -180,7 +180,7 @@ class Instance(BaseModel):
 
         from drivers import factory_for
         driver = factory_for(instance)
-        max_retries = 15
+        # max_retries = 15
         retry = 0
         while True:
             #TODO: timeout or use some async job
@@ -194,11 +194,16 @@ class Instance(BaseModel):
             except:
                 LOG.warning('Node %s not ready...', node, exc_info=True)
                 retry += 1
-        
+
         LOG.info('Retries until the node creation for instance %s: %s' % (instance, retry))
+
+        # change default password after node started
+        instance.password = driver.change_default_pwd(node)
+        instance.save()
+
         node.is_active = True
         node.save()
-        
+
         #returns the instance
         return instance
 
@@ -220,7 +225,6 @@ class Node(BaseModel):
                             max_length=2,
                             choices=HOST_TYPE_CHOICES,
                             default=PHYSICAL)
-
 
     class Meta:
         unique_together = (
@@ -254,6 +258,8 @@ class Node(BaseModel):
 #####################################################################################################
 # SIGNALS
 #####################################################################################################
+
+
 @receiver(pre_save, sender=Instance)
 def instance_pre_save(sender, **kwargs):
     """
@@ -265,13 +271,14 @@ def instance_pre_save(sender, **kwargs):
         instance.plan = instance.engine.engine_type.default_plan
         LOG.warning("No plan specified, using default plan (%s) for engine %s" % (instance, instance.engine))
 
+
 @receiver(pre_save, sender=Plan)
 def plan_pre_save(sender, **kwargs):
     """
     plan pre save
     instance is a plan object and not an implementation from Instance's model
     """
-    
+
     instance = kwargs.get('instance')
     LOG.debug("plan pre-save triggered")
     if instance.is_default:
@@ -284,7 +291,7 @@ def plan_pre_save(sender, **kwargs):
             with transaction.commit_on_success():
                 for plan in plans:
                     LOG.info("marking plan %s(%s) attr is_default to False" % (plan, plan.engine_type))
-                    plan.is_default=False
+                    plan.is_default = False
                     plan.save(update_fields=['is_default'])
         else:
             LOG.debug("No plan found")
