@@ -199,9 +199,6 @@ class Instance(BaseModel):
         node.is_active = True
         node.save()
         
-        #now creates the database
-        Instance.provision_database(instance=instance)
-        
         #returns the instance
         return instance
 
