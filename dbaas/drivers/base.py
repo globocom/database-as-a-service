@@ -92,7 +92,7 @@ class BaseDriver(object):
         """ Returns a mapping with same attributes of instance """
         raise NotImplementedError()
 
-    def create_user(self, credential):
+    def create_user(self, credential, roles=None):
         raise NotImplementedError()
 
     def remove_user(self, credential):
