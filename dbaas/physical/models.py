@@ -4,7 +4,7 @@ from django.conf import settings
 import time
 import logging
 import simple_audit
-from django.db.models.signals import pre_save
+from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -53,8 +53,12 @@ class Engine(BaseModel):
             ('version', 'engine_type', )
         )
 
+    @property
+    def name(self):
+        return self.engine_type.name
+
     def __unicode__(self):
-        return "%s_%s" % (self.engine_type.name, self.version)
+        return "%s_%s" % (self.name, self.version)
 
 
 class Plan(BaseModel):
@@ -112,7 +116,7 @@ class Instance(BaseModel):
         }
         """
         envs = {}
-        prefix = self.engine.engine_type.name.upper()
+        prefix = self.engine.name.upper()
         envs["%s_HOST" % prefix] = self.node.address
         envs["%s_PORT" % prefix] = self.node.port
         envs["%s_USER" % prefix] = self.user
@@ -147,11 +151,8 @@ class Instance(BaseModel):
     @classmethod
     def provision_database(cls, instance=None):
         from logical.models import Database
-
+        #a signal will create the database in the engine
         database = Database.objects.get_or_create(name=instance.name, instance=instance)
-        # engine = factory_for(instance)
-        # engine.create_database(database)
-
         return database
 
     @classmethod
@@ -258,7 +259,6 @@ class Node(BaseModel):
 #####################################################################################################
 # SIGNALS
 #####################################################################################################
-
 
 @receiver(pre_save, sender=Instance)
 def instance_pre_save(sender, **kwargs):

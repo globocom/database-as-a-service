@@ -13,9 +13,10 @@ class DatabaseService(service.CRUDService):
 
     def create(self, database):
         super(DatabaseService, self).create(database)
-
-        engine = self.get_engine(database)
-        engine.create_database(database)
+        # moved to database signal
+        
+        # engine = self.get_engine(database)
+        # engine.create_database(database)
 
     def update(self, database):
         super(DatabaseService, self).update(database)
@@ -23,6 +24,7 @@ class DatabaseService(service.CRUDService):
 
     def delete(self, database):
         super(DatabaseService, self).delete(database)
-
-        engine = self.get_engine(database)
-        engine.remove_database(database)
+        
+        #moved to database signal
+        # engine = self.get_engine(database)
+        # engine.remove_database(database)

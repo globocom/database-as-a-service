@@ -2,6 +2,7 @@
 from __future__ import absolute_import, unicode_literals
 from django.utils.translation import ugettext_lazy as _
 from django.views.decorators.csrf import csrf_exempt
+from django.db import transaction
 import logging
 
 from rest_framework import viewsets
@@ -10,6 +11,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view
 
 from physical.models import Engine, EngineType, Instance, Node
+from logical.models import Database, Bind
 from drivers import factory_for
 
 
@@ -82,7 +84,7 @@ def service_add(request, engine_name=None, engine_version=None):
     try:
         instance = Instance.provision(engine=engine,name=service_name)
         return Response({"hostname": instance.node.address, 
-                        "engine_type" : engine.engine_type.name,
+                        "engine_type" : engine.name,
                         "version" : engine.version,
                         "instance_name" : instance.name}, 
                         status=201)
@@ -147,15 +149,27 @@ def service_bind(request, engine_name=None, engine_version=None, service_name=No
     LOG.debug("request DATA: %s" % request.DATA)
     LOG.debug("request QUERY_PARAMS: %s" % request.QUERY_PARAMS)
     LOG.debug("request content-type: %s" % request.content_type)
-
+    # print("request meta: %s" % request.META)
     engine = __check_service_availability(engine_name, engine_version)
     if not engine:
         return Response(data={"error": "endpoint not available for %s(%s)" % (engine_name, engine_version)}, status=500)
     
     data = request.DATA
-    
-    return Response({"action": "service_bind"}, 
-                    status=201)
+    try:
+        #get instance
+        instance = Instance.objects.get(name=service_name)
+        unit_host = data.get("unit-host", "N/A")
+        app_host = data["app-host"]
+        #provision database
+        with transaction.commit_on_success():
+            Instance.provision_database(instance=instance)
+            Bind(service_name=service_name, service_hostname=unit_host, instance=instance).save()
+        return Response({"action": "service_bind"}, 
+                        status=201)
+    except Instance.DoesNotExist:
+        LOG.warning("instance not found for service %s" % (service_name))
+        return Response(data={"status": "error", "reason": "instance %s not found" % service_name}, status=404)
+
 
 @api_view(['DELETE'])
 def service_unbind(request, engine_name=None, engine_version=None, service_name=None, host=None):
@@ -169,12 +183,29 @@ def service_unbind(request, engine_name=None, engine_version=None, service_name=
     LOG.debug("request DATA: %s" % request.DATA)
     LOG.debug("request QUERY_PARAMS: %s" % request.QUERY_PARAMS)
     LOG.debug("request content-type: %s" % request.content_type)
-    #print("request meta: %s" % request.META)
+    # print("request meta: %s" % request.META)
     engine = __check_service_availability(engine_name, engine_version)
     if not engine:
         return Response(data={"error": "endpoint not available for %s(%s)" % (engine_name, engine_version)}, status=500)
     
     data = request.DATA
-    
-    return Response({"action": "service_unbind"}, 
-                    status=200)
+    try:
+        #get database
+        database = Database.objects.get(name=service_name)
+        instance = Instance.objects.get(name=service_name)
+        #removes the database
+        with transaction.commit_on_success():
+            database.delete()
+            #get binds and delete all
+            binds = Bind.objects.filter(service_name=service_name, service_hostname=host, instance=instance)
+            LOG.info("Binds registered in dbaas that will be deleted: %s" % binds)
+            [bind.delete() for bind in binds]
+        return Response({"action": "service_unbind"}, 
+                        status=200)
+    except Instance.DoesNotExist:
+        LOG.warning("instance not found for service %s" % (service_name))
+        return Response(data={"status": "error", "reason": "instance %s not found" % service_name}, status=404)
+    except Database.DoesNotExist:
+        LOG.warning("database %s not found" % (service_name))
+        return Response(data={"status": "warning", "reason": "database %s not found" % service_name}, status=200)
+

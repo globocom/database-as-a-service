@@ -1,21 +1,24 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 import simple_audit
+import logging
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
-from django.db.models.signals import pre_save
+from django.db.models.signals import pre_save, post_save, pre_delete
 from django.dispatch import receiver
 from django_extensions.db.fields.encrypted import EncryptedCharField
 from util import slugify
 from util.models import BaseModel
 from physical.models import Instance
+from drivers import factory_for
 
+LOG = logging.getLogger(__name__)
 
 class Bind(BaseModel):
 
     service_name = models.CharField(verbose_name=_("Service Name"), max_length=200)
-    service_hostname = models.CharField(verbose_name=_("Service Hostname"), max_length=200)
+    service_hostname = models.CharField(verbose_name=_("Service Hostname"), max_length=200, null=True, blank=True)
     instance = models.ForeignKey(Instance, related_name="binds", on_delete=models.PROTECT, null=True, blank=True)
 
     def __unicode__(self):
@@ -60,6 +63,33 @@ class Credential(BaseModel):
         return u"%s" % self.user
 
 
+#####################################################################################################
+# SIGNALS
+#####################################################################################################
+@receiver(pre_delete, sender=Database)
+def database_pre_delete(sender, **kwargs):
+    """
+    database pre delete signal. Removes database from the engine
+    """
+    database = kwargs.get("instance")
+    LOG.debug("database pre-delete triggered")
+    engine = factory_for(database.instance)
+    engine.remove_database(database)
+
+@receiver(post_save, sender=Database)
+def database_post_save(sender, **kwargs):
+    """
+    database post save signal. Creates the database in the driver.
+    """
+    database = kwargs.get("instance")
+    is_new = kwargs.get("created")
+    LOG.debug("database post-save triggered")
+    if is_new:
+        LOG.info("a new database (%s) were created... provision it in the engine" % (database.name))
+        engine = factory_for(database.instance)
+        engine.create_database(database)
+
+
 @receiver(pre_save, sender=Database)
 def database_pre_save(sender, **kwargs):
     instance = kwargs.get('instance')
@@ -87,7 +117,6 @@ def credential_pre_save(sender, **kwargs):
 
         if instance.database != saved_object.database:
             raise AttributeError(_("Attribute database cannot be edited"))
-
 
 
 simple_audit.register(Product, Database, Credential, Bind)
