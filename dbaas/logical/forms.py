@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
-from django.utils.translation import ugettext_lazy as _
+# from django.utils.translation import ugettext_lazy as _
 import logging
 from django.forms import models
 from django import forms
@@ -10,11 +10,26 @@ from physical.models import Engine, Plan, Instance
 LOG = logging.getLogger(__name__)
 
 
+class AdvancedModelChoiceIterator(models.ModelChoiceIterator):
+    def choice(self, obj):
+        opts = (self.field.prepare_value(obj), self.field.label_from_instance(obj), obj)
+        return opts
+
+
+class AdvancedModelChoiceField(models.ModelChoiceField):
+    def _get_choices(self):
+        if hasattr(self, '_choices'):
+            return self._choices
+
+        return AdvancedModelChoiceIterator(self)
+
+    choices = property(_get_choices, models.ModelChoiceField._set_choices)
+
+
 class DatabaseForm(models.ModelForm):
-    # new_instance = forms.BooleanField(required=True)
-    instance = forms.ModelChoiceField(queryset=Instance.objects, required=False)
-    engine = forms.ModelChoiceField(queryset=Engine.objects, required=False)
-    plan = forms.ModelChoiceField(queryset=Plan.objects, required=False)
+    instance = forms.ModelChoiceField(queryset=Instance.objects.all(), required=False)
+    engine = forms.ModelChoiceField(queryset=Engine.objects.all(), required=False)
+    plan = AdvancedModelChoiceField(queryset=Plan.objects.all(), required=False, widget=forms.RadioSelect, empty_label=None)
 
     class Meta:
         model = Database

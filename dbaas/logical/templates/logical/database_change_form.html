@@ -1,0 +1,77 @@
+{% extends "admin/change_form.html" %}
+{% load i18n admin_static admin_modify %}
+
+{% block extrahead %}
+    {{ block.super }}
+    <script type="text/javascript" src="{% static 'js/database_admin.js' %}"></script>
+{% endblock %}
+
+{% block extrastyle %}
+    {{ block.super }}
+{% endblock %}
+
+{% block field_sets %}
+{% for fieldset in adminform %}
+    {% if fieldset.name == 'reuse_instance' %}
+        <div class="controls">
+            <label class="radio">
+                <input name="new_instance" checked="checked" type="radio" value="" class="new_instance"> <span>Use existing instances</span>
+            </label>
+        </div>
+        <fieldset class="module aligned {{ fieldset.classes }}">
+            {% for line in fieldset %}
+                {% for field in line %}
+                    {% include "admin/includes/field.html" %}
+                {% endfor %}
+            {% endfor %}
+        </fieldset>
+    {% elif fieldset.name == 'new_instance' %}
+        <div class="controls">
+            <label class="radio">
+                <input name="new_instance" type="radio" value="on" class="new_instance"> <span>Create new instances</span>
+            </label>
+        </div>
+        <fieldset class="module aligned {{ fieldset.classes }}">
+            {% for line in fieldset %}
+                {% for field in line %}
+                    {% if field.field.name == 'plan' %}
+                        <div class="control-label">
+                            <label for="id_engine">Plan:</label>
+                        </div>
+                        <div class="row plans">
+                            {% for plan_value, plan_name, plan in field.field.field.choices %}
+                            <div class="span3 plan">
+                                <div class="well">
+                                    <h2 class="">{{plan_name}}</h2>
+                                    <p>
+                                    {% if plan.is_default %}
+                                        <span class="label">Recomended</span>
+                                    {% else %}
+                                        <span>&nbsp;</span>
+                                    {% endif %}
+                                    </p>
+                                    <ul class="plan-attributes">
+                                        {% for plan_attribute in plan.plan_attributes.all %}
+                                        <li>{{plan_attribute.name}}: {{plan_attribute.value}}</li>
+                                        {% endfor %}
+                                    </ul>
+                                    {# <p>Use this space for description</p> #}
+                                    <hr>
+                                    <p class="text-center">
+                                        <span><input type="radio" name="{{field.field.name}}" value="{{plan_value}}" {% if field.field.value == plan_value %} checked="checked" {% endif %} /></span>
+                                    </p>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        {% include "admin/includes/field.html" %}
+                    {% endif %}
+                {% endfor %}
+            {% endfor %}
+        </fieldset>
+    {% else %}
+        {% include "admin/includes/fieldset.html" %}
+    {% endif %}
+{% endfor %}
+{% endblock %}

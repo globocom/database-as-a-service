@@ -11,7 +11,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     search_fields = ("name", "instance__name")
     list_display = ("name", "instance",)
     list_filter = ("instance", "product",)
-    change_form_template = "physical/database_change_form.html"
+    change_form_template = "logical/database_change_form.html"
     fieldsets = (
         (None, {
             'fields': ('name', 'product')
