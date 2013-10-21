@@ -125,12 +125,11 @@ class Instance(BaseModel):
         
         envs = {}
         prefix = self.engine.name.upper()
-        envs["%s_HOST" % prefix] = self.node.address
-        envs["%s_PORT" % prefix] = self.node.port
-        envs["%s_USER" % prefix] = credential.user
-        envs["%s_PASSWORD" % prefix] = credential.password
-        #For now, we can only have one database per instance
-        envs["%s_DATABASE_NAME" % prefix] = database.name
+        envs["%s_HOST" % prefix] = "%s" % self.node.address
+        envs["%s_PORT" % prefix] = "%s" % self.node.port
+        envs["%s_USER" % prefix] = "%s" % credential.user
+        envs["%s_PASSWORD" % prefix] = "%s" % credential.password
+        envs["%s_DATABASE_NAME" % prefix] = "%s" % database.name
 
         return envs
 

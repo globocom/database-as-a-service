@@ -6,6 +6,6 @@ from ..service.bind import BindService
 
 class BindAdmin(admin.DjangoServicesAdmin):
     service_class = BindService
-    list_display = ("service_name", "service_hostname", "instance")
+    list_display = ("created_at", "service_name", "service_hostname", "instance")
     list_filter = ("service_name",)
     save_on_top = True
