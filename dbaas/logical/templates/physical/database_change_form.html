@@ -3,6 +3,7 @@
 
 {% block extrahead %}
     {{ block.super }}
+    <script type="text/javascript" src="{% static 'js/database_admin.js' %}"></script>
 {% endblock %}
 
 {% block extrastyle %}
@@ -14,7 +15,7 @@
     {% if fieldset.name == 'reuse_instance' %}
         <div class="controls">
             <label class="radio">
-                <input name="new_instance" checked="checked" type="radio" value=""> <span>Use existing instances</span>
+                <input name="new_instance" checked="checked" type="radio" value="" class="new_instance"> <span>Use existing instances</span>
             </label>
         </div>
         <fieldset class="module aligned {{ fieldset.classes }}">
@@ -27,7 +28,7 @@
     {% elif fieldset.name == 'new_instance' %}
         <div class="controls">
             <label class="radio">
-                <input name="new_instance" type="radio" value="on"> <span>Create new instances</span>
+                <input name="new_instance" type="radio" value="on" class="new_instance"> <span>Create new instances</span>
             </label>
         </div>
         <fieldset class="module aligned {{ fieldset.classes }}">
