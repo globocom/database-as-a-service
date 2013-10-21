@@ -164,8 +164,10 @@ def service_bind(request, engine_name=None, engine_version=None, service_name=No
         with transaction.commit_on_success():
             Instance.provision_database(instance=instance)
             Bind(service_name=service_name, service_hostname=unit_host, instance=instance).save()
-        return Response({"action": "service_bind"}, 
-                        status=201)
+            response=instance.env_variables(database_name=service_name)
+            LOG.debug("response: %s" % response)
+            return Response(data=response, 
+                            status=201)
     except Instance.DoesNotExist:
         LOG.warning("instance not found for service %s" % (service_name))
         return Response(data={"status": "error", "reason": "instance %s not found" % service_name}, status=404)
@@ -200,8 +202,8 @@ def service_unbind(request, engine_name=None, engine_version=None, service_name=
             binds = Bind.objects.filter(service_name=service_name, service_hostname=host, instance=instance)
             LOG.info("Binds registered in dbaas that will be deleted: %s" % binds)
             [bind.delete() for bind in binds]
-        return Response({"action": "service_unbind"}, 
-                        status=200)
+            return Response({"action": "service_unbind"}, 
+                            status=200)
     except Instance.DoesNotExist:
         LOG.warning("instance not found for service %s" % (service_name))
         return Response(data={"status": "error", "reason": "instance %s not found" % service_name}, status=404)
