@@ -102,8 +102,7 @@ class Instance(BaseModel):
     def __unicode__(self):
         return self.name
 
-    @property
-    def env_variables(self):
+    def env_variables(self, database_name=None):
         """
         Returns a dictionary with the variables to be exported in users environment
 
@@ -115,14 +114,23 @@ class Instance(BaseModel):
             "MYSQL_DATABASE_NAME":"myapp"
         }
         """
+        from logical.models import Database, Credential
+        # TODO: deal with multiple databases with the same name but associated with differente products
+        try:
+            database = Database.objects.get(name=database_name)
+            credential = Credential.objects.get(database=database, user=Credential.USER_PATTERN % (database_name))
+        except Credential.DoesNotExist:
+            LOG.warning("Credential for database %s not found. Trying to create a new one..." % database_name)
+            credential.create_new()
+        
         envs = {}
         prefix = self.engine.name.upper()
         envs["%s_HOST" % prefix] = self.node.address
         envs["%s_PORT" % prefix] = self.node.port
-        envs["%s_USER" % prefix] = self.user
-        envs["%s_PASSWORD" % prefix] = self.password
+        envs["%s_USER" % prefix] = credential.user
+        envs["%s_PASSWORD" % prefix] = credential.password
         #For now, we can only have one database per instance
-        envs["%s_DATABASE_NAME" % prefix] = self.name
+        envs["%s_DATABASE_NAME" % prefix] = database.name
 
         return envs
 

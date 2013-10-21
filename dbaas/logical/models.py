@@ -50,11 +50,23 @@ class Database(BaseModel):
         if self.name in self.__get_database_reserved_names():
             raise ValidationError(_("%s is a reserved database name" % self.name))
 
+    def create_new(self):
+        """creates a new credential for the database with a random password"""
+        engine = factory_for(self.instance)
+        LOG.info("creating new credential for database %s" % self.name)
+        credential = Credential(user=Credential.USER_PATTERN % self.name, password=engine.make_random_password(), database=self)
+        credential.save()
+        engine.create_user(credential)
+        return credential
+        
     def __get_database_reserved_names(self):
         return Database.RESERVED_DATABASES_NAME
 
 
 class Credential(BaseModel):
+
+    USER_PATTERN = "u_%s"
+
     user = models.CharField(verbose_name=_("User name"), max_length=100, unique=True)
     password = EncryptedCharField(verbose_name=_("User password"), max_length=255)
     database = models.ForeignKey(Database, related_name="credentials")
@@ -79,7 +91,7 @@ def database_pre_delete(sender, **kwargs):
 @receiver(post_save, sender=Database)
 def database_post_save(sender, **kwargs):
     """
-    database post save signal. Creates the database in the driver.
+    database post save signal. Creates the database in the driver and creates a new credential.
     """
     database = kwargs.get("instance")
     is_new = kwargs.get("created")
@@ -88,6 +100,7 @@ def database_post_save(sender, **kwargs):
         LOG.info("a new database (%s) were created... provision it in the engine" % (database.name))
         engine = factory_for(database.instance)
         engine.create_database(database)
+        database.create_new()
 
 
 @receiver(pre_save, sender=Database)

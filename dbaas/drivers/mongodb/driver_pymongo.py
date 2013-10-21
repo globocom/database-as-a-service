@@ -5,7 +5,6 @@ import pymongo
 from contextlib import contextmanager
 from .. import BaseDriver, InstanceStatus, DatabaseStatus, \
     AuthenticationError, ConnectionError
-from django.contrib.auth.models import User
 
 LOG = logging.getLogger(__name__)
 
@@ -83,9 +82,9 @@ class MongoDB(BaseDriver):
 
         return instance_status
 
-    def create_user(self, credential):
+    def create_user(self, credential, roles=["readWrite", "dbAdmin"]):
         with self.pymongo(database=credential.database) as mongo_database:
-            mongo_database.add_user(credential.user, password=credential.password, roles=["readWrite", "dbAdmin"])
+            mongo_database.add_user(credential.user, password=credential.password, roles=roles)
 
     def remove_user(self, credential):
         with self.pymongo(database=credential.database) as mongo_database:
@@ -103,6 +102,6 @@ class MongoDB(BaseDriver):
 
     def change_default_pwd(self, node):
         with self.pymongo(node=node) as client:
-            new_password = User.objects.make_random_password()
+            new_password = self.make_random_password()
             client.admin.add_user(name=node.instance.user, password=new_password)
             return new_password
