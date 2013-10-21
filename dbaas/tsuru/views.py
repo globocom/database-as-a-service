@@ -5,10 +5,11 @@ from django.views.decorators.csrf import csrf_exempt
 from django.db import transaction
 import logging
 
+from rest_framework.renderers import JSONRenderer, JSONPRenderer
 from rest_framework import viewsets
 from rest_framework.response import Response
 # from rest_framework.decorators import action, link
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, renderer_classes
 
 from physical.models import Engine, EngineType, Instance, Node
 from logical.models import Database, Bind
@@ -35,6 +36,7 @@ def __check_service_availability(engine_name, engine_version):
     return engine
 
 @api_view(['GET'])
+@renderer_classes((JSONRenderer, JSONPRenderer))
 def service_status(request, engine_name=None, engine_version=None, service_name=None):
     """
     To check the status of an instance, tsuru uses the url /resources/<service_name>/status. 
@@ -58,6 +60,7 @@ def service_status(request, engine_name=None, engine_version=None, service_name=
 
 
 @api_view(['POST'])
+@renderer_classes((JSONRenderer, JSONPRenderer))
 def service_add(request, engine_name=None, engine_version=None):
     """
     Responds to tsuru's service_add call.
@@ -93,6 +96,7 @@ def service_add(request, engine_name=None, engine_version=None):
 
 
 @api_view(['POST','DELETE',])
+@renderer_classes((JSONRenderer, JSONPRenderer))
 def service_bind_remove(request, engine_name=None, engine_version=None, service_name=None):
     """
     Service bind and service bind shares the same url structure
@@ -104,6 +108,7 @@ def service_bind_remove(request, engine_name=None, engine_version=None, service_
 
 
 @api_view(['DELETE'])
+@renderer_classes((JSONRenderer, JSONPRenderer))
 def service_remove(request, engine_name=None, engine_version=None, service_name=None):
     """
     In the destroy action, tsuru calls your service via DELETE on /resources/<service_name>/.
@@ -136,6 +141,7 @@ def service_remove(request, engine_name=None, engine_version=None, service_name=
 
 
 @api_view(['POST'])
+@renderer_classes((JSONRenderer, JSONPRenderer))
 def service_bind(request, engine_name=None, engine_version=None, service_name=None):
     """
     In the bind action, tsuru calls your service via POST on /resources/<service_name>/ with the "app-hostname" 
@@ -174,6 +180,7 @@ def service_bind(request, engine_name=None, engine_version=None, service_name=No
 
 
 @api_view(['DELETE'])
+@renderer_classes((JSONRenderer, JSONPRenderer))
 def service_unbind(request, engine_name=None, engine_version=None, service_name=None, host=None):
     """
     In the unbind action, tsuru calls your service via DELETE on /resources/<hostname>/hostname/<unit_hostname>/.
