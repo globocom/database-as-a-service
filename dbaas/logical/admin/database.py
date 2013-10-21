@@ -18,11 +18,13 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             }
         ),
         ('reuse_instance', {
-            'fields': ('instance',)
+            'fields': ('instance',),
+            'classes': ('reuse_instance',),
             },
         ),
         ('new_instance', {
             'fields': ('engine', 'plan'),
+            'classes': ('new_instance',),
             },
         )
     )
