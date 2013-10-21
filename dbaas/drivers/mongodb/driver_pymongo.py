@@ -82,9 +82,9 @@ class MongoDB(BaseDriver):
 
         return instance_status
 
-    def create_user(self, credential):
+    def create_user(self, credential, roles=["readWrite", "dbAdmin"]):
         with self.pymongo(database=credential.database) as mongo_database:
-            mongo_database.add_user(credential.user, password=credential.password, roles=["readWrite", "dbAdmin"])
+            mongo_database.add_user(credential.user, password=credential.password, roles=roles)
 
     def remove_user(self, credential):
         with self.pymongo(database=credential.database) as mongo_database:
