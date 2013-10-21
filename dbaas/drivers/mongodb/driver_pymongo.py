@@ -92,10 +92,12 @@ class MongoDB(BaseDriver):
             mongo_database.remove_user(credential.user)
 
     def create_database(self, database):
+        LOG.info("creating database %s" % database.name)
         with self.pymongo(database=database) as mongo_database:
             mongo_database.collection_names()
 
     def remove_database(self, database):
+        LOG.info("removing database %s" % database.name)
         with self.pymongo() as client:
             client.drop_database(database.name)
 
