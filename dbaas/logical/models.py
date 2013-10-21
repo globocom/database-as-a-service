@@ -79,7 +79,7 @@ def database_pre_delete(sender, **kwargs):
 @receiver(post_save, sender=Database)
 def database_post_save(sender, **kwargs):
     """
-    database post save signal. Creates the database in the driver.
+    database post save signal. Creates the database in the driver and creates a new credential.
     """
     database = kwargs.get("instance")
     is_new = kwargs.get("created")
