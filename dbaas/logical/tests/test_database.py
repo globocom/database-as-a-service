@@ -6,6 +6,10 @@ from . import factory
 from ..models import Database
 from drivers import base
 
+import logging
+
+LOG = logging.getLogger(__name__)
+
 
 class FakeDriver(base.BaseDriver):
     
@@ -62,6 +66,5 @@ class DatabaseTestCase(TestCase):
         database.name = "super3"
         
         self.assertRaises(AttributeError, database.save)
-
 
 
