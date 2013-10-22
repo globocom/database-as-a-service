@@ -121,7 +121,7 @@ class Instance(BaseModel):
             credential = Credential.objects.get(database=database, user=Credential.USER_PATTERN % (database_name))
         except Credential.DoesNotExist:
             LOG.warning("Credential for database %s not found. Trying to create a new one..." % database_name)
-            database.create_new_credential()
+            credential = database.create_new_credential()
         
         envs = {}
         prefix = self.engine.name.upper()
@@ -205,13 +205,15 @@ class Instance(BaseModel):
 
         LOG.info('Retries until the node creation for instance %s: %s' % (instance, retry))
 
-        # change default password after node started
+        # change default password after node is started
         instance.password = driver.change_default_pwd(node)
         instance.save()
-
+        
         node.is_active = True
         node.save()
 
+        #create database
+        Instance.provision_database(instance=instance)
         #returns the instance
         return instance
 
