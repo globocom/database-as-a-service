@@ -12,7 +12,8 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view, renderer_classes
 
 from physical.models import Engine, EngineType, Instance, Node
-from logical.models import Database, Bind, Credential
+from logical.models import Database, Credential
+from tsuru.models import Bind
 from drivers import factory_for
 
 

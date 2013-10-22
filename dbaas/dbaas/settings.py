@@ -172,6 +172,7 @@ INSTALLED_APPS = (
     'adminplus',
     'physical',
     'logical',
+    'tsuru',
     'drivers',
     'dashboard',
     'simple_audit',

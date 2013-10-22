@@ -50,6 +50,12 @@ endif
 	@echo "\n\n---------- Creating admin user..."
 	@cd dbaas && python manage.py createsuperuser --username='admin' --email='admin@admin.com'
 
+physical_migrate: # create migration to physical app
+	@cd dbaas && python manage.py schemamigration physical --auto
+
+tsuru_migrate: # create migration to tsuru app
+	@cd dbaas && python manage.py schemamigration tsuru --auto
+
 logical_migrate: # create migration to logical app
 	@cd dbaas && python manage.py schemamigration logical --auto
 

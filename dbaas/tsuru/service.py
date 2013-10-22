@@ -1,5 +1,5 @@
 from django_services import service
-from .. import models
+from . import models
 
 
 class BindService(service.CRUDService):
