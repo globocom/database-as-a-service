@@ -40,12 +40,12 @@
                         </div>
                         <div class="row plans">
                             {% for plan_value, plan_name, plan in field.field.field.choices %}
-                            <div class="span3 plan">
+                            <div class="span3 plan" {% for engine in plan.engines %}data-engine-{{engine.id}}="1" {%endfor%}>
                                 <div class="well">
                                     <h2 class="">{{plan_name}}</h2>
                                     <p>
                                     {% if plan.is_default %}
-                                        <span class="label">Recomended</span>
+                                        <span class="label label-success">Recommended</span>
                                     {% else %}
                                         <span>&nbsp;</span>
                                     {% endif %}

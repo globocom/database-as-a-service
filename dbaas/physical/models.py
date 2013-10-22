@@ -4,7 +4,7 @@ from django.conf import settings
 import time
 import logging
 import simple_audit
-from django.db.models.signals import pre_save, post_save
+from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -69,6 +69,10 @@ class Plan(BaseModel):
                                      default=False,
                                      help_text=_("Check this option if this the default plan. There can be only one..."))
     engine_type = models.ForeignKey(EngineType, verbose_name=_("Engine Type"), related_name='plans')
+
+    @property
+    def engines(self):
+        return Engine.objects.filter(engine_type_id=self.engine_type_id)
 
     def __unicode__(self):
         return "%s" % self.name

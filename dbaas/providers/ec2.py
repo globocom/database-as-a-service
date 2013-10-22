@@ -50,6 +50,7 @@ class Ec2Provider(object):
             time.sleep(1)
             i.update()
 
+        LOG.info("Created node %s", i.ip_address)
         node = models.Node()
         node.address = i.ip_address
         # node.address = i.public_dns_name
