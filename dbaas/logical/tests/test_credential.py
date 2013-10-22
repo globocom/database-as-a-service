@@ -15,7 +15,8 @@ class FakeDriver(base.BaseDriver):
 class CredentialTestCase(TestCase):
 
     def setUp(self):
-        self.instance = factory_physical.InstanceFactory()
+        self.node = factory_physical.NodeFactory()
+        self.instance = self.node.instance
         self.engine = FakeDriver(instance=self.instance)
         self.database = factory_logical.DatabaseFactory(instance=self.instance)
 
@@ -46,7 +47,7 @@ class CredentialTestCase(TestCase):
 
     def test_cannot_edit_user_credential(self):
 
-        credential = factory_logical.CredentialFactory()
+        credential = factory_logical.CredentialFactory(database=self.database)
 
         self.assertTrue(credential.pk)
 
