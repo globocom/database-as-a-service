@@ -2,7 +2,7 @@
 from __future__ import absolute_import, unicode_literals
 import factory
 from .. import models
-from physical.tests.factory import InstanceFactory
+from physical.tests.factory import InstanceFactory, NodeFactory
 
 
 class ProductFactory(factory.DjangoModelFactory):
