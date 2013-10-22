@@ -171,7 +171,6 @@ def service_bind(request, engine_name=None, engine_version=None, service_name=No
             Instance.provision_database(instance=instance)
             Bind(service_name=service_name, service_hostname=unit_host, instance=instance).save()
             response=instance.env_variables(database_name=service_name)
-            LOG.debug("response: %s" % response)
             return Response(data=response, 
                             status=201)
     except Instance.DoesNotExist:
