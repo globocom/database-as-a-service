@@ -58,7 +58,7 @@ class CredentialTestCase(TestCase):
     def test_cannot_edit_database_credential(self):
 
         credential = factory_logical.CredentialFactory(database=self.database)
-        another_database = factory_logical.DatabaseFactory()
+        another_database = factory_logical.DatabaseFactory(instance=self.instance)
 
         credential.database = another_database
 
