@@ -105,10 +105,6 @@ class Instance(BaseModel):
 
     def __unicode__(self):
         return self.name
-
-    def change_default_password(self, driver=None, node=None):
-        self.password = driver.change_default_pwd(node)
-        self.save()
         
     def env_variables(self, database_name=None):
         """
@@ -214,7 +210,8 @@ class Instance(BaseModel):
         LOG.info('Retries until the node creation for instance %s: %s' % (instance, retry))
 
         # change default password after node is started
-        self.change_default_password(driver=driver, node=node)
+        instance.password = driver.change_default_pwd(node)
+        instance.save()
         
         node.is_active = True
         node.save()
