@@ -15,15 +15,6 @@ from drivers import factory_for
 
 LOG = logging.getLogger(__name__)
 
-class Bind(BaseModel):
-
-    service_name = models.CharField(verbose_name=_("Service Name"), max_length=200)
-    service_hostname = models.CharField(verbose_name=_("Service Hostname"), max_length=200, null=True, blank=True)
-    instance = models.ForeignKey(Instance, related_name="binds", on_delete=models.PROTECT, null=True, blank=True)
-
-    def __unicode__(self):
-        return "%s" % self.service_name
-
 class Product(BaseModel):
 
     name = models.CharField(verbose_name=_("Product name"), max_length=100, unique=True)
@@ -131,4 +122,4 @@ def credential_pre_save(sender, **kwargs):
             raise AttributeError(_("Attribute database cannot be edited"))
 
 
-simple_audit.register(Product, Database, Credential, Bind)
+simple_audit.register(Product, Database, Credential)

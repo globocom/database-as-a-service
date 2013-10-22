@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 from django_services import admin
-from ..service.bind import BindService
+from ..service import BindService
 
 
 class BindAdmin(admin.DjangoServicesAdmin):
