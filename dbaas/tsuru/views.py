@@ -12,7 +12,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view, renderer_classes
 
 from physical.models import Engine, EngineType, Instance, Node
-from logical.models import Database, Bind
+from logical.models import Database, Bind, Credential
 from drivers import factory_for
 
 
@@ -128,6 +128,17 @@ def service_remove(request, engine_name=None, engine_version=None, service_name=
     data = request.DATA
 
     LOG.info("removing service %s" % (service_name))
+    #removes database
+    try:
+        database = Database.objects.get(name=service_name)
+        database.delete()
+    except Database.DoesNotExist:
+        LOG.warning("database not found for service %s" % (service_name))
+    except Exception, e:
+        LOG.error("error removing database %s: %s" % (service_name, e))
+        return Response(data={"error": "%s" % e}, status=500)
+        
+    #removes instance
     try:
         instance = Instance.objects.get(name=service_name)
         driver = factory_for(instance)
@@ -137,6 +148,7 @@ def service_remove(request, engine_name=None, engine_version=None, service_name=
         LOG.warning("instance not found for service %s" % (service_name))
         return Response(data={"status": "not_found"}, status=404)
     except Exception, e:
+        LOG.error("error removing instance %s: %s" % (service_name, e))
         return Response(data={"error": "%s" % e}, status=500)
 
 
@@ -168,10 +180,8 @@ def service_bind(request, engine_name=None, engine_version=None, service_name=No
         app_host = data["app-host"]
         #provision database
         with transaction.commit_on_success():
-            Instance.provision_database(instance=instance)
             Bind(service_name=service_name, service_hostname=unit_host, instance=instance).save()
             response=instance.env_variables(database_name=service_name)
-            LOG.debug("response: %s" % response)
             return Response(data=response, 
                             status=201)
     except Instance.DoesNotExist:
@@ -192,19 +202,20 @@ def service_unbind(request, engine_name=None, engine_version=None, service_name=
     LOG.debug("request DATA: %s" % request.DATA)
     LOG.debug("request QUERY_PARAMS: %s" % request.QUERY_PARAMS)
     LOG.debug("request content-type: %s" % request.content_type)
-    # print("request meta: %s" % request.META)
     engine = __check_service_availability(engine_name, engine_version)
     if not engine:
         return Response(data={"error": "endpoint not available for %s(%s)" % (engine_name, engine_version)}, status=500)
     
     data = request.DATA
     try:
-        #get database
-        database = Database.objects.get(name=service_name)
         instance = Instance.objects.get(name=service_name)
-        #removes the database
+        database = Database.objects.get(name=service_name)
         with transaction.commit_on_success():
-            database.delete()
+            #removes credentials
+            credentials = Credential.objects.filter(database=database, user=Credential.USER_PATTERN % (database.name))
+            LOG.info("Credentials registered in dbaas for database %s that will be deleted: %s" % (database.name, credentials))
+            [credential.delete() for credential in credentials]
+            
             #get binds and delete all
             binds = Bind.objects.filter(service_name=service_name, service_hostname=host, instance=instance)
             LOG.info("Binds registered in dbaas that will be deleted: %s" % binds)

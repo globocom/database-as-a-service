@@ -50,7 +50,7 @@ class Database(BaseModel):
         if self.name in self.__get_database_reserved_names():
             raise ValidationError(_("%s is a reserved database name" % self.name))
 
-    def create_new(self):
+    def create_new_credential(self):
         """creates a new credential for the database with a random password"""
         engine = factory_for(self.instance)
         LOG.info("creating new credential for database %s" % self.name)
@@ -100,7 +100,6 @@ def database_post_save(sender, **kwargs):
         LOG.info("a new database (%s) were created... provision it in the engine" % (database.name))
         engine = factory_for(database.instance)
         engine.create_database(database)
-        database.create_new()
 
 
 @receiver(pre_save, sender=Database)
