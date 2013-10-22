@@ -121,7 +121,7 @@ class Instance(BaseModel):
             credential = Credential.objects.get(database=database, user=Credential.USER_PATTERN % (database_name))
         except Credential.DoesNotExist:
             LOG.warning("Credential for database %s not found. Trying to create a new one..." % database_name)
-            credential.create_new()
+            database.create_new_credential()
         
         envs = {}
         prefix = self.engine.name.upper()
