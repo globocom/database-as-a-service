@@ -3,6 +3,7 @@ from __future__ import absolute_import, unicode_literals
 import simple_audit
 import logging
 from django.db import models
+from django.contrib.auth.models import User, Group
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 from django.db.models.signals import pre_save, post_save, pre_delete
@@ -69,6 +70,14 @@ class Credential(BaseModel):
 #####################################################################################################
 # SIGNALS
 #####################################################################################################
+
+#all users should be is_staff True
+@receiver(pre_save, sender=User)
+def user_pre_save(sender, **kwargs):
+    instance = kwargs.get('instance')
+    if not instance.is_staff:
+        instance.is_staff = True
+
 @receiver(pre_delete, sender=Database)
 def database_pre_delete(sender, **kwargs):
     """
