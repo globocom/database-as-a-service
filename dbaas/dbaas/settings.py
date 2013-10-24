@@ -198,6 +198,49 @@ if CI:
     NOSE_ARGS += ['--with-coverage', '--cover-package=application',
                   '--with-xunit', '--xunit-file=test-report.xml', '--cover-xml', '--cover-xml-file=coverage.xml']
 
+##################################
+### LDAP_AUTHENTICATION
+##################################
+LDAP_ENABLED = os.getenv('DBAAS_LDAP_ENABLED', '0')
+if LDAP_ENABLED == "1":
+    LDAP_ENABLED = True
+else:
+    LDAP_ENABLED = False
+
+LDAP_CERTDIR = os.getenv('DBAAS_LDAP_CERTDIR', '')
+LDAP_CACERTFILE = os.getenv('DBAAS_LDAP_CACERTFILE', '')
+LDAP_CERTFILE = os.getenv('DBAAS_LDAP_CERTFILE', '')
+LDAP_KEYFILE = os.getenv('DBAAS_LDAP_KEYFILE', '')
+if LDAP_ENABLED:
+    import ldap
+    from django_auth_ldap.config import LDAPSearch
+
+    ldap.set_option(ldap.OPT_X_TLS_CACERTFILE, LDAP_CERTDIR + LDAP_CACERTFILE)
+    ldap.set_option(ldap.OPT_X_TLS_CERTFILE, LDAP_CERTDIR + LDAP_CERTFILE)
+    ldap.set_option(ldap.OPT_X_TLS_KEYFILE, LDAP_CERTDIR + LDAP_KEYFILE)
+
+    # Baseline configuration.
+    AUTH_LDAP_SERVER_URI = os.getenv('AUTH_LDAP_SERVER_URI', '')
+
+    AUTH_LDAP_BIND_DN = os.getenv('AUTH_LDAP_BIND_DN', '')
+    AUTH_LDAP_BIND_PASSWORD = os.getenv('AUTH_LDAP_BIND_PASSWORD', '')
+    AUTH_LDAP_USER_SEARCH = LDAPSearch(os.getenv('AUTH_LDAP_USER_SEARCH', ''),
+                                       ldap.SCOPE_SUBTREE, "(&(uid=%(user)s)(!(nsaccountlock=TRUE)))")
+
+    AUTH_LDAP_ALWAYS_UPDATE_USER = True
+
+    # Populate the Django user from the LDAP directory.
+    AUTH_LDAP_USER_ATTR_MAP = {
+        "first_name": "givenName",
+        "last_name": "sn",
+        "email": "mail"
+    }
+
+    AUTHENTICATION_BACKENDS = (
+        'django_auth_ldap.backend.LDAPBackend',
+        'django.contrib.auth.backends.ModelBackend',
+    )
+
 REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': (
         'rest_framework_hal.renderers.JSONHalRenderer',
