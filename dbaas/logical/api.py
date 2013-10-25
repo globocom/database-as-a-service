@@ -2,7 +2,7 @@
 from __future__ import absolute_import, unicode_literals
 from django_services.api import DjangoServiceAPI, register
 from rest_framework.decorators import link
-from .service.product import ProductService
+from .service.project import ProjectService
 from .service.database import DatabaseService
 from .service.credential import CredentialService
 from . import serializers
@@ -11,9 +11,9 @@ from rest_framework.response import Response
 from drivers import factory_for
 
 
-class ProductAPI(DjangoServiceAPI):
-    serializer_class = serializers.ProductSerializer
-    service_class = ProductService
+class ProjectAPI(DjangoServiceAPI):
+    serializer_class = serializers.ProjectSerializer
+    service_class = ProjectService
 
 
 class DatabaseAPI(DjangoServiceAPI):
@@ -45,7 +45,7 @@ class CredentialAPI(DjangoServiceAPI):
     service_class = CredentialService
 
 
-register('product', ProductAPI)
+register('project', ProjectAPI)
 register('database', DatabaseAPI)
 register('credential', CredentialAPI)
 

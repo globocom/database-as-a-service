@@ -3,7 +3,7 @@ from __future__ import absolute_import, unicode_literals
 import simple_audit
 import logging
 from django.db import models
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 from django.db.models.signals import pre_save, post_save, pre_delete
@@ -16,10 +16,10 @@ from drivers import factory_for
 
 LOG = logging.getLogger(__name__)
 
-class Product(BaseModel):
+class Project(BaseModel):
 
-    name = models.CharField(verbose_name=_("Product name"), max_length=100, unique=True)
-    is_active = models.BooleanField(verbose_name=_("Is product active"), default=True)
+    name = models.CharField(verbose_name=_("Project name"), max_length=100, unique=True)
+    is_active = models.BooleanField(verbose_name=_("Is project active"), default=True)
     slug = models.SlugField()
 
     def __unicode__(self):
@@ -32,7 +32,7 @@ class Database(BaseModel):
 
     name = models.CharField(verbose_name=_("Database name"), max_length=100, unique=True)
     instance = models.ForeignKey(Instance, related_name="databases", on_delete=models.PROTECT)
-    product = models.ForeignKey(Product, related_name="databases", on_delete=models.PROTECT, null=True, blank=True)
+    project = models.ForeignKey(Project, related_name="databases", on_delete=models.PROTECT, null=True, blank=True)
 
     def __unicode__(self):
         return u"%s" % self.name
@@ -131,4 +131,4 @@ def credential_pre_save(sender, **kwargs):
             raise AttributeError(_("Attribute database cannot be edited"))
 
 
-simple_audit.register(Product, Database, Credential)
+simple_audit.register(Project, Database, Credential)

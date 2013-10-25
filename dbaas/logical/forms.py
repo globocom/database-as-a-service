@@ -33,7 +33,7 @@ class DatabaseForm(models.ModelForm):
 
     class Meta:
         model = Database
-        fields = ('name', 'product',)
+        fields = ('name', 'project',)
 
     def clean(self):
         cleaned_data = super(DatabaseForm, self).clean()

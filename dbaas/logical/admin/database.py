@@ -10,11 +10,11 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     service_class = DatabaseService
     search_fields = ("name", "instance__name")
     list_display = ("name", "instance",)
-    list_filter = ("instance", "product",)
+    list_filter = ("instance", "project",)
     change_form_template = "logical/database_change_form.html"
     fieldsets = (
         (None, {
-            'fields': ('name', 'product')
+            'fields': ('name', 'project')
             }
         ),
         ('reuse_instance', {

@@ -5,10 +5,10 @@ from .. import models
 from physical.tests.factory import InstanceFactory, NodeFactory
 
 
-class ProductFactory(factory.DjangoModelFactory):
-    FACTORY_FOR = models.Product
+class ProjectFactory(factory.DjangoModelFactory):
+    FACTORY_FOR = models.Project
 
-    name = factory.Sequence(lambda n: 'product_{0}'.format(n))
+    name = factory.Sequence(lambda n: 'project_{0}'.format(n))
     is_active = True
     slug = factory.LazyAttribute(lambda p: p.name)
 
@@ -18,7 +18,7 @@ class DatabaseFactory(factory.DjangoModelFactory):
 
     name = factory.Sequence(lambda n: 'db-{0}'.format(n))
     instance = factory.SubFactory(InstanceFactory)
-    product = factory.SubFactory(ProductFactory)
+    project = factory.SubFactory(ProjectFactory)
 
 
 class CredentialFactory(factory.DjangoModelFactory):

@@ -4,10 +4,10 @@ from django_services.api import DjangoServiceSerializer
 from . import models
 
 
-class ProductSerializer(DjangoServiceSerializer):
+class ProjectSerializer(DjangoServiceSerializer):
 
     class Meta:
-        model = models.Product
+        model = models.Project
 
 
 class DatabaseSerializer(DjangoServiceSerializer):
