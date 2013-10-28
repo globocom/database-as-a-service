@@ -14,19 +14,9 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     change_form_template = "logical/database_change_form.html"
     fieldsets = (
         (None, {
-            'fields': ('name', 'project')
+            'fields': ('name', 'project', 'plan')
             }
         ),
-        ('reuse_databaseinfra', {
-            'fields': ('databaseinfra',),
-            'classes': ('reuse_databaseinfra',),
-            },
-        ),
-        ('new_databaseinfra', {
-            'fields': ('engine', 'plan'),
-            'classes': ('new_databaseinfra',),
-            },
-        )
     )
     form = DatabaseForm
 

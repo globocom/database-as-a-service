@@ -40,19 +40,3 @@
     margin-left: 42px;
     height: 109px;
 }
-
-/* Box Plan */
-.plan .well {
-    box-shadow:         3px 3px 7px rgba(50, 50, 50, 0.75);
-}
-.plan .well:hover {
-    background-color: white;
-}
-
-.plan-attributes {
-    min-height: 50px;
-}
-
-.text-center {
-    text-align: center;
-}
