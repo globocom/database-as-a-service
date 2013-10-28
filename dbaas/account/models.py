@@ -13,9 +13,21 @@ from util.models import BaseModel
 
 LOG = logging.getLogger(__name__)
 
+class Team(BaseModel):
+    name = models.CharField(verbose_name=_("Team name"), max_length=200, unique=True)
+    user = models.ForeignKey(User, related_name="teams", null=True, blank=True)
+    is_active = models.BooleanField(verbose_name=_("Is team active"), default=True)
+
+    def __unicode__(self):
+        return "%s" % self.name
+
 class Profile(BaseModel):
     user = models.OneToOneField(User)
-    team = models.CharField(max_length=200)
+    team = models.CharField(verbose_name=_("Team name"), max_length=200)
+    #team = models.OneToOneField(Team)
+    
+    def __unicode__(self):
+        return "%s | %s" % (self.user.username, self.team.name)
 
 
 #####################################################################################################
@@ -28,3 +40,20 @@ def user_pre_save(sender, **kwargs):
     user = kwargs.get('instance')
     if not user.is_staff:
         user.is_staff = True
+
+
+@receiver(post_save, sender=User)
+def user_post_save(sender, **kwargs):
+    user = kwargs.get('instance')
+    LOG.debug("User post save triggered")
+    try:
+        profile = user.profile
+        team = Team.objects.get_or_create(name=profile.team.name)
+    except:
+        pass
+
+
+@receiver(post_save, sender=Profile)
+def profile_post_save(sender, **kwargs):
+    profile = kwargs.get('instance')
+    LOG.debug("Profile post save triggered")
