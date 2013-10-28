@@ -4,12 +4,12 @@ from simple_audit.models import Audit
 register = template.Library()
 
 
-class AdminAuditInstance(template.Instance):
+class AdminAuditNode(template.Node):
     def __init__(self, limit, varname, user):
         self.limit, self.varname, self.user = limit, varname, user
 
     def __repr__(self):
-        return "<GetAdminLog Instance>"
+        return "<GetAdminLog Node>"
 
     def render(self, context):
         if self.user is None:
@@ -39,7 +39,7 @@ def get_audit_log(parser, token):
         if tokens[4] != 'for_user':
             raise template.TemplateSyntaxError(
                 "Fourth argument to 'get_audit_log' must be 'for_user'")
-    return AdminAuditInstance(limit=tokens[1], varname=tokens[3], user=(len(tokens) > 5 and tokens[5] or None))
+    return AdminAuditNode(limit=tokens[1], varname=tokens[3], user=(len(tokens) > 5 and tokens[5] or None))
 
 
 @register.filter
