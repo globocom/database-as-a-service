@@ -51,6 +51,18 @@ class Database(BaseModel):
         credential.save()
         engine.create_user(credential)
         return credential
+
+    @classmethod
+    def provision(cls, name, plan):
+        # create new databaseinfra
+
+        LOG.debug("provisioning databaseinfra with plan: %s | name: %s", plan, name)
+
+        database = Database()
+        database.databaseinfra = DatabaseInfra.best_for(plan)
+        database.name = name
+        database.save()
+        return database
         
     def __get_database_reserved_names(self):
         return Database.RESERVED_DATABASES_NAME

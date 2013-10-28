@@ -20,7 +20,7 @@ class PlanForm(forms.ModelForm):
         is_default = cleaned_data.get("is_default")
         engine_type = cleaned_data.get("engine_type")
         if not is_default:
-            if self.databaseinfra.id:
+            if self.instance.id:
                 plans = models.Plan.objects.filter(is_default=True, engine_type=engine_type).exclude(id=self.databaseinfra.id)
             else:
                 plans = models.Plan.objects.filter(is_default=True, engine_type=engine_type)
@@ -44,7 +44,7 @@ class PlanAttributeInlineFormset(forms.models.BaseInlineFormSet):
                 # annoyingly, if a subform is invalid Django explicity raises
                 # an AttributeError for cleaned_data
                 pass
-        if count < 1:
-            log.warning(u"%s" % _("You must have at least one plan attribute"))
-            raise forms.ValidationError(_("You must have at least one plan attribute"))
+        # if count < 1:
+        #     log.warning(u"%s" % _("You must have at least one plan attribute"))
+        #     raise forms.ValidationError(_("You must have at least one plan attribute"))
         

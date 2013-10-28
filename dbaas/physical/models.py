@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
-from django.conf import settings
-import time
 import logging
 import simple_audit
 from django.db.models.signals import pre_save
@@ -64,6 +62,7 @@ class Engine(BaseModel):
 class Plan(BaseModel):
 
     name = models.CharField(verbose_name=_("Plan name"), max_length=100, unique=True)
+    description = models.TextField(null=True, blank=True)
     is_active = models.BooleanField(verbose_name=_("Is plan active"), default=True)
     is_default = models.BooleanField(verbose_name=_("Is plan default"),
                                      default=False,
@@ -160,66 +159,13 @@ class DatabaseInfra(BaseModel):
         return name
 
     @classmethod
-    def provision_database(cls, databaseinfra=None):
-        from logical.models import Database
-        #a signal will create the database in the engine
-        database = Database.objects.get_or_create(name=databaseinfra.name, databaseinfra=databaseinfra)
-        return database
-
-    @classmethod
-    def provision(cls, engine=None, plan=None, name=None):
-        # create new databaseinfra
-
-        LOG.debug("provisioning databaseinfra with engine: %s | plan: %s | name: %s" % (engine, plan, name))
-
-        databaseinfra = DatabaseInfra()
-        databaseinfra.name = DatabaseInfra.get_unique_databaseinfra_name(name)
-        databaseinfra.engine = engine
-        databaseinfra.user = getattr(settings, "DB_DEFAULT_USER", "")
-        databaseinfra.password = getattr(settings, "DB_DEFAULT_PASSWORD", "")
-        #if plan is none, then default plan is set via signal.
-        if plan:
-            databaseinfra.plan = plan
-        else:
-            databaseinfra.plan = databaseinfra.engine.engine_type.default_plan
-        databaseinfra.save()
-
-        # now, create a instance
-        # hardcode!!!
-        from providers import ProviderFactory
-        provider = ProviderFactory.factory()
-        instance = provider.create_instance(databaseinfra)
-
-        from drivers import factory_for
-        driver = factory_for(databaseinfra)
-        # max_retries = 15
-        retry = 0
-        while True:
-            #TODO: timeout or use some async job
-            # if retry == max_retries:
-            #     raise Exception(_("Max retries (%d) reached when trying to create a instance." % max_retries))
-            time.sleep(10)
-            try:
-                LOG.debug('Waiting for instance %s...', instance)
-                driver.check_status(instance=instance)
-                break
-            except:
-                LOG.warning('Instance %s not ready...', instance, exc_info=True)
-                retry += 1
-
-        LOG.info('Retries until the instance creation for databaseinfra %s: %s' % (databaseinfra, retry))
-
-        # change default password after instance is started
-        databaseinfra.password = driver.change_default_pwd(instance)
-        databaseinfra.save()
-        
-        instance.is_active = True
-        instance.save()
-
-        #create database
-        DatabaseInfra.provision_database(databaseinfra=databaseinfra)
-        #returns the databaseinfra
-        return databaseinfra
+    def best_for(cls, plan):
+        """ Choose the best DatabaseInfra for another database """
+        # FIXME For a while, choose always first database
+        databases = DatabaseInfra.objects.filter(plan=plan).all()
+        if not databases:
+            return None
+        return databases[0]
 
 
 class Instance(BaseModel):

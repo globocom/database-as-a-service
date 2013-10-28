@@ -1,0 +1,17 @@
+
+/* Box Plan */
+.plan {
+    box-shadow: 3px 3px 7px rgba(50, 50, 50, 0.75);
+    /*min-height: 100px;*/
+}
+.plan:hover {
+    background-color: white;
+}
+
+.plan-description {
+    min-height: 150px;
+}
+
+.text-center {
+    text-align: center;
+}
