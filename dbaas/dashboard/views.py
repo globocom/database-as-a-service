@@ -35,4 +35,4 @@ def dashboard(request, *args, **kwargs):
             })
         
         databaseinfras.append(data)
-    return render_to_response("dashboard/dashboard.html", locals(), context_databaseinfra=RequestContext(request))
+    return render_to_response("dashboard/dashboard.html", locals(), context_instance=RequestContext(request))
