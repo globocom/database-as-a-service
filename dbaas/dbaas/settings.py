@@ -168,6 +168,7 @@ INSTALLED_APPS = (
     'django.contrib.sites',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'account',
     'admin',
     'adminplus',
     'physical',
@@ -320,7 +321,7 @@ LOGGING = {
             'propagate': True,
         },
         'django.db.backends': {
-            'level': 'DEBUG'
+            'level': 'INFO'
         },
         'south': {
             'level': 'INFO'
