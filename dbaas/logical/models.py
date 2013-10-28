@@ -16,6 +16,7 @@ from drivers import factory_for
 
 LOG = logging.getLogger(__name__)
 
+
 class Project(BaseModel):
 
     name = models.CharField(verbose_name=_("Project name"), max_length=100, unique=True)
@@ -70,14 +71,6 @@ class Credential(BaseModel):
 #####################################################################################################
 # SIGNALS
 #####################################################################################################
-
-#all users should be is_staff True
-@receiver(pre_save, sender=User)
-def user_pre_save(sender, **kwargs):
-    user = kwargs.get('instance')
-    if not user.is_staff:
-        user.is_staff = True
-
 @receiver(pre_delete, sender=Database)
 def database_pre_delete(sender, **kwargs):
     """
