@@ -6,7 +6,7 @@ from django.db import models
 from django.contrib.auth.models import User, Group
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
-from django.db.models.signals import pre_save, post_save, pre_delete
+from django.db.models.signals import pre_save, post_save, pre_delete, m2m_changed
 from django.dispatch import receiver
 from django_extensions.db.fields.encrypted import EncryptedCharField
 
@@ -24,7 +24,8 @@ def sync_ldap_groups_with_user(user=None):
     groups = Group.objects.filter(name__in=ldap_groups).exclude(user=user)
     LOG.info("LDAP's team created in the system and not set to user %s: %s" % (user, groups))
     if groups:
-        groups[0].user_set.add(user)
+        #groups[0].user_set.add(user)
+        user.groups.add(groups[0])
         LOG.info("group %s added to user %s" % (groups[0], user))
 
 
@@ -47,6 +48,5 @@ def user_post_save(sender, **kwargs):
     user = kwargs.get('instance')
     LOG.debug("user post save signal")
     sync_ldap_groups_with_user(user=user)
-
 
 
