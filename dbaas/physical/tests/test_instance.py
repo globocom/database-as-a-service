@@ -5,39 +5,39 @@ from django.test import TestCase
 from django.test.client import RequestFactory
 from django.db import IntegrityError
 
-from ..models import Node
+from ..models import Instance
 from .factory import DatabaseInfraFactory
 
 
-class NodeTestCase(TestCase):
+class InstanceTestCase(TestCase):
 
     def setUp(self):
         self.client = Client()
         self.factory = RequestFactory()
         self.databaseinfra = DatabaseInfraFactory()
-        self.new_node = Node.objects.create(address="new_node.localnode",
+        self.new_instance = Instance.objects.create(address="new_instance.localinstance",
                                     port=123,
                                     is_active=True,
                                     databaseinfra=self.databaseinfra,
                                     type='1')
 
     def tearDown(self):
-        self.new_node.delete()
+        self.new_instance.delete()
 
-    def test_create_node(self):
+    def test_create_instance(self):
         
-        node = Node.objects.create(address="test.localnode",
+        instance = Instance.objects.create(address="test.localinstance",
                                     port=123,
                                     is_active=True,
                                     databaseinfra=self.databaseinfra,
                                     type='1')
         
-        self.assertTrue(node.id)
+        self.assertTrue(instance.id)
 
 
-    def test_error_duplicate_node(self):
+    def test_error_duplicate_instance(self):
         
-        self.assertRaises(IntegrityError, Node.objects.create, address="new_node.localnode",
+        self.assertRaises(IntegrityError, Instance.objects.create, address="new_instance.localinstance",
                                                                 port=123,
                                                                 is_active=True, 
                                                                 databaseinfra=self.databaseinfra,

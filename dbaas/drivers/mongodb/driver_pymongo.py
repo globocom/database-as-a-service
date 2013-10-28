@@ -14,21 +14,21 @@ class MongoDB(BaseDriver):
     default_port = 27017
 
     def get_connection(self):
-        return "%s:%s" % (self.databaseinfra.node.address, self.databaseinfra.node.port)
+        return "%s:%s" % (self.databaseinfra.instance.address, self.databaseinfra.instance.port)
 
-    def __mongo_client__(self, node):
-        client = pymongo.MongoClient(node.address, int(node.port))
+    def __mongo_client__(self, instance):
+        client = pymongo.MongoClient(instance.address, int(instance.port))
         if self.databaseinfra.user and self.databaseinfra.password:
             LOG.debug('Authenticating databaseinfra %s', self.databaseinfra)
             client.admin.authenticate(self.databaseinfra.user, self.databaseinfra.password)
         return client
 
     @contextmanager
-    def pymongo(self, node=None, database=None):
+    def pymongo(self, instance=None, database=None):
         client = None
         try:
-            node = node or self.databaseinfra.node
-            client = self.__mongo_client__(node)
+            instance = instance or self.databaseinfra.instance
+            client = self.__mongo_client__(instance)
 
             if database is None:
                 return_value = client
@@ -48,8 +48,8 @@ class MongoDB(BaseDriver):
             except:
                 LOG.warn('Error disconnecting from databaseinfra %s. Ignoring...', self.databaseinfra, exc_info=True)
 
-    def check_status(self, node=None):
-        with self.pymongo(node=node) as client:
+    def check_status(self, instance=None):
+        with self.pymongo(instance=instance) as client:
             try:
                 ok = client.admin.command('ping')
             except pymongo.errors.PyMongoError, e:
@@ -100,8 +100,8 @@ class MongoDB(BaseDriver):
         with self.pymongo() as client:
             client.drop_database(database.name)
 
-    def change_default_pwd(self, node):
-        with self.pymongo(node=node) as client:
+    def change_default_pwd(self, instance):
+        with self.pymongo(instance=instance) as client:
             new_password = self.make_random_password()
-            client.admin.add_user(name=node.databaseinfra.user, password=new_password)
+            client.admin.add_user(name=instance.databaseinfra.user, password=new_password)
             return new_password

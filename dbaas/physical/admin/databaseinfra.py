@@ -6,13 +6,13 @@ from django.utils.translation import ugettext_lazy as _
 from django.core.exceptions import ValidationError
 from django_services import admin
 from ..service.databaseinfra import DatabaseInfraService
-from ..models import Node
+from ..models import Instance
 
 
-class NodeModelFormSet(BaseInlineFormSet):
+class InstanceModelFormSet(BaseInlineFormSet):
 
     def clean(self):
-        super(NodeModelFormSet, self).clean()
+        super(InstanceModelFormSet, self).clean()
 
         for error in self.errors:
             if error:
@@ -26,28 +26,28 @@ class NodeModelFormSet(BaseInlineFormSet):
 
         # example custom validation across forms in the formset:
         if completed  == 0:
-            raise ValidationError({'nodes': _("Specify at least one valid node")})
+            raise ValidationError({'instances': _("Specify at least one valid instance")})
         elif completed > 1:
-            raise ValidationError({'nodes': _("Currently, you can have only one node per databaseinfra")})
+            raise ValidationError({'instances': _("Currently, you can have only one instance per databaseinfra")})
 
 
-class NodeAdmin(django_admin.TabularInline):
-    model = Node
+class InstanceAdmin(django_admin.TabularInline):
+    model = Instance
     fields = ('address', 'port', 'type', 'is_active',)
     max_num = 1
     can_delete = False
     extra = 1
-    formset = NodeModelFormSet
+    formset = InstanceModelFormSet
 
 
 class DatabaseInfraAdmin(admin.DjangoServicesAdmin):
     service_class = DatabaseInfraService
-    search_fields = ("name", "user", "nodes__address",)
-    list_display = ("name", "user", "node",)
+    search_fields = ("name", "user", "instances__address",)
+    list_display = ("name", "user", "instance",)
     list_filter = ("engine",)
     save_on_top = True
 
     inlines = [
-        NodeAdmin
+        InstanceAdmin
     ]
 

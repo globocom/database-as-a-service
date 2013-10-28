@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 from django_services import service
-from ..models import Node
+from ..models import Instance
 
 
-class NodeService(service.CRUDService):
-    model_class = Node
+class InstanceService(service.CRUDService):
+    model_class = Instance

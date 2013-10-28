@@ -21,8 +21,8 @@ class FakeDriver(base.BaseDriver):
 class DatabaseTestCase(TestCase):
 
     def setUp(self):
-        self.node = physical_factory.NodeFactory()
-        self.databaseinfra = self.node.databaseinfra
+        self.instance = physical_factory.InstanceFactory()
+        self.databaseinfra = self.instance.databaseinfra
         self.engine = FakeDriver(databaseinfra=self.databaseinfra)
 
     def tearDown(self):

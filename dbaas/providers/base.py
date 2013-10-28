@@ -16,8 +16,8 @@ class BaseProvider(object):
     #     else:
     #         raise TypeError(_("DatabaseInfra is not defined"))
 
-    def create_node(self, databaseinfra):
+    def create_instance(self, databaseinfra):
         raise NotImplementedError()
 
-    def destroy_node(self, node):
+    def destroy_instance(self, instance):
         raise NotImplementedError()

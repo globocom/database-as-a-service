@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 from django_services.api import DjangoServiceAPI, register
-from .service.node import NodeService
+from .service.instance import InstanceService
 from .service.databaseinfra import DatabaseInfraService
 from .service.plan import PlanService
 from .service.engine import EngineService, EngineTypeService
-from .serializers import NodeSerializer, DatabaseInfraSerializer, \
+from .serializers import InstanceSerializer, DatabaseInfraSerializer, \
                         EngineSerializer, EngineTypeSerializer, PlanSerializer
 
 
@@ -31,14 +31,14 @@ class DatabaseInfraAPI(DjangoServiceAPI):
     operations = ('list', 'retrieve', 'create', 'update', 'destroy')
 
 
-class NodeAPI(DjangoServiceAPI):
-    serializer_class = NodeSerializer
-    service_class = NodeService
+class InstanceAPI(DjangoServiceAPI):
+    serializer_class = InstanceSerializer
+    service_class = InstanceService
 
 
 register('enginetype', EngineTypeAPI)
 register('engine', EngineAPI)
 register('plan', PlanAPI)
-register('node', NodeAPI)
+register('instance', InstanceAPI)
 register('databaseinfra', DatabaseInfraAPI)
 

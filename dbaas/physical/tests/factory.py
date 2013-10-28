@@ -46,8 +46,8 @@ class DatabaseInfraFactory(factory.DjangoModelFactory):
     plan = factory.SubFactory(PlanFactory)
 
 
-class NodeFactory(factory.DjangoModelFactory):
-    FACTORY_FOR = models.Node
+class InstanceFactory(factory.DjangoModelFactory):
+    FACTORY_FOR = models.Instance
 
     address = '127.0.0.1'
     port = 27017

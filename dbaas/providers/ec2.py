@@ -39,7 +39,7 @@ def get_ec2_api():
 class Ec2Provider(object):
 
     #@timeout_decorator.timeout(60)
-    def create_node(self, databaseinfra):
+    def create_instance(self, databaseinfra):
         ec2_api = get_ec2_api()
         reservation = ec2_api.run_instances(settings.EC2_AMI_ID, subnet_id=settings.EC2_SUBNET_ID)
         i = reservation.instances[0]
@@ -50,17 +50,17 @@ class Ec2Provider(object):
             time.sleep(1)
             i.update()
 
-        LOG.info("Created node %s", i.ip_address)
-        node = models.Node()
-        node.address = i.ip_address
-        # node.address = i.public_dns_name
-        # node.address = i.dns_name
-        node.port = factory_for(databaseinfra).default_port
-        node.databaseinfra = databaseinfra
-        node.is_active = False
-        node.type = models.Node.VIRTUAL
-        node.save()
-        return node
+        LOG.info("Created instance %s", i.ip_address)
+        instance = models.Instance()
+        instance.address = i.ip_address
+        # instance.address = i.public_dns_name
+        # instance.address = i.dns_name
+        instance.port = factory_for(databaseinfra).default_port
+        instance.databaseinfra = databaseinfra
+        instance.is_active = False
+        instance.type = models.Instance.VIRTUAL
+        instance.save()
+        return instance
 
 # >>> pprint(i.__dict__)
 # {'_in_monitoring_element': False,

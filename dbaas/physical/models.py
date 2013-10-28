@@ -129,8 +129,8 @@ class DatabaseInfra(BaseModel):
         
         envs = {}
         prefix = self.engine.name.upper()
-        envs["%s_HOST" % prefix] = "%s" % self.node.address
-        envs["%s_PORT" % prefix] = "%s" % self.node.port
+        envs["%s_HOST" % prefix] = "%s" % self.instance.address
+        envs["%s_PORT" % prefix] = "%s" % self.instance.port
         envs["%s_USER" % prefix] = "%s" % credential.user
         envs["%s_PASSWORD" % prefix] = "%s" % credential.password
         envs["%s_DATABASE_NAME" % prefix] = "%s" % database.name
@@ -138,9 +138,9 @@ class DatabaseInfra(BaseModel):
         return envs
 
     @property
-    def node(self):
+    def instance(self):
         # temporary
-        return self.nodes.all()[0]
+        return self.instances.all()[0]
 
     @property
     def engine_name(self):
@@ -184,11 +184,11 @@ class DatabaseInfra(BaseModel):
             databaseinfra.plan = databaseinfra.engine.engine_type.default_plan
         databaseinfra.save()
 
-        # now, create a node
+        # now, create a instance
         # hardcode!!!
         from providers import ProviderFactory
         provider = ProviderFactory.factory()
-        node = provider.create_node(databaseinfra)
+        instance = provider.create_instance(databaseinfra)
 
         from drivers import factory_for
         driver = factory_for(databaseinfra)
@@ -197,24 +197,24 @@ class DatabaseInfra(BaseModel):
         while True:
             #TODO: timeout or use some async job
             # if retry == max_retries:
-            #     raise Exception(_("Max retries (%d) reached when trying to create a node." % max_retries))
+            #     raise Exception(_("Max retries (%d) reached when trying to create a instance." % max_retries))
             time.sleep(10)
             try:
-                LOG.debug('Waiting for node %s...', node)
-                driver.check_status(node=node)
+                LOG.debug('Waiting for instance %s...', instance)
+                driver.check_status(instance=instance)
                 break
             except:
-                LOG.warning('Node %s not ready...', node, exc_info=True)
+                LOG.warning('Instance %s not ready...', instance, exc_info=True)
                 retry += 1
 
-        LOG.info('Retries until the node creation for databaseinfra %s: %s' % (databaseinfra, retry))
+        LOG.info('Retries until the instance creation for databaseinfra %s: %s' % (databaseinfra, retry))
 
-        # change default password after node is started
-        databaseinfra.password = driver.change_default_pwd(node)
+        # change default password after instance is started
+        databaseinfra.password = driver.change_default_pwd(instance)
         databaseinfra.save()
         
-        node.is_active = True
-        node.save()
+        instance.is_active = True
+        instance.save()
 
         #create database
         DatabaseInfra.provision_database(databaseinfra=databaseinfra)
@@ -222,20 +222,20 @@ class DatabaseInfra(BaseModel):
         return databaseinfra
 
 
-class Node(BaseModel):
+class Instance(BaseModel):
 
     VIRTUAL = '1'
     PHYSICAL = '2'
     HOST_TYPE_CHOICES = (
         (VIRTUAL, 'Virtual Machine'),
-        (PHYSICAL, 'Physical Node'),
+        (PHYSICAL, 'Physical Instance'),
     )
 
-    address = models.CharField(verbose_name=_("Node address"), max_length=200)
-    port = models.IntegerField(verbose_name=_("Node port"))
-    databaseinfra = models.ForeignKey(DatabaseInfra, related_name="nodes", on_delete=models.CASCADE)
-    is_active = models.BooleanField(verbose_name=_("Is node active"), default=True)
-    type = models.CharField(verbose_name=_("Node type"),
+    address = models.CharField(verbose_name=_("Instance address"), max_length=200)
+    port = models.IntegerField(verbose_name=_("Instance port"))
+    databaseinfra = models.ForeignKey(DatabaseInfra, related_name="instances", on_delete=models.CASCADE)
+    is_active = models.BooleanField(verbose_name=_("Is instance active"), default=True)
+    type = models.CharField(verbose_name=_("Instance type"),
                             max_length=2,
                             choices=HOST_TYPE_CHOICES,
                             default=PHYSICAL)
@@ -253,19 +253,19 @@ class Node(BaseModel):
         return self.connection
 
     def clean(self, *args, **kwargs):
-        LOG.debug('Checking node %s (%s) status...', self.connection, self.databaseinfra)
+        LOG.debug('Checking instance %s (%s) status...', self.connection, self.databaseinfra)
         # self.clean_fields()
         from drivers import factory_for, GenericDriverError, ConnectionError, AuthenticationError
         try:
             engine = factory_for(self.databaseinfra)
-            engine.check_status(node=self)
-            LOG.debug('Node %s is ok', self)
+            engine.check_status(instance=self)
+            LOG.debug('Instance %s is ok', self)
         except AuthenticationError, e:
             # at django 1.5, model validation throught form doesn't use field name in ValidationError.
             # I put here, because I expected this problem can be solved in next versions
             raise ValidationError({'user': e.message})
         except ConnectionError, e:
-            raise ValidationError({'node': e.message})
+            raise ValidationError({'instance': e.message})
         except GenericDriverError, e:
             raise ValidationError(e.message)
 
@@ -310,4 +310,4 @@ def plan_pre_save(sender, **kwargs):
             LOG.debug("No plan found")
 
 
-simple_audit.register(EngineType, Engine, Plan, PlanAttribute, DatabaseInfra, Node)
+simple_audit.register(EngineType, Engine, Plan, PlanAttribute, DatabaseInfra, Instance)

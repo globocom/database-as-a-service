@@ -11,7 +11,7 @@ class AbstractTestDriverMongo(TestCase):
 
     def setUp(self):
         self.databaseinfra = factory_physical.DatabaseInfraFactory()
-        self.node = factory_physical.NodeFactory(databaseinfra=self.databaseinfra)
+        self.instance = factory_physical.InstanceFactory(databaseinfra=self.databaseinfra)
         self.driver = MongoDB(databaseinfra=self.databaseinfra)
         self._mongo_client = None
 
@@ -24,7 +24,7 @@ class AbstractTestDriverMongo(TestCase):
     @property
     def mongo_client(self):
         if self._mongo_client is None:
-            self._mongo_client = self.driver.__mongo_client__(self.node)
+            self._mongo_client = self.driver.__mongo_client__(self.instance)
         return self._mongo_client
 
 
@@ -42,7 +42,7 @@ class MongoDBEngineTestCase(AbstractTestDriverMongo):
         self.assertEqual(self.databaseinfra, self.driver.databaseinfra)
 
     def test_connection_string(self):
-        self.assertEqual("%s:%s" % (self.databaseinfra.node.address, self.databaseinfra.node.port), self.driver.get_connection())
+        self.assertEqual("%s:%s" % (self.databaseinfra.instance.address, self.databaseinfra.instance.port), self.driver.get_connection())
 
     def test_get_user(self):
         self.assertEqual(self.databaseinfra.user, self.driver.get_user())

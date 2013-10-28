@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 from django_services.api import DjangoServiceSerializer
-from .models import Node, DatabaseInfra, Engine, EngineType, Plan
+from .models import Instance, DatabaseInfra, Engine, EngineType, Plan
 
 
 class EngineTypeSerializer(DjangoServiceSerializer):
@@ -28,7 +28,7 @@ class DatabaseInfraSerializer(DjangoServiceSerializer):
         model = DatabaseInfra
 
 
-class NodeSerializer(DjangoServiceSerializer):
+class InstanceSerializer(DjangoServiceSerializer):
 
     class Meta:
-        model = Node
+        model = Instance

@@ -20,7 +20,7 @@ class Ec2ProviderTestCase(TestCase):
 
     def setUp(self):
         self.databaseinfra = factory_physical.DatabaseInfraFactory()
-        # self.node = factory_physical.NodeFactory(databaseinfra=self.databaseinfra)
+        # self.instance = factory_physical.InstanceFactory(databaseinfra=self.databaseinfra)
         self.provider = ec2.Ec2Provider()
 
 
@@ -61,12 +61,12 @@ class Ec2ProviderTestCase(TestCase):
     @mock_ec2
     @override_settings(EC2_URL=None)
     @override_settings(EC2_REGION="us-west-2")
-    def test_create_node(self):
-        node = self.provider.create_node(self.databaseinfra)
-        self.assertIsNotNone(node)
-        self.assertEqual(self.databaseinfra, node.databaseinfra)
-        self.assertEqual(False, node.is_active)
-        self.assertEqual(node.VIRTUAL, node.type)
-        self.assertIsNotNone(node.address)
-        self.assertEqual(27017, node.port)
+    def test_create_instance(self):
+        instance = self.provider.create_instance(self.databaseinfra)
+        self.assertIsNotNone(instance)
+        self.assertEqual(self.databaseinfra, instance.databaseinfra)
+        self.assertEqual(False, instance.is_active)
+        self.assertEqual(instance.VIRTUAL, instance.type)
+        self.assertIsNotNone(instance.address)
+        self.assertEqual(27017, instance.port)
 

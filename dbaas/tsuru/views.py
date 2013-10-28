@@ -11,7 +11,7 @@ from rest_framework.response import Response
 # from rest_framework.decorators import action, link
 from rest_framework.decorators import api_view, renderer_classes
 
-from physical.models import Engine, EngineType, DatabaseInfra, Node
+from physical.models import Engine, EngineType, DatabaseInfra, Instance
 from logical.models import Database, Credential
 from tsuru.models import Bind
 from drivers import factory_for
@@ -87,7 +87,7 @@ def service_add(request, engine_name=None, engine_version=None):
     LOG.info("creating service %s" % (service_name))
     try:
         databaseinfra = DatabaseInfra.provision(engine=engine,name=service_name)
-        return Response({"hostname": databaseinfra.node.address, 
+        return Response({"hostname": databaseinfra.instance.address, 
                         "engine_type" : engine.name,
                         "version" : engine.version,
                         "databaseinfra_name" : databaseinfra.name}, 

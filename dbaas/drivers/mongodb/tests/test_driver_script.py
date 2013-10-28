@@ -35,7 +35,7 @@ class MongoDBScriptEngineTestCase(TestCase):
         self.assertEqual(self.databaseinfra, mongodb_engine.databaseinfra)
 
     def test_connection_string(self):
-        self.assertEqual("%s:%s" % (self.databaseinfra.node.address, self.databaseinfra.node.port), self.driver.get_connection())
+        self.assertEqual("%s:%s" % (self.databaseinfra.instance.address, self.databaseinfra.instance.port), self.driver.get_connection())
 
     def test_get_user(self):
         self.assertEqual(self.databaseinfra.user, self.driver.get_user())

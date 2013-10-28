@@ -19,7 +19,7 @@ class MongoDBScript(BaseDriver):
     SCRIPT = "./MongoManager.sh"
     
     def get_connection(self):
-        return "%s:%s" % (self.databaseinfra.node.address, self.databaseinfra.node.port)
+        return "%s:%s" % (self.databaseinfra.instance.address, self.databaseinfra.instance.port)
 
     def check_status(self):
         self.run_mongo("status")
@@ -30,7 +30,7 @@ class MongoDBScript(BaseDriver):
         # gambiarra, precisa acertar isto!
         import pymongo
         from pprint import pprint
-        client = pymongo.MongoClient(self.databaseinfra.node.address, int(self.databaseinfra.node.port))
+        client = pymongo.MongoClient(self.databaseinfra.instance.address, int(self.databaseinfra.instance.port))
         json_status = client.server_info()
 
         print "** GERAL"

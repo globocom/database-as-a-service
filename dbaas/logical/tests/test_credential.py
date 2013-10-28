@@ -15,8 +15,8 @@ class FakeDriver(base.BaseDriver):
 class CredentialTestCase(TestCase):
 
     def setUp(self):
-        self.node = factory_physical.NodeFactory()
-        self.databaseinfra = self.node.databaseinfra
+        self.instance = factory_physical.InstanceFactory()
+        self.databaseinfra = self.instance.databaseinfra
         self.engine = FakeDriver(databaseinfra=self.databaseinfra)
         self.database = factory_logical.DatabaseFactory(databaseinfra=self.databaseinfra)
 
