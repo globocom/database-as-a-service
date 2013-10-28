@@ -25,8 +25,8 @@ class DatabaseAPI(DjangoServiceAPI):
         """ Status of DB """
         try:
             db = Database.objects.get(pk=pk)
-            instance = db.instance
-            factory_for(instance).check_status()
+            databaseinfra = db.databaseinfra
+            factory_for(databaseinfra).check_status()
             return Response(
                 {'status': 'WORKING'},
                 status='200')

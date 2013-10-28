@@ -6,15 +6,15 @@ from ..service.credential import CredentialService
 
 class CredentialAdmin(admin.DjangoServicesAdmin):
     service_class = CredentialService
-    search_fields = ("user", "database__name", "database__instance__name")
-    list_filter = ("database", "database__instance",)
-    list_display = ("user", "database", "instance_name")
+    search_fields = ("user", "database__name", "database__databaseinfra__name")
+    list_filter = ("database", "database__databaseinfra",)
+    list_display = ("user", "database", "databaseinfra_name")
     save_on_top = True
 
-    def instance_name(self, credential):
-        return credential.database.instance.name
+    def databaseinfra_name(self, credential):
+        return credential.database.databaseinfra.name
     
-    instance_name.admin_order_field = "database__instance__name"
+    databaseinfra_name.admin_order_field = "database__databaseinfra__name"
 
     def get_readonly_fields(self, request, obj = None):
 

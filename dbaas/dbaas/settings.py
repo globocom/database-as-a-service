@@ -193,7 +193,7 @@ SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
 
 TEST_DISCOVER_ROOT = os.path.abspath(os.path.join(__file__, '../..'))
 TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
-NOSE_ARGS = ['--verbosity=2', '--no-byte-compile', '-d']
+NOSE_ARGS = ['--verbosity=2', '--no-byte-compile', '-d', '-s']
 if CI:
     NOSE_ARGS += ['--with-coverage', '--cover-package=application',
                   '--with-xunit', '--xunit-file=test-report.xml', '--cover-xml', '--cover-xml-file=coverage.xml']
@@ -320,7 +320,7 @@ LOGGING = {
             'propagate': True,
         },
         'django.db.backends': {
-            'level': 'INFO'
+            'level': 'DEBUG'
         },
         'south': {
             'level': 'INFO'

@@ -5,7 +5,7 @@ from django.forms.models import BaseInlineFormSet
 from django.utils.translation import ugettext_lazy as _
 from django.core.exceptions import ValidationError
 from django_services import admin
-from ..service.instance import InstanceService
+from ..service.databaseinfra import DatabaseInfraService
 from ..models import Node
 
 
@@ -28,7 +28,7 @@ class NodeModelFormSet(BaseInlineFormSet):
         if completed  == 0:
             raise ValidationError({'nodes': _("Specify at least one valid node")})
         elif completed > 1:
-            raise ValidationError({'nodes': _("Currently, you can have only one node per instance")})
+            raise ValidationError({'nodes': _("Currently, you can have only one node per databaseinfra")})
 
 
 class NodeAdmin(django_admin.TabularInline):
@@ -40,8 +40,8 @@ class NodeAdmin(django_admin.TabularInline):
     formset = NodeModelFormSet
 
 
-class InstanceAdmin(admin.DjangoServicesAdmin):
-    service_class = InstanceService
+class DatabaseInfraAdmin(admin.DjangoServicesAdmin):
+    service_class = DatabaseInfraService
     search_fields = ("name", "user", "nodes__address",)
     list_display = ("name", "user", "node",)
     list_filter = ("engine",)

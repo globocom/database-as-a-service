@@ -60,7 +60,7 @@ logical_migrate: # create migration to logical app
 	@cd dbaas && python manage.py schemamigration logical --auto
 
 run_migrate: # run all migrations
-	@cd dbaas && python manage.py syncdb --migrate --noinput --all
+	@cd dbaas && python manage.py syncdb --migrate --noinput
 
 test: # run tests
 ifeq ($(DBAAS_DATABASE_HOST),)

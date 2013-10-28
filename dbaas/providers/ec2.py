@@ -39,14 +39,14 @@ def get_ec2_api():
 class Ec2Provider(object):
 
     #@timeout_decorator.timeout(60)
-    def create_node(self, instance):
+    def create_node(self, databaseinfra):
         ec2_api = get_ec2_api()
         reservation = ec2_api.run_instances(settings.EC2_AMI_ID, subnet_id=settings.EC2_SUBNET_ID)
         i = reservation.instances[0]
 
         # due to a bug in boto, I put this call to allow get instance.ip_address
         while not i.ip_address:
-            LOG.debug('Refresh instance status')
+            LOG.debug('Refresh instances status')
             time.sleep(1)
             i.update()
 
@@ -55,8 +55,8 @@ class Ec2Provider(object):
         node.address = i.ip_address
         # node.address = i.public_dns_name
         # node.address = i.dns_name
-        node.port = factory_for(instance).default_port
-        node.instance = instance
+        node.port = factory_for(databaseinfra).default_port
+        node.databaseinfra = databaseinfra
         node.is_active = False
         node.type = models.Node.VIRTUAL
         node.save()
@@ -79,8 +79,8 @@ class Ec2Provider(object):
 #  'hypervisor': None,
 #  'id': u'i-00001789',
 #  'image_id': u'ami-00000042',
-#  'instance_profile': None,
-#  'instance_type': u'large',
+#  'databaseinfra_profile': None,
+#  'databaseinfra_type': u'large',
 #  'interfaces': [],
 #  'ip_address': u'10.248.46.183',
 #  'item': '',
@@ -103,7 +103,7 @@ class Ec2Provider(object):
 #  'root_device_name': u'/dev/xvda1',
 #  'root_device_type': u'nfs',
 #  'sourceDestCheck': u'true',
-#  'spot_instance_request_id': None,
+#  'spot_databaseinfra_request_id': None,
 #  'state_reason': None,
 #  'subnet_id': u'subnet-00001145',
 #  'tags': {},

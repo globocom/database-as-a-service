@@ -88,20 +88,20 @@ class PlanAttribute(BaseModel):
         return "%s=%s (plan=%s)" % (self.name, self.value, self.plan)
 
 
-class Instance(BaseModel):
+class DatabaseInfra(BaseModel):
 
-    name = models.CharField(verbose_name=_("Instance name"),
+    name = models.CharField(verbose_name=_("DatabaseInfra name"),
                             max_length=100,
                             unique=True,
-                            help_text=_("This could be the fqdn associated to the instance."))
-    user = models.CharField(verbose_name=_("Instance user"),
+                            help_text=_("This could be the fqdn associated to the databaseinfra."))
+    user = models.CharField(verbose_name=_("DatabaseInfra user"),
                             max_length=100,
                             help_text=_("Administrative user with permission to manage databases, create users and etc."),
                             blank=True,
                             null=False)
-    password = EncryptedCharField(verbose_name=_("Instance password"), max_length=255, blank=True, null=False)
-    engine = models.ForeignKey(Engine, related_name="instances", on_delete=models.PROTECT)
-    plan = models.ForeignKey(Plan, related_name="instances", on_delete=models.PROTECT)
+    password = EncryptedCharField(verbose_name=_("DatabaseInfra password"), max_length=255, blank=True, null=False)
+    engine = models.ForeignKey(Engine, related_name="databaseinfras", on_delete=models.PROTECT)
+    plan = models.ForeignKey(Plan, related_name="databaseinfras", on_delete=models.PROTECT)
 
     def __unicode__(self):
         return self.name
@@ -147,51 +147,51 @@ class Instance(BaseModel):
         return self.engine.engine_type.name
 
     @classmethod
-    def get_unique_instance_name(cls, base_name):
+    def get_unique_databaseinfra_name(cls, base_name):
         """
         try diferent names if first exists, like NAME-1, NAME-2, ...
         """
         i = 0
         name = base_name
-        while Instance.objects.filter(name=name).exists():
+        while DatabaseInfra.objects.filter(name=name).exists():
             i += 1
             name = "%s-%d" % (base_name, i)
-        LOG.info("instance unique name to be returned: %s" % name)
+        LOG.info("databaseinfra unique name to be returned: %s" % name)
         return name
 
     @classmethod
-    def provision_database(cls, instance=None):
+    def provision_database(cls, databaseinfra=None):
         from logical.models import Database
         #a signal will create the database in the engine
-        database = Database.objects.get_or_create(name=instance.name, instance=instance)
+        database = Database.objects.get_or_create(name=databaseinfra.name, databaseinfra=databaseinfra)
         return database
 
     @classmethod
     def provision(cls, engine=None, plan=None, name=None):
-        # create new instance
+        # create new databaseinfra
 
-        LOG.debug("provisioning instance with engine: %s | plan: %s | name: %s" % (engine, plan, name))
+        LOG.debug("provisioning databaseinfra with engine: %s | plan: %s | name: %s" % (engine, plan, name))
 
-        instance = Instance()
-        instance.name = Instance.get_unique_instance_name(name)
-        instance.engine = engine
-        instance.user = getattr(settings, "DB_DEFAULT_USER", "")
-        instance.password = getattr(settings, "DB_DEFAULT_PASSWORD", "")
+        databaseinfra = DatabaseInfra()
+        databaseinfra.name = DatabaseInfra.get_unique_databaseinfra_name(name)
+        databaseinfra.engine = engine
+        databaseinfra.user = getattr(settings, "DB_DEFAULT_USER", "")
+        databaseinfra.password = getattr(settings, "DB_DEFAULT_PASSWORD", "")
         #if plan is none, then default plan is set via signal.
         if plan:
-            instance.plan = plan
+            databaseinfra.plan = plan
         else:
-            instance.plan = instance.engine.engine_type.default_plan
-        instance.save()
+            databaseinfra.plan = databaseinfra.engine.engine_type.default_plan
+        databaseinfra.save()
 
         # now, create a node
         # hardcode!!!
         from providers import ProviderFactory
         provider = ProviderFactory.factory()
-        node = provider.create_node(instance)
+        node = provider.create_node(databaseinfra)
 
         from drivers import factory_for
-        driver = factory_for(instance)
+        driver = factory_for(databaseinfra)
         # max_retries = 15
         retry = 0
         while True:
@@ -207,19 +207,19 @@ class Instance(BaseModel):
                 LOG.warning('Node %s not ready...', node, exc_info=True)
                 retry += 1
 
-        LOG.info('Retries until the node creation for instance %s: %s' % (instance, retry))
+        LOG.info('Retries until the node creation for databaseinfra %s: %s' % (databaseinfra, retry))
 
         # change default password after node is started
-        instance.password = driver.change_default_pwd(node)
-        instance.save()
+        databaseinfra.password = driver.change_default_pwd(node)
+        databaseinfra.save()
         
         node.is_active = True
         node.save()
 
         #create database
-        Instance.provision_database(instance=instance)
-        #returns the instance
-        return instance
+        DatabaseInfra.provision_database(databaseinfra=databaseinfra)
+        #returns the databaseinfra
+        return databaseinfra
 
 
 class Node(BaseModel):
@@ -233,7 +233,7 @@ class Node(BaseModel):
 
     address = models.CharField(verbose_name=_("Node address"), max_length=200)
     port = models.IntegerField(verbose_name=_("Node port"))
-    instance = models.ForeignKey(Instance, related_name="nodes", on_delete=models.CASCADE)
+    databaseinfra = models.ForeignKey(DatabaseInfra, related_name="nodes", on_delete=models.CASCADE)
     is_active = models.BooleanField(verbose_name=_("Is node active"), default=True)
     type = models.CharField(verbose_name=_("Node type"),
                             max_length=2,
@@ -253,11 +253,11 @@ class Node(BaseModel):
         return self.connection
 
     def clean(self, *args, **kwargs):
-        LOG.debug('Checking node %s (%s) status...', self.connection, self.instance)
+        LOG.debug('Checking node %s (%s) status...', self.connection, self.databaseinfra)
         # self.clean_fields()
         from drivers import factory_for, GenericDriverError, ConnectionError, AuthenticationError
         try:
-            engine = factory_for(self.instance)
+            engine = factory_for(self.databaseinfra)
             engine.check_status(node=self)
             LOG.debug('Node %s is ok', self)
         except AuthenticationError, e:
@@ -273,33 +273,33 @@ class Node(BaseModel):
 # SIGNALS
 #####################################################################################################
 
-@receiver(pre_save, sender=Instance)
-def instance_pre_save(sender, **kwargs):
+@receiver(pre_save, sender=DatabaseInfra)
+def databaseinfra_pre_save(sender, **kwargs):
     """
-    instance pre save
+    databaseinfra pre save
     """
-    instance = kwargs.get('instance')
-    LOG.debug("instance pre-save triggered")
-    if not instance.plan:
-        instance.plan = instance.engine.engine_type.default_plan
-        LOG.warning("No plan specified, using default plan (%s) for engine %s" % (instance, instance.engine))
+    databaseinfra = kwargs.get('instance')
+    LOG.debug("databaseinfra pre-save triggered")
+    if not databaseinfra.plan:
+        databaseinfra.plan = databaseinfra.engine.engine_type.default_plan
+        LOG.warning("No plan specified, using default plan (%s) for engine %s" % (databaseinfra, databaseinfra.engine))
 
 
 @receiver(pre_save, sender=Plan)
 def plan_pre_save(sender, **kwargs):
     """
     plan pre save
-    instance is a plan object and not an implementation from Instance's model
+    databaseinfra is a plan object and not an implementation from DatabaseInfra's model
     """
 
-    instance = kwargs.get('instance')
+    plan = kwargs.get('instance')
     LOG.debug("plan pre-save triggered")
-    if instance.is_default:
-        LOG.debug("looking for other plans marked as default (they will be marked as false) with engine type %s" % instance.engine_type)
-        if instance.id:
-            plans = Plan.objects.filter(is_default=True, engine_type=instance.engine_type).exclude(id=instance.id)
+    if plan.is_default:
+        LOG.debug("looking for other plans marked as default (they will be marked as false) with engine type %s" % plan.engine_type)
+        if plan.id:
+            plans = Plan.objects.filter(is_default=True, engine_type=plan.engine_type).exclude(id=plan.id)
         else:
-            plans = Plan.objects.filter(is_default=True, engine_type=instance.engine_type)
+            plans = Plan.objects.filter(is_default=True, engine_type=plan.engine_type)
         if plans:
             with transaction.commit_on_success():
                 for plan in plans:
@@ -310,4 +310,4 @@ def plan_pre_save(sender, **kwargs):
             LOG.debug("No plan found")
 
 
-simple_audit.register(EngineType, Engine, Plan, PlanAttribute, Instance, Node)
+simple_audit.register(EngineType, Engine, Plan, PlanAttribute, DatabaseInfra, Node)

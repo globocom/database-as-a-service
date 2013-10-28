@@ -8,23 +8,23 @@ from ..forms import DatabaseForm
 
 class DatabaseAdmin(admin.DjangoServicesAdmin):
     service_class = DatabaseService
-    search_fields = ("name", "instance__name")
-    list_display = ("name", "instance",)
-    list_filter = ("instance", "project",)
+    search_fields = ("name", "databaseinfra__name")
+    list_display = ("name", "databaseinfra",)
+    list_filter = ("databaseinfra", "project",)
     change_form_template = "logical/database_change_form.html"
     fieldsets = (
         (None, {
             'fields': ('name', 'project')
             }
         ),
-        ('reuse_instance', {
-            'fields': ('instance',),
-            'classes': ('reuse_instance',),
+        ('reuse_databaseinfra', {
+            'fields': ('databaseinfra',),
+            'classes': ('reuse_databaseinfra',),
             },
         ),
-        ('new_instance', {
+        ('new_databaseinfra', {
             'fields': ('engine', 'plan'),
-            'classes': ('new_instance',),
+            'classes': ('new_databaseinfra',),
             },
         )
     )

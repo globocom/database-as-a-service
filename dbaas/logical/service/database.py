@@ -9,7 +9,7 @@ class DatabaseService(service.CRUDService):
     model_class = Database
 
     def get_engine(self, database):
-        return factory_for(database.instance)
+        return factory_for(database.databaseinfra)
 
     def create(self, database):
         super(DatabaseService, self).create(database)
@@ -20,7 +20,7 @@ class DatabaseService(service.CRUDService):
 
     def update(self, database):
         super(DatabaseService, self).update(database)
-        # FIXME?? How can I change the name? or Instance?
+        # FIXME?? How can I change the name? or DatabaseInfra?
 
     def delete(self, database):
         super(DatabaseService, self).delete(database)

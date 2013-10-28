@@ -23,21 +23,21 @@
 	<h1>Dashboard</h1>
 </div>
 
-{% if not instances %}
-    <h2>No instances found</h2>
+{% if not databaseinfras %}
+    <h2>No databaseinfras found</h2>
 {% else %}
 
 <div class="row-fluid">
-	{% for instance in instances %}
+	{% for databaseinfra in databaseinfras %}
 	<div class="span4 box">
 		<div class='boxtitle'>
-			 <i class="icon-magnet"></i>Instance Name - {{ instance.name }}
+			 <i class="icon-magnet"></i>DatabaseInfra Name - {{ databaseinfra.name }}
 		</div>
 		<div class="status">
 			<ul>
-				<li>Version: {{ instance.version }}</li>
-				<li>Total instance Size: {{ instance.size|floatformat:0 }}(MB)</li>
-				{% for database in instance.databases %}
+				<li>Version: {{ databaseinfra.version }}</li>
+				<li>Total databaseinfra Size: {{ databaseinfra.size|floatformat:0 }}(MB)</li>
+				{% for database in databaseinfra.databases %}
 					<li><hr />Database Name: {{ database.name }}</li>
 					<div class="size-total">{{ database.size|floatformat:0 }}(MB)</div>
 					<li>Database Size (MB)

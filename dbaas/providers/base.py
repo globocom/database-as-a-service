@@ -11,12 +11,12 @@ class BaseProvider(object):
     """
     # def __init__(self, *args, **kwargs):
     # 
-    #     if 'instance' in kwargs:
-    #         self.instance = kwargs.get('instance')
+    #     if 'databaseinfra' in kwargs:
+    #         self.databaseinfra = kwargs.get('databaseinfra')
     #     else:
-    #         raise TypeError(_("Instance is not defined"))
+    #         raise TypeError(_("DatabaseInfra is not defined"))
 
-    def create_node(self, instance):
+    def create_node(self, databaseinfra):
         raise NotImplementedError()
 
     def destroy_node(self, node):

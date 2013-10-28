@@ -4,7 +4,7 @@ import logging
 import subprocess
 import os.path
 from django.utils.translation import ugettext_lazy as _
-from physical.models import Instance
+from physical.models import DatabaseInfra
 from django_services.service.exceptions import InternalException
 from django.contrib.auth.models import User
 
@@ -15,10 +15,10 @@ DEFAULT_OUTPUT_BUFFER_SIZE = 16384
 LOG = logging.getLogger(__name__)
 
 __all__ = ['GenericDriverError', 'ErrorRunningScript', 'ConnectionError',
-    'AuthenticationError', 'BaseDriver', 'DatabaseStatus', 'InstanceStatus']
+    'AuthenticationError', 'BaseDriver', 'DatabaseStatus', 'DatabaseInfraStatus']
 
 class GenericDriverError(InternalException):
-    """ Exception raises when any kind of problem happens when executing operations on instance """
+    """ Exception raises when any kind of problem happens when executing operations on databaseinfra """
 
     def __init__(self, message=None):
         self.message = message
@@ -43,11 +43,11 @@ class ErrorRunningScript(GenericDriverError):
         super(ErrorRunningScript, self).__init__(message='%s. Exit code=%s: stdout=%s' % (self.script_name, self.exit_code, self.stdout))
 
 class ConnectionError(GenericDriverError):
-    """ Raised when there is any problem to connect on instance """
+    """ Raised when there is any problem to connect on databaseinfra """
     pass
 
 class AuthenticationError(ConnectionError):
-    """ Raised when there is any problem authenticating on instance """
+    """ Raised when there is any problem authenticating on databaseinfra """
     pass
 
 
@@ -55,17 +55,17 @@ class BaseDriver(object):
     """
     BaseDriver interface
     """
-    ENV_CONNECTION = 'INSTANCE_CONNECTION'
+    ENV_CONNECTION = 'DATABASEINFRA_CONNECTION'
 
     # must be overwrited by subclasses
     default_port = 0
 
     def __init__(self, *args, **kwargs):
 
-        if 'instance' in kwargs:
-            self.instance = kwargs.get('instance')
+        if 'databaseinfra' in kwargs:
+            self.databaseinfra = kwargs.get('databaseinfra')
         else:
-            raise TypeError(_("Instance is not defined"))
+            raise TypeError(_("DatabaseInfra is not defined"))
 
     def test_connection(self, credential=None):
         """ Tests the connection to the database """
@@ -76,20 +76,20 @@ class BaseDriver(object):
         raise NotImplementedError()
 
     def get_user(self):
-        return self.instance.user
+        return self.databaseinfra.user
 
     def make_random_password(self):
         return User.objects.make_random_password()
         
     def get_password(self):
-        return self.instance.password
+        return self.databaseinfra.password
 
     def check_status(self):
-        """ Check if instance is working. If not working, raises subclass of GenericDriverError """
+        """ Check if databaseinfra is working. If not working, raises subclass of GenericDriverError """
         raise NotImplementedError()
 
     def info(self):
-        """ Returns a mapping with same attributes of instance """
+        """ Returns a mapping with same attributes of databaseinfra """
         raise NotImplementedError()
 
     def create_user(self, credential, roles=None):
@@ -105,11 +105,11 @@ class BaseDriver(object):
         raise NotImplementedError()
 
     def list_databases(self):
-        """list databases in a instance"""
+        """list databases in a databaseinfra"""
         raise NotImplementedError()
 
-    def import_databases(self, instance):
-        """import databases already created in a instance"""
+    def import_databases(self, databaseinfra):
+        """import databases already created in a databaseinfra"""
         raise NotImplementedError()
 
     def call_script(self, script_name, args=[], envs={}):
@@ -124,8 +124,8 @@ class BaseDriver(object):
         try:
             LOG.info('Running on path %s command: %s', working_dir, logging_cmdline)
 
-            if self.instance.engine.path:
-                envs_with_path = {'PATH': self.instance.engine.path}
+            if self.databaseinfra.engine.path:
+                envs_with_path = {'PATH': self.databaseinfra.engine.path}
             else:
                 envs_with_path = {'PATH': os.getenv("PATH")}
 
@@ -177,7 +177,7 @@ class BaseDriver(object):
             value = field.value_to_string(obj)
             envs["%s_%s" % (obj_name, field.name.upper())] = '' if value is None else str(value)
 
-        if isinstance(obj, Instance):
+        if isinstance(obj, DatabaseInfra):
             envs[BaseDriver.ENV_CONNECTION] = self.get_connection()
         return envs
 
@@ -243,10 +243,10 @@ class DatabaseStatus(SizeUnitsMixin):
         return self.database_model.name
 
 
-class InstanceStatus(SizeUnitsMixin):
+class DatabaseInfraStatus(SizeUnitsMixin):
 
-    def __init__(self, instance_model):
-        self.instance_model = instance_model
+    def __init__(self, databaseinfra_model):
+        self.databaseinfra_model = databaseinfra_model
         self.version = None
         self.size_in_bytes = -1
         self.databases_status = {}

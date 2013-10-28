@@ -18,30 +18,30 @@ class MongoDBScriptEngineTestCase(TestCase):
     """
 
     def setUp(self):
-        self.instance = factory_physical.InstanceFactory()
-        self.driver = MongoDB(instance=self.instance)
+        self.databaseinfra = factory_physical.DatabaseInfraFactory()
+        self.driver = MongoDB(databaseinfra=self.databaseinfra)
 
     def tearDown(self):
-        self.instance.delete()
-        self.driver = self.instance = None
+        self.databaseinfra.delete()
+        self.driver = self.databaseinfra = None
 
     def test_mongodb_app_installed(self):
         self.assertTrue(DriverFactory.is_driver_available("mongodb")) 
 
     #test mongo methods
     def test_instantiate_mongodb_using_engine_factory(self):
-        mongodb_engine = DriverFactory.factory(self.instance)
+        mongodb_engine = DriverFactory.factory(self.databaseinfra)
         self.assertEqual(MongoDB, type(mongodb_engine))
-        self.assertEqual(self.instance, mongodb_engine.instance)
+        self.assertEqual(self.databaseinfra, mongodb_engine.databaseinfra)
 
     def test_connection_string(self):
-        self.assertEqual("%s:%s" % (self.instance.node.address, self.instance.node.port), self.driver.get_connection())
+        self.assertEqual("%s:%s" % (self.databaseinfra.node.address, self.databaseinfra.node.port), self.driver.get_connection())
 
     def test_get_user(self):
-        self.assertEqual(self.instance.user, self.driver.get_user())
+        self.assertEqual(self.databaseinfra.user, self.driver.get_user())
 
     def test_get_password(self):
-        self.assertEqual(self.instance.password, self.driver.get_password())
+        self.assertEqual(self.databaseinfra.password, self.driver.get_password())
 
 
 @unittest.skip('Using test_driver_pymongo')
@@ -49,16 +49,16 @@ class ManageDatabaseMongoDBScriptTestCase(TestCase):
     """ Test case to managing database in mongodb engine """
 
     def setUp(self):
-        self.instance = factory_physical.InstanceFactory()
-        self.database = factory_logical.DatabaseFactory(instance=self.instance)
+        self.databaseinfra = factory_physical.DatabaseInfraFactory()
+        self.database = factory_logical.DatabaseFactory(databaseinfra=self.databaseinfra)
         self.credential = factory_logical.CredentialFactory(database=self.database)
-        self.driver = MongoDB(instance=self.instance)
+        self.driver = MongoDB(databaseinfra=self.databaseinfra)
 
     def tearDown(self):
         self.credential.delete()
         self.database.delete()
-        self.instance.delete()
-        self.driver = self.instance = self.credential = self.database = None
+        self.databaseinfra.delete()
+        self.driver = self.databaseinfra = self.credential = self.database = None
 
     @mock.patch.object(MongoDB, 'call_script')
     def test_mongodb_create_database(self, call_script):
@@ -88,16 +88,16 @@ class ManageCredentialsMongoDBScriptTestCase(TestCase):
     """ Test cases for managing credentials in mongodb engine """
 
     def setUp(self):
-        self.instance = factory_physical.InstanceFactory()
-        self.database = factory_logical.DatabaseFactory(instance=self.instance)
+        self.databaseinfra = factory_physical.DatabaseInfraFactory()
+        self.database = factory_logical.DatabaseFactory(databaseinfra=self.databaseinfra)
         self.credential = factory_logical.CredentialFactory(database=self.database)
-        self.driver = MongoDB(instance=self.instance)
+        self.driver = MongoDB(databaseinfra=self.databaseinfra)
 
     def tearDown(self):
         self.credential.delete()
         self.database.delete()
-        self.instance.delete()
-        self.driver = self.instance = self.credential = self.database = None
+        self.databaseinfra.delete()
+        self.driver = self.databaseinfra = self.credential = self.database = None
 
     @mock.patch.object(MongoDB, 'call_script')
     def test_mongodb_create_user(self, call_script):
@@ -132,8 +132,8 @@ class StatusAndInfoMongoDBScriptTestCase(TestCase):
     """ Test cases for get status and informations from mongodb """
 
     def setUp(self):
-        self.instance = factory_physical.InstanceFactory()
-        self.driver = MongoDB(instance=self.instance)
+        self.databaseinfra = factory_physical.DatabaseInfraFactory()
+        self.driver = MongoDB(databaseinfra=self.databaseinfra)
 
     def tearDown(self):
         pass
@@ -166,7 +166,7 @@ class StatusAndInfoMongoDBScriptTestCase(TestCase):
 
     @mock.patch.object(MongoDB, 'call_script')
     def test_mongodb_create_user(self, call_script):
-        database_base1 = factory_logical.DatabaseFactory(instance=self.instance, name="base1")
+        database_base1 = factory_logical.DatabaseFactory(databaseinfra=self.databaseinfra, name="base1")
 
         results = [
             '  { "host": "xxx", \n"version": "2.4.6", "localTime" : ISODate("2013-09-26T20:47:56.766Z") } ',
@@ -176,7 +176,7 @@ class StatusAndInfoMongoDBScriptTestCase(TestCase):
             return results.pop(0)
 
         call_script.side_effect = sequence_calls
-        instance_status = self.driver.info()
+        databaseinfra_status = self.driver.info()
         required_envs={
             "INSTANCE_CONNECTION": self.driver.get_connection(),
             "INSTANCE_USER": self.driver.get_user(),
@@ -184,12 +184,12 @@ class StatusAndInfoMongoDBScriptTestCase(TestCase):
         }
         call_script.assert_any_call(MongoDB.SCRIPT, ["serverstatus"], envs=match_equality(has_entries(required_envs)))
         call_script.assert_any_call(MongoDB.SCRIPT, ["listdatabases"], envs=match_equality(has_entries(required_envs)))
-        self.assertEquals("2.4.6", instance_status.version)
-        self.assertEquals(100663296, instance_status.size_in_bytes)
-        self.assertEquals(96, instance_status.size_in_mb)
-        self.assertEquals(0.09375, instance_status.size_in_gb)
+        self.assertEquals("2.4.6", databaseinfra_status.version)
+        self.assertEquals(100663296, databaseinfra_status.size_in_bytes)
+        self.assertEquals(96, databaseinfra_status.size_in_mb)
+        self.assertEquals(0.09375, databaseinfra_status.size_in_gb)
 
-        base1_status = instance_status.get_database_status("base1")
+        base1_status = databaseinfra_status.get_database_status("base1")
         self.assertEquals(database_base1, base1_status.database_model)
         self.assertEquals(67108864, base1_status.size_in_bytes)
 

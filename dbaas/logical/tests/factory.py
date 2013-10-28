@@ -2,7 +2,7 @@
 from __future__ import absolute_import, unicode_literals
 import factory
 from .. import models
-from physical.tests.factory import InstanceFactory, NodeFactory
+from physical.tests.factory import DatabaseInfraFactory
 
 
 class ProjectFactory(factory.DjangoModelFactory):
@@ -17,7 +17,7 @@ class DatabaseFactory(factory.DjangoModelFactory):
     FACTORY_FOR = models.Database
 
     name = factory.Sequence(lambda n: 'db-{0}'.format(n))
-    instance = factory.SubFactory(InstanceFactory)
+    databaseinfra = factory.SubFactory(DatabaseInfraFactory)
     project = factory.SubFactory(ProjectFactory)
 
 

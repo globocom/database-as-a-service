@@ -3,6 +3,7 @@ from __future__ import absolute_import, unicode_literals
 from django.test import TestCase
 from django.db import IntegrityError
 from . import factory
+from physical.tests import factory as physical_factory
 from ..models import Database
 from drivers import base
 
@@ -20,16 +21,16 @@ class FakeDriver(base.BaseDriver):
 class DatabaseTestCase(TestCase):
 
     def setUp(self):
-        self.node = factory.NodeFactory()
-        self.instance = self.node.instance
-        self.engine = FakeDriver(instance=self.instance)
+        self.node = physical_factory.NodeFactory()
+        self.databaseinfra = self.node.databaseinfra
+        self.engine = FakeDriver(databaseinfra=self.databaseinfra)
 
     def tearDown(self):
         self.engine = None
 
     def test_create_database(self):
         
-        database = Database(name="blabla", instance=self.instance)
+        database = Database(name="blabla", databaseinfra=self.databaseinfra)
         database.save()
         
         self.assertTrue(database.pk)
@@ -37,29 +38,29 @@ class DatabaseTestCase(TestCase):
 
     def test_create_duplicate_database_error(self):
         
-        database = Database(name="bleble", instance=self.instance)
+        database = Database(name="bleble", databaseinfra=self.databaseinfra)
         
         database.save()
         
         self.assertTrue(database.pk)
         
-        self.assertRaises(IntegrityError, Database(name="bleble", instance=self.instance).save)
+        self.assertRaises(IntegrityError, Database(name="bleble", databaseinfra=self.databaseinfra).save)
 
     def test_slugify_database_name(self):
         
-        database = factory.DatabaseFactory(name="w h a t", instance=self.instance)
+        database = factory.DatabaseFactory(name="w h a t", databaseinfra=self.databaseinfra)
         
         self.assertTrue(database.id)
         self.assertEqual(database.name, 'w_h_a_t')
         
-        database2 = factory.DatabaseFactory(name="w.h.e.r.e", instance=self.instance)
+        database2 = factory.DatabaseFactory(name="w.h.e.r.e", databaseinfra=self.databaseinfra)
         
         self.assertTrue(database2.id)
         self.assertEqual(database2.name, 'w_h_e_r_e')
     
     def test_cannot_edit_database_name(self):
         
-        database = factory.DatabaseFactory(name="w h a t", instance=self.instance)
+        database = factory.DatabaseFactory(name="w h a t", databaseinfra=self.databaseinfra)
         
         self.assertTrue(database.id)
         

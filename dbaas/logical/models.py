@@ -11,7 +11,7 @@ from django.dispatch import receiver
 from django_extensions.db.fields.encrypted import EncryptedCharField
 from util import slugify
 from util.models import BaseModel
-from physical.models import Instance
+from physical.models import DatabaseInfra
 from drivers import factory_for
 
 LOG = logging.getLogger(__name__)
@@ -31,7 +31,7 @@ class Database(BaseModel):
     RESERVED_DATABASES_NAME = ('admin', 'config', 'local')
 
     name = models.CharField(verbose_name=_("Database name"), max_length=100, unique=True)
-    instance = models.ForeignKey(Instance, related_name="databases", on_delete=models.PROTECT)
+    databaseinfra = models.ForeignKey(DatabaseInfra, related_name="databases", on_delete=models.PROTECT)
     project = models.ForeignKey(Project, related_name="databases", on_delete=models.PROTECT, null=True, blank=True)
 
     def __unicode__(self):
@@ -44,7 +44,7 @@ class Database(BaseModel):
 
     def create_new_credential(self):
         """creates a new credential for the database with a random password"""
-        engine = factory_for(self.instance)
+        engine = factory_for(self.databaseinfra)
         LOG.info("creating new credential for database %s" % self.name)
         credential = Credential(user=Credential.USER_PATTERN % self.name, password=engine.make_random_password(), database=self)
         credential.save()
@@ -74,9 +74,9 @@ class Credential(BaseModel):
 #all users should be is_staff True
 @receiver(pre_save, sender=User)
 def user_pre_save(sender, **kwargs):
-    instance = kwargs.get('instance')
-    if not instance.is_staff:
-        instance.is_staff = True
+    user = kwargs.get('instance')
+    if not user.is_staff:
+        user.is_staff = True
 
 @receiver(pre_delete, sender=Database)
 def database_pre_delete(sender, **kwargs):
@@ -85,7 +85,7 @@ def database_pre_delete(sender, **kwargs):
     """
     database = kwargs.get("instance")
     LOG.debug("database pre-delete triggered")
-    engine = factory_for(database.instance)
+    engine = factory_for(database.databaseinfra)
     engine.remove_database(database)
 
 @receiver(post_save, sender=Database)
@@ -98,36 +98,36 @@ def database_post_save(sender, **kwargs):
     LOG.debug("database post-save triggered")
     if is_new:
         LOG.info("a new database (%s) were created... provision it in the engine" % (database.name))
-        engine = factory_for(database.instance)
+        engine = factory_for(database.databaseinfra)
         engine.create_database(database)
 
 
 @receiver(pre_save, sender=Database)
 def database_pre_save(sender, **kwargs):
-    instance = kwargs.get('instance')
+    database = kwargs.get('instance')
 
     #slugify name
-    instance.name = slugify(instance.name)
+    database.name = slugify(database.name)
 
-    if instance.id:
-        saved_object = Database.objects.get(id=instance.id)
-        if instance.name != saved_object.name:
+    if database.id:
+        saved_object = Database.objects.get(id=database.id)
+        if database.name != saved_object.name:
             raise AttributeError(_("Attribute name cannot be edited"))
 
 
 @receiver(pre_save, sender=Credential)
 def credential_pre_save(sender, **kwargs):
-    instance = kwargs.get('instance')
+    credential = kwargs.get('instance')
 
     #slugify user
-    instance.user = slugify(instance.user)
+    credential.user = slugify(credential.user)
 
-    if instance.id:
-        saved_object = Credential.objects.get(id=instance.id)
-        if instance.user != saved_object.user:
+    if credential.id:
+        saved_object = Credential.objects.get(id=credential.id)
+        if credential.user != saved_object.user:
             raise AttributeError(_("Attribute user cannot be edited"))
 
-        if instance.database != saved_object.database:
+        if credential.database != saved_object.database:
             raise AttributeError(_("Attribute database cannot be edited"))
 
 

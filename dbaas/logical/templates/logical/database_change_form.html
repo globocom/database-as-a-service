@@ -12,10 +12,10 @@
 
 {% block field_sets %}
 {% for fieldset in adminform %}
-    {% if fieldset.name == 'reuse_instance' %}
+    {% if fieldset.name == 'reuse_databaseinfra' %}
         <div class="controls">
             <label class="radio">
-                <input name="new_instance" checked="checked" type="radio" value="" class="new_instance"> <span>Use existing instances</span>
+                <input name="new_databaseinfra" checked="checked" type="radio" value="" class="new_databaseinfra"> <span>Use existing databaseinfras</span>
             </label>
         </div>
         <fieldset class="module aligned {{ fieldset.classes }}">
@@ -25,10 +25,10 @@
                 {% endfor %}
             {% endfor %}
         </fieldset>
-    {% elif fieldset.name == 'new_instance' %}
+    {% elif fieldset.name == 'new_databaseinfra' %}
         <div class="controls">
             <label class="radio">
-                <input name="new_instance" type="radio" value="on" class="new_instance"> <span>Create new instances</span>
+                <input name="new_databaseinfra" type="radio" value="on" class="new_databaseinfra"> <span>Create new databaseinfras</span>
             </label>
         </div>
         <fieldset class="module aligned {{ fieldset.classes }}">

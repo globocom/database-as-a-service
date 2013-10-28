@@ -36,10 +36,10 @@ class PlanFactory(factory.DjangoModelFactory):
     engine_type = factory.LazyAttribute(get_engine_type)
 
 
-class InstanceFactory(factory.DjangoModelFactory):
-    FACTORY_FOR = models.Instance
+class DatabaseInfraFactory(factory.DjangoModelFactory):
+    FACTORY_FOR = models.DatabaseInfra
 
-    name = factory.Sequence(lambda n: 'instance-{0}'.format(n))
+    name = factory.Sequence(lambda n: 'databaseinfra-{0}'.format(n))
     user = 'admin'
     password = '123456'
     engine = factory.LazyAttribute(get_engine)
@@ -52,6 +52,6 @@ class NodeFactory(factory.DjangoModelFactory):
     address = '127.0.0.1'
     port = 27017
     is_active = True
-    instance = factory.SubFactory(InstanceFactory)
+    databaseinfra = factory.SubFactory(DatabaseInfraFactory)
 
 

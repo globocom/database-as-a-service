@@ -10,16 +10,16 @@ from ..driver_pymongo import MongoDB
 class AbstractTestDriverMongo(TestCase):
 
     def setUp(self):
-        self.instance = factory_physical.InstanceFactory()
-        self.node = factory_physical.NodeFactory(instance=self.instance)
-        self.driver = MongoDB(instance=self.instance)
+        self.databaseinfra = factory_physical.DatabaseInfraFactory()
+        self.node = factory_physical.NodeFactory(databaseinfra=self.databaseinfra)
+        self.driver = MongoDB(databaseinfra=self.databaseinfra)
         self._mongo_client = None
 
     def tearDown(self):
-        self.instance.delete()
+        self.databaseinfra.delete()
         if self._mongo_client:
             self._mongo_client.disconnect()
-        self.driver = self.instance = self._mongo_client = None
+        self.driver = self.databaseinfra = self._mongo_client = None
 
     @property
     def mongo_client(self):
@@ -39,16 +39,16 @@ class MongoDBEngineTestCase(AbstractTestDriverMongo):
     #test mongo methods
     def test_instantiate_mongodb_using_engine_factory(self):
         self.assertEqual(MongoDB, type(self.driver))
-        self.assertEqual(self.instance, self.driver.instance)
+        self.assertEqual(self.databaseinfra, self.driver.databaseinfra)
 
     def test_connection_string(self):
-        self.assertEqual("%s:%s" % (self.instance.node.address, self.instance.node.port), self.driver.get_connection())
+        self.assertEqual("%s:%s" % (self.databaseinfra.node.address, self.databaseinfra.node.port), self.driver.get_connection())
 
     def test_get_user(self):
-        self.assertEqual(self.instance.user, self.driver.get_user())
+        self.assertEqual(self.databaseinfra.user, self.driver.get_user())
 
     def test_get_password(self):
-        self.assertEqual(self.instance.password, self.driver.get_password())
+        self.assertEqual(self.databaseinfra.password, self.driver.get_password())
 
     def test_get_default_port(self):
         self.assertEqual(27017, self.driver.default_port)
@@ -59,7 +59,7 @@ class ManageDatabaseMongoDBTestCase(AbstractTestDriverMongo):
 
     def setUp(self):
         super(ManageDatabaseMongoDBTestCase, self).setUp()
-        self.database = factory_logical.DatabaseFactory(instance=self.instance)
+        self.database = factory_logical.DatabaseFactory(databaseinfra=self.databaseinfra)
         # ensure database is dropped
         self.mongo_client.drop_database(self.database.name)
 
@@ -84,7 +84,7 @@ class ManageCredentialsMongoDBTestCase(AbstractTestDriverMongo):
 
     def setUp(self):
         super(ManageCredentialsMongoDBTestCase, self).setUp()
-        self.database = factory_logical.DatabaseFactory(instance=self.instance)
+        self.database = factory_logical.DatabaseFactory(databaseinfra=self.databaseinfra)
         self.credential = factory_logical.CredentialFactory(database=self.database)
         self.driver.create_database(self.database)
 

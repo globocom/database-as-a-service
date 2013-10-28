@@ -9,7 +9,7 @@ class CredentialService(service.CRUDService):
     model_class = models.Credential
 
     def __get_engine__(self, credential):
-        return factory_for(credential.database.instance)
+        return factory_for(credential.database.databaseinfra)
 
     def create(self, credential):
         super(CredentialService, self).create(credential)

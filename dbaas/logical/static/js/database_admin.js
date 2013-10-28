@@ -6,22 +6,22 @@
     };
 
     Database.prototype = {
-        is_new_instance: function() {
-            var new_instance = $(".new_instance:checked").val() == 'on';
-            return new_instance;
+        is_new_databaseinfra: function() {
+            var new_databaseinfra = $(".new_databaseinfra:checked").val() == 'on';
+            return new_databaseinfra;
         },
-        mode: function(new_instance) {
-            if (new_instance) {
-                // new instance
-                $("select, input", "fieldset.new_instance").removeAttr("disabled");
-                $("select, input", "fieldset.reuse_instance").attr("disabled", "disabled");
+        mode: function(new_databaseinfra) {
+            if (new_databaseinfra) {
+                // new databaseinfra
+                $("select, input", "fieldset.new_databaseinfra").removeAttr("disabled");
+                $("select, input", "fieldset.reuse_databaseinfra").attr("disabled", "disabled");
             } else {
-                $("select, input", "fieldset.new_instance").attr("disabled", "disabled");
-                $("select, input", "fieldset.reuse_instance").removeAttr("disabled");
+                $("select, input", "fieldset.new_databaseinfra").attr("disabled", "disabled");
+                $("select, input", "fieldset.reuse_databaseinfra").removeAttr("disabled");
             }
         },
         update_components: function() {
-            this.mode(this.is_new_instance());
+            this.mode(this.is_new_databaseinfra());
             this.filter_plans();
         },
         get_engine: function() {
@@ -45,12 +45,12 @@
     $(function() {
         var database = new Database();
 
-        $(".new_instance, #id_engine").on("change", function() {
+        $(".new_databaseinfra, #id_engine").on("change", function() {
             database.update_components();
         });
 
         $(".plan .well").on("click", function() {
-            if (database.is_new_instance()) {
+            if (database.is_new_databaseinfra()) {
                 $("input", ".plan").removeAttr("checked");
                 $("input", $(this)).attr("checked", "checked");
             }

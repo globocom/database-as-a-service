@@ -22,8 +22,8 @@ class ProviderFactory(object):
     @classmethod
     def factory(cls):
 
-        # if instance is None:
-        #     raise TypeError(_("Instance is not defined"))
+        # if databaseinfra is None:
+        #     raise TypeError(_("DatabaseInfra is not defined"))
 
         provider_class = cls.get_provider_class("ec2")
         return provider_class()

@@ -26,7 +26,7 @@ Options:
     dropuser		    Remove specific username from the database
     createdatabase	    Initialize a database
     dropdatabase	    Drop database and the associated files
-    listdatabases           List databases per instance
+    listdatabases           List databases per databaseinfra
     listcollections         List collections per database
     status/healthcheck	    It is a kind of healthcheck
     serverstatus	    Statistics data

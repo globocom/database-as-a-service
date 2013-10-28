@@ -5,14 +5,14 @@ import logging
 from django.forms import models
 from django import forms
 from .models import Database
-from physical.models import Engine, Plan, Instance
+from physical.models import Engine, Plan, DatabaseInfra
 
 LOG = logging.getLogger(__name__)
 
 
 class AdvancedModelChoiceIterator(models.ModelChoiceIterator):
     def choice(self, obj):
-        opts = (self.field.prepare_value(obj), self.field.label_from_instance(obj), obj)
+        opts = (self.field.prepare_value(obj), self.field.label_from_databaseinfra(obj), obj)
         return opts
 
 
@@ -27,7 +27,7 @@ class AdvancedModelChoiceField(models.ModelChoiceField):
 
 
 class DatabaseForm(models.ModelForm):
-    instance = forms.ModelChoiceField(queryset=Instance.objects.all(), required=False)
+    databaseinfra = forms.ModelChoiceField(queryset=DatabaseInfra.objects.all(), required=False)
     engine = forms.ModelChoiceField(queryset=Engine.objects.all(), required=False)
     plan = AdvancedModelChoiceField(queryset=Plan.objects.all(), required=False, widget=forms.RadioSelect, empty_label=None)
 
@@ -38,23 +38,23 @@ class DatabaseForm(models.ModelForm):
     def clean(self):
         cleaned_data = super(DatabaseForm, self).clean()
 
-        new_instance = self.data.get('new_instance', '')
+        new_databaseinfra = self.data.get('new_databaseinfra', '')
         
-        if new_instance == 'on':
+        if new_databaseinfra == 'on':
             try:
-                instance = Instance.provision(engine=self.cleaned_data['engine'],
+                databaseinfra = DatabaseInfra.provision(engine=self.cleaned_data['engine'],
                                                                     plan=self.cleaned_data['plan'],
                                                                     name=self.cleaned_data['name'])
-                LOG.info("provisioned instance: %s" % instance)
-                self.cleaned_data['instance'] = instance
-                self.cleaned_data['plan'] = instance.plan
+                LOG.info("provisioned databaseinfra: %s" % databaseinfra)
+                self.cleaned_data['databaseinfra'] = databaseinfra
+                self.cleaned_data['plan'] = databaseinfra.plan
             except Exception, e:
                 LOG.error("Erro validating inputed data: %s" % e)
                 raise forms.ValidationError(e)
         # else:
-            # if not cleaned_data.get('instance', None):
+            # if not cleaned_data.get('databaseinfra', None):
             #     ## TODO MELHORAR ISTO
             #     print "passou"
-            #     raise forms.ValidationError("You miss instance!")
+            #     raise forms.ValidationError("You miss databaseinfra!")
         return cleaned_data
 

@@ -19,28 +19,28 @@ class EngineTestCase(TestCase):
     """
 
     def setUp(self):
-        self.instance = factory.InstanceFactory()
-        self.engine = FakeDriver(instance=self.instance)
+        self.databaseinfra = factory.DatabaseInfraFactory()
+        self.engine = FakeDriver(databaseinfra=self.databaseinfra)
 
     def tearDown(self):
-        self.instance.delete()
-        self.instance = self.engine = None
+        self.databaseinfra.delete()
+        self.databaseinfra = self.engine = None
 
     def test_to_envs_with_none_returns_empty_dict(self):
         self.assertEquals({}, self.engine.to_envs(None))
 
-    def test_to_envs_with_instance_object_must_return_a_dictionary(self):
+    def test_to_envs_with_databaseinfra_object_must_return_a_dictionary(self):
         self.assertEquals({
-            'INSTANCE_ID': str(self.instance.id),
-            'INSTANCE_NAME': self.instance.name,
-            'INSTANCE_PASSWORD': self.instance.password,
-            'INSTANCE_USER': self.instance.user,
-            'INSTANCE_CONNECTION': CONNECTION_TEST,
-            }, self.engine.to_envs(self.instance))
+            'DATABASEINFRA_ID': str(self.databaseinfra.id),
+            'DATABASEINFRA_NAME': self.databaseinfra.name,
+            'DATABASEINFRA_PASSWORD': self.databaseinfra.password,
+            'DATABASEINFRA_USER': self.databaseinfra.user,
+            'DATABASEINFRA_CONNECTION': CONNECTION_TEST,
+            }, self.engine.to_envs(self.databaseinfra))
 
     def test_call_script_will_put_engine_path_as_environment_variable(self):
         PATH = '/bin:/bin/path1:/bin/path2'
-        self.engine.instance.engine.path = PATH
+        self.engine.databaseinfra.engine.path = PATH
         result = self.engine.call_script("/bin/bash", ["-c", 'echo $PATH'])
         self.assertEquals(PATH, result.strip())
 
