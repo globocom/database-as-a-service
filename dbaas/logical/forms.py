@@ -48,6 +48,7 @@ class DatabaseForm(models.ModelForm):
         database = Database()
         database.name = self.cleaned_data['name']
         database.databaseinfra = self.cleaned_data['databaseinfra']
+        database.project = self.cleaned_data['project']
         database.save()
         return database
 
