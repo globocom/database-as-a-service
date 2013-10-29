@@ -21,9 +21,11 @@ class DriverFactory(object):
         if driver_name == "mongodb":
             from .mongodb import MongoDB
             return MongoDB
+        elif driver_name == "fake":
+            from .fake import FakeDriver
+            return FakeDriver
 
         raise NotImplementedError()
-
 
     @classmethod
     def factory(cls, databaseinfra):

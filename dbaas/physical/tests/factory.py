@@ -35,6 +35,14 @@ class PlanFactory(factory.DjangoModelFactory):
     is_default = True
     engine_type = factory.LazyAttribute(get_engine_type)
 
+    @classmethod
+    def _adjust_kwargs(cls, **kwargs):
+        if 'engine_type' in kwargs:
+            if kwargs['engine_type'] == 'fake':
+                engine_type, created = models.EngineType.objects.get_or_create(name='fake')
+                kwargs['engine_type'] = engine_type
+        return kwargs
+
 
 class DatabaseInfraFactory(factory.DjangoModelFactory):
     FACTORY_FOR = models.DatabaseInfra
@@ -44,6 +52,15 @@ class DatabaseInfraFactory(factory.DjangoModelFactory):
     password = '123456'
     engine = factory.LazyAttribute(get_engine)
     plan = factory.SubFactory(PlanFactory)
+
+    @classmethod
+    def _adjust_kwargs(cls, **kwargs):
+        if 'engine' in kwargs:
+            if kwargs['engine'] == 'fake':
+                engine_type, created = models.EngineType.objects.get_or_create(name='fake')
+                engine, created = models.Engine.objects.get_or_create(version='unique', engine_type=engine_type)
+                kwargs['engine'] = engine
+        return kwargs
 
 
 class InstanceFactory(factory.DjangoModelFactory):
