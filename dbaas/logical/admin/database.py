@@ -8,7 +8,7 @@ from ..forms import DatabaseForm
 class DatabaseAdmin(admin.DjangoServicesAdmin):
     service_class = DatabaseService
     search_fields = ("name", "databaseinfra__name")
-    list_display = ("name", "endpoint", "get_capacity_html")
+    list_display = ("name", "get_capacity_html", "endpoint")
     list_filter = ("databaseinfra", "project",)
     change_form_template = "logical/database_change_form.html"
     fieldsets = (
@@ -27,8 +27,9 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         else:
             bar_type = "success"
         return """
-<div class="progress progress-striped active">
-    <div class="bar bar-%(bar_type)s" style="width: %(p)d%%;">%(used)d of %(total)d MB used</div>
+<div class="progress progress-%(bar_type)s">
+    <p style="position: absolute; padding-left: 10px;">%(used)d of %(total)d MB used</p>
+    <div class="bar" style="width: %(p)d%%;"></div>
 </div>""" % {
             "p": int(database.capacity*100),
             "used": database.used_size,
