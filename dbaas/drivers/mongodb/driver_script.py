@@ -45,14 +45,14 @@ class MongoDBScript(BaseDriver):
         # stdout = unicode(self.run_mongo("listdatabases")).strip()
         # LOG.debug('List Databases return:\n%s', stdout)
         # json_status = load_mongo_json(stdout)
-        databaseinfra_status.size_in_bytes = json_status.get('fileSize', 0)
+        databaseinfra_status.used_size_in_bytes = json_status.get('fileSize', 0)
 
         for database in self.databaseinfra.databases.all():
             database_name = database.name
             db_json_status = getattr(client, database_name).command('dbStats')
             db_status = DatabaseStatus(database)
             pprint(db_json_status)
-            db_status.size_in_bytes = db_json_status.get("fileSize")
+            db_status.used_size_in_bytes = db_json_status.get("fileSize")
             databaseinfra_status.databases_status[database_name] = db_status
 
         client.disconnect()

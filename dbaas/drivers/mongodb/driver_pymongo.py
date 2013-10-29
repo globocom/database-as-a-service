@@ -66,18 +66,14 @@ class MongoDB(BaseDriver):
             json_list_databases = client.admin.command('listDatabases')
 
             databaseinfra_status.version = json_server_info.get('version', None)
-            databaseinfra_status.size_in_bytes = json_list_databases.get('totalSize', 0)
-
-            json_databases = dict([(json_db['name'], json_db) for json_db in json_list_databases.get('databases', [])])
+            databaseinfra_status.used_size_in_bytes = json_list_databases.get('totalSize', 0)
 
             for database in self.databaseinfra.databases.all():
                 database_name = database.name
-                json_db_status = json_databases.get(database_name, {})
+                json_db_status = getattr(client, database_name).command('dbStats')
                 db_status = DatabaseStatus(database)
-                if json_db_status.get('empty', False):
-                    db_status.size_in_bytes = 0
-                else:
-                    db_status.size_in_bytes = json_db_status.get("sizeOnDisk") or 0
+                db_status.used_size_in_bytes = json_db_status.get("dataSize") or 0
+                db_status.total_size_in_bytes = json_db_status.get("fileSize") or 0
                 databaseinfra_status.databases_status[database_name] = db_status
 
         return databaseinfra_status

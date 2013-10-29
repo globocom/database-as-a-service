@@ -185,11 +185,9 @@ class StatusAndInfoMongoDBScriptTestCase(TestCase):
         call_script.assert_any_call(MongoDB.SCRIPT, ["serverstatus"], envs=match_equality(has_entries(required_envs)))
         call_script.assert_any_call(MongoDB.SCRIPT, ["listdatabases"], envs=match_equality(has_entries(required_envs)))
         self.assertEquals("2.4.6", databaseinfra_status.version)
-        self.assertEquals(100663296, databaseinfra_status.size_in_bytes)
-        self.assertEquals(96, databaseinfra_status.size_in_mb)
-        self.assertEquals(0.09375, databaseinfra_status.size_in_gb)
+        self.assertEquals(100663296, databaseinfra_status.used_size_in_bytes)
 
         base1_status = databaseinfra_status.get_database_status("base1")
         self.assertEquals(database_base1, base1_status.database_model)
-        self.assertEquals(67108864, base1_status.size_in_bytes)
+        self.assertEquals(67108864, base1_status.used_size_in_bytes)
 
