@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 from django_services import admin
-# from django.utils.translation import ugettext_lazy as _
 from ..service.database import DatabaseService
 from ..forms import DatabaseForm
 
@@ -21,7 +20,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     form = DatabaseForm
 
 
-    def get_readonly_fields(self, request, obj = None):
+    def get_readonly_fields(self, request, obj=None):
         """
         if in edit mode, name is readonly.
         """
@@ -30,7 +29,12 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
         return self.readonly_fields
 
-    # def add_view(self, request, form_url='', extra_context=None, **kwargs):
-    #     return super(DatabaseAdmin, self).add_view(request, form_url, extra_context, **kwargs)
+
+    def add_view(self, request, form_url='', extra_context=None, **kwargs):
+        return super(DatabaseAdmin, self).add_view(request, form_url, extra_context, **kwargs)
+
+
+    def change_view(self, request, object_id, form_url='', extra_context=None):
+        return super(DatabaseAdmin, self).change_view(request, object_id, form_url, extra_context=extra_context)
 
 

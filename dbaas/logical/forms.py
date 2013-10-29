@@ -12,7 +12,7 @@ LOG = logging.getLogger(__name__)
 
 class AdvancedModelChoiceIterator(models.ModelChoiceIterator):
     def choice(self, obj):
-        """ I override this method to put plan object in view. I need this for
+        """ I override this method to put plan object in view. I need this to
         draw plan boxes """
         opts = (self.field.prepare_value(obj), self.field.label_from_instance(obj), obj)
         return opts

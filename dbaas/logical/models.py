@@ -3,7 +3,7 @@ from __future__ import absolute_import, unicode_literals
 import simple_audit
 import logging
 from django.db import models
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 from django.db.models.signals import pre_save, post_save, pre_delete
@@ -34,6 +34,10 @@ class Database(BaseModel):
     name = models.CharField(verbose_name=_("Database name"), max_length=100, unique=True)
     databaseinfra = models.ForeignKey(DatabaseInfra, related_name="databases", on_delete=models.PROTECT)
     project = models.ForeignKey(Project, related_name="databases", on_delete=models.PROTECT, null=True, blank=True)
+    group = models.OneToOneField(Group, related_name="databases", 
+                                        help_text=_("Group that is accountable for the database"), 
+                                        null=True, 
+                                        blank=True)
 
     def __unicode__(self):
         return u"%s" % self.name
