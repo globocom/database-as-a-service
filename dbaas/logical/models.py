@@ -3,12 +3,13 @@ from __future__ import absolute_import, unicode_literals
 import simple_audit
 import logging
 from django.db import models
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 from django.db.models.signals import pre_save, post_save, pre_delete
 from django.dispatch import receiver
 from django_extensions.db.fields.encrypted import EncryptedCharField
+from django.utils.functional import cached_property
 from util import slugify
 from util.models import BaseModel
 from physical.models import DatabaseInfra
@@ -70,6 +71,36 @@ class Database(BaseModel):
         
     def __get_database_reserved_names(self):
         return Database.RESERVED_DATABASES_NAME
+
+    @cached_property
+    def driver(self):
+        return self.databaseinfra.get_driver()
+
+    def get_endpoint(self):
+        return self.driver.get_connection()
+
+    endpoint = property(get_endpoint)
+
+    @cached_property
+    def database_status(self):
+        info = self.driver.info()
+        database_status = info.get_database_status(self.name)
+        return database_status
+
+    @property
+    def total_size(self):
+        """ Total size of database (in MB) """
+        return 500 # FIXME
+
+    @property
+    def used_size(self):
+        """ Used size of database (in MB) """
+        return self.database_status.size_in_mbytes
+
+    @property
+    def capacity(self):
+        """ Float number about used capacity """
+        return 1.0 * self.used_size / self.total_size
 
 
 class Credential(BaseModel):

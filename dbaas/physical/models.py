@@ -167,6 +167,10 @@ class DatabaseInfra(BaseModel):
             return None
         return databases[0]
 
+    def get_driver(self):
+        import drivers
+        return drivers.factory_for(self)
+
 
 class Instance(BaseModel):
 
