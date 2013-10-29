@@ -1,4 +1,7 @@
+# -*- coding: utf-8 -*-
+from __future__ import absolute_import, unicode_literals
 from django.conf import settings
+from dbaas import features
 
 import logging
 
@@ -20,7 +23,7 @@ def get_ldap_connection():
 
 def find_ldap_groups_from_user(username=None):
     groups = []
-    if settings.LDAP_ENABLED and username:
+    if features.LDAP_ENABLED and username:
         import ldap
         user_search = settings.AUTH_LDAP_USER_SEARCH_STR
         group_search = settings.AUTH_LDAP_GROUP_SEARCH_STR
