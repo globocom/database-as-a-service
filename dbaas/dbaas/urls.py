@@ -4,12 +4,9 @@ from django.conf.urls import patterns, include, url
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.conf import settings
 from django.views.generic.base import RedirectView
-
-from django.contrib import admin
-from adminplus.sites import AdminSitePlus
+import admin
 import django_services.api.urls
 
-admin.site = AdminSitePlus()
 admin.autodiscover()
 
 urlpatterns = patterns('',
