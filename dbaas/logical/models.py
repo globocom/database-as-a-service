@@ -89,13 +89,13 @@ class Database(BaseModel):
 
     @property
     def total_size(self):
-        """ Total size of database (in MB) """
-        return 500 # FIXME
+        """ Total size of database (in bytes) """
+        return self.database_status.total_size_in_bytes
 
     @property
     def used_size(self):
-        """ Used size of database (in MB) """
-        return self.database_status.size_in_mbytes
+        """ Used size of database (in bytes) """
+        return self.database_status.used_size_in_bytes
 
     @property
     def capacity(self):

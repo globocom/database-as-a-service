@@ -181,74 +181,25 @@ class BaseDriver(object):
             envs[BaseDriver.ENV_CONNECTION] = self.get_connection()
         return envs
 
-class SizeUnitsMixin(object):
 
-    @property
-    def size_in_bytes(self):
-        """ Size in bytes (long) """
-        return self.__size
-
-    @size_in_bytes.setter
-    def size_in_bytes(self, size):
-        try:
-            self.__size = int(size)
-        except TypeError:
-            self.__size = -1
-
-    @property
-    def size_in_kbytes(self):
-        """ Size in kbytes (float) """
-        return self.size_in_bytes / 1024.
-
-    @size_in_kbytes.setter
-    def size_in_kbytes(self, size):
-        self.size_in_bytes = size * 1024
-
-    @property
-    def size_in_mbytes(self):
-        """ Size in megabytes (float) """
-        return self.size_in_kbytes / 1024.
-
-    @size_in_mbytes.setter
-    def size_in_mbytes(self, size):
-        self.size_in_kbytes = size * 1024
-
-    @property
-    def size_in_gbytes(self):
-        """ Size in gigabytes (float) """
-        return self.size_in_mbytes / 1024.
-
-    @size_in_gbytes.setter
-    def size_in_gbytes(self, size):
-        self.size_in_mbytes = size * 1024
-
-    @property
-    def size_in_pbytes(self):
-        """ Size in pentabytes (float) """
-        return self.size_in_gbytes / 1024.
-
-    @size_in_pbytes.setter
-    def size_in_pbytes(self, size):
-        self.size_in_gbytes = size * 1024
-
-
-class DatabaseStatus(SizeUnitsMixin):
+class DatabaseStatus(object):
 
     def __init__(self, database_model):
         self.database_model = database_model
-        self.size_in_bytes = -1
+        self.used_size_in_bytes = -1
+        self.total_size_in_bytes = -1
 
     @property
     def name(self):
         return self.database_model.name
 
 
-class DatabaseInfraStatus(SizeUnitsMixin):
+class DatabaseInfraStatus(object):
 
     def __init__(self, databaseinfra_model):
         self.databaseinfra_model = databaseinfra_model
         self.version = None
-        self.size_in_bytes = -1
+        self.used_size_in_bytes = -1
         self.databases_status = {}
 
     def get_database_status(self, database_name):

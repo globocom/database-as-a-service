@@ -4,6 +4,7 @@ from django_services import admin
 from ..service.database import DatabaseService
 from ..forms import DatabaseForm
 
+MB_FACTOR = 1.0 / 1024.0 / 1024.0
 
 class DatabaseAdmin(admin.DjangoServicesAdmin):
     service_class = DatabaseService
@@ -28,12 +29,12 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             bar_type = "success"
         return """
 <div class="progress progress-%(bar_type)s">
-    <p style="position: absolute; padding-left: 10px;">%(used)d of %(total)d MB used</p>
+    <p style="position: absolute; padding-left: 10px;">%(used)d MB of %(total)d MB</p>
     <div class="bar" style="width: %(p)d%%;"></div>
 </div>""" % {
             "p": int(database.capacity*100),
-            "used": database.used_size,
-            "total": database.total_size,
+            "used": database.used_size * MB_FACTOR,
+            "total": database.total_size * MB_FACTOR,
             "bar_type": bar_type,
         }
     get_capacity_html.allow_tags = True

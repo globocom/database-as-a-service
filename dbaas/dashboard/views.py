@@ -24,14 +24,14 @@ def dashboard(request, *args, **kwargs):
         data = SortedDict()
         data["name"] = databaseinfra.name
         data["version"] = databaseinfra_status.version
-        data["size"] = databaseinfra_status.size_in_mbytes
+        data["size"] = databaseinfra_status.used_size_in_bytes / 1024.0 / 1024
         data["databases"] = []
     
         for database_status in databaseinfra_status.databases_status.values():
             data["databases"].append({
                 "name" : database_status.name,
-                "size" : database_status.size_in_mbytes,
-                "usage": round(100 * database_status.size_in_mbytes / databaseinfra_status.size_in_mbytes)
+                "size" : database_status.used_size_in_bytes / 1024.0 / 1024,
+                "usage": round(100 * database_status.used_size_in_bytes / databaseinfra_status.used_size_in_bytes)
             })
         
         databaseinfras.append(data)
