@@ -6,6 +6,7 @@ from django.contrib.auth.models import User
 from drivers import fake
 from physical.tests import factory as physical_factory
 from ..models import Database
+from ..forms import DatabaseForm
 from . import factory
 
 LOG = logging.getLogger(__name__)
@@ -40,3 +41,16 @@ class AdminCreateDatabaseTestCase(TestCase):
 
         database = Database.objects.get(databaseinfra=self.databaseinfra, name=database_name)
         self.assertEqual(self.project, database.project)
+
+    def test_db_name(self):
+        data = {'name': '', 'project': 'any_project'}
+        form = DatabaseForm(data=data)
+        self.assertFalse(form.is_valid())
+
+    def test_project_choice(self):
+        data = {'name': 'some_name', 'project': ''}
+        form = DatabaseForm(data=data)
+        self.assertFalse(form.is_valid())
+
+    def plan_choice(self):
+        pass
