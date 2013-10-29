@@ -11,10 +11,10 @@ def get_ldap_connection():
     dn = settings.AUTH_LDAP_BIND_DN
     conn = None
 
-    LOG.info("connecting to LDAP")
+    LOG.debug("connecting to LDAP")
     conn = ldap.initialize(server)
     conn.bind_s(dn, user_pw)
-    LOG.info("Done")
+    LOG.debug("Done")
     
     return conn
 
