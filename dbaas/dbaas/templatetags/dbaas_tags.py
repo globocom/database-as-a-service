@@ -12,7 +12,8 @@ def submit_row_extended(context):
     is_popup = context['is_popup']
     save_as = context['save_as']
     delete_button_name = context.get('delete_button_name', 'Delete')
-
+    # TODO:
+    # show_delete_link permission name should be parametrized
     ctx = {
         'opts': opts,
         'onclick_attrib': (opts.get_ordered_objects() and change
