@@ -23,6 +23,7 @@ def dashboard(request, *args, **kwargs):
         databaseinfra_status = databaseinfra_service.get_databaseinfra_status(databaseinfra)
         data = SortedDict()
         data["name"] = databaseinfra.name
+        data["engine"] = databaseinfra.engine.engine_type
         data["version"] = databaseinfra_status.version
         data["size"] = databaseinfra_status.used_size_in_bytes / 1024.0 / 1024
         data["databases"] = []
