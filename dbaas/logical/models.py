@@ -39,6 +39,8 @@ class Database(BaseModel):
                                         help_text=_("Group that is accountable for the database"), 
                                         null=True, 
                                         blank=True)
+    is_in_quarantine = models.BooleanField(verbose_name=_("Is database in quarantine?"), default=False)
+    quarantine_dt = models.DateField(verbose_name=_("Quarantine date"), null=True, blank=True, editable=False)
 
     def __unicode__(self):
         return u"%s" % self.name
