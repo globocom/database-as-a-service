@@ -1,10 +1,14 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
+import logging
 from django_services import admin
 from ..service.database import DatabaseService
 from ..forms import DatabaseForm
+from ..models import Database
 
 MB_FACTOR = 1.0 / 1024.0 / 1024.0
+
+LOG = logging.getLogger(__name__)
 
 class DatabaseAdmin(admin.DjangoServicesAdmin):
     service_class = DatabaseService
@@ -19,6 +23,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         ),
     )
     form = DatabaseForm
+    delete_button_name = "Delete"
 
     def get_capacity_html(self, database):
         if database.capacity > .75:
@@ -54,6 +59,12 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
 
     def change_view(self, request, object_id, form_url='', extra_context=None):
+        database = Database.objects.get(id=object_id)
+        extra_context = extra_context or {}
+        if database.is_in_quarantine:
+            extra_context['delete_button_name'] = self.delete_button_name
+        else:
+            extra_context['delete_button_name'] = "Move to quarantine"
         return super(DatabaseAdmin, self).change_view(request, object_id, form_url, extra_context=extra_context)
 
 
