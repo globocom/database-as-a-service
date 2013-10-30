@@ -43,7 +43,14 @@
                             </div>
                             <div class="plan-chooser">
                                 <p class="text-center">
-                                    <span><input type="radio" name="{{field.field.name}}" value="{{plan_value}}" {% if field.field.value == plan_value %} checked="checked" {% endif %} /></span>
+                                    <span>
+                                        <input type="radio" 
+                                                name="{{field.field.name}}" 
+                                                value="{{plan_value}}" 
+                                                {% if adminform.form.instance.infra.plan.id == plan_value %} 
+                                                checked="checked" 
+                                                {% endif %} />
+                                    </span>
                                 </p>
                             </div>
                         </div>
@@ -58,3 +65,5 @@
     </fieldset>
 {% endfor %}
 {% endblock %}
+
+{% block submit_buttons_bottom %}{% submit_row %}{% endblock %}
