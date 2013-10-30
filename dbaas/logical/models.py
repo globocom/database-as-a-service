@@ -35,7 +35,7 @@ class Database(BaseModel):
     name = models.CharField(verbose_name=_("Database name"), max_length=100, unique=True)
     databaseinfra = models.ForeignKey(DatabaseInfra, related_name="databases", on_delete=models.PROTECT)
     project = models.ForeignKey(Project, related_name="databases", on_delete=models.PROTECT, null=True, blank=True)
-    group = models.OneToOneField(Group, related_name="databases", 
+    group = models.ForeignKey(Group, related_name="databases", 
                                         help_text=_("Group that is accountable for the database"), 
                                         null=True, 
                                         blank=True)
@@ -100,7 +100,7 @@ class Database(BaseModel):
     @property
     def capacity(self):
         """ Float number about used capacity """
-        return 1.0 * self.used_size / self.total_size
+        return 1.0 * self.used_size / self.total_size if self.total_size else 0
 
 
 class Credential(BaseModel):
