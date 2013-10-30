@@ -54,8 +54,18 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
         return self.readonly_fields
 
-    def add_view(self, request, form_url='', extra_context=None, **kwargs):
-        return super(DatabaseAdmin, self).add_view(request, form_url, extra_context, **kwargs)
+    def queryset(self, request):
+        qs = super(DatabaseAdmin, self).queryset(request)
+        if request.user.is_superuser:
+            return qs
+        return qs.filter(is_in_quarantine=False)
+
+    # def changelist_view(self, request, extra_context=None):
+    #     queryset = self.model.objects.filter(is_in_quarantine=False)
+    #     return super(DatabaseAdmin, self).changelist_view(request, extra_context=extra_context)
+        
+    def add_view(self, request, form_url='', extra_context=None):
+        return super(DatabaseAdmin, self).add_view(request, form_url, extra_context=extra_context)
 
 
     def change_view(self, request, object_id, form_url='', extra_context=None):
