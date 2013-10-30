@@ -122,10 +122,7 @@ class Database(BaseModel):
     @property
     def capacity(self):
         """ Float number about used capacity """
-        try:
-            return 1.0 * self.used_size / self.total_size
-        except ZeroDivisionError:
-            return 0.0
+        return 1.0 * self.used_size / self.total_size if self.total_size else 0
 
 
 class Credential(BaseModel):

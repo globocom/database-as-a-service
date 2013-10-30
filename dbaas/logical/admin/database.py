@@ -11,14 +11,20 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     search_fields = ("name", "databaseinfra__name")
     list_display = ("name", "get_capacity_html", "endpoint", "is_in_quarantine")
     list_filter = ("databaseinfra", "project", "is_in_quarantine")
+    add_form_template = "logical/database_add_form.html"
     change_form_template = "logical/database_change_form.html"
-    fieldsets = (
+    fieldsets_add = (
         (None, {
             'fields': ('name', 'project', 'plan')
             }
         ),
     )
-    form = DatabaseForm
+    fieldsets_change = (
+        (None, {
+            'fields': ('name', 'project', 'group')
+            }
+        ),
+    )
 
     def get_capacity_html(self, database):
         if database.capacity > .75:
@@ -40,20 +46,30 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     get_capacity_html.allow_tags = True
     get_capacity_html.short_description = "Capacity"
 
+    def get_form(self, request, obj=None, **kwargs):
+        self.exclude = []
+        if not obj:
+            # adding new database
+            return DatabaseForm
+        # Tradicional form
+        return super(DatabaseAdmin, self).get_form(request, obj, **kwargs)
+
+    def get_fieldsets(self, request, obj=None):
+        return self.fieldsets_change if obj else self.fieldsets_add
+
     def get_readonly_fields(self, request, obj=None):
         """
         if in edit mode, name is readonly.
         """
         if obj: #In edit mode
-            return ('name',) + self.readonly_fields
-
+            return ('name', 'group', 'databaseinfra') + self.readonly_fields
         return self.readonly_fields
 
-    def add_view(self, request, form_url='', extra_context=None, **kwargs):
-        return super(DatabaseAdmin, self).add_view(request, form_url, extra_context, **kwargs)
+    # def add_view(self, request, form_url='', extra_context=None, **kwargs):
+    #     return super(DatabaseAdmin, self).add_view(request, form_url, extra_context, **kwargs)
 
 
-    def change_view(self, request, object_id, form_url='', extra_context=None):
-        return super(DatabaseAdmin, self).change_view(request, object_id, form_url, extra_context=extra_context)
+    # def change_view(self, request, object_id, form_url='', extra_context=None):
+    #     return super(DatabaseAdmin, self).change_view(request, object_id, form_url, extra_context=extra_context)
 
 
