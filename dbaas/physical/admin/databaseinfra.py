@@ -33,7 +33,7 @@ class InstanceModelFormSet(BaseInlineFormSet):
 
 class InstanceAdmin(django_admin.TabularInline):
     model = Instance
-    fields = ('address', 'port', 'type', 'is_active',)
+    fields = ('hostname', 'address', 'port', 'type', 'is_active', 'is_arbiter')
     max_num = 1
     can_delete = False
     extra = 1

@@ -39,6 +39,7 @@ class Migration(SchemaMigration):
             ('created_at', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
             ('updated_at', self.gf('django.db.models.fields.DateTimeField')(auto_now=True, blank=True)),
             ('name', self.gf('django.db.models.fields.CharField')(unique=True, max_length=100)),
+            ('description', self.gf('django.db.models.fields.TextField')(null=True, blank=True)),
             ('is_active', self.gf('django.db.models.fields.BooleanField')(default=True)),
             ('is_default', self.gf('django.db.models.fields.BooleanField')(default=False)),
             ('engine_type', self.gf('django.db.models.fields.related.ForeignKey')(related_name=u'plans', to=orm['physical.EngineType'])),
@@ -69,6 +70,15 @@ class Migration(SchemaMigration):
         ))
         db.send_create_signal(u'physical', ['DatabaseInfra'])
 
+        # Adding model 'Host'
+        db.create_table(u'physical_host', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('created_at', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
+            ('updated_at', self.gf('django.db.models.fields.DateTimeField')(auto_now=True, blank=True)),
+            ('hostname', self.gf('django.db.models.fields.CharField')(max_length=255)),
+        ))
+        db.send_create_signal(u'physical', ['Host'])
+
         # Adding model 'Instance'
         db.create_table(u'physical_instance', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
@@ -78,6 +88,8 @@ class Migration(SchemaMigration):
             ('port', self.gf('django.db.models.fields.IntegerField')()),
             ('databaseinfra', self.gf('django.db.models.fields.related.ForeignKey')(related_name=u'instances', to=orm['physical.DatabaseInfra'])),
             ('is_active', self.gf('django.db.models.fields.BooleanField')(default=True)),
+            ('is_arbiter', self.gf('django.db.models.fields.BooleanField')(default=False)),
+            ('hostname', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['physical.Host'])),
             ('type', self.gf('django.db.models.fields.CharField')(default=u'2', max_length=2)),
         ))
         db.send_create_signal(u'physical', ['Instance'])
@@ -107,6 +119,9 @@ class Migration(SchemaMigration):
 
         # Deleting model 'DatabaseInfra'
         db.delete_table(u'physical_databaseinfra')
+
+        # Deleting model 'Host'
+        db.delete_table(u'physical_host')
 
         # Deleting model 'Instance'
         db.delete_table(u'physical_instance')
@@ -142,13 +157,22 @@ class Migration(SchemaMigration):
             'name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '100'}),
             'updated_at': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'})
         },
+        u'physical.host': {
+            'Meta': {'object_name': 'Host'},
+            'created_at': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
+            'hostname': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'updated_at': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'})
+        },
         u'physical.instance': {
             'Meta': {'unique_together': "((u'address', u'port'),)", 'object_name': 'Instance'},
             'address': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
             'created_at': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
             'databaseinfra': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "u'instances'", 'to': u"orm['physical.DatabaseInfra']"}),
+            'hostname': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['physical.Host']"}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'is_active': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
+            'is_arbiter': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'port': ('django.db.models.fields.IntegerField', [], {}),
             'type': ('django.db.models.fields.CharField', [], {'default': "u'2'", 'max_length': '2'}),
             'updated_at': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'})
@@ -156,6 +180,7 @@ class Migration(SchemaMigration):
         u'physical.plan': {
             'Meta': {'object_name': 'Plan'},
             'created_at': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
+            'description': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
             'engine_type': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "u'plans'", 'to': u"orm['physical.EngineType']"}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'is_active': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),

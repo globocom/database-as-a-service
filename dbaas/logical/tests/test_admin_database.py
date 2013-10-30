@@ -52,5 +52,5 @@ class AdminCreateDatabaseTestCase(TestCase):
         form = DatabaseForm(data=data)
         self.assertFalse(form.is_valid())
 
-    def plan_choice(self):
+    def test_plan_choice(self):
         pass
