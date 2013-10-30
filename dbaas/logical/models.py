@@ -36,10 +36,10 @@ class Database(BaseModel):
     name = models.CharField(verbose_name=_("Database name"), max_length=100, unique=True)
     databaseinfra = models.ForeignKey(DatabaseInfra, related_name="databases", on_delete=models.PROTECT)
     project = models.ForeignKey(Project, related_name="databases", on_delete=models.PROTECT, null=True, blank=True)
-    group = models.OneToOneField(Group, related_name="databases", 
-                                        help_text=_("Group that is accountable for the database"), 
-                                        null=True, 
-                                        blank=True)
+    group = models.OneToOneField(Group, related_name="databases",
+                                 help_text=_("Group that is accountable for the database"),
+                                 null=True,
+                                 blank=True)
     is_in_quarantine = models.BooleanField(verbose_name=_("Is database in quarantine?"), default=False)
     quarantine_dt = models.DateField(verbose_name=_("Quarantine date"), null=True, blank=True, editable=False)
 
@@ -53,7 +53,7 @@ class Database(BaseModel):
         #do_something()
         if self.is_in_quarantine:
             LOG.warning("Database %s is in quarantine and will be removed" % self.name)
-            super(Database, self).delete(*args, **kwargs) # Call the "real" delete() method.
+            super(Database, self).delete(*args, **kwargs)  # Call the "real" delete() method.
         else:
             LOG.warning("Putting database %s in quarantine" % self.name)
             self.is_in_quarantine = True
@@ -85,7 +85,7 @@ class Database(BaseModel):
         database.name = name
         database.save()
         return database
-        
+
     def __get_database_reserved_names(self):
         return Database.RESERVED_DATABASES_NAME
 
@@ -94,7 +94,7 @@ class Database(BaseModel):
         return self.databaseinfra.get_driver()
 
     def get_endpoint(self):
-        return self.driver.get_connection()
+        return self.driver.get_connection() + '/' + self.name
 
     endpoint = property(get_endpoint)
 
@@ -103,7 +103,6 @@ class Database(BaseModel):
         info = self.driver.info()
         database_status = info.get_database_status(self.name)
         return database_status
-
 
     @property
     def infra(self):
@@ -123,7 +122,7 @@ class Database(BaseModel):
     @property
     def capacity(self):
         """ Float number about used capacity """
-        try :
+        try:
             return 1.0 * self.used_size / self.total_size
         except ZeroDivisionError:
             return 0.0
@@ -153,6 +152,7 @@ def database_pre_delete(sender, **kwargs):
     LOG.debug("database pre-delete triggered")
     engine = factory_for(database.databaseinfra)
     engine.remove_database(database)
+
 
 @receiver(post_save, sender=Database)
 def database_post_save(sender, **kwargs):
