@@ -15,11 +15,11 @@ class AbstractTestDriverMongo(TestCase):
         self.driver = MongoDB(databaseinfra=self.databaseinfra)
         self._mongo_client = None
 
-    def tearDown(self):
-        self.databaseinfra.delete()
-        if self._mongo_client:
-            self._mongo_client.disconnect()
-        self.driver = self.databaseinfra = self._mongo_client = None
+    # def tearDown(self):
+    #     self.databaseinfra.delete()
+    #     if self._mongo_client:
+    #         self._mongo_client.disconnect()
+    #     self.driver = self.databaseinfra = self._mongo_client = None
 
     @property
     def mongo_client(self):
@@ -63,9 +63,9 @@ class ManageDatabaseMongoDBTestCase(AbstractTestDriverMongo):
         # ensure database is dropped
         self.mongo_client.drop_database(self.database.name)
 
-    def tearDown(self):
-        self.database.delete()
-        super(ManageDatabaseMongoDBTestCase, self).tearDown()
+    # def tearDown(self):
+    #     self.database.delete()
+    #     super(ManageDatabaseMongoDBTestCase, self).tearDown()
 
     def test_mongodb_create_database(self):
         self.assertFalse(self.database.name in self.mongo_client.database_names())
