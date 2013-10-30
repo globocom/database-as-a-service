@@ -9,8 +9,8 @@ MB_FACTOR = 1.0 / 1024.0 / 1024.0
 class DatabaseAdmin(admin.DjangoServicesAdmin):
     service_class = DatabaseService
     search_fields = ("name", "databaseinfra__name")
-    list_display = ("name", "get_capacity_html", "endpoint")
-    list_filter = ("databaseinfra", "project",)
+    list_display = ("name", "get_capacity_html", "endpoint", "is_in_quarantine")
+    list_filter = ("databaseinfra", "project", "is_in_quarantine")
     add_form_template = "logical/database_add_form.html"
     change_form_template = "logical/database_change_form.html"
     fieldsets_add = (

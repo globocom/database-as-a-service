@@ -20,6 +20,12 @@ class EngineTypeFactory(factory.Factory):
     name = factory.Sequence(lambda n: 'blabla-{0}'.format(n))
 
 
+class HostFactory(factory.DjangoModelFactory):
+    FACTORY_FOR = models.Host
+
+    hostname = factory.Sequence(lambda n: 'host{0}.mydomain.com'.format(n))
+
+
 class EngineFactory(factory.Factory):
     FACTORY_FOR = models.Engine
 
@@ -69,6 +75,6 @@ class InstanceFactory(factory.DjangoModelFactory):
     address = '127.0.0.1'
     port = 27017
     is_active = True
+    is_arbiter = False
     databaseinfra = factory.SubFactory(DatabaseInfraFactory)
-
-
+    hostname = factory.SubFactory(HostFactory)

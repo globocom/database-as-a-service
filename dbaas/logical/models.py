@@ -2,6 +2,7 @@
 from __future__ import absolute_import, unicode_literals
 import simple_audit
 import logging
+import datetime
 from django.db import models
 from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
@@ -39,9 +40,25 @@ class Database(BaseModel):
                                         help_text=_("Group that is accountable for the database"), 
                                         null=True, 
                                         blank=True)
+    is_in_quarantine = models.BooleanField(verbose_name=_("Is database in quarantine?"), default=False)
+    quarantine_dt = models.DateField(verbose_name=_("Quarantine date"), null=True, blank=True, editable=False)
 
     def __unicode__(self):
         return u"%s" % self.name
+
+    def delete(self, *args, **kwargs):
+        """
+        Overrides the delete method so that a database can be put in quarantine and not removed
+        """
+        #do_something()
+        if self.is_in_quarantine:
+            LOG.warning("Database %s is in quarantine and will be removed" % self.name)
+            super(Database, self).delete(*args, **kwargs) # Call the "real" delete() method.
+        else:
+            LOG.warning("Putting database %s in quarantine" % self.name)
+            self.is_in_quarantine = True
+            self.quarantine_dt = datetime.datetime.now().date()
+            self.save()
 
     def clean(self):
 
@@ -86,6 +103,12 @@ class Database(BaseModel):
         info = self.driver.info()
         database_status = info.get_database_status(self.name)
         return database_status
+
+
+    @property
+    def infra(self):
+        """ Total size of database (in bytes) """
+        return self.databaseinfra
 
     @property
     def total_size(self):

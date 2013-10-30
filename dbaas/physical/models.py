@@ -172,6 +172,14 @@ class DatabaseInfra(BaseModel):
         return drivers.factory_for(self)
 
 
+
+class Host(BaseModel):
+    hostname = models.CharField(verbose_name=_("Hostname"), max_length=255, unique=True)
+
+    def __unicode__(self):
+        return self.hostname
+
+
 class Instance(BaseModel):
 
     VIRTUAL = '1'
@@ -185,6 +193,8 @@ class Instance(BaseModel):
     port = models.IntegerField(verbose_name=_("Instance port"))
     databaseinfra = models.ForeignKey(DatabaseInfra, related_name="instances", on_delete=models.CASCADE)
     is_active = models.BooleanField(verbose_name=_("Is instance active"), default=True)
+    is_arbiter = models.BooleanField(verbose_name=_("Is arbiter"), default=False)
+    hostname = models.ForeignKey(Host)
     type = models.CharField(verbose_name=_("Instance type"),
                             max_length=2,
                             choices=HOST_TYPE_CHOICES,

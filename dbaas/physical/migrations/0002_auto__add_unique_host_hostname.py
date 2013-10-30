@@ -8,15 +8,13 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Adding field 'Plan.description'
-        db.add_column(u'physical_plan', 'description',
-                      self.gf('django.db.models.fields.TextField')(null=True, blank=True),
-                      keep_default=False)
+        # Adding unique constraint on 'Host', fields ['hostname']
+        db.create_unique(u'physical_host', ['hostname'])
 
 
     def backwards(self, orm):
-        # Deleting field 'Plan.description'
-        db.delete_column(u'physical_plan', 'description')
+        # Removing unique constraint on 'Host', fields ['hostname']
+        db.delete_unique(u'physical_host', ['hostname'])
 
 
     models = {
@@ -49,13 +47,22 @@ class Migration(SchemaMigration):
             'name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '100'}),
             'updated_at': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'})
         },
+        u'physical.host': {
+            'Meta': {'object_name': 'Host'},
+            'created_at': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
+            'hostname': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '255'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'updated_at': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'})
+        },
         u'physical.instance': {
             'Meta': {'unique_together': "((u'address', u'port'),)", 'object_name': 'Instance'},
             'address': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
             'created_at': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
             'databaseinfra': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "u'instances'", 'to': u"orm['physical.DatabaseInfra']"}),
+            'hostname': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['physical.Host']"}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'is_active': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
+            'is_arbiter': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'port': ('django.db.models.fields.IntegerField', [], {}),
             'type': ('django.db.models.fields.CharField', [], {'default': "u'2'", 'max_length': '2'}),
             'updated_at': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'})
