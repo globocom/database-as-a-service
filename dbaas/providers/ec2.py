@@ -64,7 +64,7 @@ class Ec2Provider(object):
         instance.databaseinfra = databaseinfra
         instance.is_active = False
         instance.is_arbiter = False
-        instance.host = host
+        instance.hostname = host
         instance.type = models.Instance.VIRTUAL
         instance.save()
         return instance
