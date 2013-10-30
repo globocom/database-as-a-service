@@ -89,6 +89,12 @@ class Database(BaseModel):
         database_status = info.get_database_status(self.name)
         return database_status
 
+
+    @property
+    def infra(self):
+        """ Total size of database (in bytes) """
+        return self.databaseinfra
+
     @property
     def total_size(self):
         """ Total size of database (in bytes) """
