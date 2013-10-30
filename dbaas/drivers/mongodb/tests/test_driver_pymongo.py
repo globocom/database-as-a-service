@@ -44,7 +44,7 @@ class MongoDBEngineTestCase(AbstractTestDriverMongo):
         self.assertEqual(self.databaseinfra, self.driver.databaseinfra)
 
     def test_connection_string(self):
-        self.assertEqual("%s:%s" % (self.databaseinfra.instance.address, self.databaseinfra.instance.port), self.driver.get_connection())
+        self.assertEqual("mongodb://<user>:<password>@%s:%s" % (self.databaseinfra.instance.address, self.databaseinfra.instance.port), self.driver.get_connection())
 
     def test_get_user(self):
         self.assertEqual(self.databaseinfra.user, self.driver.get_user())
