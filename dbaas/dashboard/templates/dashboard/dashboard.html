@@ -35,6 +35,7 @@
 		</div>
 		<div class="status">
 			<ul>
+				<li>Engine: {{ databaseinfra.engine }}</li>
 				<li>Version: {{ databaseinfra.version }}</li>
 				<li>Total databaseinfra Size: {{ databaseinfra.size|floatformat:0 }}(MB)</li>
 				{% for database in databaseinfra.databases %}
