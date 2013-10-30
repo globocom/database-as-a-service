@@ -2,6 +2,7 @@
 from __future__ import absolute_import, unicode_literals
 import simple_audit
 import logging
+import datetime
 from django.db import models
 from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
@@ -44,6 +45,20 @@ class Database(BaseModel):
 
     def __unicode__(self):
         return u"%s" % self.name
+
+    def delete(self, *args, **kwargs):
+        """
+        Overrides the delete method so that a database can be put in quarantine and not removed
+        """
+        #do_something()
+        if self.is_in_quarantine:
+            LOG.warning("Database %s is in quarantine and will be removed" % self.name)
+            super(Database, self).delete(*args, **kwargs) # Call the "real" delete() method.
+        else:
+            LOG.warning("Putting database %s in quarantine" % self.name)
+            self.is_in_quarantine = True
+            self.quarantine_dt = datetime.datetime.now().date()
+            self.save()
 
     def clean(self):
 
