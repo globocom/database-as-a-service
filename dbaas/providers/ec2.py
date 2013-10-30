@@ -4,6 +4,7 @@ import logging
 from urlparse import urlparse
 import boto.ec2.regioninfo
 import boto.ec2.connection
+from django.db import transaction
 from django.conf import settings
 from physical import models
 from drivers import factory_for
@@ -39,6 +40,7 @@ def get_ec2_api():
 class Ec2Provider(object):
 
     #@timeout_decorator.timeout(60)
+    @transaction.commit_on_success
     def create_instance(self, databaseinfra):
         ec2_api = get_ec2_api()
         reservation = ec2_api.run_instances(settings.EC2_AMI_ID, subnet_id=settings.EC2_SUBNET_ID)
@@ -51,6 +53,9 @@ class Ec2Provider(object):
             i.update()
 
         LOG.info("Created instance %s", i.ip_address)
+        host = models.Host()
+        host.hostname = i.public_dns_name
+        host.save()
         instance = models.Instance()
         instance.address = i.ip_address
         # instance.address = i.public_dns_name
@@ -58,6 +63,8 @@ class Ec2Provider(object):
         instance.port = factory_for(databaseinfra).default_port
         instance.databaseinfra = databaseinfra
         instance.is_active = False
+        instance.is_arbiter = False
+        instance.host = host
         instance.type = models.Instance.VIRTUAL
         instance.save()
         return instance

@@ -174,7 +174,7 @@ class DatabaseInfra(BaseModel):
 
 
 class Host(BaseModel):
-    hostname = models.CharField(verbose_name=_("Hostname"), max_length=255)
+    hostname = models.CharField(verbose_name=_("Hostname"), max_length=255, unique=True)
 
     def __unicode__(self):
         return self.hostname

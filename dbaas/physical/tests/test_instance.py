@@ -6,7 +6,7 @@ from django.test.client import RequestFactory
 from django.db import IntegrityError
 
 from ..models import Instance
-from .factory import DatabaseInfraFactory
+from .factory import DatabaseInfraFactory, HostFactory, InstanceFactory
 
 
 class InstanceTestCase(TestCase):
@@ -15,20 +15,21 @@ class InstanceTestCase(TestCase):
         self.client = Client()
         self.factory = RequestFactory()
         self.databaseinfra = DatabaseInfraFactory()
-        self.new_instance = Instance.objects.create(address="new_instance.localinstance",
+        self.hostname = HostFactory()
+        self.new_instance = InstanceFactory(address="new_instance.localinstance",
                                     port=123,
                                     is_active=True,
+                                    is_arbiter = False,
                                     databaseinfra=self.databaseinfra,
                                     type='1')
-
-    def tearDown(self):
-        self.new_instance.delete()
 
     def test_create_instance(self):
         
         instance = Instance.objects.create(address="test.localinstance",
                                     port=123,
                                     is_active=True,
+                                    is_arbiter=False,
+                                    hostname=self.hostname,
                                     databaseinfra=self.databaseinfra,
                                     type='1')
         
@@ -37,8 +38,7 @@ class InstanceTestCase(TestCase):
 
     def test_error_duplicate_instance(self):
         
-        self.assertRaises(IntegrityError, Instance.objects.create, address="new_instance.localinstance",
-                                                                port=123,
-                                                                is_active=True, 
-                                                                databaseinfra=self.databaseinfra,
-                                                                type='1')
+        another_instance = self.new_instance
+        another_instance.id = None
+        
+        self.assertRaises(IntegrityError, another_instance.save)
