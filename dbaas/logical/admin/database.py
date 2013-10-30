@@ -1,7 +1,14 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 import logging
+from django.contrib import messages
+from django.template import RequestContext
 from django_services import admin
+from django.http import HttpResponse, HttpResponseRedirect
+from django.shortcuts import render_to_response
+
+from django.core.urlresolvers import reverse
+from django.conf.urls import patterns, include, url
 from ..service.database import DatabaseService
 from ..forms import DatabaseForm
 from ..models import Database
@@ -13,7 +20,7 @@ LOG = logging.getLogger(__name__)
 class DatabaseAdmin(admin.DjangoServicesAdmin):
     service_class = DatabaseService
     search_fields = ("name", "databaseinfra__name")
-    list_display = ("name", "get_capacity_html", "endpoint", "is_in_quarantine")
+    list_display = ["name", "get_capacity_html", "endpoint", "is_in_quarantine"]
     list_filter = ("databaseinfra", "project", "is_in_quarantine")
     change_form_template = "logical/database_change_form.html"
     fieldsets = (
@@ -59,6 +66,19 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         if request.user.is_superuser:
             return qs
         return qs.filter(is_in_quarantine=False)
+
+
+    def get_urls(self):
+        urls = super(DatabaseAdmin, self).get_urls()
+        my_urls = patterns('',
+            url(r'^removed/$', self.admin_site.admin_view(self.view_removed), name="removed_databases"),
+        )
+        return my_urls + urls
+
+    def view_removed(self, request):
+        #url = reverse('admin:logical_database_changelist')
+        #return HttpResponseRedirect(url + "?is_in_quarantine__exact=1")
+        return render_to_response("logical/database/removed.html", locals(), context_instance=RequestContext(request))
 
     # def changelist_view(self, request, extra_context=None):
     #     queryset = self.model.objects.filter(is_in_quarantine=False)
