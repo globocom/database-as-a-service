@@ -1,0 +1,61 @@
+{% extends "admin/change_form.html" %}
+{% load i18n admin_static admin_modify %}
+
+{% block extrahead %}
+    {{ block.super }}
+    <script type="text/javascript" src="{% static 'js/database_admin.js' %}"></script>
+{% endblock %}
+
+{% block extrastyle %}
+    {{ block.super }}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/database_admin.css' %}" />
+{% endblock %}
+
+{% block field_sets %}
+{% for fieldset in adminform %}
+    <fieldset class="module aligned {{ fieldset.classes }}">
+    {% for line in fieldset %}
+        {% for field in line %}
+            {% if field.field.name == 'plan' %}
+                <div class="row plans">
+                    <input id="plan-type" type="hidden" name="{{field.field.name}}" value="" />
+                    {% for plan_value, plan_name, plan in field.field.field.choices %}
+                    <div class="span3">
+                        <div class="well plan">
+                            <div class="plan-description">
+                                <h2 class="">{{plan_name}}</h2>
+                                <p>
+                                {% if plan.is_default %}
+                                    <span class="label label-success">Recommended</span>
+                                {% else %}
+                                    <span>&nbsp;</span>
+                                {% endif %}
+                                </p>
+                                <p class="description">{{plan.description}}</p>
+                                <ul class="plan-attributes">
+                                    {% for plan_attribute in plan.plan_attributes.all %}
+                                    <li>{{plan_attribute.name}}: {{plan_attribute.value}}</li>
+                                    {% endfor %}
+                                </ul>
+                                {# <p>Use this space for description</p> #}
+                            </div>
+                            <div class="plan-chooser">
+                                <p class="text-center">
+                                    <span><button data-plan-id="{{plan_value}}" type="submit" class="btn btn-plan">Choose</button></span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                {% include "admin/includes/field.html" %}
+            {% endif %}
+        {% endfor %}
+    {% endfor %}
+    </fieldset>
+{% endfor %}
+{% endblock %}
+
+
+{% block submit_buttons_bottom %}{% endblock %}

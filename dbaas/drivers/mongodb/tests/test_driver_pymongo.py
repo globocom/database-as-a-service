@@ -4,6 +4,7 @@ from django.test import TestCase
 from drivers import DriverFactory
 from physical.tests import factory as factory_physical
 from logical.tests import factory as factory_logical
+from logical.models import Database
 from ..driver_pymongo import MongoDB
 
 
@@ -16,7 +17,8 @@ class AbstractTestDriverMongo(TestCase):
         self._mongo_client = None
 
     def tearDown(self):
-        self.databaseinfra.delete()
+        if not Database.objects.filter(databaseinfra_id=self.databaseinfra.id):
+            self.databaseinfra.delete()
         if self._mongo_client:
             self._mongo_client.disconnect()
         self.driver = self.databaseinfra = self._mongo_client = None
@@ -34,7 +36,7 @@ class MongoDBEngineTestCase(AbstractTestDriverMongo):
     """
 
     def test_mongodb_app_installed(self):
-        self.assertTrue(DriverFactory.is_driver_available("mongodb")) 
+        self.assertTrue(DriverFactory.is_driver_available("mongodb"))
 
     #test mongo methods
     def test_instantiate_mongodb_using_engine_factory(self):
@@ -42,7 +44,7 @@ class MongoDBEngineTestCase(AbstractTestDriverMongo):
         self.assertEqual(self.databaseinfra, self.driver.databaseinfra)
 
     def test_connection_string(self):
-        self.assertEqual("%s:%s" % (self.databaseinfra.instance.address, self.databaseinfra.instance.port), self.driver.get_connection())
+        self.assertEqual("mongodb://<user>:<password>@%s:%s" % (self.databaseinfra.instance.address, self.databaseinfra.instance.port), self.driver.get_connection())
 
     def test_get_user(self):
         self.assertEqual(self.databaseinfra.user, self.driver.get_user())
@@ -64,7 +66,8 @@ class ManageDatabaseMongoDBTestCase(AbstractTestDriverMongo):
         self.mongo_client.drop_database(self.database.name)
 
     def tearDown(self):
-        self.database.delete()
+        if not Database.objects.filter(databaseinfra_id=self.databaseinfra.id):
+            self.database.delete()
         super(ManageDatabaseMongoDBTestCase, self).tearDown()
 
     def test_mongodb_create_database(self):

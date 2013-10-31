@@ -14,7 +14,7 @@ class MongoDB(BaseDriver):
     default_port = 27017
 
     def get_connection(self):
-        return "%s:%s" % (self.databaseinfra.instance.address, self.databaseinfra.instance.port)
+        return "mongodb://<user>:<password>@%s:%s" % (self.databaseinfra.instance.address, self.databaseinfra.instance.port)
 
     def __mongo_client__(self, instance):
         client = pymongo.MongoClient(instance.address, int(instance.port))
