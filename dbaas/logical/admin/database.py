@@ -6,9 +6,10 @@ from django.template import RequestContext
 from django_services import admin
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render_to_response
-
+from django.utils.encoding import force_text
 from django.core.urlresolvers import reverse
 from django.conf.urls import patterns, include, url
+
 from ..service.database import DatabaseService
 from ..forms import DatabaseForm
 from ..models import Database
@@ -20,7 +21,8 @@ LOG = logging.getLogger(__name__)
 class DatabaseAdmin(admin.DjangoServicesAdmin):
     service_class = DatabaseService
     search_fields = ("name", "databaseinfra__name")
-    list_display = ["name", "get_capacity_html", "endpoint", "is_in_quarantine"]
+    change_list_display = ["name", "get_capacity_html", "endpoint", "is_in_quarantine"]
+    quarantine_list_display = ["quarantine_dt", "name", "get_capacity_html", "endpoint", "is_in_quarantine"]
     list_filter = ("databaseinfra", "project", "is_in_quarantine")
     change_form_template = "logical/database_change_form.html"
     fieldsets = (
@@ -75,14 +77,14 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         )
         return my_urls + urls
 
-    def view_removed(self, request):
-        #url = reverse('admin:logical_database_changelist')
-        #return HttpResponseRedirect(url + "?is_in_quarantine__exact=1")
-        return render_to_response("logical/database/removed.html", locals(), context_instance=RequestContext(request))
 
-    # def changelist_view(self, request, extra_context=None):
-    #     queryset = self.model.objects.filter(is_in_quarantine=False)
-    #     return super(DatabaseAdmin, self).changelist_view(request, extra_context=extra_context)
+    def changelist_view(self, request, extra_context=None):
+        if request.GET.get('is_in_quarantine__exact'):
+            self.list_display = self.quarantine_list_display
+        else:
+            self.list_display = self.change_list_display
+        
+        return super(DatabaseAdmin, self).changelist_view(request, extra_context=extra_context)
         
     def add_view(self, request, form_url='', extra_context=None):
         return super(DatabaseAdmin, self).add_view(request, form_url, extra_context=extra_context)
@@ -97,4 +99,22 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             extra_context['delete_button_name'] = "Move to quarantine"
         return super(DatabaseAdmin, self).change_view(request, object_id, form_url, extra_context=extra_context)
 
+    def get_context(self, request):
+        context = {}
+
+        opts = self.model._meta
+        app_label = opts.app_label
+
+        context = {
+            'module_name': force_text(opts.verbose_name_plural),
+            'app_label': app_label,
+        }
+        
+        return context
+
+    def view_removed(self, request):
+        url = reverse('admin:logical_database_changelist')
+        # context = self.get_context(request)
+        return HttpResponseRedirect(url + "?is_in_quarantine__exact=1")
+        # return render_to_response("logical/database/removed.html", locals(), context_instance=RequestContext(request))
 
