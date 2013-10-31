@@ -17,6 +17,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     list_filter = ("databaseinfra", "project", "is_in_quarantine")
     add_form_template = "logical/database_add_form.html"
     change_form_template = "logical/database_change_form.html"
+    delete_button_name = "Delete"
     fieldsets_add = (
         (None, {
             'fields': ('name', 'project', 'plan')
@@ -73,7 +74,13 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     #     return super(DatabaseAdmin, self).add_view(request, form_url, extra_context, **kwargs)
 
 
-    # def change_view(self, request, object_id, form_url='', extra_context=None):
-    #     return super(DatabaseAdmin, self).change_view(request, object_id, form_url, extra_context=extra_context)
+    def change_view(self, request, object_id, form_url='', extra_context=None):
+        database = Database.objects.get(id=object_id)
+        extra_context = extra_context or {}
+        if database.is_in_quarantine:
+            extra_context['delete_button_name'] = self.delete_button_name
+        else:
+            extra_context['delete_button_name'] = "Move to quarantine"
+        return super(DatabaseAdmin, self).change_view(request, object_id, form_url, extra_context=extra_context)
 
 
