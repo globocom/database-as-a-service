@@ -7,6 +7,7 @@ def submit_row_extended(context):
     """
     Displays the row of buttons for delete and save.
     """
+    print "AAAAAA"
     opts = context['opts']
     change = context['change']
     is_popup = context['is_popup']

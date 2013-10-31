@@ -36,6 +36,10 @@
             $("input", ".plan").removeAttr("checked");
             $("input", $(this)).attr("checked", "checked");
         });
+
+        $(".btn-plan").on("click", function(ev) {
+            $("#plan-type").val(this.dataset.planId);
+        });
     });
 
 })(django.jQuery);
