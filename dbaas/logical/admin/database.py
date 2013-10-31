@@ -68,6 +68,16 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         # Tradicional form
         return super(DatabaseAdmin, self).get_form(request, obj, **kwargs)
 
+    def save_model(self, request, obj, form, change):
+        if not change:
+            groups = request.user.groups.all()
+            LOG.info("user %s groups: %s" % (request.user, groups))
+            if groups:
+                obj.group = groups[0]
+                LOG.info("Team accountable for database %s set to %s" % (obj, obj.group))
+
+        obj.save()
+
     def get_fieldsets(self, request, obj=None):
         return self.fieldsets_change if obj else self.fieldsets_add
 
