@@ -62,6 +62,9 @@ logical_migrate: # create migration to logical app
 run_migrate: # run all migrations
 	@cd dbaas && python manage.py syncdb --migrate --noinput
 
+graph_models: # generate graph models
+	@cd dbaas && python manage.py graph_models -g physical logical tsuru > ~/dbaas_model.dot
+
 test: # run tests
 ifeq ($(DBAAS_DATABASE_HOST),)
 	@mysql -uroot -e "DROP DATABASE IF EXISTS test_dbaas"
