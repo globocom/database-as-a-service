@@ -1,5 +1,5 @@
 {% extends "admin/base_site.html" %}
-{% load i18n admin_static admin_modify %}
+{% load i18n admin_static admin_modify dbaas_tags %}
 {% load admin_urls %}
 
 {% block extrahead %}{{ block.super }}
@@ -86,7 +86,7 @@
 
     {% block after_related_objects %}{% endblock %}
 
-    {% block submit_buttons_bottom %}{% submit_row %}{% endblock %}
+    {% block submit_buttons_bottom %}{% submit_row_extended %}{% endblock %}
 
     {% if adminform.first_field and add %}
        <script type="text/javascript">document.getElementById("{{ adminform.first_field.id_for_label }}").focus();</script>
