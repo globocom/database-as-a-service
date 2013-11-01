@@ -122,7 +122,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         if database.is_in_quarantine:
             extra_context['delete_button_name'] = self.delete_button_name
         else:
-            extra_context['delete_button_name'] = "Move to quarantine"
+            extra_context['delete_button_name'] = "Delete"
         return super(DatabaseAdmin, self).change_view(request, object_id, form_url, extra_context=extra_context)
 
     def get_context(self, request):
