@@ -28,6 +28,11 @@ class Project(BaseModel):
     def __unicode__(self):
         return "%s" % self.name
 
+    class Meta:
+        permissions = (
+            ("view_project", "Can view projects"),
+        )
+
 
 class Database(BaseModel):
 
@@ -49,6 +54,7 @@ class Database(BaseModel):
     class Meta:
         permissions = (
             ("can_manage_quarantine_databases", "Can manage databases in quarantine"),
+            ("view_database", "Can view databases"),
         )
 
     def delete(self, *args, **kwargs):
@@ -140,6 +146,11 @@ class Credential(BaseModel):
 
     def __unicode__(self):
         return u"%s" % self.user
+
+    class Meta:
+        permissions = (
+            ("view_credential", "Can view credentials"),
+        )
 
 
 #####################################################################################################
