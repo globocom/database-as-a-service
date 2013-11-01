@@ -89,14 +89,17 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             return ('name', 'group', 'databaseinfra') + self.readonly_fields
         return self.readonly_fields
 
-    # def add_view(self, request, form_url='', extra_context=None, **kwargs):
-    #     return super(DatabaseAdmin, self).add_view(request, form_url, extra_context, **kwargs)
 
+    def queryset(self, request):
+        qs = super(DatabaseAdmin, self).queryset(request)
+        if request.user.has_perm("logical.can_manage_quarantine_databases"):
+            return qs
+        return qs.filter(is_in_quarantine=False)
 
     def get_urls(self):
         urls = super(DatabaseAdmin, self).get_urls()
         my_urls = patterns('',
-            url(r'^removed/$', self.admin_site.admin_view(self.view_removed), name="removed_databases"),
+            url(r'^removed/$', self.admin_site.admin_view(self.view_removed), name="%s_removed_databases" % self.opts.app_label),
         )
         return my_urls + urls
 
