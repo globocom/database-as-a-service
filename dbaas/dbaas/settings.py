@@ -245,6 +245,7 @@ if LDAP_ENABLED:
 
     AUTHENTICATION_BACKENDS = (
         'django_auth_ldap.backend.LDAPBackend',
+        'account.backends.DbaasBackend',
         'django.contrib.auth.backends.ModelBackend',
     )
 

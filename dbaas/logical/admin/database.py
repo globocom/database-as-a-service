@@ -21,7 +21,7 @@ LOG = logging.getLogger(__name__)
 class DatabaseAdmin(admin.DjangoServicesAdmin):
     service_class = DatabaseService
     search_fields = ("name", "databaseinfra__name")
-    change_list_display = ["name", "get_capacity_html", "endpoint", "is_in_quarantine"]
+    change_list_display = ["name", "get_capacity_html", "endpoint", ]
     quarantine_list_display = ["quarantine_dt", "name", "get_capacity_html", "endpoint", "is_in_quarantine"]
     list_filter = ("databaseinfra", "project", "is_in_quarantine")
     add_form_template = "logical/database_add_form.html"
@@ -102,7 +102,6 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             url(r'^removed/$', self.admin_site.admin_view(self.view_removed), name="%s_removed_databases" % self.opts.app_label),
         )
         return my_urls + urls
-
 
     def changelist_view(self, request, extra_context=None):
         if request.GET.get('is_in_quarantine__exact'):

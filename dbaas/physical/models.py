@@ -22,6 +22,11 @@ class EngineType(BaseModel):
     def __unicode__(self):
         return self.name
 
+    class Meta:
+        permissions = (
+            ("view_enginetype", "Can view engine types"),
+        )
+
     @property
     def default_plan(self):
         return Plan.objects.get(is_default=True, engine_type=self)
@@ -50,6 +55,9 @@ class Engine(BaseModel):
         unique_together = (
             ('version', 'engine_type', )
         )
+        permissions = (
+            ("view_engine", "Can view engines"),
+        )
 
     @property
     def name(self):
@@ -77,6 +85,12 @@ class Plan(BaseModel):
         return "%s" % self.name
 
 
+    class Meta:
+        permissions = (
+            ("view_plan", "Can view plans"),
+        )
+
+
 class PlanAttribute(BaseModel):
 
     name = models.CharField(verbose_name=_("Plan attribute name"), max_length=200)
@@ -86,6 +100,10 @@ class PlanAttribute(BaseModel):
     def __unicode__(self):
         return "%s=%s (plan=%s)" % (self.name, self.value, self.plan)
 
+    class Meta:
+        permissions = (
+            ("view_planattribute", "Can view plan attributes"),
+        )
 
 class DatabaseInfra(BaseModel):
 
@@ -104,7 +122,12 @@ class DatabaseInfra(BaseModel):
 
     def __unicode__(self):
         return self.name
-        
+
+    class Meta:
+        permissions = (
+            ("view_databaseinfra", "Can view database infras"),
+        )
+
     def env_variables(self, database_name=None):
         """
         Returns a dictionary with the variables to be exported in users environment
@@ -179,6 +202,11 @@ class Host(BaseModel):
     def __unicode__(self):
         return self.hostname
 
+    class Meta:
+        permissions = (
+            ("view_host", "Can view hosts"),
+        )
+
 
 class Instance(BaseModel):
 
@@ -203,6 +231,9 @@ class Instance(BaseModel):
     class Meta:
         unique_together = (
             ('address', 'port', )
+        )
+        permissions = (
+            ("view_instance", "Can view instances"),
         )
 
     @property
