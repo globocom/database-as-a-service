@@ -46,6 +46,11 @@ class Database(BaseModel):
     def __unicode__(self):
         return u"%s" % self.name
 
+    class Meta:
+        permissions = (
+            ("can_manage_quarantine_databases", "Can manage databases in quarantine"),
+        )
+
     def delete(self, *args, **kwargs):
         """
         Overrides the delete method so that a database can be put in quarantine and not removed
