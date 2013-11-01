@@ -6,7 +6,6 @@ Unidecode==0.04.14
 astroid==1.0.0
 boto==2.14.0
 bootstrap-admin==0.2.5
-#git+https://github.com/snbuback/django-admin-bootstrap.git#bootstrap-admin
 distribute==0.7.3
 #timeout-decorator==0.1.0
 django-adminplus==0.2.0
