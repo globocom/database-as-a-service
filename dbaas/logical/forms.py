@@ -29,7 +29,7 @@ class AdvancedModelChoiceField(models.ModelChoiceField):
 
 
 class DatabaseForm(models.ModelForm):
-    plan = AdvancedModelChoiceField(queryset=Plan.objects.all(), required=False, widget=forms.RadioSelect, empty_label=None)
+    plan = AdvancedModelChoiceField(queryset=Plan.objects.filter(is_active='True'), required=False, widget=forms.RadioSelect, empty_label=None)
 
     class Meta:
         model = Database

@@ -25,7 +25,7 @@ class PlanForm(forms.ModelForm):
             raise forms.ValidationError(msg)
         if not is_default:
             if self.instance.id:
-                plans = models.Plan.objects.filter(is_default=True, engine_type=engine_type).exclude(id=self.databaseinfra.id)
+                plans = models.Plan.objects.filter(is_default=True, engine_type=engine_type).exclude(id=self.instance.id)
             else:
                 plans = models.Plan.objects.filter(is_default=True, engine_type=engine_type)
             if not plans:
