@@ -18,8 +18,8 @@ class AdminCreateDatabaseTestCase(TestCase):
     PASSWORD = "123456"
 
     def setUp(self):
-        self.plan = physical_factory.PlanFactory(engine_type='fake')
-        self.databaseinfra = physical_factory.DatabaseInfraFactory(plan=self.plan, engine='fake')
+        self.plan = physical_factory.PlanFactory()
+        self.databaseinfra = physical_factory.DatabaseInfraFactory(plan=self.plan)
         self.project = factory.ProjectFactory()
         self.user = User.objects.create_superuser(self.USERNAME, email="%s@admin.com" % self.USERNAME, password=self.PASSWORD)
         self.client.login(username=self.USERNAME, password=self.PASSWORD)

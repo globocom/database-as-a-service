@@ -68,5 +68,5 @@ class Ec2ProviderTestCase(TestCase):
         self.assertEqual(False, instance.is_active)
         self.assertEqual(instance.VIRTUAL, instance.type)
         self.assertIsNotNone(instance.address)
-        self.assertEqual(27017, instance.port)
+        self.assertEqual(12345, instance.port)
 

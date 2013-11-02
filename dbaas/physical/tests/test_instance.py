@@ -4,6 +4,7 @@ from django.test.client import Client
 from django.test import TestCase
 from django.test.client import RequestFactory
 from django.db import IntegrityError
+from django.core.exceptions import ValidationError
 
 from ..models import Instance
 from .factory import DatabaseInfraFactory, HostFactory, InstanceFactory
@@ -42,3 +43,8 @@ class InstanceTestCase(TestCase):
         another_instance.id = None
         
         self.assertRaises(IntegrityError, another_instance.save)
+
+
+    def test_cleanup_without_engine_raises_exception(self):
+        self.new_instance.databaseinfra.engine_id = None
+        self.assertRaises(ValidationError, self.new_instance.clean)

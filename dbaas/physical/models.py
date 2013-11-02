@@ -143,7 +143,9 @@ class DatabaseInfra(BaseModel):
 
     @property
     def engine_name(self):
-        return self.engine.engine_type.name
+        if self.engine and self.engine.engine_type:
+            return self.engine.engine_type.name
+        return None
 
     @classmethod
     def get_unique_databaseinfra_name(cls, base_name):
@@ -202,7 +204,7 @@ class Instance(BaseModel):
 
     class Meta:
         unique_together = (
-            ('address', 'port', )
+            ('address', 'port',)
         )
 
     @property
@@ -215,6 +217,10 @@ class Instance(BaseModel):
     def clean(self, *args, **kwargs):
         LOG.debug('Checking instance %s (%s) status...', self.connection, self.databaseinfra)
         # self.clean_fields()
+
+        if not self.databaseinfra.engine_id:
+            raise ValidationError({'engine': _("No engine selected")})
+
         from drivers import factory_for, GenericDriverError, ConnectionError, AuthenticationError
         try:
             engine = factory_for(self.databaseinfra)

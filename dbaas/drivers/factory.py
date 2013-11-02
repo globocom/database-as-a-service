@@ -30,10 +30,10 @@ class DriverFactory(object):
     @classmethod
     def factory(cls, databaseinfra):
 
-        if databaseinfra is None:
+        if not (databaseinfra and databaseinfra.engine and databaseinfra.engine.engine_type):
             raise TypeError(_("DatabaseInfra is not defined"))
 
-        driver_name = databaseinfra.engine_name.lower()
+        driver_name = databaseinfra.engine.engine_type.name
         driver_class = cls.get_driver_class(driver_name)
         return driver_class(databaseinfra=databaseinfra)
 

@@ -12,9 +12,10 @@ class Migration(SchemaMigration):
 
     def forwards(self, orm):
         content_type = ContentType.objects.get_for_model(Database)
-        permission = Permission.objects.create(codename='can_manage_quarantine_databases',
-                                               name='Can manage databases in quarantine',
-                                               content_type=content_type)
+        Permission.objects.get_or_create(
+            codename='can_manage_quarantine_databases',
+            content_type=content_type,
+            defaults = { 'name': 'Can manage databases in quarantine' })
 
     def backwards(self, orm):
         content_type = ContentType.objects.get_for_model(Database)
