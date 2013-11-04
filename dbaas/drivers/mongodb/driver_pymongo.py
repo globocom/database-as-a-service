@@ -5,6 +5,7 @@ import pymongo
 from contextlib import contextmanager
 from .. import BaseDriver, DatabaseInfraStatus, DatabaseStatus, \
     AuthenticationError, ConnectionError
+from util import make_db_random_password
 
 LOG = logging.getLogger(__name__)
 
@@ -98,6 +99,6 @@ class MongoDB(BaseDriver):
 
     def change_default_pwd(self, instance):
         with self.pymongo(instance=instance) as client:
-            new_password = self.make_random_password()
+            new_password = make_db_random_password()
             client.admin.add_user(name=instance.databaseinfra.user, password=new_password)
             return new_password
