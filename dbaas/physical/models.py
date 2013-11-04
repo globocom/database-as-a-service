@@ -246,6 +246,10 @@ class Instance(BaseModel):
         return self.connection
 
     def clean(self, *args, **kwargs):
+        if self.is_arbiter or not self.is_active:
+            # no connection check is needed
+            return
+
         LOG.debug('Checking instance %s (%s) status...', self.connection, self.databaseinfra)
         # self.clean_fields()
 

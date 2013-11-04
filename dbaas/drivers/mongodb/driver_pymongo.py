@@ -18,11 +18,14 @@ class MongoDB(BaseDriver):
         return "mongodb://<user>:<password>@%s:%s" % (self.databaseinfra.instance.address, self.databaseinfra.instance.port)
 
     def __mongo_client__(self, instance):
-        client = pymongo.MongoClient(instance.address, int(instance.port))
-        if self.databaseinfra.user and self.databaseinfra.password:
-            LOG.debug('Authenticating databaseinfra %s', self.databaseinfra)
-            client.admin.authenticate(self.databaseinfra.user, self.databaseinfra.password)
-        return client
+        try:
+            client = pymongo.MongoClient(instance.address, int(instance.port))
+            if self.databaseinfra.user and self.databaseinfra.password:
+                LOG.debug('Authenticating databaseinfra %s', self.databaseinfra)
+                client.admin.authenticate(self.databaseinfra.user, self.databaseinfra.password)
+            return client
+        except TypeError:
+            raise AuthenticationError(message='Invalid address %s:%s' % (instance.address, instance.port))
 
     @contextmanager
     def pymongo(self, instance=None, database=None):
