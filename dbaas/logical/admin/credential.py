@@ -2,6 +2,7 @@
 from __future__ import absolute_import, unicode_literals
 from django_services import admin
 from ..service.credential import CredentialService
+from ..forms import CredentialForm
 
 
 class CredentialAdmin(admin.DjangoServicesAdmin):
@@ -10,7 +11,8 @@ class CredentialAdmin(admin.DjangoServicesAdmin):
     list_filter = ("database", "database__databaseinfra",)
     list_display = ("user", "database", "databaseinfra_name")
     save_on_top = True
-
+    form = CredentialForm
+    
     def databaseinfra_name(self, credential):
         return credential.database.databaseinfra.name
     
