@@ -6,7 +6,6 @@ import os.path
 from django.utils.translation import ugettext_lazy as _
 from physical.models import DatabaseInfra
 from django_services.service.exceptions import InternalException
-from django.contrib.auth.models import User
 
 # See http://docs.python.org/2/library/subprocess.html#popen-constructor if you
 # have questions about this variable
@@ -78,9 +77,6 @@ class BaseDriver(object):
     def get_user(self):
         return self.databaseinfra.user
 
-    def make_random_password(self):
-        return User.objects.make_random_password()
-        
     def get_password(self):
         return self.databaseinfra.password
 
