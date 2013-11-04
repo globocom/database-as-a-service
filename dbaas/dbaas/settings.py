@@ -371,3 +371,8 @@ EC2_REGION = os.getenv('EC2_REGION', None) #us-east-1
 EC2_SUBNET_ID = os.getenv('EC2_SUBNET_ID', None) #'vpc-1212'
 EC2_AMI_ID = 'ami-b91043d0'
 
+USER_ROLES = (
+    'dba',
+    'regular',
+)
+
