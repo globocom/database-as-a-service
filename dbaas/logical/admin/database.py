@@ -94,7 +94,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         qs = super(DatabaseAdmin, self).queryset(request)
         if request.user.has_perm("logical.can_manage_quarantine_databases"):
             return qs
-        return qs.filter(is_in_quarantine=False)
+
+        return qs.filter(is_in_quarantine=False, group__in=[group.id for group in request.user.groups.all()])
 
     def get_urls(self):
         urls = super(DatabaseAdmin, self).get_urls()
