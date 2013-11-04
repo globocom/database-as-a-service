@@ -26,4 +26,3 @@ six==1.4.1
 wsgiref==0.1.2
 python-ldap==2.3.13
 django-auth-ldap==1.1.4
-django-user-roles==0.1.0
