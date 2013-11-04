@@ -80,3 +80,5 @@ run: # run local server
 shell: # run django shell
 	@cd dbaas && python manage.py shell_plus --use-pythonrc
 
+update_permissions:
+	@cd dbaas && python manage.py update_permissions
