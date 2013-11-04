@@ -27,11 +27,10 @@ class AdminCreateDatabaseInfraTestCase(TestCase):
         self.client.logout()
 
     def test_user_pass_all_arguments_and_database_is_created(self):
+        NUM_INSTANCES = 3
         databaseinfra_name = "test_new_database_infra"
         databaseinfra_user = "dbadmin"
         databaseinfra_pass = "123456"
-        instance_host = factory.HostFactory()
-        instance_addr = "localhost"
         instance_port = 27017
         params = {
             "name": databaseinfra_name,
@@ -39,16 +38,24 @@ class AdminCreateDatabaseInfraTestCase(TestCase):
             "password": databaseinfra_pass,
             "engine": self.engine.pk,
             "plan": self.plan.pk,
-            "instances-TOTAL_FORMS": 1,
+            "instances-TOTAL_FORMS": NUM_INSTANCES,
             "instances-INITIAL_FORMS": 0,
-            "instances-MAX_NUM_FORMS": 1,
-            "instances-0-hostname": instance_host.pk,
-            "instances-0-address": instance_addr,
-            "instances-0-port": instance_port,
-            "instances-0-type": Instance.VIRTUAL
+            "instances-MAX_NUM_FORMS": NUM_INSTANCES,
         }
+
+        hosts = {}
+        for i in xrange(NUM_INSTANCES):
+            host = factory.HostFactory()
+            hosts[host.pk] = host
+
+            params["instances-%d-hostname" % i] = host.pk,
+            params["instances-%d-address" % i] = "10.10.1.%d" % host.pk,
+            params["instances-%d-port" % i] = instance_port,
+            params["instances-%d-type" % i] = Instance.VIRTUAL
+
+
         response = self.client.post("/admin/physical/databaseinfra/add/", params)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, 302, response.content)
         # self.assertTrue(fake.database_created(self.databaseinfra.name, databaseinfra_name))
 
         databaseinfra = DatabaseInfra.objects.get(name=databaseinfra_name)
@@ -56,9 +63,9 @@ class AdminCreateDatabaseInfraTestCase(TestCase):
         self.assertEqual(databaseinfra_pass, databaseinfra.password)
         self.assertEqual(self.engine, databaseinfra.engine)
         self.assertEqual(self.plan, databaseinfra.plan)
-        self.assertEqual(1, databaseinfra.instances.count())
-        instance = databaseinfra.instances.all()[0]
-        self.assertEqual(instance_host, instance.hostname)
-        self.assertEqual(instance_addr, instance.address)
-        self.assertEqual(instance_port, instance.port)
-
+        self.assertEqual(NUM_INSTANCES, databaseinfra.instances.count())
+        for instance in databaseinfra.instances.all():
+            host = hosts[instance.hostname.pk]
+            self.assertEqual(host, instance.hostname)
+            self.assertEqual("10.10.1.%d" % host.pk, instance.address)
+            self.assertEqual(instance_port, instance.port)

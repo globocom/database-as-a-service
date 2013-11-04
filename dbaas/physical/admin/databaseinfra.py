@@ -27,15 +27,15 @@ class InstanceModelFormSet(BaseInlineFormSet):
         # example custom validation across forms in the formset:
         if completed  == 0:
             raise ValidationError({'instances': _("Specify at least one valid instance")})
-        elif completed > 1:
-            raise ValidationError({'instances': _("Currently, you can have only one instance per databaseinfra")})
+        # elif completed > 1:
+            # raise ValidationError({'instances': _("Currently, you can have only one instance per databaseinfra")})
 
 
 class InstanceAdmin(django_admin.TabularInline):
     model = Instance
     fields = ('hostname', 'address', 'port', 'type', 'is_active', 'is_arbiter')
-    max_num = 1
-    can_delete = False
+    # max_num = 1
+    # can_delete = False
     extra = 1
     formset = InstanceModelFormSet
 

@@ -20,6 +20,7 @@ clean: # remove temporary files
 	@find . -name coverage.xml -delete
 	@find . -name test-report.xml -delete
 	@find . -name .coverage -delete
+	@git clean -xdf
 
 check_environment: # check if your local environment is ok to running this project
 	@echo "$$CHECK_SCRIPT" | python -
