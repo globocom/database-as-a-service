@@ -35,14 +35,12 @@ def find_ldap_groups_from_user(username=None):
             # user_result = conn.search_s(user_search, ldap.SCOPE_SUBTREE, search_filter,
             #                         None)
             # LOG.debug(user_result)
-
-            group_result = conn.search_s(group_search, ldap.SCOPE_SUBTREE, "memberUid=%s" % username,
-                                    None)
+            group_result = conn.search_s(group_search, ldap.SCOPE_SUBTREE, "memberUid=%s" % username, None)
 
             for entry in group_result:
                 group_name = entry[0].split(',')[0].split('=')[1].strip()
                 if group_name != username:
-                    groups.append(group_name)
+                    groups.append("ldap_" + group_name)
         except Exception, e:
             LOG.error("Ops... something went wrong: %s" % e)
 
