@@ -11,7 +11,7 @@ from django.db.models.signals import pre_save, post_save, pre_delete
 from django.dispatch import receiver
 from django_extensions.db.fields.encrypted import EncryptedCharField
 from django.utils.functional import cached_property
-from util import slugify
+from util import slugify, make_db_random_password
 from util.models import BaseModel
 from physical.models import DatabaseInfra
 from drivers import factory_for
@@ -80,7 +80,7 @@ class Database(BaseModel):
         """creates a new credential for the database with a random password"""
         engine = factory_for(self.databaseinfra)
         LOG.info("creating new credential for database %s" % self.name)
-        credential = Credential(user=Credential.USER_PATTERN % self.name, password=engine.make_random_password(), database=self)
+        credential = Credential(user=Credential.USER_PATTERN % self.name, password=make_db_random_password(), database=self)
         credential.save()
         engine.create_user(credential)
         return credential
