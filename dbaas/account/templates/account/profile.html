@@ -1,0 +1,37 @@
+{% extends "admin/change_list.html" %}
+{% load i18n admin_static admin_modify dbaas_tags %}
+
+{% block breadcrumbs %}
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    <h1>Profile</h1></br>
+    {% if user %}
+    <div class="well">
+        <table class="table table-striped">
+            <tbody>
+                <tr>
+                    <td>Username</td>
+                    <td>{{user.username}}</td>
+                </tr>
+                <tr>
+                    <td>Email</td>
+                    <td>{{ user.email }}</td>
+                </tr>
+                <tr>
+                    <td>Last login</td>
+                    <td>{{ user.last_login }}</td>
+                </tr>
+            </tbody>
+        </table>
+        <h2>Groups</h2>
+        <span><ul>{% for group in user.groups.all %}<li>{{ group.name}}</li>{% endfor %}</ul></span>
+        <h2>Databases</h2>
+        <span><ul>{% for database in databases %}<li>{{ database.name}}</li>{% endfor %}</ul></span>
+    </div>
+    {% else %}
+        <h3>User not found</h3>
+    {% endif %}
+</div>
+{% endblock %}

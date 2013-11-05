@@ -7,7 +7,7 @@ from django.http import HttpResponseRedirect
 from django.conf import settings
 from django.shortcuts import render_to_response
 from django.template.loader import render_to_string
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.utils.datastructures import SortedDict
 
 from physical.service.databaseinfra import DatabaseInfraService
