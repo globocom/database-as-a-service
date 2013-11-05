@@ -1,14 +1,11 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 import logging
-from django.contrib import messages
-from django.template import RequestContext
 from django_services import admin
-from django.http import HttpResponse, HttpResponseRedirect
-from django.shortcuts import render_to_response
+from django.http import HttpResponseRedirect
 from django.utils.encoding import force_text
 from django.core.urlresolvers import reverse
-from django.conf.urls import patterns, include, url
+from django.conf.urls import patterns, url
 
 from ..service.database import DatabaseService
 from ..forms import DatabaseForm

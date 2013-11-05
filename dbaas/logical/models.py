@@ -56,6 +56,7 @@ class Database(BaseModel):
             ("can_manage_quarantine_databases", "Can manage databases in quarantine"),
             ("view_database", "Can view databases"),
         )
+        ordering = ('databaseinfra', 'name',)
 
     def delete(self, *args, **kwargs):
         """
@@ -151,6 +152,17 @@ class Credential(BaseModel):
         permissions = (
             ("view_credential", "Can view credentials"),
         )
+        ordering = ('database', 'user',)
+
+    @cached_property
+    def driver(self):
+        return self.database.databaseinfra.get_driver()
+
+    def reset_password(self):
+        """ Reset credential password to a new random password """
+        self.password = make_db_random_password()
+        self.driver.update_user(self)
+        self.save()
 
 
 #####################################################################################################

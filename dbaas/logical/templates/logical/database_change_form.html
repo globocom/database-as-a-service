@@ -12,7 +12,39 @@
 {% endblock %}
 
 {% block after_related_objects %}
-<p><a href="#">More</a></p>
+<fieldset class="module">
+    <h2>Credentials</h2>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>user</th>
+                <th>password</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for credential in original.credentials.all %}
+            <tr class="credential" data-credential-pk="{{credential.pk}}">
+                <td>{{credential.user}}</td>
+                <td>
+                    <a href="#" class="btn show-password" title="{{credential.user}}" data-content="{{credential.password}}" >show password</a>
+                    <a class="btn btn-warning btn-reset-password" href="#"><i class="icon-refresh"></i></a>
+                </td>
+                <td>
+                    <a class="btn btn-danger" href="#"><i class="icon-trash icon-white"></i></a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="3">
+                    <div class="add-row"><a href="javascript:void(0)"><i class="icon-plus-sign"></i> Add another user</a></div>
+                </td>
+            </tr>
+        </tfoot>
+    </table>
+</fieldset>
 {% endblock %}
 
 {% block submit_buttons_bottom %}{% submit_row_extended %}{% endblock %}
