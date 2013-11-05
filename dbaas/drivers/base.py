@@ -91,6 +91,9 @@ class BaseDriver(object):
     def create_user(self, credential, roles=None):
         raise NotImplementedError()
 
+    def update_user(self, credential):
+        raise NotImplementedError()
+
     def remove_user(self, credential):
         raise NotImplementedError()
 
