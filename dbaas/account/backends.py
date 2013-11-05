@@ -8,7 +8,7 @@ LOG = logging.getLogger(__name__)
 class DbaasBackend(ModelBackend):
     
     def has_perm(self, user_obj, perm, obj=None):
-
+        #LOG.debug("validating perm %s for user %s" % (perm, user_obj))
         if not user_obj.is_active:
             return False
         else:
