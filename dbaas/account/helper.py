@@ -47,5 +47,5 @@ def find_ldap_groups_from_user(username=None):
         finally:
             conn.unbind()
             LOG.info("LDAP connection closed")
-    LOG.debug("ldap groups found for username %s: %s" % (username, groups))
+    LOG.info("ldap groups found for username %s: %s" % (username, groups))
     return groups
