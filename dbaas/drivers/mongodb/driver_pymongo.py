@@ -15,7 +15,7 @@ class MongoDB(BaseDriver):
     default_port = 27017
 
     def get_connection(self):
-        return "mongodb://<user>:<password>@%s:%s" % (self.databaseinfra.instance.address, self.databaseinfra.instance.port)
+        return "mongodb://<user>:<password>@%s" % ",".join([ "%s:%s" % (instance.address, instance.port) for instance in self.databaseinfra.instances.filter(is_arbiter=False, is_active=True).all() ])
 
     def __mongo_client__(self, instance):
         try:
@@ -76,7 +76,9 @@ class MongoDB(BaseDriver):
                 database_name = database.name
                 json_db_status = getattr(client, database_name).command('dbStats')
                 db_status = DatabaseStatus(database)
-                db_status.used_size_in_bytes = json_db_status.get("dataSize") or 0
+                dataSize = json_db_status.get("dataSize") or 0
+                indexSize = json_db_status.get("indexSize") or 0
+                db_status.used_size_in_bytes = dataSize + indexSize
                 db_status.total_size_in_bytes = json_db_status.get("fileSize") or 0
                 databaseinfra_status.databases_status[database_name] = db_status
 
