@@ -12,4 +12,4 @@ class DbaasBackend(ModelBackend):
         if not user_obj.is_active:
             return False
         else:
-            return perm in user_obj.get_all_permissions()
+            return perm in user_obj.get_all_permissions(obj=None)
