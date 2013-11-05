@@ -50,6 +50,10 @@ class FakeDriver(BaseDriver):
         del instance_data[credential.database.name][credential.user]
         LOG.info('Deleted user %s', credential)
 
+    def update_user(self, credential):
+        LOG.info('Update user %s', credential)
+        self.create_user(credential)
+
     def check_status(self, instance=None):
         LOG.info('Check status')
         return True
