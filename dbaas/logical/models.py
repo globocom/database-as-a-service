@@ -67,6 +67,19 @@ class Database(BaseModel):
             super(Database, self).delete(*args, **kwargs)  # Call the "real" delete() method.
         else:
             LOG.warning("Putting database %s in quarantine" % self.name)
+            if self.credentials.exists():
+                for credential in self.credentials.all():
+                    new_password = make_db_random_password()
+                    new_credential = Credential.objects.get(pk=credential.id)
+                    new_credential.password = new_password
+                    new_credential.save()
+
+                    instance = factory_for(self.databaseinfra)
+                    instance.update_user(new_credential)
+
+            else:
+                LOG.info("There is no credential on this database: %s" % self.databaseinfra)
+
             self.is_in_quarantine = True
             self.quarantine_dt = datetime.datetime.now().date()
             self.save()
