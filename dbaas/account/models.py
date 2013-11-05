@@ -52,7 +52,10 @@ def user_pre_save(sender, **kwargs):
 @receiver(post_save, sender=User)
 def user_post_save(sender, **kwargs):
     user = kwargs.get('instance')
-    LOG.debug("user %s post save signal" % user)
+    created = kwargs.get('created')
+    if created:
+        LOG.debug("new user %s created" % user)
+        sync_ldap_groups_with_user(user=user)
 
 
 def user_m2m_changed(sender, **kwargs):
