@@ -19,7 +19,7 @@ class CredentialView(BaseDetailView):
 
     def as_json(self, obj):
         if isinstance(obj, Credential):
-            obj = {"credential" : { "user": obj.user, "password": obj.password, "id": obj.pk } }
+            obj = {"credential" : { "user": obj.user, "password": obj.password, "pk": obj.pk } }
         output = json.dumps(obj, indent=4)
         return HttpResponse(output, content_type="application/json")
 

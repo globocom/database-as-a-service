@@ -3,7 +3,19 @@
 
 {% block extrahead %}
     {{ block.super }}
+    <script type="text/javascript" src="{% static 'js/mustache.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/database_admin.js' %}"></script>
+
+    <script type="text/javascript" >
+    django.jQuery(function() {
+        Credential.init([
+        {% for credential in original.credentials.all %}
+            {"credential" : { "user": "{{credential.user}}", "password": "{{credential.password}}", "pk": "{{credential.pk}}" } },
+        {% endfor %}
+        ]);
+    });
+    </script>
+
 {% endblock %}
 
 {% block extrastyle %}
@@ -19,22 +31,24 @@
             <tr>
                 <th>user</th>
                 <th>password</th>
-                <th>Actions</th>
+                <th></th>
             </tr>
         </thead>
         <tbody>
-            {% for credential in original.credentials.all %}
-            <tr class="credential" data-credential-pk="{{credential.pk}}"  >
-                <td>{{credential.user}}</td>
-                <td>
-                    <a href="#" class="btn show-password" title="{{credential.user}}" data-content="{{credential.password}}" >show password</a>
-                    <a class="btn btn-warning btn-reset-password" href="#"><i class="icon-refresh"></i></a>
-                </td>
-                <td>
-                    <a class="btn btn-danger btn-credential-remove" href="#"><i class="icon-trash icon-white"></i></a>
-                </td>
-            </tr>
-            {% endfor %}
+            {% verbatim %}
+            <script id="credential-template" type="text/template">
+                <tr class="credential" data-credential-pk="{{credential.pk}}"  >
+                    <td>{{credential.user}}</td>
+                    <td>
+                        <a href="#" class="btn show-password" title="{{credential.user}}" data-content="{{credential.password}}" >show password</a>
+                        <a class="btn btn-warning btn-reset-password" href="#"><i class="icon-refresh"></i></a>
+                    </td>
+                    <td>
+                        <a class="btn btn-danger btn-credential-remove" href="#"><i class="icon-trash icon-white"></i></a>
+                    </td>
+                </tr>
+            </script>
+            {% endverbatim %}
         </tbody>
         <tfoot>
             <tr>

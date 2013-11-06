@@ -1,14 +1,3 @@
-var TABLE_ROW_TEMPLATE = '<tr class="credential" data-credential-pk="{{credential.pk}}" >' +
-                '<td>{{credential.user}}</td>' +
-                '<td>' +
-                '   <a href="#" class="btn show-password" title="{{credential.user}}" data-content="{{credential.password}}" >show password</a>'+
-                '   <a class="btn btn-warning btn-reset-password" href="#"><i class="icon-refresh"></i></a>'+
-                '</td>'+
-                '<td>'+
-                '   <a class="btn btn-danger" href="#"><i class="icon-trash icon-white"></i></a>'+
-                '</td>'+
-            '</tr>';
-
 (function($) {
 
 
@@ -67,6 +56,60 @@ var TABLE_ROW_TEMPLATE = '<tr class="credential" data-credential-pk="{{credentia
             });
         }
     };
+
+    var Credential = {
+        // constants
+
+        // functions
+        init: function(credentials) {
+            Credential.DATABASE_ID = $("#table-credentials").data("database-id");
+            Credential.append_all(credentials);
+
+        },
+        append_all: function(credentials) {
+            credentials.forEach(function(credential, i) {
+                Credential.append(credential);
+            });
+        },
+        append: function(credential) {
+            var selector = "#table-credentials tr[data-credential-pk=" + credential.pk + "]",
+                $table_row = $(selector);
+
+            if ($table_row.length > 1) {
+                // remove old table
+                $table_row.remove();
+            }
+
+            var html_row = $("#credential-template").mustache(credential);
+            $("tbody", "#table-credentials").append(html_row);
+
+            // request new DOM element already attached
+            $table_row = $(selector);
+            $(".show-password", $table_row)
+                .popover({"trigger": "manual", "placement": "left"});
+            return $table_row;
+        },
+        create_credential: function(username, callback) {
+            console.log({ "username": username, "database_id": Credential.DATABASE_ID });
+            $.ajax({
+                "url": "/logical/credential/",
+                "type": "POST",
+                "data": { "username": username, "database_id": Credential.DATABASE_ID },
+            }).done(function(data) {
+                if (!data || data.errors || !data.credential) {
+                    return;
+                }
+                var $table_row = Credential.append(data);
+
+                if (callback) {
+                    callback(data, $table_row);
+                }
+            }).fail(function() {
+                alert("Error creating user");
+            });
+        }
+    };
+    window.Credential = Credential;
 
 
     // Document READY
@@ -130,31 +173,14 @@ var TABLE_ROW_TEMPLATE = '<tr class="credential" data-credential-pk="{{credentia
 
         $(document).on("click.save-new-credential", ".save-new-credential", function(e) {
             var $table_row = $(e.target).parent().parent(),
-                username = $("input", $table_row).val(),
-                database_id = $("#table-credentials").data("database-id");
-            e.preventDefault();
-            $table_row.remove();
-            $.ajax({
-                "url": "/logical/credential/",
-                "type": "POST",
-                "data": { "username": username, "database_id": database_id },
-            }).done(function(data) {
-                if (!data || data.errors || !data.credential) {
-                    return;
-                }
-                var credential = data.credential;
+                username = $("input", $table_row).val();
 
-                var table_row = TABLE_ROW_TEMPLATE
-                    .replace(/{{credential.pk}}/g, credential.pk)
-                    .replace(/{{credential.user}}/g, credential.user)
-                    .replace(/{{credential.password}}/g, credential.password);
-                var $table_row = $(table_row);
-                $("tbody", "#table-credentials").append($table_row);
-                $(".show-password", $table_row).popover({"trigger": "manual", "placement": "left"}).popover("show");
-            }).fail(function() {
-                alert("Error creating user");
+            Credential.create_credential(username, function(credential) {
+                $table_row.remove();
+
+                // show password
+                $(".show-password", $table_row).popover("show");
             });
-
             return false;
         });
 
