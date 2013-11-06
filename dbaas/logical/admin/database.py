@@ -32,7 +32,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     )
     fieldsets_change = (
         (None, {
-            'fields': ('name', 'project', 'group')
+            'fields': ('name', 'project', 'group', 'is_in_quarantine')
             }
         ),
     )
@@ -90,12 +90,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     def queryset(self, request):
         qs = super(DatabaseAdmin, self).queryset(request)
         if request.user.has_perm("logical.can_manage_quarantine_databases"):
-            if request.GET.get('is_in_quarantine__exact'):
-                return qs.filter(is_in_quarantine=True)
-            elif request.GET.get('all'):
-                return qs
-            else:
-                return qs.filter(is_in_quarantine=False)
+            return qs
 
         return qs.filter(is_in_quarantine=False, group__in=[group.id for group in request.user.groups.all()])
 
