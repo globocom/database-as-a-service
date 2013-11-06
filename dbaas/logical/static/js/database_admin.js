@@ -49,28 +49,32 @@
 
         Credential.prototype.reset_password = function(callback) {
             var credential = this;
-            $.ajax({
-                "url": "/logical/credential/" + this.pk,
-                "type": "PUT",
-            }).done(function(data) {
-                $(".show-password", credential.$row).attr("data-content", data.credential.password);
-                if (callback) {
-                    callback(credential);
-                }
-            });
+            if (confirm("Are you sure?")) {
+                $.ajax({
+                    "url": "/logical/credential/" + this.pk,
+                    "type": "PUT",
+                }).done(function(data) {
+                    $(".show-password", credential.$row).attr("data-content", data.credential.password);
+                    if (callback) {
+                        callback(credential);
+                    }
+                });
+            }
         };
 
         Credential.prototype.delete = function(callback) {
             var credential = this;
-            $.ajax({
-                "url": "/logical/credential/" + this.pk,
-                "type": "DELETE",
-            }).done(function(data) {
-                credential.$row.remove();
-                if (callback) {
-                    callback(credential);
-                }
-            });
+            if (confirm("Are you sure?")) {
+                $.ajax({
+                    "url": "/logical/credential/" + this.pk,
+                    "type": "DELETE",
+                }).done(function(data) {
+                    credential.$row.remove();
+                    if (callback) {
+                        callback(credential);
+                    }
+                });
+            }
         };
 
         Credential.prototype.show_password = function(force_show) {
