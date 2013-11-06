@@ -18,7 +18,7 @@ LOG = logging.getLogger(__name__)
 class DatabaseAdmin(admin.DjangoServicesAdmin):
     service_class = DatabaseService
     search_fields = ("name", "databaseinfra__name")
-    change_list_display = ["name", "get_capacity_html", "endpoint", ]
+    change_list_display = ["name", "get_capacity_html", "endpoint", "is_in_quarantine"]
     quarantine_list_display = ["quarantine_dt", "name", "get_capacity_html", "endpoint", "is_in_quarantine"]
     list_filter = ("databaseinfra", "project", "is_in_quarantine")
     add_form_template = "logical/database_add_form.html"
@@ -90,7 +90,12 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     def queryset(self, request):
         qs = super(DatabaseAdmin, self).queryset(request)
         if request.user.has_perm("logical.can_manage_quarantine_databases"):
-            return qs
+            if request.GET.get('is_in_quarantine__exact'):
+                return qs.filter(is_in_quarantine=True)
+            elif request.GET.get('all'):
+                return qs
+            else:
+                return qs.filter(is_in_quarantine=False)
 
         return qs.filter(is_in_quarantine=False, group__in=[group.id for group in request.user.groups.all()])
 
