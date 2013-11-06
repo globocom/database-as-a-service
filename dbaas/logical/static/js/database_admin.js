@@ -37,7 +37,6 @@
         var get_database_id = function() {
             if (!DATABASE_ID) {
                 DATABASE_ID = $("#table-credentials").data("database-id");
-                console.log('DATABASE_ID=', DATABASE_ID);
             }
             return DATABASE_ID;
         };
@@ -47,6 +46,9 @@
             this.pk = $row.attr('data-credential-pk');
         };
 
+        /**
+        * Reset credential password
+        */
         Credential.prototype.reset_password = function(callback) {
             var credential = this;
             if (confirm("Are you sure?")) {
@@ -62,6 +64,9 @@
             }
         };
 
+        /**
+        * Remove a credential from server and the page.
+        */
         Credential.prototype.delete = function(callback) {
             var credential = this;
             if (confirm("Are you sure?")) {
@@ -77,6 +82,10 @@
             }
         };
 
+        /**
+        * Show credential password. If password is shown, it will be hidden. Use
+        * force_show to always show.
+        */
         Credential.prototype.show_password = function(force_show) {
             // hide all others passwords
             var credential = this, operation = "toggle";
@@ -91,6 +100,9 @@
             });
         };
 
+        /**
+        * Put the listeners on credential
+        */
         var initialize_listeners = function(credential) {
             // put all listeners
             var $row = credential.$row;
@@ -135,6 +147,10 @@
 
 
         return {
+            /**
+            * Get the credential object with pk specified. If no credential exists
+            * in page, returns null.
+            */
             get: function(credential_pk) {
                 var $row = $("#table-credentials tr[data-credential-pk=" + credential_pk + "]");
                 if ($row.length === 0) {
@@ -142,6 +158,9 @@
                 }
                 return new Credential($row);
             },
+            /**
+            * Includes a credential json representation on page (always include at the bottom).
+            */
             include: function(credential_json) {
                 var selector = "#table-credentials tr[data-credential-pk=" + credential_json.credential.pk + "]";
 
@@ -153,6 +172,9 @@
                 initialize_listeners(credential);
                 return credential;
             },
+            /**
+            * Create a new credential on server and put on page
+            */
             create: function(username, callback) {
                 var self = this;
                 $.ajax({
