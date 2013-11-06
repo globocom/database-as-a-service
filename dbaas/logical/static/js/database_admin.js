@@ -111,8 +111,8 @@ var TABLE_ROW_TEMPLATE = '<tr class="credential" data-credential-pk="{{credentia
                 $.ajax({
                     "url": "/logical/credential/" + credential_pk,
                     "type": "PUT",
-                }).done(function(credential) {
-                    $a_show_password.attr("data-content", credential.password);
+                }).done(function(data) {
+                    $a_show_password.attr("data-content", data.credential.password);
                     $a_show_password.popover("show");
                 });
             }
@@ -167,7 +167,7 @@ var TABLE_ROW_TEMPLATE = '<tr class="credential" data-credential-pk="{{credentia
                 $.ajax({
                     "url": "/logical/credential/" + credential_pk,
                     "type": "DELETE",
-                }).done(function(credential) {
+                }).done(function(data) {
                     $credential.remove();
                 });
             }
