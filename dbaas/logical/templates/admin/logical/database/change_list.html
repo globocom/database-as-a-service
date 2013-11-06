@@ -10,16 +10,4 @@
     </a>
   </li>
   {% endif %}
-  {% if perms.logical.can_manage_quarantine_databases %}
-  <li>
-    <a href="{% url 'admin:logical_removed_databases' %}{% if is_popup %}?_popup=1{% endif %}" class="addlink btn btn-info">
-      {% blocktrans %}Quarantine{% endblocktrans %}
-    </a>
-  </li>
-  {% endif %}
-  <li>
-    <a href="{% url 'admin:logical_database_changelist' %}?all=1{% if is_popup %}?_popup=1{% endif %}" class="addlink btn btn-info">
-      {% blocktrans %}All{% endblocktrans %}
-    </a>
-  </li>
 {% endblock %}
