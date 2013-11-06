@@ -1,4 +1,3 @@
-
 var TABLE_ROW_TEMPLATE = '<tr class="credential" data-credential-pk="{{credential.pk}}" >' +
                 '<td>{{credential.user}}</td>' +
                 '<td>' +
@@ -11,6 +10,40 @@ var TABLE_ROW_TEMPLATE = '<tr class="credential" data-credential-pk="{{credentia
             '</tr>';
 
 (function($) {
+
+
+    /**
+     * setup JQuery's AJAX methods to setup CSRF token in the request before sending it off.
+     * http://stackoverflow.com/questions/5100539/django-csrf-check-failing-with-an-ajax-post-request
+     */
+     
+    function getCookie(name) {
+        var cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = $.trim(cookies[i]);
+                // Does this cookie string begin with the name we want?
+     
+                if (cookie.substring(0, name.length + 1) == (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+     
+    $.ajaxSetup({
+         beforeSend: function(xhr, settings) {
+             if (!(/^http:.*/.test(settings.url) || /^https:.*/.test(settings.url))) {
+                 // Only send the token to relative URLs i.e. locally.
+                 xhr.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+             }
+         }
+    });
+
+
 
     var Database = function() {
         this.update_components();
@@ -34,6 +67,7 @@ var TABLE_ROW_TEMPLATE = '<tr class="credential" data-credential-pk="{{credentia
             });
         }
     };
+
 
     // Document READY
     $(function() {
@@ -72,17 +106,13 @@ var TABLE_ROW_TEMPLATE = '<tr class="credential" data-credential-pk="{{credentia
                 $a_show_password = $(".show-password", $credential),
                 $a_reset_password = $(e.target);
 
-            if ($a_reset_password.hasClass('disabled')) {
-                return false;
-            }
-
             var credential_pk = $credential.data("credential-pk");
             if (credential_pk) {
                 $.ajax({
-                    "url": "/logical/credential/" + credential_pk + "/reset_password",
-                    "type": "POST",
-                }).done(function(credential) {
-                    $a_show_password.attr("data-content", credential.password);
+                    "url": "/logical/credential/" + credential_pk,
+                    "type": "PUT",
+                }).done(function(data) {
+                    $a_show_password.attr("data-content", data.credential.password);
                     $a_show_password.popover("show");
                 });
             }
@@ -125,6 +155,22 @@ var TABLE_ROW_TEMPLATE = '<tr class="credential" data-credential-pk="{{credentia
                 alert("Error creating user");
             });
 
+            return false;
+        });
+
+        // Remove credential
+        $(document).on("click", ".btn-credential-remove", function(e) {
+            var $credential = $(e.target).parents(".credential");
+
+            var credential_pk = $credential.data("credential-pk");
+            if (credential_pk) {
+                $.ajax({
+                    "url": "/logical/credential/" + credential_pk,
+                    "type": "DELETE",
+                }).done(function(data) {
+                    $credential.remove();
+                });
+            }
             return false;
         });
     });
