@@ -209,6 +209,11 @@ def database_post_save(sender, **kwargs):
 @receiver(pre_save, sender=Database)
 def database_pre_save(sender, **kwargs):
     database = kwargs.get('instance')
+    if database.is_in_quarantine:
+        if database.quarantine_dt is None:
+            database.quarantine_dt = datetime.datetime.now().date()
+    else:
+        database.quarantine_dt = None
 
     #slugify name
     database.name = slugify(database.name)
