@@ -14,7 +14,7 @@
 {% block after_related_objects %}
 <fieldset class="module">
     <h2>Credentials</h2>
-    <table class="table table-striped">
+    <table id="table-credentials" class="table table-striped" data-database-id="{{original.pk}}" >
         <thead>
             <tr>
                 <th>user</th>
@@ -24,7 +24,7 @@
         </thead>
         <tbody>
             {% for credential in original.credentials.all %}
-            <tr class="credential" data-credential-pk="{{credential.pk}}">
+            <tr class="credential" data-credential-pk="{{credential.pk}}"  >
                 <td>{{credential.user}}</td>
                 <td>
                     <a href="#" class="btn show-password" title="{{credential.user}}" data-content="{{credential.password}}" >show password</a>
@@ -39,7 +39,7 @@
         <tfoot>
             <tr>
                 <td colspan="3">
-                    <div class="add-row"><a href="javascript:void(0)"><i class="icon-plus-sign"></i> Add another user</a></div>
+                    <div class="add-row"><a href="javascript:void(0)" id="add-credential" ><i class="icon-plus-sign"></i> Add another user</a></div>
                 </td>
             </tr>
         </tfoot>

@@ -1,4 +1,15 @@
 
+var TABLE_ROW_TEMPLATE = '<tr class="credential" data-credential-pk="{{credential.pk}}" >' +
+                '<td>{{credential.user}}</td>' +
+                '<td>' +
+                '   <a href="#" class="btn show-password" title="{{credential.user}}" data-content="{{credential.password}}" >show password</a>'+
+                '   <a class="btn btn-warning btn-reset-password" href="#"><i class="icon-refresh"></i></a>'+
+                '</td>'+
+                '<td>'+
+                '   <a class="btn btn-danger" href="#"><i class="icon-trash icon-white"></i></a>'+
+                '</td>'+
+            '</tr>';
+
 (function($) {
 
     var Database = function() {
@@ -42,11 +53,9 @@
         });
 
         // show password
-        $(".show-password")
-        .popover({"trigger": "manual", "placement": "left"})
-        .click(function(e) {
+        $("#table-credentials").on("click", ".show-password", function(e) {
             e.preventDefault();
-            $(".show-password").each(function(i, el) {
+            $(".show-password", "#table-credentials").each(function(i, el) {
                 if (el == e.target) {
                     $(e.target).popover("toggle");
                 } else {
@@ -55,6 +64,9 @@
             });
         });
 
+        $('.show-password').popover({"trigger": "manual", "placement": "left"});
+
+        // reset password
         $(document).on("click", ".btn-reset-password", function(e) {
             var $credential = $(e.target).parents(".credential"),
                 $a_show_password = $(".show-password", $credential),
@@ -74,6 +86,45 @@
                     $a_show_password.popover("show");
                 });
             }
+            return false;
+        });
+
+        // add credential
+        $("#add-credential").on("click.add-credential", function(e) {
+            $("tbody", "#table-credentials").append(
+                "<tr class='credential'><td colspan='3'>" +
+                "<input type='text' placeholder='type username' name='user' value='' />" +
+                "<a href='#' class='save-new-credential btn btn-primary'>Save</a>" +
+                "</td></tr>");
+        });
+
+        $(document).on("click.save-new-credential", ".save-new-credential", function(e) {
+            var $table_row = $(e.target).parent().parent(),
+                username = $("input", $table_row).val(),
+                database_id = $("#table-credentials").data("database-id");
+            e.preventDefault();
+            $table_row.remove();
+            $.ajax({
+                "url": "/logical/credential/",
+                "type": "POST",
+                "data": { "username": username, "database_id": database_id },
+            }).done(function(data) {
+                if (!data || data.errors || !data.credential) {
+                    return;
+                }
+                var credential = data.credential;
+
+                var table_row = TABLE_ROW_TEMPLATE
+                    .replace(/{{credential.pk}}/g, credential.pk)
+                    .replace(/{{credential.user}}/g, credential.user)
+                    .replace(/{{credential.password}}/g, credential.password);
+                var $table_row = $(table_row);
+                $("tbody", "#table-credentials").append($table_row);
+                $(".show-password", $table_row).popover({"trigger": "manual", "placement": "left"}).popover("show");
+            }).fail(function() {
+                alert("Error creating user");
+            });
+
             return false;
         });
     });

@@ -177,6 +177,17 @@ class Credential(BaseModel):
         self.driver.update_user(self)
         self.save()
 
+    @classmethod
+    def create_new_credential(cls, user, database):
+        credential = Credential()
+        credential.database = database
+        credential.user = user
+        credential.password = make_db_random_password()
+        credential.driver.create_user(credential)
+        credential.full_clean()
+        credential.save()
+        return credential
+
 
 #####################################################################################################
 # SIGNALS
