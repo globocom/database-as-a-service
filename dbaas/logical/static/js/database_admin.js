@@ -32,7 +32,145 @@
          }
     });
 
+    var CredentialManager = (function() {
+        var DATABASE_ID = null;
+        var get_database_id = function() {
+            if (!DATABASE_ID) {
+                DATABASE_ID = $("#table-credentials").data("database-id");
+                console.log('DATABASE_ID=', DATABASE_ID);
+            }
+            return DATABASE_ID;
+        };
 
+        var Credential = function($row) {
+            this.$row = $row;
+            this.pk = $row.attr('data-credential-pk');
+        };
+
+        Credential.prototype.reset_password = function(callback) {
+            var credential = this;
+            $.ajax({
+                "url": "/logical/credential/" + this.pk,
+                "type": "PUT",
+            }).done(function(data) {
+                $(".show-password", credential.$row).attr("data-content", data.credential.password);
+                if (callback) {
+                    callback(credential);
+                }
+            });
+        };
+
+        Credential.prototype.delete = function(callback) {
+            var credential = this;
+            $.ajax({
+                "url": "/logical/credential/" + this.pk,
+                "type": "DELETE",
+            }).done(function(data) {
+                credential.$row.remove();
+                if (callback) {
+                    callback(credential);
+                }
+            });
+        };
+
+        Credential.prototype.show_password = function(force_show) {
+            // hide all others passwords
+            var credential = this, operation = "toggle";
+            if (force_show) operation = "show";
+
+            $(".show-password", "#table-credentials").each(function(i, el) {
+                if ($(el).parents(".credential").attr("data-credential-pk") === credential.pk) {
+                    window.x = $(".show-password", credential.$row).popover(operation);
+                } else {
+                    $(el).popover("hide");
+                }
+            });
+        };
+
+        var initialize_listeners = function(credential) {
+            // put all listeners
+            var $row = credential.$row;
+
+            $(".show-password", $row).popover({"trigger": "manual", "placement": "left"});
+
+            $row.on("click.reset-password", ".btn-reset-password", function(e) {
+                credential.reset_password(function() {
+                    credential.show_password(true);
+                });
+                return false;
+            });
+
+            // Delete credential
+            $row.on("click.delete-credential", ".btn-credential-remove", function(e) {
+                credential.delete();
+                return false;
+            });
+        };
+
+        ///////// ADD BUTTON is the only function isolated
+        $(document).on("click.add-credential", "#add-credential", function(e) {
+            $("tbody", "#table-credentials").append(
+                "<tr class='credential'><td colspan='3'>" +
+                "<input type='text' placeholder='type username' name='user' value='' />" +
+                "<a href='#' class='save-new-credential btn btn-primary'>Save</a>" +
+                "</td></tr>");
+        });
+
+        $(document).on("click.save-new-credential", ".save-new-credential", function(e) {
+            var $insert_row = $(e.target).parent().parent(),
+                username = $("input", $insert_row).val();
+
+            CredentialManager.create(username, function(credential) {
+                $insert_row.remove();
+
+                // show password
+                credential.show_password();
+            });
+            return false;
+        });
+
+
+        return {
+            get: function(credential_pk) {
+                var $row = $("#table-credentials tr[data-credential-pk=" + credential_pk + "]");
+                if ($row.length === 0) {
+                    return null;
+                }
+                return new Credential($row);
+            },
+            include: function(credential_json) {
+                var selector = "#table-credentials tr[data-credential-pk=" + credential_json.credential.pk + "]";
+
+                var html_row = $("#credential-template").mustache(credential_json);
+                $("tbody", "#table-credentials").append(html_row);
+
+                // request new DOM element already attached
+                var credential = this.get(credential_json.credential.pk);
+                initialize_listeners(credential);
+                return credential;
+            },
+            create: function(username, callback) {
+                var self = this;
+                $.ajax({
+                    "url": "/logical/credential/",
+                    "type": "POST",
+                    "data": { "username": username, "database_id": get_database_id() },
+                }).done(function(data) {
+                    if (!data || data.errors || !data.credential) {
+                        return;
+                    }
+
+                    var credential = self.include(data);
+                    if (callback) {
+                        callback(credential);
+                    }
+                }).fail(function() {
+                    alert("Error creating user");
+                });
+            }
+        };
+    })();
+    window.CredentialManager = CredentialManager;
 
     var Database = function() {
         this.update_components();
@@ -56,61 +194,6 @@
             });
         }
     };
-
-    var Credential = {
-        // constants
-
-        // functions
-        init: function(credentials) {
-            Credential.DATABASE_ID = $("#table-credentials").data("database-id");
-            Credential.append_all(credentials);
-
-        },
-        append_all: function(credentials) {
-            credentials.forEach(function(credential, i) {
-                Credential.append(credential);
-            });
-        },
-        append: function(credential) {
-            var selector = "#table-credentials tr[data-credential-pk=" + credential.pk + "]",
-                $table_row = $(selector);
-
-            if ($table_row.length > 1) {
-                // remove old table
-                $table_row.remove();
-            }
-
-            var html_row = $("#credential-template").mustache(credential);
-            $("tbody", "#table-credentials").append(html_row);
-
-            // request new DOM element already attached
-            $table_row = $(selector);
-            $(".show-password", $table_row)
-                .popover({"trigger": "manual", "placement": "left"});
-            return $table_row;
-        },
-        create_credential: function(username, callback) {
-            console.log({ "username": username, "database_id": Credential.DATABASE_ID });
-            $.ajax({
-                "url": "/logical/credential/",
-                "type": "POST",
-                "data": { "username": username, "database_id": Credential.DATABASE_ID },
-            }).done(function(data) {
-                if (!data || data.errors || !data.credential) {
-                    return;
-                }
-                var $table_row = Credential.append(data);
-
-                if (callback) {
-                    callback(data, $table_row);
-                }
-            }).fail(function() {
-                alert("Error creating user");
-            });
-        }
-    };
-    window.Credential = Credential;
-
 
     // Document READY
     $(function() {
@@ -139,65 +222,6 @@
                     $(this).popover("hide");
                 }
             });
-        });
-
-        $('.show-password').popover({"trigger": "manual", "placement": "left"});
-
-        // reset password
-        $(document).on("click", ".btn-reset-password", function(e) {
-            var $credential = $(e.target).parents(".credential"),
-                $a_show_password = $(".show-password", $credential),
-                $a_reset_password = $(e.target);
-
-            var credential_pk = $credential.data("credential-pk");
-            if (credential_pk) {
-                $.ajax({
-                    "url": "/logical/credential/" + credential_pk,
-                    "type": "PUT",
-                }).done(function(data) {
-                    $a_show_password.attr("data-content", data.credential.password);
-                    $a_show_password.popover("show");
-                });
-            }
-            return false;
-        });
-
-        // add credential
-        $("#add-credential").on("click.add-credential", function(e) {
-            $("tbody", "#table-credentials").append(
-                "<tr class='credential'><td colspan='3'>" +
-                "<input type='text' placeholder='type username' name='user' value='' />" +
-                "<a href='#' class='save-new-credential btn btn-primary'>Save</a>" +
-                "</td></tr>");
-        });
-
-        $(document).on("click.save-new-credential", ".save-new-credential", function(e) {
-            var $table_row = $(e.target).parent().parent(),
-                username = $("input", $table_row).val();
-
-            Credential.create_credential(username, function(credential) {
-                $table_row.remove();
-
-                // show password
-                $(".show-password", $table_row).popover("show");
-            });
-            return false;
-        });
-
-        // Remove credential
-        $(document).on("click", ".btn-credential-remove", function(e) {
-            var $credential = $(e.target).parents(".credential");
-
-            var credential_pk = $credential.data("credential-pk");
-            if (credential_pk) {
-                $.ajax({
-                    "url": "/logical/credential/" + credential_pk,
-                    "type": "DELETE",
-                }).done(function(data) {
-                    $credential.remove();
-                });
-            }
-            return false;
         });
     });
 

@@ -8,11 +8,9 @@
 
     <script type="text/javascript" >
     django.jQuery(function() {
-        Credential.init([
         {% for credential in original.credentials.all %}
-            {"credential" : { "user": "{{credential.user}}", "password": "{{credential.password}}", "pk": "{{credential.pk}}" } },
+        CredentialManager.include({"credential" : { "user": "{{credential.user}}", "password": "{{credential.password}}", "pk": "{{credential.pk}}" } });
         {% endfor %}
-        ]);
     });
     </script>
 
