@@ -26,7 +26,9 @@
             </tbody>
         </table>
         <h2>Groups</h2>
-        <span><ul>{% for group in user.groups.all %}<li>{{ group.name}}</li>{% endfor %}</ul></span>
+        <span><ul>{% for group in groups %}<li>{{ group.name}}</li>{% endfor %}</ul></span>
+        <h2>Roles</h2>
+        <span><ul>{% for role in roles %}<li>{{ role.name}}</li>{% endfor %}</ul></span>
         <h2>Databases</h2>
         <span><ul>{% for database in databases %}<li>{{ database.name}}</li>{% endfor %}</ul></span>
     </div>
