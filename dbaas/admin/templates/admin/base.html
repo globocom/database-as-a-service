@@ -38,7 +38,7 @@
                     {% if user.is_active and user.is_staff %}
                         <div id="user-tools" class="pull-right">
                             <div class="btn-group pull-right">
-                                <a href="{% if user.has_usable_password %}{% url user|user_admin_urlname:'change' user.pk|admin_urlquote %}{% else %}#{% endif %}" class="btn btn-primary">
+                                <a href="{% if user.has_usable_password %}{% url user|user_admin_urlname:'change' user.pk|admin_urlquote %}{% else %}{% url 'account.profile' user.pk %}{% endif %}" class="btn btn-primary">
                                 <i class="icon white user"></i>
                                  @{% filter force_escape %}{% firstof user.get_short_name|lower user.get_username|lower %}{% endfilter %}
                                 </a>
