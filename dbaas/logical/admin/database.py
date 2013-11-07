@@ -124,7 +124,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             return super(DatabaseAdmin, self).has_add_permission(request)
 
     def add_view(self, request, form_url='', extra_context=None):
-        groups = get_user_groups(user=request.user)
+        groups = UserRepository.get_user_groups(user=request.user)
         LOG.info("user %s groups: %s" % (request.user, groups))
         if not groups:
             self.message_user(request, _("You must be set to at least one team or group."), level=messages.ERROR)
