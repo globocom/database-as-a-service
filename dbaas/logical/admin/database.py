@@ -11,7 +11,7 @@ from django.contrib import messages
 from ..service.database import DatabaseService
 from ..forms import DatabaseForm
 from ..models import Database
-from account.models import get_user_groups, get_user_roles
+from account.models import UserRepository
 
 MB_FACTOR = 1.0 / 1024.0 / 1024.0
 
@@ -82,7 +82,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
     def save_model(self, request, obj, form, change):
         if not change:
-            groups = get_user_groups(user=request.user)
+            groups = UserRepository.get_user_groups(user=request.user)
             LOG.info("user %s groups: %s" % (request.user, groups))
             if groups:
                 obj.group = groups[0]
@@ -117,7 +117,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
     def has_add_permission(self, request):
         """User must be set to at least one group to be able to add database"""
-        groups = get_user_groups(user=request.user)
+        groups = UserRepository.get_user_groups(user=request.user)
         if not groups:
             return False
         else:

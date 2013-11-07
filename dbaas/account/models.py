@@ -15,7 +15,6 @@ from .helper import find_ldap_groups_from_user
 
 LOG = logging.getLogger(__name__)
 
-
 def sync_ldap_groups_with_user(user=None):
     """
     Sync ldap groups (aka team) with the user
@@ -34,11 +33,15 @@ def sync_ldap_groups_with_user(user=None):
     
     return group
 
-def get_user_groups(user=None):
-    return user.groups.exclude(name__startswith="role") if user else []
-
-def get_user_roles(user=None):
-    return user.groups.filter(name__startswith="role") if user else []
+class UserRepository(object):
+    
+    @staticmethod
+    def get_user_groups(user=None):
+        return user.groups.exclude(name__startswith="role") if user else []
+    
+    @staticmethod
+    def get_user_roles(user=None):
+        return user.groups.filter(name__startswith="role") if user else []
 
 
 #####################################################################################################
