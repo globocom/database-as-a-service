@@ -1,9 +1,8 @@
-# # -*- coding: utf-8 -*-
-# from __future__ import absolute_import, unicode_literals
-# from django.contrib import admin
-# from django.contrib.auth.admin import UserAdmin
-# from django.contrib.auth.models import User
-# 
+# -*- coding: utf-8 -*-
+from __future__ import absolute_import, unicode_literals
+from django.contrib import admin
+from django.contrib.auth.models import User
+from .user import UserAdmin
 # from ..models import Profile
 # 
 # # Define an inline admin descriptor for Profile model
@@ -17,6 +16,6 @@
 # class UserAdmin(UserAdmin):
 #     inlines = (ProfileInline, )
 # 
-# # Re-register UserAdmin
-# admin.site.unregister(User)
-# admin.site.register(User, UserAdmin)
+# Re-register UserAdmin
+admin.site.unregister(User)
+admin.site.register(User, UserAdmin)
