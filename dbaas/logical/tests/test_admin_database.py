@@ -2,7 +2,7 @@
 from __future__ import absolute_import, unicode_literals
 import logging
 from django.test import TestCase
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from drivers import fake
 from physical.tests import factory as physical_factory
 from ..models import Database
@@ -21,7 +21,9 @@ class AdminCreateDatabaseTestCase(TestCase):
         self.plan = physical_factory.PlanFactory()
         self.databaseinfra = physical_factory.DatabaseInfraFactory(plan=self.plan)
         self.project = factory.ProjectFactory()
+        self.group = Group.objects.get_or_create(name="fake_group")[0]
         self.user = User.objects.create_superuser(self.USERNAME, email="%s@admin.com" % self.USERNAME, password=self.PASSWORD)
+        self.user.groups.add(self.group)
         self.client.login(username=self.USERNAME, password=self.PASSWORD)
 
     def tearDown(self):
