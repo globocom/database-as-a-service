@@ -17,7 +17,7 @@ class Command(BaseCommand):
     
     #dba has all permissions in role_reguler
     groups_roles = {'role_dba': [u'view_host', u'change_enginetype', u'delete_planattribute', u'add_enginetype', 
-                                u'physical.view_databaseinfra', u'change_databaseinfra', u'change_host', 
+                                u'view_databaseinfra', u'change_databaseinfra', u'change_host', 
                                 u'delete_auditrequest', u'change_auditchange', u'add_instance', 
                                 u'can_manage_quarantine_databases', u'add_planattribute', 
                                 u'delete_plan', u'add_databaseinfra', u'view_planattribute', 
