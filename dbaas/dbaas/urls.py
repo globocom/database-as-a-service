@@ -22,6 +22,7 @@ urlpatterns = patterns('',
     url(r'^dashboard/', include('dashboard.urls')),
     url(r'^tsuru/', include('tsuru.urls')),
     url(r'^logical/', include('logical.urls')),
+    url(r'^account/', include('account.urls')),
     url('^api/', include(django_services.api.urls))
 
 )
