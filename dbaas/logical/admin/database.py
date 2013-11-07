@@ -1,14 +1,11 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 import logging
-from django.contrib import messages
-from django.template import RequestContext
 from django_services import admin
-from django.http import HttpResponse, HttpResponseRedirect
-from django.shortcuts import render_to_response
+from django.http import HttpResponseRedirect
 from django.utils.encoding import force_text
 from django.core.urlresolvers import reverse
-from django.conf.urls import patterns, include, url
+from django.conf.urls import patterns, url
 
 from ..service.database import DatabaseService
 from ..forms import DatabaseForm
@@ -21,8 +18,7 @@ LOG = logging.getLogger(__name__)
 class DatabaseAdmin(admin.DjangoServicesAdmin):
     service_class = DatabaseService
     search_fields = ("name", "databaseinfra__name")
-    change_list_display = ["name", "get_capacity_html", "endpoint", ]
-    quarantine_list_display = ["quarantine_dt", "name", "get_capacity_html", "endpoint", "is_in_quarantine"]
+    list_display = ["name", "get_capacity_html", "endpoint", "quarantine_dt_format"]
     list_filter = ("databaseinfra", "project", "is_in_quarantine")
     add_form_template = "logical/database_add_form.html"
     change_form_template = "logical/database_change_form.html"
@@ -35,10 +31,15 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     )
     fieldsets_change = (
         (None, {
-            'fields': ('name', 'project', 'group')
+            'fields': ('name', 'project', 'group', 'is_in_quarantine')
             }
         ),
     )
+
+    def quarantine_dt_format(self, database):
+        return database.quarantine_dt or ""
+    quarantine_dt_format.short_description = "Quarantine since"
+    quarantine_dt_format.admin_order_field = 'quarantine_dt'
 
     def get_capacity_html(self, database):
         if database.capacity > .75:
@@ -104,14 +105,6 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         )
         return my_urls + urls
 
-    def changelist_view(self, request, extra_context=None):
-        if request.GET.get('is_in_quarantine__exact'):
-            self.list_display = self.quarantine_list_display
-        else:
-            self.list_display = self.change_list_display
-        
-        return super(DatabaseAdmin, self).changelist_view(request, extra_context=extra_context)
-        
     def add_view(self, request, form_url='', extra_context=None):
         return super(DatabaseAdmin, self).add_view(request, form_url, extra_context=extra_context)
 

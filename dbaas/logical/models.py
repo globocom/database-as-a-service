@@ -56,6 +56,7 @@ class Database(BaseModel):
             ("can_manage_quarantine_databases", "Can manage databases in quarantine"),
             ("view_database", "Can view databases"),
         )
+        ordering = ('databaseinfra', 'name',)
 
     def delete(self, *args, **kwargs):
         """
@@ -67,6 +68,19 @@ class Database(BaseModel):
             super(Database, self).delete(*args, **kwargs)  # Call the "real" delete() method.
         else:
             LOG.warning("Putting database %s in quarantine" % self.name)
+            if self.credentials.exists():
+                for credential in self.credentials.all():
+                    new_password = make_db_random_password()
+                    new_credential = Credential.objects.get(pk=credential.id)
+                    new_credential.password = new_password
+                    new_credential.save()
+
+                    instance = factory_for(self.databaseinfra)
+                    instance.update_user(new_credential)
+
+            else:
+                LOG.info("There is no credential on this database: %s" % self.databaseinfra)
+
             self.is_in_quarantine = True
             self.quarantine_dt = datetime.datetime.now().date()
             self.save()
@@ -151,6 +165,28 @@ class Credential(BaseModel):
         permissions = (
             ("view_credential", "Can view credentials"),
         )
+        ordering = ('database', 'user',)
+
+    @cached_property
+    def driver(self):
+        return self.database.databaseinfra.get_driver()
+
+    def reset_password(self):
+        """ Reset credential password to a new random password """
+        self.password = make_db_random_password()
+        self.driver.update_user(self)
+        self.save()
+
+    @classmethod
+    def create_new_credential(cls, user, database):
+        credential = Credential()
+        credential.database = database
+        credential.user = user
+        credential.password = make_db_random_password()
+        credential.driver.create_user(credential)
+        credential.full_clean()
+        credential.save()
+        return credential
 
 
 #####################################################################################################
@@ -184,6 +220,11 @@ def database_post_save(sender, **kwargs):
 @receiver(pre_save, sender=Database)
 def database_pre_save(sender, **kwargs):
     database = kwargs.get('instance')
+    if database.is_in_quarantine:
+        if database.quarantine_dt is None:
+            database.quarantine_dt = datetime.datetime.now().date()
+    else:
+        database.quarantine_dt = None
 
     #slugify name
     database.name = slugify(database.name)

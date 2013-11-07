@@ -3,7 +3,17 @@
 
 {% block extrahead %}
     {{ block.super }}
+    <script type="text/javascript" src="{% static 'js/mustache.js' %}"></script>
     <script type="text/javascript" src="{% static 'js/database_admin.js' %}"></script>
+
+    <script type="text/javascript" >
+    django.jQuery(function() {
+        {% for credential in original.credentials.all %}
+        CredentialManager.include({"credential" : { "user": "{{credential.user}}", "password": "{{credential.password}}", "pk": "{{credential.pk}}" } });
+        {% endfor %}
+    });
+    </script>
+
 {% endblock %}
 
 {% block extrastyle %}
@@ -12,7 +22,41 @@
 {% endblock %}
 
 {% block after_related_objects %}
-<p><a href="#">More</a></p>
+<fieldset class="module">
+    <h2>Credentials</h2>
+    <table id="table-credentials" class="table table-striped" data-database-id="{{original.pk}}" >
+        <thead>
+            <tr>
+                <th>user</th>
+                <th>password</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% verbatim %}
+            <script id="credential-template" type="text/template">
+                <tr class="credential" data-credential-pk="{{credential.pk}}"  >
+                    <td>{{credential.user}}</td>
+                    <td>
+                        <a href="#" class="btn show-password" title="{{credential.user}}" data-content="{{credential.password}}" >show password</a>
+                        <a class="btn btn-warning btn-reset-password" href="#"><i class="icon-refresh"></i></a>
+                    </td>
+                    <td>
+                        <a class="btn btn-danger btn-credential-remove" href="#"><i class="icon-trash icon-white"></i></a>
+                    </td>
+                </tr>
+            </script>
+            {% endverbatim %}
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="3">
+                    <div class="add-row"><a href="javascript:void(0)" id="add-credential" ><i class="icon-plus-sign"></i> Add another user</a></div>
+                </td>
+            </tr>
+        </tfoot>
+    </table>
+</fieldset>
 {% endblock %}
 
 {% block submit_buttons_bottom %}{% submit_row_extended %}{% endblock %}

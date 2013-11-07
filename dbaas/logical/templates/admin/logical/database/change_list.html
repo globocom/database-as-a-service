@@ -3,22 +3,10 @@
 {% load admin_urls %}
 
 {% block object-tools-items %}
+  {% if perms.logical.add_database %}
   <li>
     <a href="{% url cl.opts|admin_urlname:'add' %}{% if is_popup %}?_popup=1{% endif %}" class="addlink btn btn-primary">
       {% blocktrans with cl.opts.verbose_name as name %}Add {{ name }}{% endblocktrans %}
-    </a>
-  </li>
-  {% if perms.logical.can_manage_quarantine_databases %}
-  <li>
-    <a href="{% url 'admin:logical_removed_databases' %}{% if is_popup %}?_popup=1{% endif %}" class="addlink btn btn-info">
-      {% blocktrans %}Quarantine{% endblocktrans %}
-    </a>
-  </li>
-  {% endif %}
-  {% if perms.logical.add_database %}
-  <li>
-    <a href="{% url 'admin:logical_database_changelist' %}{% if is_popup %}?_popup=1{% endif %}" class="addlink btn btn-info">
-      {% blocktrans %}All{% endblocktrans %}
     </a>
   </li>
   {% endif %}
