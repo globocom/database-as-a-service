@@ -88,7 +88,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         obj.save()
 
     def get_fieldsets(self, request, obj=None):
-        if obj:
+        if obj: #In edit mode
             if request.user.has_perm("logical.can_manage_quarantine_databases"):
                 self.fieldsets_change = self.fieldsets_change_advanced
             else:
