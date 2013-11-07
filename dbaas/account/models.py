@@ -34,6 +34,11 @@ def sync_ldap_groups_with_user(user=None):
     
     return group
 
+def get_user_groups(user=None):
+    return user.groups.exclude(name__startswith="role") if user else []
+
+def get_user_roles(user=None):
+    return user.groups.filter(name__startswith="role") if user else []
 
 
 #####################################################################################################
@@ -55,7 +60,7 @@ def user_post_save(sender, **kwargs):
     created = kwargs.get('created')
     if created:
         LOG.debug("new user %s created" % user)
-        sync_ldap_groups_with_user(user=user)
+        #sync_ldap_groups_with_user(user=user)
 
 
 def user_m2m_changed(sender, **kwargs):
@@ -70,7 +75,7 @@ def user_m2m_changed(sender, **kwargs):
     action = kwargs.get('action')
     if action == 'post_clear':
         LOG.info("user %s m2m_changed post_clear signal" % user)
-        sync_ldap_groups_with_user(user=user)
+        #sync_ldap_groups_with_user(user=user)
 
 
 m2m_changed.connect(user_m2m_changed, sender=User.groups.through)

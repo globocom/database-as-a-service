@@ -1,15 +1,17 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
+from django.utils.translation import ugettext_lazy as _
 import logging
 from django_services import admin
 from django.http import HttpResponseRedirect
 from django.utils.encoding import force_text
 from django.core.urlresolvers import reverse
 from django.conf.urls import patterns, url
-
+from django.contrib import messages
 from ..service.database import DatabaseService
 from ..forms import DatabaseForm
 from ..models import Database
+from account.models import get_user_groups, get_user_roles
 
 MB_FACTOR = 1.0 / 1024.0 / 1024.0
 
@@ -80,7 +82,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
     def save_model(self, request, obj, form, change):
         if not change:
-            groups = request.user.groups.all()
+            groups = get_user_groups(user=request.user)
             LOG.info("user %s groups: %s" % (request.user, groups))
             if groups:
                 obj.group = groups[0]
@@ -113,8 +115,20 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
         return qs.filter(is_in_quarantine=False, group__in=[group.id for group in request.user.groups.all()])
 
+    def has_add_permission(self, request):
+        """User must be set to at least one group to be able to add database"""
+        groups = get_user_groups(user=request.user)
+        if not groups:
+            return False
+        else:
+            return super(DatabaseAdmin, self).has_add_permission(request)
 
     def add_view(self, request, form_url='', extra_context=None):
+        groups = get_user_groups(user=request.user)
+        LOG.info("user %s groups: %s" % (request.user, groups))
+        if not groups:
+            self.message_user(request, _("You must be set to at least one team or group."), level=messages.ERROR)
+            return HttpResponseRedirect(reverse('admin:logical_database_changelist'))
         return super(DatabaseAdmin, self).add_view(request, form_url, extra_context=extra_context)
 
 
