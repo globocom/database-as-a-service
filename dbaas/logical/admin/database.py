@@ -29,9 +29,17 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             }
         ),
     )
-    fieldsets_change = (
+    
+    fieldsets_change_basic = (
         (None, {
-            'fields': ('name', 'project', 'group', 'is_in_quarantine')
+            'fields': ['name', 'project', 'group',]
+            }
+        ),
+    )
+    
+    fieldsets_change_advanced = (
+        (None, {
+            'fields': fieldsets_change_basic[0][1]['fields'] + ["is_in_quarantine"]
             }
         ),
     )
@@ -80,6 +88,12 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         obj.save()
 
     def get_fieldsets(self, request, obj=None):
+        if obj:
+            if request.user.has_perm("logical.can_manage_quarantine_databases"):
+                self.fieldsets_change = self.fieldsets_change_advanced
+            else:
+                self.fieldsets_change = self.fieldsets_change_basic
+
         return self.fieldsets_change if obj else self.fieldsets_add
 
     def get_readonly_fields(self, request, obj=None):
