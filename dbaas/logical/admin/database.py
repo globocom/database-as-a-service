@@ -16,6 +16,7 @@ MB_FACTOR = 1.0 / 1024.0 / 1024.0
 LOG = logging.getLogger(__name__)
 
 class DatabaseAdmin(admin.DjangoServicesAdmin):
+    perm_manage_quarantine_database = "logical.can_manage_quarantine_databases"
     service_class = DatabaseService
     search_fields = ("name", "databaseinfra__name")
     list_display = ["name", "get_capacity_html", "endpoint", "quarantine_dt_format"]
@@ -89,7 +90,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
     def get_fieldsets(self, request, obj=None):
         if obj: #In edit mode
-            if request.user.has_perm("logical.can_manage_quarantine_databases"):
+            if request.user.has_perm(self.perm_manage_quarantine_database):
                 self.fieldsets_change = self.fieldsets_change_advanced
             else:
                 self.fieldsets_change = self.fieldsets_change_basic
@@ -107,17 +108,11 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
     def queryset(self, request):
         qs = super(DatabaseAdmin, self).queryset(request)
-        if request.user.has_perm("logical.can_manage_quarantine_databases"):
+        if request.user.has_perm(self.perm_manage_quarantine_database):
             return qs
 
         return qs.filter(is_in_quarantine=False, group__in=[group.id for group in request.user.groups.all()])
 
-    def get_urls(self):
-        urls = super(DatabaseAdmin, self).get_urls()
-        my_urls = patterns('',
-            url(r'^removed/$', self.admin_site.admin_view(self.view_removed), name="%s_removed_databases" % self.opts.app_label),
-        )
-        return my_urls + urls
 
     def add_view(self, request, form_url='', extra_context=None):
         return super(DatabaseAdmin, self).add_view(request, form_url, extra_context=extra_context)
@@ -131,23 +126,4 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         else:
             extra_context['delete_button_name'] = "Delete"
         return super(DatabaseAdmin, self).change_view(request, object_id, form_url, extra_context=extra_context)
-
-    def get_context(self, request):
-        context = {}
-
-        opts = self.model._meta
-        app_label = opts.app_label
-
-        context = {
-            'module_name': force_text(opts.verbose_name_plural),
-            'app_label': app_label,
-        }
-        
-        return context
-
-    def view_removed(self, request):
-        url = reverse('admin:logical_database_changelist')
-        # context = self.get_context(request)
-        return HttpResponseRedirect(url + "?is_in_quarantine__exact=1")
-        # return render_to_response("logical/database/removed.html", locals(), context_instance=RequestContext(request))
 
