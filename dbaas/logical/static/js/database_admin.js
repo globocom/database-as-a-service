@@ -136,7 +136,7 @@
             var $insert_row = $(e.target).parent().parent(),
                 username = $("input", $insert_row).val();
 
-            CredentialManager.create(username, function(credential) {
+            CredentialManager.create(username, $insert_row, function(credential) {
                 $insert_row.remove();
 
                 // show password
@@ -144,6 +144,12 @@
             });
             return false;
         });
+
+        var show_error_message = function($row, message) {
+            var errormsg = '<div class="alert alert-error"><button type="button" class="close" data-dismiss="alert">&times;</button><strong>Erro</strong> ' + message + '</div>';
+            $('td .alert', $row).remove();
+            $('td', $row).prepend(errormsg);
+        };
 
 
         return {
@@ -175,15 +181,16 @@
             /**
             * Create a new credential on server and put on page
             */
-            create: function(username, callback) {
+            create: function(username, $row, callback) {
                 var self = this;
                 $.ajax({
                     "url": "/logical/credential/",
                     "type": "POST",
                     "data": { "username": username, "database_id": get_database_id() },
                 }).done(function(data) {
-                    if (!data || data.errors || !data.credential) {
-                        return;
+                    console.log(data);
+                    if (data.error) {
+                        show_error_message($row, data.error);
                     }
 
                     var credential = self.include(data);
@@ -191,7 +198,7 @@
                         callback(credential);
                     }
                 }).fail(function() {
-                    alert("Error creating user");
+                    show_error_message($row, 'Invalid server response');
                 });
             }
         };
