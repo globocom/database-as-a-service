@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 from django.contrib import admin
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 
-from ..models import Team, Role
+from ..models import Team, Role, AccountUser
+
 from .user import UserAdmin
 from .role import RoleAdmin
 from .team import TeamAdmin
@@ -23,6 +24,7 @@ from .team import TeamAdmin
 # 
 # Re-register UserAdmin
 admin.site.unregister(User)
-admin.site.register(User, UserAdmin)
+admin.site.unregister(Group)
+admin.site.register(AccountUser, UserAdmin)
 admin.site.register(Role, RoleAdmin)
 admin.site.register(Team, TeamAdmin)

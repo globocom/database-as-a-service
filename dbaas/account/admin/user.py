@@ -15,14 +15,23 @@ class UserAdmin(UserAdmin):
         (_('Important dates'), {'fields': ('last_login', 'date_joined')}),
     )
     
-    # fieldsets_superuser = (
-    #     (None, {'fields': ('username', 'password')}),
-    #     (_('Personal info'), {'fields': ('first_name', 'last_name', 'email')}),
-    #     (_('Permissions'), {'fields': ('is_active', 'is_staff', 'is_superuser',
-    #                                    'groups', 'user_permissions')}),
-    #     (_('Important dates'), {'fields': ('last_login', 'date_joined')}),
-    # )
+    def has_add_permission(self, request):
+        if not request.user.is_active:
+            return False
+        else:
+            return request.user.has_perm("auth.add_user", obj=None)
 
+    def has_change_permission(self, request, obj=None):
+        if not request.user.is_active:
+            return False
+        else:
+            return request.user.has_perm("auth.change_user", obj=None)
+
+    def has_delete_permission(self, request, obj=None):
+        if not request.user.is_active:
+            return False
+        else:
+            return request.user.has_perm("auth.delete_user", obj=None)
 
     def get_fieldsets(self, request, obj=None):
         if not obj:

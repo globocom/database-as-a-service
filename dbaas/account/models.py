@@ -25,13 +25,26 @@ class UserRepository(object):
     def get_roles_for(user=None):
         return user.groups.filter(name__startswith="role") if user else []
 
+
+class AccountUser(User):
+    class Meta:
+        proxy = True
+        verbose_name_plural = _("users")
+        verbose_name = _("user")
+        app_label = 'auth'
+
+
 class Team(Group):
     class Meta:
         proxy = True
+        app_label = 'auth'
+
 
 class Role(Group):
     class Meta:
         proxy = True
+        app_label = 'auth'
+
 
 def sync_ldap_groups_with_user(user=None):
     """
