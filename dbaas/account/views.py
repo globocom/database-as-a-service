@@ -25,8 +25,8 @@ def profile(request, user_id=None):
     try :
         user = User.objects.get(id=user_id)
         databases = Database.objects.filter(group__in=[group.id for group in user.groups.all()])
-        groups = UserRepository.get_user_groups(user=user)
-        roles = UserRepository.get_user_roles(user=user)
+        groups = UserRepository.get_groups_for(user=user)
+        roles = UserRepository.get_roles_for(user=user)
     except Exception, e:
         LOG.warning("Ops... %s" % e)
     

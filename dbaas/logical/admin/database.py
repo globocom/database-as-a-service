@@ -82,7 +82,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
     def save_model(self, request, obj, form, change):
         if not change:
-            groups = UserRepository.get_user_groups(user=request.user)
+            groups = UserRepository.get_groups_for(user=request.user)
             LOG.info("user %s groups: %s" % (request.user, groups))
             if groups:
                 obj.group = groups[0]
@@ -117,14 +117,14 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
     def has_add_permission(self, request):
         """User must be set to at least one group to be able to add database"""
-        groups = UserRepository.get_user_groups(user=request.user)
+        groups = UserRepository.get_groups_for(user=request.user)
         if not groups:
             return False
         else:
             return super(DatabaseAdmin, self).has_add_permission(request)
 
     def add_view(self, request, form_url='', extra_context=None):
-        groups = UserRepository.get_user_groups(user=request.user)
+        groups = UserRepository.get_groups_for(user=request.user)
         LOG.info("user %s groups: %s" % (request.user, groups))
         if not groups:
             self.message_user(request, _("You must be set to at least one team or group."), level=messages.ERROR)
