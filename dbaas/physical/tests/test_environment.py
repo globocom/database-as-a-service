@@ -6,7 +6,7 @@ from django.db import IntegrityError
 from .factory import EnvironmentFactory
 
 
-class HostTestCase(TestCase):
+class EnvironmentTestCase(TestCase):
 
     def setUp(self):
         self.host = EnvironmentFactory(name='production')
