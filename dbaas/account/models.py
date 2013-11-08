@@ -15,6 +15,24 @@ from .helper import find_ldap_groups_from_user
 
 LOG = logging.getLogger(__name__)
 
+class UserRepository(object):
+
+    @staticmethod
+    def get_groups_for(user=None):
+        return user.groups.exclude(name__startswith="role") if user else []
+
+    @staticmethod
+    def get_roles_for(user=None):
+        return user.groups.filter(name__startswith="role") if user else []
+
+class Team(Group):
+    class Meta:
+        proxy = True
+
+class Role(Group):
+    class Meta:
+        proxy = True
+
 def sync_ldap_groups_with_user(user=None):
     """
     Sync ldap groups (aka team) with the user
@@ -33,20 +51,16 @@ def sync_ldap_groups_with_user(user=None):
     
     return group
 
-class UserRepository(object):
-    
-    @staticmethod
-    def get_user_groups(user=None):
-        return user.groups.exclude(name__startswith="role") if user else []
-    
-    @staticmethod
-    def get_user_roles(user=None):
-        return user.groups.filter(name__startswith="role") if user else []
-
 
 #####################################################################################################
 # SIGNALS
 #####################################################################################################
+#all role name should start with role_
+@receiver(pre_save, sender=Role)
+def role_pre_save(sender, **kwargs):
+    role = kwargs.get('instance')
+    if not role.name.startswith('role_'):
+        role.name = "role_" + role.name
 
 #all users should be is_staff True
 @receiver(pre_save, sender=User)
