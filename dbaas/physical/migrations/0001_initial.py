@@ -8,6 +8,15 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
+        # Adding model 'Environment'
+        db.create_table(u'physical_environment', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('created_at', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
+            ('updated_at', self.gf('django.db.models.fields.DateTimeField')(auto_now=True, blank=True)),
+            ('name', self.gf('django.db.models.fields.CharField')(unique=True, max_length=100)),
+        ))
+        db.send_create_signal(u'physical', ['Environment'])
+
         # Adding model 'EngineType'
         db.create_table(u'physical_enginetype', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
@@ -46,6 +55,15 @@ class Migration(SchemaMigration):
         ))
         db.send_create_signal(u'physical', ['Plan'])
 
+        # Adding M2M table for field environment on 'Plan'
+        m2m_table_name = db.shorten_name(u'physical_plan_environment')
+        db.create_table(m2m_table_name, (
+            ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True)),
+            ('plan', models.ForeignKey(orm[u'physical.plan'], null=False)),
+            ('environment', models.ForeignKey(orm[u'physical.environment'], null=False))
+        ))
+        db.create_unique(m2m_table_name, ['plan_id', 'environment_id'])
+
         # Adding model 'PlanAttribute'
         db.create_table(u'physical_planattribute', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
@@ -75,7 +93,7 @@ class Migration(SchemaMigration):
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('created_at', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
             ('updated_at', self.gf('django.db.models.fields.DateTimeField')(auto_now=True, blank=True)),
-            ('hostname', self.gf('django.db.models.fields.CharField')(max_length=255)),
+            ('hostname', self.gf('django.db.models.fields.CharField')(unique=True, max_length=255)),
         ))
         db.send_create_signal(u'physical', ['Host'])
 
@@ -105,6 +123,9 @@ class Migration(SchemaMigration):
         # Removing unique constraint on 'Engine', fields ['version', 'engine_type']
         db.delete_unique(u'physical_engine', ['version', 'engine_type_id'])
 
+        # Deleting model 'Environment'
+        db.delete_table(u'physical_environment')
+
         # Deleting model 'EngineType'
         db.delete_table(u'physical_enginetype')
 
@@ -113,6 +134,9 @@ class Migration(SchemaMigration):
 
         # Deleting model 'Plan'
         db.delete_table(u'physical_plan')
+
+        # Removing M2M table for field environment on 'Plan'
+        db.delete_table(db.shorten_name(u'physical_plan_environment'))
 
         # Deleting model 'PlanAttribute'
         db.delete_table(u'physical_planattribute')
@@ -157,10 +181,17 @@ class Migration(SchemaMigration):
             'name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '100'}),
             'updated_at': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'})
         },
+        u'physical.environment': {
+            'Meta': {'object_name': 'Environment'},
+            'created_at': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '100'}),
+            'updated_at': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'})
+        },
         u'physical.host': {
             'Meta': {'object_name': 'Host'},
             'created_at': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
-            'hostname': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
+            'hostname': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '255'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'updated_at': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'})
         },
@@ -182,6 +213,7 @@ class Migration(SchemaMigration):
             'created_at': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
             'description': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
             'engine_type': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "u'plans'", 'to': u"orm['physical.EngineType']"}),
+            'environment': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['physical.Environment']", 'symmetrical': 'False'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'is_active': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'is_default': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
