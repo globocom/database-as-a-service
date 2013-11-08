@@ -4,7 +4,7 @@ import logging
 from django.test import TestCase
 from django.contrib.auth.models import User
 # from drivers import fake
-from ..models import Instance, DatabaseInfra
+from ..models import DatabaseInfra
 # from ..forms import DatabaseForm
 from . import factory
 
@@ -53,7 +53,6 @@ class AdminCreateDatabaseInfraTestCase(TestCase):
             params["instances-%d-hostname" % i] = host.pk,
             params["instances-%d-address" % i] = "10.10.1.%d" % host.pk,
             params["instances-%d-port" % i] = instance_port,
-            params["instances-%d-type" % i] = Instance.VIRTUAL
 
 
         response = self.client.post("/admin/physical/databaseinfra/add/", params)

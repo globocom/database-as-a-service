@@ -5,7 +5,7 @@ from drivers import DriverFactory
 from physical.tests import factory as factory_physical
 from logical.tests import factory as factory_logical
 from logical.models import Database
-from ..driver_pymongo import MongoDB
+from ..mongodb import MongoDB
 
 
 class AbstractTestDriverMongo(TestCase):

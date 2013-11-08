@@ -140,37 +140,6 @@ class DatabaseInfra(BaseModel):
         if (not self.environment_id or not self.plan_id) or not self.plan.environments.filter(pk=self.environment_id).exists():
             raise ValidationError({'engine': _("Invalid environment")})
 
-    def env_variables(self, database_name=None):
-        """
-        Returns a dictionary with the variables to be exported in users environment
-
-        Example: {
-            "MYSQL_HOST":"10.10.10.10",
-            "MYSQL_PORT":3306,
-            "MYSQL_USER":"ROOT",
-            "MYSQL_PASSWORD":"s3cr3t",
-            "MYSQL_DATABASE_NAME":"myapp"
-        }
-        """
-        from logical.models import Database, Credential
-        # TODO: deal with multiple databases with the same name but associated with differente products
-        try:
-            database = Database.objects.get(name=database_name)
-            credential = Credential.objects.get(database=database, user=Credential.USER_PATTERN % (database_name))
-        except Credential.DoesNotExist:
-            LOG.warning("Credential for database %s not found. Trying to create a new one..." % database_name)
-            credential = database.create_new_credential()
-        
-        envs = {}
-        prefix = self.engine.name.upper()
-        envs["%s_HOST" % prefix] = "%s" % self.instance.address
-        envs["%s_PORT" % prefix] = "%s" % self.instance.port
-        envs["%s_USER" % prefix] = "%s" % credential.user
-        envs["%s_PASSWORD" % prefix] = "%s" % credential.password
-        envs["%s_DATABASE_NAME" % prefix] = "%s" % database.name
-
-        return envs
-
     @property
     def instance(self):
         # temporary
@@ -224,23 +193,12 @@ class Host(BaseModel):
 
 class Instance(BaseModel):
 
-    VIRTUAL = '1'
-    PHYSICAL = '2'
-    HOST_TYPE_CHOICES = (
-        (VIRTUAL, 'Virtual Machine'),
-        (PHYSICAL, 'Physical Instance'),
-    )
-
     address = models.CharField(verbose_name=_("Instance address"), max_length=200)
     port = models.IntegerField(verbose_name=_("Instance port"))
     databaseinfra = models.ForeignKey(DatabaseInfra, related_name="instances", on_delete=models.CASCADE)
     is_active = models.BooleanField(verbose_name=_("Is instance active"), default=True)
     is_arbiter = models.BooleanField(verbose_name=_("Is arbiter"), default=False)
     hostname = models.ForeignKey(Host)
-    type = models.CharField(verbose_name=_("Instance type"),
-                            max_length=2,
-                            choices=HOST_TYPE_CHOICES,
-                            default=PHYSICAL)
 
     class Meta:
         unique_together = (

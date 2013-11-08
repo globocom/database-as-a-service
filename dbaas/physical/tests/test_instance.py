@@ -21,8 +21,7 @@ class InstanceTestCase(TestCase):
                                     port=123,
                                     is_active=True,
                                     is_arbiter = False,
-                                    databaseinfra=self.databaseinfra,
-                                    type='1')
+                                    databaseinfra=self.databaseinfra)
 
     def test_create_instance(self):
         
@@ -31,8 +30,7 @@ class InstanceTestCase(TestCase):
                                     is_active=True,
                                     is_arbiter=False,
                                     hostname=self.hostname,
-                                    databaseinfra=self.databaseinfra,
-                                    type='1')
+                                    databaseinfra=self.databaseinfra)
         
         self.assertTrue(instance.id)
 
