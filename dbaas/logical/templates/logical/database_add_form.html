@@ -22,7 +22,7 @@
                     <input id="plan-type" type="hidden" name="{{field.field.name}}" value="" />
                     {% for plan_value, plan_name, plan in field.field.field.choices %}
                     <div class="span3">
-                        <div class="well plan" {% for env in plan.environment.all %}data-environment-{{env.pk}}="1" {% endfor %} >
+                        <div class="well plan" {% for env in plan.environments.all %}data-environment-{{env.pk}}="1" {% endfor %} >
                             <div class="plan-description">
                                 <h2 class="">{{plan_name}}</h2>
                                 <p>
