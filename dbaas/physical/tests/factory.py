@@ -4,6 +4,12 @@ import factory
 from .. import models
 
 
+class EnvironmentFactory(factory.DjangoModelFactory):
+    FACTORY_FOR = models.Environment
+
+    name = factory.Sequence(lambda n: 'env-{0}'.format(n))
+
+
 class EngineTypeFactory(factory.DjangoModelFactory):
     FACTORY_FOR = models.EngineType
     FACTORY_DJANGO_GET_OR_CREATE = ('name',)
