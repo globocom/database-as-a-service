@@ -82,7 +82,7 @@ class Plan(BaseModel):
                                      default=False,
                                      help_text=_("Check this option if this the default plan. There can be only one..."))
     engine_type = models.ForeignKey(EngineType, verbose_name=_("Engine Type"), related_name='plans')
-    environment = models.ForeignKey(Environment)
+    environment = models.ManyToManyField(Environment)
 
     @property
     def engines(self):
