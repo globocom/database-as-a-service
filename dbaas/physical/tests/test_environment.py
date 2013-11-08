@@ -9,7 +9,7 @@ from .factory import EnvironmentFactory
 class HostTestCase(TestCase):
 
     def setUp(self):
-        self.host = EnvironmentFactory(name='production')
+        self.host = EnvironmentFactory(hostname='production')
 
     def test_create_host(self):
 
