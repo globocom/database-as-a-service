@@ -154,7 +154,7 @@ class Credential(BaseModel):
 
     USER_PATTERN = "u_%s"
 
-    user = models.CharField(verbose_name=_("User name"), max_length=100, unique=True)
+    user = models.CharField(verbose_name=_("User name"), max_length=100)
     password = EncryptedCharField(verbose_name=_("User password"), max_length=255)
     database = models.ForeignKey(Database, related_name="credentials")
 
@@ -164,6 +164,9 @@ class Credential(BaseModel):
     class Meta:
         permissions = (
             ("view_credential", "Can view credentials"),
+        )
+        unique_together = (
+            ('user', 'database'),
         )
         ordering = ('database', 'user',)
 
