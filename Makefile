@@ -82,3 +82,6 @@ shell: # run django shell
 
 update_permissions:
 	@cd dbaas && python manage.py update_permissions
+
+fix_user_roles_permissions: #Fix user roles permissions
+	@cd dbaas && python manage.py fix_user_roles_permissions
