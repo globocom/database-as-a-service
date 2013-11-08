@@ -55,8 +55,8 @@ class Migration(SchemaMigration):
         ))
         db.send_create_signal(u'physical', ['Plan'])
 
-        # Adding M2M table for field environment on 'Plan'
-        m2m_table_name = db.shorten_name(u'physical_plan_environment')
+        # Adding M2M table for field environments on 'Plan'
+        m2m_table_name = db.shorten_name(u'physical_plan_environments')
         db.create_table(m2m_table_name, (
             ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True)),
             ('plan', models.ForeignKey(orm[u'physical.plan'], null=False)),
@@ -85,6 +85,7 @@ class Migration(SchemaMigration):
             ('password', self.gf('django.db.models.fields.CharField')(max_length=406, blank=True)),
             ('engine', self.gf('django.db.models.fields.related.ForeignKey')(related_name=u'databaseinfras', on_delete=models.PROTECT, to=orm['physical.Engine'])),
             ('plan', self.gf('django.db.models.fields.related.ForeignKey')(related_name=u'databaseinfras', on_delete=models.PROTECT, to=orm['physical.Plan'])),
+            ('environment', self.gf('django.db.models.fields.related.ForeignKey')(related_name=u'databaseinfras', on_delete=models.PROTECT, to=orm['physical.Environment'])),
         ))
         db.send_create_signal(u'physical', ['DatabaseInfra'])
 
@@ -135,8 +136,8 @@ class Migration(SchemaMigration):
         # Deleting model 'Plan'
         db.delete_table(u'physical_plan')
 
-        # Removing M2M table for field environment on 'Plan'
-        db.delete_table(db.shorten_name(u'physical_plan_environment'))
+        # Removing M2M table for field environments on 'Plan'
+        db.delete_table(db.shorten_name(u'physical_plan_environments'))
 
         # Deleting model 'PlanAttribute'
         db.delete_table(u'physical_planattribute')
@@ -156,6 +157,7 @@ class Migration(SchemaMigration):
             'Meta': {'object_name': 'DatabaseInfra'},
             'created_at': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
             'engine': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "u'databaseinfras'", 'on_delete': 'models.PROTECT', 'to': u"orm['physical.Engine']"}),
+            'environment': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "u'databaseinfras'", 'on_delete': 'models.PROTECT', 'to': u"orm['physical.Environment']"}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '100'}),
             'password': ('django.db.models.fields.CharField', [], {'max_length': '406', 'blank': 'True'}),
@@ -213,7 +215,7 @@ class Migration(SchemaMigration):
             'created_at': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
             'description': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
             'engine_type': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "u'plans'", 'to': u"orm['physical.EngineType']"}),
-            'environment': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['physical.Environment']", 'symmetrical': 'False'}),
+            'environments': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['physical.Environment']", 'symmetrical': 'False'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'is_active': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'is_default': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),

@@ -214,16 +214,15 @@
             this.filter_plans();
         },
         filter_plans: function() {
+            var environment_id = $("#id_environment").val() || "none";
+            var data_environment_attribute = "data-environment-" + environment_id;
             $(".plan").each(function(index, el) {
-                // var
-                //     $el = $(el),
-                //     data_attribute_name = 'engine-' + engine_id;
-
-                // if ($el.data(data_attribute_name)) {
-                //     $el.show();
-                // } else {
-                //     $el.hide();
-                // }
+                var $el = $(el);
+                if ($el.attr(data_environment_attribute)) {
+                    $(el).parent().show('fast');
+                } else {
+                    ($el).parent().hide('fast');
+                }
             });
         }
     };
@@ -232,7 +231,7 @@
     $(function() {
         var database = new Database();
 
-        $(".new_databaseinfra, #id_engine").on("change", function() {
+        $("#id_environment").on("change", function() {
             database.update_components();
         });
 
@@ -243,18 +242,6 @@
 
         $(".btn-plan").on("click", function(ev) {
             $("#plan-type").val(this.dataset.planId);
-        });
-
-        // show password
-        $("#table-credentials").on("click", ".show-password", function(e) {
-            e.preventDefault();
-            $(".show-password", "#table-credentials").each(function(i, el) {
-                if (el == e.target) {
-                    $(e.target).popover("toggle");
-                } else {
-                    $(this).popover("hide");
-                }
-            });
         });
     });
 

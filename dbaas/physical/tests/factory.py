@@ -39,6 +39,19 @@ class PlanFactory(factory.DjangoModelFactory):
     is_default = True
     engine_type = factory.SubFactory(EngineTypeFactory)
 
+    @factory.post_generation
+    def environments(self, create, extracted, **kwargs):
+        if not create:
+            # Simple build, do nothing.
+            return
+
+        if extracted:
+            # A list of groups were passed in, use them
+            for env in extracted:
+                self.environments.add(env)
+        else:
+            self.environments.add(EnvironmentFactory())
+
 
 class DatabaseInfraFactory(factory.DjangoModelFactory):
     FACTORY_FOR = models.DatabaseInfra
@@ -48,6 +61,7 @@ class DatabaseInfraFactory(factory.DjangoModelFactory):
     password = '123456'
     engine = factory.SubFactory(EngineFactory)
     plan = factory.SubFactory(PlanFactory)
+    environment = factory.LazyAttribute(lambda datainfra: datainfra.plan.environments.all()[0])
 
 
 class InstanceFactory(factory.DjangoModelFactory):

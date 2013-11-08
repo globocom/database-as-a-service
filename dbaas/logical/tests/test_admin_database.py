@@ -19,6 +19,7 @@ class AdminCreateDatabaseTestCase(TestCase):
 
     def setUp(self):
         self.plan = physical_factory.PlanFactory()
+        self.environment = self.plan.environments.all()[0]
         self.databaseinfra = physical_factory.DatabaseInfraFactory(plan=self.plan)
         self.project = factory.ProjectFactory()
         self.group = Group.objects.get_or_create(name="fake_group")[0]
@@ -36,6 +37,7 @@ class AdminCreateDatabaseTestCase(TestCase):
             "name": database_name,
             "project": self.project.pk,
             "plan": self.plan.pk,
+            "environment": self.environment.pk,
         }
         response = self.client.post("/admin/logical/database/add/", params)
         self.assertEqual(response.status_code, 302)

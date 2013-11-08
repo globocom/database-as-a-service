@@ -82,7 +82,7 @@ class Plan(BaseModel):
                                      default=False,
                                      help_text=_("Check this option if this the default plan. There can be only one..."))
     engine_type = models.ForeignKey(EngineType, verbose_name=_("Engine Type"), related_name='plans')
-    environment = models.ManyToManyField(Environment)
+    environments = models.ManyToManyField(Environment)
 
     @property
     def engines(self):
@@ -126,6 +126,7 @@ class DatabaseInfra(BaseModel):
     password = EncryptedCharField(verbose_name=_("DatabaseInfra password"), max_length=255, blank=True, null=False)
     engine = models.ForeignKey(Engine, related_name="databaseinfras", on_delete=models.PROTECT)
     plan = models.ForeignKey(Plan, related_name="databaseinfras", on_delete=models.PROTECT)
+    environment = models.ForeignKey(Environment, related_name="databaseinfras", on_delete=models.PROTECT)
 
     def __unicode__(self):
         return self.name
@@ -134,6 +135,10 @@ class DatabaseInfra(BaseModel):
         permissions = (
             ("view_databaseinfra", "Can view database infras"),
         )
+
+    def clean(self, *args, **kwargs):
+        if (not self.environment_id or not self.plan_id) or not self.plan.environments.filter(pk=self.environment_id).exists():
+            raise ValidationError({'engine': _("Invalid environment")})
 
     def env_variables(self, database_name=None):
         """
@@ -191,10 +196,10 @@ class DatabaseInfra(BaseModel):
         return name
 
     @classmethod
-    def best_for(cls, plan):
+    def best_for(cls, plan, environment):
         """ Choose the best DatabaseInfra for another database """
         # FIXME For a while, choose always first database
-        databases = DatabaseInfra.objects.filter(plan=plan).all()
+        databases = DatabaseInfra.objects.filter(plan=plan, environment=environment).all()
         if not databases:
             return None
         return databases[0]

@@ -5,7 +5,7 @@ import logging
 from django.forms import models
 from django import forms
 from .models import Database, Credential
-from physical.models import Plan, DatabaseInfra
+from physical.models import Plan, DatabaseInfra, Environment
 from util import make_db_random_password
 
 LOG = logging.getLogger(__name__)
@@ -31,6 +31,7 @@ class AdvancedModelChoiceField(models.ModelChoiceField):
 
 class DatabaseForm(models.ModelForm):
     plan = AdvancedModelChoiceField(queryset=Plan.objects.filter(is_active='True'), required=False, widget=forms.RadioSelect, empty_label=None)
+    environment = forms.ModelChoiceField(queryset=Environment.objects)
 
     class Meta:
         model = Database
@@ -38,7 +39,11 @@ class DatabaseForm(models.ModelForm):
 
     def clean(self):
         cleaned_data = super(DatabaseForm, self).clean()
-        databaseinfra = DatabaseInfra.best_for(cleaned_data['plan'])
+        plan = cleaned_data['plan']
+        environment = cleaned_data.get('environment', None)
+        if not environment or environment not in plan.environments.all():
+            raise forms.ValidationError(_("Invalid plan for selected environmnet."))
+        databaseinfra = DatabaseInfra.best_for(plan, environment)
         if not databaseinfra:
             raise forms.ValidationError(_("Sorry. I have no infra-structure to allocate this database. Try select another plan."))
         cleaned_data['databaseinfra'] = databaseinfra

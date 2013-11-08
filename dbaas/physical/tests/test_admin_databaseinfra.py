@@ -19,6 +19,7 @@ class AdminCreateDatabaseInfraTestCase(TestCase):
     def setUp(self):
         self.engine = factory.EngineFactory()
         self.plan = factory.PlanFactory(engine_type=self.engine.engine_type)
+        self.environment = self.plan.environments.all()[0]
         self.user = User.objects.create_superuser(self.USERNAME, email="%s@admin.com" % self.USERNAME, password=self.PASSWORD)
         self.client.login(username=self.USERNAME, password=self.PASSWORD)
 
@@ -38,6 +39,7 @@ class AdminCreateDatabaseInfraTestCase(TestCase):
             "password": databaseinfra_pass,
             "engine": self.engine.pk,
             "plan": self.plan.pk,
+            "environment": self.environment.pk,
             "instances-TOTAL_FORMS": NUM_INSTANCES,
             "instances-INITIAL_FORMS": 0,
             "instances-MAX_NUM_FORMS": NUM_INSTANCES,
@@ -63,6 +65,7 @@ class AdminCreateDatabaseInfraTestCase(TestCase):
         self.assertEqual(databaseinfra_pass, databaseinfra.password)
         self.assertEqual(self.engine, databaseinfra.engine)
         self.assertEqual(self.plan, databaseinfra.plan)
+        self.assertEqual(self.environment, databaseinfra.environment)
         self.assertEqual(NUM_INSTANCES, databaseinfra.instances.count())
         for instance in databaseinfra.instances.all():
             host = hosts[instance.hostname.pk]
