@@ -35,8 +35,9 @@
     margin: 12px 0;
 }
 
-.span9.app-list.custom-list {
+.custom-list {
     width: 892px;
     margin-left: 42px;
     height: 109px;
 }
+

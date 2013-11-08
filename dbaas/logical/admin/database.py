@@ -5,6 +5,7 @@ import logging
 from django_services import admin
 from django.http import HttpResponseRedirect
 from django.utils.encoding import force_text
+from django.utils.html import escape
 from django.core.urlresolvers import reverse
 from django.conf.urls import patterns, url
 from django.contrib import messages
