@@ -43,6 +43,7 @@ db_reset: # drop and create database
 	@mysqladmin -uroot -f drop dbaas -h$(DBAAS_DATABASE_HOST); true
 	@mysqladmin -uroot create dbaas -h$(DBAAS_DATABASE_HOST)
 	@cd dbaas && python manage.py syncdb --migrate --noinput
+	@cd dbaas && python manage.py loaddata basic_roles.yaml
 
 
 reset_data: db_reset # drop and create database and insert sample data
@@ -68,10 +69,6 @@ shell: # run django shell
 
 update_permissions:
 	@cd dbaas && python manage.py update_permissions
-
-
-fix_user_roles_permissions: #Fix user roles permissions
-	@cd dbaas && python manage.py fix_user_roles_permissions
 
 
 physical_migrate: # create migration to physical app
