@@ -11,6 +11,10 @@ LOG = logging.getLogger(__name__)
 class TeamAdmin(admin.ModelAdmin):
 
     filter_horizontal = ['permissions']
+    
+    fieldsets = (
+        (None, {'fields': ('name',)}),
+    )
 
     def queryset(self, request):
         return self.model.objects.exclude(name__startswith="role")
