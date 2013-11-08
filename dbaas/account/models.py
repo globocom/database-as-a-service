@@ -64,6 +64,8 @@ def sync_ldap_groups_with_user(user=None):
     
     return group
 
+simple_audit.register(AccountUser, Team, Role)
+
 
 #####################################################################################################
 # SIGNALS
