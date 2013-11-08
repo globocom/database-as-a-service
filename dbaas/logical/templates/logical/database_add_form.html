@@ -12,6 +12,7 @@
 {% endblock %}
 
 {% block field_sets %}
+<input type="hidden" name="_continue" value="1" />
 {% for fieldset in adminform %}
     <fieldset class="module aligned {{ fieldset.classes }}">
     {% for line in fieldset %}
