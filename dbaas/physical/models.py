@@ -14,6 +14,12 @@ from util.models import BaseModel
 
 LOG = logging.getLogger(__name__)
 
+class Environment(BaseModel):
+    name = models.CharField(verbose_name=_("Environment"), max_length=100, unique=True)
+
+    def __unicode__(self):
+        return self.name
+
 
 class EngineType(BaseModel):
 
@@ -76,6 +82,7 @@ class Plan(BaseModel):
                                      default=False,
                                      help_text=_("Check this option if this the default plan. There can be only one..."))
     engine_type = models.ForeignKey(EngineType, verbose_name=_("Engine Type"), related_name='plans')
+    environment = models.ForeignKey(Environment)
 
     @property
     def engines(self):
