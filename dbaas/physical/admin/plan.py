@@ -19,6 +19,7 @@ class PlanAdmin(services_admin.DjangoServicesAdmin):
     search_fields = ["name"]
     list_filter = ("is_active", )
     list_display = ("name", "is_active", "is_default")
+    filter_horizontal = ("environment",)
     inlines = [
         PlanAttributeInline,
     ]

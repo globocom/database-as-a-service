@@ -2,6 +2,11 @@
 {% load i18n admin_static admin_list %}
 {% load admin_urls %}
 
+{% block extrastyle %}
+    {{ block.super }}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/database_admin.css' %}" />
+{% endblock %}
+
 {% block object-tools-items %}
   {% if perms.logical.add_database %}
   <li>
