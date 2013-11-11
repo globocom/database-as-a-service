@@ -34,7 +34,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     
     fieldsets_change_basic = (
         (None, {
-            'fields': ['name', 'project', 'group',]
+            'fields': ['name', 'project', 'group', 'environment',]
             }
         ),
     )
