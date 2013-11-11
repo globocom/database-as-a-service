@@ -45,6 +45,8 @@ db_reset: # drop and create database
 	@cd dbaas && python manage.py syncdb --migrate --noinput
 	@cd dbaas && python manage.py loaddata basic_roles.yaml
 
+basic_roles: #(re)sync basic roles
+	@cd dbaas && python manage.py loaddata basic_roles.yaml
 
 reset_data: db_reset # drop and create database and insert sample data
 	@cd dbaas && python manage.py sample_data
