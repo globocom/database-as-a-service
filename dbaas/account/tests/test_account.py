@@ -16,6 +16,21 @@ class SimpleTest(TestCase):
     def setUp(self):
         self.new_user = factory.UserFactory()
 
-    def test_create_new_use(self):
-
+    def test_create_new_user(self):
+        """
+        Tests new_user creation
+        """
         self.assertTrue(self.new_user.pk)
+
+
+    def test_new_user_is_staff(self):
+        """
+        Tests new_user is staff
+        """
+        self.assertTrue(self.new_user.is_staff)
+
+    def test_create_new_user_is_active(self):
+        """
+        Tests new_user is active
+        """
+        self.assertTrue(self.new_user.is_active)
