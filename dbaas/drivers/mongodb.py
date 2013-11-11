@@ -14,24 +14,32 @@ class MongoDB(BaseDriver):
 
     default_port = 27017
 
+    def __concatenate_instances(self):
+        return ",".join([ "%s:%s" % (instance.address, instance.port) for instance in self.databaseinfra.instances.filter(is_arbiter=False, is_active=True).all() ])
+
     def get_connection(self):
-        return "mongodb://<user>:<password>@%s" % ",".join([ "%s:%s" % (instance.address, instance.port) for instance in self.databaseinfra.instances.filter(is_arbiter=False, is_active=True).all() ])
+        return "mongodb://<user>:<password>@%s" % self.__concatenate_instances()
+
+    def __get_admin_connection(self, instance=None):
+        if instance:
+            return "mongodb://%s:%s" % (instance.address, instance.port)
+        return "mongodb://%s" % self.__concatenate_instances()
 
     def __mongo_client__(self, instance):
+        connection_address = self.__get_admin_connection(instance)
         try:
-            client = pymongo.MongoClient(instance.address, int(instance.port))
+            client = pymongo.MongoClient(connection_address)
             if self.databaseinfra.user and self.databaseinfra.password:
                 LOG.debug('Authenticating databaseinfra %s', self.databaseinfra)
                 client.admin.authenticate(self.databaseinfra.user, self.databaseinfra.password)
             return client
         except TypeError:
-            raise AuthenticationError(message='Invalid address %s:%s' % (instance.address, instance.port))
+            raise AuthenticationError(message='Invalid address: ' % connection_address)
 
     @contextmanager
     def pymongo(self, instance=None, database=None):
         client = None
         try:
-            instance = instance or self.databaseinfra.instance
             client = self.__mongo_client__(instance)
 
             if database is None:
@@ -41,10 +49,10 @@ class MongoDB(BaseDriver):
             yield return_value
         except pymongo.errors.OperationFailure, e:
             if e.code == 18:
-                raise AuthenticationError('Invalid credentials to databaseinfra %s' % self.databaseinfra)
-            raise ConnectionError('Error connecting to databaseinfra %s: %s' % (self.databaseinfra, e.message))
+                raise AuthenticationError('Invalid credentials to databaseinfra %s: %s' % (self.databaseinfra, self.__get_admin_connection()))
+            raise ConnectionError('Error connecting to databaseinfra %s (%s): %s' % (self.databaseinfra, self.__get_admin_connection(), e.message))
         except pymongo.errors.PyMongoError, e:
-            raise ConnectionError('Error connecting to databaseinfra %s: %s' % (self.databaseinfra, e.message))
+            raise ConnectionError('Error connecting to databaseinfra %s (%s): %s' % (self.databaseinfra, self.__get_admin_connection(), e.message))
         finally:
             try:
                 if client:

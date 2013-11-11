@@ -142,11 +142,6 @@ class DatabaseInfra(BaseModel):
             raise ValidationError({'engine': _("Invalid environment")})
 
     @property
-    def instance(self):
-        # temporary
-        return self.instances.all()[0]
-
-    @property
     def engine_name(self):
         if self.engine and self.engine.engine_type:
             return self.engine.engine_type.name

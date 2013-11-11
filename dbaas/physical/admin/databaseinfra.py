@@ -44,7 +44,7 @@ class InstanceAdmin(django_admin.TabularInline):
 class DatabaseInfraAdmin(admin.DjangoServicesAdmin):
     service_class = DatabaseInfraService
     search_fields = ("name", "user", "instances__address",)
-    list_display = ("name", "user", "instance", "capacity_bar")
+    list_display = ("name", "user", "show_instances", "capacity_bar")
     list_filter = ("engine",)
     save_on_top = True
 
@@ -52,6 +52,19 @@ class DatabaseInfraAdmin(admin.DjangoServicesAdmin):
         return render_progress_bar(datainfra.used, datainfra.capacity)
     capacity_bar.short_description = "Capacity"
     capacity_bar.admin_order_field = 'capacity'
+
+    def show_instances(self, datainfra):
+        html_instances = []
+        for instance in datainfra.instances.all():
+            if not instance.is_active:
+                html_instances.append("<span style='color: #CCC'>%s</span>" % unicode(instance))
+            if instance.is_arbiter:
+                html_instances.append("%s (arbiter)" % unicode(instance))
+            else:
+                html_instances.append(unicode(instance))
+        return "<br/>".join(html_instances)
+    show_instances.allow_tags = True
+    show_instances.short_description = "Instances"
 
     inlines = [
         InstanceAdmin

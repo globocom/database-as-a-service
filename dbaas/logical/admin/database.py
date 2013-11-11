@@ -4,10 +4,7 @@ from django.utils.translation import ugettext_lazy as _
 import logging
 from django_services import admin
 from django.http import HttpResponseRedirect
-from django.utils.encoding import force_text
-from django.utils.html import escape
 from django.core.urlresolvers import reverse
-from django.conf.urls import patterns, url
 from django.contrib import messages
 from ..service.database import DatabaseService
 from ..forms import DatabaseForm
@@ -55,8 +52,14 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     quarantine_dt_format.admin_order_field = 'quarantine_dt'
 
     def get_capacity_html(self, database):
-        message = "%d MB of %d MB" % (database.used_size * MB_FACTOR, database.total_size * MB_FACTOR)
-        return render_progress_bar(database.capacity*100, message=message)
+        try:
+            message = "%d MB of %d MB" % (database.used_size * MB_FACTOR, database.total_size * MB_FACTOR)
+            return render_progress_bar(database.capacity*100, message=message)
+        except:
+            # any error show Unkown message and log error. This avoid break page if there is a problem
+            # with some database
+            LOG.error('Error getting capacity of database %s', database)
+            return "Unkown"
     get_capacity_html.short_description = "Capacity"
 
     def get_form(self, request, obj=None, **kwargs):
