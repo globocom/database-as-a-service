@@ -58,7 +58,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         except:
             # any error show Unkown message and log error. This avoid break page if there is a problem
             # with some database
-            LOG.error('Error getting capacity of database %s', database)
+            LOG.exception('Error getting capacity of database %s', database)
             return "Unkown"
     get_capacity_html.short_description = "Capacity"
 

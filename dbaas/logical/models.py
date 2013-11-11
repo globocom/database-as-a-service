@@ -129,7 +129,9 @@ class Database(BaseModel):
 
     @cached_property
     def database_status(self):
-        info = self.driver.info()
+        info = self.databaseinfra.get_info()
+        if info is None:
+            return None
         database_status = info.get_database_status(self.name)
         return database_status
 
