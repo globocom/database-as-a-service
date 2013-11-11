@@ -11,7 +11,13 @@ class UserAdmin(UserAdmin):
 
     fieldsets_basic = (
         (None, {'fields': ('username', 'password')}),
-        (_('Personal info'), {'fields': ('first_name', 'last_name', 'email')}),
+        (_('Personal info'), {'fields': ('first_name', 'last_name', 'email', 'is_staff')}),
+        (_('Important dates'), {'fields': ('last_login', 'date_joined')}),
+    )
+    
+    fieldsets_advanced = (
+        (None, {'fields': ('username', 'password')}),
+        (_('Personal info'), {'fields': ('first_name', 'last_name', 'email', 'is_staff', 'is_superuser')}),
         (_('Important dates'), {'fields': ('last_login', 'date_joined')}),
     )
 
@@ -20,6 +26,7 @@ class UserAdmin(UserAdmin):
             return self.add_fieldsets
         else:
             if request.user.is_superuser:
-                return super(UserAdmin, self).get_fieldsets(request, obj=obj)
+                #return super(UserAdmin, self).get_fieldsets(request, obj=obj)
+                return self.fieldsets_advanced
             else:
                 return self.fieldsets_basic

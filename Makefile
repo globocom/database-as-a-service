@@ -14,7 +14,7 @@ DBAAS_DATABASE_HOST=127.0.0.1
 
 
 default:
-	@cat Makefile | egrep '[a-z]+:' | grep -v 'default:' | egrep --color=never "^[a-z]+"
+	@awk -F\: '/^[a-z_]+:/ && !/default/ {printf "- %-20s %s\n", $$1, $$2}' Makefile
 
 
 clean: # remove temporary files
@@ -45,6 +45,8 @@ db_reset: # drop and create database
 	@cd dbaas && python manage.py syncdb --migrate --noinput
 	@cd dbaas && python manage.py loaddata basic_roles.yaml
 
+basic_roles: #(re)sync basic roles
+	@cd dbaas && python manage.py loaddata basic_roles.yaml
 
 reset_data: db_reset # drop and create database and insert sample data
 	@cd dbaas && python manage.py sample_data

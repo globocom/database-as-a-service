@@ -3,17 +3,19 @@ from __future__ import absolute_import, unicode_literals
 from django.utils.translation import ugettext_lazy as _
 from django.contrib import admin
 import logging
+from ..forms.team import TeamAdminForm
 
 
 LOG = logging.getLogger(__name__)
 
 
 class TeamAdmin(admin.ModelAdmin):
-
+    form = TeamAdminForm
     filter_horizontal = ['permissions']
     
     fieldsets = (
-        (None, {'fields': ('name',)}),
+        (None, {'fields': ('name', )},),
+        (_("Users"), {'fields': ('users', )},),
     )
 
     def queryset(self, request):
