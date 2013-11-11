@@ -183,7 +183,6 @@ class DatabaseInfra(BaseModel):
     @classmethod
     def best_for(cls, plan, environment):
         """ Choose the best DatabaseInfra for another database """
-        # FIXME For a while, choose always first database
         datainfras = list(DatabaseInfra.objects.filter(plan=plan, environment=environment))
         if not datainfras:
             return None
