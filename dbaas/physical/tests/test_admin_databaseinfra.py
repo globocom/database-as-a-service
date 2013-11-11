@@ -39,6 +39,7 @@ class AdminCreateDatabaseInfraTestCase(TestCase):
             "password": databaseinfra_pass,
             "engine": self.engine.pk,
             "plan": self.plan.pk,
+            "capacity": 1,
             "environment": self.environment.pk,
             "instances-TOTAL_FORMS": NUM_INSTANCES,
             "instances-INITIAL_FORMS": 0,

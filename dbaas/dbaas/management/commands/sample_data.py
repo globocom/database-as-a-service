@@ -16,7 +16,12 @@ class Command(BaseCommand):
         my_host = factory.HostFactory(hostname='localhost')
         my_env = factory.EnvironmentFactory(name='laboratory')
         my_plan = factory.PlanFactory(name='small', engine_type=my_engine.engine_type, environments=[my_env])
-        my_infradb = factory.DatabaseInfraFactory(name='local_infra', plan=my_plan, environment=my_env, engine=my_engine)
+        my_infradb = factory.DatabaseInfraFactory(
+            name='local_infra',
+            plan=my_plan,
+            environment=my_env,
+            engine=my_engine,
+            capacity=10)
         factory.InstanceFactory(databaseinfra=my_infradb, hostname=my_host)
 
         my_team = Group.objects.create(name="my team")

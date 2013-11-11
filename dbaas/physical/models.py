@@ -127,6 +127,7 @@ class DatabaseInfra(BaseModel):
     engine = models.ForeignKey(Engine, related_name="databaseinfras", on_delete=models.PROTECT)
     plan = models.ForeignKey(Plan, related_name="databaseinfras", on_delete=models.PROTECT)
     environment = models.ForeignKey(Environment, related_name="databaseinfras", on_delete=models.PROTECT)
+    capacity = models.PositiveIntegerField(default=1, help_text=_("How many databases is supported"))
 
     def __unicode__(self):
         return self.name
@@ -151,6 +152,21 @@ class DatabaseInfra(BaseModel):
             return self.engine.engine_type.name
         return None
 
+    @property
+    def used(self):
+        """ How many databases is allocated in this datainfra """
+        return self.databases.count()
+
+    @property
+    def available(self):
+        """ How many databases still supports this datainfra.
+        Returns 
+            0 if datainfra is full
+            < 0 if datainfra is overcapacity
+            > 0 if datainfra can support more databases
+        """
+        return self.capacity - self.used
+
     @classmethod
     def get_unique_databaseinfra_name(cls, base_name):
         """
@@ -168,10 +184,14 @@ class DatabaseInfra(BaseModel):
     def best_for(cls, plan, environment):
         """ Choose the best DatabaseInfra for another database """
         # FIXME For a while, choose always first database
-        databases = DatabaseInfra.objects.filter(plan=plan, environment=environment).all()
-        if not databases:
+        datainfras = list(DatabaseInfra.objects.filter(plan=plan, environment=environment))
+        if not datainfras:
             return None
-        return databases[0]
+        datainfras.sort(key=lambda di: -di.available)
+        best_datainfra = datainfras[0]
+        if best_datainfra.available <= 0:
+            return None
+        return best_datainfra
 
     def get_driver(self):
         import drivers

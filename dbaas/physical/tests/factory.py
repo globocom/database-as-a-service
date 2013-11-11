@@ -62,6 +62,7 @@ class DatabaseInfraFactory(factory.DjangoModelFactory):
     engine = factory.SubFactory(EngineFactory)
     plan = factory.SubFactory(PlanFactory)
     environment = factory.LazyAttribute(lambda datainfra: datainfra.plan.environments.all()[0])
+    capacity = 1
 
 
 class InstanceFactory(factory.DjangoModelFactory):

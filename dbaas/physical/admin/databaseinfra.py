@@ -7,6 +7,7 @@ from django.core.exceptions import ValidationError
 from django_services import admin
 from ..service.databaseinfra import DatabaseInfraService
 from ..models import Instance
+from util.html import render_progress_bar
 
 
 class InstanceModelFormSet(BaseInlineFormSet):
@@ -43,9 +44,14 @@ class InstanceAdmin(django_admin.TabularInline):
 class DatabaseInfraAdmin(admin.DjangoServicesAdmin):
     service_class = DatabaseInfraService
     search_fields = ("name", "user", "instances__address",)
-    list_display = ("name", "user", "instance",)
+    list_display = ("name", "user", "instance", "capacity_bar")
     list_filter = ("engine",)
     save_on_top = True
+
+    def capacity_bar(self, datainfra):
+        return render_progress_bar(datainfra.used, datainfra.capacity)
+    capacity_bar.short_description = "Capacity"
+    capacity_bar.admin_order_field = 'capacity'
 
     inlines = [
         InstanceAdmin

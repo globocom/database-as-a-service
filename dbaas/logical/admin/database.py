@@ -13,6 +13,7 @@ from ..service.database import DatabaseService
 from ..forms import DatabaseForm
 from ..models import Database
 from account.models import UserRepository
+from util.html import render_progress_bar
 
 MB_FACTOR = 1.0 / 1024.0 / 1024.0
 
@@ -54,23 +55,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     quarantine_dt_format.admin_order_field = 'quarantine_dt'
 
     def get_capacity_html(self, database):
-        if database.capacity > .75:
-            bar_type = "danger"
-        elif database.capacity > .5:
-            bar_type = "warning"
-        else:
-            bar_type = "success"
-        return """
-<div class="progress progress-%(bar_type)s">
-    <p style="position: absolute; padding-left: 10px;">%(used)d MB of %(total)d MB</p>
-    <div class="bar" style="width: %(p)d%%;"></div>
-</div>""" % {
-            "p": int(database.capacity*100),
-            "used": database.used_size * MB_FACTOR,
-            "total": database.total_size * MB_FACTOR,
-            "bar_type": bar_type,
-        }
-    get_capacity_html.allow_tags = True
+        message = "%d MB of %d MB" % (database.used_size * MB_FACTOR, database.total_size * MB_FACTOR)
+        return render_progress_bar(database.capacity*100, message=message)
     get_capacity_html.short_description = "Capacity"
 
     def get_form(self, request, obj=None, **kwargs):
