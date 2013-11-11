@@ -11,13 +11,13 @@ class UserAdmin(UserAdmin):
 
     fieldsets_basic = (
         (None, {'fields': ('username', 'password')}),
-        (_('Personal info'), {'fields': ('first_name', 'last_name', 'email', 'is_staff')}),
+        (_('Personal info'), {'fields': ('first_name', 'last_name', 'email', 'is_active')}),
         (_('Important dates'), {'fields': ('last_login', 'date_joined')}),
     )
     
     fieldsets_advanced = (
         (None, {'fields': ('username', 'password')}),
-        (_('Personal info'), {'fields': ('first_name', 'last_name', 'email', 'is_staff', 'is_superuser')}),
+        (_('Personal info'), {'fields': ('first_name', 'last_name', 'email', 'is_staff', 'is_active', 'is_superuser')}),
         (_('Important dates'), {'fields': ('last_login', 'date_joined')}),
     )
 
