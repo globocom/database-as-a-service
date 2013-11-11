@@ -38,7 +38,7 @@ class Database(BaseModel):
 
     RESERVED_DATABASES_NAME = ('admin', 'config', 'local')
 
-    name = models.CharField(verbose_name=_("Database name"), max_length=100, unique=True)
+    name = models.CharField(verbose_name=_("Database name"), max_length=100)
     databaseinfra = models.ForeignKey(DatabaseInfra, related_name="databases", on_delete=models.PROTECT)
     project = models.ForeignKey(Project, related_name="databases", on_delete=models.PROTECT, null=True, blank=True)
     group = models.ForeignKey(Group, related_name="databases",
@@ -56,6 +56,10 @@ class Database(BaseModel):
             ("can_manage_quarantine_databases", "Can manage databases in quarantine"),
             ("view_database", "Can view databases"),
         )
+        unique_together = (
+            ('name', 'databaseinfra'),
+        )
+        
         ordering = ('databaseinfra', 'name',)
 
     def delete(self, *args, **kwargs):
