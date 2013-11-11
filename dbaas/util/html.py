@@ -35,9 +35,9 @@ def render_progress_bar(current, total=100, message="%", bar_type="auto", stripe
 
     if message:
         # wrapper message in paragraph
-        message = "<p style='padding-left: 10px;'>%s</p>" % mark_for_escaping(message)
+        message = "<p style='padding-left: 10px; position: absolute;'>%s</p>" % mark_for_escaping(message)
 
-    html = """<div class="%(classes)s"><div class="bar" style="width: %(p)d%%;">%(message)s</div></div>""" % \
+    html = """<div class="%(classes)s">%(message)s<div class="bar" style="width: %(p)d%%;"></div></div>""" % \
         {
             "classes": " ".join(html_classes),
             "message": message or "",
