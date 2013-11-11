@@ -15,8 +15,8 @@ class RoleAdmin(admin.ModelAdmin):
 
     fieldsets = (
         (None, {'fields': ('name', )},),
-        (_("Permissions"), {'fields': ('permissions', )},),
         (_("Users"), {'fields': ('users', )},),
+        (_("Permissions"), {'fields': ('permissions', )},),
     )
 
     def queryset(self, request):
