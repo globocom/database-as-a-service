@@ -82,9 +82,6 @@ def role_pre_save(sender, **kwargs):
 def user_pre_save(sender, **kwargs):
     user = kwargs.get('instance')
     LOG.debug("user %s pre save signal" % user)
-    if not user.is_staff:
-        user.is_staff = True
-
 
 @receiver(post_save, sender=AccountUser)
 def user_post_save(sender, **kwargs):
@@ -92,6 +89,9 @@ def user_post_save(sender, **kwargs):
     created = kwargs.get('created')
     if created:
         LOG.debug("new user %s created" % user)
+        user.is_active = True
+        user.is_staff = True
+        user.save()
         #sync_ldap_groups_with_user(user=user)
 
 
