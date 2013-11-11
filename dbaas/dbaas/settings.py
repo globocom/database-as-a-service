@@ -193,6 +193,14 @@ SESSION_COOKIE_AGE = 43200  # 12 hours
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # Expire session when browser is closed
 SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
 
+CACHES = {
+    'default': {
+        'BACKEND': os.getenv('DBAAS_CACHE_BACKEND', 'django.core.cache.backends.locmem.LocMemCache'),
+        'LOCATION': os.getenv('DBAAS_CACHE_LOCATION', 'unique'),
+        'TIMEOUT': int(os.getenv('DBAAS_CACHE_TIMEOUT', '300')),
+    }
+}
+
 TEST_DISCOVER_ROOT = os.path.abspath(os.path.join(__file__, '../..'))
 TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
 NOSE_ARGS = ['--verbosity=2', '--no-byte-compile', '-d', '-s']
