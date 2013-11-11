@@ -14,7 +14,7 @@ DBAAS_DATABASE_HOST=127.0.0.1
 
 
 default:
-	@cat Makefile | egrep '[a-z]+:' | grep -v 'default:' | egrep --color=never "^[a-z]+"
+	@awk -F\: '/^[a-z_]+:/ && !/default/ {printf "- %-20s %s\n", $$1, $$2}' Makefile
 
 
 clean: # remove temporary files
