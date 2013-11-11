@@ -218,6 +218,7 @@ def database_post_save(sender, **kwargs):
         LOG.info("a new database (%s) were created... provision it in the engine" % (database.name))
         engine = factory_for(database.databaseinfra)
         engine.create_database(database)
+        database.create_new_credential()
 
 
 @receiver(pre_save, sender=Database)
