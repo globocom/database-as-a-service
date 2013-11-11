@@ -78,7 +78,7 @@ def role_pre_save(sender, **kwargs):
         role.name = "role_" + role.name
 
 #all users should be is_staff True
-@receiver(pre_save, sender=User)
+@receiver(pre_save, sender=AccountUser)
 def user_pre_save(sender, **kwargs):
     user = kwargs.get('instance')
     LOG.debug("user %s pre save signal" % user)
@@ -86,7 +86,7 @@ def user_pre_save(sender, **kwargs):
         user.is_staff = True
 
 
-@receiver(post_save, sender=User)
+@receiver(post_save, sender=AccountUser)
 def user_post_save(sender, **kwargs):
     user = kwargs.get('instance')
     created = kwargs.get('created')
