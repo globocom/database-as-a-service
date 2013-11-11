@@ -19,7 +19,7 @@ class UserAdmin(UserAdmin):
         if not obj:
             return self.add_fieldsets
         else:
-            if request.user.is_superuser:
-                return super(UserAdmin, self).get_fieldsets(request, obj=obj)
-            else:
-                return self.fieldsets_basic
+            # if request.user.is_superuser:
+            #     return super(UserAdmin, self).get_fieldsets(request, obj=obj)
+            # else:
+            return self.fieldsets_basic
