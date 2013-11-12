@@ -21,7 +21,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     perm_manage_quarantine_database = "logical.can_manage_quarantine_databases"
     service_class = DatabaseService
     search_fields = ("name", "databaseinfra__name")
-    list_display = ["name", "get_capacity_html", "endpoint", "quarantine_dt_format"]
+    list_display_basic = ["name", "get_capacity_html", "endpoint"]
+    list_display_advanced = list_display_basic + ["quarantine_dt_format"]
     list_filter_basic = ["databaseinfra", "project"]
     list_filter_advanced = list_filter_basic + ["is_in_quarantine"]
     add_form_template = "logical/database_add_form.html"
@@ -121,8 +122,10 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     def changelist_view(self, request, extra_context=None):
         if request.user.has_perm(self.perm_manage_quarantine_database):
             self.list_filter = self.list_filter_advanced
+            self.list_display = self.list_display_advanced
         else:
             self.list_filter = self.list_filter_basic
+            self.list_display = self.list_display_basic
         
         return super(DatabaseAdmin, self).changelist_view(request, extra_context=extra_context)
 
