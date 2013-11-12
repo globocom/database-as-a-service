@@ -17,6 +17,7 @@ MB_FACTOR = 1.0 / 1024.0 / 1024.0
 LOG = logging.getLogger(__name__)
 
 class DatabaseAdmin(admin.DjangoServicesAdmin):
+    database_add_perm_message = _("You must be set to at least one team to add a database.")
     perm_manage_quarantine_database = "logical.can_manage_quarantine_databases"
     service_class = DatabaseService
     search_fields = ("name", "databaseinfra__name")
@@ -49,6 +50,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
     def quarantine_dt_format(self, database):
         return database.quarantine_dt or ""
+
     quarantine_dt_format.short_description = "Quarantine since"
     quarantine_dt_format.admin_order_field = 'quarantine_dt'
 
@@ -61,6 +63,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             # with some database
             LOG.exception('Error getting capacity of database %s', database)
             return "Unkown"
+
     get_capacity_html.short_description = "Capacity"
 
     def get_form(self, request, obj=None, **kwargs):
@@ -110,6 +113,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         """User must be set to at least one group to be able to add database"""
         groups = UserRepository.get_groups_for(user=request.user)
         if not groups:
+            self.message_user(request, self.database_add_perm_message, level=messages.ERROR)
             return False
         else:
             return super(DatabaseAdmin, self).has_add_permission(request)
@@ -126,7 +130,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         groups = UserRepository.get_groups_for(user=request.user)
         LOG.info("user %s groups: %s" % (request.user, groups))
         if not groups:
-            self.message_user(request, _("You must be set to at least one team or group."), level=messages.ERROR)
+            self.message_user(request, self.database_add_perm_message, level=messages.ERROR)
             return HttpResponseRedirect(reverse('admin:logical_database_changelist'))
         return super(DatabaseAdmin, self).add_view(request, form_url, extra_context=extra_context)
 
