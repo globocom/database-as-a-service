@@ -101,20 +101,21 @@ def account_user_post_save(sender, **kwargs):
 def user_post_save(sender, **kwargs):
     user_post_save_wrapper(kwargs)
 
-def user_m2m_changed(sender, **kwargs):
-    """
-    Using m2m signal to sync user.groups relation in the db with the ones in the LDAP. The action post_clear
-    must be used in order to accomplish this. (https://docs.djangoproject.com/en/1.5/ref/signals/)
-    Remember, remember: only the groups that exists in ldap AND in the database will be synced.
-    You can however, add a group to user that is not created in ldap.
-    """
-    # LOG.debug("m2m_changed kwargs: %s" % kwargs)
-    user = kwargs.get('instance')
-    action = kwargs.get('action')
-    if action == 'post_clear':
-        LOG.info("user %s m2m_changed post_clear signal" % user)
-        #sync_ldap_groups_with_user(user=user)
-
-
-m2m_changed.connect(user_m2m_changed, sender=User.groups.through)
+# def user_m2m_changed(sender, **kwargs):
+#     """
+#     Using m2m signal to sync user.groups relation in the db with the ones in the LDAP. The action post_clear
+#     must be used in order to accomplish this. (https://docs.djangoproject.com/en/1.5/ref/signals/)
+#     Remember, remember: only the groups that exists in ldap AND in the database will be synced.
+#     You can however, add a group to user that is not created in ldap.
+#     """
+#     # LOG.debug("m2m_changed kwargs: %s" % kwargs)
+#     user = kwargs.get('instance')
+#     action = kwargs.get('action')
+#     if action == 'post_clear':
+#         LOG.info("user %s m2m_changed post_clear signal" % user)
+#         #sync_ldap_groups_with_user(user=user)
+# 
+# 
+# m2m_changed.connect(user_m2m_changed, sender=User.groups.through)
+# m2m_changed.connect(user_m2m_changed, sender=AccountUser.groups.through)
 
