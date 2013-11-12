@@ -71,6 +71,15 @@ simple_audit.register(AccountUser, Team, Role)
 # SIGNALS
 #####################################################################################################
 #all role name should start with role_
+def user_post_save_wrapper(kwargs={}):
+    user = kwargs.get('instance')
+    created = kwargs.get('created')
+    if created:
+        LOG.debug("new user %s created" % user)
+        user.is_active = True
+        user.is_staff = True
+        user.save()
+
 @receiver(pre_save, sender=Role)
 def role_pre_save(sender, **kwargs):
     role = kwargs.get('instance')
@@ -84,16 +93,13 @@ def user_pre_save(sender, **kwargs):
     LOG.debug("user %s pre save signal" % user)
 
 @receiver(post_save, sender=AccountUser)
-def user_post_save(sender, **kwargs):
-    user = kwargs.get('instance')
-    created = kwargs.get('created')
-    if created:
-        LOG.debug("new user %s created" % user)
-        user.is_active = True
-        user.is_staff = True
-        user.save()
-        #sync_ldap_groups_with_user(user=user)
+def account_user_post_save(sender, **kwargs):
+    user_post_save_wrapper(kwargs)
+    #sync_ldap_groups_with_user(user=user)
 
+@receiver(post_save, sender=User)
+def user_post_save(sender, **kwargs):
+    user_post_save_wrapper(kwargs)
 
 def user_m2m_changed(sender, **kwargs):
     """
