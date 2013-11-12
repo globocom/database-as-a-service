@@ -191,11 +191,16 @@ class DatabaseInfra(BaseModel):
         import drivers
         return drivers.factory_for(self)
 
-    def get_info(self):
+    def get_info(self, force_refresh=False):
         if not self.pk:
             return None
         key = "datainfra:info:%d" % self.pk
-        info = cache.get(key)
+        info = None
+
+        if not force_refresh:
+            # try use cache
+            info = cache.get(key)
+
         if info is None:
             info = self.get_driver().info()
             cache.set(key, info)

@@ -67,3 +67,15 @@ class DatabaseInfraTestCase(TestCase):
         self.assertIsNotNone(datainfra.get_info())
         info.assert_called_once_with()
 
+
+    @mock.patch.object(FakeDriver, 'info')
+    def test_get_info_accept_force_refresh(self, info):
+        info.return_value = 'hahaha'
+        datainfra = factory.DatabaseInfraFactory()
+        self.assertIsNotNone(datainfra.get_info())
+
+        # get another instance to ensure is not a local cache
+        datainfra = DatabaseInfra.objects.get(pk=datainfra.pk)
+        self.assertIsNotNone(datainfra.get_info(force_refresh=True))
+        self.assertEqual(2, info.call_count)
+

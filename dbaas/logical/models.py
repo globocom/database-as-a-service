@@ -133,6 +133,11 @@ class Database(BaseModel):
         if info is None:
             return None
         database_status = info.get_database_status(self.name)
+
+        if database_status is None:
+            # try get without cache
+            info = self.databaseinfra.get_info(force_refresh=True)
+            database_status = info.get_database_status(self.name)
         return database_status
 
     @property
