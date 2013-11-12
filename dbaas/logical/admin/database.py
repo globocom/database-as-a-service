@@ -21,7 +21,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     service_class = DatabaseService
     search_fields = ("name", "databaseinfra__name")
     list_display = ["name", "get_capacity_html", "endpoint", "quarantine_dt_format"]
-    list_filter = ("databaseinfra", "project", "is_in_quarantine")
+    list_filter_basic = ["databaseinfra", "project"]
+    list_filter_advanced = list_filter_basic + ["is_in_quarantine"]
     add_form_template = "logical/database_add_form.html"
     change_form_template = "logical/database_change_form.html"
     delete_button_name = "Delete"
@@ -112,6 +113,14 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             return False
         else:
             return super(DatabaseAdmin, self).has_add_permission(request)
+
+    def changelist_view(self, request, extra_context=None):
+        if request.user.has_perm(self.perm_manage_quarantine_database):
+            self.list_filter = self.list_filter_advanced
+        else:
+            self.list_filter = self.list_filter_basic
+        
+        return super(DatabaseAdmin, self).changelist_view(request, extra_context=extra_context)
 
     def add_view(self, request, form_url='', extra_context=None):
         groups = UserRepository.get_groups_for(user=request.user)
