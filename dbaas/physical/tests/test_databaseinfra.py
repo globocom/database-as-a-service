@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
+import mock
 from django.test import TestCase
 from logical.tests import factory as factory_logical
 from ..models import DatabaseInfra
 from . import factory
+from drivers.fake import FakeDriver
 
 
 class DatabaseInfraTestCase(TestCase):
@@ -53,4 +55,27 @@ class DatabaseInfraTestCase(TestCase):
             self.assertEqual(datainfra, DatabaseInfra.best_for(plan=plan, environment=environment))
             factory_logical.DatabaseFactory(databaseinfra=datainfra)
         self.assertIsNone(DatabaseInfra.best_for(plan=plan, environment=environment))
+
+    @mock.patch.object(FakeDriver, 'info')
+    def test_get_info_use_caching(self, info):
+        info.return_value = 'hahaha'
+        datainfra = factory.DatabaseInfraFactory()
+        self.assertIsNotNone(datainfra.get_info())
+
+        # get another instance to ensure is not a local cache
+        datainfra = DatabaseInfra.objects.get(pk=datainfra.pk)
+        self.assertIsNotNone(datainfra.get_info())
+        info.assert_called_once_with()
+
+
+    @mock.patch.object(FakeDriver, 'info')
+    def test_get_info_accept_force_refresh(self, info):
+        info.return_value = 'hahaha'
+        datainfra = factory.DatabaseInfraFactory()
+        self.assertIsNotNone(datainfra.get_info())
+
+        # get another instance to ensure is not a local cache
+        datainfra = DatabaseInfra.objects.get(pk=datainfra.pk)
+        self.assertIsNotNone(datainfra.get_info(force_refresh=True))
+        self.assertEqual(2, info.call_count)
 

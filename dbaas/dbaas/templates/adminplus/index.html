@@ -3,7 +3,7 @@
 {% block sidebar %}
   {{ block.super }}
 
-{% if custom_list %}
+{% if custom_list and perms.logical.can_manage_quarantine_databases %}
 <div class="row-fluid dashboard-tools">
 	<div class="span3 recent-actions"></div>
 	<div class="span9 app-list custom-list">

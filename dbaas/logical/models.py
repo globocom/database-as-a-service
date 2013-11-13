@@ -16,6 +16,8 @@ from util.models import BaseModel
 from physical.models import DatabaseInfra
 from drivers import factory_for
 
+from account.models import Team
+
 LOG = logging.getLogger(__name__)
 
 
@@ -38,11 +40,11 @@ class Database(BaseModel):
 
     RESERVED_DATABASES_NAME = ('admin', 'config', 'local')
 
-    name = models.CharField(verbose_name=_("Database name"), max_length=100, unique=True)
+    name = models.CharField(verbose_name=_("Database name"), max_length=100)
     databaseinfra = models.ForeignKey(DatabaseInfra, related_name="databases", on_delete=models.PROTECT)
     project = models.ForeignKey(Project, related_name="databases", on_delete=models.PROTECT, null=True, blank=True)
-    group = models.ForeignKey(Group, related_name="databases",
-                                 help_text=_("Group that is accountable for the database"),
+    team = models.ForeignKey(Team, related_name="databases",
+                                 help_text=_("Team that is accountable for the database"),
                                  null=True,
                                  blank=True)
     is_in_quarantine = models.BooleanField(verbose_name=_("Is database in quarantine?"), default=False)
@@ -56,6 +58,10 @@ class Database(BaseModel):
             ("can_manage_quarantine_databases", "Can manage databases in quarantine"),
             ("view_database", "Can view databases"),
         )
+        unique_together = (
+            ('name', 'databaseinfra'),
+        )
+        
         ordering = ('databaseinfra', 'name',)
 
     def delete(self, *args, **kwargs):
@@ -125,8 +131,15 @@ class Database(BaseModel):
 
     @cached_property
     def database_status(self):
-        info = self.driver.info()
+        info = self.databaseinfra.get_info()
+        if info is None:
+            return None
         database_status = info.get_database_status(self.name)
+
+        if database_status is None:
+            # try get without cache
+            info = self.databaseinfra.get_info(force_refresh=True)
+            database_status = info.get_database_status(self.name)
         return database_status
 
     @property
@@ -218,6 +231,7 @@ def database_post_save(sender, **kwargs):
         LOG.info("a new database (%s) were created... provision it in the engine" % (database.name))
         engine = factory_for(database.databaseinfra)
         engine.create_database(database)
+        database.create_new_credential()
 
 
 @receiver(pre_save, sender=Database)

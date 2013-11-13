@@ -9,7 +9,7 @@ from django.contrib import messages
 from ..service.database import DatabaseService
 from ..forms import DatabaseForm
 from ..models import Database
-from account.models import UserRepository
+from account.models import Team
 from util.html import render_progress_bar
 
 MB_FACTOR = 1.0 / 1024.0 / 1024.0
@@ -17,11 +17,14 @@ MB_FACTOR = 1.0 / 1024.0 / 1024.0
 LOG = logging.getLogger(__name__)
 
 class DatabaseAdmin(admin.DjangoServicesAdmin):
+    database_add_perm_message = _("You must be set to at least one team to add a database.")
     perm_manage_quarantine_database = "logical.can_manage_quarantine_databases"
     service_class = DatabaseService
     search_fields = ("name", "databaseinfra__name")
-    list_display = ["name", "get_capacity_html", "endpoint", "quarantine_dt_format"]
-    list_filter = ("databaseinfra", "project", "is_in_quarantine")
+    list_display_basic = ["name", "get_capacity_html", "endpoint", "environment"]
+    list_display_advanced = list_display_basic + ["quarantine_dt_format"]
+    list_filter_basic = ["databaseinfra", "project"]
+    list_filter_advanced = list_filter_basic + ["is_in_quarantine"]
     add_form_template = "logical/database_add_form.html"
     change_form_template = "logical/database_change_form.html"
     delete_button_name = "Delete"
@@ -34,7 +37,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     
     fieldsets_change_basic = (
         (None, {
-            'fields': ['name', 'project', 'group',]
+            'fields': ['name', 'project', 'team',]
             }
         ),
     )
@@ -48,8 +51,14 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
     def quarantine_dt_format(self, database):
         return database.quarantine_dt or ""
+
     quarantine_dt_format.short_description = "Quarantine since"
     quarantine_dt_format.admin_order_field = 'quarantine_dt'
+
+    def environment(self, database):
+        return database.databaseinfra.environment
+
+    environment.admin_order_field = 'name'
 
     def get_capacity_html(self, database):
         try:
@@ -58,8 +67,9 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         except:
             # any error show Unkown message and log error. This avoid break page if there is a problem
             # with some database
-            LOG.error('Error getting capacity of database %s', database)
+            LOG.exception('Error getting capacity of database %s', database)
             return "Unkown"
+
     get_capacity_html.short_description = "Capacity"
 
     def get_form(self, request, obj=None, **kwargs):
@@ -72,11 +82,11 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
     def save_model(self, request, obj, form, change):
         if not change:
-            groups = UserRepository.get_groups_for(user=request.user)
-            LOG.info("user %s groups: %s" % (request.user, groups))
-            if groups:
-                obj.group = groups[0]
-                LOG.info("Team accountable for database %s set to %s" % (obj, obj.group))
+            teams = Team.objects.filter(users=request.user)
+            LOG.info("user %s teams: %s" % (request.user, teams))
+            if teams:
+                obj.team = teams[0]
+                LOG.info("Team accountable for database %s set to %s" % (obj, obj.team))
 
         obj.save()
 
@@ -94,7 +104,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         if in edit mode, name is readonly.
         """
         if obj: #In edit mode
-            return ('name', 'group', 'databaseinfra') + self.readonly_fields
+            return ('name', 'team', 'databaseinfra') + self.readonly_fields
         return self.readonly_fields
 
 
@@ -103,21 +113,32 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         if request.user.has_perm(self.perm_manage_quarantine_database):
             return qs
 
-        return qs.filter(is_in_quarantine=False, group__in=[group.id for group in request.user.groups.all()])
+        return qs.filter(is_in_quarantine=False, team__in=[team.id for team in Team.objects.filter(users=request.user)])
 
     def has_add_permission(self, request):
-        """User must be set to at least one group to be able to add database"""
-        groups = UserRepository.get_groups_for(user=request.user)
-        if not groups:
+        """User must be set to at least one team to be able to add database"""
+        teams = Team.objects.filter(users=request.user)
+        if not teams:
+            self.message_user(request, self.database_add_perm_message, level=messages.ERROR)
             return False
         else:
             return super(DatabaseAdmin, self).has_add_permission(request)
 
+    def changelist_view(self, request, extra_context=None):
+        if request.user.has_perm(self.perm_manage_quarantine_database):
+            self.list_filter = self.list_filter_advanced
+            self.list_display = self.list_display_advanced
+        else:
+            self.list_filter = self.list_filter_basic
+            self.list_display = self.list_display_basic
+        
+        return super(DatabaseAdmin, self).changelist_view(request, extra_context=extra_context)
+
     def add_view(self, request, form_url='', extra_context=None):
-        groups = UserRepository.get_groups_for(user=request.user)
-        LOG.info("user %s groups: %s" % (request.user, groups))
-        if not groups:
-            self.message_user(request, _("You must be set to at least one team or group."), level=messages.ERROR)
+        teams = Team.objects.filter(users=request.user)
+        LOG.info("user %s teams: %s" % (request.user, teams))
+        if not teams:
+            self.message_user(request, self.database_add_perm_message, level=messages.ERROR)
             return HttpResponseRedirect(reverse('admin:logical_database_changelist'))
         return super(DatabaseAdmin, self).add_view(request, form_url, extra_context=extra_context)
 

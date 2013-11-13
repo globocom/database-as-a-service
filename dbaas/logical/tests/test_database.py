@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
+import mock
 from django.test import TestCase
 from django.db import IntegrityError
 from . import factory
 from physical.tests import factory as physical_factory
 from ..models import Database
+from physical.models import DatabaseInfra
 from drivers import base
 
 import logging
@@ -68,4 +70,17 @@ class DatabaseTestCase(TestCase):
         
         self.assertRaises(AttributeError, database.save)
 
+    @mock.patch.object(DatabaseInfra, 'get_info')
+    def test_new_database_bypass_datainfra_info_cache(self, get_info):
+        def side_effect_get_info(force_refresh=False):
+            m = mock.Mock()
+            if not force_refresh:
+                m.get_database_status.return_value = None
+                return m
+            m.get_database_status.return_value = object()
+            return m
 
+        get_info.side_effect = side_effect_get_info
+        database = factory.DatabaseFactory(name="db1cache", databaseinfra=self.databaseinfra)
+        self.assertIsNotNone(database.database_status)
+        self.assertEqual([mock.call(), mock.call(force_refresh=True)], get_info.call_args_list)

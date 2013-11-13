@@ -93,7 +93,7 @@
 
             $(".show-password", "#table-credentials").each(function(i, el) {
                 if ($(el).parents(".credential").attr("data-credential-pk") === credential.pk) {
-                    window.x = $(".show-password", credential.$row).popover(operation);
+                    $(".show-password", credential.$row).popover(operation);
                 } else {
                     $(el).popover("hide");
                 }
@@ -107,7 +107,11 @@
             // put all listeners
             var $row = credential.$row;
 
-            $(".show-password", $row).popover({"trigger": "manual", "placement": "left"});
+            $(".show-password", $row).popover({"trigger": "manual", "placement": "left"})
+            .on('click', function(e) {
+                e.preventDefault();
+                credential.show_password();
+            });
 
             $row.on("click.reset-password", ".btn-reset-password", function(e) {
                 credential.reset_password(function() {

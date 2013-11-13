@@ -9,6 +9,8 @@ from ..models import Database
 from ..forms import DatabaseForm
 from . import factory
 
+from account.models import Team, Role
+
 LOG = logging.getLogger(__name__)
 
 
@@ -22,9 +24,10 @@ class AdminCreateDatabaseTestCase(TestCase):
         self.environment = self.plan.environments.all()[0]
         self.databaseinfra = physical_factory.DatabaseInfraFactory(plan=self.plan)
         self.project = factory.ProjectFactory()
-        self.group = Group.objects.get_or_create(name="fake_group")[0]
+        self.role = Role.objects.get_or_create(name="fake_role")[0]
+        self.team = Team.objects.get_or_create(name="fake_team", role=self.role)[0]
         self.user = User.objects.create_superuser(self.USERNAME, email="%s@admin.com" % self.USERNAME, password=self.PASSWORD)
-        self.user.groups.add(self.group)
+        self.team.users.add(self.user)
         self.client.login(username=self.USERNAME, password=self.PASSWORD)
 
     def tearDown(self):

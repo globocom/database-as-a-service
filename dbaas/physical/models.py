@@ -5,8 +5,8 @@ import simple_audit
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from django.core.exceptions import ValidationError
-from django.db import models
-from django.db import transaction
+from django.core.cache import cache
+from django.db import models, transaction
 from django.utils.translation import ugettext_lazy as _
 from django_extensions.db.fields.encrypted import EncryptedCharField
 from util.models import BaseModel
@@ -191,6 +191,20 @@ class DatabaseInfra(BaseModel):
         import drivers
         return drivers.factory_for(self)
 
+    def get_info(self, force_refresh=False):
+        if not self.pk:
+            return None
+        key = "datainfra:info:%d" % self.pk
+        info = None
+
+        if not force_refresh:
+            # try use cache
+            info = cache.get(key)
+
+        if info is None:
+            info = self.get_driver().info()
+            cache.set(key, info)
+        return info
 
 
 class Host(BaseModel):
