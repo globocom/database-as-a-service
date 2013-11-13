@@ -11,7 +11,7 @@ from django.shortcuts import render_to_response
 from django.template.loader import render_to_string
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.utils.datastructures import SortedDict
-from account.models import UserRepository
+from account.models import UserRepository, Team
 from logical.models import Database
 
 LOG = logging.getLogger(__name__)
@@ -20,12 +20,12 @@ LOG = logging.getLogger(__name__)
 def profile(request, user_id=None):
     user = None
     databases = None
-    groups = None
+    teams = None
     roles = None
     try :
         user = User.objects.get(id=user_id)
-        databases = Database.objects.filter(group__in=[group.id for group in user.groups.all()])
-        groups = UserRepository.get_groups_for(user=user)
+        teams = Team.objects.filter(users=user)
+        databases = Database.objects.filter(team__in=[team.id for team in teams])
         roles = UserRepository.get_roles_for(user=user)
     except Exception, e:
         LOG.warning("Ops... %s" % e)

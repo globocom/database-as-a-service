@@ -71,6 +71,7 @@ shell: # run django shell
 
 update_permissions:
 	@cd dbaas && python manage.py update_permissions
+	@cd dbaas && python manage.py loaddata basic_roles.yaml
 
 
 physical_migrate: # create migration to physical app

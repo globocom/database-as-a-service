@@ -9,7 +9,7 @@ from django.contrib import messages
 from ..service.database import DatabaseService
 from ..forms import DatabaseForm
 from ..models import Database
-from account.models import UserRepository
+from account.models import Team
 from util.html import render_progress_bar
 
 MB_FACTOR = 1.0 / 1024.0 / 1024.0
@@ -37,7 +37,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     
     fieldsets_change_basic = (
         (None, {
-            'fields': ['name', 'project', 'group',]
+            'fields': ['name', 'project', 'team',]
             }
         ),
     )
@@ -82,11 +82,11 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
     def save_model(self, request, obj, form, change):
         if not change:
-            groups = UserRepository.get_groups_for(user=request.user)
-            LOG.info("user %s groups: %s" % (request.user, groups))
-            if groups:
-                obj.group = groups[0]
-                LOG.info("Team accountable for database %s set to %s" % (obj, obj.group))
+            teams = Team.objects.filter(users=request.user)
+            LOG.info("user %s teams: %s" % (request.user, teams))
+            if teams:
+                obj.team = teams[0]
+                LOG.info("Team accountable for database %s set to %s" % (obj, obj.team))
 
         obj.save()
 
@@ -104,7 +104,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         if in edit mode, name is readonly.
         """
         if obj: #In edit mode
-            return ('name', 'group', 'databaseinfra') + self.readonly_fields
+            return ('name', 'team', 'databaseinfra') + self.readonly_fields
         return self.readonly_fields
 
 
@@ -113,12 +113,12 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         if request.user.has_perm(self.perm_manage_quarantine_database):
             return qs
 
-        return qs.filter(is_in_quarantine=False, group__in=[group.id for group in request.user.groups.all()])
+        return qs.filter(is_in_quarantine=False, team__in=[team.id for team in Team.objects.filter(users=request.user)])
 
     def has_add_permission(self, request):
-        """User must be set to at least one group to be able to add database"""
-        groups = UserRepository.get_groups_for(user=request.user)
-        if not groups:
+        """User must be set to at least one team to be able to add database"""
+        teams = Team.objects.filter(users=request.user)
+        if not teams:
             self.message_user(request, self.database_add_perm_message, level=messages.ERROR)
             return False
         else:
@@ -135,9 +135,9 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         return super(DatabaseAdmin, self).changelist_view(request, extra_context=extra_context)
 
     def add_view(self, request, form_url='', extra_context=None):
-        groups = UserRepository.get_groups_for(user=request.user)
-        LOG.info("user %s groups: %s" % (request.user, groups))
-        if not groups:
+        teams = Team.objects.filter(users=request.user)
+        LOG.info("user %s teams: %s" % (request.user, teams))
+        if not teams:
             self.message_user(request, self.database_add_perm_message, level=messages.ERROR)
             return HttpResponseRedirect(reverse('admin:logical_database_changelist'))
         return super(DatabaseAdmin, self).add_view(request, form_url, extra_context=extra_context)
