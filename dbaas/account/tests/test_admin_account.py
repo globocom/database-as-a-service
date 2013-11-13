@@ -31,7 +31,7 @@ class AdminCreateDatabaseTestCase(TestCase):
         """
         Tests user is authenticated
         """
-        response = self.client.get('/admin/auth/accountuser/')
+        response = self.client.get('/admin/account/accountuser/')
         
         self.assertEqual(response.status_code, 200)
         self.assertNotEqual(response.content.index("Select user to change"), -1)
