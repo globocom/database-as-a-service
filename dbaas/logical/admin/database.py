@@ -21,7 +21,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     perm_manage_quarantine_database = "logical.can_manage_quarantine_databases"
     service_class = DatabaseService
     search_fields = ("name", "databaseinfra__name")
-    list_display_basic = ["name", "get_capacity_html", "endpoint"]
+    list_display_basic = ["name", "get_capacity_html", "endpoint", "environment"]
     list_display_advanced = list_display_basic + ["quarantine_dt_format"]
     list_filter_basic = ["databaseinfra", "project"]
     list_filter_advanced = list_filter_basic + ["is_in_quarantine"]
@@ -54,6 +54,11 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
     quarantine_dt_format.short_description = "Quarantine since"
     quarantine_dt_format.admin_order_field = 'quarantine_dt'
+
+    def environment(self, database):
+        return database.databaseinfra.environment
+
+    environment.admin_order_field = 'name'
 
     def get_capacity_html(self, database):
         try:
