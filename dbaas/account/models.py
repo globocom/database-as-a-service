@@ -2,6 +2,7 @@
 from __future__ import absolute_import, unicode_literals
 import simple_audit
 import logging
+from sets import Set
 from django.db import models
 from django.contrib.auth.models import User, Group
 from django.core.exceptions import ValidationError
@@ -31,20 +32,48 @@ class AccountUser(User):
         proxy = True
         verbose_name_plural = _("users")
         verbose_name = _("user")
-        app_label = 'auth'
-
-
-class Team(Group):
-    class Meta:
-        proxy = True
-        app_label = 'auth'
-
+        #app_label = 'auth'
 
 class Role(Group):
     class Meta:
         proxy = True
-        app_label = 'auth'
+        #app_label = 'auth'
 
+class TeamUsersManager(models.Manager):
+    """manager for returning """
+    def get_query_set(self):
+        return User.objects.filter(id__in=[user.id for user in Team.users_without_team()])
+
+class Team(BaseModel):
+    
+    name = models.CharField(_('name'), max_length=80, unique=True)
+    role = models.ForeignKey(Role)
+    users = models.ManyToManyField(User)
+
+    objects = models.Manager() # The default manager.
+    user_objects = TeamUsersManager() # The Dahl-specific manager.
+
+    # class Meta:
+    #     app_label = 'auth'
+
+    def __str__(self):
+        return self.name
+
+    def natural_key(self):
+        return (self.name,)
+
+    @classmethod
+    def users_without_team(cls):
+        """get all users without team"""
+        users = []
+        all_users = Set(User.objects.all())
+        teams = Team.objects.all()
+        for team in teams:
+            for user in team.users.all():
+                if user not in users:
+                    users.append(user)
+        
+        return list(all_users.difference(Set(users)))
 
 def sync_ldap_groups_with_user(user=None):
     """
@@ -118,4 +147,3 @@ def user_post_save(sender, **kwargs):
 # 
 # m2m_changed.connect(user_m2m_changed, sender=User.groups.through)
 # m2m_changed.connect(user_m2m_changed, sender=AccountUser.groups.through)
-
