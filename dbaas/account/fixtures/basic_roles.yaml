@@ -2,11 +2,11 @@
     name: role_dba
     permissions:
     - [add_role, auth, group]
-    - [add_team, auth, group]
+    - [add_team, account, team]
     - [change_role, auth, group]
-    - [change_team, auth, group]
+    - [change_team, account, team]
     - [delete_role, auth, group]
-    - [delete_team, auth, group]
+    - [delete_team, account, team]
     - [add_accountuser, auth, user]
     - [change_accountuser, auth, user]
     - [delete_accountuser, auth, user]
