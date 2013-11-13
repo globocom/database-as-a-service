@@ -24,7 +24,7 @@ from .team import TeamAdmin
 # 
 # Re-register UserAdmin
 admin.site.unregister(User)
-admin.site.unregister(Group)
+#admin.site.unregister(Group)
 admin.site.register(AccountUser, UserAdmin)
 admin.site.register(Role, RoleAdmin)
 admin.site.register(Team, TeamAdmin)

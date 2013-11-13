@@ -10,13 +10,17 @@ LOG = logging.getLogger(__name__)
 
 
 class TeamAdmin(admin.ModelAdmin):
-    form = TeamAdminForm
-    filter_horizontal = ['permissions']
-    
-    fieldsets = (
-        (None, {'fields': ('name', )},),
-        (_("Users"), {'fields': ('users', )},),
-    )
 
-    def queryset(self, request):
-        return self.model.objects.exclude(name__startswith="role")
+    list_display = ["name", "role"]
+    filter_horizontal = ['users']
+    
+    form = TeamAdminForm
+    # #filter_horizontal = ['permissions']
+    # 
+    # fieldsets = (
+    #     (None, {'fields': ('name', )},),
+    #     (_("Users"), {'fields': ('users', )},),
+    # )
+    # 
+    # def queryset(self, request):
+    #     return self.model.objects.exclude(name__startswith="role")
