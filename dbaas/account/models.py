@@ -61,6 +61,23 @@ class Team(BaseModel):
 
     def natural_key(self):
         return (self.name,)
+    
+    @classmethod
+    def get_all_permissions_for(cls, user=None):
+        """return all permissions for user"""
+        permissions = []
+        if not user.is_active:
+            return set(permissions)
+        else:
+            teams = Team.objects.filter(users=user)
+            if teams.count() > 1:
+                LOG.warning("user %s is in more than one team! %s" % teams)
+
+            for team in teams:
+                permissions = permissions + list(team.role.permissions.all())
+            
+            return set(["%s.%s" % (p.content_type.app_label, p.codename) for p in permissions])
+            #return permissions
 
     @classmethod
     def users_without_team(cls):

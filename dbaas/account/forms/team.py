@@ -12,7 +12,8 @@ from ..models import Team
 #as in http://stackoverflow.com/questions/6097210/assign-user-objects-to-a-group-while-editing-group-object-in-django-admin
 class TeamAdminForm(forms.ModelForm):
     users = forms.ModelMultipleChoiceField(
-        queryset=Team.user_objects.all(), 
+        #queryset=Team.user_objects.all(),
+        queryset=User.objects.all(),
         required=False,
         widget=FilteredSelectMultiple(
             verbose_name=_('Users'),

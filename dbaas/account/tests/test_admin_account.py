@@ -16,10 +16,13 @@ class AdminCreateDatabaseTestCase(TestCase):
     PASSWORD = "123456"
 
     def setUp(self):
-        self.group = Group.objects.get_or_create(name="fake_group")[0]
+
+        self.role = Role.objects.get_or_create(name="fake_role")[0]
+        self.team = Team.objects.get_or_create(name="fake_team", role=self.role)[0]
         self.superuser = User.objects.create_superuser(self.USERNAME, email="%s@admin.com" % self.USERNAME, password=self.PASSWORD)
-        self.superuser.groups.add(self.group)
+        self.team.users.add(self.superuser)
         self.client.login(username=self.USERNAME, password=self.PASSWORD)
+
 
     def tearDown(self):
         self.client.logout()

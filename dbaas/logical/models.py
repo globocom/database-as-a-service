@@ -16,6 +16,8 @@ from util.models import BaseModel
 from physical.models import DatabaseInfra
 from drivers import factory_for
 
+from account.models import Team
+
 LOG = logging.getLogger(__name__)
 
 
@@ -41,8 +43,8 @@ class Database(BaseModel):
     name = models.CharField(verbose_name=_("Database name"), max_length=100)
     databaseinfra = models.ForeignKey(DatabaseInfra, related_name="databases", on_delete=models.PROTECT)
     project = models.ForeignKey(Project, related_name="databases", on_delete=models.PROTECT, null=True, blank=True)
-    group = models.ForeignKey(Group, related_name="databases",
-                                 help_text=_("Group that is accountable for the database"),
+    team = models.ForeignKey(Team, related_name="databases",
+                                 help_text=_("Team that is accountable for the database"),
                                  null=True,
                                  blank=True)
     is_in_quarantine = models.BooleanField(verbose_name=_("Is database in quarantine?"), default=False)

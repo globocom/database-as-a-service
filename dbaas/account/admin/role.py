@@ -15,7 +15,6 @@ class RoleAdmin(admin.ModelAdmin):
 
     fieldsets = (
         (None, {'fields': ('name', )},),
-        (_("Users"), {'fields': ('users', )},),
         (_("Permissions"), {'fields': ('permissions', )},),
     )
 
