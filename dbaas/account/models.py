@@ -16,6 +16,7 @@ from .helper import find_ldap_groups_from_user
 
 LOG = logging.getLogger(__name__)
 
+
 class UserRepository(object):
 
     @staticmethod
@@ -32,36 +33,45 @@ class AccountUser(User):
         proxy = True
         verbose_name_plural = _("users")
         verbose_name = _("user")
-        #app_label = 'auth'
+
 
 class Role(Group):
     class Meta:
         proxy = True
-        #app_label = 'auth'
+
 
 class TeamUsersManager(models.Manager):
     """manager for returning """
     def get_query_set(self):
         return User.objects.filter(id__in=[user.id for user in Team.users_without_team()])
 
+
 class Team(BaseModel):
-    
+
     name = models.CharField(_('name'), max_length=80, unique=True)
     role = models.ForeignKey(Role)
     users = models.ManyToManyField(User)
+    objects = models.Manager()  # The default manager.
+    user_objects = TeamUsersManager()  # The Dahl-specific manager.
 
-    objects = models.Manager() # The default manager.
-    user_objects = TeamUsersManager() # The Dahl-specific manager.
-
-    # class Meta:
-    #     app_label = 'auth'
+    class Meta:
+        # putting permissions for account user and role in team model, because it
+        # clashes with the proxied classes permissions
+        permissions = (
+            ("change_accountuser", "Can change account user"),
+            ("add_accountuser", "Can add account user"),
+            ("delete_accountuser", "Can delete account user"),
+            ("change_role", "Can change role"),
+            ("add_role", "Can add role"),
+            ("delete_role", "Can delete role"),
+        )
 
     def __str__(self):
         return self.name
 
     def natural_key(self):
         return (self.name,)
-    
+
     @classmethod
     def get_all_permissions_for(cls, user=None):
         """return all permissions for user"""
@@ -89,8 +99,9 @@ class Team(BaseModel):
             for user in team.users.all():
                 if user not in users:
                     users.append(user)
-        
+
         return list(all_users.difference(Set(users)))
+
 
 def sync_ldap_groups_with_user(user=None):
     """
@@ -105,9 +116,9 @@ def sync_ldap_groups_with_user(user=None):
         group = groups[0]
         user.groups.add(group)
         LOG.info("group %s added to user %s" % (groups[0], user))
-    
+
     LOG.debug("User %s groups: %s after" % (user, user.groups.all()))
-    
+
     return group
 
 simple_audit.register(AccountUser, Team, Role)
@@ -126,11 +137,13 @@ def user_post_save_wrapper(kwargs={}):
         user.is_staff = True
         user.save()
 
+
 @receiver(pre_save, sender=Role)
 def role_pre_save(sender, **kwargs):
     role = kwargs.get('instance')
     if not role.name.startswith('role_'):
         role.name = "role_" + role.name
+
 
 #all users should be is_staff True
 @receiver(pre_save, sender=AccountUser)
@@ -138,10 +151,12 @@ def user_pre_save(sender, **kwargs):
     user = kwargs.get('instance')
     LOG.debug("user %s pre save signal" % user)
 
+
 @receiver(post_save, sender=AccountUser)
 def account_user_post_save(sender, **kwargs):
     user_post_save_wrapper(kwargs)
     #sync_ldap_groups_with_user(user=user)
+
 
 @receiver(post_save, sender=User)
 def user_post_save(sender, **kwargs):
