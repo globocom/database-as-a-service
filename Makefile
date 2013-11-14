@@ -48,6 +48,9 @@ db_reset: # drop and create database
 basic_roles: #(re)sync basic roles
 	@cd dbaas && python manage.py loaddata basic_roles.yaml
 
+basic_configs: #(re)sync basic configurations
+	@cd dbaas && python manage.py loaddata basic_configs.yaml
+
 reset_data: db_reset # drop and create database and insert sample data
 	@cd dbaas && python manage.py sample_data
 
@@ -58,7 +61,7 @@ run_migrate: # run all migrations
 
 test: # run tests
 	@mysqladmin -uroot -f drop test_dbaas -h$(DBAAS_DATABASE_HOST); true
-	@cd dbaas && python manage.py test $(filter-out $@,$(MAKECMDGOALS))
+	@cd dbaas && python manage.py test --traceback $(filter-out $@,$(MAKECMDGOALS))
 
 
 run: # run local server

@@ -1,0 +1,14 @@
+Dbaas new user notification
+
+
+Login: {{ user.username }}
+{% if user.email %}
+email: {{ user.email }}
+{% endif %}
+
+
+To add this user in a team, access the following url: {{ url }}
+
+
+Yours sincerely,
+Dbaas notification robot

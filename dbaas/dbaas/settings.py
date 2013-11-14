@@ -177,6 +177,8 @@ INSTALLED_APPS = (
     'tsuru',
     'drivers',
     'dashboard',
+    'system',
+    'email_extras',
     'simple_audit',
     'django_services',
     'rest_framework',
@@ -187,6 +189,13 @@ INSTALLED_APPS = (
     'south',
     'raven.contrib.django.raven_compat',
 )
+
+#http://django-email-extras.readthedocs.org/en/latest/
+EMAIL_EXTRAS_USE_GNUPG = False
+EMAIL_HOST = os.getenv('EMAIL_HOST', 'localhost')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
+EMAIL_PORT = os.getenv('EMAIL_PORT', 25)
 
 SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'
 SESSION_COOKIE_AGE = 43200  # 12 hours
