@@ -18,6 +18,7 @@
 
 <div class="container-fluid">
     <div class="row-fluid dashboard-tools">
+	{% if perms.audit.change_audit %}
         <div class="span3 recent-actions">
             <h2>{% trans 'My Actions' %}</h2>
             <div class="well">
@@ -70,6 +71,9 @@
             </div>
         </div>
         <div class="span9 app-list">
+		{% else %}
+		<div class="span12 app-list">
+		{% endif %}
             {% if app_list %}
                 <h2>{% trans 'Apps' %}</h2>
                 {% for app in app_list %}
