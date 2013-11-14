@@ -1,0 +1,14 @@
+- fields:
+    created_at: !!timestamp '2013-11-14 14:00:53'
+    updated_at: !!timestamp '2013-11-14 14:00:53'
+    name: new_user_notify_email
+    value: 123456@789
+  model: system.configuration
+  pk: 1
+- fields:
+    created_at: !!timestamp '2013-11-14 14:23:00'
+    updated_at: !!timestamp '2013-11-14 14:23:00'
+    name: email_addr_from
+    value: email@from.dbaas
+  model: system.configuration
+  pk: 2
