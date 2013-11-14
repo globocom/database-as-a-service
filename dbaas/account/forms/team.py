@@ -13,7 +13,7 @@ from ..models import Team
 # the solution in the previous link is no longer being used, but it was left here for documenting purpose
 class TeamAdminForm(forms.ModelForm):
     users = forms.MultipleChoiceField(
-        choices=[(user.id, user.username) for user in Team.user_objects.all()],
+        choices=[],
         required=False,
         widget=FilteredSelectMultiple(
             verbose_name=_('Users'),
@@ -27,8 +27,10 @@ class TeamAdminForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super(TeamAdminForm, self).__init__(*args, **kwargs)
         
+        choices = [(user.id, user.username) for user in Team.user_objects.all()]
+        
         if self.instance and self.instance.pk:
-            choices = [(user.id, user.username) for user in Team.user_objects.all()]
             #now concatenate with the existing users...
             choices = choices + [(user.id, user.username) for user in self.instance.users.all()]
-            self.fields['users'].choices = choices
+        
+        self.fields['users'].choices = choices
