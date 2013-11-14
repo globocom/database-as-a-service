@@ -88,8 +88,8 @@ class Plan(BaseModel):
     def engines(self):
         return Engine.objects.filter(engine_type_id=self.engine_type_id)
 
-    def __unicode__(self):
-        return "%s" % self.name
+    # def __unicode__(self):
+    #     return "%s" % self.name
 
 
     class Meta:
