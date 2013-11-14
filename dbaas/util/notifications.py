@@ -6,7 +6,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.core.urlresolvers import reverse
 from django.contrib.sites.models import Site
 from email_extras.utils import send_mail, send_mail_template
-from system.models import Configuration, ConfigurationHolder
+from system.models import Configuration
 
 LOG = logging.getLogger(__name__)
 
@@ -14,8 +14,8 @@ LOG = logging.getLogger(__name__)
 def notify_new_user_creation(user=None):
     subject=_("[DBAAS] a new user has just been created: %s" % user.username)
     template="new_user_notification"
-    addr_from=ConfigurationHolder.email_addr_from
-    addr_to=ConfigurationHolder.new_user_notify_email
+    addr_from=Configuration.get_by_name("email_addr_from")
+    addr_to=Configuration.get_by_name("new_user_notify_email")
     context={}
     context['user'] = user
     domain = Site.objects.get(id=1).domain
