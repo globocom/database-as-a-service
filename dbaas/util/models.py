@@ -12,3 +12,9 @@ class BaseModel(models.Model):
 
     class Meta:
         abstract = True
+
+    def __unicode__(self):
+        if hasattr(self, 'name'):
+            return "%s" % self.name
+        else:
+            return super(BaseModel, self).__unicode__()
