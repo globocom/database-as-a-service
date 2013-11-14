@@ -26,3 +26,4 @@ class Configuration(BaseModel):
             LOG.warning("ops.. could not retrieve configuration value for %s: %s" % (name, e))
             return None
 
+simple_audit.register(Configuration)
