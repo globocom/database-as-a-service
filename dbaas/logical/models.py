@@ -217,8 +217,8 @@ class Credential(BaseModel):
         credential.database = database
         credential.user = user
         credential.password = make_db_random_password()
-        credential.driver.create_user(credential)
         credential.full_clean()
+        credential.driver.create_user(credential)
         credential.save()
         return credential
 

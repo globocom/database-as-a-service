@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 import logging
-from . import BaseDriver, DatabaseInfraStatus
+from . import BaseDriver, DatabaseInfraStatus, DatabaseAlreadyExists, CredentialAlreadyExists, InvalidCredential
 
 LOG = logging.getLogger(__name__)
 
@@ -32,6 +32,8 @@ class FakeDriver(BaseDriver):
 
     def create_database(self, database):
         instance_data = self.__get_database_infra()
+        if database.name in instance_data:
+            raise DatabaseAlreadyExists
         instance_data[database.name] = {}
         LOG.info('Created database %s', database)
 
@@ -42,6 +44,8 @@ class FakeDriver(BaseDriver):
 
     def create_user(self, credential, roles=["readWrite", "dbAdmin"]):
         instance_data = self.__get_database_infra()
+        if credential.user in instance_data[credential.database.name]:
+            raise CredentialAlreadyExists
         instance_data[credential.database.name][credential.user] = credential.password
         LOG.info('Created user %s', credential)
 
@@ -52,7 +56,11 @@ class FakeDriver(BaseDriver):
 
     def update_user(self, credential):
         LOG.info('Update user %s', credential)
-        self.create_user(credential)
+        instance_data = self.__get_database_infra()
+        if credential.user not in instance_data[credential.database.name]:
+            raise InvalidCredential
+        instance_data[credential.database.name][credential.user] = credential.password
+        LOG.info('Created user %s', credential)
 
     def check_status(self, instance=None):
         LOG.info('Check status')

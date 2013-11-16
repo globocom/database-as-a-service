@@ -357,7 +357,7 @@ LOGGING = {
             'level': 'INFO'
         },
         'factory': {
-            'level': 'DEBUG'
+            'level': 'INFO'
         }
     },
     'root': {
