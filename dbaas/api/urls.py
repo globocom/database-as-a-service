@@ -24,6 +24,9 @@ router.register(r'project', ProjectAPI)
 from .database import DatabaseAPI
 router.register(r'database', DatabaseAPI)
 
+from .credential import CredentialAPI
+router.register(r'credential', CredentialAPI)
+
 urlpatterns = router.urls
 
 # urlpatterns = patterns(
