@@ -5,7 +5,7 @@ from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.conf import settings
 from django.views.generic.base import RedirectView
 import admin
-import django_services.api.urls
+import api.urls
 
 admin.autodiscover()
 
@@ -23,7 +23,7 @@ urlpatterns = patterns('',
     url(r'^tsuru/', include('tsuru.urls')),
     url(r'^logical/', include('logical.urls')),
     url(r'^account/', include('account.urls')),
-    url('^api/', include(django_services.api.urls))
+    url('^api/', include(api.urls))
 
 )
 

@@ -186,7 +186,7 @@ INSTALLED_APPS = (
     'django_extensions',
     'django.contrib.admin',
     'django.contrib.admindocs',
-    'south',
+    # 'south',
     'raven.contrib.django.raven_compat',
 )
 
@@ -269,7 +269,6 @@ if LDAP_ENABLED:
 REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': (
         'rest_framework_hal.renderers.JSONHalRenderer',
-        'rest_framework.renderers.JSONRenderer',
         'rest_framework.renderers.BrowsableAPIRenderer',
     ),
     'DEFAULT_PARSER_CLASSES': (
@@ -277,6 +276,10 @@ REST_FRAMEWORK = {
         'rest_framework.parsers.FormParser',
         'rest_framework.parsers.MultiPartParser'
     ),
+    'TEST_REQUEST_RENDERER_CLASSES': (
+        'rest_framework_hal.renderers.JSONHalRenderer',
+    ),
+    'TEST_REQUEST_DEFAULT_FORMAT': 'json',
     'PAGINATE_BY': 10,                 # Default to 10
     'PAGINATE_BY_PARAM': 'page_size',  # Allow client to override, using `?page_size=xxx`.
     'MAX_PAGINATE_BY': 100             # Maximum limit allowed when using `?page_size=xxx`.

@@ -24,7 +24,7 @@ class JSONHalRenderer(renderers.UnicodeJSONRenderer):
 
     def get_current_url(self, object_dict, renderer_context):
         url = object_dict.get("url", None)
-        if not url:
+        if not url and renderer_context:
             url = renderer_context["request"].build_absolute_uri()
         return url
 
