@@ -4,8 +4,8 @@ from django.utils.translation import ugettext_lazy as _
 import logging
 from django.forms import models
 from django import forms
-from .models import Database, Credential, NoDatabaseInfraCapacity
-from physical.models import Plan, Environment
+from .models import Database, Credential
+from physical.models import Plan, Environment, DatabaseInfra
 from util import make_db_random_password
 
 LOG = logging.getLogger(__name__)
@@ -39,15 +39,15 @@ class DatabaseForm(models.ModelForm):
 
     def clean(self):
         cleaned_data = super(DatabaseForm, self).clean()
-        name = cleaned_data['name']
         plan = cleaned_data['plan']
         environment = cleaned_data.get('environment', None)
         if not environment or environment not in plan.environments.all():
             raise forms.ValidationError(_("Invalid plan for selected environmnet."))
-        try:
-            cleaned_data['databaseinfra'] = Database.provision(name, plan, environment)
-        except NoDatabaseInfraCapacity:
+
+        cleaned_data['databaseinfra'] = DatabaseInfra.best_for(plan, environment)
+        if not cleaned_data['databaseinfra']:
             raise forms.ValidationError(_("Sorry. I have no infra-structure to allocate this database. Try select another plan."))
+
         return cleaned_data
 
     def save(self, *args, **kwargs):
