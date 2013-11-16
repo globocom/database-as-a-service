@@ -88,8 +88,8 @@ class Plan(BaseModel):
     def engines(self):
         return Engine.objects.filter(engine_type_id=self.engine_type_id)
 
-    # def __unicode__(self):
-    #     return "%s" % self.name
+    def __unicode__(self):
+        return "Plan %s" % self.name
 
 
     class Meta:
@@ -179,6 +179,7 @@ class DatabaseInfra(BaseModel):
     def best_for(cls, plan, environment):
         """ Choose the best DatabaseInfra for another database """
         datainfras = list(DatabaseInfra.objects.filter(plan=plan, environment=environment))
+        LOG.debug('Total of datainfra with filter plan %s and environment %s: %s', plan, environment, len(datainfras))
         if not datainfras:
             return None
         datainfras.sort(key=lambda di: -di.available)

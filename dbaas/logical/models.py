@@ -4,7 +4,6 @@ import simple_audit
 import logging
 import datetime
 from django.db import models
-from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 from django.db.models.signals import pre_save, post_save, pre_delete
@@ -13,7 +12,7 @@ from django_extensions.db.fields.encrypted import EncryptedCharField
 from django.utils.functional import cached_property
 from util import slugify, make_db_random_password
 from util.models import BaseModel
-from physical.models import DatabaseInfra
+from physical.models import DatabaseInfra, Environment, Plan
 from drivers import factory_for
 
 from account.models import Team
@@ -64,6 +63,14 @@ class Database(BaseModel):
         
         ordering = ('databaseinfra', 'name',)
 
+    @property
+    def plan(self):
+        return self.databaseinfra and self.databaseinfra.plan
+
+    @property
+    def environment(self):
+        return self.databaseinfra and self.databaseinfra.environment
+
     def delete(self, *args, **kwargs):
         """
         Overrides the delete method so that a database can be put in quarantine and not removed
@@ -106,14 +113,25 @@ class Database(BaseModel):
         return credential
 
     @classmethod
-    def provision(cls, name, plan):
+    def provision(cls, name, plan, environment):
         # create new databaseinfra
 
-        LOG.debug("provisioning databaseinfra with plan: %s | name: %s", plan, name)
+        LOG.debug("provisioning databaseinfra with name %s, plan %s and environment %s", name, plan, environment)
+
+        if not isinstance(plan, Plan):
+            raise ValidationError('Invalid plan type %s - %s' % (type(plan), plan))
+
+        if not isinstance(environment, Environment):
+            raise ValidationError('Invalid environment type %s - %s' % (type(environment), environment))
+
+        datainfra = DatabaseInfra.best_for(plan, environment)
+        if not datainfra:
+            raise NoDatabaseInfraCapacity()
 
         database = Database()
-        database.databaseinfra = DatabaseInfra.best_for(plan)
+        database.databaseinfra = datainfra
         database.name = name
+        database.clean()
         database.save()
         return database
 
@@ -266,6 +284,12 @@ def credential_pre_save(sender, **kwargs):
 
         if credential.database != saved_object.database:
             raise AttributeError(_("Attribute database cannot be edited"))
+
+class NoDatabaseInfraCapacity(Exception):
+    """ There isn't databaseinfra capable to support a new database with this plan """
+    pass
+
+
 
 
 simple_audit.register(Project, Database, Credential)

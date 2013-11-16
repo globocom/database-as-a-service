@@ -60,9 +60,18 @@ class DatabaseInfraFactory(factory.DjangoModelFactory):
     user = 'admin'
     password = '123456'
     engine = factory.SubFactory(EngineFactory)
-    plan = factory.SubFactory(PlanFactory)
-    environment = factory.LazyAttribute(lambda datainfra: datainfra.plan.environments.all()[0])
     capacity = 1
+
+    @factory.lazy_attribute
+    def environment(self):
+        # because environment is part of plan many-to-many relation, I use
+        # lazy attribute instead subfactory, to ensure environment is persisted
+        # since I used BUILD STRATEGY
+        return EnvironmentFactory()
+
+    @factory.lazy_attribute
+    def plan(self):
+        return PlanFactory(environments=[self.environment])
 
 
 class InstanceFactory(factory.DjangoModelFactory):
