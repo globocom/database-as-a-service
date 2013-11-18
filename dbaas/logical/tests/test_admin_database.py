@@ -2,7 +2,7 @@
 from __future__ import absolute_import, unicode_literals
 import logging
 from django.test import TestCase
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import User
 from drivers import fake
 from physical.tests import factory as physical_factory
 from ..models import Database
@@ -22,7 +22,7 @@ class AdminCreateDatabaseTestCase(TestCase):
     def setUp(self):
         self.plan = physical_factory.PlanFactory()
         self.environment = self.plan.environments.all()[0]
-        self.databaseinfra = physical_factory.DatabaseInfraFactory(plan=self.plan)
+        self.databaseinfra = physical_factory.DatabaseInfraFactory(plan=self.plan, environment=self.environment)
         self.project = factory.ProjectFactory()
         self.role = Role.objects.get_or_create(name="fake_role")[0]
         self.team = Team.objects.get_or_create(name="fake_team", role=self.role)[0]
@@ -43,7 +43,7 @@ class AdminCreateDatabaseTestCase(TestCase):
             "environment": self.environment.pk,
         }
         response = self.client.post("/admin/logical/database/add/", params)
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, 302, response.content)
         self.assertTrue(fake.database_created(self.databaseinfra.name, database_name))
 
         database = Database.objects.get(databaseinfra=self.databaseinfra, name=database_name)

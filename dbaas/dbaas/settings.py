@@ -186,9 +186,12 @@ INSTALLED_APPS = (
     'django_extensions',
     'django.contrib.admin',
     'django.contrib.admindocs',
-    'south',
     'raven.contrib.django.raven_compat',
 )
+
+if not DB_ENGINE.endswith('sqlite3'):
+    # support migrations
+    INSTALLED_APPS += ('south',)
 
 #http://django-email-extras.readthedocs.org/en/latest/
 EMAIL_EXTRAS_USE_GNUPG = False
@@ -276,13 +279,14 @@ REST_FRAMEWORK = {
         'rest_framework.parsers.FormParser',
         'rest_framework.parsers.MultiPartParser'
     ),
+    'DEFAULT_PERMISSION_CLASSES': ('rest_framework.permissions.DjangoObjectPermissions',),
+    'PAGINATE_BY': 10,                 # Default to 10
+    'PAGINATE_BY_PARAM': 'page_size',  # Allow client to override, using `?page_size=xxx`.
+    'MAX_PAGINATE_BY': 100,            # Maximum limit allowed when using `?page_size=xxx`.
     'TEST_REQUEST_RENDERER_CLASSES': (
         'rest_framework_hal.renderers.JSONHalRenderer',
     ),
     'TEST_REQUEST_DEFAULT_FORMAT': 'json',
-    'PAGINATE_BY': 10,                 # Default to 10
-    'PAGINATE_BY_PARAM': 'page_size',  # Allow client to override, using `?page_size=xxx`.
-    'MAX_PAGINATE_BY': 100             # Maximum limit allowed when using `?page_size=xxx`.
 }
 
 LOGIN_URL="/admin/"

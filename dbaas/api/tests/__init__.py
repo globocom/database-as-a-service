@@ -74,6 +74,13 @@ class BasicTestsMixin(object):
     def payload(self, test_obj, creation):
         raise NotImplementedError()
 
+    def test_anonimous_user_can_not_have_access(self):
+        self.client.logout()
+        url = self.url_list()
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+
     def test_get_returns_a_list_of_all_objecs_with_pagination(self):
         NUM_PAGES = 3
         NUM_OBJECTS = settings.REST_FRAMEWORK['PAGINATE_BY']*NUM_PAGES
