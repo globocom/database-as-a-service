@@ -186,7 +186,7 @@ INSTALLED_APPS = (
     'django_extensions',
     'django.contrib.admin',
     'django.contrib.admindocs',
-    # 'south',
+    'south',
     'raven.contrib.django.raven_compat',
 )
 
