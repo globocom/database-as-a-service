@@ -6,7 +6,6 @@
 
 {% block extrastyle %}
 <link rel="stylesheet" type="text/css" href="{% static "admin/css/admin-dbaas.css" %}" />
-<link href='//fonts.googleapis.com/css?family=Titillium+Web' rel='stylesheet' type='text/css'>
 {% endblock %}
 
 {% block branding %}
@@ -14,3 +13,8 @@
 {% endblock %}
 
 {% block nav-global %}{% endblock %}
+
+{% block js_footer %}
+{{block.super}}
+<link href='//fonts.googleapis.com/css?family=Titillium+Web' rel='stylesheet' type='text/css'>
+{% endblock js_footer %}
