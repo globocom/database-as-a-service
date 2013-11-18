@@ -223,7 +223,7 @@ class Credential(BaseModel):
         return credential
 
     def delete(self, *args, **kwargs):
-        # self.driver.remove_user(self)
+        self.driver.remove_user(self)
         LOG.info('User removed from driver')
         super(Credential, self).delete(*args, **kwargs)
 
