@@ -32,8 +32,8 @@ class FakeDriver(BaseDriver):
 
     def create_database(self, database):
         instance_data = self.__get_database_infra()
-        if database.name in instance_data:
-            raise DatabaseAlreadyExists
+        # if database.name in instance_data:
+            # raise DatabaseAlreadyExists
         instance_data[database.name] = {}
         LOG.info('Created database %s', database)
 
@@ -44,8 +44,8 @@ class FakeDriver(BaseDriver):
 
     def create_user(self, credential, roles=["readWrite", "dbAdmin"]):
         instance_data = self.__get_database_infra()
-        if credential.user in instance_data[credential.database.name]:
-            raise CredentialAlreadyExists
+        # if credential.user in instance_data[credential.database.name]:
+            # raise CredentialAlreadyExists
         instance_data[credential.database.name][credential.user] = credential.password
         LOG.info('Created user %s', credential)
 
@@ -57,8 +57,8 @@ class FakeDriver(BaseDriver):
     def update_user(self, credential):
         LOG.info('Update user %s', credential)
         instance_data = self.__get_database_infra()
-        if credential.user not in instance_data[credential.database.name]:
-            raise InvalidCredential
+        # if credential.user not in instance_data[credential.database.name]:
+            # raise InvalidCredential
         instance_data[credential.database.name][credential.user] = credential.password
         LOG.info('Created user %s', credential)
 
