@@ -51,7 +51,7 @@ class FakeDriver(BaseDriver):
 
     def remove_user(self, credential):
         instance_data = self.__get_database_infra()
-        del instance_data[credential.database.name][credential.user]
+        instance_data[credential.database.name].pop(credential.user, None)
         LOG.info('Deleted user %s', credential)
 
     def update_user(self, credential):
