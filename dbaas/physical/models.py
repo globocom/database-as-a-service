@@ -261,12 +261,15 @@ class Instance(BaseModel):
             engine.check_status(instance=self)
             LOG.debug('Instance %s is ok', self)
         except AuthenticationError, e:
+            LOG.exception(e)
             # at django 1.5, model validation throught form doesn't use field name in ValidationError.
             # I put here, because I expected this problem can be solved in next versions
             raise ValidationError({'user': e.message})
         except ConnectionError, e:
+            LOG.exception(e)
             raise ValidationError({'instance': e.message})
         except GenericDriverError, e:
+            LOG.exception(e)
             raise ValidationError(e.message)
 
 #####################################################################################################
