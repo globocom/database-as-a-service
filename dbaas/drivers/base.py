@@ -11,7 +11,8 @@ DEFAULT_OUTPUT_BUFFER_SIZE = 16384
 LOG = logging.getLogger(__name__)
 
 __all__ = ['GenericDriverError', 'ConnectionError',
-    'AuthenticationError', 'BaseDriver', 'DatabaseStatus', 'DatabaseInfraStatus']
+    'AuthenticationError', 'DatabaseAlreadyExists', 'CredentialAlreadyExists', 'InvalidCredential',
+    'BaseDriver', 'DatabaseStatus', 'DatabaseInfraStatus']
 
 class GenericDriverError(InternalException):
     """ Exception raises when any kind of problem happens when executing operations on databaseinfra """
@@ -36,6 +37,20 @@ class ConnectionError(GenericDriverError):
 class AuthenticationError(ConnectionError):
     """ Raised when there is any problem authenticating on databaseinfra """
     pass
+
+class DatabaseAlreadyExists(InternalException):
+    """ Raised when database already exists in datainfra """
+    pass
+
+
+class CredentialAlreadyExists(InternalException):
+    """ Raised when credential already exists in database """
+    pass
+
+class InvalidCredential(InternalException):
+    """ Raised when credential no more exists in database """
+    pass
+
 
 
 class BaseDriver(object):

@@ -12,6 +12,7 @@ from django.dispatch import receiver
 from django_extensions.db.fields.encrypted import EncryptedCharField
 
 from util.models import BaseModel
+from util.notifications import notify_new_user_creation
 from .helper import find_ldap_groups_from_user
 
 LOG = logging.getLogger(__name__)
@@ -26,6 +27,7 @@ class UserRepository(object):
     @staticmethod
     def get_roles_for(user=None):
         return user.groups.filter(name__startswith="role") if user else []
+
 
 
 class AccountUser(User):
@@ -121,7 +123,7 @@ def sync_ldap_groups_with_user(user=None):
 
     return group
 
-simple_audit.register(AccountUser, Team, Role)
+simple_audit.register(Team,)
 
 
 #####################################################################################################
@@ -136,6 +138,8 @@ def user_post_save_wrapper(kwargs={}):
         user.is_active = True
         user.is_staff = True
         user.save()
+        #notify new user create
+        notify_new_user_creation(user)
 
 
 @receiver(pre_save, sender=Role)

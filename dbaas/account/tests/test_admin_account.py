@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 import logging
+from django.core.urlresolvers import reverse
 from django.test import TestCase
 from django.test.client import Client
 from django.contrib.auth.models import User, Group
@@ -31,7 +32,8 @@ class AdminCreateDatabaseTestCase(TestCase):
         """
         Tests user is authenticated
         """
-        response = self.client.get('/admin/account/accountuser/')
+        url = reverse('admin:account_accountuser_changelist')
+        response = self.client.get(url)
         
         self.assertEqual(response.status_code, 200)
         self.assertNotEqual(response.content.index("Select user to change"), -1)
@@ -45,4 +47,10 @@ class AdminCreateDatabaseTestCase(TestCase):
         response = client.post('/admin/login/', data)
         self.assertNotEqual(response.content.index("Please enter the correct username and password"), -1)
 
+    def test_can_load_audit_page(self):
+        
+        url = reverse('admin:simple_audit_audit_changelist')
+        response = self.client.get(url)
 
+        self.assertEqual(response.status_code, 200)
+        self.assertNotEqual(response.content.index("Select Audit to change"), -1)

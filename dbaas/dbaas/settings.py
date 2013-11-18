@@ -177,6 +177,8 @@ INSTALLED_APPS = (
     'tsuru',
     'drivers',
     'dashboard',
+    'system',
+    'email_extras',
     'simple_audit',
     'django_services',
     'rest_framework',
@@ -184,9 +186,16 @@ INSTALLED_APPS = (
     'django_extensions',
     'django.contrib.admin',
     'django.contrib.admindocs',
-    'south',
+    # 'south',
     'raven.contrib.django.raven_compat',
 )
+
+#http://django-email-extras.readthedocs.org/en/latest/
+EMAIL_EXTRAS_USE_GNUPG = False
+EMAIL_HOST = os.getenv('EMAIL_HOST', 'localhost')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
+EMAIL_PORT = os.getenv('EMAIL_PORT', 25)
 
 SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'
 SESSION_COOKIE_AGE = 43200  # 12 hours
@@ -260,7 +269,6 @@ if LDAP_ENABLED:
 REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': (
         'rest_framework_hal.renderers.JSONHalRenderer',
-        'rest_framework.renderers.JSONRenderer',
         'rest_framework.renderers.BrowsableAPIRenderer',
     ),
     'DEFAULT_PARSER_CLASSES': (
@@ -268,6 +276,10 @@ REST_FRAMEWORK = {
         'rest_framework.parsers.FormParser',
         'rest_framework.parsers.MultiPartParser'
     ),
+    'TEST_REQUEST_RENDERER_CLASSES': (
+        'rest_framework_hal.renderers.JSONHalRenderer',
+    ),
+    'TEST_REQUEST_DEFAULT_FORMAT': 'json',
     'PAGINATE_BY': 10,                 # Default to 10
     'PAGINATE_BY_PARAM': 'page_size',  # Allow client to override, using `?page_size=xxx`.
     'MAX_PAGINATE_BY': 100             # Maximum limit allowed when using `?page_size=xxx`.
@@ -345,7 +357,7 @@ LOGGING = {
             'level': 'INFO'
         },
         'factory': {
-            'level': 'DEBUG'
+            'level': 'INFO'
         }
     },
     'root': {

@@ -20,7 +20,11 @@ def dashboard(request, *args, **kwargs):
     databaseinfras = []
     
     for databaseinfra in databaseinfra_service.list():
-        databaseinfra_status = databaseinfra_service.get_databaseinfra_status(databaseinfra)
+        try:
+            databaseinfra_status = databaseinfra_service.get_databaseinfra_status(databaseinfra)
+        except AttributeError, e:
+            response = HttpResponse(content='The fallow driver error was find: ' + e.message, content_type='text/plain', status=500)
+            return response
         data = SortedDict()
         data["name"] = databaseinfra.name
         data["engine"] = databaseinfra.engine.engine_type

@@ -4,11 +4,6 @@ from django_services.api import DjangoServiceSerializer
 from . import models
 
 
-class ProjectSerializer(DjangoServiceSerializer):
-
-    class Meta:
-        model = models.Project
-
 
 class DatabaseSerializer(DjangoServiceSerializer):
 

@@ -1,24 +1,21 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
-from django_services.api import DjangoServiceAPI, register
+from rest_framework import generics, mixins, status, viewsets
 from rest_framework.decorators import link
-from .service.project import ProjectService
-from .service.database import DatabaseService
-from .service.credential import CredentialService
 from . import serializers
-from .models import Database
+from .models import Database, Project, Credential
 from rest_framework.response import Response
 from drivers import factory_for
 
 
-class ProjectAPI(DjangoServiceAPI):
+class ProjectAPI(viewsets.ModelViewSet):
     serializer_class = serializers.ProjectSerializer
-    service_class = ProjectService
+    queryset = Project.objects.all()
 
 
-class DatabaseAPI(DjangoServiceAPI):
+class DatabaseAPI(viewsets.ModelViewSet):
     serializer_class = serializers.DatabaseSerializer
-    service_class = DatabaseService
+    queryset = Database.objects.all()
 
     @link()
     def status(self, request, pk):
@@ -40,9 +37,9 @@ class DatabaseAPI(DjangoServiceAPI):
                 status='400')
 
 
-class CredentialAPI(DjangoServiceAPI):
+class CredentialAPI(viewsets.ModelViewSet):
     serializer_class = serializers.CredentialSerializer
-    service_class = CredentialService
+    queryset = Credential.objects.all()
 
 
 register('project', ProjectAPI)
