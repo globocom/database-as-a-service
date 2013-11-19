@@ -5,7 +5,7 @@ import _mysql as mysqldb
 import _mysql_exceptions
 from contextlib import contextmanager
 from . import BaseDriver, DatabaseInfraStatus, AuthenticationError, ConnectionError, GenericDriverError, \
-    DatabaseAlreadyExists, CredentialAlreadyExists, InvalidCredential, DatabaseStatus
+    DatabaseAlreadyExists, CredentialAlreadyExists, InvalidCredential, DatabaseStatus, DatabaseDoesNotExist
 from util import make_db_random_password
 
 LOG = logging.getLogger(__name__)
@@ -13,9 +13,10 @@ LOG = logging.getLogger(__name__)
 MYSQL_TIMEOUT = 5
 
 ER_DB_CREATE_EXISTS = 1007
+ER_DB_DROP_EXISTS = 1008
 ER_ACCESS_DENIED_ERROR = 1045
-ER_CAN_NOT_CONNECT = 2003
 ER_CANNOT_USER = 1396
+ER_CAN_NOT_CONNECT = 2003
 
 
 class MySQL(BaseDriver):
@@ -132,18 +133,10 @@ class MySQL(BaseDriver):
             try:
                 mysql_database.query("DROP DATABASE %s" % database.name)
             except _mysql_exceptions.OperationalError, e:
-                print "@@@@@@@@@@@@@@@@@@@@@@@@@@@@ tratado"
-                print dir(e)
-
-                print type(e)
-                print "args"
-                print e.args
-                print "message"
-                print e.message
-            except Exception, e:
-                print "@@@@@@@@@@@@@@@@@@@@@@@@@@@@ nao tratado"
-                print dir(e)
-                print type(e)
+                if e.args[0] == ER_DB_DROP_EXISTS:
+                    raise DatabaseDoesNotExist(e.args[1])
+                else:
+                    raise GenericDriverError(e.args)
 
     def update_user(self, credential):
         self.create_user(credential)
