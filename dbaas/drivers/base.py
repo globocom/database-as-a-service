@@ -12,7 +12,7 @@ LOG = logging.getLogger(__name__)
 
 __all__ = ['GenericDriverError', 'ConnectionError',
            'AuthenticationError', 'DatabaseAlreadyExists', 'CredentialAlreadyExists', 'InvalidCredential',
-           'BaseDriver', 'DatabaseStatus', 'DatabaseInfraStatus']
+           'BaseDriver', 'DatabaseStatus', 'DatabaseInfraStatus', 'DatabaseDoesNotExist']
 
 
 class GenericDriverError(InternalException):
@@ -47,7 +47,7 @@ class DatabaseAlreadyExists(InternalException):
 
 
 class DatabaseDoesNotExist(InternalException):
-    """ Raised when credential no more exists in database """
+    """ Raised when there is no requested database """
     pass
 
 
