@@ -74,6 +74,13 @@ class BasicTestsMixin(object):
     def payload(self, test_obj, creation):
         raise NotImplementedError()
 
+    def test_anonimous_user_can_not_have_access(self):
+        self.client.logout()
+        url = self.url_list()
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+
     def test_get_returns_a_list_of_all_objecs_with_pagination(self):
         NUM_PAGES = 3
         NUM_OBJECTS = settings.REST_FRAMEWORK['PAGINATE_BY']*NUM_PAGES
@@ -91,8 +98,12 @@ class BasicTestsMixin(object):
             for obj_data in data[self.url_prefix]:
                 self.assertIsNotNone(obj_data['id'])
                 obj = self.model_get(obj_data['id'])
-                self.assertEqual(obj.name, obj_data['name'])
+
+                # check fields
+                fields = set(obj_data.keys()) - set(['_links', 'url'])
+                self.compare_object_and_dict(obj, obj_data, fields)
             next = data['_links']['next']
+            # import pudb; pu.db
         self.assertEqual(NUM_PAGES, pages)
 
 
@@ -119,7 +130,7 @@ class BasicTestsMixin(object):
             else:
                 expected_value = data[k]
                 value = getattr(test_obj, k)
-            LOG.info('Comparing field %s: expected "%s" and found "%s"', k, expected_value, value)
+            # LOG.info('Comparing field %s: expected "%s" and found "%s"', k, expected_value, value)
             self.assertEqual(expected_value, value)
 
 
@@ -131,7 +142,7 @@ class BasicTestsMixin(object):
         data = response.data
 
         # assert response
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.data)
         self.assertEqual(self.url_detail(data['id']), data['_links']['self'])
 
         # assert object

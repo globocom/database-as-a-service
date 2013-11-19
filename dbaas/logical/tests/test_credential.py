@@ -1,27 +1,21 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
+import mock
 from django.test import TestCase
 from physical.tests import factory as factory_physical
-from drivers import base
+from drivers.fake import FakeDriver
 from ..models import Credential
 from . import factory as factory_logical
 
-
-class FakeDriver(base.BaseDriver):
-
-    def get_connection(self):
-        return 'connection-url'
 
 class CredentialTestCase(TestCase):
 
     def setUp(self):
         self.instance = factory_physical.InstanceFactory()
         self.databaseinfra = self.instance.databaseinfra
-        self.engine = FakeDriver(databaseinfra=self.databaseinfra)
         self.database = factory_logical.DatabaseFactory(databaseinfra=self.databaseinfra)
 
     def tearDown(self):
-        self.engine = None
         self.database.delete()
 
     def test_create_credential(self):
@@ -63,3 +57,11 @@ class CredentialTestCase(TestCase):
         credential.database = another_database
 
         self.assertRaises(AttributeError, credential.save)
+
+    @mock.patch.object(FakeDriver, 'remove_user')
+    def test_delete_model_remove_credentials_from_driver(self, remove_user):
+
+        credential = factory_logical.CredentialFactory()
+        credential.delete()
+        remove_user.assert_called_once_with(credential)
+

@@ -6,6 +6,7 @@ from logical.tests import factory as factory_logical
 from ..models import DatabaseInfra
 from . import factory
 from drivers.fake import FakeDriver
+from django.core.cache import cache
 
 
 class DatabaseInfraTestCase(TestCase):
@@ -58,6 +59,7 @@ class DatabaseInfraTestCase(TestCase):
 
     @mock.patch.object(FakeDriver, 'info')
     def test_get_info_use_caching(self, info):
+        cache.clear()
         info.return_value = 'hahaha'
         datainfra = factory.DatabaseInfraFactory()
         self.assertIsNotNone(datainfra.get_info())
