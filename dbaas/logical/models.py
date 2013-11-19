@@ -131,16 +131,19 @@ class Database(BaseModel):
         database = Database()
         database.databaseinfra = datainfra
         database.name = name
-        database.clean()
+        database.full_clean()
         database.save()
+        # refresh object from database
+        database = Database.objects.get(pk=database.pk)
         return database
 
     def __get_database_reserved_names(self):
         return Database.RESERVED_DATABASES_NAME
 
-    @cached_property
+    @property
     def driver(self):
-        return self.databaseinfra.get_driver()
+        if self.databaseinfra_id is not None:
+            return self.databaseinfra.get_driver()
 
     def get_endpoint(self):
         return self.driver.get_connection() + '/' + self.name
@@ -168,17 +171,20 @@ class Database(BaseModel):
     @property
     def total_size(self):
         """ Total size of database (in bytes) """
-        return self.database_status.total_size_in_bytes
+        if self.database_status:
+            return self.database_status.total_size_in_bytes
 
     @property
     def used_size(self):
         """ Used size of database (in bytes) """
-        return self.database_status.used_size_in_bytes
+        if self.database_status:
+            return self.database_status.used_size_in_bytes
 
     @property
     def capacity(self):
         """ Float number about used capacity """
-        return 1.0 * self.used_size / self.total_size if self.total_size else 0
+        if self.database_status:
+            return round(1.0 * self.used_size / self.total_size if self.total_size else 0, 2)
 
 
 class Credential(BaseModel):
