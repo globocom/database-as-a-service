@@ -35,8 +35,7 @@ class AdminCreateDatabaseTestCase(TestCase):
         url = reverse('admin:account_accountuser_changelist')
         response = self.client.get(url)
         
-        self.assertEqual(response.status_code, 200)
-        self.assertNotEqual(response.content.index("Select user to change"), -1)
+        self.assertContains(response, "Select user to change",  status_code=200)
 
     def test_user_login_invalid(self):
         """
@@ -45,12 +44,12 @@ class AdminCreateDatabaseTestCase(TestCase):
         client = Client()
         data = {'username': 'john', 'password': 'smith'}
         response = client.post('/admin/login/', data)
-        self.assertNotEqual(response.content.index("Please enter the correct username and password"), -1)
+        self.assertContains(response, "Please enter the correct username and password",  status_code=200)
 
     def test_can_load_audit_page(self):
-        
+
         url = reverse('admin:simple_audit_audit_changelist')
         response = self.client.get(url)
 
-        self.assertEqual(response.status_code, 200)
-        self.assertNotEqual(response.content.index("Select Audit to change"), -1)
+        self.assertContains(response, "Select Audit to change",  status_code=200)
+
