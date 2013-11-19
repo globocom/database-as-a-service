@@ -6,6 +6,7 @@ from django_services import admin
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django.contrib import messages
+from django.utils.html import format_html, escape
 from ..service.database import DatabaseService
 from ..forms import DatabaseForm
 from ..models import Database
@@ -21,7 +22,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     perm_manage_quarantine_database = "logical.can_manage_quarantine_databases"
     service_class = DatabaseService
     search_fields = ("name", "databaseinfra__name")
-    list_display_basic = ["name", "get_capacity_html", "endpoint", "environment"]
+    list_display_basic = ["name", "get_capacity_html", "get_endpoint_as_html", "environment"]
     list_display_advanced = list_display_basic + ["quarantine_dt_format"]
     list_filter_basic = ["databaseinfra", "project"]
     list_filter_advanced = list_filter_basic + ["is_in_quarantine"]
@@ -59,6 +60,13 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         return database.databaseinfra.environment
 
     environment.admin_order_field = 'name'
+
+    def get_endpoint_as_html(self, database):
+        endpt = escape(database.get_endpoint())
+        html = '<a href="#" class="btn showButton">Show Endpoint</a><p class="endpoint">%s</p>' % endpt
+        return format_html(html)
+
+    get_endpoint_as_html.short_description = "Get Endpoint Address"
 
     def get_capacity_html(self, database):
         try:
