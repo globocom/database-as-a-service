@@ -4,8 +4,8 @@ import logging
 import _mysql as mysqldb
 import _mysql_exceptions
 from contextlib import contextmanager
-from . import BaseDriver, AuthenticationError, ConnectionError, GenericDriverError, \
-    DatabaseAlreadyExists, CredentialAlreadyExists, InvalidCredential
+from . import BaseDriver, DatabaseInfraStatus, AuthenticationError, ConnectionError, GenericDriverError, \
+    DatabaseAlreadyExists, CredentialAlreadyExists, InvalidCredential, DatabaseStatus
 from util import make_db_random_password
 
 LOG = logging.getLogger(__name__)
@@ -15,6 +15,7 @@ MYSQL_TIMEOUT = 5
 ER_DB_CREATE_EXISTS = 1007
 ER_ACCESS_DENIED_ERROR = 1045
 ER_CAN_NOT_CONNECT = 2003
+ER_CANNOT_USER = 1396
 
 
 class MySQL(BaseDriver):
@@ -71,7 +72,38 @@ class MySQL(BaseDriver):
                 raise ConnectionError(e.args[1])
 
     def info(self):
-        pass
+        databaseinfra_status = DatabaseInfraStatus(databaseinfra_model=self.databaseinfra)
+
+        with self.mysqldb() as client:
+            client.query("SELECT VERSION()")
+            r = client.store_result()
+
+            databaseinfra_status.version = r.fetch_row()[0][0]
+
+            client.query("SHOW DATABASES")
+            r = client.store_result()
+            my_all_dbs = r.fetch_row(maxrows=0, how=1)
+
+            client.query("SELECT table_schema 'Database', SUM( data_length + index_length) 'Size' \
+                            FROM information_schema.TABLES GROUP BY table_schema")
+            r = client.store_result()
+            db_sizes = r.fetch_row(maxrows=0, how=1)
+
+            all_dbs = {}
+            for database in db_sizes:
+                all_dbs[database['Database']] = int(database['Size'])
+
+            for database in my_all_dbs:
+                db_status = DatabaseStatus(database)
+                db_status.total_size_in_bytes = 0
+                if database['Database'] in all_dbs:
+                    db_status.used_size_in_bytes = all_dbs[database['Database']]
+                else:
+                    db_status.used_size_in_bytes = 0
+                databaseinfra_status.databases_status[database['Database']] = db_status
+            databaseinfra_status.used_size_in_bytes = sum(all_dbs.values())
+
+            return databaseinfra_status
 
     def create_database(self, database):
         LOG.info("creating database %s" % database.name)
@@ -97,7 +129,21 @@ class MySQL(BaseDriver):
     def remove_database(self, database):
         LOG.info("removing database %s" % database.name)
         with self.mysqldb() as mysql_database:
-            mysql_database.query("DROP DATABASE %s" % database.name)
+            try:
+                mysql_database.query("DROP DATABASE %s" % database.name)
+            except _mysql_exceptions.OperationalError, e:
+                print "@@@@@@@@@@@@@@@@@@@@@@@@@@@@ tratado"
+                print dir(e)
+
+                print type(e)
+                print "args"
+                print e.args
+                print "message"
+                print e.message
+            except Exception, e:
+                print "@@@@@@@@@@@@@@@@@@@@@@@@@@@@ nao tratado"
+                print dir(e)
+                print type(e)
 
     def update_user(self, credential):
         self.create_user(credential)
@@ -107,8 +153,11 @@ class MySQL(BaseDriver):
         with self.mysqldb(database=credential.database) as mysql_database:
             try:
                 mysql_database.query("DROP USER '%s'@'%%'" % credential.user)
-            except:
-                raise InvalidCredential()
+            except _mysql_exceptions.OperationalError, e:
+                if e.args[0] == ER_CANNOT_USER:
+                    raise InvalidCredential(e.args[1])
+                else:
+                    raise GenericDriverError(e.args)
 
     def change_default_pwd(self, instance):
         with self.mysqldb(instance=instance) as client:
