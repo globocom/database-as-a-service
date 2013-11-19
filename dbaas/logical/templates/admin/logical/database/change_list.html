@@ -2,6 +2,11 @@
 {% load i18n admin_static admin_list %}
 {% load admin_urls %}
 
+{% block extrahead %}
+    {{ block.super }}
+    <script type="text/javascript" src="{% static 'js/endpoint.js' %}"></script>
+{% endblock %}
+
 {% block extrastyle %}
     {{ block.super }}
     <link rel="stylesheet" type="text/css" href="{% static 'css/database_admin.css' %}" />

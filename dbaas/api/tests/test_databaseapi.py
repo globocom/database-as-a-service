@@ -25,7 +25,7 @@ class DatabaseAPITestCase(DbaaSAPITestCase, BasicTestsMixin):
     def model_create(self):
         return factory.DatabaseFactory(databaseinfra=self.datainfra)
 
-    def payload(self, database, creation):
+    def payload(self, database, **kwargs):
         data = {
             'name': database.name,
             'plan': reverse('plan-detail', kwargs={'pk': database.plan.pk }),
