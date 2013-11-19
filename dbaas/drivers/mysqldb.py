@@ -5,7 +5,7 @@ import _mysql as mysqldb
 import _mysql_exceptions
 from contextlib import contextmanager
 from . import BaseDriver, DatabaseInfraStatus, AuthenticationError, ConnectionError, GenericDriverError, \
-    DatabaseAlreadyExists, CredentialAlreadyExists, InvalidCredential, DatabaseStatus, DatabaseDoesNotExist
+    DatabaseAlreadyExists, InvalidCredential, DatabaseStatus, DatabaseDoesNotExist
 from util import make_db_random_password
 
 LOG = logging.getLogger(__name__)
@@ -65,96 +65,80 @@ class MySQL(BaseDriver):
             except:
                 LOG.warn('Error disconnecting from databaseinfra %s. Ignoring...', self.databaseinfra, exc_info=True)
 
-    def check_status(self, instance=None):
-        with self.mysqldb(instance=instance) as client:
-            try:
-                client.query("""SELECT 1""")
-            except _mysql_exceptions.OperationalError, e:
-                raise ConnectionError(e.args[1])
-
-    def info(self):
-        databaseinfra_status = DatabaseInfraStatus(databaseinfra_model=self.databaseinfra)
-
+    def __query(self, query_string, **args):
         with self.mysqldb() as client:
-            client.query("SELECT VERSION()")
-            r = client.store_result()
-
-            databaseinfra_status.version = r.fetch_row()[0][0]
-
-            client.query("SHOW DATABASES")
-            r = client.store_result()
-            my_all_dbs = r.fetch_row(maxrows=0, how=1)
-
-            client.query("SELECT table_schema 'Database', SUM( data_length + index_length) 'Size' \
-                            FROM information_schema.TABLES GROUP BY table_schema")
-            r = client.store_result()
-            db_sizes = r.fetch_row(maxrows=0, how=1)
-
-            all_dbs = {}
-            for database in db_sizes:
-                all_dbs[database['Database']] = int(database['Size'])
-
-            for database in my_all_dbs:
-                db_status = DatabaseStatus(database)
-                db_status.total_size_in_bytes = 0
-                if database['Database'] in all_dbs:
-                    db_status.used_size_in_bytes = all_dbs[database['Database']]
-                else:
-                    db_status.used_size_in_bytes = 0
-                databaseinfra_status.databases_status[database['Database']] = db_status
-            databaseinfra_status.used_size_in_bytes = sum(all_dbs.values())
-
-            return databaseinfra_status
-
-    def create_database(self, database):
-        LOG.info("creating database %s" % database.name)
-        with self.mysqldb(database=database) as mysql_database:
             try:
-                mysql_database.query("CREATE DATABASE %s" % database.name)
+                client.query(query_string)
+                r = client.store_result()
+                if r is not None:
+                    return r.fetch_row(maxrows=0, how=1)
             except _mysql_exceptions.ProgrammingError, e:
                 if e.args[0] == ER_DB_CREATE_EXISTS:
                     raise DatabaseAlreadyExists(e.args[1])
                 else:
                     raise GenericDriverError(e.args)
-
-    def create_user(self, credential, roles=["ALL PRIVILEGES"]):
-        LOG.info("creating user %s to %s" % (credential.user, credential.database))
-        with self.mysqldb(database=credential.database) as mysql_database:
-            try:
-                # the first release allow every host to connect to the database
-                mysql_database.query("GRANT %s ON %s.* TO '%s'@'%%' IDENTIFIED BY '%s'" %
-                                    (','.join(roles), credential.database, credential.user, credential.password, ))
-            except:
-                raise CredentialAlreadyExists()
-
-    def remove_database(self, database):
-        LOG.info("removing database %s" % database.name)
-        with self.mysqldb() as mysql_database:
-            try:
-                mysql_database.query("DROP DATABASE %s" % database.name)
             except _mysql_exceptions.OperationalError, e:
                 if e.args[0] == ER_DB_DROP_EXISTS:
                     raise DatabaseDoesNotExist(e.args[1])
+                elif e.args[0] == ER_CANNOT_USER:
+                    raise InvalidCredential(e.args[1])
                 else:
                     raise GenericDriverError(e.args)
+            except Exception, e:
+                GenericDriverError(e.args)
+
+    def info(self):
+        databaseinfra_status = DatabaseInfraStatus(databaseinfra_model=self.databaseinfra)
+
+        r = self.__query("SELECT VERSION()")
+        databaseinfra_status.version = r[0]['VERSION()']
+        my_all_dbs = self.__query("SHOW DATABASES")
+        db_sizes = self.__query("SELECT table_schema 'Database', SUM( data_length + index_length) 'Size' \
+                                    FROM information_schema.TABLES GROUP BY table_schema")
+
+        all_dbs = {}
+        for database in db_sizes:
+            all_dbs[database['Database']] = int(database['Size'])
+
+        for database in my_all_dbs:
+            db_status = DatabaseStatus(database)
+            db_status.total_size_in_bytes = 0
+            if database['Database'] in all_dbs:
+                db_status.used_size_in_bytes = all_dbs[database['Database']]
+            else:
+                db_status.used_size_in_bytes = 0
+            databaseinfra_status.databases_status[database['Database']] = db_status
+        databaseinfra_status.used_size_in_bytes = sum(all_dbs.values())
+
+        return databaseinfra_status
+
+    def check_status(self, instance=None):
+        self.__query("SELECT 1")
+
+    def create_database(self, database):
+        LOG.info("creating database %s" % database.name)
+        self.__query("CREATE DATABASE %s" % database.name)
+
+    def create_user(self, credential, roles=["ALL PRIVILEGES"]):
+        LOG.info("creating user %s to %s" % (credential.user, credential.database))
+        # the first release allow every host to connect to the database
+        # 2 steps required to get the user create error
+        self.__query("CREATE USER '%s'@'%%' IDENTIFIED BY '%s'" % (credential.user, credential.password))
+        self.__query("GRANT %s ON %s.* TO '%s'@'%%'" % (','.join(roles), credential.database, credential.user))
+
+    def remove_database(self, database):
+        LOG.info("removing database %s" % database.name)
+        self.__query("DROP DATABASE %s" % database.name)
 
     def update_user(self, credential):
         self.create_user(credential)
 
     def remove_user(self, credential):
         LOG.info("removing user %s from %s" % (credential.user, credential.database))
-        with self.mysqldb(database=credential.database) as mysql_database:
-            try:
-                mysql_database.query("DROP USER '%s'@'%%'" % credential.user)
-            except _mysql_exceptions.OperationalError, e:
-                if e.args[0] == ER_CANNOT_USER:
-                    raise InvalidCredential(e.args[1])
-                else:
-                    raise GenericDriverError(e.args)
+        self.__query("DROP USER '%s'@'%%'" % credential.user)
 
     def change_default_pwd(self, instance):
-        with self.mysqldb(instance=instance) as client:
-            new_password = make_db_random_password()
-            client.query("SET PASSWORD FOR '%s'@'%%' = PASSWORD('%s')" %
-                        (instance.databaseinfra.user, new_password))
-            return new_password
+        new_password = make_db_random_password()
+        self.__query("SET PASSWORD FOR '%s'@'%%' = PASSWORD('%s')" %
+                    (instance.databaseinfra.user, new_password))
+        return new_password
