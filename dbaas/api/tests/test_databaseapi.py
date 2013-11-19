@@ -26,21 +26,25 @@ class DatabaseAPITestCase(DbaaSAPITestCase, BasicTestsMixin):
         return factory.DatabaseFactory(databaseinfra=self.datainfra)
 
     def payload(self, database, creation):
-        if creation:
-            return {
-                'name': database.name,
-                'plan': reverse('plan-detail', kwargs={'pk': database.plan.pk }),
-                'environment': reverse('environment-detail', kwargs={'pk': database.environment.pk }),
-            }
+        data = {
+            'name': database.name,
+            'plan': reverse('plan-detail', kwargs={'pk': database.plan.pk }),
+            'environment': reverse('environment-detail', kwargs={'pk': database.environment.pk }),
+        }
+        # if not creation:
+        #     data.update({
+                
+        #     })
+        return data
 
-    def test_update(self):
-        test_obj = self.model_create()
-        url = self.url_detail(test_obj.pk)
-        payload = self.payload(test_obj, creation=False)
-        response = self.client.put(url, payload)
+    # def test_update(self):
+    #     test_obj = self.model_create()
+    #     url = self.url_detail(test_obj.pk)
+    #     payload = self.payload(test_obj, creation=False)
+    #     response = self.client.put(url, payload)
 
-        # assert response
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+    #     # assert response
+    #     self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST, response.content)
 
     def test_delete(self):
         obj = self.model_create()

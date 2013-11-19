@@ -100,8 +100,7 @@ class BasicTestsMixin(object):
                 obj = self.model_get(obj_data['id'])
 
                 # check fields
-                fields = set(obj_data.keys()) - set(['_links', 'url'])
-                self.compare_object_and_dict(obj, obj_data, fields)
+                self.compare_object_and_dict(obj, obj_data)
             next = data['_links']['next']
             # import pudb; pu.db
         self.assertEqual(NUM_PAGES, pages)
@@ -118,10 +117,12 @@ class BasicTestsMixin(object):
         self.assertEqual(self.url_detail(obj.pk), response.data['_links']['self'])
 
         # check fields
-        fields = set(data.keys()) - set(['_links', 'url'])
-        self.compare_object_and_dict(obj, data, fields)
+        self.compare_object_and_dict(obj, data)
 
-    def compare_object_and_dict(self, test_obj, data, fields):
+    def compare_object_and_dict(self, test_obj, data, fields=None):
+        if fields is None:
+            fields = self.payload(test_obj, creation=False).keys()
+
         for k in fields:
             if isinstance(data[k], basestring) and data[k].startswith(self.SERVER_URL):
                 # extract id from url
@@ -176,4 +177,4 @@ class BasicTestsMixin(object):
 
         # check fields
         obj = self.model_get(data['id'])
-        self.compare_object_and_dict(obj, data, payload.keys())
+        self.compare_object_and_dict(obj, data)
