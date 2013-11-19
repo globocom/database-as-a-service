@@ -1,14 +1,20 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 import logging
-import re
 import _mysql as mysqldb
 import _mysql_exceptions
 from contextlib import contextmanager
-from . import BaseDriver, AuthenticationError, ConnectionError, GenericDriverError
+from . import BaseDriver, AuthenticationError, ConnectionError, GenericDriverError, \
+    DatabaseAlreadyExists, CredentialAlreadyExists, InvalidCredential
 from util import make_db_random_password
 
 LOG = logging.getLogger(__name__)
+
+MYSQL_TIMEOUT = 5
+
+ER_DB_CREATE_EXISTS = 1007
+ER_ACCESS_DENIED_ERROR = 1045
+ER_CAN_NOT_CONNECT = 2003
 
 
 class MySQL(BaseDriver):
@@ -31,7 +37,7 @@ class MySQL(BaseDriver):
             LOG.debug('Connecting to mysql databaseinfra %s', self.databaseinfra)
             client = mysqldb.connect(host=connection_address, port=int(connection_port),
                                      user=self.databaseinfra.user, passwd=self.databaseinfra.password,
-                                     db=database, connect_timeout=5)
+                                     db=database, connect_timeout=MYSQL_TIMEOUT)
             LOG.debug('Successfully connected to mysql databaseinfra %s', self.databaseinfra)
             return client
         except Exception, e:
@@ -41,19 +47,14 @@ class MySQL(BaseDriver):
     def mysqldb(self, instance=None, database=None):
         client = None
         try:
-            # instance = instance or self.databaseinfra.instances
             yield self.__mysql_client__(instance)
-            # return_value = client
-            # yield return_value
         except _mysql_exceptions.OperationalError, e:
-            if re.search("Access denied", e.args[1]):
-                LOG.debug('Successfully connected to mysql databaseinfra %s', self.databaseinfra)
+            if e.args[0] == ER_ACCESS_DENIED_ERROR:
                 raise AuthenticationError(e.args[1])
-            elif re.search("Can't connect to MySQL", e.args[1]):
+            elif e.args[0] == ER_CAN_NOT_CONNECT:
                 raise ConnectionError(e.args[1])
             else:
-                print "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ Erro generico: %s" % type(e)
-                raise GenericDriverError
+                raise GenericDriverError(e.args)
         finally:
             try:
                 if client:
@@ -75,14 +76,23 @@ class MySQL(BaseDriver):
     def create_database(self, database):
         LOG.info("creating database %s" % database.name)
         with self.mysqldb(database=database) as mysql_database:
-            mysql_database.query("CREATE DATABASE %s" % database.name)
+            try:
+                mysql_database.query("CREATE DATABASE %s" % database.name)
+            except _mysql_exceptions.ProgrammingError, e:
+                if e.args[0] == ER_DB_CREATE_EXISTS:
+                    raise DatabaseAlreadyExists(e.args[1])
+                else:
+                    raise GenericDriverError(e.args)
 
-    def create_user(self, credential, roles=["readWrite", "dbAdmin"]):
+    def create_user(self, credential, roles=["ALL PRIVILEGES"]):
         LOG.info("creating user %s to %s" % (credential.user, credential.database))
         with self.mysqldb(database=credential.database) as mysql_database:
-            # the first release will allow every host to connect to new database
-            mysql_database.query("GRANT ALL PRIVILEGES ON %s.* TO '%s'@'localhost' IDENTIFIED BY '%s'" %
-                                (credential.database, credential.user, credential.password, ))
+            try:
+                # the first release allow every host to connect to the database
+                mysql_database.query("GRANT %s ON %s.* TO '%s'@'%%' IDENTIFIED BY '%s'" %
+                                    (','.join(roles), credential.database, credential.user, credential.password, ))
+            except:
+                raise CredentialAlreadyExists()
 
     def remove_database(self, database):
         LOG.info("removing database %s" % database.name)
@@ -95,11 +105,14 @@ class MySQL(BaseDriver):
     def remove_user(self, credential):
         LOG.info("removing user %s from %s" % (credential.user, credential.database))
         with self.mysqldb(database=credential.database) as mysql_database:
-            mysql_database.query("DROP USER '%s'@'localhost'" % credential.user)
+            try:
+                mysql_database.query("DROP USER '%s'@'%%'" % credential.user)
+            except:
+                raise InvalidCredential()
 
     def change_default_pwd(self, instance):
         with self.mysqldb(instance=instance) as client:
             new_password = make_db_random_password()
-            client.query("SET PASSWORD FOR '%s'@'localhost' = PASSWORD('%s')" %
+            client.query("SET PASSWORD FOR '%s'@'%%' = PASSWORD('%s')" %
                         (instance.databaseinfra.user, new_password))
             return new_password
