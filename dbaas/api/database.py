@@ -20,6 +20,7 @@ class DatabaseSerializer(serializers.HyperlinkedModelSerializer):
         model = models.Database
         fields = ('url', 'id', 'name', 'endpoint', 'plan', 'environment', 'project',
             'quarantine_dt', 'total_size_in_bytes', 'used_size_in_bytes', 'credentials')
+        read_only = ('credentials',)
 
     def __init__(self, *args, **kwargs):
         super(DatabaseSerializer, self).__init__(*args, **kwargs)
@@ -29,7 +30,6 @@ class DatabaseSerializer(serializers.HyperlinkedModelSerializer):
         self.fields['plan'].read_only = not creating
         self.fields['environment'].read_only = not creating
         self.fields['name'].read_only = not creating
-        self.fields['credentials'].read_only = True
 
         # quarantine is always readonly
         # self.fields['quarantine_dt'].read_only = True

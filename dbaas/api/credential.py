@@ -2,6 +2,7 @@
 from __future__ import absolute_import, unicode_literals
 from rest_framework import viewsets, serializers, status
 from rest_framework.response import Response
+from rest_framework.decorators import action
 from logical import models
 
 
@@ -9,18 +10,17 @@ class CredentialSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = models.Credential
-        fields = ('url', 'id', 'user', 'password', 'database',)
+        fields = ('url', 'id', 'user', 'database',)
+        read_only = ('user', 'database',)
 
-    def __init__(self, *args, **kwargs):
-        super(CredentialSerializer, self).__init__(*args, **kwargs)
-
-    def save_object(self, obj, created=False, **kwargs):
-        if created:
+    def save_object(self, obj, force_insert=False, **kwargs):
+        if force_insert:
             # ignore password, generating a new random
             self.object = models.Credential.create_new_credential(obj.user, obj.database)
-        else:
-            # it's allowed only change password
-            self.object.save()
+        # else:
+        #     # it's allowed only change password
+        #     self.object.save()
+        return self.object
 
 
 class CredentialAPI(viewsets.ModelViewSet):
@@ -29,6 +29,13 @@ class CredentialAPI(viewsets.ModelViewSet):
     """
     serializer_class = CredentialSerializer
     queryset = models.Credential.objects.all()
+    actions_to_show_password = ('retrieve', 'create', 'update', 'reset_password')
+
+    def get_serializer(self, *args, **kwargs):
+        serializer = super(CredentialAPI, self).get_serializer(*args, **kwargs)
+        if self.action in self.actions_to_show_password:
+            serializer.fields['password'] = serializers.Field(source='password')
+        return serializer
 
     def create(self, request):
         serializer = self.get_serializer(data=request.DATA, files=request.FILES)
@@ -36,10 +43,17 @@ class CredentialAPI(viewsets.ModelViewSet):
         if serializer.is_valid():
             self.pre_save(serializer.object)
             self.object = serializer.save(force_insert=True)
+            data = serializer.to_native(self.object)
             self.post_save(self.object, created=True)
-            headers = self.get_success_headers(serializer.data)
-            return Response(serializer.data, status=status.HTTP_201_CREATED,
-                            headers=headers)
+            headers = self.get_success_headers(data)
+            return Response(data, status=status.HTTP_201_CREATED, headers=headers)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
+    @action()
+    def reset_password(self, request, pk=None):
+        credential = self.get_object()
+        credential.reset_password()
+        serializer = self.get_serializer(instance=credential)
+        return Response(serializer.data)

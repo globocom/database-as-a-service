@@ -12,6 +12,8 @@ from django.core.cache import cache
 class DatabaseInfraTestCase(TestCase):
 
     def setUp(self):
+        # to avoid caching, clear it before tests
+        cache.clear()
         pass
         # self.client = Client()
         # self.factory = RequestFactory()
@@ -59,7 +61,6 @@ class DatabaseInfraTestCase(TestCase):
 
     @mock.patch.object(FakeDriver, 'info')
     def test_get_info_use_caching(self, info):
-        cache.clear()
         info.return_value = 'hahaha'
         datainfra = factory.DatabaseInfraFactory()
         self.assertIsNotNone(datainfra.get_info())

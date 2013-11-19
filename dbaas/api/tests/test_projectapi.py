@@ -17,5 +17,5 @@ class ProjectAPITestCase(DbaaSAPITestCase, BasicTestsMixin):
     def model_create(self):
         return factory.ProjectFactory()
 
-    def payload(self, test_obj, creation):
+    def payload(self, test_obj, **kwargs):
         return { 'name': "change-%s" % test_obj.name }
