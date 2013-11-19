@@ -30,7 +30,7 @@ class DbaaSClient(test.APIClient):
         # Ensure that any credentials set get added to every request.
         response = super(DbaaSClient, self).request(**kwargs)
         # convert data from json using rendered content
-        if response.accepted_media_type == 'application/json' and response.data:
+        if getattr(response, 'accepted_media_type', None) == 'application/json' and response.data:
             response.original_data = response.data
             response.data = json.loads(response.rendered_content)
         return response
@@ -71,14 +71,14 @@ class BasicTestsMixin(object):
     def model_create(self):
         raise NotImplementedError()
 
-    def payload(self, test_obj, creation):
+    def payload(self, test_obj, **kwargs):
         raise NotImplementedError()
 
     def test_anonimous_user_can_not_have_access(self):
         self.client.logout()
         url = self.url_list()
         response = self.client.get(url)
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
 
     def test_get_returns_a_list_of_all_objecs_with_pagination(self):
@@ -100,7 +100,7 @@ class BasicTestsMixin(object):
                 obj = self.model_get(obj_data['id'])
 
                 # check fields
-                self.compare_object_and_dict(obj, obj_data)
+                self.compare_object_and_dict(obj, obj_data, listing=True)
             next = data['_links']['next']
             # import pudb; pu.db
         self.assertEqual(NUM_PAGES, pages)
@@ -119,9 +119,9 @@ class BasicTestsMixin(object):
         # check fields
         self.compare_object_and_dict(obj, data)
 
-    def compare_object_and_dict(self, test_obj, data, fields=None):
+    def compare_object_and_dict(self, test_obj, data, fields=None, **kwargs):
         if fields is None:
-            fields = self.payload(test_obj, creation=False).keys()
+            fields = self.payload(test_obj, **kwargs).keys()
 
         for k in fields:
             if isinstance(data[k], basestring) and data[k].startswith(self.SERVER_URL):
@@ -143,15 +143,16 @@ class BasicTestsMixin(object):
         data = response.data
 
         # assert response
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.data)
-        self.assertEqual(self.url_detail(data['id']), data['_links']['self'])
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED, data)
+
+        self.assertEqual(self.url_detail(data['id']), data['_links']['self'], data)
 
         # assert object
         obj = self.model_get(data['id'])
         self.assertIsNotNone(obj)
 
         # check fields
-        self.compare_object_and_dict(obj, data, payload.keys())
+        self.compare_object_and_dict(obj, data, fields=payload.keys())
 
     def test_delete(self):
         obj = self.model_create()
