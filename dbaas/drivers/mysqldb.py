@@ -24,13 +24,13 @@ class MySQL(BaseDriver):
     default_port = 3306
 
     def get_connection(self):
-        my_instance = self.databaseinfra.instances.get(databaseinfra__name=self.databaseinfra.name)
+        my_instance = self.databaseinfra.instances.all()[0]
         return "mysql://<user>:<password>@%s" % (my_instance.address)
 
     def __get_admin_connection(self, instance=None):
         if instance:
             return instance.address, instance.port
-        my_instance = self.databaseinfra.instances.get(databaseinfra__name=self.databaseinfra.name)
+        my_instance = self.databaseinfra.instances.all()[0]
         return my_instance.address, my_instance.port
 
     def __mysql_client__(self, instance, database='mysql'):
@@ -65,8 +65,8 @@ class MySQL(BaseDriver):
             except:
                 LOG.warn('Error disconnecting from databaseinfra %s. Ignoring...', self.databaseinfra, exc_info=True)
 
-    def __query(self, query_string, **args):
-        with self.mysqldb() as client:
+    def __query(self, query_string, instance=None):
+        with self.mysqldb(instance=instance) as client:
             try:
                 client.query(query_string)
                 r = client.store_result()
@@ -113,7 +113,7 @@ class MySQL(BaseDriver):
         return databaseinfra_status
 
     def check_status(self, instance=None):
-        self.__query("SELECT 1")
+        self.__query("SELECT 1", instance=instance)
 
     def create_database(self, database):
         LOG.info("creating database %s" % database.name)
