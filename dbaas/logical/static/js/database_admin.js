@@ -131,7 +131,7 @@
         $(document).on("click.add-credential", "#add-credential", function(e) {
             $("tbody", "#table-credentials").append(
                 "<tr class='credential'><td colspan='3'>" +
-                "<input type='text' placeholder='type username' name='user' value='' />" +
+                "<input type='text' placeholder='type username' maxlength='16' name='user' value='' />" +
                 "<a href='#' class='save-new-credential btn btn-primary'>Save</a>" +
                 "</td></tr>");
         });
