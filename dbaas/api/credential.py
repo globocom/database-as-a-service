@@ -25,7 +25,31 @@ class CredentialSerializer(serializers.HyperlinkedModelSerializer):
 
 class CredentialAPI(viewsets.ModelViewSet):
     """
-    Credential API
+    *   ### __List Credentials__
+
+        __GET__ /api/credential/
+
+    *   ### __To create a new credential on a database__
+
+        __POST__ /api/credential/
+
+            {
+                "user": "{username}",
+                "database": "{api_url}/database/{database_id}/"
+            }
+
+    *   ### __Show details (including password) about a credential__
+
+        __GET__ /api/credential/`credential_id`/
+
+    *   ### __To delete a Credential__
+
+        __DELETE__ /api/credential/`credential_id`/
+
+    *   ### __To reset password__
+
+        __POST__ /api/credential/`database_id`/reset_password
+
     """
     serializer_class = CredentialSerializer
     queryset = models.Credential.objects.all()

@@ -7,7 +7,7 @@ email: {{ user.email }}
 {% endif %}
 
 
-To add this user in a team, access the following url: {{ url }}
+To add this user to a team, access the following url: {{ url }}
 
 
 Yours sincerely,
