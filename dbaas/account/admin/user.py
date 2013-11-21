@@ -23,7 +23,7 @@ class UserAdmin(UserAdmin):
     
     inlines = (TeamInline, )
     
-    list_display = ('username', 'email', 'first_name', 'last_name', 'get_team_for_user')
+    list_display = ('username', 'email', 'get_team_for_user')
     list_filter = ('is_staff', 'is_superuser', 'is_active', 'groups')
     search_fields = ('username', 'first_name', 'last_name', 'email')
     ordering = ('username',)
