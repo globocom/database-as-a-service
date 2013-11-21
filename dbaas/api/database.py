@@ -75,10 +75,10 @@ class DatabaseAPI(viewsets.ModelViewSet):
 
     def create(self, request):
         serializer = self.get_serializer(data=request.DATA, files=request.FILES)
-        data = serializer.restore_fields(request.DATA, request.FILES)
 
         if serializer.is_valid():
             self.pre_save(serializer.object)
+            data = serializer.restore_fields(request.DATA, request.FILES)
             self.object = models.Database.provision(data['name'], data['plan'], data['environment'])
             data = serializer.to_native(self.object)
             self.post_save(self.object, created=True)
