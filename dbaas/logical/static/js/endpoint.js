@@ -8,4 +8,11 @@ $(function(){
   });
 });
 
+$(function(){
+  $(document).on('click', '.endpoint', function(e){
+    $(this).hide();
+    $('.showButton', $(this).parent()).show();
+  });
+});
+
 })(django.jQuery);
