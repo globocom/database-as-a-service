@@ -21,6 +21,9 @@ class DriverFactory(object):
         if driver_name == "mongodb":
             from .mongodb import MongoDB
             return MongoDB
+        elif driver_name == "mysqldb":
+            from .mysqldb import MySQL
+            return MySQL
         elif driver_name == "fake":
             from .fake import FakeDriver
             return FakeDriver
@@ -36,4 +39,3 @@ class DriverFactory(object):
         driver_name = databaseinfra.engine.engine_type.name
         driver_class = cls.get_driver_class(driver_name)
         return driver_class(databaseinfra=databaseinfra)
-

@@ -79,6 +79,9 @@ class Database(BaseModel):
         #do_something()
         if self.is_in_quarantine:
             LOG.warning("Database %s is in quarantine and will be removed" % self.name)
+            for credential in self.credentials.all():
+                instance = factory_for(self.databaseinfra)
+                instance.remove_user(credential)
             super(Database, self).delete(*args, **kwargs)  # Call the "real" delete() method.
         else:
             LOG.warning("Putting database %s in quarantine" % self.name)
@@ -207,6 +210,10 @@ class Credential(BaseModel):
             ('user', 'database'),
         )
         ordering = ('database', 'user',)
+
+    def clean(self):
+        if len(self.user) > 16:
+            raise ValidationError(_("%s is too long" % self.user))
 
     @cached_property
     def driver(self):

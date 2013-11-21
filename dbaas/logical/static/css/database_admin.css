@@ -19,13 +19,13 @@
     text-align: center;
 }
 
-/* endpoint column */
+/* engine type */
 #result_list td:nth-child(3) {
-    width: 250px;
+    width: 10%;
 }
 
-/* endpoint column */
-#result_list td:nth-child(5) {
+/* environment */
+#result_list td:nth-child(4) {
     width: 15%;
 }
 
@@ -36,3 +36,18 @@
 .show-endpoint span {
     vertical-align: middle;
 }
+
+/* capacity */
+#result_list td:nth-child(5) {
+    width: 20%;
+}
+
+/* quarentine */
+#result_list td:nth-child(7) {
+    width: 12%;
+}
+
+.sortpriority {
+    display:none;
+}
+
