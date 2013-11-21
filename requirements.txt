@@ -13,6 +13,7 @@ django-extensions==1.2.2
 django-services==0.0.8
 django-simple-audit==0.1.11
 djangorestframework==2.3.8
+Markdown==2.3.1
 gunicorn==0.17.2
 logilab-common==0.60.0
 pyasn1==0.1.7
