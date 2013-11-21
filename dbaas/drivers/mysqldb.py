@@ -16,6 +16,7 @@ ER_DB_CREATE_EXISTS = 1007
 ER_DB_DROP_EXISTS = 1008
 ER_ACCESS_DENIED_ERROR = 1045
 ER_CANNOT_USER = 1396
+ER_WRONG_STRING_LENGTH = 1470
 ER_CAN_NOT_CONNECT = 2003
 
 
@@ -82,10 +83,15 @@ class MySQL(BaseDriver):
                     raise DatabaseDoesNotExist(e.args[1])
                 elif e.args[0] == ER_CANNOT_USER:
                     raise InvalidCredential(e.args[1])
+                elif e.args[0] == ER_WRONG_STRING_LENGTH:
+                    raise InvalidCredential(e.args[1])
                 else:
                     raise GenericDriverError(e.args)
             except Exception, e:
                 GenericDriverError(e.args)
+                
+                
+                # 1470, "String 'u_jjnjjjnnjnnjnjn' is too long for user name (should be no longer than 16)"
 
     def info(self):
         databaseinfra_status = DatabaseInfraStatus(databaseinfra_model=self.databaseinfra)
@@ -130,12 +136,13 @@ class MySQL(BaseDriver):
         LOG.info("removing database %s" % database.name)
         self.__query("DROP DATABASE %s" % database.name)
 
-    def update_user(self, credential):
-        self.create_user(credential)
-
     def remove_user(self, credential):
         LOG.info("removing user %s from %s" % (credential.user, credential.database))
         self.__query("DROP USER '%s'@'%%'" % credential.user)
+
+    def update_user(self, credential):
+        self.remove_user(credential)
+        self.create_user(credential)
 
     def change_default_pwd(self, instance):
         new_password = make_db_random_password()
