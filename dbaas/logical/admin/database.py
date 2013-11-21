@@ -66,7 +66,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         html = '<a href="#" class="btn showButton">Show Endpoint</a><p class="endpoint">%s</p>' % endpt
         return format_html(html)
 
-    get_endpoint_as_html.short_description = "Get Endpoint Address"
+    get_endpoint_as_html.short_description = "Endpoint Address"
 
     def get_capacity_html(self, database):
         try:
