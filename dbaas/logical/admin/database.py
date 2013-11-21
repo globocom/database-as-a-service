@@ -22,7 +22,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     perm_manage_quarantine_database = "logical.can_manage_quarantine_databases"
     service_class = DatabaseService
     search_fields = ("name", "databaseinfra__name")
-    list_display_basic = ["name", "get_capacity_html", "get_endpoint_as_html", "environment"]
+    list_display_basic = ["name_html", "get_capacity_html", "environment"]
     list_display_advanced = list_display_basic + ["quarantine_dt_format"]
     list_filter_basic = ["databaseinfra", "project"]
     list_filter_advanced = list_filter_basic + ["is_in_quarantine"] + ["team"]
@@ -61,12 +61,15 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
     environment.admin_order_field = 'name'
 
-    def get_endpoint_as_html(self, database):
-        endpt = escape(database.get_endpoint())
-        html = '<a href="#" class="btn showButton">Show Endpoint</a><p class="endpoint">%s</p>' % endpt
+    def name_html(self, database):
+        html = '%(name)s <a href="javascript:void(0)" title="%(title)s" data-content="%(endpoint)s" class="show-endpoint"><span class="icon-info-sign"></span></a>' % {
+            'name': database.name,
+            'endpoint': escape(database.get_endpoint()),
+            'title': _("Show Endpoint")
+        }
         return format_html(html)
-
-    get_endpoint_as_html.short_description = "Endpoint Address"
+    name_html.short_description = _("name")
+    name_html.admin_order_field = "name"
 
     def get_capacity_html(self, database):
         try:

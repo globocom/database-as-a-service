@@ -29,7 +29,10 @@
     width: 15%;
 }
 
-.endpoint {
-  display: none;
+.change-list.database .popover {
+    width: 500px;
 }
 
+.show-endpoint span {
+    vertical-align: middle;
+}

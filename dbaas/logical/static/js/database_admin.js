@@ -247,6 +247,16 @@
         $(".btn-plan").on("click", function(ev) {
             $("#plan-type").val(this.dataset.planId);
         });
+
+        $('.show-endpoint').popover({'trigger': 'manual', 'html': false})
+        .on('click', function(e) {
+            var $this = $(this);
+            $('.show-endpoint').popover('hide');
+            window.setTimeout(function() {
+                $this.popover('show');
+            }, 200);
+            e.preventDefault();
+        });
     });
 
 })(django.jQuery);
