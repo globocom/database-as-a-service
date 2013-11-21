@@ -52,6 +52,9 @@ class DatabaseForm(models.ModelForm):
             if infra.databases.filter(name=cleaned_data['name']):
                 self._errors["name"] = self.error_class([_("this name already exists in the selected environment")])
                 del cleaned_data["name"]
+                
+        if len(cleaned_data['name']) > 64:
+            self._errors["name"] = self.error_class([_("Database name too long")])
 
         return cleaned_data
 
