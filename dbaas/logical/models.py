@@ -48,6 +48,7 @@ class Database(BaseModel):
                                  blank=True)
     is_in_quarantine = models.BooleanField(verbose_name=_("Is database in quarantine?"), default=False)
     quarantine_dt = models.DateField(verbose_name=_("Quarantine date"), null=True, blank=True, editable=False)
+    description = models.TextField(verbose_name=_("Description"), null=True, blank=True)
 
     def __unicode__(self):
         return u"%s" % self.name

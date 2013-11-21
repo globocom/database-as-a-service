@@ -31,14 +31,14 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     delete_button_name = "Delete"
     fieldsets_add = (
         (None, {
-            'fields': ('name', 'project', 'environment', 'plan',)
+            'fields': ('name', 'description', 'project', 'environment', 'plan',)
             }
         ),
     )
     
     fieldsets_change_basic = (
         (None, {
-            'fields': ['name', 'project', 'team',]
+            'fields': ['name', 'description', 'project', 'team',]
             }
         ),
     )

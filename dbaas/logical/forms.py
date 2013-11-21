@@ -35,7 +35,7 @@ class DatabaseForm(models.ModelForm):
 
     class Meta:
         model = Database
-        fields = ('name', 'project',)
+        fields = ('name', 'description' ,'project',)
 
     def clean(self):
         cleaned_data = super(DatabaseForm, self).clean()
@@ -59,6 +59,7 @@ class DatabaseForm(models.ModelForm):
         # cleaned_data = super(DatabaseForm, self).clean()
         database = Database.provision(self.cleaned_data['name'], self.cleaned_data['plan'], self.cleaned_data['environment'])
         database.project = self.cleaned_data['project']
+        database.description = self.cleaned_data['description']
         database.save()
         return database
 
