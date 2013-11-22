@@ -103,6 +103,10 @@ class Database(BaseModel):
             self.save()
 
     def clean(self):
+        #slugify name
+        if not self.pk:
+            # new database
+            self.name = slugify(self.name)
 
         if self.name in self.__get_database_reserved_names():
             raise ValidationError(_("%s is a reserved database name" % self.name))
@@ -278,9 +282,6 @@ def database_pre_save(sender, **kwargs):
             database.quarantine_dt = datetime.datetime.now().date()
     else:
         database.quarantine_dt = None
-
-    #slugify name
-    database.name = slugify(database.name)
 
     if database.id:
         saved_object = Database.objects.get(id=database.id)
