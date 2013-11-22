@@ -10,7 +10,7 @@ LOG = logging.getLogger(__name__)
 class DbaasBackend(ModelBackend):
 
     def get_all_permissions(self, user_obj, obj=None):
-        print "get_all_permissions for user: %s" % user_obj
+        # LOG.debug("get_all_permissions for user: %s" % user_obj)
         if user_obj.is_anonymous() or obj is not None:
             return set()
         if not hasattr(user_obj, '_perm_cache'):
