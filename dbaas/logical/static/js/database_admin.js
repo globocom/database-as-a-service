@@ -192,7 +192,6 @@
                     "type": "POST",
                     "data": { "username": username, "database_id": get_database_id() },
                 }).done(function(data) {
-                    console.log(data);
                     if (data.error) {
                         show_error_message($row, data.error);
                     }
@@ -248,13 +247,15 @@
             $("#plan-type").val(this.dataset.planId);
         });
 
+        var endpoint_popover_active = null;
         $('.show-endpoint').popover({'trigger': 'manual', 'html': false})
         .on('click', function(e) {
             var $this = $(this);
-            $('.show-endpoint').popover('hide');
-            window.setTimeout(function() {
-                $this.popover('show');
-            }, 200);
+            if (endpoint_popover_active && endpoint_popover_active.attr('data-content') != $this.attr('data-content')) {
+                endpoint_popover_active.popover('hide');
+            }
+            endpoint_popover_active = $this;
+            endpoint_popover_active.popover('toggle');
             e.preventDefault();
         });
     });
