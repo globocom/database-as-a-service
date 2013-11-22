@@ -233,6 +233,7 @@ LDAP_CERTDIR = os.getenv('DBAAS_LDAP_CERTDIR', '')
 LDAP_CACERTFILE = os.getenv('DBAAS_LDAP_CACERTFILE', '')
 LDAP_CERTFILE = os.getenv('DBAAS_LDAP_CERTFILE', '')
 LDAP_KEYFILE = os.getenv('DBAAS_LDAP_KEYFILE', '')
+
 if LDAP_ENABLED:
     import ldap
     from django_auth_ldap.config import LDAPSearch, GroupOfNamesType
@@ -263,11 +264,11 @@ if LDAP_ENABLED:
         "email": "mail"
     }
 
-    AUTHENTICATION_BACKENDS = (
-        'django_auth_ldap.backend.LDAPBackend',
-        'account.backends.DbaasBackend',
-        'django.contrib.auth.backends.ModelBackend',
-    )
+AUTHENTICATION_BACKENDS = (
+    'django_auth_ldap.backend.LDAPBackend',
+    'account.backends.DbaasBackend',
+    'django.contrib.auth.backends.ModelBackend',
+)
 
 REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': (
