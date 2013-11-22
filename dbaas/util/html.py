@@ -11,7 +11,11 @@ def render_progress_bar(current, total=100, message="%", bar_type="auto", stripe
         striped: if you want striped bars
         active: if you want animated bars
     """
-    p = int(current * 100 / total)
+    if total is None: # unlimited
+        p = 0.0
+        total = current
+    else:
+        p = int(current * 100 / total)
 
     html_classes = ["progress"]
     if striped:

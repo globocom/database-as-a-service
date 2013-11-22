@@ -175,8 +175,7 @@ class Database(BaseModel):
     @property
     def total_size(self):
         """ Total size of database (in bytes) """
-        if self.database_status:
-            return self.database_status.total_size_in_bytes
+        return self.databaseinfra.per_database_size_bytes
 
     @property
     def used_size(self):
@@ -188,7 +187,7 @@ class Database(BaseModel):
     def capacity(self):
         """ Float number about used capacity """
         if self.database_status:
-            return round(1.0 * self.used_size / self.total_size if self.total_size else 0, 2)
+            return round((1.0 * self.used_size / self.total_size) if self.total_size else 0, 2)
 
 
 class Credential(BaseModel):

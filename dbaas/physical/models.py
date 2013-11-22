@@ -128,6 +128,7 @@ class DatabaseInfra(BaseModel):
     plan = models.ForeignKey(Plan, related_name="databaseinfras", on_delete=models.PROTECT)
     environment = models.ForeignKey(Environment, related_name="databaseinfras", on_delete=models.PROTECT)
     capacity = models.PositiveIntegerField(default=1, help_text=_("How many databases is supported"))
+    per_database_size_mbytes = models.IntegerField(default=0, verbose_name=_("Per database size (MB)"), help_text=_("What is the maximum size of each database (MB). 0 means unlimited."))
 
     def __unicode__(self):
         return self.name
@@ -146,6 +147,12 @@ class DatabaseInfra(BaseModel):
         if self.engine and self.engine.engine_type:
             return self.engine.engine_type.name
         return None
+
+    @property
+    def per_database_size_bytes(self):
+        if not self.per_database_size_mbytes:
+            return 0
+        return self.per_database_size_mbytes * 1024 * 1024
 
     @property
     def used(self):
