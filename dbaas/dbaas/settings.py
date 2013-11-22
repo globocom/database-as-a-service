@@ -220,6 +220,17 @@ if CI:
     NOSE_ARGS += ['--with-coverage', '--cover-package=application',
                   '--with-xunit', '--xunit-file=test-report.xml', '--cover-xml', '--cover-xml-file=coverage.xml']
 
+# AUTHENTICATION_BACKENDS = (
+#   'django_auth_ldap.backend.LDAPBackend',
+#   'account.backends.DbaasBackend',
+#   'django.contrib.auth.backends.ModelBackend',
+# )
+
+AUTHENTICATION_BACKENDS = [
+  'account.backends.DbaasBackend',
+  'django.contrib.auth.backends.ModelBackend',
+]
+
 ##################################
 ### LDAP_AUTHENTICATION
 ##################################
@@ -263,12 +274,9 @@ if LDAP_ENABLED:
         "last_name": "sn",
         "email": "mail"
     }
+    
+    AUTHENTICATION_BACKENDS = ['django_auth_ldap.backend.LDAPBackend'] + AUTHENTICATION_BACKENDS
 
-AUTHENTICATION_BACKENDS = (
-    'django_auth_ldap.backend.LDAPBackend',
-    'account.backends.DbaasBackend',
-    'django.contrib.auth.backends.ModelBackend',
-)
 
 REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': (
