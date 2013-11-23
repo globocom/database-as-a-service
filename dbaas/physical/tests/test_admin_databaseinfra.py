@@ -40,6 +40,7 @@ class AdminCreateDatabaseInfraTestCase(TestCase):
             "engine": self.engine.pk,
             "plan": self.plan.pk,
             "capacity": 1,
+            "per_database_size_mbytes": 10,
             "environment": self.environment.pk,
             "instances-TOTAL_FORMS": NUM_INSTANCES,
             "instances-INITIAL_FORMS": 0,

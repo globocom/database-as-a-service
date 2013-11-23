@@ -78,7 +78,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
     def get_capacity_html(self, database):
         try:
-            message = "%d MB of %d MB" % (database.used_size * MB_FACTOR, database.total_size * MB_FACTOR)
+            message = "%d of %s (MB)" % (database.used_size * MB_FACTOR, (database.total_size * MB_FACTOR) or 'unlimited')
             return render_progress_bar(database.capacity*100, message=message)
         except:
             # any error show Unkown message and log error. This avoid break page if there is a problem

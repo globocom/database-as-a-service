@@ -103,6 +103,10 @@ class Database(BaseModel):
             self.save()
 
     def clean(self):
+        #slugify name
+        if not self.pk:
+            # new database
+            self.name = slugify(self.name)
 
         if self.name in self.__get_database_reserved_names():
             raise ValidationError(_("%s is a reserved database name" % self.name))
@@ -175,8 +179,7 @@ class Database(BaseModel):
     @property
     def total_size(self):
         """ Total size of database (in bytes) """
-        if self.database_status:
-            return self.database_status.total_size_in_bytes
+        return self.databaseinfra.per_database_size_bytes
 
     @property
     def used_size(self):
@@ -188,7 +191,7 @@ class Database(BaseModel):
     def capacity(self):
         """ Float number about used capacity """
         if self.database_status:
-            return round(1.0 * self.used_size / self.total_size if self.total_size else 0, 2)
+            return round((1.0 * self.used_size / self.total_size) if self.total_size else 0, 2)
 
 
 class Credential(BaseModel):
@@ -279,9 +282,6 @@ def database_pre_save(sender, **kwargs):
             database.quarantine_dt = datetime.datetime.now().date()
     else:
         database.quarantine_dt = None
-
-    #slugify name
-    database.name = slugify(database.name)
 
     if database.id:
         saved_object = Database.objects.get(id=database.id)

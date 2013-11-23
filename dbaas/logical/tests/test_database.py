@@ -48,17 +48,22 @@ class DatabaseTestCase(TestCase):
         
         self.assertRaises(IntegrityError, Database(name="bleble", databaseinfra=self.databaseinfra).save)
 
-    def test_slugify_database_name(self):
+    def test_slugify_database_name_with_spaces(self):
         
-        database = factory.DatabaseFactory(name="w h a t", databaseinfra=self.databaseinfra)
+        database = factory.DatabaseFactory.build(name="w h a t", databaseinfra=self.databaseinfra)
         
+        database.full_clean()
+        database.save()
         self.assertTrue(database.id)
         self.assertEqual(database.name, 'w_h_a_t')
         
-        database2 = factory.DatabaseFactory(name="w.h.e.r.e", databaseinfra=self.databaseinfra)
+    def test_slugify_database_name_with_dots(self):
+        database = factory.DatabaseFactory.build(name="w.h.e.r.e", databaseinfra=self.databaseinfra)
         
-        self.assertTrue(database2.id)
-        self.assertEqual(database2.name, 'w_h_e_r_e')
+        database.full_clean()
+        database.save()
+        self.assertTrue(database.id)
+        self.assertEqual(database.name, 'w_h_e_r_e')
     
     def test_cannot_edit_database_name(self):
         
