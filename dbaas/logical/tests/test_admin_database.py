@@ -41,6 +41,7 @@ class AdminCreateDatabaseTestCase(TestCase):
             "project": self.project.pk,
             "plan": self.plan.pk,
             "environment": self.environment.pk,
+            "engine": self.databaseinfra.engine.pk,
         }
         response = self.client.post("/admin/logical/database/add/", params)
         self.assertEqual(response.status_code, 302, response.content)

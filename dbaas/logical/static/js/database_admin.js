@@ -218,10 +218,12 @@
         },
         filter_plans: function() {
             var environment_id = $("#id_environment").val() || "none";
+            var engine_id = $("#id_engine").val() || "none";
             var data_environment_attribute = "data-environment-" + environment_id;
+            var data_engine_attribute = "data-engine-" + engine_id;
             $(".plan").each(function(index, el) {
                 var $el = $(el);
-                if ($el.attr(data_environment_attribute)) {
+                if ($el.attr(data_environment_attribute) && $el.attr(data_engine_attribute)) {
                     $(el).parent().show('fast');
                 } else {
                     ($el).parent().hide('fast');
@@ -234,7 +236,7 @@
     $(function() {
         var database = new Database();
 
-        $("#id_environment").on("change", function() {
+        $("#id_environment, #id_engine").on("change", function() {
             database.update_components();
         });
 
