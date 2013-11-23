@@ -1,4 +1,4 @@
-Database as a Service (DBaas)
+Database as a Service (DBaaS)
 ===================================
 
 Introduction
@@ -39,18 +39,13 @@ Create the tables structure (see the next item)
 
 ## DB
 
-DBaaS uses simple-db-migrate to maintain the migrations up-to-date. However, for now, you can
-just run syncdb to create the table structures. There is a make shortcut to help you with that
+DBaaS uses simple-db-migrate to maintain the migrations up-to-date. However, you can
+just run syncdb to create the table structures. There is a shortcut to help you with that, including 
+put some minimum operational data on DB.
 
-    make db_drop_and_create
+    make reset_data
 
-## Running the project
-
-    make run
-    
-In your browser open the URL: http://localhost:8000/admin/
-
-## Running the tests
+## Running all tests
 
 Before running the test, makes sure that you have mongod running and a user admin created with password 123456.
 
@@ -67,4 +62,10 @@ Then install all the required packages
 Run it!
 
     make test
+
+## Running the project
+
+    make run
+
+In your browser open the URL: http://localhost:8000/admin/
 
