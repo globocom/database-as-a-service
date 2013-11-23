@@ -7,10 +7,9 @@ from contextlib import contextmanager
 from . import BaseDriver, DatabaseInfraStatus, AuthenticationError, ConnectionError, GenericDriverError, \
     DatabaseAlreadyExists, InvalidCredential, DatabaseStatus, DatabaseDoesNotExist
 from util import make_db_random_password
+from system.models import Configuration
 
 LOG = logging.getLogger(__name__)
-
-MYSQL_TIMEOUT = 5
 
 ER_DB_CREATE_EXISTS = 1007
 ER_DB_DROP_EXISTS = 1008
@@ -18,6 +17,9 @@ ER_ACCESS_DENIED_ERROR = 1045
 ER_CANNOT_USER = 1396
 ER_WRONG_STRING_LENGTH = 1470
 ER_CAN_NOT_CONNECT = 2003
+
+# mysql uses timeout in seconds
+MYSQL_CONNECT_TIMEOUT = Configuration.get_by_name('MYSQL_CONNECT_TIMEOUT') or 5
 
 
 class MySQL(BaseDriver):
@@ -40,7 +42,7 @@ class MySQL(BaseDriver):
             LOG.debug('Connecting to mysql databaseinfra %s', self.databaseinfra)
             client = mysqldb.connect(host=connection_address, port=int(connection_port),
                                      user=self.databaseinfra.user, passwd=self.databaseinfra.password,
-                                     db=database, connect_timeout=MYSQL_TIMEOUT)
+                                     db=database, connect_timeout=MYSQL_CONNECT_TIMEOUT)
             LOG.debug('Successfully connected to mysql databaseinfra %s', self.databaseinfra)
             return client
         except Exception, e:
@@ -89,9 +91,6 @@ class MySQL(BaseDriver):
                     raise GenericDriverError(e.args)
             except Exception, e:
                 GenericDriverError(e.args)
-                
-                
-                # 1470, "String 'u_jjnjjjnnjnnjnjn' is too long for user name (should be no longer than 16)"
 
     def info(self):
         databaseinfra_status = DatabaseInfraStatus(databaseinfra_model=self.databaseinfra)
