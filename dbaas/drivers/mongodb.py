@@ -6,11 +6,16 @@ from contextlib import contextmanager
 from . import BaseDriver, DatabaseInfraStatus, DatabaseStatus, \
     AuthenticationError, ConnectionError
 from util import make_db_random_password
+from system.models import Configuration
 
 LOG = logging.getLogger(__name__)
 
-# in miliseconds
-MONGO_CONNECT_TIMEOUT = 5000
+# mongo uses timeout in mili seconds
+MONGO_CONNECT_TIMEOUT = Configuration.get_by_name('MONGO_CONNECT_TIMEOUT')
+if MONGO_CONNECT_TIMEOUT is not None:
+    MONGO_CONNECT_TIMEOUT = int(MONGO_CONNECT_TIMEOUT) * 1000
+else:
+    MONGO_CONNECT_TIMEOUT = 5000
 
 
 class MongoDB(BaseDriver):
@@ -18,7 +23,8 @@ class MongoDB(BaseDriver):
     default_port = 27017
 
     def __concatenate_instances(self):
-        return ",".join([ "%s:%s" % (instance.address, instance.port) for instance in self.databaseinfra.instances.filter(is_arbiter=False, is_active=True).all() ])
+        return ",".join(["%s:%s" % (instance.address, instance.port)
+                        for instance in self.databaseinfra.instances.filter(is_arbiter=False, is_active=True).all()])
 
     def get_connection(self):
         return "mongodb://<user>:<password>@%s" % self.__concatenate_instances()
@@ -52,10 +58,13 @@ class MongoDB(BaseDriver):
             yield return_value
         except pymongo.errors.OperationFailure, e:
             if e.code == 18:
-                raise AuthenticationError('Invalid credentials to databaseinfra %s: %s' % (self.databaseinfra, self.__get_admin_connection()))
-            raise ConnectionError('Error connecting to databaseinfra %s (%s): %s' % (self.databaseinfra, self.__get_admin_connection(), e.message))
+                raise AuthenticationError('Invalid credentials to databaseinfra %s: %s' %
+                                         (self.databaseinfra, self.__get_admin_connection()))
+            raise ConnectionError('Error connecting to databaseinfra %s (%s): %s' %
+                                 (self.databaseinfra, self.__get_admin_connection(), e.message))
         except pymongo.errors.PyMongoError, e:
-            raise ConnectionError('Error connecting to databaseinfra %s (%s): %s' % (self.databaseinfra, self.__get_admin_connection(), e.message))
+            raise ConnectionError('Error connecting to databaseinfra %s (%s): %s' %
+                                 (self.databaseinfra, self.__get_admin_connection(), e.message))
         finally:
             try:
                 if client:
