@@ -1,8 +1,14 @@
 # -*- coding:utf-8 -*-
 #from django.conf.urls import patterns, url, include
 from rest_framework.routers import DefaultRouter
+from django.http import HttpResponseRedirect
 
-router = DefaultRouter()
+class MyRouter(DefaultRouter):
+
+    def get_api_root_view(self):
+        return lambda r: HttpResponseRedirect('https://github.com/globocom/database-as-a-service/wiki/Introduction-to-the-API')
+
+router = MyRouter()
 
 # physical
 from .environment import EnvironmentAPI
