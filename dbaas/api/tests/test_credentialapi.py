@@ -6,6 +6,7 @@ from logical.models import Credential
 from logical.tests import factory
 from django.core.urlresolvers import reverse
 from . import DbaaSAPITestCase, BasicTestsMixin
+from account.models import Role, Team
 # from util import make_db_random_password
 LOG = logging.getLogger(__name__)
 
@@ -49,3 +50,18 @@ class CredentialAPITestCase(DbaaSAPITestCase, BasicTestsMixin):
         new_obj = Credential.objects.get(pk=obj.pk)
         self.assertNotEqual(new_obj.password, obj.password, 'Passwod not changed')
         self.assertEqual(new_obj.password, data['password'])
+
+    def test_post_only_allow_you_create_credential_if_you_have_permission_on_datatabase(self):
+        obj = self.model_new()
+
+        # create new team
+        self.role = Role.objects.get_or_create(name="other_role")[0]
+        obj.database.team = Team.objects.get_or_create(name="other_team", role=self.role)[0]
+        obj.database.save()
+
+        url = "%" % self.url_list()
+        response = self.client.post(url, self.payload(obj, creation=True), content_type='application/json')
+
+        # assert response
+        self.assertEqual(response.status_code, status.HTTP_403_OK)
+

@@ -23,7 +23,7 @@ class DbaasBackend(ModelBackend):
         return user_obj._perm_cache
 
     def has_perm(self, user_obj, perm, obj=None):
-        LOG.debug("validating perm %s for user %s on object %s" % (perm, user_obj, obj))
+        LOG.debug("validating perm %s for user %s on object (%s) %s" % (perm, user_obj, type(obj).__name__, obj))
         # We are using django_services in admin, but it does not provide any support to 
         # object level permission
         if not user_obj.is_active:

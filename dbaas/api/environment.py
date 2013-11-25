@@ -11,7 +11,7 @@ class EnvironmentSerializer(serializers.HyperlinkedModelSerializer):
         fields = ('url', 'id', 'name',)
 
 
-class EnvironmentAPI(viewsets.ModelViewSet):
+class EnvironmentAPI(viewsets.ReadOnlyModelViewSet):
     """
     Environment API
     """

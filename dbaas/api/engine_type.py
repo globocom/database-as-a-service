@@ -11,7 +11,7 @@ class EngineTypeSerializer(serializers.HyperlinkedModelSerializer):
         fields = ('url', 'id', 'name',)
 
 
-class EngineTypeAPI(viewsets.ModelViewSet):
+class EngineTypeAPI(viewsets.ReadOnlyModelViewSet):
     """
     EngineType API
     """

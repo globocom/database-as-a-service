@@ -11,7 +11,7 @@ class PlanSerializer(serializers.HyperlinkedModelSerializer):
         fields = ('url', 'id', 'name', 'description', 'is_active', 'is_default', 'engine_type', 'environments',)
 
 
-class PlanAPI(viewsets.ModelViewSet):
+class PlanAPI(viewsets.ReadOnlyModelViewSet):
     """
     Plan API
     """
