@@ -18,6 +18,8 @@ class MongoDB(BaseDriver):
 
     default_port = 27017
 
+    RESERVED_DATABASES_NAME = ['admin', 'config', 'local']
+
     def __concatenate_instances(self):
         return ",".join(["%s:%s" % (instance.address, instance.port)
                         for instance in self.databaseinfra.instances.filter(is_arbiter=False, is_active=True).all()])
