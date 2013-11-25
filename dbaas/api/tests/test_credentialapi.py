@@ -63,3 +63,14 @@ class CredentialAPITestCase(DbaaSAPITestCase, BasicTestsMixin):
 
         # assert response
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_create_a_already_exist_user_returns_error(self):
+        obj = self.model_create()
+
+        url = self.url_list()
+        payload = self.payload(obj, creation=True)
+        response = self.client.post(url, payload, format='json')
+
+        # assert response
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertTrue('already exists' in response.data['__all__'][0], "Wrong response: %s" % response.data['__all__'][0])
