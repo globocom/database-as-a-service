@@ -18,7 +18,7 @@ MB_FACTOR = 1.0 / 1024.0 / 1024.0
 LOG = logging.getLogger(__name__)
 
 class DatabaseAdmin(admin.DjangoServicesAdmin):
-    database_add_perm_message = _("You must be set to at least one team to add a database.")
+    database_add_perm_message = _("You must be set to at least one team to add a database, and the service administrator has been notified about this.")
     perm_manage_quarantine_database = "logical.can_manage_quarantine_databases"
     service_class = DatabaseService
     search_fields = ("name", "databaseinfra__name")
