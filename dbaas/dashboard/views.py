@@ -23,7 +23,7 @@ def dashboard(request, *args, **kwargs):
         try:
             databaseinfra_status = databaseinfra_service.get_databaseinfra_status(databaseinfra)
         except AttributeError, e:
-            response = HttpResponse(content='The fallow driver error was find: ' + e.message, content_type='text/plain', status=500)
+            response = HttpResponse(content='The follow driver error was find: ' + e.message, content_type='text/plain', status=500)
             return response
         data = SortedDict()
         data["name"] = databaseinfra.name
