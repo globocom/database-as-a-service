@@ -111,13 +111,10 @@ class Database(BaseModel):
         if self.name in self.__get_database_reserved_names():
             raise ValidationError(_("%s is a reserved database name" % self.name))
 
-    def create_new_credential(self):
-        """creates a new credential for the database with a random password"""
-        engine = factory_for(self.databaseinfra)
+    def automatic_create_first_credential(self):
         LOG.info("creating new credential for database %s" % self.name)
-        credential = Credential(user=Credential.USER_PATTERN % self.name, password=make_db_random_password(), database=self)
-        credential.save()
-        engine.create_user(credential)
+        user = Credential.USER_PATTERN % self.name
+        credential = Credential.create_new_credential(user, self)
         return credential
 
     @classmethod
@@ -197,6 +194,7 @@ class Database(BaseModel):
 class Credential(BaseModel):
 
     USER_PATTERN = "u_%s"
+    USER_MAXIMUM_LENGTH_NAME = 16
 
     user = models.CharField(verbose_name=_("User name"), max_length=100)
     password = EncryptedCharField(verbose_name=_("User password"), max_length=255)
@@ -215,7 +213,7 @@ class Credential(BaseModel):
         ordering = ('database', 'user',)
 
     def clean(self):
-        if len(self.user) > 16:
+        if len(self.user) > self.USER_MAXIMUM_LENGTH_NAME:
             raise ValidationError(_("%s is too long" % self.user))
 
     @cached_property
@@ -232,7 +230,7 @@ class Credential(BaseModel):
     def create_new_credential(cls, user, database):
         credential = Credential()
         credential.database = database
-        credential.user = user
+        credential.user = user[:cls.USER_MAXIMUM_LENGTH_NAME]
         credential.password = make_db_random_password()
         credential.full_clean()
         credential.driver.create_user(credential)
@@ -271,7 +269,7 @@ def database_post_save(sender, **kwargs):
         LOG.info("a new database (%s) were created... provision it in the engine" % (database.name))
         engine = factory_for(database.databaseinfra)
         engine.create_database(database)
-        database.create_new_credential()
+        database.automatic_create_first_credential()
 
 
 @receiver(pre_save, sender=Database)
