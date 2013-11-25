@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
-from django.contrib.auth.backends import ModelBackend
 import logging
-
+from django.contrib.auth.backends import ModelBackend
 from account.models import Team
+from logical.models import Database, Credential
 
 LOG = logging.getLogger(__name__)
 
 class DbaasBackend(ModelBackend):
+    perm_manage_quarantine_database = "logical.can_manage_quarantine_databases"
 
     def get_all_permissions(self, user_obj, obj=None):
         # LOG.debug("get_all_permissions for user: %s" % user_obj)
@@ -27,5 +28,18 @@ class DbaasBackend(ModelBackend):
         # object level permission
         if not user_obj.is_active:
             return False
+
+        perms = user_obj.get_all_permissions(obj=None)
+
+        if self.perm_manage_quarantine_database in perms:
+            return perm in perms
         else:
-            return perm in user_obj.get_all_permissions(obj=None)
+            if not (perm in perms):
+                return False
+
+            # check specific permissions
+            if type(obj) == Database:
+                return Database.objects.filter(pk=obj.pk).filter(is_in_quarantine=False, team__in=[team.id for team in Team.objects.filter(users=user_obj)]).exists()
+            elif type(obj) == Credential:
+                return self.has_perm(user_obj, perm, obj=obj.database)
+            return False
