@@ -11,11 +11,7 @@ from system.models import Configuration
 LOG = logging.getLogger(__name__)
 
 # mongo uses timeout in mili seconds
-MONGO_CONNECT_TIMEOUT = Configuration.get_by_name('MONGO_CONNECT_TIMEOUT')
-if MONGO_CONNECT_TIMEOUT is not None:
-    MONGO_CONNECT_TIMEOUT = int(MONGO_CONNECT_TIMEOUT) * 1000
-else:
-    MONGO_CONNECT_TIMEOUT = 5000
+MONGO_CONNECT_TIMEOUT = int(Configuration.get_by_name('MONGO_CONNECT_TIMEOUT') or 5) * 1000
 
 
 class MongoDB(BaseDriver):
