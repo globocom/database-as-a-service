@@ -43,10 +43,13 @@ class DatabaseForm(models.ModelForm):
         if not self.is_valid():
             raise forms.ValidationError(self.errors)
         
+        if len(cleaned_data['name']) > 64:
+            self._errors["name"] = self.error_class([_("Database name too long")])
+
         plan = cleaned_data['plan']
         environment = cleaned_data.get('environment', None)
         if not environment or environment not in plan.environments.all():
-            raise forms.ValidationError(_("Invalid plan for selected environmnet."))
+            raise forms.ValidationError(_("Invalid plan for selected environment."))
 
         cleaned_data['databaseinfra'] = DatabaseInfra.best_for(plan, environment)
         if not cleaned_data['databaseinfra']:
@@ -56,9 +59,9 @@ class DatabaseForm(models.ModelForm):
             if infra.databases.filter(name=cleaned_data['name']):
                 self._errors["name"] = self.error_class([_("this name already exists in the selected environment")])
                 del cleaned_data["name"]
-                
-        if len(cleaned_data['name']) > 64:
-            self._errors["name"] = self.error_class([_("Database name too long")])
+        
+        if cleaned_data['name'] in cleaned_data['databaseinfra'].get_driver().RESERVED_DATABASES_NAME:
+            raise forms.ValidationError(_("%s is a reserved database name" % cleaned_data['name']))
 
         return cleaned_data
 
