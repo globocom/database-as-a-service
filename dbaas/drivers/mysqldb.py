@@ -19,7 +19,7 @@ ER_WRONG_STRING_LENGTH = 1470
 ER_CAN_NOT_CONNECT = 2003
 
 # mysql uses timeout in seconds
-MYSQL_CONNECT_TIMEOUT = Configuration.get_by_name('MYSQL_CONNECT_TIMEOUT') or 5
+MYSQL_CONNECT_TIMEOUT = int(Configuration.get_by_name('MYSQL_CONNECT_TIMEOUT') or 5)
 
 
 class MySQL(BaseDriver):
