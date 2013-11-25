@@ -11,6 +11,7 @@ from ..service.database import DatabaseService
 from ..forms import DatabaseForm
 from ..models import Database
 from account.models import Team
+from drivers import DatabaseAlreadyExists
 from util.html import render_progress_bar
 
 MB_FACTOR = 1.0 / 1024.0 / 1024.0
@@ -18,7 +19,7 @@ MB_FACTOR = 1.0 / 1024.0 / 1024.0
 LOG = logging.getLogger(__name__)
 
 class DatabaseAdmin(admin.DjangoServicesAdmin):
-    database_add_perm_message = _("You must be set to at least one team to add a database.")
+    database_add_perm_message = _("You must be set to at least one team to add a database, and the service administrator has been notified about this.")
     perm_manage_quarantine_database = "logical.can_manage_quarantine_databases"
     service_class = DatabaseService
     search_fields = ("name", "databaseinfra__name")
@@ -151,12 +152,18 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         return super(DatabaseAdmin, self).changelist_view(request, extra_context=extra_context)
 
     def add_view(self, request, form_url='', extra_context=None):
-        teams = Team.objects.filter(users=request.user)
-        LOG.info("user %s teams: %s" % (request.user, teams))
-        if not teams:
-            self.message_user(request, self.database_add_perm_message, level=messages.ERROR)
-            return HttpResponseRedirect(reverse('admin:logical_database_changelist'))
-        return super(DatabaseAdmin, self).add_view(request, form_url, extra_context=extra_context)
+        try:
+            teams = Team.objects.filter(users=request.user)
+            LOG.info("user %s teams: %s" % (request.user, teams))
+            if not teams:
+                self.message_user(request, self.database_add_perm_message, level=messages.ERROR)
+                return HttpResponseRedirect(reverse('admin:logical_database_changelist'))
+            return super(DatabaseAdmin, self).add_view(request, form_url, extra_context=extra_context)
+        except DatabaseAlreadyExists:
+            self.message_user(request, _('An inconsistency was found: The database "%s" already exists in infra-structure but not in DBaaS.') % request.POST['name'], level=messages.ERROR)
+            request.method = 'GET'
+            return super(DatabaseAdmin, self).add_view(request, form_url, extra_context=extra_context)
+
 
 
     def change_view(self, request, object_id, form_url='', extra_context=None):

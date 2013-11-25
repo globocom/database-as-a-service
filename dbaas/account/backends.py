@@ -42,4 +42,4 @@ class DbaasBackend(ModelBackend):
                 return Database.objects.filter(pk=obj.pk).filter(is_in_quarantine=False, team__in=[team.id for team in Team.objects.filter(users=user_obj)]).exists()
             elif type(obj) == Credential:
                 return self.has_perm(user_obj, perm, obj=obj.database)
-            return False
+            return True

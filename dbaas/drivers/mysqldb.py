@@ -25,6 +25,7 @@ MYSQL_CONNECT_TIMEOUT = int(Configuration.get_by_name('MYSQL_CONNECT_TIMEOUT') o
 class MySQL(BaseDriver):
 
     default_port = 3306
+    RESERVED_DATABASES_NAME = ['admin', 'test', 'mysql', 'information_schema']
 
     def get_connection(self):
         my_instance = self.databaseinfra.instances.all()[0]

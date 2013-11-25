@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 import logging
+import mock
 from django.test import TestCase
 from django.contrib.auth.models import User
-from drivers import fake
+from drivers import fake, base
 from physical.tests import factory as physical_factory
 from ..models import Database
 from ..forms import DatabaseForm
@@ -50,6 +51,21 @@ class AdminCreateDatabaseTestCase(TestCase):
         database = Database.objects.get(databaseinfra=self.databaseinfra, name=database_name)
         self.assertEqual(self.project, database.project)
 
+    @mock.patch.object(fake.FakeDriver, 'create_database')
+    def test_try_create_a_new_database_but_database_already_exists_in_driver(self, create_database):
+        create_database.side_effect = base.DatabaseAlreadyExists
+        database_name = "test_new_database"
+        params = {
+            "name": database_name,
+            "project": self.project.pk,
+            "plan": self.plan.pk,
+            "environment": self.environment.pk,
+            "engine": self.databaseinfra.engine.pk,
+        }
+        response = self.client.post("/admin/logical/database/add/", params)
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertTrue('already exists in infra-structure but not in DBaaS' in response.content, response.content)
+
     def test_db_name(self):
         data = {'name': '', 'project': 'any_project'}
         form = DatabaseForm(data=data)
@@ -60,5 +76,3 @@ class AdminCreateDatabaseTestCase(TestCase):
         form = DatabaseForm(data=data)
         self.assertFalse(form.is_valid())
 
-    def test_plan_choice(self):
-        pass

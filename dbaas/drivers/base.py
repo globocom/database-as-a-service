@@ -67,6 +67,9 @@ class BaseDriver(object):
     """
     ENV_CONNECTION = 'DATABASEINFRA_CONNECTION'
 
+    # List of reserved database names for this driver
+    RESERVED_DATABASES_NAME = []
+
     # must be overwrited by subclasses
     default_port = 0
 

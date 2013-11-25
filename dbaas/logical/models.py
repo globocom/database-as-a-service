@@ -37,8 +37,6 @@ class Project(BaseModel):
 
 class Database(BaseModel):
 
-    RESERVED_DATABASES_NAME = ('admin', 'config', 'local')
-
     name = models.CharField(verbose_name=_("Database name"), max_length=100)
     databaseinfra = models.ForeignKey(DatabaseInfra, related_name="databases", on_delete=models.PROTECT)
     project = models.ForeignKey(Project, related_name="databases", on_delete=models.PROTECT, null=True, blank=True)
@@ -120,7 +118,6 @@ class Database(BaseModel):
     @classmethod
     def provision(cls, name, plan, environment):
         # create new databaseinfra
-
         LOG.debug("provisioning databaseinfra with name %s, plan %s and environment %s", name, plan, environment)
 
         if not isinstance(plan, Plan):
@@ -143,7 +140,7 @@ class Database(BaseModel):
         return database
 
     def __get_database_reserved_names(self):
-        return Database.RESERVED_DATABASES_NAME
+        return getattr(self.driver, 'RESERVED_DATABASES_NAME', [])
 
     @property
     def driver(self):
