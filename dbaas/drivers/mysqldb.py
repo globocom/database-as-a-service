@@ -135,8 +135,17 @@ class MySQL(BaseDriver):
         LOG.info("removing database %s" % database.name)
         self.__query("DROP DATABASE %s" % database.name)
 
+    def disconnect_user(self, credential):
+        r = self.__query("SELECT id FROM information_schema.processlist WHERE user='%s' AND db='%s'" %
+                        (credential.user, credential.database))
+        for session in r:
+            LOG.info("disconnecting user %s from database %s id_session %s" %
+                    (credential.user, credential.database, session['id']))
+            self.__query("KILL CONNECTION %s" % session['id'])
+
     def remove_user(self, credential):
         LOG.info("removing user %s from %s" % (credential.user, credential.database))
+        self.disconnect_user(credential)
         self.__query("DROP USER '%s'@'%%'" % credential.user)
 
     def update_user(self, credential):
