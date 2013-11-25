@@ -7,7 +7,7 @@ from logical.tests import factory
 from django.core.urlresolvers import reverse
 from . import DbaaSAPITestCase, BasicTestsMixin
 from account.models import Role, Team
-# from util import make_db_random_password
+
 LOG = logging.getLogger(__name__)
 
 
@@ -17,24 +17,23 @@ class CredentialAPITestCase(DbaaSAPITestCase, BasicTestsMixin):
 
     def model_new(self):
         database = factory.DatabaseFactory()
-        database.credentials.all().delete() # delete previous credentials
+        database.credentials.all().delete()  # delete previous credentials
         return factory.CredentialFactory.build(database=database)
 
     def model_create(self):
         database = factory.DatabaseFactory()
-        database.credentials.all().delete() # delete previous credentials
+        database.credentials.all().delete()  # delete previous credentials
         return factory.CredentialFactory(database=database)
 
     def payload(self, test_obj, listing=False, creation=False, **kwargs):
         data = {
             'user': test_obj.user,
-            'database': reverse('database-detail', kwargs={'pk': test_obj.database.pk }),
+            'database': reverse('database-detail', kwargs={'pk': test_obj.database.pk}),
             'password': test_obj.password,
         }
         if listing:
             del data['password']
         return data
-
 
     def test_post_on_reset_password(self):
         obj = self.model_create()
@@ -59,9 +58,8 @@ class CredentialAPITestCase(DbaaSAPITestCase, BasicTestsMixin):
         obj.database.team = Team.objects.get_or_create(name="other_team", role=self.role)[0]
         obj.database.save()
 
-        url = "%" % self.url_list()
+        url = "%s" % self.url_list()
         response = self.client.post(url, self.payload(obj, creation=True), content_type='application/json')
 
         # assert response
-        self.assertEqual(response.status_code, status.HTTP_403_OK)
-
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
