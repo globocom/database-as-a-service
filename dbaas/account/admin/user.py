@@ -30,13 +30,13 @@ class UserAdmin(UserAdmin):
     
     fieldsets_basic = (
         (None, {'fields': ('username', 'password')}),
-        (_('Personal info'), {'fields': ('first_name', 'last_name', 'email', 'is_active')}),
+        (_('Personal info'), {'fields': ('first_name', 'last_name', 'email', 'is_active', 'is_staff')}),
         (_('Important dates'), {'fields': ('last_login', 'date_joined')}),
     )
     
     fieldsets_advanced = (
         (None, {'fields': ('username', 'password')}),
-        (_('Personal info'), {'fields': ('first_name', 'last_name', 'email', 'is_staff', 'is_active', 'is_superuser')}),
+        (_('Personal info'), {'fields': ('first_name', 'last_name', 'email', 'is_active', 'is_staff', 'is_superuser')}),
         (_('Important dates'), {'fields': ('last_login', 'date_joined')}),
     )
     
@@ -64,3 +64,14 @@ class UserAdmin(UserAdmin):
                 return self.fieldsets_advanced
             else:
                 return self.fieldsets_basic
+
+    def get_readonly_fields(self, request, obj=None):
+        """
+        if user is not superuser, than is_staff field should be readonly
+        """
+        if obj: #In edit mode
+            if request.user.is_superuser:
+                return ()
+            else:
+                return ('is_staff',)
+
