@@ -74,4 +74,6 @@ class UserAdmin(UserAdmin):
                 return ()
             else:
                 return ('is_staff',)
+        else:
+            return ()
 
