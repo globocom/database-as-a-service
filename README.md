@@ -6,12 +6,27 @@ Introduction
 
 This is an implementation of a database as a service api written in python + django. It will try to follow some hypermedia concepts throughout the api calls.
 
-Initially it will only support MongoDB.
+Below: Screenshot from the admin user.
 
-Status
-=======
+image 1: Listing databases and their summary informations
 
-In development (alpha)
+![Listing databases and their summary informations](img/manage_dbs.png "Listing databases and their summary informations")
+
+image 2: exampledb database view and all its credentials
+
+![alt text](img/manage_one_db.png "exampledb database view and all its credentials")
+
+
+Requirements
+============
+
+DBaaS requires the following:
+
+* python >= 2.7.5
+* virtualenv >= 1.7.2
+* virtualenvwrapper >= 3.5
+* and all packages in requirements.txt file (there is a shortcut to install them)
+
 
 Setup your local environment
 ============================
@@ -20,7 +35,7 @@ Setup your local environment
     workon dbaas
     
     
-You will also need to create a sitecustomize.py file with the following content in 
+You will also need to create a  *sitecustomize.py*  (which needs to be in sys.path) file with the following content in 
 yours python's lib directory.
 
     import sys
@@ -39,7 +54,7 @@ Create the tables structure (see the next item)
 
 ## DB
 
-DBaaS uses simple-db-migrate to maintain the migrations up-to-date. However, you can
+DBaaS uses south to maintain the migrations up-to-date. However, you can
 just run syncdb to create the table structures. There is a shortcut to help you with that, including 
 put some minimum operational data on DB.
 
