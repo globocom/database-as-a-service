@@ -280,7 +280,7 @@ if LDAP_ENABLED:
 
 REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': (
-        'rest_framework_hal.renderers.JSONHalRenderer',
+        'api.renderers.JSONHalRenderer',
         'rest_framework.renderers.BrowsableAPIRenderer',
     ),
     'DEFAULT_PARSER_CLASSES': (
@@ -299,7 +299,7 @@ REST_FRAMEWORK = {
     'PAGINATE_BY_PARAM': 'page_size',  # Allow client to override, using `?page_size=xxx`.
     'MAX_PAGINATE_BY': 100,            # Maximum limit allowed when using `?page_size=xxx`.
     'TEST_REQUEST_RENDERER_CLASSES': (
-        'rest_framework_hal.renderers.JSONHalRenderer',
+        'api.renderers.JSONHalRenderer',
     ),
     'TEST_REQUEST_DEFAULT_FORMAT': 'json',
 }
