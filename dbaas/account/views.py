@@ -25,7 +25,7 @@ def profile(request, user_id=None):
     try :
         user = User.objects.get(id=user_id)
         teams = Team.objects.filter(users=user)
-        databases = Database.objects.filter(is_in_quarantine=False, team__in=[team.id for team in teams])
+        databases = Database.alive.filter(team__in=[team.id for team in teams])
         roles = UserRepository.get_roles_for(user=user)
     except Exception, e:
         LOG.warning("Ops... %s" % e)
