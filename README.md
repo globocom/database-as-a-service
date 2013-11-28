@@ -84,3 +84,7 @@ Run it!
 
 In your browser open the URL: http://localhost:8000/admin/
 
+
+[Usage Documentation](./doc/USAGE.md)
+-------------------------------------
+
