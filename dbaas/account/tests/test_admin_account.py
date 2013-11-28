@@ -47,9 +47,22 @@ class AdminCreateDatabaseTestCase(TestCase):
         self.assertContains(response, "Please enter the correct username and password",  status_code=200)
 
     def test_can_load_audit_page(self):
-
+        """Test audit page load"""
         url = reverse('admin:simple_audit_audit_changelist')
         response = self.client.get(url)
 
         self.assertContains(response, "Select Audit to change",  status_code=200)
 
+    def test_can_load_user_add_page(self):
+        """Test user add page load"""
+        url = reverse('admin:account_accountuser_add')
+        response = self.client.get(url)
+
+        self.assertContains(response, "Add user",  status_code=200)
+
+    def test_can_load_user_edit_page(self):
+        """Test user add page load"""
+        url = reverse('admin:account_accountuser_change', args=(self.superuser.id,))
+        response = self.client.get(url)
+
+        self.assertContains(response, "Change user",  status_code=200)
