@@ -38,7 +38,7 @@ class CredentialAPITestCase(DbaaSAPITestCase, BasicTestsMixin):
     def test_post_on_reset_password(self):
         obj = self.model_create()
         url = "%sreset_password/" % self.url_detail(obj.pk)
-        response = self.client.post(url, {}, content_type='application/json')
+        response = self.client.post(url, {}, format='json')
         data = response.data
 
         # assert response

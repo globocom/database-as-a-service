@@ -1,6 +1,9 @@
 - fields:
     name: role_dba
     permissions:
+    - [add_configuration, system, configuration]
+    - [change_configuration, system, configuration]
+    - [delete_configuration, system, configuration]
     - [add_role, auth, group]
     - [add_team, account, team]
     - [change_role, auth, group]

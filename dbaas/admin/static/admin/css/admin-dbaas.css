@@ -41,3 +41,6 @@
     height: 109px;
 }
 
+.popover-content {
+    word-wrap: break-word;
+}

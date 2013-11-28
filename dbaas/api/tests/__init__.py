@@ -139,7 +139,7 @@ class BasicTestsMixin(object):
         url = self.url_list()
         test_obj = self.model_new()
         payload = self.payload(test_obj, creation=True)
-        response = self.client.post(url, payload)
+        response = self.client.post(url, payload, format='json')
         data = response.data
 
         # assert response
