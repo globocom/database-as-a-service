@@ -148,7 +148,7 @@ class Database(BaseModel):
             return self.databaseinfra.get_driver()
 
     def get_endpoint(self):
-        return self.driver.get_connection() + '/' + self.name
+        return self.driver.get_connection(database=self)
 
     endpoint = property(get_endpoint)
 

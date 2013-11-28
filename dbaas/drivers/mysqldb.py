@@ -27,9 +27,12 @@ class MySQL(BaseDriver):
     default_port = 3306
     RESERVED_DATABASES_NAME = ['admin', 'test', 'mysql', 'information_schema']
 
-    def get_connection(self):
+    def get_connection(self, database=None):
         my_instance = self.databaseinfra.instances.all()[0]
-        return "mysql://<user>:<password>@%s" % (my_instance.address)
+        uri = "mysql://<user>:<password>@%s" % (my_instance.address)
+        if database:
+            uri = "%s/%s" % (uri, database.name)
+        return uri
 
     def __get_admin_connection(self, instance=None):
         if instance:
