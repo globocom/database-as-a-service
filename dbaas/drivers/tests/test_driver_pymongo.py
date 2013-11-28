@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
+import mock
 from django.test import TestCase
 from drivers import DriverFactory
 from physical.tests import factory as factory_physical
@@ -54,6 +55,12 @@ class MongoDBEngineTestCase(AbstractTestDriverMongo):
 
     def test_get_default_port(self):
         self.assertEqual(27017, self.driver.default_port)
+
+    @mock.patch.object(MongoDB, 'get_replica_name')
+    def test_connection_string_when_in_replica_set(self, get_replica_name):
+        self.instance = factory_physical.InstanceFactory(databaseinfra=self.databaseinfra, address='127.0.0.2', port=27018)
+        get_replica_name.return_value = 'my_repl'
+        self.assertEqual("mongodb://<user>:<password>@127.0.0.1:27017,127.0.0.2:27018?replicaSet=my_repl", self.driver.get_connection())
 
 
 class ManageDatabaseMongoDBTestCase(AbstractTestDriverMongo):
