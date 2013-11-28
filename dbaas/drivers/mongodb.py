@@ -10,9 +10,6 @@ from system.models import Configuration
 
 LOG = logging.getLogger(__name__)
 
-# mongo uses timeout in mili seconds
-MONGO_CONNECT_TIMEOUT = int(Configuration.get_by_name('MONGO_CONNECT_TIMEOUT') or 5) * 1000
-
 
 class MongoDB(BaseDriver):
 
@@ -35,7 +32,10 @@ class MongoDB(BaseDriver):
     def __mongo_client__(self, instance):
         connection_address = self.__get_admin_connection(instance)
         try:
-            client = pymongo.MongoClient(connection_address, connectTimeoutMS=MONGO_CONNECT_TIMEOUT)
+            # mongo uses timeout in mili seconds
+            connection_timeout_in_miliseconds = int(Configuration.get_by_name('MONGO_CONNECT_TIMEOUT') or 5) * 1000
+
+            client = pymongo.MongoClient(connection_address, connectTimeoutMS=connection_timeout_in_miliseconds)
             if self.databaseinfra.user and self.databaseinfra.password:
                 LOG.debug('Authenticating databaseinfra %s', self.databaseinfra)
                 client.admin.authenticate(self.databaseinfra.user, self.databaseinfra.password)
