@@ -2,6 +2,7 @@
 from __future__ import absolute_import, unicode_literals
 import logging
 import pymongo
+from django.core.cache import cache
 from contextlib import contextmanager
 from . import BaseDriver, DatabaseInfraStatus, DatabaseStatus, \
     AuthenticationError, ConnectionError
@@ -20,12 +21,42 @@ class MongoDB(BaseDriver):
 
     RESERVED_DATABASES_NAME = ['admin', 'config', 'local']
 
+    def get_replica_name(self):
+        """ Get replica name from databaseinfra. Use cache """
+        if not self.databaseinfra.pk:
+            # no cache when database infra is not persisted
+            return self.__get_replica_name()
+
+        key = 'mongo.replica.%d' % self.databaseinfra.pk
+        repl_name = cache.get(key, None)
+        if not repl_name:
+            repl_name = self.__get_replica_name()
+            cache.set(key, repl_name or '')
+        return repl_name
+
+    def __get_replica_name(self):
+        """ Get replica name from mongodb """
+        LOG.debug('Get replica name from %s', self.databaseinfra)
+        repl_name = None
+        with self.pymongo() as client:
+            try:
+                repl_status = client.admin.command('replSetGetStatus')
+                repl_name = repl_status.get('set', None)
+            except pymongo.errors.OperationFailure:
+                # without replica
+                pass
+        return repl_name
+
     def __concatenate_instances(self):
         return ",".join(["%s:%s" % (instance.address, instance.port)
                         for instance in self.databaseinfra.instances.filter(is_arbiter=False, is_active=True).all()])
 
     def get_connection(self):
-        return "mongodb://<user>:<password>@%s" % self.__concatenate_instances()
+        uri = "mongodb://<user>:<password>@%s" % self.__concatenate_instances()
+        repl_name = self.get_replica_name()
+        if repl_name:
+            uri = "%s?replicaSet=%s" % (uri, repl_name)
+        return uri
 
     def __get_admin_connection(self, instance=None):
         if instance:
