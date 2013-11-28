@@ -18,9 +18,6 @@ ER_CANNOT_USER = 1396
 ER_WRONG_STRING_LENGTH = 1470
 ER_CAN_NOT_CONNECT = 2003
 
-# mysql uses timeout in seconds
-MYSQL_CONNECT_TIMEOUT = int(Configuration.get_by_name('MYSQL_CONNECT_TIMEOUT') or 5)
-
 
 class MySQL(BaseDriver):
 
@@ -41,9 +38,12 @@ class MySQL(BaseDriver):
         connection_address, connection_port = self.__get_admin_connection(instance)
         try:
             LOG.debug('Connecting to mysql databaseinfra %s', self.databaseinfra)
+            # mysql uses timeout in seconds
+            connection_timeout_in_seconds = int(Configuration.get_by_name('MYSQL_CONNECT_TIMEOUT') or 5)
+
             client = mysqldb.connect(host=connection_address, port=int(connection_port),
                                      user=self.databaseinfra.user, passwd=self.databaseinfra.password,
-                                     db=database, connect_timeout=MYSQL_CONNECT_TIMEOUT)
+                                     db=database, connect_timeout=connection_timeout_in_seconds)
             LOG.debug('Successfully connected to mysql databaseinfra %s', self.databaseinfra)
             return client
         except Exception, e:
