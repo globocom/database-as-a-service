@@ -30,7 +30,7 @@ class FakeDriver(BaseDriver):
     def __concatenate_instances(self):
         return ",".join([ "%s:%s" % (instance.address, instance.port) for instance in self.databaseinfra.instances.filter(is_arbiter=False, is_active=True).all() ])
 
-    def get_connection(self):
+    def get_connection(self, database=None):
         return "fake://%s" % self.__concatenate_instances()
 
     def create_database(self, database):

@@ -62,6 +62,17 @@ class MongoDBEngineTestCase(AbstractTestDriverMongo):
         get_replica_name.return_value = 'my_repl'
         self.assertEqual("mongodb://<user>:<password>@127.0.0.1:27017,127.0.0.2:27018?replicaSet=my_repl", self.driver.get_connection())
 
+    def test_connection_with_database(self):
+        self.database = factory_logical.DatabaseFactory(name="my_db_url_name", databaseinfra=self.databaseinfra)
+        self.assertEqual("mongodb://<user>:<password>@127.0.0.1:27017/my_db_url_name", self.driver.get_connection(database=self.database))
+
+    @mock.patch.object(MongoDB, 'get_replica_name')
+    def test_connection_with_database_and_replica(self, get_replica_name):
+        self.instance = factory_physical.InstanceFactory(databaseinfra=self.databaseinfra, address='127.0.0.2', port=27018)
+        get_replica_name.return_value = 'my_repl'
+        self.database = factory_logical.DatabaseFactory(name="my_db_url_name", databaseinfra=self.databaseinfra)
+        self.assertEqual("mongodb://<user>:<password>@127.0.0.1:27017,127.0.0.2:27018/my_db_url_name?replicaSet=my_repl", self.driver.get_connection(database=self.database))
+
 
 class ManageDatabaseMongoDBTestCase(AbstractTestDriverMongo):
     """ Test case to managing database in mongodb engine """

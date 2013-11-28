@@ -51,8 +51,10 @@ class MongoDB(BaseDriver):
         return ",".join(["%s:%s" % (instance.address, instance.port)
                         for instance in self.databaseinfra.instances.filter(is_arbiter=False, is_active=True).all()])
 
-    def get_connection(self):
+    def get_connection(self, database=None):
         uri = "mongodb://<user>:<password>@%s" % self.__concatenate_instances()
+        if database:
+            uri = "%s/%s" % (uri, database.name)
         repl_name = self.get_replica_name()
         if repl_name:
             uri = "%s?replicaSet=%s" % (uri, repl_name)

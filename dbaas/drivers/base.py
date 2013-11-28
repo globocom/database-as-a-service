@@ -84,8 +84,8 @@ class BaseDriver(object):
         """ Tests the connection to the database """
         raise NotImplementedError()
 
-    def get_connection(self):
-        """ Connection string passed to script as INSTANCE_CONNECTION environment variable. """
+    def get_connection(self, database=None):
+        """ Connection string for this databaseinfra """
         raise NotImplementedError()
 
     def get_user(self):
