@@ -34,6 +34,10 @@ class Project(BaseModel):
             ("view_project", "Can view projects"),
         )
 
+class DatabaseAliveManager(models.Manager):
+    """manager for returning """
+    def get_query_set(self):
+        return Database.objects.filter(is_in_quarantine=False)
 
 class Database(BaseModel):
 
@@ -47,7 +51,10 @@ class Database(BaseModel):
     is_in_quarantine = models.BooleanField(verbose_name=_("Is database in quarantine?"), default=False)
     quarantine_dt = models.DateField(verbose_name=_("Quarantine date"), null=True, blank=True, editable=False)
     description = models.TextField(verbose_name=_("Description"), null=True, blank=True)
-
+    
+    objects = models.Manager()  # The default manager.
+    alive = DatabaseAliveManager()  # The Dahl-specific manager.
+    
     def __unicode__(self):
         return u"%s" % self.name
 

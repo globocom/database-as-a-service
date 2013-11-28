@@ -29,8 +29,19 @@
         <span><ul>{% for team in teams %}<li>{{ team.name}}</li>{% endfor %}</ul></span>
         <h2>Roles</h2>
         <span><ul>{% for role in roles %}<li>{{ role.name}}</li>{% endfor %}</ul></span>
+        {% if databases %}
+        <h2><a href="{% url 'admin:logical_database_changelist' %}" target="_blank">Databases</a></h2>
+        {% else %}
         <h2>Databases</h2>
-        <span><ul>{% for database in databases %}<li>{{ database.name}}</li>{% endfor %}</ul></span>
+        {% endif %}
+        <span>
+            <ul>{% for database in databases %}<li>{{ database.name}}</li>
+                <ul>
+                    <li>Plan: {{ database.databaseinfra.plan.name }}</li>
+                    <li>Environment: {{ database.databaseinfra.environment.name }}</li>
+                </ul>{% endfor %}
+            </ul>
+        </span>
     </div>
     {% else %}
         <h3>User not found</h3>

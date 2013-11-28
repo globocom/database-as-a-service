@@ -25,8 +25,8 @@ def profile(request, user_id=None):
     try :
         user = User.objects.get(id=user_id)
         teams = Team.objects.filter(users=user)
-        databases = Database.objects.filter(team__in=[team.id for team in teams])
-        roles = UserRepository.get_roles_for(user=user)
+        databases = Database.alive.filter(team__in=[team.id for team in teams])
+        roles = [team.role for team in teams]
     except Exception, e:
         LOG.warning("Ops... %s" % e)
     
