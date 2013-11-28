@@ -10,11 +10,11 @@ Below: Screenshot from the admin user.
 
 image 1: Listing databases and their summary informations
 
-![Listing databases and their summary informations](img/manage_dbs.png "Listing databases and their summary informations")
+![Listing databases and their summary informations](doc/img/manage_dbs.png "Listing databases and their summary informations")
 
-image 2: exampledb database view and all its credentials
+image 2: example database view and all its credentials
 
-![alt text](img/manage_one_db.png "exampledb database view and all its credentials")
+![alt text](doc/img/manage_one_db.png "exampledb database view and all its credentials")
 
 
 Requirements
@@ -56,7 +56,7 @@ Create the tables structure (see the next item)
 
 DBaaS uses south to maintain the migrations up-to-date. However, you can
 just run syncdb to create the table structures. There is a shortcut to help you with that, including 
-put some minimum operational data on DB.
+some minimum operational data on DB.
 
     make reset_data
 
