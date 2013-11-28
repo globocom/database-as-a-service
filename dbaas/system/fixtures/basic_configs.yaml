@@ -12,3 +12,17 @@
     value: email@from.dbaas
   model: system.configuration
   pk: 2
+- fields:
+    created_at: !!timestamp '2013-11-14 14:23:00'
+    updated_at: !!timestamp '2013-11-14 14:23:00'
+    name: quarantine_retention_days
+    value: 7
+  model: system.configuration
+  pk: 3
+- fields:
+    created_at: !!timestamp '2013-11-14 14:23:00'
+    updated_at: !!timestamp '2013-11-14 14:23:00'
+    name: database_threshold_notify_email_percentage
+    value: 70
+  model: system.configuration
+  pk: 4
