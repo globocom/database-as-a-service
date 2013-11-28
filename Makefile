@@ -10,8 +10,6 @@ endef
 export CHECK_SCRIPT
 
 # Use make -e DBAAS_DATABASE_HOST=another_host to replace default value
-DBAAS_DATABASE_HOST=127.0.0.1
-
 
 default:
 	@awk -F\: '/^[a-z_]+:/ && !/default/ {printf "- %-20s %s\n", $$1, $$2}' Makefile
