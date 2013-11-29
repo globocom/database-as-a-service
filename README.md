@@ -85,6 +85,14 @@ Run it!
 In your browser open the URL: http://localhost:8000/admin/
 
 
-[Usage Documentation](./doc/USAGE.md)
--------------------------------------
+Documentation
+=============
 
+[DBaaS](./doc/DEFINITIONS.md)
+-------------------------------------------
+
+[Quickstart](./doc/HOWTO.md)
+-------------------------------------------
+
+[API](./doc/API.md)
+-------------------------------------------
