@@ -11,7 +11,7 @@ from django.shortcuts import render_to_response
 from django.template.loader import render_to_string
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.utils.datastructures import SortedDict
-from account.models import UserRepository, Team
+from account.models import Team
 from logical.models import Database
 
 LOG = logging.getLogger(__name__)
