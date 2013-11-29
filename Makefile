@@ -91,9 +91,3 @@ logical_migrate: # create migration to logical app
 graph_models: # generate graph models
 	@cd dbaas && python manage.py graph_models -g physical logical tsuru > ~/dbaas_model.dot
 
-
-sync_wiki: # update github wiki with files in ./doc
-	@[ -d .wiki ] || git clone git@github.com:globocom/database-as-a-service.wiki.git .wiki
-	@cd .wiki && git checkout -f && git clean -xdf && git pull
-	@cp -R ./doc/* ./.wiki
-	@cd ./.wiki && git add . && git commit -am "sync wiki on `date`" && git push
