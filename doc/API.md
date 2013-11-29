@@ -12,8 +12,13 @@ Currently, only basic authentication is supported. So I recommend you use HTTPS.
    * [Create new database](#post-apidatabase)
    * [List all databases](#get-apidatabase)
    * [Get database info](#get-apidatabasesome_id)
+   * [Delete database](#delete-apidatabasesome_id)
 * [Credential](#credential)
    * [Create new credential](#post-apicredential)
+   * [List all credentials](#get-apicredential)
+   * [Show password](#get-apicredentialsome_id)
+   * [Reset password](#delete-apicredentialsome_idresetpassword)
+   * [Delete credential](#delete-apicredentialsome_id)
 
 ## Database
 This resource represents a database. Databases can be created on different engines.
