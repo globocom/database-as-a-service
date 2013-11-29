@@ -38,8 +38,8 @@ compile:
 
 
 db_reset: # drop and create database
-	@mysqladmin -uroot -f drop dbaas -h$(DBAAS_DATABASE_HOST); true
-	@mysqladmin -uroot create dbaas -h$(DBAAS_DATABASE_HOST)
+	@mysqladmin -uroot -f drop dbaas -hlocalhost; true
+	@mysqladmin -uroot create dbaas -hlocalhost
 	@cd dbaas && python manage.py syncdb --migrate --noinput
 
 

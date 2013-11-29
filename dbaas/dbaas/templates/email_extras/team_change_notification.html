@@ -1,0 +1,16 @@
+<h2>Dbaas team change notification</h2>
+<br/>
+<b>Hello {{ user.username }}</b><br/>
+<br/>
+your team has been updated to<br/>
+<ul>
+{% for team in teams %}
+<li>{{ team }}</li>
+{% endfor %}
+</ul>
+<br/>
+You may now use the system at {{ url }}
+<br/>
+<br/>
+Yours sincerely,<br/>
+Dbaas notification robot

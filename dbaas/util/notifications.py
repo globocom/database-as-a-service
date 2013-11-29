@@ -10,20 +10,45 @@ from system.models import Configuration
 
 LOG = logging.getLogger(__name__)
 
+def get_domain():
+    domain = Site.objects.get(id=1).domain
+    if not domain.startswith('http'):
+        domain = "http://" + domain
+    
+    return domain
 
 def notify_new_user_creation(user=None):
     subject=_("[DBAAS] a new user has just been created: %s" % user.username)
     template="new_user_notification"
     addr_from=Configuration.get_by_name("email_addr_from")
-    addr_to=Configuration.get_by_name("new_user_notify_email")
+    addr_to=Configuration.get_by_name_as_list("new_user_notify_email")
     context={}
     context['user'] = user
-    domain = Site.objects.get(id=1).domain
-    if not domain.startswith('http'):
-        domain = "http://" + domain
+    domain = get_domain()
     context['url'] = domain + reverse('admin:account_team_changelist')
     LOG.debug("user: %s | addr_from: %s | addr_to: %s" % (user, addr_from, addr_to))
     if user and addr_from and addr_to:
         send_mail_template(subject, template, addr_from, addr_to, fail_silently=False, attachments=None, context=context)
     else:
         LOG.warning("could not send email for new user creation")
+
+
+def notify_team_change_for(user=None):
+    LOG.info("Notifying team change for user %s" % user)
+    subject=_("[DBAAS] your team has been updated!")
+    template="team_change_notification"
+    addr_from=Configuration.get_by_name("email_addr_from")
+    if user.email:
+        #addr_to=Configuration.get_by_name_as_list("new_user_notify_email") + [user.email]
+        addr_to=[user.email]
+        context={}
+        context['user'] = user
+        domain = get_domain()
+        context['url'] = domain
+        context['teams'] = [team.name for team in user.team_set.all()]
+        if user and addr_from and addr_to:
+            send_mail_template(subject, template, addr_from, addr_to, fail_silently=False, attachments=None, context=context)
+        else:
+            LOG.warning("could not send email for team change")
+    else:
+        LOG.warning("user %s has no email set and therefore cannot be notified!")

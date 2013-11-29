@@ -7,6 +7,7 @@ from django.utils.html import format_html, escape
 from django.contrib.auth.admin import UserAdmin
 
 from account.models import Team
+from util import notifications
 
 LOG = logging.getLogger(__name__)
 
@@ -76,4 +77,19 @@ class UserAdmin(UserAdmin):
                 return ('is_staff',)
         else:
             return ()
+
+    def save_related(self, request, form, formsets, change):
+        """overrides save_related to send an email if the user team changes"""
+
+        instance = form.instance
+
+        teams_before_save = [team.id for team in instance.team_set.all()]
+        LOG.debug("before save for user %s | teams: %s" % (instance, teams_before_save))
+        super(UserAdmin, self).save_related(request, form, formsets, change)
+        teams_after_save = [team.id for team in instance.team_set.all()]
+        LOG.debug("after save for user %s | teams: %s" % (instance, teams_after_save))
+        
+        if cmp(teams_before_save, teams_after_save):
+            notifications.notify_team_change_for(user=instance)
+    
 

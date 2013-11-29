@@ -11,7 +11,7 @@ import logging
 LOG = logging.getLogger(__name__)
 
 
-class SimpleTest(TestCase):
+class AccountTest(TestCase):
 
     def setUp(self):
         self.new_user = factory.UserFactory()

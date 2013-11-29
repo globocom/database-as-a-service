@@ -1,0 +1,15 @@
+Dbaas team change notification
+
+Hello {{ user.username }}
+
+your team has been updated to
+
+{% for team in teams %}
+{{ team }}
+{% endfor %}
+
+
+You may now use the system at {{ url }}
+
+Yours sincerely,
+Dbaas notification robot

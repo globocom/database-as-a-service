@@ -18,24 +18,11 @@ from .helper import find_ldap_groups_from_user
 LOG = logging.getLogger(__name__)
 
 
-class UserRepository(object):
-
-    @staticmethod
-    def get_groups_for(user=None):
-        return user.groups.exclude(name__startswith="role") if user else []
-
-    @staticmethod
-    def get_roles_for(user=None):
-        return user.groups.filter(name__startswith="role") if user else []
-
-
-
 class AccountUser(User):
     class Meta:
         proxy = True
         verbose_name_plural = _("users")
         verbose_name = _("user")
-
 
 class Role(Group):
     class Meta:
@@ -153,7 +140,7 @@ def role_pre_save(sender, **kwargs):
 @receiver(pre_save, sender=AccountUser)
 def user_pre_save(sender, **kwargs):
     user = kwargs.get('instance')
-    LOG.debug("user %s pre save signal" % user)
+    #LOG.debug("user %s pre save signal" % user)
 
 
 @receiver(post_save, sender=AccountUser)
