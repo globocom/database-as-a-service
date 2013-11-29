@@ -29,6 +29,19 @@ class Configuration(BaseModel):
         return 'cfg:%s' % configuration_name
 
     @classmethod
+    def get_by_name_as_list(cls, name, token=','):
+        """returns a list splited by name for the given name"""
+        return [item.strip() for item in Configuration.get_by_name(name).split(token)]
+
+    @classmethod
+    def get_by_name_as_int(cls, name):
+        """returns variable as int"""
+        try:
+            return int(Configuration.get_by_name(name))
+        except:
+            return None
+
+    @classmethod
     def get_by_name(cls, name):
         key = cls.get_cache_key(name)
         value = cache.get(key, CACHE_MISS)
