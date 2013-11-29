@@ -31,7 +31,11 @@ class Configuration(BaseModel):
     @classmethod
     def get_by_name_as_list(cls, name, token=','):
         """returns a list splited by name for the given name"""
-        return [item.strip() for item in Configuration.get_by_name(name).split(token)]
+        config = Configuration.get_by_name(name) or []
+        if config:
+            return [item.strip() for item in config.split(token)]
+        else:
+            return config
 
     @classmethod
     def get_by_name_as_int(cls, name):
