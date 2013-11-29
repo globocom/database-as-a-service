@@ -12,7 +12,6 @@ To ensure you will be able to run all examples, they are based on sample data pr
 * [Credential](#credential)
    * [Create new credential](#create-new-credential)<br>
 
-<a name="database"/>
 ## Database
 This resource represents a database. Databases can be created on different engines.
 
@@ -30,7 +29,6 @@ This resource represents a database. Databases can be created on different engin
 | credentials  | List of credentials that have access to this database | no | yes |
 \* This fields are not read only at creation time, but you can change it after.
 
-<a name="create-new-database"/>
 ### POST /api/database/
 Create new database. Required fields are:
 
@@ -66,7 +64,6 @@ Response:
         ]
     }
 
-<a name="list-all-databases"/>
 ## GET /api/database/
 List all databases that you have permission.
 
@@ -106,12 +103,10 @@ Response:
     }
 
 
-<a name="credential"/>
 ## Credential
 
 ### Functions
 
-<a name="create-new-credential"/>
 ## POST /api/credential/
 Create new credential
 
