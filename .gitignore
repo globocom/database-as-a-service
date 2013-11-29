@@ -8,3 +8,4 @@ coverage.xml
 test-report.xml
 \#*\#
 *.bak
+.wiki
