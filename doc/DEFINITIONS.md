@@ -4,7 +4,7 @@ This guide will help you to understand the basic DBaaS architecture.
 
 Basically DBaaS has 2 kind of users (if you run the `reset_data` command):
 
-* Regular user: manage projects, databases and credentials.
+* Regular user: Can manage projects, databases and credentials.
 * DBA user: Regular user roles +  physical and logical structure.
 
 
@@ -17,7 +17,7 @@ You can create one or more roles you want assign appropriate permissions. We are
 
 
 ### 1.2 Teams
-It's kind of proxy for roles. The team has only one role, but one or more users. 
+It's sort of proxy for roles. The team has only one role, but one or more users. subsequently those users inherit the team rule
 
 
 ### 1.3 Users
