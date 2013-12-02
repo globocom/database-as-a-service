@@ -17,7 +17,7 @@ You can create one or more roles you want assign appropriate permissions. We are
 
 
 ### 1.2 Teams
-It's sort of proxy for roles. The team has only one role, but one or more users. Subsequently those users inherit the team rule
+It's sort of a proxy for roles. The team has only one role, but one or more users. Subsequently those users inherit the team role.
 
 
 ### 1.3 Users
