@@ -140,6 +140,7 @@ class MySQL(BaseDriver):
         self.__query("DROP DATABASE %s" % database.name)
 
     def disconnect_user(self, credential):
+        # It works only in mysql >= 5.5
         r = self.__query("SELECT id FROM information_schema.processlist WHERE user='%s' AND db='%s'" %
                         (credential.user, credential.database))
         for session in r:
