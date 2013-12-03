@@ -232,7 +232,7 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 #enable m2m fields audit
-DJANGO_SIMPLE_AUDIT_M2M_FIELDS=True
+DJANGO_SIMPLE_AUDIT_M2M_FIELDS=False
 
 ##################################
 ### LDAP_AUTHENTICATION
