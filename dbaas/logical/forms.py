@@ -60,7 +60,7 @@ class DatabaseForm(models.ModelForm):
                 self._errors["name"] = self.error_class([_("this name already exists in the selected environment")])
                 del cleaned_data["name"]
         
-        if cleaned_data['name'] in cleaned_data['databaseinfra'].get_driver().RESERVED_DATABASES_NAME:
+        if 'name' in cleaned_data and cleaned_data['name'] in cleaned_data['databaseinfra'].get_driver().RESERVED_DATABASES_NAME:
             raise forms.ValidationError(_("%s is a reserved database name" % cleaned_data['name']))
 
         return cleaned_data

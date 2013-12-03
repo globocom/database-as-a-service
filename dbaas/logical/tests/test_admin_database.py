@@ -23,7 +23,7 @@ class AdminCreateDatabaseTestCase(TestCase):
     def setUp(self):
         self.plan = physical_factory.PlanFactory()
         self.environment = self.plan.environments.all()[0]
-        self.databaseinfra = physical_factory.DatabaseInfraFactory(plan=self.plan, environment=self.environment)
+        self.databaseinfra = physical_factory.DatabaseInfraFactory(plan=self.plan, environment=self.environment, capacity=10)
         self.project = factory.ProjectFactory()
         self.role = Role.objects.get_or_create(name="fake_role")[0]
         self.team = Team.objects.get_or_create(name="fake_team", role=self.role)[0]
@@ -51,8 +51,22 @@ class AdminCreateDatabaseTestCase(TestCase):
         database = Database.objects.get(databaseinfra=self.databaseinfra, name=database_name)
         self.assertEqual(self.project, database.project)
 
+    def test_try_create_a_new_database_but_database_already_exists(self):
+        database_name = "test_new_database"
+        self.database = factory.DatabaseFactory(databaseinfra=self.databaseinfra, name=database_name)
+        params = {
+            "name": database_name,
+            "project": self.project.pk,
+            "plan": self.plan.pk,
+            "environment": self.environment.pk,
+            "engine": self.databaseinfra.engine.pk,
+        }
+        response = self.client.post("/admin/logical/database/add/", params)
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertIn('this name already exists in the selected environment', response.content)
+
     @mock.patch.object(fake.FakeDriver, 'create_database')
-    def test_try_create_a_new_database_but_database_already_exists_in_driver(self, create_database):
+    def test_try_create_a_new_database_but_database_already_exists_only_in_driver(self, create_database):
         create_database.side_effect = base.DatabaseAlreadyExists
         database_name = "test_new_database"
         params = {
