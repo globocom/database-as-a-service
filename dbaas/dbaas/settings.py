@@ -231,6 +231,9 @@ AUTHENTICATION_BACKENDS = [
   'django.contrib.auth.backends.ModelBackend',
 ]
 
+#enable m2m fields audit
+DJANGO_SIMPLE_AUDIT_M2M_FIELDS=True
+
 ##################################
 ### LDAP_AUTHENTICATION
 ##################################
