@@ -11,8 +11,7 @@ distribute==0.7.3
 django-adminplus==0.2.0
 django-extensions==1.2.2
 django-services==0.0.8
-#django-simple-audit==0.1.11
-git+https://github.com/leandrosouza/django-simple-audit.git@develop#egg=simple_audit
+django-simple-audit==0.1.12b
 djangorestframework==2.3.8
 Markdown==2.3.1
 gunicorn==0.17.2
