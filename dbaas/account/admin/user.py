@@ -4,16 +4,57 @@ from django.utils.translation import ugettext_lazy as _
 import logging
 from django.utils.html import format_html
 from django.contrib.auth.admin import UserAdmin
+from django.contrib.admin import SimpleListFilter
+from account.models import Role, Team
+
 
 from util import notifications
 
 LOG = logging.getLogger(__name__)
 
 
+class RoleListFilter(SimpleListFilter):
+    title = _('roles')
+
+    parameter_name = 'role'
+
+    def lookups(self, request, model_admin):
+        qs = Role.objects.all()
+        return [(i.id, i.name) for i in qs]
+
+    def queryset(self, request, queryset):
+        users = []
+        if self.value():
+            teams = Team.objects.filter(role=self.value())
+            for team in teams:
+                for user in team.users.all():
+                    users.append(user.id)
+            return queryset.filter(id__in=users)
+
+
+class TeamListFilter(SimpleListFilter):
+    title = _('team')
+
+    parameter_name = 'team'
+
+    def lookups(self, request, model_admin):
+        qs = Team.objects.all()
+        return [(i.id, i.name) for i in qs]
+
+    def queryset(self, request, queryset):
+        users = []
+        if self.value():
+            teams = Team.objects.filter(id=self.value())
+            for team in teams:
+                for user in team.users.all():
+                    users.append(user.id)
+            return queryset.filter(id__in=users)
+
+
 class UserAdmin(UserAdmin):
 
     list_display = ('username', 'email', 'get_team_for_user')
-    list_filter = ('is_active', 'groups')
+    list_filter = ('is_active', RoleListFilter, TeamListFilter,)
     search_fields = ('username', 'first_name', 'last_name', 'email')
     ordering = ('username',)
 
