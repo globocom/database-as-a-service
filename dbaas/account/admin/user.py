@@ -13,7 +13,7 @@ LOG = logging.getLogger(__name__)
 class UserAdmin(UserAdmin):
 
     list_display = ('username', 'email', 'get_team_for_user')
-    list_filter = ('is_staff', 'is_superuser', 'is_active', 'groups')
+    list_filter = ('is_active', 'groups')
     search_fields = ('username', 'first_name', 'last_name', 'email')
     ordering = ('username',)
 
