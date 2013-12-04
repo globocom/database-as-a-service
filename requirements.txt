@@ -11,7 +11,7 @@ distribute==0.7.3
 django-adminplus==0.2.0
 django-extensions==1.2.2
 django-services==0.0.8
-django-simple-audit==0.1.13b
+django-simple-audit==0.1.13c
 djangorestframework==2.3.8
 Markdown==2.3.1
 gunicorn==0.17.2
