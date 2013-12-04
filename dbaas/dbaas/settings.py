@@ -68,7 +68,7 @@ ALLOWED_HOSTS = [os.getenv('DBAAS_HOST', None)]
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
 # although not all choices may be available on all operating systems.
 # In a Windows environment this must be set to your system time zone.
-TIME_ZONE = 'America/Sao_Paulo'
+TIME_ZONE = os.getenv('DJANGO_TIME_ZONE', 'America/Sao_Paulo')
 
 # Language code for this installation. All choices can be found here:
 # http://www.i18nguy.com/unicode/language-identifiers.html
@@ -232,7 +232,7 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 #enable m2m fields audit
-DJANGO_SIMPLE_AUDIT_M2M_FIELDS=False
+DJANGO_SIMPLE_AUDIT_M2M_FIELDS=True
 
 ##################################
 ### LDAP_AUTHENTICATION
