@@ -217,6 +217,7 @@ class DatabaseInfra(BaseModel):
 
 class Host(BaseModel):
     hostname = models.CharField(verbose_name=_("Hostname"), max_length=255, unique=True)
+    monitor_url = models.URLField(verbose_name=_("Monitor Url"), max_length=255, blank=True, null=True)
 
     def __unicode__(self):
         return self.hostname
