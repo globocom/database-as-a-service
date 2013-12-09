@@ -53,7 +53,7 @@ class Database(BaseModel):
     description = models.TextField(verbose_name=_("Description"), null=True, blank=True)
     
     objects = models.Manager()  # The default manager.
-    alive = DatabaseAliveManager()  # The Dahl-specific manager.
+    alive = DatabaseAliveManager()  # The alive dbs specific manager.
     
     def __unicode__(self):
         return u"%s" % self.name
