@@ -9,9 +9,3 @@ class ProjectAdmin(admin.DjangoServicesAdmin):
     service_class = ProjectService
     prepopulated_fields = {"slug": ("name",)}
     list_display = ("name", "is_active", )
-
-    # fieldsets = (
-    #     (None, {
-    #         'fields': ('name', 'is_active', 'slug')
-    #     }),
-    # )
