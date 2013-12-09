@@ -4,7 +4,7 @@ from django.utils.translation import ugettext_lazy as _
 import logging
 from django.forms import models
 from django import forms
-from .models import Database, Credential
+from .models import Database, Credential, Project
 from physical.models import Plan, Environment, DatabaseInfra, Engine
 from util import make_db_random_password
 
@@ -92,3 +92,12 @@ class CredentialForm(models.ModelForm):
     class Meta:
         model = Credential
 
+
+class ProjectForm(models.ModelForm):
+    
+    class Meta:
+        model = Project
+        # widgets = {
+        #     'slug': forms.Textarea(attrs={'disabled': True}),
+        #     'log': forms.Textarea(attrs={'disabled': True}),
+        # }
