@@ -44,8 +44,8 @@ class InstanceAdmin(django_admin.TabularInline):
 class DatabaseInfraAdmin(admin.DjangoServicesAdmin):
     service_class = DatabaseInfraService
     search_fields = ("name", "user", "instances__address",)
-    list_display = ("name", "user", "show_instances", "capacity_bar")
-    list_filter = ("engine",)
+    list_display = ("name", "user", "environment", "show_instances", "capacity_bar")
+    list_filter = ("engine", "environment")
     save_on_top = True
 
     def capacity_bar(self, datainfra):
