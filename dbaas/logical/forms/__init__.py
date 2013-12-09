@@ -10,14 +10,8 @@ from util import make_db_random_password
 
 from .database import DatabaseForm
 from .credential import CredentialForm
+from .project import ProjectForm
 
 LOG = logging.getLogger(__name__)
 
 
-class ProjectForm(models.ModelForm):
-    
-    class Meta:
-        model = Project
-        widgets = {
-            'slug': forms.HiddenInput(),
-        }
