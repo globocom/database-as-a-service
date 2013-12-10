@@ -60,6 +60,10 @@ DATABASES = {
     }
 }
 
+#get variables for the analytics
+GANALYTICS_TRACKING_CODE = os.getenv('DBAAS_ANALYTICS', '')
+
+
 # Hosts/domain names that are valid for this site; required if DEBUG is False
 # See https://docs.djangoproject.com/en/1.5/ref/settings/#allowed-hosts
 ALLOWED_HOSTS = [os.getenv('DBAAS_HOST', None)]
@@ -187,6 +191,7 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     'django.contrib.admindocs',
     'raven.contrib.django.raven_compat',
+    'ganalytics',
 )
 
 if not DB_ENGINE.endswith('sqlite3'):
