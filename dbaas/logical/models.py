@@ -306,11 +306,16 @@ def credential_pre_save(sender, **kwargs):
         if credential.database != saved_object.database:
             raise AttributeError(_("Attribute database cannot be edited"))
 
+
+@receiver(pre_save, sender=Project)
+def project_pre_save(sender, **kwargs):
+    instance = kwargs.get('instance')
+    instance.slug = slugify(instance.name)
+
+
 class NoDatabaseInfraCapacity(Exception):
     """ There isn't databaseinfra capable to support a new database with this plan """
     pass
-
-
 
 
 simple_audit.register(Project, Database, Credential)
