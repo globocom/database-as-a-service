@@ -27,8 +27,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     list_display_advanced = list_display_basic + ["quarantine_dt_format"]
     list_filter_basic = ["project", "databaseinfra__environment", "databaseinfra__engine"]
     list_filter_advanced = list_filter_basic + ["databaseinfra", "is_in_quarantine", "team"]
-    add_form_template = "logical/database_add_form.html"
-    change_form_template = "logical/database_change_form.html"
+    add_form_template = "logical/database/database_add_form.html"
+    change_form_template = "logical/database/database_change_form.html"
     delete_button_name = "Delete"
     fieldsets_add = (
         (None, {
