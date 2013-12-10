@@ -175,6 +175,6 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         database = Database.objects.get(id=object_id)
         extra_context = extra_context or {}
         if not database.is_in_quarantine:
-            extra_context['quarantine_days'] = Configuration.objects.get(name='quarantine_retention_days').value
+            extra_context['quarantine_days'] = Configuration.get_by_name_as_int('quarantine_retention_days')
         return super(DatabaseAdmin, self).delete_view(request, object_id, extra_context=extra_context)
 
