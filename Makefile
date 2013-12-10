@@ -28,7 +28,7 @@ check_environment: # check if your local environment is ok to running this proje
 	@echo "$$CHECK_SCRIPT" | python -
 
 
-pip: check_environment # install pip libraries
+pip: # install pip libraries
 	@pip install -r requirements.txt
 	@pip install -r requirements_test.txt
 
