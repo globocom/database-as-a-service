@@ -17,16 +17,11 @@ LOG = logging.getLogger(__name__)
 class Environment(BaseModel):
     name = models.CharField(verbose_name=_("Environment"), max_length=100, unique=True)
 
-    def __unicode__(self):
-        return self.name
-
 
 class EngineType(BaseModel):
 
     name = models.CharField(verbose_name=_("Engine name"), max_length=100, unique=True)
 
-    def __unicode__(self):
-        return self.name
 
     class Meta:
         permissions = (
@@ -87,9 +82,6 @@ class Plan(BaseModel):
     @property
     def engines(self):
         return Engine.objects.filter(engine_type_id=self.engine_type_id)
-
-    def __unicode__(self):
-        return "Plan %s" % self.name
 
 
     class Meta:

@@ -23,9 +23,9 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     perm_manage_quarantine_database = "logical.can_manage_quarantine_databases"
     service_class = DatabaseService
     search_fields = ("name", "databaseinfra__name")
-    list_display_basic = ["name_html", "engine_type", "environment", "get_capacity_html",]
+    list_display_basic = ["name_html", "engine_type", "environment", "plan", "get_capacity_html",]
     list_display_advanced = list_display_basic + ["quarantine_dt_format"]
-    list_filter_basic = ["project", "databaseinfra__environment", "databaseinfra__engine"]
+    list_filter_basic = ["project", "databaseinfra__environment", "databaseinfra__engine", "databaseinfra__plan"]
     list_filter_advanced = list_filter_basic + ["databaseinfra", "is_in_quarantine", "team"]
     add_form_template = "logical/database/database_add_form.html"
     change_form_template = "logical/database/database_change_form.html"
@@ -61,6 +61,11 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         return database.environment
 
     environment.admin_order_field = 'name'
+
+    def plan(self, database):
+        return database.plan
+
+    plan.admin_order_field = 'name'
 
     def name_html(self, database):
         html = '%(name)s <a href="javascript:void(0)" title="%(title)s" data-content="%(endpoint)s" class="show-endpoint"><span class="icon-info-sign"></span></a>' % {
