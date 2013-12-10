@@ -13,6 +13,7 @@ from ..models import Database
 from account.models import Team
 from drivers import DatabaseAlreadyExists
 from logical.templatetags import capacity
+from system.models import Configuration
 
 
 LOG = logging.getLogger(__name__)
@@ -161,8 +162,6 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             request.method = 'GET'
             return super(DatabaseAdmin, self).add_view(request, form_url, extra_context=extra_context)
 
-
-
     def change_view(self, request, object_id, form_url='', extra_context=None):
         database = Database.objects.get(id=object_id)
         extra_context = extra_context or {}
@@ -171,4 +170,11 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         else:
             extra_context['delete_button_name'] = "Delete"
         return super(DatabaseAdmin, self).change_view(request, object_id, form_url, extra_context=extra_context)
+
+    def delete_view(self, request, object_id, extra_context=None):
+        database = Database.objects.get(id=object_id)
+        extra_context = extra_context or {}
+        if not database.is_in_quarantine:
+            extra_context['quarantine_days'] = Configuration.get_by_name_as_int('quarantine_retention_days')
+        return super(DatabaseAdmin, self).delete_view(request, object_id, extra_context=extra_context)
 
