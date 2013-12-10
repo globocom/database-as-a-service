@@ -1,4 +1,7 @@
-{% load admin_static admin_urls bootstrap_template_tags %}<!DOCTYPE html>
+{% load admin_static admin_urls bootstrap_template_tags %}
+{% load ganalytics %}
+
+<!DOCTYPE html>
 <html lang="{{ LANGUAGE_CODE|default:"en-us" }}" {% if LANGUAGE_BIDI %}dir="rtl"{% endif %}>
 <head>
 <title>{% block title %}{% endblock %}</title>
@@ -134,5 +137,9 @@
 {% endblock js_footer_commons %}
 
 {% block js_footer %}{% endblock js_footer %}
+<!-- JAVASCRIPTS -->
+{% if not request.is_ajax %}
+{% ganalytics %}
+{% endif %}
 </body>
 </html>
