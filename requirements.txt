@@ -28,3 +28,4 @@ wsgiref==0.1.2
 python-ldap==2.3.13
 django-auth-ldap==1.1.4
 django-email-extras==0.1.13
+django-ganalytics==0.2
