@@ -22,4 +22,5 @@
 * role filter in user view
 * add the possibility to specify a monitoring_url for a hostname
 * showing environment and plan in database listing
-* removed slug field from project (it is not used...)
+* removed slug field from project form (it is not used...)
+* inform user for how long the database will be in database
