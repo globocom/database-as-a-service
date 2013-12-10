@@ -1,6 +1,6 @@
 {% extends "admin/change_list.html" %}
 {% load i18n admin_static admin_modify dbaas_tags %}
-
+{% load capacity %}
 {% block breadcrumbs %}
 {% endblock %}
 
@@ -35,12 +35,16 @@
         <h2>Databases</h2>
         {% endif %}
         <span>
-            <ul>{% for database in databases %}<li>{{ database.name}}</li>
-                <ul>
-                    <li>Plan: {{ database.databaseinfra.plan.name }}</li>
-                    <li>Environment: {{ database.databaseinfra.environment.name }}</li>
-                </ul>{% endfor %}
+			{% for database in databases %}
+            <ul>
+				<li>{{ database.name}}</li>
+               	<ul>
+                   	<li>Plan: {{ database.databaseinfra.plan.name }}</li>
+                   	<li>Environment: {{ database.databaseinfra.environment.name }}</li>
+					{% render_capacity_html database %}
+               	</ul>
             </ul>
+			{% endfor %}
         </span>
     </div>
     {% else %}
