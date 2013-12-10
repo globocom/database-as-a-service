@@ -35,16 +35,24 @@
         <h2>Databases</h2>
         {% endif %}
         <span>
-			{% for database in databases %}
-            <ul>
-				<li>{{ database.name}}</li>
-               	<ul>
-                   	<li>Plan: {{ database.databaseinfra.plan.name }}</li>
-                   	<li>Environment: {{ database.databaseinfra.environment.name }}</li>
-					{% render_capacity_html database %}
-               	</ul>
-            </ul>
-			{% endfor %}
+			<div class="row">
+				{% for database in databases %}
+				<div class="span12">
+		            <ul>
+						<li>{{ database.name}}</li>
+		               	<ul>
+		                   	<li>Plan: {{ database.databaseinfra.plan.name }}</li>
+		                   	<li>Environment: {{ database.databaseinfra.environment.name }}</li>
+							<div class="row">
+								<div class="span4">
+									{% render_capacity_html database %}
+								</div>
+							</div>
+		               	</ul>
+		            </ul>
+				</div>
+				{% endfor %}
+			<div>
         </span>
     </div>
     {% else %}
