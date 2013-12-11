@@ -52,12 +52,18 @@
     {% else %}
         <p class="errornote alert alert-error fade in">
             <button data-dismiss="alert" class="close" type="button">×</button>
-            {% blocktrans %}Are you sure you want to delete the delete_selected {{ quarantine_days }} {{ objects_name }}? All of the following objects and their related items will be deleted:{% endblocktrans %}
+            {% blocktrans %}Are you sure you want to delete the follow {{ objects_name }}? All of the following objects and their related items will be deleted or put into quarantine:{% endblocktrans %}
         </p>
         <div class="well">
-            {% for deletable_object in deletable_objects %}
-                <ul>{{ deletable_object|unordered_list }}</ul>
+            {% for obj in queryset %}
+            <ul>
+                <li><strong> Database: <a href="{% url opts|admin_urlname:'change' obj.pk|admin_urlquote %}">{{ obj.name }}</a></strong></li>
+                <p class="text-warning"> {% if obj.is_in_quarantine %} Will be deleted. {% else %} Will be put into quarantine for {{ obj.quarantine_time }} days. {% endif %} </p>
+
+
+            </ul>
             {% endfor %}
+
         </div>
         <form action="" method="post">{% csrf_token %}
             <div>
