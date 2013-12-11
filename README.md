@@ -77,7 +77,7 @@ In your browser open the URL: http://localhost:8000/admin/
 Documentation
 =============
 
-[DBaaS](./doc/definitions.md)
+[DBaaS](./doc/DEFINITIONS.md)
 -------------------------------------------
 
 [Quickstart](./doc/quickstart.md)
