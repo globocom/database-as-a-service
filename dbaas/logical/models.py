@@ -14,6 +14,7 @@ from util import slugify, make_db_random_password
 from util.models import BaseModel
 from physical.models import DatabaseInfra, Environment, Plan
 from drivers import factory_for
+from system.models import Configuration
 
 from account.models import Team
 
@@ -54,6 +55,8 @@ class Database(BaseModel):
     
     objects = models.Manager()  # The default manager.
     alive = DatabaseAliveManager()  # The alive dbs specific manager.
+
+    quarantine_time = Configuration.get_by_name_as_int('quarantine_retention_days')
     
     def __unicode__(self):
         return u"%s" % self.name
