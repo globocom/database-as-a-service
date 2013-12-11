@@ -1,4 +1,4 @@
-# DEFINITIONS
+# Definitions
 
 This guide will help you to understand the basic DBaaS architecture.
 
@@ -81,7 +81,7 @@ choose which environment this plan can be used. A plan is a n-to-n relationship 
 
 ![](./img/system_app.png "System APP View")
 
-You can input/change some system parameters dynamically, it's a key/value parameter. Bellow the parameters already supported by DBaaS:
+You can input/change some system parameters dynamically, it's a key/value parameter. The value will be cached in the cache middleware defined in the settings.py file until it is updated. Bellow the parameters already supported by DBaaS:
 
 * `email_addr_from`: (__mandatory__)
 
@@ -102,4 +102,8 @@ You can input/change some system parameters dynamically, it's a key/value parame
 * `mysql_connect_timeout`: (__default: 5__)
 
     how long (in seconds) a connection can take to be opened before timing out.
+
+# Model
+
+![](./img/dbaas_model.png "DBaAs model")
 
