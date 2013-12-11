@@ -172,7 +172,6 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         return super(DatabaseAdmin, self).change_view(request, object_id, form_url, extra_context=extra_context)
 
     def delete_view(self, request, object_id, extra_context=None):
-        import pdb; pdb.set_trace()
         database = Database.objects.get(id=object_id)
         extra_context = extra_context or {}
         if not database.is_in_quarantine:
