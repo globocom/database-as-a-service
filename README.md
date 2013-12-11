@@ -77,13 +77,16 @@ In your browser open the URL: http://localhost:8000/admin/
 Documentation
 =============
 
-[DBaaS](./doc/DEFINITIONS.md)
+[Definitions](./doc/definitions.md)
 -------------------------------------------
 
-[Quickstart](./doc/HOWTO.md)
+[Quickstart](./doc/quickstart.md)
 -------------------------------------------
 
 [API](./doc/API.md)
+-------------------------------------------
+
+[Drivers](./doc/drivers.md)
 -------------------------------------------
 
 [Changelog](./doc/changelog.md)

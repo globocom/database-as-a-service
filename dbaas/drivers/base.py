@@ -67,10 +67,10 @@ class BaseDriver(object):
     """
     ENV_CONNECTION = 'DATABASEINFRA_CONNECTION'
 
-    # List of reserved database names for this driver
+    # List of reserved database names for this driver that cannot be used
     RESERVED_DATABASES_NAME = []
 
-    # must be overwrited by subclasses
+    # must be overwritten by subclasses
     default_port = 0
 
     def __init__(self, *args, **kwargs):
