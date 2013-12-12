@@ -18,7 +18,7 @@ def LOCAL_FILES(path):
     return new_path
 
 try:
-    from version import RELEASE
+    from dbaas.version import RELEASE
 except ImportError:
     RELEASE = None
 
@@ -104,24 +104,17 @@ MEDIA_URL = '/media/'
 # Don't put anything in this directory yourself; store your static files
 # in apps' "static/" subdirectories and in STATICFILES_DIRS.
 # Example: "/var/www/example.com/static/"
-
-if RELEASE:
-    STATIC_ROOT = os.path.join(SITE_ROOT, 'static/%s/' % RELEASE)
-    # URL prefix for static files.
-    # Example: "http://example.com/static/", "http://static.example.com/"
-    STATIC_URL = '/static/%s/' % RELEASE
-else:
-    STATIC_ROOT = os.path.join(SITE_ROOT, 'static/')
-    # URL prefix for static files.
-    # Example: "http://example.com/static/", "http://static.example.com/"
-    STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(os.getenv('DBAAS_STATIC_FILE', SITE_ROOT), RELEASE)
+# URL prefix for static files.
+# Example: "http://example.com/static/", "http://static.example.com/"
+STATIC_URL = '/static/%s/' % RELEASE
 
 # Additional locations of static files
 STATICFILES_DIRS = (
     # Put strings here, like "/home/html/static" or "C:/www/django/static".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
-    os.path.join(SITE_ROOT, 'media'),
+    os.path.join(SITE_ROOT, 'static'),
 )
 
 # List of finder classes that know how to find static files in
