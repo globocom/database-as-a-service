@@ -107,7 +107,7 @@ MEDIA_URL = '/media/'
 STATIC_ROOT = os.path.join(os.getenv('DBAAS_STATIC_FILE', SITE_ROOT), RELEASE)
 # URL prefix for static files.
 # Example: "http://example.com/static/", "http://static.example.com/"
-STATIC_URL = '/%s/' % RELEASE
+STATIC_URL = '/static/%s/' % RELEASE
 
 # Additional locations of static files
 STATICFILES_DIRS = (
