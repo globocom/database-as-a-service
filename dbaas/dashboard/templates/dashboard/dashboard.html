@@ -134,12 +134,20 @@
         <div class="outer">
           <div class="inner">
 
+
+			{% for infra in dbinfra %}
 			<!-- start infranode -->
 			<div class="col-lg-4">
 				<div class="box">
 					<header>
-						<h5>single02</h5>
-						<div class="brand mongo"><img src="{% static "assets/img/MongoDB_logo.png" %}" /></div>
+						<h5>{{ infra.name }}</h5>
+						<div class="brand mongo">
+							{% if infra.engine_name == 'mongodb' %}
+								<img src="{% static "assets/img/MongoDB_logo.png" %}" />
+							{% else %}
+								<img src="{% static "assets/img/mysql_logo.png" %}" />
+							{% endif %}
+						</div>
 					</header>
 				 	<div class="body">
 						<div class="row">
@@ -148,9 +156,9 @@
 							</div>
 							<div class="col-sm-offset-1 col-lg-8">
 								<h6><b>Host:</b> cittavld333</h6>
-								<h6><b>Engine:</b> mongodb 2.4.6</h6>
-								<h6><b>Environment:</b> <li class="label label-default">dev</li></h6>
-								<h6><b>Plan:</b> Plan medium (single node)
+								<h6><b>Engine:</b> {{ infra.engine_name }}&nbsp;{{ infra.engine.version }}</h6>
+								<h6><b>Environment:</b> <li class="label label-default">{{ infra.environment.name }}</li></h6>
+								<h6><b>Plan:</b> {{ infra.plan.name }}
 							</div>
 						</div>
 							<div class="progress mongo">
@@ -162,10 +170,11 @@
 				</div>
 			</div>
 			<!-- end infranode -->
+			{% endfor %}
 
 
 			<!-- start infranode -->
-			<div class="col-lg-4">
+			<!-- <div class="col-lg-4">
 				<div class="box">
 					<header>
 						<h5>singleMysql</h5>
@@ -190,7 +199,7 @@
 							</div>
 					</div>
 				</div>
-			</div>
+			</div> -->
 			<!-- end infranode -->
 
 
