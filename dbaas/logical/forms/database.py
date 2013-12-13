@@ -6,6 +6,7 @@ from django.forms import models
 from django import forms
 from ..models import Database, Credential, Project
 from physical.models import Plan, Environment, DatabaseInfra, Engine
+from account.models import Team
 
 from .fields import AdvancedModelChoiceField
 
@@ -16,13 +17,35 @@ class DatabaseForm(models.ModelForm):
     plan = AdvancedModelChoiceField(queryset=Plan.objects.filter(is_active='True'), required=False, widget=forms.RadioSelect, empty_label=None)
     engine = forms.ModelChoiceField(queryset=Engine.objects)
     environment = forms.ModelChoiceField(queryset=Environment.objects)
-
+    
     class Meta:
         model = Database
-        fields = ('name', 'description' ,'project',)
+        fields = ('name', 'description' ,'project', 'team')
+
+    def __init__(self, *args, **kwargs):
+        
+        # user = kwargs.get('user', None)
+        # if user:
+        #     kwargs.pop('user')
+        
+        super(DatabaseForm, self).__init__(*args, **kwargs)
+        # choices = [(user.id, user.username) for user in Team.user_objects.all()]
+        # 
+        # if self.instance and self.instance.pk:
+        #     #now concatenate with the existing users...
+        #     choices = choices + [(user.id, user.username) for user in self.instance.users.all()]
+        # 
+        # self.fields['users'].choices = choices
 
     def clean(self):
         cleaned_data = super(DatabaseForm, self).clean()
+        
+        # TODO: change model field to blank=False
+        team = cleaned_data['team']
+        print "team: %s" % team
+        if not team:
+            self._errors["team"] = self.error_class([_("This field is required.")])
+
         if not self.is_valid():
             raise forms.ValidationError(self.errors)
         

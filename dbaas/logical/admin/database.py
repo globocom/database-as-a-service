@@ -19,6 +19,10 @@ from system.models import Configuration
 LOG = logging.getLogger(__name__)
 
 class DatabaseAdmin(admin.DjangoServicesAdmin):
+    """
+    the form used by this view is returned by the method get_form
+    """
+
     database_add_perm_message = _("You must be set to at least one team to add a database, and the service administrator has been notified about this.")
     perm_manage_quarantine_database = "logical.can_manage_quarantine_databases"
     service_class = DatabaseService
@@ -32,7 +36,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     delete_button_name = "Delete"
     fieldsets_add = (
         (None, {
-            'fields': ('name', 'description', 'project', 'engine', 'environment', 'plan',)
+            'fields': ('name', 'description', 'project', 'engine', 'environment', 'team', 'plan',)
             }
         ),
     )
@@ -87,19 +91,19 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
     get_capacity_html.short_description = "Capacity"
 
-    def get_form(self, request, obj=None, **kwargs):
-        self.exclude = []
-        if not obj:
-            # adding new database
-            return DatabaseForm
-        # Tradicional form
-        return super(DatabaseAdmin, self).get_form(request, obj, **kwargs)
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        #filter teams, for the ones that the user is associated
+        if db_field.name == "team":
+            kwargs["queryset"] = Team.objects.filter(users=request.user)
+        return super(DatabaseAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
     def save_model(self, request, obj, form, change):
         if not change:
             teams = Team.objects.filter(users=request.user)
             LOG.info("user %s teams: %s" % (request.user, teams))
-            if teams:
+            # if there is just one team, then set this team to the database
+            LOG.info(teams.count())
+            if teams.count() == 1:
                 obj.team = teams[0]
                 LOG.info("Team accountable for database %s set to %s" % (obj, obj.team))
 
@@ -119,7 +123,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         if in edit mode, name is readonly.
         """
         if obj: #In edit mode
-            return ('name', 'team', 'databaseinfra') + self.readonly_fields
+            return ('name', 'databaseinfra') + self.readonly_fields
         return self.readonly_fields
 
 
@@ -150,6 +154,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         return super(DatabaseAdmin, self).changelist_view(request, extra_context=extra_context)
 
     def add_view(self, request, form_url='', extra_context=None):
+        self.form = DatabaseForm
+        
         try:
             teams = Team.objects.filter(users=request.user)
             LOG.info("user %s teams: %s" % (request.user, teams))
@@ -164,6 +170,9 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
     def change_view(self, request, object_id, form_url='', extra_context=None):
         database = Database.objects.get(id=object_id)
+        
+        self.form = self.get_form(request, database)
+        
         extra_context = extra_context or {}
         if database.is_in_quarantine:
             extra_context['delete_button_name'] = self.delete_button_name
