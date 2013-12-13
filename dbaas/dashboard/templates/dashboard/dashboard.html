@@ -43,7 +43,7 @@
               <span class="icon-bar"></span>
             </button>
             <a href="index.html" class="navbar-brand">
-              <img src="assets/img/logo.png" alt="">
+              <img src="{% static "assets/img/logo.png" %}" alt="DBaaS">
             </a>
           </header>
           <div class="topnav">
@@ -139,12 +139,12 @@
 				<div class="box">
 					<header>
 						<h5>single02</h5>
-						<div class="brand mongo"><img src="assets/img/MongoDB_logo.png" /></div>
+						<div class="brand mongo"><img src="{% static "assets/img/MongoDB_logo.png" %}" /></div>
 					</header>
 				 	<div class="body">
 						<div class="row">
 							<div class="col-lg-3">
-								<img src="assets/img/mongo.png" />
+								<img src="{% static "assets/img/mongo.png" %}" />
 							</div>
 							<div class="col-sm-offset-1 col-lg-8">
 								<h6><b>Host:</b> cittavld333</h6>
@@ -169,12 +169,12 @@
 				<div class="box">
 					<header>
 						<h5>singleMysql</h5>
-						<div class="brand mysql"><img src="assets/img/mysql_logo.png" /></div>
+						<div class="brand mysql"><img src="{% static "assets/img/mysql_logo.png" %}" /></div>
 					</header>
 				 	<div class="body">
 						<div class="row">
 							<div class="col-lg-3">
-								<img src="assets/img/mysql.png" style="width: 85px;" />
+								<img src="{% static "assets/img/mysql.png" %}" style="width: 85px;" />
 							</div>
 							<div class="col-sm-offset-1 col-lg-8">
 								<h6><b>Host:</b> cittavld24</h6>
@@ -203,8 +203,8 @@
       <!-- end #content -->
     </div><!-- /#wrap -->
 
-    <script src="assets/lib/jquery.min.js"></script>
-    <script src="assets/lib/bootstrap/js/bootstrap.min.js"></script>
-    <script src="assets/js/main.min.js"></script>
+    <script src="{% static "assets/js/jquery.min.js" %}"></script>
+    <script src="{% static "assets/js/bootstrap.min.js" %}"></script>
+    <script src="{% static "assets/js/main.min.js" %}"></script>
   </body>
 </html>
