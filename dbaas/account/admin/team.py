@@ -13,14 +13,6 @@ class TeamAdmin(admin.ModelAdmin):
 
     list_display = ["name", "role"]
     filter_horizontal = ['users']
-    
-    form = TeamAdminForm
-    # #filter_horizontal = ['permissions']
-    # 
-    # fieldsets = (
-    #     (None, {'fields': ('name', )},),
-    #     (_("Users"), {'fields': ('users', )},),
-    # )
-    # 
-    # def queryset(self, request):
-    #     return self.model.objects.exclude(name__startswith="role")
+
+    #form = TeamAdminForm
+
