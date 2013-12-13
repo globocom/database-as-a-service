@@ -1,59 +1,210 @@
-{% extends "admin/base_site.html" %}
-{% load i18n admin_static admin_list %}
-{% load admin_urls %}
+{% load admin_static %}
 
-{% if not is_popup %}
-    {% block breadcrumbs %}
-        <ul class="breadcrumb">
-            <li>
-                <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
-                <span class="divider">/</span>
-            </li>
-            <li>
-                <a href="{% url 'dashboard.index' %}">{% trans 'Dashboard' %}</a>
-                <span class="divider">/</span>
-            </li>
-        </ul>
-    {% endblock %}
-{% endif %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>Dbaas Dashboard</title>
 
-{% block content %}
+    <!--Mobile first-->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<div id="content" class="page-header">
-	<h1>Dashboard</h1>
-</div>
+    <!--IE Compatibility modes-->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="msapplication-TileColor" content="#5bc0de">
 
-{% if not databaseinfras %}
-    <h2>No databaseinfras found</h2>
-{% else %}
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="{% static "assets/css/bootstrap.min.css" %}">
 
-<div class="row-fluid">
-	{% for databaseinfra in databaseinfras %}
-	<div class="span4 box">
-		<div class='boxtitle'>
-			 <i class="icon-magnet"></i>DatabaseInfra Name - {{ databaseinfra.name }}
-		</div>
-		<div class="status">
-			<ul>
-				<li>Engine: {{ databaseinfra.engine }}</li>
-				<li>Version: {{ databaseinfra.version }}</li>
-				<li>Total databaseinfra Size: {{ databaseinfra.size|floatformat:0 }}(MB)</li>
-				{% for database in databaseinfra.databases %}
-					<li><hr />Database Name: {{ database.name }}</li>
-					<div class="size-total">{{ database.size|floatformat:0 }}(MB)</div>
-					<li>Database Size (MB)
-						<div class="progress">
-							<div class="bar bar-danger" style="width: {{ database.usage }}%;">{{ database.usage }}%</div>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="{% static "assets/css/font-awesome.min.css" %}">
+
+    <!-- Metis core stylesheet -->
+    <link rel="stylesheet" href="{% static "assets/css/main.css" %}">
+    <link rel="stylesheet" href="{% static "assets/css/theme.css" %}">
+
+
+    <!--Modernizr 3.0-->
+    <script src="{% static "assets/js/modernizr-build.min.js" %}"></script>
+  </head>
+  <body>
+    <div id="wrap">
+      <div id="top">
+
+        <!-- .navbar -->
+        <nav class="navbar navbar-inverse navbar-static-top">
+
+          <!-- Brand and toggle get grouped for better mobile display -->
+          <header class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+              <span class="sr-only">Toggle navigation</span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+            </button>
+            <a href="index.html" class="navbar-brand">
+              <img src="assets/img/logo.png" alt="">
+            </a>
+          </header>
+          <div class="topnav">
+            <div class="btn-toolbar">
+              <div class="btn-group">
+                <a data-placement="bottom" data-original-title="Show / Hide Sidebar" data-toggle="tooltip" class="btn btn-success btn-sm" id="changeSidebarPos">
+                  <i class="fa fa-expand"></i>
+                </a>
+              </div>
+              <div class="btn-group">
+                <a href="login.html" data-toggle="tooltip" data-original-title="Logout" data-placement="bottom" class="btn btn-metis-1 btn-sm">
+                  <i class="fa fa-power-off"></i>
+                </a>
+              </div>
+            </div>
+          </div><!-- /.topnav -->
+        </nav><!-- /.navbar -->
+
+        <!-- header.head -->
+        <header class="head">
+          <div class="search-bar">
+            <a data-original-title="Show/Hide Menu" data-placement="bottom" data-tooltip="tooltip" class="accordion-toggle btn btn-primary btn-sm visible-xs" data-toggle="collapse" href="#menu" id="menu-toggle">
+              <i class="fa fa-expand"></i>
+            </a>
+            <form class="main-search">
+              <div class="input-group">
+                <input type="text" class="input-small form-control" placeholder="Search ...">
+                <span class="input-group-btn">
+                                    <button class="btn btn-primary btn-sm text-muted" type="button"><i class="fa fa-search"></i></button>
+                                </span>
+              </div>
+            </form>
+          </div>
+
+          <!-- ."main-bar -->
+          <div class="main-bar">
+            <h3>
+              <i class="fa fa-dashboard"></i>&nbsp;Dashboard</h3>
+          </div><!-- /.main-bar -->
+        </header>
+
+        <!-- end header.head -->
+      </div><!-- /#top -->
+      <div id="left">
+        <!-- #menu -->
+        <ul id="menu" class="collapse">
+          <li class="nav-header">Menu</li>
+          <li class="nav-divider"></li>
+
+
+          <li class="">
+			<a href="javascript:;">
+				<i class="fa fa-tasks"></i>&nbsp;Mongodb
+				<span class="fa arrow"></span></a>
+            <ul>
+              <li class="">
+                <a href="icon.html">
+                  <i class="fa fa-angle-right"></i>&nbsp;Dev</a>
+              </li>
+              <li class="">
+                <a href="button.html">
+                  <i class="fa fa-angle-right"></i>&nbsp;Prod</a>
+              </li>
+            </ul>
+          </li>
+		<li class="nav-divider"></li>
+          <li class="">
+            <a href="javascript:;">
+              <i class="fa fa-tasks"></i>&nbsp;Mysql
+              <span class="fa arrow"></span>
+            </a>
+            <ul>
+              <li class="">
+                <a href="icon.html">
+                  <i class="fa fa-angle-right"></i>&nbsp;Dev</a>
+              </li>
+              <li class="">
+                <a href="button.html">
+                  <i class="fa fa-angle-right"></i>&nbsp;Prod</a>
+              </li>
+            </ul>
+          </li>
+        </ul><!-- /#menu -->
+
+
+      </div><!-- /#left -->
+      <div id="content">
+        <div class="outer">
+          <div class="inner">
+
+			<!-- start infranode -->
+			<div class="col-lg-4">
+				<div class="box">
+					<header>
+						<h5>single02</h5>
+						<div class="brand mongo"><img src="assets/img/MongoDB_logo.png" /></div>
+					</header>
+				 	<div class="body">
+						<div class="row">
+							<div class="col-lg-3">
+								<img src="assets/img/mongo.png" />
+							</div>
+							<div class="col-sm-offset-1 col-lg-8">
+								<h6><b>Host:</b> cittavld333</h6>
+								<h6><b>Engine:</b> mongodb 2.4.6</h6>
+								<h6><b>Environment:</b> <li class="label label-default">dev</li></h6>
+								<h6><b>Plan:</b> Plan medium (single node)
+							</div>
 						</div>
-					</li>
-				{% endfor %}
-			</ul>
-		</div>
-	</div> <!-- .each box -->
-	{% endfor %}
-</div> <!-- .row-fluid -->
+							<div class="progress mongo">
+								<div class="progress-bar progress-bar-warning" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100" style="width: 70%;" data-original-title="" title="">
+									<span>7 of 10</span>
+								</div>
+							</div>
+					</div>
+				</div>
+			</div>
+			<!-- end infranode -->
 
 
-{% endif %}
+			<!-- start infranode -->
+			<div class="col-lg-4">
+				<div class="box">
+					<header>
+						<h5>singleMysql</h5>
+						<div class="brand mysql"><img src="assets/img/mysql_logo.png" /></div>
+					</header>
+				 	<div class="body">
+						<div class="row">
+							<div class="col-lg-3">
+								<img src="assets/img/mysql.png" style="width: 85px;" />
+							</div>
+							<div class="col-sm-offset-1 col-lg-8">
+								<h6><b>Host:</b> cittavld24</h6>
+								<h6><b>Engine:</b> mysql 5.5</h6>
+								<h6><b>Environment:</b> <li class="label label-danger">prod</li></h6>
+								<h6><b>Plan:</b> Plan medium (single node)
+							</div>
+						</div>
+							<div class="progress mongo">
+								<div class="progress-bar progress-bar-success" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100" style="width: 40%;" data-original-title="" title="">
+									<span>4 of 10</span>
+								</div>
+							</div>
+					</div>
+				</div>
+			</div>
+			<!-- end infranode -->
 
-{% endblock %}
+
+
+          </div>
+          <!-- end .inner -->
+        </div>
+        <!-- end .outer -->
+      </div>
+      <!-- end #content -->
+    </div><!-- /#wrap -->
+
+    <script src="assets/lib/jquery.min.js"></script>
+    <script src="assets/lib/bootstrap/js/bootstrap.min.js"></script>
+    <script src="assets/js/main.min.js"></script>
+  </body>
+</html>
