@@ -14,6 +14,7 @@ from account.models import Team
 from drivers import DatabaseAlreadyExists
 from logical.templatetags import capacity
 from system.models import Configuration
+from physical.models import DatabaseInfra
 
 
 LOG = logging.getLogger(__name__)
@@ -29,7 +30,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
     service_class = DatabaseService
     search_fields = ("name", "databaseinfra__name")
-    list_display_basic = ["name_html", "engine_type", "environment", "plan", "get_capacity_html",]
+    list_display_basic = ["name_html", "engine_type", "environment", "plan", "status", "get_capacity_html",]
     list_display_advanced = list_display_basic + ["quarantine_dt_format"]
     list_filter_basic = ["project", "databaseinfra__environment", "databaseinfra__engine", "databaseinfra__plan"]
     list_filter_advanced = list_filter_basic + ["databaseinfra", "is_in_quarantine", "team"]
@@ -70,6 +71,14 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
     def plan(self, database):
         return database.plan
+
+    def status(self, database):
+        if int(Database.objects.get(name=database).pk) % 2 != 0:
+            html = '<span class="label label-important">Down</span>'
+            return format_html(html)
+        else:
+            html = '<span class="label label-success"> OK </span>'
+            return format_html(html)
 
     plan.admin_order_field = 'name'
 
