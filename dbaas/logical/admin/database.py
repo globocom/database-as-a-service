@@ -8,7 +8,7 @@ from django.core.urlresolvers import reverse
 from django.contrib import messages
 from django.utils.html import format_html, escape
 from ..service.database import DatabaseService
-from ..forms import DatabaseForm
+from ..forms import DatabaseForm, DatabaseForm
 from ..models import Database
 from account.models import Team
 from drivers import DatabaseAlreadyExists
@@ -36,7 +36,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     delete_button_name = "Delete"
     fieldsets_add = (
         (None, {
-            'fields': ('name', 'description', 'project', 'engine', 'environment', 'team', 'plan',)
+            'fields': ('name', 'description', 'project', 'engine', 'environment', 'team', 'plan', 'is_in_quarantine')
             }
         ),
     )
@@ -170,9 +170,9 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
     def change_view(self, request, object_id, form_url='', extra_context=None):
         database = Database.objects.get(id=object_id)
-        
-        self.form = self.get_form(request, database)
-        
+        print "change_view"
+        #self.form = self.get_form(request, database)
+        self.form = DatabaseForm
         extra_context = extra_context or {}
         if database.is_in_quarantine:
             extra_context['delete_button_name'] = self.delete_button_name
