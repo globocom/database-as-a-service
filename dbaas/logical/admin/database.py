@@ -8,7 +8,7 @@ from django.core.urlresolvers import reverse
 from django.contrib import messages
 from django.utils.html import format_html, escape
 from ..service.database import DatabaseService
-from ..forms import DatabaseForm
+from ..forms import DatabaseForm, DatabaseForm
 from ..models import Database
 from account.models import Team
 from drivers import DatabaseAlreadyExists
@@ -19,8 +19,14 @@ from system.models import Configuration
 LOG = logging.getLogger(__name__)
 
 class DatabaseAdmin(admin.DjangoServicesAdmin):
+    """
+    the form used by this view is returned by the method get_form
+    """
+
     database_add_perm_message = _("You must be set to at least one team to add a database, and the service administrator has been notified about this.")
     perm_manage_quarantine_database = "logical.can_manage_quarantine_databases"
+    perm_add_database_infra = "logical.add_databaseinfra"
+
     service_class = DatabaseService
     search_fields = ("name", "databaseinfra__name")
     list_display_basic = ["name_html", "engine_type", "environment", "plan", "get_capacity_html",]
@@ -32,7 +38,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     delete_button_name = "Delete"
     fieldsets_add = (
         (None, {
-            'fields': ('name', 'description', 'project', 'engine', 'environment', 'plan',)
+            'fields': ('name', 'description', 'project', 'engine', 'environment', 'team', 'plan', 'is_in_quarantine')
             }
         ),
     )
@@ -87,23 +93,15 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
     get_capacity_html.short_description = "Capacity"
 
-    def get_form(self, request, obj=None, **kwargs):
-        self.exclude = []
-        if not obj:
-            # adding new database
-            return DatabaseForm
-        # Tradicional form
-        return super(DatabaseAdmin, self).get_form(request, obj, **kwargs)
-
-    def save_model(self, request, obj, form, change):
-        if not change:
-            teams = Team.objects.filter(users=request.user)
-            LOG.info("user %s teams: %s" % (request.user, teams))
-            if teams:
-                obj.team = teams[0]
-                LOG.info("Team accountable for database %s set to %s" % (obj, obj.team))
-
-        obj.save()
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        """
+        filter teams for the ones that the user is associated, unless the user has ther
+        perm to add databaseinfra. In this case, he should see all teams.
+        """
+        if not request.user.has_perm(self.perm_add_database_infra):
+            if db_field.name == "team":
+                kwargs["queryset"] = Team.objects.filter(users=request.user)
+        return super(DatabaseAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
     def get_fieldsets(self, request, obj=None):
         if obj: #In edit mode
@@ -119,7 +117,11 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         if in edit mode, name is readonly.
         """
         if obj: #In edit mode
-            return ('name', 'team', 'databaseinfra') + self.readonly_fields
+            #only sysadmin can change team accountable for a database
+            if request.user.has_perm(self.perm_add_database_infra):
+                return ('name', 'databaseinfra') + self.readonly_fields
+            else:
+                return ('name', 'databaseinfra', 'team') + self.readonly_fields
         return self.readonly_fields
 
 
@@ -150,12 +152,23 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         return super(DatabaseAdmin, self).changelist_view(request, extra_context=extra_context)
 
     def add_view(self, request, form_url='', extra_context=None):
+        self.form = DatabaseForm
+        
         try:
             teams = Team.objects.filter(users=request.user)
             LOG.info("user %s teams: %s" % (request.user, teams))
             if not teams:
                 self.message_user(request, self.database_add_perm_message, level=messages.ERROR)
                 return HttpResponseRedirect(reverse('admin:logical_database_changelist'))
+
+            #if no team is specified and the user has only one team, then set it to the database
+            if teams.count() == 1 and request.method == 'POST':
+                post_data = request.POST.copy()
+                if 'team' in post_data:
+                    post_data['team'] = u"%s" % teams[0].pk
+            
+                request.POST = post_data
+
             return super(DatabaseAdmin, self).add_view(request, form_url, extra_context=extra_context)
         except DatabaseAlreadyExists:
             self.message_user(request, _('An inconsistency was found: The database "%s" already exists in infra-structure but not in DBaaS.') % request.POST['name'], level=messages.ERROR)
@@ -164,7 +177,9 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
     def change_view(self, request, object_id, form_url='', extra_context=None):
         database = Database.objects.get(id=object_id)
+        self.form = DatabaseForm
         extra_context = extra_context or {}
+
         if database.is_in_quarantine:
             extra_context['delete_button_name'] = self.delete_button_name
         else:

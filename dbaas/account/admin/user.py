@@ -39,16 +39,27 @@ class TeamListFilter(SimpleListFilter):
 
     def lookups(self, request, model_admin):
         qs = Team.objects.all()
-        return [(i.id, i.name) for i in qs]
+        l = [(i.id, i.name) for i in qs]
+        return [(0, _("without team"))] + l
 
     def queryset(self, request, queryset):
         users = []
         if self.value():
-            teams = Team.objects.filter(id=self.value())
-            for team in teams:
-                for user in team.users.all():
-                    users.append(user.id)
-            return queryset.filter(id__in=users)
+            if self.value() == '0':
+                users_id = []
+                teams = Team.objects.all()
+                for team in teams:
+                    for user in team.users.all():
+                        if user.id not in users_id:
+                            users_id.append(user.id)
+
+                return queryset.exclude(id__in=users_id)
+            else:
+                teams = Team.objects.filter(id=self.value())
+                for team in teams:
+                    for user in team.users.all():
+                        users.append(user.id)
+                return queryset.filter(id__in=users)
 
 
 class UserAdmin(UserAdmin):
