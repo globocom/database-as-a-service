@@ -170,8 +170,6 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
     def change_view(self, request, object_id, form_url='', extra_context=None):
         database = Database.objects.get(id=object_id)
-        print "change_view"
-        #self.form = self.get_form(request, database)
         self.form = DatabaseForm
         extra_context = extra_context or {}
         if database.is_in_quarantine:
