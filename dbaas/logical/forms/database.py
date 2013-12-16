@@ -53,12 +53,13 @@ class DatabaseForm(models.ModelForm):
         cleaned_data = super(DatabaseForm, self).clean()
 
         # TODO: change model field to blank=False
-        team = cleaned_data['team']
-        LOG.debug("team: %s" % team)
+        if 'team' in cleaned_data:
+            team = cleaned_data['team']
+            LOG.debug("team: %s" % team)
 
-        if not team:
-            LOG.warning = "No team specified in database form"
-            self._errors["team"] = self.error_class([_("Team: This field is required.")])
+            if not team:
+                LOG.warning = "No team specified in database form"
+                self._errors["team"] = self.error_class([_("Team: This field is required.")])
 
         # if there is an instance, that it means that we are in a edit page and therefore
         # it should return the default cleaned_data

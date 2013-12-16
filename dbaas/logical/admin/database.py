@@ -25,6 +25,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
     database_add_perm_message = _("You must be set to at least one team to add a database, and the service administrator has been notified about this.")
     perm_manage_quarantine_database = "logical.can_manage_quarantine_databases"
+    perm_add_database_infra = "logical.add_databaseinfra"
+
     service_class = DatabaseService
     search_fields = ("name", "databaseinfra__name")
     list_display_basic = ["name_html", "engine_type", "environment", "plan", "get_capacity_html",]
@@ -92,9 +94,13 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     get_capacity_html.short_description = "Capacity"
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
-        #filter teams, for the ones that the user is associated
-        if db_field.name == "team":
-            kwargs["queryset"] = Team.objects.filter(users=request.user)
+        """
+        filter teams for the ones that the user is associated, unless the user has ther
+        perm to add databaseinfra. In this case, he should see all teams.
+        """
+        if not request.user.has_perm(self.perm_add_database_infra):
+            if db_field.name == "team":
+                kwargs["queryset"] = Team.objects.filter(users=request.user)
         return super(DatabaseAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
     def get_fieldsets(self, request, obj=None):
@@ -111,7 +117,11 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         if in edit mode, name is readonly.
         """
         if obj: #In edit mode
-            return ('name', 'databaseinfra') + self.readonly_fields
+            #only sysadmin can change team accountable for a database
+            if request.user.has_perm(self.perm_add_database_infra):
+                return ('name', 'databaseinfra') + self.readonly_fields
+            else:
+                return ('name', 'databaseinfra', 'team') + self.readonly_fields
         return self.readonly_fields
 
 
