@@ -97,18 +97,6 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             kwargs["queryset"] = Team.objects.filter(users=request.user)
         return super(DatabaseAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
-    def save_model(self, request, obj, form, change):
-        if not change:
-            teams = Team.objects.filter(users=request.user)
-            LOG.info("user %s teams: %s" % (request.user, teams))
-            # if there is just one team, then set this team to the database
-            LOG.info(teams.count())
-            if teams.count() == 1:
-                obj.team = teams[0]
-                LOG.info("Team accountable for database %s set to %s" % (obj, obj.team))
-
-        obj.save()
-
     def get_fieldsets(self, request, obj=None):
         if obj: #In edit mode
             if request.user.has_perm(self.perm_manage_quarantine_database):
@@ -162,6 +150,15 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             if not teams:
                 self.message_user(request, self.database_add_perm_message, level=messages.ERROR)
                 return HttpResponseRedirect(reverse('admin:logical_database_changelist'))
+
+            #if no team is specified and the user has only one team, then set it to the database
+            if teams.count() == 1 and request.method == 'POST':
+                post_data = request.POST.copy()
+                if 'team' in post_data:
+                    post_data['team'] = u"%s" % teams[0].pk
+            
+                request.POST = post_data
+
             return super(DatabaseAdmin, self).add_view(request, form_url, extra_context=extra_context)
         except DatabaseAlreadyExists:
             self.message_user(request, _('An inconsistency was found: The database "%s" already exists in infra-structure but not in DBaaS.') % request.POST['name'], level=messages.ERROR)
@@ -172,6 +169,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         database = Database.objects.get(id=object_id)
         self.form = DatabaseForm
         extra_context = extra_context or {}
+
         if database.is_in_quarantine:
             extra_context['delete_button_name'] = self.delete_button_name
         else:
