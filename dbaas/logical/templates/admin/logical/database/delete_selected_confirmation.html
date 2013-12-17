@@ -58,7 +58,7 @@
             {% for obj in queryset %}
             <ul>
                 <li><strong> Database: <a href="{% url opts|admin_urlname:'change' obj.pk|admin_urlquote %}">{{ obj.name }}</a></strong></li>
-                <p class="text-warning"> {% if obj.is_in_quarantine %} Will be deleted. {% else %} Will be put into quarantine for {{ obj.quarantine_time }} days. {% endif %} </p>
+                {% if obj.is_in_quarantine %}<span class="label label-important"> Will be deleted.</span> {% else %}<span class="label label-warning"> Will be put into quarantine for {{ obj.quarantine_time }} days. {% endif %} </span>
 
 
             </ul>
