@@ -26,7 +26,7 @@ class MySQL(BaseDriver):
 
     def get_connection(self, database=None):
         my_instance = self.databaseinfra.instances.all()[0]
-        uri = "mysql://<user>:<password>@%s" % (my_instance.address)
+        uri = "mysql://<user>:<password>@%s:%s" % (my_instance.address, my_instance.port)
         if database:
             uri = "%s/%s" % (uri, database.name)
         return uri
