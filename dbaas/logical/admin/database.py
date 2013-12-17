@@ -13,6 +13,7 @@ from ..models import Database
 from account.models import Team
 from drivers import DatabaseAlreadyExists
 from drivers.mongodb import MongoDB
+from drivers.mysqldb import MySQL
 from logical.templatetags import capacity
 from system.models import Configuration
 from physical.models import DatabaseInfra
@@ -76,15 +77,22 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     plan.admin_order_field = 'name'
 
     def status(self, database):
-        driver = MongoDB(databaseinfra=database.databaseinfra)
-        for instance in database.databaseinfra.instances.all():
-            dbs_dict = driver.check_list_dbs(instance=instance)
-            if self.is_the_db_there(database, dbs_dict['databases']):
-                html = '<span class="label label-success">Alive</span>'
-                return format_html(html)
-        else:
-            html = '<span class="label label-important">Dead</span>'
-            return format_html(html)
+        driver = database.databaseinfra.get_driver()
+        html_ok = '<span class="label label-success">Alive</span>'
+        html_nook = '<span class="label label-important">Dead</span>'
+        if driver.__class__.__name__ == u'MongoDB':
+            for instance in database.databaseinfra.instances.all():
+                dbs_dict = driver.check_list_dbs(instance=instance)
+                if self.is_the_db_there(database, dbs_dict['databases']):
+                    return format_html(html_ok)
+            else:
+                return format_html(html_nook)
+        elif driver.__class__.__name__ == u'MySQL':
+            try:
+                driver.check_status(instance=database.databaseinfra.instances.all()[0])
+                return format_html(html_ok)
+            except:
+                return format_html(html_nook)
 
     def is_the_db_there(self, database, dbs):
         for db in dbs:
