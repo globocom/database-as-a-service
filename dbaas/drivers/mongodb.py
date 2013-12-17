@@ -113,6 +113,14 @@ class MongoDB(BaseDriver):
             if isinstance(ok, dict) and ok.get('ok', 0) != 1.0:
                 raise ConnectionError('Invalid status for ping command to databaseinfra %s' % self.databaseinfra)
 
+    def check_list(self, instance=None):
+        with self.pymongo(instance=instance) as client:
+            try:
+                ok = client.admin.command('listDatabases')
+                return ok
+            except pymongo.errors.PyMongoError, e:
+                raise ConnectionError('Error connection to databaseinfra %s: %s' % (self.databaseinfra, e.message))
+
     def info(self):
         databaseinfra_status = DatabaseInfraStatus(databaseinfra_model=self.databaseinfra)
 
