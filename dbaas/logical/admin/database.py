@@ -72,15 +72,15 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     def plan(self, database):
         return database.plan
 
+    plan.admin_order_field = 'name'
+
     def status(self, database):
         if int(Database.objects.get(name=database).pk) % 2 != 0:
-            html = '<span class="label label-important">Down</span>'
+            html = '<span class="label label-important">Dead</span>'
             return format_html(html)
         else:
-            html = '<span class="label label-success"> OK </span>'
+            html = '<span class="label label-success">Alive</span>'
             return format_html(html)
-
-    plan.admin_order_field = 'name'
 
     def name_html(self, database):
         html = '%(name)s <a href="javascript:void(0)" title="%(title)s" data-content="%(endpoint)s" class="show-endpoint"><span class="icon-info-sign"></span></a>' % {
