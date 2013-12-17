@@ -39,8 +39,7 @@ class TeamListFilter(SimpleListFilter):
 
     def lookups(self, request, model_admin):
         qs = Team.objects.all()
-        l = [(i.id, i.name) for i in qs]
-        return [(-1, _("without team"))] + l
+        return [(-1, _("without team"))] + [(i.id, i.name) for i in qs]
 
     def queryset(self, request, queryset):
         users = []
