@@ -62,9 +62,9 @@ class MySQLEngineTestCase(AbstractTestDriverMongo):
     #     get_replica_name.return_value = 'my_repl'
     #     self.assertEqual("mysqldb://<user>:<password>@127.0.0.1:27017,127.0.0.2:27018?replicaSet=my_repl", self.driver.get_connection())
     # 
-    # def test_connection_with_database(self):
-    #     self.database = factory_logical.DatabaseFactory(name="my_db_url_name", databaseinfra=self.databaseinfra)
-    #     self.assertEqual("mysqldb://<user>:<password>@127.0.0.1:27017/my_db_url_name", self.driver.get_connection(database=self.database))
+    def test_connection_with_database(self):
+        self.database = factory_logical.DatabaseFactory(name="my_db_url_name", databaseinfra=self.databaseinfra)
+        self.assertEqual("mysql://<user>:<password>@127.0.0.1:3306/my_db_url_name", self.driver.get_connection(database=self.database))
 
 
 # class ManageDatabaseMySQLTestCase(AbstractTestDriverMongo):
