@@ -12,6 +12,7 @@ from ..forms import DatabaseForm, DatabaseForm
 from ..models import Database
 from account.models import Team
 from drivers import DatabaseAlreadyExists
+from drivers.mongodb import MongoDB
 from logical.templatetags import capacity
 from system.models import Configuration
 from physical.models import DatabaseInfra
@@ -75,12 +76,20 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     plan.admin_order_field = 'name'
 
     def status(self, database):
-        if int(Database.objects.get(name=database).pk) % 2 != 0:
+        driver = MongoDB(databaseinfra=database.databaseinfra)
+        for instance in database.databaseinfra.instances.all():
+            dbs_dict = driver.check_list_dbs(instance=instance)
+            if self.is_the_db_there(database, dbs_dict['databases']):
+                html = '<span class="label label-success">Alive</span>'
+                return format_html(html)
+        else:
             html = '<span class="label label-important">Dead</span>'
             return format_html(html)
-        else:
-            html = '<span class="label label-success">Alive</span>'
-            return format_html(html)
+
+    def is_the_db_there(self, database, dbs):
+        for db in dbs:
+            if db['name'] == database.name:
+                return True
 
     def name_html(self, database):
         html = '%(name)s <a href="javascript:void(0)" title="%(title)s" data-content="%(endpoint)s" class="show-endpoint"><span class="icon-info-sign"></span></a>' % {
