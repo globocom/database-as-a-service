@@ -97,35 +97,31 @@ class ManageDatabaseMySQLTestCase(AbstractTestDriverMysql):
 
 
 
-# class ManageCredentialsMySQLTestCase(AbstractTestDriverMysql):
-#     """ Test case to managing credentials in mysqldb engine """
-# 
-#     def setUp(self):
-#         super(ManageCredentialsMySQLTestCase, self).setUp()
-#         self.database = factory_logical.DatabaseFactory(databaseinfra=self.databaseinfra)
-#         self.credential = factory_logical.CredentialFactory(database=self.database)
-#         self.driver.create_database(self.database)
-# 
-#     def tearDown(self):
-#         self.driver.remove_database(self.database)
-#         self.credential.delete()
-#         self.database.delete()
-#         super(ManageCredentialsMySQLTestCase, self).tearDown()
-# 
-#     def __find_user__(self, credential):
-#         return getattr(self.mysql_client, credential.database.name).system.users.find_one({"user": credential.user})
-# 
-#     def test_mysqldb_create_credential(self):
-#         self.assertIsNone(self.__find_user__(self.credential), "User %s already exists. Invalid test" % self.credential)
-#         self.driver.create_user(self.credential)
-#         user = self.__find_user__(self.credential)
-#         self.assertIsNotNone(user)
-#         self.assertEquals(self.credential.user, user['user'])
-# 
-#     def test_mysqldb_remove_credential(self):
-#         self.driver.create_user(self.credential)
-#         self.assertIsNotNone(self.__find_user__(self.credential), "Error creating user %s. Invalid test" % self.credential)
-#         self.driver.remove_user(self.credential)
-#         self.assertIsNone(self.__find_user__(self.credential))
+class ManageCredentialsMySQLTestCase(AbstractTestDriverMysql):
+    """ Test case to managing credentials in mysqldb engine """
+
+    def setUp(self):
+        super(ManageCredentialsMySQLTestCase, self).setUp()
+        self.database = factory_logical.DatabaseFactory(databaseinfra=self.databaseinfra, name="test_mysql_credential")
+        #ensures database doest not exists
+        try:
+            self.driver.remove_database(self.database)
+        except:
+            pass
+        self.credential = factory_logical.CredentialFactory(database=self.database)
+        self.driver.create_database(self.database)
+
+    def tearDown(self):
+        self.driver.remove_database(self.database)
+        self.credential.delete()
+        self.database.delete()
+        super(ManageCredentialsMySQLTestCase, self).tearDown()
+
+    def test_mysqldb_create__and_remove_credential(self):
+        self.assertFalse(self.credential.user in self.driver.list_users())
+        self.driver.create_user(self.credential)
+        self.assertTrue(self.credential.user in self.driver.list_users())
+        self.driver.remove_user(self.credential)
+        self.assertFalse(self.credential.user in self.driver.list_users())
 
 
