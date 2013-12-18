@@ -32,7 +32,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
     service_class = DatabaseService
     search_fields = ("name", "databaseinfra__name")
-    list_display_basic = ["name_html", "engine_type", "environment", "plan", "status", "get_capacity_html",]
+    list_display_basic = ["name_html", "engine_type", "environment", "plan", "status", "get_capacity_html", ]
     list_display_advanced = list_display_basic + ["quarantine_dt_format"]
     list_filter_basic = ["project", "databaseinfra__environment", "databaseinfra__engine", "databaseinfra__plan"]
     list_filter_advanced = list_filter_basic + ["databaseinfra", "is_in_quarantine", "team"]
@@ -77,18 +77,25 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     plan.admin_order_field = 'name'
 
     def status(self, database):
-        driver = database.databaseinfra.get_driver()
-        html_ok = '<span class="label label-success">Alive</span>'
-        html_nook = '<span class="label label-important">Dead</span>'
-        if driver.check_status() and (database.name in driver.list_databases()):
-            return format_html(html_ok)
-        else:
+        try:
+            driver = database.databaseinfra.get_driver()
+            html_ok = '<span class="label label-success">Alive</span>'
+            html_nook = '<span class="label label-important">Dead</span>'
+            if driver.check_status() and (database.name in driver.list_databases()):
+                return format_html(html_ok)
+            else:
+                return format_html(html_nook)
+        except:
             return format_html(html_nook)
 
     def name_html(self, database):
+        try:
+            ed_point = escape(database.get_endpoint())
+        except:
+            ed_point = None
         html = '%(name)s <a href="javascript:void(0)" title="%(title)s" data-content="%(endpoint)s" class="show-endpoint"><span class="icon-info-sign"></span></a>' % {
             'name': database.name,
-            'endpoint': escape(database.get_endpoint()),
+            'endpoint': ed_point,
             'title': _("Show Endpoint")
         }
         return format_html(html)
@@ -101,7 +108,10 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     engine_type.admin_order_field = 'name'
 
     def get_capacity_html(self, database):
-        return capacity.render_capacity_html(database)
+        try:
+            return capacity.render_capacity_html(database)
+        except:
+            return None
 
     get_capacity_html.short_description = "Capacity"
 
