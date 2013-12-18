@@ -6,6 +6,7 @@ from django_services import admin
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django.contrib import messages
+from django.core.cache import cache
 from django.utils.html import format_html, escape
 from ..service.database import DatabaseService
 from ..forms import DatabaseForm, DatabaseForm
@@ -77,16 +78,24 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     plan.admin_order_field = 'name'
 
     def status(self, database):
-        try:
-            driver = database.databaseinfra.get_driver()
-            html_ok = '<span class="label label-success">Alive</span>'
-            html_nook = '<span class="label label-important">Dead</span>'
-            if driver.check_status() and (database.name in driver.list_databases()):
-                return format_html(html_ok)
-            else:
+        key = database.name + unicode(database.pk) + database.databaseinfra.engine.name + database.databaseinfra.engine.version
+        expire = 60
+        if cache.get(key):
+            return format_html(cache.get(key))
+        else:
+            try:
+                driver = database.databaseinfra.get_driver()
+                html_ok = '<span class="label label-success">Alive</span>'
+                html_nook = '<span class="label label-important">Dead</span>'
+                if driver.check_status() and (database.name in driver.list_databases()):
+                    cache.set(key, html_ok, expire)
+                    return format_html(html_ok)
+                else:
+                    cache.set(key, html_nook, expire)
+                    return format_html(html_nook)
+            except:
+                cache.set(key, html_nook, expire)
                 return format_html(html_nook)
-        except:
-            return format_html(html_nook)
 
     def name_html(self, database):
         try:
