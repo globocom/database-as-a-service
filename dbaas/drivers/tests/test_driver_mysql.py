@@ -79,7 +79,7 @@ class ManageDatabaseMySQLTestCase(AbstractTestDriverMysql):
             self.database.delete()
         super(ManageDatabaseMySQLTestCase, self).tearDown()
 
-    def test_mysqldb_create_database(self):
+    def test_mysqldb_create_and_drop_database(self):
         LOG.debug("mysql_client: %s" % type(self.mysql_client))
         # ensures database is removed
         try:
@@ -89,11 +89,12 @@ class ManageDatabaseMySQLTestCase(AbstractTestDriverMysql):
         self.assertFalse(self.database.name in self.driver.list_databases())
         self.driver.create_database(self.database)
         self.assertTrue(self.database.name in self.driver.list_databases())
-
-    def test_mysqldb_remove_database(self):
-        self.assertTrue(self.database.name in self.driver.list_databases())
+        
+        #drop database
         self.driver.remove_database(self.database)
         self.assertFalse(self.database.name in self.driver.list_databases())
+
+
 
 
 # class ManageCredentialsMySQLTestCase(AbstractTestDriverMysql):
