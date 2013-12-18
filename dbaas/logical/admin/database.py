@@ -19,7 +19,7 @@ from logical.templatetags import capacity
 from system.models import Configuration
 from physical.models import DatabaseInfra
 
-
+CACHE_STATUS_TIMEOUT = 60
 LOG = logging.getLogger(__name__)
 
 class DatabaseAdmin(admin.DjangoServicesAdmin):
@@ -78,24 +78,28 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     plan.admin_order_field = 'name'
 
     def status(self, database):
-        # QUESTION TO REFLECT: Shouldn't be better move the cache logic to the driver?
-        key = "%s:%s:%s:%s" % (database.name, database.pk, database.databaseinfra.engine.name, database.databaseinfra.engine.version)
-        expire = 60
-        if cache.get(key):
-            return format_html(cache.get(key))
+        # TODO: move the cache logic to the driver and implement a django templatetag so that the status badge
+        # can be used in other parts othe app
+        cache_key = "status:%s:%s:%s:%s" % (database.name, 
+                                database.pk, 
+                                database.databaseinfra.engine.name, 
+                                database.databaseinfra.engine.version)
+
+        if cache.get(cache_key):
+            return format_html(cache.get(cache_key))
         else:
             try:
                 driver = database.databaseinfra.get_driver()
                 html_ok = '<span class="label label-success">Alive</span>'
                 html_nook = '<span class="label label-important">Dead</span>'
                 if driver.check_status() and (database.name in driver.list_databases()):
-                    cache.set(key, html_ok, expire)
+                    cache.set(cache_key, html_ok, CACHE_STATUS_TIMEOUT)
                     return format_html(html_ok)
                 else:
-                    cache.set(key, html_nook, expire)
+                    cache.set(cache_key, html_nook, CACHE_STATUS_TIMEOUT)
                     return format_html(html_nook)
             except:
-                cache.set(key, html_nook, expire)
+                cache.set(cache_key, html_nook, CACHE_STATUS_TIMEOUT)
                 return format_html(html_nook)
 
     def name_html(self, database):
