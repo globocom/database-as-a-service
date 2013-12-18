@@ -80,24 +80,10 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         driver = database.databaseinfra.get_driver()
         html_ok = '<span class="label label-success">Alive</span>'
         html_nook = '<span class="label label-important">Dead</span>'
-        if driver.__class__.__name__ == u'MongoDB':
-            for instance in database.databaseinfra.instances.all():
-                dbs_dict = driver.check_list_dbs(instance=instance)
-                if self.is_the_db_there(database, dbs_dict['databases']):
-                    return format_html(html_ok)
-            else:
-                return format_html(html_nook)
-        elif driver.__class__.__name__ == u'MySQL':
-            try:
-                driver.check_status(instance=database.databaseinfra.instances.all()[0])
-                return format_html(html_ok)
-            except:
-                return format_html(html_nook)
-
-    def is_the_db_there(self, database, dbs):
-        for db in dbs:
-            if db['name'] == database.name:
-                return True
+        if driver.check_status() and (database.name in driver.list_databases()):
+            return format_html(html_ok)
+        else:
+            return format_html(html_nook)
 
     def name_html(self, database):
         html = '%(name)s <a href="javascript:void(0)" title="%(title)s" data-content="%(endpoint)s" class="show-endpoint"><span class="icon-info-sign"></span></a>' % {
