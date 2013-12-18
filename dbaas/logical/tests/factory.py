@@ -16,7 +16,7 @@ class ProjectFactory(factory.DjangoModelFactory):
 class DatabaseFactory(factory.DjangoModelFactory):
     FACTORY_FOR = models.Database
 
-    name = factory.Sequence(lambda n: 'db-{0}'.format(n))
+    name = factory.Sequence(lambda n: 'db_{0}'.format(n))
     databaseinfra = factory.SubFactory(DatabaseInfraFactory)
     project = factory.SubFactory(ProjectFactory)
 
