@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 import mock
+import logging
 from django.test import TestCase
 from drivers import DriverFactory
 from physical.tests import factory as factory_physical
@@ -8,11 +9,12 @@ from logical.tests import factory as factory_logical
 from logical.models import Database
 from ..mysqldb import MySQL
 
+LOG = logging.getLogger(__name__)
 
-class AbstractTestDriverMongo(TestCase):
+class AbstractTestDriverMysql(TestCase):
 
     def setUp(self):
-        self.databaseinfra = factory_physical.DatabaseInfraFactory()
+        self.databaseinfra = factory_physical.DatabaseInfraFactory(user="root", password="")
         self.instance = factory_physical.InstanceFactory(databaseinfra=self.databaseinfra, port=3306)
         self.driver = MySQL(databaseinfra=self.databaseinfra)
         self._mysql_client = None
@@ -21,7 +23,7 @@ class AbstractTestDriverMongo(TestCase):
         if not Database.objects.filter(databaseinfra_id=self.databaseinfra.id):
             self.databaseinfra.delete()
         if self._mysql_client:
-            self._mysql_client.disconnect()
+            self._mysql_client.close()
         self.driver = self.databaseinfra = self._mysql_client = None
 
     @property
@@ -31,7 +33,7 @@ class AbstractTestDriverMongo(TestCase):
         return self._mysql_client
 
 
-class MySQLEngineTestCase(AbstractTestDriverMongo):
+class MySQLEngineTestCase(AbstractTestDriverMysql):
     """
     Tests MySQL Engine
     """
@@ -56,44 +58,46 @@ class MySQLEngineTestCase(AbstractTestDriverMongo):
     def test_get_default_port(self):
         self.assertEqual(3306, self.driver.default_port)
 
-    # @mock.patch.object(MySQL, 'get_replica_name')
-    # def test_connection_string_when_in_replica_set(self, get_replica_name):
-    #     self.instance = factory_physical.InstanceFactory(databaseinfra=self.databaseinfra, address='127.0.0.2', port=27018)
-    #     get_replica_name.return_value = 'my_repl'
-    #     self.assertEqual("mysqldb://<user>:<password>@127.0.0.1:27017,127.0.0.2:27018?replicaSet=my_repl", self.driver.get_connection())
-    # 
     def test_connection_with_database(self):
         self.database = factory_logical.DatabaseFactory(name="my_db_url_name", databaseinfra=self.databaseinfra)
         self.assertEqual("mysql://<user>:<password>@127.0.0.1:3306/my_db_url_name", self.driver.get_connection(database=self.database))
 
 
-# class ManageDatabaseMySQLTestCase(AbstractTestDriverMongo):
-#     """ Test case to managing database in mysqldb engine """
-# 
-#     def setUp(self):
-#         super(ManageDatabaseMySQLTestCase, self).setUp()
-#         self.database = factory_logical.DatabaseFactory(databaseinfra=self.databaseinfra)
-#         # ensure database is dropped
-#         self.mysql_client.drop_database(self.database.name)
-# 
-#     def tearDown(self):
-#         if not Database.objects.filter(databaseinfra_id=self.databaseinfra.id):
-#             self.database.delete()
-#         super(ManageDatabaseMySQLTestCase, self).tearDown()
-# 
-#     def test_mysqldb_create_database(self):
-#         self.assertFalse(self.database.name in self.mysql_client.database_names())
-#         self.driver.create_database(self.database)
-#         self.assertTrue(self.database.name in self.mysql_client.database_names())
-# 
-#     def test_mysqldb_remove_database(self):
-#         self.driver.create_database(self.database)
-#         self.assertTrue(self.database.name in self.mysql_client.database_names())
-#         self.driver.remove_database(self.database)
-#         self.assertFalse(self.database.name in self.mysql_client.database_names())
+class ManageDatabaseMySQLTestCase(AbstractTestDriverMysql):
+    """ Test case to managing database in mysql engine """
+
+    def setUp(self):
+        super(ManageDatabaseMySQLTestCase, self).setUp()
+        self.database = factory_logical.DatabaseFactory(databaseinfra=self.databaseinfra)
+        # ensure database is dropped
+        #get fake driver
+        driver = self.databaseinfra.get_driver()
+        driver.remove_database(self.database)
+
+    def tearDown(self):
+        if not Database.objects.filter(databaseinfra_id=self.databaseinfra.id):
+            self.database.delete()
+        super(ManageDatabaseMySQLTestCase, self).tearDown()
+
+    def test_mysqldb_create_and_drop_database(self):
+        LOG.debug("mysql_client: %s" % type(self.mysql_client))
+        # ensures database is removed
+        try:
+            self.driver.remove_database(self.database)
+        except:
+            pass
+        self.assertFalse(self.database.name in self.driver.list_databases())
+        self.driver.create_database(self.database)
+        self.assertTrue(self.database.name in self.driver.list_databases())
+        
+        #drop database
+        self.driver.remove_database(self.database)
+        self.assertFalse(self.database.name in self.driver.list_databases())
 
 
-# class ManageCredentialsMySQLTestCase(AbstractTestDriverMongo):
+
+
+# class ManageCredentialsMySQLTestCase(AbstractTestDriverMysql):
 #     """ Test case to managing credentials in mysqldb engine """
 # 
 #     def setUp(self):

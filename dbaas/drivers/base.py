@@ -118,7 +118,11 @@ class BaseDriver(object):
         raise NotImplementedError()
 
     def list_databases(self):
-        """list databases in a databaseinfra"""
+        """
+        list databases in a databaseinfra
+        this method should return a list of the databases names in the instance
+        Ex.: ["mary", "john", "michael"]
+        """
         raise NotImplementedError()
 
     def import_databases(self, databaseinfra):

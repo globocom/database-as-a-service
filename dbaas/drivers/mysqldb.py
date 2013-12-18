@@ -47,7 +47,7 @@ class MySQL(BaseDriver):
             client = mysqldb.connect(host=connection_address, port=int(connection_port),
                                      user=self.databaseinfra.user, passwd=self.databaseinfra.password,
                                      db=database, connect_timeout=connection_timeout_in_seconds)
-            LOG.debug('Successfully connected to mysql databaseinfra %s', self.databaseinfra)
+            LOG.debug('Successfully connected to mysql databaseinfra %s' % (self.databaseinfra))
             return client
         except Exception, e:
             raise e
@@ -75,16 +75,19 @@ class MySQL(BaseDriver):
     def __query(self, query_string, instance=None):
         with self.mysqldb(instance=instance) as client:
             try:
+                LOG.debug("query_string: %s" % query_string)
                 client.query(query_string)
                 r = client.store_result()
                 if r is not None:
                     return r.fetch_row(maxrows=0, how=1)
             except _mysql_exceptions.ProgrammingError, e:
+                LOG.error("__query ProgrammingError: %s" % e)
                 if e.args[0] == ER_DB_CREATE_EXISTS:
                     raise DatabaseAlreadyExists(e.args[1])
                 else:
                     raise GenericDriverError(e.args)
             except _mysql_exceptions.OperationalError, e:
+                LOG.error("__query OperationalError: %s" % e)
                 if e.args[0] == ER_DB_DROP_EXISTS:
                     raise DatabaseDoesNotExist(e.args[1])
                 elif e.args[0] == ER_CANNOT_USER:
@@ -136,8 +139,14 @@ class MySQL(BaseDriver):
         self.__query("GRANT %s ON %s.* TO '%s'@'%%'" % (','.join(roles), credential.database, credential.user))
 
     def remove_database(self, database):
-        LOG.info("removing database %s" % database.name)
+        LOG.info("removing database %s" % (database.name))
         self.__query("DROP DATABASE %s" % database.name)
+
+    def list_databases(self, instance=None):
+        """list databases in a databaseinfra"""
+        LOG.info("listing databases in %s" % (self.databaseinfra))
+        results = self.__query("SHOW databases", instance=instance)
+        return [result["Database"] for result in results]
 
     def disconnect_user(self, credential):
         # It works only in mysql >= 5.5
