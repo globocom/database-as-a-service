@@ -78,7 +78,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     plan.admin_order_field = 'name'
 
     def status(self, database):
-        key = database.name + unicode(database.pk) + database.databaseinfra.engine.name + database.databaseinfra.engine.version
+        key = "%s:%s:%s:%s" % (database.name, database.pk, database.databaseinfra.engine.name, database.databaseinfra.engine.version)
         expire = 60
         if cache.get(key):
             return format_html(cache.get(key))
