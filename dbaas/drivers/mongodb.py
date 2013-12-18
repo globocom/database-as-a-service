@@ -107,17 +107,21 @@ class MongoDB(BaseDriver):
         with self.pymongo(instance=instance) as client:
             try:
                 ok = client.admin.command('ping')
+                return True
             except pymongo.errors.PyMongoError, e:
                 raise ConnectionError('Error connection to databaseinfra %s: %s' % (self.databaseinfra, e.message))
 
             if isinstance(ok, dict) and ok.get('ok', 0) != 1.0:
                 raise ConnectionError('Invalid status for ping command to databaseinfra %s' % self.databaseinfra)
 
-    def check_list_dbs(self, instance=None):
+    def list_databases(self, instance=None):
+        dbs_names = []
         with self.pymongo(instance=instance) as client:
             try:
-                ok = client.admin.command('listDatabases')
-                return ok
+                list_of_dbs = client.admin.command('listDatabases')
+                for db in list_of_dbs['databases']:
+                    dbs_names.append(db['name'])
+                return dbs_names
             except pymongo.errors.PyMongoError, e:
                 raise ConnectionError('Error connection to databaseinfra %s: %s' % (self.databaseinfra, e.message))
 
