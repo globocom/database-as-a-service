@@ -166,6 +166,11 @@ class MySQL(BaseDriver):
         self.remove_user(credential)
         self.create_user(credential)
 
+    def list_users(self, instance=None):
+        LOG.info("listing users in %s" % (self.databaseinfra))
+        results = self.__query("SELECT distinct User FROM mysql.user where User != ''", instance=instance)
+        return [result["User"] for result in results]
+
     def change_default_pwd(self, instance):
         new_password = make_db_random_password()
         self.__query("SET PASSWORD FOR '%s'@'%%' = PASSWORD('%s')" %
