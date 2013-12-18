@@ -78,6 +78,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     plan.admin_order_field = 'name'
 
     def status(self, database):
+        # QUESTION TO REFLECT: Shouldn't be better move the cache logic to the driver?
         key = "%s:%s:%s:%s" % (database.name, database.pk, database.databaseinfra.engine.name, database.databaseinfra.engine.version)
         expire = 60
         if cache.get(key):
