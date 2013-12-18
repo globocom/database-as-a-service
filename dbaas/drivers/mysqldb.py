@@ -47,7 +47,7 @@ class MySQL(BaseDriver):
             client = mysqldb.connect(host=connection_address, port=int(connection_port),
                                      user=self.databaseinfra.user, passwd=self.databaseinfra.password,
                                      db=database, connect_timeout=connection_timeout_in_seconds)
-            LOG.debug('Successfully connected to mysql databaseinfra %s', self.databaseinfra)
+            LOG.debug('Successfully connected to mysql databaseinfra %s' % (self.databaseinfra))
             return client
         except Exception, e:
             raise e
@@ -141,6 +141,12 @@ class MySQL(BaseDriver):
     def remove_database(self, database):
         LOG.info("removing database %s" % (database.name))
         self.__query("DROP DATABASE %s" % database.name)
+
+    def list_databases(self, instance=None):
+        """list databases in a databaseinfra"""
+        LOG.info("listing databases in %s" % (self.databaseinfra))
+        results = self.__query("SHOW databases", instance=instance)
+        return [result["Database"] for result in results]
 
     def disconnect_user(self, credential):
         # It works only in mysql >= 5.5
