@@ -29,7 +29,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
     database_add_perm_message = _("You must be set to at least one team to add a database, and the service administrator has been notified about this.")
     perm_manage_quarantine_database = "logical.can_manage_quarantine_databases"
-    perm_add_database_infra = "logical.add_databaseinfra"
+    perm_add_database_infra = "physical.add_databaseinfra"
 
     service_class = DatabaseService
     search_fields = ("name", "databaseinfra__name")
