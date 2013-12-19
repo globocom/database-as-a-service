@@ -78,8 +78,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     plan.admin_order_field = 'name'
 
     def status(self, database):
-        # TODO: move the cache logic to the driver and implement a django templatetag so that the status badge
-        # can be used in other parts othe app
+        # TODO: Database model already has a database_status method that is cached. It uses a DatabaseStatus
+        # class. 
         cache_key = "status:%s:%s:%s:%s" % (database.name, 
                                 database.pk, 
                                 database.databaseinfra.engine.name, 
@@ -102,6 +102,19 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 cache.set(cache_key, html_nook, CACHE_STATUS_TIMEOUT)
                 return format_html(html_nook)
 
+    def description_html(self, database):
+        
+        html = []
+        html.append("<ul>")
+        html.append("<li>Engine Type: %s</li>" % database.engine_type)
+        html.append("<li>Environment: %s</li>" % database.environment)
+        html.append("<li>Plan: %s</li>" % database.plan)
+        html.append("</ul>")
+        
+        return format_html("".join(html))
+
+    description_html.short_description = "Description"
+
     def name_html(self, database):
         try:
             ed_point = escape(database.get_endpoint())
@@ -117,7 +130,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     name_html.admin_order_field = "name"
 
     def engine_type(self, database):
-        return database.infra.engine_name
+        return database.engine_type
 
     engine_type.admin_order_field = 'name'
 
