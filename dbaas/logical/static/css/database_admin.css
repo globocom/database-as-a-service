@@ -20,12 +20,27 @@
 }
 
 /* engine type */
-#result_list td:nth-child(3) {
+/*#result_list td:nth-child(3) {
+    width: 10%;
+}*/
+
+/* environment */
+/*#result_list td:nth-child(4) {
+    width: 15%;
+}*/
+
+/* plan */
+#result_list td:nth-child(5) {
     width: 10%;
 }
 
-/* environment */
-#result_list td:nth-child(4) {
+/* capacity */
+#result_list td:nth-child(7) {
+    width: 20%;
+}
+
+/* quarantine */
+#result_list td:nth-child(6) {
     width: 15%;
 }
 
@@ -35,16 +50,6 @@
 
 .show-endpoint span {
     vertical-align: middle;
-}
-
-/* capacity */
-#result_list td:nth-child(5) {
-    width: 30%;
-}
-
-/* quarentine */
-#result_list td:nth-child(6) {
-    width: 12%;
 }
 
 .sortpriority {
