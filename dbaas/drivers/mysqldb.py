@@ -100,26 +100,46 @@ class MySQL(BaseDriver):
                 GenericDriverError(e.args)
 
     def info(self):
+        from logical.models import Database
+
         databaseinfra_status = DatabaseInfraStatus(databaseinfra_model=self.databaseinfra)
 
         r = self.__query("SELECT VERSION()")
         databaseinfra_status.version = r[0]['VERSION()']
+
         my_all_dbs = self.__query("SHOW DATABASES")
-        db_sizes = self.__query("SELECT table_schema 'Database', SUM( data_length + index_length) 'Size' \
-                                    FROM information_schema.TABLES GROUP BY table_schema")
+        db_sizes = self.__query("SELECT s.schema_name 'Database', ifnull(SUM( t.data_length + t.index_length), 0) 'Size' \
+                                FROM information_schema.SCHEMATA s \
+                                  left outer join information_schema.TABLES t on s.schema_name = t.table_schema \
+                                GROUP BY s.schema_name")
 
         all_dbs = {}
         for database in db_sizes:
             all_dbs[database['Database']] = int(database['Size'])
 
-        for database in my_all_dbs:
-            db_status = DatabaseStatus(database)
-            db_status.total_size_in_bytes = 0
-            if database['Database'] in all_dbs:
-                db_status.used_size_in_bytes = all_dbs[database['Database']]
-            else:
-                db_status.used_size_in_bytes = 0
-            databaseinfra_status.databases_status[database['Database']] = db_status
+        list_databases = self.list_databases()
+        for database_name in all_dbs.keys():
+            database_model = None
+            try:
+                #LOG.debug("checking status for database %s" % database_name)
+                database_model = Database.objects.get(name=database_name)
+            except Database.DoesNotExist:
+                pass
+                
+            if database_model:
+                db_status = DatabaseStatus(database_model)
+                #is_alive?
+                try:
+                    if self.check_status() and (database_name in list_databases):
+                        db_status.is_alive = True
+                except:
+                    pass
+
+                db_status.total_size_in_bytes = 0
+                db_status.used_size_in_bytes = all_dbs[database_name]
+
+                databaseinfra_status.databases_status[database_name] = db_status
+
         databaseinfra_status.used_size_in_bytes = sum(all_dbs.values())
 
         return databaseinfra_status
