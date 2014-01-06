@@ -132,8 +132,8 @@ class MySQL(BaseDriver):
                 try:
                     if self.check_status() and (database_name in list_databases):
                         db_status.is_alive = True
-                except:
-                    pass
+                except Exception, e:
+                    LOG.warning("could not retrieve db status for %s: %s" % (database_name, e))
 
                 db_status.total_size_in_bytes = 0
                 db_status.used_size_in_bytes = all_dbs[database_name]
@@ -145,7 +145,15 @@ class MySQL(BaseDriver):
         return databaseinfra_status
 
     def check_status(self, instance=None):
-        self.__query("SELECT 1", instance=instance)
+        status = False
+        try:
+            result = self.__query("SELECT 1", instance=instance)
+            if result[0]['1'] == '1':
+                status = True
+        except Exception, e:
+            LOG.warning("could not retrieve status for instance %s: %s" % (instance, e))
+
+        return status
 
     def create_database(self, database):
         LOG.info("creating database %s" % database.name)
