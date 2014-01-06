@@ -143,6 +143,7 @@ class DatabaseStatus(object):
         self.database_model = database_model
         self.used_size_in_bytes = -1
         self.total_size_in_bytes = -1
+        self.is_alive = False
 
     @property
     def name(self):

@@ -6,20 +6,15 @@ from django_services import admin
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django.contrib import messages
-from django.core.cache import cache
 from django.utils.html import format_html, escape
 from ..service.database import DatabaseService
 from ..forms import DatabaseForm, DatabaseForm
 from ..models import Database
 from account.models import Team
 from drivers import DatabaseAlreadyExists
-from drivers.mongodb import MongoDB
-from drivers.mysqldb import MySQL
 from logical.templatetags import capacity
 from system.models import Configuration
-from physical.models import DatabaseInfra
 
-CACHE_STATUS_TIMEOUT = 60
 LOG = logging.getLogger(__name__)
 
 class DatabaseAdmin(admin.DjangoServicesAdmin):
@@ -78,29 +73,16 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     plan.admin_order_field = 'name'
 
     def status(self, database):
-        # TODO: Database model already has a database_status method that is cached. It uses a DatabaseStatus
-        # class. 
-        cache_key = "status:%s:%s:%s:%s" % (database.name, 
-                                database.pk, 
-                                database.databaseinfra.engine.name, 
-                                database.databaseinfra.engine.version)
 
-        if cache.get(cache_key):
-            return format_html(cache.get(cache_key))
+        html_ok = '<span class="label label-success">Alive</span>'
+        html_nook = '<span class="label label-important">Dead</span>'
+        
+        database_status = database.database_status
+        if database_status.is_alive:
+            return format_html(html_ok)
         else:
-            try:
-                driver = database.databaseinfra.get_driver()
-                html_ok = '<span class="label label-success">Alive</span>'
-                html_nook = '<span class="label label-important">Dead</span>'
-                if driver.check_status() and (database.name in driver.list_databases()):
-                    cache.set(cache_key, html_ok, CACHE_STATUS_TIMEOUT)
-                    return format_html(html_ok)
-                else:
-                    cache.set(cache_key, html_nook, CACHE_STATUS_TIMEOUT)
-                    return format_html(html_nook)
-            except:
-                cache.set(cache_key, html_nook, CACHE_STATUS_TIMEOUT)
-                return format_html(html_nook)
+            return format_html(html_nook)
+
 
     def description_html(self, database):
         
