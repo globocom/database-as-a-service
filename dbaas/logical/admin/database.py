@@ -6,24 +6,34 @@ from django_services import admin
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django.contrib import messages
+from django.core.cache import cache
 from django.utils.html import format_html, escape
 from ..service.database import DatabaseService
-from ..forms import DatabaseForm
+from ..forms import DatabaseForm, DatabaseForm
 from ..models import Database
 from account.models import Team
 from drivers import DatabaseAlreadyExists
+from drivers.mongodb import MongoDB
+from drivers.mysqldb import MySQL
 from logical.templatetags import capacity
 from system.models import Configuration
+from physical.models import DatabaseInfra
 
-
+CACHE_STATUS_TIMEOUT = 60
 LOG = logging.getLogger(__name__)
 
 class DatabaseAdmin(admin.DjangoServicesAdmin):
+    """
+    the form used by this view is returned by the method get_form
+    """
+
     database_add_perm_message = _("You must be set to at least one team to add a database, and the service administrator has been notified about this.")
     perm_manage_quarantine_database = "logical.can_manage_quarantine_databases"
+    perm_add_database_infra = "physical.add_databaseinfra"
+
     service_class = DatabaseService
     search_fields = ("name", "databaseinfra__name")
-    list_display_basic = ["name_html", "engine_type", "environment", "plan", "get_capacity_html",]
+    list_display_basic = ["name_html", "engine_type", "environment", "plan", "status", "get_capacity_html", ]
     list_display_advanced = list_display_basic + ["quarantine_dt_format"]
     list_filter_basic = ["project", "databaseinfra__environment", "databaseinfra__engine", "databaseinfra__plan"]
     list_filter_advanced = list_filter_basic + ["databaseinfra", "is_in_quarantine", "team"]
@@ -32,7 +42,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     delete_button_name = "Delete"
     fieldsets_add = (
         (None, {
-            'fields': ('name', 'description', 'project', 'engine', 'environment', 'plan',)
+            'fields': ('name', 'description', 'project', 'engine', 'environment', 'team', 'plan', 'is_in_quarantine')
             }
         ),
     )
@@ -67,10 +77,52 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
     plan.admin_order_field = 'name'
 
+    def status(self, database):
+        # TODO: Database model already has a database_status method that is cached. It uses a DatabaseStatus
+        # class. 
+        cache_key = "status:%s:%s:%s:%s" % (database.name, 
+                                database.pk, 
+                                database.databaseinfra.engine.name, 
+                                database.databaseinfra.engine.version)
+
+        if cache.get(cache_key):
+            return format_html(cache.get(cache_key))
+        else:
+            try:
+                driver = database.databaseinfra.get_driver()
+                html_ok = '<span class="label label-success">Alive</span>'
+                html_nook = '<span class="label label-important">Dead</span>'
+                if driver.check_status() and (database.name in driver.list_databases()):
+                    cache.set(cache_key, html_ok, CACHE_STATUS_TIMEOUT)
+                    return format_html(html_ok)
+                else:
+                    cache.set(cache_key, html_nook, CACHE_STATUS_TIMEOUT)
+                    return format_html(html_nook)
+            except:
+                cache.set(cache_key, html_nook, CACHE_STATUS_TIMEOUT)
+                return format_html(html_nook)
+
+    def description_html(self, database):
+        
+        html = []
+        html.append("<ul>")
+        html.append("<li>Engine Type: %s</li>" % database.engine_type)
+        html.append("<li>Environment: %s</li>" % database.environment)
+        html.append("<li>Plan: %s</li>" % database.plan)
+        html.append("</ul>")
+        
+        return format_html("".join(html))
+
+    description_html.short_description = "Description"
+
     def name_html(self, database):
+        try:
+            ed_point = escape(database.get_endpoint())
+        except:
+            ed_point = None
         html = '%(name)s <a href="javascript:void(0)" title="%(title)s" data-content="%(endpoint)s" class="show-endpoint"><span class="icon-info-sign"></span></a>' % {
             'name': database.name,
-            'endpoint': escape(database.get_endpoint()),
+            'endpoint': ed_point,
             'title': _("Show Endpoint")
         }
         return format_html(html)
@@ -78,32 +130,27 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     name_html.admin_order_field = "name"
 
     def engine_type(self, database):
-        return database.infra.engine_name
+        return database.engine_type
 
     engine_type.admin_order_field = 'name'
 
     def get_capacity_html(self, database):
-        return capacity.render_capacity_html(database)
+        try:
+            return capacity.render_capacity_html(database)
+        except:
+            return None
 
     get_capacity_html.short_description = "Capacity"
 
-    def get_form(self, request, obj=None, **kwargs):
-        self.exclude = []
-        if not obj:
-            # adding new database
-            return DatabaseForm
-        # Tradicional form
-        return super(DatabaseAdmin, self).get_form(request, obj, **kwargs)
-
-    def save_model(self, request, obj, form, change):
-        if not change:
-            teams = Team.objects.filter(users=request.user)
-            LOG.info("user %s teams: %s" % (request.user, teams))
-            if teams:
-                obj.team = teams[0]
-                LOG.info("Team accountable for database %s set to %s" % (obj, obj.team))
-
-        obj.save()
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        """
+        filter teams for the ones that the user is associated, unless the user has ther
+        perm to add databaseinfra. In this case, he should see all teams.
+        """
+        if not request.user.has_perm(self.perm_add_database_infra):
+            if db_field.name == "team":
+                kwargs["queryset"] = Team.objects.filter(users=request.user)
+        return super(DatabaseAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
     def get_fieldsets(self, request, obj=None):
         if obj: #In edit mode
@@ -119,7 +166,11 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         if in edit mode, name is readonly.
         """
         if obj: #In edit mode
-            return ('name', 'team', 'databaseinfra') + self.readonly_fields
+            #only sysadmin can change team accountable for a database
+            if request.user.has_perm(self.perm_add_database_infra):
+                return ('name', 'databaseinfra') + self.readonly_fields
+            else:
+                return ('name', 'databaseinfra', 'team') + self.readonly_fields
         return self.readonly_fields
 
 
@@ -150,12 +201,23 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         return super(DatabaseAdmin, self).changelist_view(request, extra_context=extra_context)
 
     def add_view(self, request, form_url='', extra_context=None):
+        self.form = DatabaseForm
+        
         try:
             teams = Team.objects.filter(users=request.user)
             LOG.info("user %s teams: %s" % (request.user, teams))
             if not teams:
                 self.message_user(request, self.database_add_perm_message, level=messages.ERROR)
                 return HttpResponseRedirect(reverse('admin:logical_database_changelist'))
+
+            #if no team is specified and the user has only one team, then set it to the database
+            if teams.count() == 1 and request.method == 'POST':
+                post_data = request.POST.copy()
+                if 'team' in post_data:
+                    post_data['team'] = u"%s" % teams[0].pk
+            
+                request.POST = post_data
+
             return super(DatabaseAdmin, self).add_view(request, form_url, extra_context=extra_context)
         except DatabaseAlreadyExists:
             self.message_user(request, _('An inconsistency was found: The database "%s" already exists in infra-structure but not in DBaaS.') % request.POST['name'], level=messages.ERROR)
@@ -164,7 +226,9 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
     def change_view(self, request, object_id, form_url='', extra_context=None):
         database = Database.objects.get(id=object_id)
+        self.form = DatabaseForm
         extra_context = extra_context or {}
+
         if database.is_in_quarantine:
             extra_context['delete_button_name'] = self.delete_button_name
         else:

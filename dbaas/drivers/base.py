@@ -111,6 +111,13 @@ class BaseDriver(object):
     def remove_user(self, credential):
         raise NotImplementedError()
 
+    def list_users(self, instance=None):
+        """
+        this method should return a list of the users in the instance
+        Ex.: ["mary", "john", "michael"]
+        """
+        raise NotImplementedError()
+
     def create_database(self, database):
         raise NotImplementedError()
 
@@ -118,7 +125,11 @@ class BaseDriver(object):
         raise NotImplementedError()
 
     def list_databases(self):
-        """list databases in a databaseinfra"""
+        """
+        list databases in a databaseinfra
+        this method should return a list of the databases names in the instance
+        Ex.: ["mary", "john", "michael"]
+        """
         raise NotImplementedError()
 
     def import_databases(self, databaseinfra):

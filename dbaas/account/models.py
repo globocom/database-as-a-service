@@ -70,7 +70,7 @@ class Team(BaseModel):
         else:
             teams = Team.objects.filter(users=user)
             if teams.count() > 1:
-                LOG.warning("user %s is in more than one team! %s" % teams)
+                LOG.warning("user %s is in more than one team! %s" % (user, teams))
 
             for team in teams:
                 permissions = permissions + list(team.role.permissions.all())

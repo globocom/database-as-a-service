@@ -73,6 +73,15 @@ class Database(BaseModel):
         ordering = ('databaseinfra', 'name',)
 
     @property
+    def infra(self):
+        """ Total size of database (in bytes) """
+        return self.databaseinfra
+
+    @property
+    def engine_type(self):
+        return self.infra.engine_name
+
+    @property
     def plan(self):
         return self.databaseinfra and self.databaseinfra.plan
 
@@ -174,11 +183,6 @@ class Database(BaseModel):
             info = self.databaseinfra.get_info(force_refresh=True)
             database_status = info.get_database_status(self.name)
         return database_status
-
-    @property
-    def infra(self):
-        """ Total size of database (in bytes) """
-        return self.databaseinfra
 
     @property
     def total_size(self):

@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.0.4
+
+* users can be in more than one team
+* dba can now change the team accountable for a database
+* filter to find user without a team
+* database status in database listing
+* some mysql tests
+* method to list databases in a specific driver (implemented in mongodb and mysql)
+* showing plan and environment in database listing
+* google analytics
+
+
 ## 0.0.3
 
 * fix django-simple-audit to a working version with m2m auditing

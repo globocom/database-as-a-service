@@ -35,6 +35,18 @@ class AdminCreateDatabaseTestCase(TestCase):
         self.engine = None
         self.client.logout()
 
+    def test_user_tries_to_create_database_without_team(self):
+        database_name = "test_new_database_without_team"
+        params = {
+            "name": database_name,
+            "project": self.project.pk,
+            "plan": self.plan.pk,
+            "environment": self.environment.pk,
+            "engine": self.databaseinfra.engine.pk,
+        }
+        response = self.client.post("/admin/logical/database/add/", params)
+        self.assertContains(response, "Team: This field is required",  status_code=200)
+
     def test_user_pass_all_arguments_and_database_is_created(self):
         database_name = "test_new_database"
         params = {
@@ -43,6 +55,7 @@ class AdminCreateDatabaseTestCase(TestCase):
             "plan": self.plan.pk,
             "environment": self.environment.pk,
             "engine": self.databaseinfra.engine.pk,
+            "team": self.team.pk,
         }
         response = self.client.post("/admin/logical/database/add/", params)
         self.assertEqual(response.status_code, 302, response.content)
@@ -60,10 +73,10 @@ class AdminCreateDatabaseTestCase(TestCase):
             "plan": self.plan.pk,
             "environment": self.environment.pk,
             "engine": self.databaseinfra.engine.pk,
+            "team": self.team.pk,
         }
         response = self.client.post("/admin/logical/database/add/", params)
-        self.assertEqual(response.status_code, 200, response.content)
-        self.assertIn('this name already exists in the selected environment', response.content)
+        self.assertContains(response, "this name already exists in the selected environment",  status_code=200)
 
     @mock.patch.object(fake.FakeDriver, 'create_database')
     def test_try_create_a_new_database_but_database_already_exists_only_in_driver(self, create_database):
@@ -75,10 +88,10 @@ class AdminCreateDatabaseTestCase(TestCase):
             "plan": self.plan.pk,
             "environment": self.environment.pk,
             "engine": self.databaseinfra.engine.pk,
+            "team": self.team.pk,
         }
         response = self.client.post("/admin/logical/database/add/", params)
-        self.assertEqual(response.status_code, 200, response.content)
-        self.assertTrue('already exists in infra-structure but not in DBaaS' in response.content, response.content)
+        self.assertContains(response, "already exists in infra-structure but not in DBaaS",  status_code=200)
 
     def test_db_name(self):
         data = {'name': '', 'project': 'any_project'}
