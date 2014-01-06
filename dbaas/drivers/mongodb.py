@@ -134,11 +134,19 @@ class MongoDB(BaseDriver):
 
             databaseinfra_status.version = json_server_info.get('version', None)
             databaseinfra_status.used_size_in_bytes = json_list_databases.get('totalSize', 0)
-
+            
+            list_databases = self.list_databases()
             for database in self.databaseinfra.databases.all():
                 database_name = database.name
                 json_db_status = getattr(client, database_name).command('dbStats')
                 db_status = DatabaseStatus(database)
+                #is_alive?
+                try:
+                    if self.check_status() and (database_name in list_databases):
+                        db_status.is_alive = True
+                except:
+                    pass
+                    
                 dataSize = json_db_status.get("dataSize") or 0
                 indexSize = json_db_status.get("indexSize") or 0
                 db_status.used_size_in_bytes = dataSize + indexSize
