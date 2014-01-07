@@ -1,5 +1,5 @@
 {% extends "dashboard/base.html" %}
-{% load admin_static %}
+{% load admin_static infra_capacity %}
 
 {% block content%}
       <div id="content">
@@ -28,14 +28,20 @@
 							<div class="col-sm-offset-1 col-lg-8">
 								<h6><b>Host:</b> cittavld333</h6>
 								<h6><b>Engine:</b> {{ infra.engine_name }}&nbsp;{{ infra.engine.version }}</h6>
-								<h6><b>Environment:</b> <li class="label label-default">{{ infra.environment.name }}</li></h6>
+								{% if infra.environment.name == 'laboratory' %}
+									<h6><b>Environment:</b><li class="label label-default">{{ infra.environment.name }}</li></h6>
+								{% elif infra.environment.name == 'dev' %}
+									<h6><b>Environment:</b><li class="label label-info">{{ infra.environment.name }}</li></h6>
+								{% elif infra.environment.name == 'qa01' %}
+									<h6><b>Environment:</b><li class="label label-inverse">{{ infra.environment.name }}</li></h6>
+								{% elif infra.environment.name == 'prod' %}
+									<h6><b>Environment:</b><li class="label label-success">{{ infra.environment.name }}</li></h6>
+								{% endif %}
 								<h6><b>Plan:</b> {{ infra.plan.name }}
 							</div>
 						</div>
-							<div class="progress mongo">
-								<div class="progress-bar progress-bar-warning" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100" style="width: 70%;" data-original-title="" title="">
-									<span>7 of 10</span>
-								</div>
+							<div class="progress dashboard">
+								{% render_progress_bar infra.used infra.capacity %}
 							</div>
 					</div>
 				</div>
