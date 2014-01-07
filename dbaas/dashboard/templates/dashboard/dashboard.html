@@ -23,7 +23,11 @@
 				 	<div class="body">
 						<div class="row">
 							<div class="col-lg-3">
-								<img src="{% static "assets/img/mongo.png" %}" />
+								{% if infra.engine_name == 'mongodb' %}
+									<img src="{% static "assets/img/mongo.png" %}" />
+								{% else %}
+									<img src="{% static "assets/img/mysql.png" %}" />
+								{% endif %}
 							</div>
 							<div class="col-sm-offset-1 col-lg-8">
 								<h6><b>Host:</b> cittavld333</h6>
@@ -48,38 +52,6 @@
 			</div>
 			<!-- end infranode -->
 			{% endfor %}
-
-
-			<!-- start infranode -->
-			<!-- <div class="col-lg-4">
-				<div class="box">
-					<header>
-						<h5>singleMysql</h5>
-						<div class="brand mysql"><img src="{% static "assets/img/mysql_logo.png" %}" /></div>
-					</header>
-				 	<div class="body">
-						<div class="row">
-							<div class="col-lg-3">
-								<img src="{% static "assets/img/mysql.png" %}" style="width: 85px;" />
-							</div>
-							<div class="col-sm-offset-1 col-lg-8">
-								<h6><b>Host:</b> cittavld24</h6>
-								<h6><b>Engine:</b> mysql 5.5</h6>
-								<h6><b>Environment:</b> <li class="label label-danger">prod</li></h6>
-								<h6><b>Plan:</b> Plan medium (single node)
-							</div>
-						</div>
-							<div class="progress mongo">
-								<div class="progress-bar progress-bar-success" role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100" style="width: 40%;" data-original-title="" title="">
-									<span>4 of 10</span>
-								</div>
-							</div>
-					</div>
-				</div>
-			</div> -->
-			<!-- end infranode -->
-
-
 
           </div>
           <!-- end .inner -->
