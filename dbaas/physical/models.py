@@ -106,21 +106,28 @@ class PlanAttribute(BaseModel):
 
 class DatabaseInfra(BaseModel):
 
-    name = models.CharField(verbose_name=_("DatabaseInfra name"),
+    name = models.CharField(verbose_name=_("DatabaseInfra Name"),
                             max_length=100,
                             unique=True,
                             help_text=_("This could be the fqdn associated to the databaseinfra."))
-    user = models.CharField(verbose_name=_("DatabaseInfra user"),
+    user = models.CharField(verbose_name=_("DatabaseInfra User"),
                             max_length=100,
                             help_text=_("Administrative user with permission to manage databases, create users and etc."),
                             blank=True,
                             null=False)
-    password = EncryptedCharField(verbose_name=_("DatabaseInfra password"), max_length=255, blank=True, null=False)
+    password = EncryptedCharField(verbose_name=_("DatabaseInfra Password"), max_length=255, blank=True, null=False)
     engine = models.ForeignKey(Engine, related_name="databaseinfras", on_delete=models.PROTECT)
     plan = models.ForeignKey(Plan, related_name="databaseinfras", on_delete=models.PROTECT)
     environment = models.ForeignKey(Environment, related_name="databaseinfras", on_delete=models.PROTECT)
     capacity = models.PositiveIntegerField(default=1, help_text=_("How many databases is supported"))
-    per_database_size_mbytes = models.IntegerField(default=0, verbose_name=_("Max database size (MB)"), help_text=_("What is the maximum size of each database (MB). 0 means unlimited."))
+    per_database_size_mbytes = models.IntegerField(default=0, 
+                                                    verbose_name=_("Max database size (MB)"), 
+                                                    help_text=_("What is the maximum size of each database (MB). 0 means unlimited."))
+    endpoint = models.CharField(verbose_name=_("DatabaseInfra Endpoint"),
+                            max_length=255,
+                            help_text=_("Usually it is in the form host:port[,host_n:port_n]. If the engine is mongodb this will be automatically generated."),
+                            blank=True,
+                            null=True)
 
     def __unicode__(self):
         return self.name
