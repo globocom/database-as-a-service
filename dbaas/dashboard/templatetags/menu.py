@@ -1,32 +1,32 @@
 # -*- coding: utf-8 -*-
-from django.utils.safestring import mark_safe
 from django import template
 
-from physical.models import Plan
+from physical.models import EngineType, Environment
 
 register = template.Library()
 
-@register.simple_tag
-def render_menu():
-    plans = Plan.objects.all()
-    
-    html = """<li class="">
-		<a href="javascript:;">
-			<i class="fa fa-tasks"></i>&nbsp;Mongodb
-			<span class="fa arrow"></span></a>
-      <ul>
-        <li class="">
-          <a href="icon.html">
-            <i class="fa fa-angle-right"></i>&nbsp;Dev</a>
-        </li>
-        <li class="">
-          <a href="button.html">
-            <i class="fa fa-angle-right"></i>&nbsp;Prod</a>
-        </li>
-      </ul>
-    </li>
-    
-    <li class="nav-divider"></li>
-	"""
 
-    return mark_safe(html)
+@register.inclusion_tag('dashboard/menu.html')
+def render_menu():
+
+    data_engines = []
+    for engine_type in EngineType.objects.all():
+        data_engine = {
+            'name': engine_type.name,
+            'environments': [],
+        }
+
+        for environment in Environment.objects.filter(plan__in=engine_type.plans.all()).distinct():
+            data_environment = {
+                'name': environment.name
+            }
+            data_engine['environments'].append(data_environment)
+
+        if data_engine['environments']:
+            data_engines.append(data_engine)
+
+    context = {
+        'engines': data_engines
+    }
+
+    return context
