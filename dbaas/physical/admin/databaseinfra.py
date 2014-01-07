@@ -7,6 +7,7 @@ from django.core.exceptions import ValidationError
 from django_services import admin
 from ..service.databaseinfra import DatabaseInfraService
 from ..models import Instance
+from ..forms import DatabaseInfraForm
 from util.html import render_progress_bar
 
 
@@ -48,6 +49,10 @@ class DatabaseInfraAdmin(admin.DjangoServicesAdmin):
     list_filter = ("engine", "environment")
     save_on_top = True
 
+    inlines = [
+        InstanceAdmin
+    ]
+
     def capacity_bar(self, datainfra):
         return render_progress_bar(datainfra.used, datainfra.capacity)
     capacity_bar.short_description = "Capacity"
@@ -66,7 +71,10 @@ class DatabaseInfraAdmin(admin.DjangoServicesAdmin):
     show_instances.allow_tags = True
     show_instances.short_description = "Instances"
 
-    inlines = [
-        InstanceAdmin
-    ]
+    def add_view(self, request, form_url='', extra_context=None):
+        self.form = DatabaseInfraForm
+        return super(DatabaseInfraAdmin, self).add_view(request, form_url, extra_context=extra_context)
 
+    def change_view(self, request, object_id, form_url='', extra_context=None):
+        self.form = DatabaseInfraForm
+        return super(DatabaseInfraAdmin, self).change_view(request, object_id, form_url, extra_context=extra_context)
