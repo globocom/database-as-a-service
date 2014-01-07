@@ -1,0 +1,21 @@
+<ul id="menu" class="collapse">
+  <li class="nav-header">Menu</li>
+  <li class="nav-divider"></li>
+
+	{% for engine in engines %}
+	<li class="">
+		<a href="javascript:;">
+			<i class="fa fa-tasks"></i>&nbsp;{{engine.name}}
+			<span class="fa arrow"></span></a>
+	  <ul>
+		{% for environment in engine.environments %}
+	    <li class="">
+	      <a href="#">
+	        <i class="fa fa-angle-right"></i>&nbsp;{{environment.name}}</a>
+	    </li>
+		{% endfor %}
+	  </ul>
+	</li>
+	{% endfor %}
+
+</ul><!-- /#menu -->
