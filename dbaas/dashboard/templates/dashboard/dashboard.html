@@ -1,5 +1,10 @@
 {% extends "dashboard/base.html" %}
-{% load admin_static infra_capacity %}
+{% load admin_static menu infra_capacity %}
+
+{% block menu %}
+{% render_menu %}
+{% endblock menu %}
+
 
 {% block content%}
       <div id="content">
@@ -52,7 +57,6 @@
 			</div>
 			<!-- end infranode -->
 			{% endfor %}
-
           </div>
           <!-- end .inner -->
         </div>
