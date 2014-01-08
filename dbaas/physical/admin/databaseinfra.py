@@ -2,7 +2,6 @@
 from __future__ import absolute_import, unicode_literals
 from django.contrib import admin as django_admin
 from django.utils.translation import ugettext_lazy as _
-from django.core.exceptions import ValidationError
 from django_services import admin
 from ..service.databaseinfra import DatabaseInfraService
 from ..models import Instance

@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
+from django.utils.translation import ugettext_lazy as _
 from django.forms.models import BaseInlineFormSet
+from django.core.exceptions import ValidationError
 
 import logging
 
