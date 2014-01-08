@@ -25,17 +25,22 @@ class MySQL(BaseDriver):
     RESERVED_DATABASES_NAME = ['admin', 'test', 'mysql', 'information_schema']
 
     def get_connection(self, database=None):
-        my_instance = self.databaseinfra.instances.all()[0]
-        uri = "mysql://<user>:<password>@%s:%s" % (my_instance.address, my_instance.port)
+        # my_instance = self.databaseinfra.instances.all()[0]
+        uri = "mysql://<user>:<password>@%s" % (self.databaseinfra.endpoint)
         if database:
             uri = "%s/%s" % (uri, database.name)
         return uri
 
     def __get_admin_connection(self, instance=None):
-        if instance:
-            return instance.address, instance.port
-        my_instance = self.databaseinfra.instances.all()[0]
-        return my_instance.address, my_instance.port
+        """
+        endpoint is on the form HOST:PORT
+        """
+        endpoint = self.databaseinfra.endpoint.split(':')
+        return endpoint[0], int(endpoint[1])
+        # if instance:
+        #     return instance.address, instance.port
+        # my_instance = self.databaseinfra.instances.all()[0]
+        # return my_instance.address, my_instance.port
 
     def __mysql_client__(self, instance, database='mysql'):
         connection_address, connection_port = self.__get_admin_connection(instance)
