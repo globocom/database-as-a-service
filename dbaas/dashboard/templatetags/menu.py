@@ -18,7 +18,8 @@ def render_menu():
 
         for environment in Environment.objects.filter(plan__in=engine_type.plans.all()).distinct():
             data_environment = {
-                'name': environment.name
+                'id': environment.id,
+                'name': environment.name,
             }
             data_engine['environments'].append(data_environment)
 
