@@ -48,7 +48,10 @@ class DatabaseInfraAdmin(admin.DjangoServicesAdmin):
     list_display = ("name", "user", "environment", "show_instances", "capacity_bar")
     list_filter = ("engine", "environment")
     save_on_top = True
-
+    
+    add_form_template = "admin/physical/databaseinfra/add_form.html"
+    change_form_template = "admin/physical/databaseinfra/change_form.html"
+    
     inlines = [
         InstanceAdmin
     ]
