@@ -11,6 +11,7 @@
 			<!-- start infranode -->
 			<div class="col-lg-4">
 				<div class="box">
+					<a href="{% url 'databaseinfra.index' infra.id %}" style="color:#333;">
 					<header>
 						<h5>{{ infra.name }}</h5>
 						<div class="brand mongo">
@@ -49,6 +50,7 @@
 								{% render_progress_bar infra.used infra.capacity %}
 							</div>
 					</div>
+					</a>
 				</div>
 			</div>
 			<!-- end infranode -->
