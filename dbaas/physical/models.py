@@ -2,7 +2,7 @@
 from __future__ import absolute_import, unicode_literals
 import logging
 import simple_audit
-from django.db.models.signals import pre_save
+from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
 from django.core.exceptions import ValidationError
 from django.core.cache import cache
@@ -265,7 +265,7 @@ class Instance(BaseModel):
         from drivers import factory_for, GenericDriverError, ConnectionError, AuthenticationError
         try:
             engine = factory_for(self.databaseinfra)
-            engine.check_status(instance=self)
+            #engine.check_status(instance=self)
             LOG.debug('Instance %s is ok', self)
         except AuthenticationError, e:
             LOG.exception(e)
@@ -282,6 +282,15 @@ class Instance(BaseModel):
 #####################################################################################################
 # SIGNALS
 #####################################################################################################
+
+@receiver(post_save, sender=DatabaseInfra)
+def databaseinfra_post_save(sender, **kwargs):
+    """
+    databaseinfra post save
+    """
+    databaseinfra = kwargs.get('instance')
+    LOG.debug("databaseinfra post-save triggered")
+    LOG.debug("databaseinfra %s endpoint: %s" % (databaseinfra, databaseinfra.endpoint))
 
 @receiver(pre_save, sender=DatabaseInfra)
 def databaseinfra_pre_save(sender, **kwargs):
