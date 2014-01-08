@@ -38,18 +38,33 @@
 
     DatabaseInfra.prototype = {
         engine_changed: function() {
+            this.update_components();
+        },
+        update_components: function() {
             var el = $("#id_engine");
             var engine_id = el.val() || "none";
             var engine_name = $('#id_engine :selected').text() || "none";
-            var endpoint = $(".control-group.field-endpoint");
+
             if (engine_name.match(/mongo/g)) {
-                endpoint.hide();
+                this.hide_endpoint();
             } else {
                 if (engine_id == "none") {
-                    endpoint.hide();
+                    this.hide_endpoint();
                 } else {
-                    endpoint.show();
+                    this.show_endpoint();
                 };
+            };
+        },
+        hide_endpoint: function() {
+            var endpoint = $(".control-group.field-endpoint");
+            if (endpoint.is(":visible")) {
+                endpoint.hide();
+            };
+        },
+        show_endpoint: function() {
+            var endpoint = $(".control-group.field-endpoint");
+            if (! endpoint.is(":visible")) {
+                endpoint.show();
             };
         },
     };
@@ -60,10 +75,7 @@
         var databaseinfra = new DatabaseInfra();
         
         //hide endpoint
-        var endpoint = $(".control-group.field-endpoint");
-        if (endpoint.is(":visible")) {
-            endpoint.hide();
-        };
+        databaseinfra.hide_endpoint();
         
         // 
         $("#id_engine").on("change", function() {
