@@ -15,8 +15,13 @@ def dashboard(request):
 
     dbinfra = DatabaseInfra.objects.all()
     if engine_type:
-      dbinfra = dbinfra.filter(engine__engine_type__name=engine_type)
+        dbinfra = dbinfra.filter(engine__engine_type__name=engine_type)
     if env_id:
-      dbinfra = dbinfra.filter(environment__id=env_id)
+        dbinfra = dbinfra.filter(environment__id=env_id)
 
     return render_to_response("dashboard/dashboard.html", {'dbinfra': dbinfra}, context_instance=RequestContext(request))
+
+
+@login_required
+def databaseinfra(request, infra_id):
+    return render_to_response("dashboard/dashboard.html", context_instance=RequestContext(request))
