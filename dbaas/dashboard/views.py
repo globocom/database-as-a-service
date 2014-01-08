@@ -12,6 +12,8 @@ LOG = logging.getLogger(__name__)
 def dashboard(request):
     env_id = request.GET.get('env_id')
     engine_type = request.GET.get('engine_type')
+    if engine_type and not env_id:
+        dbinfra = DatabaseInfra.objects.filter(engine__engine_type__name=engine_type)
     if env_id and engine_type:
         dbinfra = DatabaseInfra.objects.filter(environment__id=env_id, engine__engine_type__name=engine_type)
     else:
