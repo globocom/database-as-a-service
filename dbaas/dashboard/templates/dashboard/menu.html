@@ -10,7 +10,7 @@
 	  <ul>
 		{% for environment in engine.environments %}
 	    <li class="">
-	      <a href="{% url 'dashboard.index' %}?env_id={{environment.id}}">
+	      <a href="{% url 'dashboard.index' %}?env_id={{environment.id}}&engine_type={{engine.name}}">
 	        <i class="fa fa-angle-right"></i>&nbsp;{{environment.name}}</a>
 	    </li>
 		{% endfor %}
