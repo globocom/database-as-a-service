@@ -28,7 +28,6 @@ class InstanceModelFormSet(BaseInlineFormSet):
                 continue
 
             #LOG.debug(cleaned_data)
-
             is_deleted = cleaned_data.get('DELETE', False)
             databaseinfra = cleaned_data.get('databaseinfra', None)
 
@@ -58,12 +57,22 @@ class InstanceModelFormSet(BaseInlineFormSet):
         #if step == 1, then set endpoint to the corresponding instance
         if step == 1:
             for cleaned_data in self.cleaned_data:
-                # form has data and we aren't deleting it.
+
                 if not cleaned_data:
                     continue
-
+                
+                # form has data and we aren't deleting it.
                 is_deleted = cleaned_data.get('DELETE', False)
                 databaseinfra = cleaned_data.get('databaseinfra', None)
                 if not is_deleted:
                     databaseinfra.endpoint = self.get_endpoint(cleaned_data)
-                
+        else: #if has 2 or more instances and it is not mongodb, check if endpoint were set
+            for cleaned_data in self.cleaned_data:
+
+                if not cleaned_data:
+                    continue
+
+                databaseinfra = cleaned_data.get('databaseinfra', None)
+                if databaseinfra.engine.name != "mongodb":
+                    if not databaseinfra.endpoint:
+                        raise ValidationError(_("You have 2 or more instances and dit not specify an endpoint"))
