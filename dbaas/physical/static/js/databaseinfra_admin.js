@@ -56,9 +56,14 @@
             };
         },
         hide_endpoint: function() {
-            var endpoint = $(".control-group.field-endpoint");
-            if (endpoint.is(":visible")) {
-                endpoint.hide();
+            var engine_id = $("#id_engine").val() || "none";
+            var engine_name = $('#id_engine :selected').text() || "none";
+            // only hide if it is not mongo or if no engine is selected
+            if ((engine_name.match(/mongo/g) || engine_id == "none" )) {
+                var endpoint = $(".control-group.field-endpoint");
+                if (endpoint.is(":visible")) {
+                    endpoint.hide();
+                };
             };
         },
         show_endpoint: function() {
@@ -74,7 +79,7 @@
         
         var databaseinfra = new DatabaseInfra();
         
-        //hide endpoint
+        //hide endpoint?
         databaseinfra.hide_endpoint();
         
         // 
