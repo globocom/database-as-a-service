@@ -32,7 +32,6 @@
 								{% endif %}
 							</div>
 							<div class="col-sm-offset-1 col-lg-8">
-								<h6><b>Host:</b> cittavld333</h6>
 								<h6><b>Engine:</b> {{ infra.engine_name }}&nbsp;{{ infra.engine.version }}</h6>
 								{% if infra.environment.name == 'laboratory' %}
 									<h6><b>Environment:</b><li class="label label-default">{{ infra.environment.name }}</li></h6>
@@ -43,7 +42,7 @@
 								{% elif infra.environment.name == 'prod' %}
 									<h6><b>Environment:</b><li class="label label-success">{{ infra.environment.name }}</li></h6>
 								{% endif %}
-								<h6><b>Plan:</b> {{ infra.plan.name }}
+								<h6><b>Plan:</b> {{ infra.plan.name }}</h6>
 							</div>
 						</div>
 							<div class="progress dashboard">
