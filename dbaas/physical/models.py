@@ -265,7 +265,8 @@ class Instance(BaseModel):
         from drivers import factory_for, GenericDriverError, ConnectionError, AuthenticationError
         try:
             engine = factory_for(self.databaseinfra)
-            #engine.check_status(instance=self)
+            #validate instance connection before saving
+            engine.check_status(instance=self)
             LOG.debug('Instance %s is ok', self)
         except AuthenticationError, e:
             LOG.exception(e)
