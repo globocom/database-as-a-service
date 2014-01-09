@@ -2,7 +2,7 @@ The API allows you to maintain yours databases.
 
 ## Getting Started
 
-I assumed I know about [REST API](http://en.wikipedia.org/wiki/Representational_state_transfer) and [JSON](http://en.wikipedia.org/wiki/JSON). But if you don't know, don't worry about because I give you examples using `curl` or you can access api using your web browser too. There is a beatiful interface to help you to understand it.
+I assumed you know about [REST API](http://en.wikipedia.org/wiki/Representational_state_transfer) and [JSON](http://en.wikipedia.org/wiki/JSON). But if you don't know, don't worry about because I give you examples using `curl` or you can access api using your web browser too. There is a beatiful interface to help you to understand it.
 
 To ensure you will be able to run all examples, they are based on sample data provided by `make reset_data` command.
 
