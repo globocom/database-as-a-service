@@ -38,8 +38,8 @@ compile:
 
 
 db_reset: # drop and create database
-	@mysqladmin -uroot -f drop dbaas -hlocalhost; true
-	@mysqladmin -uroot create dbaas -hlocalhost
+	@mysqladmin -uroot -p$(DBAAS_DATABASE_PASSWORD) -f drop dbaas -hlocalhost; true
+	@mysqladmin -uroot -p$(DBAAS_DATABASE_PASSWORD) create dbaas -hlocalhost
 	@cd dbaas && python manage.py syncdb --migrate --noinput
 
 
@@ -60,7 +60,7 @@ run_migrate: # run all migrations
 
 
 test: # run tests
-	@mysqladmin -uroot -f drop test_dbaas -h$(DBAAS_DATABASE_HOST); true
+	@mysqladmin -uroot -p$(DBAAS_DATABASE_PASSWORD) -f drop test_dbaas -h$(DBAAS_DATABASE_HOST); true
 	@cd dbaas && python manage.py test --traceback $(filter-out $@,$(MAKECMDGOALS))
 
 
