@@ -1,0 +1,96 @@
+{% extends "dashboard/base.html" %}
+{% load admin_static infra_capacity capacity %}
+
+
+{% block content%}
+      <div id="content">
+        <div class="outer">
+          <div class="inner">
+
+			<!-- start infranode -->
+			<div class="col-lg-12">
+				<div class="box">
+					<header>
+						<h5>{{ infra.name }}</h5>
+						<div class="brand mongo">
+							{% if infra.engine_name == 'mongodb' %}
+								<img src="{% static "assets/img/MongoDB_logo.png" %}" />
+							{% else %}
+								<img src="{% static "assets/img/mysql_logo.png" %}" />
+							{% endif %}
+						</div>
+					</header>
+				 	<div class="body">
+						<div class="row">
+							<div class="col-lg-1">
+								{% if infra.engine_name == 'mongodb' %}
+									<img src="{% static "assets/img/mongo.png" %}" />
+								{% else %}
+									<img src="{% static "assets/img/mysql.png" %}" />
+								{% endif %}
+							</div>
+							<div class="col-lg-8" style="margin-left: 12px;">
+								<h6><b>Host:</b>&nbsp;{% for i in infra.instances.all %}&nbsp;{{i.hostname}}{% if not forloop.last %},{% endif %}&nbsp;{% endfor %}</h6>
+								<h6><b>Engine:</b> {{ infra.engine_name }}&nbsp;{{ infra.engine.version }}</h6>
+								{% if infra.environment.name == 'laboratory' %}
+									<h6><b>Environment:</b><li class="label label-default">{{ infra.environment.name }}</li></h6>
+								{% elif infra.environment.name == 'dev' %}
+									<h6><b>Environment:</b><li class="label label-info">{{ infra.environment.name }}</li></h6>
+								{% elif infra.environment.name == 'qa01' %}
+									<h6><b>Environment:</b><li class="label label-inverse">{{ infra.environment.name }}</li></h6>
+								{% elif infra.environment.name == 'prod' %}
+									<h6><b>Environment:</b><li class="label label-success">{{ infra.environment.name }}</li></h6>
+								{% endif %}
+								<h6><b>Plan:</b> {{ infra.plan.name }}
+							</div>
+						</div>
+							<div class="progress dashboard">
+								{% render_progress_bar infra.used infra.capacity %}
+							</div>
+					</div>
+				</div>
+			</div>
+			<!-- end infranode -->
+			
+			{% for database in databases %}
+			<!-- start datanode -->
+			<div class="col-lg-4">
+				<div class="box">
+					<header>
+						<h5>{{ database.name }}</h5>
+					</header>
+				 	<div class="body">
+						<div class="row">
+							<div class="col-lg-3">
+								{% if infra.engine_name == 'mongodb' %}
+									<img src="{% static "assets/img/mongo.png" %}" />
+								{% else %}
+									<img src="{% static "assets/img/mysql.png" %}" />
+								{% endif %}
+							</div>
+							<div class="col-sm-offset-1 col-lg-8">
+								{% if database.database_status.is_alive %}
+									<h6><b>Status:</b><li class="label label-success">Alive</li></h6>
+								{% else %}
+									<h6><b>Status:</b><li class="label label-danger">Dead</li></h6>
+								{% endif %}
+								<h6><b>Quarantine:</b>{% if database.is_in_quarantine %}&nbsp;{{database.quarantine_dt}}{% else %}&nbsp;--{% endif %}</h6>
+								<h6><b>Team:</b>&nbsp;{{database.team.name}}</h6>
+							</div>
+						</div>
+							<div class="progress dashboard">
+								{% render_capacity_html database %}
+							</div>
+					</div>
+					</a>
+				</div>
+			</div>
+			<!-- end datanode -->
+			{% endfor %}
+          </div>
+          <!-- end .inner -->
+        </div>
+        <!-- end .outer -->
+      </div>
+      <!-- end #content -->
+{% endblock content %}
