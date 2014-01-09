@@ -4,6 +4,7 @@ from django.shortcuts import render_to_response
 from django.contrib.auth.decorators import login_required
 
 from physical.models import DatabaseInfra
+from logical.models import Database
 
 LOG = logging.getLogger(__name__)
 
@@ -24,4 +25,6 @@ def dashboard(request):
 
 @login_required
 def databaseinfra(request, infra_id):
-    return render_to_response("dashboard/dashboard.html", context_instance=RequestContext(request))
+    dbinfra = DatabaseInfra.objects.get(pk=infra_id)
+    databases = Database.objects.filter(databaseinfra=dbinfra)
+    return render_to_response("dashboard/databaseinfra.html", {'infra': dbinfra, 'databases': databases}, context_instance=RequestContext(request))
