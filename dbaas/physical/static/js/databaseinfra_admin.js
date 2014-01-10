@@ -51,8 +51,8 @@
             databaseinfra.engine_changed();
         });
         
-        $("#id_plan").on("change", function() {
-            databaseinfra.update_environments();
+        $("#id_plan").on("change", function(event, initial_environment_id) {
+            databaseinfra.update_environments(initial_environment_id);
         });
     });
 
