@@ -29,8 +29,15 @@
 									<img src="{% static "assets/img/mysql.png" %}" />
 								{% endif %}
 							</div>
-							<div class="col-lg-8" style="margin-left: 12px;">
-								<h6><b>Host:</b>&nbsp;{% for i in infra.instances.all %}&nbsp;{{i.hostname}}{% if not forloop.last %},{% endif %}&nbsp;{% endfor %}</h6>
+							<div class="col-lg-8 infranode" style="margin-left: 12px;">
+								<h6><b>Host:</b>&nbsp;
+								{% for i in infra.instances.all %}
+									{% if i.check_status %}
+										<span class="label label-success">{{i.hostname}}</span>
+									{% else %}
+										<span class="label label-danger">{{i.hostname}}</span>
+									{% endif %}
+								{% endfor %}</h6>
 								<h6><b>Engine:</b> {{ infra.engine_name }}&nbsp;{{ infra.engine.version }}</h6>
 								{% if infra.environment.name == 'laboratory' %}
 									<h6><b>Environment:</b><li class="label label-default">{{ infra.environment.name }}</li></h6>
@@ -39,7 +46,7 @@
 								{% elif infra.environment.name == 'qa01' %}
 									<h6><b>Environment:</b><li class="label label-inverse">{{ infra.environment.name }}</li></h6>
 								{% elif infra.environment.name == 'prod' %}
-									<h6><b>Environment:</b><li class="label label-success">{{ infra.environment.name }}</li></h6>
+									<h6><b>Environment:</b><li class="label label-primary">{{ infra.environment.name }}</li></h6>
 								{% endif %}
 								<h6><b>Plan:</b> {{ infra.plan.name }}
 							</div>
@@ -69,11 +76,6 @@
 								{% endif %}
 							</div>
 							<div class="col-sm-offset-1 col-lg-8">
-								{% if database.database_status.is_alive %}
-									<h6><b>Status:</b><li class="label label-success">Alive</li></h6>
-								{% else %}
-									<h6><b>Status:</b><li class="label label-danger">Dead</li></h6>
-								{% endif %}
 								<h6><b>Quarantine:</b>{% if database.is_in_quarantine %}&nbsp;{{database.quarantine_dt}}{% else %}&nbsp;--{% endif %}</h6>
 								<h6><b>Team:</b>&nbsp;{{database.team.name}}</h6>
 							</div>
