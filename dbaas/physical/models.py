@@ -280,6 +280,12 @@ class Instance(BaseModel):
             LOG.exception(e)
             raise ValidationError(e.message)
 
+
+    def check_status(self):
+        status = self.databaseinfra.get_driver().check_status()
+        return status
+        
+
 #####################################################################################################
 # SIGNALS
 #####################################################################################################
