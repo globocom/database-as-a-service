@@ -38,18 +38,22 @@
         
         var databaseinfra = new DatabaseInfra();
         
-        //hide endpoint?
+        // hide endpoint?
         databaseinfra.hide_endpoint();
         
-        //update plans
+        // update plans
         databaseinfra.update_plans();
         
-        // 
+        // update environments
+        databaseinfra.update_environments();
+        
         $("#id_engine").on("change", function() {
-            // alert("engine change");
             databaseinfra.engine_changed();
         });
-
+        
+        $("#id_plan").on("change", function() {
+            databaseinfra.update_environments();
+        });
     });
 
 })(django.jQuery);
