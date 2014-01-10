@@ -32,6 +32,7 @@ class AdminCreateDatabaseInfraTestCase(TestCase):
         databaseinfra_name = "test_new_database_infra"
         databaseinfra_user = "dbadmin"
         databaseinfra_pass = "123456"
+        databaseinfra_endpoint = ""
         instance_port = 27017
         params = {
             "name": databaseinfra_name,
@@ -51,11 +52,17 @@ class AdminCreateDatabaseInfraTestCase(TestCase):
         for i in xrange(NUM_INSTANCES):
             host = factory.HostFactory()
             hosts[host.pk] = host
-
+            address = "10.10.1.%d" % host.pk
             params["instances-%d-hostname" % i] = host.pk,
-            params["instances-%d-address" % i] = "10.10.1.%d" % host.pk,
+            params["instances-%d-address" % i] = address,
             params["instances-%d-port" % i] = instance_port,
-
+            
+            if i == (NUM_INSTANCES -1):
+                databaseinfra_endpoint += "%s:%s" % (address, instance_port)
+            else:
+                databaseinfra_endpoint += "%s:%s," % (address, instance_port)
+        
+        params["endpoint"] = databaseinfra_endpoint
 
         response = self.client.post("/admin/physical/databaseinfra/add/", params)
         self.assertEqual(response.status_code, 302, response.content)
@@ -64,6 +71,7 @@ class AdminCreateDatabaseInfraTestCase(TestCase):
         databaseinfra = DatabaseInfra.objects.get(name=databaseinfra_name)
         self.assertEqual(databaseinfra_user, databaseinfra.user)
         self.assertEqual(databaseinfra_pass, databaseinfra.password)
+        self.assertEqual(databaseinfra_endpoint, databaseinfra.endpoint)
         self.assertEqual(self.engine, databaseinfra.engine)
         self.assertEqual(self.plan, databaseinfra.plan)
         self.assertEqual(self.environment, databaseinfra.environment)
