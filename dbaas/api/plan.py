@@ -3,10 +3,13 @@ from __future__ import absolute_import, unicode_literals
 from rest_framework import viewsets, serializers
 from rest_framework.response import Response
 from physical import models
+from .environment import EnvironmentSerializer
 
 
 class PlanSerializer(serializers.HyperlinkedModelSerializer):
-
+    
+    environments = EnvironmentSerializer(many=True, read_only=True)
+    
     class Meta:
         model = models.Plan
         fields = ('url', 'id', 'name', 'description', 'is_active', 'is_default', 'engine_type', 'environments',)

@@ -59,6 +59,7 @@ class DatabaseInfraFactory(factory.DjangoModelFactory):
     name = factory.Sequence(lambda n: 'databaseinfra-{0}'.format(n))
     user = 'admin'
     password = '123456'
+    endpoint = '127.0.0.1:1111'
     engine = factory.SubFactory(EngineFactory)
     capacity = 1
 
