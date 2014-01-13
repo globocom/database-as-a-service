@@ -221,6 +221,11 @@ body.padTop53 {
   box-shadow: 0px 1px 0px rgba(255, 255, 255, 0.05) inset;
   text-shadow: 0px 1px 0px rgba(0, 0, 0, 0.5);
 }
+
+.head .search-bar {
+    display: none;
+}
+
 .head .search-bar {
   margin: 0 auto;
   padding: 10px 15px;
