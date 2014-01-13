@@ -32,7 +32,9 @@
 							<div class="col-lg-8 infranode" style="margin-left: 12px;">
 								<h6><b>Host:</b>&nbsp;
 								{% for i in infra.instances.all %}
-									{% if i.check_status %}
+									{% if i.is_arbiter %}
+										<span class="label label-default">{{i.hostname}}</span>
+									{% elif i.check_status %}
 										<span class="label label-success">{{i.hostname}}</span>
 									{% else %}
 										<span class="label label-danger">{{i.hostname}}</span>
