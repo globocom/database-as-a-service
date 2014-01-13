@@ -158,10 +158,10 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
     def queryset(self, request):
         qs = super(DatabaseAdmin, self).queryset(request)
-        if request.user.has_perm(self.perm_manage_quarantine_database):
+        if request.user.has_perm(self.perm_add_database_infra):
             return qs
 
-        return qs.filter(is_in_quarantine=False, team__in=[team.id for team in Team.objects.filter(users=request.user)])
+        return qs.filter(team__in=[team.id for team in Team.objects.filter(users=request.user)])
 
     def has_add_permission(self, request):
         """User must be set to at least one team to be able to add database"""
