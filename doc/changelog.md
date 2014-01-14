@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.0.5
+
+* several bug fixes in databaseinfra creation (filtering plan for selected engine and filtering env for selected plan)
+* dashboard for sysadmins
+* basic support for mysql engine
+* showing database status
+
 ## 0.0.4
 
 * users can be in more than one team
