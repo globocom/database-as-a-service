@@ -6,6 +6,7 @@
 * dashboard for sysadmins
 * basic support for mysql engine
 * showing database status
+* regular user can put databases in quarantine
 
 ## 0.0.4
 
