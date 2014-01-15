@@ -8,6 +8,7 @@
 * showing database status
 * users with "regular" role can put databases in quarantine
 * preventing from hitting the database unduly
+* removing api root url redirect to github
 
 ## 0.0.4
 
