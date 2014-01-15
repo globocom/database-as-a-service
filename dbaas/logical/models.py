@@ -18,6 +18,8 @@ from system.models import Configuration
 
 from account.models import Team
 
+from drivers.base import ConnectionError, DatabaseStatus
+
 LOG = logging.getLogger(__name__)
 
 
@@ -173,15 +175,20 @@ class Database(BaseModel):
 
     @cached_property
     def database_status(self):
-        info = self.databaseinfra.get_info()
-        if info is None:
-            return None
-        database_status = info.get_database_status(self.name)
-
-        if database_status is None:
-            # try get without cache
-            info = self.databaseinfra.get_info(force_refresh=True)
+        try:
+            info = self.databaseinfra.get_info()
+            if info is None:
+                return None
             database_status = info.get_database_status(self.name)
+
+            if database_status is None:
+                # try get without cache
+                info = self.databaseinfra.get_info(force_refresh=True)
+                database_status = info.get_database_status(self.name)
+        except ConnectionError, e:
+            LOG.error("ConnectionError calling database_status for database %s: %s" % (self, e))
+            database_status = DatabaseStatus(self)
+        
         return database_status
 
     @property

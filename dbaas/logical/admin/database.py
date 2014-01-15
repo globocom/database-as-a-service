@@ -77,10 +77,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         html_ok = '<span class="label label-success">Alive</span>'
         html_nook = '<span class="label label-important">Dead</span>'
 
-        try:
-            database_status = database.database_status
-        except:
-            return format_html(html_nook)
+        database_status = database.database_status
         if database_status.is_alive:
             return format_html(html_ok)
         else:
