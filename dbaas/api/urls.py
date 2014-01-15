@@ -3,12 +3,12 @@
 from rest_framework.routers import DefaultRouter
 from django.http import HttpResponseRedirect
 
-class MyRouter(DefaultRouter):
+# class MyRouter(DefaultRouter):
+# 
+#     def get_api_root_view(self):
+#         return lambda r: HttpResponseRedirect('https://github.com/globocom/database-as-a-service/wiki/Introduction-to-the-API')
 
-    def get_api_root_view(self):
-        return lambda r: HttpResponseRedirect('https://github.com/globocom/database-as-a-service/wiki/Introduction-to-the-API')
-
-router = MyRouter()
+router = DefaultRouter()
 
 # physical
 from .environment import EnvironmentAPI
