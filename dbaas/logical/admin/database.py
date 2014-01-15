@@ -76,23 +76,25 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
         html_ok = '<span class="label label-success">Alive</span>'
         html_nook = '<span class="label label-important">Dead</span>'
-        
-        database_status = database.database_status
+
+        try:
+            database_status = database.database_status
+        except:
+            return format_html(html_nook)
         if database_status.is_alive:
             return format_html(html_ok)
         else:
             return format_html(html_nook)
 
-
     def description_html(self, database):
-        
+
         html = []
         html.append("<ul>")
         html.append("<li>Engine Type: %s</li>" % database.engine_type)
         html.append("<li>Environment: %s</li>" % database.environment)
         html.append("<li>Plan: %s</li>" % database.plan)
         html.append("</ul>")
-        
+
         return format_html("".join(html))
 
     description_html.short_description = "Description"
