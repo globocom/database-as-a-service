@@ -42,6 +42,7 @@ class Team(BaseModel):
     users = models.ManyToManyField(User)
     objects = models.Manager()  # The default manager.
     user_objects = TeamUsersManager()  # The Dahl-specific manager.
+    email = models.EmailField(null=True, blank=True)
 
     class Meta:
         # putting permissions for account user and role in team model, because it
