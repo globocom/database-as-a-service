@@ -25,12 +25,15 @@ class DatabaseSerializer(serializers.HyperlinkedModelSerializer):
     def __init__(self, *args, **kwargs):
         super(DatabaseSerializer, self).__init__(*args, **kwargs)
         
-        creating = self.context['request'].method == 'POST'
-        # when database is created, user can't change plan, environment and name
-        self.fields['plan'].read_only = not creating
-        self.fields['environment'].read_only = not creating
-        self.fields['name'].read_only = not creating
-        self.fields['credentials'].read_only = True
+        request = self.context.get('request', None)
+        if request:
+            creating = request.method == 'POST'
+
+            # when database is created, user can't change plan, environment and name
+            self.fields['plan'].read_only = not creating
+            self.fields['environment'].read_only = not creating
+            self.fields['name'].read_only = not creating
+            self.fields['credentials'].read_only = True
 
         # quarantine is always readonly
         # self.fields['quarantine_dt'].read_only = True
