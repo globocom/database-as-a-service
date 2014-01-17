@@ -1,10 +1,11 @@
 {% load admin_static admin_urls menu %}
+{% load ganalytics %}
 
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8">
-    <title>Dbaas Dashboard</title>
+    <title>{% block title %}Dbaas Dashboard{% endblock %}</title>
 
     <!--Mobile first-->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -23,9 +24,15 @@
     <link rel="stylesheet" href="{% static "assets/css/main.css" %}">
     <link rel="stylesheet" href="{% static "assets/css/theme.css" %}">
 
+    {% block extrastyle %}{% endblock %}
 
     <!--Modernizr 3.0-->
     <script src="{% static "assets/js/modernizr-build.min.js" %}"></script>
+    
+    {% block extrahead %}{% endblock %}
+
+    {% block blockbots %}<meta name="robots" content="NONE,NOARCHIVE" />{% endblock %}
+
   </head>
   <body>
     <div id="wrap">
@@ -87,18 +94,24 @@
 
         <!-- end header.head -->
       </div><!-- /#top -->
+      
       <div id="left">
+        {% block menu %}
         <!-- #menu -->
-		{% render_menu %}
+        {% render_menu %}
+        {% endblock menu %}
       </div><!-- /#left -->
-	
-	{% block content %}
-	{% endblock content %}
+    
+    {% block content %}
+    {% endblock content %}
 
     </div><!-- /#wrap -->
-
     <script src="{% static "assets/js/jquery.min.js" %}"></script>
     <script src="{% static "assets/js/bootstrap.min.js" %}"></script>
     <script src="{% static "assets/js/main.min.js" %}"></script>
+    {% block extrajs %}{% endblock %}
+    {% if not request.is_ajax %}
+    {% ganalytics %}
+    {% endif %}
   </body>
 </html>
