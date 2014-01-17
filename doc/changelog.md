@@ -6,9 +6,11 @@
 * dashboard for sysadmins
 * basic support for mysql engine
 * showing database status
-* users with "regular" role can put databases in quarantine
-* preventing from hitting the database unduly
+* users with "regular" role can manage databases in quarantine
+* preventing from hitting the database unduly in database listing's view
+* automatically purging databases older than a specific value
 * removing api root url redirect to github
+* created email field in team
 
 ## 0.0.4
 
