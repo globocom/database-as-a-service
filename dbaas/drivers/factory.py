@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 from django.utils.translation import ugettext_lazy as _
+import re
 
 __all__ = ['DriverFactory']
 
@@ -17,14 +18,15 @@ class DriverFactory(object):
 
     @classmethod
     def get_driver_class(cls, driver_name):
+        driver_name = driver_name.lower()
         # TODO: import Engines dynamically
-        if driver_name == "mongodb":
+        if re.match(r'^mongo.*', driver_name):
             from .mongodb import MongoDB
             return MongoDB
-        elif driver_name == "mysqldb":
+        elif re.match(r'^mysql.*', driver_name):
             from .mysqldb import MySQL
             return MySQL
-        elif driver_name == "fake":
+        elif re.match(r'^fake.*', driver_name):
             from .fake import FakeDriver
             return FakeDriver
 

@@ -5,7 +5,7 @@ import _mysql as mysqldb
 import _mysql_exceptions
 from contextlib import contextmanager
 from . import BaseDriver, DatabaseInfraStatus, AuthenticationError, ConnectionError, GenericDriverError, \
-    DatabaseAlreadyExists, InvalidCredential, DatabaseStatus, DatabaseDoesNotExist
+    DatabaseAlreadyExists, InvalidCredential, DatabaseStatus, DatabaseDoesNotExist, CredentialAlreadyExists
 from util import make_db_random_password
 from system.models import Configuration
 
@@ -168,6 +168,8 @@ class MySQL(BaseDriver):
         LOG.info("creating user %s to %s" % (credential.user, credential.database))
         # the first release allow every host to connect to the database
         # 2 steps required to get the user create error
+        if credential.user in self.list_users():
+            raise CredentialAlreadyExists()
         self.__query("CREATE USER '%s'@'%%' IDENTIFIED BY '%s'" % (credential.user, credential.password))
         self.__query("GRANT %s ON %s.* TO '%s'@'%%'" % (','.join(roles), credential.database, credential.user))
 
