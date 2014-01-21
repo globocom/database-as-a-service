@@ -866,7 +866,8 @@ body.padTop53 {
 }
 
 .progress.dashboard {
-    margin-top: 30px;
+    /*margin-top: 30px;*/
+    margin-bottom: 5px;
 }
 
 .box header .toolbar .progress {
