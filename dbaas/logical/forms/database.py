@@ -61,6 +61,14 @@ class DatabaseForm(models.ModelForm):
                 LOG.warning = "No team specified in database form"
                 self._errors["team"] = self.error_class([_("Team: This field is required.")])
 
+        #validate if the team has available resources
+        dbs = Database.objects.filter(team=team)
+        database_alocation_limit = team.database_alocation_limit
+        if (len(dbs) > database_alocation_limit):
+            LOG.warning = "The team %s has exceeded the database alocation limit of %s" % (team, database_alocation_limit)
+            self._errors["team"] = self.error_class([_("The database alocation limit of %s has been exceeded for the selected team") % database_alocation_limit])
+
+
         # if there is an instance, that it means that we are in a edit page and therefore
         # it should return the default cleaned_data
         if self.instance and self.instance.id:

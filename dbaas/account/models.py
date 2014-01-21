@@ -38,6 +38,9 @@ class TeamUsersManager(models.Manager):
 class Team(BaseModel):
 
     name = models.CharField(_('name'), max_length=80, unique=True)
+    database_alocation_limit = models.PositiveSmallIntegerField(_('DB Alocation Limit'), 
+                                        default=2,
+                                        help_text="This limits the number of databases that a team can create.")
     role = models.ForeignKey(Role)
     users = models.ManyToManyField(User)
     objects = models.Manager()  # The default manager.
