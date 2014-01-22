@@ -54,3 +54,8 @@
     height: 49px;
     background-color: #f5f5f5;
 }
+
+#footer .tos {
+    font-family: 'Titillium Web', sans-serif;
+    padding: 16px;
+}
