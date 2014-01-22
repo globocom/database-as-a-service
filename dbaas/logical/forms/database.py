@@ -51,12 +51,10 @@ class DatabaseForm(models.ModelForm):
 
     def clean(self):
         cleaned_data = super(DatabaseForm, self).clean()
-        print cleaned_data
 
         # TODO: change model field to blank=False
         if 'team' in cleaned_data:
             team = cleaned_data['team']
-            print "@"*30
             LOG.debug("team: %s" % team)
 
             if not team:
