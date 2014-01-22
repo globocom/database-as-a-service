@@ -70,11 +70,14 @@ class DatabaseForm(models.ModelForm):
             raise forms.ValidationError(_("Invalid plan for selected environment."))
 
         #validate if the team has available resources
-        dbs = Database.objects.filter(team=team)
+        infras_in_environment = DatabaseInfra.objects.filter(environment=environment)
+        dbs = Database.objects.filter(team=team, databaseinfra__in=[infra.id for infra in infras_in_environment])
         database_alocation_limit = team.database_alocation_limit
         if (database_alocation_limit != 0 and len(dbs) > database_alocation_limit):
-            LOG.warning = "The team %s has exceeded the database alocation limit of %s" % (team, database_alocation_limit)
-            self._errors["team"] = self.error_class([_("The database alocation limit of %s has been exceeded for the selected team") % database_alocation_limit])
+            LOG.warning("The team %s has exceeded the database alocation limit of %s: %s" % (team, 
+                                                                                        database_alocation_limit,
+                                                                                        dbs))
+            self._errors["team"] = self.error_class([_("The database alocation limit of %s has been exceeded for the selected team: %s") % (database_alocation_limit, dbs)])
 
 
         # if there is an instance, that it means that we are in a edit page and therefore
