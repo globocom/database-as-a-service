@@ -72,7 +72,7 @@ class DatabaseForm(models.ModelForm):
         #validate if the team has available resources
         dbs = Database.objects.filter(team=team)
         database_alocation_limit = team.database_alocation_limit
-        if (len(dbs) > database_alocation_limit):
+        if (database_alocation_limit != 0 and len(dbs) > database_alocation_limit):
             LOG.warning = "The team %s has exceeded the database alocation limit of %s" % (team, database_alocation_limit)
             self._errors["team"] = self.error_class([_("The database alocation limit of %s has been exceeded for the selected team") % database_alocation_limit])
 
