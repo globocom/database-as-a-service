@@ -185,7 +185,16 @@ INSTALLED_APPS = (
     'django.contrib.admindocs',
     'raven.contrib.django.raven_compat',
     'ganalytics',
+    'haystack',
 )
+
+# backend for haystack
+HAYSTACK_CONNECTIONS = {
+    'default': {
+        'ENGINE': 'haystack.backends.whoosh_backend.WhooshEngine',
+        'PATH': os.path.join(SITE_ROOT,'whoosh_index'),
+    },
+}
 
 if not DB_ENGINE.endswith('sqlite3'):
     # support migrations

@@ -1,0 +1,23 @@
+{% extends "dashboard/base.html" %}
+
+
+{% block content%}
+      <div id="content">
+        <div class="outer">
+          <div class="inner">
+			<!-- start infranode -->
+			<div class="col-lg-12">
+				{% for search in page.object_list %}
+
+					{{ search.object.name }}
+
+				{% endfor %}
+			</div>
+			<!-- end infranode -->
+          </div>
+          <!-- end .inner -->
+        </div>
+        <!-- end .outer -->
+      </div>
+      <!-- end #content -->
+{% endblock content %}

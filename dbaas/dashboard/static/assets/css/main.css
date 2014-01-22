@@ -222,10 +222,10 @@ body.padTop53 {
   text-shadow: 0px 1px 0px rgba(0, 0, 0, 0.5);
 }
 
-.head .search-bar {
+/*.head .search-bar {
     display: none;
 }
-
+*/
 .head .search-bar {
   margin: 0 auto;
   padding: 10px 15px;
