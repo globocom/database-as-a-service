@@ -7,7 +7,7 @@
 
 {% block extrastyle %}
     {{ block.super }}
-    <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}admin/login.css" />
+    <link rel="stylesheet" type="text/css" href="{% static "admin/login.css" %}" />
 {% endblock %}
 
 {% block bodyclass %}login{% endblock %}
@@ -24,7 +24,7 @@
 <div id="content-main">
     <div class="row-fluid">
         <div class="well span6 well-wrapper-form">
-            <img class="img-circle logo-admin" src="{{ STATIC_URL }}admin/logo-140x140.png" alt="{{ site.name }}">
+            <img class="img-circle logo-admin" src="{% static "admin/logo-140x140.png" %}" alt="{{ site.name }}">
             <form class="bs-docs-example form-inline" id="login-form" action="{{ app_path }}" method="post">
                 {% csrf_token %}
                 <fieldset>
