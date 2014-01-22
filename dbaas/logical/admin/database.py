@@ -192,7 +192,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 return HttpResponseRedirect(reverse('admin:logical_database_changelist'))
 
             #if no team is specified and the user has only one team, then set it to the database
-            if teams.count() == 1 and request.method == 'POST':
+            if teams.count() == 1 and request.method == 'POST' and not request.user.has_perm(self.perm_add_database_infra):
                 post_data = request.POST.copy()
                 if 'team' in post_data:
                     post_data['team'] = u"%s" % teams[0].pk

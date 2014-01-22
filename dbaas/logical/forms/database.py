@@ -61,6 +61,14 @@ class DatabaseForm(models.ModelForm):
                 LOG.warning = "No team specified in database form"
                 self._errors["team"] = self.error_class([_("Team: This field is required.")])
 
+        plan = cleaned_data.get('plan', None)
+        if not plan:
+            self._errors["plan"] = self.error_class([_("Plan: This field is required.")])
+            
+        environment = cleaned_data.get('environment', None)
+        if not environment or environment not in plan.environments.all():
+            raise forms.ValidationError(_("Invalid plan for selected environment."))
+
         #validate if the team has available resources
         dbs = Database.objects.filter(team=team)
         database_alocation_limit = team.database_alocation_limit
@@ -80,11 +88,6 @@ class DatabaseForm(models.ModelForm):
 
         if len(cleaned_data['name']) > 64:
             self._errors["name"] = self.error_class([_("Database name too long")])
-
-        plan = cleaned_data['plan']
-        environment = cleaned_data.get('environment', None)
-        if not environment or environment not in plan.environments.all():
-            raise forms.ValidationError(_("Invalid plan for selected environment."))
 
         cleaned_data['databaseinfra'] = DatabaseInfra.best_for(plan, environment)
         if not cleaned_data['databaseinfra']:
