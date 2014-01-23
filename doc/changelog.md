@@ -5,6 +5,7 @@
 * mysql engine user's creation should be constrained per instance and not per database as in mongodb
 * change dashboard layout to a tabular view
 * database creation allocation limit per team
+* upgrading django simple audit version (improvements in m2m audit)
 
 ## 0.0.5
 
