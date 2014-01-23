@@ -202,10 +202,11 @@ TEMPLATE_CONTEXT_PROCESSORS = (
 )
 
 # backend for haystack
+HAYSTACK_PATH =  os.getenv('HAYSTACK_PATH', os.path.join(SITE_ROOT, '../','whoosh_index'))
 HAYSTACK_CONNECTIONS = {
     'default': {
         'ENGINE': 'haystack.backends.whoosh_backend.WhooshEngine',
-        'PATH': os.path.join(SITE_ROOT,'whoosh_index'),
+        'PATH': HAYSTACK_PATH,
     },
 }
 
