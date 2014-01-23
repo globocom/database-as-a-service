@@ -5,7 +5,7 @@ from logical.models import Project
 
 
 class DatabaseIndex(indexes.SearchIndex, indexes.Indexable):
-    text = indexes.NgramField(document=True, use_template=True)
+    text = indexes.EdgeNgramField(document=True, use_template=True)
     name =  indexes.CharField(model_attr='name')
     team = indexes.CharField(model_attr='team')
     project = indexes.CharField(model_attr='project', null=True)
