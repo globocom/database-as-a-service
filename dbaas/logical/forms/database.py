@@ -52,6 +52,11 @@ class DatabaseForm(models.ModelForm):
     def clean(self):
         cleaned_data = super(DatabaseForm, self).clean()
 
+        # if there is an instance, that means that we are in a edit page and therefore
+        # it should return the default cleaned_data
+        if self.instance and self.instance.id:
+            return cleaned_data
+
         # TODO: change model field to blank=False
         if 'team' in cleaned_data:
             team = cleaned_data['team']
@@ -61,36 +66,31 @@ class DatabaseForm(models.ModelForm):
                 LOG.warning = "No team specified in database form"
                 self._errors["team"] = self.error_class([_("Team: This field is required.")])
 
-        plan = cleaned_data.get('plan', None)
-        if not plan:
-            self._errors["plan"] = self.error_class([_("Plan: This field is required.")])
-            
-        environment = cleaned_data.get('environment', None)
-        if not environment or environment not in plan.environments.all():
-            raise forms.ValidationError(_("Invalid plan for selected environment."))
-
-        #validate if the team has available resources
-        infras_in_environment = DatabaseInfra.objects.filter(environment=environment)
-        dbs = Database.objects.filter(team=team, databaseinfra__in=[infra.id for infra in infras_in_environment])
-        database_alocation_limit = team.database_alocation_limit
-        if (database_alocation_limit != 0 and len(dbs) > database_alocation_limit):
-            LOG.warning("The team %s has exceeded the database alocation limit of %s: %s" % (team, 
-                                                                                        database_alocation_limit,
-                                                                                        dbs))
-            self._errors["team"] = self.error_class([_("The database alocation limit of %s has been exceeded for the selected team: %s") % (database_alocation_limit, dbs)])
-
-
-        # if there is an instance, that it means that we are in a edit page and therefore
-        # it should return the default cleaned_data
-        if self.instance and self.instance.id:
-            return cleaned_data
-
-
         if not self.is_valid():
             raise forms.ValidationError(self.errors)
 
         if len(cleaned_data['name']) > 64:
             self._errors["name"] = self.error_class([_("Database name too long")])
+
+        if 'plan' in cleaned_data:
+            plan = cleaned_data.get('plan', None)
+            if not plan:
+                self._errors["plan"] = self.error_class([_("Plan: This field is required.")])
+
+        if 'environment' in cleaned_data:
+            environment = cleaned_data.get('environment', None)
+            if not environment or environment not in plan.environments.all():
+                raise forms.ValidationError(_("Invalid plan for selected environment."))
+
+            #validate if the team has available resources
+            infras_in_environment = DatabaseInfra.objects.filter(environment=environment)
+            dbs = Database.objects.filter(team=team, databaseinfra__in=[infra.id for infra in infras_in_environment])
+            database_alocation_limit = team.database_alocation_limit
+            if (database_alocation_limit != 0 and len(dbs) > database_alocation_limit):
+                LOG.warning("The team %s has exceeded the database alocation limit of %s: %s" % (team, 
+                                                                                            database_alocation_limit,
+                                                                                            list(dbs)))
+                self._errors["team"] = self.error_class([_("The database alocation limit of %s has been exceeded for the selected team: %s") % (database_alocation_limit, list(dbs))])
 
         cleaned_data['databaseinfra'] = DatabaseInfra.best_for(plan, environment)
         if not cleaned_data['databaseinfra']:
