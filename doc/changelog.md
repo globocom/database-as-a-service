@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.0.7
+* implemented search box in fields database name, team and project
+
 ## 0.0.6
 
 * mysql engine user's creation should be constrained per instance and not per database as in mongodb
