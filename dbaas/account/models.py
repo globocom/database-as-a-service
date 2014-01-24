@@ -95,6 +95,17 @@ class Team(BaseModel):
 
         return list(all_users.difference(Set(users)))
 
+    def databases_in_use_for(self, environment):
+        from physical.models import DatabaseInfra
+        from logical.models import Database
+
+        infras = DatabaseInfra.objects.filter(environment=environment)
+        dbs = Database.objects.filter(team=self, databaseinfra__in=[infra.id for infra in infras])
+        
+        return dbs
+
+    def count_infras_in_use(self, environment):
+        return len(self.databases_in_use_for(environment))
 
 def sync_ldap_groups_with_user(user=None):
     """
