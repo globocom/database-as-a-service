@@ -104,8 +104,12 @@ class Team(BaseModel):
         
         return dbs
 
-    def count_infras_in_use(self, environment):
-        return len(self.databases_in_use_for(environment))
+    def count_databases_in_use(self, environment):
+        try:
+            return len(self.databases_in_use_for(environment))
+        except Exception, e:
+            LOG.warning("could not count databases in use for team %s, reason: %s" % (self, e))
+            return 0
 
 def sync_ldap_groups_with_user(user=None):
     """
