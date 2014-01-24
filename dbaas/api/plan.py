@@ -7,9 +7,9 @@ from .environment import EnvironmentSerializer
 
 
 class PlanSerializer(serializers.HyperlinkedModelSerializer):
-    
+
     environments = EnvironmentSerializer(many=True, read_only=True)
-    
+
     class Meta:
         model = models.Plan
         fields = ('url', 'id', 'name', 'description', 'is_active', 'is_default', 'engine_type', 'environments',)

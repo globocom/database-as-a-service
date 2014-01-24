@@ -8,6 +8,7 @@ from django.core.exceptions import ValidationError, PermissionDenied
 from django.utils.decorators import method_decorator
 from django.http import HttpResponse
 from .models import Credential, Database
+from drivers.base import CredentialAlreadyExists
 
 
 class CredentialView(BaseDetailView):
@@ -36,6 +37,8 @@ class CredentialView(BaseDetailView):
 
             credential = Credential.create_new_credential(username, database)
             return self.as_json(credential)
+        except CredentialAlreadyExists, e:
+            return self.as_json({ "error": "credential already exists" })
         except ValidationError, e:
             return self.as_json({ "error": ", ".join(e.messages) })
 

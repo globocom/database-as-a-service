@@ -78,8 +78,11 @@
 								{% endif %}
 							</div>
 							<div class="col-sm-offset-1 col-lg-8">
-								<h6><b>Quarantine:</b>{% if database.is_in_quarantine %}&nbsp;{{database.quarantine_dt}}{% else %}&nbsp;--{% endif %}</h6>
+								{% if database.is_in_quarantine %}
+									<h6><b>Quarantine:</b>&nbsp;{{database.quarantine_dt}}</h6>
+								{% endif %}
 								<h6><b>Team:</b>&nbsp;{{database.team.name}}</h6>
+								<h6><b>Project:</b>{% if database.project.name %}&nbsp;{{database.project.name}}{% else %}&nbsp;--{% endif %}</h6>
 							</div>
 						</div>
 							<div class="progress dashboard">

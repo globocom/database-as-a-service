@@ -6,54 +6,49 @@
       <div id="content">
         <div class="outer">
           <div class="inner">
-
-			{% for infra in dbinfra %}
 			<!-- start infranode -->
-			<div class="col-lg-4">
-				<div class="box">
-					<a href="{% url 'databaseinfra.index' infra.id %}" style="color:#333;">
-					<header>
-						<h5>{{ infra.name }}</h5>
-						<div class="brand mongo">
-							{% if infra.engine_name == 'mongodb' %}
-								<img src="{% static "assets/img/MongoDB_logo.png" %}" />
-							{% else %}
-								<img src="{% static "assets/img/mysql_logo.png" %}" />
-							{% endif %}
-						</div>
-					</header>
-				 	<div class="body">
-						<div class="row">
-							<div class="col-lg-3">
-								{% if infra.engine_name == 'mongodb' %}
-									<img src="{% static "assets/img/mongo.png" %}" />
-								{% else %}
-									<img src="{% static "assets/img/mysql.png" %}" />
-								{% endif %}
-							</div>
-							<div class="col-sm-offset-1 col-lg-8">
-								<h6><b>Engine:</b> {{ infra.engine_name }}&nbsp;{{ infra.engine.version }}</h6>
+			<div class="col-lg-12">
+				<table class="table table-striped">
+					<thead>
+						<tr>
+							<th>Infra Name</th>
+							<th>Engine</th>
+							<th>Environment</th>
+							<th>Plan</th>
+							<th>Capacity</th>
+						</tr>
+					</thead>
+					<tbody>
+					{% for infra in dbinfra %}
+						<tr>
+							<td><a href="{% url 'databaseinfra.index' infra.id %}">{{ infra.name }}</a></td>
+							<td>{{ infra.engine_name }}</td>
+							<td>
 								{% if infra.environment.name == 'laboratory' %}
-									<h6><b>Environment:</b><li class="label label-default">{{ infra.environment.name }}</li></h6>
-								{% elif infra.environment.name == 'dev' %}
-									<h6><b>Environment:</b><li class="label label-info">{{ infra.environment.name }}</li></h6>
-								{% elif infra.environment.name == 'qa01' %}
-									<h6><b>Environment:</b><li class="label label-inverse">{{ infra.environment.name }}</li></h6>
-								{% elif infra.environment.name == 'prod' %}
-									<h6><b>Environment:</b><li class="label label-primary">{{ infra.environment.name }}</li></h6>
+									<li class="label label-default">{{ infra.environment.name }}</li>
 								{% endif %}
-								<h6><b>Plan:</b> {{ infra.plan.name }}</h6>
-							</div>
-						</div>
-							<div class="progress dashboard">
-								{% render_progress_bar infra.used infra.capacity %}
-							</div>
-					</div>
-					</a>
-				</div>
+								{% if infra.environment.name == 'dev' %}
+									<li class="label label-info">{{ infra.environment.name }}</li>
+								{% endif %}
+								{% if infra.environment.name == 'qa01' %}
+									<li class="label label-inverse">{{ infra.environment.name }}</li>
+								{% endif %}
+								{% if infra.environment.name == 'prod' %}
+									<li class="label label-primary">{{ infra.environment.name }}</li>
+								{% endif %}
+							</td>
+							<td>{{ infra.plan.name }}</td>
+							<td>
+								<div class="progress dashboard">
+									{% render_progress_bar infra.used infra.capacity %}
+								</div>
+							</td>
+						</tr>
+					{% endfor %}
+					</tbody>
+				</table>
 			</div>
 			<!-- end infranode -->
-			{% endfor %}
           </div>
           <!-- end .inner -->
         </div>

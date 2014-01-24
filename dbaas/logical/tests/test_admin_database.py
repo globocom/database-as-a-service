@@ -26,7 +26,7 @@ class AdminCreateDatabaseTestCase(TestCase):
         self.databaseinfra = physical_factory.DatabaseInfraFactory(plan=self.plan, environment=self.environment, capacity=10)
         self.project = factory.ProjectFactory()
         self.role = Role.objects.get_or_create(name="fake_role")[0]
-        self.team = Team.objects.get_or_create(name="fake_team", role=self.role)[0]
+        self.team = Team.objects.get_or_create(name="fake_team", role=self.role, database_alocation_limit=0)[0]
         self.user = User.objects.create_superuser(self.USERNAME, email="%s@admin.com" % self.USERNAME, password=self.PASSWORD)
         self.team.users.add(self.user)
         self.client.login(username=self.USERNAME, password=self.PASSWORD)
