@@ -31,3 +31,8 @@ django-email-extras==0.1.13
 django-ganalytics==0.2
 Whoosh==2.5.6
 django-haystack==2.1.0
+celery==3.1.8
+django-celery==3.1.1
+redis==2.9.1
+amqp==1.4.2
+anyjson==0.3.3
