@@ -3,6 +3,8 @@
 ## 0.0.7
 * bug fix to render box "My actions"
 * bug fix HTML code
+* show overall databases usage per team and environment
+* link to monitor url in dashboard
 * implemented search box in fields database name, team and project
 
 ## 0.0.6
