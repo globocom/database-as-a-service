@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 from django.utils.translation import ugettext_lazy as _
+from django.utils.html import format_html, escape
 from django.contrib import admin
 from django.contrib.admin import SimpleListFilter
+from account.templatetags import team as team_templatetag
 import logging
 
 from ..forms.team import TeamAdminForm
@@ -28,9 +30,11 @@ class RoleListFilter(SimpleListFilter):
 
 class TeamAdmin(admin.ModelAdmin):
 
-    list_display = ["name", "role", "database_alocation_limit", "email"]
+    list_display = ["name", "role", "database_limit", "email"]
     filter_horizontal = ['users']
     list_filter = (RoleListFilter, )
     search_fields = ('name',)
     #form = TeamAdminForm
 
+    def database_limit(self, team):
+        return team_templatetag.render_usage(team)

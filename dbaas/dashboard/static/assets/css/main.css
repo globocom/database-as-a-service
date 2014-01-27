@@ -222,10 +222,10 @@ body.padTop53 {
   text-shadow: 0px 1px 0px rgba(0, 0, 0, 0.5);
 }
 
-.head .search-bar {
+/*.head .search-bar {
     display: none;
 }
-
+*/
 .head .search-bar {
   margin: 0 auto;
   padding: 10px 15px;
@@ -2721,4 +2721,34 @@ body.error .logo h1 {
     letter-spacing: 1px;
     padding: 5px;
 }
+
+.infranode h6 a {
+    text-decoration: none;
+}
+
 /* END LOGIN PAGE STYLES */
+
+
+#searchtable th.header {
+	background-image: url(../img/bg.gif);	
+	cursor: pointer;
+	font-weight: bold;
+	background-repeat: no-repeat;
+	background-position: center right;
+	border-right: 1px solid #dad9c7;
+	margin-left: -1px;
+}
+
+#searchtable th.header.headerSortDown {
+	background-image: url(../img/desc.gif);
+	background-color: #EDEDED;
+}
+
+#searchtable th.header.headerSortUp {
+	background-image: url(../img/asc.gif);
+	background-color: #EDEDED;
+}
+
+#searchtable {
+    margin-top: 6px;
+}

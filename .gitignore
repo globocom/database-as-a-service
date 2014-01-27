@@ -9,4 +9,4 @@ test-report.xml
 \#*\#
 *.bak
 .wiki
-whoosh_index
+dbaas/whoosh_index/*

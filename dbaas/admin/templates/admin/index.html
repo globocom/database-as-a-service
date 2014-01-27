@@ -18,7 +18,7 @@
 
 <div class="container-fluid">
     <div class="row-fluid dashboard-tools">
-	{% if perms.audit.change_audit %}
+	{% if perms.simple_audit.change_audit %}
         <div class="span3 recent-actions">
             <h2>{% trans 'My Actions' %}</h2>
             <div class="well">
