@@ -44,3 +44,7 @@
 .popover-content {
     word-wrap: break-word;
 }
+
+.dashboard-tools h3{
+    color: #08c;
+}
