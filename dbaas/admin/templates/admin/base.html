@@ -131,9 +131,11 @@
 
     {% block footer %}
 		<div id="footer">
+			<p class="tos">
 			{% for page in flatpages %}
-			<p class="tos"><a href="{{ page.url }}">{{ page.title }}</a></p>
+			<a href="{{ page.url }}">{{ page.title }}</a>&nbsp;&nbsp;&nbsp;
 			{% endfor %}
+			</p>
 		</div>
 	{% endblock %}
 </div>
