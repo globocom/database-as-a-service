@@ -32,3 +32,4 @@ django-ganalytics==0.2
 Whoosh==2.5.6
 django-haystack==2.1.0
 django-ckeditor==4.0.2
+Pillow==2.3.0
