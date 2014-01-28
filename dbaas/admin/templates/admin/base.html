@@ -1,5 +1,7 @@
 {% load admin_static admin_urls bootstrap_template_tags %}
 {% load ganalytics %}
+{% load flatpages %}
+{% get_flatpages as flatpages %}
 
 <!DOCTYPE html>
 <html lang="{{ LANGUAGE_CODE|default:"en-us" }}" {% if LANGUAGE_BIDI %}dir="rtl"{% endif %}>
@@ -129,7 +131,9 @@
 
     {% block footer %}
 		<div id="footer">
-			<p class="tos"><a href="#">Terms of use</a></p>
+			{% for page in flatpages %}
+			<p class="tos"><a href="{{ page.url }}">{{ page.title }}</a></p>
+			{% endfor %}
 		</div>
 	{% endblock %}
 </div>

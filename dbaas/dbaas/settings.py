@@ -144,6 +144,7 @@ MIDDLEWARE_CLASSES = (
     # Uncomment the next line for simple clickjacking protection:
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'simple_audit.middleware.TrackingRequestOnThreadLocalMiddleware',
+    'django.contrib.flatpages.middleware.FlatpageFallbackMiddleware',
 )
 
 ROOT_URLCONF = 'dbaas.urls'
@@ -186,6 +187,7 @@ INSTALLED_APPS = (
     'raven.contrib.django.raven_compat',
     'ganalytics',
     'haystack',
+    'django.contrib.flatpages',
 )
 
 
