@@ -22,6 +22,8 @@ app = Celery('dbaas', broker=BROKER_URL)
 
 app.conf.update(
     CELERY_TRACK_STARTED=True,
+    CELERY_RESULT_BACKEND='djcelery.backends.database:DatabaseBackend',
+    #CELERY_RESULT_BACKEND='djcelery.backends.cache:CacheBackend',
 )
 
 # Using a string here means the worker will not have to

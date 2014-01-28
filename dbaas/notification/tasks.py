@@ -1,14 +1,16 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 
+from django.conf import settings
+
 import os
 import logging
-
+from celery.utils.log import get_task_logger
 from dbaas.celery import app
 
 from util import call_script
  
-LOG = logging.getLogger(__name__)
+LOG = get_task_logger(__name__)
 
 @app.task
 def clone_database(origin_database, dest_database):
