@@ -219,6 +219,13 @@ class Database(BaseModel):
             database.delete()
             LOG.info("The database %s was deleted, because it was set to quarentine %d days ago" % (database.name, quarantine_time))
 
+    @classmethod
+    def clone(cls, database, database_clone):
+        database = Database.objects.get(pk=database.pk)
+        database.name = database_clone
+        database.pk = None
+        database.save()
+
 
 class Credential(BaseModel):
 

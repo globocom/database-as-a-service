@@ -13,7 +13,7 @@ from .fields import AdvancedModelChoiceField
 LOG = logging.getLogger(__name__)
 
 class CloneDatabaseForm(forms.Form):
-    database_name = forms.CharField(max_length=100)
+    database_clone = forms.CharField(max_length=100)
     origin_database_id = forms.CharField(widget=forms.HiddenInput())
 
 class DatabaseForm(models.ModelForm):
