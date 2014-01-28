@@ -24,7 +24,7 @@ urlpatterns = patterns('',
     url(r'^logical/', include('logical.urls')),
     url(r'^account/', include('account.urls')),
     url('^api/', include(api.urls)),    
-    # url('^pages/', include('django.contrib.flatpages.urls')),
+    (r'^ckeditor/', include('ckeditor.urls')),
 )
 
 # django flatpages
