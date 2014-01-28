@@ -4,6 +4,7 @@ import logging
 from django.db import models
 from django.contrib.auth.models import User, Group
 from django.utils.translation import ugettext_lazy as _
+from django.utils import simplejson
 
 from util.models import BaseModel
 
@@ -19,4 +20,11 @@ class History(BaseModel):
     user = models.CharField(max_length=255)
     ended_at = models.DateTimeField(verbose_name=_("Ended at"), null=True, blank=True)
     status = models.PositiveSmallIntegerField(_('Status'), default=0)
+    context = models.TextField(null=True, blank=True)
     description = models.TextField(verbose_name=_("Description"), null=True, blank=True)
+
+    def load_context_data(self):
+        if self.context == '':
+            self.context = '{}'
+        self.context_data = simplejson.loads(self.context)
+        return self.context_data
