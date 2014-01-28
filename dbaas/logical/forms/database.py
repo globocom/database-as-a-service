@@ -16,6 +16,11 @@ class CloneDatabaseForm(forms.Form):
     database_clone = forms.CharField(max_length=100)
     origin_database_id = forms.CharField(widget=forms.HiddenInput())
 
+    def clean(self):
+        cleaned_data = super(CloneDatabaseForm, self).clean()
+        if Database.objects.filter(name=cleaned_data['database_clone']):
+            raise forms.ValidationError(_("this name already exists"))
+
 class DatabaseForm(models.ModelForm):
     plan = AdvancedModelChoiceField(queryset=Plan.objects.filter(is_active='True'), required=False, widget=forms.RadioSelect, empty_label=None)
     engine = forms.ModelChoiceField(queryset=Engine.objects)
