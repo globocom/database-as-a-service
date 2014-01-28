@@ -20,6 +20,10 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'dbaas.settings')
 
 app = Celery('dbaas')
 
+app.conf.update(
+    CELERY_TRACK_STARTED=True,
+)
+
 # Using a string here means the worker will not have to
 # pickle the object when using Windows.
 app.config_from_object('django.conf:settings')

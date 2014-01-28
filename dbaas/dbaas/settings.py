@@ -24,6 +24,7 @@ except ImportError:
 
 # Armazena a raiz do projeto.
 SITE_ROOT = LOCAL_FILES('../')
+SCRIPTS_PATH = syspath + "/drivers/scripts/"
 
 #Keyczar key's directory
 ENCRYPTED_FIELD_KEYS_DIR = SITE_ROOT + '/keys'
