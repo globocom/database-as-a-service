@@ -12,6 +12,9 @@
             <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a> <span class="divider">/</span>
         </li>
         <li>
+            <a href="{% url 'admin:logical_database_changelist' %}">Databases</a> <span class="divider">/</span>
+        </li>
+        <li>
             <a href="{% url 'admin:logical_database_change' database.id %}">{{ database.name }}</a> <span class="divider">/</span>
         </li>
         <li>
