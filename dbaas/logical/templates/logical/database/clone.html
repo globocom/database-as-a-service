@@ -1,0 +1,34 @@
+{% extends "admin/change_form.html" %}
+{% load i18n admin_static admin_modify dbaas_tags %}
+
+{% block extrastyle %}
+    {{ block.super }}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/database_admin.css' %}" />
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ul class="breadcrumb">
+        <li>
+            <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a> <span class="divider">/</span>
+        </li>
+        <li>
+            <a href="{% url 'admin:logical_database_change' database.id %}">{{ database.name }}</a> <span class="divider">/</span>
+        </li>
+        <li>
+            Clone<span class="divider">/</span>
+        </li>
+    </ul>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    <form id="database_clone_form" action="" class="form-horizontal well" method="POST">{% csrf_token %}
+        <fieldset class="module">
+        <h2>Cloning {{ database.name }}</h2>
+            {{ form.as_p }}
+            <input type="submit" value="Submit" />
+        </fieldset>
+    </form>
+</div>
+{% endblock %}
+{% block submit_buttons_bottom %}{% endblock %}

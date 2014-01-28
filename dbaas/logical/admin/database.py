@@ -3,13 +3,15 @@ from __future__ import absolute_import, unicode_literals
 from django.utils.translation import ugettext_lazy as _
 import logging
 from django_services import admin
+from django.shortcuts import render_to_response
+from django.template import RequestContext
 from django.http import HttpResponseRedirect, HttpResponse
 from django.core.urlresolvers import reverse
 from django.conf.urls.defaults import patterns, url
 from django.contrib import messages
 from django.utils.html import format_html, escape
 from ..service.database import DatabaseService
-from ..forms import DatabaseForm, DatabaseForm
+from ..forms import DatabaseForm, CloneDatabaseForm
 from ..models import Database
 from account.models import Team
 from drivers import DatabaseAlreadyExists
@@ -226,7 +228,20 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
     def clone(self, request, database_id):
         database = Database.objects.get(id=database_id)
-        return HttpResponse("Cloning database %s" % database)
+        form = None
+        if request.method == 'POST': # If the form has been submitted...
+            form = CloneDatabaseForm(request.POST) # A form bound to the POST data
+            if form.is_valid(): # All validation rules pass
+                # Process the data in form.cleaned_data
+                url = reverse('admin:logical_database_change', args=[database_id])
+                return HttpResponseRedirect('/thanks/') # Redirect after POST
+        else:
+            form = CloneDatabaseForm({"origin_database_id" : database_id}) # An unbound form
+            print form.errors
+        return render_to_response("logical/database/clone.html",
+                                  locals(),
+                                  context_instance=RequestContext(request))
+        # return HttpResponse("Cloning database %s" % database)
 
     def get_urls(self):
         urls = super(DatabaseAdmin, self).get_urls()
