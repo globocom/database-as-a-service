@@ -18,7 +18,7 @@ CELERY_ALWAYS_EAGER = False
 # set the default Django settings module for the 'celery' program.
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'dbaas.settings')
 
-app = Celery('dbaas')
+app = Celery('dbaas', broker=BROKER_URL)
 
 app.conf.update(
     CELERY_TRACK_STARTED=True,

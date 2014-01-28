@@ -3,7 +3,7 @@ from __future__ import absolute_import, unicode_literals
 import simple_audit
 import logging
 import datetime
-from django.db import models
+from django.db import models, transaction
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 from django.db.models.signals import pre_save, post_save, pre_delete
@@ -220,11 +220,16 @@ class Database(BaseModel):
             LOG.info("The database %s was deleted, because it was set to quarentine %d days ago" % (database.name, quarantine_time))
 
     @classmethod
-    def clone(cls, database, database_clone):
-        database = Database.objects.get(pk=database.pk)
-        database.name = database_clone
-        database.pk = None
-        database.save()
+    @transaction.commit_on_success
+    def clone(cls, database, clone_name):
+        cloned_database = Database.objects.get(pk=database.pk)
+        cloned_database.name = clone_name
+        cloned_database.pk = None
+        cloned_database.save()
+        
+        #call task
+        from notification.tasks import clone_database
+        result = clone_database.delay(database, cloned_database)
 
 
 class Credential(BaseModel):

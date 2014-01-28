@@ -16,10 +16,11 @@ class History(BaseModel):
     STATUS_RUNNING = 1
     STATUS_FINISHED = 2
     
+    task_id = models.CharField(_('Task ID'), max_length=200, null=True, blank=True, editable=False)
     task_name = models.CharField(_('Task Name'), max_length=200, null=True, blank=True)
     user = models.CharField(max_length=255)
     ended_at = models.DateTimeField(verbose_name=_("Ended at"), null=True, blank=True)
-    status = models.PositiveSmallIntegerField(_('Status'), default=0)
+    task_status = models.PositiveSmallIntegerField(_('Task Status'), default=0)
     context = models.TextField(null=True, blank=True)
     description = models.TextField(verbose_name=_("Description"), null=True, blank=True)
 

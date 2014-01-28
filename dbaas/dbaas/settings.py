@@ -188,6 +188,7 @@ INSTALLED_APPS = (
     'ganalytics',
     'haystack',
     'djcelery',
+    'notification',
 )
 
 
