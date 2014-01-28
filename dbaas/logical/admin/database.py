@@ -236,7 +236,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 url = reverse('admin:logical_database_change', args=[database_id])
                 return HttpResponseRedirect('/thanks/') # Redirect after POST
         else:
-            form = CloneDatabaseForm({"origin_database_id" : database_id}) # An unbound form
+            form = CloneDatabaseForm(initial={"origin_database_id" : database_id}) # An unbound form
             print form.errors
         return render_to_response("logical/database/clone.html",
                                   locals(),
