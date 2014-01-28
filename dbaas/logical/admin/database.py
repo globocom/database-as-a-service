@@ -234,7 +234,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             if form.is_valid(): # All validation rules pass
                 # Process the data in form.cleaned_data
                 url = reverse('admin:logical_database_change', args=[database_id])
-                return HttpResponseRedirect('/thanks/') # Redirect after POST
+                return HttpResponseRedirect(url) # Redirect after POST
         else:
             form = CloneDatabaseForm(initial={"origin_database_id" : database_id}) # An unbound form
             print form.errors
