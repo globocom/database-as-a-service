@@ -3,8 +3,9 @@ from __future__ import absolute_import, unicode_literals
 from django.utils.translation import ugettext_lazy as _
 import logging
 from django_services import admin
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponse
 from django.core.urlresolvers import reverse
+from django.conf.urls.defaults import patterns, url
 from django.contrib import messages
 from django.utils.html import format_html, escape
 from ..service.database import DatabaseService
@@ -223,3 +224,13 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             extra_context['quarantine_days'] = Configuration.get_by_name_as_int('quarantine_retention_days')
         return super(DatabaseAdmin, self).delete_view(request, object_id, extra_context=extra_context)
 
+    def clone(self, request, database_id):
+        database = Database.objects.get(id=database_id)
+        return HttpResponse("Cloning database %s" % database)
+
+    def get_urls(self):
+        urls = super(DatabaseAdmin, self).get_urls()
+        my_urls = patterns('',
+            url(r'^/?(?P<database_id>\d+)/clone/$', self.admin_site.admin_view(self.clone), name="database_clone")
+        )
+        return my_urls + urls

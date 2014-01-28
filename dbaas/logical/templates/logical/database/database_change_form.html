@@ -59,7 +59,7 @@
 </fieldset>
 <fieldset class="module">
     <div class="row-fluid pagination-centered">
-        <a href="#" class="btn btn-large">Clone</a>
+        <a href="{% url 'admin:database_clone' database_id=object_id %}" class="btn btn-large">Clone</a>
     </div>
     <div class="clearfix"></div>
 </fieldset>
