@@ -20,6 +20,8 @@ class CloneDatabaseForm(forms.Form):
         cleaned_data = super(CloneDatabaseForm, self).clean()
         if Database.objects.filter(name=cleaned_data['database_clone']):
             raise forms.ValidationError(_("this name already exists"))
+            
+        return cleaned_data
 
 class DatabaseForm(models.ModelForm):
     plan = AdvancedModelChoiceField(queryset=Plan.objects.filter(is_active='True'), required=False, widget=forms.RadioSelect, empty_label=None)
