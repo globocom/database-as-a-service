@@ -12,6 +12,9 @@ from .fields import AdvancedModelChoiceField
 
 LOG = logging.getLogger(__name__)
 
+class CloneDatabaseForm(forms.Form):
+    database_name = forms.CharField(max_length=100)
+    origin_database_id = forms.CharField(widget=forms.HiddenInput())
 
 class DatabaseForm(models.ModelForm):
     plan = AdvancedModelChoiceField(queryset=Plan.objects.filter(is_active='True'), required=False, widget=forms.RadioSelect, empty_label=None)
