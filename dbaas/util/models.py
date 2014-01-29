@@ -14,7 +14,9 @@ class BaseModel(models.Model):
         abstract = True
 
     def __unicode__(self):
+
         if hasattr(self, 'name'):
             return "%s" % self.name
-        else:
-            return super(BaseModel, self).__unicode__()
+        elif hasattr(self, '__unicode__'):
+            #return super(BaseModel, self).__unicode__()
+            return self.__unicode__()
