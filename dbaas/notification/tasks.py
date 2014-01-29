@@ -5,6 +5,7 @@ from django.conf import settings
 
 import os
 import logging
+from celery import states
 from celery.utils.log import get_task_logger
 from dbaas.celery import app
 
@@ -15,8 +16,8 @@ LOG = get_task_logger(__name__)
 
 CLONE_DATABASE_SCRIPT_NAME="dummy_clone.sh"
 
-@app.task
-def clone_database(origin_database, dest_database):
+@app.task(bind=True)
+def clone_database(self, origin_database, dest_database):
 
     task_name = "clone_database"
     LOG.debug("task name: %s" % clone_database.name)
@@ -50,5 +51,5 @@ def clone_database(origin_database, dest_database):
             db_dest, user_dest, pass_dest, host_dest, port_dest, 
             path_of_dump, engine
     ]
-    call_script(CLONE_DATABASE_SCRIPT_NAME, working_dir=settings.SCRIPTS_PATH, args=args)
+    #call_script(CLONE_DATABASE_SCRIPT_NAME, working_dir=settings.SCRIPTS_PATH, args=args)
     return

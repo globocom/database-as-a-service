@@ -220,16 +220,21 @@ class Database(BaseModel):
             LOG.info("The database %s was deleted, because it was set to quarentine %d days ago" % (database.name, quarantine_time))
 
     @classmethod
-    @transaction.commit_on_success
+    @transaction.commit_manually
     def clone(cls, database, clone_name):
-        cloned_database = Database.objects.get(pk=database.pk)
-        cloned_database.name = clone_name
-        cloned_database.pk = None
-        cloned_database.save()
-        
-        #call task
-        from notification.tasks import clone_database
-        result = clone_database.delay(database, cloned_database)
+        try:
+            cloned_database = Database.objects.get(pk=database.pk)
+            cloned_database.name = clone_name
+            cloned_database.pk = None
+            cloned_database.save()
+        except:
+            transaction.rollback()
+            raise
+        else:
+            transaction.commit()
+            #call task
+            from notification.tasks import clone_database
+            result = clone_database.delay(database, cloned_database)
 
 
 class Credential(BaseModel):
