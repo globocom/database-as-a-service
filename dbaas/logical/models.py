@@ -221,7 +221,7 @@ class Database(BaseModel):
 
     @classmethod
     @transaction.commit_manually
-    def clone(cls, database, clone_name):
+    def clone(cls, database, clone_name, user):
         try:
             cloned_database = Database.objects.get(pk=database.pk)
             cloned_database.name = clone_name
@@ -234,9 +234,7 @@ class Database(BaseModel):
             transaction.commit()
             #call task
             from notification.tasks import clone_database
-            from notification.models import TaskHistory
-            result = clone_database.delay(database, cloned_database)
-            TaskHistory.register(result, user=None)
+            result = clone_database.delay(database, cloned_database, user=user)
 
 
 class Credential(BaseModel):
