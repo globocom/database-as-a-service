@@ -56,7 +56,7 @@ def call_script(script_name, working_dir=None, split_lines=True, args=[], envs={
         # create a temporary file for stdout. Scripts with lot of output and subprocess.PIPE
         # can lock because this method not consume stdout without script finish execute.
         process = subprocess.Popen(
-            [script_name] + args,
+            [working_dir + script_name] + args,
             bufsize=DEFAULT_OUTPUT_BUFFER_SIZE,
             stdin=None,
             stdout=subprocess.PIPE,
