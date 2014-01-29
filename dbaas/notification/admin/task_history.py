@@ -9,3 +9,4 @@ class TaskHistoryAdmin(admin.ModelAdmin):
     list_display = ["task_id", "task_name", "task_status", "user", "created_at", "ended_at"]
     search_fields = ('task_id', "task_name", "task_status")
     list_filter = ("task_status",)
+    readonly_fields = ('created_at', 'ended_at', 'task_name', 'task_id', 'task_status', 'user', 'context')
