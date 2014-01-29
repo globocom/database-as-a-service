@@ -18,10 +18,12 @@ CELERY_ALWAYS_EAGER = False
 # set the default Django settings module for the 'celery' program.
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'dbaas.settings')
 
-app = Celery('dbaas', broker=BROKER_URL)
+app = Celery('dbaas', 
+                broker=BROKER_URL,)
 
 app.conf.update(
     CELERY_TRACK_STARTED=True,
+    CELERY_IGNORE_RESULT=False,
     CELERY_RESULT_BACKEND='djcelery.backends.database:DatabaseBackend',
     #CELERY_RESULT_BACKEND='djcelery.backends.cache:CacheBackend',
 )

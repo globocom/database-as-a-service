@@ -234,7 +234,9 @@ class Database(BaseModel):
             transaction.commit()
             #call task
             from notification.tasks import clone_database
+            from notification.models import TaskHistory
             result = clone_database.delay(database, cloned_database)
+            TaskHistory.register(result, user=None)
 
 
 class Credential(BaseModel):

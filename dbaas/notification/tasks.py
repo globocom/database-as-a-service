@@ -11,21 +11,31 @@ from dbaas.celery import app
 
 from util import call_script
 from system.models import Configuration
+from notification.models import TaskHistory
  
 LOG = get_task_logger(__name__)
 
 CLONE_DATABASE_SCRIPT_NAME="dummy_clone.sh"
 
+def get_history_for_task_id(task_id):
+    try:
+        return TaskHistory.objects.get(task_id=task_id)
+    except Exception, e:
+        LOG.error("could not find history for task id %s" % task_id)
+        return None
+
 @app.task(bind=True)
 def clone_database(self, origin_database, dest_database):
 
-    task_name = "clone_database"
+    task_history = get_history_for_task_id(self.request.id)
+    
     LOG.debug("task name: %s" % clone_database.name)
-    LOG.debug("origin_database: %s" % origin_database)
-    LOG.debug("dest_database: %s" % dest_database)
+    LOG.info("origin_database: %s" % origin_database)
+    LOG.info("dest_database: %s" % dest_database)
     print "AAAAAAAA"
     print "*" * 30
-
+    print "id: %s" % self.request.id
+    
     #origin
     # origin_instance=origin_database.databaseinfra.instances.all()[0]
     # 
@@ -52,4 +62,6 @@ def clone_database(self, origin_database, dest_database):
     #         path_of_dump, engine
     # ]
     #call_script(CLONE_DATABASE_SCRIPT_NAME, working_dir=settings.SCRIPTS_PATH, args=args)
+    
+    task_history.update_status_for(TaskHistory.STATUS_FINISHED)
     return
