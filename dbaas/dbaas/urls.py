@@ -23,8 +23,13 @@ urlpatterns = patterns('',
     url(r'^tsuru/', include('tsuru.urls')),
     url(r'^logical/', include('logical.urls')),
     url(r'^account/', include('account.urls')),
-    url('^api/', include(api.urls))
+    url('^api/', include(api.urls)),    
+    (r'^ckeditor/', include('ckeditor.urls')),
+)
 
+# django flatpages
+urlpatterns += patterns('django.contrib.flatpages.views',
+    (r'^(?P<url>.*/)$', 'flatpage'),
 )
 
 if settings.DEBUG:

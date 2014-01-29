@@ -1,0 +1,10 @@
+{% extends "admin/base_site.html" %}
+
+{% block breadcrumbs %}
+{% endblock %}
+
+{% block content_title %}{% if flatpage.title %}<h1>{{ flatpage.title }}</h1>{% endif %}{% endblock %}
+
+{% block content %}
+{{ flatpage.content }}
+{% endblock %}

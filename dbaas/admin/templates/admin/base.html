@@ -1,5 +1,7 @@
 {% load admin_static admin_urls bootstrap_template_tags %}
 {% load ganalytics %}
+{% load flatpages %}
+{% get_flatpages as flatpages %}
 
 <!DOCTYPE html>
 <html lang="{{ LANGUAGE_CODE|default:"en-us" }}" {% if LANGUAGE_BIDI %}dir="rtl"{% endif %}>
@@ -127,7 +129,15 @@
     </div>
     <!-- END Content -->
 
-    {% block footer %}<div id="footer"></div>{% endblock %}
+    {% block footer %}
+		<div id="footer">
+			<p class="tos">
+			{% for page in flatpages %}
+			<a href="{{ page.url }}">{{ page.title }}</a>&nbsp;&nbsp;&nbsp;
+			{% endfor %}
+			</p>
+		</div>
+	{% endblock %}
 </div>
 <!-- END Container -->
 {% block js_footer_commons %}

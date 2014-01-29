@@ -44,3 +44,22 @@
 .popover-content {
     word-wrap: break-word;
 }
+
+.dashboard-tools h3{
+    color: #08c;
+}
+
+#footer {
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    left: 0;
+    z-index: 999;
+    height: 49px;
+    background-color: #f5f5f5;
+}
+
+#footer .tos {
+    font-family: 'Titillium Web', sans-serif;
+    padding: 16px;
+}
