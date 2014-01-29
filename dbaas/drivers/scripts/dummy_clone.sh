@@ -21,7 +21,7 @@ engine=${12}
 
 echo -e "\n#### db to be cloned #### \n name: $db2clone \n user: $user2clone \n password: $pass2clone \n host: $host2clone \n\n\n##### db dest ##### \n name: $db_dest \n user: $user_dest \n password: $pass_dest \n host: $host_dest \n\n path of dump: $path_of_dump \n engine: $engine\n\n\n generated at: `date`\n" > "$path_of_dump/$$.txt"
 
-for a in {1..300}
+for a in {1..10}
 do
     dd if=/dev/zero of="$path_of_dump/$$.dump" bs=1k count=100000
     sleep 1
