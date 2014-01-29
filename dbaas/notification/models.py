@@ -48,12 +48,13 @@ class TaskHistory(BaseModel):
         self.save()
 
     @classmethod
-    def register(cls, task_id=None, task_name='UNKNOWN', user=None):
-        LOG.info("task id: %s | task name: %s | " % (task_id,
-                                                    task_name))
+    def register(cls, request=None, user=None):
+                                                                
+        LOG.info("task id: %s | task name: %s | " % (request.id,
+                                                    request.task))
         task_history = TaskHistory()
-        task_history.task_id = task_id
-        task_history.task_name = task_name
+        task_history.task_id = request.id
+        task_history.task_name = request.task
         task_history.task_status = TaskHistory.STATUS_RUNNING
 
         if user:

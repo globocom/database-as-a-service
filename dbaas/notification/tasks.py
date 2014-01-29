@@ -28,19 +28,16 @@ def get_history_for_task_id(task_id):
 def clone_database(self, origin_database, dest_database, user=None):
     
     #register History
-    task_history = TaskHistory.register(task_id=self.request.id, task_name=self.request.task, user=user)
-    # task_history = get_history_for_task_id(self.request.id)
+    task_history = TaskHistory.register(request=self.request, user=user)
     
     LOG.info("origin_database: %s" % origin_database)
     LOG.info("dest_database: %s" % dest_database)
-    print "AAAAAAAA"
-    print "*" * 30
+
     LOG.info("id: %s | task: %s | kwargs: %s | args: %s" % (self.request.id,
                                                             self.request.task,
                                                             self.request.kwargs,
                                                             str(self.request.args)))
 
-    print dir(self.request)
     
     #origin
     # origin_instance=origin_database.databaseinfra.instances.all()[0]
