@@ -64,7 +64,12 @@ def clone_database(self, origin_database, dest_database, user=None):
             db_dest, user_dest, pass_dest, host_dest, str(int(port_dest)), 
             path_of_dump, engine
     ]
-    call_script(CLONE_DATABASE_SCRIPT_NAME, working_dir=settings.SCRIPTS_PATH, args=args)
-    
-    task_history.update_status_for(TaskHistory.STATUS_FINISHED)
+
+    try:
+        call_script(CLONE_DATABASE_SCRIPT_NAME, working_dir=settings.SCRIPTS_PATH, args=args)
+        task_history.update_status_for(TaskHistory.STATUS_FINISHED)
+    except Exception, e:
+        LOG.error("task id %s error: %s" % (self.request.id, e))
+        task_history.update_status_for(TaskHistory.STATUS_PENDING)
+
     return
