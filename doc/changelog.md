@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.0.8
+* terms of use
+
 ## 0.0.7
 * bug fix to render box "My actions"
 * bug fix HTML code
