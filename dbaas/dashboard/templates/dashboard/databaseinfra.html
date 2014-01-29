@@ -33,11 +33,11 @@
 								<h6><b>Host:</b>&nbsp;
 								{% for i in infra.instances.all %}
 									{% if i.is_arbiter %}
-										<span class="label label-default">{{i.hostname}}</span>
+										<a href="{%if i.hostname.monitor_url %}{{i.hostname.monitor_url}}{% else %}#{% endif %}" target="_blank"><span class="label label-default">{{i.hostname}}</span></a>
 									{% elif i.check_status %}
-										<span class="label label-success">{{i.hostname}}</span>
+										<a href="{%if i.hostname.monitor_url %}{{i.hostname.monitor_url}}{% else %}#{% endif %}" target="_blank"><span class="label label-success">{{i.hostname}}</span></a>
 									{% else %}
-										<span class="label label-danger">{{i.hostname}}</span>
+										<a href="{%if i.hostname.monitor_url %}{{i.hostname.monitor_url}}{% else %}#{% endif %}" target="_blank"><span class="label label-danger">{{i.hostname}}</span></a>
 									{% endif %}
 								{% endfor %}</h6>
 								<h6><b>Engine:</b> {{ infra.engine_name }}&nbsp;{{ infra.engine.version }}</h6>

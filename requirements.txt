@@ -36,3 +36,5 @@ django-celery==3.1.1
 redis==2.9.1
 amqp==1.4.2
 anyjson==0.3.3
+django-ckeditor==4.0.2
+Pillow==2.3.0

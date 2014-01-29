@@ -2721,6 +2721,11 @@ body.error .logo h1 {
     letter-spacing: 1px;
     padding: 5px;
 }
+
+.infranode h6 a {
+    text-decoration: none;
+}
+
 /* END LOGIN PAGE STYLES */
 
 
