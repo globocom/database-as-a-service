@@ -235,8 +235,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 # Process the data in form.cleaned_data
                 database_clone = form.cleaned_data['database_clone']
                 Database.clone(database, database_clone, request.user)
-                url = reverse('admin:logical_database_change', args=[database_id])
-                return HttpResponseRedirect(url) # Redirect after POST
+                url = reverse('admin:notification_taskhistory_changelist')
+                return HttpResponseRedirect(url+"?user=%s" % request.user.username) # Redirect after POST
         else:
             form = CloneDatabaseForm(initial={"origin_database_id" : database_id}) # An unbound form
             print form.errors
