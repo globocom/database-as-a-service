@@ -9,6 +9,8 @@ from ..models import Database
 from physical.models import DatabaseInfra
 from drivers import base
 
+from notification.tasks import clone_database
+
 import logging
 
 LOG = logging.getLogger(__name__)
@@ -74,6 +76,25 @@ class DatabaseTestCase(TestCase):
         database.name = "super3"
         
         self.assertRaises(AttributeError, database.save)
+
+    @mock.patch.object(clone_database, 'delay')
+    def test_database_clone(self, delay):
+
+        database = Database(name="morpheus", databaseinfra=self.databaseinfra)
+
+        database.save()
+
+        self.assertTrue(database.pk)
+        
+        clone_name = "morpheus_cloned"
+        Database.clone(database, clone_name, None)
+        
+        clone_database = Database.objects.get(name=clone_name)
+        self.assertTrue(clone_database.pk)
+        self.assertEqual(clone_database.name, clone_name)
+        self.assertEqual(clone_database.project, database.project)
+        self.assertEqual(clone_database.team, database.team)
+
 
     @mock.patch.object(DatabaseInfra, 'get_info')
     def test_new_database_bypass_datainfra_info_cache(self, get_info):
