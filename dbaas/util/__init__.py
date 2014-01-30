@@ -44,6 +44,7 @@ def call_script(script_name, working_dir=None, split_lines=True, args=[], envs={
         " ".join([script_name] + args),
     )
     return_code = None
+    output = []
     try:
         LOG.info('Running on path %s command: %s', working_dir, logging_cmdline)
 
@@ -81,4 +82,4 @@ def call_script(script_name, working_dir=None, split_lines=True, args=[], envs={
         LOG.error("Error running cmdline (exit code %s): %s", return_code, logging_cmdline, exc_info=True)
         if not return_code:
             return_code = 1
-        return return_code, []
+        raise
