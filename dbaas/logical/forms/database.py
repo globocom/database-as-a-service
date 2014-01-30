@@ -66,11 +66,6 @@ class DatabaseForm(models.ModelForm):
         # it should return the default cleaned_data
         if self.instance and self.instance.id:
             return cleaned_data
-        
-        if 'name' in cleaned_data:
-            name = cleaned_data['name']
-            if Database.objects.filter(name=name):
-                self._errors["name"] = self.error_class([_("Database already exists with this name.")])
 
         # TODO: change model field to blank=False
         if 'team' in cleaned_data:
