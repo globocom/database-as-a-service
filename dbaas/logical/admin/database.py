@@ -31,7 +31,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
     service_class = DatabaseService
     search_fields = ("name", "databaseinfra__name")
-    list_display_basic = ["name_html", "engine_type", "environment", "plan", "status", "get_capacity_html", ]
+    list_display_basic = ["name_html", "engine_type", "environment", "plan", "status", "clone_html", "get_capacity_html", ]
     list_display_advanced = list_display_basic + ["quarantine_dt_format"]
     list_filter_basic = ["project", "databaseinfra__environment", "databaseinfra__engine", "databaseinfra__plan"]
     list_filter_advanced = list_filter_basic + ["databaseinfra", "is_in_quarantine", "team"]
@@ -85,6 +85,14 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             return format_html(html_ok)
         else:
             return format_html(html_nook)
+    
+    def clone_html(self, database):
+        html = []
+        html.append("<a class='btn btn-info' href='%s'><i class='icon-file icon-white'></i></a>" % reverse('admin:database_clone',args=(database.id,)))
+        
+        return format_html("".join(html))
+        
+    clone_html.short_description = "Clone"
 
     def description_html(self, database):
 
