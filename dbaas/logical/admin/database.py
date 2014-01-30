@@ -88,8 +88,11 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     
     def clone_html(self, database):
         html = []
-        html.append("<a class='btn btn-info' href='%s'><i class='icon-file icon-white'></i></a>" % reverse('admin:database_clone',args=(database.id,)))
-        
+        if not database.is_in_quarantine:
+            html.append("<a class='btn btn-info' href='%s'><i class='icon-file icon-white'></i></a>" % reverse('admin:database_clone',args=(database.id,)))
+        else:
+            html.append("N/A")
+            
         return format_html("".join(html))
         
     clone_html.short_description = "Clone"
@@ -236,6 +239,11 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
     def clone(self, request, database_id):
         database = Database.objects.get(id=database_id)
+        if database.is_in_quarantine:
+            self.message_user(request, "Database in quarantine cannot be cloned", level=messages.ERROR)
+            url = reverse('admin:logical_database_changelist')
+            return HttpResponseRedirect(url) # Redirect after POST
+
         form = None
         if request.method == 'POST': # If the form has been submitted...
             form = CloneDatabaseForm(request.POST) # A form bound to the POST data
