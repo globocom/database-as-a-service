@@ -29,11 +29,10 @@ def get_clone_args(origin_database, dest_database):
     port_dest=dest_instance.port
     
     path_of_dump=Configuration.get_by_name('database_clone_dir')
-    engine=origin_database.databaseinfra.engine.name
     
     args=[db_orig, user_orig, pass_orig, host_orig, str(int(port_orig)), 
             db_dest, user_dest, pass_dest, host_dest, str(int(port_dest)), 
-            path_of_dump, engine
+            path_of_dump
     ]
     
     return args
