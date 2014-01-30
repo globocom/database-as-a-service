@@ -73,6 +73,12 @@ Run it!
 
 In your browser open the URL: http://localhost:8000/admin/
 
+### Running celery
+
+To run celery locally use the following command
+    
+    cd {APP DIR}
+    celery worker --app=dbaas -l debug
 
 Documentation
 =============

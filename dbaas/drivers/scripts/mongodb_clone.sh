@@ -14,13 +14,20 @@ pass_dest=${8}
 host_dest=${9}
 port_dest=${10}
 
-path_of_dump=${11}
+path_of_dump=${11}/${db_dest}_$(echo $RANDOM)
+
+mkdir -p ${path_of_dump}
+ret=$?
+if [ ${ret} -ne 0 ]
+then
+    exit ${ret}
+fi
 
 mongodump -h ${host2clone} --port ${port2clone} -u ${user2clone} -p ${pass2clone} -d ${db2clone} --authenticationDatabase admin -o ${path_of_dump}
 ret=$?
 if [ ${ret} -ne 0 ]
 then
-    rm -rf ${path_of_dump}/${db2clone}
+    rm -rf ${path_of_dump}
     exit ${ret}
 fi
 
@@ -28,7 +35,7 @@ rm ${path_of_dump}/${db2clone}/system.users.metadata.json
 ret=$?
 if [ ${ret} -ne 0 ]
 then
-    rm -rf ${path_of_dump}/${db2clone}
+    rm -rf ${path_of_dump}
     exit ${ret}
 fi
 
@@ -36,7 +43,7 @@ rm ${path_of_dump}/${db2clone}/system.users.bson
 ret=$?
 if [ ${ret} -ne 0 ]
 then
-    rm -rf ${path_of_dump}/${db2clone}
+    rm -rf ${path_of_dump}
     exit ${ret}
 fi
 
@@ -44,11 +51,11 @@ mongorestore -h ${host_dest} --port ${port_dest} -u ${user_dest} -p ${pass_dest}
 ret=$?
 if [ ${ret} -ne 0 ]
 then
-    rm -rf ${path_of_dump}/${db2clone}
+    rm -rf ${path_of_dump}
     exit ${ret}
 fi
 
-rm -rf ${path_of_dump}/${db2clone}
+rm -rf ${path_of_dump}
 ret=$?
 if [ ${ret} -ne 0 ]
 then
