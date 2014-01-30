@@ -7,6 +7,7 @@ from django.http import HttpResponse
 import json
 import logging
 import subprocess
+import signal
 import os
 
 LOG = logging.getLogger(__name__)
@@ -14,6 +15,14 @@ LOG = logging.getLogger(__name__)
 # See http://docs.python.org/2/library/subprocess.html#popen-constructor if you
 # have questions about this variable
 DEFAULT_OUTPUT_BUFFER_SIZE = 16384
+PROCESS_TIMEOUT=4*60*60 # 3 horas
+
+
+class AlarmException(Exception):
+    pass
+
+def alarm_handler(signum, frame):
+    raise AlarmException
 
 def slugify(string):
     return slugify_function(string, separator="_")
@@ -66,7 +75,15 @@ def call_script(script_name, working_dir=None, split_lines=True, args=[], envs={
             cwd=working_dir,
             env=envs_with_path,
             universal_newlines=True)
-        process.wait()
+
+        signal.signal(signal.SIGALRM, alarm_handler)
+        signal.alarm(PROCESS_TIMEOUT)
+        try:
+            process.wait()
+            signal.alarm(0) # Disable the alarm
+        except AlarmException:
+            print("Timeout %s exceeded for process id %s" % (PROCESS_TIMEOUT, process.pid))
+            process.kill()
 
         output = process.stdout.read()
         return_code = process.returncode

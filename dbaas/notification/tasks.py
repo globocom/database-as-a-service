@@ -41,10 +41,11 @@ def clone_database(self, origin_database, dest_database, user=None):
     args = get_clone_args(origin_database, dest_database)
 
     try:
-        script_name = factory_for(origin_database.databaseinfra).clone()
-        #script_name = "dummy_clone.sh"
+        #script_name = factory_for(origin_database.databaseinfra).clone()
+        script_name = "dummy_clone.sh"
         return_code, output = call_script(script_name, working_dir=settings.SCRIPTS_PATH, args=args)
         LOG.info("%s - return code: %s" % (self.request.id, return_code))
+        
         task_history.update_status_for(TaskHistory.STATUS_SUCCESS)
     except SoftTimeLimitExceeded:
         LOG.error("task id %s - timeout exceeded" % self.request.id)
