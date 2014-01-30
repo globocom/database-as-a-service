@@ -7,6 +7,7 @@ import os
 import logging
 from celery import states
 from celery.utils.log import get_task_logger
+from celery.exceptions import SoftTimeLimitExceeded
 from dbaas.celery import app
 
 from util import call_script
@@ -41,8 +42,12 @@ def clone_database(self, origin_database, dest_database, user=None):
 
     try:
         script_name = factory_for(origin_database.databaseinfra).clone()
-        call_script(script_name, working_dir=settings.SCRIPTS_PATH, args=args)
+        return_code, output = call_script(script_name, working_dir=settings.SCRIPTS_PATH, args=args)
+        LOG.info("%s - return code: %s" % (self.request.id, return_code))
         task_history.update_status_for(TaskHistory.STATUS_SUCCESS)
+    except SoftTimeLimitExceeded:
+        LOG.error("task id %s - timeout exceeded" % self.request.id)
+        task_history.update_status_for(TaskHistory.STATUS_ERROR)
     except Exception, e:
         LOG.error("task id %s error: %s" % (self.request.id, e))
         task_history.update_status_for(TaskHistory.STATUS_ERROR)
