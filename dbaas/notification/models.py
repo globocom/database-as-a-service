@@ -15,9 +15,10 @@ class TaskHistory(BaseModel):
     
     STATUS_PENDING = 'PENDING'
     STATUS_RUNNING = 'RUNNING'
-    STATUS_FINISHED = 'FINISHED'
+    STATUS_SUCCESS = 'SUCCESS'
+    STATUS_ERROR = 'ERROR'
     
-    _STATUS = [STATUS_PENDING, STATUS_RUNNING, STATUS_FINISHED] 
+    _STATUS = [STATUS_PENDING, STATUS_RUNNING, STATUS_SUCCESS, STATUS_ERROR] 
     
     task_id = models.CharField(_('Task ID'), max_length=200, null=True, blank=True, editable=False)
     task_name = models.CharField(_('Task Name'), max_length=200, null=True, blank=True)
@@ -39,7 +40,7 @@ class TaskHistory(BaseModel):
             raise RuntimeError("Invalid task status")
         
         self.task_status = status
-        if status == TaskHistory.STATUS_FINISHED:
+        if status in [TaskHistory.STATUS_SUCCESS, TaskHistory.STATUS_ERROR]:
             self.update_ended_at()
         else:
             self.save()

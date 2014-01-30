@@ -10,8 +10,8 @@ from celery.utils.log import get_task_logger
 from dbaas.celery import app
 
 from util import call_script
-from system.models import Configuration
-from notification.models import TaskHistory
+from .util import get_clone_args
+from .models import TaskHistory
  
 LOG = get_task_logger(__name__)
 
@@ -38,38 +38,13 @@ def clone_database(self, origin_database, dest_database, user=None):
                                                             self.request.kwargs,
                                                             str(self.request.args)))
 
-    
-    #origin
-    origin_instance=origin_database.databaseinfra.instances.all()[0]
-    
-    db_orig=origin_database.name
-    user_orig=origin_database.databaseinfra.user
-    pass_orig=origin_database.databaseinfra.password
-    host_orig=origin_instance.address
-    port_orig=origin_instance.port
-    
-    #destination
-    dest_instance=dest_database.databaseinfra.instances.all()[0]
-    
-    db_dest=dest_database.name
-    user_dest=dest_database.databaseinfra.user
-    pass_dest=dest_database.databaseinfra.password
-    host_dest=dest_instance.address
-    port_dest=dest_instance.port
-    
-    path_of_dump=Configuration.get_by_name('database_clone_dir')
-    engine=origin_database.databaseinfra.engine.name
-    
-    args=[db_orig, user_orig, pass_orig, host_orig, str(int(port_orig)), 
-            db_dest, user_dest, pass_dest, host_dest, str(int(port_dest)), 
-            path_of_dump, engine
-    ]
+    args = get_clone_args(origin_database, dest_database)
 
     try:
         call_script(CLONE_DATABASE_SCRIPT_NAME, working_dir=settings.SCRIPTS_PATH, args=args)
-        task_history.update_status_for(TaskHistory.STATUS_FINISHED)
+        task_history.update_status_for(TaskHistory.STATUS_SUCCESS)
     except Exception, e:
         LOG.error("task id %s error: %s" % (self.request.id, e))
-        task_history.update_status_for(TaskHistory.STATUS_PENDING)
+        task_history.update_status_for(TaskHistory.STATUS_ERROR)
 
     return
