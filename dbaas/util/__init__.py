@@ -71,8 +71,9 @@ def call_script(script_name, working_dir=None, split_lines=True, args=[], envs={
         output = process.stdout.read()
         return_code = process.returncode
 
-        if return_code != 0:
-            raise RuntimeError("Error executing %s, exit code = %d: '%s'" % (script_name, return_code, output))
+        # if return_code != 0:
+        #     raise RuntimeError("Error executing %s, exit code = %d: '%s'" % (script_name, return_code, output))
+
         if split_lines:
             return return_code, [s.strip() for s in output.splitlines()]
         else:
@@ -82,4 +83,5 @@ def call_script(script_name, working_dir=None, split_lines=True, args=[], envs={
         LOG.error("Error running cmdline (exit code %s): %s", return_code, logging_cmdline, exc_info=True)
         if not return_code:
             return_code = 1
-        raise
+        
+        return return_code, output
