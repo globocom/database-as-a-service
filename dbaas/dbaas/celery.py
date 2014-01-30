@@ -11,8 +11,6 @@ from dbaas import celeryconfig
 
 LOG = logging.getLogger(__name__)
 
-BROKER_URL = os.getenv('DBAAS_NOTIFICATION_BROKER_URL', 'redis://localhost:6379/0')
-
 #set this variable to True to run celery tasks synchronously
 CELERY_ALWAYS_EAGER = False
 
