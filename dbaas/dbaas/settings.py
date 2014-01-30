@@ -190,7 +190,6 @@ INSTALLED_APPS = (
     'haystack',
     'django.contrib.flatpages',
     'ckeditor',
-    'djcelery',
     'notification',
 )
 
