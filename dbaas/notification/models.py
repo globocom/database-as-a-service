@@ -26,6 +26,7 @@ class TaskHistory(BaseModel):
     task_status = models.CharField(_('Task Status'), max_length=100, default=STATUS_PENDING)
     context = models.TextField(null=True, blank=True)
     description = models.TextField(verbose_name=_("Description"), null=True, blank=True)
+    arguments = models.TextField(verbose_name=_("Arguments"), null=True, blank=True)
 
     def load_context_data(self):
         if self.context == '':
@@ -56,6 +57,7 @@ class TaskHistory(BaseModel):
         task_history.task_id = request.id
         task_history.task_name = request.task
         task_history.task_status = TaskHistory.STATUS_RUNNING
+        task_history.arguments = request.args
 
         if user:
             task_history.user = user.username
