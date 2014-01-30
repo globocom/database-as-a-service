@@ -12,10 +12,9 @@ from dbaas.celery import app
 from util import call_script
 from .util import get_clone_args
 from .models import TaskHistory
+from drivers import factory_for
  
 LOG = get_task_logger(__name__)
-
-CLONE_DATABASE_SCRIPT_NAME="dummy_clone.sh"
 
 def get_history_for_task_id(task_id):
     try:
@@ -41,7 +40,8 @@ def clone_database(self, origin_database, dest_database, user=None):
     args = get_clone_args(origin_database, dest_database)
 
     try:
-        call_script(CLONE_DATABASE_SCRIPT_NAME, working_dir=settings.SCRIPTS_PATH, args=args)
+        script_name = factory_for(origin_database.databaseinfra).clone()
+        call_script(script_name, working_dir=settings.SCRIPTS_PATH, args=args)
         task_history.update_status_for(TaskHistory.STATUS_SUCCESS)
     except Exception, e:
         LOG.error("task id %s error: %s" % (self.request.id, e))
