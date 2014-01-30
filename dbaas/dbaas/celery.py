@@ -7,6 +7,7 @@ from datetime import timedelta
 from celery import Celery
 
 from django.conf import settings
+from dbaas import celeryconfig
 
 LOG = logging.getLogger(__name__)
 
@@ -18,19 +19,9 @@ CELERY_ALWAYS_EAGER = False
 # set the default Django settings module for the 'celery' program.
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'dbaas.settings')
 
-app = Celery('dbaas', 
-                broker=BROKER_URL,)
+app = Celery('dbaas')
 
-app.conf.update(
-    CELERY_TRACK_STARTED=True,
-    CELERY_IGNORE_RESULT=False,
-    CELERY_RESULT_BACKEND='djcelery.backends.database:DatabaseBackend',
-    #CELERY_RESULT_BACKEND='djcelery.backends.cache:CacheBackend',
-)
-
-# Using a string here means the worker will not have to
-# pickle the object when using Windows.
-app.config_from_object('django.conf:settings')
+app.config_from_object(celeryconfig)
 app.autodiscover_tasks(lambda: settings.INSTALLED_APPS)
 
 
