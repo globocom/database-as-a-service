@@ -18,6 +18,7 @@ ER_CANNOT_USER = 1396
 ER_WRONG_STRING_LENGTH = 1470
 ER_CAN_NOT_CONNECT = 2003
 
+CLONE_DATABASE_SCRIPT_NAME="mysql_clone.sh"
 
 class MySQL(BaseDriver):
 
@@ -211,3 +212,6 @@ class MySQL(BaseDriver):
         self.__query("SET PASSWORD FOR '%s'@'%%' = PASSWORD('%s')" %
                     (instance.databaseinfra.user, new_password))
         return new_password
+
+    def clone(self):
+        return CLONE_DATABASE_SCRIPT_NAME

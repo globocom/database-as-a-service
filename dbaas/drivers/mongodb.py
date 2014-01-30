@@ -11,6 +11,7 @@ from system.models import Configuration
 
 LOG = logging.getLogger(__name__)
 
+CLONE_DATABASE_SCRIPT_NAME="mongodb_clone.sh"
 
 class MongoDB(BaseDriver):
 
@@ -184,3 +185,6 @@ class MongoDB(BaseDriver):
             new_password = make_db_random_password()
             client.admin.add_user(name=instance.databaseinfra.user, password=new_password)
             return new_password
+    
+    def clone(self):
+        return CLONE_DATABASE_SCRIPT_NAME
