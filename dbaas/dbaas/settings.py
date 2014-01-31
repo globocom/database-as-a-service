@@ -191,6 +191,7 @@ INSTALLED_APPS = (
     'django.contrib.flatpages',
     'ckeditor',
     'notification',
+    'djcelery',
 )
 
 
