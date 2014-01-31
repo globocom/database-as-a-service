@@ -73,7 +73,7 @@ class DatabaseForm(models.ModelForm):
             LOG.debug("team: %s" % team)
 
             if not team:
-                LOG.warning = "No team specified in database form"
+                LOG.warning("No team specified in database form")
                 self._errors["team"] = self.error_class([_("Team: This field is required.")])
 
         if not self.is_valid():
@@ -95,11 +95,9 @@ class DatabaseForm(models.ModelForm):
             #validate if the team has available resources
             dbs = team.databases_in_use_for(environment)
             database_alocation_limit = team.database_alocation_limit
-
+            LOG.debug("dbs: %s | type: %s" % (dbs, type(dbs)))
             if (database_alocation_limit != 0 and len(dbs) >= database_alocation_limit):
-                LOG.warning("The team %s has exceeded the database alocation limit of %s: %s" % (team, 
-                                                                                            database_alocation_limit,
-                                                                                            list(dbs)))
+                LOG.warning("The database alocation limit of %s has been exceeded for the selected team %s => %s" % (database_alocation_limit, team, list(dbs)))
                 self._errors["team"] = self.error_class([_("The database alocation limit of %s has been exceeded for the selected team: %s") % (database_alocation_limit, list(dbs))])
 
         cleaned_data['databaseinfra'] = DatabaseInfra.best_for(plan, environment)
