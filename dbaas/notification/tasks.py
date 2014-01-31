@@ -32,7 +32,7 @@ def clone_database(self, origin_database, dest_database, user=None):
     
     LOG.info("origin_database: %s" % origin_database)
     LOG.info("dest_database: %s" % dest_database)
-
+    # task_state = self.AsyncResult(self.request.id).state)
     LOG.info("id: %s | task: %s | kwargs: %s | args: %s" % (self.request.id,
                                                             self.request.task,
                                                             self.request.kwargs,
