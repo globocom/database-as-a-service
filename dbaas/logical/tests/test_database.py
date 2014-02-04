@@ -113,7 +113,7 @@ class DatabaseTestCase(TestCase):
         clone_name = "trinity clone"
         Database.clone(database, clone_name, None)
 
-        clone_database = Database.objects.get(name=clone_name)
+        clone_database = Database.objects.get(name="trinity_clone")
 
         self.assertTrue(clone_database.pk)
         self.assertEqual(clone_database.name, "trinity_clone")
