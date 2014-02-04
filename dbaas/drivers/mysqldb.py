@@ -17,6 +17,7 @@ ER_ACCESS_DENIED_ERROR = 1045
 ER_CANNOT_USER = 1396
 ER_WRONG_STRING_LENGTH = 1470
 ER_CAN_NOT_CONNECT = 2003
+LOST_CONNECTION = 2013
 
 CLONE_DATABASE_SCRIPT_NAME="mysql_clone.sh"
 
@@ -67,6 +68,8 @@ class MySQL(BaseDriver):
             if e.args[0] == ER_ACCESS_DENIED_ERROR:
                 raise AuthenticationError(e.args[1])
             elif e.args[0] == ER_CAN_NOT_CONNECT:
+                raise ConnectionError(e.args[1])
+            elif e.args[0] == LOST_CONNECTION:
                 raise ConnectionError(e.args[1])
             else:
                 raise GenericDriverError(e.args)
