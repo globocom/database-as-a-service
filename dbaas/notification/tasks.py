@@ -45,8 +45,14 @@ def clone_database(self, origin_database, dest_database, user=None):
         #script_name = "dummy_clone.sh"
         return_code, output = call_script(script_name, working_dir=settings.SCRIPTS_PATH, args=args)
         LOG.info("%s - return code: %s" % (self.request.id, return_code))
-        
-        task_history.update_status_for(TaskHistory.STATUS_SUCCESS)
+        if return_code != 0:
+            task_history.update_status_for(TaskHistory.STATUS_ERROR, details=output)
+            LOG.error("task id %s - error occurred. Transaction rollback" % self.request.id)
+            dest_database.is_in_quarantine = True
+            dest_database.save()
+            dest_database.delete()
+        else:
+            task_history.update_status_for(TaskHistory.STATUS_SUCCESS)
     except SoftTimeLimitExceeded:
         LOG.error("task id %s - timeout exceeded" % self.request.id)
         task_history.update_status_for(TaskHistory.STATUS_ERROR)
