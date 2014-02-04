@@ -26,7 +26,7 @@ class TaskHistory(BaseModel):
     ended_at = models.DateTimeField(verbose_name=_("Ended at"), null=True, blank=True, editable=False)
     task_status = models.CharField(_('Task Status'), max_length=100, default=STATUS_PENDING)
     context = models.TextField(null=True, blank=True)
-    description = models.TextField(verbose_name=_("Description"), null=True, blank=True)
+    details = models.TextField(verbose_name=_("Details"), null=True, blank=True)
     arguments = models.TextField(verbose_name=_("Arguments"), null=True, blank=True)
 
     def load_context_data(self):
@@ -35,11 +35,12 @@ class TaskHistory(BaseModel):
         self.context_data = simplejson.loads(self.context)
         return self.context_data
 
-    def update_status_for(self, status):
+    def update_status_for(self, status, details=None):
         if status not in TaskHistory._STATUS:
             raise RuntimeError("Invalid task status")
         
         self.task_status = status
+        self.details = details
         if status in [TaskHistory.STATUS_SUCCESS, TaskHistory.STATUS_ERROR]:
             self.update_ended_at()
         else:
