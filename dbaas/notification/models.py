@@ -29,6 +29,9 @@ class TaskHistory(BaseModel):
     details = models.TextField(verbose_name=_("Details"), null=True, blank=True)
     arguments = models.TextField(verbose_name=_("Arguments"), null=True, blank=True)
 
+    def __unicode__(self):
+        return u"%s" % self.task_id
+
     def load_context_data(self):
         if self.context == '':
             self.context = '{}'
