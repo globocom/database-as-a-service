@@ -17,6 +17,7 @@ from account.models import Team
 from drivers import DatabaseAlreadyExists
 from logical.templatetags import capacity
 from system.models import Configuration
+from dbaas import constants
 
 LOG = logging.getLogger(__name__)
 
@@ -26,8 +27,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     """
 
     database_add_perm_message = _("You must be set to at least one team to add a database, and the service administrator has been notified about this.")
-    perm_manage_quarantine_database = "logical.can_manage_quarantine_databases"
-    perm_add_database_infra = "physical.add_databaseinfra"
+    perm_manage_quarantine_database = constants.PERM_MANAGE_QUARANTINE_DATABASE
+    perm_add_database_infra = constants.PERM_ADD_DATABASE_INFRA
 
     service_class = DatabaseService
     search_fields = ("name", "databaseinfra__name")
