@@ -331,6 +331,10 @@ def database_pre_save(sender, **kwargs):
         saved_object = Database.objects.get(id=database.id)
         if database.name != saved_object.name:
             raise AttributeError(_("Attribute name cannot be edited"))
+    else:
+        # new database
+        LOG.debug("slugfying database's name for %s" % database.name)
+        database.name = slugify(database.name)
 
 
 @receiver(pre_save, sender=Credential)
