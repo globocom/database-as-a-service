@@ -11,6 +11,7 @@ from celery.exceptions import SoftTimeLimitExceeded
 from dbaas.celery import app
 
 from util import call_script
+from util import notifications
 from .util import get_clone_args
 from .models import TaskHistory
 from drivers import factory_for
@@ -60,4 +61,17 @@ def clone_database(self, origin_database, dest_database, user=None):
         LOG.error("task id %s error: %s" % (self.request.id, e))
         task_history.update_status_for(TaskHistory.STATUS_ERROR)
 
+    return
+    
+
+# @app.task(bind=True)
+def databaseinfra_notification():
+    from physical.models import DatabaseInfra
+    from django.db.models import Sum, Count
+    infras = DatabaseInfra.objects.values('plan__name', 'environment__name').annotate(capacity=Sum('capacity'))
+    for infra in infras:
+        used = DatabaseInfra.objects.filter(plan__name=infra['plan__name'], environment__name=infra['environment__name']).aggregate(used=Count('databases'))
+        percent = int(used['used'] * 100 / infra['capacity'])
+        #print "A infra do plano %s de %s esta usando %s de %s ocupando %s" % (infra['plan__name'], infra['environment__name'], used['used'],infra['capacity'],percent)
+        notifications.databaseinfra_ending(infra['plan__name'], infra['environment__name'], used['used'],infra['capacity'],percent)
     return
