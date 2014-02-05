@@ -22,11 +22,17 @@ class TaskHistoryAdmin(admin.ModelAdmin):
     readonly_fields = ('created_at', 'ended_at', 'task_name', 'task_id', 'task_status', 'user', 'context', 'arguments', 'details')
 
     def queryset(self, request):
-        # print "*" * 50
-        # print request.GET
-        qs = super(TaskHistoryAdmin, self).queryset(request)
+        qs = None
+
         if request.user.has_perm(self.perm_add_database_infra):
+            qs = super(TaskHistoryAdmin, self).queryset(request)
             return qs
+        else:
+            if request.GET.get('user'):
+                query_dict_copy = request.GET.copy()
+                del query_dict_copy['user']
+                request.GET = query_dict_copy
+            qs = super(TaskHistoryAdmin, self).queryset(request)
 
         return qs.filter(user=request.user.username)
 
@@ -34,9 +40,10 @@ class TaskHistoryAdmin(admin.ModelAdmin):
         if request.user.has_perm(self.perm_add_database_infra):
             self.list_display = self.list_display_advanced
             self.list_filter = self.list_filter_advanced
+            self.list_display_links = ("task_id",)
         else:
             self.list_display = self.list_display_basic
             self.list_filter = self.list_filter_basic
-        # self.list_display = self.list_display_basic
+            self.list_display_links = (None,)
         
         return super(TaskHistoryAdmin, self).changelist_view(request, extra_context=extra_context)
