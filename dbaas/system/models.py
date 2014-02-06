@@ -38,12 +38,12 @@ class Configuration(BaseModel):
             return config
 
     @classmethod
-    def get_by_name_as_int(cls, name):
+    def get_by_name_as_int(cls, name, default=None):
         """returns variable as int"""
         try:
             return int(Configuration.get_by_name(name))
         except:
-            return None
+            return default
 
     @classmethod
     def get_by_name(cls, name):
