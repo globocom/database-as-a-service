@@ -73,7 +73,7 @@ def databaseinfra_notification():
     for infra in infras:
         used = DatabaseInfra.objects.filter(plan__name=infra['plan__name'], environment__name=infra['environment__name']).aggregate(used=Count('databases'))
         percent = int(used['used'] * 100 / infra['capacity'])
-        if percent >= Configuration.get_by_name_as_int("threshold_infra_notification"):
+        if percent >= Configuration.get_by_name_as_int("threshold_infra_notification", default=50):
             LOG.info('Plan %s in environment %s with %s%% occupied' % (infra['plan__name'], infra['environment__name'],percent))
             LOG.info("Sending notification...")
             notifications.databaseinfra_ending(infra['plan__name'], infra['environment__name'], used['used'],infra['capacity'],percent)
