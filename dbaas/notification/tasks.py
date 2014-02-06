@@ -65,7 +65,7 @@ def clone_database(self, origin_database, dest_database, user=None):
     return
     
 
-# @app.task(bind=True)
+@app.task(bind=True)
 def databaseinfra_notification():
     from physical.models import DatabaseInfra
     from django.db.models import Sum, Count
@@ -74,7 +74,7 @@ def databaseinfra_notification():
         used = DatabaseInfra.objects.filter(plan__name=infra['plan__name'], environment__name=infra['environment__name']).aggregate(used=Count('databases'))
         percent = int(used['used'] * 100 / infra['capacity'])
         if percent >= Configuration.get_by_name_as_int("threshold_infra_notification"):
-            LOG.info('Plan %s in environment %s with %s occupied' % (infra['plan__name'], infra['environment__name'],percent))
+            LOG.info('Plan %s in environment %s with %s%% occupied' % (infra['plan__name'], infra['environment__name'],percent))
             LOG.info("Sending notification...")
             notifications.databaseinfra_ending(infra['plan__name'], infra['environment__name'], used['used'],infra['capacity'],percent)
     return
