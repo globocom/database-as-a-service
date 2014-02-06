@@ -49,7 +49,7 @@ class MySQL(BaseDriver):
         try:
             LOG.debug('Connecting to mysql databaseinfra %s', self.databaseinfra)
             # mysql uses timeout in seconds
-            connection_timeout_in_seconds = int(Configuration.get_by_name('mysql_connect_timeout') or 5)
+            connection_timeout_in_seconds = Configuration.get_by_name_as_int('mysql_connect_timeout', default=5)
 
             client = mysqldb.connect(host=connection_address, port=int(connection_port),
                                      user=self.databaseinfra.user, passwd=self.databaseinfra.password,
