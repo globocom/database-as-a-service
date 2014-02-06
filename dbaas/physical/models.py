@@ -213,6 +213,7 @@ class DatabaseInfra(BaseModel):
             try:
                 info = self.get_driver().info()
             except:
+                # To make cache possible if the database hangs the connection with no reply
                 info = DatabaseInfraStatus(databaseinfra_model=self.__class__)
                 info.databases_status[self.databases.all()[0].name] = DatabaseInfraStatus(databaseinfra_model=self.__class__)
                 info.databases_status[self.databases.all()[0].name].is_alive = False
