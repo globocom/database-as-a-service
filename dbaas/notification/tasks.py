@@ -5,6 +5,7 @@ from django.conf import settings
 
 import os
 import logging
+from system.models import Configuration
 from celery import states
 from celery.utils.log import get_task_logger
 from celery.exceptions import SoftTimeLimitExceeded
@@ -72,6 +73,8 @@ def databaseinfra_notification():
     for infra in infras:
         used = DatabaseInfra.objects.filter(plan__name=infra['plan__name'], environment__name=infra['environment__name']).aggregate(used=Count('databases'))
         percent = int(used['used'] * 100 / infra['capacity'])
-        #print "A infra do plano %s de %s esta usando %s de %s ocupando %s" % (infra['plan__name'], infra['environment__name'], used['used'],infra['capacity'],percent)
-        notifications.databaseinfra_ending(infra['plan__name'], infra['environment__name'], used['used'],infra['capacity'],percent)
+        if percent >= Configuration.get_by_name_as_int("threshold_infra_notification"):
+            LOG.info('Plan %s in environment %s with %s occupied' % (infra['plan__name'], infra['environment__name'],percent))
+            LOG.info("Sending notification...")
+            notifications.databaseinfra_ending(infra['plan__name'], infra['environment__name'], used['used'],infra['capacity'],percent)
     return
