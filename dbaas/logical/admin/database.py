@@ -242,7 +242,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             extra_context['quarantine_days'] = Configuration.get_by_name_as_int('quarantine_retention_days')
         return super(DatabaseAdmin, self).delete_view(request, object_id, extra_context=extra_context)
 
-    def clone(self, request, database_id):
+    def clone_view(self, request, database_id):
         database = Database.objects.get(id=database_id)
         if database.is_in_quarantine:
             self.message_user(request, "Database in quarantine cannot be cloned", level=messages.ERROR)
@@ -269,6 +269,6 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     def get_urls(self):
         urls = super(DatabaseAdmin, self).get_urls()
         my_urls = patterns('',
-            url(r'^/?(?P<database_id>\d+)/clone/$', self.admin_site.admin_view(self.clone), name="database_clone")
+            url(r'^/?(?P<database_id>\d+)/clone/$', self.admin_site.admin_view(self.clone_view), name="database_clone")
         )
         return my_urls + urls
