@@ -16,7 +16,7 @@ from util import notifications
 from .util import get_clone_args
 from .models import TaskHistory
 from drivers import factory_for
- 
+
 LOG = get_task_logger(__name__)
 
 def get_history_for_task_id(task_id):
@@ -65,8 +65,8 @@ def clone_database(self, origin_database, dest_database, user=None):
     return
     
 
-@app.task(bind=True)
-def databaseinfra_notification(self):
+@app.task
+def databaseinfra_notification():
     from physical.models import DatabaseInfra
     from django.db.models import Sum, Count
     infras = DatabaseInfra.objects.values('plan__name', 'environment__name').annotate(capacity=Sum('capacity'))
