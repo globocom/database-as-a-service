@@ -2,7 +2,20 @@
 {% load i18n admin_static admin_list %}
 {% load admin_urls %}
 
-{% block extrahead %}
+
+{% block extrastyle %}
     {{ block.super }}
-    <script type="text/javascript" src="{% static 'js/notification.js' %}"></script>
+    <link rel="stylesheet" type="text/css" href="{% static 'css/notification.css' %}" />
 {% endblock %}
+
+
+{% block before-object-tools %}
+<div class="notification-counter pull-right">
+    <div class="countdown callback"></div>
+</div>
+{% endblock %}
+
+{% block js_footer %}
+<script type="text/javascript" src="{% static 'js/notification.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/jquery.countdown.js' %}"></script>
+{% endblock js_footer %}
