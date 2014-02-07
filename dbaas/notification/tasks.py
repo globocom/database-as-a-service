@@ -66,7 +66,7 @@ def clone_database(self, origin_database, dest_database, user=None):
     
 
 @app.task(bind=True)
-def databaseinfra_notification():
+def databaseinfra_notification(self):
     from physical.models import DatabaseInfra
     from django.db.models import Sum, Count
     infras = DatabaseInfra.objects.values('plan__name', 'environment__name').annotate(capacity=Sum('capacity'))
