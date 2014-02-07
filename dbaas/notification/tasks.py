@@ -69,13 +69,13 @@ def clone_database(self, origin_database, dest_database, user=None):
 def databaseinfra_notification():
     from physical.models import DatabaseInfra
     from django.db.models import Sum, Count
-    from django.core.cache import cache
+    import redis
     # lock the task when someone worker is runing
-    lock_id = "lock_databaseinfra_notification"
-    acquire_lock = lambda: cache.add(lock_id, "true", 60) # seconds
-    release_lock = lambda: cache.delete(lock_id)
-    if acquire_lock():
-        try:
+    have_lock = False
+    my_lock = redis.Redis().lock("my_key")
+    try:
+        have_lock = my_lock.acquire(blocking=False)
+        if have_lock:
             infras = DatabaseInfra.objects.values('plan__name', 'environment__name', 'engine__engine_type__name').annotate(capacity=Sum('capacity'))
             for infra in infras:
                 used = DatabaseInfra.objects.filter(plan__name=infra['plan__name'], environment__name=infra['environment__name'], engine__engine_type__name=infra['engine__engine_type__name']).aggregate(used=Count('databases'))
@@ -84,6 +84,7 @@ def databaseinfra_notification():
                     LOG.info('Plan %s in environment %s with %s%% occupied' % (infra['plan__name'], infra['environment__name'],percent))
                     LOG.info("Sending notification...")
                     notifications.databaseinfra_ending(infra['plan__name'], infra['environment__name'], used['used'],infra['capacity'],percent)
-        finally:
-            release_lock()
-        return
+    finally:
+        if have_lock:
+            my_lock.release()
+    return
