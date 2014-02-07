@@ -12,6 +12,7 @@ from system.models import Configuration
 LOG = logging.getLogger(__name__)
 
 CLONE_DATABASE_SCRIPT_NAME="mongodb_clone.sh"
+MONGO_CONNECTION_DEFAULT_TIMEOUT=5
 
 class MongoDB(BaseDriver):
 
@@ -70,7 +71,7 @@ class MongoDB(BaseDriver):
         connection_address = self.__get_admin_connection(instance)
         try:
             # mongo uses timeout in mili seconds
-            connection_timeout_in_miliseconds = int(Configuration.get_by_name('mongo_connect_timeout') or 5) * 1000
+            connection_timeout_in_miliseconds = Configuration.get_by_name_as_int('mongo_connect_timeout', default=MONGO_CONNECTION_DEFAULT_TIMEOUT) * 1000
 
             client = pymongo.MongoClient(connection_address, connectTimeoutMS=connection_timeout_in_miliseconds)
             if self.databaseinfra.user and self.databaseinfra.password:

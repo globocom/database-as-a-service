@@ -20,6 +20,7 @@ ER_CAN_NOT_CONNECT = 2003
 LOST_CONNECTION = 2013
 
 CLONE_DATABASE_SCRIPT_NAME="mysql_clone.sh"
+MYSQL_CONNECTION_DEFAULT_TIMEOUT=5
 
 class MySQL(BaseDriver):
 
@@ -49,7 +50,7 @@ class MySQL(BaseDriver):
         try:
             LOG.debug('Connecting to mysql databaseinfra %s', self.databaseinfra)
             # mysql uses timeout in seconds
-            connection_timeout_in_seconds = Configuration.get_by_name_as_int('mysql_connect_timeout', default=5)
+            connection_timeout_in_seconds = Configuration.get_by_name_as_int('mysql_connect_timeout', default=MYSQL_CONNECTION_DEFAULT_TIMEOUT)
 
             client = mysqldb.connect(host=connection_address, port=int(connection_port),
                                      user=self.databaseinfra.user, passwd=self.databaseinfra.password,
