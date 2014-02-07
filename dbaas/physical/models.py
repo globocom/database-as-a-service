@@ -212,6 +212,7 @@ class DatabaseInfra(BaseModel):
         if info is None:
             try:
                 info = self.get_driver().info()
+                cache.set(key, info)
             except:
                 # To make cache possible if the database hangs the connection with no reply
                 info = DatabaseInfraStatus(databaseinfra_model=self.__class__)
