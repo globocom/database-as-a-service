@@ -8,6 +8,7 @@ CELERY_IGNORE_RESULT=False
 CELERY_RESULT_BACKEND='djcelery.backends.cache:CacheBackend'
 CELERYBEAT_MAX_LOOP_INTERVAL= 30
 CELERY_TIMEZONE = os.getenv('DJANGO_TIME_ZONE', 'America/Sao_Paulo')
+CELERYBEAT_SCHEDULER = 'djcelery.schedulers.DatabaseScheduler'
 #CELERY_RESULT_BACKEND='djcelery.backends.database:DatabaseBackend'
 #set this variable to True to run celery tasks synchronously
 CELERY_ALWAYS_EAGER=False
