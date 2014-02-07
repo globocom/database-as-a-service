@@ -18,6 +18,7 @@ class Configuration(BaseModel):
 
     name = models.CharField(verbose_name=_("Configuration name"), max_length=100, unique=True)
     value = models.CharField(verbose_name=_("Configuration value"), max_length=255)
+    description = models.TextField(verbose_name=_("Description"), null=True, blank=True)
 
     def clear_cache(self):
         key = self.get_cache_key(self.name)
