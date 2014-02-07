@@ -71,10 +71,12 @@ def databaseinfra_notification():
     from django.db.models import Sum, Count
     import redis
     # lock the task when someone worker is runing
+    REDIS_CLIENT = redis.Redis()
     have_lock = False
-    my_lock = redis.Redis().lock("my_key")
+    lock = REDIS_CLIENT.lock("notification-lock", timeout=10)
+    
     try:
-        have_lock = my_lock.acquire(blocking=False)
+        have_lock = lock.acquire(blocking=False)
         if have_lock:
             infras = DatabaseInfra.objects.values('plan__name', 'environment__name', 'engine__engine_type__name').annotate(capacity=Sum('capacity'))
             for infra in infras:
@@ -84,7 +86,9 @@ def databaseinfra_notification():
                     LOG.info('Plan %s in environment %s with %s%% occupied' % (infra['plan__name'], infra['environment__name'],percent))
                     LOG.info("Sending notification...")
                     notifications.databaseinfra_ending(infra['plan__name'], infra['environment__name'], used['used'],infra['capacity'],percent)
+        else:
+            LOG.info("lock file...")
     finally:
         if have_lock:
-            my_lock.release()
-    return
+            lock.release()
+        return
