@@ -66,14 +66,30 @@ def clone_database(self, origin_database, dest_database, user=None):
 
 @app.task
 def databaseinfra_notification():
+    import redis
     from physical.models import DatabaseInfra
     from django.db.models import Sum, Count
-    infras = DatabaseInfra.objects.values('plan__name', 'environment__name', 'engine__engine_type__name').annotate(capacity=Sum('capacity'))
-    for infra in infras:
-        used = DatabaseInfra.objects.filter(plan__name=infra['plan__name'], environment__name=infra['environment__name'], engine__engine_type__name=infra['engine__engine_type__name']).aggregate(used=Count('databases'))
-        percent = int(used['used'] * 100 / infra['capacity'])
-        if percent >= Configuration.get_by_name_as_int("threshold_infra_notification", default=50):
-            LOG.info('Plan %s in environment %s with %s%% occupied' % (infra['plan__name'], infra['environment__name'],percent))
-            LOG.info("Sending notification...")
-            notifications.databaseinfra_ending(infra['plan__name'], infra['environment__name'], used['used'],infra['capacity'],percent)
+    from dbaas.settings import REDIS_HOST,REDIS_PORT,REDIS_DB,REDIS_PASSWORD
+    # lock with redis
+    have_lock = False
+    lock = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=REDIS_DB, password=REDIS_PASSWORD).lock("databaseinfra_notification", timeout=10)
+    try:
+        have_lock = lock.acquire(blocking=False)
+        if have_lock:
+            # Sum capacity per databseinfra with parameter plan, environment and engine
+            infras = DatabaseInfra.objects.values('plan__name', 'environment__name', 'engine__engine_type__name').annotate(capacity=Sum('capacity'))
+            for infra in infras:
+                # total database created in databaseinfra per plan, environment and engine
+                used = DatabaseInfra.objects.filter(plan__name=infra['plan__name'], environment__name=infra['environment__name'], engine__engine_type__name=infra['engine__engine_type__name']).aggregate(used=Count('databases'))
+                # calculate the percentage
+                percent = int(used['used'] * 100 / infra['capacity'])
+                if percent >= Configuration.get_by_name_as_int("threshold_infra_notification", default=50):
+                    LOG.info('Plan %s in environment %s with %s%% occupied' % (infra['plan__name'], infra['environment__name'],percent))
+                    LOG.info("Sending notification...")
+                    notifications.databaseinfra_ending(infra['plan__name'], infra['environment__name'], used['used'],infra['capacity'],percent)
+        else:
+            LOG.info("databaseinfra notification locked")
+    finally:
+        if have_lock:
+            lock.release()
     return
