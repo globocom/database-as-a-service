@@ -28,8 +28,8 @@ def setup_log(**args):
     # add new handler to logger
     args['logger'].addHandler(syslog)
 
-after_setup_logger.connect(setup_log)
-after_setup_task_logger.connect(setup_log)
+# after_setup_logger.connect(setup_log)
+# after_setup_task_logger.connect(setup_log)
 
 LOG = logging.getLogger(__name__)
 

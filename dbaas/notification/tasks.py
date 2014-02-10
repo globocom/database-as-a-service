@@ -18,7 +18,6 @@ from .models import TaskHistory
 from drivers import factory_for
 
 LOG = get_task_logger(__name__)
-LOG_WITHOUT_CONTEXT = get_logger(__name__)
 
 def get_history_for_task_id(task_id):
     try:
@@ -74,7 +73,6 @@ def databaseinfra_notification(self):
     have_lock = False
     lock = redis_client().lock("databaseinfra_notification", timeout=10)
     LOG.info("starting databaseinfra_notification...")
-    LOG_WITHOUT_CONTEXT.info("starting databaseinfra_notification...")
     try:
         have_lock = lock.acquire(blocking=False)
         if have_lock:
@@ -91,7 +89,6 @@ def databaseinfra_notification(self):
                     notifications.databaseinfra_ending(infra['plan__name'], infra['environment__name'], used['used'],infra['capacity'],percent)
         else:
             LOG.info("databaseinfra notification locked")
-            LOG_WITHOUT_CONTEXT.info("databaseinfra notification locked")
     finally:
         if have_lock:
             lock.release()
