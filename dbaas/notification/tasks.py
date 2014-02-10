@@ -63,9 +63,7 @@ def clone_database(self, origin_database, dest_database, user=None):
         task_history.update_status_for(TaskHistory.STATUS_ERROR)
 
     return
-    
 
-@only_one(key="SingleTask", timeout=30)
 @app.task
 def databaseinfra_notification():
     from physical.models import DatabaseInfra
