@@ -13,7 +13,7 @@ from dbaas.celery import app
 
 from util import call_script
 from util import notifications
-from .util import get_clone_args, only_one
+from .util import get_clone_args
 from .models import TaskHistory
 from drivers import factory_for
 
