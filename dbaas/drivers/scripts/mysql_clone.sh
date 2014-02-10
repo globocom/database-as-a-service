@@ -14,6 +14,8 @@ pass_dest=${8}
 host_dest=${9}
 port_dest=${10}
 
+pass2clone2=$(echo "${pass2clone#*=}")
+pass_dest2=$(echo "${pass_dest#*=}")
 path_of_dump=${11}/${db_dest}_$(echo $RANDOM)
 
 mkdir -p ${path_of_dump}
@@ -23,7 +25,7 @@ then
     exit ${ret}
 fi
 
-mysqldump -h ${host2clone} --port ${port2clone} -u ${user2clone} -p${user2clone} --routines ${db2clone} > ${path_of_dump}/mysql.dump
+mysqldump -h ${host2clone} --port ${port2clone} -u ${user2clone} -p${pass2clone2} --routines ${db2clone} > ${path_of_dump}/mysql.dump
 ret=$?
 if [ ${ret} -ne 0 ]
 then
@@ -31,7 +33,7 @@ then
     exit ${ret}
 fi
 
-mysql -h ${host_dest} --port ${port_dest} -u ${user_dest} -p${pass_dest} ${db_dest} < ${path_of_dump}/mysql.dump
+mysql -h ${host_dest} --port ${port_dest} -u ${user_dest} -p${pass_dest2} ${db_dest} < ${path_of_dump}/mysql.dump
 ret=$?
 if [ ${ret} -ne 0 ]
 then
