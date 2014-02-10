@@ -132,7 +132,7 @@ class MySQL(BaseDriver):
             database_model = None
             try:
                 #LOG.debug("checking status for database %s" % database_name)
-                database_model = Database.objects.get(name=database_name, databaseinfra__engine__engine_type__name__icontains='mysql')
+                database_model = Database.objects.get(name=database_name, databaseinfra=self.databaseinfra)
             except Database.DoesNotExist:
                 pass
                 
