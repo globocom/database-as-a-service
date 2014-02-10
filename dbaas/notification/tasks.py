@@ -7,7 +7,7 @@ import os
 import logging
 from system.models import Configuration
 from celery import states
-from celery.utils.log import get_task_logger
+from celery.utils.log import get_task_logger, get_logger
 from celery.exceptions import SoftTimeLimitExceeded
 from dbaas.celery import app
 
@@ -64,15 +64,15 @@ def clone_database(self, origin_database, dest_database, user=None):
 
     return
 
-@app.task
-def databaseinfra_notification():
-    import redis
+@app.task(bind=True)
+def databaseinfra_notification(self):
+    from util.redis import redis_client
     from physical.models import DatabaseInfra
     from django.db.models import Sum, Count
-    from dbaas.settings import REDIS_HOST,REDIS_PORT,REDIS_DB,REDIS_PASSWORD
     # lock with redis
     have_lock = False
-    lock = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=REDIS_DB, password=REDIS_PASSWORD).lock("databaseinfra_notification", timeout=10)
+    lock = redis_client().lock("databaseinfra_notification", timeout=10)
+    LOG.info("starting databaseinfra_notification...")
     try:
         have_lock = lock.acquire(blocking=False)
         if have_lock:

@@ -18,6 +18,7 @@ def setup_log(**args):
     # redirect stdout and stderr to logger
     redirect_stdouts_to_logger(args['logger'])
     # logs to local syslog
+    #syslog = SysLogHandler(address=settings.SYSLOG_FILE, facility=logging.handlers.SysLogHandler.LOG_LOCAL3)
     syslog = SysLogHandler(address=settings.SYSLOG_FILE, facility=logging.handlers.SysLogHandler.LOG_LOCAL3)
     # setting log level
     syslog.setLevel(args['loglevel'])
@@ -27,8 +28,8 @@ def setup_log(**args):
     # add new handler to logger
     args['logger'].addHandler(syslog)
 
-after_setup_logger.connect(setup_log)
-after_setup_task_logger.connect(setup_log)
+# after_setup_logger.connect(setup_log)
+# after_setup_task_logger.connect(setup_log)
 
 LOG = logging.getLogger(__name__)
 
