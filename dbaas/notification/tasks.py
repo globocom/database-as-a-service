@@ -13,7 +13,7 @@ from dbaas.celery import app
 
 from util import call_script
 from util import notifications
-from .util import get_clone_args
+from .util import get_clone_args, only_one
 from .models import TaskHistory
 from drivers import factory_for
 
@@ -65,6 +65,7 @@ def clone_database(self, origin_database, dest_database, user=None):
     return
     
 
+@only_one(key="SingleTask", timeout=30)
 @app.task
 def databaseinfra_notification():
     from physical.models import DatabaseInfra
