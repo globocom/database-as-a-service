@@ -3,15 +3,13 @@ from __future__ import absolute_import
 
 from django.conf import settings
 
-import os
-import logging
 from system.models import Configuration
-from celery import states
-from celery.utils.log import get_task_logger, get_logger
+from celery.utils.log import get_task_logger
 from celery.exceptions import SoftTimeLimitExceeded
 from dbaas.celery import app
 
 from util import call_script
+from util.decorators import only_one
 from util import notifications
 from .util import get_clone_args
 from .models import TaskHistory
@@ -64,32 +62,21 @@ def clone_database(self, origin_database, dest_database, user=None):
 
     return
 
-@app.task(bind=True)
-def databaseinfra_notification(self):
-    from util.redis import redis_client
+
+@app.task
+@only_one(key="dbnotificationkey", timeout=20)
+def databaseinfra_notification():
     from physical.models import DatabaseInfra
     from django.db.models import Sum, Count
-    # lock with redis
-    have_lock = False
-    lock = redis_client().lock("databaseinfra_notification", timeout=10)
-    LOG.info("starting databaseinfra_notification...")
-    try:
-        have_lock = lock.acquire(blocking=False)
-        if have_lock:
-            # Sum capacity per databseinfra with parameter plan, environment and engine
-            infras = DatabaseInfra.objects.values('plan__name', 'environment__name', 'engine__engine_type__name').annotate(capacity=Sum('capacity'))
-            for infra in infras:
-                # total database created in databaseinfra per plan, environment and engine
-                used = DatabaseInfra.objects.filter(plan__name=infra['plan__name'], environment__name=infra['environment__name'], engine__engine_type__name=infra['engine__engine_type__name']).aggregate(used=Count('databases'))
-                # calculate the percentage
-                percent = int(used['used'] * 100 / infra['capacity'])
-                if percent >= Configuration.get_by_name_as_int("threshold_infra_notification", default=50):
-                    LOG.info('Plan %s in environment %s with %s%% occupied' % (infra['plan__name'], infra['environment__name'],percent))
-                    LOG.info("Sending notification...")
-                    notifications.databaseinfra_ending(infra['plan__name'], infra['environment__name'], used['used'],infra['capacity'],percent)
-        else:
-            LOG.info("databaseinfra notification locked")
-    finally:
-        if have_lock:
-            lock.release()
+    # Sum capacity per databseinfra with parameter plan, environment and engine
+    infras = DatabaseInfra.objects.values('plan__name', 'environment__name', 'engine__engine_type__name').annotate(capacity=Sum('capacity'))
+    for infra in infras:
+        # total database created in databaseinfra per plan, environment and engine
+        used = DatabaseInfra.objects.filter(plan__name=infra['plan__name'], environment__name=infra['environment__name'], engine__engine_type__name=infra['engine__engine_type__name']).aggregate(used=Count('databases'))
+        # calculate the percentage
+        percent = int(used['used'] * 100 / infra['capacity'])
+        if percent >= Configuration.get_by_name_as_int("threshold_infra_notification", default=50):
+            LOG.info('Plan %s in environment %s with %s%% occupied' % (infra['plan__name'], infra['environment__name'],percent))
+            LOG.info("Sending notification...")
+            notifications.databaseinfra_ending(infra['plan__name'], infra['environment__name'], used['used'],infra['capacity'],percent)
     return
