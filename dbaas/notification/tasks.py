@@ -13,7 +13,7 @@ from dbaas.celery import app
 
 from util import call_script
 from util import notifications
-from .util import get_clone_args
+from .util import get_clone_args, only_one
 from .models import TaskHistory
 from drivers import factory_for
 
@@ -63,7 +63,6 @@ def clone_database(self, origin_database, dest_database, user=None):
         task_history.update_status_for(TaskHistory.STATUS_ERROR)
 
     return
-    
 
 @app.task
 def databaseinfra_notification():
