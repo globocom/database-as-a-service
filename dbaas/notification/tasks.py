@@ -7,7 +7,7 @@ import os
 import logging
 from system.models import Configuration
 from celery import states
-from celery.utils.log import get_task_logger
+from celery.utils.log import get_task_logger, get_logger
 from celery.exceptions import SoftTimeLimitExceeded
 from dbaas.celery import app
 
@@ -18,6 +18,7 @@ from .models import TaskHistory
 from drivers import factory_for
 
 LOG = get_task_logger(__name__)
+LOG_WITHOUT_CONTEXT = get_logger(__name__)
 
 def get_history_for_task_id(task_id):
     try:
@@ -74,6 +75,7 @@ def databaseinfra_notification():
     have_lock = False
     lock = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=REDIS_DB, password=REDIS_PASSWORD).lock("databaseinfra_notification", timeout=10)
     LOG.info("starting databaseinfra_notification...")
+    LOG_WITHOUT_CONTEXT.info("starting databaseinfra_notification...")
     try:
         have_lock = lock.acquire(blocking=False)
         if have_lock:
@@ -90,6 +92,7 @@ def databaseinfra_notification():
                     notifications.databaseinfra_ending(infra['plan__name'], infra['environment__name'], used['used'],infra['capacity'],percent)
         else:
             LOG.info("databaseinfra notification locked")
+            LOG_WITHOUT_CONTEXT.info("databaseinfra notification locked")
     finally:
         if have_lock:
             lock.release()
