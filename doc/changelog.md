@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.0.9
+* clone database
+* notification of database infra usage
+* bug fix: when the database hang the connection, status is not cached.
+
 ## 0.0.8
 * terms of use
 
