@@ -15,7 +15,7 @@ def get_clone_args(origin_database, dest_database):
     
     db_orig=origin_database.name
     user_orig=origin_database.databaseinfra.user
-    pass_orig=origin_database.databaseinfra.password
+    pass_orig="PASSWORD_ORIGIN=%s" % origin_database.databaseinfra.password
     host_orig=origin_instance.address
     port_orig=origin_instance.port
     
@@ -24,7 +24,7 @@ def get_clone_args(origin_database, dest_database):
     
     db_dest=dest_database.name
     user_dest=dest_database.databaseinfra.user
-    pass_dest=dest_database.databaseinfra.password
+    pass_dest="PASSWORD_DEST=%s" % dest_database.databaseinfra.password
     host_dest=dest_instance.address
     port_dest=dest_instance.port
     

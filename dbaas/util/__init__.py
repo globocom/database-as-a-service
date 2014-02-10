@@ -43,19 +43,25 @@ def as_json(f):
 
 
 def call_script(script_name, working_dir=None, split_lines=True, args=[], envs={}):
-    # working_dir = "./mongodb/scripts"
-    # working_dir = os.path.abspath(working_dir)
+    
+    args_copy = []
+    for arg in args:
+        if arg.startswith("PASSWORD"):
+            args_copy.append("xxx")
+        else:
+            args_copy.append(arg)
+
     if not working_dir:
         raise RuntimeError("Working dir is null")
 
     logging_cmdline = "%s %s" % (
         " ".join([ "%s=%s" % (k, "xxx" if k.endswith("_PASSWORD") else v) for (k,v) in envs.items()]),
-        " ".join([script_name] + args),
+        " ".join([script_name] + args_copy),
     )
     return_code = None
     output = []
     try:
-        LOG.info('Running on path %s command: %s', working_dir, logging_cmdline)
+        LOG.debug('Running on path %s command: %s', working_dir, logging_cmdline)
 
         envs_with_path = {'PATH': os.getenv("PATH")}
 
