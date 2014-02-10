@@ -102,6 +102,14 @@ You can input/change some system parameters dynamically, it's a key/value parame
 * `mysql_connect_timeout`: (__default: 5__)
 
     how long (in seconds) a connection can take to be opened before timing out.
+    
+* `threshold_infra_notification`: (__default: 50)
+
+    minimum DatabaseInfra utilization percentage allowed in the system. If the utilization of a specific database infra exceeds the threshold, an email will be sent.
+    
+* `database_clone_dir`: (__mandatory__)
+
+    temporary path used during database clone feature.
 
 # Model
 
