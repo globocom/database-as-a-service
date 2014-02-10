@@ -73,6 +73,7 @@ def databaseinfra_notification():
     # lock with redis
     have_lock = False
     lock = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, db=REDIS_DB, password=REDIS_PASSWORD).lock("databaseinfra_notification", timeout=10)
+    LOG.info("starting databaseinfra_notification...")
     try:
         have_lock = lock.acquire(blocking=False)
         if have_lock:
