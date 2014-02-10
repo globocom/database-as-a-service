@@ -22,7 +22,7 @@ def setup_log(**args):
     # setting log level
     syslog.setLevel(args['loglevel'])
     # setting log format 
-    formatter = logging.Formatter('dbaas: %(name)s %(message)s')
+    formatter = logging.Formatter('dbaas: #celery %(name)s %(message)s')
     syslog.setFormatter(formatter)
     # add new handler to logger
     args['logger'].addHandler(syslog)
