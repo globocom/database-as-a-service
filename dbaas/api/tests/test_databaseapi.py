@@ -6,7 +6,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import status
 from logical.models import Database
 from logical.tests import factory
-from physical.tests.factory import DatabaseInfraFactory
+from physical.tests import factory as physical_factory
 from . import DbaaSAPITestCase, BasicTestsMixin
 LOG = logging.getLogger(__name__)
 
@@ -17,7 +17,8 @@ class DatabaseAPITestCase(DbaaSAPITestCase, BasicTestsMixin):
 
     def setUp(self):
         super(DatabaseAPITestCase, self).setUp()
-        self.datainfra = DatabaseInfraFactory()
+        self.datainfra = physical_factory.DatabaseInfraFactory()
+        self.instance = physical_factory.InstanceFactory(address="127.0.0.1", port=27017, databaseinfra=self.datainfra)
 
     def model_new(self):
         return factory.DatabaseFactory.build(databaseinfra=self.datainfra)
