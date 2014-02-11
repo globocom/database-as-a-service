@@ -60,13 +60,10 @@ def clone_database(self, origin_database, dest_database, user=None):
             task_history.update_status_for(TaskHistory.STATUS_SUCCESS)
     except SoftTimeLimitExceeded:
         LOG.error("task id %s - timeout exceeded" % self.request.id)
-        task_history.update_status_for(TaskHistory.STATUS_ERROR)
-        rollback(dest_database)
+        task_history.update_status_for(TaskHistory.STATUS_ERROR, details="timeout exceeded")
     except Exception, e:
         LOG.error("task id %s error: %s" % (self.request.id, e))
         task_history.update_status_for(TaskHistory.STATUS_ERROR, details=e)
-        rollback(dest_database)
-
     return
 
 
