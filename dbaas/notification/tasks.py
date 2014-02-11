@@ -24,6 +24,13 @@ def get_history_for_task_id(task_id):
         LOG.error("could not find history for task id %s" % task_id)
         return None
 
+
+def rollback(dest_database):
+    dest_database.is_in_quarantine = True
+    dest_database.save()
+    dest_database.delete()
+
+
 @app.task(bind=True)
 def clone_database(self, origin_database, dest_database, user=None):
     
@@ -48,17 +55,17 @@ def clone_database(self, origin_database, dest_database, user=None):
         if return_code != 0:
             task_history.update_status_for(TaskHistory.STATUS_ERROR, details=output)
             LOG.error("task id %s - error occurred. Transaction rollback" % self.request.id)
-            dest_database.is_in_quarantine = True
-            dest_database.save()
-            dest_database.delete()
+            rollback(dest_database)
         else:
             task_history.update_status_for(TaskHistory.STATUS_SUCCESS)
     except SoftTimeLimitExceeded:
         LOG.error("task id %s - timeout exceeded" % self.request.id)
         task_history.update_status_for(TaskHistory.STATUS_ERROR)
+        rollback(dest_database)
     except Exception, e:
         LOG.error("task id %s error: %s" % (self.request.id, e))
         task_history.update_status_for(TaskHistory.STATUS_ERROR, details=e)
+        rollback(dest_database)
 
     return
 
