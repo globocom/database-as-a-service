@@ -24,6 +24,7 @@ class AdminCreateDatabaseTestCase(TestCase):
         self.plan = physical_factory.PlanFactory()
         self.environment = self.plan.environments.all()[0]
         self.databaseinfra = physical_factory.DatabaseInfraFactory(plan=self.plan, environment=self.environment, capacity=10)
+        self.instance = physical_factory.InstanceFactory(address="127.0.0.1", port=27017, databaseinfra=self.databaseinfra)
         self.project = factory.ProjectFactory()
         self.role = Role.objects.get_or_create(name="fake_role")[0]
         self.team = Team.objects.get_or_create(name="fake_team", role=self.role, database_alocation_limit=0)[0]
