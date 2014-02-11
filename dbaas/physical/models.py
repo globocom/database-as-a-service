@@ -182,11 +182,17 @@ class DatabaseInfra(BaseModel):
         return name
 
     @classmethod
+    def get_active_for(cls, plan=None, environment=None):
+        """Return active databaseinfras for selected plan and environment"""
+        datainfras = DatabaseInfra.objects.filter(plan=plan, environment=environment, instances__is_active=True).distinct()
+        LOG.debug('Total of datainfra with filter plan %s and environment %s: %s', plan, environment, len(datainfras))
+        return datainfras
+
+    @classmethod
     def best_for(cls, plan, environment):
         """ Choose the best DatabaseInfra for another database """
-        datainfras = list(DatabaseInfra.objects.filter(plan=plan, environment=environment, instances__is_active=True).distinct())
+        datainfras = list(DatabaseInfra.get_active_for(plan=plan, environment=environment))
         #datainfras = list(DatabaseInfra.objects.filter(plan=plan, environment=environment))
-        LOG.debug('Total of datainfra with filter plan %s and environment %s: %s', plan, environment, len(datainfras))
         if not datainfras:
             return None
         datainfras.sort(key=lambda di: -di.available)
