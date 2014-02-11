@@ -184,8 +184,8 @@ class DatabaseInfra(BaseModel):
     @classmethod
     def best_for(cls, plan, environment):
         """ Choose the best DatabaseInfra for another database """
-        #datainfras = list(DatabaseInfra.objects.filter(plan=plan, environment=environment, instances__is_active=True))
-        datainfras = list(DatabaseInfra.objects.filter(plan=plan, environment=environment))
+        datainfras = list(DatabaseInfra.objects.filter(plan=plan, environment=environment, instances__is_active=True).distinct())
+        #datainfras = list(DatabaseInfra.objects.filter(plan=plan, environment=environment))
         LOG.debug('Total of datainfra with filter plan %s and environment %s: %s', plan, environment, len(datainfras))
         if not datainfras:
             return None
