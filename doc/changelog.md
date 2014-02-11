@@ -4,6 +4,8 @@
 * clone database
 * notification of database infra usage
 * bug fix: when the database hang the connection, status is not cached.
+* bug fix: allow databases with the same name but with different engines.
+* bug fix: database infra allocation algorithm should consider only active instances.
 
 ## 0.0.8
 * terms of use
