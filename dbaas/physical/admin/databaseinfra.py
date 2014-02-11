@@ -43,11 +43,13 @@ class DatabaseInfraAdmin(admin.DjangoServicesAdmin):
         for instance in datainfra.instances.all():
             if not instance.is_active:
                 html_instances.append("<span style='color: #CCC'>%s</span>" % unicode(instance))
-            if instance.is_arbiter:
-                html_instances.append("%s (arbiter)" % unicode(instance))
             else:
-                html_instances.append(unicode(instance))
+                if instance.is_arbiter:
+                    html_instances.append("%s (arbiter)" % unicode(instance))
+                else:
+                    html_instances.append(unicode(instance))
         return "<br/>".join(html_instances)
+
     show_instances.allow_tags = True
     show_instances.short_description = "Instances"
 
