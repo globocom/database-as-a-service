@@ -4,11 +4,12 @@ import logging
 from django.utils.translation import ugettext_lazy as _
 from django import forms
 from .. import models
+from ckeditor.widgets import CKEditorWidget
 
 log = logging.getLogger(__name__)
 
 class PlanForm(forms.ModelForm):
-    
+    description = forms.CharField(widget=CKEditorWidget(), required=False)
     class Meta:
         model = models.Plan
 

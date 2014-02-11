@@ -36,7 +36,7 @@
                                 {% endif %}
                                 {% endcomment %}
                                 </p>
-                                <p class="description">{{plan.description|default:""}}</p>
+                                <p class="description">{{plan.description|safe|escape|default:""}}</p>
                                 <ul class="plan-attributes">
                                     {% for plan_attribute in plan.plan_attributes.all %}
                                     <li>{{plan_attribute.name}}: {{plan_attribute.value}}</li>
