@@ -1,6 +1,7 @@
 from logical.models import Database
 
 from dbaas.celery import app
+from util.decorators import only_one
 
 
 @app.task
