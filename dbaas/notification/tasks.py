@@ -58,7 +58,7 @@ def clone_database(self, origin_database, dest_database, user=None):
         task_history.update_status_for(TaskHistory.STATUS_ERROR)
     except Exception, e:
         LOG.error("task id %s error: %s" % (self.request.id, e))
-        task_history.update_status_for(TaskHistory.STATUS_ERROR)
+        task_history.update_status_for(TaskHistory.STATUS_ERROR, details=e)
 
     return
 
