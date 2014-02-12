@@ -18,6 +18,7 @@ from drivers import DatabaseAlreadyExists
 from logical.templatetags import capacity
 from system.models import Configuration
 from dbaas import constants
+from account.admin.user import UserTeamListFilter
 
 LOG = logging.getLogger(__name__)
 
@@ -192,12 +193,15 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
     def changelist_view(self, request, extra_context=None):
         if request.user.has_perm(self.perm_manage_quarantine_database):
-            self.list_filter = self.list_filter_advanced
             self.list_display = self.list_display_advanced
         else:
-            self.list_filter = self.list_filter_basic
             self.list_display = self.list_display_basic
-        
+
+        if request.user.has_perm(self.perm_add_database_infra):
+            self.list_filter = self.list_filter_advanced
+        else:
+            self.list_filter = self.list_filter_basic
+
         return super(DatabaseAdmin, self).changelist_view(request, extra_context=extra_context)
 
     def add_view(self, request, form_url='', extra_context=None):
