@@ -14,7 +14,7 @@ def get_domain():
     domain = Site.objects.get(id=1).domain
     if not domain.startswith('http'):
         domain = "http://" + domain
-    
+
     return domain
 
 def notify_new_user_creation(user=None):
@@ -60,6 +60,7 @@ def databaseinfra_ending(plan,environment,used,capacity,percent):
     addr_from=Configuration.get_by_name("email_addr_from")
     addr_to=Configuration.get_by_name_as_list("new_user_notify_email")
     context={}
+    context['domain'] = get_domain()
     context['plan'] = plan
     context['environment'] = environment
     context['used'] = used

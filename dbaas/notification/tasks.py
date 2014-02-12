@@ -10,7 +10,7 @@ from dbaas.celery import app
 
 from util import call_script
 from util.decorators import only_one
-from util import notifications
+from util import email_notifications
 from .util import get_clone_args
 from .models import TaskHistory
 from drivers import factory_for
@@ -82,5 +82,5 @@ def databaseinfra_notification():
         if percent >= Configuration.get_by_name_as_int("threshold_infra_notification", default=50):
             LOG.info('Plan %s in environment %s with %s%% occupied' % (infra['plan__name'], infra['environment__name'],percent))
             LOG.info("Sending notification...")
-            notifications.databaseinfra_ending(infra['plan__name'], infra['environment__name'], used['used'],infra['capacity'],percent)
+            email_notifications.databaseinfra_ending(infra['plan__name'], infra['environment__name'], used['used'],infra['capacity'],percent)
     return
