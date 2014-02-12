@@ -32,6 +32,16 @@ class RoleListFilter(SimpleListFilter):
             return queryset.filter(id__in=users)
 
 
+class UserTeamListFilter(SimpleListFilter):
+    title = _('team')
+
+    parameter_name = 'team'
+
+    def lookups(self, request, model_admin):
+        qs = Team.objects.filter(users=request.user)
+        return [(i.id, i.name) for i in qs]
+
+
 class TeamListFilter(SimpleListFilter):
     title = _('team')
 
