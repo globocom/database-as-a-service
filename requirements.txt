@@ -12,10 +12,11 @@ astroid==1.0.0
 billiard==3.3.0.14
 bootstrap-admin==0.2.5
 boto==2.14.0
-celery==3.1.8
+celery==3.1.9
 distribute==0.7.3
 django-adminplus==0.2.0
 django-auth-ldap==1.1.4
+django-celery==3.1.9
 django-ckeditor==4.0.2
 django-email-extras==0.1.13
 django-extensions==1.2.2
@@ -26,12 +27,13 @@ django-services==0.0.8
 django-simple-audit==0.1.14
 djangorestframework==2.3.8
 gunicorn==0.17.2
-kombu==3.0.10
+kombu==3.0.12
 logilab-common==0.60.0
 nose==1.3.0
 pyasn1==0.1.7
 pycrypto==2.6
 pymongo==2.6.2
+python-gnupg==0.3.6
 python-keyczar==0.71c
 python-ldap==2.3.13
 python-slugify==0.0.6
@@ -40,5 +42,5 @@ raven==3.5.0
 redis==2.9.1
 simple-db-migrate==1.5.3
 six==1.4.1
+sphinx-me==0.2.1
 wsgiref==0.1.2
-django-celery==3.1.1
