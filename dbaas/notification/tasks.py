@@ -14,6 +14,8 @@ from util import email_notifications
 from .util import get_clone_args
 from .models import TaskHistory
 from drivers import factory_for
+from physical.models import DatabaseInfra
+from django.db.models import Sum, Count
 
 LOG = get_task_logger(__name__)
 
@@ -70,8 +72,6 @@ def clone_database(self, origin_database, dest_database, user=None):
 @app.task
 @only_one(key="dbnotificationkey", timeout=20)
 def databaseinfra_notification():
-    from physical.models import DatabaseInfra
-    from django.db.models import Sum, Count
     # Sum capacity per databseinfra with parameter plan, environment and engine
     infras = DatabaseInfra.objects.values('plan__name', 'environment__name', 'engine__engine_type__name').annotate(capacity=Sum('capacity'))
     for infra in infras:
