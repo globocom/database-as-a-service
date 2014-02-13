@@ -3,7 +3,7 @@ from __future__ import absolute_import, unicode_literals
 import simple_audit
 import logging
 import datetime
-from django.db import models
+from django.db import models, transaction
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 from django.db.models.signals import pre_save, post_save, pre_delete
@@ -219,6 +219,23 @@ class Database(BaseModel):
             database.delete()
             LOG.info("The database %s was deleted, because it was set to quarentine %d days ago" % (database.name, quarantine_time))
 
+    @classmethod
+    @transaction.commit_manually
+    def clone(cls, database, clone_name, user):
+        try:
+            cloned_database = Database.objects.get(pk=database.pk)
+            cloned_database.name = clone_name
+            cloned_database.pk = None
+            cloned_database.save()
+        except:
+            transaction.rollback()
+            raise
+        else:
+            transaction.commit()
+            #call task
+            from notification.tasks import clone_database
+            result = clone_database.delay(database, cloned_database, user=user)
+
 
 class Credential(BaseModel):
 
@@ -314,6 +331,10 @@ def database_pre_save(sender, **kwargs):
         saved_object = Database.objects.get(id=database.id)
         if database.name != saved_object.name:
             raise AttributeError(_("Attribute name cannot be edited"))
+    else:
+        # new database
+        LOG.debug("slugfying database's name for %s" % database.name)
+        database.name = slugify(database.name)
 
 
 @receiver(pre_save, sender=Credential)

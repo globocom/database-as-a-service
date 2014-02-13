@@ -9,6 +9,8 @@ from ..models import Database
 from physical.models import DatabaseInfra
 from drivers import base
 
+from notification.tasks import clone_database
+
 import logging
 
 LOG = logging.getLogger(__name__)
@@ -74,6 +76,53 @@ class DatabaseTestCase(TestCase):
         database.name = "super3"
         
         self.assertRaises(AttributeError, database.save)
+
+    @mock.patch.object(clone_database, 'delay')
+    def test_database_clone(self, delay):
+
+        database = Database(name="morpheus", databaseinfra=self.databaseinfra)
+
+        database.save()
+
+        self.assertTrue(database.pk)
+
+        clone_name = "morpheus_clone"
+        Database.clone(database, clone_name, None)
+
+        clone_database = Database.objects.get(name=clone_name)
+
+        self.assertTrue(clone_database.pk)
+        self.assertEqual(clone_database.name, clone_name)
+        self.assertEqual(clone_database.project, database.project)
+        self.assertEqual(clone_database.team, database.team)
+        
+        credential = clone_database.credentials.all()[0]
+
+        self.assertEqual(credential.user, "u_morpheus_clone")
+
+    @mock.patch.object(clone_database, 'delay')
+    def test_database_clone_with_white_space(self, delay):
+        """Tests that a clone database created with white spaces passes the test"""
+
+        database = Database(name="trinity", databaseinfra=self.databaseinfra)
+
+        database.save()
+
+        self.assertTrue(database.pk)
+
+        clone_name = "trinity clone"
+        Database.clone(database, clone_name, None)
+
+        clone_database = Database.objects.get(name="trinity_clone")
+
+        self.assertTrue(clone_database.pk)
+        self.assertEqual(clone_database.name, "trinity_clone")
+        self.assertEqual(clone_database.project, database.project)
+        self.assertEqual(clone_database.team, database.team)
+        
+        credential = clone_database.credentials.all()[0]
+
+        self.assertEqual(credential.user, "u_trinity_clone")
 
     @mock.patch.object(DatabaseInfra, 'get_info')
     def test_new_database_bypass_datainfra_info_cache(self, get_info):

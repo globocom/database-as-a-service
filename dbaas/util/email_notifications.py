@@ -14,7 +14,7 @@ def get_domain():
     domain = Site.objects.get(id=1).domain
     if not domain.startswith('http'):
         domain = "http://" + domain
-    
+
     return domain
 
 def notify_new_user_creation(user=None):
@@ -52,3 +52,19 @@ def notify_team_change_for(user=None):
             LOG.warning("could not send email for team change")
     else:
         LOG.warning("user %s has no email set and therefore cannot be notified!")
+
+def databaseinfra_ending(plan,environment,used,capacity,percent):
+    LOG.info("Notifying DatabaseInfra ending")
+    subject=_("[DBAAS] DatabaseInfra is almost full")
+    template="infra_notification"
+    addr_from=Configuration.get_by_name("email_addr_from")
+    addr_to=Configuration.get_by_name_as_list("new_user_notify_email")
+    context={}
+    context['domain'] = get_domain()
+    context['plan'] = plan
+    context['environment'] = environment
+    context['used'] = used
+    context['capacity'] = capacity
+    context['percent'] = percent
+    send_mail_template(subject, template, addr_from, addr_to, fail_silently=False, attachments=None, context=context)
+    

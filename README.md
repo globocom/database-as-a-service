@@ -25,6 +25,9 @@ DBaaS requires the following:
 * python >= 2.7.5
 * virtualenv >= 1.7.2
 * virtualenvwrapper >= 3.5
+* mysql server and client, version 5.5.x
+* mongo client (used by the clone feature)
+* redis (broker for async tasks with celery)
 * and all packages in requirements.txt file (there is a shortcut to install them)
 
 
@@ -38,7 +41,11 @@ Setup your local environment
 Install the required python packages.
 
     make pip
-    
+
+Install redis and start celery
+
+    make run_celery
+
 Create the tables structure (see the next item)
 
 ## DB
@@ -73,6 +80,12 @@ Run it!
 
 In your browser open the URL: http://localhost:8000/admin/
 
+### Running celery
+
+To run celery locally use the following command
+    
+    cd {APP DIR}
+    make run_celery
 
 Documentation
 =============

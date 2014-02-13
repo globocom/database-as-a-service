@@ -31,18 +31,22 @@
 
 /* plan */
 #result_list td:nth-child(5) {
+    width: 8%;
+}
+
+/* Status */
+#result_list td:nth-child(6) {
     width: 10%;
 }
 
-/* capacity */
 #result_list td:nth-child(7) {
+    width: 7%;
+}
+
+#result_list td:nth-child(8) {
     width: 20%;
 }
 
-/* quarantine */
-#result_list td:nth-child(6) {
-    width: 15%;
-}
 
 .change-list.database .popover {
     width: 500px;
@@ -56,3 +60,6 @@
     display:none;
 }
 
+[class^="icon-"], [class*=" icon-"] {
+    margin-top: 3px;
+}

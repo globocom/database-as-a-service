@@ -12,7 +12,7 @@ from django.dispatch import receiver
 from django_extensions.db.fields.encrypted import EncryptedCharField
 
 from util.models import BaseModel
-from util.notifications import notify_new_user_creation
+from util.email_notifications import notify_new_user_creation
 from .helper import find_ldap_groups_from_user
 
 LOG = logging.getLogger(__name__)

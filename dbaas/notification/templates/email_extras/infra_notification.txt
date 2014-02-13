@@ -1,0 +1,9 @@
+DatabaseInfra is almost full</h2>
+
+The number of Database Infras for {{plan}} plans in {{environment}} environment is {{percent}}% used.
+
+Using {{used}} of {{capacity}} databases
+
+Regards,
+Dbaas notification robot
+{{domain}}

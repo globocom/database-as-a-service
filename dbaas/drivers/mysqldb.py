@@ -17,7 +17,10 @@ ER_ACCESS_DENIED_ERROR = 1045
 ER_CANNOT_USER = 1396
 ER_WRONG_STRING_LENGTH = 1470
 ER_CAN_NOT_CONNECT = 2003
+LOST_CONNECTION = 2013
 
+CLONE_DATABASE_SCRIPT_NAME="mysql_clone.sh"
+MYSQL_CONNECTION_DEFAULT_TIMEOUT=5
 
 class MySQL(BaseDriver):
 
@@ -47,7 +50,7 @@ class MySQL(BaseDriver):
         try:
             LOG.debug('Connecting to mysql databaseinfra %s', self.databaseinfra)
             # mysql uses timeout in seconds
-            connection_timeout_in_seconds = int(Configuration.get_by_name('mysql_connect_timeout') or 5)
+            connection_timeout_in_seconds = Configuration.get_by_name_as_int('mysql_connect_timeout', default=MYSQL_CONNECTION_DEFAULT_TIMEOUT)
 
             client = mysqldb.connect(host=connection_address, port=int(connection_port),
                                      user=self.databaseinfra.user, passwd=self.databaseinfra.password,
@@ -66,6 +69,8 @@ class MySQL(BaseDriver):
             if e.args[0] == ER_ACCESS_DENIED_ERROR:
                 raise AuthenticationError(e.args[1])
             elif e.args[0] == ER_CAN_NOT_CONNECT:
+                raise ConnectionError(e.args[1])
+            elif e.args[0] == LOST_CONNECTION:
                 raise ConnectionError(e.args[1])
             else:
                 raise GenericDriverError(e.args)
@@ -127,7 +132,7 @@ class MySQL(BaseDriver):
             database_model = None
             try:
                 #LOG.debug("checking status for database %s" % database_name)
-                database_model = Database.objects.get(name=database_name)
+                database_model = Database.objects.get(name=database_name, databaseinfra=self.databaseinfra)
             except Database.DoesNotExist:
                 pass
                 
@@ -211,3 +216,6 @@ class MySQL(BaseDriver):
         self.__query("SET PASSWORD FOR '%s'@'%%' = PASSWORD('%s')" %
                     (instance.databaseinfra.user, new_password))
         return new_password
+
+    def clone(self):
+        return CLONE_DATABASE_SCRIPT_NAME

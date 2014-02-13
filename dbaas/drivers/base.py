@@ -4,10 +4,6 @@ import logging
 from django.utils.translation import ugettext_lazy as _
 from django_services.service.exceptions import InternalException
 
-# See http://docs.python.org/2/library/subprocess.html#popen-constructor if you
-# have questions about this variable
-DEFAULT_OUTPUT_BUFFER_SIZE = 16384
-
 LOG = logging.getLogger(__name__)
 
 __all__ = ['GenericDriverError', 'ConnectionError',
@@ -135,6 +131,8 @@ class BaseDriver(object):
     def import_databases(self, databaseinfra):
         """import databases already created in a databaseinfra"""
         raise NotImplementedError()
+
+
 
 
 class DatabaseStatus(object):

@@ -18,6 +18,7 @@ class Configuration(BaseModel):
 
     name = models.CharField(verbose_name=_("Configuration name"), max_length=100, unique=True)
     value = models.CharField(verbose_name=_("Configuration value"), max_length=255)
+    description = models.TextField(verbose_name=_("Description"), null=True, blank=True)
 
     def clear_cache(self):
         key = self.get_cache_key(self.name)
@@ -38,12 +39,12 @@ class Configuration(BaseModel):
             return config
 
     @classmethod
-    def get_by_name_as_int(cls, name):
+    def get_by_name_as_int(cls, name, default=None):
         """returns variable as int"""
         try:
             return int(Configuration.get_by_name(name))
         except:
-            return None
+            return default
 
     @classmethod
     def get_by_name(cls, name):

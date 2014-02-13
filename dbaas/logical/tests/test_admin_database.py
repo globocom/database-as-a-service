@@ -24,6 +24,7 @@ class AdminCreateDatabaseTestCase(TestCase):
         self.plan = physical_factory.PlanFactory()
         self.environment = self.plan.environments.all()[0]
         self.databaseinfra = physical_factory.DatabaseInfraFactory(plan=self.plan, environment=self.environment, capacity=10)
+        self.instance = physical_factory.InstanceFactory(address="127.0.0.1", port=27017, databaseinfra=self.databaseinfra)
         self.project = factory.ProjectFactory()
         self.role = Role.objects.get_or_create(name="fake_role")[0]
         self.team = Team.objects.get_or_create(name="fake_team", role=self.role, database_alocation_limit=0)[0]
@@ -46,6 +47,40 @@ class AdminCreateDatabaseTestCase(TestCase):
         }
         response = self.client.post("/admin/logical/database/add/", params)
         self.assertContains(response, "Team: This field is required",  status_code=200)
+
+    def test_user_tries_to_create_database_but_database_alocation_is_exceeded(self):
+
+        team_with_limit = Team.objects.get_or_create(name="fake_team_with_limit", role=self.role, database_alocation_limit=1)[0]
+        team_with_limit.users.add(self.user)
+
+        database_name = "test_new_database_with_database_alocation_limit_0"
+        params = {
+            "name": database_name,
+            "project": self.project.pk,
+            "plan": self.plan.pk,
+            "environment": self.environment.pk,
+            "engine": self.databaseinfra.engine.pk,
+            "team": team_with_limit.pk,
+        }
+        response = self.client.post("/admin/logical/database/add/", params)
+
+        self.assertEqual(response.status_code, 302, response.content)
+        
+        database = Database.objects.get(name=database_name)
+        self.assertTrue(database.pk)
+
+        database_name = "test_new_database_with_database_alocation_limit_1"
+        params = {
+            "name": database_name,
+            "project": self.project.pk,
+            "plan": self.plan.pk,
+            "environment": self.environment.pk,
+            "engine": self.databaseinfra.engine.pk,
+            "team": team_with_limit.pk,
+        }
+        response = self.client.post("/admin/logical/database/add/", params)
+        self.assertContains(response, "The database alocation limit of 1 has been exceeded for the selected team",  status_code=200)
+
 
     def test_user_pass_all_arguments_and_database_is_created(self):
         database_name = "test_new_database"

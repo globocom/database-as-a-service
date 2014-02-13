@@ -8,7 +8,7 @@ from django.contrib.admin import SimpleListFilter
 from account.models import Role, Team
 
 
-from util import notifications
+from util import email_notifications
 
 LOG = logging.getLogger(__name__)
 
@@ -30,6 +30,16 @@ class RoleListFilter(SimpleListFilter):
                 for user in team.users.all():
                     users.append(user.id)
             return queryset.filter(id__in=users)
+
+
+class UserTeamListFilter(SimpleListFilter):
+    title = _('team')
+
+    parameter_name = 'team'
+
+    def lookups(self, request, model_admin):
+        qs = Team.objects.filter(users=request.user)
+        return [(i.id, i.name) for i in qs]
 
 
 class TeamListFilter(SimpleListFilter):
@@ -123,10 +133,10 @@ class UserAdmin(UserAdmin):
         instance = form.instance
 
         teams_before_save = [team.id for team in instance.team_set.all()]
-        LOG.debug("before save for user %s | teams: %s" % (instance, teams_before_save))
+        LOG.debug("teams for user %s before save: %s" % (instance, teams_before_save))
         super(UserAdmin, self).save_related(request, form, formsets, change)
         teams_after_save = [team.id for team in instance.team_set.all()]
-        LOG.debug("after save for user %s | teams: %s" % (instance, teams_after_save))
+        LOG.debug("teams for user %s after save: %s" % (instance, teams_after_save))
 
         if cmp(teams_before_save, teams_after_save):
-            notifications.notify_team_change_for(user=instance)
+            email_notifications.notify_team_change_for(user=instance)

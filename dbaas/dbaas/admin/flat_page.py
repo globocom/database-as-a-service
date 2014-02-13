@@ -7,17 +7,14 @@ from django.contrib.flatpages.admin import FlatpageForm as FlatpageFormOld
  
 from django import forms
 from ckeditor.widgets import CKEditorWidget
- 
+
+
 class FlatpageForm(FlatpageFormOld):
     content = forms.CharField(widget=CKEditorWidget())
     class Meta:
         model = FlatPage # this is not automatically inherited from FlatpageFormOld
- 
- 
+
+
 class FlatPageAdmin(FlatPageAdminOld):
     form = FlatpageForm
- 
- 
-# We have to unregister the normal admin, and then reregister ours
-admin.site.unregister(FlatPage)
-admin.site.register(FlatPage, FlatPageAdmin)
+    filter_horizontal = ['sites']

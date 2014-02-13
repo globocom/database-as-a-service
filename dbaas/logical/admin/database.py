@@ -3,17 +3,22 @@ from __future__ import absolute_import, unicode_literals
 from django.utils.translation import ugettext_lazy as _
 import logging
 from django_services import admin
-from django.http import HttpResponseRedirect
+from django.shortcuts import render_to_response
+from django.template import RequestContext
+from django.http import HttpResponseRedirect, HttpResponse
 from django.core.urlresolvers import reverse
+from django.conf.urls.defaults import patterns, url
 from django.contrib import messages
 from django.utils.html import format_html, escape
 from ..service.database import DatabaseService
-from ..forms import DatabaseForm, DatabaseForm
+from ..forms import DatabaseForm, CloneDatabaseForm
 from ..models import Database
 from account.models import Team
 from drivers import DatabaseAlreadyExists
 from logical.templatetags import capacity
 from system.models import Configuration
+from dbaas import constants
+from account.admin.user import UserTeamListFilter
 
 LOG = logging.getLogger(__name__)
 
@@ -23,12 +28,12 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     """
 
     database_add_perm_message = _("You must be set to at least one team to add a database, and the service administrator has been notified about this.")
-    perm_manage_quarantine_database = "logical.can_manage_quarantine_databases"
-    perm_add_database_infra = "physical.add_databaseinfra"
+    perm_manage_quarantine_database = constants.PERM_MANAGE_QUARANTINE_DATABASE
+    perm_add_database_infra = constants.PERM_ADD_DATABASE_INFRA
 
     service_class = DatabaseService
     search_fields = ("name", "databaseinfra__name")
-    list_display_basic = ["name_html", "engine_type", "environment", "plan", "status", "get_capacity_html", ]
+    list_display_basic = ["name_html", "engine_type", "environment", "plan", "status", "clone_html", "get_capacity_html", ]
     list_display_advanced = list_display_basic + ["quarantine_dt_format"]
     list_filter_basic = ["project", "databaseinfra__environment", "databaseinfra__engine", "databaseinfra__plan"]
     list_filter_advanced = list_filter_basic + ["databaseinfra", "is_in_quarantine", "team"]
@@ -82,6 +87,21 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             return format_html(html_ok)
         else:
             return format_html(html_nook)
+    
+    def clone_html(self, database):
+        html = []
+        database_status = database.database_status
+
+        if database.is_in_quarantine:
+            html.append("N/A")
+        elif not database_status.is_alive:
+            html.append("N/A")
+        else:
+            html.append("<a class='btn btn-info' href='%s'><i class='icon-file icon-white'></i></a>" % reverse('admin:database_clone',args=(database.id,)))
+            
+        return format_html("".join(html))
+        
+    clone_html.short_description = "Clone"
 
     def description_html(self, database):
 
@@ -173,12 +193,15 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
     def changelist_view(self, request, extra_context=None):
         if request.user.has_perm(self.perm_manage_quarantine_database):
-            self.list_filter = self.list_filter_advanced
             self.list_display = self.list_display_advanced
         else:
-            self.list_filter = self.list_filter_basic
             self.list_display = self.list_display_basic
-        
+
+        if request.user.has_perm(self.perm_add_database_infra):
+            self.list_filter = self.list_filter_advanced
+        else:
+            self.list_filter = self.list_filter_basic
+
         return super(DatabaseAdmin, self).changelist_view(request, extra_context=extra_context)
 
     def add_view(self, request, form_url='', extra_context=None):
@@ -223,3 +246,33 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             extra_context['quarantine_days'] = Configuration.get_by_name_as_int('quarantine_retention_days')
         return super(DatabaseAdmin, self).delete_view(request, object_id, extra_context=extra_context)
 
+    def clone_view(self, request, database_id):
+        database = Database.objects.get(id=database_id)
+        if database.is_in_quarantine:
+            self.message_user(request, "Database in quarantine cannot be cloned", level=messages.ERROR)
+            url = reverse('admin:logical_database_changelist')
+            return HttpResponseRedirect(url) # Redirect after POST
+
+        form = None
+        if request.method == 'POST': # If the form has been submitted...
+            form = CloneDatabaseForm(request.POST) # A form bound to the POST data
+            if form.is_valid(): # All validation rules pass
+                # Process the data in form.cleaned_data
+                database_clone = form.cleaned_data['database_clone']
+                Database.clone(database, database_clone, request.user)
+                url = reverse('admin:notification_taskhistory_changelist')
+                return HttpResponseRedirect(url+"?user=%s" % request.user.username) # Redirect after POST
+        else:
+            form = CloneDatabaseForm(initial={"origin_database_id" : database_id}) # An unbound form
+            print form.errors
+        return render_to_response("logical/database/clone.html",
+                                  locals(),
+                                  context_instance=RequestContext(request))
+        # return HttpResponse("Cloning database %s" % database)
+
+    def get_urls(self):
+        urls = super(DatabaseAdmin, self).get_urls()
+        my_urls = patterns('',
+            url(r'^/?(?P<database_id>\d+)/clone/$', self.admin_site.admin_view(self.clone_view), name="database_clone")
+        )
+        return my_urls + urls

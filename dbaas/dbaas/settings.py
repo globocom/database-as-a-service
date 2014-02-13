@@ -24,6 +24,7 @@ except ImportError:
 
 # Armazena a raiz do projeto.
 SITE_ROOT = LOCAL_FILES('../')
+SCRIPTS_PATH = syspath + "/drivers/scripts/"
 
 #Keyczar key's directory
 ENCRYPTED_FIELD_KEYS_DIR = SITE_ROOT + '/keys'
@@ -189,6 +190,8 @@ INSTALLED_APPS = (
     'haystack',
     'django.contrib.flatpages',
     'ckeditor',
+    'notification',
+    'djcelery',
 )
 
 
@@ -246,6 +249,13 @@ EMAIL_HOST = os.getenv('EMAIL_HOST', 'localhost')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
 EMAIL_PORT = os.getenv('EMAIL_PORT', 25)
+
+# conf to redis
+REDIS_HOST=os.getenv('REDIS_HOST', 'localhost')
+REDIS_PORT=os.getenv('REDIS_PORT', 6379)
+REDIS_PASSWORD=os.getenv('REDIS_PASSWORD')
+REDIS_DB=os.getenv('REDIS_DB', 0)
+
 
 SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'
 SESSION_COOKIE_AGE = 43200  # 12 hours
