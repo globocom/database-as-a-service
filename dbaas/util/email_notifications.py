@@ -55,7 +55,7 @@ def notify_team_change_for(user=None):
 
 def databaseinfra_ending(plan,environment,used,capacity,percent):
     LOG.info("Notifying DatabaseInfra ending")
-    subject=_("[DBAAS] DatabaseInfra ending")
+    subject=_("[DBAAS] DatabaseInfra is almost full")
     template="infra_notification"
     addr_from=Configuration.get_by_name("email_addr_from")
     addr_to=Configuration.get_by_name_as_list("new_user_notify_email")

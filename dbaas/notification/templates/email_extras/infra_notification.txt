@@ -1,6 +1,6 @@
-Dbaas DatabaseInfra ending
+DatabaseInfra is almost full</h2>
 
-The {{plan}} plan in the {{environment}} environment is {{percent}}% full.
+The number of Database Infras for {{plan}} plans in {{environment}} environment is {{percent}}% used.
 
 Using {{used}} of {{capacity}} databases
 
