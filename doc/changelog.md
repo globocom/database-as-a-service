@@ -3,6 +3,7 @@
 ## 0.0.9
 * clone database
 * notification of database infra usage
+* using ckeditor in plan description field, allowing the admin to write rich content or anchor links.
 * bug fix: when the database hang the connection, status is not cached.
 * bug fix: allow databases with the same name but with different engines.
 * bug fix: database infra allocation algorithm should consider only active instances.
