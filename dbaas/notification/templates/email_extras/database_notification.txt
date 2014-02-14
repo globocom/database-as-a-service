@@ -1,0 +1,10 @@
+Database is almost full
+
+The Database {{database}} in {{environment}} environment is {{percent}}% used.
+
+Using {{used}} {{measure_unity}} of {{capacity}} {{measure_unity}}
+
+
+Regards,
+Dbaas notification robot
+{{domain}}
