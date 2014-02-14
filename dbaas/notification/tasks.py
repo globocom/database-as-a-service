@@ -125,7 +125,7 @@ def database_notification(self, team=None):
                 LOG.info("Sending database notification...")
                 context = {}
                 context['database'] = database
-                context['team'] = team
+                context['team'] = team.email
                 context['measure_unity'] = "MB"
                 context['used'] = used
                 context['capacity'] = capacity
