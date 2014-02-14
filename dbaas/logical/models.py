@@ -212,7 +212,7 @@ class Database(BaseModel):
     def used_size(self):
         """ Used size of database (in bytes) """
         if self.database_status:
-            return self.database_status.used_size_in_bytes
+            return float(self.database_status.used_size_in_bytes)
         else:
             return 0.0
 
