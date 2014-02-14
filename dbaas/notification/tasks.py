@@ -14,8 +14,10 @@ from util import email_notifications
 from .util import get_clone_args
 from .models import TaskHistory
 from drivers import factory_for
-from physical.models import DatabaseInfra
 from django.db.models import Sum, Count
+
+from physical.models import DatabaseInfra
+from account.models import Team
 
 LOG = get_task_logger(__name__)
 
@@ -27,7 +29,7 @@ def get_history_for_task_id(task_id):
         return None
 
 
-def rollback(dest_database):
+def rollback_database(dest_database):
     dest_database.is_in_quarantine = True
     dest_database.save()
     dest_database.delete()
@@ -57,7 +59,7 @@ def clone_database(self, origin_database, dest_database, user=None):
         if return_code != 0:
             task_history.update_status_for(TaskHistory.STATUS_ERROR, details=output)
             LOG.error("task id %s - error occurred. Transaction rollback" % self.request.id)
-            rollback(dest_database)
+            rollback_database(dest_database)
         else:
             task_history.update_status_for(TaskHistory.STATUS_SUCCESS)
     except SoftTimeLimitExceeded:
@@ -68,9 +70,8 @@ def clone_database(self, origin_database, dest_database, user=None):
         task_history.update_status_for(TaskHistory.STATUS_ERROR, details=e)
     return
 
-
 @app.task
-@only_one(key="dbnotificationkey", timeout=20)
+@only_one(key="db_infra_notification_key", timeout=20)
 def databaseinfra_notification():
     # Sum capacity per databseinfra with parameter plan, environment and engine
     infras = DatabaseInfra.objects.values('plan__name', 'environment__name', 'engine__engine_type__name').annotate(capacity=Sum('capacity'))
@@ -83,4 +84,47 @@ def databaseinfra_notification():
             LOG.info('Plan %s in environment %s with %s%% occupied' % (infra['plan__name'], infra['environment__name'],percent))
             LOG.info("Sending notification...")
             email_notifications.databaseinfra_ending(infra['plan__name'], infra['environment__name'], used['used'],infra['capacity'],percent)
+    return
+
+@app.task(bind=True)
+@only_one(key="db_notification_key", timeout=20)
+def database_notification(self, team=None):
+    """
+    Notifies teams of database usage
+    """
+    if team:
+        from logical.models import Database
+        LOG.info("sending database notification for team %s" % team)
+        threshold_database_notification = Configuration.get_by_name_as_int("threshold_database_notification", default=50)
+        databases = Database.objects.filter(team=team)
+        msgs = []
+        for database in databases:
+            try:
+                percent_usage = (database.used_size / database.total_size) * 100
+            except ZeroDivisionError:
+                #database has no total size
+                percent_usage = 0.0
+            msg = "database %s => usage: %.2f | threshold: %.2f" % (database, percent_usage, threshold_database_notification)
+            LOG.info(msg)
+            msgs.append(msg)
+            #TODO: check threshold and send email notification if necessary
+        task_history = TaskHistory.register(request=self.request, user=None)
+        task_history.update_status_for(TaskHistory.STATUS_SUCCESS, details="\n".join(msgs))
+    else:
+        #get all teams and for each one create a new task
+        LOG.info("retrieving all teams and sendind database notification %s" % team)
+        teams = Team.objects.all()
+        for team in teams:
+            if team.email:
+                ###############################################
+                # create task
+                ###############################################
+                result = database_notification.delay(team=team)
+                ###############################################
+            else:
+                msg = "team %s has no email set and therefore no database usage notification will been sent" % team
+                LOG.error(msg)
+                #register History
+                task_history = TaskHistory.register(request=self.request, user=None)
+                task_history.update_status_for(TaskHistory.STATUS_ERROR, details=msg)
     return

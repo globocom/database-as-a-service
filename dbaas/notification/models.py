@@ -38,6 +38,15 @@ class TaskHistory(BaseModel):
         self.context_data = simplejson.loads(self.context)
         return self.context_data
 
+    def update_details(self, details, persist=False):
+        """
+        Method to update the details of a task history.
+        TODO: should we put a timestamp in details? should we append the details?
+        """
+        self.details = details
+        if persist:
+            self.save()
+
     def update_status_for(self, status, details=None):
         if status not in TaskHistory._STATUS:
             raise RuntimeError("Invalid task status")
