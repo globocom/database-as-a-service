@@ -53,18 +53,26 @@ def notify_team_change_for(user=None):
     else:
         LOG.warning("user %s has no email set and therefore cannot be notified!")
 
-def databaseinfra_ending(plan,environment,used,capacity,percent):
+def databaseinfra_ending(context={}):
     LOG.info("Notifying DatabaseInfra ending")
     subject=_("[DBAAS] DatabaseInfra is almost full")
     template="infra_notification"
     addr_from=Configuration.get_by_name("email_addr_from")
     addr_to=Configuration.get_by_name_as_list("new_user_notify_email")
-    context={}
+
     context['domain'] = get_domain()
-    context['plan'] = plan
-    context['environment'] = environment
-    context['used'] = used
-    context['capacity'] = capacity
-    context['percent'] = percent
+
     send_mail_template(subject, template, addr_from, addr_to, fail_silently=False, attachments=None, context=context)
+
+def database_usage(context={}):
+    LOG.info("Notifying Database usage")
+    subject=_("[DBAAS] Database is almost full")
+    template="database_notification"
+    addr_from=Configuration.get_by_name("email_addr_from")
+    addr_to=[context["team"], Configuration.get_by_name_as_list("new_user_notify_email")]
+
+    context['domain'] = get_domain()
+
+    send_mail_template(subject, template, addr_from, addr_to, fail_silently=False, attachments=None, context=context)
+    
     

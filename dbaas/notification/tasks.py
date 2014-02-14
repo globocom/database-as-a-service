@@ -82,8 +82,14 @@ def databaseinfra_notification():
         percent = int(used['used'] * 100 / infra['capacity'])
         if percent >= Configuration.get_by_name_as_int("threshold_infra_notification", default=50):
             LOG.info('Plan %s in environment %s with %s%% occupied' % (infra['plan__name'], infra['environment__name'],percent))
-            LOG.info("Sending notification...")
-            email_notifications.databaseinfra_ending(infra['plan__name'], infra['environment__name'], used['used'],infra['capacity'],percent)
+            LOG.info("Sending database infra notification...")
+            context={}
+            context['plan'] = infra['plan__name']
+            context['environment'] = infra['environment__name']
+            context['used'] = used['used']
+            context['capacity'] = infra['capacity']
+            context['percent'] = percent
+            email_notifications.databaseinfra_ending(context=context)
     return
 
 @app.task(bind=True)
@@ -96,11 +102,18 @@ def database_notification(self, team=None):
         from logical.models import Database
         LOG.info("sending database notification for team %s" % team)
         threshold_database_notification = Configuration.get_by_name_as_int("threshold_database_notification", default=50)
+        #if threshold_database_notification 
+        if threshold_database_notification <= 0:
+            LOG.warning("database notification is disabled")
+            return
+
         databases = Database.objects.filter(team=team)
         msgs = []
         for database in databases:
+            used = database.used_size
+            capacity = database.total_size
             try:
-                percent_usage = (database.used_size / database.total_size) * 100
+                percent_usage = (used / capacity) * 100
             except ZeroDivisionError:
                 #database has no total size
                 percent_usage = 0.0
@@ -108,6 +121,18 @@ def database_notification(self, team=None):
             LOG.info(msg)
             msgs.append(msg)
             #TODO: check threshold and send email notification if necessary
+            if percent_usage >= threshold_database_notification:
+                LOG.info("Sending database notification...")
+                context = {}
+                context['database'] = database
+                context['team'] = team
+                context['measure_unity'] = "MB"
+                context['used'] = used
+                context['capacity'] = capacity
+                context['percent'] = percent_usage
+                context['environment'] = database.environment.name
+                email_notifications.database_usage(context=context)
+
         task_history = TaskHistory.register(request=self.request, user=None)
         task_history.update_status_for(TaskHistory.STATUS_SUCCESS, details="\n".join(msgs))
     else:
