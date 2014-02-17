@@ -96,7 +96,8 @@ def databaseinfra_notification():
 @only_one(key="db_notification_key", timeout=20)
 def database_notification(self, team=None):
     """
-    Notifies teams of database usage
+    Notifies teams of database usage.
+    if threshold_database_notification <= 0, the notification is disabled.
     """
     if team:
         from logical.models import Database
@@ -110,8 +111,8 @@ def database_notification(self, team=None):
         databases = Database.objects.filter(team=team)
         msgs = []
         for database in databases:
-            used = database.used_size
-            capacity = database.total_size
+            used = database.used_size_in_mb
+            capacity = database.total_size_in_mb
             try:
                 percent_usage = (used / capacity) * 100
             except ZeroDivisionError:
@@ -129,7 +130,7 @@ def database_notification(self, team=None):
                 context['measure_unity'] = "MB"
                 context['used'] = used
                 context['capacity'] = capacity
-                context['percent'] = percent_usage
+                context['percent'] = "%.2f" % percent_usage
                 context['environment'] = database.environment.name
                 email_notifications.database_usage(context=context)
 
