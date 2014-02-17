@@ -4,6 +4,7 @@ The Database {{database}} in {{environment}} environment is {{percent}}% used.
 
 Using {{used}} {{measure_unity}} of {{capacity}} {{measure_unity}}
 
+You are receiving this email because you are registered in team {{ team }}.
 
 Regards,
 Dbaas notification robot
