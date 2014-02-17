@@ -69,7 +69,7 @@ def database_usage(context={}):
     subject=_("[DBAAS] Database is almost full")
     template="database_notification"
     addr_from=Configuration.get_by_name("email_addr_from")
-    addr_to=[context["team"], Configuration.get_by_name_as_list("new_user_notify_email")]
+    addr_to=[context["team"], Configuration.get_by_name("new_user_notify_email")]
 
     context['domain'] = get_domain()
 
