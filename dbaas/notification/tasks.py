@@ -125,7 +125,7 @@ def database_notification(self, team=None):
             if percent_usage >= threshold_database_notification:
                 LOG.info("Sending database notification...")
                 context = {}
-                context['database'] = database
+                context['database'] = database.name
                 context['team'] = team.email
                 context['measure_unity'] = "MB"
                 context['used'] = used
