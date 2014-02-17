@@ -93,67 +93,73 @@ def databaseinfra_notification():
     return
 
 @app.task(bind=True)
-@only_one(key="db_notification_key", timeout=20)
-def database_notification(self, team=None):
+@only_one(key="db_notification_for_team_key", timeout=20)
+def database_notification_for_team(self, team=None):
     """
     Notifies teams of database usage.
     if threshold_database_notification <= 0, the notification is disabled.
-
-    This task is called recursively. First, if team is None, than the task retrieve all teams
-    and for each one it create a new task.
     """
-    if team:
-        from logical.models import Database
-        LOG.info("sending database notification for team %s" % team)
-        threshold_database_notification = Configuration.get_by_name_as_int("threshold_database_notification", default=50)
-        #if threshold_database_notification 
-        if threshold_database_notification <= 0:
-            LOG.warning("database notification is disabled")
-            return
+    from logical.models import Database
+    LOG.info("sending database notification for team %s" % team)
+    threshold_database_notification = Configuration.get_by_name_as_int("threshold_database_notification", default=50)
+    #if threshold_database_notification 
+    if threshold_database_notification <= 0:
+        LOG.warning("database notification is disabled")
+        return
 
-        databases = Database.objects.filter(team=team)
-        msgs = []
-        for database in databases:
-            used = database.used_size_in_mb
-            capacity = database.total_size_in_mb
-            try:
-                percent_usage = (used / capacity) * 100
-            except ZeroDivisionError:
-                #database has no total size
-                percent_usage = 0.0
-            msg = "database %s => usage: %.2f | threshold: %.2f" % (database, percent_usage, threshold_database_notification)
-            LOG.info(msg)
-            msgs.append(msg)
-            #TODO: check threshold and send email notification if necessary
-            if percent_usage >= threshold_database_notification:
-                LOG.info("Sending database notification...")
-                context = {}
-                context['database'] = database.name
-                context['team'] = team.email
-                context['measure_unity'] = "MB"
-                context['used'] = used
-                context['capacity'] = capacity
-                context['percent'] = "%.2f" % percent_usage
-                context['environment'] = database.environment.name
-                email_notifications.database_usage(context=context)
+    databases = Database.objects.filter(team=team)
+    msgs = []
+    for database in databases:
+        used = database.used_size_in_mb
+        capacity = database.total_size_in_mb
+        try:
+            percent_usage = (used / capacity) * 100
+        except ZeroDivisionError:
+            #database has no total size
+            percent_usage = 0.0
+        msg = "database %s => usage: %.2f | threshold: %.2f" % (database, percent_usage, threshold_database_notification)
+        LOG.info(msg)
+        msgs.append(msg)
 
+        if percent_usage >= threshold_database_notification:
+            LOG.info("Sending database notification...")
+            context = {}
+            context['database'] = database.name
+            context['team'] = team
+            context['measure_unity'] = "MB"
+            context['used'] = used
+            context['capacity'] = capacity
+            context['percent'] = "%.2f" % percent_usage
+            context['environment'] = database.environment.name
+            email_notifications.database_usage(context=context)
+
+    if team.email:
         task_history = TaskHistory.register(request=self.request, user=None)
         task_history.update_status_for(TaskHistory.STATUS_SUCCESS, details="\n".join(msgs))
     else:
-        #get all teams and for each one create a new task
-        LOG.info("retrieving all teams and sendind database notification %s" % team)
-        teams = Team.objects.all()
-        for team in teams:
-            if team.email:
-                ###############################################
-                # create task
-                ###############################################
-                result = database_notification.delay(team=team)
-                ###############################################
-            else:
-                msg = "team %s has no email set and therefore no database usage notification will been sent" % team
-                LOG.error(msg)
-                #register History
-                task_history = TaskHistory.register(request=self.request, user=None)
-                task_history.update_status_for(TaskHistory.STATUS_ERROR, details=msg)
+        msg = "team %s has no email set and therefore no database usage notification will been sent" % team
+        LOG.error(msg)
+        #register History
+        task_history = TaskHistory.register(request=self.request, user=None)
+        task_history.update_status_for(TaskHistory.STATUS_ERROR, details=msg)
+
+    return
+
+@app.task(bind=True)
+@only_one(key="db_notification_key", timeout=20)
+def database_notification(self):
+    """
+    Create tasks for database notification by team
+    if threshold_database_notification <= 0, the notification is disabled.
+    """
+    #get all teams and for each one create a new task
+    LOG.info("retrieving all teams and sendind database notification")
+    teams = Team.objects.all()
+    for team in teams:
+        ###############################################
+        # create task
+        ###############################################
+        result = database_notification_for_team.delay(team=team)
+        ###############################################
+
     return
