@@ -73,6 +73,11 @@ def clone_database(self, origin_database, dest_database, user=None):
 @app.task
 @only_one(key="db_infra_notification_key", timeout=20)
 def databaseinfra_notification():
+    threshold_infra_notification = Configuration.get_by_name_as_int("threshold_infra_notification", default=0)
+    if threshold_infra_notification <= 0:
+        LOG.warning("database infra notification is disabled")
+        return
+    
     # Sum capacity per databseinfra with parameter plan, environment and engine
     infras = DatabaseInfra.objects.values('plan__name', 'environment__name', 'engine__engine_type__name').annotate(capacity=Sum('capacity'))
     for infra in infras:
@@ -80,7 +85,7 @@ def databaseinfra_notification():
         used = DatabaseInfra.objects.filter(plan__name=infra['plan__name'], environment__name=infra['environment__name'], engine__engine_type__name=infra['engine__engine_type__name']).aggregate(used=Count('databases'))
         # calculate the percentage
         percent = int(used['used'] * 100 / infra['capacity'])
-        if percent >= Configuration.get_by_name_as_int("threshold_infra_notification", default=0):
+        if percent >= threshold_infra_notification:
             LOG.info('Plan %s in environment %s with %s%% occupied' % (infra['plan__name'], infra['environment__name'],percent))
             LOG.info("Sending database infra notification...")
             context={}
@@ -101,7 +106,7 @@ def database_notification_for_team(self, team=None):
     """
     from logical.models import Database
     LOG.info("sending database notification for team %s" % team)
-    threshold_database_notification = Configuration.get_by_name_as_int("threshold_database_notification", default=50)
+    threshold_database_notification = Configuration.get_by_name_as_int("threshold_database_notification", default=0)
     #if threshold_database_notification 
     if threshold_database_notification <= 0:
         LOG.warning("database notification is disabled")
