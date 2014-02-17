@@ -98,6 +98,9 @@ def database_notification(self, team=None):
     """
     Notifies teams of database usage.
     if threshold_database_notification <= 0, the notification is disabled.
+
+    This task is called recursively. First, if team is None, than the task retrieve all teams
+    and for each one it create a new task.
     """
     if team:
         from logical.models import Database
