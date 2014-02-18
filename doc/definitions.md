@@ -103,10 +103,14 @@ You can input/change some system parameters dynamically, it's a key/value parame
 
     how long (in seconds) a connection can take to be opened before timing out.
     
-* `threshold_infra_notification`: (__default: 50)
+* `threshold_infra_notification`: (__default: 0)
 
-    minimum DatabaseInfra utilization percentage allowed in the system. If the utilization of a specific database infra exceeds the threshold, an email will be sent.
-    
+    minimum DatabaseInfra utilization percentage allowed in the system. If the utilization of a specific database infra exceeds the threshold, an email will be sent. 0 is disabled.
+
+* `threshold_database_notification`: (__default: 0)
+
+    minimum Database utilization percentage allowed in the system. If the utilization of a specific database exceeds the threshold, an email will be sent to the team (if an email is set) and to the dbaas system administrators. 0 is disabled.
+
 * `database_clone_dir`: (__mandatory__)
 
     temporary path used during database clone feature.

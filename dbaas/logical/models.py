@@ -22,7 +22,8 @@ from account.models import Team
 from drivers.base import ConnectionError, DatabaseStatus
 
 LOG = logging.getLogger(__name__)
-
+MB_FACTOR = 1.0 / 1024.0 / 1024.0
+GB_FACTOR = 1.0 / 1024.0 / 1024.0 / 1024.0
 
 class Project(BaseModel):
 
@@ -198,10 +199,32 @@ class Database(BaseModel):
         return self.databaseinfra.per_database_size_bytes
 
     @property
+    def total_size_in_mb(self):
+        """ Total size of database (in bytes) """
+        return self.databaseinfra.per_database_size_bytes * MB_FACTOR
+
+    @property
+    def total_size_in_gb(self):
+        """ Total size of database (in bytes) """
+        return self.databaseinfra.per_database_size_bytes * GB_FACTOR
+
+    @property
     def used_size(self):
         """ Used size of database (in bytes) """
         if self.database_status:
-            return self.database_status.used_size_in_bytes
+            return float(self.database_status.used_size_in_bytes)
+        else:
+            return 0.0
+
+    @property
+    def used_size_in_mb(self):
+        """ Used size of database (in bytes) """
+        return self.used_size * MB_FACTOR
+
+    @property
+    def used_size_in_gb(self):
+        """ Used size of database (in bytes) """
+        return self.used_size * GB_FACTOR
 
     @property
     def capacity(self):

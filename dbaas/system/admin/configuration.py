@@ -10,6 +10,6 @@ LOG = logging.getLogger(__name__)
 
 class ConfigurationAdmin(admin.ModelAdmin):
 
-    list_display = ["name", "value"]
+    list_display = ["name", "value", "description"]
     search_fields = ("name",)
 
