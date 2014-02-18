@@ -18,33 +18,41 @@ pass2clone2=$(echo "${pass2clone#*=}")
 pass_dest2=$(echo "${pass_dest#*=}")
 path_of_dump=${11}/${db_dest}_$(echo $RANDOM)
 
+echo $(date "+%Y-%m-%d %T") "- Creating temporary dir..."
 mkdir -p ${path_of_dump}
 ret=$?
 if [ ${ret} -ne 0 ]
 then
+    echo $(date "+%Y-%m-%d %T") "- ERROR on creating temporary dir"
     exit ${ret}
 fi
 
+echo ""; echo $(date "+%Y-%m-%d %T") "- Dumping source database..."
 mysqldump -h ${host2clone} --port ${port2clone} -u ${user2clone} -p${pass2clone2} --routines ${db2clone} > ${path_of_dump}/mysql.dump
 ret=$?
 if [ ${ret} -ne 0 ]
 then
+    echo $(date "+%Y-%m-%d %T") "- ERROR on dumping source database"
     rm -rf ${path_of_dump}
     exit ${ret}
 fi
 
+echo ""; echo $(date "+%Y-%m-%d %T") "- Restoring target database..."
 mysql -h ${host_dest} --port ${port_dest} -u ${user_dest} -p${pass_dest2} ${db_dest} < ${path_of_dump}/mysql.dump
 ret=$?
 if [ ${ret} -ne 0 ]
 then
+    echo $(date "+%Y-%m-%d %T") "- ERROR on restoring target database"
     rm -rf ${path_of_dump}
     exit ${ret}
 fi
 
+echo ""; echo $(date "+%Y-%m-%d %T") "- Deleting temporary files..."
 rm -rf ${path_of_dump}
 ret=$?
 if [ ${ret} -ne 0 ]
 then
+    echo $(date "+%Y-%m-%d %T") "- ERROR on deleting temporary files"
     exit ${ret}
 fi
 

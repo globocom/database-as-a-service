@@ -32,7 +32,6 @@ def rollback(dest_database):
     dest_database.save()
     dest_database.delete()
 
-
 @app.task(bind=True)
 def clone_database(self, origin_database, dest_database, user=None):
     
@@ -51,21 +50,20 @@ def clone_database(self, origin_database, dest_database, user=None):
 
     try:
         script_name = factory_for(origin_database.databaseinfra).clone()
-        #script_name = "dummy_clone.sh"
-        return_code, output = call_script(script_name, working_dir=settings.SCRIPTS_PATH, args=args)
+        return_code, output = call_script(script_name, working_dir=settings.SCRIPTS_PATH, args=args, split_lines=False)
         LOG.info("%s - return code: %s" % (self.request.id, return_code))
         if return_code != 0:
-            task_history.update_status_for(TaskHistory.STATUS_ERROR, details=output)
+            task_history.update_status_for(TaskHistory.STATUS_ERROR, details=output + "\nTransaction rollback")
             LOG.error("task id %s - error occurred. Transaction rollback" % self.request.id)
             rollback(dest_database)
         else:
-            task_history.update_status_for(TaskHistory.STATUS_SUCCESS)
+            task_history.update_status_for(TaskHistory.STATUS_SUCCESS, details=output)
     except SoftTimeLimitExceeded:
         LOG.error("task id %s - timeout exceeded" % self.request.id)
         task_history.update_status_for(TaskHistory.STATUS_ERROR, details="timeout exceeded")
     except Exception, e:
         LOG.error("task id %s error: %s" % (self.request.id, e))
-        task_history.update_status_for(TaskHistory.STATUS_ERROR, details=e)
+        task_history.update_status_for(TaskHistory.STATUS_ERROR, details=e)        
     return
 
 
