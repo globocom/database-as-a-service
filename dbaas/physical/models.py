@@ -10,6 +10,7 @@ from django.db import models, transaction
 from django.utils.translation import ugettext_lazy as _
 from django_extensions.db.fields.encrypted import EncryptedCharField
 from util.models import BaseModel
+from drivers import DatabaseInfraStatus
 
 
 LOG = logging.getLogger(__name__)
@@ -216,8 +217,16 @@ class DatabaseInfra(BaseModel):
             info = cache.get(key)
 
         if info is None:
-            info = self.get_driver().info()
-            cache.set(key, info)
+            try:
+                info = self.get_driver().info()
+                cache.set(key, info)
+            except:
+                # To make cache possible if the database hangs the connection with no reply
+                info = DatabaseInfraStatus(databaseinfra_model=self.__class__)
+                info.databases_status[self.databases.all()[0].name] = DatabaseInfraStatus(databaseinfra_model=self.__class__)
+                info.databases_status[self.databases.all()[0].name].is_alive = False
+
+                cache.set(key, info)
         return info
 
 

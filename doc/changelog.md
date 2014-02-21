@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.0.10
+* notify the team when the database exceeded the limit of plan or based  in a threshold
+* debug message about the steps executed by clone script
+
 ## 0.0.9
 * clone database
 * notification of database infra usage
