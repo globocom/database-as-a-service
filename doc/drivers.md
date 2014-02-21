@@ -4,5 +4,5 @@ Driver is a way to add support to new databases. The supported drivers reside, g
 
 ## HowTo create a new one?
 
-We have created a [base driver class](./dbaas/drivers/base.py) that all implementations must inherit to provide support for a specific database.
+We have created a [base driver class](../dbaas/drivers/base.py) that all implementations must inherit to provide support for a specific database.
 
