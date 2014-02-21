@@ -15,7 +15,7 @@ LOG = logging.getLogger(__name__)
 # See http://docs.python.org/2/library/subprocess.html#popen-constructor if you
 # have questions about this variable
 DEFAULT_OUTPUT_BUFFER_SIZE = 16384
-PROCESS_TIMEOUT=4*60*60 # 3 horas
+PROCESS_TIMEOUT=4*60*60 # 4 horas
 
 
 class AlarmException(Exception):
@@ -88,7 +88,7 @@ def call_script(script_name, working_dir=None, split_lines=True, args=[], envs={
             process.wait()
             signal.alarm(0) # Disable the alarm
         except AlarmException:
-            print("Timeout %s exceeded for process id %s" % (PROCESS_TIMEOUT, process.pid))
+            LOG.error("Timeout %s exceeded for process id %s" % (PROCESS_TIMEOUT, process.pid))
             process.kill()
 
         output = process.stdout.read()
