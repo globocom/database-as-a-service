@@ -26,6 +26,7 @@
 							<th>Engine</th>
 							<th>Environment</th>
 							<th>Plan</th>
+							<th>Status</th>
 							<th>Capacity</th>
 						</tr>
 					</thead>
@@ -49,6 +50,14 @@
 								{% endif %}
 							</td>
 							<td>{{ infra.plan.name }}</td>
+							<td> {% for i in  infra.instances.all %}
+							                 {% if i.check_status%}         
+								                <li class="label label-success">Alive</li>
+							                 {% else %}
+							                           <li class="label label-danger">Dead</li>
+							                 {% endif %}  
+							         {% endfor %}     
+							</td>
 							<td>
 								<div class="progress dashboard">
 									{% render_progress_bar infra.used infra.capacity %}
