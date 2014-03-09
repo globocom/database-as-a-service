@@ -9,6 +9,7 @@ class ProjectFactory(factory.DjangoModelFactory):
     FACTORY_FOR = models.Project
 
     name = factory.Sequence(lambda n: 'project_{0}'.format(n))
+    description = factory.Sequence(lambda n: 'project_{0}'.format(n))
     is_active = True
     slug = factory.LazyAttribute(lambda p: p.name)
 
