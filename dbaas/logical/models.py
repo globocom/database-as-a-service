@@ -28,6 +28,7 @@ GB_FACTOR = 1.0 / 1024.0 / 1024.0 / 1024.0
 class Project(BaseModel):
 
     name = models.CharField(verbose_name=_("Project name"), max_length=100, unique=True)
+    description = models.TextField(verbose_name=_("Description"), null=True, blank=True)
     is_active = models.BooleanField(verbose_name=_("Is project active"), default=True)
     slug = models.SlugField()
 
