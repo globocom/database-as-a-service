@@ -21,6 +21,7 @@
 {% block breadcrumbs %}{% endblock %}
 
 {% block content %}
+{% url 'account_password_reset' as password_reset_url %}
 <div id="content-main">
     <div class="row-fluid">
         <div class="well span6 well-wrapper-form">
@@ -31,6 +32,11 @@
                     <legend>
                         {% trans 'Database As A Service' %} - {{ title }}
                     </legend>
+                    {% if password_reset_url %}
+                        <div class="alert">
+                            <strong>Attention!</strong>Authentication is now done via LDAP. Use only the prefix of your email address as the user name.
+                        </div>
+                    {%endif%}
                     {% if form.errors and not form.non_field_errors and not form.this_is_the_login_form.errors %}
                         <p class="errornote alert alert-error fade in">
                             <button data-dismiss="alert" class="close" type="button">×</button>
@@ -56,7 +62,7 @@
                     <input class="btn btn-primary" type="submit" value="{% trans 'Log in' %}">
                 </fieldset>
             </form>
-            {% url 'admin_password_reset' as password_reset_url %}
+           
             {% if password_reset_url %}
                 <p class="forgotten-password">
                     <a href="{{ password_reset_url }}">

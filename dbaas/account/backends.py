@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 import logging
+from django.conf import settings
 from django.contrib.auth.backends import ModelBackend
 from account.models import Team
 from logical.models import Database, Credential
@@ -43,3 +44,31 @@ class DbaasBackend(ModelBackend):
             elif type(obj) == Credential:
                 return self.has_perm(user_obj, perm, obj=obj.database)
             return True
+
+    @staticmethod
+    def change_password(username, old_password=None, new_password="globo123"):
+        import ldap
+
+        if not settings.LDAP_ENABLED:
+            return super(DbaasBackend, self).change_password(username, old_password, new_password)
+        else :
+            conn = None
+            server = settings.AUTH_LDAP_SERVER_URI
+            dn = settings.AUTH_LDAP_BIND_DN
+            user_pw = settings.AUTH_LDAP_BIND_PASSWORD
+            user_search = settings.AUTH_LDAP_USER_SEARCH
+            ret = None
+            try:
+                conn = ldap.initialize(server)
+                conn.bind_s(dn, user_pw)
+                dn_ = 'cn=%s,%s' % (username, user_search.base_dn)
+                LOG.info("Changing dn password %s" % dn_)
+                ret = conn.passwd_s(dn_, old_password, new_password)
+                LOG.info("Return: %s" % ret)
+            except Exception, e:
+                LOG.error("Ops... got an error while changing password: %s" % e)
+                ret = e
+            finally:
+                conn.unbind()
+
+            return ret
