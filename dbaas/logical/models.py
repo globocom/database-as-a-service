@@ -249,6 +249,7 @@ class Database(BaseModel):
             cloned_database = Database.objects.get(pk=database.pk)
             cloned_database.name = clone_name
             cloned_database.pk = None
+            cloned_database.databaseinfra = DatabaseInfra.best_for(database.plan, database.environment)
             cloned_database.save()
         except:
             transaction.rollback()

@@ -13,14 +13,33 @@ from .fields import AdvancedModelChoiceField
 LOG = logging.getLogger(__name__)
 
 class CloneDatabaseForm(forms.Form):
-    database_clone = forms.CharField(label=u'Destination database', max_length=100)
+    database_clone = forms.CharField(label=u'Destination database', max_length=64, required=True)
     origin_database_id = forms.CharField(widget=forms.HiddenInput())
 
     def clean(self):
         cleaned_data = super(CloneDatabaseForm, self).clean()
-        if Database.objects.filter(name=cleaned_data['database_clone']):
-            raise forms.ValidationError(_("this name already exists"))
-            
+        if 'database_clone' in cleaned_data:
+                    
+            origindatabase = Database.objects.get(pk=cleaned_data['origin_database_id'])            
+            databaseinfra = DatabaseInfra.best_for(origindatabase.plan, origindatabase.environment)
+
+            if not databaseinfra:
+                raise forms.ValidationError(_("Sorry. I have no infra-structure to allocate this database. Try select another plan."))
+
+            for infra in DatabaseInfra.objects.filter(environment=origindatabase.environment,plan=origindatabase.plan):
+                if infra.databases.filter(name=cleaned_data['database_clone']):
+                    self._errors["database_clone"] = self.error_class([_("this name already exists in the selected environment")])
+
+            if cleaned_data['database_clone'] in databaseinfra.get_driver().RESERVED_DATABASES_NAME:
+                raise forms.ValidationError(_("%s is a reserved database name" % cleaned_data['database_clone']))
+
+            dbs = origindatabase.team.databases_in_use_for(origindatabase.environment)
+            database_alocation_limit = origindatabase.team.database_alocation_limit
+            LOG.debug("dbs: %s | type: %s" % (dbs, type(dbs)))
+            if (database_alocation_limit != 0 and len(dbs) >= database_alocation_limit):
+                LOG.warning("The database alocation limit of %s has been exceeded for the team: %s => %s" % (database_alocation_limit, origindatabase.team, list(dbs)))
+                raise forms.ValidationError([_("The database alocation limit of %s has been exceeded for the team:  %s => %s") % (database_alocation_limit, origindatabase.team, list(dbs))])
+
         return cleaned_data
 
 class DatabaseForm(models.ModelForm):
@@ -104,10 +123,10 @@ class DatabaseForm(models.ModelForm):
         if not cleaned_data['databaseinfra']:
             raise forms.ValidationError(_("Sorry. I have no infra-structure to allocate this database. Try select another plan."))
 
+        print cleaned_data
         for infra in DatabaseInfra.objects.filter(environment=environment,plan=plan):
             if infra.databases.filter(name=cleaned_data['name']):
                 self._errors["name"] = self.error_class([_("this name already exists in the selected environment")])
-                del cleaned_data["name"]
 
         if 'name' in cleaned_data and cleaned_data['name'] in cleaned_data['databaseinfra'].get_driver().RESERVED_DATABASES_NAME:
             raise forms.ValidationError(_("%s is a reserved database name" % cleaned_data['name']))
