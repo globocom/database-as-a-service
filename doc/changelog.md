@@ -1,5 +1,15 @@
 # Changelog
 
+
+## 0.0.11
+* Change engine colors on dashboard
+* Improve login page, ldap message and a link to reset password through ldap.
+* Description field on project
+* bug fix: when cloning databases a new databaseinfra is passed to it
+* Team email can't be blank
+* Improve dashboard, show database status on index page
+
+
 ## 0.0.10
 * notify the team when the database exceeded the limit of plan or based  in a threshold
 * debug message about the steps executed by clone script
