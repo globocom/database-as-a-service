@@ -61,7 +61,7 @@ class DatabaseInfraFactory(factory.DjangoModelFactory):
     password = '123456'
     endpoint = '127.0.0.1:1111'
     engine = factory.SubFactory(EngineFactory)
-    capacity = 1
+    capacity = 2
 
     @factory.lazy_attribute
     def environment(self):
