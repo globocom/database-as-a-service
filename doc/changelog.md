@@ -1,7 +1,7 @@
 # Changelog
 
 
-## 0.0.11
+## rc-0.0.1
 * Change engine colors on dashboard
 * Improve login page, ldap message and a link to reset password through ldap.
 * Description field on project

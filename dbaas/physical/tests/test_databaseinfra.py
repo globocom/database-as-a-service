@@ -44,6 +44,15 @@ class DatabaseInfraTestCase(TestCase):
             database = factory_logical.DatabaseFactory(databaseinfra=choosed)
             self.assertEqual(choosed, database.databaseinfra)
 
+    
+    def test_check_instances_status(self):
+        plan = factory.PlanFactory()
+        environment = plan.environments.all()[0]
+        datainfra1 = factory.DatabaseInfraFactory(plan=plan, environment=environment, capacity=10)
+        instance1 = factory.InstanceFactory(address="127.0.0.1", port=27017, databaseinfra=datainfra1)
+        instance2 = factory.InstanceFactory(address="127.0.0.2", port=27017, databaseinfra=datainfra1)
+
+        self.assertTrue(datainfra1.check_instances_status())
 
     def test_best_for_with_only_over_capacity_datainfra_returns_None(self):
         """tests database infra capacity"""
