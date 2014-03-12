@@ -205,9 +205,9 @@ class DatabaseInfra(BaseModel):
     def check_instances_status(self):
         status = []
         for instance in Instance.objects.filter(databaseinfra=self.pk):
-            status.append(instance.check_status)
+            status.append(instance.check_status())
             LOG.debug('Checking instance %s (%s) status...', instance, instance.check_status())
-
+       
         if any(val==False for val in status):
             return False
         else:
