@@ -1,9 +1,9 @@
 # Changelog
 
 
-## rc-0.0.1
+## 0.0.11
 * Change engine colors on dashboard
-* Improve login page, ldap message and a link to reset password through ldap.
+* Improve login page, ldap message.
 * Description field on project
 * bug fix: when cloning databases a new databaseinfra is passed to it
 * Team email can't be blank
