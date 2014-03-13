@@ -83,7 +83,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         html_nook = '<span class="label label-important">Dead</span>'
 
         database_status = database.database_status
-        if database_status.is_alive:
+        if database_status and database_status.is_alive:
             return format_html(html_ok)
         else:
             return format_html(html_nook)
@@ -94,7 +94,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
         if database.is_in_quarantine:
             html.append("N/A")
-        elif not database_status.is_alive:
+        elif not database_status or not database_status.is_alive:
             html.append("N/A")
         else:
             html.append("<a class='btn btn-info' href='%s'><i class='icon-file icon-white'></i></a>" % reverse('admin:database_clone',args=(database.id,)))
