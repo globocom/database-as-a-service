@@ -7,7 +7,7 @@ from ..service.host import HostService
 class HostAdmin(admin.DjangoServicesAdmin):
     service_class = HostService
     search_fields = ("hostname",)
-    list_display = ("hostname", "monitor_url_html",)
+    list_display = ("hostname","cp_id", "monitor_url_html",)
     save_on_top = True
     
     def monitor_url_html(self, host):

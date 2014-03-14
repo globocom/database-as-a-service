@@ -2,6 +2,7 @@
 from __future__ import absolute_import, unicode_literals
 import logging
 import simple_audit
+import os
 from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
 from django.core.exceptions import ValidationError
@@ -11,6 +12,7 @@ from django.utils.translation import ugettext_lazy as _
 from django_extensions.db.fields.encrypted import EncryptedCharField
 from util.models import BaseModel
 from drivers import DatabaseInfraStatus
+from cloudstack_client.cloudstackapi.cloud_stack import CloudStack
 
 
 LOG = logging.getLogger(__name__)
@@ -243,6 +245,8 @@ class DatabaseInfra(BaseModel):
 
 class Host(BaseModel):
     hostname = models.CharField(verbose_name=_("Hostname"), max_length=255, unique=True)
+    cp_id = models.CharField(verbose_name=_("Cloud Plataform Instance id"), max_length=255, blank=True, null=True)
+    cloud_portal_host = models.BooleanField(verbose_name=_("create cloud stack host"), default=False)
     monitor_url = models.URLField(verbose_name=_("Monitor Url"), max_length=500, blank=True, null=True)
 
     def __unicode__(self):
@@ -337,6 +341,37 @@ def databaseinfra_pre_save(sender, **kwargs):
         databaseinfra.plan = databaseinfra.engine.engine_type.default_plan
         LOG.warning("No plan specified, using default plan (%s) for engine %s" % (databaseinfra, databaseinfra.engine))
 
+@receiver(pre_save, sender=Host)
+def host_pre_save(sender, **kwargs):
+    """
+    host pre save
+    """
+    host = kwargs.get('instance')
+    LOG.debug("host pre-save triggered")
+    if host.cloud_portal_host:
+        LOG.warning("Provisioning new host on cloud portal...")
+        api_url = os.getenv('CPAPI')
+        apiKey  = os.getenv('CPAPIKEY')
+        secret  = os.getenv('CPSKEY')
+ 
+        api = CloudStack(api_url, apiKey, secret)
+
+        request = { 'serviceofferingid':'5a5a6fae-73db-44d6-a05e-822ed5bd0548', 
+                          'templateid': 'eec6a23b-9982-11e3-a2b8-eee0bc1594e0', 
+                          'zoneid': 'c70c584b-4525-4399-9918-fff690489036',
+                          'networkids': '250b249b-5eb0-476a-b892-c6a6ced45aad',
+                          'projectid': '0be19820-1fe2-45ea-844e-77f17e16add5'
+                }
+
+        result = api.deployVirtualMachine(request)
+        if result['jobid']:
+            host.cp_id = result['id']
+            host.save
+            LOG.warning("VirtualMachine created!")
+
+        else:
+            raise('We could not create the VirtualMachine.     :(')
+            LOG.warning("We could not create the VirtualMachine. :(")
 
 @receiver(pre_save, sender=Plan)
 def plan_pre_save(sender, **kwargs):

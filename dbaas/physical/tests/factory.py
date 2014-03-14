@@ -29,6 +29,7 @@ class HostFactory(factory.DjangoModelFactory):
     FACTORY_FOR = models.Host
 
     hostname = factory.Sequence(lambda n: 'host{0}.mydomain.com'.format(n))
+    cp_id =  factory.Sequence(lambda n: 'cp_id{0}'.format(n))
 
 
 class PlanFactory(factory.DjangoModelFactory):
