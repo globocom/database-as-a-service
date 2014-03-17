@@ -2,7 +2,6 @@
 from __future__ import absolute_import, unicode_literals
 import logging
 import simple_audit
-import os
 from django.db.models.signals import pre_save, post_save, pre_delete
 from django.dispatch import receiver
 from django.core.exceptions import ValidationError
@@ -10,9 +9,10 @@ from django.core.cache import cache
 from django.db import models, transaction
 from django.utils.translation import ugettext_lazy as _
 from django_extensions.db.fields.encrypted import EncryptedCharField
+from django.conf import settings
 from util.models import BaseModel
 from drivers import DatabaseInfraStatus
-from cloudstack_client.cloudstackapi.cloud_stack import CloudStack
+from integrations.iaas.cloudstack import CloudStackClient
 
 
 LOG = logging.getLogger(__name__)
@@ -350,14 +350,12 @@ def host_pre_save(sender, **kwargs):
     LOG.debug("host pre-save triggered")
     if host.cloud_portal_host:
         LOG.warning("Provisioning new host on cloud portal...")
-        api_url = os.getenv('CPAPI')
-        apiKey  = os.getenv('CPAPIKEY')
-        secret  = os.getenv('CPSKEY')
+
  
-        api = CloudStack(api_url, apiKey, secret)
+        api = CloudStackClient(settings.CLOUD_STACK_API_URL, settings.CLOUD_STACK_API_KEY, settings.CLOUD_STACK_API_SECRET)
 
         request = { 'serviceofferingid':'5a5a6fae-73db-44d6-a05e-822ed5bd0548', 
-                          'templateid': '0efee4a8-4fc1-4c6c-8d79-3f21aae43695', 
+                          'templateid': '6e94d4d0-a1d6-405c-b226-e1ce6858c97d', 
                           'zoneid': 'c70c584b-4525-4399-9918-fff690489036',
                           'networkids': '250b249b-5eb0-476a-b892-c6a6ced45aad',
                           'projectid': '0be19820-1fe2-45ea-844e-77f17e16add5'
@@ -385,11 +383,8 @@ def host_pre_delete(sender, **kwargs):
     LOG.debug("host pre-delete triggered")
     if host.cloud_portal_host:
         LOG.warning("Deleting the host on cloud portal...")
-        api_url = os.getenv('CPAPI')
-        apiKey  = os.getenv('CPAPIKEY')
-        secret  = os.getenv('CPSKEY')
- 
-        api = CloudStack(api_url, apiKey, secret)
+
+        api = CloudStackClient(settings.CLOUD_STACK_API_URL, settings.CLOUD_STACK_API_KEY, settings.CLOUD_STACK_API_SECRET)
 
         request = { 'projectid': '0be19820-1fe2-45ea-844e-77f17e16add5',
                           'id': '%s' % (host.cp_id)

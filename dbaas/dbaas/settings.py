@@ -478,3 +478,8 @@ USER_ROLES = (
     'regular',
 )
 
+#CloudStack IaaS Integration credentials
+CLOUD_STACK_ENABLED = os.getenv('CS_ENABLED')
+API_URL = os.getenv('CPAPI')
+API_KEY  = os.getenv('CPAPIKEY')
+API_SECRET  = os.getenv('CPSKEY')
