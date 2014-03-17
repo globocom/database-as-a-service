@@ -3,7 +3,7 @@ from __future__ import absolute_import, unicode_literals
 import logging
 import simple_audit
 import os
-from django.db.models.signals import pre_save, post_save
+from django.db.models.signals import pre_save, post_save, pre_delete
 from django.dispatch import receiver
 from django.core.exceptions import ValidationError
 from django.core.cache import cache
@@ -361,17 +361,46 @@ def host_pre_save(sender, **kwargs):
                           'zoneid': 'c70c584b-4525-4399-9918-fff690489036',
                           'networkids': '250b249b-5eb0-476a-b892-c6a6ced45aad',
                           'projectid': '0be19820-1fe2-45ea-844e-77f17e16add5'
-                }
+                        }
 
         result = api.deployVirtualMachine(request)
         if result['jobid']:
             host.cp_id = result['id']
+            request = {'projectid': '0be19820-1fe2-45ea-844e-77f17e16add5', 'id':'%s' % (result['id']) }
+            result = api.listVirtualMachines(request)
+            host.hostname = result['virtualmachine'][0]['nic'][0]['ipaddress']
             host.save
             LOG.warning("VirtualMachine created!")
 
         else:
             raise('We could not create the VirtualMachine.     :(')
             LOG.warning("We could not create the VirtualMachine. :(")
+
+@receiver(pre_delete, sender=Host)
+def host_pre_delete(sender, **kwargs):
+    """
+    host pre delete
+    """
+    host = kwargs.get('instance')
+    LOG.debug("host pre-delete triggered")
+    if host.cloud_portal_host:
+        LOG.warning("Deleting the host on cloud portal...")
+        api_url = os.getenv('CPAPI')
+        apiKey  = os.getenv('CPAPIKEY')
+        secret  = os.getenv('CPSKEY')
+ 
+        api = CloudStack(api_url, apiKey, secret)
+
+        request = { 'projectid': '0be19820-1fe2-45ea-844e-77f17e16add5',
+                          'id': '%s' % (host.cp_id)
+                        }
+
+        result = api.destroyVirtualMachine(request)
+        if result['jobid']:
+            LOG.warning("VirtualMachine destroyed!")
+        else:
+            raise('We could not destroy the VirtualMachine.     :(')
+            LOG.warning("We could not destroy the VirtualMachine. :(")
 
 @receiver(pre_save, sender=Plan)
 def plan_pre_save(sender, **kwargs):
