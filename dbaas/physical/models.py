@@ -357,7 +357,7 @@ def host_pre_save(sender, **kwargs):
         api = CloudStack(api_url, apiKey, secret)
 
         request = { 'serviceofferingid':'5a5a6fae-73db-44d6-a05e-822ed5bd0548', 
-                          'templateid': 'eec6a23b-9982-11e3-a2b8-eee0bc1594e0', 
+                          'templateid': '0efee4a8-4fc1-4c6c-8d79-3f21aae43695', 
                           'zoneid': 'c70c584b-4525-4399-9918-fff690489036',
                           'networkids': '250b249b-5eb0-476a-b892-c6a6ced45aad',
                           'projectid': '0be19820-1fe2-45ea-844e-77f17e16add5'
