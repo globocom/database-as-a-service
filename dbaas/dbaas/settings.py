@@ -192,7 +192,6 @@ INSTALLED_APPS = (
     'ckeditor',
     'notification',
     'djcelery',
-    'cloudstack_client',
 )
 
 

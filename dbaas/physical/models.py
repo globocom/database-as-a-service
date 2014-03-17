@@ -9,10 +9,8 @@ from django.core.cache import cache
 from django.db import models, transaction
 from django.utils.translation import ugettext_lazy as _
 from django_extensions.db.fields.encrypted import EncryptedCharField
-from django.conf import settings
 from util.models import BaseModel
 from drivers import DatabaseInfraStatus
-from integrations.iaas.cloudstack import CloudStackClient
 
 
 LOG = logging.getLogger(__name__)
@@ -340,62 +338,6 @@ def databaseinfra_pre_save(sender, **kwargs):
     if not databaseinfra.plan:
         databaseinfra.plan = databaseinfra.engine.engine_type.default_plan
         LOG.warning("No plan specified, using default plan (%s) for engine %s" % (databaseinfra, databaseinfra.engine))
-
-@receiver(pre_save, sender=Host)
-def host_pre_save(sender, **kwargs):
-    """
-    host pre save
-    """
-    host = kwargs.get('instance')
-    LOG.debug("host pre-save triggered")
-    if host.cloud_portal_host:
-        LOG.warning("Provisioning new host on cloud portal...")
-
- 
-        api = CloudStackClient(settings.CLOUD_STACK_API_URL, settings.CLOUD_STACK_API_KEY, settings.CLOUD_STACK_API_SECRET)
-
-        request = { 'serviceofferingid':'5a5a6fae-73db-44d6-a05e-822ed5bd0548', 
-                          'templateid': '6e94d4d0-a1d6-405c-b226-e1ce6858c97d', 
-                          'zoneid': 'c70c584b-4525-4399-9918-fff690489036',
-                          'networkids': '250b249b-5eb0-476a-b892-c6a6ced45aad',
-                          'projectid': '0be19820-1fe2-45ea-844e-77f17e16add5'
-                        }
-
-        result = api.deployVirtualMachine(request)
-        if result['jobid']:
-            host.cp_id = result['id']
-            request = {'projectid': '0be19820-1fe2-45ea-844e-77f17e16add5', 'id':'%s' % (result['id']) }
-            result = api.listVirtualMachines(request)
-            host.hostname = result['virtualmachine'][0]['nic'][0]['ipaddress']
-            host.save
-            LOG.warning("VirtualMachine created!")
-
-        else:
-            raise('We could not create the VirtualMachine.     :(')
-            LOG.warning("We could not create the VirtualMachine. :(")
-
-@receiver(pre_delete, sender=Host)
-def host_pre_delete(sender, **kwargs):
-    """
-    host pre delete
-    """
-    host = kwargs.get('instance')
-    LOG.debug("host pre-delete triggered")
-    if host.cloud_portal_host:
-        LOG.warning("Deleting the host on cloud portal...")
-
-        api = CloudStackClient(settings.CLOUD_STACK_API_URL, settings.CLOUD_STACK_API_KEY, settings.CLOUD_STACK_API_SECRET)
-
-        request = { 'projectid': '0be19820-1fe2-45ea-844e-77f17e16add5',
-                          'id': '%s' % (host.cp_id)
-                        }
-
-        result = api.destroyVirtualMachine(request)
-        if result['jobid']:
-            LOG.warning("VirtualMachine destroyed!")
-        else:
-            raise('We could not destroy the VirtualMachine.     :(')
-            LOG.warning("We could not destroy the VirtualMachine. :(")
 
 @receiver(pre_save, sender=Plan)
 def plan_pre_save(sender, **kwargs):
