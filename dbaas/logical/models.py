@@ -12,7 +12,7 @@ from django_extensions.db.fields.encrypted import EncryptedCharField
 from django.utils.functional import cached_property
 from util import slugify, make_db_random_password
 from util.models import BaseModel
-from physical.models import DatabaseInfra, Environment, Plan
+from physical.models import DatabaseInfra, Environment, Plan, Engine
 from drivers import factory_for
 from system.models import Configuration
 from datetime import date, timedelta
@@ -151,6 +151,9 @@ class Database(BaseModel):
 
         if not isinstance(environment, Environment):
             raise ValidationError('Invalid environment type %s - %s' % (type(environment), environment))
+
+        if not isinstance(engine, Engine):
+            raise ValidationError('Invalid engine type %s - %s' % (type(engine), engine))
 
         datainfra = CloudStackProvider().create_instance(plan, environment, engine)
         if not datainfra:

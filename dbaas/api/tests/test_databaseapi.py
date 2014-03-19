@@ -31,6 +31,7 @@ class DatabaseAPITestCase(DbaaSAPITestCase, BasicTestsMixin):
             'name': database.name,
             'plan': reverse('plan-detail', kwargs={'pk': database.plan.pk }),
             'environment': reverse('environment-detail', kwargs={'pk': database.environment.pk }),
+            'engine': reverse('engine-detail', kwargs={'pk': database.databaseinfra.engine.pk }),
         }
         return data
 

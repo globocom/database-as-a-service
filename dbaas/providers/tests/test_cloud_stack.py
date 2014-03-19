@@ -24,10 +24,10 @@ class CloudStackProviderTestCase(TestCase):
                             'networkids': '250b249b-5eb0-476a-b892-c6a6ced45aad',
                             'projectid': '0be19820-1fe2-45ea-844e-77f17e16add5'
                            }
-	self.response = self.api.deployVirtualMachine(self.request)
+	self.response = self.api.deployVirtualMachine('GET', self.request)
 	self.vm_id = self.request['id']
 	self.request = {'id':'%s' %(self.vm_id)}
 	self.assertEqual(vm_id, request['id'])
 
     def tearDown(self):
-    	self.api.destroyVirtualMachine(self.request)
+    	self.api.destroyVirtualMachine('GET',self.request)
