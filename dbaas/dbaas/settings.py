@@ -192,6 +192,7 @@ INSTALLED_APPS = (
     'ckeditor',
     'notification',
     'djcelery',
+    'providers',
 )
 
 
@@ -478,7 +479,14 @@ USER_ROLES = (
 )
 
 #CloudStack IaaS Integration credentials
-CLOUD_STACK_ENABLED = os.getenv('CS_ENABLED')
-CLOUD_STACK_API_URL = os.getenv('CPAPI')
-CLOUD_STACK_API_KEY  = os.getenv('CPAPIKEY')
-CLOUD_STACK_API_SECRET  = os.getenv('CPSKEY')
+CLOUD_STACK_ENABLED = os.getenv('CLOUD_STACK_ENABLED', '0')
+CLOUD_STACK_API_URL = os.getenv('CLOUD_STACK_API_URL', None)
+CLOUD_STACK_API_KEY  = os.getenv('CLOUD_STACK_API_KEY', None)
+CLOUD_STACK_API_SECRET  = os.getenv('CLOUD_STACK_API_SECRET', None)
+CLOUD_STACK_PROJECT_ID  = os.getenv('CLOUD_STACK_PROJECT_ID', None)
+
+CLOUD_STACK_ENABLED = os.getenv('CLOUD_STACK_ENABLED', '0')
+if CLOUD_STACK_ENABLED == "1":
+    CLOUD_STACK_ENABLED = True
+else:
+    CLOUD_STACK_ENABLED = False
