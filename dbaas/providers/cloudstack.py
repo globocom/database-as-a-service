@@ -7,9 +7,11 @@ from physical import models
 from drivers import factory_for
 from time import sleep
 from pexpect import pxssh
+import logging
 
 
 LOG = logging.getLogger(__name__)
+
 class SignedApiCall(object):
     def __init__(self, api_url, apiKey, secret):
         self.api_url = api_url
@@ -49,7 +51,7 @@ class SignedApiCall(object):
 class CloudStackClient(SignedApiCall):
     def __getattr__(self, name):
         def handlerFunction(*args, **kwargs):
-            action = args[0] 
+            action = args[0] or 'GET'
             if kwargs:
                 return self._make_request(name, kwargs)
             return self._make_request(name, args[1], action)
@@ -92,7 +94,6 @@ class CloudStackProvider(object):
                         }
 
         response = api.deployVirtualMachine('GET',request)
-        print response
         host = models.Host()
         host.cp_id = response['id']
 
