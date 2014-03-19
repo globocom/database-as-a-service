@@ -16,6 +16,7 @@ from physical.models import DatabaseInfra, Environment, Plan
 from drivers import factory_for
 from system.models import Configuration
 from datetime import date, timedelta
+from providers.cloudstack import CloudStackProvider
 
 from account.models import Team
 
@@ -105,6 +106,7 @@ class Database(BaseModel):
                 instance = factory_for(self.databaseinfra)
                 instance.remove_user(credential)
             super(Database, self).delete(*args, **kwargs)  # Call the "real" delete() method.
+            CloudStackProvider().destroy_instance(self.databaseinfra.instances.all()[0].hostname)
         else:
             LOG.warning("Putting database %s in quarantine" % self.name)
             if self.credentials.exists():
@@ -140,7 +142,7 @@ class Database(BaseModel):
         return credential
 
     @classmethod
-    def provision(cls, name, plan, environment):
+    def provision(cls, name, plan, environment, engine):
         # create new databaseinfra
         LOG.debug("provisioning databaseinfra with name %s, plan %s and environment %s", name, plan, environment)
 
@@ -150,7 +152,7 @@ class Database(BaseModel):
         if not isinstance(environment, Environment):
             raise ValidationError('Invalid environment type %s - %s' % (type(environment), environment))
 
-        datainfra = DatabaseInfra.best_for(plan, environment)
+        datainfra = CloudStackProvider().create_instance(plan, environment, engine)
         if not datainfra:
             raise NoDatabaseInfraCapacity()
 
@@ -250,7 +252,7 @@ class Database(BaseModel):
             cloned_database = Database.objects.get(pk=database.pk)
             cloned_database.name = clone_name
             cloned_database.pk = None
-            cloned_database.databaseinfra = DatabaseInfra.best_for(database.plan, database.environment)
+            cloned_database.databaseinfra = CloudStackProvider().create_instance(cloned_database.plan, cloned_database.environment, cloned_database.plan.engines[0])
             cloned_database.save()
         except:
             transaction.rollback()

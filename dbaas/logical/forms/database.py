@@ -7,6 +7,7 @@ from django import forms
 from ..models import Database, Credential, Project
 from physical.models import Plan, Environment, DatabaseInfra, Engine
 from account.models import Team
+from providers.cloudstack import CloudStackProvider
 
 from .fields import AdvancedModelChoiceField
 
@@ -137,14 +138,17 @@ class DatabaseForm(models.ModelForm):
         if self.instance and self.instance.id:
             return super(DatabaseForm, self).save(*args, **kwargs)
         else:
+            LOG.debug("Provisioning a new database...")
             database = Database.provision(self.cleaned_data['name'], 
                                             self.cleaned_data['plan'], 
-                                            self.cleaned_data['environment'],)
+                                            self.cleaned_data['environment'],
+                                            self.cleaned_data['engine'],)
+            LOG.debug("Database created: (%s)..." % (database.__dict__))
             database.team = self.cleaned_data['team']
             database.project = self.cleaned_data['project']
             database.description = self.cleaned_data['description']
-            database.save()
-            return database
+            database.save()   
+            return database          
 
     def save_m2m(self, *args, **kwargs):
         pass
