@@ -192,6 +192,7 @@ INSTALLED_APPS = (
     'ckeditor',
     'notification',
     'djcelery',
+    'integrations.iaas.cloudstack',
 )
 
 

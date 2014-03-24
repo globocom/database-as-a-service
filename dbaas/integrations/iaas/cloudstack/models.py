@@ -7,7 +7,7 @@ from django.db import models, transaction
 from django.utils.translation import ugettext_lazy as _
 
 
-class CSPlanAttr(BaseModel):
+class PlanAttr(BaseModel):
 
     serviceofferingid = models.CharField(verbose_name=_("Offering ID"),
                                          max_length=100,
@@ -32,9 +32,9 @@ class CSPlanAttr(BaseModel):
             ("view_csplanattribute", "Can view cloud stack plan attributes"),
         )
 
-class CSHostAttr(BaseModel):
+class HostAttr(BaseModel):
 
-    cs_vm_id = models.CharField(verbose_name=_("Cloud Plataform Instance id"), max_length=255, blank=True, null=True)
+    vm_id = models.CharField(verbose_name=_("Cloud Plataform Instance id"), max_length=255, blank=True, null=True)
     host = models.ForeignKey('physical.Host', related_name="cs_host_attributes")
 
     def __unicode__(self):
@@ -45,5 +45,5 @@ class CSHostAttr(BaseModel):
             ("view_cshostattribute", "Can view cloud stack host attributes"),
         )
 
-simple_audit.register(CSPlanAttr)
-simple_audit.register(CSHostAttr)
+simple_audit.register(PlanAttr)
+simple_audit.register(HostAttr)
