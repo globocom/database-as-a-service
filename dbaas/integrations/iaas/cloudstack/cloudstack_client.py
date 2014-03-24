@@ -7,7 +7,7 @@ from physical import models
 from drivers import factory_for
 from time import sleep
 from pexpect import pxssh
-from models import PlanCSAttribute
+from models import CSPlanAttribute
 import logging
 from base64 import b64encode
 
@@ -89,14 +89,11 @@ class CloudStackProvider(object):
         api = CloudStackClient(settings.CLOUD_STACK_API_URL, settings.CLOUD_STACK_API_KEY, settings.CLOUD_STACK_API_SECRET)
         
         plancsattribute = PlanCSAttribute.objects.get(plan=plan)
-        #print plancsattribute.serviceofferingid, plancsattribute.templateid, plancsattribute.zoneid, plancsattribute.networkid, plancsattribute.userdata
 
         request = { 'serviceofferingid': plancsattribute.serviceofferingid, 
                           'templateid': plancsattribute.templateid, 
                           'zoneid': plancsattribute.zoneid,
                           'networkids': plancsattribute.networkid,
-                          'diskofferingid': plancsattribute.diskofferingid,
-                          'size': str(plancsattribute.disksize),
                           'projectid': settings.CLOUD_STACK_PROJECT_ID,
                           'userdata': b64encode(plancsattribute.userdata),
                         }
@@ -141,7 +138,7 @@ class CloudStackProvider(object):
             instance.save()
             LOG.debug("Instance created!")
 
-            LOG.debug("Waiting 2min to login on host....!")
+            LOG.debug("Waiting 3min to login on host....!")
             sleep(180)
             username = "root"
             password = "ChangeMe"
