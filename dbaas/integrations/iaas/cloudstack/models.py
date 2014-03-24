@@ -7,7 +7,7 @@ from django.db import models, transaction
 from django.utils.translation import ugettext_lazy as _
 
 
-class PlanCSAttribute(BaseModel):
+class CSPlanAttr(BaseModel):
 
     serviceofferingid = models.CharField(verbose_name=_("Offering ID"),
                                          max_length=100,
@@ -21,23 +21,29 @@ class PlanCSAttribute(BaseModel):
     networkid = models.CharField(verbose_name=_("Network ID"),
                                  max_length=100,
                                  help_text="Cloud Stack Network ID")
-    networkid = models.CharField(verbose_name=_("Network ID"),
-                                 max_length=100,
-                                 help_text="Cloud Stack Network ID")
-    diskofferingid = models.CharField(verbose_name=_("Disk Offering ID"),
-                                 max_length=100,
-                                 help_text="Cloud Stack Disk Offering ID")
-    disksize = models.IntegerField(verbose_name=_("Disk size"),
-                                 help_text="Cloud Stack Disk Size (GB)")
-    plan = models.ForeignKey('physical.Plan', related_name="plan_cs_attributes")
+    plan = models.ForeignKey('physical.Plan', related_name="cs_plan_attributes")
     userdata = models.TextField(verbose_name=_("User Data"),
                                 help_text="Script to create config files")
     def __unicode__(self):
-        return "Plan Cloud Stack Attributes (plan=%s)" % (self.plan)
+        return "Cloud Stack plan Attributes (plan=%s)" % (self.plan)
 
     class Meta:
         permissions = (
-            ("view_plancsattribute", "Can view plan cloud stack attributes"),
+            ("view_csplanattribute", "Can view cloud stack plan attributes"),
         )
 
-simple_audit.register(PlanCSAttribute)
+class CSHostAttr(BaseModel):
+
+    cs_vm_id = models.CharField(verbose_name=_("Cloud Plataform Instance id"), max_length=255, blank=True, null=True)
+    host = models.ForeignKey('physical.Host', related_name="cs_host_attributes")
+
+    def __unicode__(self):
+        return "Cloud Stack host Attributes (host=%s)" % (self.host)
+
+    class Meta:
+        permissions = (
+            ("view_cshostattribute", "Can view cloud stack host attributes"),
+        )
+
+simple_audit.register(CSPlanAttr)
+simple_audit.register(CSHostAttr)
