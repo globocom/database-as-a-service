@@ -7,9 +7,10 @@ from physical import models
 from drivers import factory_for
 from time import sleep
 from pexpect import pxssh
-from models import CSPlanAttribute
+from models import PlanAttr
 import logging
 from base64 import b64encode
+from ..base import BaseProvider
 
 
 LOG = logging.getLogger(__name__)
@@ -79,23 +80,23 @@ class CloudStackClient(SignedApiCall):
         key = command.lower() + "response"
         return json.loads(data)[key]
 
-class CloudStackProvider(object):
+class CloudStackProvider(BaseProvider):
     
     @classmethod
     @transaction.commit_on_success
     def create_instance(self, plan, environment, engine):
-        LOG.debug("Provisioning new host on cloud portal...")
+        LOG.info("Provisioning new host on cloud portal...")
 
         api = CloudStackClient(settings.CLOUD_STACK_API_URL, settings.CLOUD_STACK_API_KEY, settings.CLOUD_STACK_API_SECRET)
         
-        plancsattribute = PlanCSAttribute.objects.get(plan=plan)
+        planattr = PlanAttr.objects.get(plan=plan)
 
-        request = { 'serviceofferingid': plancsattribute.serviceofferingid, 
-                          'templateid': plancsattribute.templateid, 
-                          'zoneid': plancsattribute.zoneid,
-                          'networkids': plancsattribute.networkid,
+        request = { 'serviceofferingid': planattr.serviceofferingid, 
+                          'templateid': planattr.templateid, 
+                          'zoneid': planattr.zoneid,
+                          'networkids': planattr.networkid,
                           'projectid': settings.CLOUD_STACK_PROJECT_ID,
-                          'userdata': b64encode(plancsattribute.userdata),
+                          'userdata': b64encode(planattr.userdata),
                         }
 
         response = api.deployVirtualMachine('POST',request)
@@ -104,14 +105,14 @@ class CloudStackProvider(object):
 
         if response['jobid']:
 
-            LOG.debug("VirtualMachine created!")
+            LOG.info("VirtualMachine created!")
             request = {'projectid': '0be19820-1fe2-45ea-844e-77f17e16add5', 'id':'%s' % (response['id']) }
             response = api.listVirtualMachines('GET',request)
             
             host.hostname = response['virtualmachine'][0]['nic'][0]['ipaddress']
             host.cloud_portal_host = True
             host.save()
-            LOG.debug("Host created!")
+            LOG.info("Host created!")
             
             instance = models.Instance()
             instance.address = host.hostname
@@ -131,12 +132,12 @@ class CloudStackProvider(object):
             databaseinfra.per_database_size_mbytes=0
             databaseinfra.endpoint = instance.address + ":%i" %(instance.port)
             databaseinfra.save()
-            LOG.debug("DatabaseInfra created!")
+            LOG.info("DatabaseInfra created!")
 
 
             instance.databaseinfra = databaseinfra
             instance.save()
-            LOG.debug("Instance created!")
+            LOG.info("Instance created!")
 
             LOG.debug("Waiting 3min to login on host....!")
             sleep(180)
@@ -144,7 +145,7 @@ class CloudStackProvider(object):
             password = "ChangeMe"
             conection = pxssh.pxssh()
             if conection.login(instance.address, username, password):
-                LOG.debug("Logged in, returning databaseinfra!")
+                LOG.info("Logged in, returning databaseinfra!")
                 return databaseinfra
 
             else:
@@ -153,7 +154,7 @@ class CloudStackProvider(object):
 
         else:
             raise('We could not create the VirtualMachine.     :(')
-            LOG.debug("We could not create the VirtualMachine. :(")
+            LOG.warning("We could not create the VirtualMachine. :(")
      
     @classmethod
     @transaction.commit_on_success
@@ -172,11 +173,11 @@ class CloudStackProvider(object):
             databaseinfra = models.DatabaseInfra.objects.get(instances=instance)
 
             databaseinfra.delete()
-            LOG.warning("DatabaseInfra destroyed!")
+            LOG.info("DatabaseInfra destroyed!")
             instance.delete
-            LOG.warning("Instance destroyed!")
+            LOG.info("Instance destroyed!")
             host.delete()
-            LOG.warning("Host destroyed!")
+            LOG.info("Host destroyed!")
         else:
             raise('We could not destroy the VirtualMachine.     :(')
             LOG.warning("We could not destroy the VirtualMachine. :(")
