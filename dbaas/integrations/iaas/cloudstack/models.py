@@ -34,7 +34,7 @@ class PlanAttr(BaseModel):
 
 class HostAttr(BaseModel):
 
-    vm_id = models.CharField(verbose_name=_("Cloud Plataform Instance id"), max_length=255, blank=True, null=True)
+    vm_id = models.CharField(verbose_name=_("Cloud Plataform vm id"), max_length=255, blank=True, null=True)
     host = models.ForeignKey('physical.Host', related_name="cs_host_attributes")
 
     def __unicode__(self):
