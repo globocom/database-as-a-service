@@ -6,7 +6,6 @@ from django.db import transaction
 from physical import models
 from drivers import factory_for
 from time import sleep
-from pexpect import pxssh
 from models import PlanAttr
 import logging
 from base64 import b64encode
@@ -143,13 +142,14 @@ class CloudStackProvider(BaseProvider):
             sleep(180)
             username = "root"
             password = "ChangeMe"
-            conection = pxssh.pxssh()
-            if conection.login(instance.address, username, password):
-                LOG.info("Logged in, returning databaseinfra!")
-                return databaseinfra
+            #We must refactor this code
+            #conection = pxssh.pxssh()
+            # if conection.login(instance.address, username, password):
+            #     LOG.info("Logged in, returning databaseinfra!")
+            #     return databaseinfra
 
-            else:
-                LOG.debug("Could not login on host!")
+            # else:
+            #     LOG.debug("Could not login on host!")
             
 
         else:
