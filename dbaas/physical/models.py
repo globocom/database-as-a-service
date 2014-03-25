@@ -201,7 +201,7 @@ class DatabaseInfra(BaseModel):
         """ Choose the best DatabaseInfra for another database """
         from integrations.iaas.manager import IaaSManager
         iaas_manager = IaaSManager(plan, environment)
-        return iaas_manager.databaseinfra
+        return iaas_manager.instance
 
     def check_instances_status(self):
         status = []

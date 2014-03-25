@@ -3,10 +3,10 @@ import json, urllib
 import logging
 from django.conf import settings
 from django.db import transaction
-from physical import models
+from physical.models import DatabaseInfra, Instance
 from drivers import factory_for
 from time import sleep
-from models import PlanAttr
+from .models import PlanAttr
 import logging
 from base64 import b64encode
 from ..base import BaseProvider
@@ -113,14 +113,14 @@ class CloudStackProvider(BaseProvider):
             host.save()
             LOG.info("Host created!")
             
-            instance = models.Instance()
+            instance = Instance()
             instance.address = host.hostname
             instance.port = 3306
             instance.is_active = True
             instance.is_arbiter = False
             instance.hostname = host
             
-            databaseinfra = models.DatabaseInfra()
+            databaseinfra = DatabaseInfra()
             databaseinfra.name = host.cp_id
             databaseinfra.user  = 'root'
             databaseinfra.password = 'root'
@@ -169,8 +169,8 @@ class CloudStackProvider(BaseProvider):
         if response['jobid']:
             LOG.warning("VirtualMachine destroyed!")
 
-            instance = models.Instance.objects.get(hostname=host)
-            databaseinfra = models.DatabaseInfra.objects.get(instances=instance)
+            instance = Instance.objects.get(hostname=host)
+            databaseinfra = DatabaseInfra.objects.get(instances=instance)
 
             databaseinfra.delete()
             LOG.info("DatabaseInfra destroyed!")
