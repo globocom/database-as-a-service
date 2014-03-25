@@ -24,6 +24,8 @@ class PlanAttr(BaseModel):
     plan = models.ForeignKey('physical.Plan', related_name="cs_plan_attributes")
     userdata = models.TextField(verbose_name=_("User Data"),
                                 help_text="Script to create config files")
+    
+
     def __unicode__(self):
         return "Cloud Stack plan Attributes (plan=%s)" % (self.plan)
 
@@ -35,6 +37,8 @@ class PlanAttr(BaseModel):
 class HostAttr(BaseModel):
 
     vm_id = models.CharField(verbose_name=_("Cloud Plataform vm id"), max_length=255, blank=True, null=True)
+    vm_user = models.CharField(verbose_name=_("Cloud Plataform virtual machine user"), max_length=255, blank=True, null=True)
+    vm_password = models.CharField(verbose_name=_("Cloud Plataform virtual machine password"), max_length=255, blank=True, null=True)
     host = models.ForeignKey('physical.Host', related_name="cs_host_attributes")
 
     def __unicode__(self):
