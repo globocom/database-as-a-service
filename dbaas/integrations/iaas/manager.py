@@ -10,7 +10,7 @@ class IaaSManager():
     def __init__(self, plan, environment):
         LOG.info("IaaS manager initialized...")
         self.plan = plan
-        self.environment = plan
+        self.environment = environment
 
         if plan.provider == 0:
             self.create_pre_provisioned_instance()
