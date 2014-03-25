@@ -11,6 +11,7 @@ from django.utils.translation import ugettext_lazy as _
 from django_extensions.db.fields.encrypted import EncryptedCharField
 from util.models import BaseModel
 from drivers import DatabaseInfraStatus
+from integrations.iaas.manager import IaasManager
 
 
 LOG = logging.getLogger(__name__)
@@ -192,15 +193,8 @@ class DatabaseInfra(BaseModel):
     @classmethod
     def best_for(cls, plan, environment):
         """ Choose the best DatabaseInfra for another database """
-        datainfras = list(DatabaseInfra.get_active_for(plan=plan, environment=environment))
-        #datainfras = list(DatabaseInfra.objects.filter(plan=plan, environment=environment))
-        if not datainfras:
-            return None
-        datainfras.sort(key=lambda di: -di.available)
-        best_datainfra = datainfras[0]
-        if best_datainfra.available <= 0:
-            return None
-        return best_datainfra
+        iaas_manager = IaasManager(plan, environment)
+        return iaas_manager.databaseinfra
 
     def check_instances_status(self):
         status = []
