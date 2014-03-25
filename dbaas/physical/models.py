@@ -11,7 +11,6 @@ from django.utils.translation import ugettext_lazy as _
 from django_extensions.db.fields.encrypted import EncryptedCharField
 from util.models import BaseModel
 from drivers import DatabaseInfraStatus
-from integrations.iaas.manager import IaasManager
 
 
 LOG = logging.getLogger(__name__)
@@ -72,6 +71,11 @@ class Engine(BaseModel):
 
 class Plan(BaseModel):
 
+    PROVIDER_CHOICES = (
+        (0, 'Pre Provisioned'),
+        (1, 'Cloud Stack'),
+    )
+
     name = models.CharField(verbose_name=_("Plan name"), max_length=100, unique=True)
     description = models.TextField(null=True, blank=True)
     is_active = models.BooleanField(verbose_name=_("Is plan active"), default=True)
@@ -80,6 +84,8 @@ class Plan(BaseModel):
                                      help_text=_("Check this option if this the default plan. There can be only one..."))
     engine_type = models.ForeignKey(EngineType, verbose_name=_("Engine Type"), related_name='plans')
     environments = models.ManyToManyField(Environment)
+    provider = models.IntegerField(choices=PROVIDER_CHOICES,
+                                default=0)
 
     @property
     def engines(self):
@@ -193,7 +199,8 @@ class DatabaseInfra(BaseModel):
     @classmethod
     def best_for(cls, plan, environment):
         """ Choose the best DatabaseInfra for another database """
-        iaas_manager = IaasManager(plan, environment)
+        from integrations.iaas.manager import IaaSManager
+        iaas_manager = IaaSManager(plan, environment)
         return iaas_manager.databaseinfra
 
     def check_instances_status(self):
