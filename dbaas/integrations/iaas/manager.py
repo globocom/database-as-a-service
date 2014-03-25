@@ -12,10 +12,10 @@ class IaaSManager():
         self.plan = plan
         self.environment = plan
 
-        if PlanAttr.objects.filter(plan=self.plan):
+        if plan.provider == 0:
+            self.create_pre_provisioned_instance()
+        elif plan.provider == 1:
             self.create_cloud_stack_instance()
-        else:
-        	self.create_pre_provisioned_instance()
 
     def create_cloud_stack_instance(self):
         LOG.info("Creating cloud stack instance...")
