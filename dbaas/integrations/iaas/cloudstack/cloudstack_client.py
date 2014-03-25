@@ -3,11 +3,12 @@ import json, urllib
 import logging
 from django.conf import settings
 from django.db import transaction
-from physical.models import DatabaseInfra, Instance
+from physical.models import DatabaseInfra, Instance, Host
 from drivers import factory_for
 from time import sleep
 from .models import PlanAttr
 import logging
+import paramiko
 from base64 import b64encode
 from ..base import BaseProvider
 
@@ -83,8 +84,8 @@ class CloudStackProvider(BaseProvider):
     
     @classmethod
     @transaction.commit_on_success
-    def create_instance(self, plan, environment, engine):
-        LOG.info("Provisioning new host on cloud portal...")
+    def create_instance(self, plan, environment):
+        LOG.info("Provisioning new host on cloud portal with options %s %s..." % (plan, environment))
 
         api = CloudStackClient(settings.CLOUD_STACK_API_URL, settings.CLOUD_STACK_API_KEY, settings.CLOUD_STACK_API_SECRET)
         
@@ -99,7 +100,8 @@ class CloudStackProvider(BaseProvider):
                         }
 
         response = api.deployVirtualMachine('POST',request)
-        host = models.Host()
+        host = Host()
+        LOG.info(" CloudStack response %s" % (response))
         host.cp_id = response['id']
 
         if response['jobid']:
@@ -124,7 +126,7 @@ class CloudStackProvider(BaseProvider):
             databaseinfra.name = host.cp_id
             databaseinfra.user  = 'root'
             databaseinfra.password = 'root'
-            databaseinfra.engine = engine
+            databaseinfra.engine = plan.engine_type.engines.all()[0]
             databaseinfra.plan = plan
             databaseinfra.environment = environment
             databaseinfra.capacity = 1
@@ -138,23 +140,30 @@ class CloudStackProvider(BaseProvider):
             instance.save()
             LOG.info("Instance created!")
 
-            LOG.debug("Waiting 3min to login on host....!")
+            LOG.debug("Waiting 3min to return databaseinfra....!")
             sleep(180)
-            username = "root"
-            password = "ChangeMe"
-            #We must refactor this code
-            #conection = pxssh.pxssh()
-            # if conection.login(instance.address, username, password):
-            #     LOG.info("Logged in, returning databaseinfra!")
-            #     return databaseinfra
+            try:
+                username = "root"
+                password = "ChangeMe"
+                client = paramiko.SSHClient()
+                port=22
+                client.load_system_host_keys()
+                client.set_missing_host_key_policy(paramiko.AutoAddPolicy)
+                LOG.info("Trying to login in on %s" % (host.hostname))
+                conn = client.connect(host.hostname, port=port, username=username, password=password, timeout= None, allow_agent= True, look_for_keys= True, compress= False)
+    
+                if  conn is None:
+                    LOG.info("Logged in on host %s" % (host.hostname))
+                    return databaseinfra
+                else:
+                    LOG.warning("We could not create the VirtualMachine. :(")
+                    raise paramiko.SSHException
 
-            # else:
-            #     LOG.debug("Could not login on host!")
+            except:
+                raise paramiko.SSHException
+            finally:
+                client.close()
             
-
-        else:
-            raise('We could not create the VirtualMachine.     :(')
-            LOG.warning("We could not create the VirtualMachine. :(")
      
     @classmethod
     @transaction.commit_on_success
