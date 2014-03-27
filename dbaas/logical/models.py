@@ -95,34 +95,10 @@ class Database(BaseModel):
         return self.databaseinfra and self.databaseinfra.environment
 
     def delete(self, *args, **kwargs):
-        """
-        Overrides the delete method so that a database can be put in quarantine and not removed
-        """
-        #do_something()
-        if self.is_in_quarantine:
-            LOG.warning("Database %s is in quarantine and will be removed" % self.name)
-            for credential in self.credentials.all():
-                instance = factory_for(self.databaseinfra)
-                instance.remove_user(credential)
-            super(Database, self).delete(*args, **kwargs)  # Call the "real" delete() method.
-        else:
-            LOG.warning("Putting database %s in quarantine" % self.name)
-            if self.credentials.exists():
-                for credential in self.credentials.all():
-                    new_password = make_db_random_password()
-                    new_credential = Credential.objects.get(pk=credential.id)
-                    new_credential.password = new_password
-                    new_credential.save()
+        from integrations.iaas.manager import IaaSManager
 
-                    instance = factory_for(self.databaseinfra)
-                    instance.update_user(new_credential)
-
-            else:
-                LOG.info("There is no credential on this database: %s" % self.databaseinfra)
-
-            self.is_in_quarantine = True
-            self.quarantine_dt = datetime.datetime.now().date()
-            self.save()
+        IaaSManager(database=self, *args, **kwargs)
+        
 
     def clean(self):
         #slugify name
