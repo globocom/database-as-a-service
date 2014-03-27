@@ -22,18 +22,9 @@ class IaaSManager():
             self.environment = environment
 
             if plan.provider == 0:
-                self.create_pre_provisioned_instance()
+                LOG.info("Creating pre provisioned instance...")
+                self.instance =  PreProvisionedProvider().create_instance(self.plan, self.environment)
             elif plan.provider == 1:
-                self.create_cloud_stack_instance()
-
-    def create_cloud_stack_instance(self):
-        LOG.info("Creating cloud stack instance...")
-        self.instance = CloudStackProvider().create_instance(self.plan, self.environment)
-
-    def create_pre_provisioned_instance(self):
-        LOG.info("Creating pre provisioned instance...")
-        self.instance =  PreProvisionedProvider().create_instance(self.plan, self.environment)
-
-
-
-
+                LOG.info("Creating cloud stack instance...")
+                self.instance = CloudStackProvider().create_instance(self.plan, self.environment)
+        

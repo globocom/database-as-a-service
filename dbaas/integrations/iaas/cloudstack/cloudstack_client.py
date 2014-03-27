@@ -194,17 +194,18 @@ class CloudStackProvider(BaseProvider):
             if response['jobid']:
                 LOG.info("VirtualMachine created!")
                 request = {'projectid': '%s' % (settings.CLOUD_STACK_PROJECT_ID), 'id':'%s' % (response['id']) }
-                response = api.listVirtualMachines('GET',request)
                 
+                host_attr = HostAttr()
+                host_attr.vm_id = response['id']
+
+                response = api.listVirtualMachines('GET',request)
                 host = Host()
-                host.cp_id = response['id']
                 host.hostname = response['virtualmachine'][0]['nic'][0]['ipaddress']
                 host.cloud_portal_host = True
                 host.save()
                 LOG.info("Host created!")
 
-                host_attr = HostAttr()
-                host_attr.vm_id = host.cp_id
+                
                 host_attr.vm_user = 'root'
                 host_attr.vm_password = 'ChangeMe'
                 host_attr.host = host
@@ -219,7 +220,7 @@ class CloudStackProvider(BaseProvider):
                 instance.hostname = host
             
                 databaseinfra = DatabaseInfra()
-                databaseinfra.name = host.cp_id
+                databaseinfra.name = host_attr.vm_id
                 databaseinfra.user  = 'root'
                 databaseinfra.password = 'root'
                 databaseinfra.engine = plan.engine_type.engines.all()[0]
