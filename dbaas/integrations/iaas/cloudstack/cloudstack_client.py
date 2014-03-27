@@ -79,87 +79,7 @@ class CloudStackClient(SignedApiCall):
         return json.loads(data)[key]
 
 class CloudStackProvider(BaseProvider):
-    
-    @classmethod
-    @transaction.commit_on_success
-    def create_instance(self, plan, environment):
-        LOG.info("Provisioning new host on cloud portal with options %s %s..." % (plan, environment))
-
-        api = CloudStackClient(settings.CLOUD_STACK_API_URL, settings.CLOUD_STACK_API_KEY, settings.CLOUD_STACK_API_SECRET)
         
-        planattr = PlanAttr.objects.get(plan=plan)
-
-        request = { 'serviceofferingid': planattr.serviceofferingid, 
-                          'templateid': planattr.templateid, 
-                          'zoneid': planattr.zoneid,
-                          'networkids': planattr.networkid,
-                          'projectid': settings.CLOUD_STACK_PROJECT_ID,
-                          'userdata': b64encode(planattr.userdata),
-                        }
-
-        response = api.deployVirtualMachine('POST',request)
-        host = Host()
-        LOG.info(" CloudStack response %s" % (response))
-        host.cp_id = response['id']
-
-        if response['jobid'] or not response['errorcode']:
-
-            LOG.info("VirtualMachine created!")
-            request = {'projectid': '%s' % (settings.CLOUD_STACK_PROJECT_ID), 'id':'%s' % (response['id']) }
-            response = api.listVirtualMachines('GET',request)
-            
-            host.hostname = response['virtualmachine'][0]['nic'][0]['ipaddress']
-            host.cloud_portal_host = True
-            host.save()
-            LOG.info("Host created!")
-
-            host_attr = HostAttr()
-            host_attr.vm_id = host.cp_id
-            host_attr.vm_user = 'root'
-            host_attr.vm_password = 'ChangeMe'
-            host_attr.host = host
-            host_attr.save()
-            LOG.info("Host attrs custom attributes created!")
-
-            instance = Instance()
-            instance.address = host.hostname
-            instance.port = 3306
-            instance.is_active = True
-            instance.is_arbiter = False
-            instance.hostname = host
-            
-            databaseinfra = DatabaseInfra()
-            databaseinfra.name = host.cp_id
-            databaseinfra.user  = 'root'
-            databaseinfra.password = 'root'
-            databaseinfra.engine = plan.engine_type.engines.all()[0]
-            databaseinfra.plan = plan
-            databaseinfra.environment = environment
-            databaseinfra.capacity = 1
-            databaseinfra.per_database_size_mbytes=0
-            databaseinfra.endpoint = instance.address + ":%i" %(instance.port)
-            databaseinfra.save()
-            LOG.info("DatabaseInfra created!")
-
-            instance.databaseinfra = databaseinfra
-            instance.save()
-            LOG.info("Instance created!")
-
-            ssh_ok = self.check_ssh(host)
-                
-            if  ssh_ok:
-                LOG.info("Host %s is ready!" % (host.hostname))
-                return databaseinfra
-            else:
-                LOG.warning("We could not create the VirtualMachine. :(")
-                LOG.warning("Destroying DBaaS cloudstack dependencies...")
-                self.destroy_instance(host)
-                return None
-        else:
-            LOG.warning("Something ocurred on cloudstack: %s" % (response['errorcode']))
-        
-            
-     
     @classmethod
     @transaction.commit_on_success
     def destroy_instance(self, host):
@@ -170,23 +90,24 @@ class CloudStackProvider(BaseProvider):
                         }
         response = api.destroyVirtualMachine('GET',request)
         
-        if response['jobid']:
-            LOG.warning("VirtualMachine destroyed!")
+        try:
+            if response['jobid']:
+                LOG.warning("VirtualMachine destroyed!")
 
-            instance = Instance.objects.get(hostname=host)
-            databaseinfra = DatabaseInfra.objects.get(instances=instance)
+                instance = Instance.objects.get(hostname=host)
+                databaseinfra = DatabaseInfra.objects.get(instances=instance)
 
-            databaseinfra.delete()
-            LOG.info("DatabaseInfra destroyed!")
-            instance.delete
-            LOG.info("Instance destroyed!")
-            host.host_attr.delete()
-            LOG.info("Host custom cloudstack attrs destroyed!")
-            host.delete()
-            LOG.info("Host destroyed!")
-        else:
-            raise('We could not destroy the VirtualMachine.     :(')
+                databaseinfra.delete()
+                LOG.info("DatabaseInfra destroyed!")
+                instance.delete
+                LOG.info("Instance destroyed!")
+                host.host_attr.delete()
+                LOG.info("Host custom cloudstack attrs destroyed!")
+                host.delete()
+                LOG.info("Host destroyed!")
+        except (KeyError, LookupError):
             LOG.warning("We could not destroy the VirtualMachine. :(")
+
 
     @classmethod
     def check_ssh(self, host, retries=3, initial_wait=30, interval=30):
@@ -208,7 +129,7 @@ class CloudStackProvider(BaseProvider):
 
         for x in range(retries):
             try:
-                LOG.info("Attempt number %i" % (x))
+                LOG.info("Attempt number %i" % (x+1))
                 LOG.info("Trying to login in on %s with user: %s and password: %s" % (host.hostname, host_attr.vm_user, host_attr.vm_password))
                 ssh.connect(host.hostname, port=port, 
                                     username=username, password=password, 
@@ -225,3 +146,80 @@ class CloudStackProvider(BaseProvider):
                 sleep(30)
             finally:
                 ssh.close()
+
+
+    @classmethod
+    @transaction.commit_on_success
+    def create_instance(self, plan, environment):
+        LOG.info("Provisioning new host on cloud portal with options %s %s..." % (plan, environment))
+
+        api = CloudStackClient(settings.CLOUD_STACK_API_URL, settings.CLOUD_STACK_API_KEY, settings.CLOUD_STACK_API_SECRET)
+        
+        planattr = PlanAttr.objects.get(plan=plan)
+
+        request = { 'serviceofferingid': planattr.serviceofferingid, 
+                          'templateid': planattr.templateid, 
+                          'zoneid': planattr.zoneid,
+                          'networkids': planattr.networkid,
+                          'projectid': settings.CLOUD_STACK_PROJECT_ID,
+                          'userdata': b64encode(planattr.userdata),
+                        }
+
+        response = api.deployVirtualMachine('POST',request)
+        
+        LOG.info(" CloudStack response %s" % (response))
+
+        try:
+            if response['jobid']:
+                LOG.info("VirtualMachine created!")
+                request = {'projectid': '%s' % (settings.CLOUD_STACK_PROJECT_ID), 'id':'%s' % (response['id']) }
+                response = api.listVirtualMachines('GET',request)
+                
+                host = Host()
+                host.cp_id = response['id']
+                host.hostname = response['virtualmachine'][0]['nic'][0]['ipaddress']
+                host.cloud_portal_host = True
+                host.save()
+                LOG.info("Host created!")
+
+                host_attr = HostAttr()
+                host_attr.vm_id = host.cp_id
+                host_attr.vm_user = 'root'
+                host_attr.vm_password = 'ChangeMe'
+                host_attr.host = host
+                host_attr.save()
+                LOG.info("Host attrs custom attributes created!")
+
+                instance = Instance()
+                instance.address = host.hostname
+                instance.port = 3306
+                instance.is_active = True
+                instance.is_arbiter = False
+                instance.hostname = host
+            
+                databaseinfra = DatabaseInfra()
+                databaseinfra.name = host.cp_id
+                databaseinfra.user  = 'root'
+                databaseinfra.password = 'root'
+                databaseinfra.engine = plan.engine_type.engines.all()[0]
+                databaseinfra.plan = plan
+                databaseinfra.environment = environment
+                databaseinfra.capacity = 1
+                databaseinfra.per_database_size_mbytes=0
+                databaseinfra.endpoint = instance.address + ":%i" %(instance.port)
+                databaseinfra.save()
+                LOG.info("DatabaseInfra created!")
+
+            instance.databaseinfra = databaseinfra
+            instance.save()
+            LOG.info("Instance created!")
+
+            ssh_ok = self.check_ssh(host)
+                
+            if  ssh_ok:
+                LOG.info("Host %s is ready!" % (host.hostname))
+                return databaseinfra
+
+        except (KeyError, LookupError):
+            LOG.warning("We could not create the VirtualMachine because something ocurred on cloudstack: %i, %s" % (response['errorcode'], response['errortext']))
+            return None
