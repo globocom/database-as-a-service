@@ -123,7 +123,7 @@ class DatabaseForm(models.ModelForm):
         if not cleaned_data['databaseinfra']:
             raise forms.ValidationError(_("Sorry. I have no infra-structure to allocate this database. Try select another plan."))
 
-        print cleaned_data
+        LOG.debug("Database cleaned_data: %s" % (cleaned_data))
         for infra in DatabaseInfra.objects.filter(environment=environment,plan=plan):
             if infra.databases.filter(name=cleaned_data['name']):
                 self._errors["name"] = self.error_class([_("this name already exists in the selected environment")])
@@ -139,7 +139,8 @@ class DatabaseForm(models.ModelForm):
         else:
             database = Database.provision(self.cleaned_data['name'], 
                                             self.cleaned_data['plan'], 
-                                            self.cleaned_data['environment'],)
+                                            self.cleaned_data['environment'],
+                                            self.cleaned_data['databaseinfra'])
             database.team = self.cleaned_data['team']
             database.project = self.cleaned_data['project']
             database.description = self.cleaned_data['description']

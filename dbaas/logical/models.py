@@ -116,7 +116,7 @@ class Database(BaseModel):
         return credential
 
     @classmethod
-    def provision(cls, name, plan, environment):
+    def provision(cls, name, plan, environment, datainfra=None):
         # create new databaseinfra
         LOG.debug("provisioning databaseinfra with name %s, plan %s and environment %s", name, plan, environment)
 
@@ -125,10 +125,9 @@ class Database(BaseModel):
 
         if not isinstance(environment, Environment):
             raise ValidationError('Invalid environment type %s - %s' % (type(environment), environment))
-
-        datainfra = DatabaseInfra.best_for(plan, environment)
+        
         if not datainfra:
-            raise NoDatabaseInfraCapacity()
+            datainfra = DatabaseInfra.best_for(plan, environment)
 
         database = Database()
         database.databaseinfra = datainfra
