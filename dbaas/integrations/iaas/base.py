@@ -16,10 +16,10 @@ class BaseProvider(object):
     #     else:
     #         raise TypeError(_("DatabaseInfra is not defined"))
 
-    def create_instance(self, databaseinfra):
+    def create_instance(self, plan, environment):
         raise NotImplementedError()
 
-    def destroy_instance(self, instance):
+    def destroy_instance(self, database):
         raise NotImplementedError()
 
     def check_ssh(self, host):
