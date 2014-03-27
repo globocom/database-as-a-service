@@ -4,9 +4,9 @@ import logging
 from django.conf import settings
 from django.db import transaction
 from physical.models import DatabaseInfra, Instance, Host
+from util import make_db_random_password
 from drivers import factory_for
 from .models import PlanAttr, HostAttr
-import logging
 from base64 import b64encode
 from ..base import BaseProvider
 
@@ -82,31 +82,52 @@ class CloudStackProvider(BaseProvider):
         
     @classmethod
     @transaction.commit_on_success
-    def destroy_instance(self, host):
+    def destroy_instance(self, database, *args, **kwargs):
+        from logical.models import Credential, Database
+
         LOG.warning("Deleting the host on cloud portal...")
-        api = CloudStackClient(settings.CLOUD_STACK_API_URL, settings.CLOUD_STACK_API_KEY, settings.CLOUD_STACK_API_SECRET)
-        request = {  'projectid': '0be19820-1fe2-45ea-844e-77f17e16add5',
-                           'id': '%s' % (host.cp_id)
-                        }
-        response = api.destroyVirtualMachine('GET',request)
-        
-        try:
-            if response['jobid']:
-                LOG.warning("VirtualMachine destroyed!")
 
-                instance = Instance.objects.get(hostname=host)
-                databaseinfra = DatabaseInfra.objects.get(instances=instance)
+        if database.is_in_quarantine:
+            host = database.databaseinfra.instances.all()[0].hostname
+            host_attr = HostAttr.objects.filter(host= host)[0]
+            super(Database, database).delete(*args, **kwargs)  # Call the "real" delete() method.
 
-                databaseinfra.delete()
-                LOG.info("DatabaseInfra destroyed!")
-                instance.delete
-                LOG.info("Instance destroyed!")
-                host.host_attr.delete()
-                LOG.info("Host custom cloudstack attrs destroyed!")
-                host.delete()
-                LOG.info("Host destroyed!")
-        except (KeyError, LookupError):
-            LOG.warning("We could not destroy the VirtualMachine. :(")
+            api = CloudStackClient(settings.CLOUD_STACK_API_URL, settings.CLOUD_STACK_API_KEY, settings.CLOUD_STACK_API_SECRET)
+            request = {  'projectid': '%s' % (settings.CLOUD_STACK_PROJECT_ID),
+                               'id': '%s' % (host_attr.vm_id)
+                            }
+            response = api.destroyVirtualMachine('GET',request)
+            
+            try:
+                if response['jobid']:
+                    LOG.warning("VirtualMachine destroyed!")
+
+                    instance = Instance.objects.get(hostname=host)
+                    databaseinfra = DatabaseInfra.objects.get(instances=instance)
+
+                    databaseinfra.delete()
+                    LOG.info("DatabaseInfra destroyed!")
+                    instance.delete
+                    LOG.info("Instance destroyed!")
+                    host_attr.delete()
+                    LOG.info("Host custom cloudstack attrs destroyed!")
+                    host.delete()
+                    LOG.info("Host destroyed!")
+            except (KeyError, LookupError):
+                LOG.warning("We could not destroy the VirtualMachine. :(")
+        else:
+            LOG.warning("Putting database %s in quarantine" % database.name)
+            database.is_in_quarantine=True
+            database.save()
+            if database.credentials.exists():
+                for credential in database.credentials.all():
+                    new_password = make_db_random_password()
+                    new_credential = Credential.objects.get(pk=credential.id)
+                    new_credential.password = new_password
+                    new_credential.save()
+
+                    instance = factory_for(database.databaseinfra)
+                    instance.update_user(new_credential)
 
 
     @classmethod
