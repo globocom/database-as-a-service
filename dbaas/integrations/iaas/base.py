@@ -21,3 +21,6 @@ class BaseProvider(object):
 
     def destroy_instance(self, instance):
         raise NotImplementedError()
+
+    def check_ssh(self, host):
+        raise NotImplementedError()
