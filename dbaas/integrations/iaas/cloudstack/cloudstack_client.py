@@ -5,10 +5,8 @@ from django.conf import settings
 from django.db import transaction
 from physical.models import DatabaseInfra, Instance, Host
 from drivers import factory_for
-from time import sleep
-from .models import PlanAttr
+from .models import PlanAttr, HostAttr
 import logging
-import paramiko
 from base64 import b64encode
 from ..base import BaseProvider
 
@@ -104,17 +102,25 @@ class CloudStackProvider(BaseProvider):
         LOG.info(" CloudStack response %s" % (response))
         host.cp_id = response['id']
 
-        if response['jobid']:
+        if response['jobid'] or not response['errorcode']:
 
             LOG.info("VirtualMachine created!")
-            request = {'projectid': '0be19820-1fe2-45ea-844e-77f17e16add5', 'id':'%s' % (response['id']) }
+            request = {'projectid': '%s' % (settings.CLOUD_STACK_PROJECT_ID), 'id':'%s' % (response['id']) }
             response = api.listVirtualMachines('GET',request)
             
             host.hostname = response['virtualmachine'][0]['nic'][0]['ipaddress']
             host.cloud_portal_host = True
             host.save()
             LOG.info("Host created!")
-            
+
+            host_attr = HostAttr()
+            host_attr.vm_id = host.cp_id
+            host_attr.vm_user = 'root'
+            host_attr.vm_password = 'ChangeMe'
+            host_attr.host = host
+            host_attr.save()
+            LOG.info("Host attrs custom attributes created!")
+
             instance = Instance()
             instance.address = host.hostname
             instance.port = 3306
@@ -135,34 +141,23 @@ class CloudStackProvider(BaseProvider):
             databaseinfra.save()
             LOG.info("DatabaseInfra created!")
 
-
             instance.databaseinfra = databaseinfra
             instance.save()
             LOG.info("Instance created!")
 
-            LOG.debug("Waiting 3min to return databaseinfra....!")
-            sleep(180)
-            try:
-                username = "root"
-                password = "ChangeMe"
-                client = paramiko.SSHClient()
-                port=22
-                client.load_system_host_keys()
-                client.set_missing_host_key_policy(paramiko.AutoAddPolicy)
-                LOG.info("Trying to login in on %s" % (host.hostname))
-                conn = client.connect(host.hostname, port=port, username=username, password=password, timeout= None, allow_agent= True, look_for_keys= True, compress= False)
-    
-                if  conn is None:
-                    LOG.info("Logged in on host %s" % (host.hostname))
-                    return databaseinfra
-                else:
-                    LOG.warning("We could not create the VirtualMachine. :(")
-                    raise paramiko.SSHException
-
-            except:
-                raise paramiko.SSHException
-            finally:
-                client.close()
+            ssh_ok = self.check_ssh(host)
+                
+            if  ssh_ok:
+                LOG.info("Host %s is ready!" % (host.hostname))
+                return databaseinfra
+            else:
+                LOG.warning("We could not create the VirtualMachine. :(")
+                LOG.warning("Destroying DBaaS cloudstack dependencies...")
+                self.destroy_instance(host)
+                return None
+        else:
+            LOG.warning("Something ocurred on cloudstack: %s" % (response['errorcode']))
+        
             
      
     @classmethod
@@ -185,8 +180,48 @@ class CloudStackProvider(BaseProvider):
             LOG.info("DatabaseInfra destroyed!")
             instance.delete
             LOG.info("Instance destroyed!")
+            host.host_attr.delete()
+            LOG.info("Host custom cloudstack attrs destroyed!")
             host.delete()
             LOG.info("Host destroyed!")
         else:
             raise('We could not destroy the VirtualMachine.     :(')
             LOG.warning("We could not destroy the VirtualMachine. :(")
+
+    @classmethod
+    def check_ssh(self, host, retries=3, initial_wait=30, interval=30):
+        from time import sleep
+        import paramiko
+        import socket
+
+        host_attr = HostAttr.objects.filter(host= host)[0]
+
+        username = host_attr.vm_user
+        password = host_attr.vm_password
+        ssh = paramiko.SSHClient()
+        port=22
+        ssh.load_system_host_keys()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+        LOG.info("Waiting %s seconds to check %s ssh connection..." % (initial_wait, host.hostname))
+        sleep(initial_wait)
+
+        for x in range(retries):
+            try:
+                LOG.info("Attempt number %i" % (x))
+                LOG.info("Trying to login in on %s with user: %s and password: %s" % (host.hostname, host_attr.vm_user, host_attr.vm_password))
+                ssh.connect(host.hostname, port=port, 
+                                    username=username, password=password, 
+                                    timeout= None, allow_agent= True, 
+                                    look_for_keys= True, compress= False
+                                    )
+                return True
+            except (paramiko.ssh_exception.BadHostKeyException, 
+                        paramiko.ssh_exception.AuthenticationException, 
+                        paramiko.ssh_exception.SSHException, socket.error) as e:
+                LOG.warning("We caught an exception: %s ." % (e))
+                LOG.info("Wating %i seconds to try again..." % ( interval + 30))
+                sleep(interval)
+                sleep(30)
+            finally:
+                ssh.close()
