@@ -38,6 +38,7 @@ class PlanFactory(factory.DjangoModelFactory):
     is_active = True
     is_default = True
     engine_type = factory.SubFactory(EngineTypeFactory)
+    provider = 0
 
     @factory.post_generation
     def environments(self, create, extracted, **kwargs):
