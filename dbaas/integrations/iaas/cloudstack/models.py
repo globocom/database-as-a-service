@@ -27,12 +27,13 @@ class PlanAttr(BaseModel):
     
 
     def __unicode__(self):
-        return "Cloud Stack plan Attributes (plan=%s)" % (self.plan)
+        return "Cloud Stack plan custom Attributes (plan=%s)" % (self.plan)
 
     class Meta:
         permissions = (
-            ("view_csplanattribute", "Can view cloud stack plan attributes"),
+            ("view_csplanattribute", "Can view cloud stack plan custom attributes"),
         )
+        verbose_name_plural = "CloudStack plan custom attributes"
 
 class HostAttr(BaseModel):
 
