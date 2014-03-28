@@ -4,12 +4,21 @@ from django.contrib import admin
 from django_services import admin as services_admin
 from ..service.plan import PlanService
 from ..models import PlanAttribute
+from integrations.iaas.cloudstack.models import PlanAttr
 from .. import forms
 
 
 class PlanAttributeInline(admin.TabularInline):
     model = PlanAttribute
     formset = forms.PlanAttributeInlineFormset
+
+
+class PlanAttrInline(admin.StackedInline):
+    model = PlanAttr
+    max_num = 1
+    def has_delete_permission(self, request, obj=None):
+        return False
+
 
 
 class PlanAdmin(services_admin.DjangoServicesAdmin):
@@ -22,5 +31,6 @@ class PlanAdmin(services_admin.DjangoServicesAdmin):
     filter_horizontal = ("environments",)
     inlines = [
         PlanAttributeInline,
+        PlanAttrInline,
     ]
 
