@@ -1,5 +1,5 @@
-from cloudstack.cloudstack_client import CloudStackProvider
-from pre_provisioned.pre_provisioned_client import  PreProvisionedProvider
+from cloudstack.cloudstack_provider import CloudStackProvider
+from pre_provisioned.pre_provisioned_provider import  PreProvisionedProvider
 import logging
 
 LOG = logging.getLogger(__name__)
