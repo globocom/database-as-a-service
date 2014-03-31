@@ -6,25 +6,22 @@ LOG = logging.getLogger(__name__)
 
 class IaaSManager():
     
-    def __init__(self, plan=None, environment=None, database=None, *args, **kwargs):
-        LOG.info("IaaS manager initialized...")
-
-        if database:
-            provider = database.plan.provider
-            if provider == 0:
-                LOG.info("Destroying pre provisioned database...")
-                PreProvisionedProvider().destroy_instance(database, *args, **kwargs)
-            elif provider == 1:
-                LOG.info("Destroying cloud stack instance...")
-                CloudStackProvider().destroy_instance(database, *args, **kwargs)
-        else:
-            self.plan = plan
-            self.environment = environment
-
-            if plan.provider == 0:
-                LOG.info("Creating pre provisioned instance...")
-                self.instance =  PreProvisionedProvider().create_instance(self.plan, self.environment)
-            elif plan.provider == 1:
-                LOG.info("Creating cloud stack instance...")
-                self.instance = CloudStackProvider().create_instance(self.plan, self.environment)
-        
+    @classmethod
+    def destroy_instance(cls, database, *args, **kwargs):
+        plan = database.plan
+        provider = plan.provider
+        if provider == plan.PREPROVISIONED:
+            LOG.info("Destroying pre provisioned database...")
+            PreProvisionedProvider().destroy_instance(database, *args, **kwargs)
+        elif provider == plan.CLOUDSTACK:
+            LOG.info("Destroying cloud stack instance...")
+            CloudStackProvider().destroy_instance(database, *args, **kwargs)
+            
+    @classmethod 
+    def create_instance(cls, plan, environment):
+        if plan.provider == plan.PREPROVISIONED:
+            LOG.info("Creating pre provisioned instance...")
+            return PreProvisionedProvider().create_instance(plan, environment)
+        elif plan.provider == plan.CLOUDSTACK:
+            LOG.info("Creating cloud stack instance...")
+            return CloudStackProvider().create_instance(plan, environment)        
