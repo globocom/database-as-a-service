@@ -97,7 +97,7 @@ class Database(BaseModel):
     def delete(self, *args, **kwargs):
         from integrations.iaas.manager import IaaSManager
 
-        IaaSManager(database=self, *args, **kwargs)
+        IaaSManager.destroy_instance(database=self, *args, **kwargs)
         
 
     def clean(self):

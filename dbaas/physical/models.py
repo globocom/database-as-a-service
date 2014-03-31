@@ -71,9 +71,12 @@ class Engine(BaseModel):
 
 class Plan(BaseModel):
 
+    PREPROVISIONED = 0
+    CLOUDSTACK = 1
+
     PROVIDER_CHOICES = (
-        (0, 'Pre Provisioned'),
-        (1, 'Cloud Stack'),
+        (PREPROVISIONED, 'Pre Provisioned'),
+        (CLOUDSTACK, 'Cloud Stack'),
     )
 
     name = models.CharField(verbose_name=_("Plan name"), max_length=100, unique=True)
@@ -200,9 +203,8 @@ class DatabaseInfra(BaseModel):
     def best_for(cls, plan, environment):
         """ Choose the best DatabaseInfra for another database """
         from integrations.iaas.manager import IaaSManager
-        iaas_manager = IaaSManager(plan, environment)
-        return iaas_manager.instance
-
+        return IaaSManager.create_instance(plan=plan, environment=environment)
+        
     def check_instances_status(self):
         status = []
         for instance in Instance.objects.filter(databaseinfra=self.pk):
