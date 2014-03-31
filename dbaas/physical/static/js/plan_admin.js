@@ -11,9 +11,13 @@
     $(function() {
 
         $("#cs_plan_attributes-group").hide();
-        
+        if ($("#id_provider").val() == 1){
+            $("#cs_plan_attributes-group").show();
+        }else{
+            $("#cs_plan_attributes-group").hide();
+        }
+    
         $("#id_provider").change(function() {
-            console.log(this.value);
             if (this.value == 1){
                 $("#cs_plan_attributes-group").show();
             }else{
