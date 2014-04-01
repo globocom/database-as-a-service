@@ -12,11 +12,11 @@
 
         if ($("#id_cs_host_attributes-0-vm_id").val() == null){
             $("#cs_host_attributes-group").hide();
+            $("#nfsaas_host_attributes-group").hide();
         }else{
             $("#cs_host_attributes-group").show();
+            $("#nfsaas_host_attributes-group").show();
         }
-    
-
     });
 
 })(django.jQuery);

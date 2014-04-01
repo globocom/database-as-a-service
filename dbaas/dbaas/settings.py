@@ -193,6 +193,7 @@ INSTALLED_APPS = (
     'notification',
     'djcelery',
     'integrations.iaas.cloudstack',
+    'integrations.storage.nfsaas',
 )
 
 
@@ -490,3 +491,16 @@ if CLOUD_STACK_ENABLED == "1":
     CLOUD_STACK_ENABLED = True
 else:
     CLOUD_STACK_ENABLED = False
+
+NFSAAS_ENABLED = os.getenv('CLOUD_STACK_ENABLED', '0')
+if NFSAAS_ENABLED == "1":
+    NFSAAS_ENABLED = True
+else:
+    NFSAAS_ENABLED = False
+
+
+NFSAAS_USERNAME = os.getenv('NFSAAS_USERNAME', None)
+NFSAAS_PASSWORD = os.getenv('NFSAAS_PASSWORD', None)
+NFSAAS_URL = os.getenv('NFSAAS_URL', None)
+NFSAAS_TEAMID = os.getenv('NFSAAS_TEAMID', None)
+NFSAAS_PROJECTID =  os.getenv('NFSAAS_PROJECTID', None)

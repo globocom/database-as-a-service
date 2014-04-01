@@ -1,18 +1,19 @@
 # -*- coding: utf-8 -*-
 import urllib2
 import json
-import nfsaas_settings
 
-class Nfsaas(object):
+class NfsaasClient(object):
     
-    def __init__(self, *args, **kwargs):
+    def __init__(self, baseurl, teamid, projectid, username, password):
         
-        self.base_url = nfsaas_settings.NFSAAS_URL
-        self.teamid = nfsaas_settings.NFSAAS_TEAMID
-        self.projectid = nfsaas_settings.NFSAAS_PROJECTID
+        self.base_url = baseurl
+        self.teamid = teamid
+        self.projectid = projectid
+        self.username = username
+        self.password = password
         
         p = urllib2.HTTPPasswordMgrWithDefaultRealm()
-        p.add_password(None, self.base_url, nfsaas_settings.NFSAAS_USERNAME, nfsaas_settings.NFSAAS_PASSWORD)
+        p.add_password(None, self.base_url, self.username, self.password)
         handler = urllib2.HTTPBasicAuthHandler(p)
         opener = urllib2.build_opener(handler)
         urllib2.install_opener(opener)
