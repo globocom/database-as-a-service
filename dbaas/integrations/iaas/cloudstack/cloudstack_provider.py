@@ -9,6 +9,11 @@ from .models import PlanAttr, HostAttr
 from ..base import BaseProvider
 from base64 import b64encode
 import logging
+from integrations.storage.manager import StorageManager
+from django.template import Context, Template
+from time import sleep
+import paramiko
+import socket
 
 LOG = logging.getLogger(__name__)
 
@@ -63,13 +68,29 @@ class CloudStackProvider(BaseProvider):
                     instance = factory_for(database.databaseinfra)
                     instance.update_user(new_credential)
 
+    @classmethod
+    def run_script(self, host, command):
+        host_attr = HostAttr.objects.filter(host= host)[0]
+
+        username = host_attr.vm_user
+        password = host_attr.vm_password
+        
+        client = paramiko.SSHClient()
+        client.load_system_host_keys()
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        
+        client.connect(host.hostname, username=username, password=password)
+        stdin, stdout, stderr = client.exec_command(command)
+        log_stdout = stdout.readlines()
+        log_stderr = stderr.readlines()
+        cod_ret_start = stdout.channel.recv_exit_status()
+        LOG.info("Run Command Log stdout: %s" % log_stdout)
+        LOG.info("Run Command Log stderr: %s" % log_stderr)
+        return cod_ret_start
+        
 
     @classmethod
     def check_ssh(self, host, retries=3, initial_wait=30, interval=30):
-        from time import sleep
-        import paramiko
-        import socket
-
         host_attr = HostAttr.objects.filter(host= host)[0]
 
         username = host_attr.vm_user
@@ -117,7 +138,7 @@ class CloudStackProvider(BaseProvider):
                           'zoneid': planattr.zoneid,
                           'networkids': planattr.networkid,
                           'projectid': settings.CLOUD_STACK_PROJECT_ID,
-                          'userdata': b64encode(planattr.userdata),
+                          #'userdata': b64encode(planattr.userdata),
                         }
 
         response = api.deployVirtualMachine('POST',request)
@@ -171,10 +192,24 @@ class CloudStackProvider(BaseProvider):
             LOG.info("Instance created!")
 
             ssh_ok = self.check_ssh(host)
-            from time import sleep
-            sleep(20)
-                
+            #from time import sleep
+            #sleep(20)
+            
             if  ssh_ok:
+                disk = StorageManager.create_disk(environment=environment, plan=plan, host=host)
+                c = Context({"EXPORTPATH": disk['path']})
+            
+                t = Template(planattr.userdata)
+                userdata = t.render(c)
+            
+                request = {'id': host_attr.vm_id, 'userdata': b64encode(userdata)}
+                response = api.updateVirtualMachine('POST', request)            
+                
+                ret_run_script = self.run_script(host, "/opt/dbaas/scripts/dbaas_userdata_script.sh")
+                
+                #LOG.info("Script Boot: %s" % ret_run_script)
+                
+                
                 LOG.info("Host %s is ready!" % (host.hostname))
                 return databaseinfra
 

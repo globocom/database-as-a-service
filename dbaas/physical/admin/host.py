@@ -4,6 +4,7 @@ from django_services import admin as services_admin
 from django.contrib import admin
 from ..service.host import HostService
 from integrations.iaas.cloudstack.models import HostAttr
+from integrations.storage.nfsaas.models import HostAttr as HostAttrNfsaas
 
 
 class HostAttrInline(admin.StackedInline):
@@ -12,6 +13,12 @@ class HostAttrInline(admin.StackedInline):
     def has_delete_permission(self, request, obj=None):
         return False
 
+class HostAttrNfsaasInline(admin.StackedInline):
+    model = HostAttrNfsaas
+    max_num = 0
+    def has_delete_permission(self, request, obj=None):
+        return False
+        
 class HostAdmin(services_admin.DjangoServicesAdmin):
     service_class = HostService
     search_fields = ("hostname",)
@@ -26,4 +33,5 @@ class HostAdmin(services_admin.DjangoServicesAdmin):
 
     inlines = [
         HostAttrInline,
+        HostAttrNfsaasInline,
     ]
