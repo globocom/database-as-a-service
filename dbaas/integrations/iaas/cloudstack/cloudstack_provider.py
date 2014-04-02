@@ -52,6 +52,9 @@ class CloudStackProvider(BaseProvider):
                     LOG.info("Host custom cloudstack attrs destroyed!")
                     host.delete()
                     LOG.info("Host destroyed!")
+                    paramiko.HostKeys().clear()
+                    LOG.info("Removing key from known hosts!")
+                    LOG.info("Finished!")
             except (KeyError, LookupError):
                 LOG.warning("We could not destroy the VirtualMachine. :(")
         else:
@@ -105,7 +108,7 @@ class CloudStackProvider(BaseProvider):
 
         for x in range(retries):
             try:
-                LOG.info("Attempt number %i" % (x+1))
+                LOG.info("Login attempt number %i" % (x+1))
                 LOG.info("Trying to login in on %s with user: %s and password: %s" % (host.hostname, host_attr.vm_user, host_attr.vm_password))
                 ssh.connect(host.hostname, port=port, 
                                     username=username, password=password, 
