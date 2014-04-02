@@ -19,19 +19,20 @@ class CloneDatabaseForm(forms.Form):
     def clean(self):
         cleaned_data = super(CloneDatabaseForm, self).clean()
         if 'database_clone' in cleaned_data:
-                    
-            origindatabase = Database.objects.get(pk=cleaned_data['origin_database_id'])            
-            databaseinfra = DatabaseInfra.best_for(origindatabase.plan, origindatabase.environment)
 
-            if not databaseinfra:
+            origindatabase = Database.objects.get(pk=cleaned_data['origin_database_id'])            
+            cleaned_data['databaseinfra']  = DatabaseInfra.best_for(origindatabase.plan, origindatabase.environment)
+
+            if not cleaned_data['databaseinfra']:
                 raise forms.ValidationError(_("Sorry. I have no infra-structure to allocate this database. Try select another plan."))
 
             for infra in DatabaseInfra.objects.filter(environment=origindatabase.environment,plan=origindatabase.plan):
                 if infra.databases.filter(name=cleaned_data['database_clone']):
                     self._errors["database_clone"] = self.error_class([_("this name already exists in the selected environment")])
 
-            if cleaned_data['database_clone'] in databaseinfra.get_driver().RESERVED_DATABASES_NAME:
+            if cleaned_data['database_clone'] in cleaned_data['databaseinfra'].get_driver().RESERVED_DATABASES_NAME:
                 raise forms.ValidationError(_("%s is a reserved database name" % cleaned_data['database_clone']))
+
 
             dbs = origindatabase.team.databases_in_use_for(origindatabase.environment)
             database_alocation_limit = origindatabase.team.database_alocation_limit
@@ -39,7 +40,7 @@ class CloneDatabaseForm(forms.Form):
             if (database_alocation_limit != 0 and len(dbs) >= database_alocation_limit):
                 LOG.warning("The database alocation limit of %s has been exceeded for the team: %s => %s" % (database_alocation_limit, origindatabase.team, list(dbs)))
                 raise forms.ValidationError([_("The database alocation limit of %s has been exceeded for the team:  %s => %s") % (database_alocation_limit, origindatabase.team, list(dbs))])
-
+          
         return cleaned_data
 
 class DatabaseForm(models.ModelForm):

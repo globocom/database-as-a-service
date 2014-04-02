@@ -259,7 +259,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             if form.is_valid(): # All validation rules pass
                 # Process the data in form.cleaned_data
                 database_clone = form.cleaned_data['database_clone']
-                Database.clone(database, database_clone, request.user)
+                databaseinfra = form.cleaned_data['databaseinfra']
+                Database.clone(database, database_clone, request.user, databaseinfra)
                 url = reverse('admin:notification_taskhistory_changelist')
                 return HttpResponseRedirect(url+"?user=%s" % request.user.username) # Redirect after POST
         else:
