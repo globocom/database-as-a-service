@@ -30,6 +30,21 @@ class CloudStackProvider(BaseProvider):
             host = database.databaseinfra.instances.all()[0].hostname
             host_attr = HostAttr.objects.filter(host= host)[0]
             super(Database, database).delete(*args, **kwargs)  # Call the "real" delete() method.
+            
+            LOG.info("Stop MySQL!")
+            self.run_script(host, "/etc/init.d/mysql stop")
+            
+            LOG.info("Remove all data!")
+            self.run_script(host, "rm -rf /data/*")
+            
+            plan = database.databaseinfra.plan
+            LOG.info("Plan: %s" % plan)
+            
+            environment = database.databaseinfra.environment
+            LOG.info("Environment: %s" % environment)
+            
+            LOG.info("Destroy storage!")
+            StorageManager.destroy_disk(environment=environment, plan=plan, host=host)
 
             api = CloudStackClient(settings.CLOUD_STACK_API_URL, settings.CLOUD_STACK_API_KEY, settings.CLOUD_STACK_API_SECRET)
             request = {  'projectid': '%s' % (settings.CLOUD_STACK_PROJECT_ID),
