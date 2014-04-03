@@ -25,7 +25,7 @@ class CloneDatabaseForm(forms.Form):
 
             for infra in DatabaseInfra.objects.filter(environment=origindatabase.environment,plan=origindatabase.plan):
                 if infra.databases.filter(name=cleaned_data['database_clone']):
-                    self._errors["database_clone"] = self.error_class([_("this name already exists in the selected environment")])
+                    raise forms.ValidationError([_("this name already exists in the selected environment")])
 
             dbs = origindatabase.team.databases_in_use_for(origindatabase.environment)
             database_alocation_limit = origindatabase.team.database_alocation_limit
