@@ -25,7 +25,7 @@ class CloneDatabaseForm(forms.Form):
 
             for infra in DatabaseInfra.objects.filter(environment=origindatabase.environment,plan=origindatabase.plan):
                 if infra.databases.filter(name=cleaned_data['database_clone']):
-                    raise forms.ValidationError([_("this name already exists in the selected environment")])
+                    self._errors["database_clone"] = self.error_class([_("this name already exists in the selected environment")])
 
             dbs = origindatabase.team.databases_in_use_for(origindatabase.environment)
             database_alocation_limit = origindatabase.team.database_alocation_limit
@@ -41,6 +41,9 @@ class CloneDatabaseForm(forms.Form):
 
             if cleaned_data['database_clone'] in fake_infra.get_driver().RESERVED_DATABASES_NAME:
                 raise forms.ValidationError(_("%s is a reserved database name" % cleaned_data['database_clone']))
+            
+            if self._errors:
+                return cleaned_data
             
             cleaned_data['databaseinfra']  = DatabaseInfra.best_for(origindatabase.plan, origindatabase.environment)
 
@@ -138,7 +141,10 @@ class DatabaseForm(models.ModelForm):
 
         if 'name' in cleaned_data and cleaned_data['name'] in fake_infra.get_driver().RESERVED_DATABASES_NAME:
             raise forms.ValidationError(_("%s is a reserved database name" % cleaned_data['name']))
-
+        
+        if self._errors:
+            return cleaned_data
+            
         cleaned_data['databaseinfra'] = DatabaseInfra.best_for(plan, environment)
         if not cleaned_data['databaseinfra']:
             raise forms.ValidationError(_("Sorry. I have no infra-structure to allocate this database. Try select another plan."))
