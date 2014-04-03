@@ -106,7 +106,7 @@ class CloudStackProvider(BaseProvider):
         
 
     @classmethod
-    def check_ssh(self, host, retries=3, initial_wait=30, interval=30):
+    def check_ssh(self, host, retries=6, initial_wait=30, interval=40):
         host_attr = HostAttr.objects.filter(host= host)[0]
 
         username = host_attr.vm_user
