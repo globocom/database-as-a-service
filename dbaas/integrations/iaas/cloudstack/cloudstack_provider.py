@@ -31,20 +31,16 @@ class CloudStackProvider(BaseProvider):
             host_attr = HostAttr.objects.filter(host= host)[0]
             super(Database, database).delete(*args, **kwargs)  # Call the "real" delete() method.
             
-            LOG.info("Stop MySQL!")
-            self.run_script(host, "/etc/init.d/mysql stop")
+            LOG.info("Remove all database files")
+            self.run_script(host, "/opt/dbaas/scripts/dbaas_deletedatabasefiles.sh")
             
-            LOG.info("Remove all data!")
-            self.run_script(host, "rm -rf /data/*")
-            
-            plan = database.databaseinfra.plan
-            LOG.info("Plan: %s" % plan)
-            
+            plan = database.databaseinfra.plan            
             environment = database.databaseinfra.environment
-            LOG.info("Environment: %s" % environment)
             
-            LOG.info("Destroy storage!")
+            LOG.info("Destroying storage (environment:%s, plan: %s, host:%s)!" % (environment, plan, host))
             StorageManager.destroy_disk(environment=environment, plan=plan, host=host)
+            
+            
 
             api = CloudStackClient(settings.CLOUD_STACK_API_URL, settings.CLOUD_STACK_API_KEY, settings.CLOUD_STACK_API_SECRET)
             request = {  'projectid': '%s' % (settings.CLOUD_STACK_PROJECT_ID),
@@ -93,17 +89,19 @@ class CloudStackProvider(BaseProvider):
         username = host_attr.vm_user
         password = host_attr.vm_password
         
+        LOG.info("Running script [%s] on host %s" % (command, host))
+        
         client = paramiko.SSHClient()
         client.load_system_host_keys()
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        
         client.connect(host.hostname, username=username, password=password)
         stdin, stdout, stderr = client.exec_command(command)
+        
         log_stdout = stdout.readlines()
         log_stderr = stderr.readlines()
         cod_ret_start = stdout.channel.recv_exit_status()
-        LOG.info("Run Command Log stdout: %s" % log_stdout)
-        LOG.info("Run Command Log stderr: %s" % log_stderr)
+        
+        LOG.info("Script return code: %s, stdout: %s, stderr %s" % (cod_ret_start, log_stdout, log_stderr))
         return cod_ret_start
         
 

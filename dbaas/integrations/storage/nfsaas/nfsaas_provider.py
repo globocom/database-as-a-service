@@ -28,15 +28,15 @@ class NfsaasProvider(BaseProvider):
         export = nfsaas.create_export(environmentid=nfsaas_environmentid, sizeid=nfsaas_planid)
         LOG.info("Export created: %s" % export)
         
+        LOG.info("Creating access!")
         access = nfsaas.create_access(environmentid=nfsaas_environmentid, sizeid=nfsaas_planid, exportid=export['id'], host=host.hostname)
         LOG.info("Access created: %s" % access)
         
+        LOG.info("Saving export info on nfsaas host attr")
         hostattr = HostAttr(host=host, nfsaas_export_id=export['id'], nfsaas_path=export['path'])
         hostattr.save()
         
         return export
-        
-        
         
     @classmethod
     @transaction.commit_on_success
@@ -56,9 +56,11 @@ class NfsaasProvider(BaseProvider):
         accesses = nfsaas.list_access(environmentid=nfsaas_environmentid, sizeid=nfsaas_planid, exportid=export_id)
         
         for access in accesses:
+            LOG.info("Removing access on export (id=%s) from host %s" % (export_id, host))
             nfsaas.drop_access(environmentid=nfsaas_environmentid, sizeid=nfsaas_planid, exportid=export_id, accessid = access['id'])
             LOG.info("Access deleted: %s" % access)
         
+        LOG.info("Deleting register from nfsaas host attr")
         hostattr = HostAttr.objects.get(host=host)
         hostattr.delete()
         
