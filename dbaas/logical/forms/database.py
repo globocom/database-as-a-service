@@ -6,6 +6,7 @@ from django.forms import models
 from django import forms
 from ..models import Database, Credential, Project
 from physical.models import Plan, Environment, DatabaseInfra, Engine
+from physical.tests.factory import DatabaseInfraFactory
 from account.models import Team
 
 from .fields import AdvancedModelChoiceField
@@ -20,19 +21,11 @@ class CloneDatabaseForm(forms.Form):
         cleaned_data = super(CloneDatabaseForm, self).clean()
         if 'database_clone' in cleaned_data:
 
-            origindatabase = Database.objects.get(pk=cleaned_data['origin_database_id'])            
-            cleaned_data['databaseinfra']  = DatabaseInfra.best_for(origindatabase.plan, origindatabase.environment)
-
-            if not cleaned_data['databaseinfra']:
-                raise forms.ValidationError(_("Sorry. I have no infra-structure to allocate this database. Try select another plan."))
+            origindatabase = Database.objects.get(pk=cleaned_data['origin_database_id'])    
 
             for infra in DatabaseInfra.objects.filter(environment=origindatabase.environment,plan=origindatabase.plan):
                 if infra.databases.filter(name=cleaned_data['database_clone']):
                     self._errors["database_clone"] = self.error_class([_("this name already exists in the selected environment")])
-
-            if cleaned_data['database_clone'] in cleaned_data['databaseinfra'].get_driver().RESERVED_DATABASES_NAME:
-                raise forms.ValidationError(_("%s is a reserved database name" % cleaned_data['database_clone']))
-
 
             dbs = origindatabase.team.databases_in_use_for(origindatabase.environment)
             database_alocation_limit = origindatabase.team.database_alocation_limit
@@ -40,6 +33,20 @@ class CloneDatabaseForm(forms.Form):
             if (database_alocation_limit != 0 and len(dbs) >= database_alocation_limit):
                 LOG.warning("The database alocation limit of %s has been exceeded for the team: %s => %s" % (database_alocation_limit, origindatabase.team, list(dbs)))
                 raise forms.ValidationError([_("The database alocation limit of %s has been exceeded for the team:  %s => %s") % (database_alocation_limit, origindatabase.team, list(dbs))])
+
+            LOG.info("Creating fake_infra...")
+            fake_infra = DatabaseInfraFactory(plan= origindatabase.plan, environment=origindatabase.environment, engine= origindatabase.plan.engines[0] )
+            LOG.info("Deleting fake_infra...")
+            fake_infra.delete()
+
+            if cleaned_data['database_clone'] in fake_infra.get_driver().RESERVED_DATABASES_NAME:
+                raise forms.ValidationError(_("%s is a reserved database name" % cleaned_data['database_clone']))
+            
+            cleaned_data['databaseinfra']  = DatabaseInfra.best_for(origindatabase.plan, origindatabase.environment)
+
+            if not cleaned_data['databaseinfra']:
+                raise forms.ValidationError(_("Sorry. I have no infra-structure to allocate this database. Try select another plan."))
+            
           
         return cleaned_data
 
@@ -120,17 +127,21 @@ class DatabaseForm(models.ModelForm):
                 LOG.warning("The database alocation limit of %s has been exceeded for the selected team %s => %s" % (database_alocation_limit, team, list(dbs)))
                 self._errors["team"] = self.error_class([_("The database alocation limit of %s has been exceeded for the selected team: %s") % (database_alocation_limit, list(dbs))])
 
-        cleaned_data['databaseinfra'] = DatabaseInfra.best_for(plan, environment)
-        if not cleaned_data['databaseinfra']:
-            raise forms.ValidationError(_("Sorry. I have no infra-structure to allocate this database. Try select another plan."))
-
-        LOG.debug("Database cleaned_data: %s" % (cleaned_data))
         for infra in DatabaseInfra.objects.filter(environment=environment,plan=plan):
             if infra.databases.filter(name=cleaned_data['name']):
                 self._errors["name"] = self.error_class([_("this name already exists in the selected environment")])
 
-        if 'name' in cleaned_data and cleaned_data['name'] in cleaned_data['databaseinfra'].get_driver().RESERVED_DATABASES_NAME:
+        LOG.info("Creating fake_infra...")
+        fake_infra = DatabaseInfraFactory(plan= plan, environment=environment, engine= plan.engines[0])
+        LOG.info("Deleting fake_infra...")
+        fake_infra.delete()
+
+        if 'name' in cleaned_data and cleaned_data['name'] in fake_infra.get_driver().RESERVED_DATABASES_NAME:
             raise forms.ValidationError(_("%s is a reserved database name" % cleaned_data['name']))
+
+        cleaned_data['databaseinfra'] = DatabaseInfra.best_for(plan, environment)
+        if not cleaned_data['databaseinfra']:
+            raise forms.ValidationError(_("Sorry. I have no infra-structure to allocate this database. Try select another plan."))
 
         return cleaned_data
 
