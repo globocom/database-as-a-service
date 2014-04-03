@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.0.12
+* show endpoint on database edit page
+* bug fix: emails were not being sent
 
 ## 0.0.11
 * Change engine colors on dashboard
