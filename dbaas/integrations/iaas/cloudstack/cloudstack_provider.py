@@ -123,8 +123,7 @@ class CloudStackProvider(BaseProvider):
 
         for x in range(retries):
             try:
-                LOG.info("Login attempt number %i" % (x+1))
-                LOG.info("Trying to login in on %s with user: %s and password: %s" % (host.hostname, host_attr.vm_user, host_attr.vm_password))
+                LOG.info("Login attempt number %i on %s " % (x+1,host.hostname))
                 ssh.connect(host.hostname, port=port, 
                                     username=username, password=password, 
                                     timeout= None, allow_agent= True, 
