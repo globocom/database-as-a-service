@@ -33,6 +33,14 @@ router.register(r'database', DatabaseAPI)
 from .credential import CredentialAPI
 router.register(r'credential', CredentialAPI)
 
+# account
+from .team import TeamAPI
+router.register(r'team', TeamAPI)
+
+from .user import UserAPI
+router.register(r'user', UserAPI)
+
+
 urlpatterns = router.urls
 
 # urlpatterns = patterns(
