@@ -222,9 +222,8 @@ class CloudStackProvider(BaseProvider):
                 request = {'id': host_attr.vm_id, 'userdata': b64encode(userdata)}
                 response = api.updateVirtualMachine('POST', request)            
                 
-                ret_run_script = self.run_script(host, "/opt/dbaas/scripts/dbaas_userdata_script.sh")
-                
-                #LOG.info("Script Boot: %s" % ret_run_script)
+                self.run_script(host, "/opt/dbaas/scripts/dbaas_userdata_script.sh")
+
                 
                 
                 LOG.info("Host %s is ready!" % (host.hostname))
