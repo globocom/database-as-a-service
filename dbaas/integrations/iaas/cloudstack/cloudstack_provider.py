@@ -209,8 +209,6 @@ class CloudStackProvider(BaseProvider):
             LOG.info("Instance created!")
 
             ssh_ok = self.check_ssh(host)
-            #from time import sleep
-            #sleep(20)
             
             if  ssh_ok:
                 disk = StorageManager.create_disk(environment=environment, plan=plan, host=host)
