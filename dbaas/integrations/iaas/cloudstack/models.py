@@ -5,6 +5,7 @@ import simple_audit
 from util.models import BaseModel
 from django.db import models, transaction
 from django.utils.translation import ugettext_lazy as _
+from django_extensions.db.fields.encrypted import EncryptedCharField
 
 
 class PlanAttr(BaseModel):
@@ -39,7 +40,7 @@ class HostAttr(BaseModel):
 
     vm_id = models.CharField(verbose_name=_("Cloud Plataform vm id"), max_length=255, blank=True, null=True)
     vm_user = models.CharField(verbose_name=_("Cloud Plataform virtual machine user"), max_length=255, blank=True, null=True)
-    vm_password = models.CharField(verbose_name=_("Cloud Plataform virtual machine password"), max_length=255, blank=True, null=True)
+    vm_password = EncryptedCharField(verbose_name=_("Cloud Plataform virtual machine password"), max_length=255, blank=True, null=True)
     host = models.ForeignKey('physical.Host', related_name="cs_host_attributes")
 
     def __unicode__(self):
