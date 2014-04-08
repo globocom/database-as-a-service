@@ -227,6 +227,15 @@ class CloudStackProvider(BaseProvider):
                 LOG.info("Host %s is ready!" % (host.hostname))
                 return databaseinfra
 
-        except (KeyError, LookupError):
-            LOG.warning("We could not create the VirtualMachine because something ocurred on cloudstack: %i, %s" % (response['errorcode'], response['errortext']))
+        except Exception, e:
+            LOG.warning("We could not create the VirtualMachine because %s" % e)
+
+            if 'virtualmachine' in response:
+                vm_id = response['virtualmachine'][0]['id']
+                LOG.info("Destroying VirtualMachine %s on cloudstack." % (vm_id))
+                api.destroyVirtualMachine('POST',{'id': "%s" % (vm_id)})
+                LOG.info("VirtualMachine destroyed!")
+            else:
+               LOG.warning("Something ocurred on cloudstack: %i, %s" % (response['errorcode'], response['errortext']))
+            
             return None
