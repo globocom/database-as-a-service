@@ -214,10 +214,10 @@ class CloudStackProvider(BaseProvider):
             
             if  ssh_ok:
                 disk = StorageManager.create_disk(environment=environment, plan=plan, host=host)
-                c = Context({"EXPORTPATH": disk['path']})
+                context = Context({"EXPORTPATH": disk['path']})
             
-                t = Template(planattr.userdata)
-                userdata = t.render(c)
+                template = Template(planattr.userdata)
+                userdata = template.render(context)
             
                 request = {'id': host_attr.vm_id, 'userdata': b64encode(userdata)}
                 response = api.updateVirtualMachine('POST', request)            
