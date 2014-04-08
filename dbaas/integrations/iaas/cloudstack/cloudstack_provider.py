@@ -161,7 +161,7 @@ class CloudStackProvider(BaseProvider):
         LOG.info(" CloudStack response %s" % (response))
 
         try:
-            if response['jobid']:
+            if 'jobid' in response:
                 LOG.info("VirtualMachine created!")
                 request = {'projectid': '%s' % (settings.CLOUD_STACK_PROJECT_ID), 'id':'%s' % (response['id']) }
                 
@@ -201,6 +201,8 @@ class CloudStackProvider(BaseProvider):
                 databaseinfra.endpoint = instance.address + ":%i" %(instance.port)
                 databaseinfra.save()
                 LOG.info("DatabaseInfra created!")
+            else:
+                return None
 
             instance.databaseinfra = databaseinfra
             instance.save()
