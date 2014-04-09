@@ -4,6 +4,8 @@ from util.models import BaseModel
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from physical.models import Environment
+import logging
+import simple_audit
 from django_extensions.db.fields.encrypted import EncryptedCharField
 
 
@@ -57,3 +59,5 @@ class IntegrationCredential(BaseModel):
             ("view_integrationcredential", "Can view integration credential."),
         )
 
+
+simple_audit.register(IntegrationCredential, IntegrationType)
