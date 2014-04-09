@@ -43,7 +43,7 @@ class IntegrationCredential(BaseModel):
                             max_length=255,
                             blank=True,
                             null=True)
-    secret = EncryptedCharField(verbose_name=_("Token"), max_length=255, blank=True, null=False)
+    secret = EncryptedCharField(verbose_name=_("Secret"), max_length=255, blank=True, null=False)
     endpoint = models.CharField(verbose_name=_("Endpoint"),
                             max_length=255,
                             help_text=_("Usually it is in the form host:port. Authentication endpoint."),
