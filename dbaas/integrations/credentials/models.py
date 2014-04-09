@@ -35,9 +35,9 @@ class IntegrationCredential(BaseModel):
     user = models.CharField(verbose_name=_("User."),
                             max_length=100,
                             help_text=_("User used to authenticate."),
-                            blank=False,
-                            null=False)
-    password = EncryptedCharField(verbose_name=_("Password"), max_length=255, blank=True, null=False)
+                            blank=True,
+                            null=True)
+    password = EncryptedCharField(verbose_name=_("Password"), max_length=255, blank=True, null=True)
     integration_type = models.ForeignKey(IntegrationType, related_name="integration_type", on_delete=models.PROTECT)
     token = models.CharField(verbose_name=_("Authentication Token"),
                             max_length=255,
@@ -47,8 +47,8 @@ class IntegrationCredential(BaseModel):
     endpoint = models.CharField(verbose_name=_("Endpoint"),
                             max_length=255,
                             help_text=_("Usually it is in the form host:port. Authentication endpoint."),
-                            blank=True,
-                            null=True)
+                            blank=False,
+                            null=False)
     environments = models.ManyToManyField(Environment)
 
     def __unicode__(self):
