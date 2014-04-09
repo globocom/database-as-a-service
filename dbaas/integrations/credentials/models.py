@@ -52,7 +52,7 @@ class IntegrationCredential(BaseModel):
     environments = models.ManyToManyField(Environment)
 
     def __unicode__(self):
-        return "%s (integration_type=%s)" % (self.user, self.integration_type)
+        return "%s" % (self.id)
 
     class Meta:
         permissions = (
