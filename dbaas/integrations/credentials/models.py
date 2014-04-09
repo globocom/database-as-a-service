@@ -31,7 +31,7 @@ class Credentials(BaseModel):
                             blank=False,
                             null=False)
     password = EncryptedCharField(verbose_name=_("Password"), max_length=255, blank=True, null=False)
-    type = models.ForeignKey(IntegrationType, related_name="type", on_delete=models.PROTECT)
+    integration_type = models.ForeignKey(IntegrationType, related_name="integration_type", on_delete=models.PROTECT)
     token = models.CharField(verbose_name=_("Authentication Token"),
                             max_length=255,
                             blank=True,
