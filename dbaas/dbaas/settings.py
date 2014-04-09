@@ -194,6 +194,7 @@ INSTALLED_APPS = (
     'djcelery',
     'integrations.iaas.cloudstack',
     'integrations.storage.nfsaas',
+    'integrations.credentials',
 )
 
 
