@@ -18,7 +18,7 @@ class IntegrationType(BaseModel):
         (CLOUDSTACK, 'Cloud Stack'),
         (NFSAAS, 'NFS as a Service'),
     )
-    name = models.CharField(verbose_name=_("Offering ID"),
+    name = models.CharField(verbose_name=_("Name"),
                                          max_length=100,
                                          help_text="Integration Name")
     type = models.IntegerField(choices=INTEGRATION_CHOICES,
