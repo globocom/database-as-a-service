@@ -23,7 +23,7 @@ class IntegrationType(BaseModel):
                                 default=0)
     
 
-class Credentials(BaseModel):
+class IntegrationCredential(BaseModel):
 
     user = models.CharField(verbose_name=_("User."),
                             max_length=100,
