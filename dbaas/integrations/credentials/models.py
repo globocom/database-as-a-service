@@ -21,6 +21,11 @@ class IntegrationType(BaseModel):
                                          help_text="Integration Name")
     type = models.IntegerField(choices=INTEGRATION_CHOICES,
                                 default=0)
+
+    class Meta:
+        permissions = (
+            ("view_integrationtype", "Can view integration type."),
+        )
     
 
 class IntegrationCredential(BaseModel):
