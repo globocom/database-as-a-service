@@ -44,3 +44,11 @@ class IntegrationCredential(BaseModel):
                             null=True)
     environments = models.ManyToManyField(Environment)
 
+    def __unicode__(self):
+        return "%s (integration_type=%s)" % (self.user, self.integration_type)
+
+    class Meta:
+        permissions = (
+            ("view_integrationcredential", "Can view integration credential."),
+        )
+
