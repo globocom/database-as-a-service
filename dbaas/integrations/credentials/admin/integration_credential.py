@@ -5,5 +5,5 @@ from django.contrib import admin
 
 class IntegrationCredentialAdmin(admin.ModelAdmin):
     search_fields = ("endpoint",)
-    list_display = ("user","endpoint",)
+    list_display = ("endpoint","user",)
     save_on_top = True
