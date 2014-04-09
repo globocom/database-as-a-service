@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from cloudstack_client import CloudStackClient
-from django.conf import settings
 from django.db import transaction
 from physical.models import DatabaseInfra, Instance, Host
 from util import make_db_random_password
@@ -15,20 +14,24 @@ from time import sleep
 import paramiko
 import socket
 
+
 LOG = logging.getLogger(__name__)
 
 class CloudStackProvider(BaseProvider):
 
     @classmethod
-    def auth(self, environment):
+    def get_credentials(self, environment):
+        LOG.info("Getting credentials...")
         from integrations.credentials.manager import IntegrationCredentialManager
         from integrations.credentials.models import IntegrationType
-
         integration = IntegrationType.objects.get(type= IntegrationType.CLOUDSTACK)
 
-        credentials = IntegrationCredentialManager.get_credentials(environment= environment, integration= integration)
+        return IntegrationCredentialManager.get_credentials(environment= environment, integration= integration)
 
+    @classmethod
+    def auth(self, environment):
         LOG.info("Conecting with cloudstack...")
+        credentials = self.get_credentials(environment= environment)
         return CloudStackClient(credentials.endpoint, credentials.token, credentials.secret)
 
         
@@ -54,9 +57,10 @@ class CloudStackProvider(BaseProvider):
             StorageManager.destroy_disk(environment=environment, plan=plan, host=host)
             
             
+            project_id = self.get_credentials(environment= environment).project
 
             api = self.auth(environment= environment)
-            request = {  'projectid': '%s' % (settings.CLOUD_STACK_PROJECT_ID),
+            request = {  'projectid': '%s' % (project_id),
                                'id': '%s' % (host_attr.vm_id)
                             }
             response = api.destroyVirtualMachine('GET',request)
@@ -161,11 +165,13 @@ class CloudStackProvider(BaseProvider):
         
         planattr = PlanAttr.objects.get(plan=plan)
 
+        project_id = self.get_credentials(environment= environment).project
+
         request = { 'serviceofferingid': planattr.serviceofferingid, 
                           'templateid': planattr.templateid, 
                           'zoneid': planattr.zoneid,
                           'networkids': planattr.networkid,
-                          'projectid': settings.CLOUD_STACK_PROJECT_ID,
+                          'projectid': project_id,
                           #'userdata': b64encode(planattr.userdata),
                         }
 
@@ -176,7 +182,7 @@ class CloudStackProvider(BaseProvider):
         try:
             if 'jobid' in response:
                 LOG.info("VirtualMachine created!")
-                request = {'projectid': '%s' % (settings.CLOUD_STACK_PROJECT_ID), 'id':'%s' % (response['id']) }
+                request = {'projectid': '%s' % (project_id), 'id':'%s' % (response['id']) }
                 
                 host_attr = HostAttr()
                 host_attr.vm_id = response['id']
