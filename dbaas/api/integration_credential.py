@@ -13,7 +13,7 @@ class IntegrationCredentialSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = IntegrationCredential
-        fields = ('user', 'password', 'integration_type', 'token', 'secret', 'endpoint', 'environments',"project",)
+        fields = ('user', 'password', 'integration_type', 'token', 'secret', 'endpoint', 'environments',"project","team")
 
 
 class IntegrationCredentialAPI(viewsets.ModelViewSet):

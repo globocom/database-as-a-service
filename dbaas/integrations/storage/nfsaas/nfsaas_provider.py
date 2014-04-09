@@ -3,7 +3,6 @@
 from ..base import BaseProvider
 import logging
 from django.db import transaction
-from django.conf import settings
 from nfsaas_client import NfsaasClient
 from models import EnvironmentAttr, PlanAttr, HostAttr
 
@@ -24,7 +23,7 @@ class NfsaasProvider(BaseProvider):
     def auth(self, environment):
         LOG.info("Conecting with nfsaas...")
         credentials = self.get_credentials(environment= environment)
-        return NfsaasClient(baseurl= credentials.endpoint, teamid= settings.NFSAAS_TEAMID, 
+        return NfsaasClient(baseurl= credentials.endpoint, teamid= credentials.team, 
                                         projectid=credentials.project, username=credentials.user, password= credentials.password)
     
     @classmethod

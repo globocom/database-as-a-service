@@ -54,6 +54,11 @@ class IntegrationCredential(BaseModel):
                             max_length=255,
                             blank=False,
                             null=False)
+    team = models.CharField(verbose_name=_("Team"),
+                            max_length=255,
+                            blank=True,
+                            null=True,
+                            default=None)
 
     def __unicode__(self):
         return "%s" % (self.id)
