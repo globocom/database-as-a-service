@@ -18,6 +18,19 @@ import socket
 LOG = logging.getLogger(__name__)
 
 class CloudStackProvider(BaseProvider):
+
+    @classmethod
+    def auth(self, environment):
+        from integrations.credentials.manager import IntegrationCredentialManager
+        from integrations.credentials.models import IntegrationType
+
+        integration = IntegrationType.objects.get(type= IntegrationType.CLOUDSTACK)
+
+        credentials = IntegrationCredentialManager.get_credentials(environment= environment, integration= integration)
+
+        LOG.info("Conecting with cloudstack...")
+        return CloudStackClient(credentials.endpoint, credentials.token, credentials.secret)
+
         
     @classmethod
     @transaction.commit_on_success
@@ -42,7 +55,7 @@ class CloudStackProvider(BaseProvider):
             
             
 
-            api = CloudStackClient(settings.CLOUD_STACK_API_URL, settings.CLOUD_STACK_API_KEY, settings.CLOUD_STACK_API_SECRET)
+            api = self.auth(environment= environment)
             request = {  'projectid': '%s' % (settings.CLOUD_STACK_PROJECT_ID),
                                'id': '%s' % (host_attr.vm_id)
                             }
@@ -144,7 +157,7 @@ class CloudStackProvider(BaseProvider):
     def create_instance(self, plan, environment):
         LOG.info("Provisioning new host on cloud portal with options %s %s..." % (plan, environment))
 
-        api = CloudStackClient(settings.CLOUD_STACK_API_URL, settings.CLOUD_STACK_API_KEY, settings.CLOUD_STACK_API_SECRET)
+        api = self.auth(environment= environment)
         
         planattr = PlanAttr.objects.get(plan=plan)
 
