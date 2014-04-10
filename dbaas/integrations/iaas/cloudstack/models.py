@@ -34,7 +34,7 @@ class PlanAttr(BaseModel):
         permissions = (
             ("view_csplanattribute", "Can view cloud stack plan custom attributes"),
         )
-        verbose_name_plural = "CloudStack plan custom attributes"
+        verbose_name_plural = "CloudStack Custom Plan Attributes"
 
 class HostAttr(BaseModel):
 
@@ -50,6 +50,7 @@ class HostAttr(BaseModel):
         permissions = (
             ("view_cshostattribute", "Can view cloud stack host attributes"),
         )
+        verbose_name_plural = "CloudStack Custom Host Attributes"
 
 simple_audit.register(PlanAttr)
 simple_audit.register(HostAttr)
