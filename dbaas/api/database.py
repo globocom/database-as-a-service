@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from logical import models
 from physical.models import Plan, Environment
 from account.models import Team
+from .credential import CredentialSerializer
 
 
 class DatabaseSerializer(serializers.HyperlinkedModelSerializer):
@@ -18,6 +19,7 @@ class DatabaseSerializer(serializers.HyperlinkedModelSerializer):
     quarantine_dt = serializers.Field(source='quarantine_dt')
     total_size_in_bytes = serializers.Field(source='total_size')
     used_size_in_bytes = serializers.Field(source='used_size')
+    credentials = CredentialSerializer(many=True, read_only=True)
 
     class Meta:
         model = models.Database
