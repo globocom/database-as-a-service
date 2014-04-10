@@ -17,12 +17,14 @@ class PlanAttributeInline(admin.TabularInline):
 class PlanAttrInline(admin.StackedInline):
     model = PlanAttr
     max_num = 1
+    template = 'admin/physical/shared/inline_form.html'
     def has_delete_permission(self, request, obj=None):
         return False
 
 class PlanAttrNfsaasInline(admin.StackedInline):
     model = PlanAttrNfsaas
     max_num = 1
+    template = 'admin/physical/shared/inline_form.html'
     def has_delete_permission(self, request, obj=None):
         return False
 

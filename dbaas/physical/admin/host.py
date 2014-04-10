@@ -10,12 +10,14 @@ from integrations.storage.nfsaas.models import HostAttr as HostAttrNfsaas
 class HostAttrInline(admin.StackedInline):
     model = HostAttr
     max_num = 0
+    template = 'admin/physical/shared/inline_form.html'
     def has_delete_permission(self, request, obj=None):
         return False
 
 class HostAttrNfsaasInline(admin.StackedInline):
     model = HostAttrNfsaas
     max_num = 0
+    template = 'admin/physical/shared/inline_form.html'
     def has_delete_permission(self, request, obj=None):
         return False
         

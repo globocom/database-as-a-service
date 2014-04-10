@@ -7,6 +7,7 @@ from integrations.storage.nfsaas.models import EnvironmentAttr
 class EnvironmentAttrInline(admin.StackedInline):
     model = EnvironmentAttr
     max_num = 1
+    template = 'admin/physical/shared/inline_form.html'
     def has_delete_permission(self, request, obj=None):
         return False
 
