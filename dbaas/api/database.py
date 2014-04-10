@@ -4,13 +4,16 @@ from rest_framework import viewsets, serializers, status
 from rest_framework.response import Response
 from logical import models
 from physical.models import Plan, Environment
+from account.models import Team
 
 
 class DatabaseSerializer(serializers.HyperlinkedModelSerializer):
     plan = serializers.HyperlinkedRelatedField(
-        source='plan', read_only=True, view_name='plan-detail', queryset=Plan.objects)
+        source='plan', view_name='plan-detail', queryset=Plan.objects)
     environment = serializers.HyperlinkedRelatedField(
-        source='environment', read_only=True, view_name='environment-detail', queryset=Environment.objects)
+        source='environment', view_name='environment-detail', queryset=Environment.objects)
+    team = serializers.HyperlinkedRelatedField(
+        source='team', view_name='team-detail', queryset=Team.objects)
     endpoint = serializers.Field(source='endpoint')
     quarantine_dt = serializers.Field(source='quarantine_dt')
     total_size_in_bytes = serializers.Field(source='total_size')
@@ -18,8 +21,8 @@ class DatabaseSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = models.Database
-        fields = ('url', 'id', 'name', 'endpoint', 'plan', 'environment', 'project',
-            'quarantine_dt', 'total_size_in_bytes', 'used_size_in_bytes', 'credentials')
+        fields = ('url', 'id', 'name', 'endpoint', 'plan', 'environment', 'project', 'team',
+            'quarantine_dt', 'total_size_in_bytes', 'used_size_in_bytes', 'credentials',)
         read_only = ('credentials',)
 
     def __init__(self, *args, **kwargs):
@@ -53,7 +56,8 @@ class DatabaseAPI(viewsets.ModelViewSet):
                 "name": "{name}",
                 "plan": "{api_url}/plan/{plan_id}/",
                 "environment": "{api_url}/environment/{environment_id}/",
-                "project": "{api_url}/project/{project_id}/"
+                "project": "{api_url}/project/{project_id}/",
+                "team": "{api_url}/team/{team_id}/",
             }
 
     *   ### __Show details about a database__
@@ -78,15 +82,18 @@ class DatabaseAPI(viewsets.ModelViewSet):
 
     def create(self, request):
         serializer = self.get_serializer(data=request.DATA, files=request.FILES)
-
+        
         if serializer.is_valid():
             self.pre_save(serializer.object)
             data = serializer.restore_fields(request.DATA, request.FILES)
             self.object = models.Database.provision(data['name'], data['plan'], data['environment'])
+            self.object.team = data['team']
+            self.object.project = data['project']
+            self.object.save()
             data = serializer.to_native(self.object)
             self.post_save(self.object, created=True)
             headers = self.get_success_headers(data)
             return Response(data, status=status.HTTP_201_CREATED,
                             headers=headers)
-
+        
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
