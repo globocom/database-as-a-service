@@ -1,4 +1,4 @@
-from nfsaas.nfsaas_provider import NfsaasProvider
+from dbaas_nfsaas.provider import NfsaasProvider
 import logging
 
 LOG = logging.getLogger(__name__)

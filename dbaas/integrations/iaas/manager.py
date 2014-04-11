@@ -1,4 +1,4 @@
-from cloudstack.cloudstack_provider import CloudStackProvider
+from dbaas_cloudstack.provider import CloudStackProvider
 from pre_provisioned.pre_provisioned_provider import  PreProvisionedProvider
 import logging
 

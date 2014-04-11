@@ -192,9 +192,9 @@ INSTALLED_APPS = (
     'ckeditor',
     'notification',
     'djcelery',
-    'integrations.iaas.cloudstack',
-    'integrations.storage.nfsaas',
-    'integrations.credentials',
+    'dbaas_cloudstack',
+    'dbaas_credentials',
+    'dbaas_nfsaas',
 )
 
 
@@ -482,12 +482,6 @@ USER_ROLES = (
 
 #CloudStack IaaS Integration credentials
 CLOUD_STACK_ENABLED = os.getenv('CLOUD_STACK_ENABLED', '0')
-CLOUD_STACK_API_URL = os.getenv('CLOUD_STACK_API_URL', None)
-CLOUD_STACK_API_KEY  = os.getenv('CLOUD_STACK_API_KEY', None)
-CLOUD_STACK_API_SECRET  = os.getenv('CLOUD_STACK_API_SECRET', None)
-CLOUD_STACK_PROJECT_ID  = os.getenv('CLOUD_STACK_PROJECT_ID', None)
-
-CLOUD_STACK_ENABLED = os.getenv('CLOUD_STACK_ENABLED', '0')
 if CLOUD_STACK_ENABLED == "1":
     CLOUD_STACK_ENABLED = True
 else:
@@ -499,9 +493,3 @@ if NFSAAS_ENABLED == "1":
 else:
     NFSAAS_ENABLED = False
 
-
-NFSAAS_USERNAME = os.getenv('NFSAAS_USERNAME', None)
-NFSAAS_PASSWORD = os.getenv('NFSAAS_PASSWORD', None)
-NFSAAS_URL = os.getenv('NFSAAS_URL', None)
-NFSAAS_TEAMID = os.getenv('NFSAAS_TEAMID', None)
-NFSAAS_PROJECTID =  os.getenv('NFSAAS_PROJECTID', None)

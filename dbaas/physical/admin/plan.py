@@ -4,8 +4,8 @@ from django.contrib import admin
 from django_services import admin as services_admin
 from ..service.plan import PlanService
 from ..models import PlanAttribute
-from integrations.iaas.cloudstack.models import PlanAttr
-from integrations.storage.nfsaas.models import PlanAttr as PlanAttrNfsaas
+from dbaas_cloudstack.models import PlanAttr
+from dbaas_nfsaas.models import PlanAttr as PlanAttrNfsaas
 from .. import forms
 
 

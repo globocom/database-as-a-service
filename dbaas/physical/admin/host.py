@@ -3,8 +3,8 @@ from __future__ import absolute_import, unicode_literals
 from django_services import admin as services_admin
 from django.contrib import admin
 from ..service.host import HostService
-from integrations.iaas.cloudstack.models import HostAttr
-from integrations.storage.nfsaas.models import HostAttr as HostAttrNfsaas
+from dbaas_cloudstack.models import HostAttr
+from dbaas_nfsaas.models import HostAttr as HostAttrNfsaas
 
 
 class HostAttrInline(admin.StackedInline):

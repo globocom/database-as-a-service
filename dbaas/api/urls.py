@@ -33,11 +33,11 @@ router.register(r'database', DatabaseAPI)
 from .credential import CredentialAPI
 router.register(r'credential', CredentialAPI)
 
-from .integration_type import IntegrationTypeAPI
-router.register(r'integration_type', IntegrationTypeAPI)
+from .integration_type import CredentialTypeAPI
+router.register(r'integration_type', CredentialTypeAPI)
 
-from .integration_credential import IntegrationCredentialAPI
-router.register(r'integration_credential', IntegrationCredentialAPI)
+from .integration_credential import CredentialAPI
+router.register(r'integration_credential', CredentialAPI)
 
 urlpatterns = router.urls
 
