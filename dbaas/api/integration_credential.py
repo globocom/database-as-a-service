@@ -6,7 +6,7 @@ from .environment import EnvironmentSerializer
 from .integration_type import CredentialTypeSerializer
 
 
-class CredentialSerializer(serializers.HyperlinkedModelSerializer):
+class IntegrationCredentialSerializer(serializers.HyperlinkedModelSerializer):
 
     environments = EnvironmentSerializer(many=True, read_only=True)
     integration_type = CredentialTypeSerializer(many=False, read_only=True)
@@ -16,11 +16,11 @@ class CredentialSerializer(serializers.HyperlinkedModelSerializer):
         fields = ('user', 'password', 'integration_type', 'token', 'secret', 'endpoint', 'environments',"project","team")
 
 
-class CredentialAPI(viewsets.ModelViewSet):
+class IntegrationCredentialAPI(viewsets.ModelViewSet):
     """
     Integration Credential Api
     """
-    serializer_class = CredentialSerializer
+    serializer_class = IntegrationCredentialSerializer
     queryset = Credential.objects.all()
 
 

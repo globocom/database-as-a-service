@@ -3,6 +3,7 @@
 from rest_framework.routers import DefaultRouter
 from django.http import HttpResponseRedirect
 
+
 # class MyRouter(DefaultRouter):
 # 
 #     def get_api_root_view(self):
@@ -11,6 +12,7 @@ from django.http import HttpResponseRedirect
 router = DefaultRouter()
 
 # physical
+
 from .environment import EnvironmentAPI
 router.register(r'environment', EnvironmentAPI)
 
@@ -33,11 +35,17 @@ router.register(r'database', DatabaseAPI)
 from .credential import CredentialAPI
 router.register(r'credential', CredentialAPI)
 
-from .integration_type import CredentialTypeAPI
-router.register(r'integration_type', CredentialTypeAPI)
+from django.conf import settings
+if settings.CLOUD_STACK_ENABLED:
+    from .integration_type import CredentialTypeAPI
+    router.register(r'integration_type', CredentialTypeAPI)
 
-from .integration_credential import CredentialAPI
-router.register(r'integration_credential', CredentialAPI)
+    from .integration_credential import IntegrationCredentialAPI
+    router.register(r'integration_credential', IntegrationCredentialAPI, base_name="integration_credential")
+
+
+
+
 
 urlpatterns = router.urls
 
