@@ -206,23 +206,51 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
     def add_view(self, request, form_url='', extra_context=None):
         self.form = DatabaseForm
-        
+
         try:
-            teams = Team.objects.filter(users=request.user)
-            LOG.info("user %s teams: %s" % (request.user, teams))
-            if not teams:
-                self.message_user(request, self.database_add_perm_message, level=messages.ERROR)
-                return HttpResponseRedirect(reverse('admin:logical_database_changelist'))
-
-            #if no team is specified and the user has only one team, then set it to the database
-            if teams.count() == 1 and request.method == 'POST' and not request.user.has_perm(self.perm_add_database_infra):
-                post_data = request.POST.copy()
-                if 'team' in post_data:
-                    post_data['team'] = u"%s" % teams[0].pk
             
-                request.POST = post_data
+            if request.method == 'POST':
+            
+                teams = Team.objects.filter(users=request.user)
+                LOG.info("user %s teams: %s" % (request.user, teams))
+                if not teams:
+                    self.message_user(request, self.database_add_perm_message, level=messages.ERROR)
+                    return HttpResponseRedirect(reverse('admin:logical_database_changelist'))
+    
+                #if no team is specified and the user has only one team, then set it to the database
+                if teams.count() == 1 and request.method == 'POST' and not request.user.has_perm(self.perm_add_database_infra):
+                    post_data = request.POST.copy()
+                    if 'team' in post_data:
+                        post_data['team'] = u"%s" % teams[0].pk
+                
+                    request.POST = post_data
+    
+                form = DatabaseForm(request.POST)
+                
+                if not form.is_valid():
+                    return super(DatabaseAdmin, self).add_view(request, form_url, extra_context=extra_context)
+                
+                from notification.tasks import create_database
+                
+                
+                LOG.debug("call create_database - name=%s, plan=%s, environment=%s, team=%s, project=%s, description=%s, user=%s" % (
+                          form.cleaned_data['name'], form.cleaned_data['plan'], form.cleaned_data['environment'],
+                          form.cleaned_data['team'], form.cleaned_data['project'], form.cleaned_data['description'], request.user))
+                
+                result = create_database.delay(form.cleaned_data['name'],
+                                               form.cleaned_data['plan'],
+                                               form.cleaned_data['environment'],
+                                               form.cleaned_data['team'],
+                                               form.cleaned_data['project'],
+                                               form.cleaned_data['description'],
+                                               request.user)
+    
+                url = reverse('admin:notification_taskhistory_changelist')
+                return HttpResponseRedirect(url+"?user=%s" % request.user.username) # Redirect after POST
 
-            return super(DatabaseAdmin, self).add_view(request, form_url, extra_context=extra_context)
+            else:
+                return super(DatabaseAdmin, self).add_view(request, form_url, extra_context=extra_context)      
+        
         except DatabaseAlreadyExists:
             self.message_user(request, _('An inconsistency was found: The database "%s" already exists in infra-structure but not in DBaaS.') % request.POST['name'], level=messages.ERROR)
             request.method = 'GET'
@@ -259,13 +287,11 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             if form.is_valid(): # All validation rules pass
                 # Process the data in form.cleaned_data
                 database_clone = form.cleaned_data['database_clone']
-                databaseinfra = form.cleaned_data['databaseinfra']
-                Database.clone(database, database_clone, request.user, databaseinfra)
+                Database.clone(database, database_clone, request.user)
                 url = reverse('admin:notification_taskhistory_changelist')
                 return HttpResponseRedirect(url+"?user=%s" % request.user.username) # Redirect after POST
         else:
             form = CloneDatabaseForm(initial={"origin_database_id" : database_id}) # An unbound form
-            print form.errors
         return render_to_response("logical/database/clone.html",
                                   locals(),
                                   context_instance=RequestContext(request))

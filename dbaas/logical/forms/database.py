@@ -45,12 +45,6 @@ class CloneDatabaseForm(forms.Form):
             if self._errors:
                 return cleaned_data
             
-            cleaned_data['databaseinfra']  = DatabaseInfra.best_for(origindatabase.plan, origindatabase.environment)
-
-            if not cleaned_data['databaseinfra']:
-                raise forms.ValidationError(_("Sorry. I have no infra-structure to allocate this database. Try select another plan."))
-            
-          
         return cleaned_data
 
 class DatabaseForm(models.ModelForm):
@@ -144,26 +138,22 @@ class DatabaseForm(models.ModelForm):
         
         if self._errors:
             return cleaned_data
-            
-        cleaned_data['databaseinfra'] = DatabaseInfra.best_for(plan, environment)
-        if not cleaned_data['databaseinfra']:
-            raise forms.ValidationError(_("Sorry. I have no infra-structure to allocate this database. Try select another plan."))
 
         return cleaned_data
 
-    def save(self, *args, **kwargs):
-        if self.instance and self.instance.id:
-            return super(DatabaseForm, self).save(*args, **kwargs)
-        else:
-            database = Database.provision(self.cleaned_data['name'], 
-                                            self.cleaned_data['plan'], 
-                                            self.cleaned_data['environment'],
-                                            self.cleaned_data['databaseinfra'])
-            database.team = self.cleaned_data['team']
-            database.project = self.cleaned_data['project']
-            database.description = self.cleaned_data['description']
-            database.save()
-            return database
+    #def save(self, *args, **kwargs):
+    #    if self.instance and self.instance.id:
+    #        return super(DatabaseForm, self).save(*args, **kwargs)
+    #    else:
+    #        database = Database.provision(self.cleaned_data['name'], 
+    #                                        self.cleaned_data['plan'], 
+    #                                        self.cleaned_data['environment'],
+    #                                        self.cleaned_data['databaseinfra'])
+    #        database.team = self.cleaned_data['team']
+    #        database.project = self.cleaned_data['project']
+    #        database.description = self.cleaned_data['description']
+    #        database.save()
+    #        return database
 
     def save_m2m(self, *args, **kwargs):
         pass

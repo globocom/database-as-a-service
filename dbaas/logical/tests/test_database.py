@@ -77,6 +77,23 @@ class DatabaseTestCase(TestCase):
         
         self.assertRaises(AttributeError, database.save)
 
+    @mock.patch.object(DatabaseInfra, 'get_info')
+    def test_new_database_bypass_datainfra_info_cache(self, get_info):
+        def side_effect_get_info(force_refresh=False):
+            m = mock.Mock()
+            if not force_refresh:
+                m.get_database_status.return_value = None
+                return m
+            m.get_database_status.return_value = object()
+            return m
+
+        get_info.side_effect = side_effect_get_info
+        database = factory.DatabaseFactory(name="db1cache", databaseinfra=self.databaseinfra)
+        self.assertIsNotNone(database.database_status)
+        self.assertEqual([mock.call(), mock.call(force_refresh=True)], get_info.call_args_list)
+    
+    '''
+
     @mock.patch.object(clone_database, 'delay')
     def test_database_clone(self, delay):
 
@@ -123,18 +140,5 @@ class DatabaseTestCase(TestCase):
         credential = clone_database.credentials.all()[0]
 
         self.assertEqual(credential.user, "u_trinity_clone")
-
-    @mock.patch.object(DatabaseInfra, 'get_info')
-    def test_new_database_bypass_datainfra_info_cache(self, get_info):
-        def side_effect_get_info(force_refresh=False):
-            m = mock.Mock()
-            if not force_refresh:
-                m.get_database_status.return_value = None
-                return m
-            m.get_database_status.return_value = object()
-            return m
-
-        get_info.side_effect = side_effect_get_info
-        database = factory.DatabaseFactory(name="db1cache", databaseinfra=self.databaseinfra)
-        self.assertIsNotNone(database.database_status)
-        self.assertEqual([mock.call(), mock.call(force_refresh=True)], get_info.call_args_list)
+    
+    '''

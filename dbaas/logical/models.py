@@ -116,27 +116,21 @@ class Database(BaseModel):
         return credential
 
     @classmethod
-    def provision(cls, name, plan, environment, datainfra=None):
-        # create new databaseinfra
-        LOG.debug("provisioning databaseinfra with name %s, plan %s and environment %s", name, plan, environment)
+    def provision(cls, name, databaseinfra):
 
-        if not isinstance(plan, Plan):
-            raise ValidationError('Invalid plan type %s - %s' % (type(plan), plan))
-
-        if not isinstance(environment, Environment):
-            raise ValidationError('Invalid environment type %s - %s' % (type(environment), environment))
-        
-        if not datainfra:
-            datainfra = DatabaseInfra.best_for(plan, environment)
+        if not isinstance(databaseinfra, DatabaseInfra):
+            raise ValidationError('Invalid databaseinfra type %s - %s' % (type(databaseinfra), databaseinfra))
 
         database = Database()
-        database.databaseinfra = datainfra
+        database.databaseinfra = databaseinfra
         database.name = name
         database.full_clean()
         database.save()
-        # refresh object from database
         database = Database.objects.get(pk=database.pk)
         return database
+
+    def __get_database_reserved_names(self):
+        return getattr(self.driver, 'RESERVED_DATABASES_NAME', [])
 
     def __get_database_reserved_names(self):
         return getattr(self.driver, 'RESERVED_DATABASES_NAME', [])
@@ -220,24 +214,26 @@ class Database(BaseModel):
 
     @classmethod
     @transaction.commit_manually
-    def clone(cls, database, clone_name, user, databaseinfra=None):
-        try:
-            cloned_database = Database.objects.get(pk=database.pk)
-            cloned_database.name = clone_name
-            cloned_database.pk = None
-            if not databaseinfra:
-                cloned_database.databaseinfra = DatabaseInfra.best_for(database.plan, database.environment)
-            else:
-                cloned_database.databaseinfra = databaseinfra
-            cloned_database.save()
-        except:
-            transaction.rollback()
-            raise
-        else:
-            transaction.commit()
-            #call task
-            from notification.tasks import clone_database
-            result = clone_database.delay(database, cloned_database, user=user)
+    def clone(cls, database, clone_name, user):
+        #try:
+        #    cloned_database = Database.objects.get(pk=database.pk)
+        #    cloned_database.name = clone_name
+        #    cloned_database.pk = None
+        #    if not databaseinfra:
+        #        cloned_database.databaseinfra = DatabaseInfra.best_for(database.plan, database.environment)
+        #    else:
+        #        cloned_database.databaseinfra = databaseinfra
+        #    cloned_database.save()
+        #except:
+        #    transaction.rollback()
+        #    raise
+        #else:
+        #    transaction.commit()
+        #    #call task
+        #    from notification.tasks import clone_database
+        #    result = clone_database.delay(database, cloned_database, user=user)
+        from notification.tasks import clone_database
+        result = clone_database.delay(database, clone_name, user=user)
 
 
 class Credential(BaseModel):

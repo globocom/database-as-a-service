@@ -3,7 +3,7 @@ from __future__ import absolute_import, unicode_literals
 from rest_framework import viewsets, serializers, status
 from rest_framework.response import Response
 from logical import models
-from physical.models import Plan, Environment
+from physical.models import Plan, Environment, DatabaseInfra
 
 
 class DatabaseSerializer(serializers.HyperlinkedModelSerializer):
@@ -82,7 +82,8 @@ class DatabaseAPI(viewsets.ModelViewSet):
         if serializer.is_valid():
             self.pre_save(serializer.object)
             data = serializer.restore_fields(request.DATA, request.FILES)
-            self.object = models.Database.provision(data['name'], data['plan'], data['environment'])
+            databaseinfra = DatabaseInfra.best_for(data['plan'], data['environment'])
+            self.object = models.Database.provision(data['name'], databaseinfra)
             data = serializer.to_native(self.object)
             self.post_save(self.object, created=True)
             headers = self.get_success_headers(data)

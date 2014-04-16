@@ -17,6 +17,7 @@ from drivers import factory_for
 from django.db.models import Sum, Count
 
 from physical.models import DatabaseInfra
+from logical.models import Database
 from account.models import Team
 
 LOG = get_task_logger(__name__)
@@ -33,24 +34,55 @@ def rollback_database(dest_database):
     dest_database.is_in_quarantine = True
     dest_database.save()
     dest_database.delete()
-
-@app.task(bind=True)
-def clone_database(self, origin_database, dest_database, user=None):
     
+@app.task(bind=True)
+
+def create_database(self, name, plan, environment, team, project, description, user=None):
+    #register History
+    task_history = TaskHistory.register(request=self.request, user=user)
+    LOG.info("id: %s | task: %s | kwargs: %s | args: %s" % (self.request.id, self.request.task, self.request.kwargs, str(self.request.args)))    
+
+    databaseinfra = DatabaseInfra.best_for(plan, environment)
+    if not databaseinfra:
+        error = "There is not any infra-structure to allocate this database."
+        LOG.error("task id %s error: %s" % (self.request.id, error))
+        task_history.update_status_for(TaskHistory.STATUS_ERROR, details=error)
+        return
+        
+    database = Database.provision(name, databaseinfra)
+    database.team = team
+    database.project = project
+    database.description = description
+    database.save()
+    task_history.update_status_for(TaskHistory.STATUS_SUCCESS, details='Database created successfully')
+    return
+    
+@app.task(bind=True)
+def clone_database(self, origin_database, clone_name, user=None):
     #register History
     task_history = TaskHistory.register(request=self.request, user=user)
     
     LOG.info("origin_database: %s" % origin_database)
+
+    dest_database = Database.objects.get(pk=origin_database.pk)
+    dest_database.name = clone_name
+    dest_database.pk = None
+    databaseinfra = DatabaseInfra.best_for(origin_database.plan, origin_database.environment)
+
+    if not databaseinfra:
+        error = "There is not any infra-structure to allocate this database."
+        LOG.error("task id %s error: %s" % (self.request.id, error))
+        task_history.update_status_for(TaskHistory.STATUS_ERROR, details=error)
+        return
+    
+    dest_database.databaseinfra = databaseinfra
+    dest_database.save()
     LOG.info("dest_database: %s" % dest_database)
-    # task_state = self.AsyncResult(self.request.id).state)
-    LOG.info("id: %s | task: %s | kwargs: %s | args: %s" % (self.request.id,
-                                                            self.request.task,
-                                                            self.request.kwargs,
-                                                            str(self.request.args)))
-
-    args = get_clone_args(origin_database, dest_database)
-
+    
+    LOG.info("id: %s | task: %s | kwargs: %s | args: %s" % (self.request.id, self.request.task, self.request.kwargs, str(self.request.args)))    
+    
     try:
+        args = get_clone_args(origin_database, dest_database)
         script_name = factory_for(origin_database.databaseinfra).clone()
         return_code, output = call_script(script_name, working_dir=settings.SCRIPTS_PATH, args=args, split_lines=False)
         LOG.info("%s - return code: %s" % (self.request.id, return_code))
