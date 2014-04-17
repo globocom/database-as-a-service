@@ -18,10 +18,10 @@ class IaaSManager():
             CloudStackProvider().destroy_instance(database, *args, **kwargs)
             
     @classmethod 
-    def create_instance(cls, plan, environment):
+    def create_instance(cls, plan, environment, name):
         if plan.provider == plan.PREPROVISIONED:
             LOG.info("Creating pre provisioned instance...")
             return PreProvisionedProvider().create_instance(plan, environment)
         elif plan.provider == plan.CLOUDSTACK:
             LOG.info("Creating cloud stack instance...")
-            return CloudStackProvider().create_instance(plan, environment)        
+            return CloudStackProvider().create_instance(plan, environment, name)        

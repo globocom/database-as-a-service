@@ -82,7 +82,7 @@ class DatabaseAPI(viewsets.ModelViewSet):
         if serializer.is_valid():
             self.pre_save(serializer.object)
             data = serializer.restore_fields(request.DATA, request.FILES)
-            databaseinfra = DatabaseInfra.best_for(data['plan'], data['environment'])
+            databaseinfra = DatabaseInfra.best_for(data['plan'], data['environment'], data['name'])
             self.object = models.Database.provision(data['name'], databaseinfra)
             data = serializer.to_native(self.object)
             self.post_save(self.object, created=True)

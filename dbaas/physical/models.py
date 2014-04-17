@@ -200,10 +200,10 @@ class DatabaseInfra(BaseModel):
         return datainfras
 
     @classmethod
-    def best_for(cls, plan, environment):
+    def best_for(cls, plan, environment, name):
         """ Choose the best DatabaseInfra for another database """
         from integrations.iaas.manager import IaaSManager
-        return IaaSManager.create_instance(plan=plan, environment=environment)
+        return IaaSManager.create_instance(plan=plan, environment=environment, name=name)
         
     def check_instances_status(self):
         status = []

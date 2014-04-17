@@ -42,7 +42,7 @@ def create_database(self, name, plan, environment, team, project, description, u
     task_history = TaskHistory.register(request=self.request, user=user)
     LOG.info("id: %s | task: %s | kwargs: %s | args: %s" % (self.request.id, self.request.task, self.request.kwargs, str(self.request.args)))    
 
-    databaseinfra = DatabaseInfra.best_for(plan, environment)
+    databaseinfra = DatabaseInfra.best_for(plan, environment, name)
     if not databaseinfra:
         error = "There is not any infra-structure to allocate this database."
         LOG.error("task id %s error: %s" % (self.request.id, error))
@@ -67,7 +67,7 @@ def clone_database(self, origin_database, clone_name, user=None):
     dest_database = Database.objects.get(pk=origin_database.pk)
     dest_database.name = clone_name
     dest_database.pk = None
-    databaseinfra = DatabaseInfra.best_for(origin_database.plan, origin_database.environment)
+    databaseinfra = DatabaseInfra.best_for(origin_database.plan, origin_database.environment, clone_name)
 
     if not databaseinfra:
         error = "There is not any infra-structure to allocate this database."

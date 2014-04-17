@@ -21,14 +21,14 @@ class DatabaseInfraTestCase(TestCase):
     def test_best_for_without_plan_and_environment_options_returns_None(self):
         plan = factory.PlanFactory()
         environment = plan.environments.all()[0]
-        self.assertIsNone(DatabaseInfra.best_for(plan=plan, environment=environment))
+        self.assertIsNone(DatabaseInfra.best_for(plan=plan, environment=environment, name="test"))
 
     def test_best_for_with_only_one_datainfra_per_plan_and_environment(self):
         plan = factory.PlanFactory()
         environment = plan.environments.all()[0]
         datainfra = factory.DatabaseInfraFactory(plan=plan, environment=environment)
         instance = factory.InstanceFactory(address="127.0.0.1", port=27017, databaseinfra=datainfra)
-        self.assertEqual(datainfra, DatabaseInfra.best_for(plan=plan, environment=environment))
+        self.assertEqual(datainfra, DatabaseInfra.best_for(plan=plan, environment=environment, name="test"))
 
     def test_best_for_with_only_two_datainfra_per_plan_and_environment_returns_rounding_robin_them(self):
         plan = factory.PlanFactory()
@@ -39,7 +39,7 @@ class DatabaseInfraTestCase(TestCase):
         instance2 = factory.InstanceFactory(address="127.0.0.2", port=27017, databaseinfra=datainfra2)
         for i in range(10):
             should_choose = (datainfra1, datainfra2)[i%2]
-            choosed = DatabaseInfra.best_for(plan=plan, environment=environment)
+            choosed = DatabaseInfra.best_for(plan=plan, environment=environment, name="test")
             self.assertEqual(should_choose, choosed)
             database = factory_logical.DatabaseFactory(databaseinfra=choosed)
             self.assertEqual(choosed, database.databaseinfra)
@@ -62,9 +62,9 @@ class DatabaseInfraTestCase(TestCase):
         datainfra = factory.DatabaseInfraFactory(plan=plan, environment=environment, capacity=NUMBER_OF_DATABASES_TO_TEST)
         instance = factory.InstanceFactory(address="127.0.0.1", port=27017, databaseinfra=datainfra)
         for i in range(NUMBER_OF_DATABASES_TO_TEST):
-            self.assertEqual(datainfra, DatabaseInfra.best_for(plan=plan, environment=environment))
+            self.assertEqual(datainfra, DatabaseInfra.best_for(plan=plan, environment=environment, name="test"))
             factory_logical.DatabaseFactory(databaseinfra=datainfra)
-        self.assertIsNone(DatabaseInfra.best_for(plan=plan, environment=environment))
+        self.assertIsNone(DatabaseInfra.best_for(plan=plan, environment=environment, name="test"))
 
     @mock.patch.object(FakeDriver, 'info')
     def test_get_info_use_caching(self, info):
