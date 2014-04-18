@@ -27,8 +27,14 @@ class TeamAPI(viewsets.ReadOnlyModelViewSet):
         """
         queryset = models.Team.objects.all()
         username = self.request.QUERY_PARAMS.get('username', None)
-        if username is not None:
-            LOG.info("filtering teams by username %s" % username)
-            queryset = queryset.filter(users__username=username)
+        try:
+            if username is not None:
+                LOG.info("filtering teams by username %s" % username)
+                user = models.AccountUser.objects.get(username=username)
+                queryset = queryset.filter(users__username=username)
+        except:
+            LOG.warning("username %s not found. Returning an empty list of teams." % username)
+            queryset = models.Team.objects.none()
+    
         return queryset
 
