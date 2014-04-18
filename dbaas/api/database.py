@@ -20,12 +20,17 @@ class DatabaseSerializer(serializers.HyperlinkedModelSerializer):
     total_size_in_bytes = serializers.Field(source='total_size')
     used_size_in_bytes = serializers.Field(source='used_size')
     credentials = CredentialSerializer(many=True, read_only=True)
+    status = serializers.SerializerMethodField('get_status')
 
     class Meta:
         model = models.Database
-        fields = ('url', 'id', 'name', 'endpoint', 'plan', 'environment', 'project', 'team',
+        fields = ('url', 'id', 'name', 'endpoint', 'plan', 'environment', 'project', 'team', 'status',
             'quarantine_dt', 'total_size_in_bytes', 'used_size_in_bytes', 'credentials',)
         read_only = ('credentials',)
+
+    def get_status(self, obj):
+        if obj is not None:
+            return obj.database_status.is_alive
 
     def __init__(self, *args, **kwargs):
         super(DatabaseSerializer, self).__init__(*args, **kwargs)
