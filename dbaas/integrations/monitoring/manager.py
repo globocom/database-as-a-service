@@ -1,4 +1,4 @@
-from dbmonitor.provider import DBMonitorProvider
+from dbaas_dbmonitor.provider import DBMonitorProvider
 import logging
 
 LOG = logging.getLogger(__name__)

@@ -195,7 +195,7 @@ INSTALLED_APPS = (
     'dbaas_cloudstack',
     'dbaas_credentials',
     'dbaas_nfsaas',
-    'integrations.monitoring.dbmonitor'
+    'dbaas_dbmonitor'
 )
 
 

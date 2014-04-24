@@ -2,7 +2,7 @@
 from __future__ import absolute_import, unicode_literals
 from django.contrib import admin
 from dbaas_nfsaas.models import EnvironmentAttr
-from integrations.monitoring.dbmonitor.models import EnvironmentAttr as EnvironmentDBMonitorAttr
+from dbaas_dbmonitor.models import EnvironmentAttr as EnvironmentDBMonitorAttr
 
 
 class EnvironmentAttrInline(admin.StackedInline):
