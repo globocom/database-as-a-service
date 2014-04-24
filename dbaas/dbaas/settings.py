@@ -196,6 +196,7 @@ INSTALLED_APPS = (
     'dbaas_credentials',
     'dbaas_nfsaas',
     'dbaas_dbmonitor'
+    'dbaas_zabbix',
 )
 
 
