@@ -52,5 +52,6 @@ sphinx-me==0.2.1
 urllib3==1.7.1
 wsgiref==0.1.2
 dbaas-cloudstack==0.0.5
-dbaas-credentials==0.6.0
+dbaas-credentials==0.8.0
 dbaas-nfsaas==0.2.0
+dbaas-dbmonitor=0.0.1
