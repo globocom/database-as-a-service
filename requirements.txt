@@ -54,4 +54,4 @@ wsgiref==0.1.2
 dbaas-cloudstack==0.0.5
 dbaas-credentials==0.7.0
 dbaas-nfsaas==0.2.0
-dbaas_zabbix==0.0.2
+dbaas-zabbix==0.0.3
