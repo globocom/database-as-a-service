@@ -276,6 +276,7 @@ class Credential(BaseModel):
         credential = Credential()
         credential.database = database
         credential.user = user[:cls.USER_MAXIMUM_LENGTH_NAME]
+        credential.user = slugify(credential.user)
         credential.password = make_db_random_password()
         credential.full_clean()
         credential.driver.create_user(credential)
@@ -339,9 +340,6 @@ def database_pre_save(sender, **kwargs):
 @receiver(pre_save, sender=Credential)
 def credential_pre_save(sender, **kwargs):
     credential = kwargs.get('instance')
-
-    #slugify user
-    credential.user = slugify(credential.user)
 
     if credential.id:
         saved_object = Credential.objects.get(id=credential.id)
