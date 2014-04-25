@@ -10,7 +10,7 @@ class CredentialSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = models.Credential
-        fields = ('url', 'id', 'user', 'database',)
+        fields = ('url', 'id', 'user', 'database', 'password',)
         read_only = ('user', 'database',)
 
     def save_object(self, obj, force_insert=False, **kwargs):

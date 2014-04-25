@@ -43,7 +43,12 @@ if settings.CLOUD_STACK_ENABLED:
     from .integration_credential import IntegrationCredentialAPI
     router.register(r'integration_credential', IntegrationCredentialAPI, base_name="integration_credential")
 
+# account
+from .team import TeamAPI
+router.register(r'team', TeamAPI)
 
+from .user import UserAPI
+router.register(r'user', UserAPI)
 
 
 
