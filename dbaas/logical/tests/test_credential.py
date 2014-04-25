@@ -26,7 +26,7 @@ class CredentialTestCase(TestCase):
 
     def test_slugify_user_credential(self):
 
-        credential = Credential.objects.create(user="a b c", password="super", database=self.database)
+        credential = Credential.create_new_credential(user="a b c", database=self.database)
 
         self.assertTrue(credential.pk)
         self.assertEqual(credential.user, 'a_b_c')
