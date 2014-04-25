@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.0.13
+* cloudstack integration
+* zabbix integration
+* bug fix: credential user should be equal to the db
+* credential manager
+
 ## 0.0.12
 * show endpoint on database edit page
 * bug fix: emails were not being sent
