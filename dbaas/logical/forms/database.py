@@ -6,7 +6,7 @@ from django.forms import models
 from django import forms
 from ..models import Database, Credential, Project
 from physical.models import Plan, Environment, DatabaseInfra, Engine
-from physical.tests.factory import DatabaseInfraFactory
+from drivers.factory import DriverFactory
 from account.models import Team
 
 from .fields import AdvancedModelChoiceField
@@ -34,12 +34,8 @@ class CloneDatabaseForm(forms.Form):
                 LOG.warning("The database alocation limit of %s has been exceeded for the team: %s => %s" % (database_alocation_limit, origindatabase.team, list(dbs)))
                 raise forms.ValidationError([_("The database alocation limit of %s has been exceeded for the team:  %s => %s") % (database_alocation_limit, origindatabase.team, list(dbs))])
 
-            LOG.info("Creating fake_infra...")
-            fake_infra = DatabaseInfraFactory(plan= origindatabase.plan, environment=origindatabase.environment, engine= origindatabase.plan.engines[0] )
-            LOG.info("Deleting fake_infra...")
-            fake_infra.delete()
-
-            if cleaned_data['database_clone'] in fake_infra.get_driver().RESERVED_DATABASES_NAME:
+            driver = DriverFactory.get_driver_class(origindatabase.plan.engines[0].name)
+            if cleaned_data['database_clone'] in driver.RESERVED_DATABASES_NAME:
                 raise forms.ValidationError(_("%s is a reserved database name" % cleaned_data['database_clone']))
             
             if self._errors:
@@ -128,12 +124,8 @@ class DatabaseForm(models.ModelForm):
             if infra.databases.filter(name=cleaned_data['name']):
                 self._errors["name"] = self.error_class([_("this name already exists in the selected environment")])
 
-        LOG.info("Creating fake_infra...")
-        fake_infra = DatabaseInfraFactory(plan= plan, environment=environment, engine= plan.engines[0])
-        LOG.info("Deleting fake_infra...")
-        fake_infra.delete()
-
-        if 'name' in cleaned_data and cleaned_data['name'] in fake_infra.get_driver().RESERVED_DATABASES_NAME:
+        driver = DriverFactory.get_driver_class(plan.engines[0].name)
+        if 'name' in cleaned_data and cleaned_data['name'] in driver.RESERVED_DATABASES_NAME:
             raise forms.ValidationError(_("%s is a reserved database name" % cleaned_data['name']))
         
         if self._errors:
