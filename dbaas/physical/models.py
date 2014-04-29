@@ -85,6 +85,7 @@ class Plan(BaseModel):
     is_default = models.BooleanField(verbose_name=_("Is plan default"),
                                      default=False,
                                      help_text=_("Check this option if this the default plan. There can be only one..."))
+    is_ha  = models.BooleanField(verbose_name=_("Is plan HA"), default=False)
     engine_type = models.ForeignKey(EngineType, verbose_name=_("Engine Type"), related_name='plans')
     environments = models.ManyToManyField(Environment)
     provider = models.IntegerField(choices=PROVIDER_CHOICES,
@@ -93,6 +94,9 @@ class Plan(BaseModel):
     @property
     def engines(self):
         return Engine.objects.filter(engine_type_id=self.engine_type_id)
+
+    def __unicode__(self):
+        return "%s" % (self.name)
 
 
     class Meta:
