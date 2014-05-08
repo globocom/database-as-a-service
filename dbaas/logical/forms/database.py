@@ -27,6 +27,9 @@ class CloneDatabaseForm(forms.Form):
                 if infra.databases.filter(name=cleaned_data['database_clone']):
                     self._errors["database_clone"] = self.error_class([_("this name already exists in the selected environment")])
 
+            if len(cleaned_data['database_clone']) > 40:
+                self._errors["database_clone"] = self.error_class([_("Database name too long")])
+            
             dbs = origindatabase.team.databases_in_use_for(origindatabase.environment)
             database_alocation_limit = origindatabase.team.database_alocation_limit
             LOG.debug("dbs: %s | type: %s" % (dbs, type(dbs)))
@@ -99,7 +102,7 @@ class DatabaseForm(models.ModelForm):
         if not self.is_valid():
             raise forms.ValidationError(self.errors)
 
-        if len(cleaned_data['name']) > 64:
+        if len(cleaned_data['name']) > 40:
             self._errors["name"] = self.error_class([_("Database name too long")])
 
         if 'plan' in cleaned_data:
