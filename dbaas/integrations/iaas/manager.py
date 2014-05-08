@@ -1,5 +1,6 @@
 from dbaas_cloudstack.provider import CloudStackProvider
 from pre_provisioned.pre_provisioned_provider import  PreProvisionedProvider
+from integrations.monitoring.manager import MonitoringManager
 import logging
 
 LOG = logging.getLogger(__name__)
@@ -15,6 +16,7 @@ class IaaSManager():
             PreProvisionedProvider().destroy_instance(database, *args, **kwargs)
         elif provider == plan.CLOUDSTACK:
             LOG.info("Destroying cloud stack instance...")
+            MonitoringManager.remove_monitoring(database.databaseinfra)
             CloudStackProvider().destroy_instance(database, *args, **kwargs)
             
     @classmethod 
@@ -24,4 +26,7 @@ class IaaSManager():
             return PreProvisionedProvider().create_instance(plan, environment)
         elif plan.provider == plan.CLOUDSTACK:
             LOG.info("Creating cloud stack instance...")
-            return CloudStackProvider().create_instance(plan, environment, name)        
+            databaseinfra = CloudStackProvider().create_instance(plan, environment, name)
+            if databaseinfra is not None:
+                MonitoringManager.create_monitoring(databaseinfra)
+            return databaseinfra
