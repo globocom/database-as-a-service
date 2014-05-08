@@ -56,4 +56,4 @@ dbaas_credentials==0.9.0
 dbaas_nfsaas==0.3.0
 dbaas_zabbix==0.0.4
 dbaas_dbmonitor==0.0.1
-dbaas_flipper==0.0.4
+dbaas_flipper==0.0.5
