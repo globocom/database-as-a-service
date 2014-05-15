@@ -2,6 +2,7 @@
 #from django.conf.urls import patterns, url, include
 from rest_framework.routers import DefaultRouter
 from django.http import HttpResponseRedirect
+from django.conf.urls import patterns, url
 
 
 # class MyRouter(DefaultRouter):
@@ -35,6 +36,9 @@ router.register(r'database', DatabaseAPI)
 from .credential import CredentialAPI
 router.register(r'credential', CredentialAPI)
 
+from .task import TaskAPI
+router.register(r'task', TaskAPI, base_name="task")
+
 from django.conf import settings
 if settings.CLOUD_STACK_ENABLED:
     from .integration_type import CredentialTypeAPI
@@ -53,6 +57,9 @@ router.register(r'user', UserAPI)
 
 
 urlpatterns = router.urls
+
+#from .task import TaskDetail
+#urlpatterns += patterns( url('^task/(?P<task_id>.+)/$', TaskDetail.as_view()), )
 
 # urlpatterns = patterns(
 #     '',
