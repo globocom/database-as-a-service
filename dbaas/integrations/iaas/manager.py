@@ -16,7 +16,8 @@ class IaaSManager():
             PreProvisionedProvider().destroy_instance(database, *args, **kwargs)
         elif provider == plan.CLOUDSTACK:
             LOG.info("Destroying cloud stack instance...")
-            MonitoringManager.remove_monitoring(database.databaseinfra)
+            if database.is_in_quarantine:
+                MonitoringManager.remove_monitoring(database.databaseinfra)
             CloudStackProvider().destroy_instance(database, *args, **kwargs)
             
     @classmethod 
