@@ -30,4 +30,6 @@ class IaaSManager():
             databaseinfra = CloudStackProvider().create_instance(plan, environment, name)
             if databaseinfra is not None:
                 MonitoringManager.create_monitoring(databaseinfra)
+                databaseinfra.per_database_size_mbytes = plan.max_db_size
+                databaseinfra.save()
             return databaseinfra
