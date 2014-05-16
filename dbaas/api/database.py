@@ -96,23 +96,37 @@ class DatabaseAPI(viewsets.ModelViewSet):
             self.pre_save(serializer.object)
             data = serializer.restore_fields(request.DATA, request.FILES)
 
-            from notification.tasks import create_database
+            if data['plan'] == data['plan'].CLOUDSTACK:
+                from notification.tasks import create_database
 
-            result = create_database.delay(data['name'],
-                                               data['plan'],
-                                               data['environment'],
-                                               data['team'],
-                                               data['project'],
-                                               data['description'],
-                                               request.user)
-    
-            #data = serializer.to_native(self.object)
-            #self.post_save(self.object, created=True)
-            headers = self.get_success_headers(data)
-
-            task_url = Site.objects.get_current().domain + '/api/task?task_id=%s' %  str(result.id)
-
-            return Response({"task":task_url}, status=status.HTTP_201_CREATED,
-                            headers=headers)
+                result = create_database.delay(data['name'],
+                                                   data['plan'],
+                                                   data['environment'],
+                                                   data['team'],
+                                                   data['project'],
+                                                   data['description'],
+                                                   request.user)
         
+                #data = serializer.to_native(self.object)
+                #self.post_save(self.object, created=True)
+                headers = self.get_success_headers(data)
+
+                task_url = Site.objects.get_current().domain + '/api/task?task_id=%s' %  str(result.id)
+
+                return Response({"task":task_url}, status=status.HTTP_201_CREATED,
+                                headers=headers)
+            else:
+                self.pre_save(serializer.object)
+                data = serializer.restore_fields(request.DATA, request.FILES)
+
+                databaseinfra = DatabaseInfra.best_for(data['plan'], data['environment'], data['name'])
+                self.object = models.Database.provision(data['name'], databaseinfra)
+                self.object.team = data['team']
+                self.object.project = data['project']
+                self.object.save()
+                data = serializer.to_native(self.object)
+                self.post_save(self.object, created=True)
+                headers = self.get_success_headers(data)
+                return Response(data, status=status.HTTP_201_CREATED,
+                            headers=headers)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
