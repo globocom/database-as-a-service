@@ -6,7 +6,7 @@ from ..service.plan import PlanService
 from ..models import PlanAttribute
 from dbaas_cloudstack.models import PlanAttr
 from dbaas_nfsaas.models import PlanAttr as PlanAttrNfsaas
-from integrations.iaas.dnsapi.models import PlanAttr as PlanAttrDNSAPI
+from dbaas_dnsapi.models import PlanAttr as PlanAttrDNSAPI
 from .. import forms
 
 

@@ -1,7 +1,7 @@
 from dbaas_cloudstack.provider import CloudStackProvider
 from pre_provisioned.pre_provisioned_provider import  PreProvisionedProvider
 from integrations.monitoring.manager import MonitoringManager
-from dnsapi.provider import DNSAPIProvider
+from dbaas_dnsapi.provider import DNSAPIProvider
 import logging
 
 LOG = logging.getLogger(__name__)
