@@ -41,7 +41,7 @@ class InstanceModelFormSet(BaseInlineFormSet):
                         databaseinfra.endpoint = self.get_endpoint(cleaned_data)
                     databaseinfra.endpoint_dns = None
                     if not is_deleted:
-                        databaseinfra_dns.endpoint = self.get_endpoint_dns(cleaned_data)
+                        databaseinfra.endpoint_dns = self.get_endpoint_dns(cleaned_data)
                 elif step > 0 and databaseinfra:
                     if databaseinfra.endpoint and not is_deleted:
                         databaseinfra.endpoint = "%s,%s" % (databaseinfra.endpoint, 
