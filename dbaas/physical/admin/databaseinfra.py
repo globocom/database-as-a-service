@@ -15,14 +15,14 @@ from util.html import render_progress_bar
 class DatabaseInfraAttrInline(django_admin.TabularInline):
     model = DatabaseInfraAttr
     max_num = 2
-    fields = ('ip', 'is_write',)
+    fields = ('ip', 'dns', 'is_write',)
     template = 'admin/physical/shared/inline_form.html'
     def has_delete_permission(self, request, obj=None):
         return False
 
 class InstanceAdmin(django_admin.TabularInline):
     model = Instance
-    fields = ('hostname', 'address', 'port', 'is_active', 'is_arbiter')
+    fields = ('hostname', 'dns', 'address', 'port', 'is_active', 'is_arbiter')
     # max_num = 1
     # can_delete = False
     extra = 1

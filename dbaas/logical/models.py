@@ -143,7 +143,11 @@ class Database(BaseModel):
     def get_endpoint(self):
         return self.driver.get_connection(database=self)
 
+    def get_endpoint_dns(self):
+        return self.driver.get_connection_dns(database=self)
+
     endpoint = property(get_endpoint)
+    endpoint_dns = property(get_endpoint_dns)
 
     @cached_property
     def database_status(self):

@@ -117,15 +117,19 @@ DatabaseInfra.prototype = {
         // only hide if it is not mongo or if no engine is selected
         if ((engine_name.match(/mongo/g) || engine_id == "none" )) {
             var endpoint = $(".control-group.field-endpoint");
+            var endpoint_dns = $(".control-group.field-endpoint_dns");
             if (endpoint.is(":visible")) {
                 endpoint.hide();
+                endpoint_dns.hide();
             };
         };
     },
     show_endpoint: function() {
         var endpoint = $(".control-group.field-endpoint");
+        var endpoint_dns = $(".control-group.field-endpoint_dns");
         if (! endpoint.is(":visible")) {
             endpoint.show();
+            endpoint_dns.show();
         };
     },
 };

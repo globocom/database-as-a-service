@@ -12,21 +12,26 @@
 
         $("#cs_plan_attributes-group").hide();
         $("#nfsaas_plan_attributes-group").hide();
+        $("#dnsapi_plan_attributes-group").hide();
         if ($("#id_provider").val() == 1){
             $("#cs_plan_attributes-group").show();
             $("#nfsaas_plan_attributes-group").show();
+            $("#dnsapi_plan_attributes-group").show();
         }else{
             $("#cs_plan_attributes-group").hide();
             $("#nfsaas_plan_attributes-group").hide();
+            $("#dnsapi_plan_attributes-group").hide();
         }
     
         $("#id_provider").change(function() {
             if (this.value == 1){
                 $("#cs_plan_attributes-group").show();
                 $("#nfsaas_plan_attributes-group").show();
+                $("#dnsapi_plan_attributes-group").show();
             }else{
                 $("#cs_plan_attributes-group").hide();
                 $("#nfsaas_plan_attributes-group").hide();
+                $("#dnsapi_plan_attributes-group").hide();
             }
         });
     });

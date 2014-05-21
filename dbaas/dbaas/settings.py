@@ -197,6 +197,7 @@ INSTALLED_APPS = (
     'dbaas_nfsaas',
     'dbaas_dbmonitor',
     'dbaas_zabbix',
+    'integrations.iaas.dnsapi',
 )
 
 

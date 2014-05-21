@@ -118,7 +118,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
     def name_html(self, database):
         try:
-            ed_point = escape(database.get_endpoint())
+            ed_point = escape(database.get_endpoint_dns())
         except:
             ed_point = None
         html = '%(name)s <a href="javascript:void(0)" title="%(title)s" data-content="%(endpoint)s" class="show-endpoint"><span class="icon-info-sign"></span></a>' % {
