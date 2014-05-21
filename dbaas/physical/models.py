@@ -90,6 +90,9 @@ class Plan(BaseModel):
     environments = models.ManyToManyField(Environment)
     provider = models.IntegerField(choices=PROVIDER_CHOICES,
                                 default=0)
+    max_db_size= models.IntegerField(default=0, 
+                                                    verbose_name=_("Max database size (MB)"), 
+                                                    help_text=_("What is the maximum size of each database (MB). 0 means unlimited."))
 
     @property
     def engines(self):

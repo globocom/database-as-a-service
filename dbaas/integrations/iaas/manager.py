@@ -33,4 +33,6 @@ class IaaSManager():
             if databaseinfra is not None:
                 DNSAPIProvider.create_database_dns(databaseinfra=databaseinfra)
                 MonitoringManager.create_monitoring(databaseinfra)
+                databaseinfra.per_database_size_mbytes = plan.max_db_size
+                databaseinfra.save()
             return databaseinfra
