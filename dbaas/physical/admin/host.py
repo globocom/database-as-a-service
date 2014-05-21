@@ -24,7 +24,7 @@ class HostAttrNfsaasInline(admin.StackedInline):
 class HostAdmin(services_admin.DjangoServicesAdmin):
     service_class = HostService
     search_fields = ("hostname",)
-    list_display = ("hostname", "monitor_url_html",)
+    list_display = ("hostname", "address", "monitor_url_html",)
     save_on_top = True
     
     def monitor_url_html(self, host):

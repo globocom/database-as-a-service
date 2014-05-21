@@ -144,6 +144,13 @@ class DatabaseInfra(BaseModel):
                             blank=True,
                             null=True)
 
+    endpoint_dns = models.CharField(verbose_name=_("DatabaseInfra Endpoint (DNS)"),
+                            max_length=255,
+                            help_text=_("Usually it is in the form host:port[,host_n:port_n]. If the engine is mongodb this will be automatically generated."),
+                            blank=True,
+                            null=True)
+
+
     def __unicode__(self):
         return self.name
 
@@ -250,6 +257,7 @@ class DatabaseInfra(BaseModel):
 
 class Host(BaseModel):
     hostname = models.CharField(verbose_name=_("Hostname"), max_length=255, unique=True)
+    address = models.CharField(verbose_name=_("Host address"), max_length=255, unique=True)
     monitor_url = models.URLField(verbose_name=_("Monitor Url"), max_length=500, blank=True, null=True)
 
     def __unicode__(self):
@@ -263,6 +271,7 @@ class Host(BaseModel):
 
 class Instance(BaseModel):
 
+    dns = models.CharField(verbose_name=_("Instance dns"), max_length=200)
     address = models.CharField(verbose_name=_("Instance address"), max_length=200)
     port = models.IntegerField(verbose_name=_("Instance port"))
     databaseinfra = models.ForeignKey(DatabaseInfra, related_name="instances", on_delete=models.CASCADE)
