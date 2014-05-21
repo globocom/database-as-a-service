@@ -8,15 +8,31 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
+        # Adding field 'Instance.dns'
+        db.add_column(u'physical_instance', 'dns',
+                      self.gf('django.db.models.fields.CharField')(default='', max_length=200),
+                      keep_default=False)
+
         # Adding field 'DatabaseInfra.endpoint_dns'
         db.add_column(u'physical_databaseinfra', 'endpoint_dns',
                       self.gf('django.db.models.fields.CharField')(max_length=255, null=True, blank=True),
                       keep_default=False)
 
+        # Adding field 'Host.address'
+        db.add_column(u'physical_host', 'address',
+                      self.gf('django.db.models.fields.CharField')(default='', max_length=255),
+                      keep_default=False)
+
 
     def backwards(self, orm):
+        # Deleting field 'Instance.dns'
+        db.delete_column(u'physical_instance', 'dns')
+
         # Deleting field 'DatabaseInfra.endpoint_dns'
         db.delete_column(u'physical_databaseinfra', 'endpoint_dns')
+
+        # Deleting field 'Host.address'
+        db.delete_column(u'physical_host', 'address')
 
 
     models = {
@@ -63,7 +79,7 @@ class Migration(SchemaMigration):
         },
         u'physical.host': {
             'Meta': {'object_name': 'Host'},
-            'address': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '255'}),
+            'address': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             'created_at': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
             'hostname': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '255'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
@@ -93,6 +109,7 @@ class Migration(SchemaMigration):
             'is_active': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'is_default': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'is_ha': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'max_db_size': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
             'name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '100'}),
             'provider': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
             'updated_at': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'})
