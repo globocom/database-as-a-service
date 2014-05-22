@@ -29,7 +29,7 @@ class TaskHistory(BaseModel):
     context = models.TextField(null=True, blank=True)
     details = models.TextField(verbose_name=_("Details"), null=True, blank=True)
     arguments = models.TextField(verbose_name=_("Arguments"), null=True, blank=True)
-    db_id =  models.ForeignKey(Database, related_name="database", null=True, blank=True)
+    db_id =  models.ForeignKey(Database, related_name="database", null=True, blank=True, on_delete=models.SET_NULL)
 
     def __unicode__(self):
         return u"%s" % self.task_id
