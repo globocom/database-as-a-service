@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.0.15
+* add cloudstack mysql single and cluster
+
 ## 0.0.14
 * bug fix: databaseinfra form was not listing plans
 
