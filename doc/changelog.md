@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.0.14
+* bug fix: databaseinfra form was not listing plans
+
 ## 0.0.13
 * cloudstack integration
 * zabbix integration
