@@ -1,5 +1,7 @@
 from dbaas_cloudstack.provider import CloudStackProvider
 from pre_provisioned.pre_provisioned_provider import  PreProvisionedProvider
+from integrations.monitoring.manager import MonitoringManager
+from dbaas_dnsapi.provider import DNSAPIProvider
 import logging
 
 LOG = logging.getLogger(__name__)
@@ -15,6 +17,9 @@ class IaaSManager():
             PreProvisionedProvider().destroy_instance(database, *args, **kwargs)
         elif provider == plan.CLOUDSTACK:
             LOG.info("Destroying cloud stack instance...")
+            if database.is_in_quarantine:
+                MonitoringManager.remove_monitoring(database.databaseinfra)
+                DNSAPIProvider.remove_database_dns(environment = database.databaseinfra.environment , databaseinfraid = database.databaseinfra.id)
             CloudStackProvider().destroy_instance(database, *args, **kwargs)
             
     @classmethod 
@@ -24,4 +29,10 @@ class IaaSManager():
             return PreProvisionedProvider().create_instance(plan, environment)
         elif plan.provider == plan.CLOUDSTACK:
             LOG.info("Creating cloud stack instance...")
-            return CloudStackProvider().create_instance(plan, environment, name)        
+            databaseinfra = CloudStackProvider().create_instance(plan, environment, name)
+            if databaseinfra is not None:
+                DNSAPIProvider.create_database_dns(databaseinfra=databaseinfra)
+                MonitoringManager.create_monitoring(databaseinfra)
+                databaseinfra.per_database_size_mbytes = plan.max_db_size
+                databaseinfra.save()
+            return databaseinfra

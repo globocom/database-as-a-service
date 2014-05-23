@@ -35,6 +35,7 @@
     
     // Document READY
     $(function() {
+
         
         var databaseinfra = new DatabaseInfra();
         
@@ -54,6 +55,13 @@
         $("#id_plan").on("change", function(event, initial_environment_id) {
             databaseinfra.update_environments(initial_environment_id);
         });
+
+         if ($("#id_cs_dbinfra_attributes-0-ip").val() == ""){
+            $("#cs_dbinfra_attributes-group").hide();
+        }else{
+            $("#cs_dbinfra_attributes-group").show();
+        }
+
     });
 
 })(django.jQuery);

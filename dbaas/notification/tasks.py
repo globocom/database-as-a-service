@@ -54,6 +54,7 @@ def create_database(self, name, plan, environment, team, project, description, u
     database.project = project
     database.description = description
     database.save()
+    task_history.update_dbid(db=database)
     task_history.update_status_for(TaskHistory.STATUS_SUCCESS, details='Database created successfully')
     return
     
@@ -91,6 +92,7 @@ def clone_database(self, origin_database, clone_name, user=None):
             LOG.error("task id %s - error occurred. Transaction rollback" % self.request.id)
             rollback_database(dest_database)
         else:
+            task_history.update_dbid(db=dest_database)
             task_history.update_status_for(TaskHistory.STATUS_SUCCESS, details=output)
     except SoftTimeLimitExceeded:
         LOG.error("task id %s - timeout exceeded" % self.request.id)

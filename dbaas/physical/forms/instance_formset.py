@@ -13,6 +13,9 @@ class InstanceModelFormSet(BaseInlineFormSet):
     def get_endpoint(self, cleaned_data):
         return "%s:%s" % (cleaned_data.get('address'), cleaned_data.get('port'))
 
+    def get_endpoint_dns(self, cleaned_data):
+        return "%s:%s" % (cleaned_data.get('dns'), cleaned_data.get('port'))
+
     def clean(self):
         super(InstanceModelFormSet, self).clean()
 
@@ -36,12 +39,21 @@ class InstanceModelFormSet(BaseInlineFormSet):
                     databaseinfra.endpoint = None
                     if not is_deleted:
                         databaseinfra.endpoint = self.get_endpoint(cleaned_data)
+                    databaseinfra.endpoint_dns = None
+                    if not is_deleted:
+                        databaseinfra.endpoint_dns = self.get_endpoint_dns(cleaned_data)
                 elif step > 0 and databaseinfra:
                     if databaseinfra.endpoint and not is_deleted:
                         databaseinfra.endpoint = "%s,%s" % (databaseinfra.endpoint, 
                                                                 self.get_endpoint(cleaned_data))
                     elif not databaseinfra.endpoint and not is_deleted:
                         databaseinfra.endpoint = self.get_endpoint(cleaned_data)
+                    
+                    if databaseinfra.endpoint_dns and not is_deleted:
+                        databaseinfra.endpoint_dns = "%s,%s" % (databaseinfra.endpoint_dns, 
+                                                                self.get_endpoint_dns(cleaned_data))
+                    elif not databaseinfra.endpoint_dns and not is_deleted:
+                        databaseinfra.endpoint_dns = self.get_endpoint_dns(cleaned_data)
 
             if cleaned_data and not is_deleted:
                 completed += 1
@@ -66,6 +78,7 @@ class InstanceModelFormSet(BaseInlineFormSet):
                 databaseinfra = cleaned_data.get('databaseinfra', None)
                 if not is_deleted:
                     databaseinfra.endpoint = self.get_endpoint(cleaned_data)
+                    databaseinfra.endpoint_dns = self.get_endpoint_dns(cleaned_data)
         else: #if has 2 or more instances and it is not mongodb, check if endpoint were set
             for cleaned_data in self.cleaned_data:
 
@@ -76,3 +89,5 @@ class InstanceModelFormSet(BaseInlineFormSet):
                 if databaseinfra.engine.name != "mongodb":
                     if not databaseinfra.endpoint:
                         raise ValidationError(_("You have 2 or more instances and dit not specify an endpoint"))
+                    if not databaseinfra.endpoint_dns:
+                        raise ValidationError(_("You have 2 or more instances and dit not specify an endpoint dns"))

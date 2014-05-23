@@ -6,13 +6,23 @@ from django_services import admin
 from ..service.databaseinfra import DatabaseInfraService
 from ..models import Instance
 from ..forms import DatabaseInfraForm, InstanceModelFormSet
+from dbaas_cloudstack.models import DatabaseInfraAttr
+
 
 from util.html import render_progress_bar
 
 
+class DatabaseInfraAttrInline(django_admin.TabularInline):
+    model = DatabaseInfraAttr
+    max_num = 2
+    fields = ('ip', 'dns', 'is_write',)
+    template = 'admin/physical/shared/inline_form.html'
+    def has_delete_permission(self, request, obj=None):
+        return False
+
 class InstanceAdmin(django_admin.TabularInline):
     model = Instance
-    fields = ('hostname', 'address', 'port', 'is_active', 'is_arbiter')
+    fields = ('hostname', 'dns', 'address', 'port', 'is_active', 'is_arbiter')
     # max_num = 1
     # can_delete = False
     extra = 1
@@ -30,7 +40,8 @@ class DatabaseInfraAdmin(admin.DjangoServicesAdmin):
     change_form_template = "admin/physical/databaseinfra/change_form.html"
     
     inlines = [
-        InstanceAdmin
+        InstanceAdmin,
+        DatabaseInfraAttrInline,
     ]
 
     def capacity_bar(self, datainfra):

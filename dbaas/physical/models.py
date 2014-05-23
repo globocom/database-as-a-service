@@ -85,14 +85,21 @@ class Plan(BaseModel):
     is_default = models.BooleanField(verbose_name=_("Is plan default"),
                                      default=False,
                                      help_text=_("Check this option if this the default plan. There can be only one..."))
+    is_ha  = models.BooleanField(verbose_name=_("Is plan HA"), default=False)
     engine_type = models.ForeignKey(EngineType, verbose_name=_("Engine Type"), related_name='plans')
     environments = models.ManyToManyField(Environment)
     provider = models.IntegerField(choices=PROVIDER_CHOICES,
                                 default=0)
+    max_db_size= models.IntegerField(default=0, 
+                                                    verbose_name=_("Max database size (MB)"), 
+                                                    help_text=_("What is the maximum size of each database (MB). 0 means unlimited."))
 
     @property
     def engines(self):
         return Engine.objects.filter(engine_type_id=self.engine_type_id)
+
+    def __unicode__(self):
+        return "%s" % (self.name)
 
 
     class Meta:
@@ -139,6 +146,13 @@ class DatabaseInfra(BaseModel):
                             help_text=_("Usually it is in the form host:port[,host_n:port_n]. If the engine is mongodb this will be automatically generated."),
                             blank=True,
                             null=True)
+
+    endpoint_dns = models.CharField(verbose_name=_("DatabaseInfra Endpoint (DNS)"),
+                            max_length=255,
+                            help_text=_("Usually it is in the form host:port[,host_n:port_n]. If the engine is mongodb this will be automatically generated."),
+                            blank=True,
+                            null=True)
+
 
     def __unicode__(self):
         return self.name
@@ -246,6 +260,7 @@ class DatabaseInfra(BaseModel):
 
 class Host(BaseModel):
     hostname = models.CharField(verbose_name=_("Hostname"), max_length=255, unique=True)
+    address = models.CharField(verbose_name=_("Host address"), max_length=255)
     monitor_url = models.URLField(verbose_name=_("Monitor Url"), max_length=500, blank=True, null=True)
 
     def __unicode__(self):
@@ -259,6 +274,7 @@ class Host(BaseModel):
 
 class Instance(BaseModel):
 
+    dns = models.CharField(verbose_name=_("Instance dns"), max_length=200)
     address = models.CharField(verbose_name=_("Instance address"), max_length=200)
     port = models.IntegerField(verbose_name=_("Instance port"))
     databaseinfra = models.ForeignKey(DatabaseInfra, related_name="instances", on_delete=models.CASCADE)

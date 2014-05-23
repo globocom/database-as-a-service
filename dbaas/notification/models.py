@@ -6,6 +6,7 @@ from django.db import models
 from django.contrib.auth.models import User, Group
 from django.utils.translation import ugettext_lazy as _
 from django.utils import simplejson
+from logical.models import Database
 
 from util.models import BaseModel
 
@@ -28,6 +29,7 @@ class TaskHistory(BaseModel):
     context = models.TextField(null=True, blank=True)
     details = models.TextField(verbose_name=_("Details"), null=True, blank=True)
     arguments = models.TextField(verbose_name=_("Arguments"), null=True, blank=True)
+    db_id =  models.ForeignKey(Database, related_name="database", null=True, blank=True, on_delete=models.SET_NULL)
 
     def __unicode__(self):
         return u"%s" % self.task_id
@@ -57,6 +59,10 @@ class TaskHistory(BaseModel):
             self.update_ended_at()
         else:
             self.save()
+
+    def update_dbid(self, db):
+        self.db_id = db
+        self.save()
 
     def update_ended_at(self):
         self.ended_at = datetime.now()

@@ -51,8 +51,11 @@ six==1.4.1
 sphinx-me==0.2.1
 urllib3==1.7.1
 wsgiref==0.1.2
-dbaas-cloudstack==0.0.5
-dbaas-credentials==0.8.0
-dbaas-nfsaas==0.2.0
-dbaas-zabbix==0.0.4
-dbaas-dbmonitor==0.0.1
+dbaas_cloudstack==0.2.4
+dbaas_credentials==0.9.5
+dbaas_nfsaas==0.4.1
+dbaas_zabbix==0.0.6
+dbaas_dbmonitor==0.0.4
+dbaas_flipper==0.0.7
+django-filter==0.7
+dbaas_dnsapi==0.0.2
