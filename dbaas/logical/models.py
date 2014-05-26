@@ -146,6 +146,12 @@ class Database(BaseModel):
     def get_endpoint_dns(self):
         return self.driver.get_connection_dns(database=self)
 
+    def get_endpoint_db(self):
+        if self.plan==self.plan.CLOUDSTACK:
+            return self.get_endpoint_dns()
+        else:
+            return self.get_endpoint()
+
     endpoint = property(get_endpoint)
     endpoint_dns = property(get_endpoint_dns)
 
