@@ -84,6 +84,10 @@ class BaseDriver(object):
         """ Connection string for this databaseinfra """
         raise NotImplementedError()
 
+    def get_connection_dns(self, database=None):
+        """ Connection string for this databaseinfra """
+        raise NotImplementedError()
+
     def get_user(self):
         return self.databaseinfra.user
 

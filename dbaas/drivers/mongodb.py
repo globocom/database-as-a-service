@@ -62,6 +62,9 @@ class MongoDB(BaseDriver):
 
         return uri
 
+    def get_connection_dns(self, database=None):
+        return self.get_connection(database=database)
+
     def __get_admin_connection(self, instance=None):
         if instance:
             return "mongodb://%s:%s" % (instance.address, instance.port)
