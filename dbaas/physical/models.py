@@ -101,6 +101,9 @@ class Plan(BaseModel):
     def __unicode__(self):
         return "%s" % (self.name)
 
+    def environment(self):
+        return ', '.join([e.name for e in self.environments.all()])
+
 
     class Meta:
         permissions = (
