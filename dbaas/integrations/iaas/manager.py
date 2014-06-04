@@ -12,28 +12,37 @@ class IaaSManager():
     def destroy_instance(cls, database, *args, **kwargs):
         plan = database.plan
         provider = plan.provider
-        if provider == plan.PREPROVISIONED:
-            LOG.info("Destroying pre provisioned database...")
-            PreProvisionedProvider().destroy_instance(database, *args, **kwargs)
-        elif provider == plan.CLOUDSTACK:
-            LOG.info("Destroying cloud stack instance...")
-            if database.is_in_quarantine:
-                MonitoringManager.remove_monitoring(database.databaseinfra)
-                DNSAPIProvider.remove_database_dns(environment = database.databaseinfra.environment , databaseinfraid = database.databaseinfra.id)
-            CloudStackProvider().destroy_instance(database, *args, **kwargs)
-            
+        try:
+            if provider == plan.PREPROVISIONED:
+                LOG.info("Destroying pre provisioned database...")
+                PreProvisionedProvider().destroy_instance(database, *args, **kwargs)
+            elif provider == plan.CLOUDSTACK:
+                LOG.info("Destroying cloud stack instance...")
+                if database.is_in_quarantine:
+                    MonitoringManager.remove_monitoring(database.databaseinfra)
+                    DNSAPIProvider.remove_database_dns(environment = database.databaseinfra.environment , databaseinfraid = database.databaseinfra.id)
+                CloudStackProvider().destroy_instance(database, *args, **kwargs)
+            return True
+        except Exception, e:
+            LOG.warn("We caught an exception: %s" % e)
+            return False
+
     @classmethod 
     def create_instance(cls, plan, environment, name):
-        if plan.provider == plan.PREPROVISIONED:
-            LOG.info("Creating pre provisioned instance...")
-            return PreProvisionedProvider().create_instance(plan, environment)
-        elif plan.provider == plan.CLOUDSTACK:
-            LOG.info("Creating cloud stack instance...")
-            databaseinfra = CloudStackProvider().create_instance(plan, environment, name)
-            if databaseinfra is not None:
-                DNSAPIProvider.create_database_dns(databaseinfra=databaseinfra)
-                CloudStackProvider.check_nslookup(databaseinfra= databaseinfra)
-                MonitoringManager.create_monitoring(databaseinfra)
-                databaseinfra.per_database_size_mbytes = plan.max_db_size
-                databaseinfra.save()
-            return databaseinfra
+        try:
+            if plan.provider == plan.PREPROVISIONED:
+                LOG.info("Creating pre provisioned instance...")
+                return PreProvisionedProvider().create_instance(plan, environment)
+            elif plan.provider == plan.CLOUDSTACK:
+                LOG.info("Creating cloud stack instance...")
+                databaseinfra = CloudStackProvider().create_instance(plan, environment, name)
+                if databaseinfra is not None:
+                    DNSAPIProvider.create_database_dns(databaseinfra=databaseinfra)
+                    CloudStackProvider.check_nslookup(databaseinfra= databaseinfra)
+                    MonitoringManager.create_monitoring(databaseinfra)
+                    databaseinfra.per_database_size_mbytes = plan.max_db_size
+                    databaseinfra.save()
+                return databaseinfra
+        except Exception, e:
+            LOG.warn("We caught an exception: %s" % e)
+            return None

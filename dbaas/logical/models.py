@@ -97,7 +97,7 @@ class Database(BaseModel):
     def delete(self, *args, **kwargs):
         from integrations.iaas.manager import IaaSManager
 
-        IaaSManager.destroy_instance(database=self, *args, **kwargs)
+        return IaaSManager.destroy_instance(database=self, *args, **kwargs)
         
 
     def clean(self):
@@ -128,9 +128,6 @@ class Database(BaseModel):
         database.save()
         database = Database.objects.get(pk=database.pk)
         return database
-
-    def __get_database_reserved_names(self):
-        return getattr(self.driver, 'RESERVED_DATABASES_NAME', [])
 
     def __get_database_reserved_names(self):
         return getattr(self.driver, 'RESERVED_DATABASES_NAME', [])
