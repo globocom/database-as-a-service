@@ -58,6 +58,7 @@ class Team(BaseModel):
             ("add_role", "Can add role"),
             ("delete_role", "Can delete role"),
         )
+        ordering = ['name']
 
     def __str__(self):
         return self.name

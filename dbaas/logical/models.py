@@ -39,6 +39,7 @@ class Project(BaseModel):
         permissions = (
             ("view_project", "Can view projects"),
         )
+        ordering = ['name']
 
 class DatabaseAliveManager(models.Manager):
     """manager for returning """
