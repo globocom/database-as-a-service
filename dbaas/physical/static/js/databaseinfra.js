@@ -92,7 +92,7 @@ DatabaseInfra.prototype = {
                     alert(data.error);
                 } else {
                     var plan = $("#id_plan");
-                    $.each(data, function(index, item) {
+                    $.each(data.plan, function(index, item) {
                         plan.append($("<option></option>").attr("value", item.id).text(item.name));
                         /* 
                         discover if it is the selected value. This is necessary in cases where the form is submited
