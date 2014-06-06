@@ -76,7 +76,7 @@ class Database(BaseModel):
             ('name', 'databaseinfra'),
         )
         
-        ordering = ('databaseinfra', 'name',)
+        ordering = ('name', 'databaseinfra',)
 
     @property
     def infra(self):
