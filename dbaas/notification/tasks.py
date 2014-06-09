@@ -15,6 +15,7 @@ from .util import get_clone_args
 from .models import TaskHistory
 from drivers import factory_for
 from django.db.models import Sum, Count
+from physical.models import Plan
 
 from physical.models import DatabaseInfra
 from logical.models import Database
@@ -113,13 +114,13 @@ def databaseinfra_notification():
         return
     
     # Sum capacity per databseinfra with parameter plan, environment and engine
-    infras = DatabaseInfra.objects.values('plan__name', 'environment__name', 'engine__engine_type__name').annotate(capacity=Sum('capacity'))
+    infras = DatabaseInfra.objects.values('plan__name', 'environment__name', 'engine__engine_type__name', 'plan__provider').annotate(capacity=Sum('capacity'))
     for infra in infras:
         # total database created in databaseinfra per plan, environment and engine
         used = DatabaseInfra.objects.filter(plan__name=infra['plan__name'], environment__name=infra['environment__name'], engine__engine_type__name=infra['engine__engine_type__name']).aggregate(used=Count('databases'))
         # calculate the percentage
         percent = int(used['used'] * 100 / infra['capacity'])
-        if percent >= threshold_infra_notification:
+        if percent >= threshold_infra_notification and infra['plan__provider'] != Plan.CLOUDSTACK:
             LOG.info('Plan %s in environment %s with %s%% occupied' % (infra['plan__name'], infra['environment__name'],percent))
             LOG.info("Sending database infra notification...")
             context={}
