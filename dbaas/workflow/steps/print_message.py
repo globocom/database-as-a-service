@@ -1,6 +1,6 @@
+from base import BaseStep
 
-
-class ClassPrintMessage():
+class ClassPrintMessage(BaseStep):
 
 	def do(self, workflow_dict):
 		print workflow_dict['message']
@@ -13,7 +13,7 @@ class ClassPrintMessage():
 
 
 
-class ClassPrintNumber():
+class ClassPrintNumber(BaseStep):
 
 	def do(self, workflow_dict):
 		try:

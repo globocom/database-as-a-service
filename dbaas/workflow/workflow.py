@@ -14,6 +14,7 @@ def start_workflow(workflow_dict):
 				raise Exception
 			
 	except Exception, e:
+		print e
 		workflow_dict['steps'] = workflow_dict['steps'][:step_counter]
 		stop_workflow(workflow_dict)
 
