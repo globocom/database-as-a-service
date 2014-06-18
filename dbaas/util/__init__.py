@@ -4,7 +4,7 @@ from time import sleep
 import paramiko
 import socket
 import re
-from dbaas_credentials.models import Credential, CredentialType
+from dbaas_credentials.models import Credential
 from slugify import slugify as slugify_function
 from django.contrib.auth.models import User
 from django.http import HttpResponse
@@ -47,7 +47,7 @@ def as_json(f):
 
 
 def call_script(script_name, working_dir=None, split_lines=True, args=[], envs={}):
-    
+
     args_copy = []
     for arg in args:
         if arg.startswith("PASSWORD"):
@@ -110,11 +110,11 @@ def call_script(script_name, working_dir=None, split_lines=True, args=[], envs={
         LOG.error("Error running cmdline (exit code %s): %s", return_code, logging_cmdline, exc_info=True)
         if not return_code:
             return_code = 1
-        
+
         return return_code, output
 
 
-def check_nslookup(self, dns_to_check, dns_server, retries= 90, wait= 10):
+def check_nslookup(dns_to_check, dns_server, retries= 90, wait= 10):
     try:
         for attempt in range(0, retries):
             LOG.info("Cheking dns... attempt number %i..." % attempt + 1)
@@ -136,7 +136,7 @@ def check_nslookup(self, dns_to_check, dns_server, retries= 90, wait= 10):
         return None
 
 
-def exec_remote_command(self, server, username, password, command):
+def exec_remote_command(server, username, password, command):
     try:
         LOG.info("Executing command [%s] on remote server %s" % (command, server))
         client = paramiko.SSHClient()
@@ -156,7 +156,7 @@ def exec_remote_command(self, server, username, password, command):
         return None
 
 
-def check_ssh(self, server, username, password, retries=6, wait=30, interval=40):
+def check_ssh(server, username, password, retries=6, wait=30, interval=40):
     username = username
     password = password
     ssh = paramiko.SSHClient()
@@ -171,14 +171,14 @@ def check_ssh(self, server, username, password, retries=6, wait=30, interval=40)
 
             LOG.info("Login attempt number %i on %s " % (attempt+1, server))
 
-            ssh.connect( server, port=22, username=username, 
-                                 password=password, timeout= None, allow_agent= True, 
+            ssh.connect( server, port=22, username=username,
+                                 password=password, timeout= None, allow_agent= True,
                                  look_for_keys= True, compress= False)
             return True
 
-        except (paramiko.ssh_exception.BadHostKeyException, 
-                    paramiko.ssh_exception.AuthenticationException, 
-                    paramiko.ssh_exception.SSHException, 
+        except (paramiko.ssh_exception.BadHostKeyException,
+                    paramiko.ssh_exception.AuthenticationException,
+                    paramiko.ssh_exception.SSHException,
                     socket.error) as e:
 
             if attempt == retries-1:
@@ -190,7 +190,7 @@ def check_ssh(self, server, username, password, retries=6, wait=30, interval=40)
             sleep(interval)
 
 
-def gen_infra_names(self, name, qt):
+def gen_infra_names(name, qt):
     import time
     import re
 
@@ -207,5 +207,5 @@ def gen_infra_names(self, name, qt):
     return names
 
 
-def get_credentials_for(self, environment, credential_type):
-    return Credential.get_credentials(environment= environment, integration= CredentialType.objects.get(type= credential_type))
+def get_credentials_for(environment, credential_type):
+    return Credential.objects.filter(integration_type= credential_type, environments= environment)[0]
