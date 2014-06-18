@@ -4,6 +4,12 @@ DEPLOY_MYSQL_WORKFLOW = (
 	'dbaas_cloudstack.create_vm'
 	)
 
+DEPLOY_VIRTUALMACHINE = (
+            'workflow.steps.build_databaseinfra.BuildDatabaseInfra',
+            'workflow.steps.create_virtualmachines.CreateVirtualMachine',
+
+
+    )
 
 DEPLOY_MONGO_WORKFLOW = (
 	'util.gen_names',
