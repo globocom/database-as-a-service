@@ -29,16 +29,18 @@ class CreateVirtualMachine(BaseStep):
             cs_plan_attrs = PlanAttr.objects.get(plan=workflow_dict['plan'])
 
             workflow_dict['hosts'] = []
-            workflow_dict['Instances'] = []
+            workflow_dict['instances'] = []
             workflow_dict['databaseinfraattr'] = []
 
 
             for vm_name in workflow_dict['names']['vms']:
+                LOG.debug("Running vm")
                 vm = cs_provider.deploy_virtual_machine( planattr= cs_plan_attrs,
-            					     project_id= cs_credentials.project_id,
+            					     project_id= cs_credentials.project,
             					     vmname= vm_name,)
+                LOG.debug("New virtualmachine: %s" % vm)
 
-                if not vm:
+                if vm==False:
                     return False
 
                 host = Host()
@@ -50,7 +52,7 @@ class CreateVirtualMachine(BaseStep):
                 workflow_dict['hosts'].append(host)
 
                 host_attr = HostAttr()
-                host_attr.vm_id = vm['_id']
+                host_attr.vm_id = vm['virtualmachine'][0]['id']
                 host_attr.vm_user = cs_credentials.user
                 host_attr.vm_password = cs_credentials.password
                 host_attr.host = host
@@ -63,9 +65,10 @@ class CreateVirtualMachine(BaseStep):
                 instance.is_active = True
                 instance.is_arbiter = False
                 instance.hostname = host
+                instance.databaseinfra = workflow_dict['databaseinfra']
                 instance.save()
                 LOG.info("Instance created!")
-                workflow_dict['Instances'].append(instance)
+                workflow_dict['instances'].append(instance)
 
                 if not len(workflow_dict['names']['vms']) > 1:
                     return True
@@ -73,20 +76,20 @@ class CreateVirtualMachine(BaseStep):
                 total = DatabaseInfraAttr.objects.filter(databaseinfra=workflow_dict['databaseinfra']).count()
                 databaseinfraattr = DatabaseInfraAttr()
 
-    	    if total == 0:
-       	        databaseinfraattr.is_write = True
-    	    else:
-    		databaseinfraattr.is_write = False
+    	    	if total == 0:
+       	            databaseinfraattr.is_write = True
+    	    	else:
+    		    databaseinfraattr.is_write = False
 
-    	    reserved_ip= cs_provider.reserve_ip(project_id= cs_credentials.project_id, vm_id=host.vm_id)
-    	    if  not reserved_ip:
+                reserved_ip= cs_provider.reserve_ip(project_id= cs_credentials.project, vm_id=host_attr.vm_id)
+    	        if reserved_ip==False:
                     return False
 
-    	    databaseinfraattr.ip = reserved_ip['secondary_ip']
-    	    databaseinfraattr.cs_ip_id = reserved_ip['cs_ip_id']
-    	    databaseinfraattr.databaseinfra = workflow_dict['databaseinfra']
-    	    databaseinfraattr.save()
-    	    workflow_dict['databaseinfraattr'].append(databaseinfraattr)
+    	        databaseinfraattr.ip = reserved_ip['secondary_ip']
+    	        databaseinfraattr.cs_ip_id = reserved_ip['cs_ip_id']
+    	        databaseinfraattr.databaseinfra = workflow_dict['databaseinfra']
+    	        databaseinfraattr.save()
+    	        workflow_dict['databaseinfraattr'].append(databaseinfraattr)
 
             return True
         except Exception,e :
@@ -106,7 +109,7 @@ class CreateVirtualMachine(BaseStep):
 
             cs_provider = CloudStackProvider(credentials= cs_credentials)
 
-            cs_plan_attrs = PlanAttr.objects.get(plan=workflow_dict['plan'])
+            #cs_plan_attrs = PlanAttr.objects.get(plan=workflow_dict['plan'])
 
             for infra_attr in databaseinfraattr:
                 if not cs_provider.remove_secondary_ips(infra_attr.cs_ip_id):
@@ -119,7 +122,7 @@ class CreateVirtualMachine(BaseStep):
 
                 host_attr = HostAttr.objects.get(host= host)
 
-                cs_provider.destroy_virtual_machine(project_id= cs_plan_attrs.project_id,
+                cs_provider.destroy_virtual_machine(project_id= cs_credentials.project,
                                                                      environment=workflow_dict['environment'],
                                                                      vm_id= host_attr.vm_id)
 
