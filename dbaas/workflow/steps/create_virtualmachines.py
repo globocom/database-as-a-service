@@ -10,7 +10,6 @@ from physical.models import Host, Instance
 LOG = logging.getLogger(__name__)
 
 
-
 class CreateVirtualMachine(BaseStep):
 
     def __unicode__(self):
@@ -22,9 +21,11 @@ class CreateVirtualMachine(BaseStep):
             if not 'environment' in workflow_dict and not 'plan' in workflow_dict:
                 return False
 
-            cs_credentials = get_credentials_for(environment= workflow_dict['environment'], credential_type= CredentialType.CLOUDSTACK)
+            cs_credentials = get_credentials_for(
+                environment=workflow_dict['environment'],
+                credential_type=CredentialType.CLOUDSTACK)
 
-            cs_provider = CloudStackProvider(credentials= cs_credentials)
+            cs_provider = CloudStackProvider(credentials=cs_credentials)
 
             cs_plan_attrs = PlanAttr.objects.get(plan=workflow_dict['plan'])
 
@@ -32,20 +33,21 @@ class CreateVirtualMachine(BaseStep):
             workflow_dict['instances'] = []
             workflow_dict['databaseinfraattr'] = []
 
-
             for vm_name in workflow_dict['names']['vms']:
                 LOG.debug("Running vm")
-                vm = cs_provider.deploy_virtual_machine( planattr= cs_plan_attrs,
-            					     project_id= cs_credentials.project,
-            					     vmname= vm_name,)
+                vm = cs_provider.deploy_virtual_machine(
+                    planattr=cs_plan_attrs,
+                    project_id=cs_credentials.project,
+                    vmname=vm_name,
+                )
                 LOG.debug("New virtualmachine: %s" % vm)
 
-                if vm==False:
+                if not vm:
                     return False
 
                 host = Host()
                 host.address = vm['virtualmachine'][0]['nic'][0]['ipaddress']
-                host.hostname= host.address
+                host.hostname = host.address
                 host.cloud_portal_host = True
                 host.save()
                 LOG.info("Host created!")
@@ -59,8 +61,8 @@ class CreateVirtualMachine(BaseStep):
                 host_attr.save()
                 LOG.info("Host attrs custom attributes created!")
 
-                instance=Instance()
-                instance.address=host.address
+                instance = Instance()
+                instance.address = host.address
                 instance.port = 3306
                 instance.is_active = True
                 instance.is_arbiter = False
@@ -73,64 +75,80 @@ class CreateVirtualMachine(BaseStep):
                 if not len(workflow_dict['names']['vms']) > 1:
                     return True
 
-                total = DatabaseInfraAttr.objects.filter(databaseinfra=workflow_dict['databaseinfra']).count()
+                total = DatabaseInfraAttr.objects.filter(
+                    databaseinfra=workflow_dict['databaseinfra']).count()
                 databaseinfraattr = DatabaseInfraAttr()
 
-    	    	if total == 0:
-       	            databaseinfraattr.is_write = True
-    	    	else:
-    		    databaseinfraattr.is_write = False
+                if total == 0:
+                    databaseinfraattr.is_write = True
+                else:
+                    databaseinfraattr.is_write = False
 
-                reserved_ip= cs_provider.reserve_ip(project_id= cs_credentials.project, vm_id=host_attr.vm_id)
-    	        if reserved_ip==False:
+                reserved_ip = cs_provider.reserve_ip(
+                    project_id=cs_credentials.project,
+                    vm_id=host_attr.vm_id)
+                if not reserved_ip:
                     return False
 
-    	        databaseinfraattr.ip = reserved_ip['secondary_ip']
-    	        databaseinfraattr.cs_ip_id = reserved_ip['cs_ip_id']
-    	        databaseinfraattr.databaseinfra = workflow_dict['databaseinfra']
-    	        databaseinfraattr.save()
-    	        workflow_dict['databaseinfraattr'].append(databaseinfraattr)
+                databaseinfraattr.ip = reserved_ip['secondary_ip']
+                databaseinfraattr.cs_ip_id = reserved_ip['cs_ip_id']
+                databaseinfraattr.databaseinfra = workflow_dict[
+                    'databaseinfra']
+                databaseinfraattr.save()
+                workflow_dict['databaseinfraattr'].append(databaseinfraattr)
 
             return True
-        except Exception,e :
+        except Exception as e:
             print e
             return False
 
-
-
-
     def undo(self, workflow_dict):
+        LOG.info("Running undo...")
         try:
-            if not 'databaseinfra' in workflow_dict and not 'hosts' in  workflow_dict:
+            if not 'databaseinfra' in workflow_dict and not 'hosts' in workflow_dict:
+                LOG.info("We could not find a databaseinfra inside the workflow_dict")
                 return False
 
-            databaseinfraattr = DatabaseInfraAttr.objects.filter(databaseinfra= workflow_dict['databaseinfra'])
-            cs_credentials = get_credentials_for(environment= workflow_dict['environment'], credential_type= CredentialType.CLOUDSTACK)
+            databaseinfraattr = DatabaseInfraAttr.objects.filter(
+                databaseinfra=workflow_dict['databaseinfra'])
 
-            cs_provider = CloudStackProvider(credentials= cs_credentials)
+            cs_credentials = get_credentials_for(
+                environment=workflow_dict['environment'],
+                credential_type=CredentialType.CLOUDSTACK)
 
-            #cs_plan_attrs = PlanAttr.objects.get(plan=workflow_dict['plan'])
+            cs_provider = CloudStackProvider(credentials=cs_credentials)
 
             for infra_attr in databaseinfraattr:
+                LOG.info("Removing secondary_ip for %s" % infra_attr.cs_ip_id)
                 if not cs_provider.remove_secondary_ips(infra_attr.cs_ip_id):
                     return False
 
+                LOG.info("Secondary ip deleted!")
+
                 infra_attr.delete()
+                LOG.info("Databaseinfraattr deleted!")
 
             for instance in workflow_dict['databaseinfra'].instances.all():
                 host = instance.hostname
 
-                host_attr = HostAttr.objects.get(host= host)
+                host_attr = HostAttr.objects.get(host=host)
 
-                cs_provider.destroy_virtual_machine(project_id= cs_credentials.project,
-                                                                     environment=workflow_dict['environment'],
-                                                                     vm_id= host_attr.vm_id)
+                LOG.info("Destroying virtualmachine %s" % host_attr.vm_id)
+                cs_provider.destroy_virtual_machine(
+                    project_id=cs_credentials.project,
+                    environment=workflow_dict['environment'],
+                    vm_id=host_attr.vm_id)
 
                 host_attr.delete()
+                LOG.info("HostAttr deleted!")
+
                 instance.delete()
+                LOG.info("Instance deleted")
+
                 host.delete()
+                LOG.info("Host deleted!")
 
             return True
-        except Exception, e:
+        except Exception as e:
             print e
             return False
