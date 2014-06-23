@@ -7,6 +7,7 @@ DEPLOY_MYSQL_WORKFLOW = (
 DEPLOY_VIRTUALMACHINE = (
             'workflow.steps.build_databaseinfra.BuildDatabaseInfra',
             'workflow.steps.create_virtualmachines.CreateVirtualMachine',
+            'workflow.steps.create_dns.CreateDns'
 
 
     )
