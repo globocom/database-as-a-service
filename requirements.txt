@@ -58,4 +58,4 @@ dbaas_zabbix==0.0.7
 dbaas_dbmonitor==0.0.4
 dbaas_flipper==0.0.7
 django-filter==0.7
-dbaas_dnsapi==0.0.2
+dbaas_dnsapi==0.0.3
