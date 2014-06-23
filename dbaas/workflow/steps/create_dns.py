@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 import logging
 from base import BaseStep
-from dbaas_dnsapi.models import HOST as DNSAPI_HOST, INSTANCE as DNSAPI_INSTANCE, FLIPPER as DNSAPI_FLIPPER
-from dbaas_dnsapi.models import PlanAttr, DatabaseInfraDNSList
-from dbaas_cloudstack.models import Databaseinfraattr
+from dbaas_dnsapi.util import add_dns_record
+from dbaas_dnsapi.provider import DNSAPIProvider
+from dbaas_dnsapi.models import HOST, FLIPPER, INSTANCE
 #from util import get_credentials_for
 
 LOG = logging.getLogger(__name__)
@@ -11,34 +11,41 @@ LOG = logging.getLogger(__name__)
 class CreateDns(BaseStep):
 
     def do(self, workflow_dict):
+
         for infra_attr in workflow_dict['databaseinfraattr']:
 
             if infra_attr.is_write:
-                dnsname = infra_attr.name
+                dnsname = workflow_dict['databaseinfra'].name
             else:
-                dnsname = infra_attr.name + 'r'
+                dnsname = workflow_dict['databaseinfra'].name + '-r'
 
-            planattr = PlanAttr.objects.get(dbaas_plan=workflow_dict['databaseinfra'].plan)
-            if planattr.dnsapi_database_sufix:
-                sufix = '.' + planattr.dnsapi_database_sufix
-            else:
-                sufix = ''
+            dnsname = add_dns_record(databaseinfra= workflow_dict['databaseinfra'],
+                                                     name= dnsname,
+                                                     ip= infra_attr.ip,
+                                                     type= FLIPPER)
 
-            if type == DNSAPI_HOST:
-                domain = planattr.dnsapi_vm_domain
-            else:
-                domain = planattr.dnsapi_database_domain
-                name += sufix
 
-            databaseinfradnslist = DatabaseInfraDNSList(
-                databaseinfra = workflow_dict['databaseinfra'].id,
-                name = dnsname,
-                domain = domain,
-                ip = infra_attr.ip,
-                type = type)
-            databaseinfradnslist.save()
+        for host_name in zip(workflow_dict['hosts'], workflow_dict['names']['vms']):
+            host = host_name[0]
 
-            dnsname = '%s.%s' % (name, domain)
+            host.hostname = add_dns_record(databaseinfra= workflow_dict['databaseinfra'],
+                                                             name= host_name[1],
+                                                             ip= host.addres,
+                                                             type= HOST)
+            host.save()
+
+        for instance_name in zip(workflow_dict['instances'], workflow_dict['names']['vms']):
+            instance = instance_name[0]
+
+            instance.dns = add_dns_record(databaseinfra= workflow_dict['databaseinfra'],
+                                                          name= instance_name[1],
+                                                          ip= instance.addres,
+                                                          type= INSTANCE)
+            instance.save()
+
+
+        DNSAPIProvider.create_database_dns(databaseinfra=workflow_dict['databaseinfra'])
+
 
 
     def undo(self, workflow_dict):
