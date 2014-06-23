@@ -1,52 +1,84 @@
 # -*- coding: utf-8 -*-
 import logging
 from base import BaseStep
-from dbaas_dnsapi.util import add_dns_record
+from dbaas_dnsapi.utils import add_dns_record
 from dbaas_dnsapi.provider import DNSAPIProvider
 from dbaas_dnsapi.models import HOST, FLIPPER, INSTANCE
+from dbaas_dnsapi.models import DatabaseInfraDNSList
 #from util import get_credentials_for
 
 LOG = logging.getLogger(__name__)
 
 class CreateDns(BaseStep):
 
+    def __unicode__(self):
+        return "Creating DNS"
+
     def do(self, workflow_dict):
+        try:
 
-        for infra_attr in workflow_dict['databaseinfraattr']:
+            if 'databaseinfraattr' in workflow_dict:
 
-            if infra_attr.is_write:
-                dnsname = workflow_dict['databaseinfra'].name
-            else:
-                dnsname = workflow_dict['databaseinfra'].name + '-r'
+                LOG.info("Creating dns for databaseinfraattr...")
+                for infra_attr in workflow_dict['databaseinfraattr']:
 
-            dnsname = add_dns_record(databaseinfra= workflow_dict['databaseinfra'],
-                                                     name= dnsname,
-                                                     ip= infra_attr.ip,
-                                                     type= FLIPPER)
+                    if infra_attr.is_write:
+                        dnsname = workflow_dict['databaseinfra'].name
+                    else:
+                        dnsname = workflow_dict['databaseinfra'].name + '-r'
+
+                    dnsname = add_dns_record(databaseinfra= workflow_dict['databaseinfra'],
+                                                             name= dnsname,
+                                                             ip= infra_attr.ip,
+                                                             type= FLIPPER)
+                    infra_attr.dns = dnsname
+                    infra_attr.save()
+
+            LOG.info("Creating dns for hosts...")
+            for host_name in zip(workflow_dict['hosts'], workflow_dict['names']['vms']):
+                host = host_name[0]
+
+                host.hostname = add_dns_record(databaseinfra= workflow_dict['databaseinfra'],
+                                                                 name= host_name[1],
+                                                                 ip= host.address,
+                                                                 type= HOST)
+                host.save()
+
+            LOG.info("Creating dns for instances...")
+            for instance_name in zip(workflow_dict['instances'], workflow_dict['names']['vms']):
+                instance = instance_name[0]
+
+                instance.dns = add_dns_record(databaseinfra= workflow_dict['databaseinfra'],
+                                                              name= instance_name[1],
+                                                              ip= instance.address,
+                                                              type= INSTANCE)
+                instance.save()
 
 
-        for host_name in zip(workflow_dict['hosts'], workflow_dict['names']['vms']):
-            host = host_name[0]
+            LOG.info("Calling dnsapi provider...")
+            DNSAPIProvider.create_database_dns(databaseinfra=workflow_dict['databaseinfra'])
 
-            host.hostname = add_dns_record(databaseinfra= workflow_dict['databaseinfra'],
-                                                             name= host_name[1],
-                                                             ip= host.addres,
-                                                             type= HOST)
-            host.save()
+            return True
 
-        for instance_name in zip(workflow_dict['instances'], workflow_dict['names']['vms']):
-            instance = instance_name[0]
-
-            instance.dns = add_dns_record(databaseinfra= workflow_dict['databaseinfra'],
-                                                          name= instance_name[1],
-                                                          ip= instance.addres,
-                                                          type= INSTANCE)
-            instance.save()
-
-
-        DNSAPIProvider.create_database_dns(databaseinfra=workflow_dict['databaseinfra'])
+        except Exception,e :
+            print e
+            return False
 
 
 
     def undo(self, workflow_dict):
+        try:
+            DNSAPIProvider.remove_database_dns(environment = workflow_dict['environment'],
+                                                                   databaseinfraid = workflow_dict['databaseinfra'].id)
+
+
+            DatabaseInfraDNSList.objects.filter(databaseinfra= workflow_dict['databaseinfra'].id).delete()
+
+            return True
+
+        except Exception,e :
+            print e
+            return False
+
+
         pass
