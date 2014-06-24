@@ -106,7 +106,8 @@ class CreateVirtualMachine(BaseStep):
         LOG.info("Running undo...")
         try:
             if not 'databaseinfra' in workflow_dict and not 'hosts' in workflow_dict:
-                LOG.info("We could not find a databaseinfra inside the workflow_dict")
+                LOG.info(
+                    "We could not find a databaseinfra inside the workflow_dict")
                 return False
 
             databaseinfraattr = DatabaseInfraAttr.objects.filter(
