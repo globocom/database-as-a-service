@@ -49,7 +49,7 @@ class CreateNfs(BaseStep):
                 if not disk:
                     return False
 
-                return True
+            return True
         except Exception, e:
             print e
             return False
