@@ -2,6 +2,7 @@
 import logging
 from base import BaseStep
 from logical.models import Database
+import datetime
 
 
 LOG = logging.getLogger(__name__)
@@ -20,14 +21,20 @@ class BuildDatabase(BaseStep):
 
             LOG.info("Creating Database...")
             database = Database.provision(name= workflow_dict['name'], databaseinfra= workflow_dict['databaseinfra'])
+
+            LOG.info("Database %s created!" % database)
             workflow_dict['database'] = database
 
+            LOG.info("Updating database team")
             database.team = workflow_dict['team']
 
             if 'project' in workflow_dict:
+                LOG.info("Updating database project")
                 database.project = workflow_dict['project']
 
+            LOG.info("Updating database description")
             database.description = workflow_dict['description']
+
             database.save()
 
             return True
@@ -38,9 +45,19 @@ class BuildDatabase(BaseStep):
     def undo(self, workflow_dict):
         try:
 
+            if not 'database' in workflow_dict:
+                return False
+
             LOG.info("Destroying the database....")
 
-            workflow_dict['database'].delete()
+            if not workflow_dict['database'].is_in_quarantine:
+                LOG.info("Putting Database in quarentine...")
+                database = workflow_dict['database']
+                database.is_in_quarantine= True
+                database.quarantine_dt = datetime.datetime.now().date()
+                database.save()
+
+            database.delete()
 
             return True
         except Exception, e:
