@@ -73,29 +73,51 @@ class CreateVirtualMachine(BaseStep):
                 workflow_dict['instances'].append(instance)
 
                 if not len(workflow_dict['names']['vms']) > 1:
+
+                    LOG.info("Updating databaseinfra endpoint...")
+                    databaseinfra = workflow_dict['databaseinfra']
+                    databaseinfra.endpoint = instance.address + ":%i" %(instance.port)
+                    databaseinfra.save()
+                    workflow_dict['databaseinfra'] = databaseinfra
+
                     return True
-
-                total = DatabaseInfraAttr.objects.filter(
-                    databaseinfra=workflow_dict['databaseinfra']).count()
-                databaseinfraattr = DatabaseInfraAttr()
-
-                if total == 0:
-                    databaseinfraattr.is_write = True
-                else:
-                    databaseinfraattr.is_write = False
 
                 reserved_ip = cs_provider.reserve_ip(
                     project_id=cs_credentials.project,
                     vm_id=host_attr.vm_id)
+
                 if not reserved_ip:
                     return False
 
+                total = DatabaseInfraAttr.objects.filter(
+                    databaseinfra=workflow_dict['databaseinfra']).count()
+
+                databaseinfraattr = DatabaseInfraAttr()
+
                 databaseinfraattr.ip = reserved_ip['secondary_ip']
+
+                if total == 0:
+                    databaseinfraattr.is_write = True
+
+                    LOG.info("Updating databaseinfra endpoint...")
+
+                    databaseinfra = workflow_dict['databaseinfra']
+                    databaseinfra.endpoint = databaseinfraattr.ip + ":%i" %(instance.port)
+                    databaseinfra.save()
+
+                    workflow_dict['databaseinfra'] = databaseinfra
+
+                else:
+                    databaseinfraattr.is_write = False
+
+
                 databaseinfraattr.cs_ip_id = reserved_ip['cs_ip_id']
                 databaseinfraattr.databaseinfra = workflow_dict[
                     'databaseinfra']
                 databaseinfraattr.save()
+
                 workflow_dict['databaseinfraattr'].append(databaseinfraattr)
+
 
             return True
         except Exception as e:
