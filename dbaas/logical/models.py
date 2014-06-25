@@ -12,7 +12,7 @@ from django_extensions.db.fields.encrypted import EncryptedCharField
 from django.utils.functional import cached_property
 from util import slugify, make_db_random_password
 from util.models import BaseModel
-from physical.models import DatabaseInfra, Environment, Plan
+from physical.models import DatabaseInfra
 from drivers import factory_for
 from system.models import Configuration
 from datetime import date, timedelta
@@ -58,12 +58,12 @@ class Database(BaseModel):
     is_in_quarantine = models.BooleanField(verbose_name=_("Is database in quarantine?"), default=False)
     quarantine_dt = models.DateField(verbose_name=_("Quarantine date"), null=True, blank=True, editable=False)
     description = models.TextField(verbose_name=_("Description"), null=True, blank=True)
-    
+
     objects = models.Manager()  # The default manager.
     alive = DatabaseAliveManager()  # The alive dbs specific manager.
 
     quarantine_time = Configuration.get_by_name_as_int('quarantine_retention_days')
-    
+
     def __unicode__(self):
         return u"%s" % self.name
 
@@ -75,7 +75,7 @@ class Database(BaseModel):
         unique_together = (
             ('name', 'databaseinfra'),
         )
-        
+
         ordering = ('name', 'databaseinfra',)
 
     @property
@@ -96,10 +96,23 @@ class Database(BaseModel):
         return self.databaseinfra and self.databaseinfra.environment
 
     def delete(self, *args, **kwargs):
-        from integrations.iaas.manager import IaaSManager
+        if self.is_in_quarantine:
+            super(Database, self).delete(*args, **kwargs)
 
-        return IaaSManager.destroy_instance(database=self, *args, **kwargs)
-        
+        else:
+            LOG.warning("Putting database %s in quarantine" % self.name)
+            self.is_in_quarantine=True
+            self.save()
+            if self.credentials.exists():
+                for credential in self.credentials.all():
+                    new_password = make_db_random_password()
+                    new_credential = Credential.objects.get(pk=credential.id)
+                    new_credential.password = new_password
+                    new_credential.save()
+
+                    instance = factory_for(self.databaseinfra)
+                    instance.update_user(new_credential)
+
 
     def clean(self):
         #slugify name
@@ -162,7 +175,7 @@ class Database(BaseModel):
         except ConnectionError, e:
             LOG.error("ConnectionError calling database_status for database %s: %s" % (self, e))
             database_status = DatabaseStatus(self)
-        
+
         return database_status
 
     @property
