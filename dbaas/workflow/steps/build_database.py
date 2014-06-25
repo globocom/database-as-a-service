@@ -20,12 +20,15 @@ class BuildDatabase(BaseStep):
 
             LOG.info("Creating Database...")
             database = Database.provision(name= workflow_dict['name'], databaseinfra= workflow_dict['databaseinfra'])
+            workflow_dict['database'] = database
+
             database.team = workflow_dict['team']
-            database.project = workflow_dict['project']
+
+            if 'project' in workflow_dict:
+                database.project = workflow_dict['project']
+
             database.description = workflow_dict['description']
             database.save()
-
-            workflow_dict['database'] = database
 
             return True
         except Exception, e:
