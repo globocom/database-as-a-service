@@ -43,6 +43,12 @@ class BuildDatabaseInfra(BaseStep):
             return False
 
     def undo(self, workfow_dict):
-        if 'databaseinfra' in workfow_dict:
-            workfow_dict['databaseinfra'].delete()
-            return True
+        try:
+
+            if 'databaseinfra' in workfow_dict:
+                LOG.info("Destroying databaseinfra...")
+                workfow_dict['databaseinfra'].delete()
+                return True
+        except Exception,e :
+            print e
+            return False
