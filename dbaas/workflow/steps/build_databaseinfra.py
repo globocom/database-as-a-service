@@ -14,40 +14,40 @@ class BuildDatabaseInfra(BaseStep):
     def __unicode__(self):
         return "Provisioning the databaseinfra"
 
-    def do(self, workfow_dict):
+    def do(self, workflow_dict):
         try:
-            workfow_dict['names'] = gen_infra_names(
-                name=workfow_dict['name'], qt=workfow_dict['qt'])
+            workflow_dict['names'] = gen_infra_names(
+                name=workflow_dict['name'], qt=workflow_dict['qt'])
 
             mysql_credentials = get_credentials_for(
-                environment=workfow_dict['environment'], credential_type=CredentialType.MYSQL)
+                environment=workflow_dict['environment'], credential_type=CredentialType.MYSQL)
 
             databaseinfra = DatabaseInfra()
-            databaseinfra.name = workfow_dict['names']['infra']
+            databaseinfra.name = workflow_dict['names']['infra']
             databaseinfra.user = mysql_credentials.user
             databaseinfra.password = mysql_credentials.password
-            databaseinfra.engine = workfow_dict[
+            databaseinfra.engine = workflow_dict[
                 'plan'].engine_type.engines.all()[0]
-            databaseinfra.plan = workfow_dict['plan']
-            databaseinfra.environment = workfow_dict['environment']
+            databaseinfra.plan = workflow_dict['plan']
+            databaseinfra.environment = workflow_dict['environment']
             databaseinfra.capacity = 1
-            databaseinfra.per_database_size_mbytes = 0
+            databaseinfra.per_database_size_mbytes = workflow_dict['plan'].max_db_size
             databaseinfra.save()
 
             LOG.info("DatabaseInfra created!")
-            workfow_dict['databaseinfra'] = databaseinfra
+            workflow_dict['databaseinfra'] = databaseinfra
 
             return True
         except Exception, e:
             print e
             return False
 
-    def undo(self, workfow_dict):
+    def undo(self, workflow_dict):
         try:
 
-            if 'databaseinfra' in workfow_dict:
+            if 'databaseinfra' in workflow_dict:
                 LOG.info("Destroying databaseinfra...")
-                workfow_dict['databaseinfra'].delete()
+                workflow_dict['databaseinfra'].delete()
                 return True
         except Exception,e :
             print e
