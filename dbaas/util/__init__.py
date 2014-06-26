@@ -116,8 +116,9 @@ def call_script(script_name, working_dir=None, split_lines=True, args=[], envs={
 
 def check_nslookup(dns_to_check, dns_server, retries= 90, wait= 10):
     try:
+        LOG.info("Cheking dns...")
         for attempt in range(0, retries):
-            LOG.info("Cheking dns... attempt number %i..." % attempt + 1)
+            LOG.info("Cheking dns... attempt number %s..." % str(attempt + 1))
 
             result = subprocess.Popen("nslookup %s %s" % (dns_to_check, dns_server), stdout=subprocess.PIPE, shell=True)
             (output, err) = result.communicate()
@@ -208,4 +209,4 @@ def gen_infra_names(name, qt):
 
 
 def get_credentials_for(environment, credential_type):
-    return Credential.objects.filter(integration_type= credential_type, environments= environment)[0]
+    return Credential.objects.filter(integration_type__type= credential_type, environments= environment)[0]
