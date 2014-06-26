@@ -69,7 +69,7 @@ class CreateDns(BaseStep):
                     type=INSTANCE)
                 instance.save()
 
-                if workflow_dict['instances']==1:
+                if workflow_dict['qt']==1:
                     LOG.info("Updating databaseinfra dns endpoint")
                     databaseinfra = workflow_dict['databaseinfra']
                     databaseinfra.endpoint_dns = instance.dns + ':%i' % instance.port
