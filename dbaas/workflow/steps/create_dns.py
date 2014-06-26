@@ -33,8 +33,17 @@ class CreateDns(BaseStep):
                         name=dnsname,
                         ip=infra_attr.ip,
                         type=FLIPPER)
+
                     infra_attr.dns = dnsname
                     infra_attr.save()
+
+                    if infra_attr.is_write:
+                        LOG.info("Updating databaseinfra dns endpoint")
+                        databaseinfra = workflow_dict['databaseinfra']
+                        databaseinfra.endpoint_dns = infra_attr.dns + ':%i' % 3306
+                        databaseinfra.save()
+                        workflow_dict['databaseinfra'] = databaseinfra
+
 
             LOG.info("Creating dns for hosts...")
             for host_name in zip(workflow_dict['hosts'], workflow_dict['names']['vms']):
@@ -59,6 +68,14 @@ class CreateDns(BaseStep):
                     ip=instance.address,
                     type=INSTANCE)
                 instance.save()
+
+                if workflow_dict['instances']==1:
+                    LOG.info("Updating databaseinfra dns endpoint")
+                    databaseinfra = workflow_dict['databaseinfra']
+                    databaseinfra.endpoint_dns = instance.dns + ':%i' % instance.port
+                    databaseinfra.save()
+                    workflow_dict['databaseinfra'] = databaseinfra
+
 
             LOG.info("Calling dnsapi provider...")
             DNSAPIProvider.create_database_dns(
