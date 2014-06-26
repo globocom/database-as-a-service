@@ -11,6 +11,8 @@ def start_workflow(workflow_dict, task=None):
             return False
         workflow_dict['step_counter'] = 0
 
+        workflow_dict['msgs'] = []
+
         for step in workflow_dict['steps']:
             workflow_dict['step_counter'] += 1
 
@@ -20,8 +22,10 @@ def start_workflow(workflow_dict, task=None):
             LOG.info("Step %i %s " %
                      (workflow_dict['step_counter'], str(my_instance)))
 
+
             if task:
-                task.update_details(persist=True, details=str(my_instance))
+                workflow_dict['msgs'].append(str(my_instance))
+                task.update_details(persist=True, details="\n".join(workflow_dict['msgs']))
 
             if my_instance.do(workflow_dict) != True:
                 raise Exception
@@ -39,12 +43,14 @@ def stop_workflow(workflow_dict):
     try:
 
         for step in workflow_dict['steps'][::-1]:
-            workflow_dict['step_counter'] -= 1
+
             my_class = import_by_path(step)
             my_instance = my_class()
 
-            LOG.info("Step %i %s " %
-                    (workflow_dict['step_counter'], str(my_instance)))
+            if 'step_counter' in workflow_dict:
+                workflow_dict['step_counter'] -= 1
+                LOG.info("Step %i %s " %
+                        (workflow_dict['step_counter'], str(my_instance)))
             my_instance.undo(workflow_dict)
 
         return True
