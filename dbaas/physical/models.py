@@ -90,8 +90,8 @@ class Plan(BaseModel):
     environments = models.ManyToManyField(Environment)
     provider = models.IntegerField(choices=PROVIDER_CHOICES,
                                 default=0)
-    max_db_size= models.IntegerField(default=0, 
-                                                    verbose_name=_("Max database size (MB)"), 
+    max_db_size= models.IntegerField(default=0,
+                                                    verbose_name=_("Max database size (MB)"),
                                                     help_text=_("What is the maximum size of each database (MB). 0 means unlimited."))
 
     @property
@@ -141,8 +141,8 @@ class DatabaseInfra(BaseModel):
     plan = models.ForeignKey(Plan, related_name="databaseinfras", on_delete=models.PROTECT)
     environment = models.ForeignKey(Environment, related_name="databaseinfras", on_delete=models.PROTECT)
     capacity = models.PositiveIntegerField(default=1, help_text=_("How many databases is supported"))
-    per_database_size_mbytes = models.IntegerField(default=0, 
-                                                    verbose_name=_("Max database size (MB)"), 
+    per_database_size_mbytes = models.IntegerField(default=0,
+                                                    verbose_name=_("Max database size (MB)"),
                                                     help_text=_("What is the maximum size of each database (MB). 0 means unlimited."))
     endpoint = models.CharField(verbose_name=_("DatabaseInfra Endpoint"),
                             max_length=255,
@@ -189,7 +189,7 @@ class DatabaseInfra(BaseModel):
     @property
     def available(self):
         """ How many databases still supports this datainfra.
-        Returns 
+        Returns
             0 if datainfra is full
             < 0 if datainfra is overcapacity
             > 0 if datainfra can support more databases
@@ -219,15 +219,21 @@ class DatabaseInfra(BaseModel):
     @classmethod
     def best_for(cls, plan, environment, name):
         """ Choose the best DatabaseInfra for another database """
-        from integrations.iaas.manager import IaaSManager
-        return IaaSManager.create_instance(plan=plan, environment=environment, name=name)
-        
+        datainfras = list(DatabaseInfra.get_active_for(plan=plan, environment=environment))
+        if not datainfras:
+            return None
+        datainfras.sort(key=lambda di: -di.available)
+        best_datainfra = datainfras[0]
+        if best_datainfra.available <= 0:
+            return None
+        return best_datainfra
+
     def check_instances_status(self):
         status = []
         for instance in Instance.objects.filter(databaseinfra=self.pk):
             status.append(instance.check_status())
             LOG.debug('Checking instance %s (%s) status...', instance, instance.check_status())
-       
+
         if any(val==False for val in status):
             return False
         else:
@@ -333,7 +339,7 @@ class Instance(BaseModel):
     def check_status(self):
         status = self.databaseinfra.get_driver().check_status()
         return status
-        
+
 
 #####################################################################################################
 # SIGNALS

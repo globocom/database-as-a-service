@@ -97,7 +97,11 @@ class Database(BaseModel):
 
     def delete(self, *args, **kwargs):
         if self.is_in_quarantine:
-            super(Database, self).delete(*args, **kwargs)
+            LOG.warning("Database %s is in quarantine and will be removed" % self.name)
+            for credential in self.credentials.all():
+                instance = factory_for(self.databaseinfra)
+                instance.remove_user(credential)
+            super(Database, self).delete(*args, **kwargs)  # Call the "real" delete() method.
 
         else:
             LOG.warning("Putting database %s in quarantine" % self.name)
