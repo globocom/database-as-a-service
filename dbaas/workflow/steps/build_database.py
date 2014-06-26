@@ -46,9 +46,11 @@ class BuildDatabase(BaseStep):
         try:
 
             if not 'database' in workflow_dict:
-                return False
-
-            LOG.info("Destroying the database....")
+                if 'databaseinfra' in workflow_dict:
+                    LOG.info("Loading database into workflow_dict...")
+                    workflow_dict['database'] = Database.objects.filter(databaseinfra=workflow_dict['databaseinfra'])[0]
+                else:
+                    return False
 
             if not workflow_dict['database'].is_in_quarantine:
                 LOG.info("Putting Database in quarentine...")
@@ -57,6 +59,7 @@ class BuildDatabase(BaseStep):
                 database.quarantine_dt = datetime.datetime.now().date()
                 database.save()
 
+            LOG.info("Destroying the database....")
             database.delete()
 
             return True
