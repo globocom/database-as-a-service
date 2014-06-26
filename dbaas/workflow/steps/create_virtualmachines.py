@@ -4,7 +4,7 @@ from base import BaseStep
 from dbaas_cloudstack.provider import CloudStackProvider
 from dbaas_credentials.models import CredentialType
 from util import get_credentials_for
-from dbaas_cloudstack.models import PlanAttr, HostAttr, DatabaseInfraAttr
+from dbaas_cloudstack.models import PlanAttr, HostAttr
 from physical.models import Host, Instance
 
 LOG = logging.getLogger(__name__)
@@ -82,43 +82,6 @@ class CreateVirtualMachine(BaseStep):
 
                     return True
 
-                reserved_ip = cs_provider.reserve_ip(
-                    project_id=cs_credentials.project,
-                    vm_id=host_attr.vm_id)
-
-                if not reserved_ip:
-                    return False
-
-                total = DatabaseInfraAttr.objects.filter(
-                    databaseinfra=workflow_dict['databaseinfra']).count()
-
-                databaseinfraattr = DatabaseInfraAttr()
-
-                databaseinfraattr.ip = reserved_ip['secondary_ip']
-
-                if total == 0:
-                    databaseinfraattr.is_write = True
-
-                    LOG.info("Updating databaseinfra endpoint...")
-
-                    databaseinfra = workflow_dict['databaseinfra']
-                    databaseinfra.endpoint = databaseinfraattr.ip + ":%i" %(instance.port)
-                    databaseinfra.save()
-
-                    workflow_dict['databaseinfra'] = databaseinfra
-
-                else:
-                    databaseinfraattr.is_write = False
-
-
-                databaseinfraattr.cs_ip_id = reserved_ip['cs_ip_id']
-                databaseinfraattr.databaseinfra = workflow_dict[
-                    'databaseinfra']
-                databaseinfraattr.save()
-
-                workflow_dict['databaseinfraattr'].append(databaseinfraattr)
-
-
             return True
         except Exception as e:
             print e
@@ -132,24 +95,11 @@ class CreateVirtualMachine(BaseStep):
                     "We could not find a databaseinfra inside the workflow_dict")
                 return False
 
-            databaseinfraattr = DatabaseInfraAttr.objects.filter(
-                databaseinfra=workflow_dict['databaseinfra'])
-
             cs_credentials = get_credentials_for(
                 environment=workflow_dict['environment'],
                 credential_type=CredentialType.CLOUDSTACK)
 
             cs_provider = CloudStackProvider(credentials=cs_credentials)
-
-            for infra_attr in databaseinfraattr:
-                LOG.info("Removing secondary_ip for %s" % infra_attr.cs_ip_id)
-                if not cs_provider.remove_secondary_ips(infra_attr.cs_ip_id):
-                    return False
-
-                LOG.info("Secondary ip deleted!")
-
-                infra_attr.delete()
-                LOG.info("Databaseinfraattr deleted!")
 
             for instance in workflow_dict['databaseinfra'].instances.all():
                 host = instance.hostname
