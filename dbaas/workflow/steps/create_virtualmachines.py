@@ -72,7 +72,7 @@ class CreateVirtualMachine(BaseStep):
                 LOG.info("Instance created!")
                 workflow_dict['instances'].append(instance)
 
-                if not len(workflow_dict['names']['vms']) > 1:
+                if  workflow_dict['qt']==1:
 
                     LOG.info("Updating databaseinfra endpoint...")
                     databaseinfra = workflow_dict['databaseinfra']
