@@ -10,7 +10,7 @@ LOG = logging.getLogger(__name__)
 class CreateZabbix(BaseStep):
 
     def __unicode__(self):
-        return "Creating zabbix monitoring..."
+        return "Registering zabbix monitoring..."
 
     def do(self, workflow_dict):
         try:

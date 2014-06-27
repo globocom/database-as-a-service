@@ -12,7 +12,7 @@ LOG = logging.getLogger(__name__)
 class BuildDatabaseInfra(BaseStep):
 
     def __unicode__(self):
-        return "Provisioning the databaseinfra"
+        return "Initializing databaseinfra..."
 
     def do(self, workflow_dict):
         try:

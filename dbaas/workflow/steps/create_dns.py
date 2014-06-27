@@ -13,7 +13,7 @@ LOG = logging.getLogger(__name__)
 class CreateDns(BaseStep):
 
     def __unicode__(self):
-        return "Creating DNS"
+        return "Requesting DNS..."
 
     def do(self, workflow_dict):
         try:

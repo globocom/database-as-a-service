@@ -10,7 +10,7 @@ LOG = logging.getLogger(__name__)
 class CreateFlipper(BaseStep):
 
     def __unicode__(self):
-        return "Creating Flipper"
+        return "Setting up Flipper..."
 
     def do(self, workflow_dict):
         try:

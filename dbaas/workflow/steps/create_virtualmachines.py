@@ -13,7 +13,7 @@ LOG = logging.getLogger(__name__)
 class CreateVirtualMachine(BaseStep):
 
     def __unicode__(self):
-        return "Provisioning virtualmachines..."
+        return "Creating virtualmachines..."
 
     def do(self, workflow_dict):
 

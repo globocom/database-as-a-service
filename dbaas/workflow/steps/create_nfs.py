@@ -10,7 +10,7 @@ LOG = logging.getLogger(__name__)
 class CreateNfs(BaseStep):
 
     def __unicode__(self):
-        return "Creating DNS..."
+        return "Requesting NFS volume..."
 
     def do(self, workflow_dict):
         try:

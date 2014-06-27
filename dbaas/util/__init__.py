@@ -210,3 +210,10 @@ def gen_infra_names(name, qt):
 
 def get_credentials_for(environment, credential_type):
     return Credential.objects.filter(integration_type__type= credential_type, environments= environment)[0]
+
+
+def build_dict(**kwargs):
+    my_dict = {}
+    for name, value in kwargs.items():
+        my_dict[name] = value
+    return my_dict

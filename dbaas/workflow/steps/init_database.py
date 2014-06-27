@@ -14,7 +14,7 @@ LOG = logging.getLogger(__name__)
 class InitDatabase(BaseStep):
 
     def __unicode__(self):
-        return "Initializing physical database..."
+        return "Initializing database..."
 
     def do(self, workflow_dict):
         try:

@@ -21,6 +21,9 @@ from account.models import Team
 
 from drivers.base import ConnectionError, DatabaseStatus
 
+from workflow.settings import DEPLOY_MYSQL
+
+
 LOG = logging.getLogger(__name__)
 MB_FACTOR = 1.0 / 1024.0 / 1024.0
 GB_FACTOR = 1.0 / 1024.0 / 1024.0 / 1024.0
@@ -320,6 +323,21 @@ def database_pre_delete(sender, **kwargs):
     LOG.debug("database pre-delete triggered")
     engine = factory_for(database.databaseinfra)
     engine.remove_database(database)
+
+    from util.providers import destroy_infra
+
+    destroy_infra(databaseinfra= database.databaseinfra, steps= DEPLOY_MYSQL)
+
+@receiver(pre_delete, sender=Database)
+def database_post_delete(sender, **kwargs):
+    """
+    database post delete signal. Check databaseinfra provider
+    """
+    database = kwargs.get("instance")
+    LOG.debug("database post-delete triggered")
+    from util.providers import destroy_infra
+
+    destroy_infra(databaseinfra= database.databaseinfra, steps= DEPLOY_MYSQL)
 
 
 @receiver(post_save, sender=Database)

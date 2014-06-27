@@ -13,7 +13,7 @@ LOG = logging.getLogger(__name__)
 class CreateSecondaryIp(BaseStep):
 
     def __unicode__(self):
-        return "Provisioning secondary ips..."
+        return "Allocating secondary ips..."
 
     def do(self, workflow_dict):
 

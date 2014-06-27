@@ -12,7 +12,7 @@ LOG = logging.getLogger(__name__)
 class CheckDns(BaseStep):
 
     def __unicode__(self):
-        return "Checking dns..."
+        return "Waiting dns propagation..."
 
     def do(self, workflow_dict):
         try:

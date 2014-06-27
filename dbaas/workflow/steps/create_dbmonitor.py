@@ -10,7 +10,7 @@ LOG = logging.getLogger(__name__)
 class CreateDbMonitor(BaseStep):
 
     def __unicode__(self):
-        return "Creating dbmonitor monitoring..."
+        return "Registering dbmonitor monitoring..."
 
     def do(self, workflow_dict):
         try:
