@@ -136,7 +136,7 @@ def check_nslookup(self, dns_to_check, dns_server, retries= 90, wait= 10):
         return None
 
 
-def exec_remote_command(self, server, username, password, command):
+def exec_remote_command(server, username, password, command, output={}):
     try:
         LOG.info("Executing command [%s] on remote server %s" % (command, server))
         client = paramiko.SSHClient()
@@ -149,7 +149,8 @@ def exec_remote_command(self, server, username, password, command):
         log_stderr = stderr.readlines()
         exit_status = stdout.channel.recv_exit_status()
         LOG.info("Comand return code: %s, stdout: %s, stderr %s" % (exit_status, log_stdout, log_stderr))
-
+        output['stdout'] = log_stdout
+        output['stderr'] = log_stderr
         return exit_status
     except (paramiko.ssh_exception.SSHException) as e:
         LOG.warning("We caught an exception: %s ." % (e))
