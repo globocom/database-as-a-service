@@ -198,6 +198,7 @@ INSTALLED_APPS = (
     'dbaas_dbmonitor',
     'dbaas_zabbix',
     'dbaas_dnsapi',
+    'backup',
 )
 
 
