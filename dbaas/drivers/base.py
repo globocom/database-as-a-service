@@ -136,8 +136,14 @@ class BaseDriver(object):
         """import databases already created in a databaseinfra"""
         raise NotImplementedError()
 
+    def get_client(self, instance):
+        raise NotImplementedError()
+    
+    def lock_database(self, client):
+        raise NotImplementedError()
 
-
+    def unlock_database(self, client):
+        raise NotImplementedError()
 
 class DatabaseStatus(object):
 

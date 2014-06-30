@@ -47,10 +47,10 @@ class MySQL(BaseDriver):
         """
         endpoint = self.databaseinfra.endpoint.split(':')
         return endpoint[0], int(endpoint[1])
-        # if instance:
-        #     return instance.address, instance.port
-        # my_instance = self.databaseinfra.instances.all()[0]
-        # return my_instance.address, my_instance.port
+        if instance:
+            return instance.address, instance.port
+        endpoint = self.databaseinfra.endpoint.split(':')
+        return endpoint[0], int(endpoint[1])
 
     def __mysql_client__(self, instance, database='mysql'):
         connection_address, connection_port = self.__get_admin_connection(instance)
@@ -66,7 +66,17 @@ class MySQL(BaseDriver):
             return client
         except Exception, e:
             raise e
+    
+    def get_client(self, instance):
+        return self.__mysql_client__(instance)
+    
+    def lock_database(self, client):
+        client.query("flush tables with read lock")
+        client.query("flush logs")
 
+    def unlock_database(self, client):
+        client.query("unlock tables")
+    
     @contextmanager
     def mysqldb(self, instance=None, database=None):
         client = None

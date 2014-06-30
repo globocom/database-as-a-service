@@ -84,6 +84,15 @@ class MongoDB(BaseDriver):
         except TypeError:
             raise AuthenticationError(message='Invalid address: ' % connection_address)
 
+    def get_client(self, instance):
+        return self.__mongo_client__(instance)
+    
+    def lock_database(self, client):
+        client.fsync(lock=True)
+    
+    def unlock_database(self, client):
+        client.unlock()
+        
     @contextmanager
     def pymongo(self, instance=None, database=None):
         client = None
