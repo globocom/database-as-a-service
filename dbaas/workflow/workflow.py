@@ -38,7 +38,6 @@ def start_workflow(workflow_dict, task=None):
 
             workflow_dict['status'] = 1
             task.update_details(persist=True, details="DONE!")
-            LOG.info(task.details)
 
         return True
 
