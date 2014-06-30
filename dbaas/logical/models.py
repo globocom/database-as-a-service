@@ -6,7 +6,7 @@ import datetime
 from django.db import models, transaction
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
-from django.db.models.signals import pre_save, post_save, pre_delete
+from django.db.models.signals import pre_save, post_save, pre_delete, post_delete
 from django.dispatch import receiver
 from django_extensions.db.fields.encrypted import EncryptedCharField
 from django.utils.functional import cached_property
@@ -324,11 +324,8 @@ def database_pre_delete(sender, **kwargs):
     engine = factory_for(database.databaseinfra)
     engine.remove_database(database)
 
-    from util.providers import destroy_infra
 
-    destroy_infra(databaseinfra= database.databaseinfra, steps= DEPLOY_MYSQL)
-
-@receiver(pre_delete, sender=Database)
+@receiver(post_delete, sender=Database)
 def database_post_delete(sender, **kwargs):
     """
     database post delete signal. Check databaseinfra provider
