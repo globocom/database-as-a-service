@@ -17,7 +17,8 @@ class TaskHistoryAdmin(admin.ModelAdmin):
     search_fields = ('task_id', "task_name", "task_status")
     list_filter_basic = ["task_status",]
     list_filter_advanced = list_filter_basic + ["task_name", "user", ]
-    readonly_fields = ('created_at', 'ended_at', 'task_name', 'task_id', 'task_status', 'user', 'context', 'arguments', 'details')
+    readonly_fields = ('created_at', 'ended_at', 'task_name', 'task_id', 'task_status', 'user', 'context', 'arguments', 'friendly_details_read')
+    exclude = ('details',)
 
     def friendly_task_name(self, task_history):
         if task_history.task_name:
@@ -32,6 +33,11 @@ class TaskHistoryAdmin(admin.ModelAdmin):
         else:
             return "N/A"
     friendly_details.short_description = "Current Step"
+
+    def friendly_details_read(self, task_history):
+        if task_history.details:
+            return task_history.details.lstrip()
+    friendly_details_read.short_description = "Details"
 
     def queryset(self, request):
         qs = None
