@@ -126,7 +126,7 @@ def check_nslookup(dns_to_check, dns_server, retries= 90, wait= 10):
 
             LOG.info("Nslookup output: %s" % output)
 
-            if len(indexes) < 2:
+            if len(indexes)==2:
                 LOG.info("%s is available!" % dns_to_check)
                 return True
             sleep(wait)
