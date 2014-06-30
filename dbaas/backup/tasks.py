@@ -44,16 +44,21 @@ def make_instance_snapshot_backup(instance):
     driver = databaseinfra.get_driver()
     client = driver.get_client(instance)
     driver.lock_database(client)
-    nfs_snapshot = NfsaasProvider.create_snapshot(environment = databaseinfra.environment,
-                                              plan = databaseinfra.plan,
-                                              host = instance.hostname)
-        
+    try:
+        nfs_snapshot = NfsaasProvider.create_snapshot(environment = databaseinfra.environment,
+                                                      plan = databaseinfra.plan,
+                                                      host = instance.hostname)
+
+        snapshot.snapshopt_id = nfs_snapshot['id']
+        snapshot.snapshot_name = nfs_snapshot['snapshot']
+        snapshot.status = Snapshot.SUCCESS
+    except Exception, e:
+        LOG.error("Error creating snapshot: %s" % (e))
+        snapshot.status = Snapshot.ERROR
+
     driver.unlock_database(client)
     
     snapshot.end_at = datetime.datetime.now()
-    snapshot.status = Snapshot.SUCCESS
-    snapshot.snapshopt_id = nfs_snapshot['id']
-    snapshot.snapshot_name = nfs_snapshot['snapshot']
     
     from dbaas_cloudstack.models import HostAttr as Cloudstack_HostAttr
     cloudstack_hostattr = Cloudstack_HostAttr.objects.get(host=instance.hostname)
