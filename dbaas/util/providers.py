@@ -13,6 +13,8 @@ def make_infra(plan, environment, name, steps=None,task=None):
         if dbinfra:
             return {'databaseinfra':dbinfra}
 
+        return False
+
     if not steps:
         return False
 
