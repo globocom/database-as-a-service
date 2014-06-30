@@ -2,7 +2,7 @@
 from __future__ import absolute_import, unicode_literals
 import logging
 import simple_audit
-from django.db.models.signals import pre_save, post_save
+from django.db.models.signals import pre_save, post_save, pre_delete
 from django.dispatch import receiver
 from django.core.exceptions import ValidationError
 from django.core.cache import cache
@@ -298,7 +298,7 @@ class Instance(BaseModel):
         return "%s:%s" % (self.address, self.port)
 
     def __unicode__(self):
-        return self.connection
+        return "%s:%s" % (self.dns, self.port)
 
     def clean(self, *args, **kwargs):
         if self.is_arbiter or not self.is_active:
@@ -338,6 +338,27 @@ class Instance(BaseModel):
 #####################################################################################################
 # SIGNALS
 #####################################################################################################
+
+@receiver(pre_delete, sender=Instance)
+def instance_pre_delete(sender, **kwargs):
+    """
+    instance pre delete
+    """
+    
+    from backup.models import Snapshot
+    import datetime
+    
+    instance = kwargs.get('instance')
+    
+    LOG.debug("instance %s pre-delete" % (instance))
+    
+    snapshots = Snapshot.objects.filter(instance=instance, purge_at__isnull = True)
+    for snapshot in snapshots:
+        LOG.debug("Setting snapshopt %s purge_at time" % (snapshot))
+        snapshot.purge_at = datetime.datetime.now()
+        snapshot.save()
+    
+    LOG.debug("instance pre-delete triggered")
 
 @receiver(post_save, sender=DatabaseInfra)
 def databaseinfra_post_save(sender, **kwargs):
