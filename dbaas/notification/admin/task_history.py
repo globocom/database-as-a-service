@@ -40,6 +40,15 @@ class TaskHistoryAdmin(admin.ModelAdmin):
             return task_history.details.lstrip()
     friendly_details_read.short_description = "Details"
 
+    def has_delete_permission(self, request, obj=None): # note the obj=None
+        return False
+
+    def has_add_permission(self, request, obj=None): # note the obj=None
+        return False
+
+    def has_save_permission(self, request, obj=None): # note the obj=None
+        return False
+
     def queryset(self, request):
         qs = None
 
