@@ -19,11 +19,6 @@ class InitDatabase(BaseStep):
     def do(self, workflow_dict):
         try:
 
-            LOG.info("Getting vm credentials...")
-            vm_credentials = get_credentials_for(
-                environment=workflow_dict['environment'],
-                credential_type=CredentialType.VM)
-
             LOG.info("Getting cloudstack credentials...")
             cs_credentials = get_credentials_for(
                 environment=workflow_dict['environment'],
@@ -34,17 +29,18 @@ class InitDatabase(BaseStep):
             x = 0
             for hosts in permutations(workflow_dict['hosts']):
 
+                LOG.info("Getting vm credentials...")
+                host_csattr = CsHostAttr.objects.get(host=hosts[0])
+
                 LOG.info("Cheking host ssh...")
                 host_ready = check_ssh(
-                    server=hosts[0].address, username=vm_credentials.user, password=vm_credentials.password, wait=5, interval=10)
+                    server=hosts[0].address, username=host_csattr.vm_user, password=host_csattr.vm_password, wait=5, interval=10)
 
                 if not host_ready:
                     LOG.warn("Host %s is not ready..." % hosts[0])
                     return False
 
                 host_nfsattr = HostAttr.objects.get(host=hosts[0])
-
-                host_csattr = CsHostAttr.objects.get(host=hosts[0])
 
                 planattr = PlanAttr.objects.get(plan=workflow_dict['plan'])
 
@@ -79,8 +75,8 @@ class InitDatabase(BaseStep):
                 LOG.info("Executing script on %s" % hosts[0])
 
                 return_code = exec_remote_command(server=hosts[0].address,
-                                             username=vm_credentials.user,
-                                             password=vm_credentials.password,
+                                             username=host_csattr.vm_user,
+                                             password=host_csattr.vm_password,
                                              command='/opt/dbaas/scripts/dbaas_userdata_script.sh')
 
                 if return_code!=0:
@@ -93,8 +89,8 @@ class InitDatabase(BaseStep):
                     LOG.info("Executing script on %s" % hosts[0])
 
                     return_code = exec_remote_command(server=host.address,
-                                                 username=vm_credentials.user,
-                                                 password=vm_credentials.password,
+                                                 username=host_csattr.vm_user,
+                                                 password=host_csattr.vm_password,
                                                  command=contextdict['SECOND_SCRIPT_FILE'])
 
                     if return_code!=0:
@@ -109,17 +105,14 @@ class InitDatabase(BaseStep):
         try:
             LOG.info("Remove all database files")
 
-            vm_credentials = get_credentials_for(
-                environment=workflow_dict['environment'],
-                credential_type=CredentialType.VM)
-
             for host in workflow_dict['hosts']:
 
                 LOG.info("Removing database files on host %s" % host)
+                host_csattr = CsHostAttr.objects.get(host=host)
 
                 exec_remote_command(server=host.address,
-                                             username=vm_credentials.user,
-                                             password=vm_credentials.password,
+                                             username=host_csattr.vm_user,
+                                             password=host_csattr.vm_password,
                                              command="/opt/dbaas/scripts/dbaas_deletedatabasefiles.sh")
 
             return True

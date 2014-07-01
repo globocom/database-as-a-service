@@ -25,6 +25,10 @@ class CreateVirtualMachine(BaseStep):
                 environment=workflow_dict['environment'],
                 credential_type=CredentialType.CLOUDSTACK)
 
+            vm_credentials = get_credentials_for(
+                environment=workflow_dict['environment'],
+                credential_type=CredentialType.VM)
+
             cs_provider = CloudStackProvider(credentials=cs_credentials)
 
             cs_plan_attrs = PlanAttr.objects.get(plan=workflow_dict['plan'])
@@ -55,8 +59,8 @@ class CreateVirtualMachine(BaseStep):
 
                 host_attr = HostAttr()
                 host_attr.vm_id = vm['virtualmachine'][0]['id']
-                host_attr.vm_user = cs_credentials.user
-                host_attr.vm_password = cs_credentials.password
+                host_attr.vm_user = vm_credentials.user
+                host_attr.vm_password = vm_credentials.password
                 host_attr.host = host
                 host_attr.save()
                 LOG.info("Host attrs custom attributes created!")
