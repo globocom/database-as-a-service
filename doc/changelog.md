@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.0.16
+* add workflow engine
+* add a backup management tool
+* bug fix: plans and environments were not being listed on the databaseinfra edit screen
+ 
+
 ## 0.0.15
 * add cloudstack mysql single and cluster
 
