@@ -11,11 +11,13 @@ from dbaas.celery import app
 from util import call_script
 from util.decorators import only_one
 from util import email_notifications
+from util.providers import make_infra
 from .util import get_clone_args
 from .models import TaskHistory
 from drivers import factory_for
 from django.db.models import Sum, Count
 from physical.models import Plan
+from workflow.settings import DEPLOY_MYSQL
 
 from physical.models import DatabaseInfra
 from logical.models import Database
@@ -35,54 +37,59 @@ def rollback_database(dest_database):
     dest_database.is_in_quarantine = True
     dest_database.save()
     dest_database.delete()
-    
-@app.task(bind=True)
 
+@app.task(bind=True)
 def create_database(self, name, plan, environment, team, project, description, user=None):
     #register History
     task_history = TaskHistory.register(request=self.request, user=user)
-    LOG.info("id: %s | task: %s | kwargs: %s | args: %s" % (self.request.id, self.request.task, self.request.kwargs, str(self.request.args)))    
+    LOG.info("id: %s | task: %s | kwargs: %s | args: %s" % (self.request.id, self.request.task, self.request.kwargs, str(self.request.args)))
 
-    databaseinfra = DatabaseInfra.best_for(plan, environment, name)
-    if not databaseinfra:
+    task_history.update_details(persist=True, details="Loading Process...")
+
+    result = make_infra(plan=plan, environment=environment, name=name, steps=DEPLOY_MYSQL, task=task_history)
+
+    if type(result)==bool or not 'databaseinfra' in result:
         error = "There is not any infra-structure to allocate this database."
         LOG.error("task id %s error: %s" % (self.request.id, error))
         task_history.update_status_for(TaskHistory.STATUS_ERROR, details=error)
         return
-        
-    database = Database.provision(name, databaseinfra)
+
+    database = Database.provision(name, result['databaseinfra'])
     database.team = team
     database.project = project
     database.description = description
     database.save()
     task_history.update_dbid(db=database)
+
     task_history.update_status_for(TaskHistory.STATUS_SUCCESS, details='Database created successfully')
     return
-    
+
 @app.task(bind=True)
 def clone_database(self, origin_database, clone_name, user=None):
     #register History
     task_history = TaskHistory.register(request=self.request, user=user)
-    
+
     LOG.info("origin_database: %s" % origin_database)
 
     dest_database = Database.objects.get(pk=origin_database.pk)
     dest_database.name = clone_name
     dest_database.pk = None
-    databaseinfra = DatabaseInfra.best_for(origin_database.plan, origin_database.environment, clone_name)
 
-    if not databaseinfra:
+    task_history.update_details(persist=True, details="Loading Process...")
+    result= make_infra(plan=origin_database.plan, environment=origin_database.environment, name=clone_name,steps=DEPLOY_MYSQL, task=task_history)
+
+    if type(result)==bool or not 'databaseinfra' in result:
         error = "There is not any infra-structure to allocate this database."
         LOG.error("task id %s error: %s" % (self.request.id, error))
         task_history.update_status_for(TaskHistory.STATUS_ERROR, details=error)
         return
-    
-    dest_database.databaseinfra = databaseinfra
+
+    dest_database.databaseinfra = result['databaseinfra']
     dest_database.save()
     LOG.info("dest_database: %s" % dest_database)
-    
-    LOG.info("id: %s | task: %s | kwargs: %s | args: %s" % (self.request.id, self.request.task, self.request.kwargs, str(self.request.args)))    
-    
+
+    LOG.info("id: %s | task: %s | kwargs: %s | args: %s" % (self.request.id, self.request.task, self.request.kwargs, str(self.request.args)))
+
     try:
         args = get_clone_args(origin_database, dest_database)
         script_name = factory_for(origin_database.databaseinfra).clone()
@@ -101,7 +108,7 @@ def clone_database(self, origin_database, clone_name, user=None):
         rollback_database(dest_database)
     except Exception, e:
         LOG.error("task id %s error: %s" % (self.request.id, e))
-        task_history.update_status_for(TaskHistory.STATUS_ERROR, details=e)   
+        task_history.update_status_for(TaskHistory.STATUS_ERROR, details=e)
         rollback_database(dest_database)
     return
 
@@ -112,7 +119,7 @@ def databaseinfra_notification():
     if threshold_infra_notification <= 0:
         LOG.warning("database infra notification is disabled")
         return
-    
+
     # Sum capacity per databseinfra with parameter plan, environment and engine
     infras = DatabaseInfra.objects.values('plan__name', 'environment__name', 'engine__engine_type__name', 'plan__provider').annotate(capacity=Sum('capacity'))
     for infra in infras:
@@ -142,7 +149,7 @@ def database_notification_for_team(self, team=None):
     from logical.models import Database
     LOG.info("sending database notification for team %s" % team)
     threshold_database_notification = Configuration.get_by_name_as_int("threshold_database_notification", default=0)
-    #if threshold_database_notification 
+    #if threshold_database_notification
     if threshold_database_notification <= 0:
         LOG.warning("database notification is disabled")
         return

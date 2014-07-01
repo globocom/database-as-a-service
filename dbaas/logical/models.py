@@ -6,13 +6,13 @@ import datetime
 from django.db import models, transaction
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
-from django.db.models.signals import pre_save, post_save, pre_delete
+from django.db.models.signals import pre_save, post_save, pre_delete, post_delete
 from django.dispatch import receiver
 from django_extensions.db.fields.encrypted import EncryptedCharField
 from django.utils.functional import cached_property
 from util import slugify, make_db_random_password
 from util.models import BaseModel
-from physical.models import DatabaseInfra, Environment, Plan
+from physical.models import DatabaseInfra
 from drivers import factory_for
 from system.models import Configuration
 from datetime import date, timedelta
@@ -20,6 +20,9 @@ from datetime import date, timedelta
 from account.models import Team
 
 from drivers.base import ConnectionError, DatabaseStatus
+
+from workflow.settings import DEPLOY_MYSQL
+
 
 LOG = logging.getLogger(__name__)
 MB_FACTOR = 1.0 / 1024.0 / 1024.0
@@ -58,12 +61,12 @@ class Database(BaseModel):
     is_in_quarantine = models.BooleanField(verbose_name=_("Is database in quarantine?"), default=False)
     quarantine_dt = models.DateField(verbose_name=_("Quarantine date"), null=True, blank=True, editable=False)
     description = models.TextField(verbose_name=_("Description"), null=True, blank=True)
-    
+
     objects = models.Manager()  # The default manager.
     alive = DatabaseAliveManager()  # The alive dbs specific manager.
 
     quarantine_time = Configuration.get_by_name_as_int('quarantine_retention_days')
-    
+
     def __unicode__(self):
         return u"%s" % self.name
 
@@ -75,7 +78,7 @@ class Database(BaseModel):
         unique_together = (
             ('name', 'databaseinfra'),
         )
-        
+
         ordering = ('name', 'databaseinfra',)
 
     @property
@@ -96,10 +99,27 @@ class Database(BaseModel):
         return self.databaseinfra and self.databaseinfra.environment
 
     def delete(self, *args, **kwargs):
-        from integrations.iaas.manager import IaaSManager
+        if self.is_in_quarantine:
+            LOG.warning("Database %s is in quarantine and will be removed" % self.name)
+            for credential in self.credentials.all():
+                instance = factory_for(self.databaseinfra)
+                instance.remove_user(credential)
+            super(Database, self).delete(*args, **kwargs)  # Call the "real" delete() method.
 
-        return IaaSManager.destroy_instance(database=self, *args, **kwargs)
-        
+        else:
+            LOG.warning("Putting database %s in quarantine" % self.name)
+            self.is_in_quarantine=True
+            self.save()
+            if self.credentials.exists():
+                for credential in self.credentials.all():
+                    new_password = make_db_random_password()
+                    new_credential = Credential.objects.get(pk=credential.id)
+                    new_credential.password = new_password
+                    new_credential.save()
+
+                    instance = factory_for(self.databaseinfra)
+                    instance.update_user(new_credential)
+
 
     def clean(self):
         #slugify name
@@ -162,7 +182,7 @@ class Database(BaseModel):
         except ConnectionError, e:
             LOG.error("ConnectionError calling database_status for database %s: %s" % (self, e))
             database_status = DatabaseStatus(self)
-        
+
         return database_status
 
     @property
@@ -303,6 +323,18 @@ def database_pre_delete(sender, **kwargs):
     LOG.debug("database pre-delete triggered")
     engine = factory_for(database.databaseinfra)
     engine.remove_database(database)
+
+
+@receiver(post_delete, sender=Database)
+def database_post_delete(sender, **kwargs):
+    """
+    database post delete signal. Check databaseinfra provider
+    """
+    database = kwargs.get("instance")
+    LOG.debug("database post-delete triggered")
+    from util.providers import destroy_infra
+
+    destroy_infra(databaseinfra= database.databaseinfra, steps= DEPLOY_MYSQL)
 
 
 @receiver(post_save, sender=Database)

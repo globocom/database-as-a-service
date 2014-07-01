@@ -12,12 +12,14 @@ LOG = logging.getLogger(__name__)
 class TaskHistoryAdmin(admin.ModelAdmin):
     perm_add_database_infra = constants.PERM_ADD_DATABASE_INFRA
     actions = None
-    list_display_basic = ["task_id", "friendly_task_name", "task_status", "arguments", "created_at", "ended_at"]
+    list_display_basic = ["task_id", "friendly_task_name", "task_status", "arguments","friendly_details", "created_at", "ended_at"]
     list_display_advanced = list_display_basic + ["user"]
     search_fields = ('task_id', "task_name", "task_status")
     list_filter_basic = ["task_status",]
     list_filter_advanced = list_filter_basic + ["task_name", "user", ]
-    readonly_fields = ('created_at', 'ended_at', 'task_name', 'task_id', 'task_status', 'user', 'context', 'arguments', 'details', 'db_id')
+    readonly_fields = ('created_at', 'ended_at', 'task_name', 'task_id', 'task_status', 'user', 'context', 'arguments', 'friendly_details_read', "db_id")
+    exclude = ('details',)
+
 
     def friendly_task_name(self, task_history):
         if task_history.task_name:
@@ -25,6 +27,18 @@ class TaskHistoryAdmin(admin.ModelAdmin):
         else:
             return "N/A"
     friendly_task_name.short_description = "Task Name"
+
+    def friendly_details(self, task_history):
+        if task_history.details:
+            return task_history.details.split("\n")[-1]
+        else:
+            return "N/A"
+    friendly_details.short_description = "Current Step"
+
+    def friendly_details_read(self, task_history):
+        if task_history.details:
+            return task_history.details.lstrip()
+    friendly_details_read.short_description = "Details"
 
     def queryset(self, request):
         qs = None
@@ -50,5 +64,5 @@ class TaskHistoryAdmin(admin.ModelAdmin):
             self.list_display = self.list_display_basic
             self.list_filter = self.list_filter_basic
             self.list_display_links = (None,)
-        
+
         return super(TaskHistoryAdmin, self).changelist_view(request, extra_context=extra_context)

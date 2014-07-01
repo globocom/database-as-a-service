@@ -3,7 +3,7 @@ from django import template
 from django.utils.html import format_html, escape
 import logging
 
-from logical.models import Environment
+from physical.models import Environment
 
 register = template.Library()
 
@@ -19,9 +19,9 @@ def render_usage(team):
     html = []
     html.append("<ul>")
     for environment in environments:
-        html.append("<li>%s: %s of %s in use</li>" % (environment, 
+        html.append("<li>%s: %s of %s in use</li>" % (environment,
                                                         team.count_databases_in_use(environment),
                                                         team.database_alocation_limit))
 
     return format_html("".join(html))
-    
+

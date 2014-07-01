@@ -13,14 +13,14 @@ from util.models import BaseModel
 LOG = logging.getLogger(__name__)
 
 class TaskHistory(BaseModel):
-    
+
     STATUS_PENDING = 'PENDING'
     STATUS_RUNNING = 'RUNNING'
     STATUS_SUCCESS = 'SUCCESS'
     STATUS_ERROR = 'ERROR'
-    
-    _STATUS = [STATUS_PENDING, STATUS_RUNNING, STATUS_SUCCESS, STATUS_ERROR] 
-    
+
+    _STATUS = [STATUS_PENDING, STATUS_RUNNING, STATUS_SUCCESS, STATUS_ERROR]
+
     task_id = models.CharField(_('Task ID'), max_length=200, null=True, blank=True, editable=False)
     task_name = models.CharField(_('Task Name'), max_length=200, null=True, blank=True)
     user = models.CharField(max_length=255, null=True, blank=True)
@@ -45,16 +45,22 @@ class TaskHistory(BaseModel):
         Method to update the details of a task history.
         TODO: should we put a timestamp in details? should we append the details?
         """
-        self.details = details
+
+        if self.details:
+            self.details= "\n%s%s" % (self.details,details)
+        else:
+            print "None"
+            self.details=details
+
         if persist:
             self.save()
 
     def update_status_for(self, status, details=None):
         if status not in TaskHistory._STATUS:
             raise RuntimeError("Invalid task status")
-        
+
         self.task_status = status
-        self.details = details
+        self.details = self.details + "\n" + str(details)
         if status in [TaskHistory.STATUS_SUCCESS, TaskHistory.STATUS_ERROR]:
             self.update_ended_at()
         else:
@@ -70,7 +76,7 @@ class TaskHistory(BaseModel):
 
     @classmethod
     def register(cls, request=None, user=None):
-                                                                
+
         LOG.info("task id: %s | task name: %s | " % (request.id,
                                                     request.task))
         task_history = TaskHistory()
@@ -83,5 +89,5 @@ class TaskHistory(BaseModel):
             task_history.user = user.username
 
         task_history.save()
-        
+
         return task_history
