@@ -142,6 +142,8 @@ def remove_database_old_backups(self):
     snapshots = Snapshot.objects.filter(start_at__lte=backup_time_dt, purge_at__isnull = True, instance__isnull = False)
     msgs = []
     status = TaskHistory.STATUS_SUCCESS
+    if len(snapshots) == 0:
+        msgs.append("There is no snapshot to purge")
     for snapshot in snapshots:
         try:
             remove_snapshot_backup(snapshot=snapshot)

@@ -60,7 +60,7 @@ class TaskHistory(BaseModel):
             raise RuntimeError("Invalid task status")
 
         self.task_status = status
-        self.details = self.details + "\n" + str(details)
+        self.details = (self.details or " ") + "\n" + str(details)
         if status in [TaskHistory.STATUS_SUCCESS, TaskHistory.STATUS_ERROR]:
             self.update_ended_at()
         else:
