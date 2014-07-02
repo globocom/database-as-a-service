@@ -45,10 +45,9 @@ class MySQL(BaseDriver):
         """
         endpoint is on the form HOST:PORT
         """
-        endpoint = self.databaseinfra.endpoint.split(':')
-        return endpoint[0], int(endpoint[1])
         if instance:
             return instance.address, instance.port
+
         endpoint = self.databaseinfra.endpoint.split(':')
         return endpoint[0], int(endpoint[1])
 
@@ -66,17 +65,17 @@ class MySQL(BaseDriver):
             return client
         except Exception, e:
             raise e
-    
+
     def get_client(self, instance):
         return self.__mysql_client__(instance)
-    
+
     def lock_database(self, client):
         client.query("flush tables with read lock")
         client.query("flush logs")
 
     def unlock_database(self, client):
         client.query("unlock tables")
-    
+
     @contextmanager
     def mysqldb(self, instance=None, database=None):
         client = None
@@ -152,7 +151,7 @@ class MySQL(BaseDriver):
                 database_model = Database.objects.get(name=database_name, databaseinfra=self.databaseinfra)
             except Database.DoesNotExist:
                 pass
-                
+
             if database_model:
                 db_status = DatabaseStatus(database_model)
                 #is_alive?

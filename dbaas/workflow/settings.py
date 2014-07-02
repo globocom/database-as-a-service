@@ -7,6 +7,7 @@ DEPLOY_MYSQL = (
             'workflow.steps.create_nfs.CreateNfs',
             'workflow.steps.create_flipper.CreateFlipper',
             'workflow.steps.init_database.InitDatabase',
+            'workflow.steps.check_database_connection.CheckDatabaseConnection',
             'workflow.steps.check_dns.CheckDns',
             'workflow.steps.create_zabbix.CreateZabbix',
             'workflow.steps.create_dbmonitor.CreateDbMonitor'
