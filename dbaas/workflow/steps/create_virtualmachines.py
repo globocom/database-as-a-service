@@ -67,7 +67,10 @@ class CreateVirtualMachine(BaseStep):
 
                 instance = Instance()
                 instance.address = host.address
-                instance.port = 3306
+                if workflow_dict['engine'] == workflow_dict['MYSQL']:
+                    instance.port = 3306
+                elif workflow_dict['engine'] == workflow_dict['MONGODB']:
+                    instance.port = 27017
                 instance.is_active = True
                 instance.is_arbiter = False
                 instance.hostname = host
