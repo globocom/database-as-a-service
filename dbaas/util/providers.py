@@ -8,6 +8,9 @@ import re
 
 LOG = logging.getLogger(__name__)
 
+UNKNOWN = 0
+MYSQL = 1
+MONGODB = 2
 
 def make_infra(plan, environment, name,task=None):
     if not plan.provider == plan.CLOUDSTACK:
@@ -18,9 +21,15 @@ def make_infra(plan, environment, name,task=None):
 
         return False
 
-    workflow_dict = build_dict(name= name, plan= plan, environment= environment,
-                                            steps= get_engine_steps(engine= str(plan.engine_type)),
-                                            qt= get_vm_qt(plan= plan))
+    workflow_dict = build_dict(name= name,
+                               plan= plan,
+                               environment= environment,
+                               steps= get_engine_steps(engine= str(plan.engine_type)),
+                               qt= get_vm_qt(plan= plan),
+                               MYSQL = MYSQL,
+                               MONGODB = MONGODB,
+                               engine = get_engine(engine= str(plan.engine_type))
+                               )
 
     if start_workflow(workflow_dict= workflow_dict, task=task):
         return workflow_dict
@@ -39,10 +48,17 @@ def destroy_infra(databaseinfra, task=None):
         instances.append(instance)
         hosts.append(instance.hostname)
 
-    workflow_dict = build_dict(plan= databaseinfra.plan, environment= databaseinfra.environment,
-                                            steps= get_engine_steps(engine= str(databaseinfra.plan.engine_type)),
-                                            qt= get_vm_qt(plan= databaseinfra.plan),
-                                            hosts= hosts, instances= instances, databaseinfra= databaseinfra)
+    workflow_dict = build_dict(plan= databaseinfra.plan,
+                               environment= databaseinfra.environment,
+                               steps= get_engine_steps(engine= str(databaseinfra.plan.engine_type)),
+                               qt= get_vm_qt(plan= databaseinfra.plan),
+                               hosts= hosts,
+                               instances= instances,
+                               databaseinfra= databaseinfra,
+                               MYSQL = MYSQL,
+                               MONGODB = MONGODB,
+                               engine = get_engine(engine= str(plan.engine_type))
+                               )
 
     if stop_workflow(workflow_dict= workflow_dict, task=task):
         return workflow_dict
@@ -50,16 +66,31 @@ def destroy_infra(databaseinfra, task=None):
         return False
 
 
-
-def get_engine_steps(engine):
+def get_engine(engine):
     engine = engine.lower()
 
     if re.match(r'^mongo.*', engine):
+        return MONGODB
+    elif re.match(r'^mysql.*', engine):
+        return MYSQL
+    else:
+        return UNKNOWN
+    
+    
+    
+def get_engine_steps(engine):
+    
+    enginecod = get_engine(engine)
+
+    if enginecod == MONGODB:
         from workflow.settings import DEPLOY_MONGO
         steps = DEPLOY_MONGO
-    elif re.match(r'^mysql.*', engine):
+    elif enginecod == MYSQL:
         from workflow.settings import DEPLOY_MYSQL
         steps = DEPLOY_MYSQL
+    else:
+        from workflow.settings import DEPLOY_UNKNOWN
+        steps = DEPLOY_UNKNOWN
 
     return steps
 
