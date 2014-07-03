@@ -17,7 +17,6 @@ from .models import TaskHistory
 from drivers import factory_for
 from django.db.models import Sum, Count
 from physical.models import Plan
-from workflow.settings import DEPLOY_MYSQL
 
 from physical.models import DatabaseInfra
 from logical.models import Database
@@ -46,7 +45,7 @@ def create_database(self, name, plan, environment, team, project, description, u
 
     task_history.update_details(persist=True, details="Loading Process...")
 
-    result = make_infra(plan=plan, environment=environment, name=name, steps=DEPLOY_MYSQL, task=task_history)
+    result = make_infra(plan=plan, environment=environment, name=name, task=task_history)
 
     if type(result)==bool or not 'databaseinfra' in result:
         error = "There is not any infra-structure to allocate this database."
@@ -76,7 +75,7 @@ def clone_database(self, origin_database, clone_name, user=None):
     dest_database.pk = None
 
     task_history.update_details(persist=True, details="Loading Process...")
-    result= make_infra(plan=origin_database.plan, environment=origin_database.environment, name=clone_name,steps=DEPLOY_MYSQL, task=task_history)
+    result= make_infra(plan=origin_database.plan, environment=origin_database.environment, name=clone_name, task=task_history)
 
     if type(result)==bool or not 'databaseinfra' in result:
         error = "There is not any infra-structure to allocate this database."

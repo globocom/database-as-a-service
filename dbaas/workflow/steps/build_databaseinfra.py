@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 from base import BaseStep
 from util import gen_infra_names
-from util import get_credentials_for
-from dbaas_credentials.models import CredentialType
+from util.providers import get_engine_credentials
 from physical.models import DatabaseInfra
 import logging
 
@@ -19,13 +18,13 @@ class BuildDatabaseInfra(BaseStep):
             workflow_dict['names'] = gen_infra_names(
                 name=workflow_dict['name'], qt=workflow_dict['qt'])
 
-            mysql_credentials = get_credentials_for(
-                environment=workflow_dict['environment'], credential_type=CredentialType.MYSQL)
+            credentials = get_engine_credentials(engine=str(workflow_dict['plan'].engine_type),
+                                                                            environment= workflow_dict['environment'])
 
             databaseinfra = DatabaseInfra()
             databaseinfra.name = workflow_dict['names']['infra']
-            databaseinfra.user = mysql_credentials.user
-            databaseinfra.password = mysql_credentials.password
+            databaseinfra.user = credentials.user
+            databaseinfra.password = credentials.password
             databaseinfra.engine = workflow_dict[
                 'plan'].engine_type.engines.all()[0]
             databaseinfra.plan = workflow_dict['plan']
