@@ -50,6 +50,10 @@ class MongoDB(BaseDriver):
         return ",".join(["%s:%s" % (instance.address, instance.port)
                         for instance in self.databaseinfra.instances.filter(is_arbiter=False, is_active=True).all()])
 
+    def __concatenate_instances_dns(self):
+        return ",".join(["%s:%s" % (instance.dns, instance.port)
+                        for instance in self.databaseinfra.instances.filter(is_arbiter=False, is_active=True).all()])
+
     def get_connection(self, database=None):
         uri = "mongodb://<user>:<password>@%s" % self.__concatenate_instances()
         if database:
@@ -63,7 +67,16 @@ class MongoDB(BaseDriver):
         return uri
 
     def get_connection_dns(self, database=None):
-        return self.get_connection(database=database)
+        uri = "mongodb://<user>:<password>@%s" % self.__concatenate_instances_dns()
+        if database:
+            uri = "%s/%s" % (uri, database.name)
+
+        if (len(self.databaseinfra.instances.all()) > 1):
+            repl_name = self.get_replica_name()
+            if repl_name:
+                uri = "%s?replicaSet=%s" % (uri, repl_name)
+
+        return uri
 
     def __get_admin_connection(self, instance=None):
         if instance:
