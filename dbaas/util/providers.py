@@ -57,7 +57,7 @@ def destroy_infra(databaseinfra, task=None):
                                databaseinfra= databaseinfra,
                                MYSQL = MYSQL,
                                MONGODB = MONGODB,
-                               engine = get_engine(engine= str(plan.engine_type))
+                               engine = get_engine(engine= str(databaseinfra.plan.engine_type))
                                )
 
     if stop_workflow(workflow_dict= workflow_dict, task=task):
