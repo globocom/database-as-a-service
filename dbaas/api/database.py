@@ -130,6 +130,7 @@ class DatabaseAPI(viewsets.ModelViewSet):
                 self.object = models.Database.provision(data['name'], databaseinfra)
                 self.object.team = data['team']
                 self.object.project = data['project']
+                self.object.description = data['description']
                 self.object.save()
                 data = serializer.to_native(self.object)
                 self.post_save(self.object, created=True)
