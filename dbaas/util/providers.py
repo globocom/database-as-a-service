@@ -28,7 +28,7 @@ def make_infra(plan, environment, name,task=None):
                                qt= get_vm_qt(plan= plan),
                                MYSQL = MYSQL,
                                MONGODB = MONGODB,
-                               engine = get_engine(engine= str(plan.engine_type))
+                               enginecod = get_engine(engine= str(plan.engine_type))
                                )
 
     if start_workflow(workflow_dict= workflow_dict, task=task):
@@ -57,7 +57,7 @@ def destroy_infra(databaseinfra, task=None):
                                databaseinfra= databaseinfra,
                                MYSQL = MYSQL,
                                MONGODB = MONGODB,
-                               engine = get_engine(engine= str(databaseinfra.plan.engine_type))
+                               enginecod = get_engine(engine= str(databaseinfra.plan.engine_type))
                                )
 
     if stop_workflow(workflow_dict= workflow_dict, task=task):
@@ -75,11 +75,11 @@ def get_engine(engine):
         return MYSQL
     else:
         return UNKNOWN
-    
-    
-    
+
+
+
 def get_engine_steps(engine):
-    
+
     enginecod = get_engine(engine)
 
     if enginecod == MONGODB:
