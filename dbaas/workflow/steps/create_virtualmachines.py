@@ -36,6 +36,7 @@ class CreateVirtualMachine(BaseStep):
             workflow_dict['hosts'] = []
             workflow_dict['instances'] = []
             workflow_dict['databaseinfraattr'] = []
+            workflow_dict['vms_id'] = []
 
             for vm_name in workflow_dict['names']['vms']:
                 LOG.debug("Running vm")
@@ -48,6 +49,8 @@ class CreateVirtualMachine(BaseStep):
 
                 if not vm:
                     return False
+
+                workflow_dict['vms_id'].append(vm['virtualmachine'][0]['id'])
 
                 host = Host()
                 host.address = vm['virtualmachine'][0]['nic'][0]['ipaddress']
@@ -67,9 +70,9 @@ class CreateVirtualMachine(BaseStep):
 
                 instance = Instance()
                 instance.address = host.address
-                if workflow_dict['engine'] == workflow_dict['MYSQL']:
+                if workflow_dict['enginecod'] == workflow_dict['MYSQL']:
                     instance.port = 3306
-                elif workflow_dict['engine'] == workflow_dict['MONGODB']:
+                elif workflow_dict['enginecod'] == workflow_dict['MONGODB']:
                     instance.port = 27017
                 instance.is_active = True
                 instance.is_arbiter = False
@@ -97,10 +100,6 @@ class CreateVirtualMachine(BaseStep):
     def undo(self, workflow_dict):
         LOG.info("Running undo...")
         try:
-            if not 'databaseinfra' in workflow_dict and not 'hosts' in workflow_dict:
-                LOG.info(
-                    "We could not find a databaseinfra inside the workflow_dict")
-                return False
 
             cs_credentials = get_credentials_for(
                 environment=workflow_dict['environment'],
@@ -108,7 +107,28 @@ class CreateVirtualMachine(BaseStep):
 
             cs_provider = CloudStackProvider(credentials=cs_credentials)
 
-            for instance in workflow_dict['databaseinfra'].instances.all():
+            instances = workflow_dict['databaseinfra'].instances.all()
+
+            if not instances:
+                for vm_id in workflow_dict['vms_id']:
+                    cs_provider.destroy_virtual_machine(
+                    project_id=cs_credentials.project,
+                    environment=workflow_dict['environment'],
+                    vm_id=vm_id)
+
+
+                for host in workflow_dict['hosts']:
+                    host_attr = HostAttr.objects.filter(host=host)
+
+                    host.delete()
+                    LOG.info("Host deleted!")
+
+                    if host_attr:
+                        host_attr[0].delete()
+                        LOG.info("HostAttr deleted!")
+
+
+            for instance in instances:
                 host = instance.hostname
 
                 host_attr = HostAttr.objects.get(host=host)
