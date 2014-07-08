@@ -208,10 +208,13 @@ def database_notification(self):
         msgs.append(database_notification_for_team(team=team))
         ###############################################
 
-    LOG.info("Messages: ")
-    LOG.info(msgs)
+    try:
+        LOG.info("Messages: ")
+        LOG.info(msgs)
 
-    task_history = TaskHistory.register(request=self.request, user=None)
-    task_history.update_status_for(TaskHistory.STATUS_SUCCESS, details="\n".join(msgs))
+        task_history = TaskHistory.register(request=self.request, user=None)
+        task_history.update_status_for(TaskHistory.STATUS_SUCCESS, details="\n".join(msgs))
+    except Exception, e:
+        task_history.update_status_for(TaskHistory.STATUS_ERROR, details=e)
 
     return
