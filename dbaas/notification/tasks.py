@@ -113,7 +113,8 @@ def clone_database(self, origin_database, clone_name, user=None):
 
 @app.task
 @only_one(key="db_infra_notification_key", timeout=20)
-def databaseinfra_notification():
+def databaseinfra_notification(self, user=None):
+    task_history = TaskHistory.register(request=self.request, user=user)
     threshold_infra_notification = Configuration.get_by_name_as_int("threshold_infra_notification", default=0)
     if threshold_infra_notification <= 0:
         LOG.warning("database infra notification is disabled")
@@ -136,11 +137,12 @@ def databaseinfra_notification():
             context['capacity'] = infra['capacity']
             context['percent'] = percent
             email_notifications.databaseinfra_ending(context=context)
+
+        task_history.update_status_for(TaskHistory.STATUS_SUCCESS, details='Databaseinfra Notification successfully sent to dbaas admins!')
     return
 
-@app.task(bind=True)
-@only_one(key="db_notification_for_team_key", timeout=20)
-def database_notification_for_team(self, team=None):
+
+def database_notification_for_team(team=None):
     """
     Notifies teams of database usage.
     if threshold_database_notification <= 0, the notification is disabled.
@@ -167,29 +169,24 @@ def database_notification_for_team(self, team=None):
         LOG.info(msg)
         msgs.append(msg)
 
-        if percent_usage >= threshold_database_notification:
-            LOG.info("Sending database notification...")
-            context = {}
-            context['database'] = database.name
-            context['team'] = team
-            context['measure_unity'] = "MB"
-            context['used'] = used
-            context['capacity'] = capacity
-            context['percent'] = "%.2f" % percent_usage
-            context['environment'] = database.environment.name
-            email_notifications.database_usage(context=context)
+        if not team.email:
+            msgs.append("team %s has no email set and therefore no database usage notification will been sent" % team)
+        else:
+            if percent_usage >= threshold_database_notification:
+                LOG.info("Sending database notification...")
+                context = {}
+                context['database'] = database.name
+                context['team'] = team
+                context['measure_unity'] = "MB"
+                context['used'] = used
+                context['capacity'] = capacity
+                context['percent'] = "%.2f" % percent_usage
+                context['environment'] = database.environment.name
+                email_notifications.database_usage(context=context)
 
-    if team.email:
-        task_history = TaskHistory.register(request=self.request, user=None)
-        task_history.update_status_for(TaskHistory.STATUS_SUCCESS, details="\n".join(msgs))
-    else:
-        msg = "team %s has no email set and therefore no database usage notification will been sent" % team
-        LOG.error(msg)
-        #register History
-        task_history = TaskHistory.register(request=self.request, user=None)
-        task_history.update_status_for(TaskHistory.STATUS_ERROR, details=msg)
 
-    return
+
+    return msgs
 
 @app.task(bind=True)
 @only_one(key="db_notification_key", timeout=20)
@@ -201,11 +198,20 @@ def database_notification(self):
     #get all teams and for each one create a new task
     LOG.info("retrieving all teams and sendind database notification")
     teams = Team.objects.all()
+    msgs  = []
+
     for team in teams:
         ###############################################
         # create task
         ###############################################
-        result = database_notification_for_team.delay(team=team)
+
+        msgs.append(database_notification_for_team(team=team))
         ###############################################
+
+    LOG.info("Messages: ")
+    LOG.info(msgs)
+
+    task_history = TaskHistory.register(request=self.request, user=None)
+    task_history.update_status_for(TaskHistory.STATUS_SUCCESS, details="\n".join(msgs))
 
     return
