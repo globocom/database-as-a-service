@@ -62,7 +62,7 @@ def make_instance_snapshot_backup(instance):
     
     from dbaas_cloudstack.models import HostAttr as Cloudstack_HostAttr
     cloudstack_hostattr = Cloudstack_HostAttr.objects.get(host=instance.hostname)
-    
+        
     output = {}
     command = "du -sb /data/.snapshot/%s | awk '{print $1}'" % (snapshot.snapshot_name)
     size = None
@@ -79,6 +79,19 @@ def make_instance_snapshot_backup(instance):
             size = int(output['stdout'][0])
     
     snapshot.size = size
+
+    try:
+        from dbaas_dbmonitor.provider import DBMonitorProvider
+        DBMonitorProvider().register_backup(databaseinfra = databaseinfra,
+                                            start_at = snapshot.start_at,
+                                            end_at = snapshot.end_at,
+                                            size = size,
+                                            status = snapshot.status,
+                                            type = snapshot.type)
+    except Exception, e:
+        LOG.error("Error register backup on DBMonitor %s" % (e))
+    #register_backup(self, databaseinfra, start_at, end_at, size, status, type)
+
     
     snapshot.save()
     
