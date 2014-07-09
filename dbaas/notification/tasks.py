@@ -166,7 +166,8 @@ def database_notification_for_team(team=None):
             #database has no total size
             percent_usage = 0.0
         msg = "database %s => usage: %.2f | threshold: %.2f" % (database, percent_usage, threshold_database_notification)
-        LOG.info(msg)
+
+        LOG.info("Msg %s" % msg)
         msgs.append(msg)
 
         if not team.email:
@@ -212,9 +213,7 @@ def database_notification(self):
         LOG.info("Messages: ")
         LOG.info(msgs)
 
-        task_history = TaskHistory.register(request=self.request, user=None)
-        task_history.update_status_for(TaskHistory.STATUS_SUCCESS, details="\n".join(msgs))
     except Exception, e:
-        task_history.update_status_for(TaskHistory.STATUS_ERROR, details=e)
+        LOG.warning(e)
 
     return
