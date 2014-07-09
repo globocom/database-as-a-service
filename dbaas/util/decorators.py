@@ -22,6 +22,7 @@ def only_one(key="", timeout=None):
             try:
                 have_lock = lock.acquire(blocking=False)
                 if have_lock:
+                    LOG.debug("Lock acquired!")
                     function(*args, **kwargs)
                 else:
                     LOG.info("key %s locked..." % key )
