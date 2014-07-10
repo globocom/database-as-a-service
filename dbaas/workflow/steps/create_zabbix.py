@@ -18,9 +18,14 @@ class CreateZabbix(BaseStep):
             if not 'databaseinfra' in workflow_dict:
                 return False
 
-            LOG.info("Creating zabbix monitoring...")
+            if workflow_dict['enginecod'] == workflow_dict['MYSQL']:
+                dbtype = "mysql"
+            elif workflow_dict['enginecod'] == workflow_dict['MONGODB']:
+                dbtype = "mongodb"
 
-            ZabbixProvider().create_monitoring(dbinfra=workflow_dict['databaseinfra'])
+            LOG.info("Creating zabbix monitoring for %s..." % dbtype)
+
+            ZabbixProvider().create_monitoring(dbinfra=workflow_dict['databaseinfra'],dbtype=dbtype)
 
             return True
         except Exception, e:
