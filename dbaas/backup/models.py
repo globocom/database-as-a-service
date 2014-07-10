@@ -38,6 +38,7 @@ class BackupInfo(BaseModel):
     database_name = models.CharField(verbose_name=_("Database name"), max_length=100, null=True, blank=True,)
     size = models.BigIntegerField(verbose_name=_("Size"), null=True, blank=True)
     environment = models.ForeignKey('physical.Environment', related_name="backup_environment", unique=False, null=True, blank=True, on_delete=models.SET_NULL)
+    error = models.CharField(verbose_name=_("Error"), max_length=400, null=True, blank=True)
 
     def __unicode__(self):
         return u"%s from %s started at %s" % (self.type, self.database_name, self.start_at)

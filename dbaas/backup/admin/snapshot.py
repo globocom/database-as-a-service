@@ -14,7 +14,7 @@ class SnapshotAdmin(admin.ModelAdmin):
 
     list_display = ("database_name", "instance", "start_at", "end_at", "purge_at", "type", "status", "environment")
     search_fields = ("database_name", "instance__dns", )
-    readonly_fields = ("database_name", "instance", "start_at", "end_at", "purge_at", "type", "status", "snapshopt_id", "snapshot_name", "export_path", "size", "environment")
+    readonly_fields = ("database_name", "instance", "start_at", "end_at", "purge_at", "type", "status", "snapshopt_id", "snapshot_name", "export_path", "size", "environment", "error")
     ordering = ["-start_at"]
 
     def has_delete_permission(self, request, obj=None):

@@ -19,8 +19,31 @@ import logging
 LOG = logging.getLogger(__name__)
 
 
+def set_backup_error(databaseinfra, snapshot, errormsg):
+    LOG.error(errormsg)
+    snapshot.status = Snapshot.ERROR
+    snapshot.error = errormsg
+    snapshot.size = 0
+    snapshot.end_at = datetime.datetime.now()
+    snapshot.purge_at = datetime.datetime.now()
+    snapshot.save()
+    register_backup_dbmonitor(databaseinfra, snapshot)
 
-def make_instance_snapshot_backup(instance):
+def register_backup_dbmonitor(databaseinfra, snapshot):
+    try:
+        from dbaas_dbmonitor.provider import DBMonitorProvider
+        DBMonitorProvider().register_backup(databaseinfra = databaseinfra,
+                                            start_at = snapshot.start_at,
+                                            end_at = snapshot.end_at,
+                                            size = snapshot.size,
+                                            status = snapshot.status,
+                                            type = snapshot.type,
+                                            error = snapshot.error)
+    except Exception, e:
+        LOG.error("Error register backup on DBMonitor %s" % (e))
+
+
+def make_instance_snapshot_backup(instance, error):
 
     LOG.info("Make instance backup for %s" % (instance))
 
@@ -44,54 +67,56 @@ def make_instance_snapshot_backup(instance):
     databaseinfra = instance.databaseinfra
     driver = databaseinfra.get_driver()
     client = driver.get_client(instance)
-    driver.lock_database(client)
+    
     try:
+        driver.lock_database(client)
         nfs_snapshot = NfsaasProvider.create_snapshot(environment = databaseinfra.environment,
                                                       plan = databaseinfra.plan,
                                                       host = instance.hostname)
-
-        snapshot.snapshopt_id = nfs_snapshot['id']
-        snapshot.snapshot_name = nfs_snapshot['snapshot']
-        snapshot.status = Snapshot.SUCCESS
+        driver.unlock_database(client)
+        if 'error' in nfs_snapshot:
+            errormsg = nfs_snapshot['error']
+            error['errormsg'] = errormsg
+            set_backup_error(databaseinfra, snapshot, errormsg)
+            return False
+            
+        if 'id' in nfs_snapshot and 'snapshot' in nfs_snapshot:
+            snapshot.snapshopt_id = nfs_snapshot['id']
+            snapshot.snapshot_name = nfs_snapshot['snapshot']
+        else:
+            errormsg = 'There is no snapshot information'
+            error['errormsg'] = errormsg
+            set_backup_error(databaseinfra, snapshot, errormsg)
+            return False
+        
     except Exception, e:
-        LOG.error("Error creating snapshot: %s" % (e))
-        snapshot.status = Snapshot.ERROR
-
-    driver.unlock_database(client)
-
-    snapshot.end_at = datetime.datetime.now()
-
+        errormsg = "Error creating snapshot: %s" % (e)
+        error['errormsg'] = errormsg
+        set_backup_error(databaseinfra, snapshot, errormsg)
+        return False
+    
     from dbaas_cloudstack.models import HostAttr as Cloudstack_HostAttr
     cloudstack_hostattr = Cloudstack_HostAttr.objects.get(host=instance.hostname)
     output = {}
     command = "du -sb /data/.snapshot/%s | awk '{print $1}'" % (snapshot.snapshot_name)
-    size = None
     try:
         exit_status = exec_remote_command(server = instance.hostname.address,
                                           username = cloudstack_hostattr.vm_user,
                                           password = cloudstack_hostattr.vm_password,
                                           command = command,
                                           output = output)
+        size = int(output['stdout'][0])
+        snapshot.size = size
     except Exception, e:
+        snapshot.size = 0
         LOG.error("Error exec remote command %s" % (e))
-    else:
-        if exit_status == 0:
-            size = int(output['stdout'][0])
 
-    snapshot.size = size
-
-    try:
-        from dbaas_dbmonitor.provider import DBMonitorProvider
-        DBMonitorProvider().register_backup(databaseinfra = databaseinfra,
-                                            start_at = snapshot.start_at,
-                                            end_at = snapshot.end_at,
-                                            size = size,
-                                            status = snapshot.status,
-                                            type = snapshot.type)
-    except Exception, e:
-        LOG.error("Error register backup on DBMonitor %s" % (e))
-
+    snapshot.status = Snapshot.SUCCESS
+    snapshot.end_at = datetime.datetime.now()
     snapshot.save()
+    register_backup_dbmonitor(databaseinfra, snapshot)
+    
+    return True
 
 
 @app.task(bind=True)
@@ -104,14 +129,20 @@ def make_databases_backup(self):
     msgs = []
     status = TaskHistory.STATUS_SUCCESS
     databaseinfras = DatabaseInfra.objects.filter(plan__provider=Plan.CLOUDSTACK)
+    error = {}
     for databaseinfra in databaseinfras:
         instances = Instance.objects.filter(databaseinfra=databaseinfra)
         for instance in instances:
 
             try:
-                make_instance_snapshot_backup(instance=instance)
-                msg = "Backup for %s was successful" % (str(instance))
-                LOG.info(msg)
+                if make_instance_snapshot_backup(instance = instance, error = error):
+                    msg = "Backup for %s was successful" % (str(instance))
+                    LOG.info(msg)
+                else:
+                    status = TaskHistory.STATUS_ERROR
+                    msg = "Backup for %s was unsuccessful. Error: %s" % (str(instance), error['errormsg'])
+                    LOG.error(msg)
+                print msg
             except Exception, e:
                 status = TaskHistory.STATUS_ERROR
                 msg = "Backup for %s was unsuccessful. Error: %s" % (str(instance), str(e))
