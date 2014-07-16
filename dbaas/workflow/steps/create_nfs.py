@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
 from base import BaseStep
+from physical.models import Instance
 from dbaas_nfsaas.provider import NfsaasProvider
 
 
@@ -17,7 +18,12 @@ class CreateNfs(BaseStep):
 
             workflow_dict['disks'] = []
 
-            for host in workflow_dict['hosts']:
+            for instance in workflow_dict['instances']:
+                host = instance.hostname
+                
+                if instance.is_arbiter:
+                    LOG.info("Do not creat nfsaas disk for Arbiter...")
+                    continue
 
                 LOG.info("Creating nfsaas disk...")
 
