@@ -24,6 +24,7 @@ clean: # remove temporary files
 	@find . -name test-report.xml -delete
 	@find . -name .coverage -delete
 
+
 check_environment: # check if your local environment is ok to running this project
 	@echo "$$CHECK_SCRIPT" | python -
 
@@ -46,8 +47,10 @@ db_reset: # drop and create database
 load_basic_roles: # load roles
 	@cd dbaas && python manage.py loaddata basic_roles.yaml
 
+
 load_basic_configs: # load roles
 	@cd dbaas && python manage.py loaddata basic_configs.yaml
+
 
 reset_data: db_reset # drop and create database and insert sample data
 	@cd dbaas && python manage.py sample_data
@@ -67,8 +70,10 @@ test: # run tests
 run: # run local server
 	@cd dbaas && python manage.py runserver 0.0.0.0:8000 $(filter-out $@,$(MAKECMDGOALS))
 
+
 run_celery: # run local celery
 	@cd dbaas && python manage.py celery worker -E --loglevel=DEBUG --app=dbaas --beat $(filter-out $@,$(MAKECMDGOALS))
+
 
 shell: # run django shell
 	@cd dbaas && python manage.py shell_plus --use-pythonrc
