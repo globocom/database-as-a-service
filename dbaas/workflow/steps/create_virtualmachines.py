@@ -37,8 +37,8 @@ class CreateVirtualMachine(BaseStep):
             workflow_dict['instances'] = []
             workflow_dict['databaseinfraattr'] = []
             workflow_dict['vms_id'] = []
-
-            for vm_name in workflow_dict['names']['vms']:
+            
+            for index, vm_name in enumerate(workflow_dict['names']['vms']):
                 LOG.debug("Running vm")
                 vm = cs_provider.deploy_virtual_machine(
                     offering=cs_plan_attrs.serviceofferingid.all()[0].serviceofferingid,
@@ -76,7 +76,10 @@ class CreateVirtualMachine(BaseStep):
                 elif workflow_dict['enginecod'] == workflow_dict['MONGODB']:
                     instance.port = 27017
                 instance.is_active = True
-                instance.is_arbiter = False
+                if workflow_dict['enginecod'] == workflow_dict['MONGODB'] and index == 2:
+                    instance.is_arbiter = True
+                else:
+                    instance.is_arbiter = False
                 instance.hostname = host
                 instance.databaseinfra = workflow_dict['databaseinfra']
                 instance.save()

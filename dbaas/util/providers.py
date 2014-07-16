@@ -25,7 +25,7 @@ def make_infra(plan, environment, name,task=None):
                                plan= plan,
                                environment= environment,
                                steps= get_engine_steps(engine= str(plan.engine_type)),
-                               qt= get_vm_qt(plan= plan),
+                               qt= get_vm_qt(plan= plan, ),
                                MYSQL = MYSQL,
                                MONGODB = MONGODB,
                                enginecod = get_engine(engine= str(plan.engine_type))
@@ -96,7 +96,10 @@ def get_engine_steps(engine):
 
 def get_vm_qt(plan):
     if plan.is_ha:
-        qt = 2
+        if get_engine(engine= str(plan.engine_type)) == MONGODB:
+            qt = 3
+        else:
+            qt = 2
     else:
         qt = 1
 
