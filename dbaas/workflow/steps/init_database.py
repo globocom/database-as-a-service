@@ -26,8 +26,7 @@ class InitDatabase(BaseStep):
 
             cs_provider = CloudStackProvider(credentials=cs_credentials)
 
-            x = 0
-            for hosts in permutations(workflow_dict['hosts']):
+            for index, hosts in enumerate(permutations(workflow_dict['hosts'])):
 
                 LOG.info("Getting vm credentials...")
                 host_csattr = CsHostAttr.objects.get(host=hosts[0])
@@ -49,11 +48,10 @@ class InitDatabase(BaseStep):
                 }
 
                 if len(workflow_dict['hosts']) > 1:
-                    x += 1
                     LOG.info("Updating contexdict for %s" % hosts[0] )
 
                     contextdict.update({
-                        'SERVERID': x,
+                        'SERVERID': index+1,
                         'DBPASSWORD': get_credentials_for(environment=workflow_dict['environment'],
                                                           credential_type=CredentialType.MYSQL).password,
                         'IPMASTER': hosts[1].address,
