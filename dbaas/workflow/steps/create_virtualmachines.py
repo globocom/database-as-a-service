@@ -41,7 +41,8 @@ class CreateVirtualMachine(BaseStep):
             for vm_name in workflow_dict['names']['vms']:
                 LOG.debug("Running vm")
                 vm = cs_provider.deploy_virtual_machine(
-                    planattr=cs_plan_attrs,
+                    offering=cs_plan_attrs.serviceofferingid.all()[0].serviceofferingid,
+                    bundle= cs_plan_attrs.bundle.all()[0],
                     project_id=cs_credentials.project,
                     vmname=vm_name,
                 )
