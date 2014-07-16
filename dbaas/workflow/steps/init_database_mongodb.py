@@ -26,8 +26,6 @@ class InitDatabaseMongoDB(BaseStep):
 
             cs_provider = CloudStackProvider(credentials=cs_credentials)
 
-            #x = 0
-            #for host in workflow_dict['hosts']:
             for index, instance in enumerate(workflow_dict['instances']):
                 host = instance.hostname
 
