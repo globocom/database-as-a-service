@@ -16,7 +16,12 @@ class CheckDatabaseConnection(BaseStep):
 
         LOG.info("Getting driver class")
         driver = workflow_dict['databaseinfra'].get_driver()
-
+        
+        if workflow_dict['enginecod'] == workflow_dict['MONGODB'] and workflow_dict['qt'] > 1:
+            LOG.info("Waiting 60 seconds to init mongodb replication...")
+            from time import sleep
+            sleep(60)
+            
         if driver.check_status():
             LOG.info("Database is ok...")
             return True
