@@ -37,19 +37,20 @@ class CreateVirtualMachine(BaseStep):
             workflow_dict['instances'] = []
             workflow_dict['databaseinfraattr'] = []
             workflow_dict['vms_id'] = []
-            
+
             for index, vm_name in enumerate(workflow_dict['names']['vms']):
-                LOG.debug("Running vm")
+
                 vm = cs_provider.deploy_virtual_machine(
                     offering=cs_plan_attrs.serviceofferingid.all()[0].serviceofferingid,
                     bundle= cs_plan_attrs.bundle.all()[0],
                     project_id=cs_credentials.project,
                     vmname=vm_name,
                 )
-                LOG.debug("New virtualmachine: %s" % vm)
 
                 if not vm:
                     return False
+
+                LOG.debug("New virtualmachine: %s" % vm)
 
                 workflow_dict['vms_id'].append(vm['virtualmachine'][0]['id'])
 
@@ -59,6 +60,7 @@ class CreateVirtualMachine(BaseStep):
                 host.cloud_portal_host = True
                 host.save()
                 LOG.info("Host created!")
+
                 workflow_dict['hosts'].append(host)
 
                 host_attr = HostAttr()
@@ -80,10 +82,12 @@ class CreateVirtualMachine(BaseStep):
                     instance.is_arbiter = True
                 else:
                     instance.is_arbiter = False
+
                 instance.hostname = host
                 instance.databaseinfra = workflow_dict['databaseinfra']
                 instance.save()
                 LOG.info("Instance created!")
+
                 workflow_dict['instances'].append(instance)
 
                 if  workflow_dict['qt']==1:
@@ -114,6 +118,7 @@ class CreateVirtualMachine(BaseStep):
             instances = workflow_dict['databaseinfra'].instances.all()
 
             if not instances:
+
                 for vm_id in workflow_dict['vms_id']:
                     cs_provider.destroy_virtual_machine(
                     project_id=cs_credentials.project,
@@ -138,6 +143,7 @@ class CreateVirtualMachine(BaseStep):
                 host_attr = HostAttr.objects.get(host=host)
 
                 LOG.info("Destroying virtualmachine %s" % host_attr.vm_id)
+
                 cs_provider.destroy_virtual_machine(
                     project_id=cs_credentials.project,
                     environment=workflow_dict['environment'],
