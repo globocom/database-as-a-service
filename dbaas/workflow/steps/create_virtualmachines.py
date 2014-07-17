@@ -46,10 +46,15 @@ class CreateVirtualMachine(BaseStep):
 				else:
 					bundle = LastUsedBundle.get_next_bundle(plan=workflow_dict['plan'], bundle= bundles)
 
-				LOG.debug("Deploying new vm on cs with bundle %s" % bundle)
+				if workflow_dict['enginecod'] == workflow_dict['MONGODB'] and index == 2:
+					offering = cs_plan_attrs.get_weaker_offering()
+				else:
+					offering = cs_plan_attrs.get_stronger_offering()
+
+				LOG.debug("Deploying new vm on cs with bundle %s and offering %s" % (bundle,offering))
 
 				vm = cs_provider.deploy_virtual_machine(
-					offering=cs_plan_attrs.serviceofferingid.all()[0].serviceofferingid,
+					offering=offering.serviceofferingid,
 					bundle= bundle,
 					project_id=cs_credentials.project,
 					vmname=vm_name,
