@@ -54,6 +54,15 @@ class MongoDB(BaseDriver):
         return ",".join(["%s:%s" % (instance.dns, instance.port)
                         for instance in self.databaseinfra.instances.filter(is_arbiter=False, is_active=True).all()])
 
+    def __concatenate_instances_dns_only(self):
+        return ",".join(["%s" % (instance.dns)
+                        for instance in self.databaseinfra.instances.filter(is_arbiter=False, is_active=True).all()])
+    
+    def get_dns_port(self):
+        port = self.databaseinfra.instances.filter(is_arbiter=False, is_active=True).all()[0].port
+        dns = self.__concatenate_instances_dns_only()
+        return dns, port
+    
     def get_connection(self, database=None):
         uri = "mongodb://<user>:<password>@%s" % self.__concatenate_instances()
         if database:
