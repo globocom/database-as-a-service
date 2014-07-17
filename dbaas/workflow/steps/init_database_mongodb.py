@@ -7,6 +7,8 @@ from dbaas_nfsaas.models import HostAttr
 from dbaas_cloudstack.models import PlanAttr, HostAttr as CsHostAttr
 from itertools import permutations
 from util import check_ssh, exec_remote_command, get_credentials_for
+import string
+import random
 
 LOG = logging.getLogger(__name__)
 
@@ -25,6 +27,10 @@ class InitDatabaseMongoDB(BaseStep):
                 credential_type=CredentialType.CLOUDSTACK)
 
             cs_provider = CloudStackProvider(credentials=cs_credentials)
+            
+            mongodbkey = ''.join(random.choice(string.hexdigits) for i in range(50))
+            
+            workflow_dict['replicasetname'] = 'RepicaSet_' + workflow_dict['databaseinfra'].name
 
             for index, instance in enumerate(workflow_dict['instances']):
                 host = instance.hostname
@@ -61,11 +67,11 @@ class InitDatabaseMongoDB(BaseStep):
                     contextdict.update({
                         'DBPASSWORD': get_credentials_for(environment=workflow_dict['environment'],
                                                           credential_type=CredentialType.MONGODB).password,
-                        'REPLICASETNAME': 'Replica' + workflow_dict['databaseinfra'].name,
+                        'REPLICASETNAME': workflow_dict['replicasetname'],
                         'HOST01': workflow_dict['hosts'][0],
                         'HOST02': workflow_dict['hosts'][1],
                         'HOST03': workflow_dict['hosts'][2],
-                        'MONGODBKEY': 'sjhsjkhskjshd dbjkdhejkheb dfuiy378yihgbd djkdgjh',
+                        'MONGODBKEY': mongodbkey,
                         'DATABASERULE': databaserule,
                         'SECOND_SCRIPT_FILE': '/opt/dbaas/scripts/dbaas_second_script.sh'
                     })                
