@@ -223,3 +223,21 @@ class MongoDB(BaseDriver):
     
     def clone(self):
         return CLONE_DATABASE_SCRIPT_NAME
+
+    def check_instance_is_eligible_for_backup(self, instance):
+        if instance.is_arbiter:
+            return False
+        
+        if self.databaseinfra.instances.count() == 1:
+            return True
+        
+        with self.pymongo(instance=instance) as client:
+            try:
+                ismaster = client.admin.command('isMaster')
+                if ismaster['ismaster']:
+                    return False
+                else:
+                    return True
+        
+            except pymongo.errors.PyMongoError, e:
+                raise ConnectionError('Error connection to databaseinfra %s: %s' % (self.databaseinfra, e.message))

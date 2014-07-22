@@ -144,6 +144,9 @@ class BaseDriver(object):
 
     def unlock_database(self, client):
         raise NotImplementedError()
+    
+    def check_instance_is_eligible_for_backup(self, instance):
+        raise NotImplementedError()
 
 class DatabaseStatus(object):
 
