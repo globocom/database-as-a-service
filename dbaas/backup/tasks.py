@@ -133,6 +133,10 @@ def make_databases_backup(self):
     for databaseinfra in databaseinfras:
         instances = Instance.objects.filter(databaseinfra=databaseinfra)
         for instance in instances:
+            
+            if not instance.databaseinfra.get_driver().check_instance_is_eligible_for_backup(instance):
+                LOG.info('Instance %s is not eligible for backup' % (str(instance)))
+                continue
 
             try:
                 if make_instance_snapshot_backup(instance = instance, error = error):
