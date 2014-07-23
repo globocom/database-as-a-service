@@ -70,6 +70,7 @@ class MySQL(BaseDriver):
         return self.__mysql_client__(instance)
 
     def lock_database(self, client):
+        client.query("SET session lock_wait_timeout = 60")        
         client.query("flush tables with read lock")
         client.query("flush logs")
 
