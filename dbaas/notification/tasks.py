@@ -198,14 +198,14 @@ def database_notification(self):
     #get all teams and for each one create a new task
     LOG.info("retrieving all teams and sendind database notification")
     teams = Team.objects.all()
-    msgs  = []
+    msgs  = {}
 
     for team in teams:
         ###############################################
         # create task
         ###############################################
 
-        msgs.append(database_notification_for_team(team=team))
+        msgs[team] = database_notification_for_team(team=team)
         ###############################################
 
     try:
@@ -213,7 +213,7 @@ def database_notification(self):
         LOG.info(msgs)
 
         task_history = TaskHistory.register(request=self.request, user=None)
-        task_history.update_status_for(TaskHistory.STATUS_SUCCESS, details="\n".join(msgs))
+        task_history.update_status_for(TaskHistory.STATUS_SUCCESS, details="\n".join(str(key)+ ': ' + ', '.join(value) for key, value in msgs.items()))
     except Exception, e:
         task_history.update_status_for(TaskHistory.STATUS_ERROR, details=e)
 
