@@ -233,3 +233,6 @@ def full_stack():
     if not exc is None:
          stackstr += '  ' + traceback.format_exc().lstrip(trc)
     return stackstr
+
+def dict_to_string(dict):
+    ''.join('{}: {}'.format(key, val) for key, val in sorted(dict.items()))
