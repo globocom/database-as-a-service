@@ -40,10 +40,12 @@ def start_workflow(workflow_dict, task=None):
 
 			if my_instance.do(workflow_dict) != True:
 				workflow_dict['status'] = 0
-				raise Exception
+				raise Exception("We caught an error while executing the steps...")
 
 			workflow_dict['status'] = 1
 			task.update_details(persist=True, details="DONE!")
+
+		workflow_dict['created'] = True
 
 		return True
 
@@ -61,6 +63,8 @@ def start_workflow(workflow_dict, task=None):
 		workflow_dict['steps'] = workflow_dict[
 			                         'steps'][:workflow_dict['step_counter']]
 		stop_workflow(workflow_dict)
+
+		workflow_dict['created'] = False
 
 		return False
 
