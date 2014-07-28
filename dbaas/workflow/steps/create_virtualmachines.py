@@ -8,7 +8,6 @@ from dbaas_cloudstack.models import PlanAttr, HostAttr, LastUsedBundle
 from physical.models import Host, Instance
 from ..exceptions.error_codes import DBAAS_0011
 from util import full_stack
-
 LOG = logging.getLogger(__name__)
 
 
@@ -62,7 +61,7 @@ class CreateVirtualMachine(BaseStep):
 				)
 
 				if not vm:
-					return False
+					raise Exception("CloudStack could not create the virtualmachine")
 
 				LOG.debug("New virtualmachine: %s" % vm)
 
