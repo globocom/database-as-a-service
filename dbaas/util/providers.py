@@ -17,9 +17,9 @@ def make_infra(plan, environment, name,task=None):
         dbinfra = DatabaseInfra.best_for(plan= plan, environment= environment, name= name)
 
         if dbinfra:
-            return {'databaseinfra':dbinfra}
+            return build_dict(databaseinfra= dbinfra, created=True)
 
-        return False
+        return build_dict(databaseinfra=None, created= False)
 
     workflow_dict = build_dict(name= name,
                                plan= plan,
@@ -31,10 +31,9 @@ def make_infra(plan, environment, name,task=None):
                                enginecod = get_engine(engine= str(plan.engine_type))
                                )
 
-    if start_workflow(workflow_dict= workflow_dict, task=task):
-        return workflow_dict
-    else:
-        return False
+    start_workflow(workflow_dict= workflow_dict, task=task)
+    return workflow_dict
+
 
 
 def destroy_infra(databaseinfra, task=None):
