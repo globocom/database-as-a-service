@@ -37,8 +37,6 @@ class BuildDatabaseInfra(BaseStep):
 			LOG.info("DatabaseInfra created!")
 			workflow_dict['databaseinfra'] = databaseinfra
 
-			raise Exception("Eu estou aqui!")
-
 			return True
 		except Exception, e:
 
