@@ -2,41 +2,44 @@
 import logging
 from base import BaseStep
 from dbaas_dbmonitor.provider import DBMonitorProvider
-
+from ..exceptions.error_codes import DBAAS_0006
+from util import full_stack
 
 LOG = logging.getLogger(__name__)
 
 
 class CreateDbMonitor(BaseStep):
+	def __unicode__(self):
+		return "Registering dbmonitor monitoring..."
 
-    def __unicode__(self):
-        return "Registering dbmonitor monitoring..."
+	def do(self, workflow_dict):
+		try:
 
-    def do(self, workflow_dict):
-        try:
+			if not 'databaseinfra' in workflow_dict:
+				return False
 
-            if not 'databaseinfra' in workflow_dict:
-                return False
+			LOG.info("Creating dbmonitor monitoring...")
 
-            LOG.info("Creating dbmonitor monitoring...")
+			DBMonitorProvider().create_dbmonitor_monitoring(workflow_dict['databaseinfra'])
 
-            DBMonitorProvider().create_dbmonitor_monitoring(workflow_dict['databaseinfra'])
+			return True
+		except Exception, e:
+			traceback = full_stack()
 
-            return True
-        except Exception, e:
-            print e
-            return False
+			workflow_dict['exceptions']['error_codes'].append(DBAAS_0006)
+			workflow_dict['exceptions']['traceback'].append(traceback)
 
-    def undo(self, workflow_dict):
-        try:
-            if not 'databaseinfra' in workflow_dict:
-                return False
+			return False
 
-            LOG.info("Destroying dbmonitor monitoring...")
+	def undo(self, workflow_dict):
+		try:
+			if not 'databaseinfra' in workflow_dict:
+				return False
 
-            DBMonitorProvider().remove_dbmonitor_monitoring(workflow_dict['databaseinfra'])
+			LOG.info("Destroying dbmonitor monitoring...")
 
-            return True
-        except Exception, e:
-            print e
-            return False
+			DBMonitorProvider().remove_dbmonitor_monitoring(workflow_dict['databaseinfra'])
+
+			return True
+		except Exception, e:
+			raise e

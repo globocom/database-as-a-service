@@ -5,110 +5,113 @@ from dbaas_cloudstack.provider import CloudStackProvider
 from dbaas_credentials.models import CredentialType
 from util import get_credentials_for
 from dbaas_cloudstack.models import HostAttr, DatabaseInfraAttr
+from ..exceptions.error_codes import DBAAS_0010
+from util import full_stack
 
 
 LOG = logging.getLogger(__name__)
 
 
 class CreateSecondaryIp(BaseStep):
+	def __unicode__(self):
+		return "Allocating secondary ips..."
 
-    def __unicode__(self):
-        return "Allocating secondary ips..."
+	def do(self, workflow_dict):
+		try:
+			if not 'hosts' in workflow_dict:
+				return False
 
-    def do(self, workflow_dict):
+			if len(workflow_dict['hosts']) == 1:
+				return True
 
-        try:
-            if not 'hosts' in workflow_dict:
-                return False
+			cs_credentials = get_credentials_for(
+				environment=workflow_dict['environment'],
+				credential_type=CredentialType.CLOUDSTACK)
 
-            if len(workflow_dict['hosts']) ==1:
-                return True
+			cs_provider = CloudStackProvider(credentials=cs_credentials)
 
-            cs_credentials = get_credentials_for(
-                environment=workflow_dict['environment'],
-                credential_type=CredentialType.CLOUDSTACK)
+			workflow_dict['databaseinfraattr'] = []
 
-            cs_provider = CloudStackProvider(credentials=cs_credentials)
+			for host in workflow_dict['hosts']:
+				LOG.info("Creating Secondary ips...")
 
-            workflow_dict['databaseinfraattr'] = []
+				host_attr = HostAttr.objects.get(host=host)
 
-            for host in workflow_dict['hosts']:
-                LOG.info("Creating Secondary ips...")
+				reserved_ip = cs_provider.reserve_ip(
+					project_id=cs_credentials.project,
+					vm_id=host_attr.vm_id)
 
-                host_attr = HostAttr.objects.get(host= host)
+				if not reserved_ip:
+					return False
 
-                reserved_ip = cs_provider.reserve_ip(
-                    project_id=cs_credentials.project,
-                    vm_id=host_attr.vm_id)
+				total = DatabaseInfraAttr.objects.filter(
+					databaseinfra=workflow_dict['databaseinfra']).count()
 
-                if not reserved_ip:
-                    return False
+				databaseinfraattr = DatabaseInfraAttr()
 
-                total = DatabaseInfraAttr.objects.filter(
-                    databaseinfra=workflow_dict['databaseinfra']).count()
+				databaseinfraattr.ip = reserved_ip['secondary_ip']
 
-                databaseinfraattr = DatabaseInfraAttr()
+				if total == 0:
+					databaseinfraattr.is_write = True
 
-                databaseinfraattr.ip = reserved_ip['secondary_ip']
+					LOG.info("Updating databaseinfra endpoint...")
 
-                if total == 0:
-                    databaseinfraattr.is_write = True
+					databaseinfra = workflow_dict['databaseinfra']
+					databaseinfra.endpoint = databaseinfraattr.ip + ":%i" % 3306
+					databaseinfra.save()
 
-                    LOG.info("Updating databaseinfra endpoint...")
+					workflow_dict['databaseinfra'] = databaseinfra
 
-                    databaseinfra = workflow_dict['databaseinfra']
-                    databaseinfra.endpoint = databaseinfraattr.ip + ":%i" % 3306
-                    databaseinfra.save()
+				else:
+					databaseinfraattr.is_write = False
 
-                    workflow_dict['databaseinfra'] = databaseinfra
+				databaseinfraattr.cs_ip_id = reserved_ip['cs_ip_id']
+				databaseinfraattr.databaseinfra = workflow_dict[
+					'databaseinfra']
+				databaseinfraattr.save()
 
-                else:
-                    databaseinfraattr.is_write = False
+				workflow_dict['databaseinfraattr'].append(databaseinfraattr)
 
-                databaseinfraattr.cs_ip_id = reserved_ip['cs_ip_id']
-                databaseinfraattr.databaseinfra = workflow_dict[
-                    'databaseinfra']
-                databaseinfraattr.save()
+			return True
+		except Exception as e:
+			traceback = full_stack()
 
-                workflow_dict['databaseinfraattr'].append(databaseinfraattr)
+			workflow_dict['exceptions']['error_codes'].append(DBAAS_0010)
+			workflow_dict['exceptions']['traceback'].append(traceback)
 
+			return False
 
-            return True
-        except Exception as e:
-            print e
-            return False
+	def undo(self, workflow_dict):
+		LOG.info("Running undo...")
+		try:
+			if not 'databaseinfra' in workflow_dict and not 'hosts' in workflow_dict:
+				LOG.info(
+					"We could not find a databaseinfra inside the workflow_dict")
+				return False
 
-    def undo(self, workflow_dict):
-        LOG.info("Running undo...")
-        try:
-            if not 'databaseinfra' in workflow_dict and not 'hosts' in workflow_dict:
-                LOG.info(
-                    "We could not find a databaseinfra inside the workflow_dict")
-                return False
+			if len(workflow_dict['hosts']) == 1:
+				return True
 
-            if len(workflow_dict['hosts']) ==1:
-                return True
+			databaseinfraattr = DatabaseInfraAttr.objects.filter(
+				databaseinfra=workflow_dict['databaseinfra'])
 
-            databaseinfraattr = DatabaseInfraAttr.objects.filter(
-                databaseinfra=workflow_dict['databaseinfra'])
+			cs_credentials = get_credentials_for(
+				environment=workflow_dict['environment'],
+				credential_type=CredentialType.CLOUDSTACK)
 
-            cs_credentials = get_credentials_for(
-                environment=workflow_dict['environment'],
-                credential_type=CredentialType.CLOUDSTACK)
+			cs_provider = CloudStackProvider(credentials=cs_credentials)
 
-            cs_provider = CloudStackProvider(credentials=cs_credentials)
+			for infra_attr in databaseinfraattr:
+				LOG.info("Removing secondary_ip for %s" % infra_attr.cs_ip_id)
+				if not cs_provider.remove_secondary_ips(infra_attr.cs_ip_id):
+					return False
 
-            for infra_attr in databaseinfraattr:
-                LOG.info("Removing secondary_ip for %s" % infra_attr.cs_ip_id)
-                if not cs_provider.remove_secondary_ips(infra_attr.cs_ip_id):
-                    return False
+				LOG.info("Secondary ip deleted!")
 
-                LOG.info("Secondary ip deleted!")
+				infra_attr.delete()
+				LOG.info("Databaseinfraattr deleted!")
 
-                infra_attr.delete()
-                LOG.info("Databaseinfraattr deleted!")
+			return True
 
-            return True
-        except Exception as e:
-            print e
-            return False
+		except Exception as e:
+			raise e
