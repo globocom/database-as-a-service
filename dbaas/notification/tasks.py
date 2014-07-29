@@ -53,7 +53,7 @@ def create_database(self, name, plan, environment, team, project, description, u
 	if result['created']==False:
 
 		if 'exceptions' in result:
-			error = "\n".join(": ".join(err) for err in result['exceptions']['error_codes'])
+			error = "\n\n".join(": ".join(err) for err in result['exceptions']['error_codes'])
 			traceback = "\nException Traceback\n".join(result['exceptions']['traceback'])
 			error = "{}\n{}".format(error, traceback)
 		else:
@@ -89,9 +89,15 @@ def clone_database(self, origin_database, clone_name, user=None):
 	result = make_infra(plan=origin_database.plan, environment=origin_database.environment, name=clone_name,
 	                    task=task_history)
 
-	if type(result) == bool or not 'databaseinfra' in result:
-		error = "There is not any infra-structure to allocate this database."
-		LOG.error("task id %s error: %s" % (self.request.id, error))
+	if result['created']==False:
+
+		if 'exceptions' in result:
+			error = "\n\n".join(": ".join(err) for err in result['exceptions']['error_codes'])
+			traceback = "\n\nException Traceback\n".join(result['exceptions']['traceback'])
+			error = "{}\n{}".format(error, traceback)
+		else:
+			error = "There is not any infra-structure to allocate this database."
+
 		task_history.update_status_for(TaskHistory.STATUS_ERROR, details=error)
 		return
 
