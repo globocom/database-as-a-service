@@ -88,9 +88,14 @@ def stop_workflow(workflow_dict, task=None):
 		return True
 	except Exception, e:
 
-		if not workflow_dict['exceptions']['error_codes'] or not workflow_dict['exceptions']['traceback']:
-			traceback = full_stack()
-			workflow_dict['exceptions']['error_codes'].append(DBAAS_0001)
-			workflow_dict['exceptions']['traceback'].append(traceback)
+		if not 'exceptions' in workflow_dict:
+			workflow_dict['exceptions'] = {}
+			workflow_dict['exceptions']['traceback'] = []
+			workflow_dict['exceptions']['error_codes'] = []
+
+			if not workflow_dict['exceptions']['error_codes'] or not workflow_dict['exceptions']['traceback']:
+				traceback = full_stack()
+				workflow_dict['exceptions']['error_codes'].append(DBAAS_0001)
+				workflow_dict['exceptions']['traceback'].append(traceback)
 
 		return False
