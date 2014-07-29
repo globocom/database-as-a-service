@@ -38,20 +38,20 @@ class CreateZabbix(BaseStep):
 			return False
 
 
-def undo(self, workflow_dict):
-	try:
-		if not 'databaseinfra' in workflow_dict:
+	def undo(self, workflow_dict):
+		try:
+			if not 'databaseinfra' in workflow_dict:
+				return False
+
+			LOG.info("Destroying zabbix monitoring...")
+
+			ZabbixProvider().destroy_monitoring(dbinfra=workflow_dict['databaseinfra'])
+
+			return True
+		except Exception, e:
+			traceback = full_stack()
+
+			workflow_dict['exceptions']['error_codes'].append(DBAAS_0012)
+			workflow_dict['exceptions']['traceback'].append(traceback)
+
 			return False
-
-		LOG.info("Destroying zabbix monitoring...")
-
-		ZabbixProvider().destroy_monitoring(dbinfra=workflow_dict['databaseinfra'])
-
-		return True
-	except Exception, e:
-		traceback = full_stack()
-
-		workflow_dict['exceptions']['error_codes'].append(DBAAS_0012)
-		workflow_dict['exceptions']['traceback'].append(traceback)
-
-		return False
