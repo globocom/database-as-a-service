@@ -72,6 +72,11 @@ def start_workflow(workflow_dict, task=None):
 def stop_workflow(workflow_dict, task=None):
 	LOG.info("Running undo...")
 
+	if not 'exceptions' in workflow_dict:
+		workflow_dict['exceptions'] = {}
+		workflow_dict['exceptions']['traceback'] = []
+		workflow_dict['exceptions']['error_codes'] = []
+
 	try:
 
 		for step in workflow_dict['steps'][::-1]:
@@ -88,14 +93,12 @@ def stop_workflow(workflow_dict, task=None):
 		return True
 	except Exception, e:
 
-		if not 'exceptions' in workflow_dict:
-			workflow_dict['exceptions'] = {}
-			workflow_dict['exceptions']['traceback'] = []
-			workflow_dict['exceptions']['error_codes'] = []
+		if not workflow_dict['exceptions']['error_codes'] or not workflow_dict['exceptions']['traceback']:
+			traceback = full_stack()
+			workflow_dict['exceptions']['error_codes'].append(DBAAS_0001)
+			workflow_dict['exceptions']['traceback'].append(traceback)
 
-			if not workflow_dict['exceptions']['error_codes'] or not workflow_dict['exceptions']['traceback']:
-				traceback = full_stack()
-				workflow_dict['exceptions']['error_codes'].append(DBAAS_0001)
-				workflow_dict['exceptions']['traceback'].append(traceback)
+		LOG.warn("\n".join( ": ".join(error) for error in workflow_dict['exceptions']['error_codes']))
+		LOG.warn("\nException Traceback\n".join(workflow_dict['exceptions']['traceback']))
 
 		return False
