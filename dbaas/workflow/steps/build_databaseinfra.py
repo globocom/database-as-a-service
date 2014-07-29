@@ -56,4 +56,9 @@ class BuildDatabaseInfra(BaseStep):
 				return True
 
 		except Exception, e:
-			raise e
+			traceback = full_stack()
+
+			workflow_dict['exceptions']['error_codes'].append(DBAAS_0002)
+			workflow_dict['exceptions']['traceback'].append(traceback)
+
+			return False

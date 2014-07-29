@@ -102,6 +102,10 @@ class CreateDns(BaseStep):
 			return True
 
 		except Exception, e:
-			raise e
+			traceback = full_stack()
 
-		pass
+			workflow_dict['exceptions']['error_codes'].append(DBAAS_0007)
+			workflow_dict['exceptions']['traceback'].append(traceback)
+
+			return False
+

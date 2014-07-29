@@ -114,4 +114,9 @@ class CreateSecondaryIp(BaseStep):
 			return True
 
 		except Exception as e:
-			raise e
+			traceback = full_stack()
+
+			workflow_dict['exceptions']['error_codes'].append(DBAAS_0010)
+			workflow_dict['exceptions']['traceback'].append(traceback)
+
+			return False

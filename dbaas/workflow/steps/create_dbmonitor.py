@@ -42,4 +42,9 @@ class CreateDbMonitor(BaseStep):
 
 			return True
 		except Exception, e:
-			raise e
+			traceback = full_stack()
+
+			workflow_dict['exceptions']['error_codes'].append(DBAAS_0006)
+			workflow_dict['exceptions']['traceback'].append(traceback)
+
+			return False
