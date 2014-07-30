@@ -8,6 +8,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from util.models import BaseModel
+import datetime
 
 
 CACHE_MISS = object()
@@ -66,8 +67,7 @@ class Configuration(BaseModel):
             return None
         except Exception, e:
             LOG.warning("ops.. could not retrieve configuration value for %s: %s" % (name, e))
-            return None
-
+            return None    
 
 @receiver([post_save, post_delete], sender=Configuration)
 def clear_configuration_cache(sender, **kwargs):
@@ -77,3 +77,22 @@ def clear_configuration_cache(sender, **kwargs):
 
 
 simple_audit.register(Configuration)
+
+
+class CeleryHealthCheck(BaseModel):
+    last_update = models.DateTimeField()
+    
+    @classmethod
+    def set_last_update(cls):
+	    obj, created = cls.objects.get_or_create(pk=1, defaults={'last_update': datetime.datetime.now()})
+	    obj.last_update = datetime.datetime.now()
+	    obj.save()
+	
+    @classmethod
+    def get_healthcheck_string(cls):
+	    celery_healthcheck_threshold_seconds = Configuration.get_by_name_as_int(name='celery_healthcheck_threshold_seconds', default=300)
+	    obj, created = cls.objects.get_or_create(pk=1, defaults={'last_update': datetime.datetime.now()})
+	    if (datetime.datetime.now() - obj.last_update).total_seconds() > celery_healthcheck_threshold_seconds:
+	        return 'NOT WORKING. The last celery update was %s' % (str(obj.last_update))
+	    else:
+	        return 'WORKING'

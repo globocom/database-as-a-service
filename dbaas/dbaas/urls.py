@@ -23,6 +23,7 @@ urlpatterns = patterns('',
     url(r'^tsuru/', include('tsuru.urls')),
     url(r'^logical/', include('logical.urls')),
     url(r'^account/', include('account.urls')),
+    url(r'^system/', include('system.urls')),
     url('^api/', include(api.urls)),    
     (r'^ckeditor/', include('ckeditor.urls')),
 )
