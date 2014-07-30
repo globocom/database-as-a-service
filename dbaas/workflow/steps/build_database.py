@@ -3,66 +3,75 @@ import logging
 from base import BaseStep
 from logical.models import Database
 import datetime
+from ..exceptions.error_codes import DBAAS_0003
+from util import full_stack
 
 
 LOG = logging.getLogger(__name__)
 
 
 class BuildDatabase(BaseStep):
+	def __unicode__(self):
+		return "Creating logical database..."
 
-    def __unicode__(self):
-        return "Creating logical database..."
+	def do(self, workflow_dict):
+		try:
 
-    def do(self, workflow_dict):
-        try:
+			if not workflow_dict['team'] or not workflow_dict['description'] or not workflow_dict['databaseinfra']:
+				return False
 
-            if not workflow_dict['team'] or not workflow_dict['description'] or not workflow_dict['databaseinfra']:
-                return False
+			LOG.info("Creating Database...")
+			database = Database.provision(name=workflow_dict['name'], databaseinfra=workflow_dict['databaseinfra'])
 
-            LOG.info("Creating Database...")
-            database = Database.provision(name= workflow_dict['name'], databaseinfra= workflow_dict['databaseinfra'])
+			LOG.info("Database %s created!" % database)
+			workflow_dict['database'] = database
 
-            LOG.info("Database %s created!" % database)
-            workflow_dict['database'] = database
+			LOG.info("Updating database team")
+			database.team = workflow_dict['team']
 
-            LOG.info("Updating database team")
-            database.team = workflow_dict['team']
+			if 'project' in workflow_dict:
+				LOG.info("Updating database project")
+				database.project = workflow_dict['project']
 
-            if 'project' in workflow_dict:
-                LOG.info("Updating database project")
-                database.project = workflow_dict['project']
+			LOG.info("Updating database description")
+			database.description = workflow_dict['description']
 
-            LOG.info("Updating database description")
-            database.description = workflow_dict['description']
+			database.save()
 
-            database.save()
+			return True
+		except Exception, e:
+			traceback = full_stack()
 
-            return True
-        except Exception, e:
-            print e
-            return False
+			workflow_dict['exceptions']['error_codes'].append(DBAAS_0003)
+			workflow_dict['exceptions']['traceback'].append(traceback)
 
-    def undo(self, workflow_dict):
-        try:
+			return False
 
-            if not 'database' in workflow_dict:
-                if 'databaseinfra' in workflow_dict:
-                    LOG.info("Loading database into workflow_dict...")
-                    workflow_dict['database'] = Database.objects.filter(databaseinfra=workflow_dict['databaseinfra'])[0]
-                else:
-                    return False
+	def undo(self, workflow_dict):
+		try:
 
-            if not workflow_dict['database'].is_in_quarantine:
-                LOG.info("Putting Database in quarentine...")
-                database = workflow_dict['database']
-                database.is_in_quarantine= True
-                database.quarantine_dt = datetime.datetime.now().date()
-                database.save()
+			if not 'database' in workflow_dict:
+				if 'databaseinfra' in workflow_dict:
+					LOG.info("Loading database into workflow_dict...")
+					workflow_dict['database'] = Database.objects.filter(databaseinfra=workflow_dict['databaseinfra'])[0]
+				else:
+					return False
 
-            LOG.info("Destroying the database....")
-            database.delete()
+			if not workflow_dict['database'].is_in_quarantine:
+				LOG.info("Putting Database in quarentine...")
+				database = workflow_dict['database']
+				database.is_in_quarantine = True
+				database.quarantine_dt = datetime.datetime.now().date()
+				database.save()
 
-            return True
-        except Exception, e:
-            print e
-            return False
+			LOG.info("Destroying the database....")
+			database.delete()
+
+			return True
+		except Exception, e:
+			traceback = full_stack()
+
+			workflow_dict['exceptions']['error_codes'].append(DBAAS_0003)
+			workflow_dict['exceptions']['traceback'].append(traceback)
+
+			return False

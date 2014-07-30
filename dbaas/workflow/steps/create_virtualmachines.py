@@ -6,7 +6,8 @@ from dbaas_credentials.models import CredentialType
 from util import get_credentials_for
 from dbaas_cloudstack.models import PlanAttr, HostAttr, LastUsedBundle
 from physical.models import Host, Instance
-
+from ..exceptions.error_codes import DBAAS_0011
+from util import full_stack
 LOG = logging.getLogger(__name__)
 
 
@@ -16,7 +17,6 @@ class CreateVirtualMachine(BaseStep):
 		return "Creating virtualmachines..."
 
 	def do(self, workflow_dict):
-
 		try:
 			if not 'environment' in workflow_dict and not 'plan' in workflow_dict:
 				return False
@@ -61,7 +61,7 @@ class CreateVirtualMachine(BaseStep):
 				)
 
 				if not vm:
-					return False
+					raise Exception("CloudStack could not create the virtualmachine")
 
 				LOG.debug("New virtualmachine: %s" % vm)
 
@@ -115,7 +115,11 @@ class CreateVirtualMachine(BaseStep):
 
 			return True
 		except Exception as e:
-			print e
+			traceback = full_stack()
+
+			workflow_dict['exceptions']['error_codes'].append(DBAAS_0011)
+			workflow_dict['exceptions']['traceback'].append(traceback)
+
 			return False
 
 	def undo(self, workflow_dict):
@@ -173,5 +177,9 @@ class CreateVirtualMachine(BaseStep):
 
 			return True
 		except Exception as e:
-			print e
+			traceback = full_stack()
+
+			workflow_dict['exceptions']['error_codes'].append(DBAAS_0011)
+			workflow_dict['exceptions']['traceback'].append(traceback)
+
 			return False
