@@ -1,5 +1,13 @@
 # Changelog
 
+
+## 0.0.17
+* mysql ha on cloudstack
+* create a task to check whether celery is running
+* improve exception handling on workflow
+* backup only slave instances
+
+
 ## 0.0.16
 * add workflow engine
 * add a backup management tool
