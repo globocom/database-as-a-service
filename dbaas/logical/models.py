@@ -234,7 +234,7 @@ class Database(BaseModel):
 	@property
 	def used_size(self):
 		""" Used size of database (in bytes) """
-		if self.database_status:
+		if self.status:
 			return float(self.database_status.used_size_in_bytes)
 		else:
 			return 0.0
@@ -255,7 +255,7 @@ class Database(BaseModel):
 	@property
 	def capacity(self):
 		""" Float number about used capacity """
-		if self.database_status:
+		if self.status:
 			return round((1.0 * self.used_size / self.total_size) if self.total_size else 0, 2)
 
 

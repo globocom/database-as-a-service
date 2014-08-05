@@ -246,3 +246,29 @@ def database_notification(self):
 		task_history.update_status_for(TaskHistory.STATUS_ERROR, details=e)
 
 	return
+
+@app.task(bind=True)
+@only_one(key="get_databases_status", timeout=50)
+def update_database_status(self):
+	LOG.info("Retrieving all databases")
+	try:
+		databases = Database.objects.all()
+		msgs = []
+		for database in databases:
+			if database.database_status.is_alive:
+				database.status = Database.ALIVE
+			else:
+				database.status = Database.DEAD
+
+			database.save()
+			msg = "\nUpdating status for database: {}, status: {}".format(database, database.status)
+			msgs.append(msg)
+			LOG.info(msg)
+
+		task_history = TaskHistory.register(request=self.request, user=None)
+		task_history.update_status_for(TaskHistory.STATUS_SUCCESS, details="\n".join(
+			value for value in msgs))
+	except Exception, e:
+		task_history.update_status_for(TaskHistory.STATUS_ERROR, details=e)
+
+	return
