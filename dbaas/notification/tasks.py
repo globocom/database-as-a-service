@@ -272,3 +272,30 @@ def update_database_status(self):
 		task_history.update_status_for(TaskHistory.STATUS_ERROR, details=e)
 
 	return
+
+@app.task(bind=True)
+@only_one(key="get_databases_used_size", timeout=50)
+def update_database_used_size(self):
+	LOG.info("Retrieving all databases")
+	try:
+		databases = Database.objects.all()
+		msgs = []
+		for database in databases:
+			if database.database_status:
+				database.used_size_in_bytes = float(database.database_status.used_size_in_bytes)
+			else:
+				database.used_size_in_bytes = 0.0
+
+			database.save()
+			msg = "\nUpdating used size in bytes for database: {}, used size: {}".format(
+				database, database.used_size_in_bytes)
+			msgs.append(msg)
+			LOG.info(msg)
+
+		task_history = TaskHistory.register(request=self.request, user=None)
+		task_history.update_status_for(TaskHistory.STATUS_SUCCESS, details="\n".join(
+			value for value in msgs))
+	except Exception, e:
+		task_history.update_status_for(TaskHistory.STATUS_ERROR, details=e)
+
+	return

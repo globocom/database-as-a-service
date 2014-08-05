@@ -79,7 +79,7 @@ class Database(BaseModel):
 	quarantine_time = Configuration.get_by_name_as_int('quarantine_retention_days')
 	status = models.IntegerField(choices=DB_STATUS,
 	                             default=0)
-
+	used_size_in_bytes = models.FloatField(default=0.0)
 
 	def __unicode__(self):
 		return u"%s" % self.name
@@ -231,32 +231,24 @@ class Database(BaseModel):
 		return self.databaseinfra.per_database_size_bytes * GB_FACTOR
 
 
-	@property
-	def used_size(self):
-		""" Used size of database (in bytes) """
-		if self.status:
-			return float(self.database_status.used_size_in_bytes)
-		else:
-			return 0.0
-
 
 	@property
 	def used_size_in_mb(self):
 		""" Used size of database (in bytes) """
-		return self.used_size * MB_FACTOR
+		return self.used_size_in_bytes * MB_FACTOR
 
 
 	@property
 	def used_size_in_gb(self):
 		""" Used size of database (in bytes) """
-		return self.used_size * GB_FACTOR
+		return self.used_size_in_bytes * GB_FACTOR
 
 
 	@property
 	def capacity(self):
 		""" Float number about used capacity """
 		if self.status:
-			return round((1.0 * self.used_size / self.total_size) if self.total_size else 0, 2)
+			return round((1.0 * self.used_size_in_bytes / self.total_size) if self.total_size else 0, 2)
 
 
 	@classmethod
