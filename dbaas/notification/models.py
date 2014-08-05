@@ -12,82 +12,88 @@ from util.models import BaseModel
 
 LOG = logging.getLogger(__name__)
 
+
 class TaskHistory(BaseModel):
+	STATUS_PENDING = 'PENDING'
+	STATUS_RUNNING = 'RUNNING'
+	STATUS_SUCCESS = 'SUCCESS'
+	STATUS_ERROR = 'ERROR'
 
-    STATUS_PENDING = 'PENDING'
-    STATUS_RUNNING = 'RUNNING'
-    STATUS_SUCCESS = 'SUCCESS'
-    STATUS_ERROR = 'ERROR'
+	_STATUS = [STATUS_PENDING, STATUS_RUNNING, STATUS_SUCCESS, STATUS_ERROR]
 
-    _STATUS = [STATUS_PENDING, STATUS_RUNNING, STATUS_SUCCESS, STATUS_ERROR]
+	task_id = models.CharField(_('Task ID'), max_length=200, null=True, blank=True, editable=False)
+	task_name = models.CharField(_('Task Name'), max_length=200, null=True, blank=True)
+	user = models.CharField(max_length=255, null=True, blank=True)
+	ended_at = models.DateTimeField(verbose_name=_("Ended at"), null=True, blank=True, editable=False)
+	task_status = models.CharField(_('Task Status'), max_length=100, default=STATUS_PENDING)
+	context = models.TextField(null=True, blank=True)
+	details = models.TextField(verbose_name=_("Details"), null=True, blank=True)
+	arguments = models.TextField(verbose_name=_("Arguments"), null=True, blank=True)
+	db_id = models.ForeignKey(Database, related_name="database", null=True, blank=True, on_delete=models.SET_NULL)
 
-    task_id = models.CharField(_('Task ID'), max_length=200, null=True, blank=True, editable=False)
-    task_name = models.CharField(_('Task Name'), max_length=200, null=True, blank=True)
-    user = models.CharField(max_length=255, null=True, blank=True)
-    ended_at = models.DateTimeField(verbose_name=_("Ended at"), null=True, blank=True, editable=False)
-    task_status = models.CharField(_('Task Status'), max_length=100, default=STATUS_PENDING)
-    context = models.TextField(null=True, blank=True)
-    details = models.TextField(verbose_name=_("Details"), null=True, blank=True)
-    arguments = models.TextField(verbose_name=_("Arguments"), null=True, blank=True)
-    db_id =  models.ForeignKey(Database, related_name="database", null=True, blank=True, on_delete=models.SET_NULL)
+	def __unicode__(self):
+		return u"%s" % self.task_id
 
-    def __unicode__(self):
-        return u"%s" % self.task_id
+	def load_context_data(self):
+		if self.context == '':
+			self.context = '{}'
+		self.context_data = simplejson.loads(self.context)
+		return self.context_data
 
-    def load_context_data(self):
-        if self.context == '':
-            self.context = '{}'
-        self.context_data = simplejson.loads(self.context)
-        return self.context_data
-
-    def update_details(self, details, persist=False):
-        """
+	def update_details(self, details, persist=False):
+		"""
         Method to update the details of a task history.
         TODO: should we put a timestamp in details? should we append the details?
         """
 
-        if self.details:
-            self.details= "\n%s%s" % (self.details,details)
-        else:
-            print "None"
-            self.details=details
+		if self.details:
+			self.details = "\n%s%s" % (self.details, details)
+		else:
+			print "None"
+			self.details = details
 
-        if persist:
-            self.save()
+		if persist:
+			self.save()
 
-    def update_status_for(self, status, details=None):
-        if status not in TaskHistory._STATUS:
-            raise RuntimeError("Invalid task status")
+	def update_status_for(self, status, details=None):
+		if status not in TaskHistory._STATUS:
+			raise RuntimeError("Invalid task status")
 
-        self.task_status = status
-        self.details = (self.details or " ") + "\n" + str(details)
-        if status in [TaskHistory.STATUS_SUCCESS, TaskHistory.STATUS_ERROR]:
-            self.update_ended_at()
-        else:
-            self.save()
+		self.task_status = status
+		self.details = (self.details or " ") + "\n" + str(details)
+		if status in [TaskHistory.STATUS_SUCCESS, TaskHistory.STATUS_ERROR]:
+			self.update_ended_at()
+		else:
+			self.save()
 
-    def update_dbid(self, db):
-        self.db_id = db
-        self.save()
+	def update_dbid(self, db):
+		self.db_id = db
+		self.save()
 
-    def update_ended_at(self):
-        self.ended_at = datetime.now()
-        self.save()
+	def update_ended_at(self):
+		self.ended_at = datetime.now()
+		self.save()
 
-    @classmethod
-    def register(cls, request=None, user=None):
+	@classmethod
+	def register(cls, request=None, user=None):
 
-        LOG.info("task id: %s | task name: %s | " % (request.id,
-                                                    request.task))
-        task_history = TaskHistory()
-        task_history.task_id = request.id
-        task_history.task_name = request.task
-        task_history.task_status = TaskHistory.STATUS_RUNNING
-        task_history.arguments = request.args
+		LOG.info("task id: %s | task name: %s | " % (request.id,
+		                                             request.task))
+		print request.args
+		task_history = TaskHistory()
+		task_history.task_id = request.id
+		task_history.task_name = request.task
+		task_history.task_status = TaskHistory.STATUS_RUNNING
 
-        if user:
-            task_history.user = user.username
+		if request.task == 'notification.tasks.create_database':
+			task_history.arguments = "Database name: {0},\nEnvironment: {1},\nProject: {2}".format(
+				request.args[0], request.args[2], request.args[4])
+		else:
+			task_history.arguments = request.args
 
-        task_history.save()
+		if user:
+			task_history.user = user.username
 
-        return task_history
+		task_history.save()
+
+		return task_history

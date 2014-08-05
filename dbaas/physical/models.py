@@ -18,6 +18,9 @@ LOG = logging.getLogger(__name__)
 class Environment(BaseModel):
     name = models.CharField(verbose_name=_("Environment"), max_length=100, unique=True)
 
+    def __unicode__(self):
+     return '%s' % (self.name)
+
 
 class EngineType(BaseModel):
 
