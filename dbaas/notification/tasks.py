@@ -53,9 +53,9 @@ def create_database(self, name, plan, environment, team, project, description, u
 	if result['created']==False:
 
 		if 'exceptions' in result:
-			error = "\n\n".join(": ".join(err) for err in result['exceptions']['error_codes'])
+			error = "\n".join(": ".join(err) for err in result['exceptions']['error_codes'])
 			traceback = "\nException Traceback\n".join(result['exceptions']['traceback'])
-			error = "{}\n{}".format(error, traceback)
+			error = "{}\n{}\n{}".format(error, traceback, error)
 		else:
 			error = "There is not any infra-structure to allocate this database."
 
