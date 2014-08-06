@@ -78,7 +78,7 @@ class Database(BaseModel):
 
 	quarantine_time = Configuration.get_by_name_as_int('quarantine_retention_days')
 	status = models.IntegerField(choices=DB_STATUS,
-	                             default=0)
+	                             default=2)
 	used_size_in_bytes = models.FloatField(default=0.0)
 
 	def __unicode__(self):

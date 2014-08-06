@@ -19,6 +19,7 @@ from django.db.models import Sum, Count
 from physical.models import Plan
 
 from physical.models import DatabaseInfra
+from physical.models import Instance
 from logical.models import Database
 from account.models import Team
 
@@ -293,6 +294,38 @@ def update_database_used_size(self):
 			LOG.info(msg)
 
 		task_history = TaskHistory.register(request=self.request, user=None)
+		task_history.update_status_for(TaskHistory.STATUS_SUCCESS, details="\n".join(
+			value for value in msgs))
+	except Exception, e:
+		task_history.update_status_for(TaskHistory.STATUS_ERROR, details=e)
+
+	return
+
+@app.task(bind=True)
+@only_one(key="get_instances_status", timeout=50)
+def update_instances_status(self):
+	LOG.info("Retrieving all databaseinfras")
+	task_history = TaskHistory.register(request=self.request, user=None)
+
+	try:
+		infras = DatabaseInfra.objects.all()
+		msgs = []
+		for databaseinfra in infras:
+			LOG.info("Retrieving all instances for {}".format(databaseinfra))
+
+			for instance in Instance.objects.filter(databaseinfra=databaseinfra, is_arbiter=False):
+				if instance.check_status():
+					instance.status = Instance.ALIVE
+				else:
+					instance.status = Instance.DEAD
+
+				instance.save()
+
+				msg = "\nUpdating instance status, instance: {}, status: {}".format(
+				instance, instance.status)
+				msgs.append(msg)
+				LOG.info(msg)
+
 		task_history.update_status_for(TaskHistory.STATUS_SUCCESS, details="\n".join(
 			value for value in msgs))
 	except Exception, e:
