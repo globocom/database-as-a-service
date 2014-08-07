@@ -14,6 +14,10 @@ LOG = logging.getLogger(__name__)
 
 
 class TaskHistory(BaseModel):
+
+	class Meta:
+	  verbose_name_plural = "Task histories"
+
 	STATUS_PENDING = 'PENDING'
 	STATUS_RUNNING = 'RUNNING'
 	STATUS_SUCCESS = 'SUCCESS'
