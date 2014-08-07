@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.0.18
+* background tasks to update database and its instances status
+* dashboard alert status on dbinfra
+* bug fix: when a database was down the dashboard did not know what to do
+* insert error code in the end of taskhistory
+* change args on taskhistory to show more user friendly information
 
 ## 0.0.17
 * mysql ha on cloudstack
