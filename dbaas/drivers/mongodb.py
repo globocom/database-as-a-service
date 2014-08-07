@@ -95,7 +95,7 @@ class MongoDB(BaseDriver):
     def __mongo_client__(self, instance):
         connection_address = self.__get_admin_connection(instance)
         if not self.databaseinfra and instance:
-	        self.databaseinfra = instance.databaseinfra
+            self.databaseinfra = instance.databaseinfra
         try:
             # mongo uses timeout in mili seconds
             connection_timeout_in_miliseconds = Configuration.get_by_name_as_int('mongo_connect_timeout', default=MONGO_CONNECTION_DEFAULT_TIMEOUT) * 1000

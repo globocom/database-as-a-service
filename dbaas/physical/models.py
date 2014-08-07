@@ -129,6 +129,15 @@ class PlanAttribute(BaseModel):
 
 class DatabaseInfra(BaseModel):
 
+	ALIVE = 1
+	DEAD = 0
+	ALERT = 2
+
+	INFRA_STATUS = (
+		(ALIVE, "Alive"),
+		(DEAD, "Dead"),
+		(ALERT, "Alert"))
+
 	name = models.CharField(verbose_name=_("DatabaseInfra Name"),
 							max_length=100,
 							unique=True,
@@ -232,9 +241,17 @@ class DatabaseInfra(BaseModel):
 
 	@cached_property
 	def check_instances_status(self):
-		status = True
-		if Instance.objects.filter(databaseinfra=self.pk, status=Instance.DEAD):
-			status = False
+
+		alive_instances = self.instances.filter(status=Instance.ALIVE).count()
+		dead_instances = self.instances.filter(status=Instance.DEAD).count()
+
+		if dead_instances==0:
+			status = self.ALIVE
+		elif alive_instances==0:
+			status = self.DEAD
+		else:
+			status = self.ALERT
+
 		return status
 
 	def get_driver(self):

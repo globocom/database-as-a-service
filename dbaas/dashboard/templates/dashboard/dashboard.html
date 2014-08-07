@@ -52,11 +52,13 @@
 							<td>{{ infra.plan.name }}</td>
 							
 							<td> 
-								{% if infra.check_instances_status %}         
+								{% if infra.check_instances_status == infra.ALIVE %}
 									<li class="label label-success">Alive</li>
-							           {% else %}
-							                      <li class="label label-danger">Dead</li>
-							           {% endif %}   
+							    {% elif infra.check_instances_status == infra.DEAD %}
+							        <li class="label label-danger">Dead</li>
+                                {% else %}
+                                     <li class="label label-alert">Alert</li>
+							    {% endif %}
 							</td>
 							<td>
 								<div class="progress dashboard">
