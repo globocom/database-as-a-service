@@ -22,6 +22,7 @@ from physical.models import DatabaseInfra
 from physical.models import Instance
 from logical.models import Database
 from account.models import Team
+from simple_audit.models import AuditRequest
 
 LOG = get_task_logger(__name__)
 
@@ -43,64 +44,72 @@ def rollback_database(dest_database):
 @app.task(bind=True)
 def create_database(self, name, plan, environment, team, project, description, user=None):
 	# register History
-	task_history = TaskHistory.register(request=self.request, user=user)
-	LOG.info("id: %s | task: %s | kwargs: %s | args: %s" % (
-		self.request.id, self.request.task, self.request.kwargs, str(self.request.args)))
+	AuditRequest.new_request("create_database", self.request.args[-1], "localhost")
+	try:
+		task_history = TaskHistory.register(request=self.request, user=user)
+		LOG.info("id: %s | task: %s | kwargs: %s | args: %s" % (
+			self.request.id, self.request.task, self.request.kwargs, str(self.request.args)))
 
-	task_history.update_details(persist=True, details="Loading Process...")
+		task_history.update_details(persist=True, details="Loading Process...")
 
-	result = make_infra(plan=plan, environment=environment, name=name, task=task_history)
+		result = make_infra(plan=plan, environment=environment, name=name, task=task_history)
 
-	if result['created']==False:
+		if result['created']==False:
 
-		if 'exceptions' in result:
-			error = "\n".join(": ".join(err) for err in result['exceptions']['error_codes'])
-			traceback = "\nException Traceback\n".join(result['exceptions']['traceback'])
-			error = "{}\n{}\n{}".format(error, traceback, error)
-		else:
-			error = "There is not any infra-structure to allocate this database."
+			if 'exceptions' in result:
+				error = "\n".join(": ".join(err) for err in result['exceptions']['error_codes'])
+				traceback = "\nException Traceback\n".join(result['exceptions']['traceback'])
+				error = "{}\n{}\n{}".format(error, traceback, error)
+			else:
+				error = "There is not any infra-structure to allocate this database."
 
-		task_history.update_status_for(TaskHistory.STATUS_ERROR, details=error)
+			task_history.update_status_for(TaskHistory.STATUS_ERROR, details=error)
+			return
+
+
+		database = Database.provision(name, result['databaseinfra'])
+		database.team = team
+		database.project = project
+		database.description = description
+		database.save()
+		task_history.update_dbid(db=database)
+
+		task_history.update_status_for(TaskHistory.STATUS_SUCCESS, details='Database created successfully')
 		return
-
-
-	database = Database.provision(name, result['databaseinfra'])
-	database.team = team
-	database.project = project
-	database.description = description
-	database.save()
-	task_history.update_dbid(db=database)
-
-	task_history.update_status_for(TaskHistory.STATUS_SUCCESS, details='Database created successfully')
-	return
+	finally:
+		AuditRequest.cleanup_request()
 
 
 @app.task(bind=True)
 def clone_database(self, origin_database, clone_name, user=None):
 	# register History
-	task_history = TaskHistory.register(request=self.request, user=user)
+	AuditRequest.new_request("clone_database", self.request.kwargs["user"], "localhost")
+	try:
+		task_history = TaskHistory.register(request=self.request, user=user)
 
-	LOG.info("origin_database: %s" % origin_database)
+		LOG.info("origin_database: %s" % origin_database)
 
-	dest_database = Database.objects.get(pk=origin_database.pk)
-	dest_database.name = clone_name
-	dest_database.pk = None
+		dest_database = Database.objects.get(pk=origin_database.pk)
+		dest_database.name = clone_name
+		dest_database.pk = None
 
-	task_history.update_details(persist=True, details="Loading Process...")
-	result = make_infra(plan=origin_database.plan, environment=origin_database.environment, name=clone_name,
-	                    task=task_history)
+		task_history.update_details(persist=True, details="Loading Process...")
+		result = make_infra(plan=origin_database.plan, environment=origin_database.environment, name=clone_name,
+		                    task=task_history)
 
-	if result['created']==False:
+		if result['created']==False:
 
-		if 'exceptions' in result:
-			error = "\n\n".join(": ".join(err) for err in result['exceptions']['error_codes'])
-			traceback = "\n\nException Traceback\n".join(result['exceptions']['traceback'])
-			error = "{}\n{}".format(error, traceback)
-		else:
-			error = "There is not any infra-structure to allocate this database."
+			if 'exceptions' in result:
+				error = "\n\n".join(": ".join(err) for err in result['exceptions']['error_codes'])
+				traceback = "\n\nException Traceback\n".join(result['exceptions']['traceback'])
+				error = "{}\n{}".format(error, traceback)
+			else:
+				error = "There is not any infra-structure to allocate this database."
 
-		task_history.update_status_for(TaskHistory.STATUS_ERROR, details=error)
-		return
+			task_history.update_status_for(TaskHistory.STATUS_ERROR, details=error)
+			return
+	finally:
+		AuditRequest.cleanup_request()
 
 	dest_database.databaseinfra = result['databaseinfra']
 	dest_database.save()
