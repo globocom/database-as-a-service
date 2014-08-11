@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.0.19
+* bug fix: typo on taskhistory
+* change database admin to use database status column
+
 ## 0.0.18
 * background tasks to update database and its instances status
 * dashboard alert status on dbinfra
