@@ -18,15 +18,22 @@ from drivers import DatabaseAlreadyExists
 from logical.templatetags import capacity
 from system.models import Configuration
 from dbaas import constants
-from account.admin.user import UserTeamListFilter
+from django.db import router
+from django.utils.encoding import force_text
+from django.core.exceptions import PermissionDenied
+from django.contrib.admin.util import get_deleted_objects, model_ngettext
+from django.contrib.admin import helpers
+from django.template.response import TemplateResponse
+from notification.tasks import destroy_database
+from notification.tasks import create_database
 
 LOG = logging.getLogger(__name__)
 
 
 class DatabaseAdmin(admin.DjangoServicesAdmin):
 	"""
-    the form used by this view is returned by the method get_form
-    """
+	the form used by this view is returned by the method get_form
+	"""
 
 	database_add_perm_message = _(
 		"You must be set to at least one team to add a database, and the service administrator has been notified about this.")
@@ -63,6 +70,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 		}
 		),
 	)
+	# actions = ['delete_mode']
 
 	def quarantine_dt_format(self, database):
 		return database.quarantine_dt or ""
@@ -148,9 +156,9 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
 	def formfield_for_foreignkey(self, db_field, request, **kwargs):
 		"""
-        filter teams for the ones that the user is associated, unless the user has ther
-        perm to add databaseinfra. In this case, he should see all teams.
-        """
+		filter teams for the ones that the user is associated, unless the user has ther
+		perm to add databaseinfra. In this case, he should see all teams.
+		"""
 		if not request.user.has_perm(self.perm_add_database_infra):
 			if db_field.name == "team":
 				kwargs["queryset"] = Team.objects.filter(users=request.user)
@@ -167,8 +175,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
 	def get_readonly_fields(self, request, obj=None):
 		"""
-        if in edit mode, name is readonly.
-        """
+		if in edit mode, name is readonly.
+		"""
 		if obj:  # In edit mode
 			#only sysadmin can change team accountable for a database
 			if request.user.has_perm(self.perm_add_database_infra):
@@ -234,8 +242,6 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 				if not form.is_valid():
 					return super(DatabaseAdmin, self).add_view(request, form_url, extra_context=extra_context)
 
-				from notification.tasks import create_database
-
 
 				LOG.debug(
 					"call create_database - name=%s, plan=%s, environment=%s, team=%s, project=%s, description=%s, user=%s" % (
@@ -282,6 +288,24 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 			extra_context['quarantine_days'] = Configuration.get_by_name_as_int('quarantine_retention_days')
 		return super(DatabaseAdmin, self).delete_view(request, object_id, extra_context=extra_context)
 
+	def delete_model(modeladmin, request, obj):
+
+		LOG.debug("Deleting {}".format(obj))
+		database = obj
+		if database.is_in_quarantine:
+
+			LOG.debug(
+				"call destroy_database - name=%s, team=%s, project=%s, user=%s" % (
+					database.name, database.team, database.project, request.user))
+
+			result = destroy_database.delay(database, request.user)
+
+			url = reverse('admin:notification_taskhistory_changelist')
+			return None
+		else:
+			database.is_in_quarantine = True
+			database.save()
+
 	def clone_view(self, request, database_id):
 		database = Database.objects.get(id=database_id)
 		if database.is_in_quarantine:
@@ -303,7 +327,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 		return render_to_response("logical/database/clone.html",
 		                          locals(),
 		                          context_instance=RequestContext(request))
-		# return HttpResponse("Cloning database %s" % database)
+
+	# return HttpResponse("Cloning database %s" % database)
 
 	def get_urls(self):
 		urls = super(DatabaseAdmin, self).get_urls()
@@ -312,3 +337,74 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 		                       name="database_clone")
 		)
 		return my_urls + urls
+
+	def delete_selected(self, request, queryset):
+		opts = self.model._meta
+		app_label = opts.app_label
+
+		# Check that the user has delete permission for the actual model
+		if not self.has_delete_permission(request):
+			raise PermissionDenied
+
+		using = router.db_for_write(self.model)
+
+		# Populate deletable_objects, a data structure of all related objects that
+		# will also be deleted.
+		deletable_objects, perms_needed, protected = get_deleted_objects(
+			queryset, opts, request.user, self.admin_site, using)
+
+		# The user has already confirmed the deletion.
+		# Do the deletion and return a None to display the change list view again.
+		if request.POST.get('post'):
+			if perms_needed:
+				raise PermissionDenied
+
+			n = queryset.count()
+			quarantine =any(result['is_in_quarantine']==True for result in queryset.values('is_in_quarantine'))
+
+			if n:
+				for obj in queryset:
+					obj_display = force_text(obj)
+					self.log_deletion(request, obj, obj_display)
+					#remove the object
+					self.delete_model(request, obj)
+
+				self.message_user(request, _("Successfully deleted %(count)d %(items)s.") % {
+					"count": n, "items": model_ngettext(self.opts, n)
+				})
+			# Return None to display the change list page again.
+			if quarantine:
+				url = reverse('admin:notification_taskhistory_changelist')
+				return HttpResponseRedirect(url + "?user=%s" % request.user.username)
+
+			return None
+
+		if len(queryset) == 1:
+			objects_name = force_text(opts.verbose_name)
+		else:
+			objects_name = force_text(opts.verbose_name_plural)
+
+		if perms_needed or protected:
+			title = _("Cannot delete %(name)s") % {"name": objects_name}
+		else:
+			title = _("Are you sure?")
+
+		context = {
+			"title": title,
+			"objects_name": objects_name,
+			"deletable_objects": [deletable_objects],
+			'queryset': queryset,
+			"perms_lacking": perms_needed,
+			"protected": protected,
+			"opts": opts,
+			"app_label": app_label,
+			'action_checkbox_name': helpers.ACTION_CHECKBOX_NAME,
+		}
+
+		# Display the confirmation page
+
+		return TemplateResponse(request, self.delete_selected_confirmation_template or [
+			"admin/%s/%s/delete_selected_confirmation.html" % (app_label, opts.object_name.lower()),
+			"admin/%s/delete_selected_confirmation.html" % app_label,
+			"admin/delete_selected_confirmation.html"
+		], context, current_app=self.admin_site.name)

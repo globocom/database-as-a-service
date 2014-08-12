@@ -81,6 +81,30 @@ def create_database(self, name, plan, environment, team, project, description, u
 
 
 @app.task(bind=True)
+def destroy_database(self, database, user=None):
+	# register History
+	AuditRequest.new_request("destroy_database", self.request.args[-1], "localhost")
+	try:
+		task_history = TaskHistory.register(request=self.request, user=user)
+		LOG.info("id: %s | task: %s | kwargs: %s | args: %s" % (
+			self.request.id, self.request.task, self.request.kwargs, str(self.request.args)))
+
+		task_history.update_details(persist=True, details="Loading Process...")
+
+		databaseinfra = database.databaseinfra
+		database.delete()
+
+		from util.providers import destroy_infra
+
+		destroy_infra(databaseinfra=databaseinfra, task=task_history)
+
+		task_history.update_status_for(TaskHistory.STATUS_SUCCESS, details='Database destroyed successfully')
+		return
+	finally:
+		AuditRequest.cleanup_request()
+
+
+@app.task(bind=True)
 def clone_database(self, origin_database, clone_name, user=None):
 	# register History
 	AuditRequest.new_request("clone_database", self.request.kwargs["user"], "localhost")

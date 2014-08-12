@@ -353,18 +353,6 @@ def database_pre_delete(sender, **kwargs):
 	engine.remove_database(database)
 
 
-@receiver(post_delete, sender=Database)
-def database_post_delete(sender, **kwargs):
-	"""
-    database post delete signal. Check databaseinfra provider
-    """
-	database = kwargs.get("instance")
-	LOG.debug("database post-delete triggered")
-	from util.providers import destroy_infra
-
-	destroy_infra(databaseinfra=database.databaseinfra)
-
-
 @receiver(post_save, sender=Database)
 def database_post_save(sender, **kwargs):
 	"""
