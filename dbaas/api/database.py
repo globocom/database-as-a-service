@@ -21,9 +21,7 @@ class DatabaseSerializer(serializers.HyperlinkedModelSerializer):
     endpoint = serializers.Field(source='endpoint')
     quarantine_dt = serializers.Field(source='quarantine_dt')
     total_size_in_bytes = serializers.Field(source='total_size')
-    used_size_in_bytes = serializers.Field(source='used_size')
     credentials = CredentialSerializer(many=True, read_only=True)
-    status = serializers.SerializerMethodField('get_status')
 
     class Meta:
         model = models.Database
