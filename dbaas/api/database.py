@@ -22,16 +22,15 @@ class DatabaseSerializer(serializers.HyperlinkedModelSerializer):
     quarantine_dt = serializers.Field(source='quarantine_dt')
     total_size_in_bytes = serializers.Field(source='total_size')
     credentials = CredentialSerializer(many=True, read_only=True)
+    status = serializers.Field(source='status')
+    used_size_in_bytes = serializers.Field(source='used_size_in_bytes')
 
     class Meta:
         model = models.Database
-        fields = ('url', 'id', 'name', 'endpoint', 'plan', 'environment', 'project', 'team', 'status',
-            'quarantine_dt', 'total_size_in_bytes', 'used_size_in_bytes', 'credentials','description',)
-        read_only = ('credentials',)
+        fields = ('url', 'id', 'name', 'endpoint', 'plan', 'environment', 'project', 'team',
+            'quarantine_dt', 'total_size_in_bytes', 'credentials','description', 'status', 'used_size_in_bytes')
+        read_only = ('credentials', 'status', 'used_size_in_bytes')
 
-    def get_status(self, obj):
-        if obj is not None:
-            return obj.database_status.is_alive
 
     def __init__(self, *args, **kwargs):
         super(DatabaseSerializer, self).__init__(*args, **kwargs)
@@ -97,42 +96,27 @@ class DatabaseAPI(viewsets.ModelViewSet):
             self.pre_save(serializer.object)
             data = serializer.restore_fields(request.DATA, request.FILES)
 
-            LOG.info("Plano %s" % data['plan'])
+            LOG.info("Plan %s" % data['plan'])
 
             plan = data['plan']
 
-            if plan.provider == plan.CLOUDSTACK:
-                from notification.tasks import create_database
+            from notification.tasks import create_database
 
-                result = create_database.delay(data['name'],
-                                                   data['plan'],
-                                                   data['environment'],
-                                                   data['team'],
-                                                   data['project'],
-                                                   data['description'],
-                                                   request.user)
-        
-                #data = serializer.to_native(self.object)
-                #self.post_save(self.object, created=True)
-                headers = self.get_success_headers(data)
+            result = create_database.delay(data['name'],
+                                               data['plan'],
+                                               data['environment'],
+                                               data['team'],
+                                               data['project'],
+                                               data['description'],
+                                               request.user)
 
-                task_url = Site.objects.get_current().domain + '/api/task?task_id=%s' %  str(result.id)
+            #data = serializer.to_native(self.object)
+            #self.post_save(self.object, created=True)
+            headers = self.get_success_headers(data)
 
-                return Response({"task":task_url}, status=status.HTTP_201_CREATED,
-                                headers=headers)
-            else:
-                self.pre_save(serializer.object)
-                data = serializer.restore_fields(request.DATA, request.FILES)
+            task_url = Site.objects.get_current().domain + '/api/task?task_id=%s' %  str(result.id)
 
-                databaseinfra = DatabaseInfra.best_for(data['plan'], data['environment'], data['name'])
-                self.object = models.Database.provision(data['name'], databaseinfra)
-                self.object.team = data['team']
-                self.object.project = data['project']
-                self.object.description = data['description']
-                self.object.save()
-                data = serializer.to_native(self.object)
-                self.post_save(self.object, created=True)
-                headers = self.get_success_headers(data)
-                return Response(data, status=status.HTTP_201_CREATED,
+            return Response({"task":task_url}, status=status.HTTP_201_CREATED,
                             headers=headers)
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
