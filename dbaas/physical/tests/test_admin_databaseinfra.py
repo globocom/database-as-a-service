@@ -34,15 +34,16 @@ class AdminCreateDatabaseInfraTestCase(TestCase):
         databaseinfra_pass = "123456"
         databaseinfra_endpoint = ""
         instance_port = 27017
+        instance_dns = "my_instance_dns{}.com"
         params = {
             "name": databaseinfra_name,
             "user": databaseinfra_user,
             "password": databaseinfra_pass,
             "engine": self.engine.pk,
             "plan": self.plan.pk,
+            "environment": self.environment.pk,
             "capacity": 1,
             "per_database_size_mbytes": 10,
-            "environment": self.environment.pk,
             "instances-TOTAL_FORMS": NUM_INSTANCES,
             "instances-INITIAL_FORMS": 0,
             "instances-MAX_NUM_FORMS": NUM_INSTANCES,
@@ -53,9 +54,13 @@ class AdminCreateDatabaseInfraTestCase(TestCase):
             host = factory.HostFactory()
             hosts[host.pk] = host
             address = "10.10.1.%d" % host.pk
+            instance_dns = instance_dns.format(host.pk)
             params["instances-%d-hostname" % i] = host.pk,
+            params["instances-%d-dns" % i] = instance_dns,
             params["instances-%d-address" % i] = address,
             params["instances-%d-port" % i] = instance_port,
+            params["instances-%d-is_active" % i] = True,
+            params["instances-%d-is_arbiter" % i] = False,
             
             if i == (NUM_INSTANCES -1):
                 databaseinfra_endpoint += "%s:%s" % (address, instance_port)
@@ -63,6 +68,7 @@ class AdminCreateDatabaseInfraTestCase(TestCase):
                 databaseinfra_endpoint += "%s:%s," % (address, instance_port)
         
         params["endpoint"] = databaseinfra_endpoint
+        params["endpoint_dns"] = databaseinfra_endpoint
 
         response = self.client.post("/admin/physical/databaseinfra/add/", params)
         self.assertEqual(response.status_code, 302, response.content)
