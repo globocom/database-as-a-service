@@ -4,7 +4,7 @@ import simple_audit
 import logging
 from sets import Set
 from django.db import models
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import User, Group, Permission
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 from django.db.models.signals import pre_save, post_save, pre_delete, m2m_changed
@@ -39,7 +39,7 @@ class Team(BaseModel):
 
     name = models.CharField(_('name'), max_length=80, unique=True)
     email = models.EmailField(null=False, blank=False)
-    database_alocation_limit = models.PositiveSmallIntegerField(_('DB Alocation Limit'), 
+    database_alocation_limit = models.PositiveSmallIntegerField(_('DB Alocation Limit'),
                                         default=2,
                                         help_text="This limits the number of databases that a team can create. 0 for unlimited resources.")
     role = models.ForeignKey(Role)
@@ -69,19 +69,15 @@ class Team(BaseModel):
     @classmethod
     def get_all_permissions_for(cls, user=None):
         """return all permissions for user"""
-        permissions = []
-        if not user.is_active:
-            return set(permissions)
-        else:
-            teams = Team.objects.filter(users=user)
-            if teams.count() > 1:
-                LOG.warning("user %s is in more than one team! %s" % (user, teams))
 
-            for team in teams:
-                permissions = permissions + list(team.role.permissions.all())
-            
+        if not user.is_active:
+            return set()
+        else:
+            teams = user.team_set.all()
+            role_pks = [team.role.pk for team in teams]
+            permissions = Permission.objects.select_related().filter(group__pk__in=role_pks)
+
             return set(["%s.%s" % (p.content_type.app_label, p.codename) for p in permissions])
-            #return permissions
 
     @classmethod
     def users_without_team(cls):
@@ -102,7 +98,7 @@ class Team(BaseModel):
 
         infras = DatabaseInfra.objects.filter(environment=environment)
         dbs = Database.objects.filter(team=self, databaseinfra__in=[infra.id for infra in infras])
-        
+
         return dbs
 
     def count_databases_in_use(self, environment):
@@ -186,7 +182,7 @@ def user_post_save(sender, **kwargs):
 #     if action == 'post_clear':
 #         LOG.info("user %s m2m_changed post_clear signal" % user)
 #         #sync_ldap_groups_with_user(user=user)
-# 
-# 
+#
+#
 # m2m_changed.connect(user_m2m_changed, sender=User.groups.through)
 # m2m_changed.connect(user_m2m_changed, sender=AccountUser.groups.through)
