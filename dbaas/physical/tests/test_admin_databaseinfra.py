@@ -47,6 +47,10 @@ class AdminCreateDatabaseInfraTestCase(TestCase):
             "instances-TOTAL_FORMS": NUM_INSTANCES,
             "instances-INITIAL_FORMS": 0,
             "instances-MAX_NUM_FORMS": NUM_INSTANCES,
+            "cs_dbinfra_attributes-TOTAL_FORMS": 2,
+            "cs_dbinfra_attributes-INITIAL_FORMS": 0,
+            "cs_dbinfra_attributes-MAX_NUM_FORMS": 2,
+
         }
 
         hosts = {}
@@ -55,18 +59,20 @@ class AdminCreateDatabaseInfraTestCase(TestCase):
             hosts[host.pk] = host
             address = "10.10.1.%d" % host.pk
             instance_dns = instance_dns.format(host.pk)
+            params["instances-%d-id" % i] = '',
+            params["instances-%d-databaseinfra" % i] = '',
             params["instances-%d-hostname" % i] = host.pk,
             params["instances-%d-dns" % i] = instance_dns,
             params["instances-%d-address" % i] = address,
             params["instances-%d-port" % i] = instance_port,
             params["instances-%d-is_active" % i] = True,
             params["instances-%d-is_arbiter" % i] = False,
-            
+
             if i == (NUM_INSTANCES -1):
                 databaseinfra_endpoint += "%s:%s" % (address, instance_port)
             else:
                 databaseinfra_endpoint += "%s:%s," % (address, instance_port)
-        
+
         params["endpoint"] = databaseinfra_endpoint
         params["endpoint_dns"] = databaseinfra_endpoint
 
