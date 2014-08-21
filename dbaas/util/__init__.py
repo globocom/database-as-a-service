@@ -4,7 +4,6 @@ from time import sleep
 import paramiko
 import socket
 import re
-from dbaas_credentials.models import Credential
 from slugify import slugify as slugify_function
 from django.contrib.auth.models import User
 from django.http import HttpResponse
@@ -213,6 +212,7 @@ def gen_infra_names(name, qt):
 
 
 def get_credentials_for(environment, credential_type):
+    from dbaas_credentials.models import Credential
     return Credential.objects.filter(integration_type__type= credential_type, environments= environment)[0]
 
 

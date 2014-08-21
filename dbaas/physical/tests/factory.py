@@ -85,3 +85,4 @@ class InstanceFactory(factory.DjangoModelFactory):
     is_arbiter = False
     databaseinfra = factory.SubFactory(DatabaseInfraFactory)
     hostname = factory.SubFactory(HostFactory)
+    status = 1

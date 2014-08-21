@@ -7,6 +7,7 @@ from physical.models import Plan, Environment, DatabaseInfra
 from account.models import Team
 from .credential import CredentialSerializer
 from django.contrib.sites.models import Site
+from notification.tasks import create_database
 import logging
 
 LOG = logging.getLogger(__name__)
@@ -100,7 +101,6 @@ class DatabaseAPI(viewsets.ModelViewSet):
 
             plan = data['plan']
 
-            from notification.tasks import create_database
 
             result = create_database.delay(data['name'],
                                                data['plan'],
