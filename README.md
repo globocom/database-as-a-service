@@ -26,7 +26,7 @@ DBaaS requires the following:
 * virtualenv >= 1.7.2
 * virtualenvwrapper >= 3.5
 * mysql server and client, version 5.5.x
-* mongo client (used by the clone feature)
+* mongo client = 2.4 (used by the clone feature)
 * redis (broker for async tasks with celery)
 * and all packages in requirements.txt file (there is a shortcut to install them)
 
