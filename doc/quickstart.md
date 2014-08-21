@@ -40,8 +40,10 @@ Sign in as DBA user:
 ### 1.5 Plans
 * plan name: `small`
 * is plan default: `check the box`
+* is paln ha: `do not check the box`
 * engine type: choose `mongodb`
 * environments: move `laboratory` to the right
+* provider: `pre provisioned`
 * leave blank all other fields
 
 ### 1.6 Database infras
@@ -55,6 +57,7 @@ Sign in as DBA user:
 * Max database size(MB): `100`
 * Instances:
   * Hostname: choose `my_server`
+  * Instance dns: `instance_dns`
   * Instance address: `192.168.1.100`
   * Instance port: `27017`
 
