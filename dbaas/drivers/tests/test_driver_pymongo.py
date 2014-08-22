@@ -116,7 +116,11 @@ class ManageCredentialsMongoDBTestCase(AbstractTestDriverMongo):
         super(ManageCredentialsMongoDBTestCase, self).tearDown()
 
     def __find_user__(self, credential):
-        return getattr(self.mongo_client, credential.database.name).system.users.find_one({"user": credential.user})
+        v = self.mongo_client.server_info()['version']
+        if v < '2.6':
+            return getattr(self.mongo_client, credential.database.name).system.users.find_one({"user": credential.user})
+        else:
+            return getattr(self.mongo_client, "admin").system.users.find_one({"user": credential.user, "db": credential.database.name})
 
     def test_mongodb_create_credential(self):
         self.assertIsNone(self.__find_user__(self.credential), "User %s already exists. Invalid test" % self.credential)
