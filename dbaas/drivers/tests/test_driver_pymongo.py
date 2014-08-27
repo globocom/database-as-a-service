@@ -128,6 +128,7 @@ class ManageCredentialsMongoDBTestCase(AbstractTestDriverMongo):
         user = self.__find_user__(self.credential)
         self.assertIsNotNone(user)
         self.assertEquals(self.credential.user, user['user'])
+        self.driver.remove_user(self.credential)
 
     def test_mongodb_remove_credential(self):
         self.driver.create_user(self.credential)
