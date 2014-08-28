@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.0.21
+* [Closed issues on 0.0.21]
+
+## 0.0.20
+* [Closed issues on 0.0.20]
+ 
+
 ## 0.0.19
 * bug fix: typo on taskhistory
 * change database admin to use database status column
@@ -126,3 +133,6 @@
 * basic api
 * a minimum EC2 api integration
 
+[Closed issues on 0.0.20]: https://github.com/globocom/database-as-a-service/issues?q=milestone%3ASprint4.Q3.2014
+
+[Closed issues on 0.0.21]: https://github.com/globocom/database-as-a-service/issues?q=milestone%3ASprint5.Q3.2014+is%3Aclosed
