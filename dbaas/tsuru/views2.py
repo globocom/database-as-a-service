@@ -55,3 +55,20 @@ class GetServiceStatus(APIView):
             database_status = status.HTTP_202_ACCEPTED
 
         return Response(status=database_status)
+
+
+class GetServiceInfo(APIView):
+    renderer_classes = (JSONRenderer, JSONPRenderer)
+    model = Database
+
+    def get(self, request, database_id, format=None):
+        try:
+            info = Database.objects.values('used_size_in_bytes', ).extra(where=['id={}'.format(database_id),])[0]
+            info['used_size_in_bytes'] = str(info['used_size_in_bytes'])
+        except IndexError, e:
+            info = {}
+            LOG.warn("There is not a database with this {} id. {}".format(database_id,e))
+
+        LOG.info("Info = {}".format(info))
+
+        return Response(info)
