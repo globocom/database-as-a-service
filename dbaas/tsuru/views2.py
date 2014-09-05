@@ -6,6 +6,7 @@ from logical.models import Database
 from physical.models import Plan
 from django.utils.html import strip_tags
 from rest_framework import status
+from slugify import slugify
 
 LOG = logging.getLogger(__name__)
 
@@ -17,27 +18,27 @@ class ListPlans(APIView):
         """
         Return a list of all plans.
         """
-
         hard_plans = Plan.objects.values('name', 'description'
             , 'environments__name').extra(where=['is_active=True', 'provider={}'.format(Plan.CLOUDSTACK)])
 
         plans = []
 
         for hard_plan in hard_plans:
-            hard_plan['name'] = hard_plan['name'] +'-'+ hard_plan['environments__name']
-            hard_plan['description'] = strip_tags(hard_plan['description'])
+            hard_plan['description'] = hard_plan['name'] +'-'+ hard_plan['environments__name']
+            hard_plan['name'] = slugify(hard_plan['description'])
             del hard_plan['environments__name']
             plans.append(hard_plan)
 
         return Response(plans)
 
 class GetServiceStatus(APIView):
+    """
+    Return the database status
+    """
     renderer_classes = (JSONRenderer, JSONPRenderer)
     model = Database
 
-
     def get(self, request, database_id, format=None):
-
         try:
             database_status = Database.objects.values_list('status', flat=True).extra(where=['id={}'.format(database_id),])[0]
         except IndexError, e:
