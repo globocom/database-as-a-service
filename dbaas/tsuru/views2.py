@@ -70,6 +70,22 @@ class GetServiceInfo(APIView):
         return Response(info)
 
 
+class ServiceBind(APIView):
+    renderer_classes = (JSONRenderer, JSONPRenderer)
+    model = Database
+
+    def post(self, request, database_id, format=None):
+        return Response(status.HTTP_201_CREATED)
+
+
+class ServiceUnbind(APIView):
+    renderer_classes = (JSONRenderer, JSONPRenderer)
+    model = Database
+
+    def delete(self, request, database_id, unbind_ip, format=None):
+        return Response(status.HTTP_204_NO_CONTENT)
+
+
 class ServiceAdd(APIView):
 
     renderer_classes = (JSONRenderer, JSONPRenderer)
@@ -79,6 +95,7 @@ class ServiceAdd(APIView):
         data = request.DATA
         name = data['name']
         user = data['user']
+        team = data['team']
 
         try:
             dbaas_user =  AccountUser.objects.get(email=user)
@@ -86,7 +103,6 @@ class ServiceAdd(APIView):
             LOG.warn("User does not exist. Error: {}".format(e))
             return Response("This user does not own an account on dbaas.", status=status.HTTP_500_INTERNAL_SERVER_ERROR,)
 
-        team = data['team']
         try:
             dbaas_team = Team.objects.get(name=team)
         except Exception, e:
