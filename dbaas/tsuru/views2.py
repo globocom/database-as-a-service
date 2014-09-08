@@ -1,12 +1,15 @@
 from rest_framework.views import APIView
 from rest_framework.renderers import JSONRenderer, JSONPRenderer
+from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
 import logging
 from logical.models import Database
-from physical.models import Plan
-from django.utils.html import strip_tags
+from physical.models import Plan, Environment
+from account.models import AccountUser, Team
 from rest_framework import status
 from slugify import slugify
+from notification.tasks import create_database
+from django.contrib.sites.models import Site
 
 LOG = logging.getLogger(__name__)
 
@@ -21,13 +24,7 @@ class ListPlans(APIView):
         hard_plans = Plan.objects.values('name', 'description'
             , 'environments__name').extra(where=['is_active=True', 'provider={}'.format(Plan.CLOUDSTACK)])
 
-        plans = []
-
-        for hard_plan in hard_plans:
-            hard_plan['description'] = hard_plan['name'] +'-'+ hard_plan['environments__name']
-            hard_plan['name'] = slugify(hard_plan['description'])
-            del hard_plan['environments__name']
-            plans.append(hard_plan)
+        plans = get_plans_dict(hard_plans)
 
         return Response(plans)
 
@@ -72,3 +69,80 @@ class GetServiceInfo(APIView):
         LOG.info("Info = {}".format(info))
 
         return Response(info)
+
+
+class ServiceAdd(APIView):
+
+    renderer_classes = (JSONRenderer, JSONPRenderer)
+    model = Database
+
+    def post(self, request, format=None):
+        data = request.DATA
+        name = data['name'][0]
+
+        try:
+            user = data['user'][0]
+            dbaas_user =  AccountUser.objects.get(email=user)
+        except Exception, e:
+            LOG.warn("User does not exist. Error: {}".format(e))
+            return Response("This user does not own an account on dbaas.", status=status.HTTP_500_INTERNAL_SERVER_ERROR,)
+
+        try:
+            team = data['team'][0]
+            dbaas_team = Team.objects.get(name=team)
+        except Exception, e:
+            LOG.warn("Team does not exist. Error: {}".format(e))
+            try:
+                dbaas_team = dbaas_user.team_set.all()[0]
+            except IndexError, e:
+                LOG.warn("User {} from request has no team. Error: {}".format(user, e))
+                return Response("This team is not on dbaas", status=status.HTTP_500_INTERNAL_SERVER_ERROR,)
+
+
+        try:
+            plan = data['plan'][0]
+        except IndexError, e:
+            LOG.warn("Plan was not found. Error: {}".format(e))
+            LOG.info("Plan and Environment are None")
+            dbaas_plan = Plan.objects.filter(is_ha=False, provider=Plan.CLOUDSTACK)[0]
+            dbaas_environment = dbaas_plan.environments.all()[0]
+
+        if plan:
+            hard_plans = Plan.objects.values('name', 'description', 'pk'
+                , 'environments__name').extra(where=['is_active=True', 'provider={}'.format(Plan.CLOUDSTACK)])
+
+            plans = get_plans_dict(hard_plans)
+            plan = [splan for splan in plans if splan['name']==plan]
+
+            if any(plan):
+                dbaas_plan = Plan.objects.get(pk=plan[0]['pk'])
+
+            environment = plan[0]['description'].split('-')[1]
+
+            try:
+                dbaas_environment = Environment.objects.get(name= environment)
+            except DoesNotExist, e:
+                LOG.warn("Environment does not exist: {}. Error: {}".format(environment, e))
+                LOG.info("Querying an avaiable environment for this plan {}".format(plan))
+                dbaas_environment = dbaas_plan.environments.all()[0]
+
+
+        create_database.delay(name, dbaas_plan, dbaas_environment,dbaas_team,
+                                        None, 'Database from Tsuru', dbaas_user)
+
+        return Response(status=status.HTTP_201_CREATED,)
+
+
+
+
+def get_plans_dict(hard_plans):
+    plans = []
+    for hard_plan in hard_plans:
+        hard_plan['description'] = hard_plan['name'] +'-'+ hard_plan['environments__name']
+        hard_plan['name'] = slugify(hard_plan['description'])
+        del hard_plan['environments__name']
+        plans.append(hard_plan)
+
+    return plans
+
+
