@@ -97,9 +97,9 @@ class ServiceAdd(APIView):
                 LOG.warn("User {} from request has no team. Error: {}".format(user, e))
                 return Response("This team is not on dbaas", status=status.HTTP_500_INTERNAL_SERVER_ERROR,)
 
-        plan = data['plan']
+        if 'plan'in data:
+            plan = data['plan']
 
-        if plan:
             hard_plans = Plan.objects.values('name', 'description', 'pk'
                 , 'environments__name').extra(where=['is_active=True', 'provider={}'.format(Plan.CLOUDSTACK)])
 
@@ -118,7 +118,7 @@ class ServiceAdd(APIView):
                 LOG.info("Querying an avaiable environment for this plan {}".format(plan))
                 dbaas_environment = dbaas_plan.environments.all()[0]
         else:
-            LOG.warn("Plan was not found. Error: {}".format(e))
+            LOG.warn("Plan was not found")
             LOG.info("Plan and Environment are None")
             dbaas_plan = Plan.objects.filter(is_ha=False, provider=Plan.CLOUDSTACK)[0]
             dbaas_environment = dbaas_plan.environments.all()[0]
