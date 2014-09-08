@@ -1,6 +1,5 @@
 from rest_framework.views import APIView
 from rest_framework.renderers import JSONRenderer, JSONPRenderer
-from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
 import logging
 from logical.models import Database
@@ -9,7 +8,7 @@ from account.models import AccountUser, Team
 from rest_framework import status
 from slugify import slugify
 from notification.tasks import create_database
-from django.contrib.sites.models import Site
+from django.core.exceptions import ObjectDoesNotExist
 
 LOG = logging.getLogger(__name__)
 
@@ -78,17 +77,17 @@ class ServiceAdd(APIView):
 
     def post(self, request, format=None):
         data = request.DATA
-        name = data['name'][0]
+        name = data['name']
+        user = data['user']
 
         try:
-            user = data['user'][0]
             dbaas_user =  AccountUser.objects.get(email=user)
-        except Exception, e:
+        except ObjectDoesNotExist, e:
             LOG.warn("User does not exist. Error: {}".format(e))
             return Response("This user does not own an account on dbaas.", status=status.HTTP_500_INTERNAL_SERVER_ERROR,)
 
+        team = data['team']
         try:
-            team = data['team'][0]
             dbaas_team = Team.objects.get(name=team)
         except Exception, e:
             LOG.warn("Team does not exist. Error: {}".format(e))
@@ -98,14 +97,7 @@ class ServiceAdd(APIView):
                 LOG.warn("User {} from request has no team. Error: {}".format(user, e))
                 return Response("This team is not on dbaas", status=status.HTTP_500_INTERNAL_SERVER_ERROR,)
 
-
-        try:
-            plan = data['plan'][0]
-        except IndexError, e:
-            LOG.warn("Plan was not found. Error: {}".format(e))
-            LOG.info("Plan and Environment are None")
-            dbaas_plan = Plan.objects.filter(is_ha=False, provider=Plan.CLOUDSTACK)[0]
-            dbaas_environment = dbaas_plan.environments.all()[0]
+        plan = data['plan']
 
         if plan:
             hard_plans = Plan.objects.values('name', 'description', 'pk'
@@ -121,18 +113,21 @@ class ServiceAdd(APIView):
 
             try:
                 dbaas_environment = Environment.objects.get(name= environment)
-            except DoesNotExist, e:
+            except ObjectDoesNotExist, e:
                 LOG.warn("Environment does not exist: {}. Error: {}".format(environment, e))
                 LOG.info("Querying an avaiable environment for this plan {}".format(plan))
                 dbaas_environment = dbaas_plan.environments.all()[0]
+        else:
+            LOG.warn("Plan was not found. Error: {}".format(e))
+            LOG.info("Plan and Environment are None")
+            dbaas_plan = Plan.objects.filter(is_ha=False, provider=Plan.CLOUDSTACK)[0]
+            dbaas_environment = dbaas_plan.environments.all()[0]
 
 
         create_database.delay(name, dbaas_plan, dbaas_environment,dbaas_team,
                                         None, 'Database from Tsuru', dbaas_user)
 
         return Response(status=status.HTTP_201_CREATED,)
-
-
 
 
 def get_plans_dict(hard_plans):
