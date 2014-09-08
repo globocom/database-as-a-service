@@ -77,6 +77,19 @@ class ServiceBind(APIView):
     def post(self, request, database_id, format=None):
         return Response(status.HTTP_201_CREATED)
 
+    def delete(self, request, database_id, format=None):
+        try:
+            database = Database.objects.get(pk=database_id)
+        except ObjectDoesNotExist, e:
+            LOG.warn("Database id provided does not exist {}. Error: {}".format(database_id, e))
+            return Response("Database id provided does not exist.", status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        if not database.is_in_quarantine:
+            database.delete()
+
+        return Response(status.HTTP_204_NO_CONTENT)
+
+
 
 class ServiceUnbind(APIView):
     renderer_classes = (JSONRenderer, JSONPRenderer)
