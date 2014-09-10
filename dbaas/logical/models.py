@@ -12,7 +12,7 @@ from django_extensions.db.fields.encrypted import EncryptedCharField
 from django.utils.functional import cached_property
 from util import slugify, make_db_random_password
 from util.models import BaseModel
-from physical.models import DatabaseInfra
+from physical.models import DatabaseInfra, Environment
 from drivers import factory_for
 from system.models import Configuration
 from datetime import date, timedelta
@@ -80,6 +80,7 @@ class Database(BaseModel):
 	status = models.IntegerField(choices=DB_STATUS,
 	                             default=2)
 	used_size_in_bytes = models.FloatField(default=0.0)
+	environment = models.ForeignKey(Environment, related_name="databases", on_delete=models.PROTECT)
 
 	def __unicode__(self):
 		return u"%s" % self.name
@@ -91,10 +92,10 @@ class Database(BaseModel):
 			("view_database", "Can view databases"),
 		)
 		unique_together = (
-			('name', 'databaseinfra'),
+			('name', 'environment'),
 		)
 
-		ordering = ('name', 'databaseinfra',)
+		ordering = ('name', )
 
 
 	@property
@@ -113,9 +114,9 @@ class Database(BaseModel):
 		return self.databaseinfra and self.databaseinfra.plan
 
 
-	@property
-	def environment(self):
-		return self.databaseinfra and self.databaseinfra.environment
+	# @property
+	# def environment(self):
+	# 	return self.databaseinfra and self.databaseinfra.environment
 
 
 	def delete(self, *args, **kwargs):
@@ -165,6 +166,7 @@ class Database(BaseModel):
 
 		database = Database()
 		database.databaseinfra = databaseinfra
+		database.environment = databaseinfra.environment
 		database.name = name
 		database.full_clean()
 		database.save()

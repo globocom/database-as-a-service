@@ -9,6 +9,8 @@ from rest_framework import status
 from slugify import slugify
 from notification.tasks import create_database
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import Q
+from notification.models import TaskHistory
 
 LOG = logging.getLogger(__name__)
 
@@ -20,7 +22,9 @@ class ListPlans(APIView):
         """
         Return a list of all plans.
         """
-        hard_plans = Plan.objects.values('name', 'description'
+        env = get_url_env(request)
+
+        hard_plans = Plan.objects.filter(environments__name=env).values('name', 'description'
             , 'environments__name').extra(where=['is_active=True', 'provider={}'.format(Plan.CLOUDSTACK)])
 
         plans = get_plans_dict(hard_plans)
@@ -34,19 +38,24 @@ class GetServiceStatus(APIView):
     renderer_classes = (JSONRenderer, JSONPRenderer)
     model = Database
 
-    def get(self, request, database_id, format=None):
+    def get(self, request, database_name, format=None):
+        env = get_url_env(request)
+        LOG.info("Database name {}. Environment {}".format(database_name, env))
         try:
-            database_status = Database.objects.values_list('status', flat=True).extra(where=['id={}'.format(database_id),])[0]
+            database_status = Database.objects.filter(name= database_name, environment__name=env).values_list('status', flat=True)[0]
         except IndexError, e:
             database_status=2
-            LOG.warn("There is not a database with this {} id. {}".format(database_id,e))
+            LOG.warn("There is not a database with this {} name on {}. {}".format(database_name, env,e))
 
         LOG.info("Status = {}".format(database_status))
+        task = TaskHistory.objects.filter(Q(arguments__contains=database_name) &
+                Q(arguments__contains=env), task_status="RUNNING",).order_by("created_at")
+
+        LOG.info("Task {}".format(task))
 
         if database_status == Database.ALIVE:
             database_status = status.HTTP_204_NO_CONTENT
-        elif database_status == Database.DEAD:
-            #task = TaskHistory.objects.filter(Q(arguments__contains="tsuru_db") & Q(arguments__contains="dev"), task_status="RUNNING",).order_by("created_at")
+        elif database_status == Database.DEAD and not task:
             database_status = status.HTTP_500_INTERNAL_SERVER_ERROR
         else:
             database_status = status.HTTP_202_ACCEPTED
@@ -58,13 +67,14 @@ class GetServiceInfo(APIView):
     renderer_classes = (JSONRenderer, JSONPRenderer)
     model = Database
 
-    def get(self, request, database_id, format=None):
+    def get(self, request, database_name, format=None):
+        env = get_url_env(request)
         try:
-            info = Database.objects.values('used_size_in_bytes', ).extra(where=['id={}'.format(database_id),])[0]
+            info = Database.objects.filter(name= database_name, environment__name=env).values('used_size_in_bytes', )[0]
             info['used_size_in_bytes'] = str(info['used_size_in_bytes'])
         except IndexError, e:
             info = {}
-            LOG.warn("There is not a database with this {} id. {}".format(database_id,e))
+            LOG.warn("There is not a database {} on {}. {}".format(database_name, env,e))
 
         LOG.info("Info = {}".format(info))
 
@@ -75,15 +85,16 @@ class ServiceBind(APIView):
     renderer_classes = (JSONRenderer, JSONPRenderer)
     model = Database
 
-    def post(self, request, database_id, format=None):
+    def post(self, request, database_name, format=None):
         return Response(status.HTTP_201_CREATED)
 
-    def delete(self, request, database_id, format=None):
+    def delete(self, request, database_name, format=None):
+        env = get_url_env(request)
         try:
-            database = Database.objects.get(pk=database_id)
+            database = Database.objects.get(name=database_name, environment__name=env)
         except ObjectDoesNotExist, e:
-            LOG.warn("Database id provided does not exist {}. Error: {}".format(database_id, e))
-            return Response("Database id provided does not exist.", status.HTTP_500_INTERNAL_SERVER_ERROR)
+            LOG.warn("Database id provided does not exist {} on {}. Error: {}".format(database_name, env, e))
+            return Response("Database name provided does not exist.", status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         if not database.is_in_quarantine:
             database.delete()
@@ -96,7 +107,7 @@ class ServiceUnbind(APIView):
     renderer_classes = (JSONRenderer, JSONPRenderer)
     model = Database
 
-    def delete(self, request, database_id, unbind_ip, format=None):
+    def delete(self, request, database_name, unbind_ip, format=None):
         return Response(status.HTTP_204_NO_CONTENT)
 
 
@@ -110,6 +121,13 @@ class ServiceAdd(APIView):
         name = data['name']
         user = data['user']
         team = data['team']
+        env = get_url_env(request)
+
+        try:
+            Database.objects.get(name=name, environment__name=env)
+            return Response("There is already a database called {} in {}.".format(name, env), status=status.HTTP_500_INTERNAL_SERVER_ERROR,)
+        except ObjectDoesNotExist, e:
+            pass
 
         try:
             dbaas_user =  AccountUser.objects.get(email=user)
@@ -141,8 +159,7 @@ class ServiceAdd(APIView):
 
 
         try:
-            environment = plan[0]['description'].split('-')[1]
-            dbaas_environment = Environment.objects.get(name= environment)
+            dbaas_environment = Environment.objects.get(name= env)
         except(ObjectDoesNotExist,IndexError), e:
             LOG.warn("Environment does not exist. Error: {}".format(e))
             return Response("Environment Not Found", status=status.HTTP_500_INTERNAL_SERVER_ERROR,)
@@ -165,4 +182,5 @@ def get_plans_dict(hard_plans):
 
     return plans
 
-
+def get_url_env(request):
+    return request._request.path.split('/')[1]
