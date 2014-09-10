@@ -46,6 +46,7 @@ class GetServiceStatus(APIView):
         if database_status == Database.ALIVE:
             database_status = status.HTTP_204_NO_CONTENT
         elif database_status == Database.DEAD:
+            #task = TaskHistory.objects.filter(Q(arguments__contains="tsuru_db") & Q(arguments__contains="dev"), task_status="RUNNING",).order_by("created_at")
             database_status = status.HTTP_500_INTERNAL_SERVER_ERROR
         else:
             database_status = status.HTTP_202_ACCEPTED
@@ -118,39 +119,34 @@ class ServiceAdd(APIView):
 
         try:
             dbaas_team = Team.objects.get(name=team)
-        except Exception, e:
+        except ObjectDoesNotExist, e:
             LOG.warn("Team does not exist. Error: {}".format(e))
-            try:
-                dbaas_team = dbaas_user.team_set.all()[0]
-            except IndexError, e:
-                LOG.warn("User {} from request has no team. Error: {}".format(user, e))
-                return Response("This team is not on dbaas", status=status.HTTP_500_INTERNAL_SERVER_ERROR,)
+            return Response("This team is not on dbaas", status=status.HTTP_500_INTERNAL_SERVER_ERROR,)
 
-        if 'plan'in data:
-            plan = data['plan']
-
-            hard_plans = Plan.objects.values('name', 'description', 'pk'
-                , 'environments__name').extra(where=['is_active=True', 'provider={}'.format(Plan.CLOUDSTACK)])
-
-            plans = get_plans_dict(hard_plans)
-            plan = [splan for splan in plans if splan['name']==plan]
-
-            if any(plan):
-                dbaas_plan = Plan.objects.get(pk=plan[0]['pk'])
-
-            environment = plan[0]['description'].split('-')[1]
-
-            try:
-                dbaas_environment = Environment.objects.get(name= environment)
-            except ObjectDoesNotExist, e:
-                LOG.warn("Environment does not exist: {}. Error: {}".format(environment, e))
-                LOG.info("Querying an avaiable environment for this plan {}".format(plan))
-                dbaas_environment = dbaas_plan.environments.all()[0]
-        else:
+        if not 'plan' in data:
             LOG.warn("Plan was not found")
-            LOG.info("Plan and Environment are None")
-            dbaas_plan = Plan.objects.filter(is_ha=False, provider=Plan.CLOUDSTACK)[0]
-            dbaas_environment = dbaas_plan.environments.all()[0]
+            return Response("This team is not on dbaas", status=status.HTTP_500_INTERNAL_SERVER_ERROR,)
+
+        plan = data['plan']
+
+        hard_plans = Plan.objects.values('name', 'description', 'pk'
+            , 'environments__name').extra(where=['is_active=True', 'provider={}'.format(Plan.CLOUDSTACK)])
+
+        plans = get_plans_dict(hard_plans)
+        plan = [splan for splan in plans if splan['name']==plan]
+        LOG.info("Plan: {}".format(plan))
+
+        if any(plan):
+            dbaas_plan = Plan.objects.get(pk=plan[0]['pk'])
+
+
+        try:
+            environment = plan[0]['description'].split('-')[1]
+            dbaas_environment = Environment.objects.get(name= environment)
+        except(ObjectDoesNotExist,IndexError), e:
+            LOG.warn("Environment does not exist. Error: {}".format(e))
+            return Response("Environment Not Found", status=status.HTTP_500_INTERNAL_SERVER_ERROR,)
+
 
 
         create_database.delay(name, dbaas_plan, dbaas_environment,dbaas_team,
