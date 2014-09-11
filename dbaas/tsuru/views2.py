@@ -86,15 +86,48 @@ class ServiceBind(APIView):
     model = Database
 
     def post(self, request, database_name, format=None):
-        return Response(status.HTTP_201_CREATED)
+        env = get_url_env(request)
+        data = request.DATA
+        LOG.debug("Request DATA {}".format(data))
+
+        try:
+            database = Database.objects.get(name=database_name, environment__name=env)
+        except ObjectDoesNotExist, e:
+            msg = "Database {} does not exist in env {}.".format(database_name, env)
+            return log_and_response(msg=msg, e=e, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        if not(database and database.status):
+            msg = "Database {} is not Alive.".format(database_name)
+            return log_and_response(msg=msg, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        task = TaskHistory.objects.filter(Q(arguments__contains=database_name) &
+            Q(arguments__contains=env), task_status="RUNNING",).order_by("created_at")
+
+        LOG.info("Task {}".format(task))
+        if task:
+            msg = "Database {} in env {} is beeing created.".format(database_name, env)
+            return log_and_response(msg=msg, http_status=status.HTTP_412_PRECONDITION_FAILED)
+
+        try:
+            credential = database.credentials.all()[0]
+        except IndexError, e:
+            msg = "Database {} in env {} does not have credentials.".format(database_name, env)
+            return log_and_response(msg=msg, e=e, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+        endpoint = database.endpoint.replace('<user>:<password>',"{}:{}".format(
+            credential.user, credential.password))
+
+        return Response({"user":credential.user, "password": credential.password, "endpoint": endpoint},
+            status.HTTP_201_CREATED)
 
     def delete(self, request, database_name, format=None):
         env = get_url_env(request)
         try:
             database = Database.objects.get(name=database_name, environment__name=env)
         except ObjectDoesNotExist, e:
-            LOG.warn("Database id provided does not exist {} on {}. Error: {}".format(database_name, env, e))
-            return Response("Database name provided does not exist.", status.HTTP_500_INTERNAL_SERVER_ERROR)
+            msg = "Database id provided does not exist {} in {}.".format(database_name, env)
+            return log_and_response(msg=msg, e=e,http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         if not database.is_in_quarantine:
             database.delete()
@@ -125,31 +158,32 @@ class ServiceAdd(APIView):
 
         try:
             Database.objects.get(name=name, environment__name=env)
-            return Response("There is already a database called {} in {}.".format(name, env), status=status.HTTP_500_INTERNAL_SERVER_ERROR,)
+            msg = "There is already a database called {} in {}.".format(name, env)
+            return log_and_response(msg=msg, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         except ObjectDoesNotExist, e:
             pass
 
         try:
             dbaas_user =  AccountUser.objects.get(email=user)
         except ObjectDoesNotExist, e:
-            LOG.warn("User does not exist. Error: {}".format(e))
-            return Response("This user does not own an account on dbaas.", status=status.HTTP_500_INTERNAL_SERVER_ERROR,)
+            msg = "User does not exist"
+            return log_and_response(msg=msg, e=e,http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         try:
             dbaas_team = Team.objects.get(name=team)
         except ObjectDoesNotExist, e:
-            LOG.warn("Team does not exist. Error: {}".format(e))
-            return Response("This team is not on dbaas", status=status.HTTP_500_INTERNAL_SERVER_ERROR,)
+            msg = "Team does not exist."
+            return log_and_response(msg=msg, e=e,http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         try:
             dbaas_user.team_set.get(name=dbaas_team.name)
         except ObjectDoesNotExist, e:
-            LOG.warn("The user is not on {} team. Error: {}".format(dbaas_team.name,e))
-            return Response("The user is not on {} team".format(dbaas_team.name), status=status.HTTP_500_INTERNAL_SERVER_ERROR,)
+            msg = "The user is not on {} team".format(dbaas_team.name)
+            return log_and_response(msg=msg, e=e,http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         if not 'plan' in data:
-            LOG.warn("Plan was not found")
-            return Response("This team is not on dbaas", status=status.HTTP_500_INTERNAL_SERVER_ERROR,)
+            msg = "Plan was not found"
+            return log_and_response(msg=msg, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         plan = data['plan']
 
@@ -163,15 +197,14 @@ class ServiceAdd(APIView):
         if any(plan):
             dbaas_plan = Plan.objects.get(pk=plan[0]['pk'])
         else:
-            return Response("Plan Not Found", status=status.HTTP_500_INTERNAL_SERVER_ERROR,)
-
+            msg = "Plan was not found"
+            return log_and_response(msg=msg, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         try:
             dbaas_environment = Environment.objects.get(name= env)
         except(ObjectDoesNotExist,IndexError), e:
-            LOG.warn("Environment does not exist. Error: {}".format(e))
-            return Response("Environment Not Found", status=status.HTTP_500_INTERNAL_SERVER_ERROR,)
-
+            msg = "Environment does not exist."
+            return log_and_response(msg=msg, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
         create_database.delay(name, dbaas_plan, dbaas_environment,dbaas_team,
@@ -192,3 +225,9 @@ def get_plans_dict(hard_plans):
 
 def get_url_env(request):
     return request._request.path.split('/')[1]
+
+def log_and_response(msg, http_status, e="Conditional Error."):
+    LOG.warn(msg)
+    LOG.warn("Error: {}".format(e))
+
+    return Response(msg, http_status)
