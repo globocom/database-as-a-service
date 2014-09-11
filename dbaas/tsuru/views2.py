@@ -156,6 +156,8 @@ class ServiceAdd(APIView):
 
         if any(plan):
             dbaas_plan = Plan.objects.get(pk=plan[0]['pk'])
+        else:
+            return Response("Plan Not Found", status=status.HTTP_500_INTERNAL_SERVER_ERROR,)
 
 
         try:
