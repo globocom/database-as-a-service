@@ -141,6 +141,12 @@ class ServiceAdd(APIView):
             LOG.warn("Team does not exist. Error: {}".format(e))
             return Response("This team is not on dbaas", status=status.HTTP_500_INTERNAL_SERVER_ERROR,)
 
+        try:
+            dbaas_user.team_set.get(name=dbaas_team.name)
+        except ObjectDoesNotExist, e:
+            LOG.warn("The user is not on {} team. Error: {}".format(dbaas_team.name,e))
+            return Response("The user is not on {} team".format(dbaas_team.name), status=status.HTTP_500_INTERNAL_SERVER_ERROR,)
+
         if not 'plan' in data:
             LOG.warn("Plan was not found")
             return Response("This team is not on dbaas", status=status.HTTP_500_INTERNAL_SERVER_ERROR,)
