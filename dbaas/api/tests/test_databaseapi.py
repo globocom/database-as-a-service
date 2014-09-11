@@ -26,9 +26,10 @@ class DatabaseAPITestCase(DbaaSAPITestCase, BasicTestsMixin):
         self.instance = physical_factory.InstanceFactory(address="127.0.0.1", port=27017, databaseinfra=self.datainfra)
         self.team = TeamFactory()
         self.project = ProjectFactory()
+        self.environment = self.datainfra.environment
 
     def model_new(self):
-        return factory.DatabaseFactory.build(databaseinfra=self.datainfra, team=self.team, project=self.project)
+        return factory.DatabaseFactory.build(databaseinfra=self.datainfra, team=self.team, project=self.project, environment=self.environment)
 
     def model_create(self):
         return factory.DatabaseFactory(databaseinfra=self.datainfra)
@@ -40,6 +41,8 @@ class DatabaseAPITestCase(DbaaSAPITestCase, BasicTestsMixin):
         payload = self.payload(test_obj, creation=True)
         response = self.client.post(url, payload, format='json')
         data = response.data
+
+        LOG.debug("Response: ".format(response))
 
         LOG.debug("Call args {}, Call count {}".format(mock_delay.call_args, mock_delay.call_count))
 
