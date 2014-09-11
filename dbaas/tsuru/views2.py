@@ -96,10 +96,6 @@ class ServiceBind(APIView):
             msg = "Database {} does not exist in env {}.".format(database_name, env)
             return log_and_response(msg=msg, e=e, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        if not(database and database.status):
-            msg = "Database {} is not Alive.".format(database_name)
-            return log_and_response(msg=msg, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
         task = TaskHistory.objects.filter(Q(arguments__contains=database_name) &
             Q(arguments__contains=env), task_status="RUNNING",).order_by("created_at")
 
@@ -107,6 +103,10 @@ class ServiceBind(APIView):
         if task:
             msg = "Database {} in env {} is beeing created.".format(database_name, env)
             return log_and_response(msg=msg, http_status=status.HTTP_412_PRECONDITION_FAILED)
+
+        if not(database and database.status):
+            msg = "Database {} is not Alive.".format(database_name)
+            return log_and_response(msg=msg, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         try:
             credential = database.credentials.all()[0]
