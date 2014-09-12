@@ -1,6 +1,6 @@
 from django.conf.urls.defaults import *
 from django.conf import settings
-from views2 import ListPlans, GetServiceStatus, GetServiceInfo, ServiceAdd, ServiceBind, ServiceUnbind
+from views import ListPlans, GetServiceStatus, GetServiceInfo, ServiceAdd, ServiceBind, ServiceUnbind
 
 urlpatterns = patterns('tsuru.views',
     url(r'^resources/plans$', ListPlans.as_view()),

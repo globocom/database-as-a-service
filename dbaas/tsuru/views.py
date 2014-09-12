@@ -1,232 +1,233 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import, unicode_literals
-from django.utils.translation import ugettext_lazy as _
-from django.views.decorators.csrf import csrf_exempt
-from django.db import transaction
-import logging
-
+from rest_framework.views import APIView
 from rest_framework.renderers import JSONRenderer, JSONPRenderer
-from rest_framework import viewsets
 from rest_framework.response import Response
-# from rest_framework.decorators import action, link
-from rest_framework.decorators import api_view, renderer_classes
-
-from physical.models import Engine, EngineType, DatabaseInfra, Instance
-from logical.models import Database, Credential
-from tsuru.models import Bind
-from drivers import factory_for
-
+import logging
+from logical.models import Database
+from physical.models import Plan, Environment
+from account.models import AccountUser, Team
+from rest_framework import status
+from slugify import slugify
+from notification.tasks import create_database
+from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import Q
+from notification.models import TaskHistory
 
 LOG = logging.getLogger(__name__)
 
-def __check_service_availability(engine_name, engine_version):
+class ListPlans(APIView):
+    renderer_classes = (JSONRenderer, JSONPRenderer)
+    model = Plan
+
+    def get(self, request, format=None):
+        """
+        Return a list of all plans.
+        """
+        env = get_url_env(request)
+
+        hard_plans = Plan.objects.filter(environments__name=env).values('name', 'description'
+            , 'environments__name').extra(where=['is_active=True', 'provider={}'.format(Plan.CLOUDSTACK)])
+
+        plans = get_plans_dict(hard_plans)
+
+        return Response(plans)
+
+class GetServiceStatus(APIView):
     """
-    Checks the availability of the service.
-    Returns the engine.
-    
+    Return the database status
     """
-    engine = None
-    try:
-        engine_type = EngineType.objects.get(name=engine_name)
-        engine = Engine.objects.get(engine_type=engine_type, version=engine_version)
-    except EngineType.DoesNotExist:
-        LOG.warning("endpoint not available for %s_%s" % (engine_name, engine_version))
-    except Engine.DoesNotExist:
-        LOG.warning("endpoint not available for %s_%s" % (engine_name, engine_version))
-    
-    return engine
+    renderer_classes = (JSONRenderer, JSONPRenderer)
+    model = Database
 
-@api_view(['GET'])
-@renderer_classes((JSONRenderer, JSONPRenderer))
-def service_status(request, engine_name=None, engine_version=None, service_name=None):
-    """
-    To check the status of an databaseinfra, tsuru uses the url /resources/<service_name>/status. 
-    If the databaseinfra is ok, this URL should return 204.
-    """
-    engine = __check_service_availability(engine_name, engine_version)
-    if not engine:
-        return Response(data={"error": "endpoint not available for %s(%s)" % (engine_name, engine_version)}, status=500)
-    
-    data = request.DATA
-    LOG.info("status for service %s" % (service_name))
-    try:
-        databaseinfra = DatabaseInfra.objects.get(name=service_name)
-        factory_for(databaseinfra).check_status()
-        return Response(data={"status": "ok"}, status=204)
-    except DatabaseInfra.DoesNotExist:
-        LOG.warning("databaseinfra not found for service %s" % (service_name))
-        return Response(data={"status": "not_found"}, status=404)
-    except Exception, e:
-        return Response(data={"error": "%s" % e}, status=500)
+    def get(self, request, database_name, format=None):
+        env = get_url_env(request)
+        LOG.info("Database name {}. Environment {}".format(database_name, env))
+        try:
+            database_status = Database.objects.filter(name= database_name, environment__name=env).values_list('status', flat=True)[0]
+        except IndexError, e:
+            database_status=2
+            LOG.warn("There is not a database with this {} name on {}. {}".format(database_name, env,e))
+
+        LOG.info("Status = {}".format(database_status))
+        task = TaskHistory.objects.filter(Q(arguments__contains=database_name) &
+                Q(arguments__contains=env), task_status="RUNNING",).order_by("created_at")
+
+        LOG.info("Task {}".format(task))
+
+        if database_status == Database.ALIVE:
+            database_status = status.HTTP_204_NO_CONTENT
+        elif database_status == Database.DEAD and not task:
+            database_status = status.HTTP_500_INTERNAL_SERVER_ERROR
+        else:
+            database_status = status.HTTP_202_ACCEPTED
+
+        return Response(status=database_status)
 
 
-@api_view(['POST'])
-@renderer_classes((JSONRenderer, JSONPRenderer))
-def service_add(request, engine_name=None, engine_version=None):
-    """
-    Responds to tsuru's service_add call.
-    
-    Creates a new databaseinfra.
-    
-    Return codes:
-    201: when the databaseinfra is successfully created. You don’t need to include any content in the response body.
-    500: in case of any failure in the creation process. Make sure you include an explanation for the failure in the response body.
-    """
-    LOG.info("service_add for %s(%s)" % (engine_name, engine_version))
-    
-    LOG.debug("request DATA: %s" % request.DATA)
-    LOG.debug("request QUERY_PARAMS: %s" % request.QUERY_PARAMS)
-    LOG.debug("request content-type: %s" % request.content_type)
-    # LOG.debug("request meta: %s" % request.META)
-    engine = __check_service_availability(engine_name, engine_version)
-    if not engine:
-        return Response(data={"error": "endpoint not available for %s(%s)" % (engine_name, engine_version)}, status=500)
-    
-    data = request.DATA
-    service_name = data.get('name', None)
-    LOG.info("creating service %s" % (service_name))
-    try:
-        databaseinfra = DatabaseInfra.provision(engine=engine,name=service_name)
-        return Response({"hostname": databaseinfra.instance.address, 
-                        "engine_type" : engine.name,
-                        "version" : engine.version,
-                        "databaseinfra_name" : databaseinfra.name}, 
-                        status=201)
-    except Exception, e:
-        LOG.error("error provisioning databaseinfra %s: %s" % (service_name, e))
+class GetServiceInfo(APIView):
+    renderer_classes = (JSONRenderer, JSONPRenderer)
+    model = Database
+
+    def get(self, request, database_name, format=None):
+        env = get_url_env(request)
+        try:
+            info = Database.objects.filter(name= database_name, environment__name=env).values('used_size_in_bytes', )[0]
+            info['used_size_in_bytes'] = str(info['used_size_in_bytes'])
+        except IndexError, e:
+            info = {}
+            LOG.warn("There is not a database {} on {}. {}".format(database_name, env,e))
+
+        LOG.info("Info = {}".format(info))
+
+        return Response(info)
 
 
-@api_view(['POST','DELETE',])
-@renderer_classes((JSONRenderer, JSONPRenderer))
-def service_bind_remove(request, engine_name=None, engine_version=None, service_name=None):
-    """
-    Service bind and service bind shares the same url structure
-    """
-    if request.method == "POST":
-        return service_bind(request, engine_name=engine_name, engine_version=engine_version, service_name=service_name)
-    elif request.method == "DELETE":
-        return service_remove(request, engine_name=engine_name, engine_version=engine_version, service_name=service_name)
+class ServiceBind(APIView):
+    renderer_classes = (JSONRenderer, JSONPRenderer)
+    model = Database
+
+    def post(self, request, database_name, format=None):
+        env = get_url_env(request)
+        data = request.DATA
+        LOG.debug("Request DATA {}".format(data))
+
+        try:
+            database = Database.objects.get(name=database_name, environment__name=env)
+        except ObjectDoesNotExist, e:
+            msg = "Database {} does not exist in env {}.".format(database_name, env)
+            return log_and_response(msg=msg, e=e, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        task = TaskHistory.objects.filter(Q(arguments__contains=database_name) &
+            Q(arguments__contains=env), task_status="RUNNING",).order_by("created_at")
+
+        LOG.info("Task {}".format(task))
+        if task:
+            msg = "Database {} in env {} is beeing created.".format(database_name, env)
+            return log_and_response(msg=msg, http_status=status.HTTP_412_PRECONDITION_FAILED)
+
+        if not(database and database.status):
+            msg = "Database {} is not Alive.".format(database_name)
+            return log_and_response(msg=msg, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        try:
+            credential = database.credentials.all()[0]
+        except IndexError, e:
+            msg = "Database {} in env {} does not have credentials.".format(database_name, env)
+            return log_and_response(msg=msg, e=e, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-@api_view(['DELETE'])
-@renderer_classes((JSONRenderer, JSONPRenderer))
-def service_remove(request, engine_name=None, engine_version=None, service_name=None):
-    """
-    In the destroy action, tsuru calls your service via DELETE on /resources/<service_name>/.
+        endpoint = database.endpoint.replace('<user>:<password>',"{}:{}".format(
+            credential.user, credential.password))
 
-    If the service databaseinfra is successfully removed you should return 200 as status code.
-    """
-    LOG.info("service_remove for service %s using %s(%s)" % (service_name, engine_name, engine_version))
-    
-    LOG.debug("request DATA: %s" % request.DATA)
-    LOG.debug("request QUERY_PARAMS: %s" % request.QUERY_PARAMS)
-    LOG.debug("request content-type: %s" % request.content_type)
-    # LOG.debug("request meta: %s" % request.META)
-    engine = __check_service_availability(engine_name, engine_version)
-    if not engine:
-        return Response(data={"error": "endpoint not available for %s(%s)" % (engine_name, engine_version)}, status=500)
-    
-    data = request.DATA
+        return Response({"user":credential.user, "password": credential.password, "endpoint": endpoint},
+            status.HTTP_201_CREATED)
 
-    LOG.info("removing service %s" % (service_name))
-    #removes database
-    try:
-        database = Database.objects.get(name=service_name)
-        database.delete()
-    except Database.DoesNotExist:
-        LOG.warning("database not found for service %s" % (service_name))
-    except Exception, e:
-        LOG.error("error removing database %s: %s" % (service_name, e))
-        return Response(data={"error": "%s" % e}, status=500)
-        
-    #removes databaseinfra
-    try:
-        databaseinfra = DatabaseInfra.objects.get(name=service_name)
-        driver = factory_for(databaseinfra)
-        databaseinfra.delete()
-        return Response(data={"status": "ok"}, status=200)
-    except DatabaseInfra.DoesNotExist:
-        LOG.warning("databaseinfra not found for service %s" % (service_name))
-        return Response(data={"status": "not_found"}, status=404)
-    except Exception, e:
-        LOG.error("error removing databaseinfra %s: %s" % (service_name, e))
-        return Response(data={"error": "%s" % e}, status=500)
+    def delete(self, request, database_name, format=None):
+        env = get_url_env(request)
+        try:
+            database = Database.objects.get(name=database_name, environment__name=env)
+        except ObjectDoesNotExist, e:
+            msg = "Database id provided does not exist {} in {}.".format(database_name, env)
+            return log_and_response(msg=msg, e=e,http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        if not database.is_in_quarantine:
+            database.delete()
+
+        return Response(status.HTTP_204_NO_CONTENT)
 
 
-@api_view(['POST'])
-@renderer_classes((JSONRenderer, JSONPRenderer))
-def service_bind(request, engine_name=None, engine_version=None, service_name=None):
-    """
-    In the bind action, tsuru calls your service via POST on /resources/<service_name>/ with the "app-hostname" 
-    that represents the app hostname and the "unit-hostname" that represents the unit hostname on body.
 
-    If the app is successfully binded to the databaseinfra, you should return 201 as status code with the variables 
-    to be exported in the app environment on body with the json format.
-    """
-    LOG.info("service_bind for %s > %s(%s)" % (service_name, engine_name, engine_version))
-    
-    LOG.debug("request DATA: %s" % request.DATA)
-    LOG.debug("request QUERY_PARAMS: %s" % request.QUERY_PARAMS)
-    LOG.debug("request content-type: %s" % request.content_type)
-    # print("request meta: %s" % request.META)
-    engine = __check_service_availability(engine_name, engine_version)
-    if not engine:
-        return Response(data={"error": "endpoint not available for %s(%s)" % (engine_name, engine_version)}, status=500)
-    
-    data = request.DATA
-    try:
-        #get databaseinfra
-        databaseinfra = DatabaseInfra.objects.get(name=service_name)
-        unit_host = data.get("unit-host", "N/A")
-        app_host = data["app-host"]
-        #provision database
-        with transaction.commit_on_success():
-            Bind(service_name=service_name, service_hostname=unit_host, databaseinfra=databaseinfra).save()
-            response=databaseinfra.env_variables(database_name=service_name)
-            return Response(data=response, 
-                            status=201)
-    except DatabaseInfra.DoesNotExist:
-        LOG.warning("databaseinfra not found for service %s" % (service_name))
-        return Response(data={"status": "error", "reason": "databaseinfra %s not found" % service_name}, status=404)
+class ServiceUnbind(APIView):
+    renderer_classes = (JSONRenderer, JSONPRenderer)
+    model = Database
+
+    def delete(self, request, database_name, unbind_ip, format=None):
+        return Response(status.HTTP_204_NO_CONTENT)
 
 
-@api_view(['DELETE'])
-@renderer_classes((JSONRenderer, JSONPRenderer))
-def service_unbind(request, engine_name=None, engine_version=None, service_name=None, host=None):
-    """
-    In the unbind action, tsuru calls your service via DELETE on /resources/<hostname>/hostname/<unit_hostname>/.
+class ServiceAdd(APIView):
 
-    If the app is successfully unbinded from the databaseinfra you should return 200 as status code.
-    """
-    LOG.info("service_unbind for %s at %s > %s(%s)" % (service_name, host, engine_name, engine_version))
-    
-    LOG.debug("request DATA: %s" % request.DATA)
-    LOG.debug("request QUERY_PARAMS: %s" % request.QUERY_PARAMS)
-    LOG.debug("request content-type: %s" % request.content_type)
-    engine = __check_service_availability(engine_name, engine_version)
-    if not engine:
-        return Response(data={"error": "endpoint not available for %s(%s)" % (engine_name, engine_version)}, status=500)
-    
-    data = request.DATA
-    try:
-        databaseinfra = DatabaseInfra.objects.get(name=service_name)
-        database = Database.objects.get(name=service_name)
-        with transaction.commit_on_success():
-            #removes credentials
-            credentials = Credential.objects.filter(database=database, user=Credential.USER_PATTERN % (database.name))
-            LOG.info("Credentials registered in dbaas for database %s that will be deleted: %s" % (database.name, credentials))
-            [credential.delete() for credential in credentials]
-            
-            #get binds and delete all
-            binds = Bind.objects.filter(service_name=service_name, service_hostname=host, databaseinfra=databaseinfra)
-            LOG.info("Binds registered in dbaas that will be deleted: %s" % binds)
-            [bind.delete() for bind in binds]
-            return Response({"action": "service_unbind"}, 
-                            status=200)
-    except DatabaseInfra.DoesNotExist:
-        LOG.warning("databaseinfra not found for service %s" % (service_name))
-        return Response(data={"status": "error", "reason": "databaseinfra %s not found" % service_name}, status=404)
-    except Database.DoesNotExist:
-        LOG.warning("database %s not found" % (service_name))
-        return Response(data={"status": "warning", "reason": "database %s not found" % service_name}, status=200)
+    renderer_classes = (JSONRenderer, JSONPRenderer)
+    model = Database
 
+    def post(self, request, format=None):
+        data = request.DATA
+        name = data['name']
+        user = data['user']
+        team = data['team']
+        env = get_url_env(request)
+
+        try:
+            Database.objects.get(name=name, environment__name=env)
+            msg = "There is already a database called {} in {}.".format(name, env)
+            return log_and_response(msg=msg, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except ObjectDoesNotExist, e:
+            pass
+
+        try:
+            dbaas_user =  AccountUser.objects.get(email=user)
+        except ObjectDoesNotExist, e:
+            msg = "User does not exist"
+            return log_and_response(msg=msg, e=e,http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        try:
+            dbaas_team = Team.objects.get(name=team)
+        except ObjectDoesNotExist, e:
+            msg = "Team does not exist."
+            return log_and_response(msg=msg, e=e,http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        try:
+            dbaas_user.team_set.get(name=dbaas_team.name)
+        except ObjectDoesNotExist, e:
+            msg = "The user is not on {} team".format(dbaas_team.name)
+            return log_and_response(msg=msg, e=e,http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        if not 'plan' in data:
+            msg = "Plan was not found"
+            return log_and_response(msg=msg, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        plan = data['plan']
+
+        hard_plans = Plan.objects.values('name', 'description', 'pk'
+            , 'environments__name').extra(where=['is_active=True', 'provider={}'.format(Plan.CLOUDSTACK)])
+
+        plans = get_plans_dict(hard_plans)
+        plan = [splan for splan in plans if splan['name']==plan]
+        LOG.info("Plan: {}".format(plan))
+
+        if any(plan):
+            dbaas_plan = Plan.objects.get(pk=plan[0]['pk'])
+        else:
+            msg = "Plan was not found"
+            return log_and_response(msg=msg, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        try:
+            dbaas_environment = Environment.objects.get(name= env)
+        except(ObjectDoesNotExist,IndexError), e:
+            msg = "Environment does not exist."
+            return log_and_response(msg=msg, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+        create_database.delay(name, dbaas_plan, dbaas_environment,dbaas_team,
+                                        None, 'Database from Tsuru', dbaas_user)
+
+        return Response(status=status.HTTP_201_CREATED,)
+
+
+def get_plans_dict(hard_plans):
+    plans = []
+    for hard_plan in hard_plans:
+        hard_plan['description'] = hard_plan['name'] +'-'+ hard_plan['environments__name']
+        hard_plan['name'] = slugify(hard_plan['description'])
+        del hard_plan['environments__name']
+        plans.append(hard_plan)
+
+    return plans
+
+def get_url_env(request):
+    return request._request.path.split('/')[1]
+
+def log_and_response(msg, http_status, e="Conditional Error."):
+    LOG.warn(msg)
+    LOG.warn("Error: {}".format(e))
+
+    return Response(msg, http_status)
