@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.0.22
+* Integration with Tsuru
+* PyMongo 2.7.2
+* Celery 3.1.14
+
 ## 0.0.21
 * [Closed issues on 0.0.21]
 
