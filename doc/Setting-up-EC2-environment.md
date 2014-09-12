@@ -1,3 +1,5 @@
+#*The project does not support this feature anymore*
+
 Some calls, like vm provision, use the ec2 api. In order to have the api fully functional in your system, you must acomplish a few steps.
 
 # Environment variables
