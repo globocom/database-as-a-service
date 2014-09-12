@@ -2,7 +2,7 @@
 from __future__ import absolute_import, unicode_literals
 import factory
 from .. import models
-from physical.tests.factory import DatabaseInfraFactory
+from physical.tests.factory import DatabaseInfraFactory, EnvironmentFactory
 from account.tests.factory import TeamFactory
 
 
@@ -23,6 +23,12 @@ class DatabaseFactory(factory.DjangoModelFactory):
     project = factory.SubFactory(ProjectFactory)
     team = factory.SubFactory(TeamFactory)
     description = factory.Sequence(lambda n: 'desc{0}'.format(n))
+
+    @factory.lazy_attribute
+    def environment(self):
+        # because environment is part of plan many-to-many relation, I use
+        # lazy attribute instead subfactory, to ensure environment is persisted
+        return self.databaseinfra.environment
 
 
 

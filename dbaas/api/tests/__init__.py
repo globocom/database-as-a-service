@@ -9,6 +9,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from account.models import Role, Team
+from physical.models import Environment
 
 LOG = logging.getLogger(__name__)
 
@@ -46,7 +47,7 @@ class DbaaSAPITestCase(test.APITestCase):
         self.team = Team.objects.get_or_create(name="fake_team", role=self.role)[0]
         self.superuser = User.objects.create_superuser(self.USERNAME, email="%s@admin.com" % self.USERNAME, password=self.PASSWORD)
         self.team.users.add(self.superuser)
-        # self.client = 
+        # self.client =
         self.client.login(username=self.USERNAME, password=self.PASSWORD)
 
     def tearDown(self):
@@ -100,6 +101,8 @@ class BasicTestsMixin(object):
                 obj = self.model_get(obj_data['id'])
 
                 # check fields
+                self.get_env(data)
+
                 self.compare_object_and_dict(obj, obj_data, listing=True)
             next = data['_links']['next']
             # import pudb; pu.db
@@ -111,6 +114,7 @@ class BasicTestsMixin(object):
         url = self.url_detail(obj.pk)
         response = self.client.get(url)
         data = response.data
+        self.get_env(data)
 
         # assert response
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -131,7 +135,7 @@ class BasicTestsMixin(object):
             else:
                 expected_value = data[k]
                 value = getattr(test_obj, k)
-            # LOG.info('Comparing field %s: expected "%s" and found "%s"', k, expected_value, value)
+            LOG.info('Comparing field %s: expected "%s" and found "%s"', k, expected_value, value)
             self.assertEqual(expected_value, value)
 
 
@@ -171,6 +175,7 @@ class BasicTestsMixin(object):
         payload = self.payload(test_obj, creation=False)
         response = self.client.put(url, payload)
         data = response.data
+        self.get_env(data)
 
         # assert response
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -179,3 +184,9 @@ class BasicTestsMixin(object):
         # check fields
         obj = self.model_get(data['id'])
         self.compare_object_and_dict(obj, data)
+
+
+    def get_env(self, data):
+        if 'environment' in data:
+            if isinstance(data['environment'], Environment):
+                data['environment'] = data['environment'].name

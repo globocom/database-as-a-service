@@ -15,8 +15,8 @@ LOG = logging.getLogger(__name__)
 class DatabaseSerializer(serializers.HyperlinkedModelSerializer):
     plan = serializers.HyperlinkedRelatedField(
         source='plan', view_name='plan-detail', queryset=Plan.objects)
-    environment = serializers.HyperlinkedRelatedField(
-        source='environment', view_name='environment-detail', queryset=Environment.objects)
+    environment =serializers.HyperlinkedRelatedField(source='environment', view_name='environment-detail'
+        , queryset=Environment.objects)
     team = serializers.HyperlinkedRelatedField(
         source='team', view_name='team-detail', queryset=Team.objects)
     endpoint = serializers.Field(source='endpoint')
@@ -35,7 +35,7 @@ class DatabaseSerializer(serializers.HyperlinkedModelSerializer):
 
     def __init__(self, *args, **kwargs):
         super(DatabaseSerializer, self).__init__(*args, **kwargs)
-        
+
         request = self.context.get('request', None)
         if request:
             creating = request.method == 'POST'
@@ -92,15 +92,12 @@ class DatabaseAPI(viewsets.ModelViewSet):
 
     def create(self, request):
         serializer = self.get_serializer(data=request.DATA, files=request.FILES)
-        
+
         if serializer.is_valid():
             self.pre_save(serializer.object)
             data = serializer.restore_fields(request.DATA, request.FILES)
 
             LOG.info("Plan %s" % data['plan'])
-
-            plan = data['plan']
-
 
             result = create_database.delay(data['name'],
                                                data['plan'],
