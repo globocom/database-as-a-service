@@ -21,7 +21,7 @@ class CloneDatabaseForm(forms.Form):
         cleaned_data = super(CloneDatabaseForm, self).clean()
         if 'database_clone' in cleaned_data:
 
-            origindatabase = Database.objects.get(pk=cleaned_data['origin_database_id'])    
+            origindatabase = Database.objects.get(pk=cleaned_data['origin_database_id'])
 
             for infra in DatabaseInfra.objects.filter(environment=origindatabase.environment,plan=origindatabase.plan):
                 if infra.databases.filter(name=cleaned_data['database_clone']):
@@ -29,7 +29,7 @@ class CloneDatabaseForm(forms.Form):
 
             if len(cleaned_data['database_clone']) > 40:
                 self._errors["database_clone"] = self.error_class([_("Database name too long")])
-            
+
             dbs = origindatabase.team.databases_in_use_for(origindatabase.environment)
             database_alocation_limit = origindatabase.team.database_alocation_limit
             LOG.debug("dbs: %s | type: %s" % (dbs, type(dbs)))
@@ -40,17 +40,17 @@ class CloneDatabaseForm(forms.Form):
             driver = DriverFactory.get_driver_class(origindatabase.plan.engines[0].name)
             if cleaned_data['database_clone'] in driver.RESERVED_DATABASES_NAME:
                 raise forms.ValidationError(_("%s is a reserved database name" % cleaned_data['database_clone']))
-            
+
             if self._errors:
                 return cleaned_data
-            
+
         return cleaned_data
 
 class DatabaseForm(models.ModelForm):
     plan = AdvancedModelChoiceField(queryset=Plan.objects.filter(is_active='True'), required=False, widget=forms.RadioSelect, empty_label=None)
     engine = forms.ModelChoiceField(queryset=Engine.objects)
     environment = forms.ModelChoiceField(queryset=Environment.objects)
-    
+
     class Meta:
         model = Database
         fields = ('name', 'description' ,'project', 'team', 'is_in_quarantine')
@@ -75,11 +75,11 @@ class DatabaseForm(models.ModelForm):
             self.fields['is_in_quarantine'].widget = forms.HiddenInput()
 
         # choices = [(user.id, user.username) for user in Team.user_objects.all()]
-        # 
+        #
         # if self.instance and self.instance.pk:
         #     #now concatenate with the existing users...
         #     choices = choices + [(user.id, user.username) for user in self.instance.users.all()]
-        # 
+        #
         # self.fields['users'].choices = choices
 
     def clean(self):
@@ -123,14 +123,14 @@ class DatabaseForm(models.ModelForm):
                 LOG.warning("The database alocation limit of %s has been exceeded for the selected team %s => %s" % (database_alocation_limit, team, list(dbs)))
                 self._errors["team"] = self.error_class([_("The database alocation limit of %s has been exceeded for the selected team: %s") % (database_alocation_limit, list(dbs))])
 
-        for infra in DatabaseInfra.objects.filter(environment=environment,plan=plan):
+        for infra in DatabaseInfra.objects.filter(environment=environment,):
             if infra.databases.filter(name=cleaned_data['name']):
                 self._errors["name"] = self.error_class([_("this name already exists in the selected environment")])
 
         driver = DriverFactory.get_driver_class(plan.engines[0].name)
         if 'name' in cleaned_data and cleaned_data['name'] in driver.RESERVED_DATABASES_NAME:
             raise forms.ValidationError(_("%s is a reserved database name" % cleaned_data['name']))
-        
+
         if self._errors:
             return cleaned_data
 
@@ -140,8 +140,8 @@ class DatabaseForm(models.ModelForm):
     #    if self.instance and self.instance.id:
     #        return super(DatabaseForm, self).save(*args, **kwargs)
     #    else:
-    #        database = Database.provision(self.cleaned_data['name'], 
-    #                                        self.cleaned_data['plan'], 
+    #        database = Database.provision(self.cleaned_data['name'],
+    #                                        self.cleaned_data['plan'],
     #                                        self.cleaned_data['environment'],
     #                                        self.cleaned_data['databaseinfra'])
     #        database.team = self.cleaned_data['team']
