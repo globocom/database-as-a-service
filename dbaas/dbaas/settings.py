@@ -12,7 +12,7 @@ CI = os.getenv('CI', '0') == '1'
 syspath = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 if not syspath in sys.path:
     sys.path.insert(0, syspath)
-    
+
 def LOCAL_FILES(path):
     new_path = os.path.abspath(os.path.join(__file__, path))
     return new_path
@@ -199,6 +199,7 @@ INSTALLED_APPS = (
     'dbaas_zabbix',
     'dbaas_dnsapi',
     'backup',
+    'dbaas_aclapi',
 )
 
 
@@ -343,7 +344,7 @@ if LDAP_ENABLED:
         "last_name": "sn",
         "email": "mail"
     }
-    
+
     AUTHENTICATION_BACKENDS = ['django_auth_ldap.backend.LDAPBackend'] + AUTHENTICATION_BACKENDS
 
 
@@ -455,7 +456,7 @@ LOGGING = {
 }
 
 if SENTRY:
-    LOGGING['root']['handlers'] += ['sentry']    
+    LOGGING['root']['handlers'] += ['sentry']
 
 # logging to file
 LOGFILE = os.getenv('DBAAS_LOGFILE', None)
