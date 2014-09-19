@@ -23,6 +23,7 @@ DEPLOY_MONGO = (
             'workflow.steps.check_database_connection.CheckDatabaseConnection',
             'workflow.steps.check_dns.CheckDns',
             'workflow.steps.create_zabbix.CreateZabbix',
+            'workflow.steps.create_dbmonitor.CreateDbMonitor'
 )
 
 DEPLOY_UNKNOWN = (
