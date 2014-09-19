@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.0.23
+* Remove plan from database name+environment check
+* Call CreateDbMonitor on DEPLOY_MONGO
+
 ## 0.0.22
 * Integration with Tsuru
 * PyMongo 2.7.2
