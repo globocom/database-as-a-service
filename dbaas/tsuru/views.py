@@ -44,7 +44,7 @@ class GetServiceStatus(APIView):
         try:
             database_status = Database.objects.filter(name= database_name, environment__name=env).values_list('status', flat=True)[0]
         except IndexError, e:
-            database_status=2
+            database_status=0
             LOG.warn("There is not a database with this {} name on {}. {}".format(database_name, env,e))
 
         LOG.info("Status = {}".format(database_status))
