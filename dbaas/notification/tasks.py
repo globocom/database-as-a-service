@@ -7,6 +7,7 @@ from system.models import Configuration
 from celery.utils.log import get_task_logger
 from celery.exceptions import SoftTimeLimitExceeded
 from dbaas.celery import app
+from django.db import transaction
 
 from util import call_script
 from util.decorators import only_one
@@ -392,6 +393,7 @@ def bind_address_on_database(self, database, acl_environment, acl_vlan, action="
 
     task_history.update_details(persist=True, details="Loading Process...")
 
+
     try:
         if action == "permit":
         	bind_status = models.CREATING
@@ -404,20 +406,21 @@ def bind_address_on_database(self, database, acl_environment, acl_vlan, action="
         job = tasks.bind_unbind_address_on_database(database= database, acl_environment= acl_environment,
         	acl_vlan=acl_vlan, action=action, bind_status= bind_status)
 
-        if job:
-            task_history.update_status_for(TaskHistory.STATUS_SUCCESS, details='Bind created successfully')
-
-            if bind_status == models.CREATING:
-                bind_status = models.CREATED
-            else:
-                bind_status = models.ERROR
-
-            LOG.debug("Bind Status: {}".format(bind_status))
-
-            monitor_acl_job.delay(database, job, acl_environment+'/'+acl_vlan, bind_status, user=user)
-            return
-        else:
+        if not job:
             raise Exception, "Error when executing the Bind"
+
+        task_history.update_status_for(TaskHistory.STATUS_SUCCESS, details='Bind created successfully')
+
+        if bind_status == models.CREATING:
+            bind_status = models.CREATED
+        else:
+            bind_status = models.ERROR
+
+        LOG.debug("Bind Status: {}".format(bind_status))
+
+
+        monitor_acl_job.delay(database, job, acl_environment+'/'+acl_vlan, bind_status, user=user)
+        return
 
     except Exception,e:
         LOG.info("DatabaseBind ERROR: {}".format(e))
