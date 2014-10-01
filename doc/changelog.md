@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.0.24
+* Initial integration with acl_api
+
 ## 0.0.23
 * Remove plan from database name+environment check
 * Call CreateDbMonitor on DEPLOY_MONGO
@@ -14,7 +17,7 @@
 
 ## 0.0.20
 * [Closed issues on 0.0.20]
- 
+
 
 ## 0.0.19
 * bug fix: typo on taskhistory
@@ -38,7 +41,7 @@
 * add workflow engine
 * add a backup management tool
 * bug fix: plans and environments were not being listed on the databaseinfra edit screen
- 
+
 
 ## 0.0.15
 * add cloudstack mysql single and cluster
