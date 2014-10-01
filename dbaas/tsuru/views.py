@@ -11,6 +11,7 @@ from notification.tasks import create_database
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
 from notification.models import TaskHistory
+from notification.tasks import bind_address_on_database
 
 LOG = logging.getLogger(__name__)
 
@@ -90,12 +91,6 @@ class ServiceBind(APIView):
         data = request.DATA
         LOG.debug("Request DATA {}".format(data))
 
-        try:
-            database = Database.objects.get(name=database_name, environment__name=env)
-        except ObjectDoesNotExist, e:
-            msg = "Database {} does not exist in env {}.".format(database_name, env)
-            return log_and_response(msg=msg, e=e, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
         task = TaskHistory.objects.filter(Q(arguments__contains=database_name) &
             Q(arguments__contains=env), task_status="RUNNING",).order_by("created_at")
 
@@ -103,6 +98,12 @@ class ServiceBind(APIView):
         if task:
             msg = "Database {} in env {} is beeing created.".format(database_name, env)
             return log_and_response(msg=msg, http_status=status.HTTP_412_PRECONDITION_FAILED)
+
+        try:
+            database = Database.objects.get(name=database_name, environment__name=env)
+        except ObjectDoesNotExist, e:
+            msg = "Database {} does not exist in env {}.".format(database_name, env)
+            return log_and_response(msg=msg, e=e, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         if not(database and database.status):
             msg = "Database {} is not Alive.".format(database_name)
@@ -114,24 +115,24 @@ class ServiceBind(APIView):
             msg = "Database {} in env {} does not have credentials.".format(database_name, env)
             return log_and_response(msg=msg, e=e, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+        if 'unit-host' in data:
+            bind_address_on_database.delay(database, data['unit-host'], '32', action="permit", user=request.user)
 
         endpoint = database.endpoint.replace('<user>:<password>',"{}:{}".format(
             credential.user, credential.password))
 
-        return Response({"user":credential.user, "password": credential.password, "endpoint": endpoint},
+        return Response({"DBAAS_USER":credential.user, "DBAAS_PASSWORD": credential.password, "DBAAS_ENDPOINT": endpoint},
             status.HTTP_201_CREATED)
 
     def delete(self, request, database_name, format=None):
         env = get_url_env(request)
         try:
-            database = Database.objects.get(name=database_name, environment__name=env)
-        except ObjectDoesNotExist, e:
+            database = Database.objects.filter(name=database_name, environment__name=env).exclude(is_in_quarantine=True)[0]
+        except IndexError, e:
             msg = "Database id provided does not exist {} in {}.".format(database_name, env)
             return log_and_response(msg=msg, e=e,http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        if not database.is_in_quarantine:
-            database.delete()
-
+        database.delete()
         return Response(status.HTTP_204_NO_CONTENT)
 
 
@@ -141,6 +142,31 @@ class ServiceUnbind(APIView):
     model = Database
 
     def delete(self, request, database_name, unbind_ip, format=None):
+        env = get_url_env(request)
+        data = request.DATA
+        LOG.debug("Request DATA {}".format(data))
+
+        task = TaskHistory.objects.filter(Q(arguments__contains=database_name) &
+            Q(arguments__contains=env), task_status="RUNNING",).order_by("created_at")
+
+        LOG.info("Task {}".format(task))
+        if task:
+            msg = "Database {} in env {} is beeing created.".format(database_name, env)
+            return log_and_response(msg=msg, http_status=status.HTTP_412_PRECONDITION_FAILED)
+
+        try:
+            database = Database.objects.filter(name=database_name, environment__name=env).exclude(is_in_quarantine=True)[0]
+        except IndexError, e:
+            msg = "Database {} does not exist in env {}.".format(database_name, env)
+            return log_and_response(msg=msg, e=e, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+        if not(database and database.status):
+            msg = "Database {} is not Alive.".format(database_name)
+            return log_and_response(msg=msg, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+        bind_address_on_database.delay(database, unbind_ip, '32', action="deny", user=request.user)
         return Response(status.HTTP_204_NO_CONTENT)
 
 

@@ -236,3 +236,23 @@ def full_stack():
 
 def dict_to_string(dict):
     ''.join('{}: {}'.format(key, val) for key, val in sorted(dict.items()))
+
+
+
+def retry(ExceptionToCheck, tries=10, delay=3, backoff=2):
+    import time
+    def deco_retry(f):
+        def f_retry(*args, **kwargs):
+            mtries, mdelay = tries, delay
+            while mtries > 0:
+                try:
+                    return f(*args, **kwargs)
+                except ExceptionToCheck, e:
+                    print "%s, Retrying in %d seconds..." % (str(e), mdelay)
+                    time.sleep(mdelay)
+                    mtries -= 1
+                    mdelay *= backoff
+                    lastException = e
+            raise lastException
+        return f_retry # true decorator
+    return deco_retry
