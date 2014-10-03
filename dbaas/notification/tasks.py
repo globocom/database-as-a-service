@@ -444,7 +444,7 @@ def bind_address_on_database(self, database, acl_environment, acl_vlan, action="
         	acl_vlan, action, bind_status))
 
         job = tasks.bind_unbind_address_on_database(database= database, acl_environment= acl_environment,
-        	acl_vlan=acl_vlan, action=action, bind_status= bind_status)
+        	acl_vlan=acl_vlan, action="permit", bind_status= bind_status)
 
         if not job:
             raise Exception, "Error when executing the Bind"
