@@ -63,6 +63,15 @@
          {{original.get_endpoint_dns}}
      </tr>
  </table>
+
+<h2>Log</h2>
+ <table id="table-log" class="table table-striped" data-database-id="{{original.pk}}" >
+     <tr class="credential" data-credential-pk="log_pk"  >
+         {{original.get_log_url|safe}}
+     </tr>
+ </table>
+
+
 {% endblock %}
 
 {% block submit_buttons_bottom %}{% submit_row_extended %}{% endblock %}
