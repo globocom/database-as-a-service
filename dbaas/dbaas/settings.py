@@ -200,6 +200,7 @@ INSTALLED_APPS = (
     'dbaas_dnsapi',
     'backup',
     'dbaas_aclapi',
+    'dbaas_laas',
 )
 
 

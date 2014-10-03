@@ -22,8 +22,9 @@ class TaskHistory(BaseModel):
 	STATUS_RUNNING = 'RUNNING'
 	STATUS_SUCCESS = 'SUCCESS'
 	STATUS_ERROR = 'ERROR'
+	STATUS_WARNING = 'WARNING'
 
-	_STATUS = [STATUS_PENDING, STATUS_RUNNING, STATUS_SUCCESS, STATUS_ERROR]
+	_STATUS = [STATUS_PENDING, STATUS_RUNNING, STATUS_SUCCESS, STATUS_ERROR, STATUS_WARNING]
 
 	task_id = models.CharField(_('Task ID'), max_length=200, null=True, blank=True, editable=False)
 	task_name = models.CharField(_('Task Name'), max_length=200, null=True, blank=True)
@@ -65,7 +66,7 @@ class TaskHistory(BaseModel):
 
 		self.task_status = status
 		self.details = (self.details or " ") + "\n" + str(details)
-		if status in [TaskHistory.STATUS_SUCCESS, TaskHistory.STATUS_ERROR]:
+		if status in [TaskHistory.STATUS_SUCCESS, TaskHistory.STATUS_ERROR, TaskHistory.STATUS_WARNING]:
 			self.update_ended_at()
 		else:
 			self.save()
