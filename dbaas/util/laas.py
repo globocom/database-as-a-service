@@ -29,7 +29,7 @@ def get_hosts_for_database(database):
     return hosts  
 
 def get_group_name(database):
-    return "DBaaS_%s_%s" % (database.name, database.engine_type)
+    return "DBaaS_%s_%s" % (database.databaseinfra.name, database.engine_type)
     
 def register_database_laas(database):
     workspace_json = {}
