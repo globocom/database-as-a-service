@@ -174,7 +174,7 @@ def user_m2m_changed(sender, **kwargs):
     action = kwargs.get('action')
     if action == 'post_add':
         from util import laas
-        laas.register_team_laas(team)
+        #laas.register_team_laas(team)
         
 m2m_changed.connect(user_m2m_changed, sender=Team.users.through)
 

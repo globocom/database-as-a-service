@@ -78,7 +78,7 @@ def create_database(self, name, plan, environment, team, project, description, u
 		task_history.update_dbid(db=database)
 		
 		from util import laas
-		laas.register_database_laas(database)
+		#laas.register_database_laas(database)
 		
 		task_history.update_status_for(TaskHistory.STATUS_SUCCESS, details='Database created successfully')
 		
@@ -172,7 +172,7 @@ def clone_database(self, origin_database, clone_name, user=None):
 	    LOG.info("dest_database: %s" % dest_database)
 		
 	    from util import laas
-	    laas.register_database_laas(dest_database)
+	    #laas.register_database_laas(dest_database)
 	except Exception, e:
 	    traceback = full_stack()
 	    LOG.error("Ops... something went wrong: %s" % e)
