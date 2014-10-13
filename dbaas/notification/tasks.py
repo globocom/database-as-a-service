@@ -12,7 +12,8 @@ from django.db import transaction
 from util import call_script
 from util.decorators import only_one
 from util import email_notifications
-from util.providers import make_infra
+from util.providers import make_infra, destroy_infra
+from util import full_stack
 from .util import get_clone_args
 from .models import TaskHistory
 from drivers import factory_for
@@ -73,10 +74,29 @@ def create_database(self, name, plan, environment, team, project, description, u
 		database.project = project
 		database.description = description
 		database.save()
+		
 		task_history.update_dbid(db=database)
-
+		
+		from util import laas
+		#laas.register_database_laas(database)
+		
 		task_history.update_status_for(TaskHistory.STATUS_SUCCESS, details='Database created successfully')
+		
 		return
+		
+	except Exception, e:
+	    traceback = full_stack()
+	    LOG.error("Ops... something went wrong: %s" % e)
+	    LOG.error(traceback)
+	    
+	    if 'database' in locals() and database.id:
+	        task_history.update_status_for(TaskHistory.STATUS_WARNING, details=traceback)
+	    else:
+	        if 'result' in locals() and result['created']:
+	            destroy_infra(databaseinfra = result['databaseinfra'])
+	        task_history.update_status_for(TaskHistory.STATUS_ERROR, details=traceback)
+	    return
+	    
 	finally:
 		AuditRequest.cleanup_request()
 
@@ -94,8 +114,6 @@ def destroy_database(self, database, user=None):
 
 		databaseinfra = database.databaseinfra
 		database.delete()
-
-		from util.providers import destroy_infra
 
 		destroy_infra(databaseinfra=databaseinfra, task=task_history)
 
@@ -133,12 +151,34 @@ def clone_database(self, origin_database, clone_name, user=None):
 
 			task_history.update_status_for(TaskHistory.STATUS_ERROR, details=error)
 			return
+					
+	except Exception, e:
+	    traceback = full_stack()
+	    LOG.error("Ops... something went wrong: %s" % e)
+	    LOG.error(traceback)
+	    
+	    if 'result' in locals() and result['created']:
+	        destroy_infra(databaseinfra = result['databaseinfra'])
+	    
+	    task_history.update_status_for(TaskHistory.STATUS_ERROR, details=traceback)
+	    return
+
 	finally:
 		AuditRequest.cleanup_request()
 
-	dest_database.databaseinfra = result['databaseinfra']
-	dest_database.save()
-	LOG.info("dest_database: %s" % dest_database)
+	try:
+	    dest_database.databaseinfra = result['databaseinfra']
+	    dest_database.save()
+	    LOG.info("dest_database: %s" % dest_database)
+		
+	    from util import laas
+	    #laas.register_database_laas(dest_database)
+	except Exception, e:
+	    traceback = full_stack()
+	    LOG.error("Ops... something went wrong: %s" % e)
+	    LOG.error(traceback)
+	    task_history.update_details(persist=True, details='\n' + traceback)
+
 
 	LOG.info("id: %s | task: %s | kwargs: %s | args: %s" % (
 		self.request.id, self.request.task, self.request.kwargs, str(self.request.args)))

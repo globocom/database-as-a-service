@@ -192,6 +192,16 @@ class Database(BaseModel):
 
     def get_endpoint_dns(self):
         return self.driver.get_connection_dns(database=self)
+    
+    def get_log_url(self):
+        from util import get_credentials_for
+        from util.laas import get_group_name
+        from dbaas_credentials.models import CredentialType
+        
+        credential = get_credentials_for(environment=self.environment, credential_type=CredentialType.LOGNIT)
+        #print credential.endpoint, get_group_name(self)
+        url = "%s%s" % (credential.endpoint, get_group_name(self))
+        return "<a href='%s' target='_blank'>%s</a>" % (url, url)
 
     endpoint = property(get_endpoint)
     endpoint_dns = property(get_endpoint_dns)
