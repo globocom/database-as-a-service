@@ -33,10 +33,16 @@ class CreateSecondaryIp(BaseStep):
                 credential_type=CredentialType.NETWORKAPI)
 
             cs_provider = CloudStackProvider(credentials = cs_credentials, networkapi_credentials = networkapi_credentials)
+            if not cs_provider:
+                raise Exception, "Could not create CloudStackProvider object"
+                return False
 
             workflow_dict['databaseinfraattr'] = []
             
             networkapi_equipment_id = cs_provider.register_networkapi_equipment(equipment_name = workflow_dict['names']['infra'])
+            if not networkapi_equipment_id:
+                raise Exception, "Could not register networkapi equipment"
+                return False
             
             for host in workflow_dict['hosts']:
                 LOG.info("Creating Secondary ips...")
