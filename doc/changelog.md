@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.0.25
+* Integration with network api
+* Integration with LaaS (initially disabled)
+
 ## 0.0.24
 * Initial integration with acl_api
 
