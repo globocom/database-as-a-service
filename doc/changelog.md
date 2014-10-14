@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.0.26
+* Change dbaas_credentials version (bug fix)
+
 ## 0.0.25
 * Integration with network api
 * Integration with LaaS (initially disabled)
