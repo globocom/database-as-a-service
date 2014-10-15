@@ -55,6 +55,9 @@ class InitDatabaseMongoDB(BaseStep):
 					host_nfsattr = HostAttr.objects.get(host=host)
 					contextdict = {
 						'EXPORTPATH': host_nfsattr.nfsaas_path,
+						'HOST': workflow_dict['hosts'][0].hostname.split('.')[0],
+						'DATABASENAME': workflow_dict['name'],
+						'ENGINE': 'mongodb'
 					}
 
 					if index == 0:
