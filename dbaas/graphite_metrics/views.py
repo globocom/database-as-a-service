@@ -13,7 +13,7 @@ LOG = logging.getLogger(__name__)
 def graphite_metrics(request):
     http = urllib3.PoolManager()
 
-    response = http.request(method="GET", url="http://graphite.dev.globoi.com/render?from=-10minutes&until=now&target=statsite.dbaas.mongodb.kpm.kpm-01-141339554773.cpu.cpu_usr&format=json",)
+    response = http.request(method="GET", url="http://graphite.dev.globoi.com/render?from=-60minutes&until=now&target=statsite.dbaas.mongodb.kpm.kpm-01-141339554773.cpu.cpu_usr&format=json",)
 
     data = json.loads(response.data)
     cpu_usr = []
@@ -21,10 +21,8 @@ def graphite_metrics(request):
         if d[0] is not None:
             cpu_usr.append([d[1] * 1000, d[0]])
 
-    LOG.debug("CPU_USER: {}".format(cpu_usr))
 
-
-    response = http.request(method="GET", url="http://graphite.dev.globoi.com/render?from=-10minutes&until=now&target=statsite.dbaas.mongodb.kpm.kpm-01-141339554773.cpu.cpu_idle&format=json")
+    response = http.request(method="GET", url="http://graphite.dev.globoi.com/render?from=-60minutes&until=now&target=statsite.dbaas.mongodb.kpm.kpm-01-141339554773.cpu.cpu_idle&format=json")
 
     data = json.loads(response.data)
     cpu_idle = []
@@ -32,10 +30,8 @@ def graphite_metrics(request):
         if d[0] is not None:
             cpu_idle.append([d[1] * 1000, d[0]])
 
-    LOG.debug("CPU_IDLE: {}".format(cpu_idle))
 
-
-    response = http.request(method="GET", url="http://graphite.dev.globoi.com/render?from=-10minutes&until=now&target=statsite.dbaas.mongodb.kpm.kpm-01-141339554773.cpu.cpu_wait&format=json")
+    response = http.request(method="GET", url="http://graphite.dev.globoi.com/render?from=-60minutes&until=now&target=statsite.dbaas.mongodb.kpm.kpm-01-141339554773.cpu.cpu_wait&format=json")
 
     data = json.loads(response.data)
     cpu_wait = []
@@ -43,17 +39,13 @@ def graphite_metrics(request):
         if d[0] is not None:
             cpu_wait.append([d[1] * 1000, d[0]])
 
-    LOG.debug("CPU_WAIT: {}".format(cpu_wait))
-
-    response = http.request(method="GET", url="http://graphite.dev.globoi.com/render?from=-10minutes&until=now&target=statsite.dbaas.mongodb.kpm.kpm-01-141339554773.cpu.cpu_sys&format=json")
+    response = http.request(method="GET", url="http://graphite.dev.globoi.com/render?from=-60minutes&until=now&target=statsite.dbaas.mongodb.kpm.kpm-01-141339554773.cpu.cpu_sys&format=json")
 
     data = json.loads(response.data)
     cpu_sys = []
     for d in data[0]['datapoints']:
         if d[0] is not None:
             cpu_sys.append([d[1] * 1000, d[0]])
-
-    LOG.debug("CPU_IDLE: {}".format(cpu_idle))
 
     return render_to_response("metrics/graph01.html", {'cpu_usr': cpu_usr, 'cpu_idle': cpu_idle,
         'cpu_wait': cpu_wait,'cpu_sys': cpu_sys}, context_instance=RequestContext(request))

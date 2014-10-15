@@ -4,7 +4,7 @@
     <script src="http://code.highcharts.com/modules/exporting.js"></script>
 </head>
 <body bgcolor="#2a2a2b">
-    <div id="container" style="min-width: 310px; height: 400px; max-width: 800px; margin: 0 auto"></div>
+    <div id="container" style="min-width: 250px; height: 400px; max-width: 800px; margin: 0 auto"></div>
     <script type="text/javascript">
         $(function () {
 
@@ -217,7 +217,8 @@
                 });
                 $('#container').highcharts({
                     chart: {
-                        type: 'area'
+                        type: 'area',
+                        zoomType: 'x'
                     },
                     title: {
                         text: 'CPU'
