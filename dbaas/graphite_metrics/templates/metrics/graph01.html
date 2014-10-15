@@ -1,0 +1,77 @@
+<head>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+    <script src="http://code.highcharts.com/highcharts.js"></script>
+    <script src="http://code.highcharts.com/modules/exporting.js"></script>
+</head>
+<body>
+    <div id="container" style="min-width: 310px; height: 400px; max-width: 800px; margin: 0 auto"></div>
+    <script type="text/javascript">
+        $(function () {
+                Highcharts.setOptions({
+                    global: {
+                        timezoneOffset: 3 * 60
+                    }
+                });
+                $('#container').highcharts({
+                    chart: {
+                        type: 'area'
+                    },
+                    title: {
+                        text: 'CPU'
+                    },
+                    xAxis: {
+                        type: 'datetime',
+                        tickmarkPlacement: 'on',
+                        title: {
+                            enabled: false
+                        }
+
+                    },
+                    yAxis: {
+                        title: {
+                            text: 'Percent'
+                        }
+                    },
+                    tooltip: {
+                        pointFormat: '<span style="color:{series.color}">{series.name}</span>: <b>{point.percentage:.1f}%</b> <br/>',
+                        shared: true
+                    },
+                    plotOptions: {
+                        area: {
+                            stacking: 'percent',
+                            lineColor: '#ffffff',
+                            lineWidth: 1,
+                            marker: {
+                                lineWidth: 1,
+                                lineColor: '#ffffff',
+                                enabled: false,
+                                symbol: 'circle',
+                                radius: 2,
+                                states: {
+                                    hover: {
+                                        enabled: true
+                                    }
+                                }
+                        }
+                    }
+                            }
+                        }
+                    },
+                    series: [{
+                        name: 'Idle',
+                        data: {{cpu_idle}}
+                    }, {
+                        name: 'User',
+                        data: {{cpu_usr}}
+                    }, {
+                        name: 'Wait',
+                        data: {{cpu_wait}}
+                    }, {
+                        name: 'System',
+                        data: {{cpu_sys}}
+                    }]
+                });
+        });
+    </script>
+</body>
+
