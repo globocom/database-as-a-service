@@ -26,6 +26,8 @@ from django.contrib.admin import helpers
 from django.template.response import TemplateResponse
 from notification.tasks import destroy_database
 from notification.tasks import create_database
+import urllib3
+import json
 
 LOG = logging.getLogger(__name__)
 
@@ -42,8 +44,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
 	service_class = DatabaseService
 	search_fields = ("name", "databaseinfra__name")
-	list_display_basic = ["name_html", "engine_type", "environment", "plan", "friendly_status", "clone_html",
-	                      "get_capacity_html", ]
+	list_display_basic = ["name_html", "engine_type", "environment", "plan", "friendly_status", "clone_html" ,
+	                      "get_capacity_html", "metrics_html"]
 	list_display_advanced = list_display_basic + ["quarantine_dt_format"]
 	list_filter_basic = ["project", "databaseinfra__environment", "databaseinfra__engine", "databaseinfra__plan"]
 	list_filter_advanced = list_filter_basic + ["databaseinfra", "is_in_quarantine", "team"]
@@ -112,6 +114,15 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 		return format_html("".join(html))
 
 	clone_html.short_description = "Clone"
+
+	def metrics_html(self, database):
+		html = []
+		html.append("<a class='btn btn-info' href='%s'><i class='icon-list-alt icon-white'></i></a>" % reverse(
+			'admin:database_metrics', args=(database.id,)))
+
+		return format_html("".join(html))
+
+	clone_html.short_description = "Metrics"
 
 	def description_html(self, database):
 
@@ -328,14 +339,63 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 		                          locals(),
 		                          context_instance=RequestContext(request))
 
+
+	def metrics_view(self, request, database_id):
+		database = Database.objects.get(id=database_id)
+
+		form = None
+		if request.method == 'GET':
+			http = urllib3.PoolManager()
+
+			response = http.request(method="GET", url="http://graphite.dev.globoi.com/render?from=-60minutes&until=now&target=statsite.dbaas.mongodb.kpm.kpm-01-141339554773.cpu.cpu_usr&format=json",)
+
+			data = json.loads(response.data)
+			cpu_usr = []
+			for d in data[0]['datapoints']:
+			    if d[0] is not None:
+			        cpu_usr.append([d[1] * 1000, d[0]])
+
+
+			response = http.request(method="GET", url="http://graphite.dev.globoi.com/render?from=-60minutes&until=now&target=statsite.dbaas.mongodb.kpm.kpm-01-141339554773.cpu.cpu_idle&format=json")
+
+			data = json.loads(response.data)
+			cpu_idle = []
+			for d in data[0]['datapoints']:
+			    if d[0] is not None:
+			        cpu_idle.append([d[1] * 1000, d[0]])
+
+
+			response = http.request(method="GET", url="http://graphite.dev.globoi.com/render?from=-60minutes&until=now&target=statsite.dbaas.mongodb.kpm.kpm-01-141339554773.cpu.cpu_wait&format=json")
+
+			data = json.loads(response.data)
+			cpu_wait = []
+			for d in data[0]['datapoints']:
+			    if d[0] is not None:
+			        cpu_wait.append([d[1] * 1000, d[0]])
+
+			response = http.request(method="GET", url="http://graphite.dev.globoi.com/render?from=-60minutes&until=now&target=statsite.dbaas.mongodb.kpm.kpm-01-141339554773.cpu.cpu_sys&format=json")
+
+			data = json.loads(response.data)
+			cpu_sys = []
+			for d in data[0]['datapoints']:
+			    if d[0] is not None:
+			        cpu_sys.append([d[1] * 1000, d[0]])
+
+			return render_to_response("metrics/graph01.html", {'cpu_usr': cpu_usr, 'cpu_idle': cpu_idle,
+			    'cpu_wait': cpu_wait,'cpu_sys': cpu_sys}, context_instance=RequestContext(request))
+
 	# return HttpResponse("Cloning database %s" % database)
 
 	def get_urls(self):
 		urls = super(DatabaseAdmin, self).get_urls()
 		my_urls = patterns('',
 		                   url(r'^/?(?P<database_id>\d+)/clone/$', self.admin_site.admin_view(self.clone_view),
-		                       name="database_clone")
+		                       name="database_clone"),
+
+		                   url(r'^/?(?P<database_id>\d+)/metrics/$', self.admin_site.admin_view(self.metrics_view),
+		                       name="database_metrics")
 		)
+
 		return my_urls + urls
 
 	def delete_selected(self, request, queryset):
