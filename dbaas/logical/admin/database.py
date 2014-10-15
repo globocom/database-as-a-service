@@ -122,7 +122,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
 		return format_html("".join(html))
 
-	clone_html.short_description = "Metrics"
+	metrics_html.short_description = "Metrics"
 
 	def description_html(self, database):
 
@@ -347,7 +347,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 		if request.method == 'GET':
 			http = urllib3.PoolManager()
 
-			response = http.request(method="GET", url="http://graphite.dev.globoi.com/render?from=-60minutes&until=now&target=statsite.dbaas.mongodb.kpm.kpm-01-141339554773.cpu.cpu_usr&format=json",)
+			response = http.request(method="GET", url="http://graphite.dev.globoi.com/render?from=-60minutes&until=now&target=statsite.dbaas.{}.{}.{}.cpu.cpu_usr&format=json".format(database.infra.engine_name,database.name, database.infra.instances.get().hostname.hostname.split('.')[0]),)
 
 			data = json.loads(response.data)
 			cpu_usr = []
@@ -356,7 +356,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 			        cpu_usr.append([d[1] * 1000, d[0]])
 
 
-			response = http.request(method="GET", url="http://graphite.dev.globoi.com/render?from=-60minutes&until=now&target=statsite.dbaas.mongodb.kpm.kpm-01-141339554773.cpu.cpu_idle&format=json")
+			response = http.request(method="GET", url="http://graphite.dev.globoi.com/render?from=-60minutes&until=now&target=statsite.dbaas.{}.{}.{}.cpu.cpu_idle&format=json".format(database.infra.engine_name,database.name, database.infra.instances.get().hostname.hostname.split('.')[0]),)
 
 			data = json.loads(response.data)
 			cpu_idle = []
@@ -365,7 +365,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 			        cpu_idle.append([d[1] * 1000, d[0]])
 
 
-			response = http.request(method="GET", url="http://graphite.dev.globoi.com/render?from=-60minutes&until=now&target=statsite.dbaas.mongodb.kpm.kpm-01-141339554773.cpu.cpu_wait&format=json")
+			response = http.request(method="GET", url="http://graphite.dev.globoi.com/render?from=-60minutes&until=now&target=statsite.dbaas.{}.{}.{}.cpu.cpu_wait&format=json".format(database.infra.engine_name,database.name, database.infra.instances.get().hostname.hostname.split('.')[0]),)
 
 			data = json.loads(response.data)
 			cpu_wait = []
@@ -373,7 +373,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 			    if d[0] is not None:
 			        cpu_wait.append([d[1] * 1000, d[0]])
 
-			response = http.request(method="GET", url="http://graphite.dev.globoi.com/render?from=-60minutes&until=now&target=statsite.dbaas.mongodb.kpm.kpm-01-141339554773.cpu.cpu_sys&format=json")
+			response = http.request(method="GET", url="http://graphite.dev.globoi.com/render?from=-60minutes&until=now&target=statsite.dbaas.{}.{}.{}.cpu.cpu_sys&format=json".format(database.infra.engine_name,database.name, database.infra.instances.get().hostname.hostname.split('.')[0]),)
 
 			data = json.loads(response.data)
 			cpu_sys = []
@@ -381,7 +381,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 			    if d[0] is not None:
 			        cpu_sys.append([d[1] * 1000, d[0]])
 
-			return render_to_response("metrics/graph01.html", {'cpu_usr': cpu_usr, 'cpu_idle': cpu_idle,
+			return render_to_response("logical/database/metrics.html", {'cpu_usr': cpu_usr, 'cpu_idle': cpu_idle,
 			    'cpu_wait': cpu_wait,'cpu_sys': cpu_sys}, context_instance=RequestContext(request))
 
 	# return HttpResponse("Cloning database %s" % database)

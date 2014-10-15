@@ -20,7 +20,6 @@ urlpatterns = patterns('',
     # Uncomment the next line to enable the admin:
     url(r'^admin/', include(admin.site.urls)),
     url(r'^dashboard/', include('dashboard.urls')),
-    url(r'^metrics/', include('graphite_metrics.urls')),
     url(r'^([^/]+)/tsuru/', include('tsuru.urls'),),
     url(r'^logical/', include('logical.urls')),
     url(r'^account/', include('account.urls')),
