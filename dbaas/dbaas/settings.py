@@ -201,6 +201,7 @@ INSTALLED_APPS = (
     'backup',
     'dbaas_aclapi',
     'dbaas_laas',
+    'graphite_metrics',
 )
 
 
