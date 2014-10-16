@@ -5,7 +5,10 @@
 {% block title %}{{ title }} | DBaaS{% endblock %}
 
 {% block extrastyle %}
-<link rel="stylesheet" type="text/css" href="{% static "admin/css/admin-dbaas.css" %}" />
+{{ block.super }}
+<link rel="stylesheet" type="text/css" href="{% static 'admin/css/admin-dbaas.css' %}" />
+ <link rel="stylesheet" type="text/css" href="{% static 'css/metrics.css' %}" />
+
 {% endblock %}
 
 {% block extrahead %}
