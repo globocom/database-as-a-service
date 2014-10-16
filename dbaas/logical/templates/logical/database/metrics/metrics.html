@@ -21,6 +21,11 @@
 {% endblock %}
 
 {% block content %}
+<ul class="nav nav-pills" id="navFinished" >
+  <li class="active"><a href="#">{{hostname}}</a></li>
+  <li><a href="#">Profile</a></li>
+  <li><a href="#">Messages</a></li>
+</ul>
 {% include "logical/database/metrics/cpu.html" %}
 
 {% endblock %}
@@ -35,4 +40,10 @@
 <body bgcolor="#2a2a2b">
 {% endblock %}
 
-{% block footer %}{% endblock %}
+{% block footer %}
+<script type="text/javascript">
+    $('ul.nav.nav-pills li a').click(function() {
+    $(this).parent().addClass('active').siblings().removeClass('active');
+});
+</script>
+{% endblock %}
