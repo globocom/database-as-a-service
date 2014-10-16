@@ -359,7 +359,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 			    			 'cpu_sys':   datapoints[0]["cpu.cpu_sys"],
 			    			 'hostname': datapoints[0]["hostname"]
 			    		          }
-			return render_to_response("logical/database/metrics.html", template_variables, context_instance=RequestContext(request))
+			return render_to_response("logical/database/metrics/metrics.html", template_variables, context_instance=RequestContext(request))
 
 
 	def get_urls(self):
