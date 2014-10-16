@@ -8,10 +8,16 @@ LOG = logging.getLogger(__name__)
 URL = "http://graphite.dev.globoi.com/render?from=-{}{}&until=now&target=statsite.dbaas.{}.{}.{}.{}&format=json"
 
 VM_METRICS = ("cpu.cpu_idle",
-                         "cpu.cpu_wait",
-                         "cpu.cpu_usr",
-                         "cpu.cpu_sys",
-                         )
+              "cpu.cpu_wait",
+              "cpu.cpu_usr",
+              "cpu.cpu_sys",
+              "men.men_used",
+              "men.men_cach",
+              "men.men_free",
+              "men.men_buff",
+              "net.net_send",
+              "net.net_recv",
+              )
 
 MONGODB_METRICS = () +VM_METRICS
 
