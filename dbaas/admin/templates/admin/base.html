@@ -30,7 +30,9 @@
 </head>
 {% load i18n %}
 
+{% block body %}
 <body class="{% if is_popup %}popup {% endif %}{% block bodyclass %}{% endblock %}">
+{% endblock %}
 
 {% if not is_popup %}
     <!-- Header -->
