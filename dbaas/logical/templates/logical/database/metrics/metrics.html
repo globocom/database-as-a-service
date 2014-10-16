@@ -26,7 +26,11 @@
   <li><a href="#">Profile</a></li>
   <li><a href="#">Messages</a></li>
 </ul>
-{% include "logical/database/metrics/cpu.html" %}
+
+<div id="container_cpu" style="minwidth: 400px; height: 400px; maxwidth: 1180px; margin: 0 auto"></div>
+<div id="container_mem" style="minwidth: 400px; height: 400px; maxwidth: 1180px; margin: 0 auto"></div>
+<div id="container_net" style="minwidth: 400px; height: 400px; maxwidth: 1180px; margin: 0 auto"></div>
+{% include "logical/database/metrics/graphs.html" %}
 
 {% endblock %}
 

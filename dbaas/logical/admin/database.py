@@ -355,8 +355,14 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
 			template_variables = {  'cpu_idle':  datapoints[0]["cpu.cpu_idle"],
 			    			 'cpu_wait': datapoints[0]["cpu.cpu_wait"],
-			    			 'cpu_usr':   datapoints[0]["cpu.cpu_usr"],
-			    			 'cpu_sys':   datapoints[0]["cpu.cpu_sys"],
+			    			 'cpu_usr': datapoints[0]["cpu.cpu_usr"],
+			    			 'cpu_sys': datapoints[0]["cpu.cpu_sys"],
+			    			 'men_used': datapoints[0]["men.men_used"],
+			    			 'men_cach': datapoints[0]["men.men_cach"],
+			    			 'men_free': datapoints[0]["men.men_free"],
+			    			 'men_buff': datapoints[0]["men.men_buff"],
+			    			 'net_send': datapoints[0]["net.net_send"],
+			    			 'net_recv': datapoints[0]["net.net_recv"],
 			    			 'hostname': datapoints[0]["hostname"]
 			    		          }
 			return render_to_response("logical/database/metrics/metrics.html", template_variables, context_instance=RequestContext(request))
