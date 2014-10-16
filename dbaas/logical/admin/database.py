@@ -26,8 +26,6 @@ from django.contrib.admin import helpers
 from django.template.response import TemplateResponse
 from notification.tasks import destroy_database
 from notification.tasks import create_database
-import urllib3
-import json
 
 LOG = logging.getLogger(__name__)
 
@@ -341,50 +339,28 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
 
 	def metrics_view(self, request, database_id):
+		from util.metrics.metrics import URL, get_metric_datapoints_for
 		database = Database.objects.get(id=database_id)
 
 		form = None
+		datapoints = {}
 		if request.method == 'GET':
-			http = urllib3.PoolManager()
-
-			response = http.request(method="GET", url="http://graphite.dev.globoi.com/render?from=-60minutes&until=now&target=statsite.dbaas.{}.{}.{}.cpu.cpu_usr&format=json".format(database.infra.engine_name,database.name, database.infra.instances.get().hostname.hostname.split('.')[0]),)
-
-			data = json.loads(response.data)
-			cpu_usr = []
-			for d in data[0]['datapoints']:
-			    if d[0] is not None:
-			        cpu_usr.append([d[1] * 1000, d[0]])
+			engine = database.infra.engine_name
+			db_name = database.name
+			for index, instance in enumerate(database.infra.instances.all()):
+				hostname = instance.hostname.hostname.split('.')[0]
+				datapoints[index] = get_metric_datapoints_for(engine, db_name, hostname, url=URL)
+				datapoints[index].update({"hostname" : hostname})
 
 
-			response = http.request(method="GET", url="http://graphite.dev.globoi.com/render?from=-60minutes&until=now&target=statsite.dbaas.{}.{}.{}.cpu.cpu_idle&format=json".format(database.infra.engine_name,database.name, database.infra.instances.get().hostname.hostname.split('.')[0]),)
+			template_variables = {  'cpu_idle':  datapoints[0]["cpu.cpu_idle"],
+			    			 'cpu_wait': datapoints[0]["cpu.cpu_wait"],
+			    			 'cpu_usr':   datapoints[0]["cpu.cpu_usr"],
+			    			 'cpu_sys':   datapoints[0]["cpu.cpu_sys"],
+			    			 'hostname': datapoints[0]["hostname"]
+			    		          }
+			return render_to_response("logical/database/metrics.html", template_variables, context_instance=RequestContext(request))
 
-			data = json.loads(response.data)
-			cpu_idle = []
-			for d in data[0]['datapoints']:
-			    if d[0] is not None:
-			        cpu_idle.append([d[1] * 1000, d[0]])
-
-
-			response = http.request(method="GET", url="http://graphite.dev.globoi.com/render?from=-60minutes&until=now&target=statsite.dbaas.{}.{}.{}.cpu.cpu_wait&format=json".format(database.infra.engine_name,database.name, database.infra.instances.get().hostname.hostname.split('.')[0]),)
-
-			data = json.loads(response.data)
-			cpu_wait = []
-			for d in data[0]['datapoints']:
-			    if d[0] is not None:
-			        cpu_wait.append([d[1] * 1000, d[0]])
-
-			response = http.request(method="GET", url="http://graphite.dev.globoi.com/render?from=-60minutes&until=now&target=statsite.dbaas.{}.{}.{}.cpu.cpu_sys&format=json".format(database.infra.engine_name,database.name, database.infra.instances.get().hostname.hostname.split('.')[0]),)
-
-			data = json.loads(response.data)
-			cpu_sys = []
-			for d in data[0]['datapoints']:
-			    if d[0] is not None:
-			        cpu_sys.append([d[1] * 1000, d[0]])
-
-			return render_to_response("logical/database/metrics.html", {'cpu_usr': cpu_usr, 'cpu_idle': cpu_idle,
-			    'cpu_wait': cpu_wait,'cpu_sys': cpu_sys}, context_instance=RequestContext(request))
-
-	# return HttpResponse("Cloning database %s" % database)
 
 	def get_urls(self):
 		urls = super(DatabaseAdmin, self).get_urls()
