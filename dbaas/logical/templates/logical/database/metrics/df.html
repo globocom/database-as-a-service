@@ -1,0 +1,52 @@
+                $('#container_df').highcharts({
+                    chart: {
+                        type: 'line',
+                        zoomType: 'x'
+                    },
+                    title: {
+                        text: "DF"
+                    },
+                    xAxis: {
+                        type: 'datetime',
+                        tickmarkPlacement: 'on',
+                        title: {
+                            enabled: false
+                        }
+
+                    },
+                    yAxis: {
+                        title: {
+                            text: 'Percent'
+                        }
+                    },
+                    tooltip: {
+                        pointFormat: '<span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b> <br/>',
+                        shared: true
+                    },
+                    plotOptions: {
+                        area: {
+                            /*lineColor: '#ffffff',*/
+                            lineWidth: 1,
+                            marker: {
+                                lineWidth: 1,
+                                lineColor: '#ffffff',
+                                enabled: false,
+                                symbol: 'circle',
+                                radius: 2,
+                                states: {
+                                    hover: {
+                                        enabled: true
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    series: [{
+                        name: 'Used',
+                        data: {{df_used}}
+                    }, {
+                        name: 'Available',
+                        data: {{df_available}}
+                    }]
+                });
+

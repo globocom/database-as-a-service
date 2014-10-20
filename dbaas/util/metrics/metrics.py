@@ -25,6 +25,8 @@ VM_METRICS = ("cpu.cpu_idle",
               "load.15m",
               "swap.used",
               "swap.free",
+              "df.used",
+              "df.available",
               )
 
 MONGODB_METRICS = (

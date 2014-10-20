@@ -382,6 +382,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 			    			 'load_15m': datapoints["load.15m"],
 			    			 'swap_used': datapoints["swap.used"],
 			    			 'swap_free': datapoints["swap.free"],
+			    			 'df_used': datapoints["df.used"],
+			    			 'df_available': datapoints["df.available"],
 			    			 'hostname': datapoints["hostname"],
 			    			 'hosts': hosts,
 			    			 'momgodb_conn_current': datapoints["momgodb.connections.current"],
