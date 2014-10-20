@@ -1,10 +1,10 @@
-                $('#container_cpu').highcharts({
+                $('#container_load').highcharts({
                     chart: {
-                        type: 'area',
+                        type: 'line',
                         zoomType: 'x'
                     },
                     title: {
-                        text: "CPU"
+                        text: "Load"
                     },
                     xAxis: {
                         type: 'datetime',
@@ -16,16 +16,15 @@
                     },
                     yAxis: {
                         title: {
-                            text: 'Percent'
+                            text: ''
                         }
                     },
                     tooltip: {
-                        pointFormat: '<span style="color:{series.color}">{series.name}</span>: <b>{point.percentage:.1f}%</b> <br/>',
+                        pointFormat: '<span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b> <br/>',
                         shared: true
                     },
                     plotOptions: {
                         area: {
-                            stacking: 'percent',
                             /*lineColor: '#ffffff',*/
                             lineWidth: 1,
                             marker: {
@@ -43,17 +42,14 @@
                         }
                     },
                     series: [{
-                        name: 'Idle',
-                        data: {{cpu_idle}}
+                        name: 'Load 1m',
+                        data: {{load_1m}}
                     }, {
-                        name: 'User',
-                        data: {{cpu_usr}}
+                        name: 'Load 5m',
+                        data: {{load_5m}}
                     }, {
-                        name: 'Wait',
-                        data: {{cpu_wait}}
-                    }, {
-                        name: 'System',
-                        data: {{cpu_sys}}
+                        name: 'Load 15m',
+                        data: {{load_15m}}
                     }]
                 });
 

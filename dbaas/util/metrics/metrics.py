@@ -18,6 +18,13 @@ VM_METRICS = ("cpu.cpu_idle",
               "men.men_buff",
               "net.net_send",
               "net.net_recv",
+              "dsk.read",
+              "dsk.write",
+              "load.1m",
+              "load.5m",
+              "load.15m",
+              "swap.used",
+              "swap.free",
               )
 
 MONGODB_METRICS = (
@@ -60,7 +67,10 @@ def get_graphite_metrics_datapoints(*args, **kwargs):
         return None
 
     try:
-        return format_datapoints(data['datapoints'])
+        data = format_datapoints(data['datapoints'])
+        if not data:
+          data = []
+        return data
     except KeyError, e:
         LOG.warn("No datapoints received... {}".format(e))
         return None

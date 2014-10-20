@@ -1,10 +1,10 @@
-                $('#container_cpu').highcharts({
+                $('#container_swap').highcharts({
                     chart: {
                         type: 'area',
                         zoomType: 'x'
                     },
                     title: {
-                        text: "CPU"
+                        text: "Swap"
                     },
                     xAxis: {
                         type: 'datetime',
@@ -43,17 +43,11 @@
                         }
                     },
                     series: [{
-                        name: 'Idle',
-                        data: {{cpu_idle}}
+                        name: 'Used',
+                        data: {{swap_used}}
                     }, {
-                        name: 'User',
-                        data: {{cpu_usr}}
-                    }, {
-                        name: 'Wait',
-                        data: {{cpu_wait}}
-                    }, {
-                        name: 'System',
-                        data: {{cpu_sys}}
+                        name: 'Free',
+                        data: {{swap_free}}
                     }]
                 });
 
