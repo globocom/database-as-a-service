@@ -89,6 +89,9 @@ def get_metric_datapoints_for(engine, db_name, hostname, url):
 
         for metric in metrics:
             datapoint = get_graphite_metrics_datapoints('60', "minutes", engine, db_name, hostname, metric, url=url)
-            datapoints[metric] = datapoint
+            if datapoint is None:
+                datapoints[metric] = []
+            else:
+                datapoints[metric] = datapoint
 
         return datapoints
