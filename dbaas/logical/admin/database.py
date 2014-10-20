@@ -340,55 +340,50 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 	def metrics_view(self, request, database_id):
 		database = Database.objects.get(id=database_id)
 		instance = database.infra.instances.all()[0]
-		
+
 		if request.method == 'GET':
 			hostname = request.GET.get('hostname')
 
 		if hostname is None:
 			hostname = instance.hostname.hostname.split('.')[0]
-		
+
 		return self.database_host_metrics_view(request, database, hostname)
 
 	def database_host_metrics_view(self, request, database, hostname):
 		from util.metrics.metrics import URL, get_metric_datapoints_for
-		
+
 		form = None
 		datapoints = {}
 		if request.method == 'GET':
 			engine = database.infra.engine_name
 			db_name = database.name
 			hosts = []
-			#for index, instance in enumerate(database.infra.instances.all()):
-			#	hostname = instance.hostname.hostname.split('.')[0]
-			#	hosts.append(hostname)
-			#	datapoints[index] = get_metric_datapoints_for(engine, db_name, hostname, url=URL)
-			#	#print datapoints[index]
-			#	datapoints[index].update({"hostname" : hostname})
+
 			for instance in database.infra.instances.all():
 				hosts.append(instance.hostname.hostname.split('.')[0])
-			
-			datapoints[0] = get_metric_datapoints_for(engine, db_name, hostname, url=URL)
-			datapoints[0].update({"hostname" : hostname})
-			
-			template_variables = {  'cpu_idle':  datapoints[0]["cpu.cpu_idle"],
-			    			 'cpu_wait': datapoints[0]["cpu.cpu_wait"],
-			    			 'cpu_usr': datapoints[0]["cpu.cpu_usr"],
-			    			 'cpu_sys': datapoints[0]["cpu.cpu_sys"],
-			    			 'men_used': datapoints[0]["men.men_used"],
-			    			 'men_cach': datapoints[0]["men.men_cach"],
-			    			 'men_free': datapoints[0]["men.men_free"],
-			    			 'men_buff': datapoints[0]["men.men_buff"],
-			    			 'net_send': datapoints[0]["net.net_send"],
-			    			 'net_recv': datapoints[0]["net.net_recv"],
-			    			 'hostname': datapoints[0]["hostname"],
+
+			datapoints = get_metric_datapoints_for(engine, db_name, hostname, url=URL)
+			datapoints.update({"hostname" : hostname})
+
+			template_variables = {  'cpu_idle':  datapoints["cpu.cpu_idle"],
+			    			 'cpu_wait': datapoints["cpu.cpu_wait"],
+			    			 'cpu_usr': datapoints["cpu.cpu_usr"],
+			    			 'cpu_sys': datapoints["cpu.cpu_sys"],
+			    			 'men_used': datapoints["men.men_used"],
+			    			 'men_cach': datapoints["men.men_cach"],
+			    			 'men_free': datapoints["men.men_free"],
+			    			 'men_buff': datapoints["men.men_buff"],
+			    			 'net_send': datapoints["net.net_send"],
+			    			 'net_recv': datapoints["net.net_recv"],
+			    			 'hostname': datapoints["hostname"],
 			    			 'hosts': hosts,
-			    			 'momgodb_conn_current': datapoints[0]["momgodb.connections.current"],
-			    			 'momgodb_opcounters_insert': datapoints[0]["momgodb.opcounters.insert"],
-			    			 'momgodb_opcounters_query': datapoints[0]["momgodb.opcounters.query"],
-			    			 'momgodb_opcounters_update': datapoints[0]["momgodb.opcounters.update"],
-			    			 'momgodb_opcounters_delete': datapoints[0]["momgodb.opcounters.delete"],
-			    			 'momgodb_opcounters_getmore': datapoints[0]["momgodb.opcounters.getmore"],
-			    			 'momgodb_opcounters_command': datapoints[0]["momgodb.opcounters.command"],
+			    			 'momgodb_conn_current': datapoints["momgodb.connections.current"],
+			    			 'momgodb_opcounters_insert': datapoints["momgodb.opcounters.insert"],
+			    			 'momgodb_opcounters_query': datapoints["momgodb.opcounters.query"],
+			    			 'momgodb_opcounters_update': datapoints["momgodb.opcounters.update"],
+			    			 'momgodb_opcounters_delete': datapoints["momgodb.opcounters.delete"],
+			    			 'momgodb_opcounters_getmore': datapoints["momgodb.opcounters.getmore"],
+			    			 'momgodb_opcounters_command': datapoints["momgodb.opcounters.command"],
 			    			 'title': db_name + ' Metrics',
 			    		          }
 			return render_to_response("logical/database/metrics/metrics.html", template_variables, context_instance=RequestContext(request))
