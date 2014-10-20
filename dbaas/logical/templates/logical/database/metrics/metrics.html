@@ -2,7 +2,7 @@
 {% load i18n %}
 {% load admin_static %}
 
-{% block title %}{{ title }} | DBaaS{% endblock %}
+{% block title %}{{ title }}{% endblock %}
 
 {% block extrastyle %}
 {{ block.super }}
@@ -20,16 +20,28 @@
     <a href="{% url 'admin:index' %}" class="brand" id="site-name">DBaaS</a>
 {% endblock %}
 
+{% block content_title %}
+    {% if title %}<h1 style="color: White;">{{ title }}</h1>{% endif %}
+{% endblock %}
+
 {% block content %}
 <ul class="nav nav-pills" id="navFinished" >
-  <li class="active"><a href="#">{{hostname}}</a></li>
-  <li><a href="#">Profile</a></li>
-  <li><a href="#">Messages</a></li>
+  {% for host in hosts %}
+  <li {% ifequal hostname host %} class="active" {% endifequal %}><a href="?hostname={{host}}">{{host}}</a></li>
+  {% endfor %}
 </ul>
+
 
 <div id="container_cpu" style="minwidth: 400px; height: 400px; maxwidth: 1180px; margin: 0 auto"></div>
 <div id="container_mem" style="minwidth: 400px; height: 400px; maxwidth: 1180px; margin: 0 auto"></div>
 <div id="container_net" style="minwidth: 400px; height: 400px; maxwidth: 1180px; margin: 0 auto"></div>
+{% if momgodb_conn_current %}
+<div id="container_mongodb_connections" style="minwidth: 400px; height: 400px; maxwidth: 1180px; margin: 0 auto"></div>
+{% endif %}
+{% if momgodb_opcounters_command %}
+<div id="container_mongodb_opcounters" style="minwidth: 400px; height: 400px; maxwidth: 1180px; margin: 0 auto"></div>
+{% endif %}
+
 {% include "logical/database/metrics/graphs.html" %}
 
 {% endblock %}

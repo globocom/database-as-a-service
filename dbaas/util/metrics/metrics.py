@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import urllib3
 import json
 import logging
@@ -19,7 +20,15 @@ VM_METRICS = ("cpu.cpu_idle",
               "net.net_recv",
               )
 
-MONGODB_METRICS = () +VM_METRICS
+MONGODB_METRICS = (
+"momgodb.connections.current",
+"momgodb.opcounters.insert",
+"momgodb.opcounters.query",
+"momgodb.opcounters.update",
+"momgodb.opcounters.delete",
+"momgodb.opcounters.getmore",
+"momgodb.opcounters.command",
+) + VM_METRICS
 
 MYSQL_METRICS = () + VM_METRICS
 
@@ -67,7 +76,7 @@ def get_metric_datapoints_for(engine, db_name, hostname, url):
             metrics = None
 
         for metric in metrics:
-            datapoint = get_graphite_metrics_datapoints('120', "minutes", engine, db_name, hostname, metric, url=url)
+            datapoint = get_graphite_metrics_datapoints('60', "minutes", engine, db_name, hostname, metric, url=url)
             datapoints[metric] = datapoint
 
         return datapoints

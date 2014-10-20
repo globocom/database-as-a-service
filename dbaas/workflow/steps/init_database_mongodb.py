@@ -49,13 +49,17 @@ class InitDatabaseMongoDB(BaseStep):
 					return False
 
 				if instance.is_arbiter:
-					contextdict = {}
+					contextdict = {
+						'HOST': workflow_dict['hosts'][index].hostname.split('.')[0],
+						'DATABASENAME': workflow_dict['name'],
+						'ENGINE': 'mongodb'
+					}
 					databaserule = 'ARBITER'
 				else:
 					host_nfsattr = HostAttr.objects.get(host=host)
 					contextdict = {
 						'EXPORTPATH': host_nfsattr.nfsaas_path,
-						'HOST': workflow_dict['hosts'][0].hostname.split('.')[0],
+						'HOST': workflow_dict['hosts'][index].hostname.split('.')[0],
 						'DATABASENAME': workflow_dict['name'],
 						'ENGINE': 'mongodb'
 					}
@@ -77,7 +81,10 @@ class InitDatabaseMongoDB(BaseStep):
 						'HOST03': workflow_dict['hosts'][2],
 						'MONGODBKEY': mongodbkey,
 						'DATABASERULE': databaserule,
-						'SECOND_SCRIPT_FILE': '/opt/dbaas/scripts/dbaas_second_script.sh'
+						'SECOND_SCRIPT_FILE': '/opt/dbaas/scripts/dbaas_second_script.sh',
+						'HOST': workflow_dict['hosts'][index].hostname.split('.')[0],
+						'DATABASENAME': workflow_dict['name'],
+						'ENGINE': 'mongodb'
 					})
 
 				LOG.info("Updating userdata for %s" % host)

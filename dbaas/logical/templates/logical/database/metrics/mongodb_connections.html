@@ -1,10 +1,10 @@
-                $('#container_net').highcharts({
+                $('#container_mongodb_connections').highcharts({
                     chart: {
                         type: 'line',
                         zoomType: 'x'
                     },
                     title: {
-                        text: "Network"
+                        text: "MongoDB Connections"
                     },
                     xAxis: {
                         type: 'datetime',
@@ -16,11 +16,11 @@
                     },
                     yAxis: {
                         title: {
-                            text: 'Bytes'
+                            text: 'Connections'
                         }
                     },
                     tooltip: {
-                        pointFormat: '<span style="color:{series.color}">{series.name}</span>: <b>{point.y:.1f} Bytes</b> <br/>',
+                        pointFormat: '<span style="color:{series.color}">{series.name}</span>: <b>{point.y} </b> <br/>',
                         shared: true
                     },
                     plotOptions: {
@@ -42,11 +42,8 @@
                         }
                     },
                     series: [{
-                        name: 'Sent',
-                        data: {{net_send}}
-                    }, {
-                        name: 'Received',
-                        data: {{net_recv}}
+                        name: 'Connections',
+                        data: {{momgodb_conn_current}}
                     }]
                 });
         
