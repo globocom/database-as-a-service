@@ -214,6 +214,4 @@ def get_metric_datapoints_for(engine, db_name, hostname, url):
                                         }
                                     )
 
-
-
         return newgraph
