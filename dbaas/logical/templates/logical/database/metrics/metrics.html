@@ -25,37 +25,21 @@
 {% endblock %}
 
 {% block content %}
-<ul class="nav nav-pills" id="navFinished" >
-  {% for host in hosts %}
-  <li {% ifequal hostname host %} class="active" {% endifequal %}><a href="?hostname={{host}}">{{host}}</a></li>
-  {% endfor %}
-</ul>
+    <ul class="nav nav-pills" id="navFinished" >
+        {% for host in hosts %}
+            <li {% ifequal hostname host %} class="active" {% endifequal %}><a href="?hostname={{host}}">{{host}}</a></li>
+        {% endfor %}
+    </ul>
 
+    {% for graph in graph_data %}
+        <div id="container_{{graph.name}}" style="minwidth: 400px; height: 400px; maxwidth: 1180px; margin: 0 auto"></div>
+    {% endfor %}
 
-<div id="container_cpu" style="minwidth: 400px; height: 400px; maxwidth: 1180px; margin: 0 auto"></div>
-<div id="container_mem" style="minwidth: 400px; height: 400px; maxwidth: 1180px; margin: 0 auto"></div>
-<div id="container_net" style="minwidth: 400px; height: 400px; maxwidth: 1180px; margin: 0 auto"></div>
-<div id="container_disk" style="minwidth: 400px; height: 400px; maxwidth: 1180px; margin: 0 auto"></div>
-<div id="container_swap" style="minwidth: 400px; height: 400px; maxwidth: 1180px; margin: 0 auto"></div>
-<div id="container_load" style="minwidth: 400px; height: 400px; maxwidth: 1180px; margin: 0 auto"></div>
-<div id="container_df" style="minwidth: 400px; height: 400px; maxwidth: 1180px; margin: 0 auto"></div>
-
-{% if momgodb_conn_current %}
-<div id="container_mongodb_connections" style="minwidth: 400px; height: 400px; maxwidth: 1180px; margin: 0 auto"></div>
-{% endif %}
-{% if momgodb_opcounters_command %}
-<div id="container_mongodb_opcounters" style="minwidth: 400px; height: 400px; maxwidth: 1180px; margin: 0 auto"></div>
-{% endif %}
-
-{% include "logical/database/metrics/graphs.html" %}
+    {% include "logical/database/metrics/graphs.html" %}
 
 {% endblock %}
 
-
-
-
 {% block breadcrumbs %}{% endblock %}
-
 
 {% block body %}
 <body bgcolor="#2a2a2b">

@@ -26,7 +26,6 @@ from django.contrib.admin import helpers
 from django.template.response import TemplateResponse
 from notification.tasks import destroy_database
 from notification.tasks import create_database
-
 LOG = logging.getLogger(__name__)
 
 
@@ -353,7 +352,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 		from util.metrics.metrics import URL, get_metric_datapoints_for
 
 		form = None
-		datapoints = {}
+
 		if request.method == 'GET':
 			engine = database.infra.engine_name
 			db_name = database.name
@@ -362,40 +361,10 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 			for instance in database.infra.instances.all():
 				hosts.append(instance.hostname.hostname.split('.')[0])
 
-			datapoints = get_metric_datapoints_for(engine, db_name, hostname, url=URL)
-			datapoints.update({"hostname" : hostname})
+			graph_data = get_metric_datapoints_for(engine, db_name, hostname, url=URL)
 
-			template_variables = {  'cpu_idle':  datapoints["cpu.cpu_idle"],
-			    			 'cpu_wait': datapoints["cpu.cpu_wait"],
-			    			 'cpu_usr': datapoints["cpu.cpu_usr"],
-			    			 'cpu_sys': datapoints["cpu.cpu_sys"],
-			    			 'men_used': datapoints["men.men_used"],
-			    			 'men_cach': datapoints["men.men_cach"],
-			    			 'men_free': datapoints["men.men_free"],
-			    			 'men_buff': datapoints["men.men_buff"],
-			    			 'net_send': datapoints["net.net_send"],
-			    			 'net_recv': datapoints["net.net_recv"],
-			    			 'dsk_read': datapoints["dsk.read"],
-			    			 'dsk_write': datapoints["dsk.write"],
-			    			 'load_1m': datapoints["load.1m"],
-			    			 'load_5m': datapoints["load.5m"],
-			    			 'load_15m': datapoints["load.15m"],
-			    			 'swap_used': datapoints["swap.used"],
-			    			 'swap_free': datapoints["swap.free"],
-			    			 'df_used': datapoints["df.used"],
-			    			 'df_available': datapoints["df.available"],
-			    			 'hostname': datapoints["hostname"],
-			    			 'hosts': hosts,
-			    			 'momgodb_conn_current': datapoints["momgodb.connections.current"],
-			    			 'momgodb_opcounters_insert': datapoints["momgodb.opcounters.insert"],
-			    			 'momgodb_opcounters_query': datapoints["momgodb.opcounters.query"],
-			    			 'momgodb_opcounters_update': datapoints["momgodb.opcounters.update"],
-			    			 'momgodb_opcounters_delete': datapoints["momgodb.opcounters.delete"],
-			    			 'momgodb_opcounters_getmore': datapoints["momgodb.opcounters.getmore"],
-			    			 'momgodb_opcounters_command': datapoints["momgodb.opcounters.command"],
-			    			 'title': db_name + ' Metrics',
-			    		          }
-			return render_to_response("logical/database/metrics/metrics.html", template_variables, context_instance=RequestContext(request))
+
+			return render_to_response("logical/database/metrics/metrics.html", locals(), context_instance=RequestContext(request))
 
 	def get_urls(self):
 		urls = super(DatabaseAdmin, self).get_urls()

@@ -205,22 +205,14 @@
 
                 Highcharts.setOptions({
                     global: {
-                        timezoneOffset: 3 * 60
+                        timezoneOffset: (new Date()).getTimezoneOffset()
                     }
                 });
 
 
-{% include "logical/database/metrics/cpu.html" with graph="CPU"%}
-{% include "logical/database/metrics/mem.html" %}
-{% include "logical/database/metrics/net.html" %}
-{% include "logical/database/metrics/disk.html" %}
-{% include "logical/database/metrics/load.html" %}
-{% include "logical/database/metrics/swap.html" %}
-{% include "logical/database/metrics/df.html" %}
-
-{% include "logical/database/metrics/mongodb_connections.html" %}
-{% include "logical/database/metrics/mongodb_opcounters.html" %}
-
+{% for graph in graph_data %}
+  {% include "logical/database/metrics/generic_graph.html" with name=graph.name type=graph.type series=graph.series tooltip_point_format=graph.tooltip_point_format y_axis_title=graph.y_axis_title stacking=graph.stacking graph_name=graph.graph_name %}
+{% endfor %}
 
 
 });

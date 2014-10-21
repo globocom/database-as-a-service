@@ -1,10 +1,10 @@
-                $('#container_cpu').highcharts({
+                $('#container_{{name}}').highcharts({
                     chart: {
-                        type: 'area',
+                        type: '{{type}}',
                         zoomType: 'x'
                     },
                     title: {
-                        text: "CPU"
+                        text: "{{graph_name}}"
                     },
                     xAxis: {
                         type: 'datetime',
@@ -16,16 +16,16 @@
                     },
                     yAxis: {
                         title: {
-                            text: 'Percent'
+                            text: '{{y_axis_title}}'
                         }
                     },
                     tooltip: {
-                        pointFormat: '<span style="color:{series.color}">{series.name}</span>: <b>{point.percentage:.1f}%</b> <br/>',
+                        pointFormat:  '{{tooltip_point_format|safe}}',
                         shared: true
                     },
                     plotOptions: {
-                        area: {
-                            stacking: 'percent',
+                        {{type}}: {
+                            stacking: '{{stacking}}',
                             /*lineColor: '#ffffff',*/
                             lineWidth: 1,
                             marker: {
@@ -42,18 +42,6 @@
                             }
                         }
                     },
-                    series: [{
-                        name: 'Idle',
-                        data: {{cpu_idle}}
-                    }, {
-                        name: 'User',
-                        data: {{cpu_usr}}
-                    }, {
-                        name: 'Wait',
-                        data: {{cpu_wait}}
-                    }, {
-                        name: 'System',
-                        data: {{cpu_sys}}
-                    }]
+                    series: {{series|safe}}
                 });
 
