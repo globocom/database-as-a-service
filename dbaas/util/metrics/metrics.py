@@ -141,6 +141,7 @@ VM_METRICS = (
 
 MONGODB_METRICS = VM_METRICS + (
           MONGO_CON,
+          MONGO_OP,
   )
 
 MYSQL_METRICS = () + VM_METRICS
