@@ -127,6 +127,81 @@ MONGO_OP = {"name": "mongo_opcounters",
 }
 
 
+MONGO_PF = {"name": "mongo_page_faults",
+                   "series":[
+                                   { "name": "Page Faults" , "data": "momgodb.extra_info.page_faults"}
+                   ],
+           "type": "line",
+           "tooltip_point_format": """ <span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b> <br/>""",
+           "y_axis_title": "Total",
+           "stacking": 'normal',
+           "graph_name": "MongoDB Page Faults"
+}
+
+MONGO_IDX = {"name": "mongo_index_counters",
+                   "series":[
+                                   { "name": "Accesses" , "data": "momgodb.indexCounters.accesses"},
+                                   { "name": "Hits" , "data": "momgodb.indexCounters.hits"},
+                                   { "name": "Misses" , "data": "momgodb.indexCounters.misses"},
+                                   { "name": "Resets" , "data": "momgodb.indexCounters.resets"},
+                                   { "name": "Miss Ratio" , "data": "momgodb.indexCounters.missRatio"},
+                   ],
+           "type": "line",
+           "tooltip_point_format": """ <span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b> <br/>""",
+           "y_axis_title": "Total",
+           "stacking": 'normal',
+           "graph_name": "MongoDB Index Counters"
+}
+
+MONGO_LOCK_CURR = {"name": "mongo_current_lock",
+                   "series":[
+                                   { "name": "Total" , "data": "momgodb.globalLock.currentQueue.total"},
+                                   { "name": "Readers" , "data": "momgodb.globalLock.currentQueue.readers"},
+                                   { "name": "Writers" , "data": "momgodb.globalLock.currentQueue.writers"},
+                   ],
+           "type": "line",
+           "tooltip_point_format": """ <span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b> <br/>""",
+           "y_axis_title": "Total",
+           "stacking": 'normal',
+           "graph_name": "MongoDB Current Lock"
+}
+
+MONGO_LOCK_ACT = {"name": "mongo_active_lock",
+                   "series":[
+                                   { "name": "Total" , "data": "momgodb.globalLock.activeClients.total"},
+                                   { "name": "Readers" , "data": "momgodb.globalLock.activeClients.readers"},
+                                   { "name": "Writers" , "data": "momgodb.globalLock.activeClients.writers"},
+                   ],
+           "type": "line",
+           "tooltip_point_format": """ <span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b> <br/>""",
+           "y_axis_title": "Total",
+           "stacking": 'normal',
+           "graph_name": "MongoDB Active Sessions Lock"
+}
+
+MONGO_NET_BYTES = {"name": "mongo_net_bytes",
+                   "series":[
+                                   { "name": "Bytes In" , "data": "momgodb.network.bytesIn"},
+                                   { "name": "Bytes Out" , "data": "momgodb.network.bytesOut"},
+                   ],
+           "type": "line",
+           "tooltip_point_format": """ <span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b> <br/>""",
+           "y_axis_title": "Bytes",
+           "stacking": 'normal',
+           "graph_name": "MongoDB Network In/Out"
+}
+
+MONGO_NET_REQUEST = {"name": "mongo_net_req",
+                   "series":[
+                                   { "name": "Requests" , "data": "momgodb.network.numRequests"},
+                   ],
+           "type": "line",
+           "tooltip_point_format": """ <span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b> <br/>""",
+           "y_axis_title": "Requests",
+           "stacking": 'normal',
+           "graph_name": "MongoDB Network Requests"
+}
+
 VM_METRICS = (
              CPU,
               MEMORY,
@@ -140,6 +215,12 @@ VM_METRICS = (
 MONGODB_METRICS = VM_METRICS + (
           MONGO_CON,
           MONGO_OP,
+          MONGO_PF,
+          MONGO_IDX,
+          MONGO_LOCK_CURR,
+          MONGO_LOCK_ACT,
+          MONGO_NET_BYTES,
+          MONGO_NET_REQUEST,
   )
 
 MYSQL_METRICS = () + VM_METRICS
