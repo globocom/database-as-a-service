@@ -61,7 +61,9 @@ class InitDatabaseMongoDB(BaseStep):
 						'EXPORTPATH': host_nfsattr.nfsaas_path,
 						'HOST': workflow_dict['hosts'][index].hostname.split('.')[0],
 						'DATABASENAME': workflow_dict['name'],
-						'ENGINE': 'mongodb'
+						'ENGINE': 'mongodb',
+						'DBPASSWORD': get_credentials_for(environment=workflow_dict['environment'],
+						                                  credential_type=CredentialType.MONGODB).password,
 					}
 
 					if index == 0:
