@@ -6,8 +6,6 @@ import ast
 
 LOG = logging.getLogger(__name__)
 
-URL = "http://graphite.dev.globoi.com/render?from=-{}{}&until=-5minutes&target=statsite.dbaas.{}.{}.{}.{}&format=json"
-
 CPU = {"name": "cpu",
             "series":[
                             { "name": "idle" , "data": "cpu.cpu_idle"},
@@ -198,7 +196,7 @@ def get_metric_datapoints_for(engine, db_name, hostname, url):
           for serie in graph['series']:
 
             datapoints = get_graphite_metrics_datapoints('60', "minutes", engine, db_name, hostname, serie['data'], url=url)
-            
+
             if datapoints:
                 newserie.append({
                     'name': serie['name'],

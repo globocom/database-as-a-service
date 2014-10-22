@@ -26,6 +26,8 @@ from django.contrib.admin import helpers
 from django.template.response import TemplateResponse
 from notification.tasks import destroy_database
 from notification.tasks import create_database
+from util import get_credentials_for
+from dbaas_credentials.models import CredentialType
 LOG = logging.getLogger(__name__)
 
 
@@ -349,7 +351,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 		return self.database_host_metrics_view(request, database, hostname)
 
 	def database_host_metrics_view(self, request, database, hostname):
-		from util.metrics.metrics import URL, get_metric_datapoints_for
+		from util.metrics.metrics import get_metric_datapoints_for
+		URL = get_credentials_for(environment=database.environment, credential_type=CredentialType.GRAPHITE).endpoint
 
 		form = None
 
