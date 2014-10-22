@@ -198,11 +198,17 @@ def get_metric_datapoints_for(engine, db_name, hostname, url):
           for serie in graph['series']:
 
             datapoints = get_graphite_metrics_datapoints('60', "minutes", engine, db_name, hostname, serie['data'], url=url)
-
-            newserie.append({
-              'name': serie['name'],
-              'data': datapoints
-              })
+            
+            if datapoints:
+                newserie.append({
+                    'name': serie['name'],
+                    'data': datapoints
+                    })
+            else:
+                newserie.append({
+                    'name': serie['name'],
+                    'data': []
+                    })
 
           newgraph.append(
                                         { "name": graph["name"],
