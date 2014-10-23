@@ -18,7 +18,8 @@ CPU = {"name": "cpu",
            "tooltip_point_format": """ <span style="color:{series.color}">{series.name}</span>: <b>{point.percentage:.1f}%</b> <br/>""",
            "y_axis_title": "percent",
            "stacking": 'percent',
-           "graph_name": "CPU"
+           "graph_name": "CPU",
+           "normalize_series": False
 }
 
 MEMORY = {"name": "mem",
@@ -32,7 +33,8 @@ MEMORY = {"name": "mem",
            "tooltip_point_format": """ <span style="color:{series.color}">{series.name}</span>: <b>{point.percentage:.1f}%</b> <br/>""",
            "y_axis_title": "percent",
            "stacking": 'percent',
-           "graph_name": "Memory"
+           "graph_name": "Memory",
+           "normalize_series": False
 }
 
 NETWORK = {"name": "net",
@@ -44,7 +46,8 @@ NETWORK = {"name": "net",
            "tooltip_point_format": """ <span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b> <br/>""",
            "y_axis_title": "",
            "stacking": 'normal',
-           "graph_name": "Network"
+           "graph_name": "Network",
+           "normalize_series": False
 }
 
 DISK_IO = {"name": "io",
@@ -56,7 +59,8 @@ DISK_IO = {"name": "io",
            "tooltip_point_format": """ <span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b> <br/>""",
            "y_axis_title": "",
            "stacking": 'normal',
-           "graph_name": "Disk I/O"
+           "graph_name": "Disk I/O",
+           "normalize_series": False
 }
 
 
@@ -70,7 +74,8 @@ LOAD = {"name": "load",
            "tooltip_point_format": """ <span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b> <br/>""",
            "y_axis_title": "",
            "stacking": 'normal',
-           "graph_name": "Load"
+           "graph_name": "Load",
+           "normalize_series": False
 }
 
 SWAP = {"name": "swap",
@@ -82,7 +87,8 @@ SWAP = {"name": "swap",
            "tooltip_point_format": """ <span style="color:{series.color}">{series.name}</span>: <b>{point.percentage:.1f}%</b> <br/>""",
            "y_axis_title": "percent",
            "stacking": 'percent',
-           "graph_name": "Swap"
+           "graph_name": "Swap",
+           "normalize_series": False
 }
 
 DISK = {"name": "disk",
@@ -94,7 +100,8 @@ DISK = {"name": "disk",
            "tooltip_point_format": """ <span style="color:{series.color}">{series.name}</span>: <b>{point.percentage:.1f}%</b> <br/>""",
            "y_axis_title": "percent",
            "stacking": 'percent',
-           "graph_name": "Disk Usage"
+           "graph_name": "Disk Usage",
+           "normalize_series": False
 }
 
 
@@ -106,24 +113,26 @@ MONGO_CON = {"name": "mongo_connections",
            "tooltip_point_format": """ <span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b> <br/>""",
            "y_axis_title": "Connections",
            "stacking": 'normal',
-           "graph_name": "MongoDB Connections"
+           "graph_name": "MongoDB Connections",
+           "normalize_series": False
 }
 
 
 MONGO_OP = {"name": "mongo_opcounters",
                    "series":[
+                                   { "name": "Command" , "data": "momgodb.opcounters.command"},
                                    { "name": "Insert" , "data": "momgodb.opcounters.insert"},
                                    { "name": "Query" , "data": "momgodb.opcounters.query"},
                                    { "name": "Update" , "data": "momgodb.opcounters.update"},
                                    { "name": "Delete" , "data": "momgodb.opcounters.delete"},
                                    { "name": "Getmore" , "data": "momgodb.opcounters.getmore"},
-                                   { "name": "Command" , "data": "momgodb.opcounters.command"},
                    ],
            "type": "line",
            "tooltip_point_format": """ <span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b> <br/>""",
            "y_axis_title": "Operations",
            "stacking": 'normal',
-           "graph_name": "MongoDB Operations"
+           "graph_name": "MongoDB Operations",
+           "normalize_series": True
 }
 
 
@@ -135,7 +144,8 @@ MONGO_PF = {"name": "mongo_page_faults",
            "tooltip_point_format": """ <span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b> <br/>""",
            "y_axis_title": "Total",
            "stacking": 'normal',
-           "graph_name": "MongoDB Page Faults"
+           "graph_name": "MongoDB Page Faults",
+           "normalize_series": False
 }
 
 MONGO_IDX = {"name": "mongo_index_counters",
@@ -150,7 +160,8 @@ MONGO_IDX = {"name": "mongo_index_counters",
            "tooltip_point_format": """ <span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b> <br/>""",
            "y_axis_title": "Total",
            "stacking": 'normal',
-           "graph_name": "MongoDB Index Counters"
+           "graph_name": "MongoDB Index Counters",
+           "normalize_series": False
 }
 
 MONGO_LOCK_CURR = {"name": "mongo_current_lock",
@@ -163,7 +174,8 @@ MONGO_LOCK_CURR = {"name": "mongo_current_lock",
            "tooltip_point_format": """ <span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b> <br/>""",
            "y_axis_title": "Total",
            "stacking": 'normal',
-           "graph_name": "MongoDB Current Lock"
+           "graph_name": "MongoDB Current Lock",
+           "normalize_series": False
 }
 
 MONGO_LOCK_ACT = {"name": "mongo_active_lock",
@@ -176,7 +188,8 @@ MONGO_LOCK_ACT = {"name": "mongo_active_lock",
            "tooltip_point_format": """ <span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b> <br/>""",
            "y_axis_title": "Total",
            "stacking": 'normal',
-           "graph_name": "MongoDB Active Sessions Lock"
+           "graph_name": "MongoDB Active Sessions Lock",
+           "normalize_series": False
 }
 
 MONGO_NET_BYTES = {"name": "mongo_net_bytes",
@@ -188,7 +201,8 @@ MONGO_NET_BYTES = {"name": "mongo_net_bytes",
            "tooltip_point_format": """ <span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b> <br/>""",
            "y_axis_title": "Bytes",
            "stacking": 'normal',
-           "graph_name": "MongoDB Network In/Out"
+           "graph_name": "MongoDB Network In/Out",
+           "normalize_series": False
 }
 
 MONGO_NET_REQUEST = {"name": "mongo_net_req",
@@ -199,17 +213,18 @@ MONGO_NET_REQUEST = {"name": "mongo_net_req",
            "tooltip_point_format": """ <span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b> <br/>""",
            "y_axis_title": "Requests",
            "stacking": 'normal',
-           "graph_name": "MongoDB Network Requests"
+           "graph_name": "MongoDB Network Requests",
+           "normalize_series": False
 }
 
 VM_METRICS = (
              CPU,
-              MEMORY,
-              NETWORK,
-              DISK,
-              DISK_IO,
-              LOAD,
-              SWAP,
+             MEMORY,
+             NETWORK,
+             DISK,
+             DISK_IO,
+             LOAD,
+             SWAP,
               )
 
 MONGODB_METRICS = VM_METRICS + (
@@ -237,8 +252,12 @@ def format_url(*args, **kwargs):
     LOG.debug("Formating url. ARGS: {} | KWARGS: {}".format(str(args), kwargs))
     return kwargs['url'].format(*args)
 
-def format_datapoints(datapoints):
-    return [ [dp[1]*1000,dp[0]] for dp in datapoints if dp[0] is not None]
+def format_datapoints(datapoints, normalize_series):
+    if normalize_series:
+      list = [ [dp[1]*1000, 0] if index==0  else [dp[1] * 1000 ,dp[0]-datapoints[index-1][0]] for index,dp in enumerate(datapoints) if dp[0] is not None and datapoints[index-1][0] is not None]
+    else:
+      list = [ [dp[1]*1000,dp[0]] for dp in datapoints if dp[0] is not None]
+    return list
 
 def get_graphite_metrics_datapoints(*args, **kwargs):
     url = format_url(*args, **kwargs)
@@ -253,7 +272,7 @@ def get_graphite_metrics_datapoints(*args, **kwargs):
         return None
 
     try:
-        data = format_datapoints(data['datapoints'])
+        data = format_datapoints(data['datapoints'],kwargs['normalize_series'])
         if not data:
           data = []
         return data
@@ -276,7 +295,7 @@ def get_metric_datapoints_for(engine, db_name, hostname, url):
           newserie = []
           for serie in graph['series']:
 
-            datapoints = get_graphite_metrics_datapoints('60', "minutes", engine, db_name, hostname, serie['data'], url=url)
+            datapoints = get_graphite_metrics_datapoints('60', "minutes", engine, db_name, hostname, serie['data'], url=url, normalize_series=graph['normalize_series'])
 
             if datapoints:
                 newserie.append({
