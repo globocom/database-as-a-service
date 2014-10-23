@@ -145,7 +145,7 @@ MONGO_PF = {"name": "mongo_page_faults",
            "y_axis_title": "Total",
            "stacking": 'normal',
            "graph_name": "MongoDB Page Faults",
-           "normalize_series": False
+           "normalize_series": True
 }
 
 MONGO_IDX = {"name": "mongo_index_counters",
@@ -161,7 +161,7 @@ MONGO_IDX = {"name": "mongo_index_counters",
            "y_axis_title": "Total",
            "stacking": 'normal',
            "graph_name": "MongoDB Index Counters",
-           "normalize_series": False
+           "normalize_series": True
 }
 
 MONGO_LOCK_CURR = {"name": "mongo_current_lock",
