@@ -202,7 +202,7 @@ MONGO_NET_BYTES = {"name": "mongo_net_bytes",
            "y_axis_title": "Bytes",
            "stacking": 'normal',
            "graph_name": "MongoDB Network In/Out",
-           "normalize_series": False
+           "normalize_series": True
 }
 
 MONGO_NET_REQUEST = {"name": "mongo_net_req",
@@ -214,7 +214,7 @@ MONGO_NET_REQUEST = {"name": "mongo_net_req",
            "y_axis_title": "Requests",
            "stacking": 'normal',
            "graph_name": "MongoDB Network Requests",
-           "normalize_series": False
+           "normalize_series": True
 }
 
 VM_METRICS = (
