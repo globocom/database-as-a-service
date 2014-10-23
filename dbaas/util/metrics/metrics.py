@@ -45,7 +45,7 @@ NETWORK = {"name": "net",
            "type": "line",
            "tooltip_point_format": """ <span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b> <br/>""",
            "y_axis_title": "",
-           "stacking": 'normal',
+           "stacking": '',
            "graph_name": "Network",
            "normalize_series": False
 }
@@ -58,7 +58,7 @@ DISK_IO = {"name": "io",
            "type": "line",
            "tooltip_point_format": """ <span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b> <br/>""",
            "y_axis_title": "",
-           "stacking": 'normal',
+           "stacking": '',
            "graph_name": "Disk I/O",
            "normalize_series": False
 }
@@ -73,7 +73,7 @@ LOAD = {"name": "load",
            "type": "line",
            "tooltip_point_format": """ <span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b> <br/>""",
            "y_axis_title": "",
-           "stacking": 'normal',
+           "stacking": '',
            "graph_name": "Load",
            "normalize_series": False
 }
@@ -112,7 +112,7 @@ MONGO_CON = {"name": "mongo_connections",
            "type": "line",
            "tooltip_point_format": """ <span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b> <br/>""",
            "y_axis_title": "Connections",
-           "stacking": 'normal',
+           "stacking": '',
            "graph_name": "MongoDB Connections",
            "normalize_series": False
 }
@@ -130,7 +130,7 @@ MONGO_OP = {"name": "mongo_opcounters",
            "type": "line",
            "tooltip_point_format": """ <span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b> <br/>""",
            "y_axis_title": "Operations",
-           "stacking": 'normal',
+           "stacking": '',
            "graph_name": "MongoDB Operations",
            "normalize_series": True
 }
@@ -143,7 +143,7 @@ MONGO_PF = {"name": "mongo_page_faults",
            "type": "line",
            "tooltip_point_format": """ <span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b> <br/>""",
            "y_axis_title": "Total",
-           "stacking": 'normal',
+           "stacking": '',
            "graph_name": "MongoDB Page Faults",
            "normalize_series": True
 }
@@ -159,7 +159,7 @@ MONGO_IDX = {"name": "mongo_index_counters",
            "type": "line",
            "tooltip_point_format": """ <span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b> <br/>""",
            "y_axis_title": "Total",
-           "stacking": 'normal',
+           "stacking": '',
            "graph_name": "MongoDB Index Counters",
            "normalize_series": True
 }
@@ -173,7 +173,7 @@ MONGO_LOCK_CURR = {"name": "mongo_current_lock",
            "type": "line",
            "tooltip_point_format": """ <span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b> <br/>""",
            "y_axis_title": "Total",
-           "stacking": 'normal',
+           "stacking": '',
            "graph_name": "MongoDB Current Lock",
            "normalize_series": False
 }
@@ -187,34 +187,105 @@ MONGO_LOCK_ACT = {"name": "mongo_active_lock",
            "type": "line",
            "tooltip_point_format": """ <span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b> <br/>""",
            "y_axis_title": "Total",
-           "stacking": 'normal',
+           "stacking": '',
            "graph_name": "MongoDB Active Sessions Lock",
            "normalize_series": False
 }
 
 MONGO_NET_BYTES = {"name": "mongo_net_bytes",
                    "series":[
-                                   { "name": "Bytes In" , "data": "momgodb.network.bytesIn"},
-                                   { "name": "Bytes Out" , "data": "momgodb.network.bytesOut"},
+                                   { "name": "in" , "data": "momgodb.network.bytesIn"},
+                                   { "name": "out" , "data": "momgodb.network.bytesOut"},
                    ],
            "type": "line",
            "tooltip_point_format": """ <span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b> <br/>""",
            "y_axis_title": "Bytes",
-           "stacking": 'normal',
+           "stacking": '',
            "graph_name": "MongoDB Network In/Out",
            "normalize_series": True
 }
 
 MONGO_NET_REQUEST = {"name": "mongo_net_req",
                    "series":[
-                                   { "name": "Requests" , "data": "momgodb.network.numRequests"},
+                                   { "name": "requests" , "data": "momgodb.network.numRequests"},
                    ],
            "type": "line",
            "tooltip_point_format": """ <span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b> <br/>""",
            "y_axis_title": "Requests",
-           "stacking": 'normal',
+           "stacking": '',
            "graph_name": "MongoDB Network Requests",
            "normalize_series": True
+}
+
+
+MYSQL_OP = {"name": "mysql_opcounters",
+                   "series":[
+                                   { "name": "select" , "data": "mysql.status.com_select"},
+                                   { "name": "insert" , "data": "mysql.status.com_insert"},
+                                   { "name": "update" , "data": "mysql.status.com_update"},
+                                   { "name": "delete" , "data": "mysql.status.com_delete"},
+                                   { "name": "insert/select" , "data": "mysql.status.com_insert_select"},
+                   ],
+           "type": "line",
+           "tooltip_point_format": """ <span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b> <br/>""",
+           "y_axis_title": "Operations",
+           "stacking": '',
+           "graph_name": "MySQL Operations",
+           "normalize_series": True
+}
+
+MYSQL_NET_BYTES = {"name": "mysql_net_bytes",
+                   "series":[
+                                   { "name": "in" , "data": "mysql.status.bytes_received"},
+                                   { "name": "out" , "data": "mysql.status.bytes_sent"},
+                   ],
+           "type": "line",
+           "tooltip_point_format": """ <span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b> <br/>""",
+           "y_axis_title": "Bytes",
+           "stacking": '',
+           "graph_name": "MySQL Network In/Out",
+           "normalize_series": True
+}
+
+MYSQL_CON = {"name": "mysql_connections",
+                   "series":[
+                                   { "name": "total" , "data": "mysql.status.threads_connected"},
+                                   { "name": "active" , "data": "mysql.status.threads_running"},
+                   ],
+           "type": "line",
+           "tooltip_point_format": """ <span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b> <br/>""",
+           "y_axis_title": "Connections",
+           "stacking": '',
+           "graph_name": "MySQL Connections",
+           "normalize_series": False
+}
+
+MYSQL_QUERY_CACHE = {"name": "mysql_query_cache",
+                   "series":[
+                                   { "name": "queries in cache" , "data": "mysql.status.qcache_queries_in_cache"},
+                                   { "name": "inserts" , "data": "mysql.status.qcache_inserts"},
+                                   { "name": "hits" , "data": "mysql.status.qcache_hits"},
+                                   { "name": "noncached queries" , "data": "mysql.status.qcache_not_cached"},
+                   ],
+           "type": "line",
+           "tooltip_point_format": """ <span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b> <br/>""",
+           "y_axis_title": "Count",
+           "stacking": '',
+           "graph_name": "MySQL Query Cache",
+           "normalize_series": True
+}
+
+MYSQL_QUERY_CACHE_MEM = {"name": "mysql_query_cache_mem",
+                   "series":[
+                                   { "name": "free" , "data": "mysql.status.qcache_free_memory"},
+                                   { "name": "total" , "data": "mysql.variables.query_cache_size"},
+                   ],
+           "type": "area",
+           "tooltip_point_format": """ <span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b> <br/>""",
+           "y_axis_title": "Count",
+           "stacking": '',
+           "graph_name": "MySQL Query Cache Memory",
+           "normalize_series": False
 }
 
 VM_METRICS = (
@@ -225,7 +296,7 @@ VM_METRICS = (
              DISK_IO,
              LOAD,
              SWAP,
-              )
+)
 
 MONGODB_METRICS = VM_METRICS + (
           MONGO_CON,
@@ -238,7 +309,13 @@ MONGODB_METRICS = VM_METRICS + (
           MONGO_NET_REQUEST,
   )
 
-MYSQL_METRICS = () + VM_METRICS
+MYSQL_METRICS = VM_METRICS + (
+    MYSQL_OP,
+    MYSQL_NET_BYTES,
+    MYSQL_CON,
+    MYSQL_QUERY_CACHE,
+    MYSQL_QUERY_CACHE_MEM,
+)
 
 
 def make_request(url):
