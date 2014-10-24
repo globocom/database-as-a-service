@@ -1,30 +1,8 @@
-{% extends "admin/base.html" %}
-{% load i18n %}
-{% load admin_static %}
-
-{% block title %}{{ title }}{% endblock %}
-
-{% block extrastyle %}
-{{ block.super }}
-<link rel="stylesheet" type="text/css" href="{% static 'admin/css/admin-dbaas.css' %}" />
- <link rel="stylesheet" type="text/css" href="{% static 'css/metrics.css' %}" />
-
-{% endblock %}
-
-{% block extrahead %}
-{% include "logical/database/metrics/metrics_scripts.html" %}
-{% endblock %}
+{% extends "logical/database/metrics/metrics_base.html" %}
 
 
-{% block branding %}
-    <a href="{% url 'admin:index' %}" class="brand" id="site-name">DBaaS</a>
-{% endblock %}
+{% block graphs %}
 
-{% block content_title %}
-    {% if title %}<h1 style="color: White;">{{ title }}</h1>{% endif %}
-{% endblock %}
-
-{% block content %}
     <ul class="nav nav-pills" id="navFinished" >
         {% for host in hosts %}
             <li {% ifequal hostname host %} class="active" {% endifequal %}><a href="?hostname={{host}}">{{host}}</a></li>
@@ -32,19 +10,13 @@
     </ul>
 
     {% for graph in graph_data %}
-      <!--   <a href="url_detail_graph" target="_blank"><div id="container_{{graph.name}}" style="height: 300px; width:30%; margin: 0 auto; display: inline-block;"></div></a> -->
-      <div id="container_{{graph.name}}" style="height: 300px; width:30%; margin: 0 auto; display: inline-block;"></div>
+      <a href="../metricdetail/?hostname={{hostname}}&metricname={{graph.name}}" target="_blank"><div id="container_{{graph.name}}" style="height: 300px; width:30%; margin: 0 auto; display: inline-block;"></div></a> 
     {% endfor %}
 
     {% include "logical/database/metrics/graphs.html" %}
 
 {% endblock %}
 
-{% block breadcrumbs %}{% endblock %}
-
-{% block body %}
-<body bgcolor="#2a2a2b">
-{% endblock %}
 
 {% block footer %}
 <script type="text/javascript">

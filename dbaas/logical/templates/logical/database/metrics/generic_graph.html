@@ -1,7 +1,10 @@
                 $('#container_{{name}}').highcharts({
                     chart: {
                         type: '{{type}}',
-                        zoomType: 'x'
+                        zoomType: '{{zoomtype}}'
+                    },
+                    credits: {
+                        enabled: false
                     },
                     title: {
                         text: "{{graph_name}}"

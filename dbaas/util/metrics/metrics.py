@@ -289,25 +289,25 @@ MYSQL_QUERY_CACHE_MEM = {"name": "mysql_query_cache_mem",
 }
 
 VM_METRICS = (
-             CPU,
-             MEMORY,
-             NETWORK,
-             DISK,
-             DISK_IO,
-             LOAD,
-             SWAP,
+    CPU,
+    MEMORY,
+    NETWORK,
+    DISK,
+    DISK_IO,
+    LOAD,
+    SWAP,
 )
 
 MONGODB_METRICS = VM_METRICS + (
-          MONGO_CON,
-          MONGO_OP,
-          MONGO_PF,
-          MONGO_IDX,
-          MONGO_LOCK_CURR,
-          MONGO_LOCK_ACT,
-          MONGO_NET_BYTES,
-          MONGO_NET_REQUEST,
-  )
+    MONGO_CON,
+    MONGO_OP,
+    MONGO_PF,
+    MONGO_IDX,
+    MONGO_LOCK_CURR,
+    MONGO_LOCK_ACT,
+    MONGO_NET_BYTES,
+    MONGO_NET_REQUEST,
+)
 
 MYSQL_METRICS = VM_METRICS + (
     MYSQL_OP,
@@ -357,21 +357,28 @@ def get_graphite_metrics_datapoints(*args, **kwargs):
         LOG.warn("No datapoints received... {}".format(e))
         return None
 
-def get_metric_datapoints_for(engine, db_name, hostname, url):
-        datapoints = {}
+def get_metric_datapoints_for(engine, db_name, hostname, url, metric_name = None):
+    datapoints = {}
 
-        if engine=="mongodb":
-            graphs = MONGODB_METRICS
-        elif engine=="mysql":
-            graphs = MYSQL_METRICS
+    if engine=="mongodb":
+        graphs = MONGODB_METRICS
+    elif engine=="mysql":
+        graphs = MYSQL_METRICS
+    else:
+        graphs = None
+
+    newgraph = []
+    for graph in graphs:
+        newserie = []
+        
+        if metric_name is not None and graph['name'] != metric_name:
+            zoomtype = ''
+            continue
         else:
-            graphs = None
+            zoomtype = 'x'
 
-        newgraph = []
-        for graph in graphs:
-          newserie = []
-          for serie in graph['series']:
-
+        for serie in graph['series']:
+                        
             datapoints = get_graphite_metrics_datapoints('60', "minutes", engine, db_name, hostname, serie['data'], url=url, normalize_series=graph['normalize_series'])
 
             if datapoints:
@@ -385,15 +392,15 @@ def get_metric_datapoints_for(engine, db_name, hostname, url):
                     'data': []
                     })
 
-          newgraph.append(
-                                        { "name": graph["name"],
-                                          "series":str(ast.literal_eval(json.dumps(newserie))),
-                                          "type": graph["type"],
-                                          "tooltip_point_format": graph["tooltip_point_format"],
-                                          "y_axis_title": graph["y_axis_title"],
-                                          "stacking": graph["stacking"],
-                                          "graph_name": graph["graph_name"],
-                                        }
-                                    )
+        newgraph.append({
+            "name": graph["name"],
+            "series":str(ast.literal_eval(json.dumps(newserie))),
+            "type": graph["type"],
+            "tooltip_point_format": graph["tooltip_point_format"],
+            "y_axis_title": graph["y_axis_title"],
+            "stacking": graph["stacking"],
+            "graph_name": graph["graph_name"],
+            "zoomtype": zoomtype
+        })
 
-        return newgraph
+    return newgraph

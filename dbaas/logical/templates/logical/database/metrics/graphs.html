@@ -211,7 +211,7 @@
 
 
 {% for graph in graph_data %}
-  {% include "logical/database/metrics/generic_graph.html" with name=graph.name type=graph.type series=graph.series tooltip_point_format=graph.tooltip_point_format y_axis_title=graph.y_axis_title stacking=graph.stacking graph_name=graph.graph_name %}
+  {% include "logical/database/metrics/generic_graph.html" with name=graph.name type=graph.type series=graph.series tooltip_point_format=graph.tooltip_point_format y_axis_title=graph.y_axis_title stacking=graph.stacking graph_name=graph.graph_name zoomtype=graph.zoomtype%}
 {% endfor %}
 
 

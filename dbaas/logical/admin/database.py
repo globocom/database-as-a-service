@@ -338,6 +338,24 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 		                          locals(),
 		                          context_instance=RequestContext(request))
 
+	def metricdetail_view(self, request, database_id):
+		from util.metrics.metrics import get_metric_datapoints_for
+		
+		if request.method == 'GET':
+			hostname = request.GET.get('hostname')
+			metricname = request.GET.get('metricname')
+		
+		database = Database.objects.get(id=database_id)
+		engine = database.infra.engine_name
+		db_name = database.name
+		URL = get_credentials_for(environment=database.environment, credential_type=CredentialType.GRAPHITE).endpoint
+		graph_data = get_metric_datapoints_for(engine, db_name, hostname, url=URL, metric_name=metricname)
+
+		title = "{} {} Metric".format(database.name, graph_data[0]["graph_name"])
+		
+		
+		return render_to_response("logical/database/metrics/metricdetail.html", locals(), context_instance=RequestContext(request))
+
 	def metrics_view(self, request, database_id):
 		database = Database.objects.get(id=database_id)
 		instance = database.infra.instances.all()[0]
@@ -353,8 +371,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 	def database_host_metrics_view(self, request, database, hostname):
 		from util.metrics.metrics import get_metric_datapoints_for
 		URL = get_credentials_for(environment=database.environment, credential_type=CredentialType.GRAPHITE).endpoint
-
-		form = None
+		
+		title = "{} Metrics".format(database.name)
 
 		if request.method == 'GET':
 			engine = database.infra.engine_name
@@ -376,7 +394,11 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 		                       name="database_clone"),
 
 		                   url(r'^/?(?P<database_id>\d+)/metrics/$', self.admin_site.admin_view(self.metrics_view),
-		                       name="database_metrics")
+		                       name="database_metrics"),
+
+		                   url(r'^/?(?P<database_id>\d+)/metricdetail/$', self.admin_site.admin_view(self.metricdetail_view),
+		                       name="database_metricdetail"),
+
 		)
 
 		return my_urls + urls
