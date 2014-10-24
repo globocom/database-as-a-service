@@ -32,7 +32,8 @@
     </ul>
 
     {% for graph in graph_data %}
-        <a href="url_detail_graph" target="_blank"><div id="container_{{graph.name}}" style="height: 300px; width:30%; margin: 0 auto; display: inline-block;"></div></a>
+      <!--   <a href="url_detail_graph" target="_blank"><div id="container_{{graph.name}}" style="height: 300px; width:30%; margin: 0 auto; display: inline-block;"></div></a> -->
+      <div id="container_{{graph.name}}" style="height: 300px; width:30%; margin: 0 auto; display: inline-block;"></div>
     {% endfor %}
 
     {% include "logical/database/metrics/graphs.html" %}
