@@ -1,5 +1,5 @@
 # Changelog
-## 0.0.26
+## 0.0.27
 * Add support to Graphite metrics
 
 ## 0.0.26
