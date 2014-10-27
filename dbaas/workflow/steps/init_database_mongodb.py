@@ -32,6 +32,12 @@ class InitDatabaseMongoDB(BaseStep):
 			mongodbkey = ''.join(random.choice(string.hexdigits) for i in range(50))
 
 			workflow_dict['replicasetname'] = 'RepicaSet_' + workflow_dict['databaseinfra'].name
+			
+			statsd_credentials = get_credentials_for(
+				environment=workflow_dict['environment'],
+				credential_type=CredentialType.STATSD)
+			
+			statsd_host, statsd_port = statsd_credentials.endpoint.split(':')
 
 			for index, instance in enumerate(workflow_dict['instances']):
 				host = instance.hostname
@@ -49,12 +55,25 @@ class InitDatabaseMongoDB(BaseStep):
 					return False
 
 				if instance.is_arbiter:
-					contextdict = {}
+					contextdict = {
+						'HOST': workflow_dict['hosts'][index].hostname.split('.')[0],
+						'DATABASENAME': workflow_dict['name'],
+						'ENGINE': 'mongodb',
+						'STATSD_HOST': statsd_host,
+						'STATSD_PORT': statsd_port,
+					}
 					databaserule = 'ARBITER'
 				else:
 					host_nfsattr = HostAttr.objects.get(host=host)
 					contextdict = {
 						'EXPORTPATH': host_nfsattr.nfsaas_path,
+						'HOST': workflow_dict['hosts'][index].hostname.split('.')[0],
+						'DATABASENAME': workflow_dict['name'],
+						'ENGINE': 'mongodb',
+						'DBPASSWORD': get_credentials_for(environment=workflow_dict['environment'],
+						                                  credential_type=CredentialType.MONGODB).password,
+						'STATSD_HOST': statsd_host,
+						'STATSD_PORT': statsd_port,
 					}
 
 					if index == 0:
@@ -66,15 +85,14 @@ class InitDatabaseMongoDB(BaseStep):
 					LOG.info("Updating contexdict for %s" % host)
 
 					contextdict.update({
-						'DBPASSWORD': get_credentials_for(environment=workflow_dict['environment'],
-						                                  credential_type=CredentialType.MONGODB).password,
 						'REPLICASETNAME': workflow_dict['replicasetname'],
 						'HOST01': workflow_dict['hosts'][0],
 						'HOST02': workflow_dict['hosts'][1],
 						'HOST03': workflow_dict['hosts'][2],
 						'MONGODBKEY': mongodbkey,
 						'DATABASERULE': databaserule,
-						'SECOND_SCRIPT_FILE': '/opt/dbaas/scripts/dbaas_second_script.sh'
+						'SECOND_SCRIPT_FILE': '/opt/dbaas/scripts/dbaas_second_script.sh',
+						'HOST': workflow_dict['hosts'][index].hostname.split('.')[0],
 					})
 
 				LOG.info("Updating userdata for %s" % host)

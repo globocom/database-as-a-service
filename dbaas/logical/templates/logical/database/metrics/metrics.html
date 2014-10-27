@@ -1,0 +1,27 @@
+{% extends "logical/database/metrics/metrics_base.html" %}
+
+
+{% block graphs %}
+
+    <ul class="nav nav-pills" id="navFinished" >
+        {% for host in hosts %}
+            <li {% ifequal hostname host %} class="active" {% endifequal %}><a href="?hostname={{host}}">{{host}}</a></li>
+        {% endfor %}
+    </ul>
+
+    {% for graph in graph_data %}
+      <a href="../metricdetail/?hostname={{hostname}}&metricname={{graph.name}}" target="_blank"><div id="container_{{graph.name}}" style="height: 300px; width:30%; margin: 0 auto; display: inline-block;"></div></a> 
+    {% endfor %}
+
+    {% include "logical/database/metrics/graphs.html" %}
+
+{% endblock %}
+
+
+{% block footer %}
+<script type="text/javascript">
+    $('ul.nav.nav-pills li a').click(function() {
+    $(this).parent().addClass('active').siblings().removeClass('active');
+});
+</script>
+{% endblock %}

@@ -1,0 +1,16 @@
+{% extends "logical/database/metrics/metrics_base.html" %}
+
+
+{% block graphs %}
+
+    {% for graph in graph_data %}
+      <div id="container_{{graph.name}}"></div>
+    {% endfor %}
+
+    {% include "logical/database/metrics/graphs.html" %}
+    
+{% endblock %}
+
+
+{% block footer %}
+{% endblock %}

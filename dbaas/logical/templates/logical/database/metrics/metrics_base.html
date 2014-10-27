@@ -1,0 +1,40 @@
+{% extends "admin/base.html" %}
+{% load i18n %}
+{% load admin_static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<link rel="stylesheet" type="text/css" href="{% static 'admin/css/admin-dbaas.css' %}" />
+ <link rel="stylesheet" type="text/css" href="{% static 'css/metrics.css' %}" />
+
+{% endblock %}
+
+{% block extrahead %}
+{% include "logical/database/metrics/metrics_scripts.html" %}
+{% endblock %}
+
+
+{% block branding %}
+    <a href="{% url 'admin:index' %}" class="brand" id="site-name">DBaaS</a>
+{% endblock %}
+
+{% block content_title %}
+    {% if title %}<h1 style="color: White;">{{ title }}</h1>{% endif %}
+{% endblock %}
+
+{% block content %}
+
+    {% block graphs %}
+    {% endblock %}
+
+
+{% endblock %}
+
+{% block breadcrumbs %}{% endblock %}
+
+{% block body %}
+<body bgcolor="#2a2a2b">
+{% endblock %}
+

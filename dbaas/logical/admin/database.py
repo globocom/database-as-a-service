@@ -26,7 +26,8 @@ from django.contrib.admin import helpers
 from django.template.response import TemplateResponse
 from notification.tasks import destroy_database
 from notification.tasks import create_database
-
+from util import get_credentials_for
+from dbaas_credentials.models import CredentialType
 LOG = logging.getLogger(__name__)
 
 
@@ -42,9 +43,9 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
 	service_class = DatabaseService
 	search_fields = ("name", "databaseinfra__name")
-	list_display_basic = ["name_html", "engine_type", "environment", "plan", "friendly_status", "clone_html",
-	                      "get_capacity_html", ]
-	list_display_advanced = list_display_basic + ["quarantine_dt_format"]
+	list_display_basic = ["name_html", "engine_type", "environment", "plan", "friendly_status", "clone_html" ,
+	                      "get_capacity_html"]
+	list_display_advanced = list_display_basic + ["metrics_html", "quarantine_dt_format"]
 	list_filter_basic = ["project", "databaseinfra__environment", "databaseinfra__engine", "databaseinfra__plan"]
 	list_filter_advanced = list_filter_basic + ["databaseinfra", "is_in_quarantine", "team"]
 	add_form_template = "logical/database/database_add_form.html"
@@ -112,6 +113,15 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 		return format_html("".join(html))
 
 	clone_html.short_description = "Clone"
+
+	def metrics_html(self, database):
+		html = []
+		html.append("<a class='btn btn-info' href='%s'><i class='icon-list-alt icon-white'></i></a>" % reverse(
+			'admin:database_metrics', args=(database.id,)))
+
+		return format_html("".join(html))
+
+	metrics_html.short_description = "Metrics"
 
 	def description_html(self, database):
 
@@ -328,14 +338,69 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 		                          locals(),
 		                          context_instance=RequestContext(request))
 
-	# return HttpResponse("Cloning database %s" % database)
+	def metricdetail_view(self, request, database_id):
+		from util.metrics.metrics import get_metric_datapoints_for
+		
+		if request.method == 'GET':
+			hostname = request.GET.get('hostname')
+			metricname = request.GET.get('metricname')
+		
+		database = Database.objects.get(id=database_id)
+		engine = database.infra.engine_name
+		db_name = database.name
+		URL = get_credentials_for(environment=database.environment, credential_type=CredentialType.GRAPHITE).endpoint
+		graph_data = get_metric_datapoints_for(engine, db_name, hostname, url=URL, metric_name=metricname)
+
+		title = "{} {} Metric".format(database.name, graph_data[0]["graph_name"])
+		
+		
+		return render_to_response("logical/database/metrics/metricdetail.html", locals(), context_instance=RequestContext(request))
+
+	def metrics_view(self, request, database_id):
+		database = Database.objects.get(id=database_id)
+		instance = database.infra.instances.all()[0]
+
+		if request.method == 'GET':
+			hostname = request.GET.get('hostname')
+
+		if hostname is None:
+			hostname = instance.hostname.hostname.split('.')[0]
+
+		return self.database_host_metrics_view(request, database, hostname)
+
+	def database_host_metrics_view(self, request, database, hostname):
+		from util.metrics.metrics import get_metric_datapoints_for
+		URL = get_credentials_for(environment=database.environment, credential_type=CredentialType.GRAPHITE).endpoint
+		
+		title = "{} Metrics".format(database.name)
+
+		if request.method == 'GET':
+			engine = database.infra.engine_name
+			db_name = database.name
+			hosts = []
+
+			for instance in database.infra.instances.all():
+				hosts.append(instance.hostname.hostname.split('.')[0])
+
+			graph_data = get_metric_datapoints_for(engine, db_name, hostname, url=URL)
+
+
+			return render_to_response("logical/database/metrics/metrics.html", locals(), context_instance=RequestContext(request))
 
 	def get_urls(self):
 		urls = super(DatabaseAdmin, self).get_urls()
 		my_urls = patterns('',
 		                   url(r'^/?(?P<database_id>\d+)/clone/$', self.admin_site.admin_view(self.clone_view),
-		                       name="database_clone")
+		                       name="database_clone"),
+
+		                   url(r'^/?(?P<database_id>\d+)/metrics/$', self.admin_site.admin_view(self.metrics_view),
+		                       name="database_metrics"),
+
+		                   url(r'^/?(?P<database_id>\d+)/metricdetail/$', self.admin_site.admin_view(self.metricdetail_view),
+		                       name="database_metricdetail"),
+
 		)
+
 		return my_urls + urls
 
 	def delete_selected(self, request, queryset):
