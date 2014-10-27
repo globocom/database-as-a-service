@@ -27,6 +27,12 @@ class InitDatabase(BaseStep):
 
 			cs_provider = CloudStackProvider(credentials=cs_credentials)
 
+			statsd_credentials = get_credentials_for(
+				environment=workflow_dict['environment'],
+				credential_type=CredentialType.STATSD)
+
+			statsd_host, statsd_port = statsd_credentials.endpoint.split(':')
+
 			for index, hosts in enumerate(permutations(workflow_dict['hosts'])):
 
 				LOG.info("Getting vm credentials...")
@@ -52,6 +58,8 @@ class InitDatabase(BaseStep):
 					                                  credential_type=CredentialType.MYSQL).password,
 					'HOST': workflow_dict['hosts'][index].hostname.split('.')[0],
 					'ENGINE': 'mysql',
+					'STATSD_HOST': statsd_host,
+					'STATSD_PORT': statsd_port,
 				}
 
 				if len(workflow_dict['hosts']) > 1:
@@ -59,11 +67,6 @@ class InitDatabase(BaseStep):
 
 					contextdict.update({
 						'SERVERID': index + 1,
-						'DATABASENAME': workflow_dict['name'],
-						'ENGINE': 'mysql',
-						'HOST': workflow_dict['hosts'][index].hostname.split('.')[0],
-						'DBPASSWORD': get_credentials_for(environment=workflow_dict['environment'],
-						                                  credential_type=CredentialType.MYSQL).password,
 						'IPMASTER': hosts[1].address,
 						'IPWRITE': workflow_dict['databaseinfraattr'][0].ip,
 						'IPREAD': workflow_dict['databaseinfraattr'][1].ip,
