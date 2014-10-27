@@ -1,4 +1,6 @@
 # Changelog
+## 0.0.26
+* Add support to Graphite metrics
 
 ## 0.0.26
 * Change dbaas_credentials version (bug fix)
