@@ -126,24 +126,8 @@ class ServiceBind(APIView):
 
     def delete(self, request, database_name, format=None):
         env = get_url_env(request)
-        try:
-            database = Database.objects.filter(name=database_name, environment__name=env).exclude(is_in_quarantine=True)[0]
-        except IndexError, e:
-            msg = "Database id provided does not exist {} in {}.".format(database_name, env)
-            return log_and_response(msg=msg, e=e,http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-        database.delete()
-        return Response(status.HTTP_204_NO_CONTENT)
-
-
-
-class ServiceUnbind(APIView):
-    renderer_classes = (JSONRenderer, JSONPRenderer)
-    model = Database
-
-    def delete(self, request, database_name, unbind_ip, format=None):
-        env = get_url_env(request)
         data = request.DATA
+        unbind_ip = data.get('unit-host')
         LOG.debug("Request DATA {}".format(data))
 
         task = TaskHistory.objects.filter(Q(arguments__contains=database_name) &
@@ -239,6 +223,22 @@ class ServiceAdd(APIView):
         return Response(status=status.HTTP_201_CREATED,)
 
 
+class ServiceRemove(APIView):
+    renderer_classes = (JSONRenderer, JSONPRenderer)
+    model = Database
+
+    def delete(self, request, database_name, format=None):
+        env = get_url_env(request)
+        try:
+            database = Database.objects.filter(name=database_name, environment__name=env).exclude(is_in_quarantine=True)[0]
+        except IndexError, e:
+            msg = "Database id provided does not exist {} in {}.".format(database_name, env)
+            return log_and_response(msg=msg, e=e,http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        database.delete()
+        return Response(status.HTTP_204_NO_CONTENT)
+
+
 def get_plans_dict(hard_plans):
     plans = []
     for hard_plan in hard_plans:
@@ -249,8 +249,10 @@ def get_plans_dict(hard_plans):
 
     return plans
 
+
 def get_url_env(request):
     return request._request.path.split('/')[1]
+
 
 def log_and_response(msg, http_status, e="Conditional Error."):
     LOG.warn(msg)
