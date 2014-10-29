@@ -370,7 +370,7 @@ def get_metric_datapoints_for(engine, db_name, hostname, url, metric_name = None
     newgraph = []
     for graph in graphs:
         newserie = []
-        
+
         if metric_name is not None and graph['name'] != metric_name:
             zoomtype = ''
             continue
@@ -378,8 +378,8 @@ def get_metric_datapoints_for(engine, db_name, hostname, url, metric_name = None
             zoomtype = 'x'
 
         for serie in graph['series']:
-                        
-            datapoints = get_graphite_metrics_datapoints('60', "minutes", engine, db_name, hostname, serie['data'], url=url, normalize_series=graph['normalize_series'])
+
+            datapoints = get_graphite_metrics_datapoints('24', "hours", engine, db_name, hostname, serie['data'], url=url, normalize_series=graph['normalize_series'])
 
             if datapoints:
                 newserie.append({
