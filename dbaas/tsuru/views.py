@@ -130,7 +130,7 @@ class ServiceBind(APIView):
         return Response({
             "DBAAS_{}USER".format(kind): credential.user,
             "DBAAS_{}PASSWORD".format(kind): credential.password,
-            "DBAAS_{}ENDPOINT".format(kind): endpoind
+            "DBAAS_{}ENDPOINT".format(kind): endpoint
         }, status.HTTP_201_CREATED)
 
     def delete(self, request, database_name, format=None):
