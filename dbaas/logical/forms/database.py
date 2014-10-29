@@ -23,9 +23,9 @@ class CloneDatabaseForm(forms.Form):
 
             origindatabase = Database.objects.get(pk=cleaned_data['origin_database_id'])
 
-            for infra in DatabaseInfra.objects.filter(environment=origindatabase.environment,plan=origindatabase.plan):
-                if infra.databases.filter(name=cleaned_data['database_clone']):
-                    self._errors["database_clone"] = self.error_class([_("this name already exists in the selected environment")])
+            #for infra in DatabaseInfra.objects.filter(environment=origindatabase.environment,plan=origindatabase.plan):
+            #    if infra.databases.filter(name=cleaned_data['database_clone']):
+            #        self._errors["database_clone"] = self.error_class([_("this name already exists in the selected environment")])
 
             if len(cleaned_data['database_clone']) > 40:
                 self._errors["database_clone"] = self.error_class([_("Database name too long")])
@@ -123,9 +123,9 @@ class DatabaseForm(models.ModelForm):
                 LOG.warning("The database alocation limit of %s has been exceeded for the selected team %s => %s" % (database_alocation_limit, team, list(dbs)))
                 self._errors["team"] = self.error_class([_("The database alocation limit of %s has been exceeded for the selected team: %s") % (database_alocation_limit, list(dbs))])
 
-        for infra in DatabaseInfra.objects.filter(environment=environment,):
-            if infra.databases.filter(name=cleaned_data['name']):
-                self._errors["name"] = self.error_class([_("this name already exists in the selected environment")])
+        #for infra in DatabaseInfra.objects.filter(environment=environment,):
+         #   if infra.databases.filter(name=cleaned_data['name']):
+          #      self._errors["name"] = self.error_class([_("this name already exists in the selected environment")])
 
         driver = DriverFactory.get_driver_class(plan.engines[0].name)
         if 'name' in cleaned_data and cleaned_data['name'] in driver.RESERVED_DATABASES_NAME:
