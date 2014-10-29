@@ -379,7 +379,7 @@ def get_metric_datapoints_for(engine, db_name, hostname, url, metric_name = None
 
         for serie in graph['series']:
 
-            datapoints = get_graphite_metrics_datapoints('24', "hours", engine, db_name, hostname, serie['data'], url=url, normalize_series=graph['normalize_series'])
+            datapoints = get_graphite_metrics_datapoints(engine, db_name, hostname, serie['data'], url=url, normalize_series=graph['normalize_series'])
 
             if datapoints:
                 newserie.append({
