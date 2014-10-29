@@ -1,4 +1,12 @@
 # Changelog
+
+## 0.0.28
+* bug fix: tsuru routes
+* change graphite metrics params
+* add support for same database name in environment
+* add metrics link only for cloudstack databases
+* add log link
+
 ## 0.0.27
 * Add support to Graphite metrics
 
