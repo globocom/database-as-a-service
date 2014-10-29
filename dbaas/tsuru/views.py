@@ -121,8 +121,17 @@ class ServiceBind(APIView):
         endpoint = database.endpoint.replace('<user>:<password>',"{}:{}".format(
             credential.user, credential.password))
 
-        return Response({"DBAAS_USER":credential.user, "DBAAS_PASSWORD": credential.password, "DBAAS_ENDPOINT": endpoint},
-            status.HTTP_201_CREATED)
+        kind = ''
+        if endpoint.startswith('mysql'):
+            kind = 'MYSQL_'
+        if endpoint.startswith('mongodb'):
+            kind = 'MONGODB_'
+
+        return Response({
+            "DBAAS_{}USER".format(kind): credential.user,
+            "DBAAS_{}PASSWORD".format(kind): credential.password,
+            "DBAAS_{}ENDPOINT".format(kind): endpoind
+        }, status.HTTP_201_CREATED)
 
     def delete(self, request, database_name, format=None):
         env = get_url_env(request)

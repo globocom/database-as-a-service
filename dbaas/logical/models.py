@@ -12,7 +12,7 @@ from django_extensions.db.fields.encrypted import EncryptedCharField
 from django.utils.functional import cached_property
 from util import slugify, make_db_random_password
 from util.models import BaseModel
-from physical.models import DatabaseInfra, Environment
+from physical.models import DatabaseInfra, Environment, Plan
 from drivers import factory_for
 from system.models import Configuration
 from datetime import date, timedelta
@@ -194,12 +194,18 @@ class Database(BaseModel):
         return self.driver.get_connection_dns(database=self)
 
     def get_log_url(self):
+        
+        if Configuration.get_by_name_as_int('laas_integration') != 1:
+            return ""
+        
+        if self.databaseinfra.plan.provider == Plan.PREPROVISIONED:
+            return ""
+        
         from util import get_credentials_for
         from util.laas import get_group_name
         from dbaas_credentials.models import CredentialType
 
         credential = get_credentials_for(environment=self.environment, credential_type=CredentialType.LOGNIT)
-        #print credential.endpoint, get_group_name(self)
         url = "%s%s" % (credential.endpoint, get_group_name(self))
         return "<a href='%s' target='_blank'>%s</a>" % (url, url)
 
