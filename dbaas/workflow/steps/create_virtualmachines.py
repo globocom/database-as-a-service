@@ -4,7 +4,8 @@ from base import BaseStep
 from dbaas_cloudstack.provider import CloudStackProvider
 from dbaas_credentials.models import CredentialType
 from util import get_credentials_for
-from dbaas_cloudstack.models import PlanAttr, HostAttr, LastUsedBundle
+from dbaas_cloudstack.models import PlanAttr, HostAttr, LastUsedBundle, DatabaseInfraOffering
+from django.core.exceptions import ObjectDoesNotExist
 from physical.models import Host, Instance
 from ..exceptions.error_codes import DBAAS_0011
 from util import full_stack
@@ -50,6 +51,16 @@ class CreateVirtualMachine(BaseStep):
 					offering = cs_plan_attrs.get_weaker_offering()
 				else:
 					offering = cs_plan_attrs.get_stronger_offering()
+
+				try:
+					DatabaseInfraOffering.objects.get(databaseinfra= workflow_dict['databaseinfra'])
+				except ObjectDoesNotExist, e:
+					LOG.info("Creating databaseInfra Offering...")
+					dbinfra_offering = DatabaseInfraOffering()
+					dbinfra_offering.offering = offering
+					dbinfra_offering.databaseinfra = workflow_dict['databaseinfra']
+					dbinfra_offering.save()
+
 
 				LOG.debug("Deploying new vm on cs with bundle %s and offering %s" % (bundle,offering))
 
@@ -152,6 +163,9 @@ class CreateVirtualMachine(BaseStep):
 					if host_attr:
 						host_attr[0].delete()
 						LOG.info("HostAttr deleted!")
+
+			dbinfra_offering = DatabaseInfraOffering.objects.get(workflow_dict['databaseinfra'])
+			dbinfra_offering.delete()
 
 
 			for instance in instances:
