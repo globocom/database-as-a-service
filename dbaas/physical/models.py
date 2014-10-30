@@ -31,6 +31,9 @@ class EngineType(BaseModel):
 			("view_enginetype", "Can view engine types"),
 		)
 
+	def __unicode__(self):
+		return "%s" % (self.name,)
+
 	@property
 	def default_plan(self):
 		return Plan.objects.get(is_default=True, engine_type=self)
