@@ -44,7 +44,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 	service_class = DatabaseService
 	search_fields = ("name", "databaseinfra__name")
 	list_display_basic = ["name_html", "engine_type", "environment", "plan", "friendly_status", "clone_html" ,
-	                      "get_capacity_html", "metrics_html"]
+	                      "get_capacity_html", "metrics_html", ]
 	list_display_advanced = list_display_basic + ["quarantine_dt_format"]
 	list_filter_basic = ["project", "databaseinfra__environment", "databaseinfra__engine", "databaseinfra__plan"]
 	list_filter_advanced = list_filter_basic + ["databaseinfra", "is_in_quarantine", "team"]
@@ -53,14 +53,14 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 	delete_button_name = "Delete"
 	fieldsets_add = (
 		(None, {
-			'fields': ('name', 'description', 'project', 'engine', 'environment', 'team', 'plan', 'is_in_quarantine')
+			'fields': ('name', 'description', 'project', 'engine', 'environment', 'team', 'plan', 'is_in_quarantine', )
 		}
 		),
 	)
 
 	fieldsets_change_basic = (
 		(None, {
-			'fields': ['name', 'description', 'project', 'team', ]
+			'fields': ['name', 'description', 'project', 'team', 'offering']
 		}
 		),
 	)
@@ -83,6 +83,11 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 		return database.environment
 
 	environment.admin_order_field = 'name'
+
+	def offering(self, database):
+		return database.cloudstack_service_offering
+
+	offering.short_description = "Cloudstack Offering"
 
 	def plan(self, database):
 		return database.plan
@@ -344,11 +349,11 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
 	def metricdetail_view(self, request, database_id):
 		from util.metrics.metrics import get_metric_datapoints_for
-		
+
 		if request.method == 'GET':
 			hostname = request.GET.get('hostname')
 			metricname = request.GET.get('metricname')
-		
+
 		database = Database.objects.get(id=database_id)
 		engine = database.infra.engine_name
 		db_name = database.name
@@ -356,8 +361,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 		graph_data = get_metric_datapoints_for(engine, db_name, hostname, url=URL, metric_name=metricname)
 
 		title = "{} {} Metric".format(database.name, graph_data[0]["graph_name"])
-		
-		
+
+
 		return render_to_response("logical/database/metrics/metricdetail.html", locals(), context_instance=RequestContext(request))
 
 	def metrics_view(self, request, database_id):
@@ -375,7 +380,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 	def database_host_metrics_view(self, request, database, hostname):
 		from util.metrics.metrics import get_metric_datapoints_for
 		URL = get_credentials_for(environment=database.environment, credential_type=CredentialType.GRAPHITE).endpoint
-		
+
 		title = "{} Metrics".format(database.name)
 
 		if request.method == 'GET':
