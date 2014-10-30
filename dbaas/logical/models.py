@@ -194,13 +194,13 @@ class Database(BaseModel):
         return self.driver.get_connection_dns(database=self)
 
     def get_log_url(self):
-        
+
         if Configuration.get_by_name_as_int('laas_integration') != 1:
             return ""
-        
+
         if self.databaseinfra.plan.provider == Plan.PREPROVISIONED:
             return ""
-        
+
         from util import get_credentials_for
         from util.laas import get_group_name
         from dbaas_credentials.models import CredentialType
@@ -230,6 +230,12 @@ class Database(BaseModel):
             database_status = DatabaseStatus(self)
 
         return database_status
+
+    def get_cloudstack_service_offering(self):
+        LOG.info("Get offering")
+        return self.databaseinfra.cs_dbinfra_offering.get().offering.name
+
+    offering = property(get_cloudstack_service_offering)
 
     @property
     def total_size(self):
