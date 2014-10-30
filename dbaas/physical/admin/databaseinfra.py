@@ -6,7 +6,7 @@ from django_services import admin
 from ..service.databaseinfra import DatabaseInfraService
 from ..models import Instance
 from ..forms import DatabaseInfraForm, InstanceModelFormSet
-from dbaas_cloudstack.models import DatabaseInfraAttr
+from dbaas_cloudstack.models import DatabaseInfraAttr, DatabaseInfraOffering
 
 
 from util.html import render_progress_bar
@@ -16,6 +16,14 @@ class DatabaseInfraAttrInline(django_admin.TabularInline):
     model = DatabaseInfraAttr
     max_num = 2
     fields = ('ip', 'dns', 'is_write',)
+    template = 'admin/physical/shared/inline_form.html'
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+class DatabaseInfraOfferingInline(django_admin.TabularInline):
+    model = DatabaseInfraOffering
+    max_num = 1
+    readonly_fields = ('offering', )
     template = 'admin/physical/shared/inline_form.html'
     def has_delete_permission(self, request, obj=None):
         return False
@@ -35,13 +43,14 @@ class DatabaseInfraAdmin(admin.DjangoServicesAdmin):
     list_display = ("name", "user", "environment", "show_instances", "capacity_bar")
     list_filter = ("engine", "environment")
     save_on_top = True
-    
+
     add_form_template = "admin/physical/databaseinfra/add_form.html"
     change_form_template = "admin/physical/databaseinfra/change_form.html"
-    
+
     inlines = [
         InstanceAdmin,
         DatabaseInfraAttrInline,
+        DatabaseInfraOfferingInline,
     ]
 
     def capacity_bar(self, datainfra):

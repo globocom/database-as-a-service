@@ -50,6 +50,9 @@ class AdminCreateDatabaseInfraTestCase(TestCase):
             "cs_dbinfra_attributes-TOTAL_FORMS": 2,
             "cs_dbinfra_attributes-INITIAL_FORMS": 0,
             "cs_dbinfra_attributes-MAX_NUM_FORMS": 2,
+            "cs_dbinfra_offering-TOTAL_FORMS": 1,
+            "cs_dbinfra_offering-INITIAL_FORMS": 0,
+            "cs_dbinfra_offering-MAX_NUM_FORMS": 1,
 
         }
 
