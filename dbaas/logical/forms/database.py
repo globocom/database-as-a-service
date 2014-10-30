@@ -50,10 +50,11 @@ class DatabaseForm(models.ModelForm):
     plan = AdvancedModelChoiceField(queryset=Plan.objects.filter(is_active='True'), required=False, widget=forms.RadioSelect, empty_label=None)
     engine = forms.ModelChoiceField(queryset=Engine.objects)
     environment = forms.ModelChoiceField(queryset=Environment.objects)
+    offering = forms.CharField(widget=forms.TextInput(attrs={'readonly':'readonly'}), required=False)
 
     class Meta:
         model = Database
-        fields = ('name', 'description' ,'project', 'team', 'is_in_quarantine')
+        fields = ('name', 'description' ,'project', 'team', 'is_in_quarantine',)
 
     def remove_fields_not_in_models(self):
         """remove fields not int models"""
@@ -62,6 +63,9 @@ class DatabaseForm(models.ModelForm):
             if field_name in self.fields:
                 del self.fields[field_name]
 
+    def add_initial_value_to_offering(self, value):
+        """remove fields not int models"""
+        self.initial["offering"] = value
 
     def __init__(self, *args, **kwargs):
 
@@ -71,6 +75,7 @@ class DatabaseForm(models.ModelForm):
             LOG.debug("instance database form found! %s" % instance)
             #remove fields not in models
             self.remove_fields_not_in_models()
+            self.add_initial_value_to_offering(value = instance.offering)
         else:
             self.fields['is_in_quarantine'].widget = forms.HiddenInput()
 
