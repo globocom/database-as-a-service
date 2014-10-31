@@ -8,6 +8,7 @@ from ..models import Database, Credential, Project
 from physical.models import Plan, Environment, DatabaseInfra, Engine
 from drivers.factory import DriverFactory
 from account.models import Team
+from logical.widgets.database_offering_field import DatabaseOfferingWidget
 
 from .fields import AdvancedModelChoiceField
 
@@ -50,7 +51,7 @@ class DatabaseForm(models.ModelForm):
     plan = AdvancedModelChoiceField(queryset=Plan.objects.filter(is_active='True'), required=False, widget=forms.RadioSelect, empty_label=None)
     engine = forms.ModelChoiceField(queryset=Engine.objects)
     environment = forms.ModelChoiceField(queryset=Environment.objects)
-    offering = forms.CharField(widget=forms.TextInput(attrs={'readonly':'readonly'}), required=False)
+    offering = forms.CharField(widget=DatabaseOfferingWidget(attrs={'readonly':'readonly'}), required=False)
 
     class Meta:
         model = Database
