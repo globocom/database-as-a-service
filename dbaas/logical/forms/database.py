@@ -148,11 +148,12 @@ class ResizeDatabaseForm(forms.Form):
 
         super(ResizeDatabaseForm, self).__init__(*args, **kwargs)
 
-        instance = Database.objects.get(id=kwargs['initial']['database_id'])
+        if 'initial' in kwargs:
+            instance = Database.objects.get(id=kwargs['initial']['database_id'])
 
-        if instance:
-            LOG.debug("instance database form found! %s" % instance)
-            self.define_target_offering_field(database_instance= instance, origin_offer=kwargs['initial']['original_offering_id'])
+            if instance:
+                LOG.debug("instance database form found! %s" % instance)
+                self.define_target_offering_field(database_instance= instance, origin_offer=kwargs['initial']['original_offering_id'])
 
     def define_target_offering_field(self, database_instance, origin_offer):
        self.fields['target_offer']= forms.ModelChoiceField(
