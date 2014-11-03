@@ -307,6 +307,15 @@ class Database(BaseModel):
     def get_metrics_url(self):
         return "/admin/logical/database/{}/metrics/".format(self.id)
 
+    def get_resize_url(self):
+        return "/admin/logical/database/{}/resize/".format(self.id)
+
+    def get_cloudstack_service_offering_id(self):
+        LOG.info("Get offering")
+        return self.databaseinfra.cs_dbinfra_offering.get().offering.serviceofferingid
+
+    offering_id = property(get_cloudstack_service_offering_id)
+
 
 class Credential(BaseModel):
     USER_PATTERN = "u_%s"

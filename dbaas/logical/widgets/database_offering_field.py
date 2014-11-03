@@ -8,8 +8,11 @@ class DatabaseOfferingWidget(forms.widgets.TextInput):
     def render(self, name, value, attrs=None):
        html = super(DatabaseOfferingWidget, self).render(name, value,attrs)
 
-       html = html + """
-             <a id="resizeDatabase" class="btn btn-primary" mytitle="Resize database" href="#">
+       resize_link  = """
+             <a id="resizeDatabase" class="btn btn-primary" mytitle="Resize database" href=
+             """ + self.attrs['database'].get_resize_url()+""">"""
+
+       html_plus = """
                 <i class="icon-resize-full icon-white"></i>
              </a >
             <style type="text/css">
@@ -54,6 +57,8 @@ class DatabaseOfferingWidget(forms.widgets.TextInput):
                 }
             </style>
          """
+       html = """{}{}{}""".format(html, resize_link, html_plus)
+
        return mark_safe(html);
 
 

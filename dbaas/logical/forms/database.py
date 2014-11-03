@@ -6,6 +6,7 @@ from django.forms import models
 from django import forms
 from ..models import Database, Credential, Project
 from physical.models import Plan, Environment, DatabaseInfra, Engine
+from dbaas_cloudstack.models import  CloudStackPack
 from drivers.factory import DriverFactory
 from account.models import Team
 from logical.widgets.database_offering_field import DatabaseOfferingWidget
@@ -51,7 +52,6 @@ class DatabaseForm(models.ModelForm):
     plan = AdvancedModelChoiceField(queryset=Plan.objects.filter(is_active='True'), required=False, widget=forms.RadioSelect, empty_label=None)
     engine = forms.ModelChoiceField(queryset=Engine.objects)
     environment = forms.ModelChoiceField(queryset=Environment.objects)
-    offering = forms.CharField(widget=DatabaseOfferingWidget(attrs={'readonly':'readonly'}), required=False)
 
     class Meta:
         model = Database
@@ -64,9 +64,10 @@ class DatabaseForm(models.ModelForm):
             if field_name in self.fields:
                 del self.fields[field_name]
 
-    def add_initial_value_to_offering(self, value):
-        """remove fields not int models"""
-        self.initial["offering"] = value
+
+    def define_offering_field(self, database_instance):
+       self.fields['offering']=forms.CharField(widget=DatabaseOfferingWidget(attrs={'readonly':'readonly', 'database': database_instance }), required=False)
+       self.initial["offering"]=database_instance.offering
 
     def __init__(self, *args, **kwargs):
 
@@ -76,17 +77,9 @@ class DatabaseForm(models.ModelForm):
             LOG.debug("instance database form found! %s" % instance)
             #remove fields not in models
             self.remove_fields_not_in_models()
-            self.add_initial_value_to_offering(value = instance.offering)
+            self.define_offering_field(database_instance= instance)
         else:
             self.fields['is_in_quarantine'].widget = forms.HiddenInput()
-
-        # choices = [(user.id, user.username) for user in Team.user_objects.all()]
-        #
-        # if self.instance and self.instance.pk:
-        #     #now concatenate with the existing users...
-        #     choices = choices + [(user.id, user.username) for user in self.instance.users.all()]
-        #
-        # self.fields['users'].choices = choices
 
     def clean(self):
         cleaned_data = super(DatabaseForm, self).clean()
@@ -142,19 +135,43 @@ class DatabaseForm(models.ModelForm):
 
         return cleaned_data
 
-    #def save(self, *args, **kwargs):
-    #    if self.instance and self.instance.id:
-    #        return super(DatabaseForm, self).save(*args, **kwargs)
-    #    else:
-    #        database = Database.provision(self.cleaned_data['name'],
-    #                                        self.cleaned_data['plan'],
-    #                                        self.cleaned_data['environment'],
-    #                                        self.cleaned_data['databaseinfra'])
-    #        database.team = self.cleaned_data['team']
-    #        database.project = self.cleaned_data['project']
-    #        database.description = self.cleaned_data['description']
-    #        database.save()
-    #        return database
-
     def save_m2m(self, *args, **kwargs):
         pass
+
+
+
+class ResizeDatabaseForm(forms.Form):
+    database_id = forms.CharField(widget=forms.HiddenInput())
+    original_offering_id = forms.CharField(widget=forms.HiddenInput())
+
+    def __init__(self, *args, **kwargs):
+
+        super(ResizeDatabaseForm, self).__init__(*args, **kwargs)
+
+        instance = Database.objects.get(id=kwargs['initial']['database_id'])
+
+        if instance:
+            LOG.debug("instance database form found! %s" % instance)
+            self.define_target_offering_field(database_instance= instance, origin_offer=kwargs['initial']['original_offering_id'])
+
+    def define_target_offering_field(self, database_instance, origin_offer):
+       self.fields['target_offer']= forms.ModelChoiceField(
+                                        queryset=CloudStackPack.objects.filter(
+                                                                                                    offering__region__environment=database_instance.environment,
+                                                                                                    engine_type__name= database_instance.engine_type
+                                                                                                    ).exclude(offering__serviceofferingid=origin_offer),
+                                        label=u'New Offering',
+                                        required=True)
+
+    def clean(self):
+        cleaned_data = super(ResizeDatabaseForm, self).clean()
+
+        if 'target_offer' in cleaned_data:
+
+            if cleaned_data['target_offer'].offering.serviceofferingid == cleaned_data['original_offering_id']:
+               raise forms.ValidationError(_("new offering must be different from the current"))
+
+            if self._errors:
+                return cleaned_data
+
+        return cleaned_data

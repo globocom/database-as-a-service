@@ -11,7 +11,7 @@ from django.conf.urls.defaults import patterns, url
 from django.contrib import messages
 from django.utils.html import format_html, escape
 from ..service.database import DatabaseService
-from ..forms import DatabaseForm, CloneDatabaseForm
+from ..forms import DatabaseForm, CloneDatabaseForm, ResizeDatabaseForm
 from ..models import Database
 from account.models import Team
 from drivers import DatabaseAlreadyExists
@@ -396,6 +396,43 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
 			return render_to_response("logical/database/metrics/metrics.html", locals(), context_instance=RequestContext(request))
 
+	def database_resize_view(self, request, database_id):
+		from dbaas_cloudstack.models import CloudStackPack
+
+		database = Database.objects.get(id=database_id)
+
+		url = reverse('admin:logical_database_change', args=[database.id])
+
+		if database.is_in_quarantine:
+			self.message_user(request, "Database in quarantine and cannot be resized", level=messages.ERROR)
+			return HttpResponseRedirect(url)  # Redirect after POST
+
+		if not database.database_status.is_alive:
+			self.message_user(request, "Database is dead  and cannot be resized", level=messages.ERROR)
+			return HttpResponseRedirect(url)  # Redirect after POST
+
+		if not CloudStackPack.objects.filter(
+                                                                                   offering__region__environment=database.environment,
+                                                                                   engine_type__name= database.engine_type
+                                                                               ).exclude(offering__serviceofferingid=database.offering_id):
+			self.message_user(request, "Database has no offerings availables.", level=messages.ERROR)
+			return HttpResponseRedirect(url)  # Redirect after POST
+
+
+		form = None
+		if request.method == 'POST':  # If the form has been submitted...
+			form = ResizeDatabaseForm(request.POST)  # A form bound to the POST data
+			if form.is_valid():  # All validation rules pass
+				# Call task to resize database here
+				url = reverse('admin:notification_taskhistory_changelist')
+				return HttpResponseRedirect(url + "?user=%s" % request.user.username)  # Redirect after POST
+		else:
+			form = ResizeDatabaseForm(initial={"database_id": database_id, "original_offering_id": database.offering_id})  # An unbound form
+		return render_to_response("logical/database/resize.html",
+		                          locals(),
+		                          context_instance=RequestContext(request))
+
+
 	def get_urls(self):
 		urls = super(DatabaseAdmin, self).get_urls()
 		my_urls = patterns('',
@@ -407,6 +444,9 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
 		                   url(r'^/?(?P<database_id>\d+)/metricdetail/$', self.admin_site.admin_view(self.metricdetail_view),
 		                       name="database_metricdetail"),
+
+		                   url(r'^/?(?P<database_id>\d+)/resize/$', self.admin_site.admin_view(self.database_resize_view),
+		                       name="database_resize"),
 
 		)
 
