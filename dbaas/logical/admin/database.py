@@ -85,11 +85,6 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
 	environment.admin_order_field = 'name'
 
-	def offering(self, database):
-		return database.cloudstack_service_offering
-
-	offering.short_description = "Cloudstack Offering"
-
 	def plan(self, database):
 		return database.plan
 
@@ -425,13 +420,13 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
 		form = None
 		if request.method == 'POST':  # If the form has been submitted...
-			form = ResizeDatabaseForm(request.POST)  # A form bound to the POST data
+			form = ResizeDatabaseForm(request.POST, initial={"database_id": database_id, "original_offering_id": database.offering_id},)  # A form bound to the POST data
 			if form.is_valid():  # All validation rules pass
 				# Call task to resize database here
 				url = reverse('admin:notification_taskhistory_changelist')
 				return HttpResponseRedirect(url + "?user=%s" % request.user.username)  # Redirect after POST
 		else:
-			form = ResizeDatabaseForm(initial={"database_id": database_id, "original_offering_id": database.offering_id})  # An unbound form
+			form = ResizeDatabaseForm(initial={"database_id": database_id, "original_offering_id": database.offering_id},)  # An unbound form
 		return render_to_response("logical/database/resize.html",
 		                          locals(),
 		                          context_instance=RequestContext(request))
