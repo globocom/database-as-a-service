@@ -13,6 +13,7 @@ from django.utils.html import format_html, escape
 from ..service.database import DatabaseService
 from ..forms import DatabaseForm, CloneDatabaseForm, ResizeDatabaseForm
 from ..models import Database
+from physical.models import Plan
 from account.models import Team
 from drivers import DatabaseAlreadyExists
 from logical.templatetags import capacity
@@ -60,7 +61,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
 	fieldsets_change_basic = (
 		(None, {
-			'fields': ['name', 'description', 'project', 'team', 'offering']
+			'fields': ['name', 'description', 'project', 'team', ]
 		}
 		),
 	)
@@ -189,6 +190,9 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 				self.fieldsets_change = self.fieldsets_change_advanced
 			else:
 				self.fieldsets_change = self.fieldsets_change_basic
+
+			if obj.plan.provider==Plan.CLOUDSTACK and ('offering' not in self.fieldsets_change[0][1]['fields']):
+				self.fieldsets_change[0][1]['fields'].append('offering')
 
 		return self.fieldsets_change if obj else self.fieldsets_add
 

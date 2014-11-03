@@ -233,7 +233,13 @@ class Database(BaseModel):
 
     def get_cloudstack_service_offering(self):
         LOG.info("Get offering")
-        return self.databaseinfra.cs_dbinfra_offering.get().offering.name
+        try:
+            offer_name = self.databaseinfra.cs_dbinfra_offering.get().offering.name
+        except Exception, e:
+            LOG.info("Oops...{}".format(e))
+            offer_name = None
+
+        return offer_name
 
     offering = property(get_cloudstack_service_offering)
 
@@ -312,7 +318,13 @@ class Database(BaseModel):
 
     def get_cloudstack_service_offering_id(self):
         LOG.info("Get offering")
-        return self.databaseinfra.cs_dbinfra_offering.get().offering.serviceofferingid
+        try:
+            offer_id = self.databaseinfra.cs_dbinfra_offering.get().offering.serviceofferingid
+        except Exception, e:
+            LOG.info("Oops...{}".format(e))
+            offer_id = None
+
+        return offer_id
 
     offering_id = property(get_cloudstack_service_offering_id)
 
