@@ -116,3 +116,39 @@ def get_engine_credentials(engine, environment):
     return get_credentials_for(
                 environment=environment, credential_type=credential_type)
 
+def resize_database(database, cloudstackpack, task=None):
+
+    instances = []
+    
+    for instance in database.databaseinfra.instances.all():
+        instances.append(instance)
+        
+    workflow_dict = build_dict(database= database,
+                               cloudstackpack= cloudstackpack,
+                               environment= database.environment,
+                               instances = instances,
+                               steps= get_engine_resize_steps(engine= str(database.plan.engine_type)),
+                               MYSQL = MYSQL,
+                               MONGODB = MONGODB,
+                               enginecod = get_engine(engine= str(database.plan.engine_type))
+                               )
+
+    start_workflow(workflow_dict= workflow_dict, task=task)
+    
+    return workflow_dict
+
+def get_engine_resize_steps(engine):
+
+    enginecod = get_engine(engine)
+
+    if enginecod == MONGODB:
+        from workflow.settings import RESIZE_MONGO
+        steps = RESIZE_MONGO
+    elif enginecod == MYSQL:
+        from workflow.settings import RESIZE_MYSQL
+        steps = RESIZE_MYSQL
+    else:
+        from workflow.settings import RESIZE_UNKNOWN
+        steps = RESIZE_UNKNOWN
+
+    return steps
