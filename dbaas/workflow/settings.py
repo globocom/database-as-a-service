@@ -29,3 +29,19 @@ DEPLOY_MONGO = (
 DEPLOY_UNKNOWN = (
 
 )
+
+RESIZE_MONGO = (
+     'workflow.steps.resize.mongodb.stop.StopDatabase',
+     'workflow.steps.resize.mongodb.resize.ResizeInstance',
+     'workflow.steps.resize.mongodb.start.StartDatabase',
+)
+
+RESIZE_MYSQL = (
+     'workflow.steps.resize.mysql.stop.StopDatabase',
+     'workflow.steps.resize.mysql.resize.ResizeInstance',
+     'workflow.steps.resize.mysql.start.StartDatabase',
+)
+
+RESIZE_UNKNOWN = (
+
+)
