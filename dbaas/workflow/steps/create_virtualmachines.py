@@ -164,10 +164,6 @@ class CreateVirtualMachine(BaseStep):
 						host_attr[0].delete()
 						LOG.info("HostAttr deleted!")
 
-			dbinfra_offering = DatabaseInfraOffering.objects.get(workflow_dict['databaseinfra'])
-			dbinfra_offering.delete()
-
-
 			for instance in instances:
 				host = instance.hostname
 
