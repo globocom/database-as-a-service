@@ -310,6 +310,13 @@ class Database(BaseModel):
 
         result = clone_database.delay(database, clone_name, user=user)
 
+    @classmethod
+    @transaction.commit_manually
+    def resize(cls, database, cloudstackpack, user):
+        from notification.tasks import resize_database
+        
+        result = resize_database.delay(database, cloudstackpack, user)
+
     def get_metrics_url(self):
         return "/admin/logical/database/{}/metrics/".format(self.id)
 
