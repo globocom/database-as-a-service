@@ -95,7 +95,7 @@ def create_database(self, name, plan, environment, team, project, description, u
 	        task_history.update_status_for(TaskHistory.STATUS_WARNING, details=traceback)
 	    else:
 	        if 'result' in locals() and result['created']:
-	            destroy_infra(databaseinfra = result['databaseinfra'])
+	            destroy_infra(databaseinfra = result['databaseinfra'], task=task_history)
 	        task_history.update_status_for(TaskHistory.STATUS_ERROR, details=traceback)
 	    return
 	    
@@ -160,7 +160,7 @@ def clone_database(self, origin_database, clone_name, user=None):
 	    LOG.error(traceback)
 	    
 	    if 'result' in locals() and result['created']:
-	        destroy_infra(databaseinfra = result['databaseinfra'])
+	        destroy_infra(databaseinfra = result['databaseinfra'], task=task_history)
 	    
 	    task_history.update_status_for(TaskHistory.STATUS_ERROR, details=traceback)
 	    return
@@ -509,3 +509,37 @@ def monitor_acl_job(self,database, job_id, bind_address, bind_status=models.CREA
 
     finally:
         AuditRequest.cleanup_request()
+
+@app.task(bind=True)
+def resize_database(self, database, cloudstackpack, user=None):
+    
+    AuditRequest.new_request("resize_database", user, "localhost")
+    
+    try:
+        task_history = TaskHistory.register(request=self.request, user=user)
+    
+        from util.providers import resize_database
+    
+        result = resize_database(database = database, cloudstackpack = cloudstackpack, task = task_history)
+
+        if result['created']==False:
+
+            if 'exceptions' in result:
+                error = "\n".join(": ".join(err) for err in result['exceptions']['error_codes'])
+                traceback = "\nException Traceback\n".join(result['exceptions']['traceback'])
+                error = "{}\n{}\n{}".format(error, traceback, error)
+            else:
+                error = "Something went wrong."
+
+            task_history.update_status_for(TaskHistory.STATUS_ERROR, details=error)
+        else:
+            task_history.update_status_for(TaskHistory.STATUS_SUCCESS, details='Resize successfully done.')
+    
+    except Exception, e:
+        error = "Resize Database ERROR: {}".format(e)
+        LOG.error(error)
+        task_history.update_status_for(TaskHistory.STATUS_ERROR, details=error)
+    
+    finally:
+        AuditRequest.cleanup_request()
+    
