@@ -422,8 +422,11 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 		if request.method == 'POST':  # If the form has been submitted...
 			form = ResizeDatabaseForm(request.POST, initial={"database_id": database_id, "original_offering_id": database.offering_id},)  # A form bound to the POST data
 			if form.is_valid():  # All validation rules pass
-				# Call task to resize database here
+
+				cloudstackpack = CloudStackPack.objects.get(id=request.POST.get('target_offer'))
+				Database.resize(database, cloudstackpack, request.user)
 				url = reverse('admin:notification_taskhistory_changelist')
+
 				return HttpResponseRedirect(url + "?user=%s" % request.user.username)  # Redirect after POST
 		else:
 			form = ResizeDatabaseForm(initial={"database_id": database_id, "original_offering_id": database.offering_id},)  # An unbound form
