@@ -13,3 +13,4 @@ DBAAS_0012 = ("DBAAS_0012","Create Zabbix error")
 DBAAS_0013 = ("DBAAS_0013","Initializing MYSQL Database error")
 DBAAS_0014 = ("DBAAS_0014","Initializing MONGODB Database error")
 
+DBAAS_0015 = ("DBAAS_0015","Resize Database")
