@@ -91,8 +91,11 @@ class TaskHistory(BaseModel):
 		task_history.task_status = TaskHistory.STATUS_RUNNING
 
 		if request.task == 'notification.tasks.create_database':
-			task_history.arguments = "Database name: {0},\nEnvironment: {1},\nProject: {2}".format(
-				request.args[0], request.args[2], request.args[4])
+			task_history.arguments = "Database name: {0},\nEnvironment: {1},\nProject: {2},\nPlan: {3}".format(
+				request.args[0], request.args[2], request.args[4], request.args[1])
+		elif request.task == 'notification.tasks.resize_database':
+			task_history.arguments = "Database name: {0},\nNew Offering: {1}".format(
+				request.args[0].name, request.args[1])
 		else:
 			task_history.arguments = request.args
 
