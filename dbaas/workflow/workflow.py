@@ -43,7 +43,8 @@ def start_workflow(workflow_dict, task=None):
 				raise Exception("We caught an error while executing the steps...")
 
 			workflow_dict['status'] = 1
-			task.update_details(persist=True, details="DONE!")
+			if task:
+				task.update_details(persist=True, details="DONE!")
 
 		workflow_dict['created'] = True
 
@@ -62,7 +63,7 @@ def start_workflow(workflow_dict, task=None):
 
 		workflow_dict['steps'] = workflow_dict[
 			                         'steps'][:workflow_dict['step_counter']]
-		stop_workflow(workflow_dict)
+		stop_workflow(workflow_dict, task)
 
 		workflow_dict['created'] = False
 
@@ -76,6 +77,10 @@ def stop_workflow(workflow_dict, task=None):
 		workflow_dict['exceptions'] = {}
 		workflow_dict['exceptions']['traceback'] = []
 		workflow_dict['exceptions']['error_codes'] = []
+	
+	workflow_dict['total_steps'] = len(workflow_dict['steps'])
+	workflow_dict['step_counter'] = 0
+	workflow_dict['msgs'] = []
 
 	try:
 
@@ -85,11 +90,26 @@ def stop_workflow(workflow_dict, task=None):
 			my_instance = my_class()
 
 			if 'step_counter' in workflow_dict:
-				workflow_dict['step_counter'] -= 1
-				LOG.info("Step %i %s " %
+				workflow_dict['step_counter'] += 1
+				LOG.info("Rollback Step %i %s " %
 				         (workflow_dict['step_counter'], str(my_instance)))
+
+			time_now = str(time.strftime("%m/%d/%Y %H:%M:%S"))
+
+			msg = "\n%s - Rollback Step %i of %i - %s" % (
+				time_now, workflow_dict['step_counter'], workflow_dict['total_steps'], str(my_instance))
+
+			LOG.info(msg)
+
+			if task:
+				workflow_dict['msgs'].append(msg)
+				task.update_details(persist=True, details=msg)
+
 			my_instance.undo(workflow_dict)
 
+			if task:
+				task.update_details(persist=True, details="DONE!")
+				
 		return True
 	except Exception, e:
 
