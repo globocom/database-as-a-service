@@ -26,6 +26,8 @@
                             {% for env in plan.environments.all %}data-environment-{{env.pk}}="1" {% endfor %}
                             {% for engine in plan.engine_type.engines.all %}data-engine-{{engine.pk}}="1" {% endfor %} >
                             <div class="plan-description">
+                                {% if plan.is_ha %}<span class="badge pull-right label-warning" >HA</span>{% endif %}
+
                                 <h2 class="">{{plan_name}}</h2>
                                 <p>
                                 {% comment %}
