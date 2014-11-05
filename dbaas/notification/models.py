@@ -96,6 +96,12 @@ class TaskHistory(BaseModel):
 		elif request.task == 'notification.tasks.resize_database':
 			task_history.arguments = "Database name: {0},\nNew Offering: {1}".format(
 				request.args[0].name, request.args[1])
+		elif request.task=='notification.tasks.destroy_database':
+			task_history.arguments = "Database name: {0},\nUser: {1}".format(
+				request.args[0].name, request.args[1])
+		elif request.task=='notification.tasks.clone_database':
+			task_history.arguments = "Database name: {0},\nClone: {1}".format(
+				request.args[0].name, request.args[1])
 		else:
 			task_history.arguments = request.args
 
