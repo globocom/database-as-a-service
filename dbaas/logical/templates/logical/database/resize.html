@@ -38,7 +38,7 @@
         <fieldset class="module">
         <h2>Resizing {{ database.name }}</h2>
             {{ form.as_p }}
-            <input class="btn" type="submit" value="Submit" />
+            <input class="btn" type="submit" value="Submit" onclick="return confirm('Are you sure?')"/>
         </fieldset>
 
     </form>
