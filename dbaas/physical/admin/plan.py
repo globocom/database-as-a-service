@@ -36,14 +36,14 @@ class PlanAttrDNSAPIInline(admin.StackedInline):
     template = 'admin/physical/shared/inline_form.html'
     def has_delete_permission(self, request, obj=None):
         return False
-        
+
 class PlanAdmin(services_admin.DjangoServicesAdmin):
     form = forms.PlanForm
     service_class = PlanService
     save_on_top = True
     search_fields = ["name"]
     list_filter = ("is_active", )
-    list_display = ("name", "environment", "is_active", "is_default")
+    list_display = ("name", "engine_type","environment", "is_active", "is_default", "provider", "is_ha")
     filter_horizontal = ("environments",)
     inlines = [
         PlanAttributeInline,
