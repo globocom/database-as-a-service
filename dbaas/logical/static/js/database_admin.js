@@ -245,10 +245,6 @@
             $("input", $(this)).attr("checked", "checked");
         });
 
-        $("#deleteDatabaseBtn").on("click", function() {
-            $("#deleteDatabaseBtn").attr("disabled",true);
-        });
-
         $(".btn-plan").on("click", function(ev) {
             $("#plan-type").val(this.dataset.planId);
             $(".btn-plan").attr('disabled', true);
