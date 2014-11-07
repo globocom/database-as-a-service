@@ -31,15 +31,22 @@ DEPLOY_UNKNOWN = (
 )
 
 RESIZE_MONGO = (
-     'workflow.steps.resize.mongodb.stop.StopDatabase',
-     'workflow.steps.resize.mongodb.resize.ResizeInstance',
-     'workflow.steps.resize.mongodb.start.StartDatabase',
+    'workflow.steps.resize.mongodb.init_variables.InitVariables',
+    'workflow.steps.resize.mongodb.stop_database.StopDatabase',
+    'workflow.steps.resize.mongodb.stop_vm.StopVM',
+    'workflow.steps.resize.mongodb.resize_vm.ResizeVM',
+    'workflow.steps.resize.mongodb.start_vm.StartVM',
+    'workflow.steps.resize.mongodb.start_database.StartDatabase',
 )
 
 RESIZE_MYSQL = (
-     'workflow.steps.resize.mysql.stop.StopDatabase',
-     'workflow.steps.resize.mysql.resize.ResizeInstance',
-     'workflow.steps.resize.mysql.start.StartDatabase',
+    'workflow.steps.resize.mysql.init_variables.InitVariables',
+    'workflow.steps.resize.mysql.stop_database.StopDatabase',
+    'workflow.steps.resize.mysql.change_config.ChangeDatabaseConfigFile',
+    'workflow.steps.resize.mysql.stop_vm.StopVM',
+    'workflow.steps.resize.mysql.resize_vm.ResizeVM',
+    'workflow.steps.resize.mysql.start_vm.StartVM',
+    'workflow.steps.resize.mysql.start_database.StartDatabase',
 )
 
 RESIZE_UNKNOWN = (
