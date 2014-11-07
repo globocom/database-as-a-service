@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.0.29
+* improve workflow
+* add resize for cloudstack databases
+
 ## 0.0.28
 * bug fix: tsuru routes
 * change graphite metrics params
