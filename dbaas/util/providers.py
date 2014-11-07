@@ -117,19 +117,16 @@ def get_engine_credentials(engine, environment):
                 environment=environment, credential_type=credential_type)
 
 def resize_database(database, cloudstackpack, task=None):
-
-    instances = []
     
-    for instance in database.databaseinfra.instances.all():
-        instances.append(instance)
-        
+    from dbaas_cloudstack.models import CloudStackPack
+    original_cloudstackpack = CloudStackPack.objects.get(offering__serviceofferingid = database.offering_id, 
+                                                         offering__region__environment = database.environment, 
+                                                         engine_type__name = database.engine_type)
     workflow_dict = build_dict(database= database,
                                cloudstackpack= cloudstackpack,
+                               original_cloudstackpack = original_cloudstackpack,
                                environment= database.environment,
-                               instances = instances,
                                steps= get_engine_resize_steps(engine= str(database.plan.engine_type)),
-                               MYSQL = MYSQL,
-                               MONGODB = MONGODB,
                                enginecod = get_engine(engine= str(database.plan.engine_type))
                                )
 
