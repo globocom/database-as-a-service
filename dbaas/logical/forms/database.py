@@ -153,7 +153,9 @@ class ResizeDatabaseForm(forms.Form):
 
             if instance:
                 LOG.debug("instance database form found! %s" % instance)
-                self.define_target_offering_field(database_instance= instance, origin_offer=kwargs['initial']['original_offering_id'])
+                if instance.plan.provider == instance.plan.CLOUDSTACK:
+                    LOG.debug("Cloudstack plan found!")
+                    self.define_target_offering_field(database_instance= instance, origin_offer=kwargs['initial']['original_offering_id'])
 
     def define_target_offering_field(self, database_instance, origin_offer):
        self.fields['target_offer']= forms.ModelChoiceField(
