@@ -141,7 +141,7 @@ def check_nslookup(dns_to_check, dns_server, retries= 90, wait= 10):
 def exec_remote_command(server, username, password, command, output={}):
 
     try:
-        LOG.info("Executing command [%s] on remote server %s" % (command, server))
+        #LOG.info("Executing command [%s] on remote server %s" % (command, server))
         client = paramiko.SSHClient()
         client.load_system_host_keys()
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
