@@ -251,6 +251,15 @@
             $("#database_form").submit();
         });
 
+        $( document ).ready(function() {
+            if ($("#id_offering").val() == ""){
+                $("#id_offering").hide();
+                $("#resizeDatabase").hide();
+                $('input[id="id_offering"], label[for="id_offering"]').hide();
+
+            }
+        });
+
         var endpoint_popover_active = null;
         $('.show-endpoint').popover({'trigger': 'manual', 'html': false})
         .on('click', function(e) {
