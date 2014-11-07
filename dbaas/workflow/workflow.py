@@ -79,7 +79,8 @@ def stop_workflow(workflow_dict, task=None):
 		workflow_dict['exceptions']['error_codes'] = []
 	
 	workflow_dict['total_steps'] = len(workflow_dict['steps'])
-	workflow_dict['step_counter'] = 0
+	if 'step_counter' not in workflow_dict:
+	    workflow_dict['step_counter'] = len(workflow_dict['steps'])
 	workflow_dict['msgs'] = []
 
 	try:
@@ -89,10 +90,7 @@ def stop_workflow(workflow_dict, task=None):
 			my_class = import_by_path(step)
 			my_instance = my_class()
 
-			if 'step_counter' in workflow_dict:
-				workflow_dict['step_counter'] += 1
-				LOG.info("Rollback Step %i %s " %
-				         (workflow_dict['step_counter'], str(my_instance)))
+			LOG.info("Rollback Step %i %s " % (workflow_dict['step_counter'], str(my_instance)))
 
 			time_now = str(time.strftime("%m/%d/%Y %H:%M:%S"))
 
@@ -101,6 +99,8 @@ def stop_workflow(workflow_dict, task=None):
 
 			LOG.info(msg)
 
+			workflow_dict['step_counter'] -= 1
+			
 			if task:
 				workflow_dict['msgs'].append(msg)
 				task.update_details(persist=True, details=msg)
