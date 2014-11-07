@@ -246,4 +246,12 @@ class MySQL(BaseDriver):
         else:
             return False
         
+    def check_instance_is_master(self, instance):
+        if self.databaseinfra.instances.count() == 1:
+            return True
+        results = self.__query(query_string="show variables like 'read_only'", instance=instance)
+        if results[0]["Value"] == "ON":
+            return False
+        else:
+            return True
         

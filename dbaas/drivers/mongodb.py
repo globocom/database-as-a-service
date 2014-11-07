@@ -243,3 +243,22 @@ class MongoDB(BaseDriver):
         
             except pymongo.errors.PyMongoError, e:
                 raise ConnectionError('Error connection to databaseinfra %s: %s' % (self.databaseinfra, e.message))
+
+
+    def check_instance_is_master(self, instance):
+        if instance.is_arbiter:
+            return False
+        
+        if self.databaseinfra.instances.count() == 1:
+            return True
+        
+        with self.pymongo(instance=instance) as client:
+            try:
+                ismaster = client.admin.command('isMaster')
+                if ismaster['ismaster']:
+                    return True
+                else:
+                    return False
+        
+            except pymongo.errors.PyMongoError, e:
+                raise ConnectionError('Error connection to databaseinfra %s: %s' % (self.databaseinfra, e.message))

@@ -148,6 +148,10 @@ class BaseDriver(object):
     def check_instance_is_eligible_for_backup(self, instance):
         raise NotImplementedError()
 
+    def check_instance_is_master(self, instance):
+        raise NotImplementedError()
+
+
 class DatabaseStatus(object):
 
     def __init__(self, database_model):
