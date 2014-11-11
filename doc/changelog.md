@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.0.30
+* Bug fix resize mysql infra
+
 ## 0.0.29
 * improve workflow
 * add resize for cloudstack databases
