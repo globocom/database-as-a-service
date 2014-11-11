@@ -73,6 +73,7 @@ class ResizeVM(BaseStep):
                     if not offering_changed:
                         raise Exception, "Could not change offering for Host {}".format(host)
                 else:
+                    instance = instance_detail['instance']
                     LOG.info('No resize to instance {}'.format(instance))
                     
             LOG.info('Updating offering DatabaseInfra.')
