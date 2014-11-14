@@ -32,10 +32,10 @@ class CloneDatabaseForm(forms.Form):
 
         if instance:
             LOG.debug("instance database form found! %s" % instance)
+            self.define_engine_field(database=instance)
             self.define_available_plans(database=instance)
 
         self.initial['old_plan'] = instance.plan.id
-        self.initial['environment'] = instance.environment
 
     def define_engine_field(self, database):
        self.initial['engine'] = database.infra.engine.engine_type.id
