@@ -4,20 +4,48 @@ from django.utils.translation import ugettext_lazy as _
 import logging
 from django.forms import models
 from django import forms
-from ..models import Database, Credential, Project
-from physical.models import Plan, Environment, DatabaseInfra, Engine
+from ..models import Database
+from physical.models import Plan, Environment, Engine
 from dbaas_cloudstack.models import  CloudStackPack
 from drivers.factory import DriverFactory
-from account.models import Team
 from logical.widgets.database_offering_field import DatabaseOfferingWidget
-
 from .fields import AdvancedModelChoiceField
 
 LOG = logging.getLogger(__name__)
 
 class CloneDatabaseForm(forms.Form):
     database_clone = forms.CharField(label=u'Destination database', max_length=64, required=True)
+    environment = forms.ModelChoiceField(queryset=Environment.objects, widget=forms.Select(attrs={'class':'environment'}),required='True',)
+    engine = forms.CharField(widget=forms.HiddenInput(),)
     origin_database_id = forms.CharField(widget=forms.HiddenInput())
+    old_plan = forms.CharField(widget=forms.HiddenInput())
+
+    def __init__(self, *args, **kwargs):
+
+        super(CloneDatabaseForm, self).__init__(*args, **kwargs)
+
+
+        if 'initial' in kwargs:
+            instance = Database.objects.get(id=kwargs['initial']['origin_database_id'])
+        elif 'origin_database_id' in self.data:
+            instance = Database.objects.get(id= self.data['origin_database_id'])
+
+        if instance:
+            LOG.debug("instance database form found! %s" % instance)
+            self.define_engine_field(database=instance)
+            self.define_available_plans(database=instance)
+
+        self.initial['old_plan'] = instance.plan.id
+        self.initial['environment'] = instance.environment
+
+    def define_engine_field(self, database):
+       self.initial['engine'] = database.infra.engine.engine_type.id
+
+    def define_available_plans(self, database):
+         self.fields['plan'] = forms.ModelChoiceField(queryset= Plan.objects.filter(engine_type__name=database.infra.engine.name,
+            environments=database.environment).exclude(id=database.plan.id, is_active='True' )
+            ,widget=forms.Select(attrs={'class':'plan'}),required=True,)
+
 
     def clean(self):
         cleaned_data = super(CloneDatabaseForm, self).clean()
