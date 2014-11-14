@@ -43,7 +43,7 @@ class CloneDatabaseForm(forms.Form):
 
     def define_available_plans(self, database):
          self.fields['plan'] = forms.ModelChoiceField(queryset= Plan.objects.filter(engine_type__name=database.infra.engine.name,
-            environments=database.environment).exclude(id=database.plan.id, is_active='True' )
+            ).exclude(id=database.plan.id, is_active='True' )
             ,widget=forms.Select(attrs={'class':'plan'}),required=True,)
 
 
