@@ -76,21 +76,21 @@ def create_database(self, name, plan, environment, team, project, description, u
 		database.project = project
 		database.description = description
 		database.save()
-		
+
 		task_history.update_dbid(db=database)
-		
+
 		if Configuration.get_by_name_as_int('laas_integration') == 1:
 			register_database_laas(database)
-		
+
 		task_history.update_status_for(TaskHistory.STATUS_SUCCESS, details='Database created successfully')
-		
+
 		return
-		
+
 	except Exception, e:
 	    traceback = full_stack()
 	    LOG.error("Ops... something went wrong: %s" % e)
 	    LOG.error(traceback)
-	    
+
 	    if 'database' in locals() and database.id:
 	        task_history.update_status_for(TaskHistory.STATUS_WARNING, details=traceback)
 	    else:
@@ -98,7 +98,7 @@ def create_database(self, name, plan, environment, team, project, description, u
 	            destroy_infra(databaseinfra = result['databaseinfra'], task=task_history)
 	        task_history.update_status_for(TaskHistory.STATUS_ERROR, details=traceback)
 	    return
-	    
+
 	finally:
 		AuditRequest.cleanup_request()
 
@@ -126,7 +126,7 @@ def destroy_database(self, database, user=None):
 
 
 @app.task(bind=True)
-def clone_database(self, origin_database, clone_name, user=None):
+def clone_database(self, origin_database, clone_name, plan, environment, user=None):
 	# register History
 	AuditRequest.new_request("clone_database", self.request.kwargs["user"], "localhost")
 	try:
@@ -139,7 +139,7 @@ def clone_database(self, origin_database, clone_name, user=None):
 		dest_database.pk = None
 
 		task_history.update_details(persist=True, details="Loading Process...")
-		result = make_infra(plan=origin_database.plan, environment=origin_database.environment, name=clone_name,
+		result = make_infra(plan=plan, environment=environment, name=clone_name,
 		                    task=task_history)
 
 		if result['created']==False:
@@ -153,15 +153,15 @@ def clone_database(self, origin_database, clone_name, user=None):
 
 			task_history.update_status_for(TaskHistory.STATUS_ERROR, details=error)
 			return
-					
+
 	except Exception, e:
 	    traceback = full_stack()
 	    LOG.error("Ops... something went wrong: %s" % e)
 	    LOG.error(traceback)
-	    
+
 	    if 'result' in locals() and result['created']:
 	        destroy_infra(databaseinfra = result['databaseinfra'], task=task_history)
-	    
+
 	    task_history.update_status_for(TaskHistory.STATUS_ERROR, details=traceback)
 	    return
 
@@ -175,7 +175,7 @@ def clone_database(self, origin_database, clone_name, user=None):
 
 	    if Configuration.get_by_name_as_int('laas_integration') == 1:
 	        register_database_laas(dest_database)
-	        
+
 	except Exception, e:
 	    traceback = full_stack()
 	    LOG.error("Ops... something went wrong: %s" % e)
@@ -512,14 +512,14 @@ def monitor_acl_job(self,database, job_id, bind_address, bind_status=models.CREA
 
 @app.task(bind=True)
 def resize_database(self, database, cloudstackpack, user=None):
-    
+
     AuditRequest.new_request("resize_database", user, "localhost")
-    
+
     try:
         task_history = TaskHistory.register(request=self.request, user=user)
-    
+
         from util.providers import resize_database
-    
+
         result = resize_database(database = database, cloudstackpack = cloudstackpack, task = task_history)
 
         if result['created']==False:
@@ -534,12 +534,12 @@ def resize_database(self, database, cloudstackpack, user=None):
             task_history.update_status_for(TaskHistory.STATUS_ERROR, details=error)
         else:
             task_history.update_status_for(TaskHistory.STATUS_SUCCESS, details='Resize successfully done.')
-    
+
     except Exception, e:
         error = "Resize Database ERROR: {}".format(e)
         LOG.error(error)
         task_history.update_status_for(TaskHistory.STATUS_ERROR, details=error)
-    
+
     finally:
         AuditRequest.cleanup_request()
-    
+
