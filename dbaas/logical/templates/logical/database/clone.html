@@ -1,6 +1,16 @@
 {% extends "admin/change_form.html" %}
 {% load i18n admin_static admin_modify dbaas_tags %}
 
+
+{% block extrahead %}
+    {{ block.super }}
+    <script type="text/javascript" src="/static/0.0.11/admin/js/jquery.min.js"></script>
+    <script type="text/javascript" src="/static/0.0.11/admin/js/jquery.init.js"></script>
+    <script type="text/javascript" src="{% static 'js/clone.js' %}"> </script>
+
+{% endblock %}
+
+
 {% block extrastyle %}
     {{ block.super }}
     <link rel="stylesheet" type="text/css" href="{% static 'css/database_admin.css' %}" />
@@ -25,21 +35,21 @@
 
 {% block content %}
 <div id="content-main">
-    
-    
+
+
     <form id="database_clone_form" action="" class="form-horizontal well" method="POST">{% csrf_token %}
-        
+
         <div class="alert alert-info">
              <h4>Warning!</h4>
 The clone process uses databases resources and may have a performance impact on the source database. We recommend that you execute this procedure at lower load periods.
         </div>
-        
+
         <fieldset class="module">
         <h2>Cloning {{ database.name }}</h2>
             {{ form.as_p }}
             <input class="btn" type="submit" value="Submit" />
         </fieldset>
-        
+
     </form>
 </div>
 {% endblock %}
