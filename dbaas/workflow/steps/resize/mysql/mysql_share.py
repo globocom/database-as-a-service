@@ -77,7 +77,11 @@ def start_vm(workflow_dict):
                 LOG.warn(error)
                 raise Exception, error
                 return False
-                    
+        
+        # wait database starting
+        from time import sleep
+        sleep(60)
+        
         return True
     except Exception, e:
         traceback = full_stack()

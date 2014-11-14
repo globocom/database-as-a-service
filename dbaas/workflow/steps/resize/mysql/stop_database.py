@@ -28,7 +28,8 @@ class StopDatabase(BaseStep):
         context_dict = {
             'STARTDB': True,
             'STARTREPLICATION': True,
-            'SETFLIPPER': True
+            'SETFLIPPER': True,
+            'STARTHEARTBEAT': True,
         }
         
         ret_script = run_vm_script(
