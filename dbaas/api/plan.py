@@ -21,7 +21,7 @@ class PlanAPI(viewsets.ReadOnlyModelViewSet):
     serializer_class = PlanSerializer
     queryset = models.Plan.objects.all()
 
-    
+
     def get_queryset(self):
         """
         Optionally restricts the returned purchases to a given user,
@@ -29,10 +29,20 @@ class PlanAPI(viewsets.ReadOnlyModelViewSet):
         """
         queryset = models.Plan.objects.all()
         engine_id = self.request.QUERY_PARAMS.get('engine_id', None)
+        environment_id = self.request.QUERY_PARAMS.get('environment_id', None)
+        old_plan= self.request.QUERY_PARAMS.get('old_plan', None)
+
         try:
-            if engine_id is not None:
+            if (engine_id is not None) and (environment_id is not None) and (old_plan is not None):
+                queryset = models.Plan.objects.filter(engine_type=models.Engine.objects.get(id=engine_id).engine_type,
+                    environments=models.Environment.objects.get(id=environment_id)).exclude(id=old_plan)
+
+            elif engine_id is not None:
                 queryset = models.Plan.objects.filter(engine_type=models.Engine.objects.get(id=engine_id).engine_type)
+
+            elif environment_id is not None:
+                queryset = models.Plan.objects.filter(environments=models.Environment.objects.get(id=environment_id))
         except:
             pass
-    
+
         return queryset
