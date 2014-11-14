@@ -130,6 +130,9 @@ def clone_database(self, origin_database, clone_name, plan, environment, user=No
 	# register History
 	AuditRequest.new_request("clone_database", self.request.kwargs["user"], "localhost")
 	try:
+		LOG.info("id: %s | task: %s | kwargs: %s | args: %s" % (
+			self.request.id, self.request.task, self.request.kwargs, str(self.request.args)))
+
 		task_history = TaskHistory.register(request=self.request, user=user)
 
 		LOG.info("origin_database: %s" % origin_database)
@@ -154,59 +157,52 @@ def clone_database(self, origin_database, clone_name, plan, environment, user=No
 			task_history.update_status_for(TaskHistory.STATUS_ERROR, details=error)
 			return
 
-	except Exception, e:
-	    traceback = full_stack()
-	    LOG.error("Ops... something went wrong: %s" % e)
-	    LOG.error(traceback)
+		dest_database.databaseinfra = result['databaseinfra']
+		dest_database.save()
+		LOG.info("dest_database: %s" % dest_database)
 
-	    if 'result' in locals() and result['created']:
-	        destroy_infra(databaseinfra = result['databaseinfra'], task=task_history)
-
-	    task_history.update_status_for(TaskHistory.STATUS_ERROR, details=traceback)
-	    return
-
-	finally:
-		AuditRequest.cleanup_request()
-
-	try:
-	    dest_database.databaseinfra = result['databaseinfra']
-	    dest_database.save()
-	    LOG.info("dest_database: %s" % dest_database)
-
-	    if Configuration.get_by_name_as_int('laas_integration') == 1:
-	        register_database_laas(dest_database)
-
-	except Exception, e:
-	    traceback = full_stack()
-	    LOG.error("Ops... something went wrong: %s" % e)
-	    LOG.error(traceback)
-	    task_history.update_details(persist=True, details='\n' + traceback)
+		if Configuration.get_by_name_as_int('laas_integration') == 1:
+			register_database_laas(dest_database)
 
 
-	LOG.info("id: %s | task: %s | kwargs: %s | args: %s" % (
-		self.request.id, self.request.task, self.request.kwargs, str(self.request.args)))
-
-	try:
 		args = get_clone_args(origin_database, dest_database)
 		script_name = factory_for(origin_database.databaseinfra).clone()
 		return_code, output = call_script(script_name, working_dir=settings.SCRIPTS_PATH, args=args, split_lines=False)
 		LOG.info("%s - return code: %s" % (self.request.id, return_code))
+
 		if return_code != 0:
 			task_history.update_status_for(TaskHistory.STATUS_ERROR, details=output + "\nTransaction rollback")
 			LOG.error("task id %s - error occurred. Transaction rollback" % self.request.id)
 			rollback_database(dest_database)
+			if 'result' in locals() and result['created']:
+	        			destroy_infra(databaseinfra = result['databaseinfra'], task=task_history)
 		else:
 			task_history.update_dbid(db=dest_database)
 			task_history.update_status_for(TaskHistory.STATUS_SUCCESS, details=output)
+		return
 	except SoftTimeLimitExceeded:
 		LOG.error("task id %s - timeout exceeded" % self.request.id)
 		task_history.update_status_for(TaskHistory.STATUS_ERROR, details="timeout exceeded")
 		rollback_database(dest_database)
+		if 'result' in locals() and result['created']:
+	        		destroy_infra(databaseinfra = result['databaseinfra'], task=task_history)
+	        		return
 	except Exception, e:
-		LOG.error("task id %s error: %s" % (self.request.id, e))
-		task_history.update_status_for(TaskHistory.STATUS_ERROR, details=e)
+		traceback = full_stack()
+		LOG.error("Ops... something went wrong: %s" % e)
+		LOG.error(traceback)
+
 		rollback_database(dest_database)
-	return
+		if 'result' in locals() and result['created']:
+			destroy_infra(databaseinfra = result['databaseinfra'], task=task_history)
+
+		task_history.update_status_for(TaskHistory.STATUS_ERROR, details=traceback)
+
+		return
+
+	finally:
+		AuditRequest.cleanup_request()
+
 
 
 @app.task
