@@ -248,7 +248,15 @@
         $(".btn-plan").on("click", function(ev) {
             $("#plan-type").val(this.dataset.planId);
             $(".btn-plan").attr('disabled', true);
-            $("#database_form").submit();
+            confirmation = confirm('Are you sure?');
+
+            if(confirmation== true){
+                $("#database_form").submit();
+            }else{
+                $(".btn-plan").attr('disabled', false);
+                return false
+            }
+
         });
 
         $( document ).ready(function() {

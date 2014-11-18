@@ -13,7 +13,7 @@ from django.utils.html import format_html, escape
 from ..service.database import DatabaseService
 from ..forms import DatabaseForm, CloneDatabaseForm, ResizeDatabaseForm
 from ..models import Database
-from physical.models import Plan
+from physical.models import Plan, Environment
 from account.models import Team
 from drivers import DatabaseAlreadyExists
 from logical.templatetags import capacity
@@ -117,7 +117,6 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
 	def metrics_html(self, database):
 		html = []
-		from physical.models import Plan
 		if database.databaseinfra.plan.provider == Plan.PREPROVISIONED:
 			html.append("N/A")
 		else:
@@ -337,7 +336,9 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 			if form.is_valid():  # All validation rules pass
 				# Process the data in form.cleaned_data
 				database_clone = form.cleaned_data['database_clone']
-				Database.clone(database, database_clone, request.user)
+				plan = form.cleaned_data['plan']
+				environment= form.cleaned_data['environment']
+				Database.clone(database, database_clone, plan, environment, request.user)
 				url = reverse('admin:notification_taskhistory_changelist')
 				return HttpResponseRedirect(url + "?user=%s" % request.user.username)  # Redirect after POST
 		else:

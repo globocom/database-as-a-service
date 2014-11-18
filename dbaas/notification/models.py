@@ -100,8 +100,8 @@ class TaskHistory(BaseModel):
 			task_history.arguments = "Database name: {0},\nUser: {1}".format(
 				request.args[0].name, request.args[1])
 		elif request.task=='notification.tasks.clone_database':
-			task_history.arguments = "Database name: {0},\nClone: {1}".format(
-				request.args[0].name, request.args[1])
+			task_history.arguments = "Database name: {0},\nClone: {1},\nPlan: {2},\nEnvironment: {3}".format(
+				request.args[0].name, request.args[1], request.args[2], request.args[3])
 		else:
 			task_history.arguments = request.args
 
