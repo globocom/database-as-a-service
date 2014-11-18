@@ -4,7 +4,7 @@ from dbaas_cloudstack.models import HostAttr
 from util import exec_remote_command, check_ssh
 from workflow.exceptions.error_codes import DBAAS_0015
 from util import full_stack
-import re
+from util import build_context_script
 from dbaas_cloudstack.provider import CloudStackProvider
 from dbaas_credentials.models import CredentialType
 from util import get_credentials_for
@@ -12,18 +12,9 @@ from util import get_credentials_for
 LOG = logging.getLogger(__name__)
 
 
-def build_context_script(contextdict, script):
-    from django.template import Context, Template
-    context = Context(contextdict)
-    template = Template(script)
-    return template.render(context)
-
 def run_vm_script(workflow_dict, context_dict, script):
     try:
         instances_detail = workflow_dict['instances_detail']
-
-        regex = re.compile(r'[\r]')
-        script = regex.sub('', str(script))
         
         final_context_dict = dict(context_dict.items() + workflow_dict['initial_context_dict'].items())
         
@@ -76,7 +67,6 @@ def start_vm(workflow_dict):
                 error = "Host %s is not ready..." % host
                 LOG.warn(error)
                 raise Exception, error
-                return False
         
         # wait database starting
         from time import sleep
