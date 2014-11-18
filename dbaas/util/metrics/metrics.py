@@ -317,6 +317,8 @@ MYSQL_METRICS = VM_METRICS + (
     MYSQL_QUERY_CACHE_MEM,
 )
 
+REDIS_METRICS = VM_METRICS + (
+)
 
 def make_request(url):
     LOG.info("Requesting {}".format(url))
@@ -364,6 +366,8 @@ def get_metric_datapoints_for(engine, db_name, hostname, url, metric_name = None
         graphs = MONGODB_METRICS
     elif engine=="mysql":
         graphs = MYSQL_METRICS
+    elif engine=="redis":
+        graphs = REDIS_METRICS
     else:
         graphs = None
 
