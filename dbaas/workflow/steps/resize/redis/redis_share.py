@@ -19,9 +19,11 @@ def run_vm_script(workflow_dict, context_dict, script):
         final_context_dict = dict(context_dict.items() + workflow_dict['initial_context_dict'].items())
         
         for instance_detail in instances_detail:
-            host = instance_detail['instance'].hostname
+            instance = instance_detail['instance']
+            host = instance.hostname
             host_csattr = HostAttr.objects.get(host=host) 
-            final_context_dict['IS_MASTER'] = instance_detail['is_master']
+            final_context_dict['HOSTADDRESS'] = instance.address
+            final_context_dict['PORT'] = instance.port
             command = build_context_script(final_context_dict, script)
             output = {} 
             return_code = exec_remote_command(server = host.address,
@@ -67,10 +69,6 @@ def start_vm(workflow_dict):
                 error = "Host %s is not ready..." % host
                 LOG.warn(error)
                 raise Exception, error
-        
-        # wait database starting
-        from time import sleep
-        sleep(60)
         
         return True
     except Exception, e:

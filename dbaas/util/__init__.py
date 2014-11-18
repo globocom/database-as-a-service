@@ -256,3 +256,12 @@ def retry(ExceptionToCheck, tries=10, delay=3, backoff=2):
             raise lastException
         return f_retry # true decorator
     return deco_retry
+
+def build_context_script(contextdict, script):
+    from django.template import Context, Template
+    import re
+    regex = re.compile(r'[\r]')
+    script = regex.sub('', str(script))
+    context = Context(contextdict)
+    template = Template(script)
+    return template.render(context)

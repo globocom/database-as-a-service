@@ -16,142 +16,142 @@ LOG = logging.getLogger(__name__)
 
 
 class InitDatabaseMongoDB(BaseStep):
-	def __unicode__(self):
-		return "Initializing database..."
+    def __unicode__(self):
+        return "Initializing database..."
 
-	def do(self, workflow_dict):
-		try:
+    def do(self, workflow_dict):
+        try:
 
-			LOG.info("Getting cloudstack credentials...")
-			cs_credentials = get_credentials_for(
-				environment=workflow_dict['environment'],
-				credential_type=CredentialType.CLOUDSTACK)
+            LOG.info("Getting cloudstack credentials...")
+            cs_credentials = get_credentials_for(
+                environment=workflow_dict['environment'],
+                credential_type=CredentialType.CLOUDSTACK)
 
-			cs_provider = CloudStackProvider(credentials=cs_credentials)
+            cs_provider = CloudStackProvider(credentials=cs_credentials)
 
-			mongodbkey = ''.join(random.choice(string.hexdigits) for i in range(50))
+            mongodbkey = ''.join(random.choice(string.hexdigits) for i in range(50))
 
-			workflow_dict['replicasetname'] = 'RepicaSet_' + workflow_dict['databaseinfra'].name
-			
-			statsd_credentials = get_credentials_for(
-				environment=workflow_dict['environment'],
-				credential_type=CredentialType.STATSD)
-			
-			statsd_host, statsd_port = statsd_credentials.endpoint.split(':')
+            workflow_dict['replicasetname'] = 'RepicaSet_' + workflow_dict['databaseinfra'].name
+            
+            statsd_credentials = get_credentials_for(
+                environment=workflow_dict['environment'],
+                credential_type=CredentialType.STATSD)
+            
+            statsd_host, statsd_port = statsd_credentials.endpoint.split(':')
 
-			for index, instance in enumerate(workflow_dict['instances']):
-				host = instance.hostname
+            for index, instance in enumerate(workflow_dict['instances']):
+                host = instance.hostname
 
-				LOG.info("Getting vm credentials...")
-				host_csattr = CsHostAttr.objects.get(host=host)
+                LOG.info("Getting vm credentials...")
+                host_csattr = CsHostAttr.objects.get(host=host)
 
-				LOG.info("Cheking host ssh...")
-				host_ready = check_ssh(
-					server=host.address, username=host_csattr.vm_user, password=host_csattr.vm_password, wait=5,
-					interval=10)
+                LOG.info("Cheking host ssh...")
+                host_ready = check_ssh(
+                    server=host.address, username=host_csattr.vm_user, password=host_csattr.vm_password, wait=5,
+                    interval=10)
 
-				if not host_ready:
-					LOG.warn("Host %s is not ready..." % host)
-					return False
+                if not host_ready:
+                    LOG.warn("Host %s is not ready..." % host)
+                    return False
 
-				if instance.is_arbiter:
-					contextdict = {
-						'HOST': workflow_dict['hosts'][index].hostname.split('.')[0],
-						'DATABASENAME': workflow_dict['name'],
-						'ENGINE': 'mongodb',
-						'STATSD_HOST': statsd_host,
-						'STATSD_PORT': statsd_port,
-					}
-					databaserule = 'ARBITER'
-				else:
-					host_nfsattr = HostAttr.objects.get(host=host)
-					contextdict = {
-						'EXPORTPATH': host_nfsattr.nfsaas_path,
-						'HOST': workflow_dict['hosts'][index].hostname.split('.')[0],
-						'DATABASENAME': workflow_dict['name'],
-						'ENGINE': 'mongodb',
-						'DBPASSWORD': get_credentials_for(environment=workflow_dict['environment'],
-						                                  credential_type=CredentialType.MONGODB).password,
-						'STATSD_HOST': statsd_host,
-						'STATSD_PORT': statsd_port,
-					}
+                if instance.is_arbiter:
+                    contextdict = {
+                        'HOST': workflow_dict['hosts'][index].hostname.split('.')[0],
+                        'DATABASENAME': workflow_dict['name'],
+                        'ENGINE': 'mongodb',
+                        'STATSD_HOST': statsd_host,
+                        'STATSD_PORT': statsd_port,
+                    }
+                    databaserule = 'ARBITER'
+                else:
+                    host_nfsattr = HostAttr.objects.get(host=host)
+                    contextdict = {
+                        'EXPORTPATH': host_nfsattr.nfsaas_path,
+                        'HOST': workflow_dict['hosts'][index].hostname.split('.')[0],
+                        'DATABASENAME': workflow_dict['name'],
+                        'ENGINE': 'mongodb',
+                        'DBPASSWORD': get_credentials_for(environment=workflow_dict['environment'],
+                                                          credential_type=CredentialType.MONGODB).password,
+                        'STATSD_HOST': statsd_host,
+                        'STATSD_PORT': statsd_port,
+                    }
 
-					if index == 0:
-						databaserule = 'PRIMARY'
-					else:
-						databaserule = 'SECONDARY'
+                    if index == 0:
+                        databaserule = 'PRIMARY'
+                    else:
+                        databaserule = 'SECONDARY'
 
-				if len(workflow_dict['hosts']) > 1:
-					LOG.info("Updating contexdict for %s" % host)
+                if len(workflow_dict['hosts']) > 1:
+                    LOG.info("Updating contexdict for %s" % host)
 
-					contextdict.update({
-						'REPLICASETNAME': workflow_dict['replicasetname'],
-						'HOST01': workflow_dict['hosts'][0],
-						'HOST02': workflow_dict['hosts'][1],
-						'HOST03': workflow_dict['hosts'][2],
-						'MONGODBKEY': mongodbkey,
-						'DATABASERULE': databaserule,
-						'SECOND_SCRIPT_FILE': '/opt/dbaas/scripts/dbaas_second_script.sh',
-						'HOST': workflow_dict['hosts'][index].hostname.split('.')[0],
-					})
+                    contextdict.update({
+                        'REPLICASETNAME': workflow_dict['replicasetname'],
+                        'HOST01': workflow_dict['hosts'][0],
+                        'HOST02': workflow_dict['hosts'][1],
+                        'HOST03': workflow_dict['hosts'][2],
+                        'MONGODBKEY': mongodbkey,
+                        'DATABASERULE': databaserule,
+                        'SECOND_SCRIPT_FILE': '/opt/dbaas/scripts/dbaas_second_script.sh',
+                        'HOST': workflow_dict['hosts'][index].hostname.split('.')[0],
+                    })
 
-				LOG.info("Updating userdata for %s" % host)
+                LOG.info("Updating userdata for %s" % host)
 
-				planattr = PlanAttr.objects.get(plan=workflow_dict['plan'])
-				cs_provider.update_userdata(
-					vm_id=host_csattr.vm_id, contextdict=contextdict, userdata=planattr.userdata)
+                planattr = PlanAttr.objects.get(plan=workflow_dict['plan'])
+                cs_provider.update_userdata(
+                    vm_id=host_csattr.vm_id, contextdict=contextdict, userdata=planattr.userdata)
 
-				LOG.info("Executing script on %s" % host)
+                LOG.info("Executing script on %s" % host)
 
-				return_code = exec_remote_command(server=host.address,
-				                                  username=host_csattr.vm_user,
-				                                  password=host_csattr.vm_password,
-				                                  command='/opt/dbaas/scripts/dbaas_userdata_script.sh')
+                return_code = exec_remote_command(server=host.address,
+                                                  username=host_csattr.vm_user,
+                                                  password=host_csattr.vm_password,
+                                                  command='/opt/dbaas/scripts/dbaas_userdata_script.sh')
 
-				if return_code != 0:
-					return False
+                if return_code != 0:
+                    return False
 
-			if len(workflow_dict['hosts']) > 1:
-				for host in workflow_dict['hosts']:
+            if len(workflow_dict['hosts']) > 1:
+                for host in workflow_dict['hosts']:
 
-					LOG.info("Executing script on %s" % host)
+                    LOG.info("Executing script on %s" % host)
 
-					return_code = exec_remote_command(server=host.address,
-					                                  username=host_csattr.vm_user,
-					                                  password=host_csattr.vm_password,
-					                                  command=contextdict['SECOND_SCRIPT_FILE'])
+                    return_code = exec_remote_command(server=host.address,
+                                                      username=host_csattr.vm_user,
+                                                      password=host_csattr.vm_password,
+                                                      command=contextdict['SECOND_SCRIPT_FILE'])
 
-					if return_code != 0:
-						return False
+                    if return_code != 0:
+                        return False
 
-			return True
-		except Exception, e:
-			traceback = full_stack()
+            return True
+        except Exception, e:
+            traceback = full_stack()
 
-			workflow_dict['exceptions']['error_codes'].append(DBAAS_0014)
-			workflow_dict['exceptions']['traceback'].append(traceback)
+            workflow_dict['exceptions']['error_codes'].append(DBAAS_0014)
+            workflow_dict['exceptions']['traceback'].append(traceback)
 
-			return False
+            return False
 
-	def undo(self, workflow_dict):
-		try:
-			LOG.info("Remove all database files")
+    def undo(self, workflow_dict):
+        try:
+            LOG.info("Remove all database files")
 
-			for host in workflow_dict['hosts']:
-				LOG.info("Removing database files on host %s" % host)
-				host_csattr = CsHostAttr.objects.get(host=host)
+            for host in workflow_dict['hosts']:
+                LOG.info("Removing database files on host %s" % host)
+                host_csattr = CsHostAttr.objects.get(host=host)
 
-				exec_remote_command(server=host.address,
-				                    username=host_csattr.vm_user,
-				                    password=host_csattr.vm_password,
-				                    command="/opt/dbaas/scripts/dbaas_deletedatabasefiles.sh")
+                exec_remote_command(server=host.address,
+                                    username=host_csattr.vm_user,
+                                    password=host_csattr.vm_password,
+                                    command="/opt/dbaas/scripts/dbaas_deletedatabasefiles.sh")
 
-			return True
+            return True
 
-		except Exception, e:
-			traceback = full_stack()
+        except Exception, e:
+            traceback = full_stack()
 
-			workflow_dict['exceptions']['error_codes'].append(DBAAS_0014)
-			workflow_dict['exceptions']['traceback'].append(traceback)
+            workflow_dict['exceptions']['error_codes'].append(DBAAS_0014)
+            workflow_dict['exceptions']['traceback'].append(traceback)
 
-			return False
+            return False

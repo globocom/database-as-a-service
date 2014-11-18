@@ -26,6 +26,9 @@ class DriverFactory(object):
         elif re.match(r'^mysql.*', driver_name):
             from .mysqldb import MySQL
             return MySQL
+        elif re.match(r'^redis.*', driver_name):
+            from .redis import Redis
+            return Redis
         elif re.match(r'^fake.*', driver_name):
             from .fake import FakeDriver
             return FakeDriver

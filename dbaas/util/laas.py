@@ -38,12 +38,14 @@ def register_database_laas(database):
         "users" : get_users_for_team(database.team),
     }
     
-    from util.providers import MYSQL, MONGODB, get_engine
+    from util.providers import MYSQL, MONGODB, REDIS, get_engine
     engine = get_engine(database.engine_type)
     if engine == MYSQL:
         app = ["mysqld", "mysql-slow"]
     elif engine == MONGODB:
         app = ["mongod.27017"]
+    elif engine == REDIS:
+        app = ["redis"]
     else:
         app =[]
 
