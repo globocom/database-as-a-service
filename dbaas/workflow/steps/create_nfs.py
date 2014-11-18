@@ -11,60 +11,60 @@ LOG = logging.getLogger(__name__)
 
 
 class CreateNfs(BaseStep):
-	def __unicode__(self):
-		return "Requesting NFS volume..."
+    def __unicode__(self):
+        return "Requesting NFS volume..."
 
-	def do(self, workflow_dict):
-		try:
+    def do(self, workflow_dict):
+        try:
 
-			workflow_dict['disks'] = []
+            workflow_dict['disks'] = []
 
-			for instance in workflow_dict['instances']:
-				host = instance.hostname
+            for instance in workflow_dict['instances']:
+                host = instance.hostname
 
-				if instance.is_arbiter:
-					LOG.info("Do not creat nfsaas disk for Arbiter...")
-					continue
+                if instance.is_arbiter:
+                    LOG.info("Do not creat nfsaas disk for Arbiter...")
+                    continue
 
-				LOG.info("Creating nfsaas disk...")
+                LOG.info("Creating nfsaas disk...")
 
-				disk = NfsaasProvider(
-				).create_disk(environment=workflow_dict['environment'],
-				              plan=workflow_dict[
-					              'plan'],
-				              host=host)
+                disk = NfsaasProvider(
+                ).create_disk(environment=workflow_dict['environment'],
+                              plan=workflow_dict[
+                                  'plan'],
+                              host=host)
 
-				if not disk:
-					return False
+                if not disk:
+                    return False
 
-				workflow_dict['disks'].append(disk)
+                workflow_dict['disks'].append(disk)
 
-			return True
+            return True
 
-		except Exception, e:
-			traceback = full_stack()
+        except Exception, e:
+            traceback = full_stack()
 
-			workflow_dict['exceptions']['error_codes'].append(DBAAS_0009)
-			workflow_dict['exceptions']['traceback'].append(traceback)
+            workflow_dict['exceptions']['error_codes'].append(DBAAS_0009)
+            workflow_dict['exceptions']['traceback'].append(traceback)
 
-			return False
+            return False
 
-	def undo(self, workflow_dict):
-		try:
-			for host in workflow_dict['hosts']:
-				LOG.info("Destroying nfsaas disk...")
+    def undo(self, workflow_dict):
+        try:
+            for host in workflow_dict['hosts']:
+                LOG.info("Destroying nfsaas disk...")
 
-				disk = NfsaasProvider().destroy_disk(
-					environment=workflow_dict['environment'], plan=workflow_dict['plan'], host=host)
+                disk = NfsaasProvider().destroy_disk(
+                    environment=workflow_dict['environment'], plan=workflow_dict['plan'], host=host)
 
-				if not disk:
-					return False
+                if not disk:
+                    return False
 
-			return True
-		except Exception, e:
-			traceback = full_stack()
+            return True
+        except Exception, e:
+            traceback = full_stack()
 
-			workflow_dict['exceptions']['error_codes'].append(DBAAS_0009)
-			workflow_dict['exceptions']['traceback'].append(traceback)
+            workflow_dict['exceptions']['error_codes'].append(DBAAS_0009)
+            workflow_dict['exceptions']['traceback'].append(traceback)
 
-			return False
+            return False
