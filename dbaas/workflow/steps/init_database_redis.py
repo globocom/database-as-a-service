@@ -60,6 +60,11 @@ class InitDatabaseRedis(BaseStep):
                     'DBPASSWORD': workflow_dict['databaseinfra'].password,
                     'HOSTADDRESS':  instance.address,
                     'PORT': instance.port,
+                    'ENGINE': 'redis',
+                    'DATABASENAME': workflow_dict['name'],
+                    'HOST': workflow_dict['hosts'][index].hostname.split('.')[0],
+                    'STATSD_HOST': statsd_host,
+                    'STATSD_PORT': statsd_port,
                 }
                 
                 LOG.info(contextdict)
