@@ -20,11 +20,11 @@ class Redis(BaseDriver):
     #RESERVED_DATABASES_NAME = ['admin', 'config', 'local']
 
     def get_connection(self, database=None):
-        uri = "redis://%s@<password>" % (self.databaseinfra.endpoint)
+        uri = "redis://:<password>@%s/0" % (self.databaseinfra.endpoint)
         return uri
 
     def get_connection_dns(self, database=None):
-        uri = "redis://%s@<password>" % (self.databaseinfra.endpoint_dns)
+        uri = "redis://:<password>@%s/0" % (self.databaseinfra.endpoint_dns)
         return uri
 
     def __get_admin_connection(self, instance=None):
