@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.0.31
+* Clone to different environments and plans
+* New Engine Redis
+
 ## 0.0.30
 * Bug fix resize mysql infra
 
