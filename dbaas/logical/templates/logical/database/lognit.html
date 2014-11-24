@@ -1,0 +1,33 @@
+{% extends "admin/change_list_results.html" %}
+{% load i18n admin_static admin_modify dbaas_tags %}
+
+{% block extrahead %}
+
+    {{ block.super }}
+    <script type="text/javascript" src="{% static 'js/mustache.js' %}"></script>
+    <script type="text/javascript" src="{% static 'js/database_admin.js' %}"></script>
+
+    <script type="text/javascript" >
+    django.jQuery(function() {
+        {% for credential in original.credentials.all %}
+        CredentialManager.include({"credential" : { "user": "{{credential.user}}", "password": "{{credential.password}}", "pk": "{{credential.pk}}" } });
+        {% endfor %}
+    });
+    </script>
+
+{% endblock %}
+
+{% block extrastyle %}
+    {{ block.super }}
+{% endblock %}
+
+
+{% block after_related_objects %}
+<fieldset class="module">
+</fieldset>
+
+{% if original.get_log_url %} 
+
+{% endif %}
+{% endblock %}
+{% block submit_buttons_bottom %}{% submit_row_extended %}{% endblock %}
