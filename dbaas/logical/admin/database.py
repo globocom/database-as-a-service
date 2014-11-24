@@ -436,15 +436,16 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 		                          context_instance=RequestContext(request))
 
 	def database_log_view(self, request, database_id):
+
 		database = Database.objects.get(id=database_id)
 		instance = database.infra.instances.all()[0]
 
-		if request.method == 'GET':
-			hostname = request.GET.get('hostname')
-
-		if hostname is None:
-			hostname = instance.hostname.hostname.split('.')[0]
-
+#		if request.method == 'GET':
+#			hostname = request.GET.get('hostname')
+#
+#		if hostname is None:
+#			hostname = instance.hostname.hostname.split('.')[0]
+#
 		return render_to_response("logical/database/lognit.html",
 		                          locals(),
 		                          context_instance=RequestContext(request))

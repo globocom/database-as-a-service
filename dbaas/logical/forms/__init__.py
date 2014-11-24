@@ -8,7 +8,7 @@ from ..models import Database, Credential, Project
 from physical.models import Plan, Environment, DatabaseInfra, Engine
 from util import make_db_random_password
 
-from .database import DatabaseForm, CloneDatabaseForm, ResizeDatabaseForm
+from .database import DatabaseForm, CloneDatabaseForm, ResizeDatabaseForm, LogDatabaseForm
 from .credential import CredentialForm
 from .project import ProjectForm
 

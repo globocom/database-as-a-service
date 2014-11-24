@@ -217,16 +217,3 @@ class LogDatabaseForm(forms.Form):
 
             if instance:
                 LOG.debug("instance database form found! %s" % instance)
-
-    def clean(self):
-        cleaned_data = super(ResizeDatabaseForm, self).clean()
-
-        if 'target_offer' in cleaned_data:
-
-            if cleaned_data['target_offer'].offering.serviceofferingid == cleaned_data['original_offering_id']:
-               raise forms.ValidationError(_("new offering must be different from the current"))
-
-            if self._errors:
-                return cleaned_data
-
-        return cleaned_data

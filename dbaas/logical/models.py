@@ -209,6 +209,10 @@ class Database(BaseModel):
         url = "%s%s" % (credential.endpoint, get_group_name(self))
         return "%s" % (url)
 
+    def get_is_preprovisioned(self):
+        if self.databaseinfra.plan.provider == Plan.PREPROVISIONED:
+            return True
+
     endpoint = property(get_endpoint)
     endpoint_dns = property(get_endpoint_dns)
 
@@ -322,6 +326,9 @@ class Database(BaseModel):
 
     def get_resize_url(self):
         return "/admin/logical/database/{}/resize/".format(self.id)
+
+    def get_log_url(self):
+        return "/admin/logical/database/{}/lognit/".format(self.id)
 
     def get_cloudstack_service_offering_id(self):
         LOG.info("Get offering")
