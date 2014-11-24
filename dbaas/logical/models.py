@@ -411,10 +411,8 @@ database post save signal. Creates the database in the driver and creates a new 
     database = kwargs.get("instance")
     is_new = kwargs.get("created")
     LOG.debug("database post-save triggered")
-    if is_new:
-        LOG.info(
-            "a new database (%s) were created... provision it in the engine" %
-            (database.name))
+    if is_new and database.engine_type != 'redis':
+        LOG.info("a new database (%s) were created... provision it in the engine" % (database.name))
         engine = factory_for(database.databaseinfra)
         engine.create_database(database)
         database.automatic_create_first_credential()

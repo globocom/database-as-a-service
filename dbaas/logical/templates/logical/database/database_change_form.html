@@ -9,9 +9,13 @@
 
     <script type="text/javascript" >
     django.jQuery(function() {
-        {% for credential in original.credentials.all %}
-        CredentialManager.include({"credential" : { "user": "{{credential.user}}", "password": "{{credential.password}}", "pk": "{{credential.pk}}" } });
-        {% endfor %}
+        {% ifequal original.engine_type "redis" %}
+            CredentialManager.include({"credential" : {  "password": "{{original.databaseinfra.password}}", "pk": "001" } });
+        {% else %}
+            {% for credential in original.credentials.all %}
+            CredentialManager.include({"credential" : { "user": "{{credential.user}}", "password": "{{credential.password}}", "pk": "{{credential.pk}}" } });
+            {% endfor %}
+        {% endifequal %}
     });
     </script>
 
@@ -24,8 +28,28 @@
 
 
 {% block after_related_objects %}
+
+
 <fieldset class="module">
-    <h2>Credentials</h2>
+   
+{% ifequal original.engine_type "redis" %}
+ <h2>Password</h2>
+<table id="table-credentials" class="table table-striped" data-database-id="{{original.pk}}" >
+        <tbody>
+            {% verbatim %}
+            <script id="credential-template" type="text/template">
+                <tr class="credential" data-credential-pk="{{credential.pk}}"  >
+                    <td>
+                        <a href="#" class="btn show-password"  data-content="{{credential.password}}" data-placement="right" data-container="body" data-toggle="popover" id="show_password_redis" >show password</a>
+                     </td>
+                </tr>
+            </script>
+            {% endverbatim %}
+        </tbody>
+
+</table>
+{% else %}
+ <h2>Credentials</h2>
     <table id="table-credentials" class="table table-striped" data-database-id="{{original.pk}}" >
         <thead>
             <tr>
@@ -58,7 +82,10 @@
             </tr>
         </tfoot>
     </table>
+{% endifequal %}
 </fieldset>
+
+
 <h2>Endpoint</h2>
  <table id="table-credentials-endpoint" class="table table-striped" data-database-id="{{original.pk}}" >
      <tr class="credential" data-credential-pk="{{credential.pk}}"  >
