@@ -402,8 +402,9 @@ def get_metric_datapoints_for(engine, db_name, hostname, url, metric_name = None
     for graph in graphs:
         newserie = []
 
-        if metric_name is not None and graph['name'] != metric_name:
+        if metric_name is None:
             zoomtype = ''
+        elif graph['name'] != metric_name:
             continue
         else:
             zoomtype = 'x'
