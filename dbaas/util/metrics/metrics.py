@@ -288,6 +288,31 @@ MYSQL_QUERY_CACHE_MEM = {"name": "mysql_query_cache_mem",
            "normalize_series": False
 }
 
+REDIS_MEMORY = {"name": "redis_mem",
+                   "series":[
+                                   { "name": "used memory" , "data": "redis.used_memory"},
+                   ],
+           "type": "area",
+           "tooltip_point_format": """ <span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b> <br/>""",
+           "y_axis_title": "Count",
+           "stacking": '',
+           "graph_name": "Redis Used Memory",
+           "normalize_series": False
+}
+
+REDIS_CON = {"name": "redis_connections",
+                   "series":[
+                                   { "name": "clients" , "data": "redis.connected_clients"},
+                   ],
+           "type": "line",
+           "tooltip_point_format": """ <span style="color:{series.color}">{series.name}</span>: <b>{point.y}</b> <br/>""",
+           "y_axis_title": "Connections",
+           "stacking": '',
+           "graph_name": "Redis Connections",
+           "normalize_series": False
+}
+
+
 VM_METRICS = (
     CPU,
     MEMORY,
@@ -318,6 +343,8 @@ MYSQL_METRICS = VM_METRICS + (
 )
 
 REDIS_METRICS = VM_METRICS + (
+REDIS_MEMORY,
+REDIS_CON,
 )
 
 def make_request(url):
