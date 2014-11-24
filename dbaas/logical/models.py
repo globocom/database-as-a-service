@@ -327,7 +327,7 @@ class Database(BaseModel):
     def get_resize_url(self):
         return "/admin/logical/database/{}/resize/".format(self.id)
 
-    def get_log_url(self):
+    def get_lognit_url(self):
         return "/admin/logical/database/{}/lognit/".format(self.id)
 
     def get_cloudstack_service_offering_id(self):
