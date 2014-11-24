@@ -91,19 +91,19 @@
      <tr class="credential" data-credential-pk="{{credential.pk}}"  >
          {{original.get_endpoint_dns}}
      </tr>
- </table>
-{% if original.get_log_url %} 
-<h2>Monitoracao</h2>
+ </table> 
+<h2>Monitoring</h2>
  <table id="table-mais" class="table table-striped">
     <tr >
         <div class="btn-toolbar">
             <div class="btn-group-lg">
-                <a href="#" class="btn btn-primary" title="Métricas" data-content="Metricas">Metricas</a>
-                <a href="{{original.get_log_url}}" class="btn btn-primary" title="Logs" data-content="Logs">Logs</a>
+                <a href="metrics" class="btn btn-primary" title="Metrics" data-content="Metrics">Metrics</a>
+                {% if original.get_log_url %}
+                <a href="{{original.get_log_url}}" class="btn btn-primary" title="Logs" data-content="Logs" target="_blank">Logs</a>
+                {% endif %}
             </div>
         </div>
     </tr>
  </table>
- {% endif %}
 {% endblock %}
 {% block submit_buttons_bottom %}{% submit_row_extended %}{% endblock %}
