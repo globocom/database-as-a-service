@@ -435,6 +435,19 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 		                          locals(),
 		                          context_instance=RequestContext(request))
 
+	def database_log_view(self, request, database_id):
+		database = Database.objects.get(id=database_id)
+		instance = database.infra.instances.all()[0]
+
+		if request.method == 'GET':
+			hostname = request.GET.get('hostname')
+
+		if hostname is None:
+			hostname = instance.hostname.hostname.split('.')[0]
+
+		return render_to_response("logical/database/lognit.html",
+		                          locals(),
+		                          context_instance=RequestContext(request))
 
 	def get_urls(self):
 		urls = super(DatabaseAdmin, self).get_urls()
@@ -449,6 +462,9 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 		                       name="database_metricdetail"),
 
 		                   url(r'^/?(?P<database_id>\d+)/resize/$', self.admin_site.admin_view(self.database_resize_view),
+		                       name="database_resize"),
+
+		                   url(r'^/?(?P<database_id>\d+)/lognit/$', self.admin_site.admin_view(self.database_log_view),
 		                       name="database_resize"),
 
 		)

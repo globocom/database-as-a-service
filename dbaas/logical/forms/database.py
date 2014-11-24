@@ -95,6 +95,7 @@ class DatabaseForm(models.ModelForm):
     def define_offering_field(self, database_instance):
        self.fields['offering']=forms.CharField(widget=DatabaseOfferingWidget(attrs={'readonly':'readonly', 'database': database_instance }), required=False)
        self.initial["offering"]=database_instance.offering
+       # forms.TextInput
 
     def __init__(self, *args, **kwargs):
 
@@ -192,6 +193,30 @@ class ResizeDatabaseForm(forms.Form):
                                                                                                     ).exclude(offering__serviceofferingid=origin_offer),
                                         label=u'New Offering',
                                         required=True)
+
+    def clean(self):
+        cleaned_data = super(ResizeDatabaseForm, self).clean()
+
+        if 'target_offer' in cleaned_data:
+
+            if cleaned_data['target_offer'].offering.serviceofferingid == cleaned_data['original_offering_id']:
+               raise forms.ValidationError(_("new offering must be different from the current"))
+
+            if self._errors:
+                return cleaned_data
+
+        return cleaned_data
+
+class LogDatabaseForm(forms.Form):
+    database_id = forms.CharField(widget=forms.HiddenInput())
+    def __init__(self, *args, **kwargs):
+
+        super(LogDatabaseForm, self).__init__(*args, **kwargs)
+        if 'initial' in kwargs:
+            instance = Database.objects.get(id=kwargs['initial']['database_id'])
+
+            if instance:
+                LOG.debug("instance database form found! %s" % instance)
 
     def clean(self):
         cleaned_data = super(ResizeDatabaseForm, self).clean()

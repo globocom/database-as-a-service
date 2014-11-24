@@ -22,6 +22,7 @@
     <link rel="stylesheet" type="text/css" href="{% static 'css/database_admin.css' %}" />
 {% endblock %}
 
+
 {% block after_related_objects %}
 <fieldset class="module">
     <h2>Credentials</h2>
@@ -64,17 +65,18 @@
          {{original.get_endpoint_dns}}
      </tr>
  </table>
-
-{% if original.get_log_url %}
-<h2>Log</h2>
- <table id="table-log" class="table table-striped" data-database-id="{{original.pk}}" >
-     <tr class="credential" data-credential-pk="log_pk"  >
-         {{original.get_log_url|safe}}
-     </tr>
+{% if original.get_log_url %} 
+<h2>Monitoracao</h2>
+ <table id="table-mais" class="table table-striped">
+    <tr >
+        <div class="btn-toolbar">
+            <div class="btn-group-lg">
+                <a href="#" class="btn btn-primary" title="Métricas" data-content="Metricas">Metricas</a>
+                <a href="{{original.get_log_url}}" class="btn btn-primary" title="Logs" data-content="Logs">Logs</a>
+            </div>
+        </div>
+    </tr>
  </table>
-{% endif %}
-
-
+ {% endif %}
 {% endblock %}
-
 {% block submit_buttons_bottom %}{% submit_row_extended %}{% endblock %}

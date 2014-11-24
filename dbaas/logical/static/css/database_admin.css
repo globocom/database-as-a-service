@@ -63,3 +63,16 @@
 [class^="icon-"], [class*=" icon-"] {
     margin-top: 3px;
 }
+
+.metrica {
+  background-image:linear-gradient(to bottom,#fff,#05a5a5);
+}
+
+.metrica:hover {
+    background-position: 0 0;
+}
+
+[class^="logs"], [class*=" logs"]
+{
+  background-image:linear-gradient(to bottom,#fff,#15a5a5);
+}

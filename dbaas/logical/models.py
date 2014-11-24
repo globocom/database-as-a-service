@@ -207,7 +207,7 @@ class Database(BaseModel):
 
         credential = get_credentials_for(environment=self.environment, credential_type=CredentialType.LOGNIT)
         url = "%s%s" % (credential.endpoint, get_group_name(self))
-        return "<a href='%s' target='_blank'>%s</a>" % (url, url)
+        return "%s" % (url)
 
     endpoint = property(get_endpoint)
     endpoint_dns = property(get_endpoint_dns)
