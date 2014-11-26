@@ -105,7 +105,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     def clone_html(self, database):
         html = []
 
-        if database.is_in_quarantine or database.status != database.ALIVE:
+        if database.is_in_quarantine or database.status != database.ALIVE or database.engine_type == 'redis':
             html.append("N/A")
         else:
             html.append("<a class='btn btn-info' href='%s'><i class='icon-file icon-white'></i></a>" % reverse(
