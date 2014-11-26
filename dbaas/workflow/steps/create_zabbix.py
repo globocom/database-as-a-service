@@ -23,6 +23,8 @@ class CreateZabbix(BaseStep):
                 dbtype = "mysql"
             elif workflow_dict['enginecod'] == workflow_dict['MONGODB']:
                 dbtype = "mongodb"
+            elif workflow_dict['enginecod'] == workflow_dict['REDIS']:
+                dbtype = "redis"
 
             LOG.info("Creating zabbix monitoring for %s..." % dbtype)
 
@@ -45,7 +47,14 @@ class CreateZabbix(BaseStep):
 
             LOG.info("Destroying zabbix monitoring...")
 
-            ZabbixProvider().destroy_monitoring(dbinfra=workflow_dict['databaseinfra'])
+            if workflow_dict['enginecod'] == workflow_dict['MYSQL']:
+                dbtype = "mysql"
+            elif workflow_dict['enginecod'] == workflow_dict['MONGODB']:
+                dbtype = "mongodb"
+            elif workflow_dict['enginecod'] == workflow_dict['REDIS']:
+                dbtype = "redis"
+
+            ZabbixProvider().destroy_monitoring(dbinfra=workflow_dict['databaseinfra'], dbtype=dbtype)
 
             return True
         except Exception, e:
