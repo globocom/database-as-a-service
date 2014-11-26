@@ -60,9 +60,9 @@ class Database(BaseModel):
     INITIALIZING = 2
 
     DB_STATUS = (
-    	(DEAD, 'Dead'),
-    	(ALIVE, 'Alive'),
-    	(INITIALIZING, 'Initializing')
+        (DEAD, 'Dead'),
+        (ALIVE, 'Alive'),
+        (INITIALIZING, 'Initializing')
     )
 
 
@@ -87,55 +87,55 @@ class Database(BaseModel):
     environment = models.ForeignKey(Environment, related_name="databases", on_delete=models.PROTECT)
 
     def __unicode__(self):
-    	return u"%s" % self.name
+        return u"%s" % self.name
 
 
     class Meta:
-    	permissions = (
-    		("can_manage_quarantine_databases", "Can manage databases in quarantine"),
-    		("view_database", "Can view databases"),
-    	)
-    	unique_together = (
-    		('name', 'databaseinfra'),
-    	)
+        permissions = (
+            ("can_manage_quarantine_databases", "Can manage databases in quarantine"),
+            ("view_database", "Can view databases"),
+        )
+        unique_together = (
+            ('name', 'databaseinfra'),
+        )
 
-    	ordering = ('name', )
+        ordering = ('name', )
 
 
     @property
     def infra(self):
-    	""" Total size of database (in bytes) """
-    	return self.databaseinfra
+        """ Total size of database (in bytes) """
+        return self.databaseinfra
 
 
     @property
     def engine_type(self):
-    	return self.infra.engine_name
+        return self.infra.engine_name
 
 
     @property
     def plan(self):
-    	return self.databaseinfra and self.databaseinfra.plan
+        return self.databaseinfra and self.databaseinfra.plan
 
 
     # @property
     # def environment(self):
-    # 	return self.databaseinfra and self.databaseinfra.environment
+    #     return self.databaseinfra and self.databaseinfra.environment
 
 
     def delete(self, *args, **kwargs):
         if self.is_in_quarantine:
-        	LOG.warning("Database %s is in quarantine and will be removed" % self.name)
-        	for credential in self.credentials.all():
-        		instance = factory_for(self.databaseinfra)
-        		instance.remove_user(credential)
-        	super(Database, self).delete(*args, **kwargs)  # Call the "real" delete() method.
+            LOG.warning("Database %s is in quarantine and will be removed" % self.name)
+            for credential in self.credentials.all():
+                instance = factory_for(self.databaseinfra)
+                instance.remove_user(credential)
+            super(Database, self).delete(*args, **kwargs)  # Call the "real" delete() method.
 
         else:
-        	LOG.warning("Putting database %s in quarantine" % self.name)
-        	self.is_in_quarantine = True
-        	self.save()
-        	if self.credentials.exists():
+            LOG.warning("Putting database %s in quarantine" % self.name)
+            self.is_in_quarantine = True
+            self.save()
+            if self.credentials.exists():
                     for credential in self.credentials.all():
                         new_password = make_db_random_password()
                         new_credential = Credential.objects.get(pk=credential.id)
@@ -149,8 +149,8 @@ class Database(BaseModel):
     def clean(self):
         # slugify name
         if not self.pk:
-        	# new database
-        	self.name = slugify(self.name)
+            # new database
+            self.name = slugify(self.name)
 
         if self.name in self.__get_database_reserved_names():
             raise ValidationError(_("%s is a reserved database name" % self.name))
@@ -165,17 +165,17 @@ class Database(BaseModel):
 
     @classmethod
     def provision(cls, name, databaseinfra):
-    	if not isinstance(databaseinfra, DatabaseInfra):
+        if not isinstance(databaseinfra, DatabaseInfra):
                 raise ValidationError('Invalid databaseinfra type %s - %s' % (type(databaseinfra), databaseinfra))
 
-    	database = Database()
-    	database.databaseinfra = databaseinfra
-    	database.environment = databaseinfra.environment
-    	database.name = name
-    	database.full_clean()
-    	database.save()
-    	database = Database.objects.get(pk=database.pk)
-    	return database
+        database = Database()
+        database.databaseinfra = databaseinfra
+        database.environment = databaseinfra.environment
+        database.name = name
+        database.full_clean()
+        database.save()
+        database = Database.objects.get(pk=database.pk)
+        return database
 
 
     def __get_database_reserved_names(self):

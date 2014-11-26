@@ -136,14 +136,14 @@
     <!-- END Content -->
 
     {% block footer %}
-		<div id="footer">
-			<p class="tos">
-			{% for page in flatpages %}
-			<a href="{{ page.url }}">{{ page.title }}</a>&nbsp;&nbsp;&nbsp;
-			{% endfor %}
-			</p>
-		</div>
-	{% endblock %}
+        <div id="footer">
+            <p class="tos">
+            {% for page in flatpages %}
+            <a href="{{ page.url }}">{{ page.title }}</a>&nbsp;&nbsp;&nbsp;
+            {% endfor %}
+            </p>
+        </div>
+    {% endblock %}
 </div>
 <!-- END Container -->
 {% block js_footer_commons %}

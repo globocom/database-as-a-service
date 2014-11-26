@@ -3,43 +3,43 @@
 
 {% block extrajs %}
     <script type="text/javascript" src="{% static "assets/js/jquery.tablesorter.js" %}"></script>
-	<script>
-	$(document).ready(function() 
-	    { 
-	        $("#searchtable").tablesorter(); 
-	    } 
-	);
-	</script>
+    <script>
+    $(document).ready(function() 
+        { 
+            $("#searchtable").tablesorter(); 
+        } 
+    );
+    </script>
 {% endblock %}
 
 {% block content%}
       <div id="content">
         <div class="outer">
           <div class="inner">
-			<!-- start infranode -->
-			<div class="col-lg-12">
-				<table id="searchtable" class="table table-striped">
-					<thead>
-						<tr>
-							<th>Database</th>
-							<th>Infra Name</th>
-							<th>Project</th>
-							<th>Team</th>
-						</tr>
-					</thead>
-					<tbody>
-					{% for search in page.object_list %}
-						<tr>
-							<td>{{ search.object.name }}</td>
-							<td><a href="{% url 'databaseinfra.index' search.object.infra.id %}">{{ search.object.infra }}</a></td>
-							<td>{{ search.object.project }}</td>
-							<td>{{ search.object.team }}</td>
-						</tr>
-					{% endfor %}
-					</tbody>
-				</table>
-			</div>
-			<!-- end infranode -->
+            <!-- start infranode -->
+            <div class="col-lg-12">
+                <table id="searchtable" class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Database</th>
+                            <th>Infra Name</th>
+                            <th>Project</th>
+                            <th>Team</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for search in page.object_list %}
+                        <tr>
+                            <td>{{ search.object.name }}</td>
+                            <td><a href="{% url 'databaseinfra.index' search.object.infra.id %}">{{ search.object.infra }}</a></td>
+                            <td>{{ search.object.project }}</td>
+                            <td>{{ search.object.team }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <!-- end infranode -->
           </div>
           <!-- end .inner -->
         </div>

@@ -2730,23 +2730,23 @@ body.error .logo h1 {
 
 
 #searchtable th.header {
-	background-image: url(../img/bg.gif);	
-	cursor: pointer;
-	font-weight: bold;
-	background-repeat: no-repeat;
-	background-position: center right;
-	border-right: 1px solid #dad9c7;
-	margin-left: -1px;
+    background-image: url(../img/bg.gif);    
+    cursor: pointer;
+    font-weight: bold;
+    background-repeat: no-repeat;
+    background-position: center right;
+    border-right: 1px solid #dad9c7;
+    margin-left: -1px;
 }
 
 #searchtable th.header.headerSortDown {
-	background-image: url(../img/desc.gif);
-	background-color: #EDEDED;
+    background-image: url(../img/desc.gif);
+    background-color: #EDEDED;
 }
 
 #searchtable th.header.headerSortUp {
-	background-image: url(../img/asc.gif);
-	background-color: #EDEDED;
+    background-image: url(../img/asc.gif);
+    background-color: #EDEDED;
 }
 
 #searchtable {

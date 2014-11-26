@@ -3,13 +3,13 @@
 
 {% block extrajs %}
     <script type="text/javascript" src="{% static "assets/js/jquery.tablesorter.js" %}"></script>
-	<script>
-	$(document).ready(function() 
-	    { 
-	        $("#searchtable").tablesorter(); 
-	    } 
-	);
-	</script>
+    <script>
+    $(document).ready(function() 
+        { 
+            $("#searchtable").tablesorter(); 
+        } 
+    );
+    </script>
 {% endblock %}
 
 
@@ -17,60 +17,60 @@
       <div id="content">
         <div class="outer">
           <div class="inner">
-			<!-- start infranode -->
-			<div class="col-lg-12">
-				<table id="searchtable" class="table table-striped">
-					<thead>
-						<tr>
-							<th>Infra Name</th>
-							<th>Engine</th>
-							<th>Environment</th>
-							<th>Plan</th>
-							<th>Status</th>
-							<th>Capacity</th>
-						</tr>
-					</thead>
-					<tbody>
-					{% for infra in dbinfra %}
-						<tr>
-							<td><a href="{% url 'databaseinfra.index' infra.id %}">{{ infra.name }}</a></td>
-							<td>{{ infra.engine_name }}</td>
-							<td>
-								{% if infra.environment.name == 'laboratory' %}
-									<li class="label label-default">{{ infra.environment.name }}</li>
-								{% endif %}
-								{% if infra.environment.name == 'dev' %}
-									<li class="label label-info">{{ infra.environment.name }}</li>
-								{% endif %}
-								{% if infra.environment.name == 'qa01' %}
-									<li class="label label-inverse">{{ infra.environment.name }}</li>
-								{% endif %}
-								{% if infra.environment.name == 'prod' %}
-									<li class="label label-primary">{{ infra.environment.name }}</li>
-								{% endif %}
-							</td>
-							<td>{{ infra.plan.name }}</td>
-							
-							<td> 
-								{% if infra.check_instances_status == infra.ALIVE %}
-									<li class="label label-success">Alive</li>
-							    {% elif infra.check_instances_status == infra.DEAD %}
-							        <li class="label label-danger">Dead</li>
+            <!-- start infranode -->
+            <div class="col-lg-12">
+                <table id="searchtable" class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Infra Name</th>
+                            <th>Engine</th>
+                            <th>Environment</th>
+                            <th>Plan</th>
+                            <th>Status</th>
+                            <th>Capacity</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for infra in dbinfra %}
+                        <tr>
+                            <td><a href="{% url 'databaseinfra.index' infra.id %}">{{ infra.name }}</a></td>
+                            <td>{{ infra.engine_name }}</td>
+                            <td>
+                                {% if infra.environment.name == 'laboratory' %}
+                                    <li class="label label-default">{{ infra.environment.name }}</li>
+                                {% endif %}
+                                {% if infra.environment.name == 'dev' %}
+                                    <li class="label label-info">{{ infra.environment.name }}</li>
+                                {% endif %}
+                                {% if infra.environment.name == 'qa01' %}
+                                    <li class="label label-inverse">{{ infra.environment.name }}</li>
+                                {% endif %}
+                                {% if infra.environment.name == 'prod' %}
+                                    <li class="label label-primary">{{ infra.environment.name }}</li>
+                                {% endif %}
+                            </td>
+                            <td>{{ infra.plan.name }}</td>
+                            
+                            <td> 
+                                {% if infra.check_instances_status == infra.ALIVE %}
+                                    <li class="label label-success">Alive</li>
+                                {% elif infra.check_instances_status == infra.DEAD %}
+                                    <li class="label label-danger">Dead</li>
                                 {% else %}
                                      <li class="label label-alert">Alert</li>
-							    {% endif %}
-							</td>
-							<td>
-								<div class="progress dashboard">
-									{% render_progress_bar infra.used infra.capacity %}
-								</div>
-							</td>
-						</tr>
-					{% endfor %}
-					</tbody>
-				</table>
-			</div>
-			<!-- end infranode -->
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="progress dashboard">
+                                    {% render_progress_bar infra.used infra.capacity %}
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <!-- end infranode -->
           </div>
           <!-- end .inner -->
         </div>

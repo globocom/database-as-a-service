@@ -2,25 +2,25 @@
   <li class="nav-header">Menu</li>
   <li class="nav-divider"></li>
 
-	{% for engine in engines %}
-	<li class="">
-		<a href="javascript:;">
-			<i class="fa fa-tasks"></i>&nbsp;{{engine.name}}
-			<span class="fa arrow"></span>
-		</a>
-		<ul>
-			<li class="">
-		      <a href="{% url 'dashboard.index' %}?engine_type={{engine.name}}">
-		        <i class="fa fa-angle-right"></i>&nbsp;all</a>
-		    </li>
-			{% for environment in engine.environments %}
-		    <li class="">
-		      <a href="{% url 'dashboard.index' %}?env_id={{environment.id}}&engine_type={{engine.name}}">
-		        <i class="fa fa-angle-right"></i>&nbsp;{{environment.name}}</a>
-		    </li>
-			{% endfor %}
-		</ul>
-	</li>
-	{% endfor %}
+    {% for engine in engines %}
+    <li class="">
+        <a href="javascript:;">
+            <i class="fa fa-tasks"></i>&nbsp;{{engine.name}}
+            <span class="fa arrow"></span>
+        </a>
+        <ul>
+            <li class="">
+              <a href="{% url 'dashboard.index' %}?engine_type={{engine.name}}">
+                <i class="fa fa-angle-right"></i>&nbsp;all</a>
+            </li>
+            {% for environment in engine.environments %}
+            <li class="">
+              <a href="{% url 'dashboard.index' %}?env_id={{environment.id}}&engine_type={{engine.name}}">
+                <i class="fa fa-angle-right"></i>&nbsp;{{environment.name}}</a>
+            </li>
+            {% endfor %}
+        </ul>
+    </li>
+    {% endfor %}
 
 </ul><!-- /#menu -->
