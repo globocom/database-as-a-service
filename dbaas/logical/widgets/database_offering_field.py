@@ -10,7 +10,7 @@ class DatabaseOfferingWidget(forms.widgets.TextInput):
 
        resize_link  = """
              </br><a id="resizeDatabase" class="btn btn-primary" href=
-             """ + self.attrs['database'].get_resize_url()+""">Resize Database</a >"""
+             """ + self.attrs['database'].get_resize_url()+""">Resize VM</a >"""
 
        html_plus = """
 
