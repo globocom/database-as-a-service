@@ -185,7 +185,7 @@ def remove_database_old_backups(self):
     LOG.info("Removing backups older than %s days" % (backup_retention_days))
 
     backup_time_dt = date.today() - timedelta(days=backup_retention_days)
-    snapshots = Snapshot.objects.filter(start_at__lte=backup_time_dt, purge_at__isnull = True, instance__isnull = False)
+    snapshots = Snapshot.objects.filter(start_at__lte=backup_time_dt, purge_at__isnull = True, instance__isnull = False, snapshopt_id__isnull = False)
     msgs = []
     status = TaskHistory.STATUS_SUCCESS
     if len(snapshots) == 0:
@@ -204,15 +204,3 @@ def remove_database_old_backups(self):
     task_history.update_status_for(status, details="\n".join(msgs))
 
     return
-
-
-"""
-from backup import tasks
-tasks.make_databases_backup.delay()
-
-tasks.remove_database_old_backups.delay()
-
-update backup_snapshot set start_at=date_sub(start_at, INTERVAL 5 DAY), end_at=date_sub(end_at, INTERVAL 5 DAY) where id between 1 and 4;
-
-
-"""
