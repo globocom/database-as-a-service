@@ -3,7 +3,7 @@ from physical.models import DatabaseInfra
 from dbaas_credentials.models import CredentialType
 from util import get_credentials_for
 import logging
-from util import build_dict
+from util import build_dict, slugify
 import re
 
 LOG = logging.getLogger(__name__)
@@ -22,7 +22,7 @@ def make_infra(plan, environment, name,task=None):
 
         return build_dict(databaseinfra=None, created= False)
 
-    workflow_dict = build_dict(name= name,
+    workflow_dict = build_dict(name= slugify(name),
                                plan= plan,
                                environment= environment,
                                steps= get_engine_steps(engine= str(plan.engine_type)),
