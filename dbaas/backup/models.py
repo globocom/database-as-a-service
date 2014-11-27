@@ -45,6 +45,6 @@ class BackupInfo(BaseModel):
 
 class Snapshot(BackupInfo):
 
-    snapshopt_id = models.CharField(verbose_name=_("Snapshopt ID"), max_length=100, null=True, blank=True)
-    snapshot_name = models.CharField(verbose_name=_("Snapshopt Name"), max_length=200, null=True, blank=True)
+    snapshopt_id = models.CharField(verbose_name=_("Snapshot ID"), max_length=100, null=True, blank=True)
+    snapshot_name = models.CharField(verbose_name=_("Snapshot Name"), max_length=200, null=True, blank=True)
     export_path = models.CharField(verbose_name=_("Export Path"), max_length=200, null=True, blank=True)
