@@ -31,7 +31,7 @@
 
 
 <fieldset class="module">
-   
+
 {% ifequal original.engine_type "redis" %}
  <h2>Password</h2>
 <table id="table-credentials" class="table table-striped" data-database-id="{{original.pk}}" >
@@ -91,7 +91,7 @@
      <tr class="credential" data-credential-pk="{{credential.pk}}"  >
          {{original.get_endpoint_dns}}
      </tr>
- </table> 
+ </table>
 {% if not original.get_is_preprovisioned %}
 <h2>Monitoring</h2>
  <table id="table-mais" class="table table-striped">
@@ -101,6 +101,9 @@
                 <a href="metrics" class="btn btn-primary" title="Metrics" data-content="Metrics">Metrics</a>
                 {% if original.get_log_url %}
                 <a href="{{original.get_log_url}}" class="btn btn-primary" title="Logs" data-content="Logs" target="_blank">Logs</a>
+                {% endif %}
+                {% if original.plan.provider == original.plan.CLOUDSTACK and original.engine_type == 'mongodb' %}
+                <a href="dex" class="btn btn-primary" title="Dex Advisor" data-content="Advisor" target="_blank"  data-loading-text="Loading..." id="adv_button">Dex advisor</a>
                 {% endif %}
             </div>
         </div>
