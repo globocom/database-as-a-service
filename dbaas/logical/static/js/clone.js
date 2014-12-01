@@ -9,7 +9,7 @@
                             environment_id = $('#id_environment option:selected').val()
 
                             if(environment_id){
-                                $.getJSON('/api/plan/?format=json', {'engine_id': $engine, 'environment_id': environment_id, 'old_plan': $old_plan},function(plans) {
+                                $.getJSON('/api/plan/?format=json', {'engine_id': $engine, 'environment_id': environment_id, 'active':'True'},function(plans) {
                                         plans = plans['plan']
                                         $("#id_plan option").remove();
 
