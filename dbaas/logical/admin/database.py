@@ -393,8 +393,9 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
             graph_data = get_metric_datapoints_for(engine, db_name, hostname, url=URL)
 
-
-            return render_to_response("logical/database/metrics/metrics.html", locals(), context_instance=RequestContext(request))
+    def database_dex_analyze_view(self, request, database_id):
+        database = Database.objects.get(id=database_id)
+        return render_to_response("logical/database/dex_analyze.html", locals(), context_instance=RequestContext(request))
 
     def database_resize_view(self, request, database_id):
         from dbaas_cloudstack.models import CloudStackPack
@@ -467,6 +468,9 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
                            url(r'^/?(?P<database_id>\d+)/lognit/$', self.admin_site.admin_view(self.database_log_view),
                                name="database_resize"),
+
+                           url(r'^/?(?P<database_id>\d+)/dex/$', self.admin_site.admin_view(self.database_dex_analyze_view),
+                               name="database_dex_analyze_view"),
 
         )
 
