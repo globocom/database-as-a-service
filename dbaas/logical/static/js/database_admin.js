@@ -259,6 +259,11 @@
 
         });
 
+        $("#adv_button").on("click", function(ev) {
+            var $btn = $(this).button('loading')
+            $btn.button('reset')
+        });
+
         $( document ).ready(function() {
             if ($("#id_offering").val() == ""){
                 $("#id_offering").hide();
