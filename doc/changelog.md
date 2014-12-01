@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.0.32
+* Bug Fix metrics name database
+* Bug Fix deleting backup
+
 ## 0.0.31
 * Clone to different environments and plans
 * New Engine Redis

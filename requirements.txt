@@ -62,3 +62,4 @@ dbaas_dnsapi==0.0.4
 dbaas-aclapi==0.0.14
 dbaas_laas==0.0.2
 GloboNetworkAPI==0.2.2
+Dex==0.6
