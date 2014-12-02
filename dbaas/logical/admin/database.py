@@ -29,6 +29,11 @@ from notification.tasks import destroy_database
 from notification.tasks import create_database
 from util import get_credentials_for
 from dbaas_credentials.models import CredentialType
+from dex import dex
+from cStringIO import StringIO
+import sys
+from bson.json_util import loads
+
 LOG = logging.getLogger(__name__)
 
 
@@ -393,8 +398,48 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
             graph_data = get_metric_datapoints_for(engine, db_name, hostname, url=URL)
 
+    def database_dex_analyze_view(self, request, database_id):
+        database = Database.objects.get(id=database_id)
 
-            return render_to_response("logical/database/metrics/metrics.html", locals(), context_instance=RequestContext(request))
+        uri = 'mongodb://{}:{}@{}:{}/admin'.format(database.databaseinfra.user,
+                                                   database.databaseinfra.password,
+                                                   database.databaseinfra.instances.all()[0].address,
+                                                   #'10.236.1.15',
+                                                   database.databaseinfra.instances.all()[0].port)
+
+        old_stdout = sys.stdout
+        sys.stdout = mystdout = StringIO()
+
+        md = dex.Dex(db_uri = uri, verbose=False, namespaces_list = [], slowms=0, check_indexes=True, timeout=0)
+        md.analyze_profile()
+
+        sys.stdout = old_stdout
+
+        dexanalyzer = loads(mystdout.getvalue().replace("\"", "&&").replace("'", "\"").replace("&&","'"))
+
+        import ast
+        final_mask = """<ul>"""
+
+        for result in dexanalyzer['results']:
+
+                final_mask += "<h3> Collection: " + result['namespace']+ "</h3>"
+                final_mask += \
+                             """<li> Query: """ +\
+                            str(ast.literal_eval(result['queryMask'])['$query']) +\
+                            """</li>""" +\
+                            """<li> Index: """+\
+                            result['recommendation']['index']+\
+                            """</li>"""+\
+                            """<li> Command: """+\
+                            result['recommendation']['shellCommand']+\
+                            """</li>"""
+
+                final_mask += """<br>"""
+
+        final_mask += """</ul>"""
+
+
+        return render_to_response("logical/database/dex_analyze.html", locals(), context_instance=RequestContext(request))
 
     def database_resize_view(self, request, database_id):
         from dbaas_cloudstack.models import CloudStackPack
@@ -467,6 +512,9 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
                            url(r'^/?(?P<database_id>\d+)/lognit/$', self.admin_site.admin_view(self.database_log_view),
                                name="database_resize"),
+
+                           url(r'^/?(?P<database_id>\d+)/dex/$', self.admin_site.admin_view(self.database_dex_analyze_view),
+                               name="database_dex_analyze_view"),
 
         )
 
