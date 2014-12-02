@@ -394,38 +394,27 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             graph_data = get_metric_datapoints_for(engine, db_name, hostname, url=URL)
 
     def database_dex_analyze_view(self, request, database_id):
-        database = Database.objects.get(id=database_id)
-        
         from dex import dex
-        uri = 'mongodb://{}:{}@{}:{}/admin'.format(database.databaseinfra.user, 
+        from cStringIO import StringIO
+        import sys
+        from bson.json_util import loads
+
+        database = Database.objects.get(id=database_id)
+
+        uri = 'mongodb://{}:{}@{}:{}/admin'.format(database.databaseinfra.user,
                                                    database.databaseinfra.password,
                                                    database.databaseinfra.instances.all()[0].address,
                                                    database.databaseinfra.instances.all()[0].port)
-        md = dex.Dex(db_uri = uri, verbose=False, namespaces_list = [], slowms=0, check_indexes=True, timeout=0)
-        
-        from cStringIO import StringIO
-        import json
-        import sys
 
         old_stdout = sys.stdout
         sys.stdout = mystdout = StringIO()
-        
-        md.analyze_profile()
-        
-        sys.stdout = old_stdout
-        
-        from bson.json_util import loads
-        dexanalyzer = loads(mystdout.getvalue().replace("\"", "&&").replace("'", "\"").replace("&&","'"))
-        
-        
-        #var2 = dexanalyzer.replace("\"", "&&").replace("'", "\"").replace("&&","'")
 
-        #dexanalyzer = loads(var2)
-        print dexanalyzer
-        #print dexanalyzer2
-        
-        #print dexanalyzer2
-        
+        md = dex.Dex(db_uri = uri, verbose=False, namespaces_list = [], slowms=0, check_indexes=True, timeout=0)
+        md.analyze_profile()
+
+        sys.stdout = old_stdout
+
+        dexanalyzer = loads(mystdout.getvalue().replace("\"", "&&").replace("'", "\"").replace("&&","'"))
 
         return render_to_response("logical/database/dex_analyze.html", locals(), context_instance=RequestContext(request))
 
