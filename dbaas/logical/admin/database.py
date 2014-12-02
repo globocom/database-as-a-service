@@ -398,6 +398,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
             graph_data = get_metric_datapoints_for(engine, db_name, hostname, url=URL)
 
+        return render_to_response("logical/database/metrics/metrics.html", locals(), context_instance=RequestContext(request))
+
     def database_dex_analyze_view(self, request, database_id):
         database = Database.objects.get(id=database_id)
 
@@ -418,7 +420,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         dexanalyzer = loads(mystdout.getvalue().replace("\"", "&&").replace("'", "\"").replace("&&","'"))
 
         import ast
-        final_mask = """<ul>"""
+        final_mask = """<div>"""
 
         for result in dexanalyzer['results']:
 
@@ -436,7 +438,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
                 final_mask += """<br>"""
 
-        final_mask += """</ul>"""
+        final_mask += """</ul> </div>"""
 
 
         return render_to_response("logical/database/dex_analyze.html", locals(), context_instance=RequestContext(request))
