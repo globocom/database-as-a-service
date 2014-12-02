@@ -404,6 +404,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         uri = 'mongodb://{}:{}@{}:{}/admin'.format(database.databaseinfra.user,
                                                    database.databaseinfra.password,
                                                    database.databaseinfra.instances.all()[0].address,
+                                                   #'10.236.1.15',
                                                    database.databaseinfra.instances.all()[0].port)
 
         old_stdout = sys.stdout
