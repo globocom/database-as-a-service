@@ -29,6 +29,11 @@ from notification.tasks import destroy_database
 from notification.tasks import create_database
 from util import get_credentials_for
 from dbaas_credentials.models import CredentialType
+from dex import dex
+from cStringIO import StringIO
+import sys
+from bson.json_util import loads
+
 LOG = logging.getLogger(__name__)
 
 
@@ -394,11 +399,6 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             graph_data = get_metric_datapoints_for(engine, db_name, hostname, url=URL)
 
     def database_dex_analyze_view(self, request, database_id):
-        from dex import dex
-        from cStringIO import StringIO
-        import sys
-        from bson.json_util import loads
-
         database = Database.objects.get(id=database_id)
 
         uri = 'mongodb://{}:{}@{}:{}/admin'.format(database.databaseinfra.user,
