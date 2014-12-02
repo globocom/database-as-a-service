@@ -102,7 +102,7 @@
                 {% if original.get_log_url %}
                 <a href="{{original.get_log_url}}" class="btn btn-primary" title="Logs" data-content="Logs" target="_blank">Logs</a>
                 {% endif %}
-                {% if original.plan.provider == original.plan.CLOUDSTACK and original.engine_type == 'mongodb' %}
+                {% if original.get_dex_url %}
                 <a href="dex" class="btn btn-primary" title="Dex Advisor" data-content="Advisor" target="_blank"  data-loading-text="Loading..." id="adv_button">Dex advisor</a>
                 {% endif %}
             </div>
