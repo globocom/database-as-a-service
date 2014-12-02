@@ -413,11 +413,18 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         md.analyze_profile()
         
         sys.stdout = old_stdout
-                
-        #dexanalyzer = json.dumps(json.loads(mystdout.getvalue())
-        #dexanalyzer = json.loads(mystdout.getvalue())
         
-        dexanalyzer = mystdout.getvalue()
+        from bson.json_util import loads
+        dexanalyzer = loads(mystdout.getvalue().replace("\"", "&&").replace("'", "\"").replace("&&","'"))
+        
+        
+        #var2 = dexanalyzer.replace("\"", "&&").replace("'", "\"").replace("&&","'")
+
+        #dexanalyzer = loads(var2)
+        print dexanalyzer
+        #print dexanalyzer2
+        
+        #print dexanalyzer2
         
 
         return render_to_response("logical/database/dex_analyze.html", locals(), context_instance=RequestContext(request))
