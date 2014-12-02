@@ -209,6 +209,18 @@ class Database(BaseModel):
         url = "%s%s" % (credential.endpoint, get_group_name(self))
         return "%s" % (url)
 
+    def get_dex_url(self):
+        if Configuration.get_by_name_as_int('dex_analyze') != 1:
+            return ""
+
+        if self.databaseinfra.plan.provider == Plan.PREPROVISIONED:
+            return ""
+
+        if self.engine_type != 'mongodb':
+            return ""
+
+        return 1
+
     def get_is_preprovisioned(self):
         if self.databaseinfra.plan.provider == Plan.PREPROVISIONED:
             return True
