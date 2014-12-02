@@ -416,6 +416,28 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
         dexanalyzer = loads(mystdout.getvalue().replace("\"", "&&").replace("'", "\"").replace("&&","'"))
 
+        import ast
+        final_mask = """<ul>"""
+
+        for result in dexanalyzer['results']:
+
+                final_mask += "<h3> Collection: " + result['namespace']+ "</h3>"
+                final_mask += \
+                             """<li> Query: """ +\
+                            str(ast.literal_eval(result['queryMask'])['$query']) +\
+                            """</li>""" +\
+                            """<li> Index: """+\
+                            result['recommendation']['index']+\
+                            """</li>"""+\
+                            """<li> Command: """+\
+                            result['recommendation']['shellCommand']+\
+                            """</li>"""
+
+                final_mask += """<br>"""
+
+        final_mask += """</ul>"""
+
+
         return render_to_response("logical/database/dex_analyze.html", locals(), context_instance=RequestContext(request))
 
     def database_resize_view(self, request, database_id):
