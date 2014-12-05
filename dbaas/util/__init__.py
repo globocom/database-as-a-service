@@ -46,7 +46,7 @@ def as_json(f):
     return wrapper
 
 
-def call_script(script_name, working_dir=None, split_lines=True, args=[], envs={}):
+def call_script(script_name, working_dir=None, split_lines=True, args=[], envs={}, shell=False):
 
     args_copy = []
     for arg in args:
@@ -84,7 +84,8 @@ def call_script(script_name, working_dir=None, split_lines=True, args=[], envs={
             close_fds=True,
             cwd=working_dir,
             env=envs_with_path,
-            universal_newlines=True)
+            universal_newlines=True,
+            shell=shell)
 
         signal.signal(signal.SIGALRM, alarm_handler)
         signal.alarm(PROCESS_TIMEOUT)
