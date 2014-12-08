@@ -112,7 +112,7 @@ def dump_src_database(host, redis_port, redis_pass,
         click.echo('ERROR while transporting dump file: {}'.format(e))
         return False
 
-def restore_dst_database(dump_path, host, sys_user, sys_pass, remote_path):
+def restore_dst_database(dump_path, host, redis_port, redis_pass, sys_user, sys_pass, remote_path, redis_time_out):
 
     click.echo("Restoring target database...")
     return_code = exec_remote_command(server=host,
@@ -120,8 +120,6 @@ def restore_dst_database(dump_path, host, sys_user, sys_pass, remote_path):
                                                   password=sys_pass,
                                                   command='/etc/init.d/redis stop')
 
-    if not test_return_code(return_code):
-        return False
 
     try:
         transport = paramiko.Transport((host, 22))
@@ -135,15 +133,43 @@ def restore_dst_database(dump_path, host, sys_user, sys_pass, remote_path):
     except Exception, e:
         click.echo('ERROR while transporting dump file: {}'.format(e))
         return False
+    
+    return_code = exec_remote_command(server=host,
+                                      username=sys_user,
+                                      password=sys_pass,
+                                      command="sed -i 's/appendonly/#appendonly/g' /data/redis.conf")
 
 
     return_code = exec_remote_command(server=host,
-                                                  username=sys_user,
-                                                  password=sys_pass,
-                                                  command='/etc/init.d/redis start')
+                                      username=sys_user,
+                                      password=sys_pass,
+                                      command='/etc/init.d/redis start')
 
-    if not test_return_code(return_code):
-        return False
+
+    return_code = exec_remote_command(server=host,
+                                      username=sys_user,
+                                      password=sys_pass,
+                                      command="sed -i 's/#appendonly/appendonly/g' /data/redis.conf")
+
+    
+    driver = RedisDriver(host, redis_port, redis_pass, redis_time_out)
+
+    with driver.redis() as client:
+        try:
+            client.config_set("appendonly", "yes")
+        except Exception, e:
+            click.echo("Error while requesting dump: {}".format(e))
+            return False
+
+    #with driver.redis() as client:
+    #    try:
+    #        client.bgrewriteaof()
+    #    except Exception, e:
+    #        click.echo("Error while requesting dump: {}".format(e))
+    #        return False
+
+
+
 
     click.echo("Restore successful! :)")
 
@@ -157,14 +183,16 @@ def restore_dst_database(dump_path, host, sys_user, sys_pass, remote_path):
 @click.argument('src_sys_user', default="root")
 @click.argument('src_sys_pass')
 @click.argument('src_dump_path', type=click.Path(exists=False))
-@click.argument('dst_host')
+@click.argument('dst_pass')
+@click.argument('dst_host', default="127.0.0.1")
+@click.argument('dst_port', default=6379)
 @click.argument('dst_sys_user', default="root")
 @click.argument('dst_sys_pass')
 @click.argument('dst_dump_path', type=click.Path(exists=False))
 @click.argument('local_dump_path', default="/tmp/dump.rdb", type=click.Path(exists=False))
 def main(redis_time_out, src_pass, src_host,
                                             src_port, src_sys_user, src_sys_pass,
-                                            src_dump_path, dst_host, dst_sys_user,
+                                            src_dump_path, dst_pass, dst_host, dst_port, dst_sys_user,
                                             dst_sys_pass, dst_dump_path, local_dump_path, ):
     """Command line tool to dump a redis database and import on another"""
 
@@ -174,8 +202,8 @@ def main(redis_time_out, src_pass, src_host,
         click.echo("Dump unsuccessful! :(")
         return 1
 
-    if not restore_dst_database(local_dump_path, dst_host,
-                                            dst_sys_user, dst_sys_pass, dst_dump_path):
+    if not restore_dst_database(local_dump_path, dst_host, dst_port, dst_pass, 
+                                            dst_sys_user, dst_sys_pass, dst_dump_path, redis_time_out):
         click.echo("Restore unsuccessful! :(")
         return 1
 
