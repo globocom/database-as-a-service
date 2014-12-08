@@ -7,11 +7,6 @@ import os
 from contextlib import contextmanager
 import logging
 
-logging.basicConfig(
-                                level=logging.DEBUG,
-                                format='%(asctime)s %(levelname)s %(message)s',
-                                )
-
 class RedisDriver(object):
     def __init__(self, address, port, password, timeout,):
         self.address= address
@@ -115,7 +110,7 @@ def dump_src_database(host, redis_port, redis_pass,
 def restore_dst_database(dump_path, host, redis_port, redis_pass, sys_user, sys_pass, remote_path, redis_time_out):
 
     click.echo("Restoring target database...")
-    return_code = exec_remote_command(server=host,
+    exec_remote_command(server=host,
                                                   username=sys_user,
                                                   password=sys_pass,
                                                   command='/etc/init.d/redis stop')
@@ -133,25 +128,25 @@ def restore_dst_database(dump_path, host, redis_port, redis_pass, sys_user, sys_
     except Exception, e:
         click.echo('ERROR while transporting dump file: {}'.format(e))
         return False
-    
-    return_code = exec_remote_command(server=host,
+
+    exec_remote_command(server=host,
                                       username=sys_user,
                                       password=sys_pass,
                                       command="sed -i 's/appendonly/#appendonly/g' /data/redis.conf")
 
 
-    return_code = exec_remote_command(server=host,
+    exec_remote_command(server=host,
                                       username=sys_user,
                                       password=sys_pass,
                                       command='/etc/init.d/redis start')
 
 
-    return_code = exec_remote_command(server=host,
+    exec_remote_command(server=host,
                                       username=sys_user,
                                       password=sys_pass,
                                       command="sed -i 's/#appendonly/appendonly/g' /data/redis.conf")
 
-    
+
     driver = RedisDriver(host, redis_port, redis_pass, redis_time_out)
 
     with driver.redis() as client:
@@ -180,11 +175,18 @@ def restore_dst_database(dump_path, host, redis_port, redis_pass, sys_user, sys_
 @click.argument('dst_sys_pass')
 @click.argument('dst_dump_path', type=click.Path(exists=False))
 @click.argument('local_dump_path', default="/tmp/dump.rdb", type=click.Path(exists=False))
+@click.option('--verbose', is_flag=True)
 def main(redis_time_out, src_pass, src_host,
                                             src_port, src_sys_user, src_sys_pass,
                                             src_dump_path, dst_pass, dst_host, dst_port, dst_sys_user,
-                                            dst_sys_pass, dst_dump_path, local_dump_path, ):
+                                            dst_sys_pass, dst_dump_path, local_dump_path, verbose):
     """Command line tool to dump a redis database and import on another"""
+
+    if verbose:
+        logging.basicConfig(
+                                    level=logging.DEBUG,
+                                    format='%(asctime)s %(levelname)s %(message)s',
+                                    )
 
     if not dump_src_database(src_host, src_port, src_pass,
                                             redis_time_out, local_dump_path,
@@ -192,7 +194,7 @@ def main(redis_time_out, src_pass, src_host,
         click.echo("Dump unsuccessful! :(")
         return 1
 
-    if not restore_dst_database(local_dump_path, dst_host, dst_port, dst_pass, 
+    if not restore_dst_database(local_dump_path, dst_host, dst_port, dst_pass,
                                             dst_sys_user, dst_sys_pass, dst_dump_path, redis_time_out):
         click.echo("Restore unsuccessful! :(")
         return 1
