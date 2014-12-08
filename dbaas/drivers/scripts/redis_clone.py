@@ -161,16 +161,6 @@ def restore_dst_database(dump_path, host, redis_port, redis_pass, sys_user, sys_
             click.echo("Error while requesting dump: {}".format(e))
             return False
 
-    #with driver.redis() as client:
-    #    try:
-    #        client.bgrewriteaof()
-    #    except Exception, e:
-    #        click.echo("Error while requesting dump: {}".format(e))
-    #        return False
-
-
-
-
     click.echo("Restore successful! :)")
 
     return True
