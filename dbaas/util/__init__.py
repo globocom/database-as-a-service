@@ -75,6 +75,10 @@ def call_script(script_name, working_dir=None, split_lines=True, args=[], envs={
         # For future, if scripts have lot of output can be better
         # create a temporary file for stdout. Scripts with lot of output and subprocess.PIPE
         # can lock because this method not consume stdout without script finish execute.
+
+        LOG.info("Args: {}".format(args))
+
+        print "subporeccess"
         process = subprocess.Popen(
             [working_dir + script_name] + args,
             bufsize=DEFAULT_OUTPUT_BUFFER_SIZE,
@@ -87,8 +91,9 @@ def call_script(script_name, working_dir=None, split_lines=True, args=[], envs={
             universal_newlines=True,
             shell=shell)
 
-        signal.signal(signal.SIGALRM, alarm_handler)
-        signal.alarm(PROCESS_TIMEOUT)
+        if not shell:
+            signal.signal(signal.SIGALRM, alarm_handler)
+            signal.alarm(PROCESS_TIMEOUT)
         try:
             process.wait()
             signal.alarm(0) # Disable the alarm
@@ -99,8 +104,7 @@ def call_script(script_name, working_dir=None, split_lines=True, args=[], envs={
         output = process.stdout.read()
         return_code = process.returncode
 
-        # if return_code != 0:
-        #     raise RuntimeError("Error executing %s, exit code = %d: '%s'" % (script_name, return_code, output))
+        LOG.debug("output: {} \n return_code: {}".format(output, return_code))
 
         if split_lines:
             return return_code, [s.strip() for s in output.splitlines()]

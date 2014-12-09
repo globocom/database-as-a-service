@@ -32,7 +32,7 @@ LOG = get_task_logger(__name__)
 
 
 def get_history_for_task_id(task_id):
-    
+
     try:
         return TaskHistory.objects.get(task_id=task_id)
     except Exception, e:
@@ -76,21 +76,21 @@ def create_database(self, name, plan, environment, team, project, description, u
         database.project = project
         database.description = description
         database.save()
-        
+
         task_history.update_dbid(db=database)
-        
+
         if Configuration.get_by_name_as_int('laas_integration') == 1:
             register_database_laas(database)
-        
+
         task_history.update_status_for(TaskHistory.STATUS_SUCCESS, details='Database created successfully')
-        
+
         return
-        
+
     except Exception, e:
         traceback = full_stack()
         LOG.error("Ops... something went wrong: %s" % e)
         LOG.error(traceback)
-        
+
         if 'database' in locals() and database.id:
             task_history.update_status_for(TaskHistory.STATUS_WARNING, details=traceback)
         else:
@@ -98,7 +98,7 @@ def create_database(self, name, plan, environment, team, project, description, u
                 destroy_infra(databaseinfra = result['databaseinfra'], task=task_history)
             task_history.update_status_for(TaskHistory.STATUS_ERROR, details=traceback)
         return
-        
+
     finally:
         AuditRequest.cleanup_request()
 
@@ -167,7 +167,10 @@ def clone_database(self, origin_database, clone_name, plan, environment, user=No
 
         args = get_clone_args(origin_database, dest_database)
         script_name = factory_for(origin_database.databaseinfra).clone()
-        return_code, output = call_script(script_name, working_dir=settings.SCRIPTS_PATH, args=args, split_lines=False)
+        if origin_database.databaseinfra.engine.engine_type.name == 'redis':
+            shell=True
+
+        return_code, output = call_script(script_name, working_dir=settings.SCRIPTS_PATH, args=args, split_lines=False, shell= shell)
         LOG.info("%s - return code: %s" % (self.request.id, return_code))
 
         if return_code != 0:
@@ -339,7 +342,7 @@ def update_database_status(self):
             msg = "\nUpdating status for database: {}, status: {}".format(database, database.status)
             msgs.append(msg)
             LOG.info(msg)
-        
+
         task_history.update_status_for(TaskHistory.STATUS_SUCCESS, details="\n".join(
             value for value in msgs))
     except Exception, e:
@@ -366,7 +369,7 @@ def update_database_used_size(self):
                 database, database.used_size_in_bytes)
             msgs.append(msg)
             LOG.info(msg)
-        
+
         task_history.update_status_for(TaskHistory.STATUS_SUCCESS, details="\n".join(
             value for value in msgs))
     except Exception, e:

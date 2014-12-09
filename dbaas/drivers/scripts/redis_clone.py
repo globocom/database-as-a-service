@@ -176,10 +176,11 @@ def restore_dst_database(dump_path, host, redis_port, redis_pass, sys_user, sys_
 @click.argument('dst_dump_path', type=click.Path(exists=False))
 @click.argument('local_dump_path', default="/tmp/dump.rdb", type=click.Path(exists=False))
 @click.option('--verbose', is_flag=True)
+@click.option('--remove_dump', is_flag=True)
 def main(redis_time_out, src_pass, src_host,
                                             src_port, src_sys_user, src_sys_pass,
                                             src_dump_path, dst_pass, dst_host, dst_port, dst_sys_user,
-                                            dst_sys_pass, dst_dump_path, local_dump_path, verbose):
+                                            dst_sys_pass, dst_dump_path, local_dump_path, verbose, remove_dump):
     """Command line tool to dump a redis database and import on another"""
 
     if verbose:
@@ -198,6 +199,13 @@ def main(redis_time_out, src_pass, src_host,
                                             dst_sys_user, dst_sys_pass, dst_dump_path, redis_time_out):
         click.echo("Restore unsuccessful! :(")
         return 1
+
+    if remove_dump:
+        try:
+            os.remove(local_dump_path)
+        except OSError:
+            click.echo("The file {} dos not exists.".format(local_dump_path))
+            pass
 
     return 0
 
