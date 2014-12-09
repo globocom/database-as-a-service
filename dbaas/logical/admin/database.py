@@ -110,7 +110,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     def clone_html(self, database):
         html = []
 
-        if database.is_in_quarantine or database.status != database.ALIVE or database.databaseinfra.engine.engine_type.name== 'redis':
+        if database.is_in_quarantine or database.status != database.ALIVE:
             html.append("N/A")
         else:
             html.append("<a class='btn btn-info' href='%s'><i class='icon-file icon-white'></i></a>" % reverse(
@@ -296,20 +296,6 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         database = Database.objects.get(id=object_id)
         self.form = DatabaseForm
         extra_context = extra_context or {}
-
-        # from util import call_script
-
-        # print "Calling script..."
-
-        # args = [ '--remove_dump', "60", "7gva5qrKcQ", "10.236.1.9", "6379",
-        #              "root", "ChangeMe", "/data/data/dump.rdb", "e7Ub2A5zJE",
-        #              "10.236.1.10", "6379", "root", "ChangeMe",
-        #              "/data/data/dump.rdb", "/tmp/dump.rdb"]
-
-        # from django.conf import settings
-
-        # call_script("redis_clone.py", working_dir=settings.SCRIPTS_PATH, args=args, split_lines=False, shell= True)
-
 
         if database.is_in_quarantine:
             extra_context['delete_button_name'] = self.delete_button_name
