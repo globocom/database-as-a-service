@@ -40,21 +40,21 @@ def get_clone_args(origin_database, dest_database):
             db_dest, user_dest, pass_dest, host_dest, str(int(port_dest)),
             path_of_dump
           ]
-    # else:
-    #     sys_credentials = get_credentials_for(origin_database.environment, models.CredentialType.VM)
-    #     sys_user_orig =  sys_user_dest = sys_credentials.user
-    #     sys_pass_orig = sys_pass_dest = sys_credentials.password
+    else:
+        sys_credentials = get_credentials_for(origin_database.environment, models.CredentialType.VM)
+        sys_user_orig =  sys_user_dest = sys_credentials.user
+        sys_pass_orig = sys_pass_dest = sys_credentials.password
 
-    #     if path_of_dump.endswith('/'):
-    #         path_of_dump += 'dump.rdb'
-    #     else:
-    #         path_of_dump += '/dump.rdb'
+        if path_of_dump.endswith('/'):
+            path_of_dump += 'dump.rdb'
+        else:
+            path_of_dump += '/dump.rdb'
 
-    #     args=['--remove_dump', "60", pass_orig, host_orig,
-    #                 str(int(port_orig)), sys_user_orig, sys_pass_orig,
-    #                 '/data/data/dump.rdb', pass_dest, host_dest,
-    #                 str(int(port_dest)), sys_user_dest, sys_pass_dest,
-    #                 '/data/data/dump.rdb', path_of_dump
-    #       ]
+        args=['--remove_dump', "60", pass_orig, host_orig,
+                    str(int(port_orig)), sys_user_orig, sys_pass_orig,
+                    '/data/data/dump.rdb', pass_dest, host_dest,
+                    str(int(port_dest)), sys_user_dest, sys_pass_dest,
+                    '/data/data/dump.rdb', path_of_dump
+          ]
 
     return args
