@@ -167,10 +167,8 @@ def clone_database(self, origin_database, clone_name, plan, environment, user=No
 
         args = get_clone_args(origin_database, dest_database)
         script_name = factory_for(origin_database.databaseinfra).clone()
-        if origin_database.databaseinfra.engine.engine_type.name == 'redis':
-            shell=True
 
-        return_code, output = call_script(script_name, working_dir=settings.SCRIPTS_PATH, args=args, split_lines=False, shell= shell)
+        return_code, output = call_script(script_name, working_dir=settings.SCRIPTS_PATH, args=args, split_lines=False,)
         LOG.info("%s - return code: %s" % (self.request.id, return_code))
 
         if return_code != 0:
