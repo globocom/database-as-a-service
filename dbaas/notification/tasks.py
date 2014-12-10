@@ -182,7 +182,7 @@ def clone_database(self, origin_database, clone_name, plan, environment, user=No
                         destroy_infra(databaseinfra = result['databaseinfra'], task=task_history)
         else:
             task_history.update_dbid(db=dest_database)
-            task_history.update_status_for(TaskHistory.STATUS_SUCCESS, details=output)
+            task_history.update_status_for(TaskHistory.STATUS_SUCCESS, details=output + '\nDatabase cloned successfully')
         return
     except SoftTimeLimitExceeded:
         LOG.error("task id %s - timeout exceeded" % self.request.id)
