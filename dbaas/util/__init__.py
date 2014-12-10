@@ -46,7 +46,7 @@ def as_json(f):
     return wrapper
 
 
-def call_script(script_name, working_dir=None, split_lines=True, args=[], envs={}, shell=False):
+def call_script(script_name, working_dir=None, split_lines=True, args=[], envs={}, shell=False, python_bin=None):
 
     args_copy = []
     for arg in args:
@@ -78,9 +78,14 @@ def call_script(script_name, working_dir=None, split_lines=True, args=[], envs={
 
         LOG.info("Args: {}".format(args))
 
-        print "subporeccess"
+        if python_bin:
+            exec_script = [python_bin, working_dir + script_name] + args
+        else:
+            exec_script = [working_dir + script_name] + args
+
+
         process = subprocess.Popen(
-            [working_dir + script_name] + args,
+            exec_script,
             bufsize=DEFAULT_OUTPUT_BUFFER_SIZE,
             stdin=None,
             stdout=subprocess.PIPE,
