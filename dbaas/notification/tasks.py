@@ -168,7 +168,10 @@ def clone_database(self, origin_database, clone_name, plan, environment, user=No
         args = get_clone_args(origin_database, dest_database)
         script_name = factory_for(origin_database.databaseinfra).clone()
 
-        return_code, output = call_script(script_name, working_dir=settings.SCRIPTS_PATH, args=args, split_lines=False,)
+        python_bin= Configuration.get_by_name('python_venv_bin')
+
+        return_code, output = call_script(script_name, working_dir=settings.SCRIPTS_PATH
+            , args=args, split_lines=False, python_bin=python_bin)
         LOG.info("%s - return code: %s" % (self.request.id, return_code))
 
         if return_code != 0:
