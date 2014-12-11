@@ -30,7 +30,8 @@ def make_infra(plan, environment, name,task=None):
                                MYSQL = MYSQL,
                                MONGODB = MONGODB,
                                REDIS = REDIS,
-                               enginecod = get_engine(engine= str(plan.engine_type))
+                               enginecod = get_engine(engine= str(plan.engine_type)),
+                               dbtype = str(plan.engine_type)
                                )
 
     start_workflow(workflow_dict= workflow_dict, task=task)
@@ -127,10 +128,10 @@ def get_engine_credentials(engine, environment):
                 environment=environment, credential_type=credential_type)
 
 def resize_database(database, cloudstackpack, task=None):
-    
+
     from dbaas_cloudstack.models import CloudStackPack
-    original_cloudstackpack = CloudStackPack.objects.get(offering__serviceofferingid = database.offering_id, 
-                                                         offering__region__environment = database.environment, 
+    original_cloudstackpack = CloudStackPack.objects.get(offering__serviceofferingid = database.offering_id,
+                                                         offering__region__environment = database.environment,
                                                          engine_type__name = database.engine_type)
     workflow_dict = build_dict(database= database,
                                cloudstackpack= cloudstackpack,
@@ -141,7 +142,7 @@ def resize_database(database, cloudstackpack, task=None):
                                )
 
     start_workflow(workflow_dict= workflow_dict, task=task)
-    
+
     return workflow_dict
 
 def get_engine_resize_steps(engine):
