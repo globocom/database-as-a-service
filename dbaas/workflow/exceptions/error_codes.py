@@ -12,7 +12,6 @@ DBAAS_0011 = ("DBAAS_0011","Create VirtualMachine error")
 DBAAS_0012 = ("DBAAS_0012","Create Zabbix error")
 DBAAS_0013 = ("DBAAS_0013","Initializing MYSQL Database error")
 DBAAS_0014 = ("DBAAS_0014","Initializing MONGODB Database error")
-
 DBAAS_0015 = ("DBAAS_0015","Resize Database")
-
-DBAAS_0016 = ("DBAAS_0014","Initializing REDIS Database error")
+DBAAS_0016 = ("DBAAS_0016","Initializing REDIS Database error")
+DBAAS_0017 = ("DBAAS_0017","Clone Database error")
