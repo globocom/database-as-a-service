@@ -5,7 +5,7 @@ from util import call_script
 from django.conf import settings
 from drivers import factory_for
 from system.models import Configuration
-from .util import get_clone_args
+from notification.util import get_clone_args
 from ...base import BaseStep
 from ....exceptions.error_codes import DBAAS_0017
 
