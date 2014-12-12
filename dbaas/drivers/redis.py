@@ -21,8 +21,8 @@ class Redis(BaseDriver):
 
     default_port = 6379
     DEPLOY = DEPLOY_REDIS
-    CLONE = RESIZE_REDIS
-    RESIZE = CLONE_REDIS
+    CLONE = CLONE_REDIS
+    RESIZE =  RESIZE_REDIS
 
     def get_connection(self, database=None):
         uri = "redis://:<password>@%s/0" % (self.databaseinfra.endpoint)

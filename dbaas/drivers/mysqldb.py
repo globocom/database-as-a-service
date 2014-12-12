@@ -39,8 +39,8 @@ class MySQL(BaseDriver):
     default_port = 3306
     RESERVED_DATABASES_NAME = ['admin', 'test', 'mysql', 'information_schema']
     DEPLOY = DEPLOY_MYSQL
-    CLONE = RESIZE_MYSQL
-    RESIZE = CLONE_MYSQL
+    CLONE = CLONE_MYSQL
+    RESIZE =  RESIZE_MYSQL
 
     def get_connection(self, database=None):
         # my_instance = self.databaseinfra.instances.all()[0]
