@@ -1,5 +1,6 @@
 from workflow.workflow import stop_workflow, start_workflow
 from physical.models import DatabaseInfra
+from logical.models import Database
 from dbaas_credentials.models import CredentialType
 from util import get_credentials_for
 import logging
@@ -18,7 +19,13 @@ def make_infra(plan, environment, name, team, project, description, task=None):
         dbinfra = DatabaseInfra.best_for(plan= plan, environment= environment, name= name)
 
         if dbinfra:
-            return build_dict(databaseinfra= dbinfra, created=True)
+            database = Database.provision(databaseinfra=dbinfra, name=name)
+            database.team = team
+            database.description = description
+            database.project = project
+            database.save()
+
+            return build_dict(databaseinfra= dbinfra, database= database, created= True)
 
         return build_dict(databaseinfra=None, created= False)
 
@@ -43,14 +50,16 @@ def make_infra(plan, environment, name, team, project, description, task=None):
 
 
 def destroy_infra(databaseinfra, task=None):
-    if not databaseinfra.plan.provider == databaseinfra.plan.CLOUDSTACK:
-        return True
 
     try:
       database = databaseinfra.databases.all()[0]
       LOG.debug('Database found! {}'.format(database))
     except IndexError:
       LOG.info("Database not found...")
+
+    if not databaseinfra.plan.provider == databaseinfra.plan.CLOUDSTACK:
+        database.delete()
+        return True
 
     instances = []
     hosts = []
