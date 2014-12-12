@@ -1,41 +1,35 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
-
 from django.conf import settings
-
-from system.models import Configuration
 from celery.utils.log import get_task_logger
 from celery.exceptions import SoftTimeLimitExceeded
 from dbaas.celery import app
-from django.db import transaction
-
 from util import call_script
 from util.decorators import only_one
 from util import email_notifications
-from util.providers import make_infra, destroy_infra
+from util.providers import make_infra
+from util.providers import destroy_infra
 from util import full_stack
-from .util import get_clone_args
-from .models import TaskHistory
+from util.laas import register_database_laas
 from drivers import factory_for
 from django.db.models import Sum, Count
 from physical.models import Plan
-
 from physical.models import DatabaseInfra
 from physical.models import Instance
 from logical.models import Database
 from account.models import Team
-from simple_audit.models import AuditRequest
 from system.models import Configuration
-from util.laas import register_database_laas
+from simple_audit.models import AuditRequest
+from .util import get_clone_args
+from .models import TaskHistory
 
 LOG = get_task_logger(__name__)
 
 
 def get_history_for_task_id(task_id):
-
     try:
         return TaskHistory.objects.get(task_id=task_id)
-    except Exception, e:
+    except Exception:
         LOG.error("could not find history for task id %s" % task_id)
         return None
 
@@ -78,10 +72,6 @@ def create_database(self, name, plan, environment, team, project, description, u
             return
 
         task_history.update_dbid(db=result['database'])
-
-        if Configuration.get_by_name_as_int('laas_integration') == 1:
-            register_database_laas(result['database'])
-
         task_history.update_status_for(TaskHistory.STATUS_SUCCESS, details='Database created successfully')
 
         return
