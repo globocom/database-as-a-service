@@ -11,6 +11,7 @@ DEPLOY_MYSQL = (
     'workflow.steps.util.deploy.create_zabbix.CreateZabbix',
     'workflow.steps.util.deploy.create_dbmonitor.CreateDbMonitor',
     'workflow.steps.util.deploy.build_database.BuildDatabase',
+    'workflow.steps.util.deploy.create_log.CreateLog',
 )
 
 DEPLOY_MONGO = (
@@ -24,6 +25,7 @@ DEPLOY_MONGO = (
     'workflow.steps.util.deploy.create_zabbix.CreateZabbix',
     'workflow.steps.util.deploy.create_dbmonitor.CreateDbMonitor',
     'workflow.steps.util.deploy.build_database.BuildDatabase',
+    'workflow.steps.util.deploy.create_log.CreateLog',
 )
 
 DEPLOY_REDIS = (
@@ -37,6 +39,7 @@ DEPLOY_REDIS = (
     'workflow.steps.util.deploy.create_zabbix.CreateZabbix',
     'workflow.steps.util.deploy.create_dbmonitor.CreateDbMonitor',
     'workflow.steps.util.deploy.build_database.BuildDatabase',
+    'workflow.steps.util.deploy.create_log.CreateLog',
 )
 
 DEPLOY_UNKNOWN = (
