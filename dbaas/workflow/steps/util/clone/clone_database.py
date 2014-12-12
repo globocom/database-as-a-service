@@ -35,6 +35,7 @@ class CloneDatabase(BaseStep):
             LOG.info("Return code: {}".format(return_code))
 
             if return_code != 0:
+                workflow_dict['exceptions']['traceback'].append(output)
                 return False
 
             return True
