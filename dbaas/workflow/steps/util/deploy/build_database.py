@@ -16,7 +16,9 @@ class BuildDatabase(BaseStep):
     def do(self, workflow_dict):
         try:
 
-            if not workflow_dict['team'] or not workflow_dict['description'] or not workflow_dict['databaseinfra']:
+            if  'team' not in workflow_dict or \
+                'description' not in workflow_dict or \
+                'databaseinfra' not in workflow_dict:
                 return False
 
             LOG.info("Creating Database...")
@@ -50,21 +52,18 @@ class BuildDatabase(BaseStep):
         try:
 
             if not 'database' in workflow_dict:
-                if 'databaseinfra' in workflow_dict:
-                    LOG.info("Loading database into workflow_dict...")
-                    workflow_dict['database'] = Database.objects.get(databaseinfra=workflow_dict['databaseinfra'])
-                else:
-                    return False
+                return False
 
-            if not workflow_dict['database'].is_in_quarantine:
+            database = workflow_dict['database']
+
+            if not database.is_in_quarantine:
                 LOG.info("Putting Database in quarentine...")
-                database = workflow_dict['database']
                 database.is_in_quarantine = True
                 database.quarantine_dt = datetime.datetime.now().date()
                 database.save()
 
-            LOG.info("Destroying the database....")
             database.delete()
+            LOG.info("Database destroyed....")
 
             return True
         except Exception:
