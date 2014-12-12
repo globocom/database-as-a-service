@@ -4,10 +4,16 @@ import logging
 import pymongo
 from django.core.cache import cache
 from contextlib import contextmanager
-from . import BaseDriver, DatabaseInfraStatus, DatabaseStatus, \
-    AuthenticationError, ConnectionError
+from . import BaseDriver
+from . import DatabaseInfraStatus
+from . import DatabaseStatus
+from . import AuthenticationError
+from . import ConnectionError
 from util import make_db_random_password
 from system.models import Configuration
+from workflow.settings import DEPLOY_MONGO
+from workflow.settings import RESIZE_MONGO
+from workflow.settings import CLONE_MONGO
 
 LOG = logging.getLogger(__name__)
 
@@ -19,6 +25,9 @@ class MongoDB(BaseDriver):
     default_port = 27017
 
     RESERVED_DATABASES_NAME = ['admin', 'config', 'local']
+    DEPLOY = DEPLOY_MONGO
+    CLONE = CLONE_MONGO
+    RESIZE = RESIZE_MONGO
 
     def get_replica_name(self):
         """ Get replica name from databaseinfra. Use cache """
@@ -57,12 +66,12 @@ class MongoDB(BaseDriver):
     def __concatenate_instances_dns_only(self):
         return ",".join(["%s" % (instance.dns)
                         for instance in self.databaseinfra.instances.filter(is_arbiter=False, is_active=True).all()])
-    
+
     def get_dns_port(self):
         port = self.databaseinfra.instances.filter(is_arbiter=False, is_active=True).all()[0].port
         dns = self.__concatenate_instances_dns_only()
         return dns, port
-    
+
     def get_connection(self, database=None):
         uri = "mongodb://<user>:<password>@%s" % self.__concatenate_instances()
         if database:
@@ -110,13 +119,13 @@ class MongoDB(BaseDriver):
 
     def get_client(self, instance):
         return self.__mongo_client__(instance)
-    
+
     def lock_database(self, client):
         client.fsync(lock=True)
-    
+
     def unlock_database(self, client):
         client.unlock()
-        
+
     @contextmanager
     def pymongo(self, instance=None, database=None):
         client = None
@@ -175,7 +184,7 @@ class MongoDB(BaseDriver):
 
             databaseinfra_status.version = json_server_info.get('version', None)
             databaseinfra_status.used_size_in_bytes = json_list_databases.get('totalSize', 0)
-            
+
             list_databases = self.list_databases()
             for database in self.databaseinfra.databases.all():
                 database_name = database.name
@@ -187,7 +196,7 @@ class MongoDB(BaseDriver):
                         db_status.is_alive = True
                 except:
                     pass
-                    
+
                 dataSize = json_db_status.get("dataSize") or 0
                 indexSize = json_db_status.get("indexSize") or 0
                 db_status.used_size_in_bytes = dataSize + indexSize
@@ -222,17 +231,17 @@ class MongoDB(BaseDriver):
             new_password = make_db_random_password()
             client.admin.add_user(name=instance.databaseinfra.user, password=new_password)
             return new_password
-    
+
     def clone(self):
         return CLONE_DATABASE_SCRIPT_NAME
 
     def check_instance_is_eligible_for_backup(self, instance):
         if instance.is_arbiter:
             return False
-        
+
         if self.databaseinfra.instances.count() == 1:
             return True
-        
+
         with self.pymongo(instance=instance) as client:
             try:
                 ismaster = client.admin.command('isMaster')
@@ -240,7 +249,7 @@ class MongoDB(BaseDriver):
                     return False
                 else:
                     return True
-        
+
             except pymongo.errors.PyMongoError, e:
                 raise ConnectionError('Error connection to databaseinfra %s: %s' % (self.databaseinfra, e.message))
 
@@ -248,10 +257,10 @@ class MongoDB(BaseDriver):
     def check_instance_is_master(self, instance):
         if instance.is_arbiter:
             return False
-        
+
         if self.databaseinfra.instances.count() == 1:
             return True
-        
+
         with self.pymongo(instance=instance) as client:
             try:
                 ismaster = client.admin.command('isMaster')
@@ -259,6 +268,6 @@ class MongoDB(BaseDriver):
                     return True
                 else:
                     return False
-        
+
             except pymongo.errors.PyMongoError, e:
                 raise ConnectionError('Error connection to databaseinfra %s: %s' % (self.databaseinfra, e.message))
