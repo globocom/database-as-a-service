@@ -52,10 +52,8 @@ class CreateVirtualMachine(BaseStep):
                 else:
                     bundle = LastUsedBundle.get_next_bundle(plan=workflow_dict['plan'], bundle= bundles)
 
-                if workflow_dict['enginecod'] == workflow_dict['MONGODB'] and index == 2:
-                    offering = cs_plan_attrs.get_weaker_offering()
-                else:
-                    offering = cs_plan_attrs.get_stronger_offering()
+
+                offering = cs_plan_attrs.get_stronger_offering()
 
                 try:
                     DatabaseInfraOffering.objects.get(databaseinfra= workflow_dict['databaseinfra'])
