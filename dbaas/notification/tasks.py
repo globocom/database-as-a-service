@@ -56,7 +56,14 @@ def create_database(self, name, plan, environment, team, project, description, u
 
         task_history.update_details(persist=True, details="Loading Process...")
 
-        result = make_infra(plan=plan, environment=environment, name=name, task=task_history)
+        result = make_infra(plan=plan,
+                                        environment=environment,
+                                        name=name,
+                                        team= team,
+                                        project= project,
+                                        description= description,
+                                        task=task_history,
+                                        )
 
         if result['created']==False:
 
@@ -70,17 +77,10 @@ def create_database(self, name, plan, environment, team, project, description, u
             task_history.update_status_for(TaskHistory.STATUS_ERROR, details=error)
             return
 
-
-        database = Database.provision(name, result['databaseinfra'])
-        database.team = team
-        database.project = project
-        database.description = description
-        database.save()
-
-        task_history.update_dbid(db=database)
+        task_history.update_dbid(db=result['database'])
 
         if Configuration.get_by_name_as_int('laas_integration') == 1:
-            register_database_laas(database)
+            register_database_laas(result['database'])
 
         task_history.update_status_for(TaskHistory.STATUS_SUCCESS, details='Database created successfully')
 
@@ -91,12 +91,10 @@ def create_database(self, name, plan, environment, team, project, description, u
         LOG.error("Ops... something went wrong: %s" % e)
         LOG.error(traceback)
 
-        if 'database' in locals() and database.id:
-            task_history.update_status_for(TaskHistory.STATUS_WARNING, details=traceback)
-        else:
-            if 'result' in locals() and result['created']:
-                destroy_infra(databaseinfra = result['databaseinfra'], task=task_history)
-            task_history.update_status_for(TaskHistory.STATUS_ERROR, details=traceback)
+        if 'result' in locals() and result['created']:
+            destroy_infra(databaseinfra = result['databaseinfra'], task=task_history)
+
+        task_history.update_status_for(TaskHistory.STATUS_ERROR, details=traceback)
         return
 
     finally:
@@ -116,7 +114,6 @@ def destroy_database(self, database, user=None):
         task_history.update_details(persist=True, details="Loading Process...")
 
         databaseinfra = database.databaseinfra
-        database.delete()
 
         destroy_infra(databaseinfra=databaseinfra, task=task_history)
 
