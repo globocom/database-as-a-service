@@ -1,13 +1,25 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import, unicode_literals
+from __future__ import absolute_import
+from __future__ import  unicode_literals
 import logging
 import _mysql as mysqldb
 import _mysql_exceptions
 from contextlib import contextmanager
-from . import BaseDriver, DatabaseInfraStatus, AuthenticationError, ConnectionError, GenericDriverError, \
-    DatabaseAlreadyExists, InvalidCredential, DatabaseStatus, DatabaseDoesNotExist, CredentialAlreadyExists
+from . import BaseDriver
+from . import DatabaseInfraStatus
+from . import AuthenticationError
+from . import ConnectionError
+from . import GenericDriverError
+from . import DatabaseAlreadyExists
+from . import InvalidCredential
+from . import DatabaseStatus
+from . import DatabaseDoesNotExist
+from . import CredentialAlreadyExists
 from util import make_db_random_password
 from system.models import Configuration
+from workflow.settings import DEPLOY_MYSQL
+from workflow.settings import RESIZE_MYSQL
+from workflow.settings import CLONE_MYSQL
 
 LOG = logging.getLogger(__name__)
 
@@ -26,6 +38,9 @@ class MySQL(BaseDriver):
 
     default_port = 3306
     RESERVED_DATABASES_NAME = ['admin', 'test', 'mysql', 'information_schema']
+    DEPLOY = DEPLOY_MYSQL
+    CLONE = RESIZE_MYSQL
+    RESIZE = CLONE_MYSQL
 
     def get_connection(self, database=None):
         # my_instance = self.databaseinfra.instances.all()[0]
@@ -70,7 +85,7 @@ class MySQL(BaseDriver):
         return self.__mysql_client__(instance)
 
     def lock_database(self, client):
-        client.query("SET session lock_wait_timeout = 60")        
+        client.query("SET session lock_wait_timeout = 60")
         client.query("flush tables with read lock")
         client.query("flush logs")
 
@@ -236,7 +251,7 @@ class MySQL(BaseDriver):
 
     def clone(self):
         return CLONE_DATABASE_SCRIPT_NAME
-    
+
     def check_instance_is_eligible_for_backup(self, instance):
         if self.databaseinfra.instances.count() == 1:
             return True
@@ -245,7 +260,7 @@ class MySQL(BaseDriver):
             return True
         else:
             return False
-        
+
     def check_instance_is_master(self, instance):
         if self.databaseinfra.instances.count() == 1:
             return True
@@ -254,4 +269,4 @@ class MySQL(BaseDriver):
             return False
         else:
             return True
-        
+
