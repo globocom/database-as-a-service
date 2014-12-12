@@ -2,11 +2,15 @@
 from __future__ import absolute_import, unicode_literals
 import logging
 import redis
-from django.core.cache import cache
 from contextlib import contextmanager
-from . import BaseDriver, DatabaseInfraStatus, DatabaseStatus, AuthenticationError, ConnectionError
-from util import make_db_random_password
+from . import BaseDriver
+from . import DatabaseInfraStatus
+from . import DatabaseStatus
+from . import ConnectionError
 from system.models import Configuration
+from workflow.settings import DEPLOY_REDIS
+from workflow.settings import RESIZE_REDIS
+from workflow.settings import CLONE_REDIS
 
 LOG = logging.getLogger(__name__)
 
@@ -16,6 +20,9 @@ REDIS_CONNECTION_DEFAULT_TIMEOUT=5
 class Redis(BaseDriver):
 
     default_port = 6379
+    DEPLOY = DEPLOY_REDIS
+    CLONE = RESIZE_REDIS
+    RESIZE = CLONE_REDIS
 
     def get_connection(self, database=None):
         uri = "redis://:<password>@%s/0" % (self.databaseinfra.endpoint)
