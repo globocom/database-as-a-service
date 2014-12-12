@@ -80,3 +80,21 @@ RESIZE_UNKNOWN = (
 
 )
 
+CLONE_MONGO = (
+    DEPLOY_MONGO +
+    ('workflow.steps.util.clone.clone_database.CloneDatabase',)
+)
+
+CLONE_MYSQL = (
+    DEPLOY_MYSQL +
+    ('workflow.steps.util.clone.clone_database.CloneDatabase',)
+)
+
+CLONE_REDIS = (
+    DEPLOY_REDIS +
+    ('workflow.steps.util.clone.clone_database.CloneDatabase',)
+)
+
+CLONE_UNKNOWN = (
+
+)
