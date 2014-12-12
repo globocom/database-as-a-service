@@ -11,7 +11,7 @@ LOG = logging.getLogger(__name__)
 
 class CreateLog(BaseStep):
     def __unicode__(self):
-        return "Requesting DNS..."
+        return "Requesting Log..."
 
     def do(self, workflow_dict):
         try:
