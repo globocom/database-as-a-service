@@ -13,7 +13,7 @@ MYSQL = 1
 MONGODB = 2
 REDIS = 3
 
-def make_infra(plan, environment, name,task=None):
+def make_infra(plan, environment, name, team, project, description, task=None):
     if not plan.provider == plan.CLOUDSTACK:
         dbinfra = DatabaseInfra.best_for(plan= plan, environment= environment, name= name)
 
@@ -31,7 +31,10 @@ def make_infra(plan, environment, name,task=None):
                                MONGODB = MONGODB,
                                REDIS = REDIS,
                                enginecod = get_engine(engine= str(plan.engine_type)),
-                               dbtype = str(plan.engine_type)
+                               dbtype = str(plan.engine_type),
+                               team= team,
+                               project= project,
+                               description= description,
                                )
 
     start_workflow(workflow_dict= workflow_dict, task=task)
@@ -42,6 +45,12 @@ def make_infra(plan, environment, name,task=None):
 def destroy_infra(databaseinfra, task=None):
     if not databaseinfra.plan.provider == databaseinfra.plan.CLOUDSTACK:
         return True
+
+    try:
+      database = databaseinfra.databases.all()[0]
+      LOG.debug('Database found! {}'.format(database))
+    except IndexError:
+      LOG.info("Database not found...")
 
     instances = []
     hosts = []
@@ -60,7 +69,8 @@ def destroy_infra(databaseinfra, task=None):
                                MYSQL = MYSQL,
                                MONGODB = MONGODB,
                                REDIS = REDIS,
-                               enginecod = get_engine(engine= str(databaseinfra.plan.engine_type))
+                               enginecod = get_engine(engine= str(databaseinfra.plan.engine_type)),
+                               database=database
                                )
 
     if stop_workflow(workflow_dict= workflow_dict, task=task):
