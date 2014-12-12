@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
-from physical.models import Instance, Environment
+from physical.models import Instance
+from physical.models import Environment
 from logical.models import Database
 from account.models import Team
 from dbaas_laas.provider import LaaSProvider
 import json
 import logging
+import re
 
 LOG = logging.getLogger(__name__)
 
@@ -17,7 +19,7 @@ def get_users_for_team(team):
             "username" : user.username
         })
     return users
-    
+
 def get_hosts_for_database(database):
     instances = Instance.objects.filter(databaseinfra=database.databaseinfra)
     hosts = []
@@ -26,28 +28,24 @@ def get_hosts_for_database(database):
             hosts.append(instance.hostname.hostname.split('.')[0])
         else:
             hosts.append(hostname = instance.hostname.hostname)
-    return hosts  
+    return hosts
 
 def get_group_name(database):
     return "DBaaS_%s_%s" % (database.databaseinfra.name, database.engine_type)
-    
+
 def register_database_laas(database):
     workspace_json = {}
     workspace_json["team"] = {
         "name" : database.team.name,
         "users" : get_users_for_team(database.team),
     }
-    
-    from util.providers import MYSQL, MONGODB, REDIS, get_engine
-    engine = get_engine(database.engine_type)
-    if engine == MYSQL:
-        app = ["mysqld", "mysql-slow"]
-    elif engine == MONGODB:
+
+    if re.match(r'^mongo.*', database.engine_type):
         app = ["mongod.27017"]
-    elif engine == REDIS:
+    elif re.match(r'^mysql.*', database.engine_type):
+        app = ["mysqld", "mysql-slow"]
+    elif re.match(r'^redis.*', database.engine_type):
         app = ["redis"]
-    else:
-        app =[]
 
     hosts = get_hosts_for_database(database)
 
@@ -61,13 +59,13 @@ def register_database_laas(database):
         "name" : database.team.name,
         "groups" : groups
     }
-    
+
     workspace_json = json.dumps(workspace_json)
     LOG.info("Register workspace on LaaS. Workspace info: %s" % (workspace_json))
     try:
         LaaSProvider.update_laas_workspace(environment=database.environment, laas_workspace=workspace_json)
     except Exception, e:
-        LOG.error("Ops... something went wrong: %s" % e)    
+        LOG.error("Ops... something went wrong: %s" % e)
 
 def register_all_databases_laas():
     for database in Database.objects.all():
