@@ -1,17 +1,14 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
-from django.conf import settings
 from celery.utils.log import get_task_logger
 from celery.exceptions import SoftTimeLimitExceeded
 from dbaas.celery import app
-from util import call_script
 from util.decorators import only_one
 from util import email_notifications
 from util.providers import make_infra
+from util.providers import clone_infra
 from util.providers import destroy_infra
 from util import full_stack
-from util.laas import register_database_laas
-from drivers import factory_for
 from django.db.models import Sum, Count
 from physical.models import Plan
 from physical.models import DatabaseInfra
@@ -20,7 +17,6 @@ from logical.models import Database
 from account.models import Team
 from system.models import Configuration
 from simple_audit.models import AuditRequest
-from .util import get_clone_args
 from .models import TaskHistory
 
 LOG = get_task_logger(__name__)
@@ -124,13 +120,16 @@ def clone_database(self, origin_database, clone_name, plan, environment, user=No
 
         LOG.info("origin_database: %s" % origin_database)
 
-        dest_database = Database.objects.get(pk=origin_database.pk)
-        dest_database.name = clone_name
-        dest_database.pk = None
-
         task_history.update_details(persist=True, details="Loading Process...")
-        result = make_infra(plan=plan, environment=environment, name=clone_name,
-                            task=task_history)
+        result = clone_infra(plan=plan,
+                                        environment=environment,
+                                        name=clone_name,
+                                        team= origin_database.team,
+                                        project= origin_database.project,
+                                        description= origin_database.description,
+                                        task=task_history,
+                                        clone= origin_database,
+                                        )
 
         if result['created']==False:
 
@@ -144,46 +143,21 @@ def clone_database(self, origin_database, clone_name, plan, environment, user=No
             task_history.update_status_for(TaskHistory.STATUS_ERROR, details=error)
             return
 
-        dest_database.databaseinfra = result['databaseinfra']
-        dest_database.save()
-        LOG.info("dest_database: %s" % dest_database)
-
-        if Configuration.get_by_name_as_int('laas_integration') == 1:
-            register_database_laas(dest_database)
+        task_history.update_dbid(db=result['database'])
+        task_history.update_status_for(TaskHistory.STATUS_SUCCESS, details='\nDatabase cloned successfully')
 
 
-        args = get_clone_args(origin_database, dest_database)
-        script_name = factory_for(origin_database.databaseinfra).clone()
-
-        python_bin= Configuration.get_by_name('python_venv_bin')
-
-        return_code, output = call_script(script_name, working_dir=settings.SCRIPTS_PATH
-            , args=args, split_lines=False, python_bin=python_bin)
-        LOG.info("%s - return code: %s" % (self.request.id, return_code))
-
-        if return_code != 0:
-            task_history.update_status_for(TaskHistory.STATUS_ERROR, details=output + "\nTransaction rollback")
-            LOG.error("task id %s - error occurred. Transaction rollback" % self.request.id)
-            rollback_database(dest_database)
-            if 'result' in locals() and result['created']:
-                        destroy_infra(databaseinfra = result['databaseinfra'], task=task_history)
-        else:
-            task_history.update_dbid(db=dest_database)
-            task_history.update_status_for(TaskHistory.STATUS_SUCCESS, details=output + '\nDatabase cloned successfully')
-        return
     except SoftTimeLimitExceeded:
         LOG.error("task id %s - timeout exceeded" % self.request.id)
         task_history.update_status_for(TaskHistory.STATUS_ERROR, details="timeout exceeded")
-        rollback_database(dest_database)
         if 'result' in locals() and result['created']:
-                    destroy_infra(databaseinfra = result['databaseinfra'], task=task_history)
-                    return
+            destroy_infra(databaseinfra = result['databaseinfra'], task=task_history)
+            return
     except Exception, e:
         traceback = full_stack()
         LOG.error("Ops... something went wrong: %s" % e)
         LOG.error(traceback)
 
-        rollback_database(dest_database)
         if 'result' in locals() and result['created']:
             destroy_infra(databaseinfra = result['databaseinfra'], task=task_history)
 
@@ -238,8 +212,6 @@ def database_notification_for_team(team=None):
     Notifies teams of database usage.
     if threshold_database_notification <= 0, the notification is disabled.
     """
-    from logical.models import Database
-
     LOG.info("sending database notification for team %s" % team)
     threshold_database_notification = Configuration.get_by_name_as_int("threshold_database_notification", default=0)
     # if threshold_database_notification
