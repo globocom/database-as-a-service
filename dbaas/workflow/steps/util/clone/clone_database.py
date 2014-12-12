@@ -14,7 +14,7 @@ LOG = logging.getLogger(__name__)
 
 class CloneDatabase(BaseStep):
     def __unicode__(self):
-        return "Waiting dns propagation..."
+        return "Replicating database data..."
 
     def do(self, workflow_dict):
         try:
