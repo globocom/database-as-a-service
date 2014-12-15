@@ -73,6 +73,9 @@ def start_workflow(workflow_dict, task=None):
 def stop_workflow(workflow_dict, task=None):
     LOG.info("Running undo...")
 
+    if not 'steps' in workflow_dict:
+        return False
+
     if not 'exceptions' in workflow_dict:
         workflow_dict['exceptions'] = {}
         workflow_dict['exceptions']['traceback'] = []
