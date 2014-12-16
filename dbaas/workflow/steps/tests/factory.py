@@ -45,4 +45,5 @@ class TestStep4(BaseStep):
         return True
 
     def undo(self, workflow_dict):
+        raise Exception
         return False
