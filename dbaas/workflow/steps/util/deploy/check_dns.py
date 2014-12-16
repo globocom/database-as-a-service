@@ -5,7 +5,7 @@ from util import check_nslookup
 from util import get_credentials_for
 from dbaas_dnsapi.models import DatabaseInfraDNSList
 from dbaas_credentials.models import CredentialType
-from ...base import BaseStep
+from ..base import BaseStep
 from ....exceptions.error_codes import DBAAS_0005
 
 LOG = logging.getLogger(__name__)

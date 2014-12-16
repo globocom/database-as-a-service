@@ -11,7 +11,7 @@ from dbaas_cloudstack.models import DatabaseInfraOffering
 from django.core.exceptions import ObjectDoesNotExist
 from physical.models import Host
 from physical.models import Instance
-from ...base import BaseStep
+from ...util.base import BaseStep
 from ....exceptions.error_codes import DBAAS_0011
 
 LOG = logging.getLogger(__name__)

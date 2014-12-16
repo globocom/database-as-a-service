@@ -4,7 +4,7 @@ from util import gen_infra_names
 from util import full_stack
 from util.providers import get_engine_credentials
 from physical.models import DatabaseInfra
-from ...base import BaseStep
+from ..base import BaseStep
 from ....exceptions.error_codes import DBAAS_0002
 
 LOG = logging.getLogger(__name__)

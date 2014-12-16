@@ -3,7 +3,7 @@ import logging
 from util import full_stack
 from system.models import Configuration
 from util.laas import register_database_laas
-from ...base import BaseStep
+from ..base import BaseStep
 from ....exceptions.error_codes import DBAAS_0018
 
 LOG = logging.getLogger(__name__)

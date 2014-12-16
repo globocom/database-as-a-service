@@ -10,7 +10,7 @@ from util import check_ssh
 from util import get_credentials_for
 from util import exec_remote_command
 from util import full_stack
-from ...base import BaseStep
+from ...util.base import BaseStep
 from ....exceptions.error_codes import DBAAS_0013
 
 LOG = logging.getLogger(__name__)

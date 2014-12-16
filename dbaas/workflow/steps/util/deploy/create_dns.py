@@ -6,7 +6,7 @@ from dbaas_dnsapi.provider import DNSAPIProvider
 from dbaas_dnsapi.models import HOST
 from dbaas_dnsapi.models import INSTANCE
 from dbaas_dnsapi.models import DatabaseInfraDNSList
-from ...base import BaseStep
+from ..base import BaseStep
 from ....exceptions.error_codes import DBAAS_0007
 
 LOG = logging.getLogger(__name__)

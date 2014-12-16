@@ -6,7 +6,7 @@ from django.conf import settings
 from drivers import factory_for
 from system.models import Configuration
 from notification.util import get_clone_args
-from ...base import BaseStep
+from ...util.base import BaseStep
 from ....exceptions.error_codes import DBAAS_0017
 
 LOG = logging.getLogger(__name__)

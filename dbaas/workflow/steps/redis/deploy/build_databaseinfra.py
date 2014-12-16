@@ -4,7 +4,7 @@ from util import gen_infra_names
 from util import make_db_random_password
 from physical.models import DatabaseInfra
 from util import full_stack
-from ...base import BaseStep
+from ...util.base import BaseStep
 from ....exceptions.error_codes import DBAAS_0002
 
 LOG = logging.getLogger(__name__)

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
 from . import run_vm_script
-from ...base import BaseStep
+from ...util.base import BaseStep
 
 LOG = logging.getLogger(__name__)
 

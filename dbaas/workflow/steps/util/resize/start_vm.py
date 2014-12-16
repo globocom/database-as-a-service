@@ -2,7 +2,7 @@
 import logging
 from . import start_vm
 from . import stop_vm
-from ...base import BaseStep
+from ...util.base import BaseStep
 
 LOG = logging.getLogger(__name__)
 

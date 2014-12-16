@@ -6,7 +6,7 @@ from dbaas_cloudstack.models import HostAttr
 from dbaas_cloudstack.models import DatabaseInfraOffering
 from dbaas_cloudstack.provider import CloudStackProvider
 from dbaas_credentials.models import CredentialType
-from ...base import BaseStep
+from ...util.base import BaseStep
 from ....exceptions.error_codes import DBAAS_0015
 
 LOG = logging.getLogger(__name__)

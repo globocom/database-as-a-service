@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
 from util import full_stack
-from ...base import BaseStep
+from ...util.base import BaseStep
 from ....exceptions.error_codes import DBAAS_0015
 
 LOG = logging.getLogger(__name__)

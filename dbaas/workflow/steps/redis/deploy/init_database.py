@@ -8,7 +8,7 @@ from util import check_ssh
 from util import exec_remote_command
 from util import get_credentials_for
 from util import build_context_script
-from ...base import BaseStep
+from ...util.base import BaseStep
 from ....exceptions.error_codes import DBAAS_0016
 from util import full_stack
 

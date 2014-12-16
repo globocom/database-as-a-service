@@ -6,7 +6,7 @@ from util import full_stack
 from dbaas_cloudstack.models import HostAttr
 from dbaas_cloudstack.models import DatabaseInfraAttr
 from dbaas_cloudstack.provider import CloudStackProvider
-from ...base import BaseStep
+from ...util.base import BaseStep
 from ....exceptions.error_codes import DBAAS_0010
 
 LOG = logging.getLogger(__name__)

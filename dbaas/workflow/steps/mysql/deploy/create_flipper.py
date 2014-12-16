@@ -2,7 +2,7 @@
 import logging
 from util import full_stack
 from dbaas_flipper.provider import FlipperProvider
-from ...base import BaseStep
+from ...util.base import BaseStep
 from ....exceptions.error_codes import DBAAS_0008
 
 LOG = logging.getLogger(__name__)

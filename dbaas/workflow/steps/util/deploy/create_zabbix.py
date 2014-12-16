@@ -2,7 +2,7 @@
 import logging
 from util import full_stack
 from dbaas_zabbix.provider import ZabbixProvider
-from ...base import BaseStep
+from ..base import BaseStep
 from ....exceptions.error_codes import DBAAS_0012
 
 LOG = logging.getLogger(__name__)
