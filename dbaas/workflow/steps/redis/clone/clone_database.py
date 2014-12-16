@@ -4,6 +4,7 @@ from util import full_stack
 from util import call_script
 from django.conf import settings
 from drivers import factory_for
+from system.models import Configuration
 from notification.util import get_clone_args
 from ...util.base import BaseStep
 from ....exceptions.error_codes import DBAAS_0017
@@ -25,8 +26,10 @@ class CloneDatabase(BaseStep):
             args = get_clone_args(workflow_dict['clone'], workflow_dict['database'])
             script_name = factory_for(workflow_dict['clone'].databaseinfra).clone()
 
+            python_bin= Configuration.get_by_name('python_venv_bin')
+
             return_code, output = call_script(script_name, working_dir=settings.SCRIPTS_PATH
-                , args=args, split_lines=False,)
+                , args=args, split_lines=False, python_bin=python_bin)
 
             LOG.info("Script Output: {}".format(output))
             LOG.info("Return code: {}".format(return_code))

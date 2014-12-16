@@ -92,7 +92,7 @@ CLONE_MYSQL = (
 
 CLONE_REDIS = (
     DEPLOY_REDIS +
-    ('workflow.steps.util.clone.clone_database.CloneDatabase',)
+    ('workflow.steps.redis.clone.clone_database.CloneDatabase',)
 )
 
 CLONE_UNKNOWN = (
