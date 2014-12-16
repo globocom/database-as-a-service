@@ -64,7 +64,7 @@ RESIZE_MYSQL = (
     'workflow.steps.mysql.resize.stop_database.StopDatabase',
     'workflow.steps.mysql.resize.change_config.ChangeDatabaseConfigFile',)
     + STOP_RESIZE_START +
-    ('workflow.steps.resize.mysql.start_database.StartDatabase',)
+    ('workflow.steps.mysql.resize.start_database.StartDatabase',)
 )
 
 RESIZE_REDIS = (
@@ -72,7 +72,7 @@ RESIZE_REDIS = (
     'workflow.steps.redis.resize.stop_database.StopDatabase',
     'workflow.steps.redis.resize.change_config.ChangeDatabaseConfigFile',)
     + STOP_RESIZE_START +
-    ('workflow.steps.resize.redis.start_database.StartDatabase',)
+    ('workflow.steps.redis.resize.start_database.StartDatabase',)
 
 )
 
