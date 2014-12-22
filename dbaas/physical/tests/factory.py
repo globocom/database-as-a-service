@@ -86,3 +86,4 @@ class InstanceFactory(factory.DjangoModelFactory):
     databaseinfra = factory.SubFactory(DatabaseInfraFactory)
     hostname = factory.SubFactory(HostFactory)
     status = 1
+    database_type = 1
