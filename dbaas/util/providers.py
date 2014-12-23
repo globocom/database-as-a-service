@@ -134,6 +134,8 @@ def get_vm_qt(plan):
     if plan.is_ha:
         if plan.engine_type.name == 'mongodb':
             qt = 3
+        elif plan.engine_type.name == 'redis':
+            qt = 3
         else:
             qt = 2
     else:

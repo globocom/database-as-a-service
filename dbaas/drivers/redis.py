@@ -2,6 +2,7 @@
 from __future__ import absolute_import, unicode_literals
 import logging
 import redis
+from redis.sentinel import Sentinel
 from contextlib import contextmanager
 from . import BaseDriver
 from . import DatabaseInfraStatus
@@ -11,6 +12,7 @@ from system.models import Configuration
 from workflow.settings import DEPLOY_REDIS
 from workflow.settings import RESIZE_REDIS
 from workflow.settings import CLONE_REDIS
+from physical.models import Instance
 
 LOG = logging.getLogger(__name__)
 
@@ -24,35 +26,89 @@ class Redis(BaseDriver):
     CLONE = CLONE_REDIS
     RESIZE =  RESIZE_REDIS
 
+    def __concatenate_instances(self):
+        instance = self.databaseinfra.instances.filter(is_active=True).all()[0]
+        return "%s:%s" % (instance.address, instance.port)
+
+    #def get_connection(self, database=None):
+    #    uri = "redis://:<password>@%s/0" % (self.databaseinfra.endpoint)
+    #    return uri
+
+    def __concatenate_instances(self):
+        if self.databaseinfra.plan.is_ha:
+            return ",".join(["%s:%s" % (instance.address, instance.port)
+                        for instance in self.databaseinfra.instances.filter(database_type=Instance.REDIS_SENTINEL, is_active=True).all()])
+        else:
+            return ",".join(["%s:%s" % (instance.address, instance.port)
+                        for instance in self.databaseinfra.instances.filter(database_type=Instance.REDIS, is_active=True).all()])
+
+    def __concatenate_instances_dns(self):
+        if self.databaseinfra.plan.is_ha:
+            return ",".join(["%s:%s" % (instance.dns, instance.port)
+                        for instance in self.databaseinfra.instances.filter(database_type=Instance.REDIS_SENTINEL, is_active=True).all()])
+        else:
+            return ",".join(["%s:%s" % (instance.dns, instance.port)
+                        for instance in self.databaseinfra.instances.filter(database_type=Instance.REDIS, is_active=True).all()])
+
     def get_connection(self, database=None):
-        uri = "redis://:<password>@%s/0" % (self.databaseinfra.endpoint)
+        if self.databaseinfra.plan.is_ha:
+            uri_database_type = 'sentinel'
+            database_name = 'master:%s' % (self.databaseinfra.name)
+        else:
+            uri_database_type = 'redis'
+            database_name = '0'
+        uri = "%s://:<password>@%s/%s" % (uri_database_type, self.__concatenate_instances(), database_name)
         return uri
 
     def get_connection_dns(self, database=None):
-        uri = "redis://:<password>@%s/0" % (self.databaseinfra.endpoint_dns)
+        if self.databaseinfra.plan.is_ha:
+            uri_database_type = 'sentinel'
+            database_name = 'master:%s' % (self.databaseinfra.name)
+        else:
+            uri_database_type = 'redis'
+            database_name = '0'
+        uri = "%s://:<password>@%s/%s" % (uri_database_type, self.__concatenate_instances_dns(), database_name)
         return uri
 
-    def __get_admin_connection(self, instance=None):
-        """
-        endpoint is on the form HOST:PORT
-        """
+    def __get_admin_sentinel_connection(self, instance=None):
+        sentinels = []
+        
+        if instance:
+            sentinels.append((instance.address, instance.port))
+        else:
+            for instance in self.databaseinfra.instances.filter(database_type=Instance.REDIS_SENTINEL, is_active=True).all():
+                sentinels.append((instance.address, instance.port))
+
+        return sentinels
+
+    def __get_admin_single_connection(self, instance=None):
         if instance:
             return instance.address, instance.port
 
-        endpoint = self.databaseinfra.endpoint.split(':')
-        return endpoint[0], int(endpoint[1])
+        instances = self.databaseinfra.instances.filter(database_type=Instance.REDIS, is_active=True).all()
+        return instances[0].address, instances[0].port
 
     def __redis_client__(self, instance):
-        connection_address, connection_port = self.__get_admin_connection(instance)
+
         try:
             LOG.debug('Connecting to redis databaseinfra %s', self.databaseinfra)
             # redis uses timeout in seconds
             connection_timeout_in_seconds = Configuration.get_by_name_as_int('redis_connect_timeout', default=REDIS_CONNECTION_DEFAULT_TIMEOUT)
 
-            client = redis.Redis(host = connection_address,
-                                 port = int(connection_port),
-                                 password = self.databaseinfra.password,
-                                 socket_connect_timeout = connection_timeout_in_seconds)
+
+            if instance or not self.databaseinfra.plan.is_ha:
+                connection_address, connection_port = self.__get_admin_single_connection(instance)
+                client = redis.Redis(host = connection_address,
+                                    port = int(connection_port),
+                                    password = self.databaseinfra.password,
+                                    socket_connect_timeout = connection_timeout_in_seconds)
+            
+            else:
+                sentinels = self.__get_admin_sentinel_connection(instance)
+                sentinel = Sentinel(sentinels, socket_timeout=connection_timeout_in_seconds)
+                client = sentinel.master_for(self.databaseinfra.name,
+                                             socket_timeout=connection_timeout_in_seconds,
+                                             password = self.databaseinfra.password)
 
             LOG.debug('Successfully connected to redis databaseinfra %s' % (self.databaseinfra))
             return client
@@ -77,8 +133,7 @@ class Redis(BaseDriver):
             return_value = client
             yield return_value
         except Exception, e:
-            raise ConnectionError('Error connecting to databaseinfra %s (%s): %s' %
-                                 (self.databaseinfra, self.__get_admin_connection(), str(e)))
+            raise ConnectionError('Error connecting to databaseinfra %s : %s' % (self.databaseinfra, str(e)))
 
     def check_status(self, instance=None):
         with self.redis(instance=instance) as client:

@@ -31,13 +31,13 @@ DEPLOY_MONGO = (
 DEPLOY_REDIS = (
     'workflow.steps.redis.deploy.build_databaseinfra.BuildDatabaseInfra',
     'workflow.steps.redis.deploy.create_virtualmachines.CreateVirtualMachine',
-    'workflow.steps.util.deploy.create_dns.CreateDns',
+    'workflow.steps.redis.deploy.create_dns.CreateDns',
     'workflow.steps.util.deploy.create_nfs.CreateNfs',
     'workflow.steps.redis.deploy.init_database.InitDatabaseRedis',
     'workflow.steps.util.deploy.check_database_connection.CheckDatabaseConnection',
     'workflow.steps.util.deploy.check_dns.CheckDns',
-    'workflow.steps.util.deploy.create_zabbix.CreateZabbix',
-    'workflow.steps.util.deploy.create_dbmonitor.CreateDbMonitor',
+    #'workflow.steps.util.deploy.create_zabbix.CreateZabbix',
+    #'workflow.steps.util.deploy.create_dbmonitor.CreateDbMonitor',
     'workflow.steps.util.deploy.build_database.BuildDatabase',
     'workflow.steps.util.deploy.create_log.CreateLog',
 )

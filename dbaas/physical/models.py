@@ -310,6 +310,22 @@ class Instance(BaseModel):
         (ALIVE, 'Alive'),
         (INITIALIZING, 'Initializing')
     )
+    
+    NONE = 0
+    MYSQL = 1
+    MONGODB = 2
+    MONGODB_ARBITER = 3
+    REDIS = 4
+    REDIS_SENTINEL = 5
+    
+    DATABASE_TYPE = (
+        (NONE, 'None'),
+        (MYSQL, 'MySQL'),
+        (MONGODB, 'MongoDB'),
+        (MONGODB_ARBITER, 'Arbiter'),
+        (REDIS, 'Redis'),
+        (REDIS_SENTINEL, 'Sentinel'),
+    )
 
     dns = models.CharField(verbose_name=_("Instance dns"), max_length=200)
     address = models.CharField(verbose_name=_("Instance address"), max_length=200)
@@ -318,8 +334,8 @@ class Instance(BaseModel):
     is_active = models.BooleanField(verbose_name=_("Is instance active"), default=True)
     is_arbiter = models.BooleanField(verbose_name=_("Is arbiter"), default=False)
     hostname = models.ForeignKey(Host)
-    status = models.IntegerField(choices=INFRA_STATUS,
-                                 default=2)
+    status = models.IntegerField(choices=INFRA_STATUS, default=2)
+    database_type = models.IntegerField(choices=DATABASE_TYPE, default = 0)
 
     class Meta:
         unique_together = (

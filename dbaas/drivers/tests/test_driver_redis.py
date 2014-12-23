@@ -15,7 +15,7 @@ class AbstractTestDriverRedis(TestCase):
 
     def setUp(self):
         self.databaseinfra = factory_physical.DatabaseInfraFactory(password="OPlpplpooi", endpoint="127.0.0.1:6379")
-        self.instance = factory_physical.InstanceFactory(databaseinfra=self.databaseinfra, port=6379)
+        self.instance = factory_physical.InstanceFactory(databaseinfra=self.databaseinfra, port=6379, database_type=4)
         self.driver = Redis(databaseinfra=self.databaseinfra)
         self._redis_client = None
 

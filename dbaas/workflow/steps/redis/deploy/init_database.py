@@ -49,6 +49,10 @@ class InitDatabaseRedis(BaseStep):
 
                 planattr = PlanAttr.objects.get(plan=workflow_dict['plan'])
 
+                if index == 0:
+                    master_host = instance.address
+                    master_port = instance.port
+
                 contextdict = {
                     'EXPORTPATH': host_nfsattr.nfsaas_path,
                     'DATABASENAME': workflow_dict['name'],
@@ -60,6 +64,10 @@ class InitDatabaseRedis(BaseStep):
                     'HOST': workflow_dict['hosts'][index].hostname.split('.')[0],
                     'STATSD_HOST': statsd_host,
                     'STATSD_PORT': statsd_port,
+                    'IS_HA': workflow_dict['databaseinfra'].plan.is_ha,
+                    'SENTINELMASTER': master_host,
+                    'SENTINELPORT': 26379,
+                    'MASTERNAME': instance.databaseinfra.name,
                 }
                 LOG.info(contextdict)
 
@@ -79,6 +87,10 @@ class InitDatabaseRedis(BaseStep):
                 LOG.info(output)
                 if return_code != 0:
                     return False
+
+                if index != 0:
+                    client = instance.databaseinfra.get_driver().get_client(instance)
+                    client.slaveof(master_host, master_port)
 
             return True
         except Exception:

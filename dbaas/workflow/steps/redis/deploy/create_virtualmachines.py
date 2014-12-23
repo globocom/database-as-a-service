@@ -41,6 +41,7 @@ class CreateVirtualMachine(BaseStep):
 
             workflow_dict['hosts'] = []
             workflow_dict['instances'] = []
+            workflow_dict['instances_sentinel'] = []
             workflow_dict['databaseinfraattr'] = []
             workflow_dict['vms_id'] = []
             bundles = list(cs_plan_attrs.bundle.all())
@@ -104,6 +105,7 @@ class CreateVirtualMachine(BaseStep):
                 instance.is_active = True
                 instance.hostname = host
                 instance.databaseinfra = workflow_dict['databaseinfra']
+                instance.database_type = Instance.REDIS
                 instance.save()
                 LOG.info("Instance created!")
 
@@ -117,7 +119,18 @@ class CreateVirtualMachine(BaseStep):
                     databaseinfra.save()
                     workflow_dict['databaseinfra'] = databaseinfra
 
-                    return True
+                else:
+
+                    instance = Instance()
+                    instance.address = host.address
+                    instance.port = 26379
+                    instance.is_active = True
+                    instance.hostname = host
+                    instance.databaseinfra = workflow_dict['databaseinfra']
+                    instance.database_type = Instance.REDIS_SENTINEL
+                    instance.save()
+                    LOG.info("Instance created!")
+                    workflow_dict['instances_sentinel'].append(instance)
 
             return True
         except Exception:
@@ -138,10 +151,14 @@ class CreateVirtualMachine(BaseStep):
 
             cs_provider = CloudStackProvider(credentials=cs_credentials)
 
+            instances_sentinel = workflow_dict['databaseinfra'].instances.filter(database_type = Instance.REDIS_SENTINEL)
+            for instance_sentinel in instances_sentinel:
+                instance_sentinel.delete()
+                LOG.info("Instance deleted")
+
             instances = workflow_dict['databaseinfra'].instances.all()
 
             if not instances:
-
                 for vm_id in workflow_dict['vms_id']:
                     cs_provider.destroy_virtual_machine(
                     project_id=cs_credentials.project,
