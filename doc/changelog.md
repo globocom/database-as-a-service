@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.0.33
+* Add 'acive' option to plan api
+* Improve redis driver
+* Initial redis clone
+* Refactor Workflow engine
+* Change zabbix version
+* Add tests
+
 ## 0.0.32
 * Bug Fix metrics name database
 * Bug Fix deleting backup
