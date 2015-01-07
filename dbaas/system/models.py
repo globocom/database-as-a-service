@@ -93,6 +93,6 @@ class CeleryHealthCheck(BaseModel):
         celery_healthcheck_threshold_seconds = Configuration.get_by_name_as_int(name='celery_healthcheck_threshold_seconds', default=300)
         obj, created = cls.objects.get_or_create(pk=1, defaults={'last_update': datetime.datetime.now()})
         if (datetime.datetime.now() - obj.last_update).total_seconds() > celery_healthcheck_threshold_seconds:
-            return 'NOT WORKING. The last celery update was %s' % (str(obj.last_update))
+            return 'FAILURE. The last celery update was %s' % (str(obj.last_update))
         else:
             return 'WORKING'
