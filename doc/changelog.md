@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.0.34
+* Change Celery Health String
+* Bug Fix Zabbix api
+
 ## 0.0.33
 * Add 'acive' option to plan api
 * Improve redis driver
