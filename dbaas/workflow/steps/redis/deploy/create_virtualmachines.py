@@ -41,20 +41,21 @@ class CreateVirtualMachine(BaseStep):
 
             workflow_dict['hosts'] = []
             workflow_dict['instances'] = []
-            workflow_dict['instances_sentinel'] = []
             workflow_dict['databaseinfraattr'] = []
             workflow_dict['vms_id'] = []
             bundles = list(cs_plan_attrs.bundle.all())
 
             for index, vm_name in enumerate(workflow_dict['names']['vms']):
 
-                if bundles.__len__()==1:
+                if len(bundles)==1:
                     bundle = bundles[0]
                 else:
                     bundle = LastUsedBundle.get_next_bundle(plan=workflow_dict['plan'], bundle= bundles)
 
-
-                offering = cs_plan_attrs.get_stronger_offering()
+                if index == 2:
+                    offering = cs_plan_attrs.get_weaker_offering()
+                else:
+                    offering = cs_plan_attrs.get_stronger_offering()
 
                 try:
                     DatabaseInfraOffering.objects.get(databaseinfra= workflow_dict['databaseinfra'])
@@ -99,17 +100,18 @@ class CreateVirtualMachine(BaseStep):
                 host_attr.save()
                 LOG.info("Host attrs custom attributes created!")
 
-                instance = Instance()
-                instance.address = host.address
-                instance.port = 6379
-                instance.is_active = True
-                instance.hostname = host
-                instance.databaseinfra = workflow_dict['databaseinfra']
-                instance.database_type = Instance.REDIS
-                instance.save()
-                LOG.info("Instance created!")
+                if index in (0, 1):
+                    instance = Instance()
+                    instance.address = host.address
+                    instance.port = 6379
+                    instance.is_active = True
+                    instance.hostname = host
+                    instance.databaseinfra = workflow_dict['databaseinfra']
+                    instance.database_type = Instance.REDIS
+                    instance.save()
+                    LOG.info("Instance created!")
 
-                workflow_dict['instances'].append(instance)
+                    workflow_dict['instances'].append(instance)
 
                 if  workflow_dict['qt']==1:
 
@@ -130,7 +132,7 @@ class CreateVirtualMachine(BaseStep):
                     instance.database_type = Instance.REDIS_SENTINEL
                     instance.save()
                     LOG.info("Instance created!")
-                    workflow_dict['instances_sentinel'].append(instance)
+                    workflow_dict['instances'].append(instance)
 
             return True
         except Exception:
@@ -151,10 +153,10 @@ class CreateVirtualMachine(BaseStep):
 
             cs_provider = CloudStackProvider(credentials=cs_credentials)
 
-            instances_sentinel = workflow_dict['databaseinfra'].instances.filter(database_type = Instance.REDIS_SENTINEL)
-            for instance_sentinel in instances_sentinel:
-                instance_sentinel.delete()
-                LOG.info("Instance deleted")
+            #instances_sentinel = workflow_dict['databaseinfra'].instances.filter(database_type = Instance.REDIS_SENTINEL)
+            #for instance_sentinel in instances_sentinel:
+            #    instance_sentinel.delete()
+            #    LOG.info("Instance deleted")
 
             instances = workflow_dict['databaseinfra'].instances.all()
 
@@ -177,6 +179,12 @@ class CreateVirtualMachine(BaseStep):
                         LOG.info("HostAttr deleted!")
 
             for instance in instances:
+                
+                if len(Instance.objects.filter(hostname = instance.hostname)) > 1:
+                    instance.delete()
+                    LOG.info("Instance deleted")
+                    continue
+
                 host = instance.hostname
 
                 host_attr = HostAttr.objects.get(host=host)

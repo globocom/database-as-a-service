@@ -8,6 +8,7 @@ from util import check_ssh
 from util import exec_remote_command
 from util import get_credentials_for
 from util import build_context_script
+from physical.models import Instance
 from ...util.base import BaseStep
 from ....exceptions.error_codes import DBAAS_0016
 from util import full_stack
@@ -30,8 +31,7 @@ class InitDatabaseRedis(BaseStep):
 
             statsd_host, statsd_port = statsd_credentials.endpoint.split(':')
 
-            for index, instance in enumerate(workflow_dict['instances']):
-                host = instance.hostname
+            for index, host in enumerate(workflow_dict['hosts']):
 
                 LOG.info("Getting vm credentials...")
                 host_csattr = CsHostAttr.objects.get(host=host)
@@ -44,30 +44,48 @@ class InitDatabaseRedis(BaseStep):
                 if not host_ready:
                     LOG.warn("Host %s is not ready..." % host)
                     return False
+                
+                instances_redis = Instance.objects.filter(hostname=host, database_type=Instance.REDIS)
+                instances_sentinel = Instance.objects.filter(hostname=host, database_type=Instance.REDIS_SENTINEL)
+                
+                if instances_redis:
+                    host_nfsattr = HostAttr.objects.get(host=host)
+                    nfsaas_path = host_nfsattr.nfsaas_path
+                    only_sentinel = False
+                    instance_redis_address = instances_redis[0].address
+                    instance_redis_port = instances_redis[0].port
+                else:
+                    nfsaas_path = ""
+                    only_sentinel = True
+                    instance_redis_address = ''
+                    instance_redis_port = ''
 
-                host_nfsattr = HostAttr.objects.get(host=host)
-
-                planattr = PlanAttr.objects.get(plan=workflow_dict['plan'])
-
+                if instances_sentinel:
+                    instance_sentinel_port = instances_sentinel[0].port
+                else:
+                    instance_sentinel_port = ''
+                
                 if index == 0:
-                    master_host = instance.address
-                    master_port = instance.port
+                    master_host = instance_redis_address
+                    master_port = instance_redis_port
 
                 contextdict = {
-                    'EXPORTPATH': host_nfsattr.nfsaas_path,
+                    'EXPORTPATH': nfsaas_path,
                     'DATABASENAME': workflow_dict['name'],
                     'DBPASSWORD': workflow_dict['databaseinfra'].password,
-                    'HOSTADDRESS':  instance.address,
-                    'PORT': instance.port,
+                    'HOSTADDRESS':  instance_redis_address,
+                    'PORT': instance_redis_port,
                     'ENGINE': 'redis',
                     'DATABASENAME': workflow_dict['name'],
-                    'HOST': workflow_dict['hosts'][index].hostname.split('.')[0],
+                    'HOST': host.hostname.split('.')[0],
                     'STATSD_HOST': statsd_host,
                     'STATSD_PORT': statsd_port,
                     'IS_HA': workflow_dict['databaseinfra'].plan.is_ha,
                     'SENTINELMASTER': master_host,
-                    'SENTINELPORT': 26379,
-                    'MASTERNAME': instance.databaseinfra.name,
+                    'SENTINELMASTERPORT': master_port,
+                    'SENTINELPORT': instance_sentinel_port,
+                    'MASTERNAME': workflow_dict['databaseinfra'].name,
+                    'ONLY_SENTINEL': only_sentinel,
                 }
                 LOG.info(contextdict)
 
@@ -88,8 +106,8 @@ class InitDatabaseRedis(BaseStep):
                 if return_code != 0:
                     return False
 
-                if index != 0:
-                    client = instance.databaseinfra.get_driver().get_client(instance)
+                if index > 0 and instances_redis:
+                    client = instances_redis[0].databaseinfra.get_driver().get_client(instances_redis[0])
                     client.slaveof(master_host, master_port)
 
             return True

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
 from util import full_stack
+from physical.models import Instance
 from dbaas_dnsapi.utils import add_dns_record
 from dbaas_dnsapi.provider import DNSAPIProvider
 from dbaas_dnsapi.models import HOST
@@ -24,20 +25,27 @@ class CreateDns(BaseStep):
 
                 host.hostname = add_dns_record(
                     databaseinfra=workflow_dict['databaseinfra'],
-                    name=host_name[
-                        1],
+                    name=host_name[1],
                     ip=host.address,
                     type=HOST)
                 host.save()
 
+            instances_redis = []
+            instances_sentinel = []
+
+            for instance in workflow_dict['instances']:
+                if instance.database_type == Instance.REDIS_SENTINEL:
+                    instances_sentinel.append(instance)
+                else:
+                    instances_redis.append(instance)
+
             LOG.info("Creating dns for instances...")
-            for instance_name in zip(workflow_dict['instances'], workflow_dict['names']['vms']):
+            for instance_name in zip(instances_redis, workflow_dict['names']['vms']):
                 instance = instance_name[0]
 
                 instance.dns = add_dns_record(
                     databaseinfra=workflow_dict['databaseinfra'],
-                    name=instance_name[
-                        1],
+                    name=instance_name[1],
                     ip=instance.address,
                     type=INSTANCE)
                 instance.save()
@@ -50,7 +58,7 @@ class CreateDns(BaseStep):
                     workflow_dict['databaseinfra'] = databaseinfra
 
             LOG.info("Creating dns for sentinel instances...")
-            for instance_name in zip(workflow_dict['instances_sentinel'], workflow_dict['names']['vms']):
+            for instance_name in zip(instances_sentinel, workflow_dict['names']['vms']):
                 instance = instance_name[0]
 
                 instance.dns = add_dns_record(
