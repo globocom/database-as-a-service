@@ -30,7 +30,9 @@ class DatabaseInfraOfferingInline(django_admin.TabularInline):
 
 class InstanceAdmin(django_admin.TabularInline):
     model = Instance
-    fields = ('hostname', 'dns', 'address', 'port', 'is_active', 'is_arbiter')
+    #fields = ('hostname', 'dns', 'address', 'port', 'is_active', 'is_arbiter')
+    #fields = ('hostname', 'dns', 'address', 'port', 'is_active', 'database_type')
+    fields = ('hostname', 'dns', 'address', 'port', 'is_active', 'is_arbiter', 'database_type')
     # max_num = 1
     # can_delete = False
     extra = 1
