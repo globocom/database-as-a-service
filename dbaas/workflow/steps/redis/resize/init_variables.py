@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
+from physical.models import Instance
 from util import full_stack
 from ...util.base import BaseStep
 from ....exceptions.error_codes import DBAAS_0015
@@ -16,7 +17,7 @@ class InitVariables(BaseStep):
 
             database = workflow_dict['database']
             instances_detail = []
-            for instance in database.databaseinfra.instances.all():
+            for instance in database.databaseinfra.instances.filter(database_type = Instance.REDIS):
                 instances_detail.append({
                     'instance': instance,
                     #'is_master': is_master,

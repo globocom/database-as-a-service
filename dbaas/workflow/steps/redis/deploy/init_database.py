@@ -61,8 +61,10 @@ class InitDatabaseRedis(BaseStep):
                     instance_redis_port = ''
 
                 if instances_sentinel:
+                    instance_sentinel_address = instances_sentinel[0].address
                     instance_sentinel_port = instances_sentinel[0].port
                 else:
+                    instance_sentinel_address = ''
                     instance_sentinel_port = ''
                 
                 if index == 0:
@@ -83,6 +85,7 @@ class InitDatabaseRedis(BaseStep):
                     'IS_HA': workflow_dict['databaseinfra'].plan.is_ha,
                     'SENTINELMASTER': master_host,
                     'SENTINELMASTERPORT': master_port,
+                    'SENTINELADDRESS': instance_sentinel_address,
                     'SENTINELPORT': instance_sentinel_port,
                     'MASTERNAME': workflow_dict['databaseinfra'].name,
                     'ONLY_SENTINEL': only_sentinel,
