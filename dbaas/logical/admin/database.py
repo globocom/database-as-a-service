@@ -13,7 +13,7 @@ from django.utils.html import format_html, escape
 from ..service.database import DatabaseService
 from ..forms import DatabaseForm, CloneDatabaseForm, ResizeDatabaseForm
 from ..models import Database
-from physical.models import Plan, Environment
+from physical.models import Plan, Environment, Host
 from account.models import Team
 from drivers import DatabaseAlreadyExists
 from logical.templatetags import capacity
@@ -393,8 +393,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             db_name = database.name
             hosts = []
 
-            for instance in database.infra.instances.all():
-                hosts.append(instance.hostname.hostname.split('.')[0])
+            for host in Host.objects.filter(instance__databaseinfra=database.infra).distinct():
+                hosts.append(host.hostname.split('.')[0])
 
             graph_data = get_metric_datapoints_for(engine, db_name, hostname, url=URL)
 
