@@ -4,8 +4,9 @@ import paramiko
 import redis
 import click
 import os
-from contextlib import contextmanager
 import logging
+import ast
+from contextlib import contextmanager
 
 class RedisDriver(object):
     def __init__(self, address, port, password, timeout,):
@@ -160,6 +161,78 @@ def restore_dst_database(dump_path, host, redis_port, redis_pass, sys_user, sys_
 
     return True
 
+
+def restore_dst_cluster(dump_path, cluster_info, redis_time_out):
+
+    for instance_info in cluster_info:
+        sys_user = instance_info['sys_user']
+        sys_pass = instance_info['sys_pass']
+        remote_path = instance_info['remote_path']
+        redis_pass = instance_info['redis_pass']
+        redis_port = instance_info['redis_port']
+        host = instance_info['host']
+
+        click.echo("Restoring target database...")
+        exec_remote_command(server=host,
+                                                      username=sys_user,
+                                                      password=sys_pass,
+                                                      command='/etc/init.d/redis stop')
+
+
+
+    for instance_info in cluster_info:
+        sys_user = instance_info['sys_user']
+        sys_pass = instance_info['sys_pass']
+        remote_path = instance_info['remote_path']
+        redis_pass = instance_info['redis_pass']
+        redis_port = instance_info['redis_port']
+        host = instance_info['host']
+
+        try:
+            transport = paramiko.Transport((host, 22))
+            transport.connect(username = sys_user, password = sys_pass)
+
+            sftp = paramiko.SFTPClient.from_transport(transport)
+            sftp.put(dump_path, remote_path)
+
+            sftp.close()
+            transport.close()
+        except Exception, e:
+            click.echo('ERROR while transporting dump file: {}'.format(e))
+            return False
+
+        exec_remote_command(server=host,
+                                          username=sys_user,
+                                          password=sys_pass,
+                                          command="sed -i 's/appendonly/#appendonly/g' /data/redis.conf")
+
+
+        exec_remote_command(server=host,
+                                          username=sys_user,
+                                          password=sys_pass,
+                                          command='/etc/init.d/redis start')
+
+
+        exec_remote_command(server=host,
+                                          username=sys_user,
+                                          password=sys_pass,
+                                          command="sed -i 's/#appendonly/appendonly/g' /data/redis.conf")
+
+
+        driver = RedisDriver(host, redis_port, redis_pass, redis_time_out)
+
+        with driver.redis() as client:
+            try:
+                client.config_set("appendonly", "yes")
+            except Exception, e:
+                click.echo("Error while requesting dump: {}".format(e))
+                return False
+
+        click.echo("Restore successful! :)")
+
+        return True
+
+
 @click.command()
 @click.argument('redis_time_out', default=60)
 @click.argument('src_pass')
@@ -175,12 +248,14 @@ def restore_dst_database(dump_path, host, redis_port, redis_pass, sys_user, sys_
 @click.argument('dst_sys_pass')
 @click.argument('dst_dump_path', type=click.Path(exists=False))
 @click.argument('local_dump_path', default="/tmp/dump.rdb", type=click.Path(exists=False))
+@click.option('--cluster_info',)
 @click.option('--verbose', is_flag=True)
 @click.option('--remove_dump', is_flag=True)
 def main(redis_time_out, src_pass, src_host,
                                             src_port, src_sys_user, src_sys_pass,
                                             src_dump_path, dst_pass, dst_host, dst_port, dst_sys_user,
-                                            dst_sys_pass, dst_dump_path, local_dump_path, verbose, remove_dump):
+                                            dst_sys_pass, dst_dump_path, local_dump_path,
+                                            verbose, remove_dump, cluster_info):
     """Command line tool to dump a redis database and import on another"""
 
     if verbose:
@@ -195,10 +270,17 @@ def main(redis_time_out, src_pass, src_host,
         click.echo("Dump unsuccessful! :(")
         return 1
 
-    if not restore_dst_database(local_dump_path, dst_host, dst_port, dst_pass,
-                                            dst_sys_user, dst_sys_pass, dst_dump_path, redis_time_out):
-        click.echo("Restore unsuccessful! :(")
-        return 1
+    if cluster_info:
+        cluster_info =  ast.literal_eval(cluster_info)
+
+        if not restore_dst_cluster(local_dump_path, cluster_info, redis_time_out):
+            click.echo("Restore unsuccessful! :(")
+            return 1
+    else:
+        if not restore_dst_database(local_dump_path, dst_host, dst_port, dst_pass,
+                                                dst_sys_user, dst_sys_pass, dst_dump_path, redis_time_out):
+            click.echo("Restore unsuccessful! :(")
+            return 1
 
     if remove_dump:
         try:

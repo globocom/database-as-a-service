@@ -50,7 +50,7 @@ def call_script(script_name, working_dir=None, split_lines=True, args=[], envs={
 
     args_copy = []
     for arg in args:
-        if arg.startswith("PASSWORD"):
+        if type(arg)=='str' and arg.startswith("PASSWORD"):
             args_copy.append("xxx")
         else:
             args_copy.append(arg)
