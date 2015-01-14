@@ -106,10 +106,10 @@ class CreateVirtualMachine(BaseStep):
                 instance.is_active = True
                 if index == 2:
                     instance.is_arbiter = True
-                    instance.database_type = Instance.MONGODB_ARBITER
+                    instance.instance_type = Instance.MONGODB_ARBITER
                 else:
                     instance.is_arbiter = False
-                    instance.database_type = Instance.MONGODB
+                    instance.instance_type = Instance.MONGODB
 
                 instance.hostname = host
                 instance.databaseinfra = workflow_dict['databaseinfra']

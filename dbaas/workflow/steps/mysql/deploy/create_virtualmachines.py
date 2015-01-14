@@ -102,7 +102,7 @@ class CreateVirtualMachine(BaseStep):
                 instance.port = 3306
                 instance.hostname = host
                 instance.databaseinfra = workflow_dict['databaseinfra']
-                instance.database_type = Instance.MYSQL
+                instance.instance_type = Instance.MYSQL
                 instance.save()
                 LOG.info("Instance created!")
 

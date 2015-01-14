@@ -107,7 +107,7 @@ class CreateVirtualMachine(BaseStep):
                     instance.is_active = True
                     instance.hostname = host
                     instance.databaseinfra = workflow_dict['databaseinfra']
-                    instance.database_type = Instance.REDIS
+                    instance.instance_type = Instance.REDIS
                     instance.save()
                     LOG.info("Instance created!")
 
@@ -129,7 +129,7 @@ class CreateVirtualMachine(BaseStep):
                     instance.is_active = True
                     instance.hostname = host
                     instance.databaseinfra = workflow_dict['databaseinfra']
-                    instance.database_type = Instance.REDIS_SENTINEL
+                    instance.instance_type = Instance.REDIS_SENTINEL
                     instance.save()
                     LOG.info("Instance created!")
                     workflow_dict['instances'].append(instance)
@@ -152,11 +152,6 @@ class CreateVirtualMachine(BaseStep):
                 credential_type=CredentialType.CLOUDSTACK)
 
             cs_provider = CloudStackProvider(credentials=cs_credentials)
-
-            #instances_sentinel = workflow_dict['databaseinfra'].instances.filter(database_type = Instance.REDIS_SENTINEL)
-            #for instance_sentinel in instances_sentinel:
-            #    instance_sentinel.delete()
-            #    LOG.info("Instance deleted")
 
             instances = workflow_dict['databaseinfra'].instances.all()
 
