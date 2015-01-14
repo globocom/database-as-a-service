@@ -37,7 +37,7 @@ DEPLOY_REDIS = (
     'workflow.steps.util.deploy.check_database_connection.CheckDatabaseConnection',
     'workflow.steps.util.deploy.check_dns.CheckDns',
     'workflow.steps.util.deploy.create_zabbix.CreateZabbix',
-    #'workflow.steps.util.deploy.create_dbmonitor.CreateDbMonitor',
+    'workflow.steps.util.deploy.create_dbmonitor.CreateDbMonitor',
     'workflow.steps.util.deploy.build_database.BuildDatabase',
     'workflow.steps.util.deploy.create_log.CreateLog',
 )
