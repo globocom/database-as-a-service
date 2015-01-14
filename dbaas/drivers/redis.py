@@ -88,6 +88,21 @@ class Redis(BaseDriver):
         instances = self.databaseinfra.instances.filter(database_type=Instance.REDIS, is_active=True).all()
         return instances[0].address, instances[0].port
 
+    def __concatenate_instances_dns_only(self):
+        return ",".join(["%s" % (instance.dns)
+                        for instance in self.databaseinfra.instances.filter(database_type=Instance.REDIS_SENTINEL, is_active=True).all()])
+
+    def get_dns_port(self):
+        if self.databaseinfra.plan.is_ha:
+            dns = self.__concatenate_instances_dns_only()
+            port = self.databaseinfra.instances.filter(database_type=Instance.REDIS_SENTINEL, is_active=True).all()[0].port
+        else:
+            instance = self.databaseinfra.instances.all()[0]
+            dns = instance.dns
+            port = instance.port
+        return dns, port
+
+
     def __redis_client__(self, instance):
 
         try:
