@@ -7,7 +7,7 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.http import HttpResponseRedirect, HttpResponse
 from django.core.urlresolvers import reverse
-from django.conf.urls.defaults import patterns, url
+from django.conf.urls import patterns, url
 from django.contrib import messages
 from django.utils.html import format_html, escape
 from ..service.database import DatabaseService
@@ -66,7 +66,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
     fieldsets_change_basic = (
         (None, {
-            'fields': ['name', 'description', 'project', 'team', ]
+            'fields': ['name', 'description', 'project', 'team',]
         }
         ),
     )
@@ -193,6 +193,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             if obj.plan.provider==Plan.CLOUDSTACK and ('offering' not in self.fieldsets_change[0][1]['fields']):
                 self.fieldsets_change[0][1]['fields'].append('offering')
 
+        LOG.debug("GET FIELDSETS")
+
         return self.fieldsets_change if obj else self.fieldsets_add
 
     def get_readonly_fields(self, request, obj=None):
@@ -202,9 +204,9 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         if obj:  # In edit mode
             #only sysadmin can change team accountable for a database
             if request.user.has_perm(self.perm_add_database_infra):
-                return ('name', 'databaseinfra') + self.readonly_fields
+                return ('name', 'databaseinfra', ) + self.readonly_fields
             else:
-                return ('name', 'databaseinfra', 'team') + self.readonly_fields
+                return ('name', 'databaseinfra', 'team',) + self.readonly_fields
         return self.readonly_fields
 
 
@@ -293,8 +295,14 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             return super(DatabaseAdmin, self).add_view(request, form_url, extra_context=extra_context)
 
     def change_view(self, request, object_id, form_url='', extra_context=None):
+        import pdb
+        pdb.set_trace()
         database = Database.objects.get(id=object_id)
+
+        LOG.debug("BEFORE FORM")
         self.form = DatabaseForm
+
+        LOG.debug("AFTER FORM")
         extra_context = extra_context or {}
 
         if database.is_in_quarantine:

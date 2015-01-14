@@ -92,20 +92,22 @@ class DatabaseForm(models.ModelForm):
                 del self.fields[field_name]
 
 
-    def define_offering_field(self, database_instance):
-       self.fields['offering']=forms.CharField(widget=DatabaseOfferingWidget(attrs={'readonly':'readonly', 'database': database_instance }), required=False)
-       self.initial["offering"]=database_instance.offering
-       # forms.TextInput
 
     def __init__(self, *args, **kwargs):
 
+        LOG.debug("MY SUPER IS HERE")
         super(DatabaseForm, self).__init__(*args, **kwargs)
         instance = kwargs.get('instance')
         if instance:
             LOG.debug("instance database form found! %s" % instance)
             #remove fields not in models
             self.remove_fields_not_in_models()
-            self.define_offering_field(database_instance= instance)
+
+            self.fields['offering']=forms.CharField(widget=DatabaseOfferingWidget(attrs={'readonly':'readonly', 'database': instance }),
+             required=False)
+            self.initial["offering"]=instance.offering
+
+            LOG.debug("MY FORM IS HERE")
         else:
             self.fields['is_in_quarantine'].widget = forms.HiddenInput()
 

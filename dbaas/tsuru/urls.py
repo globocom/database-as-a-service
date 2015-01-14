@@ -1,4 +1,4 @@
-from django.conf.urls.defaults import *
+from django.conf.urls import *
 from django.conf import settings
 from views import (ListPlans, GetServiceStatus, GetServiceInfo, ServiceAdd,
                    ServiceAppBind, ServiceUnitBind, ServiceRemove)

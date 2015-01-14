@@ -5,7 +5,7 @@ from django.utils.encoding import python_2_unicode_compatible
 @python_2_unicode_compatible
 class BaseStep(object):
 
-    def __unicode__(self):
+    def __str__(self):
         return "I am a step"
 
     def do(self, workflow_dict):

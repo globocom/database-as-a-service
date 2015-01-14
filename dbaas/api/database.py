@@ -122,7 +122,8 @@ class DatabaseAPI(viewsets.ModelViewSet):
         instance = self.get_object()
 
         if not instance.is_in_quarantine:
-            self.perform_destroy(instance)
+            instance.delete()
+
             return Response(status=status.HTTP_204_NO_CONTENT)
         else:
             return Response(status=status.HTTP_401_UNAUTHORIZED)

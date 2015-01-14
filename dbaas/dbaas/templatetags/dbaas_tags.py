@@ -16,8 +16,7 @@ def submit_row_extended_save_continue(context):
     # show_delete_link permission name should be parametrized
     ctx = {
         'opts': opts,
-        'onclick_attrib': (opts.get_ordered_objects() and change
-                            and 'onclick="submitOrderForm();"' or ''),
+        'onclick_attrib': (change and 'onclick="submitOrderForm();"' or ''),
         'show_delete_link': (not is_popup and context['has_delete_permission']
                               and change and context.get('show_delete', True)),
         'show_save_as_new': not is_popup and change and save_as,
@@ -27,7 +26,7 @@ def submit_row_extended_save_continue(context):
         'is_popup': is_popup,
         'show_save': True,
         'delete_button_name': delete_button_name
-        
+
     }
     if context.get('original') is not None:
         ctx['original'] = context['original']
@@ -46,14 +45,13 @@ def submit_row_extended(context):
     # show_delete_link permission name should be parametrized
     ctx = {
         'opts': opts,
-        'onclick_attrib': (opts.get_ordered_objects() and change
-                            and 'onclick="submitOrderForm();"' or ''),
+        'onclick_attrib': (change and 'onclick="submitOrderForm();"' or ''),
         'show_delete_link': (not is_popup and context['has_delete_permission']
                               and change and context.get('show_delete', True)),
         'is_popup': is_popup,
         'show_save': True,
         'delete_button_name': delete_button_name
-        
+
     }
     if context.get('original') is not None:
         ctx['original'] = context['original']
