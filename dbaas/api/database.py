@@ -14,7 +14,7 @@ LOG = logging.getLogger(__name__)
 
 class DatabaseSerializer(serializers.HyperlinkedModelSerializer):
     plan = serializers.HyperlinkedRelatedField(
-        source='plan', view_name='plan-detail', queryset=Plan.objects)
+        source='plan', view_name='plan-detail', queryset=Plan.objects.filter(is_active=True))
     environment =serializers.HyperlinkedRelatedField(source='environment', view_name='environment-detail'
         , queryset=Environment.objects)
     team = serializers.HyperlinkedRelatedField(
@@ -117,3 +117,13 @@ class DatabaseAPI(viewsets.ModelViewSet):
                             headers=headers)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+
+        if not instance.is_in_quarantine:
+            self.perform_destroy(instance)
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        else:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+
