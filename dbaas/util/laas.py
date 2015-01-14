@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from physical.models import Instance
+from physical.models import Host
 from physical.models import Environment
 from logical.models import Database
 from account.models import Team
@@ -21,13 +22,12 @@ def get_users_for_team(team):
     return users
 
 def get_hosts_for_database(database):
-    instances = Instance.objects.filter(databaseinfra=database.databaseinfra)
     hosts = []
-    for instance in instances:
-        if '.' in instance.hostname.hostname:
-            hosts.append(instance.hostname.hostname.split('.')[0])
+    for host in Host.objects.filter(instance__databaseinfra=database.infra).distinct():
+        if '.' in host.hostname:
+            hosts.append(host.hostname.split('.')[0])
         else:
-            hosts.append(hostname = instance.hostname.hostname)
+            hosts.append(host.hostname)
     return hosts
 
 def get_group_name(database):
@@ -45,7 +45,7 @@ def register_database_laas(database):
     elif re.match(r'^mysql.*', database.engine_type):
         app = ["mysqld", "mysql-slow"]
     elif re.match(r'^redis.*', database.engine_type):
-        app = ["redis"]
+        app = ["redis", "sentinel"]
 
     hosts = get_hosts_for_database(database)
 
