@@ -34,7 +34,7 @@ class CreateDns(BaseStep):
             instances_sentinel = []
 
             for instance in workflow_dict['instances']:
-                if instance.database_type == Instance.REDIS_SENTINEL:
+                if instance.instance_type == Instance.REDIS_SENTINEL:
                     instances_sentinel.append(instance)
                 else:
                     instances_redis.append(instance)

@@ -335,7 +335,7 @@ class Instance(BaseModel):
     is_arbiter = models.BooleanField(verbose_name=_("Is arbiter"), default=False)
     hostname = models.ForeignKey(Host)
     status = models.IntegerField(choices=INFRA_STATUS, default=2)
-    database_type = models.IntegerField(choices=DATABASE_TYPE, default = 0)
+    instance_type = models.IntegerField(choices=DATABASE_TYPE, default = 0)
 
     class Meta:
         unique_together = (
