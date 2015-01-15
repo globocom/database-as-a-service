@@ -1,4 +1,4 @@
-Django==1.5.5
+Django==1.5.12
 Flask==0.10.1
 Jinja2==2.7.2
 Markdown==2.3.1
