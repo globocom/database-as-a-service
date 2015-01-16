@@ -1,0 +1,4 @@
+.dropdown-submenu ul.dropdown-menu{
+    max-height: 300px;
+    overflow: scroll;
+}
