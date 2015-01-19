@@ -5,7 +5,8 @@ import logging
 from django_services import admin
 from django.shortcuts import render_to_response
 from django.template import RequestContext
-from django.http import HttpResponseRedirect, HttpResponse
+from django.http import HttpResponseRedirect
+from django.contrib.admin.util import flatten_fieldsets
 from django.core.urlresolvers import reverse
 from django.conf.urls import patterns, url
 from django.contrib import messages
@@ -13,7 +14,8 @@ from django.utils.html import format_html, escape
 from ..service.database import DatabaseService
 from ..forms import DatabaseForm, CloneDatabaseForm, ResizeDatabaseForm
 from ..models import Database
-from physical.models import Plan, Environment, Host
+from physical.models import Plan, Host
+from django.forms.models import modelform_factory,modelform_defines_fields
 from account.models import Team
 from drivers import DatabaseAlreadyExists
 from logical.templatetags import capacity
@@ -29,10 +31,13 @@ from notification.tasks import destroy_database
 from notification.tasks import create_database
 from util import get_credentials_for
 from dbaas_credentials.models import CredentialType
+from django.core.exceptions import FieldError
 from dex import dex
 from cStringIO import StringIO
+from functools import partial
 import sys
 from bson.json_util import loads
+
 
 LOG = logging.getLogger(__name__)
 
@@ -191,11 +196,6 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             else:
                 self.fieldsets_change = self.fieldsets_change_basic
 
-            if obj.plan.provider==Plan.CLOUDSTACK and ('offering' not in self.fieldsets_change[0][1]['fields']):
-                self.fieldsets_change[0][1]['fields'].append('offering')
-
-        LOG.debug("GET FIELDSETS")
-
         return self.fieldsets_change if obj else self.fieldsets_add
 
     def get_readonly_fields(self, request, obj=None):
@@ -226,6 +226,43 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             return False
         else:
             return super(DatabaseAdmin, self).has_add_permission(request)
+
+    def get_form(self, request, obj=None, **kwargs):
+        if 'fields' in kwargs:
+            fields = kwargs.pop('fields')
+        else:
+            fields = flatten_fieldsets(self.get_fieldsets(request, obj))
+        if self.exclude is None:
+            exclude = []
+        else:
+            exclude = list(self.exclude)
+        exclude.extend(self.get_readonly_fields(request, obj))
+        if self.exclude is None and hasattr(self.form, '_meta') and self.form._meta.exclude:
+            # Take the custom ModelForm's Meta.exclude into account only if the
+            # ModelAdmin doesn't define its own.
+            exclude.extend(self.form._meta.exclude)
+        # if exclude is an empty list we pass None to be consistent with the
+        # default on modelform_factory
+        exclude = exclude or None
+
+        if obj and obj.plan.provider==Plan.CLOUDSTACK and \
+            'offering' not in self.fieldsets_change and 'offering' not in self.form.declared_fields:
+            DatabaseForm.setup_offering_field(form=self.form,db_instance=obj)
+            self.fieldsets_change[0][1]['fields'].append('offering')
+
+        defaults = {
+            "form": self.form,
+            "fields": fields,
+            "exclude": exclude,
+            "formfield_callback": partial(self.formfield_for_dbfield, request=request),
+        }
+        defaults.update(kwargs)
+
+        try:
+            return modelform_factory(self.model, **defaults)
+        except FieldError as e:
+            raise FieldError('%s. Check fields/fieldsets/exclude attributes of class %s.'
+                             % (e, self.__class__.__name__))
 
     def changelist_view(self, request, extra_context=None):
         if request.user.has_perm(self.perm_manage_quarantine_database):
@@ -296,8 +333,6 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             return super(DatabaseAdmin, self).add_view(request, form_url, extra_context=extra_context)
 
     def change_view(self, request, object_id, form_url='', extra_context=None):
-        import pdb
-        pdb.set_trace()
         database = Database.objects.get(id=object_id)
 
         LOG.debug("BEFORE FORM")

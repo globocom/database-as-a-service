@@ -8,8 +8,9 @@ from ..models import Database
 from physical.models import Plan, Environment, Engine
 from dbaas_cloudstack.models import  CloudStackPack
 from drivers.factory import DriverFactory
-from logical.widgets.database_offering_field import DatabaseOfferingWidget
 from .fields import AdvancedModelChoiceField
+from django import forms
+from logical.widgets.database_offering_field import DatabaseOfferingWidget
 
 LOG = logging.getLogger(__name__)
 
@@ -91,6 +92,11 @@ class DatabaseForm(models.ModelForm):
             if field_name in self.fields:
                 del self.fields[field_name]
 
+    @classmethod
+    def setup_offering_field(cls, form, db_instance):
+        form.declared_fields['offering']=forms.CharField(
+            widget=DatabaseOfferingWidget(attrs={'readonly':'readonly',
+                'database': db_instance }), required=False, initial=db_instance.offering)
 
 
     def __init__(self, *args, **kwargs):
@@ -101,10 +107,6 @@ class DatabaseForm(models.ModelForm):
             LOG.debug("instance database form found! %s" % instance)
             #remove fields not in models
             self.remove_fields_not_in_models()
-
-            self.fields['offering']=forms.CharField(widget=DatabaseOfferingWidget(attrs={'readonly':'readonly', 'database': instance }),
-             required=False)
-            self.initial["offering"]=instance.offering
 
         else:
             self.fields['is_in_quarantine'].widget = forms.HiddenInput()
