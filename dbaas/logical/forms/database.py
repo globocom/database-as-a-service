@@ -95,7 +95,6 @@ class DatabaseForm(models.ModelForm):
 
     def __init__(self, *args, **kwargs):
 
-        LOG.debug("MY SUPER IS HERE")
         super(DatabaseForm, self).__init__(*args, **kwargs)
         instance = kwargs.get('instance')
         if instance:
@@ -107,7 +106,6 @@ class DatabaseForm(models.ModelForm):
              required=False)
             self.initial["offering"]=instance.offering
 
-            LOG.debug("MY FORM IS HERE")
         else:
             self.fields['is_in_quarantine'].widget = forms.HiddenInput()
 
