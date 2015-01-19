@@ -14,14 +14,13 @@ Whoosh==2.5.6
 amqp==1.4.2
 anyjson==0.3.3
 astroid==1.0.0
-billiard==3.3.0.18
+billiard==3.3.0.19
 bootstrap-admin==0.2.5
 boto==2.14.0
-celery==3.1.14
+celery==3.1.17
 django-adminplus==0.3
 django-auth-ldap==1.1.4
-django-celery==3.1.9
-django-ckeditor-updated==4.2.1
+django-ckeditor-updated==4.4
 django-email-extras==0.1.13
 django-extensions==1.2.2
 django-ganalytics==0.2
