@@ -72,7 +72,7 @@ run: # run local server
 
 
 run_celery: # run local celery
-	@cd dbaas && python manage.py celery worker -E --loglevel=DEBUG --app=dbaas --beat $(filter-out $@,$(MAKECMDGOALS))
+	@cd dbaas && celery worker -E --loglevel=DEBUG --app=dbaas --beat $(filter-out $@,$(MAKECMDGOALS))
 
 
 shell: # run django shell
