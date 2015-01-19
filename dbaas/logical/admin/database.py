@@ -48,7 +48,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     perm_add_database_infra = constants.PERM_ADD_DATABASE_INFRA
 
     service_class = DatabaseService
-    search_fields = ("name", "databaseinfra__name")
+    search_fields = ("name", "databaseinfra__name", "team__name",
+                            "project__name", "environment__name", "databaseinfra__engine__engine_type__name")
     list_display_basic = ["name_html", "engine_type", "environment", "plan", "friendly_status", "clone_html" ,
                           "get_capacity_html", "metrics_html", ]
     list_display_advanced = list_display_basic + ["quarantine_dt_format"]

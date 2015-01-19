@@ -37,37 +37,37 @@ class Redis(BaseDriver):
     def __concatenate_instances(self):
         if self.databaseinfra.plan.is_ha:
             return ",".join(["%s:%s" % (instance.address, instance.port)
-                        for instance in self.databaseinfra.instances.filter(database_type=Instance.REDIS_SENTINEL, is_active=True).all()])
+                        for instance in self.databaseinfra.instances.filter(instance_type=Instance.REDIS_SENTINEL, is_active=True).all()])
         else:
             return ",".join(["%s:%s" % (instance.address, instance.port)
-                        for instance in self.databaseinfra.instances.filter(database_type=Instance.REDIS, is_active=True).all()])
+                        for instance in self.databaseinfra.instances.filter(instance_type=Instance.REDIS, is_active=True).all()])
 
     def __concatenate_instances_dns(self):
         if self.databaseinfra.plan.is_ha:
             return ",".join(["%s:%s" % (instance.dns, instance.port)
-                        for instance in self.databaseinfra.instances.filter(database_type=Instance.REDIS_SENTINEL, is_active=True).all()])
+                        for instance in self.databaseinfra.instances.filter(instance_type=Instance.REDIS_SENTINEL, is_active=True).all()])
         else:
             return ",".join(["%s:%s" % (instance.dns, instance.port)
-                        for instance in self.databaseinfra.instances.filter(database_type=Instance.REDIS, is_active=True).all()])
+                        for instance in self.databaseinfra.instances.filter(instance_type=Instance.REDIS, is_active=True).all()])
 
     def get_connection(self, database=None):
         if self.databaseinfra.plan.is_ha:
-            uri_database_type = 'sentinel'
+            uri_instance_type = 'sentinel'
             database_name = 'master:%s' % (self.databaseinfra.name)
         else:
-            uri_database_type = 'redis'
+            uri_instance_type = 'redis'
             database_name = '0'
-        uri = "%s://:<password>@%s/%s" % (uri_database_type, self.__concatenate_instances(), database_name)
+        uri = "%s://:<password>@%s/%s" % (uri_instance_type, self.__concatenate_instances(), database_name)
         return uri
 
     def get_connection_dns(self, database=None):
         if self.databaseinfra.plan.is_ha:
-            uri_database_type = 'sentinel'
+            uri_instance_type = 'sentinel'
             database_name = 'master:%s' % (self.databaseinfra.name)
         else:
-            uri_database_type = 'redis'
+            uri_instance_type = 'redis'
             database_name = '0'
-        uri = "%s://:<password>@%s/%s" % (uri_database_type, self.__concatenate_instances_dns(), database_name)
+        uri = "%s://:<password>@%s/%s" % (uri_instance_type, self.__concatenate_instances_dns(), database_name)
         return uri
 
     def __get_admin_sentinel_connection(self, instance=None):
@@ -76,7 +76,7 @@ class Redis(BaseDriver):
         if instance:
             sentinels.append((instance.address, instance.port))
         else:
-            for instance in self.databaseinfra.instances.filter(database_type=Instance.REDIS_SENTINEL, is_active=True).all():
+            for instance in self.databaseinfra.instances.filter(instance_type=Instance.REDIS_SENTINEL, is_active=True).all():
                 sentinels.append((instance.address, instance.port))
 
         return sentinels
@@ -85,8 +85,23 @@ class Redis(BaseDriver):
         if instance:
             return instance.address, instance.port
 
-        instances = self.databaseinfra.instances.filter(database_type=Instance.REDIS, is_active=True).all()
+        instances = self.databaseinfra.instances.filter(instance_type=Instance.REDIS, is_active=True).all()
         return instances[0].address, instances[0].port
+
+    def __concatenate_instances_dns_only(self):
+        return ",".join(["%s" % (instance.dns)
+                        for instance in self.databaseinfra.instances.filter(instance_type=Instance.REDIS_SENTINEL, is_active=True).all()])
+
+    def get_dns_port(self):
+        if self.databaseinfra.plan.is_ha:
+            dns = self.__concatenate_instances_dns_only()
+            port = self.databaseinfra.instances.filter(instance_type=Instance.REDIS_SENTINEL, is_active=True).all()[0].port
+        else:
+            instance = self.databaseinfra.instances.all()[0]
+            dns = instance.dns
+            port = instance.port
+        return dns, port
+
 
     def __redis_client__(self, instance):
 

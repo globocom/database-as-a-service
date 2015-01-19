@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.0.35
+* Redis HA
+* Fix database api (deleting database)
+
 ## 0.0.34
 * Change Celery Health String
 * Bug Fix Zabbix api

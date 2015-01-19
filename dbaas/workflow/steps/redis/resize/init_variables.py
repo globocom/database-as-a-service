@@ -17,7 +17,7 @@ class InitVariables(BaseStep):
 
             database = workflow_dict['database']
             instances_detail = []
-            for instance in database.databaseinfra.instances.filter(database_type = Instance.REDIS):
+            for instance in database.databaseinfra.instances.filter(instance_type = Instance.REDIS):
                 instances_detail.append({
                     'instance': instance,
                     #'is_master': is_master,

@@ -45,8 +45,8 @@ class InitDatabaseRedis(BaseStep):
                     LOG.warn("Host %s is not ready..." % host)
                     return False
                 
-                instances_redis = Instance.objects.filter(hostname=host, database_type=Instance.REDIS)
-                instances_sentinel = Instance.objects.filter(hostname=host, database_type=Instance.REDIS_SENTINEL)
+                instances_redis = Instance.objects.filter(hostname=host, instance_type=Instance.REDIS)
+                instances_sentinel = Instance.objects.filter(hostname=host, instance_type=Instance.REDIS_SENTINEL)
                 
                 if instances_redis:
                     host_nfsattr = HostAttr.objects.get(host=host)

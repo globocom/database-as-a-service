@@ -62,7 +62,7 @@ def get_clone_args(origin_database, dest_database):
         if dest_database.plan.is_ha:
             cluster_info = []
 
-            for instance in dest_database.databaseinfra.instances.filter(database_type=Instance.REDIS):
+            for instance in dest_database.databaseinfra.instances.filter(instance_type=Instance.REDIS):
                 cluster_info.append({"sys_user":sys_user_dest,"sys_pass":sys_pass_dest,
                     "remote_path":"/data/data/dump.rdb","host":instance.address,
                     "redis_pass":pass_dest, "redis_port":str(int(port_dest))})

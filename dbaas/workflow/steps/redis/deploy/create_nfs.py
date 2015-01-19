@@ -20,7 +20,7 @@ class CreateNfs(BaseStep):
 
             for instance in workflow_dict['instances']:
                 
-                if instance.database_type == Instance.REDIS_SENTINEL:
+                if instance.instance_type == Instance.REDIS_SENTINEL:
                     continue
                 
                 host = instance.hostname
