@@ -4,6 +4,7 @@ from django.test.client import Client
 from django.test import TestCase
 from django.test.client import RequestFactory
 from django.db import IntegrityError
+from django.db import transaction
 
 from ..models import Engine, EngineType
 
@@ -27,8 +28,8 @@ class EngineTestCase(TestCase):
         self.assertTrue(engine_type.id)
 
     def test_error_duplicate_engine_type(self):
-
-        self.assertRaises(IntegrityError, EngineType.objects.create, name="Test")
+        with transaction.atomic():
+            self.assertRaises(IntegrityError, EngineType.objects.create, name="Test")
 
     def test_create_engine_in_bd(self):
 
@@ -40,4 +41,4 @@ class EngineTestCase(TestCase):
 
         self.assertTrue(engine.id)
 
-    
+
