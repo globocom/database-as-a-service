@@ -54,13 +54,9 @@ class DatabaseSerializer(serializers.HyperlinkedModelSerializer):
 class DatabaseAPI(viewsets.ModelViewSet):
     """
     *   ### __List databases__
-
         __GET__ /api/database/
-
     *   ### __To create a new database__
-
         __POST__ /api/database/
-
             {
                 "name": "{name}",
                 "plan": "{api_url}/plan/{plan_id}/",
@@ -69,23 +65,15 @@ class DatabaseAPI(viewsets.ModelViewSet):
                 "team": "{api_url}/team/{team_id}/",
                 "description": "{description}"
             }
-
     *   ### __Show details about a database__
-
         __GET__ /api/database/`database_id`/
-
     *   ### __To delete a database (will put it on quarantine)__
-
         __DELETE__ /api/database/`database_id`/
-
     *   ### __To change database project__
-
         __PUT__ /api/database/`database_id`/
-
             {
                 "project": "{api_url}/project/{project_id}/"
             }
-
     """
     serializer_class = DatabaseSerializer
     queryset = models.Database.objects.all()
@@ -123,8 +111,6 @@ class DatabaseAPI(viewsets.ModelViewSet):
 
         if not instance.is_in_quarantine:
             instance.delete()
-
             return Response(status=status.HTTP_204_NO_CONTENT)
         else:
             return Response(status=status.HTTP_401_UNAUTHORIZED)
-
