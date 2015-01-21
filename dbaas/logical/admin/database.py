@@ -246,7 +246,9 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         exclude = exclude or None
 
         if obj and obj.plan.provider==Plan.CLOUDSTACK and \
-            'offering' not in self.fieldsets_change and 'offering' not in self.form.declared_fields:
+            'offering' not in self.fieldsets_change and \
+            'offering' not in self.form.declared_fields:
+
             DatabaseForm.setup_offering_field(form=self.form,db_instance=obj)
             self.fieldsets_change[0][1]['fields'].append('offering')
 
@@ -334,11 +336,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
     def change_view(self, request, object_id, form_url='', extra_context=None):
         database = Database.objects.get(id=object_id)
-
-        LOG.debug("BEFORE FORM")
         self.form = DatabaseForm
-
-        LOG.debug("AFTER FORM")
         extra_context = extra_context or {}
 
         if database.is_in_quarantine:
