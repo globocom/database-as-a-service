@@ -1,9 +1,9 @@
-Django==1.6
+Django==1.6.10
 Flask==0.10.1
 Jinja2==2.7.2
 Markdown==2.3.1
 MarkupSafe==0.18
-MySQL-python==1.2.3
+MySQL-python==1.2.5
 Pillow==2.3.0
 PyHamcrest==1.7.2
 PyYAML==3.10
@@ -27,9 +27,9 @@ django-ganalytics==0.2
 django-haystack==2.1.0
 django-services==0.0.8
 django-simple-audit==0.1.14
-djangorestframework==2.4.0
+djangorestframework==2.3.8
 ecdsa==0.11
-gunicorn==0.17.2
+gunicorn==19.1.1
 httpretty==0.8.0
 itsdangerous==0.23
 kombu==3.0.22
@@ -56,7 +56,7 @@ dbaas_nfsaas==0.4.3
 dbaas_zabbix==0.2.1
 dbaas_dbmonitor==0.1.0
 dbaas_flipper==0.0.7
-django-filter==0.7
+django-filter==0.9.1
 dbaas_dnsapi==0.0.5
 dbaas-aclapi==0.0.15
 dbaas_laas==0.0.2
