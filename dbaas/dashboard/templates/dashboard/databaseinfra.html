@@ -34,6 +34,8 @@
                                 {% for i in infra.instances.all %}
                                     {% if i.is_arbiter %}
                                         <a href="{%if i.hostname.monitor_url %}{{i.hostname.monitor_url}}{% else %}#{% endif %}" target="_blank"><span class="label label-arbiter">{{i.hostname}}</span></a>
+                                    {% elif i.instance_type == i.REDIS_SENTINEL %}
+                                        <a href="{%if i.hostname.monitor_url %}{{i.hostname.monitor_url}}{% else %}#{% endif %}" target="_blank"><span class="label label-arbiter">{{i.hostname}}</span></a>
                                     {% elif i.check_status %}
                                         <a href="{%if i.hostname.monitor_url %}{{i.hostname.monitor_url}}{% else %}#{% endif %}" target="_blank"><span class="label label-success">{{i.hostname}}</span></a>
                                     {% else %}
