@@ -110,8 +110,7 @@ class Redis(BaseDriver):
             # redis uses timeout in seconds
             connection_timeout_in_seconds = Configuration.get_by_name_as_int('redis_connect_timeout', default=REDIS_CONNECTION_DEFAULT_TIMEOUT)
 
-
-            if instance or not self.databaseinfra.plan.is_ha:
+            if (instance and instance.instance_type == Instance.REDIS) or (not self.databaseinfra.plan.is_ha and not instance):
                 connection_address, connection_port = self.__get_admin_single_connection(instance)
                 client = redis.Redis(host = connection_address,
                                     port = int(connection_port),
@@ -221,7 +220,35 @@ class Redis(BaseDriver):
         return CLONE_DATABASE_SCRIPT_NAME
 
     def check_instance_is_eligible_for_backup(self, instance):
-        return True
+        if instance.instance_type == Instance.REDIS_SENTINEL:
+            return False
+        
+        if self.databaseinfra.instances.count() == 1:
+            return True
+        
+        with self.redis(instance=instance) as client:
+            try:
+                info = client.info()
+                if info['role'] == 'slave':
+                    return True
+                else:
+                    return False
+            except Exception, e:
+                raise ConnectionError('Error connection to databaseinfra %s: %s' % (self.databaseinfra, str(e)))
 
     def check_instance_is_master(self, instance):
-        return True
+        if instance.instance_type == Instance.REDIS_SENTINEL:
+            return False
+        
+        if self.databaseinfra.instances.count() == 1:
+            return True
+        
+        with self.redis(instance=instance) as client:
+            try:
+                info = client.info()
+                if info['role'] == 'slave':
+                    return False
+                else:
+                    return True
+            except Exception, e:
+                raise ConnectionError('Error connection to databaseinfra %s: %s' % (self.databaseinfra, str(e)))
