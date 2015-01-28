@@ -357,18 +357,22 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         LOG.debug("Deleting {}".format(obj))
         database = obj
         if database.is_in_quarantine:
+            
+            if database.plan.provider == database.plan.CLOUDSTACK:
 
-            LOG.debug(
-                "call destroy_database - name=%s, team=%s, project=%s, user=%s" % (
-                    database.name, database.team, database.project, request.user))
+                LOG.debug(
+                    "call destroy_database - name=%s, team=%s, project=%s, user=%s" % (
+                        database.name, database.team, database.project, request.user))
 
-            result = destroy_database.delay(database, request.user)
+                result = destroy_database.delay(database, request.user)
 
-            url = reverse('admin:notification_taskhistory_changelist')
-            return None
+                url = reverse('admin:notification_taskhistory_changelist')
+            else:
+                database.delete()
         else:
-            database.is_in_quarantine = True
-            database.save()
+            #database.is_in_quarantine = True
+            #database.save()
+            database.delete()
 
     def clone_view(self, request, database_id):
         database = Database.objects.get(id=database_id)

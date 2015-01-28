@@ -78,13 +78,13 @@ def clone_infra(plan, environment, name, team, project, description, task=None, 
 def destroy_infra(databaseinfra, task=None):
 
     try:
-      database = databaseinfra.databases.all()[0]
+      database = databaseinfra.databases.get()
       LOG.debug('Database found! {}'.format(database))
     except IndexError:
       LOG.info("Database not found...")
 
     if not databaseinfra.plan.provider == databaseinfra.plan.CLOUDSTACK:
-        database.delete()
+        LOG.error('Databaseinfra is not cloudstack infra')
         return True
 
     instances = []
