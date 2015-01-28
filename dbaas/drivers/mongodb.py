@@ -121,10 +121,12 @@ class MongoDB(BaseDriver):
         return self.__mongo_client__(instance)
 
     def lock_database(self, client):
-        client.fsync(lock=True)
+        #client.fsync(lock=True)
+        pass
 
     def unlock_database(self, client):
-        client.unlock()
+        #client.unlock()
+        pass
 
     @contextmanager
     def pymongo(self, instance=None, database=None):
