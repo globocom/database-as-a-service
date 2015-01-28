@@ -69,11 +69,13 @@ def make_instance_snapshot_backup(instance, error):
     client = driver.get_client(instance)
     
     try:
+        LOG.debug('Locking instance %s' % str(instance))
         driver.lock_database(client)
+        LOG.debug('Instance %s is locked' % str(instance))
+        raise Exception('spam', 'eggs')
         nfs_snapshot = NfsaasProvider.create_snapshot(environment = databaseinfra.environment,
                                                       plan = databaseinfra.plan,
                                                       host = instance.hostname)
-        driver.unlock_database(client)
         if 'error' in nfs_snapshot:
             errormsg = nfs_snapshot['error']
             error['errormsg'] = errormsg
@@ -94,6 +96,11 @@ def make_instance_snapshot_backup(instance, error):
         error['errormsg'] = errormsg
         set_backup_error(databaseinfra, snapshot, errormsg)
         return False
+
+    finally:
+        LOG.debug('Unlocking instance %s' % str(instance))
+        driver.unlock_database(client)
+        LOG.debug('Instance %s is unlocked' % str(instance))
     
     from dbaas_cloudstack.models import HostAttr as Cloudstack_HostAttr
     cloudstack_hostattr = Cloudstack_HostAttr.objects.get(host=instance.hostname)
