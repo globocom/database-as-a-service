@@ -11,7 +11,7 @@ South==1.0
 Unidecode==0.04.14
 Werkzeug==0.9.4
 Whoosh==2.5.6
-amqp==1.4.2
+amqp==1.4.6
 anyjson==0.3.3
 astroid==1.0.0
 billiard==3.3.0.19
