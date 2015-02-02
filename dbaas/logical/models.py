@@ -303,31 +303,12 @@ class Database(BaseModel):
                 database.name, quarantine_time))
 
     @classmethod
-    @transaction.commit_manually
     def clone(cls, database, clone_name, plan, environment, user):
-        # try:
-        #    cloned_database = Database.objects.get(pk=database.pk)
-        #    cloned_database.name = clone_name
-        #    cloned_database.pk = None
-        #    if not databaseinfra:
-        #        cloned_database.databaseinfra = DatabaseInfra.best_for(database.plan, database.environment)
-        #    else:
-        #        cloned_database.databaseinfra = databaseinfra
-        #    cloned_database.save()
-        # except:
-        #    transaction.rollback()
-        #    raise
-        # else:
-        #    transaction.commit()
-        # call task
-        #    from notification.tasks import clone_database
-        #    result = clone_database.delay(database, cloned_database, user=user)
         from notification.tasks import clone_database
 
         result = clone_database.delay(database, clone_name, plan, environment, user=user)
 
     @classmethod
-    @transaction.commit_manually
     def resize(cls, database, cloudstackpack, user):
         from notification.tasks import resize_database
 
