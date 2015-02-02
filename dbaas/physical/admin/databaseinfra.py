@@ -34,6 +34,7 @@ class InstanceAdmin(django_admin.TabularInline):
     # max_num = 1
     # can_delete = False
     extra = 1
+    template = 'admin/physical/shared/inline_form.html'
     formset = InstanceModelFormSet
 
 
