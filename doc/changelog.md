@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.0.36
+* Updated to Django 1.6.10(and its deps)
+* Updated Celery to 3.1.17
+* Fix pre-provisioned database deletion and improve database deletion proccess
+
+
 ## 0.0.35
 * Redis HA
 * Fix database api (deleting database)
