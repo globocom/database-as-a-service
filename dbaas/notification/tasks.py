@@ -37,10 +37,12 @@ def rollback_database(dest_database):
 
 
 @app.task(bind=True)
-def create_database(self, name, plan, environment, team, project, description, user=None):
-    AuditRequest.new_request("create_database", self.request.args[-1], "localhost")
+def create_database(self, name, plan, environment, team, project, description, task_history=None, user=None):
+    AuditRequest.new_request("create_database", user, "localhost")
     try:
-        task_history = TaskHistory.register(request=self.request, user=user)
+        task_history = TaskHistory.register(request=self.request, task_history=task_history,
+            user=user)
+
         LOG.info("id: %s | task: %s | kwargs: %s | args: %s" % (
             self.request.id, self.request.task, self.request.kwargs, str(self.request.args)))
 
@@ -89,11 +91,11 @@ def create_database(self, name, plan, environment, team, project, description, u
 
 
 @app.task(bind=True)
-def destroy_database(self, database, user=None):
+def destroy_database(self, database, task_history=None, user=None):
     # register History
-    AuditRequest.new_request("destroy_database", self.request.args[-1], "localhost")
+    AuditRequest.new_request("destroy_database", user, "localhost")
     try:
-        task_history = TaskHistory.register(request=self.request, user=user)
+        task_history = TaskHistory.register(request=self.request, task_history=task_history, user=user)
         LOG.info("id: %s | task: %s | kwargs: %s | args: %s" % (
             self.request.id, self.request.task, self.request.kwargs, str(self.request.args)))
 
@@ -110,13 +112,13 @@ def destroy_database(self, database, user=None):
 
 
 @app.task(bind=True)
-def clone_database(self, origin_database, clone_name, plan, environment, user=None):
-    AuditRequest.new_request("clone_database", self.request.kwargs["user"], "localhost")
+def clone_database(self, origin_database, clone_name, plan, environment, task_history=None,user=None):
+    AuditRequest.new_request("clone_database", user, "localhost")
     try:
         LOG.info("id: %s | task: %s | kwargs: %s | args: %s" % (
             self.request.id, self.request.task, self.request.kwargs, str(self.request.args)))
 
-        task_history = TaskHistory.register(request=self.request, user=user)
+        task_history = TaskHistory.register(request=self.request, task_history=task_history,user=user)
 
         LOG.info("origin_database: %s" % origin_database)
 
@@ -470,13 +472,12 @@ def monitor_acl_job(self,database, job_id, bind_address, bind_status=models.CREA
         AuditRequest.cleanup_request()
 
 @app.task(bind=True)
-def resize_database(self, database, cloudstackpack, user=None):
+def resize_database(self, database, cloudstackpack, task_history=None,user=None):
 
     AuditRequest.new_request("resize_database", user, "localhost")
 
     try:
-        task_history = TaskHistory.register(request=self.request, user=user)
-
+        task_history = TaskHistory.register(request=self.request, task_history=task_history, user=user)
         from util.providers import resize_database
 
         result = resize_database(database = database, cloudstackpack = cloudstackpack, task = task_history)

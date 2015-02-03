@@ -48,18 +48,19 @@ class DatabaseAPITestCase(DbaaSAPITestCase, BasicTestsMixin):
 
         self.assertEquals(mock_delay.call_count, 1)
 
-        call_args = mock_delay.call_args[0]
-        self.assertEquals(test_obj.name, call_args[0])
+        call_args = mock_delay.call_args[1]
 
-        self.assertEquals(test_obj.plan, call_args[1])
+        self.assertEquals(test_obj.name, call_args['name'])
 
-        self.assertEquals(test_obj.environment, call_args[2])
+        self.assertEquals(test_obj.plan, call_args['plan'])
 
-        self.assertEquals(test_obj.team, call_args[3])
+        self.assertEquals(test_obj.environment, call_args['environment'])
 
-        self.assertEquals(test_obj.project, call_args[4])
+        self.assertEquals(test_obj.team, call_args['team'])
 
-        self.assertEquals(test_obj.description, call_args[5])
+        self.assertEquals(test_obj.project, call_args['project'])
+
+        self.assertEquals(test_obj.description, call_args['description'])
 
 
 

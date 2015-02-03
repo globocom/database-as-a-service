@@ -305,14 +305,33 @@ class Database(BaseModel):
     @classmethod
     def clone(cls, database, clone_name, plan, environment, user):
         from notification.tasks import clone_database
+        from notification.models import TaskHistory
 
-        result = clone_database.delay(database, clone_name, plan, environment, user=user)
+        task_history = TaskHistory()
+        task_history.task_name="clone_database"
+        task_history.task_status= task_history.STATUS_PENDING
+        task_history.arguments="Database name: {}".format(database.name)
+        task_history.save()
+
+        clone_database.delay(origin_database=database, clone_name=clone_name,
+                                                    plan=plan, environment=environment, user=user,
+                                                    task_history=task_history
+                                                    )
 
     @classmethod
     def resize(cls, database, cloudstackpack, user):
         from notification.tasks import resize_database
+        from notification.models import TaskHistory
 
-        result = resize_database.delay(database, cloudstackpack, user)
+        task_history = TaskHistory()
+        task_history.task_name="resize_database"
+        task_history.task_status= task_history.STATUS_PENDING
+        task_history.arguments="Database name: {}".format(database.name)
+        task_history.save()
+
+        resize_database.delay(database=database, cloudstackpack=cloudstackpack,
+                                            user=user,task_history=task_history
+                                        )
 
     def get_metrics_url(self):
         return "/admin/logical/database/{}/metrics/".format(self.id)

@@ -29,6 +29,7 @@ from django.contrib.admin import helpers
 from django.template.response import TemplateResponse
 from notification.tasks import destroy_database
 from notification.tasks import create_database
+from notification.models import TaskHistory
 from util import get_credentials_for
 from dbaas_credentials.models import CredentialType
 from django.core.exceptions import FieldError
@@ -313,13 +314,20 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                         form.cleaned_data['team'], form.cleaned_data['project'], form.cleaned_data['description'],
                         request.user))
 
-                result = create_database.delay(form.cleaned_data['name'],
-                                               form.cleaned_data['plan'],
-                                               form.cleaned_data['environment'],
-                                               form.cleaned_data['team'],
-                                               form.cleaned_data['project'],
-                                               form.cleaned_data['description'],
-                                               request.user)
+                task_history = TaskHistory()
+                task_history.task_name="create_database"
+                task_history.task_status= task_history.STATUS_PENDING
+                task_history.arguments="Database name: {}".format(form.cleaned_data['name'])
+                task_history.save()
+
+                create_database.delay(name=form.cleaned_data['name'],
+                                               plan=form.cleaned_data['plan'],
+                                               environment=form.cleaned_data['environment'],
+                                               team=form.cleaned_data['team'],
+                                               project=form.cleaned_data['project'],
+                                               description=form.cleaned_data['description'],
+                                               task_history=task_history,
+                                               user=request.user)
 
                 url = reverse('admin:notification_taskhistory_changelist')
                 return HttpResponseRedirect(url + "?user=%s" % request.user.username)  # Redirect after POST
@@ -357,21 +365,28 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         LOG.debug("Deleting {}".format(obj))
         database = obj
         if database.is_in_quarantine:
-            
+
             if database.plan.provider == database.plan.CLOUDSTACK:
 
                 LOG.debug(
                     "call destroy_database - name=%s, team=%s, project=%s, user=%s" % (
                         database.name, database.team, database.project, request.user))
 
-                result = destroy_database.delay(database, request.user)
+                task_history = TaskHistory()
+                task_history.task_name="destroy_database"
+                task_history.task_status= task_history.STATUS_PENDING
+                task_history.arguments="Database name: {}".format(database.name)
+                task_history.save()
+
+                destroy_database.delay(database=database,
+                                                    task_history=task_history,
+                                                    user=request.user
+                                                    )
 
                 url = reverse('admin:notification_taskhistory_changelist')
             else:
                 database.delete()
         else:
-            #database.is_in_quarantine = True
-            #database.save()
             database.delete()
 
     def clone_view(self, request, database_id):
@@ -389,7 +404,12 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 database_clone = form.cleaned_data['database_clone']
                 plan = form.cleaned_data['plan']
                 environment= form.cleaned_data['environment']
-                Database.clone(database, database_clone, plan, environment, request.user)
+
+                Database.clone(database=database, clone_name=database_clone,
+                                        plan=plan, environment=environment,
+                                        user=request.user
+                                        )
+
                 url = reverse('admin:notification_taskhistory_changelist')
                 return HttpResponseRedirect(url + "?user=%s" % request.user.username)  # Redirect after POST
         else:
@@ -505,9 +525,9 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             return HttpResponseRedirect(url)  # Redirect after POST
 
         if not CloudStackPack.objects.filter(
-                                                                                   offering__region__environment=database.environment,
-                                                                                   engine_type__name= database.engine_type
-                                                                               ).exclude(offering__serviceofferingid=database.offering_id):
+                                                                offering__region__environment=database.environment,
+                                                                engine_type__name= database.engine_type
+                                                            ).exclude(offering__serviceofferingid=database.offering_id):
             self.message_user(request, "Database has no offerings availables.", level=messages.ERROR)
             return HttpResponseRedirect(url)  # Redirect after POST
 
@@ -518,7 +538,9 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             if form.is_valid():  # All validation rules pass
 
                 cloudstackpack = CloudStackPack.objects.get(id=request.POST.get('target_offer'))
-                Database.resize(database, cloudstackpack, request.user)
+                Database.resize(database=database, cloudstackpack=cloudstackpack,
+                                        user=request.user,)
+
                 url = reverse('admin:notification_taskhistory_changelist')
 
                 return HttpResponseRedirect(url + "?user=%s" % request.user.username)  # Redirect after POST
