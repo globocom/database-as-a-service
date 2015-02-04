@@ -309,7 +309,7 @@ class Database(BaseModel):
 
         task_history = TaskHistory()
         task_history.task_name="clone_database"
-        task_history.task_status= task_history.STATUS_PENDING
+        task_history.task_status= task_history.STATUS_WAITING
         task_history.arguments="Database name: {}".format(database.name)
         task_history.user= user
         task_history.save()
@@ -326,7 +326,7 @@ class Database(BaseModel):
 
         task_history = TaskHistory()
         task_history.task_name="resize_database"
-        task_history.task_status= task_history.STATUS_PENDING
+        task_history.task_status= task_history.STATUS_WAITING
         task_history.arguments="Database name: {}".format(database.name)
         task_history.user= user
         task_history.save()
