@@ -139,6 +139,16 @@ class DatabaseForm(models.ModelForm):
             if not plan:
                 self._errors["plan"] = self.error_class([_("Plan: This field is required.")])
 
+        if 'project' in cleaned_data:
+            project = cleaned_data.get('project', None)
+            if not project:
+                self._errors["project"] = self.error_class([_("Project: This field is required.")])
+
+        if 'description' in cleaned_data:
+            description = cleaned_data.get('description', None)
+            if not description:
+                self._errors["description"] = self.error_class([_("Description: This field is required.")])
+
         if 'environment' in cleaned_data:
             environment = cleaned_data.get('environment', None)
             if not environment or environment not in plan.environments.all():
