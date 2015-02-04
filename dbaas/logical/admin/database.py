@@ -39,7 +39,6 @@ from functools import partial
 import sys
 from bson.json_util import loads
 
-
 LOG = logging.getLogger(__name__)
 
 
@@ -246,12 +245,14 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         # default on modelform_factory
         exclude = exclude or None
 
-        if obj and obj.plan.provider==Plan.CLOUDSTACK and \
-            'offering' not in self.fieldsets_change and \
-            'offering' not in self.form.declared_fields:
+        if obj and obj.plan.provider==Plan.CLOUDSTACK:
+            if 'offering' in self.fieldsets_change[0][1]['fields'] and 'offering' in self.form.declared_fields:
+                del self.form.declared_fields['offering']
+            else:
+                self.fieldsets_change[0][1]['fields'].append('offering')
 
             DatabaseForm.setup_offering_field(form=self.form,db_instance=obj)
-            self.fieldsets_change[0][1]['fields'].append('offering')
+            
 
         defaults = {
             "form": self.form,
