@@ -72,7 +72,6 @@ def make_instance_snapshot_backup(instance, error):
         LOG.debug('Locking instance %s' % str(instance))
         driver.lock_database(client)
         LOG.debug('Instance %s is locked' % str(instance))
-        raise Exception('spam', 'eggs')
         nfs_snapshot = NfsaasProvider.create_snapshot(environment = databaseinfra.environment,
                                                       plan = databaseinfra.plan,
                                                       host = instance.hostname)
