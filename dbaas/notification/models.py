@@ -23,8 +23,9 @@ class TaskHistory(BaseModel):
     STATUS_SUCCESS = 'SUCCESS'
     STATUS_ERROR = 'ERROR'
     STATUS_WARNING = 'WARNING'
+    STATUS_WAITING = 'WAITING'
 
-    _STATUS = [STATUS_PENDING, STATUS_RUNNING, STATUS_SUCCESS, STATUS_ERROR, STATUS_WARNING]
+    _STATUS = [STATUS_PENDING, STATUS_RUNNING, STATUS_SUCCESS, STATUS_ERROR, STATUS_WARNING, STATUS_WAITING]
 
     task_id = models.CharField(_('Task ID'), max_length=200, null=True, blank=True, editable=False)
     task_name = models.CharField(_('Task Name'), max_length=200, null=True, blank=True)
