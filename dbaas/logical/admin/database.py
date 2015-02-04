@@ -318,6 +318,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 task_history.task_name="create_database"
                 task_history.task_status= task_history.STATUS_PENDING
                 task_history.arguments="Database name: {}".format(form.cleaned_data['name'])
+                task_history.user= request.user
                 task_history.save()
 
                 create_database.delay(name=form.cleaned_data['name'],
@@ -376,6 +377,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 task_history.task_name="destroy_database"
                 task_history.task_status= task_history.STATUS_PENDING
                 task_history.arguments="Database name: {}".format(database.name)
+                task_history.user= request.user
                 task_history.save()
 
                 destroy_database.delay(database=database,
