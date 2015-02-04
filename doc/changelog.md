@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.0.37
+* Fix resize button 
+* Create TaskHistory object outside celery task
+* Description and project are obligatory for databases created from admin interface.
+
 ## 0.0.36
 * Updated to Django 1.6.10(and its deps)
 * Updated Celery to 3.1.17
