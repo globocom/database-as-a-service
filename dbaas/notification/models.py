@@ -23,8 +23,9 @@ class TaskHistory(BaseModel):
     STATUS_SUCCESS = 'SUCCESS'
     STATUS_ERROR = 'ERROR'
     STATUS_WARNING = 'WARNING'
+    STATUS_WAITING = 'WAITING'
 
-    _STATUS = [STATUS_PENDING, STATUS_RUNNING, STATUS_SUCCESS, STATUS_ERROR, STATUS_WARNING]
+    _STATUS = [STATUS_PENDING, STATUS_RUNNING, STATUS_SUCCESS, STATUS_ERROR, STATUS_WARNING, STATUS_WAITING]
 
     task_id = models.CharField(_('Task ID'), max_length=200, null=True, blank=True, editable=False)
     task_name = models.CharField(_('Task Name'), max_length=200, null=True, blank=True)
@@ -80,33 +81,44 @@ class TaskHistory(BaseModel):
         self.save()
 
     @classmethod
-    def register(cls, request=None, user=None):
+    def register(cls, request=None, user=None, task_history=None):
 
         LOG.info("task id: %s | task name: %s | " % (request.id,
                                                      request.task))
         print request.args
-        task_history = TaskHistory()
+
+        if not task_history:
+            task_history = TaskHistory()
+
         task_history.task_id = request.id
         task_history.task_name = request.task
         task_history.task_status = TaskHistory.STATUS_RUNNING
 
         if request.task == 'notification.tasks.create_database':
-            task_history.arguments = "Database name: {0},\nEnvironment: {1},\nProject: {2},\nPlan: {3}".format(
-                request.args[0], request.args[2], request.args[4], request.args[1])
+            task_history.arguments = "Database name: {0},\nEnvironment: {1},\
+            \nProject: {2},\nPlan: {3}".format(
+                request.kwargs['name'], request.kwargs['environment'],
+                request.kwargs['project'], request.kwargs['plan'])
+
         elif request.task == 'notification.tasks.resize_database':
             task_history.arguments = "Database name: {0},\nNew Offering: {1}".format(
-                request.args[0].name, request.args[1])
+                request.kwargs['database'].name, request.kwargs['cloudstackpack'])
+
         elif request.task=='notification.tasks.destroy_database':
             task_history.arguments = "Database name: {0},\nUser: {1}".format(
-                request.args[0].name, request.args[1])
+                request.kwargs['database'].name, request.kwargs['user'])
+
         elif request.task=='notification.tasks.clone_database':
-            task_history.arguments = "Database name: {0},\nClone: {1},\nPlan: {2},\nEnvironment: {3}".format(
-                request.args[0].name, request.args[1], request.args[2], request.args[3])
+            task_history.arguments = "Database name: {0},\nClone: {1},\nPlan: {2},\
+            \nEnvironment: {3}".format(
+                request.kwargs['origin_database'].name, str(request.kwargs['clone_name']),
+                str(request.kwargs['plan']), str(request.kwargs['environment']))
+
         else:
             task_history.arguments = request.args
 
         if user:
-            task_history.user = user.username
+            task_history.user = str(user.username)
 
         task_history.save()
 

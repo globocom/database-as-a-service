@@ -39,6 +39,13 @@ class BuildDatabase(BaseStep):
             database.save()
             workflow_dict['database'] = database
 
+            driver = workflow_dict['databaseinfra'].get_driver()
+            if driver.check_status():
+                LOG.info("Database is ok...")
+                database.status=database.ALIVE
+                database.save()
+
+
             return True
         except Exception:
             traceback = full_stack()

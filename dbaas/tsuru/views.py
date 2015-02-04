@@ -276,9 +276,14 @@ class ServiceAdd(APIView):
             msg = "Environment does not exist."
             return log_and_response(msg=msg, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+        task_history = TaskHistory()
+        task_history.task_name="create_database"
+        task_history.arguments="Database name: {}".format(name)
+        task_history.save()
 
-        create_database.delay(name, dbaas_plan, dbaas_environment,dbaas_team,
-                                        None, 'Database from Tsuru', dbaas_user)
+        create_database.delay(name=name, plan=dbaas_plan, environment=dbaas_environment,
+            team=dbaas_team,project=None, description='Database from Tsuru',
+            task_history=task_history, user=dbaas_user)
 
         return Response(status=status.HTTP_201_CREATED,)
 
