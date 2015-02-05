@@ -67,7 +67,7 @@ def make_instance_snapshot_backup(instance, error):
     databaseinfra = instance.databaseinfra
     driver = databaseinfra.get_driver()
     client = driver.get_client(instance)
-    
+
     try:
         LOG.debug('Locking instance %s' % str(instance))
         driver.lock_database(client)
@@ -80,7 +80,7 @@ def make_instance_snapshot_backup(instance, error):
             error['errormsg'] = errormsg
             set_backup_error(databaseinfra, snapshot, errormsg)
             return False
-            
+
         if 'id' in nfs_snapshot and 'snapshot' in nfs_snapshot:
             snapshot.snapshopt_id = nfs_snapshot['id']
             snapshot.snapshot_name = nfs_snapshot['snapshot']
@@ -89,7 +89,7 @@ def make_instance_snapshot_backup(instance, error):
             error['errormsg'] = errormsg
             set_backup_error(databaseinfra, snapshot, errormsg)
             return False
-        
+
     except Exception, e:
         errormsg = "Error creating snapshot: %s" % (e)
         error['errormsg'] = errormsg
@@ -100,7 +100,7 @@ def make_instance_snapshot_backup(instance, error):
         LOG.debug('Unlocking instance %s' % str(instance))
         driver.unlock_database(client)
         LOG.debug('Instance %s is unlocked' % str(instance))
-    
+
     from dbaas_cloudstack.models import HostAttr as Cloudstack_HostAttr
     cloudstack_hostattr = Cloudstack_HostAttr.objects.get(host=instance.hostname)
     output = {}
@@ -121,12 +121,12 @@ def make_instance_snapshot_backup(instance, error):
     snapshot.end_at = datetime.datetime.now()
     snapshot.save()
     register_backup_dbmonitor(databaseinfra, snapshot)
-    
+
     return True
 
 
 @app.task(bind=True)
-@only_one(key="makedatabasebackupkey", timeout=20)
+@only_one(key="makedatabasebackupkey", timeout=1200)
 def make_databases_backup(self):
 
     LOG.info("Making databases backups")
@@ -139,7 +139,7 @@ def make_databases_backup(self):
     for databaseinfra in databaseinfras:
         instances = Instance.objects.filter(databaseinfra=databaseinfra)
         for instance in instances:
-            
+
             if not instance.databaseinfra.get_driver().check_instance_is_eligible_for_backup(instance):
                 LOG.info('Instance %s is not eligible for backup' % (str(instance)))
                 continue
@@ -181,7 +181,7 @@ def remove_snapshot_backup(snapshot):
 
 
 @app.task(bind=True)
-@only_one(key="removedatabaseoldbackupkey", timeout=20)
+@only_one(key="removedatabaseoldbackupkey", timeout=1200)
 def remove_database_old_backups(self):
 
     task_history = TaskHistory.register(request=self.request, user=None)

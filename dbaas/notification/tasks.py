@@ -255,7 +255,7 @@ def database_notification_for_team(team=None):
 
 
 @app.task(bind=True)
-@only_one(key="db_notification_key", timeout=20)
+@only_one(key="db_notification_key", timeout=180)
 def database_notification(self):
     """
     Create tasks for database notification by team
@@ -287,7 +287,7 @@ def database_notification(self):
     return
 
 @app.task(bind=True)
-@only_one(key="get_databases_status", timeout=50)
+@only_one(key="get_databases_status", timeout=180)
 def update_database_status(self):
     LOG.info("Retrieving all databases")
     try:
@@ -313,7 +313,7 @@ def update_database_status(self):
     return
 
 @app.task(bind=True)
-@only_one(key="get_databases_used_size", timeout=50)
+@only_one(key="get_databases_used_size", timeout=180)
 def update_database_used_size(self):
     LOG.info("Retrieving all databases")
     try:
@@ -340,7 +340,7 @@ def update_database_used_size(self):
     return
 
 @app.task(bind=True)
-@only_one(key="get_instances_status", timeout=50)
+@only_one(key="get_instances_status", timeout=180)
 def update_instances_status(self):
     LOG.info("Retrieving all databaseinfras")
     task_history = TaskHistory.register(request=self.request, user=None)
