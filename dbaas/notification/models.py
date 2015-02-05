@@ -90,7 +90,11 @@ class TaskHistory(BaseModel):
         if not task_history:
             task_history = TaskHistory()
 
-        task_history.task_id = request.id
+        if task_history.task_id:
+            task_history.task_id += ';' + request.id
+        else:
+            task_history.task_id = request.id
+
         task_history.task_name = request.task
         task_history.task_status = TaskHistory.STATUS_RUNNING
 
