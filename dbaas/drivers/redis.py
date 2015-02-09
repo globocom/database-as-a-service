@@ -53,7 +53,7 @@ class Redis(BaseDriver):
     def get_connection(self, database=None):
         if self.databaseinfra.plan.is_ha:
             uri_instance_type = 'sentinel'
-            database_name = 'master:%s' % (self.databaseinfra.name)
+            database_name = 'service_name:%s' % (self.databaseinfra.name)
         else:
             uri_instance_type = 'redis'
             database_name = '0'
@@ -63,7 +63,7 @@ class Redis(BaseDriver):
     def get_connection_dns(self, database=None):
         if self.databaseinfra.plan.is_ha:
             uri_instance_type = 'sentinel'
-            database_name = 'master:%s' % (self.databaseinfra.name)
+            database_name = 'service_name:%s' % (self.databaseinfra.name)
         else:
             uri_instance_type = 'redis'
             database_name = '0'
@@ -72,7 +72,7 @@ class Redis(BaseDriver):
 
     def __get_admin_sentinel_connection(self, instance=None):
         sentinels = []
-        
+
         if instance:
             sentinels.append((instance.address, instance.port))
         else:
@@ -116,7 +116,7 @@ class Redis(BaseDriver):
                                     port = int(connection_port),
                                     password = self.databaseinfra.password,
                                     socket_connect_timeout = connection_timeout_in_seconds)
-            
+
             else:
                 sentinels = self.__get_admin_sentinel_connection(instance)
                 sentinel = Sentinel(sentinels, socket_timeout=connection_timeout_in_seconds)
@@ -222,10 +222,10 @@ class Redis(BaseDriver):
     def check_instance_is_eligible_for_backup(self, instance):
         if instance.instance_type == Instance.REDIS_SENTINEL:
             return False
-        
+
         if self.databaseinfra.instances.count() == 1:
             return True
-        
+
         with self.redis(instance=instance) as client:
             try:
                 info = client.info()
@@ -239,10 +239,10 @@ class Redis(BaseDriver):
     def check_instance_is_master(self, instance):
         if instance.instance_type == Instance.REDIS_SENTINEL:
             return False
-        
+
         if self.databaseinfra.instances.count() == 1:
             return True
-        
+
         with self.redis(instance=instance) as client:
             try:
                 info = client.info()
