@@ -81,11 +81,10 @@ class TaskHistory(BaseModel):
         self.save()
 
     @classmethod
-    def register(cls, request=None, user=None, task_history=None):
+    def register(cls, request=None, user=None, task_history=None, worker_name=None):
 
         LOG.info("task id: %s | task name: %s | " % (request.id,
                                                      request.task))
-        print request.args
 
         if not task_history:
             task_history = TaskHistory()
@@ -97,6 +96,11 @@ class TaskHistory(BaseModel):
 
         task_history.task_name = request.task
         task_history.task_status = TaskHistory.STATUS_RUNNING
+
+        if task_history.context:
+            task_history.context.update({"worker_name": worker_name})
+        else:
+            task_history.context = {"worker_name": worker_name}
 
         if request.task == 'notification.tasks.create_database':
             task_history.arguments = "Database name: {0},\nEnvironment: {1},\
