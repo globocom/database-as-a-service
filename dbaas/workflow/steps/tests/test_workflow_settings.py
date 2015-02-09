@@ -79,7 +79,8 @@ class WorkflowSettingsTestCase(TestCase):
             'workflow.steps.util.deploy.create_dbmonitor.CreateDbMonitor',
             'workflow.steps.util.deploy.build_database.BuildDatabase',
             'workflow.steps.util.deploy.create_log.CreateLog',
-            'workflow.steps.util.clone.clone_database.CloneDatabase'
+            'workflow.steps.util.clone.clone_database.CloneDatabase',
+            'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',
             )
         )
 
@@ -96,7 +97,8 @@ class WorkflowSettingsTestCase(TestCase):
             'workflow.steps.util.deploy.create_dbmonitor.CreateDbMonitor',
             'workflow.steps.util.deploy.build_database.BuildDatabase',
             'workflow.steps.util.deploy.create_log.CreateLog',
-            'workflow.steps.util.clone.clone_database.CloneDatabase'
+            'workflow.steps.util.clone.clone_database.CloneDatabase',
+            'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',
             )
         )
 
@@ -111,7 +113,8 @@ class WorkflowSettingsTestCase(TestCase):
             'workflow.steps.util.deploy.create_dbmonitor.CreateDbMonitor',
             'workflow.steps.util.deploy.build_database.BuildDatabase',
             'workflow.steps.util.deploy.create_log.CreateLog',
-            'workflow.steps.redis.clone.clone_database.CloneDatabase'
+            'workflow.steps.redis.clone.clone_database.CloneDatabase',
+            'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',
             )
         )
 
@@ -125,7 +128,8 @@ class WorkflowSettingsTestCase(TestCase):
             'workflow.steps.util.resize.stop_vm.StopVM',
             'workflow.steps.util.resize.resize_vm.ResizeVM',
             'workflow.steps.util.resize.start_vm.StartVM',
-            'workflow.steps.mongodb.resize.start_database.StartDatabase'
+            'workflow.steps.mongodb.resize.start_database.StartDatabase',
+            'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',
             )
         )
 
@@ -135,7 +139,8 @@ class WorkflowSettingsTestCase(TestCase):
             'workflow.steps.util.resize.stop_vm.StopVM',
             'workflow.steps.util.resize.resize_vm.ResizeVM',
             'workflow.steps.util.resize.start_vm.StartVM',
-            'workflow.steps.mysql.resize.start_database.StartDatabase'
+            'workflow.steps.mysql.resize.start_database.StartDatabase',
+            'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',
             )
         )
 
@@ -145,6 +150,7 @@ class WorkflowSettingsTestCase(TestCase):
             'workflow.steps.util.resize.stop_vm.StopVM',
             'workflow.steps.util.resize.resize_vm.ResizeVM',
             'workflow.steps.util.resize.start_vm.StartVM',
-            'workflow.steps.redis.resize.start_database.StartDatabase'
+            'workflow.steps.redis.resize.start_database.StartDatabase',
+            'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',
             )
         )
