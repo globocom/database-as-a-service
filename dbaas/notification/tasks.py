@@ -18,6 +18,8 @@ from account.models import Team
 from system.models import Configuration
 from simple_audit.models import AuditRequest
 from .models import TaskHistory
+from celery import task
+from billiard import current_process
 
 LOG = get_task_logger(__name__)
 
@@ -40,8 +42,10 @@ def rollback_database(dest_database):
 def create_database(self, name, plan, environment, team, project, description, task_history=None, user=None):
     AuditRequest.new_request("create_database", user, "localhost")
     try:
+
+        worker_name = get_worker_name()
         task_history = TaskHistory.register(request=self.request, task_history=task_history,
-            user=user)
+            user=user, worker_name= worker_name)
 
         LOG.info("id: %s | task: %s | kwargs: %s | args: %s" % (
             self.request.id, self.request.task, self.request.kwargs, str(self.request.args)))
@@ -95,7 +99,10 @@ def destroy_database(self, database, task_history=None, user=None):
     # register History
     AuditRequest.new_request("destroy_database", user, "localhost")
     try:
-        task_history = TaskHistory.register(request=self.request, task_history=task_history, user=user)
+        worker_name = get_worker_name()
+        task_history = TaskHistory.register(request=self.request, task_history=task_history,
+            user=user, worker_name= worker_name)
+
         LOG.info("id: %s | task: %s | kwargs: %s | args: %s" % (
             self.request.id, self.request.task, self.request.kwargs, str(self.request.args)))
 
@@ -115,10 +122,12 @@ def destroy_database(self, database, task_history=None, user=None):
 def clone_database(self, origin_database, clone_name, plan, environment, task_history=None,user=None):
     AuditRequest.new_request("clone_database", user, "localhost")
     try:
+        worker_name = get_worker_name()
         LOG.info("id: %s | task: %s | kwargs: %s | args: %s" % (
             self.request.id, self.request.task, self.request.kwargs, str(self.request.args)))
 
-        task_history = TaskHistory.register(request=self.request, task_history=task_history,user=user)
+        task_history = TaskHistory.register(request=self.request, task_history=task_history,
+            user=user, worker_name=worker_name)
 
         LOG.info("origin_database: %s" % origin_database)
 
@@ -175,7 +184,8 @@ def clone_database(self, origin_database, clone_name, plan, environment, task_hi
 @app.task
 @only_one(key="db_infra_notification_key", timeout=20)
 def databaseinfra_notification(self, user=None):
-    task_history = TaskHistory.register(request=self.request, user=user)
+    worker_name = get_worker_name()
+    task_history = TaskHistory.register(request=self.request, user=user, worker_name= worker_name)
     threshold_infra_notification = Configuration.get_by_name_as_int("threshold_infra_notification", default=0)
     if threshold_infra_notification <= 0:
         LOG.warning("database infra notification is disabled")
@@ -278,7 +288,8 @@ def database_notification(self):
         LOG.info("Messages: ")
         LOG.info(msgs)
 
-        task_history = TaskHistory.register(request=self.request, user=None)
+        worker_name = get_worker_name()
+        task_history = TaskHistory.register(request=self.request, user=None, worker_name=worker_name)
         task_history.update_status_for(TaskHistory.STATUS_SUCCESS, details="\n".join(
             str(key) + ': ' + ', '.join(value) for key, value in msgs.items()))
     except Exception, e:
@@ -291,7 +302,8 @@ def database_notification(self):
 def update_database_status(self):
     LOG.info("Retrieving all databases")
     try:
-        task_history = TaskHistory.register(request=self.request, user=None)
+        worker_name = get_worker_name()
+        task_history = TaskHistory.register(request=self.request, user=None, worker_name=worker_name)
         databases = Database.objects.all()
         msgs = []
         for database in databases:
@@ -317,7 +329,8 @@ def update_database_status(self):
 def update_database_used_size(self):
     LOG.info("Retrieving all databases")
     try:
-        task_history = TaskHistory.register(request=self.request, user=None)
+        worker_name = get_worker_name()
+        task_history = TaskHistory.register(request=self.request, user=None, worker_name=worker_name)
         databases = Database.objects.all()
         msgs = []
         for database in databases:
@@ -343,7 +356,8 @@ def update_database_used_size(self):
 @only_one(key="get_instances_status", timeout=180)
 def update_instances_status(self):
     LOG.info("Retrieving all databaseinfras")
-    task_history = TaskHistory.register(request=self.request, user=None)
+    worker_name = get_worker_name()
+    task_history = TaskHistory.register(request=self.request, user=None, worker_name=worker_name)
 
     try:
         infras = DatabaseInfra.objects.all()
@@ -392,7 +406,8 @@ def bind_address_on_database(self, database, acl_environment, acl_vlan, action="
 
     LOG.info("User: {}, action: {}".format(user, action))
 
-    task_history = TaskHistory.register(request=self.request, user=user)
+    worker_name = get_worker_name()
+    task_history = TaskHistory.register(request=self.request, user=user, worker_name=worker_name)
     LOG.info("id: %s | task: %s | kwargs: %s | args: %s" % (self.request.id, self.request.task, self.request.kwargs, str(self.request.args)))
 
     task_history.update_details(persist=True, details="Loading Process...")
@@ -441,7 +456,8 @@ def monitor_acl_job(self,database, job_id, bind_address, bind_status=models.CREA
         user =  self.request.args[-1]
     AuditRequest.new_request("create_database",user, "localhost")
 
-    task_history = TaskHistory.register(request=self.request, user=user)
+    worker_name = get_worker_name()
+    task_history = TaskHistory.register(request=self.request, user=user, worker_name=worker_name)
     LOG.info("id: %s | task: %s | kwargs: %s | args: %s" % (self.request.id, self.request.task, self.request.kwargs, str(self.request.args)))
 
     task_history.update_details(persist=True, details="Loading Process...")
@@ -477,7 +493,9 @@ def resize_database(self, database, cloudstackpack, task_history=None,user=None)
     AuditRequest.new_request("resize_database", user, "localhost")
 
     try:
-        task_history = TaskHistory.register(request=self.request, task_history=task_history, user=user)
+        worker_name = get_worker_name()
+        task_history = TaskHistory.register(request=self.request, task_history=task_history,
+            user=user, worker_name=worker_name)
         from util.providers import resize_database
 
         result = resize_database(database = database, cloudstackpack = cloudstackpack, task = task_history)
@@ -503,3 +521,7 @@ def resize_database(self, database, cloudstackpack, task_history=None,user=None)
     finally:
         AuditRequest.cleanup_request()
 
+
+def get_worker_name():
+    p = current_process()
+    return p.initargs[1].split('@')[1]

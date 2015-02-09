@@ -3,6 +3,7 @@ from dbaas.celery import app
 from util.decorators import only_one
 from models import CeleryHealthCheck
 from notification.models import TaskHistory
+from notification.tasks import get_worker_name
 
 import logging
 LOG = logging.getLogger(__name__)
@@ -13,7 +14,9 @@ LOG = logging.getLogger(__name__)
 @only_one(key="celery_healthcheck_last_update", timeout=20)
 def set_celery_healthcheck_last_update(self):
     try:
-        task_history = TaskHistory.register(request=self.request, user=None)
+        worker_name = get_worker_name()
+        task_history = TaskHistory.register(request=self.request, user=None,
+            worker_name=worker_name)
 
         LOG.info("Setting Celery healthcheck last update")
         CeleryHealthCheck.set_last_update()
