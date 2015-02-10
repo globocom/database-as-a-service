@@ -11,6 +11,7 @@ from system.models import Configuration
 import datetime
 from datetime import date, timedelta
 from util import exec_remote_command
+from dbaas_cloudstack.models import HostAttr as Cloudstack_HostAttr
 #from celery.utils.log import get_task_logger
 
 #LOG = get_task_logger(__name__)
@@ -42,6 +43,31 @@ def register_backup_dbmonitor(databaseinfra, snapshot):
     except Exception, e:
         LOG.error("Error register backup on DBMonitor %s" % (e))
 
+def mysql_binlog_save(client, instance, cloudstack_hostattr):
+    
+    try:
+        client.query('show master status')
+        r = client.store_result()
+        row = r.fetch_row(maxrows=0, how=1)
+        binlog_file = row[0]['File']
+        binlog_pos = row[0]['Position']
+    
+        client.query("show variables like 'datadir'")
+        r = client.store_result()
+        row = r.fetch_row(maxrows=0, how=1)
+        datadir = row[0]['Value']
+
+        output = {}
+        command = 'echo "master=%s;position=%s" > %smysql_binlog_master_file_pos' % (binlog_file, binlog_pos, datadir)
+
+        exit_status = exec_remote_command(server = instance.hostname.address,
+                                        username = cloudstack_hostattr.vm_user,
+                                        password = cloudstack_hostattr.vm_password,
+                                        command = command,
+                                        output = output)
+    except Exception, e:
+        LOG.error("Error saving mysql master binlog file and position: %s" % (e))
+
 
 def make_instance_snapshot_backup(instance, error):
 
@@ -67,11 +93,16 @@ def make_instance_snapshot_backup(instance, error):
     databaseinfra = instance.databaseinfra
     driver = databaseinfra.get_driver()
     client = driver.get_client(instance)
+    cloudstack_hostattr = Cloudstack_HostAttr.objects.get(host=instance.hostname)
 
     try:
         LOG.debug('Locking instance %s' % str(instance))
         driver.lock_database(client)
         LOG.debug('Instance %s is locked' % str(instance))
+        
+        if type(driver).__name__ == 'MySQL':
+            mysql_binlog_save(client, instance, cloudstack_hostattr)
+                
         nfs_snapshot = NfsaasProvider.create_snapshot(environment = databaseinfra.environment,
                                                       plan = databaseinfra.plan,
                                                       host = instance.hostname)
@@ -101,8 +132,6 @@ def make_instance_snapshot_backup(instance, error):
         driver.unlock_database(client)
         LOG.debug('Instance %s is unlocked' % str(instance))
 
-    from dbaas_cloudstack.models import HostAttr as Cloudstack_HostAttr
-    cloudstack_hostattr = Cloudstack_HostAttr.objects.get(host=instance.hostname)
     output = {}
     command = "du -sb /data/.snapshot/%s | awk '{print $1}'" % (snapshot.snapshot_name)
     try:
