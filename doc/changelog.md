@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.0.38
+* Add celery worker to TaskHistory context
+* Change redis connection string
+* General bug fixes
+
 ## 0.0.37
 * Fix resize button 
 * Create TaskHistory object outside celery task
