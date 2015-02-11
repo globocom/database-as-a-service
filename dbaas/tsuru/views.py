@@ -122,9 +122,9 @@ class ServiceAppBind(APIView):
             if database.plan.is_ha:
                 env_vars = {
                     "DBAAS_SENTINEL_PASSWORD": redis_password,
-                    "DBAAS_SENTINEL_ENDPOINT": endpoint
+                    "DBAAS_SENTINEL_ENDPOINT": endpoint,
+                    "DBAAS_SENTINEL_SERVICE_NAME": database.databaseinfra.name
                 }
-                env_vars["DBAAS_SENTINEL_SERVICE_NAME"] = database.databaseinfra.name
 
         else:
             try:
