@@ -112,15 +112,15 @@ class ServiceAppBind(APIView):
 
         if database.databaseinfra.engine.name == 'redis':
             redis_password = database.databaseinfra.password
-            endpoint = database.endpoint.replace('<password>', redis_password)
+            endpoint = database.get_endpoint_dns.replace('<password>', redis_password)
 
             env_vars = {
-                    "DBAAS_REDIS_PASSWORD": redis_password,
-                    "DBAAS_REDIS_ENDPOINT": endpoint
+                    "DBAAS_SENTINEL_PASSWORD": redis_password,
+                    "DBAAS_SENTINEL_ENDPOINT": endpoint
                 }
 
             if database.plan.is_ha:
-                env_vars['DBAAS_REDIS_SERVICE_NAME'] = database.databaseinfra.name
+                env_vars["DBAAS_SENTINEL_SERVICE_NAME"] = database.databaseinfra.name
 
         else:
             try:
