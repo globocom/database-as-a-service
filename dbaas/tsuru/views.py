@@ -112,7 +112,7 @@ class ServiceAppBind(APIView):
 
         if database.databaseinfra.engine.name == 'redis':
             redis_password = database.databaseinfra.password
-            endpoint = database.get_endpoint_dns.replace('<password>', redis_password)
+            endpoint = database.get_endpoint_dns().replace('<password>', redis_password)
 
             env_vars = {
                     "DBAAS_SENTINEL_PASSWORD": redis_password,
