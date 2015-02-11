@@ -109,26 +109,42 @@ class ServiceAppBind(APIView):
             msg = "Database {} is not Alive.".format(database_name)
             return log_and_response(msg=msg, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        try:
-            credential = database.credentials.all()[0]
-        except IndexError, e:
-            msg = "Database {} in env {} does not have credentials.".format(database_name, env)
-            return log_and_response(msg=msg, e=e, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        endpoint = database.endpoint.replace('<user>:<password>',"{}:{}".format(
-            credential.user, credential.password))
+        if database.databaseinfra.engine.name == 'redis':
+            redis_password = database.databaseinfra.password
+            endpoint = database.endpoint.replace('<password>', redis_password)
 
-        kind = ''
-        if endpoint.startswith('mysql'):
-            kind = 'MYSQL_'
-        if endpoint.startswith('mongodb'):
-            kind = 'MONGODB_'
+            env_vars = {
+                    "DBAAS_REDIS_PASSWORD": redis_password,
+                    "DBAAS_REDIS_ENDPOINT": endpoint
+                }
 
-        return Response({
-            "DBAAS_{}USER".format(kind): credential.user,
-            "DBAAS_{}PASSWORD".format(kind): credential.password,
-            "DBAAS_{}ENDPOINT".format(kind): endpoint
-        }, status.HTTP_201_CREATED)
+            if database.plan.is_ha:
+                env_vars['DBAAS_REDIS_SERVICE_NAME'] = database.databaseinfra.name
+
+        else:
+            try:
+                credential = database.credentials.all()[0]
+            except IndexError, e:
+                msg = "Database {} in env {} does not have credentials.".format(database_name, env)
+                return log_and_response(msg=msg, e=e, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+            endpoint = database.endpoint.replace('<user>:<password>',"{}:{}".format(
+                credential.user, credential.password))
+
+            kind = ''
+            if endpoint.startswith('mysql'):
+                kind = 'MYSQL_'
+            if endpoint.startswith('mongodb'):
+                kind = 'MONGODB_'
+
+            env_vars = {
+                "DBAAS_{}USER".format(kind): credential.user,
+                "DBAAS_{}PASSWORD".format(kind): credential.password,
+                "DBAAS_{}ENDPOINT".format(kind): endpoint
+            }
+
+        return Response(env_vars, status.HTTP_201_CREATED)
 
     def delete(self, request, database_name, format=None):
         env = get_url_env(request)
