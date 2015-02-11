@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.0.39
+* fix tsuru bugs
+
 ## 0.0.38
 * Add celery worker to TaskHistory context
 * Change redis connection string
