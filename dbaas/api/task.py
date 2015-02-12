@@ -13,7 +13,7 @@ class TaskSerializer(serializers.HyperlinkedModelSerializer):
         fields = ('task_id','task_status', 'db_id')
 
     def get_id(self, obj):
-        return obj.task_id 
+        return obj.task_id
 
 class TaskAPI(viewsets.ReadOnlyModelViewSet):
     """
@@ -23,6 +23,6 @@ class TaskAPI(viewsets.ReadOnlyModelViewSet):
     #queryset = models.Engine.objects.all()
     queryset = TaskHistory.objects.all()
     filter_backends = (filters.DjangoFilterBackend,)
-    filter_fields = ('task_id',)
+    filter_fields = ('task_id','task_status')
 
 
