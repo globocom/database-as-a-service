@@ -12,10 +12,7 @@ import datetime
 from datetime import date, timedelta
 from util import exec_remote_command
 from dbaas_cloudstack.models import HostAttr as Cloudstack_HostAttr
-#from celery.utils.log import get_task_logger
-
-#LOG = get_task_logger(__name__)
-
+from util import get_worker_name
 import logging
 LOG = logging.getLogger(__name__)
 
@@ -44,14 +41,14 @@ def register_backup_dbmonitor(databaseinfra, snapshot):
         LOG.error("Error register backup on DBMonitor %s" % (e))
 
 def mysql_binlog_save(client, instance, cloudstack_hostattr):
-    
+
     try:
         client.query('show master status')
         r = client.store_result()
         row = r.fetch_row(maxrows=0, how=1)
         binlog_file = row[0]['File']
         binlog_pos = row[0]['Position']
-    
+
         client.query("show variables like 'datadir'")
         r = client.store_result()
         row = r.fetch_row(maxrows=0, how=1)
@@ -99,10 +96,10 @@ def make_instance_snapshot_backup(instance, error):
         LOG.debug('Locking instance %s' % str(instance))
         driver.lock_database(client)
         LOG.debug('Instance %s is locked' % str(instance))
-        
+
         if type(driver).__name__ == 'MySQL':
             mysql_binlog_save(client, instance, cloudstack_hostattr)
-                
+
         nfs_snapshot = NfsaasProvider.create_snapshot(environment = databaseinfra.environment,
                                                       plan = databaseinfra.plan,
                                                       host = instance.hostname)
@@ -159,7 +156,9 @@ def make_instance_snapshot_backup(instance, error):
 def make_databases_backup(self):
 
     LOG.info("Making databases backups")
-    task_history = TaskHistory.register(request=self.request, user=None)
+    worker_name = get_worker_name()
+    task_history = TaskHistory.register(request=self.request,
+        worker_name=worker_name, user=None)
 
     msgs = []
     status = TaskHistory.STATUS_SUCCESS
@@ -213,7 +212,9 @@ def remove_snapshot_backup(snapshot):
 @only_one(key="removedatabaseoldbackupkey", timeout=1200)
 def remove_database_old_backups(self):
 
-    task_history = TaskHistory.register(request=self.request, user=None)
+    worker_name = get_worker_name()
+    task_history = TaskHistory.register(request=self.request,
+        worker_name=worker_name, user=None)
 
     backup_retention_days = Configuration.get_by_name_as_int('backup_retention_days')
 

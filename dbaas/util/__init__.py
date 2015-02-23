@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+ # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 from time import sleep
 import paramiko
@@ -13,7 +13,7 @@ import subprocess
 import signal
 import os
 import traceback, sys
-
+from billiard import current_process
 LOG = logging.getLogger(__name__)
 
 # See http://docs.python.org/2/library/subprocess.html#popen-constructor if you
@@ -275,3 +275,9 @@ def build_context_script(contextdict, script):
     context = Context(contextdict)
     template = Template(script)
     return template.render(context)
+
+
+
+def get_worker_name():
+    p = current_process()
+    return p.initargs[1].split('@')[1]

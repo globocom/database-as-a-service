@@ -8,6 +8,7 @@ from util import email_notifications
 from util.providers import make_infra
 from util.providers import clone_infra
 from util.providers import destroy_infra
+from util import get_worker_name
 from util import full_stack
 from django.db.models import Sum, Count
 from physical.models import Plan
@@ -20,7 +21,6 @@ from simple_audit.models import AuditRequest
 from .models import TaskHistory
 from celery import task
 import datetime
-from billiard import current_process
 
 LOG = get_task_logger(__name__)
 
@@ -399,9 +399,7 @@ def purge_task_history(self):
 
         n_days_before = now - datetime.timedelta(days=retention_days)
 
-        tasks_to_purge = TaskHistory.objects.filter(task_name__in=['backup.tasks.make_databases_backup',
-                'backup.tasks.remove_database_old_backups',
-                'notification.tasks.database_notification',
+        tasks_to_purge = TaskHistory.objects.filter(task_name__in=['notification.tasks.database_notification',
                 'notification.tasks.database_notification_for_team',
                 'notification.tasks.update_database_status',
                 'notification.tasks.update_database_used_size',
@@ -553,8 +551,3 @@ def resize_database(self, database, cloudstackpack, task_history=None,user=None)
 
     finally:
         AuditRequest.cleanup_request()
-
-
-def get_worker_name():
-    p = current_process()
-    return p.initargs[1].split('@')[1]
