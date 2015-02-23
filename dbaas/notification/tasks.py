@@ -19,6 +19,7 @@ from system.models import Configuration
 from simple_audit.models import AuditRequest
 from .models import TaskHistory
 from celery import task
+import datetime
 from billiard import current_process
 
 LOG = get_task_logger(__name__)
@@ -384,6 +385,38 @@ def update_instances_status(self):
         task_history.update_status_for(TaskHistory.STATUS_ERROR, details=e)
 
     return
+
+
+@app.task(bind=True)
+@only_one(key="purge_task_history", timeout=600)
+def purge_task_history(self):
+    try:
+        worker_name = get_worker_name()
+        task_history = TaskHistory.register(request=self.request, user=None, worker_name=worker_name)
+
+        now = datetime.datetime.now()
+        retention_days = Configuration.get_by_name_as_int('task_history_retention_days')
+
+        n_days_before = now - datetime.timedelta(days=retention_days)
+
+        tasks_to_purge = TaskHistory.objects.filter(task_name__in=['backup.tasks.make_databases_backup',
+                'backup.tasks.remove_database_old_backups',
+                'notification.tasks.database_notification',
+                'notification.tasks.database_notification_for_team',
+                'notification.tasks.update_database_status',
+                'notification.tasks.update_database_used_size',
+                'notification.tasks.update_instances_status',
+                'system.tasks.set_celery_healthcheck_last_update']
+        , ended_at__lt=n_days_before
+        , task_status__in=["SUCCESS", "ERROR"])
+
+        tasks_to_purge.delete()
+
+        task_history.update_status_for(TaskHistory.STATUS_SUCCESS,
+            details='Purge succesfully done!')
+    except Exception, e:
+        task_history.update_status_for(TaskHistory.STATUS_ERROR, details=e)
+
 
 
 
