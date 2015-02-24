@@ -5,7 +5,7 @@
   background: #27ae60;
   padding: 0.5em 0.7em;
   color: #ecf0f1;
-  margin-bottom: 50px;
+  /*margin-bottom: 50px;*/
   -webkit-transition: background 0.5s ease-out;
   transition: background 0.5s ease-out;
 }
@@ -23,4 +23,19 @@
 /*    top: 56px;
     left: 1170px;
     position: absolute;*/
+}
+
+.auto-refresh-label{
+  display: inline-block;
+  text-align: right;
+  font-size: 14px;
+  vertical-align: middle;
+  padding-right: 5px;
+}
+
+
+.disable_auto_refresh {
+  margin: 5px 0;
+  display: inline-block;
+  vertical-align: middle;
 }

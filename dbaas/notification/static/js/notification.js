@@ -17,6 +17,8 @@
                 $(this.el).addClass('ended');
                 location.reload();
               }
+            }).on("click", function() {
+              $(this).removeClass('ended').data('countdown').update(+(new Date) + REFRESH_TIMEOUT).start();
             });
         },
     };
@@ -25,6 +27,19 @@
     $(function() {
         var notification = new Notification();
         notification.setupRefresh();
+        $("#disable_auto_refresh")[0].checked=true;
+
+        $("#disable_auto_refresh").click(function() {
+          if(!this.checked){
+            console.log('Stoping countdown!');
+            $('.countdown.callback').css("background-color", "#BAB9B9");
+            $('.countdown.callback').data('countdown').stop();
+          }else{
+            console.log("Starting countdown");
+            $('.countdown.callback').css("background-color", "#27ae60");
+            $('.countdown.callback').data('countdown').start();
+          };
+        });
     });
 
 })(django.jQuery);
