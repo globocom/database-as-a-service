@@ -20,6 +20,9 @@ class CheckDatabaseStatus(BaseStep):
 
             LOG.info("Getting driver class")
             driver = workflow_dict['databaseinfra'].get_driver()
+            from time import sleep
+
+            sleep(60)
 
             if driver.check_status():
                 LOG.info("Database is ok...")
