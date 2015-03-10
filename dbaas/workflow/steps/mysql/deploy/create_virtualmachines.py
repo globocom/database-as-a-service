@@ -71,6 +71,7 @@ class CreateVirtualMachine(BaseStep):
                     bundle= bundle,
                     project_id=cs_credentials.project,
                     vmname=vm_name,
+                    affinity_group_id=cs_credentials.get_parameter_by_name('affinity_group_id'),
                 )
 
                 if not vm:
