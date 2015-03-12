@@ -23,6 +23,8 @@ class Maintenance(BaseModel):
         null=True, blank=True)
     host_query = models.TextField(verbose_name=_("Query Hosts"),
         null=False, blank=False)
+    maximum_workers = models.PositiveSmallIntegerField(verbose_name=_("Maximum workers"),
+        null=False, default=1)
 
 
 
