@@ -6,7 +6,9 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from physical.models import Host
 from util.models import BaseModel
-
+# from datetime import datetime
+# from datetime import timedelta
+# from dbaas.celery import app
 
 LOG = logging.getLogger(__name__)
 
@@ -25,6 +27,17 @@ class Maintenance(BaseModel):
         null=False, blank=False)
     maximum_workers = models.PositiveSmallIntegerField(verbose_name=_("Maximum workers"),
         null=False, default=1)
+
+    # def __init__(self, *args, **kwargs):
+    #     self.datelimit = datetime.utcnow() + timedelta(minutes=kwargs.get('minutes', 1))
+
+    # def test_funk(self,):
+    #     self.real_task.apply_async(args=[self],eta=self.datelimit)
+
+    # @app.task
+    # def real_task(self):
+    #     print "Hi, I am here!"
+
 
 
 
