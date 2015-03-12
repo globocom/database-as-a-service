@@ -38,6 +38,8 @@ class Maintenance(BaseModel):
     # def real_task(self):
     #     print "Hi, I am here!"
 
+    def __unicode__(self):
+       return "%s" % self.description
 
 
 
