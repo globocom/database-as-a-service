@@ -1,6 +1,6 @@
 from django_services import service
-from .. import models
+from ..models import Maintenance
 
 
 class MaintenanceService(service.CRUDService):
-    model_class = models.Maintenance
+    model_class = Maintenance
