@@ -30,7 +30,8 @@ class Maintenance(BaseModel):
 
     description = models.CharField(verbose_name=_("Description"),
         null=False, blank=False, max_length=500,)
-    scheduled_for = models.DateTimeField(verbose_name=_("Schedule for"),)
+    scheduled_for = models.DateTimeField(verbose_name=_("Schedule for"),
+        unique=True,)
     main_script = models.TextField(verbose_name=_("Main Script"),
         null=False, blank=False)
     rollback_script = models.TextField(verbose_name=_("Rollback Script"),
