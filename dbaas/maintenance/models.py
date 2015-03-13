@@ -19,11 +19,13 @@ class Maintenance(BaseModel):
     WAITING = 0
     RUNNING = 1
     FINISHED = 2
+    REJECTED = 3
 
     MAINTENANCE_STATUS = (
         (FINISHED, 'Finished'),
         (RUNNING, 'Running'),
         (WAITING, 'Waiting'),
+        (REJECTED, 'Rejected'),
     )
 
     description = models.CharField(verbose_name=_("Description"),
@@ -55,6 +57,8 @@ class Maintenance(BaseModel):
         except Exception, e:
             LOG.warn("There is something wrong with the executed query")
             LOG.warn("Error: {}".format(e.args[1]))
+            self.status = self.REJECTED
+            self.save()
             return False
 
         return True
