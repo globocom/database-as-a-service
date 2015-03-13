@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
-from django.utils.translation import ugettext_lazy as _
 from django_services import admin
 from ..models import Maintenance
 from ..service.maintenance import MaintenanceService
