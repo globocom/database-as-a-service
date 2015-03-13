@@ -6,9 +6,11 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from physical.models import Host
 from util.models import BaseModel
-# from datetime import datetime
-# from datetime import timedelta
-# from dbaas.celery import app
+from django.db.models.signals import post_save
+from django.db.models.signals import pre_delete
+from django.dispatch import receiver
+from celery.task.control import revoke
+from .tasks import execute_scheduled_maintenance
 
 LOG = logging.getLogger(__name__)
 
@@ -21,26 +23,30 @@ class Maintenance(BaseModel):
         null=False, blank=False)
     rollback_script = models.TextField(verbose_name=_("Rollback Script"),
         null=True, blank=True)
-    check_script = models.TextField(verbose_name=_("Check Script"),
-        null=True, blank=True)
     host_query = models.TextField(verbose_name=_("Query Hosts"),
         null=False, blank=False)
     maximum_workers = models.PositiveSmallIntegerField(verbose_name=_("Maximum workers"),
         null=False, default=1)
-
-    # def __init__(self, *args, **kwargs):
-    #     self.datelimit = datetime.utcnow() + timedelta(minutes=kwargs.get('minutes', 1))
-
-    # def test_funk(self,):
-    #     self.real_task.apply_async(args=[self],eta=self.datelimit)
-
-    # @app.task
-    # def real_task(self):
-    #     print "Hi, I am here!"
+    celery_task_id = models.CharField(verbose_name=_("Celery task Id"),
+        null=True, blank=True, max_length=50,)
 
     def __unicode__(self):
        return "%s" % self.description
 
+    def save_host_maintenance(self,):
+        hosts = Host.objects.raw(self.host_query)
+        try:
+            for host in hosts:
+                hm = HostMaintenance()
+                hm.host = host
+                hm.maintenance = self
+                hm.save()
+        except Exception, e:
+            LOG.warn("There is something wrong with the executed query")
+            LOG.warn("Error: {}".format(e.args[1]))
+            return False
+
+        return True
 
 
 class HostMaintenance(BaseModel):
@@ -49,6 +55,8 @@ class HostMaintenance(BaseModel):
     RUNNING = 2
     ROLLBACK = 3
     WAITING = 4
+    ROLLBACK_ERROR = 5
+    ROLLBACK_SUCCESS = 6
 
     MAINTENANCE_STATUS = (
         (ERROR, 'Error'),
@@ -56,20 +64,64 @@ class HostMaintenance(BaseModel):
         (RUNNING, 'Running'),
         (ROLLBACK, 'Rollback'),
         (WAITING, 'Waiting'),
+        (ROLLBACK_ERROR, 'Rollback error'),
+        (ROLLBACK_SUCCESS, 'Rollback success'),
     )
 
-    started_at = models.DateTimeField(verbose_name=_("Started at"),)
-    finished_at = models.DateTimeField(verbose_name=_("Finished at"),)
+    started_at = models.DateTimeField(verbose_name=_("Started at"), null=True)
+    finished_at = models.DateTimeField(verbose_name=_("Finished at"),null=True)
     main_log = models.TextField(verbose_name=_("Main Script"),
-        null=False, blank=False)
-    rollback_log = models.TextField(verbose_name=_("Rollback Script"),
         null=True, blank=True)
-    check_log = models.TextField(verbose_name=_("Check Script"),
+    rollback_log = models.TextField(verbose_name=_("Rollback Script"),
         null=True, blank=True)
     status = models.IntegerField(choices=MAINTENANCE_STATUS, default=WAITING)
     host = models.ForeignKey(Host, related_name="host_maintenance",)
     maintenance = models.ForeignKey(Maintenance, related_name="maintenance",)
 
+    class Meta:
+        unique_together = (("host", "maintenance"),)
+
+    def __unicode__(self):
+        return "%s %s" % (self.host, self.maintenance)
 
 simple_audit.register(Maintenance)
 simple_audit.register(HostMaintenance)
+
+
+
+#########
+# SIGNALS#
+#########
+
+@receiver(pre_delete, sender=Maintenance)
+def database_pre_delete(sender, **kwargs):
+    """
+    maintenance pre delete signal. Revoke scheduled task and remove
+    its HostMaintenance objects
+    """
+    maintenance = kwargs.get("instance")
+    LOG.debug("maintenance pre-delete triggered")
+    HostMaintenance.objects.filter().delete()
+    revoke(task_id=maintenance.celery_task_id)
+
+
+
+@receiver(post_save, sender=Maintenance)
+def maintenance_post_save(sender, **kwargs):
+    """
+     maintenance post save signal. Creates the maintenance
+     task on celery and its HostMaintenance objetcs.
+    """
+    maintenance = kwargs.get("instance")
+    is_new = kwargs.get("created")
+    LOG.debug("maintenance post-save triggered")
+
+    if is_new or not maintenance.celery_task_id:
+        LOG.info("Spawning task and HostMaintenance objects...")
+
+        if maintenance.save_host_maintenance():
+            task = execute_scheduled_maintenance.apply_async(args=[maintenance],
+                eta=maintenance.scheduled_for)
+
+            maintenance.celery_task_id = task.task_id
+            maintenance.save()
