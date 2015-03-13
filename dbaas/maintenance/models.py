@@ -73,7 +73,7 @@ class Maintenance(BaseModel):
 
     def is_waiting_to_run(self):
         if self.status == self.FINISHED:
-            LOG.info("Maintenance has already run!")
+            LOG.info("Maintenance: {} has already run!".format(self))
             return False
 
         inspect = control.inspect()
