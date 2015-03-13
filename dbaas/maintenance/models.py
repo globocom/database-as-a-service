@@ -80,6 +80,7 @@ class HostMaintenance(BaseModel):
 
     class Meta:
         unique_together = (("host", "maintenance"),)
+        index_together = [["host", "maintenance"],]
 
     def __unicode__(self):
         return "%s %s" % (self.host, self.maintenance)
