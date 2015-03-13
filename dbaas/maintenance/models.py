@@ -9,7 +9,7 @@ from util.models import BaseModel
 from django.db.models.signals import post_save
 from django.db.models.signals import pre_delete
 from django.dispatch import receiver
-from celery.task.control import revoke
+from celery.task import control
 from .tasks import execute_scheduled_maintenance
 
 LOG = logging.getLogger(__name__)
@@ -58,10 +58,36 @@ class Maintenance(BaseModel):
             LOG.warn("There is something wrong with the executed query")
             LOG.warn("Error: {}".format(e.args[1]))
             self.status = self.REJECTED
+            post_save.disconnect(maintenance_post_save, sender=Maintenance)
             self.save()
+            post_save.connect(maintenance_post_save, sender=Maintenance)
             return False
 
         return True
+
+    def is_waiting_to_run(self):
+        if self.status == self.FINISHED:
+            LOG.info("Maintenance has already run!")
+            return False
+
+        inspect = control.inspect()
+        scheduled_tasks = inspect.scheduled()
+        hosts = scheduled_tasks.keys()
+
+        for host in hosts:
+            try:
+                scheduled_tasks = scheduled_tasks[host]
+            except TypeError:
+                LOG.warn("There are not scheduled tasks")
+                LOG.info(scheduled_tasks)
+                return False
+
+            for task in scheduled_tasks:
+                if  task['id'] == self.celery_task_id:
+                    return True
+
+        return False
+
 
 
 class HostMaintenance(BaseModel):
@@ -118,7 +144,7 @@ def database_pre_delete(sender, **kwargs):
     maintenance = kwargs.get("instance")
     LOG.debug("maintenance pre-delete triggered")
     HostMaintenance.objects.filter().delete()
-    revoke(task_id=maintenance.celery_task_id)
+    control.revoke(task_id=maintenance.celery_task_id)
 
 
 
