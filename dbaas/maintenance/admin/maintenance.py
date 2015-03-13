@@ -11,8 +11,8 @@ class MaintenanceAdmin(admin.DjangoServicesAdmin):
     service_class = MaintenanceService
     search_fields = ("scheduled_for", "description", "maximum_workers", 'status')
     list_display = ("scheduled_for", "description", "maximum_workers", 'status')
-    fields = ( "description", "scheduled_for","maximum_workers", 'status',
-        "main_script", "rollback_script", "host_query","celery_task_id")
+    fields = ( "description", "scheduled_for", "main_script", "rollback_script",
+         "host_query","maximum_workers", "status", "celery_task_id",)
     save_on_top = True
     readonly_fields = ('status', 'celery_task_id')
 
@@ -25,5 +25,9 @@ class MaintenanceAdmin(admin.DjangoServicesAdmin):
 
         return super(MaintenanceAdmin, self).change_view(request,
             object_id, form_url, extra_context=extra_context)
+
+    def add_view(self, request, form_url='', extra_context=None):
+        return super(MaintenanceAdmin, self).add_view(request, form_url,
+            extra_context)
 
 
