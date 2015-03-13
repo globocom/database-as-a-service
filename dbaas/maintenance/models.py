@@ -16,6 +16,16 @@ LOG = logging.getLogger(__name__)
 
 
 class Maintenance(BaseModel):
+    WAITING = 0
+    RUNNING = 1
+    FINISHED = 2
+
+    MAINTENANCE_STATUS = (
+        (FINISHED, 'Finished'),
+        (RUNNING, 'Running'),
+        (WAITING, 'Waiting'),
+    )
+
     description = models.CharField(verbose_name=_("Description"),
         null=False, blank=False, max_length=500,)
     scheduled_for = models.DateTimeField(verbose_name=_("Schedule for"),)
@@ -29,6 +39,7 @@ class Maintenance(BaseModel):
         null=False, default=1)
     celery_task_id = models.CharField(verbose_name=_("Celery task Id"),
         null=True, blank=True, max_length=50,)
+    status = models.IntegerField(choices=MAINTENANCE_STATUS, default=WAITING)
 
     def __unicode__(self):
        return "%s" % self.description
