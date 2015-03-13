@@ -75,6 +75,9 @@ class Maintenance(BaseModel):
         if self.status == self.FINISHED:
             LOG.info("Maintenance: {} has already run!".format(self))
             return False
+        elif self.status == self.REJECTED:
+            LOG.info("Maintenance: {} is rejected".format(self))
+            return False
 
         inspect = control.inspect()
         scheduled_tasks = inspect.scheduled()
@@ -86,10 +89,10 @@ class Maintenance(BaseModel):
             except TypeError:
                 LOG.warn("There are no scheduled tasks")
                 LOG.info(scheduled_tasks)
-                return False
+                continue
 
             for task in scheduled_tasks:
-                if  task['id'] == self.celery_task_id:
+                if  task['request']['id'] == self.celery_task_id:
                     return True
 
         return False
