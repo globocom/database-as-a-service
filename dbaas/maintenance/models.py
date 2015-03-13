@@ -76,7 +76,7 @@ class Maintenance(BaseModel):
             LOG.info("Maintenance: {} has already run!".format(self))
             return False
         elif self.status == self.REJECTED:
-            LOG.info("Maintenance: {} is rejected".format(self))
+            LOG.info("Maintenance: {} has been rejected".format(self))
             return False
 
         inspect = control.inspect()
