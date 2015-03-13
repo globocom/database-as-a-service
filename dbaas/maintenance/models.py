@@ -84,7 +84,7 @@ class Maintenance(BaseModel):
             try:
                 scheduled_tasks = scheduled_tasks[host]
             except TypeError:
-                LOG.warn("There are not scheduled tasks")
+                LOG.warn("There are no scheduled tasks")
                 LOG.info(scheduled_tasks)
                 return False
 
