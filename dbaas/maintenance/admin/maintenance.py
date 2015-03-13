@@ -3,7 +3,7 @@ from __future__ import absolute_import, unicode_literals
 from django_services import admin
 from ..models import Maintenance
 from ..service.maintenance import MaintenanceService
-
+from ..forms import MaintenanceForm
 
 
 class MaintenanceAdmin(admin.DjangoServicesAdmin):
@@ -14,7 +14,7 @@ class MaintenanceAdmin(admin.DjangoServicesAdmin):
          "host_query","maximum_workers", "status", "celery_task_id",)
     save_on_top = True
     readonly_fields = ('status', 'celery_task_id')
-
+    form = MaintenanceForm
 
     def change_view(self, request, object_id, form_url='', extra_context=None):
         maintenance = Maintenance.objects.get(id=object_id)
@@ -24,9 +24,5 @@ class MaintenanceAdmin(admin.DjangoServicesAdmin):
 
         return super(MaintenanceAdmin, self).change_view(request,
             object_id, form_url, extra_context=extra_context)
-
-    def add_view(self, request, form_url='', extra_context=None):
-        return super(MaintenanceAdmin, self).add_view(request, form_url,
-            extra_context)
 
 
