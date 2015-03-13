@@ -56,11 +56,16 @@ class Maintenance(BaseModel):
                 hm.maintenance = self
                 hm.save()
         except Exception, e:
-            LOG.warn("There is something wrong with the executed query")
+            LOG.warn("There is something wrong with the given query")
             LOG.warn("Error: {}".format(e.args[1]))
             self.status = self.REJECTED
+
+            # post_save signal has to be disconnected in order to avoid
+            # recursive signal call
             post_save.disconnect(maintenance_post_save, sender=Maintenance)
+
             self.save()
+            # connecting signal again
             post_save.connect(maintenance_post_save, sender=Maintenance)
             return False
 
