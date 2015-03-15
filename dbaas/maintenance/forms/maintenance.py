@@ -4,12 +4,13 @@ from django.utils.translation import ugettext_lazy as _
 import logging
 from django import forms
 from .. import models
+from ..validators import validate_host_query
 
 
 LOG = logging.getLogger(__name__)
 
 class MaintenanceForm(forms.ModelForm):
-
+    host_query = forms.CharField(widget=forms.Textarea,validators= [validate_host_query])
     class Meta:
         model = models.Maintenance
         fields = ( "description", "scheduled_for", "main_script", "rollback_script",
@@ -21,11 +22,10 @@ class MaintenanceForm(forms.ModelForm):
     def clean(self):
         cleaned_data = super(MaintenanceForm, self).clean()
 
-        if 'host_query' in cleaned_data:
-            host_query = cleaned_data['host_query']
-            bad_statements = ['CREATE ', 'DROP ', 'DELETE ', 'UPDATE ', 'INSERT ']
-            if any(statement in host_query.upper() for statement in bad_statements):
-                raise forms.ValidationError(_("%s is a bad query" % cleaned_data['host_query']))
+        # if 'host_query' in cleaned_data:
+        #     host_query = cleaned_data['host_query']
+        #     if models.Maintenance.host_query_has_bad_statements(host_query=host_query):
+        #         raise forms.ValidationError(_("%s is a bad query" % cleaned_data['host_query']))
 
         #     origindatabase = Database.objects.get(pk=cleaned_data['origin_database_id'])
 

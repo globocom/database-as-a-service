@@ -11,7 +11,7 @@ from django.db.models.signals import pre_delete
 from django.dispatch import receiver
 from celery.task import control
 from .tasks import execute_scheduled_maintenance
-
+from .validators import validate_host_query
 LOG = logging.getLogger(__name__)
 
 
@@ -37,7 +37,7 @@ class Maintenance(BaseModel):
     rollback_script = models.TextField(verbose_name=_("Rollback Script"),
         null=True, blank=True)
     host_query = models.TextField(verbose_name=_("Query Hosts"),
-        null=False, blank=False)
+        null=False, blank=False, validators=[validate_host_query])
     maximum_workers = models.PositiveSmallIntegerField(verbose_name=_("Maximum workers"),
         null=False, default=1)
     celery_task_id = models.CharField(verbose_name=_("Celery task Id"),
