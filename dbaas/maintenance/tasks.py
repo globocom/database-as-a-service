@@ -59,7 +59,7 @@ def execute_scheduled_maintenance(self,maintenance):
                 else:
                     hm.status = hm.ROLLBACK_ERROR
 
-                hm.rollback_output = rollback_output
+                hm.rollback_log = rollback_output
 
             else:
                 hm.status = hm.ERROR
