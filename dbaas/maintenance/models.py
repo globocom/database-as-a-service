@@ -120,9 +120,9 @@ class HostMaintenance(BaseModel):
 
     started_at = models.DateTimeField(verbose_name=_("Started at"), null=True)
     finished_at = models.DateTimeField(verbose_name=_("Finished at"),null=True)
-    main_log = models.TextField(verbose_name=_("Main Script"),
+    main_log = models.TextField(verbose_name=_("Main Log"),
         null=True, blank=True)
-    rollback_log = models.TextField(verbose_name=_("Rollback Script"),
+    rollback_log = models.TextField(verbose_name=_("Rollback Log"),
         null=True, blank=True)
     status = models.IntegerField(choices=MAINTENANCE_STATUS, default=WAITING)
     host = models.ForeignKey(Host, related_name="host_maintenance",)
