@@ -27,9 +27,6 @@ class MaintenanceAdmin(admin.DjangoServicesAdmin):
 
         return ('status', 'celery_task_id',)
 
-    def has_delete_permission(self, request, obj=None):
-        return True
-
 
     def delete_view(self, request, object_id, extra_context=None):
         maintenance = models.Maintenance.objects.get(id=object_id)
