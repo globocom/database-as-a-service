@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 from django_services import admin
-from ..models import Maintenance
 from ..service.maintenance import MaintenanceService
 from ..forms import MaintenanceForm
 
@@ -13,16 +12,15 @@ class MaintenanceAdmin(admin.DjangoServicesAdmin):
     fields = ( "description", "scheduled_for", "main_script", "rollback_script",
          "host_query","maximum_workers", "status", "celery_task_id",)
     save_on_top = True
-    readonly_fields = ('status', 'celery_task_id')
     form = MaintenanceForm
 
-    def change_view(self, request, object_id, form_url='', extra_context=None):
-        maintenance = Maintenance.objects.get(id=object_id)
+    def get_readonly_fields(self, request, obj=None):
+        maintenance = obj
 
-        if maintenance.celery_task_id:
-            self.readonly_fields = self.fields
+        if maintenance:
+            if maintenance.celery_task_id:
+                return self.fields
 
-        return super(MaintenanceAdmin, self).change_view(request,
-            object_id, form_url, extra_context=extra_context)
+        return ('status', 'celery_task_id',)
 
 
