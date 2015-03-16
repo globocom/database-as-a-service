@@ -145,7 +145,7 @@ simple_audit.register(HostMaintenance)
 #########
 
 @receiver(pre_delete, sender=Maintenance)
-def database_pre_delete(sender, **kwargs):
+def maintenance_pre_delete(sender, **kwargs):
     """
     maintenance pre delete signal. Revoke scheduled task and remove
     its HostMaintenance objects
