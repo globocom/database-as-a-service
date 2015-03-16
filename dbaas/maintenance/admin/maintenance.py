@@ -31,14 +31,16 @@ class MaintenanceAdmin(admin.DjangoServicesAdmin):
     def delete_view(self, request, object_id, extra_context=None):
         maintenance = models.Maintenance.objects.get(id=object_id)
         if maintenance.status ==  maintenance.RUNNING:
-            LOG.info("Maintenance: can be deleted!".format(maintenance))
-            return super(MaintenanceAdmin, self).delete_view(request,
-                object_id, extra_context)
+            self.message_user(request, "Task is running and cannot be deleted now. \
+                You must wait it to finish", level=messages.ERROR)
 
-        self.message_user(request, "Task is running and cannot be deleted now. \
-            You must wait it to finish", level=messages.ERROR)
+            LOG.info("Maintenance: can not be deleted!".format(maintenance))
+            return HttpResponseRedirect(
+                reverse('maintenance:maintenance_maintenance_changelist'))
 
-        LOG.info("Maintenance: can not be deleted!".format(maintenance))
-        return HttpResponseRedirect(
-            reverse('maintenance:maintenance_maintenance_changelist'))
+        LOG.info("Maintenance: can be deleted!".format(maintenance))
+        return super(MaintenanceAdmin, self).delete_view(request,
+            object_id, extra_context)
+
+
 
