@@ -1,6 +1,6 @@
 from django_services import service
-from .. import models
+from ..models import HostMaintenance
 
 
 class HostMaintenanceService(service.CRUDService):
-    model_class = models.HostMaintenance
+    model_class = HostMaintenance
