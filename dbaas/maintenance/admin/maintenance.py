@@ -21,9 +21,9 @@ class MaintenanceAdmin(admin.DjangoServicesAdmin):
 
     def get_readonly_fields(self, request, obj=None):
         maintenance = obj
-        if maintenance:
-            if maintenance.celery_task_id:
-                return self.fields
+        if maintenance and maintenance.celery_task_id:
+            LOG.debug("All fields are read_only!")
+            return self.fields
 
         return ('status', 'celery_task_id',)
 
