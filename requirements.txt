@@ -65,3 +65,4 @@ GloboNetworkAPI==0.2.2
 Dex==0.6
 click==3.3
 requests==2.5.1
+python-dateutil==2.4.1
