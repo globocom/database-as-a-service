@@ -12,10 +12,11 @@ from django.core.urlresolvers import reverse
 
 class MaintenanceAdmin(admin.DjangoServicesAdmin):
     service_class = MaintenanceService
-    search_fields = ("scheduled_for", "description", "maximum_workers", 'status')
-    list_display = ("scheduled_for", "description", "maximum_workers", 'status')
+    search_fields = ("scheduled_for", "description", "maximum_workers", "status")
+    list_display = ("scheduled_for", "description", "maximum_workers", "affected_hosts", "status")
     fields = ( "description", "scheduled_for", "main_script", "rollback_script",
-         "host_query","maximum_workers", "status", "celery_task_id",)
+         "host_query","maximum_workers", "status", "celery_task_id", "affected_hosts",
+         "query_error",)
     save_on_top = True
     form = MaintenanceForm
 
@@ -25,7 +26,7 @@ class MaintenanceAdmin(admin.DjangoServicesAdmin):
             LOG.debug("All fields are read_only!")
             return self.fields
 
-        return ('status', 'celery_task_id',)
+        return ('status', 'celery_task_id', 'query_error', 'affected_hosts')
 
 
     def delete_view(self, request, object_id, extra_context=None):
