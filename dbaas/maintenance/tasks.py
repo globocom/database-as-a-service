@@ -4,16 +4,16 @@ from dbaas.celery import app
 import models
 import logging
 from notification.models import TaskHistory
-from util import get_worker_name
+from util import get_worker_name, build_context_script
 
 LOG = logging.getLogger(__name__)
 
 @app.task(bind=True)
-def execute_scheduled_maintenance(self,maintenance):
+def execute_scheduled_maintenance(self,maintenance_id):
     main_output = {}
-    maintenance = models.Maintenance.objects.get(id=maintenance.id)
-    maintenance.status = maintenance.RUNNING
-    maintenance.save()
+    LOG.debug("Maintenance id: {}".format(maintenance_id))
+    maintenance = models.Maintenance.objects.get(id=maintenance_id)
+    models.Maintenance.objects.filter(id=maintenance_id).update(status=maintenance.RUNNING)
     LOG.info("Maintenance {} is RUNNING".format(maintenance,))
 
     worker_name = get_worker_name()
@@ -34,11 +34,11 @@ def execute_scheduled_maintenance(self,maintenance):
         update_task = "\nRunning Maintenance on {}".format(host)
 
         cloudstack_host_attributes = host.cs_host_attributes.get()
-
+        main_script = build_context_script({}, maintenance.main_script)
         exit_status = exec_remote_command(server=host.address,
             username=cloudstack_host_attributes.vm_user,
             password=cloudstack_host_attributes.vm_password,
-            command=maintenance.main_script, output=main_output)
+            command=main_script, output=main_output)
 
         if exit_status == 0:
             hm.status = hm.SUCCESS
@@ -49,10 +49,11 @@ def execute_scheduled_maintenance(self,maintenance):
                 hm.status = hm.ROLLBACK
                 hm.save()
 
+                rollback_script = build_context_script({}, maintenance.rollback_script)
                 exit_status = exec_remote_command(server=host.address,
                     username=cloudstack_host_attributes.vm_user,
                     password=cloudstack_host_attributes.vm_password,
-                    command=maintenance.rollback_script, output=rollback_output)
+                    command=rollback_script, output=rollback_output)
 
                 if exit_status ==0:
                     hm.status = hm.ROLLBACK_SUCCESS
@@ -73,8 +74,7 @@ def execute_scheduled_maintenance(self,maintenance):
         hm.finished_at = datetime.now()
         hm.save()
 
-    maintenance.status = maintenance.FINISHED
-    maintenance.save()
+    models.Maintenance.objects.filter(id=maintenance_id).update(status=maintenance.FINISHED)
 
     task_history.update_status_for(TaskHistory.STATUS_SUCCESS,
         details='Maintenance executed succesfully')

@@ -4,6 +4,8 @@ import logging
 import simple_audit
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
+from dateutil import tz
+from datetime import datetime
 from physical.models import Host
 from util.models import BaseModel
 from django.db.models.signals import post_save
@@ -43,33 +45,48 @@ class Maintenance(BaseModel):
     celery_task_id = models.CharField(verbose_name=_("Celery task Id"),
         null=True, blank=True, max_length=50,)
     status = models.IntegerField(choices=MAINTENANCE_STATUS, default=WAITING)
+    query_error = models.TextField(verbose_name=_("Query Error"), null=True, blank=True)
+    affected_hosts = models.IntegerField(verbose_name=_("Affected hosts"), default=0)
 
     def __unicode__(self):
        return "%s" % self.description
 
     def save_host_maintenance(self,):
-        hosts = Host.objects.raw(self.host_query)
+        save_host_ok = True
+        total_hosts = 0
+
         try:
+            hosts = Host.objects.raw(self.host_query)
             for host in hosts:
                 hm = HostMaintenance()
                 hm.host = host
                 hm.maintenance = self
                 hm.save()
-        except Exception, e:
-            LOG.warn("There is something wrong with the given query")
-            LOG.warn("Error: {}".format(e.args[1]))
-            self.status = self.REJECTED
+                total_hosts += 1
 
+        except Exception, e:
+            error = e.args[1]
+            LOG.warn("There is something wrong with the given query")
+            LOG.warn("Error: {}".format(error))
+            self.status = self.REJECTED
+            self.query_error = error
+            save_host_ok = False
+        
+        else:
+            self.affected_hosts = total_hosts
+            self.query_error = None
+
+        finally:
             # post_save signal has to be disconnected in order to avoid
             # recursive signal call
             post_save.disconnect(maintenance_post_save, sender=Maintenance)
 
             self.save()
+
             # connecting signal again
             post_save.connect(maintenance_post_save, sender=Maintenance)
-            return False
 
-        return True
+        return save_host_ok
 
     def is_waiting_to_run(self):
         if self.status == self.FINISHED:
@@ -171,8 +188,12 @@ def maintenance_post_save(sender, **kwargs):
         LOG.info("Spawning task and HostMaintenance objects...")
 
         if maintenance.save_host_maintenance():
-            task = execute_scheduled_maintenance.apply_async(args=[maintenance],
-                eta=maintenance.scheduled_for)
-
+            if maintenance.scheduled_for > datetime.now():
+                task = execute_scheduled_maintenance.apply_async(args=[maintenance.id],
+                    eta=maintenance.scheduled_for.replace(tzinfo=tz.tzlocal()).astimezone(tz.tzutc()))
+            else:
+                task = execute_scheduled_maintenance.apply_async(args=[maintenance.id],
+                    countdown=5)
+                            
             maintenance.celery_task_id = task.task_id
             maintenance.save()
