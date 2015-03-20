@@ -28,4 +28,7 @@ class HostMaintenanceAdmin(admin.DjangoServicesAdmin):
     def has_add_permission(self, request, obj=None):
         return False
 
+    def get_changelist(self, request, **kwargs):
+        from .views.main import ChangeList
+        return ChangeList
 
