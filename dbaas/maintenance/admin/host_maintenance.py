@@ -19,7 +19,6 @@ class HostMaintenanceAdmin(admin.DjangoServicesAdmin):
     list_display = ("maintenance", "host", "started_at", "finished_at", "status")
     fields = ("maintenance", "host", "status", "started_at", "finished_at", "main_log", "rollback_log")
     readonly_fields = fields
-    #save_on_top = True
     form = HostMaintenanceForm
     
     ordering = ["-started_at"]
@@ -28,7 +27,5 @@ class HostMaintenanceAdmin(admin.DjangoServicesAdmin):
         return False
     def has_add_permission(self, request, obj=None):
         return False
-
-
 
 
