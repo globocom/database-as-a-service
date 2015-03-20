@@ -28,7 +28,8 @@ class CheckDns(BaseStep):
 
             for dns in dns_list:
                 LOG.info("Checking dns %s on %s" % (dns.dns, dns_credentials.project))
-                #check_nslookup(dns.dns, dns_credentials.project)
+                
+                check_nslookup(dns.dns, dns_credentials.project)
 
             return True
         except Exception:
