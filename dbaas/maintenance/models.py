@@ -75,6 +75,7 @@ class Maintenance(BaseModel):
         else:
             self.affected_hosts = total_hosts
             self.query_error = None
+            self.status = self.WAITING
 
         finally:
             # post_save signal has to be disconnected in order to avoid
