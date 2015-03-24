@@ -12,7 +12,8 @@ from .. import models
 class MaintenanceAdmin(admin.DjangoServicesAdmin):
     service_class = MaintenanceService
     search_fields = ("scheduled_for", "description", "maximum_workers", "status")
-    list_display = ("description", "scheduled_for", "maximum_workers", "affected_hosts_html", "status")
+    list_display = ("description", "scheduled_for", "maximum_workers",
+        "affected_hosts_html", "friendly_status")
     fields = ( "description", "scheduled_for", "main_script", "rollback_script",
          "host_query","maximum_workers", "status", "celery_task_id", "affected_hosts",
          "query_error",)
@@ -30,6 +31,24 @@ class MaintenanceAdmin(admin.DjangoServicesAdmin):
             return self.fields
 
         return ('status', 'celery_task_id', 'query_error', 'affected_hosts')
+
+    def friendly_status(self, maintenance):
+
+        html_finished = '<span class="label label-info">Finished</span>'
+        html_rejected = '<span class="label label-important">Rejected</span>'
+        html_waiting = '<span class="label label-warning">Waiting</span>'
+        html_running = '<span class="label label-success">Running</span>'
+
+        if maintenance.status == models.Maintenance.FINISHED:
+            return format_html(html_finished)
+        elif maintenance.status == models.Maintenance.REJECTED:
+            return format_html(html_rejected)
+        elif maintenance.status == models.Maintenance.WAITING:
+            return format_html(html_waiting)
+        elif maintenance.status == models.Maintenance.RUNNING:
+            return format_html(html_running)
+
+    friendly_status.short_description = "Status"
 
 
     def affected_hosts_html(self, maintenance):
