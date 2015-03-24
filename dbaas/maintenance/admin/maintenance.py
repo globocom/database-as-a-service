@@ -32,11 +32,6 @@ class MaintenanceAdmin(admin.DjangoServicesAdmin):
 
         return ('status', 'celery_task_id', 'query_error', 'affected_hosts')
 
-    def get_change_form_template(self, *args, **kwargs):
-        import pdb
-        pdb.set_trace()
-
-
     def delete_view(self, request, object_id, extra_context=None):
         maintenance = models.Maintenance.objects.get(id=object_id)
         if maintenance.status ==  maintenance.RUNNING:
