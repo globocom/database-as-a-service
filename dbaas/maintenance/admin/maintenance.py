@@ -3,13 +3,11 @@ from __future__ import absolute_import, unicode_literals
 from django_services import admin
 from ..service.maintenance import MaintenanceService
 from ..forms import MaintenanceForm
-from django.utils.html import format_html, escape
+from django.utils.html import format_html
 import logging
-from django.contrib import messages
 LOG = logging.getLogger(__name__)
 from .. import models
-from django.http import HttpResponseRedirect
-from django.core.urlresolvers import reverse
+
 
 class MaintenanceAdmin(admin.DjangoServicesAdmin):
     service_class = MaintenanceService
@@ -19,6 +17,7 @@ class MaintenanceAdmin(admin.DjangoServicesAdmin):
          "host_query","maximum_workers", "status", "celery_task_id", "affected_hosts",
          "query_error",)
     form = MaintenanceForm
+    actions = None
 
     def get_readonly_fields(self, request, obj=None):
         maintenance = obj
@@ -31,20 +30,6 @@ class MaintenanceAdmin(admin.DjangoServicesAdmin):
             return self.fields
 
         return ('status', 'celery_task_id', 'query_error', 'affected_hosts')
-
-    def delete_view(self, request, object_id, extra_context=None):
-        maintenance = models.Maintenance.objects.get(id=object_id)
-        if maintenance.status ==  maintenance.RUNNING:
-            self.message_user(request, "Task is running and cannot be deleted now. \
-                You must wait it to finish", level=messages.ERROR)
-
-            LOG.info("Maintenance: can not be deleted!".format(maintenance))
-            return HttpResponseRedirect(
-                reverse('maintenance:maintenance_maintenance_changelist'))
-
-        LOG.info("Maintenance: can be deleted!".format(maintenance))
-        return super(MaintenanceAdmin, self).delete_view(request,
-            object_id, extra_context)
 
 
     def affected_hosts_html(self, maintenance):
