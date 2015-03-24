@@ -18,16 +18,23 @@ class MaintenanceAdmin(admin.DjangoServicesAdmin):
     fields = ( "description", "scheduled_for", "main_script", "rollback_script",
          "host_query","maximum_workers", "status", "celery_task_id", "affected_hosts",
          "query_error",)
-    save_on_top = True
     form = MaintenanceForm
 
     def get_readonly_fields(self, request, obj=None):
         maintenance = obj
+        if maintenance and maintenance.status !=models.Maintenance.REJECTED:
+            self.change_form_template = "admin/maintenance/maintenance/custom_change_form.html"
+        else:
+            self.change_form_template = None
+
         if maintenance and maintenance.celery_task_id:
-            LOG.debug("All fields are read_only!")
             return self.fields
 
         return ('status', 'celery_task_id', 'query_error', 'affected_hosts')
+
+    def get_change_form_template(self, *args, **kwargs):
+        import pdb
+        pdb.set_trace()
 
 
     def delete_view(self, request, object_id, extra_context=None):
