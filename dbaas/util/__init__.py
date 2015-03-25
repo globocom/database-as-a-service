@@ -170,6 +170,7 @@ def exec_remote_command(server, username, password, command, output={}):
                     paramiko.ssh_exception.SSHException,
                     socket.error) as e:
         LOG.warning("We caught an exception: %s ." % (e))
+        output['exception'] = str(e)
         return None
 
 
