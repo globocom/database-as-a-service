@@ -10,7 +10,6 @@ LOG = logging.getLogger(__name__)
 
 @app.task(bind=True)
 def execute_scheduled_maintenance(self,maintenance_id):
-    main_output = {}
     LOG.debug("Maintenance id: {}".format(maintenance_id))
     maintenance = models.Maintenance.objects.get(id=maintenance_id)
     models.Maintenance.objects.filter(id=maintenance_id).update(status=maintenance.RUNNING, started_at=datetime.now())
@@ -26,6 +25,13 @@ def execute_scheduled_maintenance(self,maintenance_id):
         details="Executing Maintenance: {}".format(maintenance))
 
     for hm in models.HostMaintenance.objects.filter(maintenance=maintenance):
+        
+        if hm.host is None:
+            hm.status = hm.UNAVAILABLEHOST
+            hm.save()
+            continue
+        
+        main_output = {}
         hm.status = hm.RUNNING
         hm.started_at = datetime.now()
         hm.save()
