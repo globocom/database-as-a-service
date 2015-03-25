@@ -165,7 +165,10 @@ def exec_remote_command(server, username, password, command, output={}):
         output['stdout'] = log_stdout
         output['stderr'] = log_stderr
         return exit_status
-    except (paramiko.ssh_exception.SSHException) as e:
+    except (paramiko.ssh_exception.BadHostKeyException,
+                    paramiko.ssh_exception.AuthenticationException,
+                    paramiko.ssh_exception.SSHException,
+                    socket.error) as e:
         LOG.warning("We caught an exception: %s ." % (e))
         return None
 
