@@ -13,7 +13,7 @@ def execute_scheduled_maintenance(self,maintenance_id):
     main_output = {}
     LOG.debug("Maintenance id: {}".format(maintenance_id))
     maintenance = models.Maintenance.objects.get(id=maintenance_id)
-    models.Maintenance.objects.filter(id=maintenance_id).update(status=maintenance.RUNNING)
+    models.Maintenance.objects.filter(id=maintenance_id).update(status=maintenance.RUNNING, started_at=datetime.now())
     LOG.info("Maintenance {} is RUNNING".format(maintenance,))
 
     worker_name = get_worker_name()
@@ -74,7 +74,7 @@ def execute_scheduled_maintenance(self,maintenance_id):
         hm.finished_at = datetime.now()
         hm.save()
 
-    models.Maintenance.objects.filter(id=maintenance_id).update(status=maintenance.FINISHED)
+    models.Maintenance.objects.filter(id=maintenance_id).update(status=maintenance.FINISHED, finished_at=datetime.now())
 
     task_history.update_status_for(TaskHistory.STATUS_SUCCESS,
         details='Maintenance executed succesfully')

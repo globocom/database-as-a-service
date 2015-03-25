@@ -47,6 +47,8 @@ class Maintenance(BaseModel):
     status = models.IntegerField(choices=MAINTENANCE_STATUS, default=WAITING)
     query_error = models.TextField(verbose_name=_("Query Error"), null=True, blank=True)
     affected_hosts = models.IntegerField(verbose_name=_("Affected hosts"), default=0)
+    started_at = models.DateTimeField(verbose_name=_("Started at"), null=True, blank=True)
+    finished_at = models.DateTimeField(verbose_name=_("Finished at"),null=True, blank=True)
 
     def __unicode__(self):
        return "%s" % self.description
