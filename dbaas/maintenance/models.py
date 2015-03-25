@@ -63,6 +63,7 @@ class Maintenance(BaseModel):
                 hm = HostMaintenance()
                 hm.host = host
                 hm.maintenance = self
+                hm.hostname = host.hostname
                 hm.save()
                 total_hosts += 1
 
@@ -145,7 +146,8 @@ class HostMaintenance(BaseModel):
     rollback_log = models.TextField(verbose_name=_("Rollback Log"),
         null=True, blank=True)
     status = models.IntegerField(choices=MAINTENANCE_STATUS, default=WAITING)
-    host = models.ForeignKey(Host, related_name="host_maintenance",)
+    host = models.ForeignKey(Host, related_name="host_maintenance", on_delete=models.SET_NULL, null=True)
+    hostname = models.CharField(verbose_name=_("Hostname"), max_length=255, default='')
     maintenance = models.ForeignKey(Maintenance, related_name="maintenance",)
 
     class Meta:
