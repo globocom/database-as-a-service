@@ -22,12 +22,14 @@ class Maintenance(BaseModel):
     RUNNING = 1
     FINISHED = 2
     REJECTED = 3
+    REVOKED = 4
 
     MAINTENANCE_STATUS = (
         (FINISHED, 'Finished'),
         (RUNNING, 'Running'),
         (WAITING, 'Waiting'),
         (REJECTED, 'Rejected'),
+        (REVOKED, 'Revoked')
     )
 
     description = models.CharField(verbose_name=_("Description"),
@@ -74,7 +76,7 @@ class Maintenance(BaseModel):
             self.status = self.REJECTED
             self.query_error = error
             save_host_ok = False
-        
+
         else:
             self.affected_hosts = total_hosts
             self.query_error = None
@@ -91,6 +93,15 @@ class Maintenance(BaseModel):
             post_save.connect(maintenance_post_save, sender=Maintenance)
 
         return save_host_ok
+
+    def revoke_maintenance(self):
+        if self.is_waiting_to_run:
+            control.revoke(self.celery_task_id,)
+            self.status=self.REVOKED
+            self.save()
+            return True
+
+        return False
 
     def is_waiting_to_run(self):
         if self.status == self.FINISHED:
@@ -199,6 +210,6 @@ def maintenance_post_save(sender, **kwargs):
             else:
                 task = execute_scheduled_maintenance.apply_async(args=[maintenance.id],
                     countdown=5)
-                            
+
             maintenance.celery_task_id = task.task_id
             maintenance.save()
