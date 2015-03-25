@@ -141,6 +141,7 @@ class HostMaintenance(BaseModel):
     ROLLBACK_ERROR = 5
     ROLLBACK_SUCCESS = 6
     REVOKED = 7
+    UNAVAILABLEHOST = 8
 
     MAINTENANCE_STATUS = (
         (ERROR, 'Error'),
@@ -151,6 +152,7 @@ class HostMaintenance(BaseModel):
         (ROLLBACK_ERROR, 'Rollback error'),
         (ROLLBACK_SUCCESS, 'Rollback success'),
         (REVOKED, 'Revoked'),
+        (UNAVAILABLEHOST, 'Unavailable host'),        
     )
 
     started_at = models.DateTimeField(verbose_name=_("Started at"), null=True)
