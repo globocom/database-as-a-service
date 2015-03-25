@@ -97,8 +97,12 @@ class Maintenance(BaseModel):
     def revoke_maintenance(self):
         if self.is_waiting_to_run:
             control.revoke(self.celery_task_id,)
+
             self.status=self.REVOKED
             self.save()
+
+            HostMaintenance.objects.filter(maintenance=self,
+                ).update(status=HostMaintenance.REVOKED)
             return True
 
         return False
@@ -139,6 +143,7 @@ class HostMaintenance(BaseModel):
     WAITING = 4
     ROLLBACK_ERROR = 5
     ROLLBACK_SUCCESS = 6
+    REVOKED = 7
 
     MAINTENANCE_STATUS = (
         (ERROR, 'Error'),
@@ -148,6 +153,7 @@ class HostMaintenance(BaseModel):
         (WAITING, 'Waiting'),
         (ROLLBACK_ERROR, 'Rollback error'),
         (ROLLBACK_SUCCESS, 'Rollback success'),
+        (REVOKED, 'Revoked'),
     )
 
     started_at = models.DateTimeField(verbose_name=_("Started at"), null=True)

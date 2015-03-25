@@ -27,6 +27,7 @@ class HostMaintenanceAdmin(admin.DjangoServicesAdmin):
         html_rejected = '<span class="label label-important">{}</span>'
         html_waiting = '<span class="label label-warning">Waiting</span>'
         html_running = '<span class="label label-success">Running</span>'
+        html_revoked = '<span class="label label-primary">Revoked</span>'
 
 
         if host_maintenance.status == models.HostMaintenance.SUCCESS:
@@ -43,6 +44,8 @@ class HostMaintenanceAdmin(admin.DjangoServicesAdmin):
             return format_html(html_waiting)
         elif host_maintenance.status == models.HostMaintenance.RUNNING:
             return format_html(html_running)
+        elif host_maintenance.status == models.HostMaintenance.REVOKED:
+            return format_html(html_revoked)
 
     friendly_status.short_description = "Status"
 
