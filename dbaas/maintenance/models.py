@@ -13,7 +13,6 @@ from django.db.models.signals import pre_delete
 from django.dispatch import receiver
 from celery.task import control
 from .tasks import execute_scheduled_maintenance
-from .validators import validate_host_query
 LOG = logging.getLogger(__name__)
 
 
@@ -40,17 +39,16 @@ class Maintenance(BaseModel):
         null=False, blank=False)
     rollback_script = models.TextField(verbose_name=_("Rollback Script"),
         null=True, blank=True)
-    host_query = models.TextField(verbose_name=_("Query Hosts"),
-        null=False, blank=False, validators=[validate_host_query])
     maximum_workers = models.PositiveSmallIntegerField(verbose_name=_("Maximum workers"),
         null=False, default=1)
     celery_task_id = models.CharField(verbose_name=_("Celery task Id"),
         null=True, blank=True, max_length=50,)
     status = models.IntegerField(choices=MAINTENANCE_STATUS, default=WAITING)
-    query_error = models.TextField(verbose_name=_("Query Error"), null=True, blank=True)
     affected_hosts = models.IntegerField(verbose_name=_("Affected hosts"), default=0)
     started_at = models.DateTimeField(verbose_name=_("Started at"), null=True, blank=True)
     finished_at = models.DateTimeField(verbose_name=_("Finished at"),null=True, blank=True)
+    hostsid = models.CommaSeparatedIntegerField(verbose_name=_("Hosts id"), 
+        null=False, blank=False, max_length=10000)
 
     def __unicode__(self):
        return "%s" % self.description
@@ -60,7 +58,9 @@ class Maintenance(BaseModel):
         total_hosts = 0
 
         try:
-            hosts = Host.objects.raw(self.host_query)
+            
+            hostsid_list = self.hostsid.split(',')
+            hosts = Host.objects.filter(pk__in=hostsid_list)
             for host in hosts:
                 hm = HostMaintenance()
                 hm.host = host
@@ -71,15 +71,12 @@ class Maintenance(BaseModel):
 
         except Exception, e:
             error = e.args[1]
-            LOG.warn("There is something wrong with the given query")
             LOG.warn("Error: {}".format(error))
             self.status = self.REJECTED
-            self.query_error = error
             save_host_ok = False
 
         else:
             self.affected_hosts = total_hosts
-            self.query_error = None
             self.status = self.WAITING
 
         finally:

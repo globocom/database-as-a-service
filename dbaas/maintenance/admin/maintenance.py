@@ -18,8 +18,8 @@ class MaintenanceAdmin(admin.DjangoServicesAdmin):
     list_display = ("description", "scheduled_for", "started_at", "finished_at",
         "maximum_workers", "affected_hosts_html", "friendly_status")
     fields = ( "description", "scheduled_for", "started_at", "finished_at",
-         "main_script", "rollback_script", "host_query","maximum_workers",
-         "status", "celery_task_id", "affected_hosts", "query_error",)
+         "main_script", "rollback_script", "hostsid", "maximum_workers",
+         "status", "celery_task_id", "affected_hosts")
     form = MaintenanceForm
     actions = None
 
@@ -69,7 +69,7 @@ class MaintenanceAdmin(admin.DjangoServicesAdmin):
         if maintenance and maintenance.celery_task_id:
             return self.fields
 
-        return ('status', 'celery_task_id', 'query_error', 'affected_hosts', 'started_at', 'finished_at')
+        return ('status', 'celery_task_id', 'affected_hosts', 'started_at', 'finished_at')
 
     def friendly_status(self, maintenance):
 
