@@ -43,7 +43,7 @@
                 {% block object-tools-items %}
 
                 {% for button in buttons %}
-                    <li><a {% if button.confirm %} onclick="return confirm('{{ button.confirm }}')"{% endif%} href="./{{ button.url }}/">{{ button.textname }}</a></li>
+                    <li><a {% if button.confirm %} onclick="return confirm('{{ button.confirm }}')"{% endif%} href="./{{ button.url }}/" class="addlink btn btn-primary">{{ button.textname }}</a></li>
                 {% endfor %}
                 <li>
                     <a href="{% url opts|admin_urlname:'history' original.pk|admin_urlquote %}" class="btn historylink">
