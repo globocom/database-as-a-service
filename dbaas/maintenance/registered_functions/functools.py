@@ -5,11 +5,17 @@ LOG = logging.getLogger(__name__)
 def _is_mod_function(mod, func):
     return inspect.isfunction(func) and inspect.getmodule(func) == mod
 
+def _get_key(item):
+    return item[1]
+
 def _get_registered_functions():
     current_module = sys.modules[__name__]
-    return ((func.__name__, func.__doc__) for func in current_module.__dict__.itervalues()
+    function_list = ((func.__name__, func.__doc__) for func in current_module.__dict__.itervalues()
             if _is_mod_function(current_module,
                 func) and not func.__name__.startswith('_'))
+
+    return sorted(function_list, key=_get_key)
+
 
 def _get_function(func_name):
     current_module = sys.modules[__name__]
