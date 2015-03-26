@@ -13,7 +13,7 @@ from django.db.models.signals import pre_delete
 from django.dispatch import receiver
 from celery.task import control
 from .tasks import execute_scheduled_maintenance
-from .registered_functions.functools import REGISTERED_FUNCTIONS
+from .registered_functions.functools import get_registered_functions
 LOG = logging.getLogger(__name__)
 
 
@@ -165,8 +165,10 @@ class HostMaintenance(BaseModel):
     rollback_log = models.TextField(verbose_name=_("Rollback Log"),
         null=True, blank=True)
     status = models.IntegerField(choices=MAINTENANCE_STATUS, default=WAITING)
-    host = models.ForeignKey(Host, related_name="host_maintenance", on_delete=models.SET_NULL, null=True)
-    hostname = models.CharField(verbose_name=_("Hostname"), max_length=255, default='')
+    host = models.ForeignKey(Host, related_name="host_maintenance",
+     on_delete=models.SET_NULL, null=True)
+    hostname = models.CharField(verbose_name=_("Hostname"), max_length=255,
+     default='')
     maintenance = models.ForeignKey(Maintenance, related_name="maintenance",)
 
     class Meta:
@@ -182,7 +184,7 @@ class MaintenanceParameters(BaseModel):
     parameter_name = models.CharField(verbose_name=_(" Parameter name"),
         null=False, blank=False, max_length=100,)
     function_name = models.CharField(verbose_name=_(" Function name"),
-        null=False, blank=False, max_length=100,choices=REGISTERED_FUNCTIONS)
+        null=False, blank=False, max_length=100,choices=(get_registered_functions()))
     maintenance = models.ForeignKey(Maintenance,
         related_name="maintenance_params",)
 
