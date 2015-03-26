@@ -5,6 +5,7 @@ import models
 import logging
 from notification.models import TaskHistory
 from util import get_worker_name, build_context_script
+from django.core.exceptions import ObjectDoesNotExist
 
 LOG = logging.getLogger(__name__)
 
@@ -25,12 +26,12 @@ def execute_scheduled_maintenance(self,maintenance_id):
         details="Executing Maintenance: {}".format(maintenance))
 
     for hm in models.HostMaintenance.objects.filter(maintenance=maintenance):
-        
+
         if hm.host is None:
             hm.status = hm.UNAVAILABLEHOST
             hm.save()
             continue
-        
+
         main_output = {}
         hm.status = hm.RUNNING
         hm.started_at = datetime.now()
@@ -39,7 +40,14 @@ def execute_scheduled_maintenance(self,maintenance_id):
         host = hm.host
         update_task = "\nRunning Maintenance on {}".format(host)
 
-        cloudstack_host_attributes = host.cs_host_attributes.get()
+        try:
+            cloudstack_host_attributes = host.cs_host_attributes.get()
+        except ObjectDoesNotExist, e:
+            LOG.warn("Host {} does not have cloudstack attrs...{}".format(hm.host,e))
+            hm.status = hm.UNAVAILABLECSHOSTATTR
+            hm.save()
+            continue
+
         main_script = build_context_script({}, maintenance.main_script)
         exit_status = exec_remote_command(server=host.address,
             username=cloudstack_host_attributes.vm_user,
