@@ -48,6 +48,8 @@ class HostMaintenanceAdmin(admin.DjangoServicesAdmin):
             return format_html(html_revoked.format("Revoked"))
         elif host_maintenance.status == models.HostMaintenance.UNAVAILABLEHOST:
             return format_html(html_revoked.format("Unavailable Host"))
+        elif host_maintenance.status == models.HostMaintenance.UNAVAILABLECSHOSTATTR:
+            return format_html(html_revoked.format("Unavailable CsHost"))
 
     friendly_status.short_description = "Status"
 
