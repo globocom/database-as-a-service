@@ -103,3 +103,25 @@ def get_infra_password(host_id):
 
 
     return host.instance_set.all()[0].databaseinfra.password
+
+
+def get_host_user(host_id):
+    """Return HOST_USER"""
+    from physical.models import Host
+
+    host = Host.objects.filter(id=host_id).select_related('cs_host_attributes')
+
+    try:
+        host = host[0]
+    except IndexError, e:
+        LOG.warn("Host id does not exists: {}. {}".format(host_id, e))
+        return None
+
+    try:
+        host_attr = host.cs_host_attributes.all()[0]
+    except IndexError, e:
+        LOG.warn("Host id does not own a cs_host_attr: {}. {}".format(host_id, e))
+        return None
+
+
+    return host_attr.vm_user
