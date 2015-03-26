@@ -23,7 +23,7 @@ class HostMaintenanceAdmin(admin.DjangoServicesAdmin):
 
     def friendly_status(self, host_maintenance):
 
-        html_finished = '<span class="label label-info">Finished</span>'
+        html_success = '<span class="label label-info">Success</span>'
         html_rejected = '<span class="label label-important">{}</span>'
         html_waiting = '<span class="label label-warning">Waiting</span>'
         html_running = '<span class="label label-success">Running</span>'
@@ -31,7 +31,7 @@ class HostMaintenanceAdmin(admin.DjangoServicesAdmin):
 
 
         if host_maintenance.status == models.HostMaintenance.SUCCESS:
-            return format_html(html_finished)
+            return format_html(html_success)
         elif host_maintenance.status ==models.HostMaintenance.ERROR:
             return format_html(html_rejected.format("Error"))
         elif host_maintenance.status ==models.HostMaintenance.ROLLBACK:
