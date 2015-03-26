@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 from django_services import admin
+from django.contrib import admin as django_admin
 from ..service.maintenance import MaintenanceService
 from ..forms import MaintenanceForm
 from django.utils.html import format_html
@@ -10,6 +11,28 @@ from django.contrib import messages
 from django.core.urlresolvers import reverse
 LOG = logging.getLogger(__name__)
 from .. import models
+
+
+
+class MaintenanceParametersInline(django_admin.TabularInline):
+    model = models.MaintenanceParameters
+    fields = ('parameter_name', 'function_name',)
+    template = 'admin/physical/shared/inline_form.html'
+    can_delete = False
+
+    def get_readonly_fields(self, request, obj=None):
+        maintenance = obj
+        self.max_num = None
+        if maintenance and maintenance.status !=models.Maintenance.REJECTED:
+            self.change_form_template = "admin/maintenance/maintenance/custom_change_form.html"
+        else:
+            self.change_form_template = None
+
+        if maintenance and maintenance.celery_task_id:
+            self.max_num = 0
+            return self.fields
+
+        return ()
 
 
 class MaintenanceAdmin(admin.DjangoServicesAdmin):
@@ -22,6 +45,8 @@ class MaintenanceAdmin(admin.DjangoServicesAdmin):
          "status", "celery_task_id", "affected_hosts")
     form = MaintenanceForm
     actions = None
+
+    inlines = [MaintenanceParametersInline,]
 
     def revoke_maintenance(request, id):
         maintenance = models.Maintenance.objects.get(id=id)
