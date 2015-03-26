@@ -1,4 +1,6 @@
 import sys, inspect
+import logging
+LOG = logging.getLogger(__name__)
 
 def is_mod_function(mod, func):
     return inspect.isfunction(func) and inspect.getmodule(func) == mod
@@ -17,7 +19,8 @@ def get_function(func_doc):
     try:
         func_list = func_list[0]
     except IndexError, e:
-        return []
+        LOG.info("Function not found! {}".format(e))
+        return None
 
     return func_list
 
