@@ -2,19 +2,19 @@ import sys, inspect
 import logging
 LOG = logging.getLogger(__name__)
 
-def is_mod_function(mod, func):
+def _is_mod_function(mod, func):
     return inspect.isfunction(func) and inspect.getmodule(func) == mod
 
-def get_registered_functions():
+def _get_registered_functions():
     current_module = sys.modules[__name__]
     return ((func.__name__, func.__doc__) for func in current_module.__dict__.itervalues()
-            if is_mod_function(current_module,
-                func) and func.__name__ not in['is_mod_function','get_registered_functions','get_function', ])
+            if _is_mod_function(current_module,
+                func) and not func.__name__.startswith('_'))
 
-def get_function(func_name):
+def _get_function(func_name):
     current_module = sys.modules[__name__]
     func_list =  list((func for func in current_module.__dict__.itervalues()
-            if is_mod_function(current_module,func) and func.__name__ ==func_name))
+            if _is_mod_function(current_module,func) and func.__name__ ==func_name))
 
     try:
         func_list = func_list[0]

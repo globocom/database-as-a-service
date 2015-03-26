@@ -13,7 +13,7 @@ from django.db.models.signals import pre_delete
 from django.dispatch import receiver
 from celery.task import control
 from .tasks import execute_scheduled_maintenance
-from .registered_functions.functools import get_registered_functions
+from .registered_functions.functools import _get_registered_functions
 LOG = logging.getLogger(__name__)
 
 
@@ -184,7 +184,7 @@ class MaintenanceParameters(BaseModel):
     parameter_name = models.CharField(verbose_name=_(" Parameter name"),
         null=False, blank=False, max_length=100,)
     function_name = models.CharField(verbose_name=_(" Function name"),
-        null=False, blank=False, max_length=100,choices=(get_registered_functions()))
+        null=False, blank=False, max_length=100,choices=(_get_registered_functions()))
     maintenance = models.ForeignKey(Maintenance,
         related_name="maintenance_params",)
 
