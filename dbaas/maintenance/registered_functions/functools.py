@@ -25,10 +25,6 @@ def get_function(func_name):
     return func_list
 
 
-def return_host_id_str(host_id):
-    """Get HostId String"""
-    return str(host_id)
-
 def get_hostmane(host_id):
     """Return HOSTNAME"""
     from physical.models import Host
