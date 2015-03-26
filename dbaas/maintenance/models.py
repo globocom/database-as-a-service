@@ -13,6 +13,7 @@ from django.db.models.signals import pre_delete
 from django.dispatch import receiver
 from celery.task import control
 from .tasks import execute_scheduled_maintenance
+from .registered_functions.functools import REGISTERED_FUNCTIONS
 LOG = logging.getLogger(__name__)
 
 
@@ -47,7 +48,7 @@ class Maintenance(BaseModel):
     affected_hosts = models.IntegerField(verbose_name=_("Affected hosts"), default=0)
     started_at = models.DateTimeField(verbose_name=_("Started at"), null=True, blank=True)
     finished_at = models.DateTimeField(verbose_name=_("Finished at"),null=True, blank=True)
-    hostsid = models.CommaSeparatedIntegerField(verbose_name=_("Hosts id"), 
+    hostsid = models.CommaSeparatedIntegerField(verbose_name=_("Hosts id"),
         null=False, blank=False, max_length=10000)
 
     def __unicode__(self):
@@ -58,7 +59,7 @@ class Maintenance(BaseModel):
         total_hosts = 0
 
         try:
-            
+
             hostsid_list = self.hostsid.split(',')
             hosts = Host.objects.filter(pk__in=hostsid_list)
             for host in hosts:
@@ -152,7 +153,7 @@ class HostMaintenance(BaseModel):
         (ROLLBACK_ERROR, 'Rollback error'),
         (ROLLBACK_SUCCESS, 'Rollback success'),
         (REVOKED, 'Revoked'),
-        (UNAVAILABLEHOST, 'Unavailable host'),        
+        (UNAVAILABLEHOST, 'Unavailable host'),
     )
 
     started_at = models.DateTimeField(verbose_name=_("Started at"), null=True)
@@ -173,8 +174,23 @@ class HostMaintenance(BaseModel):
     def __unicode__(self):
         return "%s %s" % (self.host, self.maintenance)
 
+
+
+class MaintenanceParameters(BaseModel):
+    parameter_name = models.CharField(verbose_name=_(" Parameter name"),
+        null=False, blank=False, max_length=100,)
+    function_name = models.CharField(verbose_name=_(" Function name"),
+        null=False, blank=False, max_length=100,choices=REGISTERED_FUNCTIONS)
+    maintenance = models.ForeignKey(Maintenance,
+        related_name="maintenance_params",)
+
+    def __unicode__(self):
+       return "{} - {}".format(self.parameter_name, self.function_name)
+
+
 simple_audit.register(Maintenance)
 simple_audit.register(HostMaintenance)
+simple_audit.register(MaintenanceParameters)
 
 
 
