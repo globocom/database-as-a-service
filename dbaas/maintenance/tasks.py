@@ -6,6 +6,7 @@ import logging
 from notification.models import TaskHistory
 from util import get_worker_name, build_context_script
 from django.core.exceptions import ObjectDoesNotExist
+from registered_functions.functools import get_function
 
 LOG = logging.getLogger(__name__)
 
@@ -51,7 +52,12 @@ def execute_scheduled_maintenance(self,maintenance_id):
             hm.save()
             continue
 
-        main_script = build_context_script({}, maintenance.main_script)
+        param_dict = {}
+        for param in models.MaintenanceParameters.objects.filter(maintenance=maintenance):
+            param_function = get_function(param.function_name)
+            param_dict[param.parameter_name] = param_function(host.id)
+        
+        main_script = build_context_script(param_dict, maintenance.main_script)
         exit_status = exec_remote_command(server=host.address,
             username=cloudstack_host_attributes.vm_user,
             password=cloudstack_host_attributes.vm_password,
@@ -66,7 +72,7 @@ def execute_scheduled_maintenance(self,maintenance_id):
                 hm.status = hm.ROLLBACK
                 hm.save()
 
-                rollback_script = build_context_script({}, maintenance.rollback_script)
+                rollback_script = build_context_script(param_dict, maintenance.rollback_script)
                 exit_status = exec_remote_command(server=host.address,
                     username=cloudstack_host_attributes.vm_user,
                     password=cloudstack_host_attributes.vm_password,
