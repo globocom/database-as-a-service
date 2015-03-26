@@ -26,16 +26,16 @@ def execute_scheduled_maintenance(self,maintenance_id):
         details="Executing Maintenance: {}".format(maintenance))
 
     for hm in models.HostMaintenance.objects.filter(maintenance=maintenance):
-
-        if hm.host is None:
-            hm.status = hm.UNAVAILABLEHOST
-            hm.save()
-            continue
-
         main_output = {}
         hm.status = hm.RUNNING
         hm.started_at = datetime.now()
         hm.save()
+
+        if hm.host is None:
+            hm.status = hm.UNAVAILABLEHOST
+            hm.finished_at = datetime.now()
+            hm.save()
+            continue
 
         host = hm.host
         update_task = "\nRunning Maintenance on {}".format(host)
@@ -45,6 +45,7 @@ def execute_scheduled_maintenance(self,maintenance_id):
         except ObjectDoesNotExist, e:
             LOG.warn("Host {} does not have cloudstack attrs...{}".format(hm.host,e))
             hm.status = hm.UNAVAILABLECSHOSTATTR
+            hm.finished_at = datetime.now()
             hm.save()
             continue
 
