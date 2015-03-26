@@ -34,7 +34,6 @@ def get_hostmane(host_id):
 def get_infra_name(host_id):
     """Return DATABASE_INFRA_NAME"""
     from physical.models import Host
-
     host = Host.objects.filter(id=host_id,
         ).select_related('instance').select_related('databaseinfra')
 
@@ -50,7 +49,6 @@ def get_infra_name(host_id):
 def get_database_name(host_id):
     """Return DATABASE_NAME"""
     from physical.models import Host
-
     host = Host.objects.filter(id=host_id,
         ).select_related('instance',
         ).select_related('databaseinfra',
@@ -74,7 +72,6 @@ def get_database_name(host_id):
 def get_infra_user(host_id):
     """Return DATABASE_INFRA_USER"""
     from physical.models import Host
-
     host = Host.objects.filter(id=host_id,
         ).select_related('instance').select_related('databaseinfra')
 
@@ -91,7 +88,6 @@ def get_infra_user(host_id):
 def get_infra_password(host_id):
     """Return DATABASE_INFRA_PASSWORD"""
     from physical.models import Host
-
     host = Host.objects.filter(id=host_id,
         ).select_related('instance').select_related('databaseinfra')
 
@@ -108,7 +104,6 @@ def get_infra_password(host_id):
 def get_host_user(host_id):
     """Return HOST_USER"""
     from physical.models import Host
-
     host = Host.objects.filter(id=host_id).select_related('cs_host_attributes')
 
     try:
@@ -129,7 +124,6 @@ def get_host_user(host_id):
 def get_host_password(host_id):
     """Return HOST_PASSWORD"""
     from physical.models import Host
-
     host = Host.objects.filter(id=host_id).select_related('cs_host_attributes')
 
     try:
@@ -151,7 +145,6 @@ def get_host_password(host_id):
 def get_engine_type_name(host_id):
     """Return ENGINE_TYPE"""
     from physical.models import Host
-
     host = Host.objects.filter(id=host_id,
         ).select_related('instance',
         ).select_related('databaseinfra',
