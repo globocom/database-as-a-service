@@ -26,9 +26,23 @@ def get_function(func_name):
 
 
 def get_hostmane(host_id):
-    """Return HOSTNAME"""
+    """Return HOST_NAME"""
     from physical.models import Host
     host = Host.objects.get(id=host_id)
     return host.hostname
 
+def get_infra_name(host_id):
+    """Return DATABASE_INFRA_NAME"""
+    from physical.models import Host
 
+    host = Host.objects.filter(id=host_id,
+        ).select_related('instance').select_related('databaseinfra')
+
+    try:
+        host = host[0]
+    except IndexError, e:
+        LOG.warn("Host id does not exists: {}. {}".format(host_id, e))
+        return None
+
+
+    return host.instance_set.all()[0].databaseinfra.name
