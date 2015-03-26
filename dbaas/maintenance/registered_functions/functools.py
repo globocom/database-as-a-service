@@ -46,3 +46,26 @@ def get_infra_name(host_id):
 
 
     return host.instance_set.all()[0].databaseinfra.name
+
+def get_database_name(host_id):
+    """Return DATABASE_NAME"""
+    from physical.models import Host
+
+    host = Host.objects.filter(id=host_id,
+        ).select_related('instance',
+        ).select_related('databaseinfra',
+        ).select_related('database',)
+
+    try:
+        host = host[0]
+    except IndexError, e:
+        LOG.warn("Host id does not exists: {}. {}".format(host_id, e))
+        return None
+
+    try:
+        database = host.instance_set.all()[0].databaseinfra.databases.all()[0]
+    except IndexError, e:
+        LOG.warn("There is not a database on this host: {}. {}".format(host_id, e))
+        return None
+
+    return database.name
