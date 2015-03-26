@@ -146,3 +146,22 @@ def get_host_password(host_id):
 
 
     return host_attr.vm_password
+
+
+def get_engine_type_name(host_id):
+    """Return ENGINE_TYPE"""
+    from physical.models import Host
+
+    host = Host.objects.filter(id=host_id,
+        ).select_related('instance',
+        ).select_related('databaseinfra',
+        )
+
+    try:
+        host = host[0]
+    except IndexError, e:
+        LOG.warn("Host id does not exists: {}. {}".format(host_id, e))
+        return None
+
+
+    return host.instance_set.all()[0].databaseinfra.engine.name
