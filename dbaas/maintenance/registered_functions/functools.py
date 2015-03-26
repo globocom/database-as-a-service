@@ -86,3 +86,20 @@ def get_infra_user(host_id):
 
 
     return host.instance_set.all()[0].databaseinfra.user
+
+
+def get_infra_password(host_id):
+    """Return DATABASE_INFRA_PASSWORD"""
+    from physical.models import Host
+
+    host = Host.objects.filter(id=host_id,
+        ).select_related('instance').select_related('databaseinfra')
+
+    try:
+        host = host[0]
+    except IndexError, e:
+        LOG.warn("Host id does not exists: {}. {}".format(host_id, e))
+        return None
+
+
+    return host.instance_set.all()[0].databaseinfra.password
