@@ -180,7 +180,7 @@ class HostMaintenance(BaseModel):
         unique_together = (("host", "maintenance"),)
         index_together = [["host", "maintenance"],]
         permissions = (
-            ("view_host_maintenance", "Can view host maintenance"),
+            ("view_hostmaintenance", "Can view host maintenance"),
         )
 
     def __unicode__(self):
