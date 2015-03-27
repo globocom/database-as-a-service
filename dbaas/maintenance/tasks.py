@@ -4,7 +4,9 @@ from dbaas.celery import app
 import models
 import logging
 from notification.models import TaskHistory
-from util import get_worker_name, build_context_script
+from util import get_worker_name
+from util import build_context_script
+from util import get_dict_lines
 from django.core.exceptions import ObjectDoesNotExist
 from registered_functions.functools import _get_function
 
@@ -83,7 +85,7 @@ def execute_scheduled_maintenance(self,maintenance_id):
                 else:
                     hm.status = hm.ROLLBACK_ERROR
 
-                hm.rollback_log = rollback_output
+                hm.rollback_log = get_dict_lines(rollback_output)
 
             else:
                 hm.status = hm.ERROR
@@ -93,7 +95,7 @@ def execute_scheduled_maintenance(self,maintenance_id):
         task_history.update_details(persist=True,
             details=update_task)
 
-        hm.main_log = main_output
+        hm.main_log = get_dict_lines(main_output)
         hm.finished_at = datetime.now()
         hm.save()
 
