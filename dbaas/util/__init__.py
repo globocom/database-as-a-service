@@ -285,3 +285,13 @@ def build_context_script(contextdict, script):
 def get_worker_name():
     p = current_process()
     return p.initargs[1].split('@')[1]
+
+def get_dict_lines(my_dict={}):
+    final_str = ''
+    for key in my_dict.keys():
+        final_str += key.upper() + ': \n\n'
+        for line in my_dict[key]:
+            final_str += line
+
+        final_str += '\n'
+    return final_str
