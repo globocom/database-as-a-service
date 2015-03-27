@@ -39,10 +39,10 @@ class MaintenanceAdmin(admin.DjangoServicesAdmin):
     service_class = MaintenanceService
     search_fields = ("scheduled_for", "description", "maximum_workers", "status")
     list_display = ("description", "scheduled_for", "started_at", "finished_at",
-        "maximum_workers", "affected_hosts_html", "friendly_status")
+        "maximum_workers", "affected_hosts_html", "created_by", "friendly_status")
     fields = ( "description", "scheduled_for", "started_at", "finished_at",
          "main_script", "rollback_script", "hostsid", "maximum_workers",
-         "status", "celery_task_id", "affected_hosts")
+         "status", "celery_task_id", "affected_hosts", "created_by", "revoked_by")
     form = MaintenanceForm
     actions = None
     inlines = [MaintenanceParametersInline,]
@@ -50,7 +50,7 @@ class MaintenanceAdmin(admin.DjangoServicesAdmin):
     def revoke_maintenance(request, id):
         maintenance = models.Maintenance.objects.get(id=id)
         if maintenance.status == maintenance.WAITING:
-            if maintenance.revoke_maintenance():
+            if maintenance.revoke_maintenance(request):
                 messages.add_message(request,  messages.SUCCESS,
                     "Maintenance revoked!",)
             else:
@@ -93,7 +93,7 @@ class MaintenanceAdmin(admin.DjangoServicesAdmin):
         if maintenance and maintenance.celery_task_id:
             return self.fields
 
-        return ('status', 'celery_task_id', 'affected_hosts', 'started_at', 'finished_at')
+        return ('status', 'celery_task_id', 'affected_hosts', 'started_at', 'finished_at', 'created_by', 'revoked_by')
 
     def friendly_status(self, maintenance):
         html_finished = '<span class="label label-info">Finished</span>'
@@ -123,5 +123,11 @@ class MaintenanceAdmin(admin.DjangoServicesAdmin):
         return format_html("".join(html))
 
     affected_hosts_html.short_description = "Affected hosts"
+
+    def save_model(self, request, obj, form, change):
+        
+        if not change:
+            obj.created_by = request.user.username
+            obj.save()
 
 

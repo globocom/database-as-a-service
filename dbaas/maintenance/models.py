@@ -50,6 +50,8 @@ class Maintenance(BaseModel):
     finished_at = models.DateTimeField(verbose_name=_("Finished at"),null=True, blank=True)
     hostsid = models.CommaSeparatedIntegerField(verbose_name=_("Hosts id"),
         null=False, blank=False, max_length=10000)
+    created_by = models.CharField(verbose_name=_("Created by"), max_length=255, null=True, blank=True)
+    revoked_by = models.CharField(verbose_name=_("Revoked by"), max_length=255, null=True, blank=True)
 
     def __unicode__(self):
        return "%s" % self.description
@@ -97,11 +99,12 @@ class Maintenance(BaseModel):
 
         return save_host_ok
 
-    def revoke_maintenance(self):
+    def revoke_maintenance(self, request):
         if self.is_waiting_to_run:
             control.revoke(self.celery_task_id,)
 
             self.status=self.REVOKED
+            self.revoked_by = request.user.username
             self.save()
 
             HostMaintenance.objects.filter(maintenance=self,
