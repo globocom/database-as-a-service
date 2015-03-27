@@ -9,9 +9,7 @@ from .. import models
 from django.utils.html import format_html
 
 class HostMaintenanceAdmin(admin.DjangoServicesAdmin):
-
     actions = None
-
     service_class = HostMaintenanceService
     search_fields = ("maintenance__description", "hostname", "status")
     list_display = ("maintenance", "hostname", "started_at", "finished_at", "friendly_status")

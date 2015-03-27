@@ -54,6 +54,11 @@ class Maintenance(BaseModel):
     def __unicode__(self):
        return "%s" % self.description
 
+    class Meta:
+        permissions = (
+            ("view_maintenance", "Can view maintenance"),
+        )
+
     def save_host_maintenance(self,):
         save_host_ok = True
         total_hosts = 0
@@ -174,6 +179,9 @@ class HostMaintenance(BaseModel):
     class Meta:
         unique_together = (("host", "maintenance"),)
         index_together = [["host", "maintenance"],]
+        permissions = (
+            ("view_host_maintenance", "Can view host maintenance"),
+        )
 
     def __unicode__(self):
         return "%s %s" % (self.host, self.maintenance)
@@ -191,6 +199,10 @@ class MaintenanceParameters(BaseModel):
     def __unicode__(self):
        return "{} - {}".format(self.parameter_name, self.function_name)
 
+    class Meta:
+        permissions = (
+            ("view_maintenance_parameters", "Can view maintenance parameters"),
+        )
 
 simple_audit.register(Maintenance)
 simple_audit.register(HostMaintenance)
