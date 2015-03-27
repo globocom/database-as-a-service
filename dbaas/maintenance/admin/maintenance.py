@@ -67,7 +67,8 @@ class MaintenanceAdmin(admin.DjangoServicesAdmin):
          'url': 'revoke_maintenance',
          'textname': 'Revoke Maintenance',
          'func': revoke_maintenance,
-         'confirm': u'Do you really want to revoke this maintenance?'
+         'confirm': u'Do you really want to revoke this maintenance?',
+         'id': 'revoke_maintenance'
         },
     ]
 
