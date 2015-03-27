@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.0.42
+* Maintenance hosts
+
 ## 0.0.39
 * fix tsuru bugs
 
