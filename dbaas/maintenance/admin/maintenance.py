@@ -45,12 +45,10 @@ class MaintenanceAdmin(admin.DjangoServicesAdmin):
          "status", "celery_task_id", "affected_hosts")
     form = MaintenanceForm
     actions = None
-
     inlines = [MaintenanceParametersInline,]
 
     def revoke_maintenance(request, id):
         maintenance = models.Maintenance.objects.get(id=id)
-
         if maintenance.status == maintenance.WAITING:
             if maintenance.revoke_maintenance():
                 messages.add_message(request,  messages.SUCCESS,
@@ -97,7 +95,6 @@ class MaintenanceAdmin(admin.DjangoServicesAdmin):
         return ('status', 'celery_task_id', 'affected_hosts', 'started_at', 'finished_at')
 
     def friendly_status(self, maintenance):
-
         html_finished = '<span class="label label-info">Finished</span>'
         html_rejected = '<span class="label label-important">Rejected</span>'
         html_waiting = '<span class="label label-warning">Waiting</span>'
