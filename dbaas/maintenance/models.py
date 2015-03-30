@@ -123,7 +123,11 @@ class Maintenance(BaseModel):
 
         inspect = control.inspect()
         scheduled_tasks = inspect.scheduled()
-        hosts = scheduled_tasks.keys()
+        try:
+            hosts = scheduled_tasks.keys()
+        except Exception, e:
+            LOG.info("Could not retrieve celery scheduled tasks: {}".format(e))
+            return False
 
         for host in hosts:
             try:
