@@ -48,6 +48,27 @@ class MaintenanceAdmin(admin.DjangoServicesAdmin):
     inlines = [MaintenanceParametersInline,]
 
     def revoke_maintenance(request, id):
+        import celery
+        from system.models import Configuration
+        celery_inpsect = celery.current_app.control.inspect()
+
+        celery_workers = Configuration.get_by_name_as_list('celery_workers',)
+
+        try:
+            workers = celery_inpsect.ping().keys()
+        except Exception, e:
+            LOG.warn("All celery workers are down! {} :(".format(e))
+            messages.add_message(request,  messages.ERROR,
+                "Maintenance can't be revoked because all celery workers are down!",)
+            return HttpResponseRedirect(reverse('admin:maintenance_maintenance_changelist'))
+
+        if workers and workers != celery_workers:
+            LOG.warn("At least one celery worker is down! :(")
+            messages.add_message(request,  messages.ERROR,
+                "Maintenance can't be revoked because at least one celery worker is down!",)
+            return HttpResponseRedirect(reverse('admin:maintenance_maintenance_changelist'))
+
+
         maintenance = models.Maintenance.objects.get(id=id)
         if maintenance.status == maintenance.WAITING:
             if maintenance.revoke_maintenance(request):
@@ -125,7 +146,7 @@ class MaintenanceAdmin(admin.DjangoServicesAdmin):
     affected_hosts_html.short_description = "Affected hosts"
 
     def save_model(self, request, obj, form, change):
-        
+
         if not change:
             obj.created_by = request.user.username
             obj.save()
