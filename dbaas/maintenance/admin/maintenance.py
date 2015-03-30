@@ -60,13 +60,13 @@ class MaintenanceAdmin(admin.DjangoServicesAdmin):
             LOG.warn("All celery workers are down! {} :(".format(e))
             messages.add_message(request,  messages.ERROR,
                 "Maintenance can't be revoked because all celery workers are down!",)
-            return HttpResponseRedirect(reverse('admin:maintenance_maintenance_changelist'))
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
         if workers and workers != celery_workers:
             LOG.warn("At least one celery worker is down! :(")
             messages.add_message(request,  messages.ERROR,
                 "Maintenance can't be revoked because at least one celery worker is down!",)
-            return HttpResponseRedirect(reverse('admin:maintenance_maintenance_changelist'))
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
 
         maintenance = models.Maintenance.objects.get(id=id)
