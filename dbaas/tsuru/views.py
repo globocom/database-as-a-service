@@ -11,8 +11,7 @@ from notification.tasks import create_database
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
 from notification.models import TaskHistory
-from dbaas_aclapi.tasks.tasks import bind_address_on_database
-from dbaas_aclapi.tasks.tasks import unbind_address_on_database
+from dbaas_aclapi.tasks import tasks
 from dbaas_aclapi.models import DatabaseBind
 from django.core.exceptions import MultipleObjectsReturned
 
@@ -177,7 +176,7 @@ class ServiceUnitBind(APIView):
         database_bind.save()
 
         if created:
-            bind_address_on_database.delay(database_bind=database_bind,
+            tasks.bind_address_on_database.delay(database_bind=database_bind,
              action="permit", user=request.user)
 
         return Response(None, status.HTTP_201_CREATED)
@@ -206,7 +205,7 @@ class ServiceUnitBind(APIView):
         database_bind.save()
 
         if database_bind == 0:
-            unbind_address_on_database.delay(database_bind=database_bind,
+            tasks.unbind_address_on_database.delay(database_bind=database_bind,
              user=request.user)
 
         return Response(status.HTTP_204_NO_CONTENT)
