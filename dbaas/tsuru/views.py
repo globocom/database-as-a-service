@@ -178,7 +178,7 @@ class ServiceUnitBind(APIView):
 
         if created:
             bind_address_on_database.delay(database_bind=database_bind,
-             action="permit", user=request.user)
+             user=request.user)
 
         return Response(None, status.HTTP_201_CREATED)
 
