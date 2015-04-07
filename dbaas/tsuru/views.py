@@ -174,20 +174,22 @@ class ServiceUnitBind(APIView):
         unit_host = data.get('unit-host') + '/32'
         created = False
 
-        with transaction.commit_manually():
-            database_bind = DatabaseBind(database= database,
-                bind_address= unit_host, binds_requested=1)
-            try:
-                database_bind.save()
-                created = True
-            except IntegrityError, e:
-                LOG.info("IntegrityError: {}".format(e))
-                bind = DatabaseBind.objects.select_for_update().filter(database= database,
-                    bind_address=unit_host)[0]
-                bind.binds_requested+=1
-                bind.save()
+        transaction.set_autocommit(False)
+        database_bind = DatabaseBind(database= database,
+            bind_address= unit_host, binds_requested=1)
 
+        try:
+            database_bind.save()
+            created = True
+        except IntegrityError, e:
+            LOG.info("IntegrityError: {}".format(e))
+            bind = DatabaseBind.objects.select_for_update().filter(database= database,
+                bind_address=unit_host)[0]
+            bind.binds_requested+=1
+            bind.save()
+        finally:
             transaction.commit()
+            transaction.set_autocommit(True)
 
         if created:
             bind_address_on_database.delay(database_bind=database_bind,
@@ -206,16 +208,17 @@ class ServiceUnitBind(APIView):
 
         database = response
         unbind_ip = data.get('unit-host') + '/32'
+        transaction.set_autocommit(False)
 
         try:
-            with transaction.commit_manually():
-                database_bind = DatabaseBind.objects.select_for_update().filter(database= database,
-                    bind_address=unbind_ip)[0]
+            database_bind = DatabaseBind.objects.select_for_update().filter(database= database,
+                bind_address=unbind_ip)[0]
 
-                database_bind.binds_requested -=1
-                database_bind.save()
+            database_bind.binds_requested -=1
+            database_bind.save()
 
-                transaction.commit()
+            transaction.commit()
+            transaction.set_autocommit(True)
         except IndexError, e:
             msg = "DatabaseBind does not exist"
             return log_and_response(msg=msg, e=e,
