@@ -174,7 +174,7 @@ class ServiceUnitBind(APIView):
         unit_host = data.get('unit-host') + '/32'
         created = False
 
-        with transaction.atomic():
+        with transaction.commit_manually():
             database_bind = DatabaseBind(database= database,
                 bind_address= unit_host, binds_requested=1)
             try:
@@ -186,6 +186,8 @@ class ServiceUnitBind(APIView):
                     bind_address=unit_host)[0]
                 bind.binds_requested+=1
                 bind.save()
+
+            transaction.commit()
 
         if created:
             bind_address_on_database.delay(database_bind=database_bind,
@@ -206,11 +208,14 @@ class ServiceUnitBind(APIView):
         unbind_ip = data.get('unit-host') + '/32'
 
         try:
-            with transaction.atomic():
+            with transaction.commit_manually():
                 database_bind = DatabaseBind.objects.select_for_update().filter(database= database,
                     bind_address=unbind_ip)[0]
+
                 database_bind.binds_requested -=1
                 database_bind.save()
+
+                transaction.commit()
         except IndexError, e:
             msg = "DatabaseBind does not exist"
             return log_and_response(msg=msg, e=e,
