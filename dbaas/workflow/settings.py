@@ -12,6 +12,7 @@ DEPLOY_MYSQL = (
     'workflow.steps.util.deploy.create_dbmonitor.CreateDbMonitor',
     'workflow.steps.util.deploy.build_database.BuildDatabase',
     'workflow.steps.util.deploy.create_log.CreateLog',
+    'workflow.steps.util.deploy.check_database_binds.CheckDatabaseBinds',
 )
 
 DEPLOY_MONGO = (
@@ -26,6 +27,7 @@ DEPLOY_MONGO = (
     'workflow.steps.util.deploy.create_dbmonitor.CreateDbMonitor',
     'workflow.steps.util.deploy.build_database.BuildDatabase',
     'workflow.steps.util.deploy.create_log.CreateLog',
+    'workflow.steps.util.deploy.check_database_binds.CheckDatabaseBinds',
 )
 
 DEPLOY_REDIS = (
@@ -40,6 +42,7 @@ DEPLOY_REDIS = (
     'workflow.steps.util.deploy.create_dbmonitor.CreateDbMonitor',
     'workflow.steps.util.deploy.build_database.BuildDatabase',
     'workflow.steps.util.deploy.create_log.CreateLog',
+    'workflow.steps.util.deploy.check_database_binds.CheckDatabaseBinds',
 )
 
 DEPLOY_UNKNOWN = (
