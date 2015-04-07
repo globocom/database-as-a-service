@@ -16,6 +16,7 @@ from dbaas_aclapi.tasks import unbind_address_on_database
 from dbaas_aclapi.models import DatabaseBind
 from django.core.exceptions import MultipleObjectsReturned
 from django.db import transaction
+from django.db import IntegrityError
 
 LOG = logging.getLogger(__name__)
 
@@ -171,12 +172,20 @@ class ServiceUnitBind(APIView):
         LOG.debug("Request DATA {}".format(data))
 
         unit_host = data.get('unit-host') + '/32'
+        created = False
 
         with transaction.atomic():
-            database_bind, created = DatabaseBind.objects.get_or_create(database= database,
-                bind_address= unit_host,)
-            database_bind.binds_requested += 1
-            database_bind.save()
+            database_bind = DatabaseBind.objects(database= database,
+                bind_address= unit_host, binds_requested=1)
+            try:
+                database_bind.save()
+                created = True
+            except IntegrityError, e:
+                LOG.info("IntegrityError: {}".format(e))
+                bind = DatabaseBind.objects.select_for_update().filter(database= database,
+                    bind_address=unit_host)[0]
+                bind.binds_requested+=1
+                bind.save()
 
         if created:
             bind_address_on_database.delay(database_bind=database_bind,
@@ -198,11 +207,11 @@ class ServiceUnitBind(APIView):
 
         try:
             with transaction.atomic():
-                database_bind = DatabaseBind.objects.get(database= database,
-                    bind_address= unbind_ip)
+                database_bind = DatabaseBind.objects.select_for_update().filter(database= database,
+                    bind_address=unbind_ip)[0]
                 database_bind.binds_requested -=1
                 database_bind.save()
-        except ObjectDoesNotExist, e:
+        except IndexError, e:
             msg = "DatabaseBind does not exist"
             return log_and_response(msg=msg, e=e,
                 http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
