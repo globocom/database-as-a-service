@@ -196,17 +196,16 @@ class ServiceUnitBind(APIView):
         database = response
         unbind_ip = data.get('unit-host') + '/32'
 
-        with transaction.atomic():
-            try:
+        try:
+            with transaction.atomic():
                 database_bind = DatabaseBind.objects.get(database= database,
                     bind_address= unbind_ip)
-            except ObjectDoesNotExist, e:
-                msg = "DatabaseBind does not exist"
-                return log_and_response(msg=msg, e=e,
-                    http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-            database_bind.binds_requested -=1
-            database_bind.save()
+                database_bind.binds_requested -=1
+                database_bind.save()
+        except ObjectDoesNotExist, e:
+            msg = "DatabaseBind does not exist"
+            return log_and_response(msg=msg, e=e,
+                http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
         if database_bind.binds_requested == 0:
