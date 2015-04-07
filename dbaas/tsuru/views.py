@@ -175,7 +175,7 @@ class ServiceUnitBind(APIView):
         created = False
 
         with transaction.atomic():
-            database_bind = DatabaseBind.objects(database= database,
+            database_bind = DatabaseBind(database= database,
                 bind_address= unit_host, binds_requested=1)
             try:
                 database_bind.save()
