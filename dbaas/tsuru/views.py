@@ -205,7 +205,7 @@ class ServiceUnitBind(APIView):
         database_bind.binds_requested -=1
         database_bind.save()
 
-        if database_bind == 0:
+        if database_bind.binds_requested == 0:
             unbind_address_on_database.delay(database_bind=database_bind,
              user=request.user)
 
