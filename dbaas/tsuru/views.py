@@ -15,6 +15,7 @@ from dbaas_aclapi.tasks import bind_address_on_database
 from dbaas_aclapi.tasks import unbind_address_on_database
 from dbaas_aclapi.models import DatabaseBind
 from django.core.exceptions import MultipleObjectsReturned
+from django.db import transaction
 
 LOG = logging.getLogger(__name__)
 
@@ -171,10 +172,11 @@ class ServiceUnitBind(APIView):
 
         unit_host = data.get('unit-host') + '/32'
 
-        database_bind, created = DatabaseBind.objects.get_or_create(database= database,
-            bind_address= unit_host,)
-        database_bind.binds_requested += 1
-        database_bind.save()
+        with transaction.atomic():
+            database_bind, created = DatabaseBind.objects.get_or_create(database= database,
+                bind_address= unit_host,)
+            database_bind.binds_requested += 1
+            database_bind.save()
 
         if created:
             bind_address_on_database.delay(database_bind=database_bind,
@@ -194,16 +196,18 @@ class ServiceUnitBind(APIView):
         database = response
         unbind_ip = data.get('unit-host') + '/32'
 
-        try:
-            database_bind = DatabaseBind.objects.get(database= database,
-                bind_address= unbind_ip)
-        except ObjectDoesNotExist, e:
-            msg = "DatabaseBind does not exist"
-            return log_and_response(msg=msg, e=e,
-                http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        with transaction.atomic():
+            try:
+                database_bind = DatabaseBind.objects.get(database= database,
+                    bind_address= unbind_ip)
+            except ObjectDoesNotExist, e:
+                msg = "DatabaseBind does not exist"
+                return log_and_response(msg=msg, e=e,
+                    http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        database_bind.binds_requested -=1
-        database_bind.save()
+            database_bind.binds_requested -=1
+            database_bind.save()
+
 
         if database_bind.binds_requested == 0:
             unbind_address_on_database.delay(database_bind=database_bind,
