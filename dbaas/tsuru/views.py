@@ -184,17 +184,20 @@ class ServiceUnitBind(APIView):
             LOG.info("IntegrityError: {}".format(e))
 
             try:
-                bind = DatabaseBind.objects.select_for_update().filter(database= database,
-                    bind_address=unit_host).exclude(bind_status=DESTROYING)[0]
-                bind.binds_requested+=1
-                bind.save()
-            except IndexError, e:
+                db_bind = DatabaseBind.objects.get(database= database, bind_address=unit_host)
+
+                bind = DatabaseBind.objects.select_for_update().filter(id= db_bind.id)[0]
+                if bind.bind_status != DESTROYING:
+                    bind.binds_requested+=1
+                    bind.save()
+            except (IndexError, ObjectDoesNotExist), e:
                 LOG.debug("DatabaseBind is under destruction! {}".format(e))
                 msg = "DatabaseBind does not exist"
                 return log_and_response(msg=msg, e=e,
                     http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         finally:
+            LOG.debug("Finishing transaction!")
             transaction.commit()
             transaction.set_autocommit(True)
 
@@ -218,19 +221,22 @@ class ServiceUnitBind(APIView):
         transaction.set_autocommit(False)
 
         try:
-            database_bind = DatabaseBind.objects.select_for_update().filter(database= database,
-                bind_address=unbind_ip).exclude(bind_status= DESTROYING)[0]
+            db_bind = DatabaseBind.objects.get(database= database, bind_address=unbind_ip)
 
-            database_bind.binds_requested -=1
-            if database_bind.binds_requested == 0:
-                database_bind.status = DESTROYING
+            database_bind = DatabaseBind.objects.select_for_update().filter(id= db_bind.id)[0]
 
-            database_bind.save()
-        except IndexError, e:
+            if database_bind.bind_status != DESTROYING:
+                database_bind.binds_requested -=1
+                if database_bind.binds_requested == 0:
+                    database_bind.status = DESTROYING
+
+                database_bind.save()
+        except (IndexError, ObjectDoesNotExist), e:
             msg = "DatabaseBind does not exist"
             return log_and_response(msg=msg, e=e,
                 http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         finally:
+            LOG.debug("Finishing transaction!")
             transaction.commit()
             transaction.set_autocommit(True)
 
