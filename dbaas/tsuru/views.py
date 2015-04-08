@@ -226,7 +226,9 @@ class ServiceUnitBind(APIView):
             database_bind = DatabaseBind.objects.select_for_update().filter(id= db_bind.id)[0]
 
             if database_bind.bind_status != DESTROYING:
-                database_bind.binds_requested -=1
+                if database_bind.binds_requested > 0:
+                    database_bind.binds_requested -=1
+
                 if database_bind.binds_requested == 0:
                     database_bind.status = DESTROYING
 
