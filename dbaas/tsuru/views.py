@@ -226,13 +226,13 @@ class ServiceUnitBind(APIView):
                 database_bind.status = DESTROYING
 
             database_bind.save()
-
-            transaction.commit()
-            transaction.set_autocommit(True)
         except IndexError, e:
             msg = "DatabaseBind does not exist"
             return log_and_response(msg=msg, e=e,
                 http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        finally:
+            transaction.commit()
+            transaction.set_autocommit(True)
 
 
         if database_bind.binds_requested == 0:
