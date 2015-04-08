@@ -14,6 +14,7 @@ from notification.models import TaskHistory
 from dbaas_aclapi.tasks import bind_address_on_database
 from dbaas_aclapi.tasks import unbind_address_on_database
 from dbaas_aclapi.models import DatabaseBind
+from dbaas_aclapi.models import DESTROYING
 from django.core.exceptions import MultipleObjectsReturned
 from django.db import transaction
 from django.db import IntegrityError
@@ -184,7 +185,7 @@ class ServiceUnitBind(APIView):
 
             try:
                 bind = DatabaseBind.objects.select_for_update().filter(database= database,
-                    bind_address=unit_host).exclude(status=DatabaseBind.DESTROYING)[0]
+                    bind_address=unit_host).exclude(status=DESTROYING)[0]
                 bind.binds_requested+=1
                 bind.save()
             except IndexError, e:
@@ -218,7 +219,7 @@ class ServiceUnitBind(APIView):
 
         try:
             database_bind = DatabaseBind.objects.select_for_update().filter(database= database,
-                bind_address=unbind_ip).exclude(bind_status= DatabaseBind.DESTROYING)[0]
+                bind_address=unbind_ip).exclude(bind_status= DESTROYING)[0]
 
             database_bind.binds_requested -=1
             database_bind.save()
@@ -236,9 +237,9 @@ class ServiceUnitBind(APIView):
 
             database_bind = DatabaseBind.objects.select_for_update().filter(database= database,
                 bind_address=unbind_ip, binds_requested=0,
-                ).exclude(bind_status= DatabaseBind.DESTROYING)[0]
+                ).exclude(bind_status= DESTROYING)[0]
 
-            database_bind.status = DatabaseBind.DESTROYING
+            database_bind.status = DESTROYING
             database_bind.save()
 
             transaction.commit()
