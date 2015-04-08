@@ -167,10 +167,8 @@ class ServiceUnitBind(APIView):
             return response
 
         database = response
-
         data = request.DATA
         LOG.debug("Request DATA {}".format(data))
-
         unit_host = data.get('unit-host') + '/32'
         created = False
 
@@ -183,10 +181,18 @@ class ServiceUnitBind(APIView):
             created = True
         except IntegrityError, e:
             LOG.info("IntegrityError: {}".format(e))
-            bind = DatabaseBind.objects.select_for_update().filter(database= database,
-                bind_address=unit_host)[0]
-            bind.binds_requested+=1
-            bind.save()
+
+            try:
+                bind = DatabaseBind.objects.select_for_update().filter(database= database,
+                    bind_address=unit_host).exclude(status=DatabaseBind.DESTROYING)[0]
+                bind.binds_requested+=1
+                bind.save()
+            except IndexError, e:
+                LOG.debug("DatabaseBind is under destruction! {}".format(e))
+                msg = "DatabaseBind does not exist"
+                return log_and_response(msg=msg, e=e,
+                    http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
         finally:
             transaction.commit()
             transaction.set_autocommit(True)
@@ -212,7 +218,7 @@ class ServiceUnitBind(APIView):
 
         try:
             database_bind = DatabaseBind.objects.select_for_update().filter(database= database,
-                bind_address=unbind_ip)[0]
+                bind_address=unbind_ip).exclude(bind_status= DatabaseBind.DESTROYING)[0]
 
             database_bind.binds_requested -=1
             database_bind.save()
@@ -226,6 +232,18 @@ class ServiceUnitBind(APIView):
 
 
         if database_bind.binds_requested == 0:
+            transaction.set_autocommit(False)
+
+            database_bind = DatabaseBind.objects.select_for_update().filter(database= database,
+                bind_address=unbind_ip, binds_requested=0,
+                ).exclude(bind_status= DatabaseBind.DESTROYING)[0]
+
+            database_bind.status = DatabaseBind.DESTROYING
+            database_bind.save()
+
+            transaction.commit()
+            transaction.set_autocommit(True)
+
             unbind_address_on_database.delay(database_bind=database_bind,
              user=request.user)
 
