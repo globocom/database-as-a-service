@@ -185,7 +185,7 @@ class ServiceUnitBind(APIView):
 
             try:
                 bind = DatabaseBind.objects.select_for_update().filter(database= database,
-                    bind_address=unit_host).exclude(status=DESTROYING)[0]
+                    bind_address=unit_host).exclude(bind_status=DESTROYING)[0]
                 bind.binds_requested+=1
                 bind.save()
             except IndexError, e:
@@ -222,6 +222,9 @@ class ServiceUnitBind(APIView):
                 bind_address=unbind_ip).exclude(bind_status= DESTROYING)[0]
 
             database_bind.binds_requested -=1
+            if database_bind.binds_requested == 0:
+                database_bind.status = DESTROYING
+
             database_bind.save()
 
             transaction.commit()
@@ -233,18 +236,6 @@ class ServiceUnitBind(APIView):
 
 
         if database_bind.binds_requested == 0:
-            transaction.set_autocommit(False)
-
-            database_bind = DatabaseBind.objects.select_for_update().filter(database= database,
-                bind_address=unbind_ip, binds_requested=0,
-                ).exclude(bind_status= DESTROYING)[0]
-
-            database_bind.status = DESTROYING
-            database_bind.save()
-
-            transaction.commit()
-            transaction.set_autocommit(True)
-
             unbind_address_on_database.delay(database_bind=database_bind,
              user=request.user)
 
