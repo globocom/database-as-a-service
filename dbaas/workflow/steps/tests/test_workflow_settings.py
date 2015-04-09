@@ -30,6 +30,7 @@ class WorkflowSettingsTestCase(TestCase):
             'workflow.steps.util.deploy.create_dbmonitor.CreateDbMonitor',
             'workflow.steps.util.deploy.build_database.BuildDatabase',
             'workflow.steps.util.deploy.create_log.CreateLog',
+            'workflow.steps.util.deploy.check_database_binds.CheckDatabaseBinds',
             )
         )
 
@@ -47,6 +48,7 @@ class WorkflowSettingsTestCase(TestCase):
             'workflow.steps.util.deploy.create_dbmonitor.CreateDbMonitor',
             'workflow.steps.util.deploy.build_database.BuildDatabase',
             'workflow.steps.util.deploy.create_log.CreateLog',
+            'workflow.steps.util.deploy.check_database_binds.CheckDatabaseBinds',
             )
         )
 
@@ -62,6 +64,7 @@ class WorkflowSettingsTestCase(TestCase):
             'workflow.steps.util.deploy.create_dbmonitor.CreateDbMonitor',
             'workflow.steps.util.deploy.build_database.BuildDatabase',
             'workflow.steps.util.deploy.create_log.CreateLog',
+            'workflow.steps.util.deploy.check_database_binds.CheckDatabaseBinds',
             )
         )
 
@@ -79,6 +82,7 @@ class WorkflowSettingsTestCase(TestCase):
             'workflow.steps.util.deploy.create_dbmonitor.CreateDbMonitor',
             'workflow.steps.util.deploy.build_database.BuildDatabase',
             'workflow.steps.util.deploy.create_log.CreateLog',
+            'workflow.steps.util.deploy.check_database_binds.CheckDatabaseBinds',
             'workflow.steps.util.clone.clone_database.CloneDatabase',
             'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',
             )
@@ -97,6 +101,7 @@ class WorkflowSettingsTestCase(TestCase):
             'workflow.steps.util.deploy.create_dbmonitor.CreateDbMonitor',
             'workflow.steps.util.deploy.build_database.BuildDatabase',
             'workflow.steps.util.deploy.create_log.CreateLog',
+            'workflow.steps.util.deploy.check_database_binds.CheckDatabaseBinds',
             'workflow.steps.util.clone.clone_database.CloneDatabase',
             'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',
             )
@@ -113,6 +118,7 @@ class WorkflowSettingsTestCase(TestCase):
             'workflow.steps.util.deploy.create_dbmonitor.CreateDbMonitor',
             'workflow.steps.util.deploy.build_database.BuildDatabase',
             'workflow.steps.util.deploy.create_log.CreateLog',
+            'workflow.steps.util.deploy.check_database_binds.CheckDatabaseBinds',
             'workflow.steps.redis.clone.clone_database.CloneDatabase',
             'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',
             )
