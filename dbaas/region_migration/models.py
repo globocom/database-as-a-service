@@ -6,6 +6,7 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from logical.models import Database
 from util.models import BaseModel
+from region_migration.migration_steps import get_engine_steps
 
 
 LOG = logging.getLogger(__name__)
@@ -20,6 +21,11 @@ class DatabaseRegionMigration(BaseModel):
     def __unicode__(self):
         return '{} on step {}'.format(self.database, self.current_step)
 
+    def get_steps(self,):
+        return get_engine_steps(self.database.engine)
+
+    def get_current_step(self,):
+        return get_engine_steps(self.database.engine)[self.step]
 
 
 
