@@ -1,5 +1,7 @@
 from collections import OrderedDict
 from operator import itemgetter
+from workflow import settings
+import re
 
 
 class Step(tuple):
@@ -54,12 +56,26 @@ class Step(tuple):
 
 def get_mongodb_steps():
     step1 = Step('mongodb', 'First step', 1,
-        'Please check acls with the team', ('workflow.mongodb.migration.step0',
-            'workflow.mongodb.migration.step1'))
+        'Please check acls with the team', settings.MONGODB_REGION_MIGRATION_1)
 
     step2 = Step('mongodb', 'Second step', 2,
-        'Please check dns', ('workflow.mongodb.migration.step2',
-            'workflow.mongodb.migration.step3'))
+        'Please check dns', settings.MONGODB_REGION_MIGRATION_2)
 
     return (step1, step2)
+
+def get_mysql_steps():
+   pass
+
+def get_redis_steps():
+    pass
+
+def get_engine_steps(engine):
+    engine = engine.lower()
+    if re.match(r'^mongo.*', engine):
+        return get_mongodb_steps()
+    elif re.match(r'^mysql.*', engine):
+        return get_mysql_steps()
+    elif re.match(r'^redis.*', engine):
+        return get_redis_steps()
+
 
