@@ -57,8 +57,8 @@ def get_mongodb_steps():
         'Please check acls with the team', ('workflow.mongodb.migration.step0',
             'workflow.mongodb.migration.step1'))
 
-    step2 = Step('mongodb', 'First step', 2,
-        'Please check acls with the team', ('workflow.mongodb.migration.step2',
+    step2 = Step('mongodb', 'Second step', 2,
+        'Please check dns', ('workflow.mongodb.migration.step2',
             'workflow.mongodb.migration.step3'))
 
     return (step1, step2)
