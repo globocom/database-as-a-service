@@ -202,6 +202,7 @@ INSTALLED_APPS = (
     'dbaas_aclapi',
     'dbaas_laas',
     'maintenance',
+    'region_migration',
 )
 
 
