@@ -18,7 +18,9 @@ class DatabaseRegionMigration(BaseModel):
         blank= False)
 
     def __unicode__(self):
-     return '{} on step {}'.format(self.database, self.current_step)
+        return '{} on step {}'.format(self.database, self.current_step)
+
+
 
 
 class DatabaseRegionMigrationDetail(BaseModel):
