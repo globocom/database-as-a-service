@@ -110,4 +110,9 @@ MYSQL_REGION_MIGRATION = ()
 REDIS_REGION_MIGRATION = ()
 
 MONGODB_REGION_MIGRATION_1 = ()
-MONGODB_REGION_MIGRATION_2 = ()
+MONGODB_REGION_MIGRATION_2 = (
+    'workflow.steps.mongodb.region_migration.change_ttl.DecreaseTTL',
+    'workflow.steps.mongodb.region_migration.create_virtualmachines.CreateVirtualMachine',
+    'workflow.steps.mongodb.region_migration.create_nfs.CreateNfs',
+    'workflow.steps.mongodb.region_migration.create_database_instances.CreateMongoDBInstances',
+)

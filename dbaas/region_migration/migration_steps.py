@@ -55,10 +55,10 @@ class Step(tuple):
     step_classes = property(itemgetter(4), doc='Alias for field number 4')
 
 def get_mongodb_steps():
-    step1 = Step('mongodb', 'First step', 1,
+    step1 = Step('mongodb', 'Ready to start migration', 0,
         'Please check acls with the team', settings.MONGODB_REGION_MIGRATION_1)
 
-    step2 = Step('mongodb', 'Second step', 2,
+    step2 = Step('mongodb', 'Create new instances', 1,
         'Please check dns', settings.MONGODB_REGION_MIGRATION_2)
 
     return (step1, step2)
