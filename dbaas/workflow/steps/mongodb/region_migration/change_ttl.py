@@ -24,8 +24,6 @@ class DecreaseTTL(BaseStep):
 
     def do(self, workflow_dict):
         try:
-            from time import sleep
-            sleep(60)
             
             return True
         except Exception:
