@@ -20,7 +20,7 @@ LOG = logging.getLogger(__name__)
 class DecreaseTTL(BaseStep):
 
     def __unicode__(self):
-        return "Chngeing TTL..."
+        return "Changing TTL..."
 
     def do(self, workflow_dict):
         try:
