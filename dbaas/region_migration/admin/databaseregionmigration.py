@@ -62,7 +62,9 @@ class DatabaseRegionMigrationAdmin(admin.DjangoServicesAdmin):
         task_history = TaskHistory()
         task_history.task_name = "execute_database_region_migration"
         task_history.task_status = task_history.STATUS_WAITING
-        task_history.arguments = "Database name: {}, Step: {}".format(database_region_migration.database.name, database_region_migration_detail.step)
+        
+        task_history.arguments = "Database name: {}, Step: {}".format(database_region_migration.database.name, 
+                                  database_region_migration_detail.database_region_migration.next_step_description())
         task_history.user = request.user
         task_history.save()
         
