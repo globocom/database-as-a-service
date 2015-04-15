@@ -17,7 +17,7 @@ LOG = logging.getLogger(__name__)
 
 class Environment(BaseModel):
     name = models.CharField(verbose_name=_("Environment"), max_length=100, unique=True)
-    equivalent_environment = models.ForeignKey("Environment", null=True, blank=True)
+    equivalent_environment = models.ForeignKey("Environment", null=True, blank=True, on_delete=models.SET_NULL)
 
     def __unicode__(self):
         return '%s' % (self.name)
@@ -99,7 +99,7 @@ class Plan(BaseModel):
     max_db_size= models.IntegerField(default=0,
                                                     verbose_name=_("Max database size (MB)"),
                                                     help_text=_("What is the maximum size of each database (MB). 0 means unlimited."))
-    equivalent_plan = models.ForeignKey("Plan", null=True, blank=True)
+    equivalent_plan = models.ForeignKey("Plan", null=True, blank=True, on_delete=models.SET_NULL)
 
     @property
     def engines(self):
@@ -291,7 +291,7 @@ class Host(BaseModel):
     hostname = models.CharField(verbose_name=_("Hostname"), max_length=255, unique=True)
     address = models.CharField(verbose_name=_("Host address"), max_length=255)
     monitor_url = models.URLField(verbose_name=_("Monitor Url"), max_length=500, blank=True, null=True)
-    future_host = models.ForeignKey("Host",null=True, blank=True)
+    future_host = models.ForeignKey("Host",null=True, blank=True, on_delete=models.SET_NULL)
 
     def __unicode__(self):
         return self.hostname
@@ -339,7 +339,7 @@ class Instance(BaseModel):
     hostname = models.ForeignKey(Host)
     status = models.IntegerField(choices=INFRA_STATUS, default=2)
     instance_type = models.IntegerField(choices=DATABASE_TYPE, default = 0)
-    future_instance = models.ForeignKey("Instance",null=True, blank=True)
+    future_instance = models.ForeignKey("Instance",null=True, blank=True, on_delete=models.SET_NULL)
 
     class Meta:
         unique_together = (
