@@ -339,6 +339,7 @@ class Instance(BaseModel):
     hostname = models.ForeignKey(Host)
     status = models.IntegerField(choices=INFRA_STATUS, default=2)
     instance_type = models.IntegerField(choices=DATABASE_TYPE, default = 0)
+    future_instance = models.ForeignKey("Instance",null=True, blank=True)
 
     class Meta:
         unique_together = (
