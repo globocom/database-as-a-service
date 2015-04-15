@@ -6,6 +6,8 @@ from util import build_dict
 from models import DatabaseRegionMigrationDetail
 from workflow.workflow import  start_workflow
 from .migration_steps import get_engine_steps
+from physical.models import Environment, Instance
+from sets import Set
 
 LOG = logging.getLogger(__name__)
 
@@ -34,21 +36,31 @@ def execute_database_region_migration(self, database_region_migration_detail_id,
     database_region_migration = database_region_migration_detail.database_region_migration
     database = database_region_migration.database
     databaseinfra = database.databaseinfra
-    environment = databaseinfra.environment
-    
-    
-    
+    source_environment = databaseinfra.environment
+    target_environment = source_environment.equivalent_environment
     engine = database.engine_type
     steps = get_engine_steps(engine)
     workflow_steps = steps[database_region_migration_detail.step].step_classes
+    source_instances = []
+    for instance in Instance.objects.filter(databaseinfra=databaseinfra):
+        source_instances.append(instance)
+    source_hosts = []
+    for instance in source_instances:
+        source_hosts.append(instance.hostname)
+    source_hosts = list(Set(source_hosts))
+    
+    
     
     workflow_dict = build_dict(database_region_migration_detail = database_region_migration_detail,
                                database_region_migration = database_region_migration,
                                database = database,
                                databaseinfra = databaseinfra,
-                               environment= environment,
+                               source_environment = source_environment,
+                               target_environment = target_environment,
                                steps = workflow_steps,
-                               engine = engine
+                               engine = engine,
+                               source_instances = source_instances,
+                               source_hosts = source_hosts,
                                )
 
     start_workflow(workflow_dict=workflow_dict, task=task_history)    
