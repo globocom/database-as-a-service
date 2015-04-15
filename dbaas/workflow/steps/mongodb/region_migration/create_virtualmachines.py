@@ -24,6 +24,34 @@ class CreateVirtualMachine(BaseStep):
 
     def do(self, workflow_dict):
         try:
+            #LOG.debug(workflow_dict)
+            
+            cs_credentials = get_credentials_for(
+                environment=workflow_dict['target_environment'],
+                credential_type=CredentialType.CLOUDSTACK)
+
+            vm_credentials = get_credentials_for(
+                environment=workflow_dict['target_environment'],
+                credential_type=CredentialType.VM)
+
+            cs_provider = CloudStackProvider(credentials=cs_credentials)
+            
+            original_serviceoffering = workflow_dict['databaseinfra'].cs_dbinfra_offering.get().offering
+            target_serviceoffering = original_serviceoffering.equivalent_offering
+            
+            #for source_host in workflow_dict['source_hosts']:
+            #    source_host_name = source_host.hostname.split('.')[0]
+            #
+            #    vm = cs_provider.deploy_virtual_machine(
+            #            offering=offering.target_serviceoffering.serviceofferingid,
+            #            bundle= bundle,
+            #            project_id=cs_credentials.project,
+            #            vmname=vm_name,
+            #            affinity_group_id=cs_credentials.get_parameter_by_name('affinity_group_id'),
+            #    )
+
+            if not vm:
+                raise Exception("CloudStack could not create the virtualmachine")
             
             return True
         except Exception:
