@@ -291,7 +291,7 @@ class Host(BaseModel):
     hostname = models.CharField(verbose_name=_("Hostname"), max_length=255, unique=True)
     address = models.CharField(verbose_name=_("Host address"), max_length=255)
     monitor_url = models.URLField(verbose_name=_("Monitor Url"), max_length=500, blank=True, null=True)
-    future_host = models.ForeignKey("Host",null=True, blank=False)
+    future_host = models.ForeignKey("Host",null=True, blank=True)
 
     def __unicode__(self):
         return self.hostname
