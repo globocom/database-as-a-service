@@ -7,12 +7,10 @@ from dbaas_credentials.models import CredentialType
 from dbaas_cloudstack.models import PlanAttr
 from dbaas_cloudstack.models import HostAttr
 from dbaas_cloudstack.models import LastUsedBundle
-from dbaas_cloudstack.models import DatabaseInfraOffering
-from django.core.exceptions import ObjectDoesNotExist
 from physical.models import Host
 from physical.models import Instance
 from ...util.base import BaseStep
-from ....exceptions.error_codes import DBAAS_0011
+from ....exceptions.error_codes import DBAAS_0019
 
 LOG = logging.getLogger(__name__)
 
@@ -41,17 +39,15 @@ class CreateVirtualMachine(BaseStep):
             cs_plan_attrs = PlanAttr.objects.get(plan = workflow_dict['target_plan'])
             bundles = list(cs_plan_attrs.bundle.all())
             
-            workflow_dict['source_hosts'] = []
             workflow_dict['target_hosts'] = []
-            workflow_dict['target_vms_id'] = []
             workflow_dict['target_instances'] = []
             
             for index, source_instance in enumerate(workflow_dict['source_instances']):
-                source_host = source_instance.hostname
-                
+
+                source_host = workflow_dict['source_hosts'][index]
                 vm_name = source_host.hostname.split('.')[0]
 
-                if len(bundles)==1:
+                if len(bundles) == 1:
                     bundle = bundles[0]
                 else:
                     bundle = LastUsedBundle.get_next_bundle(plan = workflow_dict['target_plan'], bundle = bundles)
@@ -72,8 +68,6 @@ class CreateVirtualMachine(BaseStep):
 
                 if not vm:
                     raise Exception("CloudStack could not create the virtualmachine")
-            
-                workflow_dict['target_vms_id'].append(vm['virtualmachine'][0]['id'])
 
                 host = Host()
                 host.address = vm['virtualmachine'][0]['nic'][0]['ipaddress']
@@ -83,10 +77,7 @@ class CreateVirtualMachine(BaseStep):
                 
                 source_host.future_host = host
                 source_host.save()
-                workflow_dict['source_hosts'].append(source_host)
-                
-                
-                
+
                 host_attr = HostAttr()
                 host_attr.vm_id = vm['virtualmachine'][0]['id']
                 host_attr.vm_user = vm_credentials.user
@@ -118,7 +109,7 @@ class CreateVirtualMachine(BaseStep):
         except Exception:
             traceback = full_stack()
 
-            workflow_dict['exceptions']['error_codes'].append(DBAAS_0011)
+            workflow_dict['exceptions']['error_codes'].append(DBAAS_0019)
             workflow_dict['exceptions']['traceback'].append(traceback)
 
             return False
@@ -165,7 +156,7 @@ class CreateVirtualMachine(BaseStep):
         except Exception:
             traceback = full_stack()
 
-            workflow_dict['exceptions']['error_codes'].append(DBAAS_0011)
+            workflow_dict['exceptions']['error_codes'].append(DBAAS_0019)
             workflow_dict['exceptions']['traceback'].append(traceback)
 
             return False

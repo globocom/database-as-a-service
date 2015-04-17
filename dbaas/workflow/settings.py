@@ -114,5 +114,7 @@ MONGODB_REGION_MIGRATION_2 = (
     'workflow.steps.mongodb.region_migration.change_ttl.DecreaseTTL',
     'workflow.steps.mongodb.region_migration.create_virtualmachines.CreateVirtualMachine',
     'workflow.steps.mongodb.region_migration.create_nfs.CreateNfs',
-    'workflow.steps.mongodb.region_migration.create_database_instances.CreateMongoDBInstances',
+    'workflow.steps.mongodb.region_migration.mount_disks.MountDisks',
+    'workflow.steps.mongodb.region_migration.config_files.ConfigFiles',
+    'workflow.steps.mongodb.region_migration.add_instances_replica_set.AddInstancesReplicaSet',
 )
