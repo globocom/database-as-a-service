@@ -16,7 +16,7 @@ from ..tasks import execute_database_region_migration
 
 class DatabaseRegionMigrationAdmin(admin.DjangoServicesAdmin):
     model = DatabaseRegionMigration
-    list_display = ('database', 'current_step_description', 'next_step_description', 'schedule_next_step_html')
+    list_display = ('database', 'current_step_description', 'next_step_description', 'warning', 'schedule_next_step_html')
     actions = None
     service_class = DatabaseRegionMigrationService
     list_display_links = ()
@@ -33,7 +33,8 @@ class DatabaseRegionMigrationAdmin(admin.DjangoServicesAdmin):
     def schedule_next_step_html(self, databaseregionmigration):
         html = []
         
-        html.append("<a class='btn btn-info' href='%s/schedulenextstep'><i class='icon-calendar icon-white'></i></a>" % (databaseregionmigration.id))
+        if databaseregionmigration.next_step and databaseregionmigration.next_step < len(databaseregionmigration.get_steps()) - 1:
+            html.append("<a class='btn btn-info' href='%s/schedulenextstep'><i class='icon-calendar icon-white'></i></a>" % (databaseregionmigration.id))
         
         return format_html("".join(html))
 
@@ -58,6 +59,8 @@ class DatabaseRegionMigrationAdmin(admin.DjangoServicesAdmin):
             scheduled_for = datetime.now(),
             created_by = request.user.username)
         database_region_migration_detail.save()
+        database_region_migration.next_step = None
+        database_region_migration.save()
         
         task_history = TaskHistory()
         task_history.task_name = "execute_database_region_migration"

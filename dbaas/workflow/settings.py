@@ -118,3 +118,7 @@ MONGODB_REGION_MIGRATION_2 = (
     'workflow.steps.mongodb.region_migration.config_files.ConfigFiles',
     'workflow.steps.mongodb.region_migration.add_instances_replica_set.AddInstancesReplicaSet',
 )
+MONGODB_REGION_MIGRATION_3 = ()
+MONGODB_REGION_MIGRATION_4 = ()
+MONGODB_REGION_MIGRATION_5 = ()
+MONGODB_REGION_MIGRATION_6 = ()

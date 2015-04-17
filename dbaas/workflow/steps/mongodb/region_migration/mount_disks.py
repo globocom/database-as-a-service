@@ -2,6 +2,7 @@
 import logging
 import os
 from util import full_stack
+from util import check_ssh
 from util import exec_remote_command
 from util import build_context_script
 from dbaas_cloudstack.models import HostAttr as CS_HostAttr
@@ -26,13 +27,23 @@ class MountDisks(BaseStep):
                 
                 if instance.instance_type == instance.MONGODB_ARBITER:
                     continue
-                
+
                 host = instance.hostname
+
                 LOG.info("Mounting disks on host {}".format(host))
-                
+
                 cs_host_attr = CS_HostAttr.objects.get(host=host)
                 nfs_host_attr = NFS_HostAttr.objects.get(host=host)
-                
+
+                LOG.info("Cheking host ssh...")
+                host_ready = check_ssh(server = host.address,
+                                       username = cs_host_attr.vm_user, 
+                                       password = cs_host_attr.vm_password,
+                                       wait = 5, interval = 10)
+
+                if not host_ready:
+                    raise Exception, str("Host %s is not ready..." % host)
+
                 context_dict = {
                     'EXPORTPATH': nfs_host_attr.nfsaas_path,
                 }
@@ -53,7 +64,7 @@ class MountDisks(BaseStep):
                                                   output=output)
                 LOG.info(output)
                 if return_code != 0:
-                    raise Exception, output['stderr']
+                    raise Exception, str(output)
 
             return True
         except Exception:

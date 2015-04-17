@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
 from util import full_stack
+from dbaas_dnsapi.provider import DNSAPIProvider
 from ...util.base import BaseStep
 from ....exceptions.error_codes import DBAAS_0019
 
@@ -14,7 +15,10 @@ class DecreaseTTL(BaseStep):
 
     def do(self, workflow_dict):
         try:
-            
+
+            LOG.info("Calling dnsapi provider...")
+            DNSAPIProvider.update_database_dns_ttl(databaseinfra = workflow_dict['databaseinfra'], ttl=5)
+
             return True
         except Exception:
             traceback = full_stack()
@@ -27,8 +31,8 @@ class DecreaseTTL(BaseStep):
     def undo(self, workflow_dict):
         LOG.info("Running undo...")
         try:
-            pass
 
+            DNSAPIProvider.update_database_dns_ttl(databaseinfra = workflow_dict['databaseinfra'], ttl=None)
             return True
         except Exception:
             traceback = full_stack()

@@ -3,6 +3,7 @@ import logging
 import os
 import shutil
 from util import full_stack
+from util import check_ssh
 from util import exec_remote_command
 from util import build_context_script
 from util import scp_get_file
@@ -66,6 +67,17 @@ class ConfigFiles(BaseStep):
                 target_host = source_host.future_host
                 LOG.info(target_host)
                 target_cs_host_attr = CS_HostAttr.objects.get(host = target_host)
+                
+                target_instance = source_instance.future_instance
+                if target_instance.instance_type == target_instance.MONGODB_ARBITER:
+                    LOG.info("Cheking host ssh...")
+                    host_ready = check_ssh(server = target_host.address,
+                                           username = target_cs_host_attr.vm_user, 
+                                           password = target_cs_host_attr.vm_password,
+                                           wait = 5, interval = 10)
+
+                    if not host_ready:
+                        raise Exception, str("Host %s is not ready..." % host)
 
                 if not scp_put_file(server = target_host.address,
                                     username = target_cs_host_attr.vm_user,
@@ -129,8 +141,6 @@ class ConfigFiles(BaseStep):
     def undo(self, workflow_dict):
         LOG.info("Running undo...")
         try:
-            if 'region_migration_dir_infra_name' in workflow_dict:
-                shutil.rmtree(workflow_dict['region_migration_dir_infra_name'])
             
             script = '/etc/init.d/mongodb stop'
             script += '\nrm -rf /data/*'
@@ -145,7 +155,13 @@ class ConfigFiles(BaseStep):
                                     command = script,
                                     output = output)
                 LOG.info(output)
-                
+
+            try:
+                if 'region_migration_dir_infra_name' in workflow_dict:
+                    shutil.rmtree(workflow_dict['region_migration_dir_infra_name'])
+            except Exception:
+                pass
+
             return True
         except Exception:
             traceback = full_stack()
