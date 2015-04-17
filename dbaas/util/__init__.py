@@ -161,14 +161,12 @@ def scp_file(server, username, password, localpath, remotepath, option):
             raise Exception("Invalid option...")
         
         sftp.close()
+        transport.close()
         return True
 
     except Exception, e:
         LOG.error("We caught an exception: %s ." % (e))
         return False
-
-    finally:
-        transport.close()
 
 def scp_put_file(server, username, password, localpath, remotepath):
     return scp_file(server, username, password, localpath, remotepath, 'PUT')
@@ -180,7 +178,7 @@ def scp_get_file(server, username, password, localpath, remotepath):
 def exec_remote_command(server, username, password, command, output={}):
 
     try:
-        #LOG.info("Executing command [%s] on remote server %s" % (command, server))
+        LOG.info("Executing command [%s] on remote server %s" % (command, server))
         client = paramiko.SSHClient()
         client.load_system_host_keys()
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
