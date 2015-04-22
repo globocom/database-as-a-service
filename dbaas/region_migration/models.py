@@ -24,12 +24,8 @@ class DatabaseRegionMigration(BaseModel):
     def __unicode__(self):
         return '{}'.format(self.database)
 
-    @property
-    def engine_type(self):
-        return self.database.engine_type
-
     def get_steps(self,):
-        return get_engine_steps(self.engine_type)
+        return get_engine_steps(self.database.engine_type)
 
     def get_current_step(self,):
         return self.get_steps()[self.current_step]
