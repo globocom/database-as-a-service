@@ -54,28 +54,28 @@ STOP_RESIZE_START = (
 
 RESIZE_MONGO = (
     ('workflow.steps.mongodb.resize.init_variables.InitVariables',
-    'workflow.steps.mongodb.resize.stop_database.StopDatabase',)
-    + STOP_RESIZE_START +
+     'workflow.steps.mongodb.resize.stop_database.StopDatabase',)
+     + STOP_RESIZE_START +
     ('workflow.steps.mongodb.resize.start_database.StartDatabase',
-    'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',)
+     'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',)
 )
 
 RESIZE_MYSQL = (
     ('workflow.steps.mysql.resize.init_variables.InitVariables',
-    'workflow.steps.mysql.resize.stop_database.StopDatabase',
-    'workflow.steps.mysql.resize.change_config.ChangeDatabaseConfigFile',)
-    + STOP_RESIZE_START +
+     'workflow.steps.mysql.resize.stop_database.StopDatabase',
+     'workflow.steps.mysql.resize.change_config.ChangeDatabaseConfigFile',)
+     + STOP_RESIZE_START +
     ('workflow.steps.mysql.resize.start_database.StartDatabase',
-    'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',)
+     'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',)
 )
 
 RESIZE_REDIS = (
     ('workflow.steps.redis.resize.init_variables.InitVariables',
-    'workflow.steps.redis.resize.stop_database.StopDatabase',
-    'workflow.steps.redis.resize.change_config.ChangeDatabaseConfigFile',)
-    + STOP_RESIZE_START +
+     'workflow.steps.redis.resize.stop_database.StopDatabase',
+     'workflow.steps.redis.resize.change_config.ChangeDatabaseConfigFile',)
+     + STOP_RESIZE_START +
     ('workflow.steps.redis.resize.start_database.StartDatabase',
-    'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',)
+     'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',)
 
 )
 
@@ -86,19 +86,19 @@ RESIZE_UNKNOWN = (
 CLONE_MONGO = (
     DEPLOY_MONGO +
     ('workflow.steps.util.clone.clone_database.CloneDatabase',
-    'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',)
+     'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',)
 )
 
 CLONE_MYSQL = (
     DEPLOY_MYSQL +
     ('workflow.steps.util.clone.clone_database.CloneDatabase',
-    'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',)
+     'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',)
 )
 
 CLONE_REDIS = (
     DEPLOY_REDIS +
     ('workflow.steps.redis.clone.clone_database.CloneDatabase',
-    'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',)
+     'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',)
 )
 
 CLONE_UNKNOWN = (
@@ -109,8 +109,7 @@ CLONE_UNKNOWN = (
 MYSQL_REGION_MIGRATION = ()
 REDIS_REGION_MIGRATION = ()
 
-MONGODB_REGION_MIGRATION_1 = ()
-MONGODB_REGION_MIGRATION_2 = (
+MONGODB_REGION_MIGRATION_1 = (
     'workflow.steps.mongodb.region_migration.change_ttl.DecreaseTTL',
     'workflow.steps.mongodb.region_migration.create_virtualmachines.CreateVirtualMachine',
     'workflow.steps.mongodb.region_migration.create_nfs.CreateNfs',
@@ -118,7 +117,7 @@ MONGODB_REGION_MIGRATION_2 = (
     'workflow.steps.mongodb.region_migration.config_files.ConfigFiles',
     'workflow.steps.mongodb.region_migration.add_instances_replica_set.AddInstancesReplicaSet',
 )
+MONGODB_REGION_MIGRATION_2 = ()
 MONGODB_REGION_MIGRATION_3 = ()
 MONGODB_REGION_MIGRATION_4 = ()
 MONGODB_REGION_MIGRATION_5 = ()
-MONGODB_REGION_MIGRATION_6 = ()
