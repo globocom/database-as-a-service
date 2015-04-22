@@ -20,36 +20,39 @@ class AddInstancesReplicaSet(BaseStep):
 
             initial_script = '#!/bin/bash\n\ndie_if_error()\n{\n    local err=$?\n    if [ "$err" != "0" ]; then\n        echo "$*"\n        exit $err\n    fi\n}'
             databaseinfra = workflow_dict['databaseinfra']
-            
+
             connect_string = ""
             for source_instance in workflow_dict['source_instances']:
                 if source_instance.instance_type != source_instance.MONGODB_ARBITER:
                     if connect_string:
                         connect_string += ','
-                    connect_string += source_instance.address + ":" + str(source_instance.port)
-            
-            connect_string = databaseinfra.get_driver().get_replica_name() + "/" + connect_string
-            connect_string = " --host {} admin -u{} -p{}".format(connect_string, databaseinfra.user, databaseinfra.password)
+                    connect_string += source_instance.address + \
+                        ":" + str(source_instance.port)
+
+            connect_string = databaseinfra.get_driver().get_replica_name() + \
+                "/" + connect_string
+            connect_string = " --host {} admin -u{} -p{}".format(
+                connect_string, databaseinfra.user, databaseinfra.password)
             LOG.debug(connect_string)
-            
+
             client = databaseinfra.get_driver().get_client(None)
             rsconf = client.local.system.replset.find_one()
             member_ids = []
             for member in rsconf['members']:
                 member_ids.append(member['_id'])
-            
+
             max_member_id = max(member_ids)
             secundary_one_member_id = max_member_id + 1
             secundary_two_member_id = max_member_id + 2
-            
+
             context_dict = {
-                    'CONNECT_STRING': connect_string,
-                    'SECUNDARY_ONE': "{}:{}".format(workflow_dict['target_instances'][0].address, workflow_dict['target_instances'][0].port),
-                    'SECUNDARY_TWO': "{}:{}".format(workflow_dict['target_instances'][1].address, workflow_dict['target_instances'][1].port),
-                    'ARBITER': "{}:{}".format(workflow_dict['target_instances'][2].address, workflow_dict['target_instances'][2].port),
-                    'SECUNDARY_ONE_MEMBER_ID': secundary_one_member_id,
-                    'SECUNDARY_TWO_MEMBER_ID': secundary_two_member_id,
-                }
+                'CONNECT_STRING': connect_string,
+                'SECUNDARY_ONE': "{}:{}".format(workflow_dict['target_instances'][0].address, workflow_dict['target_instances'][0].port),
+                'SECUNDARY_TWO': "{}:{}".format(workflow_dict['target_instances'][1].address, workflow_dict['target_instances'][1].port),
+                'ARBITER': "{}:{}".format(workflow_dict['target_instances'][2].address, workflow_dict['target_instances'][2].port),
+                'SECUNDARY_ONE_MEMBER_ID': secundary_one_member_id,
+                'SECUNDARY_TWO_MEMBER_ID': secundary_two_member_id,
+            }
 
             script = initial_script
             script += '\necho ""; echo $(date "+%Y-%m-%d %T") "- Adding new database members"'
@@ -74,7 +77,7 @@ class AddInstancesReplicaSet(BaseStep):
                                               output=output)
             LOG.info(output)
             if return_code != 0:
-                raise Exception, str(output)
+                raise Exception(str(output))
 
             return True
         except Exception:
@@ -97,18 +100,21 @@ class AddInstancesReplicaSet(BaseStep):
                 if source_instance.instance_type != source_instance.MONGODB_ARBITER:
                     if connect_string:
                         connect_string += ','
-                    connect_string += source_instance.address + ":" + str(source_instance.port)
+                    connect_string += source_instance.address + \
+                        ":" + str(source_instance.port)
 
-            connect_string = databaseinfra.get_driver().get_replica_name() + "/" + connect_string
-            connect_string = " --host {} admin -u{} -p{}".format(connect_string, databaseinfra.user, databaseinfra.password)
+            connect_string = databaseinfra.get_driver().get_replica_name() + \
+                "/" + connect_string
+            connect_string = " --host {} admin -u{} -p{}".format(
+                connect_string, databaseinfra.user, databaseinfra.password)
             LOG.debug(connect_string)
 
             context_dict = {
-                    'CONNECT_STRING': connect_string,
-                    'SECUNDARY_ONE': "{}:{}".format(workflow_dict['target_instances'][0].address, workflow_dict['target_instances'][0].port),
-                    'SECUNDARY_TWO': "{}:{}".format(workflow_dict['target_instances'][1].address, workflow_dict['target_instances'][1].port),
-                    'ARBITER': "{}:{}".format(workflow_dict['target_instances'][2].address, workflow_dict['target_instances'][2].port),
-                }
+                'CONNECT_STRING': connect_string,
+                'SECUNDARY_ONE': "{}:{}".format(workflow_dict['target_instances'][0].address, workflow_dict['target_instances'][0].port),
+                'SECUNDARY_TWO': "{}:{}".format(workflow_dict['target_instances'][1].address, workflow_dict['target_instances'][1].port),
+                'ARBITER': "{}:{}".format(workflow_dict['target_instances'][2].address, workflow_dict['target_instances'][2].port),
+            }
 
             script = initial_script
             script += '\necho ""; echo $(date "+%Y-%m-%d %T") "- Removing new database members"'
@@ -134,7 +140,6 @@ class AddInstancesReplicaSet(BaseStep):
             script += '\nEOF_DBAAS'
             script += '\ndie_if_error "Error removing new replica set members"'
 
-            
             script = build_context_script(context_dict, script)
             output = {}
 
@@ -147,7 +152,7 @@ class AddInstancesReplicaSet(BaseStep):
                                               output=output)
             LOG.info(output)
             if return_code != 0:
-                raise Exception, str(output)
+                raise Exception(str(output))
 
             return True
         except Exception:
