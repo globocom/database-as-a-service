@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import logging
 from django_services import admin
 from django.utils.html import format_html
 from django.core.urlresolvers import reverse
@@ -10,6 +11,8 @@ from ..models import DatabaseRegionMigration
 from ..models import DatabaseRegionMigrationDetail
 from ..service.databaseregionmigration import DatabaseRegionMigrationService
 from ..tasks import execute_database_region_migration
+
+LOG = logging.getLogger(__name__)
 
 
 class DatabaseRegionMigrationAdmin(admin.DjangoServicesAdmin):
@@ -36,6 +39,8 @@ class DatabaseRegionMigrationAdmin(admin.DjangoServicesAdmin):
         last_step = len(databaseregionmigration.get_steps()) - 1
         next_step = databaseregionmigration.next_step
         id = databaseregionmigration.id
+
+        html = ''
 
         if next_step and next_step < last_step:
             html = "<a class='btn btn-info' href='{}/schedulenextstep'><i\
