@@ -29,24 +29,25 @@ class DatabaseRegionMigration(BaseModel):
     def get_steps(self,):
         return get_engine_steps(self.engine_type)
 
+    def get_current_step(self,):
+        return self.get_steps()[self.current_step]
+
     @property
     def warning(self,):
-        return get_engine_steps(self.engine_type)[self.current_step].warning
-
-    def get_current_step(self,):
-        return get_engine_steps(self.engine_type)[self.current_step]
+        return self.get_current_step().warning
 
     @property
     def description(self,):
-        return get_engine_steps(self.engine_type)[self.current_step].description
+        return self.get_current_step().description
 
     @property
     def status(self,):
-        return get_engine_steps(self.engine_type)[self.current_step].status
+        return self.get_current_step().status
 
     class Meta:
         permissions = (
-            ("view_databaseregiomigration", "Can view database region migration"),
+            ("view_databaseregiomigration",
+             "Can view database region migration"),
         )
 
 
