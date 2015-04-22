@@ -36,14 +36,9 @@ class DatabaseRegionMigrationAdmin(admin.DjangoServicesAdmin):
         return False
 
     def schedule_next_step_html(self, databaseregionmigration):
-        last_step = len(databaseregionmigration.get_steps()) - 1
-        next_step = databaseregionmigration.next_step
         id = databaseregionmigration.id
 
-        html = ''
-
-        if next_step and next_step < last_step:
-            html = "<a class='btn btn-info' href='{}/schedulenextstep'><i\
+        html = "<a class='btn btn-info' href='{}/schedulenextstep'><i\
                     class='icon-calendar icon-white'></i></a>".format(id)
 
         return format_html(html)
@@ -90,8 +85,6 @@ class DatabaseRegionMigrationAdmin(admin.DjangoServicesAdmin):
             created_by=request.user.username)
 
         database_region_migration_detail.save()
-        database_region_migration.next_step = None
-        database_region_migration.save()
 
         task_history = TaskHistory()
         task_history.task_name = "execute_database_region_migration"
