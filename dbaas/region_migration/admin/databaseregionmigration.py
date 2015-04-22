@@ -33,19 +33,20 @@ class DatabaseRegionMigrationAdmin(admin.DjangoServicesAdmin):
         return False
 
     def schedule_next_step_html(self, databaseregionmigration):
-        html = []
+        last_step = len(databaseregionmigration.get_steps()) - 1
+        next_step = databaseregionmigration.next_step
 
-        if databaseregionmigration.next_step and databaseregionmigration.next_step < len(databaseregionmigration.get_steps()) - 1:
-            html.append("<a class='btn btn-info' href='%s/schedulenextstep'><i class='icon-calendar icon-white'></i></a>" %
-                        (databaseregionmigration.id))
+        if next_step and next_step < last_step:
+            html = "<a class='btn btn-info' href='{}/schedulenextstep'><i\
+                    class='icon-calendar icon-white'></i></a>".format(databaseregionmigration.id)
 
-        return format_html("".join(html))
+        return format_html(html)
 
     schedule_next_step_html.short_description = "Schedule next step"
 
     def user_friendly_warning(self, databaseregionmigration):
-        html = '<span class="label label-warning"><font size=4>{}</font></span>'.format(
-            databaseregionmigration.warning())
+        html = '<span class="label label-warning"><font size=4>\
+                {}</font></span>'.format(databaseregionmigration.warning())
         return format_html(html)
 
     user_friendly_warning.short_description = "Warning"
@@ -70,10 +71,13 @@ class DatabaseRegionMigrationAdmin(admin.DjangoServicesAdmin):
     def databaseregionmigration_view(self, request, databaseregionmigration_id):
         database_region_migration = DatabaseRegionMigration.objects.get(
             id=databaseregionmigration_id)
+
         database_region_migration_detail = DatabaseRegionMigrationDetail(
-            database_region_migration=database_region_migration, step=database_region_migration.next_step,
+            database_region_migration=database_region_migration,
+            step=database_region_migration.next_step,
             scheduled_for=datetime.now(),
             created_by=request.user.username)
+
         database_region_migration_detail.save()
         database_region_migration.next_step = None
         database_region_migration.save()
@@ -82,8 +86,9 @@ class DatabaseRegionMigrationAdmin(admin.DjangoServicesAdmin):
         task_history.task_name = "execute_database_region_migration"
         task_history.task_status = task_history.STATUS_WAITING
 
-        task_history.arguments = "Database name: {}, Step: {}".format(database_region_migration.database.name,
-                                                                      database_region_migration_detail.database_region_migration.next_step_description())
+        task_history.arguments = "Database name: {}, \
+                                  Step: {}".format(database_region_migration.database.name,
+                                                   database_region_migration_detail.database_region_migration.next_step_description())
         task_history.user = request.user
         task_history.save()
         execute_database_region_migration.apply_async(args=[database_region_migration_detail.id, task_history, request.user],
