@@ -15,9 +15,9 @@ LOG = logging.getLogger(__name__)
 class DatabaseRegionMigration(BaseModel):
     database = models.ForeignKey(Database, verbose_name=("Database"),
                                  null=False, unique=True)
-    current_step = models.PositiveSmallIntegerField(verbose_name=_("Current Step"),
-                                                    null=False, blank=False,
-                                                    default=0)
+    current_step = models.PositiveSmallIntegerField(verbose_name=_("Current \
+                                                    Step"), null=False,
+                                                    blank=False, default=0)
     next_step = models.PositiveSmallIntegerField(verbose_name=_("Next Step"),
                                                  null=True, blank=False)
 
@@ -73,13 +73,16 @@ class DatabaseRegionMigrationDetail(BaseModel):
     step = models.PositiveSmallIntegerField(verbose_name=_("Step"),
                                             null=False,
                                             blank=False)
-    scheduled_for = models.DateTimeField(verbose_name=_("Schedule for"), null=False)
-    started_at = models.DateTimeField(verbose_name=_("Started at"), null=True, blank=True)
-    finished_at = models.DateTimeField(verbose_name=_("Finished at"), null=True, blank=True)
-    created_by = models.CharField(verbose_name=_("Created by"), max_length=255, null=False,
-                                  blank=False)
-    revoked_by = models.CharField(verbose_name=_("Revoked by"), max_length=255, null=True,
-                                  blank=True)
+    scheduled_for = models.DateTimeField(verbose_name=_("Schedule for"),
+                                         null=False)
+    started_at = models.DateTimeField(verbose_name=_("Started at"), null=True,
+                                      blank=True)
+    finished_at = models.DateTimeField(verbose_name=_("Finished at"),
+                                       null=True, blank=True)
+    created_by = models.CharField(verbose_name=_("Created by"), max_length=255,
+                                  null=False, blank=False)
+    revoked_by = models.CharField(verbose_name=_("Revoked by"), max_length=255,
+                                  null=True, blank=True)
     status = models.IntegerField(choices=MAINTENANCE_STATUS, default=WAITING)
     log = models.TextField(verbose_name=_("Log"), null=False, blank=False)
 
