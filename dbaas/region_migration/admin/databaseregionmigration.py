@@ -44,7 +44,7 @@ class DatabaseRegionMigrationAdmin(admin.DjangoServicesAdmin):
     schedule_next_step_html.short_description = "Schedule next step"
 
     def user_friendly_warning(self, databaseregionmigration):
-        html = '<span class="label label-warning">{}</span>'.format(
+        html = '<span class="label label-warning"><font size=4>{}</font></span>'.format(
             databaseregionmigration.warning())
         return format_html(html)
 
