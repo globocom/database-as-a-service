@@ -54,32 +54,40 @@ class Step(tuple):
     msg = property(itemgetter(3), doc='Alias for field number 3')
     step_classes = property(itemgetter(4), doc='Alias for field number 4')
 
+
 def get_mongodb_steps():
     step1 = Step('mongodb', 'Ready to start migration', 0,
-         '', settings.MONGODB_REGION_MIGRATION_1)
+                 '', settings.MONGODB_REGION_MIGRATION_1)
 
     step2 = Step('mongodb', 'Create new instances', 1,
-        'Please, check replication and ACL', settings.MONGODB_REGION_MIGRATION_2)
+                 'Please, check replication and ACL',
+                 settings.MONGODB_REGION_MIGRATION_2)
 
     step3 = Step('mongodb', 'Switch primary instance', 2,
-        'Please, check if the application is ok', settings.MONGODB_REGION_MIGRATION_3)
+                 'Please, check if the application is ok',
+                 settings.MONGODB_REGION_MIGRATION_3)
 
     step4 = Step('mongodb', 'Switch DNS', 3,
-        'Please, check aplication and monitoring', settings.MONGODB_REGION_MIGRATION_4)
+                 'Please, check aplication and monitoring',
+                 settings.MONGODB_REGION_MIGRATION_4)
 
     step5 = Step('mongodb', 'Clean old instances', 4,
-        'Please, check aplication and monitoring', settings.MONGODB_REGION_MIGRATION_5)
+                 'Please, check aplication and monitoring',
+                 settings.MONGODB_REGION_MIGRATION_5)
 
     step6 = Step('mongodb', 'There is not next step. Database migrated', 5,
-        '', settings.MONGODB_REGION_MIGRATION_6)
+                 '', settings.MONGODB_REGION_MIGRATION_6)
 
     return (step1, step2, step3, step4, step5, step6)
 
+
 def get_mysql_steps():
-   pass
+    pass
+
 
 def get_redis_steps():
     pass
+
 
 def get_engine_steps(engine):
     engine = engine.lower()
@@ -89,5 +97,3 @@ def get_engine_steps(engine):
         return get_mysql_steps()
     elif re.match(r'^redis.*', engine):
         return get_redis_steps()
-
-
