@@ -15,8 +15,8 @@ from ..tasks import execute_database_region_migration
 class DatabaseRegionMigrationAdmin(admin.DjangoServicesAdmin):
     model = DatabaseRegionMigration
     list_display = ('database', 'steps_information',
-                    'current_step_description', 'next_step_description',
-                    'user_friendly_warning', 'schedule_next_step_html')
+                    'current_step_description', 'user_friendly_warning',
+                    'next_step_description', 'schedule_next_step_html')
 
     actions = None
     service_class = DatabaseRegionMigrationService
