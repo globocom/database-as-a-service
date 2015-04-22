@@ -35,10 +35,11 @@ class DatabaseRegionMigrationAdmin(admin.DjangoServicesAdmin):
     def schedule_next_step_html(self, databaseregionmigration):
         last_step = len(databaseregionmigration.get_steps()) - 1
         next_step = databaseregionmigration.next_step
+        id = databaseregionmigration.id
 
         if next_step and next_step < last_step:
             html = "<a class='btn btn-info' href='{}/schedulenextstep'><i\
-                    class='icon-calendar icon-white'></i></a>".format(databaseregionmigration.id)
+                    class='icon-calendar icon-white'></i></a>".format(id)
 
         return format_html(html)
 
