@@ -13,11 +13,13 @@ LOG = logging.getLogger(__name__)
 
 
 class DatabaseRegionMigration(BaseModel):
-    database = models.ForeignKey(Database, verbose_name=("Database"), null=False, unique=True)
-    current_step = models.PositiveSmallIntegerField(verbose_name=_("Current Step"), null=False,
-                                                    blank=False, default=0)
-    next_step = models.PositiveSmallIntegerField(verbose_name=_("Next Step"), null=True,
-                                                 blank=False)
+    database = models.ForeignKey(Database, verbose_name=("Database"),
+                                 null=False, unique=True)
+    current_step = models.PositiveSmallIntegerField(verbose_name=_("Current Step"),
+                                                    null=False, blank=False,
+                                                    default=0)
+    next_step = models.PositiveSmallIntegerField(verbose_name=_("Next Step"),
+                                                 null=True, blank=False)
 
     def __unicode__(self):
         return '{}'.format(self.database)
