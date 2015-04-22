@@ -18,8 +18,6 @@ class DatabaseRegionMigration(BaseModel):
     current_step = models.PositiveSmallIntegerField(verbose_name=_("Current \
                                                     Step"), null=False,
                                                     blank=False, default=0)
-    next_step = models.PositiveSmallIntegerField(verbose_name=_("Next Step"),
-                                                 null=True, blank=False)
 
     def __unicode__(self):
         return '{}'.format(self.database)
