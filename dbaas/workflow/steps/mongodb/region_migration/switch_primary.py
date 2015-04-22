@@ -52,7 +52,7 @@ class SwitchPrimary(BaseStep):
             script += '\nexit'
             script += '\nEOF_DBAAS'
             script += '\ndie_if_error "Error changing priority of members"'
-            
+
             script += '\nsleep 30'
             script += '\necho ""; echo $(date "+%Y-%m-%d %T") "- Switch primary"'
             script += '\n/usr/local/mongodb/bin/mongo {{CONNECT_STRING}} <<EOF_DBAAS'
@@ -135,7 +135,7 @@ class SwitchPrimary(BaseStep):
             script += '\nexit'
             script += '\nEOF_DBAAS'
             script += '\ndie_if_error "Error changing priority of members"'
-            
+
             script += '\nsleep 30'
             script += '\necho ""; echo $(date "+%Y-%m-%d %T") "- Switch primary"'
             script += '\n/usr/local/mongodb/bin/mongo {{CONNECT_STRING}} <<EOF_DBAAS'
