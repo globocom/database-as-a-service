@@ -5,27 +5,28 @@ import re
 
 
 class Step(tuple):
-    'Step(engine, description, order, msg, step_classes)'
+    'Step(engine, status, description, order, warning, step_classes)'
 
     __slots__ = ()
 
-    _fields = ('engine', 'description', 'order', 'msg', 'step_classes')
+    _fields = ('engine', 'status', 'description', 'order', 'warning', 'step_classes')
 
-    def __new__(_cls, engine, description, order, msg, step_classes):
-        'Create new instance of Step(engine, description, order, msg, step_classes)'
-        return tuple.__new__(_cls, (engine, description, order, msg, step_classes))
+    def __new__(_cls, engine, status, description, order, warning, step_classes):
+        'Create new instance of Step(engine, status, description, order, warning, step_classes)'
+        return tuple.__new__(_cls, (engine, status, description, order, warning, step_classes))
 
     @classmethod
     def _make(cls, iterable, new=tuple.__new__, len=len):
         'Make a new Step object from a sequence or iterable'
         result = new(cls, iterable)
         if len(result) != 5:
-            raise TypeError('Expected 5 arguments, got %d' % len(result))
+            raise TypeError('Expected 6 arguments, got %d' % len(result))
         return result
 
     def __repr__(self):
         'Return a nicely formatted representation string'
-        return 'Step(engine=%r, description=%r, order=%r, msg=%r, step_classes=%r)' % self
+        return 'Step(engine=%r, status=%r, \
+                     description=%r, order=%r, warning=%r, step_classes=%r)' % self
 
     def _asdict(self):
         'Return a new OrderedDict which maps field names to their values'
@@ -33,13 +34,14 @@ class Step(tuple):
 
     def _replace(_self, **kwds):
         'Return a new Step object replacing specified fields with new values'
-        result = _self._make(map(kwds.pop, ('engine', 'description', 'order', 'msg', 'step_classes'), _self))
+        result = _self._make(map(kwds.pop, ('engine', 'status', 'description',
+                             'order', 'warning', 'step_classes'), _self))
         if kwds:
             raise ValueError('Got unexpected field names: %r' % kwds.keys())
         return result
 
     def __getnewargs__(self):
-        'Return self as a plain tuple.  Used by copy and pickle.'
+        'Return self as a plain tuple. Used by copy and pickle.'
         return tuple(self)
 
     __dict__ = property(_asdict)
@@ -49,36 +51,40 @@ class Step(tuple):
         pass
 
     engine = property(itemgetter(0), doc='Alias for field number 0')
-    description = property(itemgetter(1), doc='Alias for field number 1')
-    order = property(itemgetter(2), doc='Alias for field number 2')
-    warning = property(itemgetter(3), doc='Alias for field number 3')
-    step_classes = property(itemgetter(4), doc='Alias for field number 4')
+    status = property(itemgetter(1), doc='Alias for field number 1')
+    description = property(itemgetter(2), doc='Alias for field number 2')
+    order = property(itemgetter(3), doc='Alias for field number 3')
+    warning = property(itemgetter(4), doc='Alias for field number 4')
+    step_classes = property(itemgetter(5), doc='Alias for field number 5')
 
 
 def get_mongodb_steps():
-    step1 = Step('mongodb', 'Ready to start migration', 0,
-                 '', settings.MONGODB_REGION_MIGRATION_1)
-
-    step2 = Step('mongodb', 'Create new instances', 1,
-                 'Please, check replication and ACL',
+    step1 = Step('mongodb', 'Ready to start Migration!',
+                 'Create new instances', 0,
+                 '',
                  settings.MONGODB_REGION_MIGRATION_2)
 
-    step3 = Step('mongodb', 'Switch primary instance', 2,
-                 'Please, check if the application is ok',
+    step2 = Step('mongodb', 'New instances created!',
+                 'Switch primary instance', 1,
+                 'Please, check replication and ACL',
                  settings.MONGODB_REGION_MIGRATION_3)
 
-    step4 = Step('mongodb', 'Switch DNS', 3,
-                 'Please, check aplication and monitoring',
+    step3 = Step('mongodb', 'Primary instance switched!',
+                 'Switch DNS', 2,
+                 'Please, check if the application is ok',
                  settings.MONGODB_REGION_MIGRATION_4)
 
-    step5 = Step('mongodb', 'Clean old instances', 4,
+    step4 = Step('mongodb', 'DNS switched!',
+                 'Clean old instances', 3,
                  'Please, check aplication and monitoring',
                  settings.MONGODB_REGION_MIGRATION_5)
 
-    step6 = Step('mongodb', 'There is not next step. Database migrated', 5,
-                 '', settings.MONGODB_REGION_MIGRATION_6)
+    step5 = Step('mongodb', 'Database migrated!',
+                 'There is not next step. Database migrated', 4,
+                 'Please, check aplication and monitoring',
+                 settings.MONGODB_REGION_MIGRATION_6)
 
-    return (step1, step2, step3, step4, step5, step6)
+    return (step1, step2, step3, step4, step5)
 
 
 def get_mysql_steps():
