@@ -159,7 +159,7 @@ def execute_database_region_migration_undo(self, database_region_migration_detai
         target_environment = source_environment.equivalent_environment
         engine = database.engine_type
         steps = get_engine_steps(engine)
-        workflow_steps = steps[database_region_migration_detail.step].step_classes
+        workflow_steps = steps[database_region_migration_detail.step - 1].step_classes
         source_instances = []
         source_hosts = []
         for instance in databaseinfra.instances.filter(future_instance__isnull = False):
