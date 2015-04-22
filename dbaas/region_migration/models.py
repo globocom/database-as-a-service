@@ -34,11 +34,14 @@ class DatabaseRegionMigration(BaseModel):
     def current_step_description(self,):
         return get_engine_steps(self.database.engine_type)[self.current_step].description
 
+    current_step_description.short_description = "Description"
+
     def next_step_description(self,):
         if self.next_step:
             return get_engine_steps(self.database.engine_type)[self.next_step].description
         else:
             return ""
+    next_step_description.short_description = "Next"
 
     class Meta:
         permissions = (

@@ -14,7 +14,10 @@ from ..tasks import execute_database_region_migration
 
 class DatabaseRegionMigrationAdmin(admin.DjangoServicesAdmin):
     model = DatabaseRegionMigration
-    list_display = ('database', 'current_step_description', 'next_step_description', 'warning', 'schedule_next_step_html')
+    list_display = ('database', 'steps_information',
+                    'current_step_description', 'next_step_description',
+                    'user_friendly_warning', 'schedule_next_step_html')
+
     actions = None
     service_class = DatabaseRegionMigrationService
     list_display_links = ()
@@ -33,22 +36,40 @@ class DatabaseRegionMigrationAdmin(admin.DjangoServicesAdmin):
         html = []
 
         if databaseregionmigration.next_step and databaseregionmigration.next_step < len(databaseregionmigration.get_steps()) - 1:
-            html.append("<a class='btn btn-info' href='%s/schedulenextstep'><i class='icon-calendar icon-white'></i></a>" % (databaseregionmigration.id))
+            html.append("<a class='btn btn-info' href='%s/schedulenextstep'><i class='icon-calendar icon-white'></i></a>" %
+                        (databaseregionmigration.id))
 
         return format_html("".join(html))
 
     schedule_next_step_html.short_description = "Schedule next step"
 
+    def user_friendly_warning(self, databaseregionmigration):
+        html = '<span class="label label-warning">{}</span>'.format(
+            databaseregionmigration.warning())
+        return format_html(html)
+
+    user_friendly_warning.short_description = "Warning"
+
+    def steps_information(self, databaseregionmigration):
+        current_step = str(databaseregionmigration.current_step)
+        steps_len = str(len(databaseregionmigration.get_steps()))
+        information = 'Step {} of {}'.format(current_step, steps_len)
+
+        return information
+
+    steps_information.short_description = "Current"
+
     def get_urls(self):
         urls = super(DatabaseRegionMigrationAdmin, self).get_urls()
         my_urls = patterns('',
-            url(r'^/?(?P<databaseregionmigration_id>\d+)/schedulenextstep/$',
-                self.admin_site.admin_view(self.databaseregionmigration_view)),
-        )
+                           url(r'^/?(?P<databaseregionmigration_id>\d+)/schedulenextstep/$',
+                               self.admin_site.admin_view(self.databaseregionmigration_view)),
+                           )
         return my_urls + urls
 
     def databaseregionmigration_view(self, request, databaseregionmigration_id):
-        database_region_migration = DatabaseRegionMigration.objects.get(id=databaseregionmigration_id)
+        database_region_migration = DatabaseRegionMigration.objects.get(
+            id=databaseregionmigration_id)
         database_region_migration_detail = DatabaseRegionMigrationDetail(
             database_region_migration=database_region_migration, step=database_region_migration.next_step,
             scheduled_for=datetime.now(),
@@ -62,10 +83,11 @@ class DatabaseRegionMigrationAdmin(admin.DjangoServicesAdmin):
         task_history.task_status = task_history.STATUS_WAITING
 
         task_history.arguments = "Database name: {}, Step: {}".format(database_region_migration.database.name,
-            database_region_migration_detail.database_region_migration.next_step_description())
+                                                                      database_region_migration_detail.database_region_migration.next_step_description())
         task_history.user = request.user
         task_history.save()
-        execute_database_region_migration.apply_async(args=[database_region_migration_detail.id, task_history, request.user], countdown=1)
+        execute_database_region_migration.apply_async(args=[database_region_migration_detail.id, task_history, request.user],
+                                                      countdown=1)
 
         url = reverse('admin:notification_taskhistory_changelist')
-        return HttpResponseRedirect(url + "?user=%s" % request.user.username) 
+        return HttpResponseRedirect(url + "?user=%s" % request.user.username)
