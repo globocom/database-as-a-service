@@ -51,7 +51,7 @@ class Step(tuple):
     engine = property(itemgetter(0), doc='Alias for field number 0')
     description = property(itemgetter(1), doc='Alias for field number 1')
     order = property(itemgetter(2), doc='Alias for field number 2')
-    msg = property(itemgetter(3), doc='Alias for field number 3')
+    warning = property(itemgetter(3), doc='Alias for field number 3')
     step_classes = property(itemgetter(4), doc='Alias for field number 4')
 
 

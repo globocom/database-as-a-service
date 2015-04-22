@@ -26,7 +26,8 @@ class DatabaseRegionMigration(BaseModel):
         return get_engine_steps(self.database.engine_type)
 
     def warning(self,):
-        return get_engine_steps(self.database.engine_type)[self.current_step].msg
+        engine_type = self.database.engine_type
+        return get_engine_steps(engine_type)[self.current_step].warning
 
     def get_current_step(self,):
         return get_engine_steps(self.database.engine_type)[self.current_step]
