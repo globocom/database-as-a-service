@@ -85,7 +85,7 @@ class DatabaseRegionMigrationAdmin(admin.DjangoServicesAdmin):
 
         database_region_migration_detail = DatabaseRegionMigrationDetail(
             database_region_migration=database_region_migration,
-            step=database_region_migration.next_step,
+            step=database_region_migration.current_step,
             scheduled_for=datetime.now(),
             created_by=request.user.username)
 

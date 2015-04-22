@@ -18,12 +18,12 @@ LOG = logging.getLogger(__name__)
 def execute_database_region_migration(self, database_region_migration_detail_id, task_history=None, user=None):
     AuditRequest.new_request("execute_database_region_migration", user, "localhost")
     try:
-    
+
         if task_history:
             arguments = task_history.arguments
         else:
             arguments = None
-    
+
         task_history = TaskHistory.register(request=self.request,
             task_history = task_history,
             user = user,
@@ -32,13 +32,13 @@ def execute_database_region_migration(self, database_region_migration_detail_id,
         if arguments:
             task_history.arguments = arguments
             task_history.save()
-    
+
         database_region_migration_detail = DatabaseRegionMigrationDetail.objects.get(id=database_region_migration_detail_id)
-        
+
         database_region_migration_detail.started_at = datetime.now()
         database_region_migration_detail.status = database_region_migration_detail.RUNNING
         database_region_migration_detail.save()
-        
+
         database_region_migration = database_region_migration_detail.database_region_migration
         database = database_region_migration.database
         databaseinfra = database.databaseinfra
@@ -53,10 +53,10 @@ def execute_database_region_migration(self, database_region_migration_detail_id,
             source_instances.append(instance)
             if instance.instance_type != instance.REDIS_SENTINEL:
                 source_hosts.append(instance.hostname)
-    
+
         source_plan = databaseinfra.plan
         target_plan = source_plan.equivalent_plan_id
-    
+
         workflow_dict = build_dict(
                                databaseinfra = databaseinfra,
                                target_environment = target_environment,
@@ -66,9 +66,9 @@ def execute_database_region_migration(self, database_region_migration_detail_id,
                                target_plan = target_plan,
                                )
 
-        start_workflow(workflow_dict = workflow_dict, task = task_history)    
-        
-        
+        start_workflow(workflow_dict = workflow_dict, task = task_history)
+
+
         if workflow_dict['created'] == False:
 
             if 'exceptions' in workflow_dict:
@@ -77,7 +77,7 @@ def execute_database_region_migration(self, database_region_migration_detail_id,
                 error = "{}\n{}\n{}".format(error, traceback, error)
             else:
                 error = "There is not any infra-structure to allocate this database."
-            
+
             database_region_migration.next_step = database_region_migration.current_step + 1
             database_region_migration.save()
 
@@ -88,20 +88,20 @@ def execute_database_region_migration(self, database_region_migration_detail_id,
             task_history.update_status_for(TaskHistory.STATUS_ERROR, details=error)
 
             return
-        
+
         else:
             database_region_migration_detail.status = database_region_migration_detail.SUCCESS
             database_region_migration_detail.finished_at = datetime.now()
             database_region_migration_detail.save()
-            
+
             current_step = database_region_migration.current_step + 1
             database_region_migration.current_step = current_step
             next_step = current_step + 1
-            
+
             total_steps = len(database_region_migration.get_steps())
-            
+
             LOG.debug("current_step:{} - next_step: {} - steps: {}".format(current_step, next_step, total_steps))
-            
+
             if next_step < total_steps:
                 database_region_migration.next_step = next_step
             else:
@@ -136,12 +136,12 @@ def execute_database_region_migration(self, database_region_migration_detail_id,
 def execute_database_region_migration_undo(self, database_region_migration_detail_id, task_history=None, user=None):
     #AuditRequest.new_request("execute_database_region_migration", user, "localhost")
     try:
-    
+
         if task_history:
             arguments = task_history.arguments
         else:
             arguments = None
-    
+
         task_history = TaskHistory.register(request=self.request,
             task_history = task_history,
             user = user,
@@ -150,7 +150,7 @@ def execute_database_region_migration_undo(self, database_region_migration_detai
         if arguments:
             task_history.arguments = arguments
             task_history.save()
-    
+
         database_region_migration_detail = DatabaseRegionMigrationDetail.objects.get(id=database_region_migration_detail_id)
         database_region_migration = database_region_migration_detail.database_region_migration
         database = database_region_migration.database
@@ -159,22 +159,22 @@ def execute_database_region_migration_undo(self, database_region_migration_detai
         target_environment = source_environment.equivalent_environment
         engine = database.engine_type
         steps = get_engine_steps(engine)
-        workflow_steps = steps[database_region_migration_detail.step - 1].step_classes
+        workflow_steps = steps[database_region_migration_detail.step].step_classes
         source_instances = []
         source_hosts = []
         for instance in databaseinfra.instances.filter(future_instance__isnull = False):
             source_instances.append(instance)
             source_hosts.append(instance.hostname)
-        
+
         target_instances = []
         target_hosts = []
         for instance in databaseinfra.instances.filter(future_instance__isnull = True):
             target_instances.append(instance)
             target_hosts.append(instance.hostname)
-        
+
         source_plan = databaseinfra.plan
         target_plan = source_plan.equivalent_plan_id
-    
+
         workflow_dict = build_dict(database_region_migration_detail = database_region_migration_detail,
                                database_region_migration = database_region_migration,
                                database = database,
@@ -191,7 +191,7 @@ def execute_database_region_migration_undo(self, database_region_migration_detai
                                target_hosts = target_hosts
                                )
 
-        stop_workflow(workflow_dict = workflow_dict, task = task_history)    
+        stop_workflow(workflow_dict = workflow_dict, task = task_history)
 
         task_history.update_status_for(TaskHistory.STATUS_SUCCESS, details='Database region migration was succesfully')
 
@@ -206,4 +206,4 @@ def execute_database_region_migration_undo(self, database_region_migration_detai
     finally:
         #AuditRequest.cleanup_request()
         pass
-   
+
