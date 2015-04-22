@@ -29,15 +29,18 @@ class DatabaseRegionMigration(BaseModel):
     def get_steps(self,):
         return get_engine_steps(self.engine_type)
 
+    @property
     def warning(self,):
         return get_engine_steps(self.engine_type)[self.current_step].warning
 
     def get_current_step(self,):
         return get_engine_steps(self.engine_type)[self.current_step]
 
+    @property
     def description(self,):
         return get_engine_steps(self.engine_type)[self.current_step].description
 
+    @property
     def status(self,):
         return get_engine_steps(self.engine_type)[self.current_step].status
 

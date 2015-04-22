@@ -47,7 +47,7 @@ class DatabaseRegionMigrationAdmin(admin.DjangoServicesAdmin):
 
     def user_friendly_warning(self, databaseregionmigration):
         html = '<span class="label label-warning"><font size=3.5>\
-                {}</font></span>'.format(databaseregionmigration.warning())
+                {}</font></span>'.format(databaseregionmigration.warning)
         return format_html(html)
 
     user_friendly_warning.short_description = "Warning"
