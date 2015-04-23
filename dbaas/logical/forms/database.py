@@ -76,14 +76,18 @@ class CloneDatabaseForm(forms.Form):
 
         return cleaned_data
 
+
 class DatabaseForm(models.ModelForm):
-    plan = AdvancedModelChoiceField(queryset=Plan.objects.filter(is_active='True'), required=False, widget=forms.RadioSelect, empty_label=None)
+    plan = AdvancedModelChoiceField(queryset=Plan.objects.filter(is_active='True'),
+                                    required=False, widget=forms.RadioSelect,
+                                    empty_label=None)
     engine = forms.ModelChoiceField(queryset=Engine.objects)
     environment = forms.ModelChoiceField(queryset=Environment.objects)
 
     class Meta:
         model = Database
-        fields = ('name', 'description' ,'project', 'team', 'is_in_quarantine',)
+        fields = ('name', 'description', 'project', 'team',
+                  'is_in_quarantine',)
 
     def remove_fields_not_in_models(self):
         """remove fields not int models"""
@@ -94,10 +98,10 @@ class DatabaseForm(models.ModelForm):
 
     @classmethod
     def setup_offering_field(cls, form, db_instance):
-        form.declared_fields['offering']=forms.CharField(
-            widget=DatabaseOfferingWidget(attrs={'readonly':'readonly',
-                'database': db_instance }), required=False, initial=db_instance.offering)
-
+        form.declared_fields['offering'] = forms.CharField(
+            widget=DatabaseOfferingWidget(attrs={'readonly': 'readonly',
+                                                 'database': db_instance}),
+            required=False, initial=db_instance.offering)
 
     def __init__(self, *args, **kwargs):
 
@@ -105,7 +109,7 @@ class DatabaseForm(models.ModelForm):
         instance = kwargs.get('instance')
         if instance:
             LOG.debug("instance database form found! %s" % instance)
-            #remove fields not in models
+            # remove fields not in models
             self.remove_fields_not_in_models()
 
         else:

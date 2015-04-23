@@ -32,8 +32,7 @@ urlpatterns = patterns('',
 
 # django flatpages
 urlpatterns += patterns('django.contrib.flatpages.views',
-    (r'^(?P<url>.*/)$', 'flatpage'),
-)
+                        (r'^(?P<url>.*/)$', 'flatpage'),)
 
 if settings.DEBUG:
     urlpatterns += staticfiles_urlpatterns()

@@ -11,6 +11,9 @@ from ..models import DatabaseRegionMigration
 from ..models import DatabaseRegionMigrationDetail
 from ..service.databaseregionmigration import DatabaseRegionMigrationService
 from ..tasks import execute_database_region_migration
+from django.shortcuts import render_to_response
+from django.template import RequestContext
+from ..forms import DatabaseRegionMigrationDetailForm
 
 LOG = logging.getLogger(__name__)
 
@@ -24,6 +27,7 @@ class DatabaseRegionMigrationAdmin(admin.DjangoServicesAdmin):
     actions = None
     service_class = DatabaseRegionMigrationService
     list_display_links = ()
+    template = 'region_migration/databaseregionmigration/schedule_next_step.html'
 
     def __init__(self, *args, **kwargs):
         super(DatabaseRegionMigrationAdmin, self).__init__(*args, **kwargs)
@@ -52,8 +56,8 @@ class DatabaseRegionMigrationAdmin(admin.DjangoServicesAdmin):
         if is_migration_finished or migration_running_or_waiting:
             return ''
 
-        html = "<a class='btn btn-info' href='{}/schedulenextstep'><i\
-                    class='icon-chevron-right icon-white'></i></a>".format(id)
+        html = "<a class='btn btn-info' href='{}/schedulenextstep/'><i\
+                class='icon-chevron-right icon-white'></i></a>".format(id)
 
         return format_html(html)
 
@@ -89,28 +93,39 @@ class DatabaseRegionMigrationAdmin(admin.DjangoServicesAdmin):
         return my_urls + urls
 
     def databaseregionmigration_view(self, request, databaseregionmigration_id):
-        database_region_migration = DatabaseRegionMigration.objects.get(
-            id=databaseregionmigration_id)
+        form = DatabaseRegionMigrationDetailForm
+        database_region_migration = DatabaseRegionMigration.objects.get(id=databaseregionmigration_id)
+        add = True
 
-        database_region_migration_detail = DatabaseRegionMigrationDetail(
-            database_region_migration=database_region_migration,
-            step=database_region_migration.current_step,
-            scheduled_for=datetime.now(),
-            created_by=request.user.username)
+        if request.method == 'POST':
+            form = DatabaseRegionMigrationDetailForm(request.POST)
+            if form.is_valid():
+                scheduled_for = form.cleaned_data['scheduled_for']
 
-        database_region_migration_detail.save()
+                database_region_migration_detail = DatabaseRegionMigrationDetail(
+                    database_region_migration=database_region_migration,
+                    step=database_region_migration.current_step,
+                    scheduled_for=scheduled_for,
+                    created_by=request.user.username)
 
-        task_history = TaskHistory()
-        task_history.task_name = "execute_database_region_migration"
-        task_history.task_status = task_history.STATUS_WAITING
+                database_region_migration_detail.save()
 
-        description = database_region_migration.description
-        task_history.arguments = "Database name: {}, \
-                                  Step: {}".format(database_region_migration.database.name, description)
-        task_history.user = request.user
-        task_history.save()
-        execute_database_region_migration.apply_async(args=[database_region_migration_detail.id, task_history, request.user],
-                                                      countdown=1)
+                task_history = TaskHistory()
+                task_history.task_name = "execute_database_region_migration"
+                task_history.task_status = task_history.STATUS_WAITING
 
-        url = reverse('admin:notification_taskhistory_changelist')
-        return HttpResponseRedirect(url + "?user=%s" % request.user.username)
+                description = database_region_migration.description
+                task_history.arguments = "Database name: {}, \
+                                          Step: {}".format(database_region_migration.database.name, description)
+                task_history.user = request.user
+                task_history.save()
+                execute_database_region_migration.apply_async(args=[database_region_migration_detail.id,
+                                                              task_history, request.user],
+                                                              eta=scheduled_for)
+
+                url = reverse('admin:notification_taskhistory_changelist')
+                return HttpResponseRedirect(url + "?user=%s" % request.user.username)
+
+        return render_to_response("region_migration/databaseregionmigrationdetail/schedule_next_step.html",
+                                  locals(),
+                                  context_instance=RequestContext(request))

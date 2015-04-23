@@ -15,7 +15,7 @@ from ..service.database import DatabaseService
 from ..forms import DatabaseForm, CloneDatabaseForm, ResizeDatabaseForm
 from ..models import Database
 from physical.models import Plan, Host
-from django.forms.models import modelform_factory,modelform_defines_fields
+from django.forms.models import modelform_factory, modelform_defines_fields
 from account.models import Team
 from drivers import DatabaseAlreadyExists
 from logical.templatetags import capacity
@@ -252,7 +252,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 self.fieldsets_change[0][1]['fields'].append('offering')
 
             DatabaseForm.setup_offering_field(form=self.form,db_instance=obj)
-            
+
 
         defaults = {
             "form": self.form,
