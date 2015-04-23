@@ -120,6 +120,8 @@ MONGODB_REGION_MIGRATION_1 = (
 MONGODB_REGION_MIGRATION_2 = (
     'workflow.steps.mongodb.region_migration.switch_primary.SwitchPrimary',
 )
-MONGODB_REGION_MIGRATION_3 = ()
+MONGODB_REGION_MIGRATION_3 = (
+    'workflow.steps.mongodb.region_migration.switch_dns.SwitchDNS',
+)
 MONGODB_REGION_MIGRATION_4 = ()
 MONGODB_REGION_MIGRATION_5 = ()
