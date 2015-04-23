@@ -32,9 +32,10 @@ class DatabaseRegionMigration(BaseModel):
     def warning(self,):
         return self.get_current_step().warning
 
-    @property
     def description(self,):
         return self.get_current_step().description
+
+    description.short_description = 'Next Step'
 
     @property
     def status(self,):

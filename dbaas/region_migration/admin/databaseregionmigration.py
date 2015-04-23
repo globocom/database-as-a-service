@@ -37,9 +37,23 @@ class DatabaseRegionMigrationAdmin(admin.DjangoServicesAdmin):
 
     def schedule_next_step_html(self, databaseregionmigration):
         id = databaseregionmigration.id
+        current_step = databaseregionmigration.current_step
+        last_step = len(databaseregionmigration.get_steps()) - 1
+
+        is_migration_finished = current_step == last_step
+
+        waiting_status = DatabaseRegionMigrationDetail.WAITING
+        running_status = DatabaseRegionMigrationDetail.RUNNING
+
+        migration_running_or_waiting = DatabaseRegionMigrationDetail.objects.\
+            filter(database_region_migration=databaseregionmigration,
+                   status__in=[waiting_status, running_status])
+
+        if is_migration_finished or migration_running_or_waiting:
+            return ''
 
         html = "<a class='btn btn-info' href='{}/schedulenextstep'><i\
-                    class='icon-calendar icon-white'></i></a>".format(id)
+                    class='icon-chevron-right icon-white'></i></a>".format(id)
 
         return format_html(html)
 
@@ -60,11 +74,11 @@ class DatabaseRegionMigrationAdmin(admin.DjangoServicesAdmin):
     def steps_information(self, databaseregionmigration):
         current_step = str(databaseregionmigration.current_step)
         steps_len = str(len(databaseregionmigration.get_steps()))
-        information = 'Step {} of {}'.format(current_step, steps_len)
+        information = '{} of {}'.format(current_step, steps_len)
 
         return information
 
-    steps_information.short_description = "Current"
+    steps_information.short_description = "Current Step"
 
     def get_urls(self):
         urls = super(DatabaseRegionMigrationAdmin, self).get_urls()
