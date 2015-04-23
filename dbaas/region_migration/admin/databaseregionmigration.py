@@ -11,6 +11,7 @@ from ..models import DatabaseRegionMigration
 from ..models import DatabaseRegionMigrationDetail
 from ..service.databaseregionmigration import DatabaseRegionMigrationService
 from ..tasks import execute_database_region_migration
+from ..tasks import execute_database_region_migration_undo
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from ..forms import DatabaseRegionMigrationDetailForm
@@ -20,9 +21,9 @@ LOG = logging.getLogger(__name__)
 
 class DatabaseRegionMigrationAdmin(admin.DjangoServicesAdmin):
     model = DatabaseRegionMigration
-    list_display = ('database', 'steps_information', 'status',
-                    'description', 'user_friendly_warning',
-                    'schedule_next_step_html')
+    list_display = ('database', 'steps_information',
+                    'status', 'description', 'schedule_next_step_html',
+                    'user_friendly_warning', 'schedule_rollback_html')
 
     actions = None
     service_class = DatabaseRegionMigrationService
@@ -39,7 +40,7 @@ class DatabaseRegionMigrationAdmin(admin.DjangoServicesAdmin):
     def has_add_permission(self, request, obj=None):
         return False
 
-    def schedule_next_step_html(self, databaseregionmigration):
+    def get_step_id(self, databaseregionmigration,):
         id = databaseregionmigration.id
         current_step = databaseregionmigration.current_step
         last_step = len(databaseregionmigration.get_steps()) - 1
@@ -56,12 +57,31 @@ class DatabaseRegionMigrationAdmin(admin.DjangoServicesAdmin):
         if is_migration_finished or migration_running_or_waiting:
             return ''
 
-        html = "<a class='btn btn-info' href='{}/schedulenextstep/'><i\
-                class='icon-chevron-right icon-white'></i></a>".format(id)
+        return id
+
+    def schedule_next_step_html(self, databaseregionmigration):
+        id = self.get_step_id(databaseregionmigration)
+        html = ''
+
+        if id:
+            html = "<a class='btn btn-info' href='{}/schedulenextstep/'><i\
+                    class='icon-chevron-right icon-white'></i></a>".format(id)
 
         return format_html(html)
 
     schedule_next_step_html.short_description = "Schedule next step"
+
+    def schedule_rollback_html(self, databaseregionmigration):
+        id = self.get_step_id(databaseregionmigration)
+        html = ''
+
+        if id:
+            html = "<a class='btn btn-info' href='{}/schedulenextstep/'><i\
+                    class='icon-chevron-left icon-white'></i></a>".format(id)
+
+        return format_html(html)
+
+    schedule_rollback_html.short_description = "Schedule Rollback"
 
     def user_friendly_warning(self, databaseregionmigration):
         warning_message = databaseregionmigration.warning
@@ -95,7 +115,6 @@ class DatabaseRegionMigrationAdmin(admin.DjangoServicesAdmin):
     def databaseregionmigration_view(self, request, databaseregionmigration_id):
         form = DatabaseRegionMigrationDetailForm
         database_region_migration = DatabaseRegionMigration.objects.get(id=databaseregionmigration_id)
-        add = True
 
         if request.method == 'POST':
             form = DatabaseRegionMigrationDetailForm(request.POST)
@@ -115,13 +134,24 @@ class DatabaseRegionMigrationAdmin(admin.DjangoServicesAdmin):
                 task_history.task_status = task_history.STATUS_WAITING
 
                 description = database_region_migration.description
-                task_history.arguments = "Database name: {}, \
-                                          Step: {}".format(database_region_migration.database.name, description)
+                task_history.arguments = "Database name: {},\
+                                          Step: {}".format(database_region_migration.database.name,
+                                                           description)
                 task_history.user = request.user
                 task_history.save()
-                execute_database_region_migration.apply_async(args=[database_region_migration_detail.id,
-                                                              task_history, request.user],
-                                                              eta=scheduled_for)
+
+                is_rollback = request.GET.get('rollback')
+
+                if is_rollback:
+                    LOG.info("Rollback!")
+                    execute_database_region_migration_undo.apply_async(args=[database_region_migration_detail.id,
+                                                                             task_history,
+                                                                             request.user],
+                                                                       eta=scheduled_for)
+                else:
+                    execute_database_region_migration.apply_async(args=[database_region_migration_detail.id,
+                                                                  task_history, request.user],
+                                                                  eta=scheduled_for)
 
                 url = reverse('admin:notification_taskhistory_changelist')
                 return HttpResponseRedirect(url + "?user=%s" % request.user.username)
