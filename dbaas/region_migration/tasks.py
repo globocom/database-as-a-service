@@ -168,6 +168,15 @@ def execute_database_region_migration_undo(self, database_region_migration_detai
         source_plan = databaseinfra.plan
         target_plan = source_plan.equivalent_plan_id
 
+        if not source_hosts:
+            except Exception('There is no source host')
+        if not source_instances:
+            except Exception('There is no source instance')
+        if not target_hosts:
+            except Exception('There is no target host')
+        if not target_instances:
+            except Exception('There is no target instance')
+
         workflow_dict = build_dict(database_region_migration_detail=database_region_migration_detail,
                                    database_region_migration=database_region_migration,
                                    database=database,
