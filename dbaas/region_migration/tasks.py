@@ -54,6 +54,8 @@ def execute_database_region_migration(self, database_region_migration_detail_id,
         source_instances = []
         source_hosts = []
         for instance in Instance.objects.filter(databaseinfra=databaseinfra):
+            if database_region_migration.current_step > 0 and not instance.future_instance:
+                continue
             source_instances.append(instance)
             if instance.instance_type != instance.REDIS_SENTINEL:
                 source_hosts.append(instance.hostname)
