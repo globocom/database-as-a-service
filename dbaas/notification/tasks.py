@@ -19,7 +19,6 @@ from account.models import Team
 from system.models import Configuration
 from simple_audit.models import AuditRequest
 from .models import TaskHistory
-from celery import task
 import datetime
 
 LOG = get_task_logger(__name__)
@@ -416,107 +415,6 @@ def purge_task_history(self):
         task_history.update_status_for(TaskHistory.STATUS_ERROR, details=e)
 
 
-
-
-####################
-#DBAAS_ACL_API_TASKS#
-####################
-
-try:
-    from dbaas_aclapi.tasks import tasks
-    from dbaas_aclapi import models
-except ImportError, e:
-    LOG.warn("DBaaS AclApi not installed")
-
-
-
-@app.task(bind= True)
-def bind_address_on_database(self, database, acl_environment, acl_vlan, action="permit", user=None):
-    if not user:
-        user =  self.request.args[-1]
-
-    LOG.info("User: {}, action: {}".format(user, action))
-
-    worker_name = get_worker_name()
-    task_history = TaskHistory.register(request=self.request, user=user, worker_name=worker_name)
-    LOG.info("id: %s | task: %s | kwargs: %s | args: %s" % (self.request.id, self.request.task, self.request.kwargs, str(self.request.args)))
-
-    task_history.update_details(persist=True, details="Loading Process...")
-
-
-    try:
-        if action == "permit":
-            bind_status = models.CREATING
-        else:
-            bind_status = models.DESTROYING
-
-        LOG.info("Params database: {}, acl_environment: {}, acl_vlan: {}, action: {}, bind_status: {}".format(database, acl_environment,
-            acl_vlan, action, bind_status))
-
-        job = tasks.bind_unbind_address_on_database(database= database, acl_environment= acl_environment,
-            acl_vlan=acl_vlan, action="permit", bind_status= bind_status)
-
-        if not job:
-            raise Exception, "Error when executing the Bind"
-
-        task_history.update_status_for(TaskHistory.STATUS_SUCCESS, details='Bind created successfully')
-
-        if bind_status == models.CREATING:
-            bind_status = models.CREATED
-        else:
-            bind_status = models.ERROR
-
-        LOG.debug("Bind Status: {}".format(bind_status))
-
-
-        monitor_acl_job.delay(database, job, acl_environment+'/'+acl_vlan, bind_status, user=user)
-        return
-
-    except Exception,e:
-        LOG.info("DatabaseBind ERROR: {}".format(e))
-        task_history.update_status_for(TaskHistory.STATUS_ERROR, details='Bind could not be created')
-        return
-
-    finally:
-        AuditRequest.cleanup_request()
-
-
-@app.task(bind= True)
-def monitor_acl_job(self,database, job_id, bind_address, bind_status=models.CREATED , user=None):
-    if not user:
-        user =  self.request.args[-1]
-    AuditRequest.new_request("create_database",user, "localhost")
-
-    worker_name = get_worker_name()
-    task_history = TaskHistory.register(request=self.request, user=user, worker_name=worker_name)
-    LOG.info("id: %s | task: %s | kwargs: %s | args: %s" % (self.request.id, self.request.task, self.request.kwargs, str(self.request.args)))
-
-    task_history.update_details(persist=True, details="Loading Process...")
-    try:
-
-        LOG.debug("database: {}, job_id: {}, bind_address: {}, bind_status: {}, user: {}".format(database, job_id, bind_address, bind_status, user))
-
-        status = tasks.monitor_acl_job(database, job_id, bind_address,)
-
-        LOG.debug("Job status return: {}".format(status))
-        if status:
-            from dbaas_aclapi.util import update_bind_status
-            LOG.info("Updating Bind Status")
-            update_bind_status(database, bind_address, bind_status)
-
-            task_history.update_status_for(TaskHistory.STATUS_SUCCESS, details='Bind created successfully')
-            return
-        else:
-            raise Exception, "Error when monitoring the Bind Process"
-
-
-    except Exception, e:
-        LOG.info("DatabaseBindMonitoring ERROR: {}".format(e))
-        task_history.update_status_for(TaskHistory.STATUS_ERROR, details='Bind could not be granted')
-        return
-
-    finally:
-        AuditRequest.cleanup_request()
 
 @app.task(bind=True)
 def resize_database(self, database, cloudstackpack, task_history=None,user=None):
