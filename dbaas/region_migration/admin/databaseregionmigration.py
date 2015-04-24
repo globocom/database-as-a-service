@@ -76,7 +76,7 @@ class DatabaseRegionMigrationAdmin(admin.DjangoServicesAdmin):
         html = ''
 
         if id:
-            html = "<a class='btn btn-info' href='{}/schedulenextstep/'><i\
+            html = "<a class='btn btn-info' href='{}/schedulenextstep/?rollback=true'><i\
                     class='icon-chevron-left icon-white'></i></a>".format(id)
 
         return format_html(html)
