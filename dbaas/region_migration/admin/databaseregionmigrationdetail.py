@@ -41,6 +41,8 @@ class DatabaseRegionMigrationDetailAdmin(admin.DjangoServicesAdmin):
             return format_html(html_running)
         elif detail.status == models.DatabaseRegionMigrationDetail.REVOKED:
             return format_html(html_revoked.format("Revoked"))
+        elif detail.status == models.DatabaseRegionMigrationDetail.ERROR:
+            return format_html(html_rejected.format("Error"))
 
     friendly_status.short_description = "Status"
 
