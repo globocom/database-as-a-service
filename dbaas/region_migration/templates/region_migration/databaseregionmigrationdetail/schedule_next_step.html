@@ -1,0 +1,52 @@
+{% extends "admin/change_form.html" %}
+{% load i18n admin_static admin_modify %}
+
+{% block extrahead %}
+    {{ block.super }}
+    <script type="text/javascript" src="/static/0.0.11/admin/js/core.js"></script>
+<script type="text/javascript" src="/static/0.0.11/admin/js/admin/RelatedObjectLookups.js"></script>
+<script type="text/javascript" src="/static/0.0.11/admin/js/jquery.js"></script>
+<script type="text/javascript" src="/static/0.0.11/admin/js/jquery.init.js"></script>
+<script type="text/javascript" src="/static/0.0.11/admin/js/calendar.js"></script>
+<script type="text/javascript" src="/static/0.0.11/admin/js/admin/DateTimeShortcuts.js"></script>
+<script type="text/javascript" src="/static/0.0.11/admin/js/inlines.js"></script>
+{% endblock %}
+
+{% block extrastyle %}
+    {{ block.super }}
+    {{ form.media }}
+    <link rel="stylesheet" type="text/css" href="{% static "admin/css/forms-and-widgets.css" %}" />
+    <link rel="stylesheet" type="text/css" href="{% static "admin/css/change-form.css" %}" />
+{% endblock %}
+
+
+{% block breadcrumbs %}
+    <ul class="breadcrumb">
+        <li>
+            <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a> <span class="divider">/</span>
+        </li>
+        <li>
+            <a href="{% url 'admin:region_migration_databaseregionmigration_changelist' %}">Databas Region MIgrations</a> <span class="divider">/</span>
+        </li>
+        <li>
+            Schedule Next Step<span class="divider">/</span>
+        </li>
+    </ul>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+
+
+    <form id="region_migration_detail" action="" class="form-horizontal well" method="POST">{% csrf_token %}
+
+        <fieldset class="module">
+        <h2>Step {{database_region_migration.current_step}} to migrate database "{{ database_region_migration.database.name }}"</h2>
+            {{ form.as_p }}
+            <input class="btn" type="submit" value="Submit" onclick="this.disabled=true,this.form.submit(); return confirm('Are you sure?')"/>
+        </fieldset>
+
+    </form>
+</div>
+{% endblock %}
+{% block submit_buttons_bottom %}{% endblock %}

@@ -40,7 +40,7 @@ Sign in as DBA user:
 ### 1.5 Plans
 * plan name: `small`
 * is plan default: `check the box`
-* is paln ha: `do not check the box`
+* is plan ha: `do not check the box`
 * engine type: choose `mongodb`
 * environments: move `laboratory` to the right
 * provider: `pre provisioned`

@@ -146,12 +146,39 @@ def check_nslookup(dns_to_check, dns_server, retries= 90, wait= 10):
         LOG.warn("We caught an exception %s" % e)
         return None
 
+def scp_file(server, username, password, localpath, remotepath, option):
+
+    try:
+        transport = paramiko.Transport((server, 22))
+        transport.connect(username = username, password = password)
+        
+        sftp = paramiko.SFTPClient.from_transport(transport)
+        if option == 'PUT':
+            sftp.put(localpath, remotepath)
+        elif option == 'GET':
+            sftp.get(remotepath, localpath)
+        else:
+            raise Exception("Invalid option...")
+        
+        sftp.close()
+        transport.close()
+        return True
+
+    except Exception, e:
+        LOG.error("We caught an exception: %s ." % (e))
+        return False
+
+def scp_put_file(server, username, password, localpath, remotepath):
+    return scp_file(server, username, password, localpath, remotepath, 'PUT')
+
+def scp_get_file(server, username, password, localpath, remotepath):
+    return scp_file(server, username, password, localpath, remotepath, 'GET')
 
 
 def exec_remote_command(server, username, password, command, output={}):
 
     try:
-        #LOG.info("Executing command [%s] on remote server %s" % (command, server))
+        LOG.info("Executing command [%s] on remote server %s" % (command, server))
         client = paramiko.SSHClient()
         client.load_system_host_keys()
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
