@@ -37,9 +37,9 @@ class DatabaseRegionMigrationDetailAdmin(admin.DjangoServicesAdmin):
             return format_html(html_rejected.format("Rollback"))
         elif detail.status == models.DatabaseRegionMigrationDetail.WAITING:
             return format_html(html_waiting)
-        elif detail.status == models.HostMaintenance.RUNNING:
+        elif detail.status == models.DatabaseRegionMigrationDetail.RUNNING:
             return format_html(html_running)
-        elif detail.status == models.HostMaintenance.REVOKED:
+        elif detail.status == models.DatabaseRegionMigrationDetail.REVOKED:
             return format_html(html_revoked.format("Revoked"))
 
     friendly_status.short_description = "Status"
