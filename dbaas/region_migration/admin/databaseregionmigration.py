@@ -97,7 +97,7 @@ class DatabaseRegionMigrationAdmin(admin.DjangoServicesAdmin):
 
     def steps_information(self, databaseregionmigration):
         current_step = str(databaseregionmigration.current_step)
-        steps_len = str(len(databaseregionmigration.get_steps()))
+        steps_len = str(len(databaseregionmigration.get_steps()) - 1)
         information = '{} of {}'.format(current_step, steps_len)
 
         return information
