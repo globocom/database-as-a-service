@@ -147,7 +147,7 @@ class DatabaseRegionMigrationAdmin(admin.DjangoServicesAdmin):
 
                 if is_rollback:
                     LOG.info("Rollback!")
-                    database_region_migration_detail.current_step -= 1
+                    database_region_migration_detail.step -= 1
                     database_region_migration_detail.save()
                     execute_database_region_migration_undo.apply_async(args=[database_region_migration_detail.id,
                                                                              task_history,
