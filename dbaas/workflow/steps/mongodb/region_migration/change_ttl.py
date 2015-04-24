@@ -17,7 +17,7 @@ class DecreaseTTL(BaseStep):
         try:
 
             LOG.info("Calling dnsapi provider...")
-            DNSAPIProvider.update_database_dns_ttl(databaseinfra = workflow_dict['databaseinfra'], ttl=5)
+            DNSAPIProvider.update_database_dns_ttl(databaseinfra=workflow_dict['databaseinfra'], ttl=5)
 
             return True
         except Exception:
@@ -32,7 +32,7 @@ class DecreaseTTL(BaseStep):
         LOG.info("Running undo...")
         try:
 
-            DNSAPIProvider.update_database_dns_ttl(databaseinfra = workflow_dict['databaseinfra'], ttl=None)
+            DNSAPIProvider.update_database_dns_ttl(databaseinfra=workflow_dict['databaseinfra'], ttl=None)
             return True
         except Exception:
             traceback = full_stack()
@@ -41,3 +41,29 @@ class DecreaseTTL(BaseStep):
             workflow_dict['exceptions']['traceback'].append(traceback)
 
             return False
+
+
+class DefaultTTL(BaseStep):
+
+    def __unicode__(self):
+        return "Changing TTL..."
+
+    def do(self, workflow_dict):
+        try:
+
+            LOG.info("Calling dnsapi provider...")
+            DNSAPIProvider.update_database_dns_ttl(databaseinfra=workflow_dict['databaseinfra'], ttl=None)
+
+            return True
+        except Exception:
+            traceback = full_stack()
+
+            workflow_dict['exceptions']['error_codes'].append(DBAAS_0019)
+            workflow_dict['exceptions']['traceback'].append(traceback)
+
+            return False
+
+    def undo(self, workflow_dict):
+
+        LOG.info("Running undo - nothing to do here...")
+        return True

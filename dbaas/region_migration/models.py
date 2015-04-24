@@ -54,6 +54,7 @@ class DatabaseRegionMigrationDetail(BaseModel):
     SUCCESS = 2
     ROLLBACK = 3
     REVOKED = 4
+    ERROR = 5
 
     MAINTENANCE_STATUS = (
         (SUCCESS, 'Success'),
