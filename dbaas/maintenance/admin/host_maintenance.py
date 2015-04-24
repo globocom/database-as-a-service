@@ -3,10 +3,12 @@ from __future__ import absolute_import, unicode_literals
 from django_services import admin
 from ..service.host_maintenance import HostMaintenanceService
 from ..forms import HostMaintenanceForm
-import logging
-LOG = logging.getLogger(__name__)
 from .. import models
+import logging
 from django.utils.html import format_html
+
+LOG = logging.getLogger(__name__)
+
 
 class HostMaintenanceAdmin(admin.DjangoServicesAdmin):
     actions = None
@@ -27,16 +29,15 @@ class HostMaintenanceAdmin(admin.DjangoServicesAdmin):
         html_running = '<span class="label label-success">Running</span>'
         html_revoked = '<span class="label label-primary">{}</span>'
 
-
         if host_maintenance.status == models.HostMaintenance.SUCCESS:
             return format_html(html_success)
-        elif host_maintenance.status ==models.HostMaintenance.ERROR:
+        elif host_maintenance.status == models.HostMaintenance.ERROR:
             return format_html(html_rejected.format("Error"))
-        elif host_maintenance.status ==models.HostMaintenance.ROLLBACK:
+        elif host_maintenance.status == models.HostMaintenance.ROLLBACK:
             return format_html(html_rejected.format("Rollback"))
-        elif host_maintenance.status ==models.HostMaintenance.ROLLBACK_ERROR:
+        elif host_maintenance.status == models.HostMaintenance.ROLLBACK_ERROR:
             return format_html(html_rejected.format("Rollback Error"))
-        elif host_maintenance.status ==models.HostMaintenance.ROLLBACK_SUCCESS:
+        elif host_maintenance.status == models.HostMaintenance.ROLLBACK_SUCCESS:
             return format_html(html_rejected.format("Rollback Succes"))
         elif host_maintenance.status == models.HostMaintenance.WAITING:
             return format_html(html_waiting)
@@ -53,7 +54,6 @@ class HostMaintenanceAdmin(admin.DjangoServicesAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
     def has_add_permission(self, request, obj=None):
         return False
-
-

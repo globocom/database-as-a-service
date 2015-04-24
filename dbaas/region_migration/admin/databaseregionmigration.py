@@ -75,7 +75,7 @@ class DatabaseRegionMigrationAdmin(admin.DjangoServicesAdmin):
         id = self.get_step_id(databaseregionmigration)
         html = ''
 
-        if id:
+        if id and databaseregionmigration.current_step > 0:
             html = "<a class='btn btn-info' href='{}/schedulenextstep/?rollback=true'><i\
                     class='icon-chevron-left icon-white'></i></a>".format(id)
 
@@ -98,9 +98,12 @@ class DatabaseRegionMigrationAdmin(admin.DjangoServicesAdmin):
     def steps_information(self, databaseregionmigration):
         current_step = str(databaseregionmigration.current_step)
         steps_len = str(len(databaseregionmigration.get_steps()))
+        html = "<a href='../databaseregionmigrationdetail/?databaseregionmigration__id={}'>{}</a>"
         information = '{} of {}'.format(current_step, steps_len)
 
-        return information
+        html = html.format(databaseregionmigration.id, information)
+
+        return format_html(html)
 
     steps_information.short_description = "Current Step"
 
