@@ -6,7 +6,7 @@ from dbaas_cloudstack.provider import CloudStackProvider
 from dbaas_cloudstack.models import HostAttr
 from dbaas_credentials.models import CredentialType
 from ...util.base import BaseStep
-from ....exceptions.error_codes import DBAAS_0019
+from ....exceptions.error_codes import DBAAS_0020
 
 LOG = logging.getLogger(__name__)
 
@@ -44,7 +44,7 @@ class RemoveVms(BaseStep):
         except Exception:
             traceback = full_stack()
 
-            workflow_dict['exceptions']['error_codes'].append(DBAAS_0019)
+            workflow_dict['exceptions']['error_codes'].append(DBAAS_0020)
             workflow_dict['exceptions']['traceback'].append(traceback)
 
             return False
@@ -57,7 +57,7 @@ class RemoveVms(BaseStep):
         except Exception:
             traceback = full_stack()
 
-            workflow_dict['exceptions']['error_codes'].append(DBAAS_0019)
+            workflow_dict['exceptions']['error_codes'].append(DBAAS_0020)
             workflow_dict['exceptions']['traceback'].append(traceback)
 
             return False

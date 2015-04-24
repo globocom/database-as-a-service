@@ -3,7 +3,7 @@ import logging
 from util import full_stack
 from dbaas_nfsaas.provider import NfsaasProvider
 from ...util.base import BaseStep
-from ....exceptions.error_codes import DBAAS_0019
+from ....exceptions.error_codes import DBAAS_0020
 
 LOG = logging.getLogger(__name__)
 
@@ -43,7 +43,7 @@ class CreateNfs(BaseStep):
         except Exception:
             traceback = full_stack()
 
-            workflow_dict['exceptions']['error_codes'].append(DBAAS_0019)
+            workflow_dict['exceptions']['error_codes'].append(DBAAS_0020)
             workflow_dict['exceptions']['traceback'].append(traceback)
 
             return False
@@ -63,7 +63,7 @@ class CreateNfs(BaseStep):
         except Exception:
             traceback = full_stack()
 
-            workflow_dict['exceptions']['error_codes'].append(DBAAS_0019)
+            workflow_dict['exceptions']['error_codes'].append(DBAAS_0020)
             workflow_dict['exceptions']['traceback'].append(traceback)
 
             return False
