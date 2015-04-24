@@ -31,13 +31,13 @@ def run_vm_script(workflow_dict, context_dict, script, reverse=False, wait=0):
             final_context_dict['IS_MASTER'] = instance_detail['is_master']
             command = build_context_script(final_context_dict, script)
             output = {}
-            return_code = exec_remote_command(server = host.address,
-                                              username = host_csattr.vm_user,
-                                              password = host_csattr.vm_password,
-                                              command = command,
-                                              output = output)
+            return_code = exec_remote_command(server=host.address,
+                                              username=host_csattr.vm_user,
+                                              password=host_csattr.vm_password,
+                                              command=command,
+                                              output=output)
             if return_code:
-                raise Exception, "Could not run script. Output: {}".format(output)
+                raise Exception("Could not run script. Output: {}".format(output))
 
             sleep(wait)
 
@@ -55,17 +55,17 @@ def run_vm_script(workflow_dict, context_dict, script, reverse=False, wait=0):
 def start_vm(workflow_dict):
     try:
         environment = workflow_dict['environment']
-        cs_credentials = get_credentials_for(environment = environment, credential_type = CredentialType.CLOUDSTACK)
-        cs_provider = CloudStackProvider(credentials = cs_credentials)
+        cs_credentials = get_credentials_for(environment=environment, credential_type=CredentialType.CLOUDSTACK)
+        cs_provider = CloudStackProvider(credentials=cs_credentials)
         instances_detail = workflow_dict['instances_detail']
 
         for instance_detail in instances_detail:
             instance = instance_detail['instance']
             host = instance.hostname
             host_csattr = HostAttr.objects.get(host=host)
-            started = cs_provider.start_virtual_machine(vm_id = host_csattr.vm_id)
+            started = cs_provider.start_virtual_machine(vm_id=host_csattr.vm_id)
             if not started:
-                raise Exception, "Could not start host {}".format(host)
+                raise Exception("Could not start host {}".format(host))
 
         for instance_detail in instances_detail:
             instance = instance_detail['instance']
@@ -75,7 +75,7 @@ def start_vm(workflow_dict):
             if not host_ready:
                 error = "Host %s is not ready..." % host
                 LOG.warn(error)
-                raise Exception, error
+                raise Exception(error)
 
         from time import sleep
         sleep(60)
@@ -93,17 +93,17 @@ def start_vm(workflow_dict):
 def stop_vm(workflow_dict):
     try:
         environment = workflow_dict['environment']
-        cs_credentials = get_credentials_for(environment = environment, credential_type = CredentialType.CLOUDSTACK)
-        cs_provider = CloudStackProvider(credentials = cs_credentials)
+        cs_credentials = get_credentials_for(environment=environment, credential_type=CredentialType.CLOUDSTACK)
+        cs_provider = CloudStackProvider(credentials=cs_credentials)
         instances_detail = workflow_dict['instances_detail']
 
         for instance_detail in instances_detail:
             instance = instance_detail['instance']
             host = instance.hostname
             host_csattr = HostAttr.objects.get(host=host)
-            stoped = cs_provider.stop_virtual_machine(vm_id = host_csattr.vm_id)
+            stoped = cs_provider.stop_virtual_machine(vm_id=host_csattr.vm_id)
             if not stoped:
-                raise Exception, "Could not stop host {}".format(host)
+                raise Exception("Could not stop host {}".format(host))
 
         return True
 

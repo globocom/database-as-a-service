@@ -35,7 +35,7 @@ class ConfigFiles(BaseStep):
             for index, source_instance in enumerate(workflow_dict['source_instances']):
 
                 source_host = source_instance.hostname
-                source_cs_host_attr = CS_HostAttr.objects.get(host = source_host)
+                source_cs_host_attr = CS_HostAttr.objects.get(host=source_host)
 
                 hostname = source_host.hostname.split('.')[0]
                 localpath = "{}/{}".format(workflow_dict['region_migration_dir_infra_name'], hostname)
@@ -43,61 +43,61 @@ class ConfigFiles(BaseStep):
 
                 LOG.info('Get source host files to {}'.format(localpath))
 
-                if not scp_get_file(server = source_host.address,
-                                    username = source_cs_host_attr.vm_user,
-                                    password = source_cs_host_attr.vm_password,
-                                    localpath = "{}/mongodb.key".format(localpath),
-                                    remotepath = "/data/mongodb.key"):
+                if not scp_get_file(server=source_host.address,
+                                    username=source_cs_host_attr.vm_user,
+                                    password=source_cs_host_attr.vm_password,
+                                    localpath="{}/mongodb.key".format(localpath),
+                                    remotepath="/data/mongodb.key"):
                     raise Exception("FTP Error")
 
-                if not scp_get_file(server = source_host.address,
-                                    username = source_cs_host_attr.vm_user,
-                                    password = source_cs_host_attr.vm_password,
-                                    localpath = "{}/mongodb.conf".format(localpath),
-                                    remotepath = "/data/mongodb.conf"):
+                if not scp_get_file(server=source_host.address,
+                                    username=source_cs_host_attr.vm_user,
+                                    password=source_cs_host_attr.vm_password,
+                                    localpath="{}/mongodb.conf".format(localpath),
+                                    remotepath="/data/mongodb.conf"):
                     raise Exception("FTP Error")
 
-                if not scp_get_file(server = source_host.address,
-                                    username = source_cs_host_attr.vm_user,
-                                    password = source_cs_host_attr.vm_password,
-                                    localpath = "{}/td-agent.conf".format(localpath),
-                                    remotepath = "/etc/td-agent/td-agent.conf"):
+                if not scp_get_file(server=source_host.address,
+                                    username=source_cs_host_attr.vm_user,
+                                    password=source_cs_host_attr.vm_password,
+                                    localpath="{}/td-agent.conf".format(localpath),
+                                    remotepath="/etc/td-agent/td-agent.conf"):
                     raise Exception("FTP Error")
 
                 target_host = source_host.future_host
                 LOG.info(target_host)
-                target_cs_host_attr = CS_HostAttr.objects.get(host = target_host)
+                target_cs_host_attr = CS_HostAttr.objects.get(host=target_host)
 
                 target_instance = source_instance.future_instance
                 if target_instance.instance_type == target_instance.MONGODB_ARBITER:
                     LOG.info("Cheking host ssh...")
-                    host_ready = check_ssh(server = target_host.address,
-                                           username = target_cs_host_attr.vm_user,
-                                           password = target_cs_host_attr.vm_password,
-                                           wait = 5, interval = 10)
+                    host_ready = check_ssh(server=target_host.address,
+                                           username=target_cs_host_attr.vm_user,
+                                           password=target_cs_host_attr.vm_password,
+                                           wait=5, interval=10)
 
                     if not host_ready:
-                        raise Exception, str("Host %s is not ready..." % host)
+                        raise Exception(str("Host %s is not ready..." % host))
 
-                if not scp_put_file(server = target_host.address,
-                                    username = target_cs_host_attr.vm_user,
-                                    password = target_cs_host_attr.vm_password,
-                                    localpath = "{}/mongodb.key".format(localpath),
-                                    remotepath = "/data/mongodb.key"):
+                if not scp_put_file(server=target_host.address,
+                                    username=target_cs_host_attr.vm_user,
+                                    password=target_cs_host_attr.vm_password,
+                                    localpath="{}/mongodb.key".format(localpath),
+                                    remotepath="/data/mongodb.key"):
                     raise Exception("FTP Error")
 
-                if not scp_put_file(server = target_host.address,
-                                    username = target_cs_host_attr.vm_user,
-                                    password = target_cs_host_attr.vm_password,
-                                    localpath = "{}/mongodb.conf".format(localpath),
-                                    remotepath = "/data/mongodb.conf"):
+                if not scp_put_file(server=target_host.address,
+                                    username=target_cs_host_attr.vm_user,
+                                    password=target_cs_host_attr.vm_password,
+                                    localpath="{}/mongodb.conf".format(localpath),
+                                    remotepath="/data/mongodb.conf"):
                     raise Exception("FTP Error")
 
-                if not scp_put_file(server = target_host.address,
-                                    username = target_cs_host_attr.vm_user,
-                                    password = target_cs_host_attr.vm_password,
-                                    localpath = "{}/td-agent.conf".format(localpath),
-                                    remotepath = "/etc/td-agent/td-agent.conf"):
+                if not scp_put_file(server=target_host.address,
+                                    username=target_cs_host_attr.vm_user,
+                                    password=target_cs_host_attr.vm_password,
+                                    localpath="{}/td-agent.conf".format(localpath),
+                                    remotepath="/etc/td-agent/td-agent.conf"):
                     raise Exception("FTP Error")
 
                 script = initial_script
@@ -125,7 +125,7 @@ class ConfigFiles(BaseStep):
                                                   output=output)
                 LOG.info(output)
                 if return_code != 0:
-                    raise Exception, str(output)
+                    raise Exception(str(output))
 
             shutil.rmtree(workflow_dict['region_migration_dir_infra_name'])
 
@@ -147,13 +147,13 @@ class ConfigFiles(BaseStep):
             script = build_context_script({}, script)
             for target_instance in workflow_dict['target_instances']:
                 target_host = target_instance.hostname
-                target_cs_host_attr = CS_HostAttr.objects.get(host = target_host)
+                target_cs_host_attr = CS_HostAttr.objects.get(host=target_host)
                 output = {}
-                exec_remote_command(server = target_host.address,
-                                    username = target_cs_host_attr.vm_user,
-                                    password = target_cs_host_attr.vm_password,
-                                    command = script,
-                                    output = output)
+                exec_remote_command(server=target_host.address,
+                                    username=target_cs_host_attr.vm_user,
+                                    password=target_cs_host_attr.vm_password,
+                                    command=script,
+                                    output=output)
                 LOG.info(output)
 
             try:

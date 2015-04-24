@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import logging
-import os
 from util import full_stack
 from util import check_ssh
 from util import exec_remote_command
@@ -36,13 +35,13 @@ class MountDisks(BaseStep):
                 nfs_host_attr = NFS_HostAttr.objects.get(host=host)
 
                 LOG.info("Cheking host ssh...")
-                host_ready = check_ssh(server = host.address,
-                                       username = cs_host_attr.vm_user,
-                                       password = cs_host_attr.vm_password,
-                                       wait = 5, interval = 10)
+                host_ready = check_ssh(server=host.address,
+                                       username=cs_host_attr.vm_user,
+                                       password=cs_host_attr.vm_password,
+                                       wait=5, interval=10)
 
                 if not host_ready:
-                    raise Exception, str("Host %s is not ready..." % host)
+                    raise Exception(str("Host %s is not ready..." % host))
 
                 context_dict = {
                     'EXPORTPATH': nfs_host_attr.nfsaas_path,
@@ -64,7 +63,7 @@ class MountDisks(BaseStep):
                                                   output=output)
                 LOG.info(output)
                 if return_code != 0:
-                    raise Exception, str(output)
+                    raise Exception(str(output))
 
             return True
         except Exception:
