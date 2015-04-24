@@ -1,8 +1,20 @@
 {% extends "admin/change_form.html" %}
 {% load i18n admin_static admin_modify %}
 
+{% block extrahead %}
+    {{ block.super }}
+    <script type="text/javascript" src="/static/0.0.11/admin/js/core.js"></script>
+<script type="text/javascript" src="/static/0.0.11/admin/js/admin/RelatedObjectLookups.js"></script>
+<script type="text/javascript" src="/static/0.0.11/admin/js/jquery.js"></script>
+<script type="text/javascript" src="/static/0.0.11/admin/js/jquery.init.js"></script>
+<script type="text/javascript" src="/static/0.0.11/admin/js/calendar.js"></script>
+<script type="text/javascript" src="/static/0.0.11/admin/js/admin/DateTimeShortcuts.js"></script>
+<script type="text/javascript" src="/static/0.0.11/admin/js/inlines.js"></script>
+{% endblock %}
+
 {% block extrastyle %}
     {{ block.super }}
+    {{ form.media }}
     <link rel="stylesheet" type="text/css" href="{% static "admin/css/forms-and-widgets.css" %}" />
     <link rel="stylesheet" type="text/css" href="{% static "admin/css/change-form.css" %}" />
 {% endblock %}

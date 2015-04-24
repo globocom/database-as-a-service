@@ -3,14 +3,14 @@ import logging
 from django.forms import models
 from ..models import DatabaseRegionMigrationDetail
 from django import forms
-from django.forms.widgets import DateTimeInput
+from django.contrib.admin.widgets import AdminSplitDateTime
 from datetime import datetime
 LOG = logging.getLogger(__name__)
 
 
 class DatabaseRegionMigrationDetailForm(models.ModelForm):
     scheduled_for = forms.DateTimeField(initial=datetime.now(),
-                                        widget=DateTimeInput)
+                                        widget=AdminSplitDateTime)
 
     def __init__(self, *args, **kwargs):
         super(DatabaseRegionMigrationDetailForm, self).__init__(*args, **kwargs)
