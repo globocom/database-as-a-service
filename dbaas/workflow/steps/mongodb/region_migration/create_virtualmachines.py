@@ -26,22 +26,21 @@ class CreateVirtualMachine(BaseStep):
             cs_credentials = get_credentials_for(
                 environment=workflow_dict['target_environment'],
                 credential_type=CredentialType.CLOUDSTACK)
-            
+
             vm_credentials = get_credentials_for(
                 environment=workflow_dict['target_environment'],
                 credential_type=CredentialType.VM)
 
             cs_provider = CloudStackProvider(credentials=cs_credentials)
-            
-            original_serviceoffering = workflow_dict['databaseinfra'].cs_dbinfra_offering.get().offering
-            target_serviceoffering = original_serviceoffering.equivalent_offering
-            
-            cs_plan_attrs = PlanAttr.objects.get(plan = workflow_dict['target_plan'])
+
+            target_offering = workflow_dict['target_offering']
+
+            cs_plan_attrs = PlanAttr.objects.get(plan=workflow_dict['target_plan'])
             bundles = list(cs_plan_attrs.bundle.all())
-            
+
             workflow_dict['target_hosts'] = []
             workflow_dict['target_instances'] = []
-            
+
             for index, source_instance in enumerate(workflow_dict['source_instances']):
 
                 source_host = workflow_dict['source_hosts'][index]
@@ -50,21 +49,19 @@ class CreateVirtualMachine(BaseStep):
                 if len(bundles) == 1:
                     bundle = bundles[0]
                 else:
-                    bundle = LastUsedBundle.get_next_bundle(plan = workflow_dict['target_plan'], bundle = bundles)
+                    bundle = LastUsedBundle.get_next_bundle(plan=workflow_dict['target_plan'], bundle=bundles)
 
                 if index == 2:
                     offering = cs_plan_attrs.get_weaker_offering()
                 else:
-                    offering = target_serviceoffering
+                    offering = target_offering
 
-
-                vm = cs_provider.deploy_virtual_machine(
-                        offering = offering.serviceofferingid,
-                        bundle = bundle,
-                        project_id = cs_credentials.project,
-                        vmname = vm_name,
-                        affinity_group_id = cs_credentials.get_parameter_by_name('affinity_group_id'),
-                )
+                vm = cs_provider.deploy_virtual_machine(offering=offering.serviceofferingid,
+                                                        bundle=bundle,
+                                                        project_id=cs_credentials.project,
+                                                        vmname=vm_name,
+                                                        affinity_group_id=cs_credentials.get_parameter_by_name('affinity_group_id'),
+                                                        )
 
                 if not vm:
                     raise Exception("CloudStack could not create the virtualmachine")
@@ -74,7 +71,7 @@ class CreateVirtualMachine(BaseStep):
                 host.hostname = host.address
                 host.save()
                 workflow_dict['target_hosts'].append(host)
-                
+
                 source_host.future_host = host
                 source_host.save()
 
@@ -95,11 +92,11 @@ class CreateVirtualMachine(BaseStep):
                 instance.is_arbiter = source_instance.is_arbiter
                 instance.instance_type = source_instance.instance_type
                 instance.hostname = host
-                
+
                 instance.databaseinfra = workflow_dict['databaseinfra']
                 instance.save()
                 LOG.info("Instance created!")
-                
+
                 source_instance.future_instance = instance
                 source_instance.save()
 
@@ -118,40 +115,40 @@ class CreateVirtualMachine(BaseStep):
         LOG.info("Running undo...")
         try:
             cs_credentials = get_credentials_for(
-                environment = workflow_dict['target_environment'],
-                credential_type = CredentialType.CLOUDSTACK)
+                environment=workflow_dict['target_environment'],
+                credential_type=CredentialType.CLOUDSTACK)
 
             cs_provider = CloudStackProvider(credentials=cs_credentials)
-            
+
             for source_instance in workflow_dict['source_instances']:
                 source_instance.future_instance = None
                 source_instance.save()
                 LOG.info("Source instance updated")
-            
+
             for target_instance in workflow_dict['target_instances']:
                 target_instance.delete()
                 LOG.info("Target instance deleted")
-            
+
             for source_host in workflow_dict['source_hosts']:
                 source_host.future_host = None
                 source_host.save()
                 LOG.info("Source host updated")
-            
+
             for target_host in workflow_dict['target_hosts']:
-                host_attr = HostAttr.objects.get(host = target_host)
+                host_attr = HostAttr.objects.get(host=target_host)
                 LOG.info("Destroying virtualmachine %s" % host_attr.vm_id)
-                
+
                 cs_provider.destroy_virtual_machine(
-                    project_id = cs_credentials.project,
-                    environment = workflow_dict['target_environment'],
-                    vm_id = host_attr.vm_id)
+                    project_id=cs_credentials.project,
+                    environment=workflow_dict['target_environment'],
+                    vm_id=host_attr.vm_id)
 
                 host_attr.delete()
                 LOG.info("HostAttr deleted!")
-                
+
                 target_host.delete()
                 LOG.info("Target host deleted")
-            
+
             return True
         except Exception:
             traceback = full_stack()
