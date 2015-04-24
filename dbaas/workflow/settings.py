@@ -123,5 +123,12 @@ MONGODB_REGION_MIGRATION_2 = (
 MONGODB_REGION_MIGRATION_3 = (
     'workflow.steps.mongodb.region_migration.switch_dns.SwitchDNS',
 )
-MONGODB_REGION_MIGRATION_4 = ()
+MONGODB_REGION_MIGRATION_4 = (
+    'workflow.steps.mongodb.region_migration.update_dbaas_metadata.UpdateDBaaSMetadata',
+    'workflow.steps.mongodb.region_migration.remove_old_instances_replica_set.RemoveInstancesReplicaSet',
+    'workflow.steps.mongodb.region_migration.stop_old_instances.StopInstances',
+    'workflow.steps.mongodb.region_migration.remove_disks.RemoveDisks',
+    'workflow.steps.mongodb.region_migration.remove_vms.RemoveVms',
+    'workflow.steps.mongodb.region_migration.change_ttl.DefaultTTL',
+)
 MONGODB_REGION_MIGRATION_5 = ()
