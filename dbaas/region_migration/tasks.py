@@ -59,15 +59,23 @@ def execute_database_region_migration(self, database_region_migration_detail_id,
                 source_hosts.append(instance.hostname)
 
         source_plan = databaseinfra.plan
-        target_plan = source_plan.equivalent_plan_id
+        target_plan = source_plan.equivalent_plan
+
+        source_offering = databaseinfra.cs_dbinfra_offering.get().offering
+        target_offering = source_offering.equivalent_offering
 
         workflow_dict = build_dict(
             databaseinfra=databaseinfra,
+            database=database,
+            source_environment=source_environment,
             target_environment=target_environment,
             steps=workflow_steps,
             source_instances=source_instances,
             source_hosts=source_hosts,
+            source_plan=source_plan,
             target_plan=target_plan,
+            source_offering=source_offering,
+            target_offering=target_offering,
         )
 
         start_workflow(workflow_dict=workflow_dict, task=task_history)
@@ -125,7 +133,7 @@ def execute_database_region_migration(self, database_region_migration_detail_id,
 
 @app.task(bind=True)
 def execute_database_region_migration_undo(self, database_region_migration_detail_id, task_history=None, user=None):
-    #AuditRequest.new_request("execute_database_region_migration", user, "localhost")
+    AuditRequest.new_request("execute_database_region_migration", user, "localhost")
     try:
 
         if task_history:
@@ -144,6 +152,11 @@ def execute_database_region_migration_undo(self, database_region_migration_detai
 
         database_region_migration_detail = DatabaseRegionMigrationDetail.objects.get(
             id=database_region_migration_detail_id)
+
+        database_region_migration_detail.started_at = datetime.now()
+        database_region_migration_detail.status = database_region_migration_detail.RUNNING
+        database_region_migration_detail.save()
+
         database_region_migration = database_region_migration_detail.database_region_migration
         database = database_region_migration.database
         databaseinfra = database.databaseinfra
@@ -199,6 +212,10 @@ def execute_database_region_migration_undo(self, database_region_migration_detai
         database_region_migration.current_step = current_step - 1
         database_region_migration.save()
 
+        database_region_migration_detail.status = database_region_migration_detail.SUCCESS
+        database_region_migration_detail.finished_at = datetime.now()
+        database_region_migration_detail.save()
+
         task_history.update_status_for(
             TaskHistory.STATUS_SUCCESS, details='Database region migration was succesfully')
 
@@ -209,8 +226,12 @@ def execute_database_region_migration_undo(self, database_region_migration_detai
 
         task_history.update_status_for(
             TaskHistory.STATUS_ERROR, details=traceback)
+
+        database_region_migration_detail.status = database_region_migration_detail.ERROR
+        database_region_migration_detail.finished_at = datetime.now()
+        database_region_migration_detail.save()
+
         return
 
     finally:
-        # AuditRequest.cleanup_request()
-        pass
+        AuditRequest.cleanup_request()
