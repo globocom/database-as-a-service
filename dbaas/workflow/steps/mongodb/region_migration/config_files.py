@@ -13,6 +13,9 @@ from dbaas_cloudstack.models import HostAttr as CS_HostAttr
 from workflow.steps.util.base import BaseStep
 from workflow.exceptions.error_codes import DBAAS_0020
 from workflow.steps.util import test_bash_script_error
+from workflow.steps.mongodb.util import build_permission_script
+from workflow.steps.mongodb.util import build_start_database_script
+from workflow.steps.mongodb.util import build_stop_database_script
 
 LOG = logging.getLogger(__name__)
 
@@ -99,21 +102,10 @@ class ConfigFiles(BaseStep):
                     raise Exception("FTP Error")
 
                 script = test_bash_script_error()
-                script += '\nmkdir /data/data'
-                script += '\ndie_if_error "Error creating data dir"'
-
-                script += '\nchown mongodb:mongodb /data'
-                script += '\ndie_if_error "Error changing datadir permission"'
-                script += '\nchown -R mongodb:mongodb /data/*'
-                script += '\ndie_if_error "Error changing datadir permission"'
-
-                script += '\nchmod 600 /data/mongodb.key'
-                script += '\ndie_if_error "Error changing mongodb key file permission"'
-
-                script += '\necho ""; echo $(date "+%Y-%m-%d %T") "- Starting the database"'
-                script += '\n/etc/init.d/mongodb start > /dev/null'
-                script += '\ndie_if_error "Error starting database"'
+                script += build_permission_script()
+                script += build_start_database_script()
                 script = build_context_script({}, script)
+
                 output = {}
                 LOG.info(script)
                 return_code = exec_remote_command(server=target_host.address,
@@ -140,8 +132,7 @@ class ConfigFiles(BaseStep):
         LOG.info("Running undo...")
         try:
 
-            script = '/etc/init.d/mongodb stop'
-            script += '\nrm -rf /data/*'
+            script = build_stop_database_script()
             script = build_context_script({}, script)
             for target_instance in workflow_dict['target_instances']:
                 target_host = target_instance.hostname
