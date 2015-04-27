@@ -3,8 +3,8 @@ import logging
 from util import full_stack
 from dbaas_dnsapi.provider import DNSAPIProvider
 from physical.models import Instance
-from ...util.base import BaseStep
-from ....exceptions.error_codes import DBAAS_0020
+from workflow.steps.util.base import BaseStep
+from workflow.exceptions.error_codes import DBAAS_0020
 
 LOG = logging.getLogger(__name__)
 

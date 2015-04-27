@@ -10,8 +10,8 @@ from util import scp_get_file
 from util import scp_put_file
 from system.models import Configuration
 from dbaas_cloudstack.models import HostAttr as CS_HostAttr
-from ...util.base import BaseStep
-from ....exceptions.error_codes import DBAAS_0020
+from workflow.steps.util.base import BaseStep
+from workflow.exceptions.error_codes import DBAAS_0020
 
 LOG = logging.getLogger(__name__)
 

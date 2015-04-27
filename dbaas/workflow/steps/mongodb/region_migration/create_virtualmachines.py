@@ -9,8 +9,8 @@ from dbaas_cloudstack.models import HostAttr
 from dbaas_cloudstack.models import LastUsedBundle
 from physical.models import Host
 from physical.models import Instance
-from ...util.base import BaseStep
-from ....exceptions.error_codes import DBAAS_0020
+from workflow.steps.util.base import BaseStep
+from workflow.exceptions.error_codes import DBAAS_0020
 
 LOG = logging.getLogger(__name__)
 

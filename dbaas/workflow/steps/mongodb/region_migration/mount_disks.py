@@ -6,8 +6,9 @@ from util import exec_remote_command
 from util import build_context_script
 from dbaas_cloudstack.models import HostAttr as CS_HostAttr
 from dbaas_nfsaas.models import HostAttr as NFS_HostAttr
-from ...util.base import BaseStep
-from ....exceptions.error_codes import DBAAS_0020
+from workflow.steps.util.base import BaseStep
+from workflow.steps.util import test_bash_script_error
+from workflow.exceptions.error_codes import DBAAS_0020
 
 LOG = logging.getLogger(__name__)
 
@@ -19,9 +20,6 @@ class MountDisks(BaseStep):
 
     def do(self, workflow_dict):
         try:
-
-            initial_script = '#!/bin/bash\n\ndie_if_error()\n{\n    local err=$?\n    if [ "$err" != "0" ]; then\n        echo "$*"\n        exit $err\n    fi\n}'
-
             for index, instance in enumerate(workflow_dict['target_instances']):
 
                 if instance.instance_type == instance.MONGODB_ARBITER:
@@ -47,7 +45,7 @@ class MountDisks(BaseStep):
                     'EXPORTPATH': nfs_host_attr.nfsaas_path,
                 }
 
-                script = initial_script
+                script = test_bash_script_error()
                 script += '\necho ""; echo $(date "+%Y-%m-%d %T") "- Mounting data disk"'
                 script += '\necho "{{EXPORTPATH}}    /data nfs defaults,bg,intr,nolock 0 0" >> /etc/fstab'
                 script += '\ndie_if_error "Error setting fstab"'

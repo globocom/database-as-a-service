@@ -4,8 +4,9 @@ from util import full_stack
 from util import exec_remote_command
 from util import build_context_script
 from dbaas_cloudstack.models import HostAttr as CS_HostAttr
-from ...util.base import BaseStep
-from ....exceptions.error_codes import DBAAS_0020
+from workflow.steps.util.base import BaseStep
+from workflow.exceptions.error_codes import DBAAS_0020
+from workflow.steps.util import test_bash_script_error
 
 LOG = logging.getLogger(__name__)
 
@@ -17,8 +18,6 @@ class AddInstancesReplicaSet(BaseStep):
 
     def do(self, workflow_dict):
         try:
-
-            initial_script = '#!/bin/bash\n\ndie_if_error()\n{\n    local err=$?\n    if [ "$err" != "0" ]; then\n        echo "$*"\n        exit $err\n    fi\n}'
             databaseinfra = workflow_dict['databaseinfra']
 
             connect_string = ""
@@ -54,7 +53,7 @@ class AddInstancesReplicaSet(BaseStep):
                 'SECUNDARY_TWO_MEMBER_ID': secundary_two_member_id,
             }
 
-            script = initial_script
+            script = test_bash_script_error()
             script += '\necho ""; echo $(date "+%Y-%m-%d %T") "- Adding new database members"'
             script += '\n/usr/local/mongodb/bin/mongo {{CONNECT_STRING}} <<EOF_DBAAS'
             script += '\nrs.add( { "_id": {{SECUNDARY_ONE_MEMBER_ID}}, "host": "{{SECUNDARY_ONE}}", "priority": 0 } )'
@@ -91,8 +90,6 @@ class AddInstancesReplicaSet(BaseStep):
     def undo(self, workflow_dict):
         LOG.info("Running undo...")
         try:
-
-            initial_script = '#!/bin/bash\n\ndie_if_error()\n{\n    local err=$?\n    if [ "$err" != "0" ]; then\n        echo "$*"\n        exit $err\n    fi\n}'
             databaseinfra = workflow_dict['databaseinfra']
 
             connect_string = ""
@@ -116,7 +113,7 @@ class AddInstancesReplicaSet(BaseStep):
                 'ARBITER': "{}:{}".format(workflow_dict['target_instances'][2].address, workflow_dict['target_instances'][2].port),
             }
 
-            script = initial_script
+            script = test_bash_script_error()
             script += '\necho ""; echo $(date "+%Y-%m-%d %T") "- Removing new database members"'
             script += '\n/usr/local/mongodb/bin/mongo {{CONNECT_STRING}} <<EOF_DBAAS'
             script += '\nrs.remove("{{ARBITER}}")'

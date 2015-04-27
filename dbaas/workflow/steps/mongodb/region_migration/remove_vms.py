@@ -5,8 +5,8 @@ from util import get_credentials_for
 from dbaas_cloudstack.provider import CloudStackProvider
 from dbaas_cloudstack.models import HostAttr
 from dbaas_credentials.models import CredentialType
-from ...util.base import BaseStep
-from ....exceptions.error_codes import DBAAS_0020
+from workflow.steps.util.base import BaseStep
+from workflow.exceptions.error_codes import DBAAS_0020
 
 LOG = logging.getLogger(__name__)
 

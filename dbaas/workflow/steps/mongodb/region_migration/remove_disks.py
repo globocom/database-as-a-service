@@ -4,8 +4,8 @@ from util import full_stack
 from util import exec_remote_command
 from dbaas_cloudstack.models import HostAttr as CsHostAttr
 from dbaas_nfsaas.provider import NfsaasProvider
-from ...util.base import BaseStep
-from ....exceptions.error_codes import DBAAS_0020
+from workflow.steps.util.base import BaseStep
+from workflow.exceptions.error_codes import DBAAS_0020
 
 LOG = logging.getLogger(__name__)
 
