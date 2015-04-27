@@ -7,6 +7,7 @@ from dbaas_cloudstack.models import HostAttr as CS_HostAttr
 from workflow.steps.util.base import BaseStep
 from workflow.exceptions.error_codes import DBAAS_0020
 from workflow.steps.util import test_bash_script_error
+from workflow.steps.mongodb.util import build_mongodb_connect_string
 
 LOG = logging.getLogger(__name__)
 
@@ -20,19 +21,8 @@ class SwitchPrimary(BaseStep):
         try:
             databaseinfra = workflow_dict['databaseinfra']
 
-            connect_string = ""
-            for source_instance in workflow_dict['source_instances']:
-                if source_instance.instance_type != source_instance.MONGODB_ARBITER:
-                    if connect_string:
-                        connect_string += ','
-                    connect_string += source_instance.address + \
-                        ":" + str(source_instance.port)
-
-            connect_string = databaseinfra.get_driver().get_replica_name() + \
-                "/" + connect_string
-            connect_string = " --host {} admin -u{} -p{}".format(
-                connect_string, databaseinfra.user, databaseinfra.password)
-
+            connect_string = build_mongodb_connect_string(instances=workflow_dict['source_instances'],
+                                                          databaseinfra=databaseinfra)
             context_dict = {
                 'CONNECT_STRING': connect_string,
             }
@@ -98,29 +88,16 @@ class SwitchPrimary(BaseStep):
     def undo(self, workflow_dict):
         LOG.info("Running undo...")
         try:
-
-            initial_script = '#!/bin/bash\n\ndie_if_error()\n{\n    local err=$?\n    if [ "$err" != "0" ]; then\n        echo "$*"\n        exit $err\n    fi\n}'
             databaseinfra = workflow_dict['databaseinfra']
 
-            connect_string = ""
-            for source_instance in workflow_dict['source_instances']:
-                if source_instance.instance_type != source_instance.MONGODB_ARBITER:
-                    if connect_string:
-                        connect_string += ','
-                    connect_string += source_instance.address + \
-                        ":" + str(source_instance.port)
-
-            connect_string = databaseinfra.get_driver().get_replica_name() + \
-                "/" + connect_string
-            connect_string = " --host {} admin -u{} -p{}".format(
-                connect_string, databaseinfra.user, databaseinfra.password)
-            LOG.debug(connect_string)
+            connect_string = build_mongodb_connect_string(instances=workflow_dict['source_instances'],
+                                                          databaseinfra=databaseinfra)
 
             context_dict = {
                 'CONNECT_STRING': connect_string,
             }
 
-            script = initial_script
+            script = test_bash_script_error()
             script += '\necho ""; echo $(date "+%Y-%m-%d %T") "- Change priority of members"'
             script += '\n/usr/local/mongodb/bin/mongo {{CONNECT_STRING}} <<EOF_DBAAS'
             script += '\nstatus = rs.status()'

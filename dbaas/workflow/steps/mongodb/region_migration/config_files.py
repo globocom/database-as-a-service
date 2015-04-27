@@ -12,6 +12,7 @@ from system.models import Configuration
 from dbaas_cloudstack.models import HostAttr as CS_HostAttr
 from workflow.steps.util.base import BaseStep
 from workflow.exceptions.error_codes import DBAAS_0020
+from workflow.steps.util import test_bash_script_error
 
 LOG = logging.getLogger(__name__)
 
@@ -23,9 +24,6 @@ class ConfigFiles(BaseStep):
 
     def do(self, workflow_dict):
         try:
-
-            initial_script = '#!/bin/bash\n\ndie_if_error()\n{\n    local err=$?\n    if [ "$err" != "0" ]; then\n        echo "$*"\n        exit $err\n    fi\n}'
-
             region_migration_dir = Configuration.get_by_name('region_migration_dir')
             if not region_migration_dir:
                 region_migration_dir = '/tmp'
@@ -77,7 +75,7 @@ class ConfigFiles(BaseStep):
                                            wait=5, interval=10)
 
                     if not host_ready:
-                        raise Exception(str("Host %s is not ready..." % host))
+                        raise Exception(str("Host %s is not ready..." % target_host))
 
                 if not scp_put_file(server=target_host.address,
                                     username=target_cs_host_attr.vm_user,
@@ -100,7 +98,7 @@ class ConfigFiles(BaseStep):
                                     remotepath="/etc/td-agent/td-agent.conf"):
                     raise Exception("FTP Error")
 
-                script = initial_script
+                script = test_bash_script_error()
                 script += '\nmkdir /data/data'
                 script += '\ndie_if_error "Error creating data dir"'
 

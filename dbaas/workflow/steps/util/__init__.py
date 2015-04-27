@@ -9,7 +9,7 @@ from time import sleep
 from dbaas_cloudstack.models import HostAttr
 from dbaas_cloudstack.provider import CloudStackProvider
 from dbaas_credentials.models import CredentialType
-from ...exceptions.error_codes import DBAAS_0015
+from workflow.exceptions.error_codes import DBAAS_0015
 
 LOG = logging.getLogger(__name__)
 

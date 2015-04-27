@@ -7,6 +7,7 @@ from dbaas_cloudstack.models import HostAttr as CS_HostAttr
 from workflow.steps.util.base import BaseStep
 from workflow.exceptions.error_codes import DBAAS_0020
 from workflow.steps.util import test_bash_script_error
+from workflow.steps.mongodb.util import build_mongodb_connect_string
 
 
 LOG = logging.getLogger(__name__)
@@ -21,21 +22,13 @@ class RemoveInstancesReplicaSet(BaseStep):
         try:
 
             databaseinfra = workflow_dict['databaseinfra']
+            target_instances = []
 
-            connect_string = ""
             for source_instance in workflow_dict['source_instances']:
-                target_instance = source_instance.future_instance
-                if target_instance.instance_type != target_instance.MONGODB_ARBITER:
-                    if connect_string:
-                        connect_string += ','
-                    connect_string += target_instance.address + \
-                        ":" + str(target_instance.port)
+                target_instances.append(source_instance.future_instance)
 
-            connect_string = databaseinfra.get_driver().get_replica_name() + \
-                "/" + connect_string
-            connect_string = " --host {} admin -u{} -p{}".format(
-                connect_string, databaseinfra.user, databaseinfra.password)
-            LOG.debug(connect_string)
+            connect_string = build_mongodb_connect_string(instances=target_instances,
+                                                          databaseinfra=databaseinfra)
 
             context_dict = {
                 'CONNECT_STRING': connect_string,
