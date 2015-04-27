@@ -5,7 +5,7 @@ from django.utils.html import format_html
 from django.core.urlresolvers import reverse
 from django.conf.urls import url, patterns
 from django.http import HttpResponseRedirect
-from datetime import datetime
+from dateutil import tz
 from notification.models import TaskHistory
 from ..models import DatabaseRegionMigration
 from ..models import DatabaseRegionMigrationDetail
@@ -144,6 +144,7 @@ class DatabaseRegionMigrationAdmin(admin.DjangoServicesAdmin):
                 task_history.save()
 
                 is_rollback = request.GET.get('rollback')
+                scheduled_for.replace(tzinfo=tz.tzlocal()).astimezone(tz.tzutc())
 
                 if is_rollback:
                     LOG.info("Rollback!")
