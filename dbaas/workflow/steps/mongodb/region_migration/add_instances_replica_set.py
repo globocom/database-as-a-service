@@ -8,6 +8,8 @@ from workflow.steps.util.base import BaseStep
 from workflow.exceptions.error_codes import DBAAS_0020
 from workflow.steps.util import test_bash_script_error
 from workflow.steps.mongodb.util import build_mongodb_connect_string
+from workflow.steps.mongodb.util import build_add_replica_set_members_script
+from workflow.steps.mongodb.util import build_remove_replica_set_members_script
 
 LOG = logging.getLogger(__name__)
 
@@ -44,14 +46,7 @@ class AddInstancesReplicaSet(BaseStep):
             }
 
             script = test_bash_script_error()
-            script += '\necho ""; echo $(date "+%Y-%m-%d %T") "- Adding new database members"'
-            script += '\n/usr/local/mongodb/bin/mongo {{CONNECT_STRING}} <<EOF_DBAAS'
-            script += '\nrs.add( { "_id": {{SECUNDARY_ONE_MEMBER_ID}}, "host": "{{SECUNDARY_ONE}}", "priority": 0 } )'
-            script += '\nrs.add( { "_id": {{SECUNDARY_TWO_MEMBER_ID}}, "host": "{{SECUNDARY_TWO}}", "priority": 0 } )'
-            script += '\nrs.addArb("{{ARBITER}}")'
-            script += '\nexit'
-            script += '\nEOF_DBAAS'
-            script += '\ndie_if_error "Error adding new replica set members"'
+            script += build_add_replica_set_members_script()
 
             script = build_context_script(context_dict, script)
             output = {}
@@ -93,28 +88,7 @@ class AddInstancesReplicaSet(BaseStep):
             }
 
             script = test_bash_script_error()
-            script += '\necho ""; echo $(date "+%Y-%m-%d %T") "- Removing new database members"'
-            script += '\n/usr/local/mongodb/bin/mongo {{CONNECT_STRING}} <<EOF_DBAAS'
-            script += '\nrs.remove("{{ARBITER}}")'
-            script += '\nexit'
-            script += '\nEOF_DBAAS'
-            script += '\ndie_if_error "Error removing new replica set members"'
-
-            script += '\nsleep 30'
-            script += '\necho ""; echo $(date "+%Y-%m-%d %T") "- Removing new database members"'
-            script += '\n/usr/local/mongodb/bin/mongo {{CONNECT_STRING}} <<EOF_DBAAS'
-            script += '\nrs.remove("{{SECUNDARY_TWO}}")'
-            script += '\nexit'
-            script += '\nEOF_DBAAS'
-            script += '\ndie_if_error "Error removing new replica set members"'
-
-            script += '\nsleep 30'
-            script += '\necho ""; echo $(date "+%Y-%m-%d %T") "- Removing new database members"'
-            script += '\n/usr/local/mongodb/bin/mongo {{CONNECT_STRING}} <<EOF_DBAAS'
-            script += '\nrs.remove("{{SECUNDARY_ONE}}")'
-            script += '\nexit'
-            script += '\nEOF_DBAAS'
-            script += '\ndie_if_error "Error removing new replica set members"'
+            script += build_remove_replica_set_members_script()
 
             script = build_context_script(context_dict, script)
             output = {}

@@ -8,6 +8,9 @@ from workflow.steps.util.base import BaseStep
 from workflow.exceptions.error_codes import DBAAS_0020
 from workflow.steps.util import test_bash_script_error
 from workflow.steps.mongodb.util import build_mongodb_connect_string
+from workflow.steps.mongodb.util import build_switch_primary_to_new_instances_script
+from workflow.steps.mongodb.util import build_switch_primary_to_old_instances_script
+
 
 LOG = logging.getLogger(__name__)
 
@@ -28,38 +31,7 @@ class SwitchPrimary(BaseStep):
             }
 
             script = test_bash_script_error()
-            script += '\necho ""; echo $(date "+%Y-%m-%d %T") "- Change priority of members"'
-            script += '\n/usr/local/mongodb/bin/mongo {{CONNECT_STRING}} <<EOF_DBAAS'
-            script += '\nstatus = rs.status()'
-            script += '\nvar_secundary_member = 0'
-            script += '\nif (status["members"][1].stateStr == "SECONDARY") {var_secundary_member = 1}'
-            script += '\ncfg = rs.conf()'
-            script += '\ncfg.members[var_secundary_member].priority = 0'
-            script += '\ncfg.members[3].priority = 1'
-            script += '\ncfg.members[4].priority = 1'
-            script += '\nrs.reconfig(cfg)'
-            script += '\nexit'
-            script += '\nEOF_DBAAS'
-            script += '\ndie_if_error "Error changing priority of members"'
-
-            script += '\nsleep 30'
-            script += '\necho ""; echo $(date "+%Y-%m-%d %T") "- Switch primary"'
-            script += '\n/usr/local/mongodb/bin/mongo {{CONNECT_STRING}} <<EOF_DBAAS'
-            script += '\nrs.stepDown()'
-            script += '\nexit'
-            script += '\nEOF_DBAAS'
-            script += '\ndie_if_error "Error switching primary"'
-
-            script += '\nsleep 30'
-            script += '\necho ""; echo $(date "+%Y-%m-%d %T") "- Change priority of members"'
-            script += '\n/usr/local/mongodb/bin/mongo {{CONNECT_STRING}} <<EOF_DBAAS'
-            script += '\ncfg = rs.conf()'
-            script += '\ncfg.members[0].priority = 0'
-            script += '\ncfg.members[1].priority = 0'
-            script += '\nrs.reconfig(cfg)'
-            script += '\nexit'
-            script += '\nEOF_DBAAS'
-            script += '\ndie_if_error "Error changing priority of members"'
+            script += build_switch_primary_to_new_instances_script()
 
             script = build_context_script(context_dict, script)
             output = {}
@@ -98,38 +70,7 @@ class SwitchPrimary(BaseStep):
             }
 
             script = test_bash_script_error()
-            script += '\necho ""; echo $(date "+%Y-%m-%d %T") "- Change priority of members"'
-            script += '\n/usr/local/mongodb/bin/mongo {{CONNECT_STRING}} <<EOF_DBAAS'
-            script += '\nstatus = rs.status()'
-            script += '\nvar_secundary_member = 3'
-            script += '\nif (status["members"][4].stateStr == "SECONDARY") {var_secundary_member = 4}'
-            script += '\ncfg = rs.conf()'
-            script += '\ncfg.members[var_secundary_member].priority = 0'
-            script += '\ncfg.members[0].priority = 1'
-            script += '\ncfg.members[1].priority = 1'
-            script += '\nrs.reconfig(cfg)'
-            script += '\nexit'
-            script += '\nEOF_DBAAS'
-            script += '\ndie_if_error "Error changing priority of members"'
-
-            script += '\nsleep 30'
-            script += '\necho ""; echo $(date "+%Y-%m-%d %T") "- Switch primary"'
-            script += '\n/usr/local/mongodb/bin/mongo {{CONNECT_STRING}} <<EOF_DBAAS'
-            script += '\nrs.stepDown()'
-            script += '\nexit'
-            script += '\nEOF_DBAAS'
-            script += '\ndie_if_error "Error switching primary"'
-
-            script += '\nsleep 30'
-            script += '\necho ""; echo $(date "+%Y-%m-%d %T") "- Change priority of members"'
-            script += '\n/usr/local/mongodb/bin/mongo {{CONNECT_STRING}} <<EOF_DBAAS'
-            script += '\ncfg = rs.conf()'
-            script += '\ncfg.members[3].priority = 0'
-            script += '\ncfg.members[4].priority = 0'
-            script += '\nrs.reconfig(cfg)'
-            script += '\nexit'
-            script += '\nEOF_DBAAS'
-            script += '\ndie_if_error "Error changing priority of members"'
+            script += build_switch_primary_to_old_instances_script()
             script = build_context_script(context_dict, script)
             output = {}
 

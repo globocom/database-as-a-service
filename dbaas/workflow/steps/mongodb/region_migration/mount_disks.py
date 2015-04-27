@@ -8,6 +8,7 @@ from dbaas_cloudstack.models import HostAttr as CS_HostAttr
 from dbaas_nfsaas.models import HostAttr as NFS_HostAttr
 from workflow.steps.util.base import BaseStep
 from workflow.steps.util import test_bash_script_error
+from workflow.steps.mongodb.util import build_mount_disk_script
 from workflow.exceptions.error_codes import DBAAS_0020
 
 LOG = logging.getLogger(__name__)
@@ -46,11 +47,7 @@ class MountDisks(BaseStep):
                 }
 
                 script = test_bash_script_error()
-                script += '\necho ""; echo $(date "+%Y-%m-%d %T") "- Mounting data disk"'
-                script += '\necho "{{EXPORTPATH}}    /data nfs defaults,bg,intr,nolock 0 0" >> /etc/fstab'
-                script += '\ndie_if_error "Error setting fstab"'
-                script += '\nmount /data'
-                script += '\ndie_if_error "Error setting fstab"'
+                script += build_mount_disk_script()
                 script = build_context_script(context_dict, script)
                 LOG.info(script)
                 output = {}
