@@ -38,6 +38,8 @@ from cStringIO import StringIO
 from functools import partial
 import sys
 from bson.json_util import loads
+from django.contrib.admin import site
+from django.db import IntegrityError
 
 LOG = logging.getLogger(__name__)
 
@@ -90,6 +92,21 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
     quarantine_dt_format.short_description = "Quarantine since"
     quarantine_dt_format.admin_order_field = 'quarantine_dt'
+
+    def initialize_database_migration(model_admin, request, queryset):
+        from region_migration.models import DatabaseRegionMigration
+
+        for database in queryset:
+            region_migration = DatabaseRegionMigration(database=database,
+                                                       current_step=0,
+                                                       )
+            try:
+                region_migration.save()
+            except IntegrityError:
+                pass
+
+
+    site.add_action(initialize_database_migration, 'initialize_region_migration')
 
     def environment(self, database):
         return database.environment
