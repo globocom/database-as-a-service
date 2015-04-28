@@ -105,7 +105,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             except IntegrityError:
                 pass
 
-    site.add_action(initialize_database_migration, 'initialize_region_migration')
+    #site.add_action(initialize_database_migration, 'initialize_region_migration')
 
     def environment(self, database):
         return database.environment
