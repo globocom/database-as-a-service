@@ -45,6 +45,8 @@
                                 <h6><b>Engine:</b> {{ infra.engine_name }}&nbsp;{{ infra.engine.version }}</h6>
                                 {% if infra.environment.name == 'laboratory' %}
                                     <h6><b>Environment:</b><li class="label label-default">{{ infra.environment.name }}</li></h6>
+                                {% if infra.environment.name == 'qa2' %}
+                                    <h6><b>Environment:</b><li class="label label-default">{{ infra.environment.name }}</li></h6>
                                 {% elif infra.environment.name == 'dev' %}
                                     <h6><b>Environment:</b><li class="label label-info">{{ infra.environment.name }}</li></h6>
                                 {% elif infra.environment.name == 'qa01' %}

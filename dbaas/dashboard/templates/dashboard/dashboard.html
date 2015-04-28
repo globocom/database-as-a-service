@@ -4,10 +4,10 @@
 {% block extrajs %}
     <script type="text/javascript" src="{% static "assets/js/jquery.tablesorter.js" %}"></script>
     <script>
-    $(document).ready(function() 
-        { 
-            $("#searchtable").tablesorter(); 
-        } 
+    $(document).ready(function()
+        {
+            $("#searchtable").tablesorter();
+        }
     );
     </script>
 {% endblock %}
@@ -39,6 +39,9 @@
                                 {% if infra.environment.name == 'laboratory' %}
                                     <li class="label label-default">{{ infra.environment.name }}</li>
                                 {% endif %}
+                                {% if infra.environment.name == 'qa2' %}
+                                    <li class="label label-default">{{ infra.environment.name }}</li>
+                                {% endif %}
                                 {% if infra.environment.name == 'dev' %}
                                     <li class="label label-info">{{ infra.environment.name }}</li>
                                 {% endif %}
@@ -50,8 +53,8 @@
                                 {% endif %}
                             </td>
                             <td>{{ infra.plan.name }}</td>
-                            
-                            <td> 
+
+                            <td>
                                 {% if infra.check_instances_status == infra.ALIVE %}
                                     <li class="label label-success">Alive</li>
                                 {% elif infra.check_instances_status == infra.DEAD %}
