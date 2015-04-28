@@ -24,6 +24,10 @@ class CreateNfs(BaseStep):
                     LOG.info("Do not creat nfsaas disk for Arbiter...")
                     continue
 
+                if instance.instance_type == instance.REDIS_SENTINEL:
+                    LOG.info("Do not creat nfsaas disk for Redis Sentinel...")
+                    continue
+
                 LOG.info("Creating nfsaas disk...")
 
                 host = instance.hostname
