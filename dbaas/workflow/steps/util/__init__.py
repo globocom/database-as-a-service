@@ -129,3 +129,20 @@ def test_bash_script_error():
                 exit $err
             fi
       }"""
+
+
+def build_mount_disk_script():
+    return """
+        echo ""; echo $(date "+%Y-%m-%d %T") "- Mounting data disk"
+        echo "{{EXPORTPATH}}    /data nfs defaults,bg,intr,nolock 0 0" >> /etc/fstab
+        die_if_error "Error setting fstab"
+        mount /data
+        die_if_error "Error setting fstab"
+        """
+
+
+def build_start_td_agent_script():
+    return """
+        echo ""; echo $(date "+%Y-%m-%d %T") "- Starting td_agent"
+        /etc/init.d/td-agent start
+        """

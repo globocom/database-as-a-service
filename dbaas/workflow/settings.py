@@ -113,10 +113,10 @@ MYSQL_REGION_MIGRATION = ()
 REDIS_REGION_MIGRATION = ()
 
 MONGODB_REGION_MIGRATION_1 = (
-    'workflow.steps.mongodb.region_migration.change_ttl.DecreaseTTL',
+    'workflow.steps.util.region_migration.change_ttl.DecreaseTTL',
     'workflow.steps.mongodb.region_migration.create_virtualmachines.CreateVirtualMachine',
-    'workflow.steps.mongodb.region_migration.create_nfs.CreateNfs',
-    'workflow.steps.mongodb.region_migration.mount_disks.MountDisks',
+    'workflow.steps.util.region_migration.create_nfs.CreateNfs',
+    'workflow.steps.util.region_migration.mount_disks.MountDisks',
     'workflow.steps.mongodb.region_migration.config_files.ConfigFiles',
     'workflow.steps.mongodb.region_migration.add_instances_replica_set.AddInstancesReplicaSet',
 )
@@ -128,9 +128,10 @@ MONGODB_REGION_MIGRATION_3 = (
 )
 MONGODB_REGION_MIGRATION_4 = (
     'workflow.steps.mongodb.region_migration.update_dbaas_metadata.UpdateDBaaSMetadata',
+    'workflow.steps.util.region_migration.td_agent.StartTDAgent',
     'workflow.steps.mongodb.region_migration.remove_old_instances_replica_set.RemoveInstancesReplicaSet',
-    'workflow.steps.mongodb.region_migration.remove_disks.RemoveDisks',
-    'workflow.steps.mongodb.region_migration.remove_vms.RemoveVms',
-    'workflow.steps.mongodb.region_migration.change_ttl.DefaultTTL',
+    'workflow.steps.util.region_migration.remove_disks.RemoveDisks',
+    'workflow.steps.util.region_migration.remove_vms.RemoveVms',
+    'workflow.steps.util.region_migration.change_ttl.DefaultTTL',
 )
 MONGODB_REGION_MIGRATION_5 = ()

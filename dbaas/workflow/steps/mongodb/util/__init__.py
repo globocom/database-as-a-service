@@ -23,16 +23,6 @@ def build_mongodb_connect_string(instances, databaseinfra):
     return connect_string
 
 
-def build_mount_disk_script():
-    return """
-        echo ""; echo $(date "+%Y-%m-%d %T") "- Mounting data disk"
-        echo "{{EXPORTPATH}}    /data nfs defaults,bg,intr,nolock 0 0" >> /etc/fstab
-        die_if_error "Error setting fstab"
-        mount /data
-        die_if_error "Error setting fstab"
-        """
-
-
 def build_permission_script():
 
     return """

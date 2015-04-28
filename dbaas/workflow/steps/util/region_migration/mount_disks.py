@@ -8,7 +8,7 @@ from dbaas_cloudstack.models import HostAttr as CS_HostAttr
 from dbaas_nfsaas.models import HostAttr as NFS_HostAttr
 from workflow.steps.util.base import BaseStep
 from workflow.steps.util import test_bash_script_error
-from workflow.steps.mongodb.util import build_mount_disk_script
+from workflow.steps.util import build_mount_disk_script
 from workflow.exceptions.error_codes import DBAAS_0020
 
 LOG = logging.getLogger(__name__)
@@ -24,6 +24,9 @@ class MountDisks(BaseStep):
             for index, instance in enumerate(workflow_dict['target_instances']):
 
                 if instance.instance_type == instance.MONGODB_ARBITER:
+                    continue
+
+                if instance.instance_type == instance.REDIS_SENTINEL:
                     continue
 
                 host = instance.hostname
