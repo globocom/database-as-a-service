@@ -88,7 +88,27 @@ def get_mongodb_steps():
 
 
 def get_mysql_steps():
-    pass
+    step1 = Step('mysql', 'Ready to start Migration!',
+                 'Create new instances', 0,
+                 '',
+                 settings.MYSQL_REGION_MIGRATION_1)
+
+    step2 = Step('mysql', 'New instances created!',
+                 'Switch DNS', 1,
+                 'Please, check replication and ACL',
+                 settings.MYSQL_REGION_MIGRATION_2)
+
+    step3 = Step('mysql', 'DNS switched!',
+                 'Clean old instances', 2,
+                 'Please, check aplication and monitoring',
+                 settings.MYSQL_REGION_MIGRATION_3)
+
+    step4 = Step('mysql', 'Database migrated!',
+                 'There is not next step. Database migrated', 3,
+                 'Please, check aplication and monitoring',
+                 settings.MYSQL_REGION_MIGRATION_4)
+
+    return (step1, step2, step3, step4)
 
 
 def get_redis_steps():
