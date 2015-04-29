@@ -203,7 +203,7 @@ def execute_database_region_migration_undo(self, database_region_migration_detai
             raise Exception('There is no target instance')
 
         source_secondary_ips = DatabaseInfraAttr.objects.filter(databaseinfra=databaseinfra,
-                                                                equivalent_dbinfraattr=None)
+                                                                equivalent_dbinfraattr__isnull=False)
 
         source_secondary_ips = list(source_secondary_ips)
 
