@@ -47,7 +47,7 @@ class CheckDatabaseBinds(BaseStep):
                     filter(databaseinfra= databaseinfra,bind_address= database_bind.bind_address)
 
                 for infra_instance_bind in infra_instances_binds:
-                    custom_options = default_options
+                    custom_options = default_options.copy()
                     custom_options['source'] = database_bind.bind_address
                     custom_options['destination'] = infra_instance_bind.instance + '/32'
                     custom_options['l4-options']['dest-port-start'] = infra_instance_bind.instance_port
