@@ -73,7 +73,7 @@ def execute_database_region_migration(self, database_region_migration_detail_id,
             if database_region_migration.current_step > 0 and\
                     not secondary_ip.equivalent_dbinfraattr:
                 continue
-            source_secondary_ips.append(instance)
+            source_secondary_ips.append(secondary_ip)
 
         workflow_dict = build_dict(
             databaseinfra=databaseinfra,
