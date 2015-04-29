@@ -109,7 +109,16 @@ CLONE_UNKNOWN = (
 )
 
 
-MYSQL_REGION_MIGRATION = ()
+MYSQL_REGION_MIGRATION_1 = (
+    'workflow.steps.util.region_migration.change_ttl.DecreaseTTL',
+    'workflow.steps.mongodb.region_migration.create_virtualmachines.CreateVirtualMachine',
+    'workflow.steps.util.region_migration.create_nfs.CreateNfs',
+    'workflow.steps.util.region_migration.mount_disks.MountDisks',
+)
+MYSQL_REGION_MIGRATION_2 = ()
+MYSQL_REGION_MIGRATION_3 = ()
+MYSQL_REGION_MIGRATION_4 = ()
+
 REDIS_REGION_MIGRATION = ()
 
 MONGODB_REGION_MIGRATION_1 = (
