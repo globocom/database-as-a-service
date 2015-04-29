@@ -104,6 +104,9 @@ class CreateSecondaryIp(BaseStep):
                 databaseinfra=workflow_dict['databaseinfra'],
                 equivalent_dbinfraattr=None).exclude(id__in=source_secondary_ip_ids)
 
+            LOG.info("databaseinfraattr: {}".format(databaseinfraattr))
+            LOG.info("old infra ip: {}".format(workflow_dict['source_secondary_ips']))
+
             cs_credentials = get_credentials_for(
                 environment=workflow_dict['target_environment'],
                 credential_type=CredentialType.CLOUDSTACK)
@@ -117,6 +120,7 @@ class CreateSecondaryIp(BaseStep):
 
             for infra_attr in databaseinfraattr:
 
+                LOG.info("Entrou no for!!!!")
                 networkapi_equipment_id = infra_attr.networkapi_equipment_id
                 networkapi_ip_id = infra_attr.networkapi_ip_id
                 if networkapi_ip_id:
