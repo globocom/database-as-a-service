@@ -10,6 +10,7 @@ from models import DatabaseRegionMigrationDetail
 from workflow.workflow import start_workflow, stop_workflow
 from .migration_steps import get_engine_steps
 from physical.models import Environment, Instance
+from dbaas_cloudstack.models import DatabaseInfraAttr
 from sets import Set
 
 LOG = logging.getLogger(__name__)
@@ -66,6 +67,14 @@ def execute_database_region_migration(self, database_region_migration_detail_id,
         source_offering = databaseinfra.cs_dbinfra_offering.get().offering
         target_offering = source_offering.equivalent_offering
 
+        source_secondary_ips = []
+
+        for secondary_ip in DatabaseInfraAttr.objects.filter(databaseinfra=databaseinfra):
+            if database_region_migration.current_step > 0 and\
+                    not secondary_ip.equivalent_dbinfraattr:
+                continue
+            source_secondary_ips.append(instance)
+
         workflow_dict = build_dict(
             databaseinfra=databaseinfra,
             database=database,
@@ -78,6 +87,7 @@ def execute_database_region_migration(self, database_region_migration_detail_id,
             target_plan=target_plan,
             source_offering=source_offering,
             target_offering=target_offering,
+            source_secondary_ips=source_secondary_ips,
         )
 
         start_workflow(workflow_dict=workflow_dict, task=task_history)
@@ -192,6 +202,11 @@ def execute_database_region_migration_undo(self, database_region_migration_detai
         if not target_instances:
             raise Exception('There is no target instance')
 
+        source_secondary_ips = DatabaseInfraAttr.objects.filter(databaseinfra=databaseinfra,
+                                                                equivalent_dbinfraattr=None)
+
+        source_secondary_ips = list(source_secondary_ips)
+
         workflow_dict = build_dict(database_region_migration_detail=database_region_migration_detail,
                                    database_region_migration=database_region_migration,
                                    database=database,
@@ -205,7 +220,8 @@ def execute_database_region_migration_undo(self, database_region_migration_detai
                                    target_plan=target_plan,
                                    source_hosts=source_hosts,
                                    target_instances=target_instances,
-                                   target_hosts=target_hosts
+                                   target_hosts=target_hosts,
+                                   source_secondary_ips=source_secondary_ips,
                                    )
 
         stop_workflow(workflow_dict=workflow_dict, task=task_history)
