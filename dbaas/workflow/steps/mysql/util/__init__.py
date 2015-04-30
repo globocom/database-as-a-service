@@ -54,3 +54,11 @@ def build_mount_snapshot_volume_script():
         rm -rf /data2
 
     """
+
+
+def build_remove_deprecated_files_script():
+    return """
+        rm -f /data/data/auto.cnf
+        rm -f /data/data/*.err
+        rm -f /data/data/*.pid
+    """
