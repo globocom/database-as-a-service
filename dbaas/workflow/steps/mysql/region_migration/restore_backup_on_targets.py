@@ -10,6 +10,8 @@ from workflow.exceptions.error_codes import DBAAS_0020
 from workflow.steps.util import test_bash_script_error
 from workflow.steps.mysql.util import build_permission_script
 from workflow.steps.mysql.util import build_mount_snapshot_volume_script
+from workflow.steps.mysql.util import build_remove_deprecated_files_script
+from workflow.steps.mysql.util import build_start_database_script
 
 LOG = logging.getLogger(__name__)
 
@@ -29,7 +31,9 @@ class RetoreBackupOnTargets(BaseStep):
 
                 script = test_bash_script_error()
                 script += build_mount_snapshot_volume_script()
+                script += build_remove_deprecated_files_script()
                 script += build_permission_script()
+                script += build_start_database_script()
 
                 context_dict = {
                     'EXPORT_PATH': nf_host_attr.nfsaas_path,
