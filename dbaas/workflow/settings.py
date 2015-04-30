@@ -7,7 +7,7 @@ DEPLOY_MYSQL = (
     'workflow.steps.mysql.deploy.create_flipper.CreateFlipper',
     'workflow.steps.mysql.deploy.init_database.InitDatabase',
     'workflow.steps.util.deploy.check_database_connection.CheckDatabaseConnection',
-    'workflow.steps.util.deploy.check_dns.CheckDns',
+    #'workflow.steps.util.deploy.check_dns.CheckDns',
     'workflow.steps.util.deploy.create_zabbix.CreateZabbix',
     'workflow.steps.util.deploy.create_dbmonitor.CreateDbMonitor',
     'workflow.steps.util.deploy.build_database.BuildDatabase',
@@ -119,6 +119,8 @@ MYSQL_REGION_MIGRATION_1 = (
     'workflow.steps.mysql.region_migration.make_backup.MakeBackup',
     'workflow.steps.mysql.region_migration.grant_nfs_access.GrantNFSAccess',
     'workflow.steps.mysql.region_migration.restore_backup_on_targets.RetoreBackupOnTargets',
+    'workflow.steps.mysql.region_migration.revoke_nfs_access.RevokeNFSAccess',
+    'workflow.steps.mysql.region_migration.remove_nfs_snapshot.RemoveNfsSnapshot',
 )
 
 MYSQL_REGION_MIGRATION_2 = ()
