@@ -4,28 +4,35 @@ from util import full_stack
 from workflow.steps.util.base import BaseStep
 from dbaas_nfsaas.provider import NfsaasProvider
 from workflow.exceptions.error_codes import DBAAS_0020
+from workflow.steps.mysql.util import get_replication_info
+from workflow.steps.mysql.util import change_master_to
 
 LOG = logging.getLogger(__name__)
 
 
-class MakeBackup(BaseStep):
+class StartReplication(BaseStep):
 
     def __unicode__(self):
-        return "Making database backup..."
+        return "Starting Replication..."
 
     def do(self, workflow_dict):
         try:
+            master_source_instance = workflow_dict['source_instances'][0]
 
-            databaseinfra = workflow_dict['databaseinfra']
-            driver = databaseinfra.get_driver()
-            instance = workflow_dict['source_instances'][0]
-            client = driver.get_client(instance)
+            master_target_instance = workflow_dict['source_instances'][0].future_instance
+            slave_target_instance = workflow_dict['source_instances'][1].future_instance
 
-            client.query('show master status')
-            r = client.store_result()
-            row = r.fetch_row(maxrows=0, how=1)
-            workflow_dict['target_binlog_file'] = row[0]['File']
-            workflow_dict['target_binlog_pos'] = row[0]['Position']
+            master_log_file, master_log_pos = get_replication_info(master_target_instance)
+
+            change_master_to(instance=master_target_instance,
+                             master_host=master_source_instance.address,
+                             bin_log_file=workflow_dict['binlog_file'],
+                             bin_log_position=workflow_dict['binlog_pos'])
+
+            change_master_to(instance=slave_target_instance,
+                             master_host=master_target_instance.address,
+                             bin_log_file=master_log_file,
+                             bin_log_position=master_log_pos)
 
             return True
         except Exception:
@@ -39,20 +46,6 @@ class MakeBackup(BaseStep):
     def undo(self, workflow_dict):
         LOG.info("Running undo...")
         try:
-
-            databaseinfra = workflow_dict['databaseinfra']
-            instance = workflow_dict['source_instances'][0]
-            if 'database_locked' in workflow_dict and workflow_dict['database_locked']:
-                driver = databaseinfra.get_driver()
-                client = driver.get_client(instance)
-                driver.unlock_database(client)
-
-            if 'snapshopt_id' in workflow_dict:
-                NfsaasProvider.remove_snapshot(environment=databaseinfra.environment,
-                                               plan=databaseinfra.plan,
-                                               host=instance.hostname,
-                                               snapshopt=workflow_dict['snapshopt_id'])
-
             return True
         except Exception:
             traceback = full_stack()

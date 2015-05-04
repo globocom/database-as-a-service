@@ -62,3 +62,42 @@ def build_remove_deprecated_files_script():
         rm -f /data/data/*.err
         rm -f /data/data/*.pid
     """
+
+
+def get_client(instance):
+    databaseinfra = instance.databaseinfra
+    driver = databaseinfra.get_driver()
+
+    return driver.get_client(instance)
+
+
+def get_replication_info(instance):
+    client = get_client(instance)
+
+    client.query('show master status')
+    r = client.store_result()
+    row = r.fetch_row(maxrows=0, how=1)
+    return row[0]['File'], row[0]['Position']
+
+
+def change_master_to(instance, master_host, bin_log_file, bin_log_position):
+    client = get_client(instance)
+    client.query('stop slave')
+
+    sql_command = "change master to master_host='{}', master_log_file='{}', master_log_pos={}"
+    sql_command = sql_command.format(master_host, bin_log_file, bin_log_position)
+    client.query(sql_command)
+
+    client.query('start slave')
+
+
+def build_flipper_script():
+    return """
+        echo ""; echo $(date "+%Y-%m-%d %T") "- Setting /etc/hosts file"
+        echo "\n{{VIP_FLIPPER}}      flipper-metadata\n{{IPWRITE}}         heartbeat\n" >> /etc/hosts
+
+        echo ""; echo $(date "+%Y-%m-%d %T") "- Adding hosts to flipper known_hosts file"
+        ssh-keyscan -t rsa {{HOST01.address}} >> /home/flipper/.ssh/known_hosts
+        ssh-keyscan -t rsa {{HOST02.address}} >> /home/flipper/.ssh/known_hosts
+        chown flipper:flipper /home/flipper/.ssh/known_hosts
+    """
