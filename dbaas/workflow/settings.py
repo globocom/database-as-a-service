@@ -7,7 +7,7 @@ DEPLOY_MYSQL = (
     'workflow.steps.mysql.deploy.create_flipper.CreateFlipper',
     'workflow.steps.mysql.deploy.init_database.InitDatabase',
     'workflow.steps.util.deploy.check_database_connection.CheckDatabaseConnection',
-    #'workflow.steps.util.deploy.check_dns.CheckDns',
+    'workflow.steps.util.deploy.check_dns.CheckDns',
     'workflow.steps.util.deploy.create_zabbix.CreateZabbix',
     'workflow.steps.util.deploy.create_dbmonitor.CreateDbMonitor',
     'workflow.steps.util.deploy.build_database.BuildDatabase',
