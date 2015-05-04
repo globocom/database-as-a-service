@@ -151,7 +151,7 @@ def scp_file(server, username, password, localpath, remotepath, option):
     try:
         transport = paramiko.Transport((server, 22))
         transport.connect(username = username, password = password)
-        
+
         sftp = paramiko.SFTPClient.from_transport(transport)
         if option == 'PUT':
             sftp.put(localpath, remotepath)
@@ -159,7 +159,7 @@ def scp_file(server, username, password, localpath, remotepath, option):
             sftp.get(remotepath, localpath)
         else:
             raise Exception("Invalid option...")
-        
+
         sftp.close()
         transport.close()
         return True
@@ -254,7 +254,7 @@ def gen_infra_names(name, qt):
 
 def get_credentials_for(environment, credential_type):
     from dbaas_credentials.models import Credential
-    return Credential.objects.filter(integration_type__type= credential_type, environments= environment)[0]
+    return Credential.objects.filter(integration_type__type=credential_type, environments=environment)[0]
 
 
 def build_dict(**kwargs):
@@ -263,25 +263,27 @@ def build_dict(**kwargs):
         my_dict[name] = value
     return my_dict
 
+
 def full_stack():
     exc = sys.exc_info()[0]
     stack = traceback.extract_stack()[:-1]  # last one would be full_stack()
-    if not exc is None:  # i.e. if an exception is present
-        del stack[-1]       # remove call of full_stack, the printed exception
-                            # will contain the caught exception caller instead
+    if exc is not None:  # i.e. if an exception is present
+        del stack[-1]    # remove call of full_stack, the printed exception
+                         # will contain the caught exception caller instead
     trc = 'Traceback (most recent call last):\n'
     stackstr = trc + ''.join(traceback.format_list(stack))
-    if not exc is None:
-         stackstr += '  ' + traceback.format_exc().lstrip(trc)
+    if exc is not None:
+        stackstr += '  ' + traceback.format_exc().lstrip(trc)
     return stackstr
+
 
 def dict_to_string(dict):
     ''.join('{}: {}'.format(key, val) for key, val in sorted(dict.items()))
 
 
-
 def retry(ExceptionToCheck, tries=10, delay=3, backoff=2):
     import time
+
     def deco_retry(f):
         def f_retry(*args, **kwargs):
             mtries, mdelay = tries, delay
@@ -295,8 +297,10 @@ def retry(ExceptionToCheck, tries=10, delay=3, backoff=2):
                     mdelay *= backoff
                     lastException = e
             raise lastException
-        return f_retry # true decorator
+        return f_retry
+        # true decorator
     return deco_retry
+
 
 def build_context_script(contextdict, script):
     from django.template import Context, Template
@@ -306,7 +310,6 @@ def build_context_script(contextdict, script):
     context = Context(contextdict)
     template = Template(script)
     return template.render(context)
-
 
 
 def get_worker_name():

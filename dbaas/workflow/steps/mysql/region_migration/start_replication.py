@@ -2,7 +2,6 @@
 import logging
 from util import full_stack
 from workflow.steps.util.base import BaseStep
-from dbaas_nfsaas.provider import NfsaasProvider
 from workflow.exceptions.error_codes import DBAAS_0020
 from workflow.steps.mysql.util import get_replication_info
 from workflow.steps.mysql.util import change_master_to

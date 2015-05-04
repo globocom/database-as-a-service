@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
+from time import sleep
 
 LOG = logging.getLogger(__name__)
 
@@ -71,6 +72,12 @@ def get_client(instance):
     return driver.get_client(instance)
 
 
+def get_client_for_infra(databaseinfra):
+    driver = databaseinfra.get_driver()
+
+    return driver.get_client(None)
+
+
 def get_replication_info(instance):
     client = get_client(instance)
 
@@ -78,6 +85,27 @@ def get_replication_info(instance):
     r = client.store_result()
     row = r.fetch_row(maxrows=0, how=1)
     return row[0]['File'], row[0]['Position']
+
+
+def check_seconds_behind(instance, retries=50):
+    client = get_client(instance)
+
+    for attempt in range(retries):
+        LOG.info("Checking replication %i on %s " % (attempt + 1, instance))
+
+        client.query("show slave status")
+        r = client.store_result()
+        row = r.fetch_row(maxrows=0, how=1)
+        seconds_behind = row[0]['Seconds_Behind_Master']
+
+        if seconds_behind == '0':
+            return True
+
+        if attempt == retries - 1:
+            LOG.warning("Seconds behind: {}".format(seconds_behind))
+            return False
+
+        sleep(10)
 
 
 def change_master_to(instance, master_host, bin_log_file, bin_log_position):

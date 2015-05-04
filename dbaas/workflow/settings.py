@@ -110,7 +110,7 @@ CLONE_UNKNOWN = (
 
 
 MYSQL_REGION_MIGRATION_1 = (
-    #'workflow.steps.util.region_migration.change_ttl.DecreaseTTL',
+    'workflow.steps.util.region_migration.change_ttl.DecreaseTTL',
     'workflow.steps.util.region_migration.create_virtualmachines.CreateVirtualMachine',
     'workflow.steps.util.region_migration.create_nfs.CreateNfs',
     'workflow.steps.util.region_migration.mount_disks.MountDisks',
@@ -124,7 +124,15 @@ MYSQL_REGION_MIGRATION_1 = (
     'workflow.steps.mysql.region_migration.start_replication.StartReplication',
 )
 
-MYSQL_REGION_MIGRATION_2 = ()
+
+MYSQL_REGION_MIGRATION_2 = (
+    'workflow.steps.mysql.region_migration.set_master_read_only.SetMasterReadOnly',
+    'workflow.steps.mysql.region_migration.check_replication.CheckReplication',
+    'workflow.steps.mysql.region_migration.change_master.ChangeMaster',
+    'workflow.steps.mysql.region_migration.rename_flipper_masterpair.RenameFlipperMasterPair',
+    'workflow.steps.mysql.region_migration.create_flipper.CreateFlipper',
+)
+
 MYSQL_REGION_MIGRATION_3 = ()
 MYSQL_REGION_MIGRATION_4 = ()
 
