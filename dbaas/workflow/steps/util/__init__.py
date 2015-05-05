@@ -9,6 +9,7 @@ from time import sleep
 from dbaas_cloudstack.models import HostAttr
 from dbaas_cloudstack.provider import CloudStackProvider
 from dbaas_credentials.models import CredentialType
+from dbaas_dnsapi.provider import DNSAPIProvider
 from workflow.exceptions.error_codes import DBAAS_0015
 
 LOG = logging.getLogger(__name__)
@@ -146,3 +147,62 @@ def build_start_td_agent_script():
         echo ""; echo $(date "+%Y-%m-%d %T") "- Starting td_agent"
         /etc/init.d/td-agent start
         """
+
+
+def switch_dns_forward(databaseinfra, source_object_list, ip_attribute_name,
+                       dns_attribute_name, equivalent_atribute_name):
+
+    LOG.info("databaseinfra: {}\nsource_object_list: {}\nip_attribute_name: {}\
+             \ndns_attribute_name: {}\nequivalent_atribute_name: {}\
+             ".format(databaseinfra, source_object_list, ip_attribute_name,
+                      dns_attribute_name, equivalent_atribute_name))
+
+    for source_object in source_object_list:
+        old_ip = source_object.__getattribute__(ip_attribute_name)
+        dns = source_object.__getattribute__(dns_attribute_name)
+        source_object.__setattr__(dns_attribute_name, old_ip)
+
+        target_object = source_object.__getattribute__(equivalent_atribute_name)
+        new_ip = target_object.__getattribute__(ip_attribute_name)
+        target_object.__setattr__(dns_attribute_name, dns)
+
+        LOG.info("Changing {}: from {} to {}".format(dns, old_ip, new_ip))
+
+        DNSAPIProvider.update_database_dns_content(
+            databaseinfra=databaseinfra,
+            dns=dns,
+            old_ip=old_ip,
+            new_ip=new_ip)
+
+        source_object.save()
+        target_object.save()
+
+
+def switch_dns_backward(databaseinfra, source_object_list, ip_attribute_name,
+                        dns_attribute_name, equivalent_atribute_name):
+
+    LOG.info("databaseinfra: {}\nsource_object_list: {}\nip_attribute_name: {}\
+             \ndns_attribute_name: {}\nequivalent_atribute_name: {}\
+             ".format(databaseinfra, source_object_list, ip_attribute_name,
+                      dns_attribute_name, equivalent_atribute_name))
+
+    for source_object in source_object_list:
+        target_object = source_object.__getattribute__(equivalent_atribute_name)
+
+        old_ip = target_object.__getattribute__(ip_attribute_name)
+        dns = target_object.__getattribute__(dns_attribute_name)
+        target_object.__setattr__(dns_attribute_name, old_ip)
+
+        new_ip = source_object.__getattribute__(ip_attribute_name)
+        source_object.__setattr__(dns_attribute_name, dns)
+
+        LOG.info("Changing {}: from {} to {}".format(dns, old_ip, new_ip))
+
+        DNSAPIProvider.update_database_dns_content(
+            databaseinfra=databaseinfra,
+            dns=dns,
+            old_ip=old_ip,
+            new_ip=new_ip)
+
+        target_object.save()
+        source_object.save()

@@ -132,6 +132,7 @@ MYSQL_REGION_MIGRATION_2 = (
     'workflow.steps.mysql.region_migration.rename_flipper_masterpair.RenameFlipperMasterPair',
     'workflow.steps.mysql.region_migration.create_flipper.CreateFlipper',
     'workflow.steps.mysql.region_migration.set_flipper_ips.SetFlipperIps',
+    'workflow.steps.util.region_migration.switch_dns.SwitchDNS',
 )
 
 MYSQL_REGION_MIGRATION_3 = ()
@@ -151,7 +152,7 @@ MONGODB_REGION_MIGRATION_2 = (
     'workflow.steps.mongodb.region_migration.switch_primary.SwitchPrimary',
 )
 MONGODB_REGION_MIGRATION_3 = (
-    'workflow.steps.mongodb.region_migration.switch_dns.SwitchDNS',
+    'workflow.steps.util.region_migration.switch_dns.SwitchDNS',
 )
 MONGODB_REGION_MIGRATION_4 = (
     'workflow.steps.mongodb.region_migration.update_dbaas_metadata.UpdateDBaaSMetadata',
