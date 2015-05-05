@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
 from util import full_stack
-from dbaas_dnsapi.provider import DNSAPIProvider
 from workflow.steps.util.base import BaseStep
 from workflow.steps.util import switch_dns_forward
 from workflow.steps.util import switch_dns_backward
@@ -11,7 +10,6 @@ LOG = logging.getLogger(__name__)
 
 
 class SwitchDNS(BaseStep):
-
     def __unicode__(self):
         return "Switching DNS..."
 
@@ -19,28 +17,28 @@ class SwitchDNS(BaseStep):
         try:
             databaseinfra = workflow_dict['databaseinfra']
 
-            ## ver depois
-            workflow_dict['dns_changed_hosts'] = []
-            workflow_dict['dns_changed_instances'] = []
-            workflow_dict['dns_changed_secondary_ips'] = []
+            workflow_dict['objects_changed'] = []
 
             switch_dns_forward(databaseinfra=databaseinfra,
                                source_object_list=workflow_dict['source_hosts'],
                                ip_attribute_name='address',
                                dns_attribute_name='hostname',
-                               equivalent_atribute_name='future_host')
+                               equivalent_atribute_name='future_host',
+                               workflow_dict=workflow_dict)
 
             switch_dns_forward(databaseinfra=databaseinfra,
                                source_object_list=workflow_dict['source_instances'],
                                ip_attribute_name='address',
                                dns_attribute_name='dns',
-                               equivalent_atribute_name='future_instance')
+                               equivalent_atribute_name='future_instance',
+                               workflow_dict=workflow_dict)
 
             switch_dns_forward(databaseinfra=databaseinfra,
                                source_object_list=workflow_dict['source_secondary_ips'],
                                ip_attribute_name='ip',
                                dns_attribute_name='dns',
-                               equivalent_atribute_name='equivalent_dbinfraattr')
+                               equivalent_atribute_name='equivalent_dbinfraattr',
+                               workflow_dict=workflow_dict)
 
             return True
         except Exception:
@@ -54,8 +52,17 @@ class SwitchDNS(BaseStep):
     def undo(self, workflow_dict):
         LOG.info("Running undo...")
         try:
-
             databaseinfra = workflow_dict['databaseinfra']
+
+            if 'objects_changed' in workflow_dict:
+                for object_changed in workflow_dict['objects_changed']:
+                    switch_dns_backward(
+                        databaseinfra=databaseinfra,
+                        source_object_list=[object_changed['source_object'], ],
+                        ip_attribute_name=object_changed['ip_attribute_name'],
+                        dns_attribute_name=object_changed['dns_attribute_name'],
+                        equivalent_atribute_name=object_changed['equivalent_atribute_name'])
+                return True
 
             switch_dns_backward(databaseinfra=databaseinfra,
                                 source_object_list=workflow_dict['source_hosts'],
