@@ -129,3 +129,11 @@ def build_flipper_script():
         ssh-keyscan -t rsa {{HOST02.address}} >> /home/flipper/.ssh/known_hosts
         chown flipper:flipper /home/flipper/.ssh/known_hosts
     """
+
+
+def build_set_flipper_ips_script():
+    return """
+        echo ""; echo $(date "+%Y-%m-%d %T") "- Setting flipper IPs"
+        sudo -u flipper /usr/bin/flipper {{MASTERPAIRNAME}} set write {{HOST01.address}}
+        sudo -u flipper /usr/bin/flipper {{MASTERPAIRNAME}} set read {{HOST02.address}}
+    """
