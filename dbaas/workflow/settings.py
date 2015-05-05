@@ -127,6 +127,7 @@ MYSQL_REGION_MIGRATION_1 = (
 
 MYSQL_REGION_MIGRATION_2 = (
     'workflow.steps.mysql.region_migration.set_master_read_only.SetMasterReadOnly',
+    'workflow.steps.mysql.region_migration.turn_flipper_ip_down.TurnFlipperIpDown',
     'workflow.steps.mysql.region_migration.check_replication.CheckReplication',
     'workflow.steps.mysql.region_migration.change_master.ChangeMaster',
     'workflow.steps.mysql.region_migration.rename_flipper_masterpair.RenameFlipperMasterPair',

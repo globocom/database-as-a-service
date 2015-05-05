@@ -137,3 +137,11 @@ def build_set_flipper_ips_script():
         sudo -u flipper /usr/bin/flipper {{MASTERPAIRNAME}} set write {{HOST01.address}}
         sudo -u flipper /usr/bin/flipper {{MASTERPAIRNAME}} set read {{HOST02.address}}
     """
+
+
+def build_turn_flipper_ip_down_script():
+    return """
+        echo ""; echo $(date "+%Y-%m-%d %T") "- Setting flipper IPs"
+        sudo -u flipper /usr/bin/flipper {{MASTERPAIRNAME}} ipdown read
+        sudo -u flipper /usr/bin/flipper {{MASTERPAIRNAME}} ipdown write
+    """
