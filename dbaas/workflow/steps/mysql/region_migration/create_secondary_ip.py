@@ -119,8 +119,6 @@ class CreateSecondaryIp(BaseStep):
                                              networkapi_credentials=networkapi_credentials)
 
             for infra_attr in databaseinfraattr:
-
-                LOG.info("Entrou no for!!!!")
                 networkapi_equipment_id = infra_attr.networkapi_equipment_id
                 networkapi_ip_id = infra_attr.networkapi_ip_id
                 if networkapi_ip_id:

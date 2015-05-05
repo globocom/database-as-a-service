@@ -136,7 +136,16 @@ MYSQL_REGION_MIGRATION_2 = (
     'workflow.steps.util.region_migration.switch_dns.SwitchDNS',
 )
 
-MYSQL_REGION_MIGRATION_3 = ()
+MYSQL_REGION_MIGRATION_3 = (
+    'workflow.steps.util.region_migration.td_agent.StartTDAgent',
+    'workflow.steps.mysql.region_migration.start_mysql_statsd.StartMySQLStasD',
+    'workflow.steps.util.region_migration.update_dbaas_metadata.UpdateDBaaSMetadata',
+    'workflow.steps.mysql.region_migration.remove_secondary_ip.RemoveSecondaryIp',
+    'workflow.steps.util.region_migration.remove_disks.RemoveDisks',
+    'workflow.steps.util.region_migration.remove_vms.RemoveVms',
+    'workflow.steps.util.region_migration.change_ttl.DefaultTTL',
+)
+
 MYSQL_REGION_MIGRATION_4 = ()
 
 REDIS_REGION_MIGRATION = ()
@@ -156,7 +165,7 @@ MONGODB_REGION_MIGRATION_3 = (
     'workflow.steps.util.region_migration.switch_dns.SwitchDNS',
 )
 MONGODB_REGION_MIGRATION_4 = (
-    'workflow.steps.mongodb.region_migration.update_dbaas_metadata.UpdateDBaaSMetadata',
+    'workflow.steps.util.region_migration.update_dbaas_metadata.UpdateDBaaSMetadata',
     'workflow.steps.util.region_migration.td_agent.StartTDAgent',
     'workflow.steps.mongodb.region_migration.remove_old_instances_replica_set.RemoveInstancesReplicaSet',
     'workflow.steps.util.region_migration.remove_disks.RemoveDisks',

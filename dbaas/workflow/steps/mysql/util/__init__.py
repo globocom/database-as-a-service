@@ -145,3 +145,10 @@ def build_turn_flipper_ip_down_script():
         sudo -u flipper /usr/bin/flipper {{MASTERPAIRNAME}} ipdown read
         sudo -u flipper /usr/bin/flipper {{MASTERPAIRNAME}} ipdown write
     """
+
+
+def build_start_mysql_statsd_script():
+    return """
+        echo ""; echo $(date "+%Y-%m-%d %T") "- Starting mysql_statsd"
+        /etc/init.d/mysql_statsd start > /dev/null
+        """
