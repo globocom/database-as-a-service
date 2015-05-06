@@ -18,7 +18,7 @@ class RemoveSecondaryIp(BaseStep):
     def do(self, workflow_dict):
         try:
             databaseinfraattr = DatabaseInfraAttr.objects.filter(
-                databaseinfra=workflow_dict['source_secondary_ips'])
+                databaseinfra=workflow_dict['databaseinfra'])
 
             cs_credentials = get_credentials_for(
                 environment=workflow_dict['source_environment'],
