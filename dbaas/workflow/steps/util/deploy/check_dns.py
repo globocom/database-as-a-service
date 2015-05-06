@@ -18,7 +18,7 @@ class CheckDns(BaseStep):
     def do(self, workflow_dict):
         try:
 
-            if not 'databaseinfra' in workflow_dict:
+            if 'databaseinfra' not in workflow_dict:
                 return False
 
             dns_credentials = get_credentials_for(environment=workflow_dict['environment'],
@@ -28,7 +28,7 @@ class CheckDns(BaseStep):
 
             for dns in dns_list:
                 LOG.info("Checking dns %s on %s" % (dns.dns, dns_credentials.project))
-                #check_nslookup(dns.dns, dns_credentials.project)
+                check_nslookup(dns.dns, dns_credentials.project)
 
             return True
         except Exception:
