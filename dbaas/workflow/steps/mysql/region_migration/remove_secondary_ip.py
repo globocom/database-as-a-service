@@ -17,9 +17,6 @@ class RemoveSecondaryIp(BaseStep):
 
     def do(self, workflow_dict):
         try:
-            databaseinfraattr = DatabaseInfraAttr.objects.filter(
-                databaseinfra=workflow_dict['databaseinfra'])
-
             cs_credentials = get_credentials_for(
                 environment=workflow_dict['source_environment'],
                 credential_type=CredentialType.CLOUDSTACK)
@@ -31,7 +28,7 @@ class RemoveSecondaryIp(BaseStep):
             cs_provider = CloudStackProvider(credentials=cs_credentials,
                                              networkapi_credentials=networkapi_credentials)
 
-            for infra_attr in databaseinfraattr:
+            for infra_attr in workflow_dict['source_secondary_ips']:
 
                 networkapi_equipment_id = infra_attr.networkapi_equipment_id
                 networkapi_ip_id = infra_attr.networkapi_ip_id
