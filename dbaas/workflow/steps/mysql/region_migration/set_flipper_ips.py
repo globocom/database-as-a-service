@@ -49,7 +49,7 @@ class SetFlipperIps(BaseStep):
 
             databaseinfraattr = workflow_dict['source_secondary_ips'][0].equivalent_dbinfraattr
             databaseinfra = workflow_dict['databaseinfra']
-            databaseinfra.endpoint = databaseinfraattr.ip + ":{}".format(3306)
+            databaseinfra.endpoint = databaseinfraattr.ip + ":3306"
             databaseinfra.save()
 
             return True
@@ -64,6 +64,11 @@ class SetFlipperIps(BaseStep):
     def undo(self, workflow_dict):
         LOG.info("Running undo...")
         try:
+
+            databaseinfraattr = workflow_dict['source_secondary_ips'][0]
+            databaseinfra = workflow_dict['databaseinfra']
+            databaseinfra.endpoint = databaseinfraattr.ip + ":3306"
+            databaseinfra.save()
 
             return True
         except Exception:
