@@ -47,6 +47,11 @@ class SetFlipperIps(BaseStep):
             if return_code != 0:
                 raise Exception(str(output))
 
+            databaseinfraattr = workflow_dict['source_secondary_ips'][0].equivalent_dbinfraattr
+            databaseinfra = workflow_dict['databaseinfra']
+            databaseinfra.endpoint = databaseinfraattr.ip + ":{}".format(3306)
+            databaseinfra.save()
+
             return True
         except Exception:
             traceback = full_stack()
