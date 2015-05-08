@@ -65,34 +65,41 @@ class Database(BaseModel):
         (INITIALIZING, 'Initializing')
     )
 
-
     name = models.CharField(verbose_name=_("Database name"), max_length=100)
-    databaseinfra = models.ForeignKey(DatabaseInfra, related_name="databases", on_delete=models.PROTECT)
-    project = models.ForeignKey(Project, related_name="databases", on_delete=models.PROTECT, null=True, blank=True)
+    databaseinfra = models.ForeignKey(
+        DatabaseInfra, related_name="databases", on_delete=models.PROTECT)
+    project = models.ForeignKey(
+        Project, related_name="databases", on_delete=models.PROTECT, null=True, blank=True)
     team = models.ForeignKey(Team, related_name="databases",
-                             help_text=_("Team that is accountable for the database"),
+                             help_text=_(
+                                 "Team that is accountable for the database"),
                              null=True,
                              blank=True)
-    is_in_quarantine = models.BooleanField(verbose_name=_("Is database in quarantine?"), default=False)
-    quarantine_dt = models.DateField(verbose_name=_("Quarantine date"), null=True, blank=True, editable=False)
-    description = models.TextField(verbose_name=_("Description"), null=True, blank=True)
+    is_in_quarantine = models.BooleanField(
+        verbose_name=_("Is database in quarantine?"), default=False)
+    quarantine_dt = models.DateField(
+        verbose_name=_("Quarantine date"), null=True, blank=True, editable=False)
+    description = models.TextField(
+        verbose_name=_("Description"), null=True, blank=True)
 
     objects = models.Manager()  # The default manager.
     alive = DatabaseAliveManager()  # The alive dbs specific manager.
 
-    quarantine_time = Configuration.get_by_name_as_int('quarantine_retention_days')
+    quarantine_time = Configuration.get_by_name_as_int(
+        'quarantine_retention_days')
     status = models.IntegerField(choices=DB_STATUS,
                                  default=2)
     used_size_in_bytes = models.FloatField(default=0.0)
-    environment = models.ForeignKey(Environment, related_name="databases", on_delete=models.PROTECT)
+    environment = models.ForeignKey(
+        Environment, related_name="databases", on_delete=models.PROTECT)
 
     def __unicode__(self):
         return u"%s" % self.name
 
-
     class Meta:
         permissions = (
-            ("can_manage_quarantine_databases", "Can manage databases in quarantine"),
+            ("can_manage_quarantine_databases",
+             "Can manage databases in quarantine"),
             ("view_database", "Can view databases"),
         )
         unique_together = (
@@ -101,50 +108,46 @@ class Database(BaseModel):
 
         ordering = ('name', )
 
-
     @property
     def infra(self):
         """ Total size of database (in bytes) """
         return self.databaseinfra
 
-
     @property
     def engine_type(self):
         return self.infra.engine_name
-
 
     @property
     def plan(self):
         return self.databaseinfra and self.databaseinfra.plan
 
-
     # @property
     # def environment(self):
     #     return self.databaseinfra and self.databaseinfra.environment
 
-
     def delete(self, *args, **kwargs):
         if self.is_in_quarantine:
-            LOG.warning("Database %s is in quarantine and will be removed" % self.name)
+            LOG.warning(
+                "Database %s is in quarantine and will be removed" % self.name)
             for credential in self.credentials.all():
                 instance = factory_for(self.databaseinfra)
                 instance.remove_user(credential)
-            super(Database, self).delete(*args, **kwargs)  # Call the "real" delete() method.
+            # Call the "real" delete() method.
+            super(Database, self).delete(*args, **kwargs)
 
         else:
             LOG.warning("Putting database %s in quarantine" % self.name)
             self.is_in_quarantine = True
             self.save()
             if self.credentials.exists():
-                    for credential in self.credentials.all():
-                        new_password = make_db_random_password()
-                        new_credential = Credential.objects.get(pk=credential.id)
-                        new_credential.password = new_password
-                        new_credential.save()
+                for credential in self.credentials.all():
+                    new_password = make_db_random_password()
+                    new_credential = Credential.objects.get(pk=credential.id)
+                    new_credential.password = new_password
+                    new_credential.save()
 
-                        instance = factory_for(self.databaseinfra)
-                        instance.update_user(new_credential)
-
+                    instance = factory_for(self.databaseinfra)
+                    instance.update_user(new_credential)
 
     def clean(self):
         # slugify name
@@ -153,8 +156,8 @@ class Database(BaseModel):
             self.name = slugify(self.name)
 
         if self.name in self.__get_database_reserved_names():
-            raise ValidationError(_("%s is a reserved database name" % self.name))
-
+            raise ValidationError(
+                _("%s is a reserved database name" % self.name))
 
     def automatic_create_first_credential(self):
         LOG.info("creating new credential for database %s" % self.name)
@@ -162,11 +165,11 @@ class Database(BaseModel):
         credential = Credential.create_new_credential(user, self)
         return credential
 
-
     @classmethod
     def provision(cls, name, databaseinfra):
         if not isinstance(databaseinfra, DatabaseInfra):
-                raise ValidationError('Invalid databaseinfra type %s - %s' % (type(databaseinfra), databaseinfra))
+            raise ValidationError(
+                'Invalid databaseinfra type %s - %s' % (type(databaseinfra), databaseinfra))
 
         database = Database()
         database.databaseinfra = databaseinfra
@@ -177,10 +180,8 @@ class Database(BaseModel):
         database = Database.objects.get(pk=database.pk)
         return database
 
-
     def __get_database_reserved_names(self):
         return getattr(self.driver, 'RESERVED_DATABASES_NAME', [])
-
 
     @property
     def driver(self):
@@ -205,7 +206,8 @@ class Database(BaseModel):
         from util.laas import get_group_name
         from dbaas_credentials.models import CredentialType
 
-        credential = get_credentials_for(environment=self.environment, credential_type=CredentialType.LOGNIT)
+        credential = get_credentials_for(
+            environment=self.environment, credential_type=CredentialType.LOGNIT)
         url = "%s%s" % (credential.endpoint, get_group_name(self))
         return "%s" % (url)
 
@@ -250,7 +252,8 @@ class Database(BaseModel):
     def get_cloudstack_service_offering(self):
         LOG.info("Get offering")
         try:
-            offer_name = self.databaseinfra.cs_dbinfra_offering.get().offering.name
+            offer_name = self.databaseinfra.cs_dbinfra_offering.get(
+            ).offering.name
         except Exception, e:
             LOG.info("Oops...{}".format(e))
             offer_name = None
@@ -308,16 +311,16 @@ class Database(BaseModel):
         from notification.models import TaskHistory
 
         task_history = TaskHistory()
-        task_history.task_name="clone_database"
-        task_history.task_status= task_history.STATUS_WAITING
-        task_history.arguments="Database name: {}".format(database.name)
-        task_history.user= user
+        task_history.task_name = "clone_database"
+        task_history.task_status = task_history.STATUS_WAITING
+        task_history.arguments = "Database name: {}".format(database.name)
+        task_history.user = user
         task_history.save()
 
         clone_database.delay(origin_database=database, clone_name=clone_name,
-                                                    plan=plan, environment=environment, user=user,
-                                                    task_history=task_history
-                                                    )
+                             plan=plan, environment=environment, user=user,
+                             task_history=task_history
+                             )
 
     @classmethod
     def resize(cls, database, cloudstackpack, user):
@@ -325,15 +328,15 @@ class Database(BaseModel):
         from notification.models import TaskHistory
 
         task_history = TaskHistory()
-        task_history.task_name="resize_database"
-        task_history.task_status= task_history.STATUS_WAITING
-        task_history.arguments="Database name: {}".format(database.name)
-        task_history.user= user
+        task_history.task_name = "resize_database"
+        task_history.task_status = task_history.STATUS_WAITING
+        task_history.arguments = "Database name: {}".format(database.name)
+        task_history.user = user
         task_history.save()
 
         resize_database.delay(database=database, cloudstackpack=cloudstackpack,
-                                            user=user,task_history=task_history
-                                        )
+                              user=user, task_history=task_history
+                              )
 
     def get_metrics_url(self):
         return "/admin/logical/database/{}/metrics/".format(self.id)
@@ -347,7 +350,8 @@ class Database(BaseModel):
     def get_cloudstack_service_offering_id(self):
         LOG.info("Get offering")
         try:
-            offer_id = self.databaseinfra.cs_dbinfra_offering.get().offering.serviceofferingid
+            offer_id = self.databaseinfra.cs_dbinfra_offering.get(
+            ).offering.serviceofferingid
         except Exception, e:
             LOG.info("Oops...{}".format(e))
             offer_id = None
@@ -433,7 +437,8 @@ database post save signal. Creates the database in the driver and creates a new 
     is_new = kwargs.get("created")
     LOG.debug("database post-save triggered")
     if is_new and database.engine_type != 'redis':
-        LOG.info("a new database (%s) were created... provision it in the engine" % (database.name))
+        LOG.info("a new database (%s) were created... provision it in the engine" % (
+            database.name))
         engine = factory_for(database.databaseinfra)
         engine.create_database(database)
         database.automatic_create_first_credential()
