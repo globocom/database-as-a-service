@@ -338,6 +338,10 @@ class Database(BaseModel):
                               user=user, task_history=task_history
                               )
 
+    @classmethod
+    def recover_snapshot(cls, database, snapshot, user):
+        LOG.info("Changeging database volume")
+
     def get_metrics_url(self):
         return "/admin/logical/database/{}/metrics/".format(self.id)
 
@@ -346,6 +350,9 @@ class Database(BaseModel):
 
     def get_lognit_url(self):
         return "/admin/logical/database/{}/lognit/".format(self.id)
+
+    def get_restore_url(self):
+        return "/admin/logical/database/{}/restore/".format(self.id)
 
     def get_cloudstack_service_offering_id(self):
         LOG.info("Get offering")

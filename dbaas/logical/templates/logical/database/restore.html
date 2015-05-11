@@ -1,0 +1,49 @@
+{% extends "admin/change_form.html" %}
+{% load i18n admin_static admin_modify dbaas_tags %}
+
+{% block extrastyle %}
+    {{ block.super }}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/database_admin.css' %}" />
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ul class="breadcrumb">
+        <li>
+            <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a> <span class="divider">/</span>
+        </li>
+        <li>
+            <a href="{% url 'admin:logical_database_changelist' %}">Databases</a> <span class="divider">/</span>
+        </li>
+        <li>
+            <a href="{% url 'admin:logical_database_change' database.id %}">{{ database.name }}</a> <span class="divider">/</span>
+        </li>
+        <li>
+            Restore<span class="divider">/</span>
+        </li>
+    </ul>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+
+
+    <form id="database_restore_form" action="" class="form-horizontal well" method="POST">{% csrf_token %}
+
+        <div class="alert alert-danger">
+             <h2>Warning!</h2>
+             <h4>The retore process will stop the database and, consequently, it will be unavailable until the the end of the process.
+             <br><br>
+             <h3>All data from current database will be erased!</h3>
+            </h4>
+        </div>
+
+        <fieldset class="module">
+        <h2>Restoring {{ database.name }}</h2>
+            {{ form.as_p }}
+            <input class="btn" type="submit" value="Submit" onclick="this.disabled=true,this.form.submit(); return confirm('Are you sure?')"/>
+        </fieldset>
+
+    </form>
+</div>
+{% endblock %}
+{% block submit_buttons_bottom %}{% endblock %}

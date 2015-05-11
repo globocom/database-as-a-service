@@ -13,9 +13,9 @@ from django.contrib import messages
 from django.utils.html import format_html, escape
 from ..service.database import DatabaseService
 from ..forms import DatabaseForm, CloneDatabaseForm, ResizeDatabaseForm
-from ..models import Database
+from ..forms import RestoreDatabaseForm
 from physical.models import Plan, Host
-from django.forms.models import modelform_factory, modelform_defines_fields
+from django.forms.models import modelform_factory
 from account.models import Team
 from drivers import DatabaseAlreadyExists
 from logical.templatetags import capacity
@@ -40,11 +40,13 @@ import sys
 from bson.json_util import loads
 from django.contrib.admin import site
 from django.db import IntegrityError
+from ..models import Database
 
 LOG = logging.getLogger(__name__)
 
 
 class DatabaseAdmin(admin.DjangoServicesAdmin):
+
     """
     the form used by this view is returned by the method get_form
     """
@@ -56,12 +58,14 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
     service_class = DatabaseService
     search_fields = ("name", "databaseinfra__name", "team__name",
-                            "project__name", "environment__name", "databaseinfra__engine__engine_type__name")
-    list_display_basic = ["name_html", "engine_type", "environment", "plan", "friendly_status", "clone_html" ,
+                     "project__name", "environment__name", "databaseinfra__engine__engine_type__name")
+    list_display_basic = ["name_html", "engine_type", "environment", "plan", "friendly_status", "clone_html",
                           "get_capacity_html", "metrics_html", ]
     list_display_advanced = list_display_basic + ["quarantine_dt_format"]
-    list_filter_basic = ["project", "databaseinfra__environment", "databaseinfra__engine", "databaseinfra__plan"]
-    list_filter_advanced = list_filter_basic + ["databaseinfra", "is_in_quarantine", "team"]
+    list_filter_basic = ["project", "databaseinfra__environment",
+                         "databaseinfra__engine", "databaseinfra__plan"]
+    list_filter_advanced = list_filter_basic + \
+        ["databaseinfra", "is_in_quarantine", "team"]
     add_form_template = "logical/database/database_add_form.html"
     change_form_template = "logical/database/database_change_form.html"
     delete_button_name = "Delete"
@@ -74,7 +78,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
     fieldsets_change_basic = (
         (None, {
-            'fields': ['name', 'description', 'project', 'team',]
+            'fields': ['name', 'description', 'project', 'team', ]
         }
         ),
     )
@@ -105,7 +109,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             except IntegrityError:
                 pass
 
-    site.add_action(initialize_database_migration, 'initialize_region_migration')
+    site.add_action(
+        initialize_database_migration, 'initialize_region_migration')
 
     def environment(self, database):
         return database.environment
@@ -219,13 +224,12 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         if in edit mode, name is readonly.
         """
         if obj:  # In edit mode
-            #only sysadmin can change team accountable for a database
+            # only sysadmin can change team accountable for a database
             if request.user.has_perm(self.perm_add_database_infra):
                 return ('name', 'databaseinfra', ) + self.readonly_fields
             else:
                 return ('name', 'databaseinfra', 'team',) + self.readonly_fields
         return self.readonly_fields
-
 
     def queryset(self, request):
         qs = super(DatabaseAdmin, self).queryset(request)
@@ -238,7 +242,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         """User must be set to at least one team to be able to add database"""
         teams = Team.objects.filter(users=request.user)
         if not teams:
-            self.message_user(request, self.database_add_perm_message, level=messages.ERROR)
+            self.message_user(
+                request, self.database_add_perm_message, level=messages.ERROR)
             return False
         else:
             return super(DatabaseAdmin, self).has_add_permission(request)
@@ -261,14 +266,13 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         # default on modelform_factory
         exclude = exclude or None
 
-        if obj and obj.plan.provider==Plan.CLOUDSTACK:
+        if obj and obj.plan.provider == Plan.CLOUDSTACK:
             if 'offering' in self.fieldsets_change[0][1]['fields'] and 'offering' in self.form.declared_fields:
                 del self.form.declared_fields['offering']
             else:
                 self.fieldsets_change[0][1]['fields'].append('offering')
 
-            DatabaseForm.setup_offering_field(form=self.form,db_instance=obj)
-
+            DatabaseForm.setup_offering_field(form=self.form, db_instance=obj)
 
         defaults = {
             "form": self.form,
@@ -307,12 +311,15 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 teams = Team.objects.filter(users=request.user)
                 LOG.info("user %s teams: %s" % (request.user, teams))
                 if not teams:
-                    self.message_user(request, self.database_add_perm_message, level=messages.ERROR)
+                    self.message_user(
+                        request, self.database_add_perm_message, level=messages.ERROR)
                     return HttpResponseRedirect(reverse('admin:logical_database_changelist'))
 
-                # if no team is specified and the user has only one team, then set it to the database
+                # if no team is specified and the user has only one team, then
+                # set it to the database
                 if teams.count() == 1 and request.method == 'POST' and not request.user.has_perm(
-                    self.perm_add_database_infra):
+                        self.perm_add_database_infra):
+
                     post_data = request.POST.copy()
                     if 'team' in post_data:
                         post_data['team'] = u"%s" % teams[0].pk
@@ -324,31 +331,36 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 if not form.is_valid():
                     return super(DatabaseAdmin, self).add_view(request, form_url, extra_context=extra_context)
 
-
                 LOG.debug(
                     "call create_database - name=%s, plan=%s, environment=%s, team=%s, project=%s, description=%s, user=%s" % (
-                        form.cleaned_data['name'], form.cleaned_data['plan'], form.cleaned_data['environment'],
-                        form.cleaned_data['team'], form.cleaned_data['project'], form.cleaned_data['description'],
+                        form.cleaned_data['name'], form.cleaned_data[
+                            'plan'], form.cleaned_data['environment'],
+                        form.cleaned_data['team'], form.cleaned_data[
+                            'project'], form.cleaned_data['description'],
                         request.user))
 
                 task_history = TaskHistory()
-                task_history.task_name="create_database"
-                task_history.task_status= task_history.STATUS_WAITING
-                task_history.arguments="Database name: {}".format(form.cleaned_data['name'])
-                task_history.user= request.user
+                task_history.task_name = "create_database"
+                task_history.task_status = task_history.STATUS_WAITING
+                task_history.arguments = "Database name: {}".format(
+                    form.cleaned_data['name'])
+                task_history.user = request.user
                 task_history.save()
 
                 create_database.delay(name=form.cleaned_data['name'],
-                                               plan=form.cleaned_data['plan'],
-                                               environment=form.cleaned_data['environment'],
-                                               team=form.cleaned_data['team'],
-                                               project=form.cleaned_data['project'],
-                                               description=form.cleaned_data['description'],
-                                               task_history=task_history,
-                                               user=request.user)
+                                      plan=form.cleaned_data['plan'],
+                                      environment=form.cleaned_data[
+                                          'environment'],
+                                      team=form.cleaned_data['team'],
+                                      project=form.cleaned_data['project'],
+                                      description=form.cleaned_data[
+                                          'description'],
+                                      task_history=task_history,
+                                      user=request.user)
 
                 url = reverse('admin:notification_taskhistory_changelist')
-                return HttpResponseRedirect(url + "?user=%s" % request.user.username)  # Redirect after POST
+                # Redirect after POST
+                return HttpResponseRedirect(url + "?user=%s" % request.user.username)
 
             else:
                 return super(DatabaseAdmin, self).add_view(request, form_url, extra_context=extra_context)
@@ -356,7 +368,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         except DatabaseAlreadyExists:
             self.message_user(request, _(
                 'An inconsistency was found: The database "%s" already exists in infra-structure but not in DBaaS.') %
-                              request.POST['name'], level=messages.ERROR)
+                request.POST['name'], level=messages.ERROR)
+
             request.method = 'GET'
             return super(DatabaseAdmin, self).add_view(request, form_url, extra_context=extra_context)
 
@@ -375,7 +388,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         database = Database.objects.get(id=object_id)
         extra_context = extra_context or {}
         if not database.is_in_quarantine:
-            extra_context['quarantine_days'] = Configuration.get_by_name_as_int('quarantine_retention_days')
+            extra_context['quarantine_days'] = Configuration.get_by_name_as_int(
+                'quarantine_retention_days')
         return super(DatabaseAdmin, self).delete_view(request, object_id, extra_context=extra_context)
 
     def delete_model(modeladmin, request, obj):
@@ -391,16 +405,17 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                         database.name, database.team, database.project, request.user))
 
                 task_history = TaskHistory()
-                task_history.task_name="destroy_database"
-                task_history.task_status= task_history.STATUS_WAITING
-                task_history.arguments="Database name: {}".format(database.name)
-                task_history.user= request.user
+                task_history.task_name = "destroy_database"
+                task_history.task_status = task_history.STATUS_WAITING
+                task_history.arguments = "Database name: {}".format(
+                    database.name)
+                task_history.user = request.user
                 task_history.save()
 
                 destroy_database.delay(database=database,
-                                                    task_history=task_history,
-                                                    user=request.user
-                                                    )
+                                       task_history=task_history,
+                                       user=request.user
+                                       )
 
                 url = reverse('admin:notification_taskhistory_changelist')
             else:
@@ -411,28 +426,32 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     def clone_view(self, request, database_id):
         database = Database.objects.get(id=database_id)
         if database.is_in_quarantine:
-            self.message_user(request, "Database in quarantine cannot be cloned", level=messages.ERROR)
+            self.message_user(
+                request, "Database in quarantine cannot be cloned", level=messages.ERROR)
             url = reverse('admin:logical_database_changelist')
             return HttpResponseRedirect(url)  # Redirect after POST
 
         form = None
         if request.method == 'POST':  # If the form has been submitted...
-            form = CloneDatabaseForm(request.POST)  # A form bound to the POST data
+            # A form bound to the POST data
+            form = CloneDatabaseForm(request.POST)
             if form.is_valid():  # All validation rules pass
                 # Process the data in form.cleaned_data
                 database_clone = form.cleaned_data['database_clone']
                 plan = form.cleaned_data['plan']
-                environment= form.cleaned_data['environment']
+                environment = form.cleaned_data['environment']
 
                 Database.clone(database=database, clone_name=database_clone,
-                                        plan=plan, environment=environment,
-                                        user=request.user
-                                        )
+                               plan=plan, environment=environment,
+                               user=request.user
+                               )
 
                 url = reverse('admin:notification_taskhistory_changelist')
-                return HttpResponseRedirect(url + "?user=%s" % request.user.username)  # Redirect after POST
+                # Redirect after POST
+                return HttpResponseRedirect(url + "?user=%s" % request.user.username)
         else:
-            form = CloneDatabaseForm(initial={"origin_database_id": database_id})  # An unbound form
+            form = CloneDatabaseForm(
+                initial={"origin_database_id": database_id})  # An unbound form
         return render_to_response("logical/database/clone.html",
                                   locals(),
                                   context_instance=RequestContext(request))
@@ -447,11 +466,13 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         database = Database.objects.get(id=database_id)
         engine = database.infra.engine_name
         db_name = database.name
-        URL = get_credentials_for(environment=database.environment, credential_type=CredentialType.GRAPHITE).endpoint
-        graph_data = get_metric_datapoints_for(engine, db_name, hostname, url=URL, metric_name=metricname)
+        URL = get_credentials_for(
+            environment=database.environment, credential_type=CredentialType.GRAPHITE).endpoint
+        graph_data = get_metric_datapoints_for(
+            engine, db_name, hostname, url=URL, metric_name=metricname)
 
-        title = "{} {} Metric".format(database.name, graph_data[0]["graph_name"])
-
+        title = "{} {} Metric".format(
+            database.name, graph_data[0]["graph_name"])
 
         return render_to_response("logical/database/metrics/metricdetail.html", locals(), context_instance=RequestContext(request))
 
@@ -469,7 +490,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
     def database_host_metrics_view(self, request, database, hostname):
         from util.metrics.metrics import get_metric_datapoints_for
-        URL = get_credentials_for(environment=database.environment, credential_type=CredentialType.GRAPHITE).endpoint
+        URL = get_credentials_for(
+            environment=database.environment, credential_type=CredentialType.GRAPHITE).endpoint
 
         title = "{} Metrics".format(database.name)
 
@@ -481,7 +503,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             for host in Host.objects.filter(instance__databaseinfra=database.infra).distinct():
                 hosts.append(host.hostname.split('.')[0])
 
-            graph_data = get_metric_datapoints_for(engine, db_name, hostname, url=URL)
+            graph_data = get_metric_datapoints_for(
+                engine, db_name, hostname, url=URL)
 
         return render_to_response("logical/database/metrics/metrics.html", locals(), context_instance=RequestContext(request))
 
@@ -490,41 +513,43 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
         uri = 'mongodb://{}:{}@{}:{}/admin'.format(database.databaseinfra.user,
                                                    database.databaseinfra.password,
-                                                   database.databaseinfra.instances.all()[0].address,
+                                                   database.databaseinfra.instances.all()[
+                                                       0].address,
                                                    #'10.236.1.15',
                                                    database.databaseinfra.instances.all()[0].port)
 
         old_stdout = sys.stdout
         sys.stdout = mystdout = StringIO()
 
-        md = dex.Dex(db_uri = uri, verbose=False, namespaces_list = [], slowms=0, check_indexes=True, timeout=0)
+        md = dex.Dex(db_uri=uri, verbose=False, namespaces_list=[],
+                     slowms=0, check_indexes=True, timeout=0)
         md.analyze_profile()
 
         sys.stdout = old_stdout
 
-        dexanalyzer = loads(mystdout.getvalue().replace("\"", "&&").replace("'", "\"").replace("&&","'"))
+        dexanalyzer = loads(
+            mystdout.getvalue().replace("\"", "&&").replace("'", "\"").replace("&&", "'"))
 
         import ast
         final_mask = """<div>"""
 
         for result in dexanalyzer['results']:
 
-                final_mask += "<h3> Collection: " + result['namespace']+ "</h3>"
-                final_mask += \
-                             """<li> Query: """ +\
-                            str(ast.literal_eval(result['queryMask'])['$query']) +\
-                            """</li>""" +\
-                            """<li> Index: """+\
-                            result['recommendation']['index']+\
-                            """</li>"""+\
-                            """<li> Command: """+\
-                            result['recommendation']['shellCommand']+\
-                            """</li>"""
+            final_mask += "<h3> Collection: " + result['namespace'] + "</h3>"
+            final_mask += \
+                """<li> Query: """ +\
+                str(ast.literal_eval(result['queryMask'])['$query']) +\
+                """</li>""" +\
+                """<li> Index: """ +\
+                result['recommendation']['index'] +\
+                """</li>""" +\
+                """<li> Command: """ +\
+                result['recommendation']['shellCommand'] +\
+                """</li>"""
 
-                final_mask += """<br>"""
+            final_mask += """<br>"""
 
         final_mask += """</ul> </div>"""
-
 
         return render_to_response("logical/database/dex_analyze.html", locals(), context_instance=RequestContext(request))
 
@@ -536,36 +561,75 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         url = reverse('admin:logical_database_change', args=[database.id])
 
         if database.is_in_quarantine:
-            self.message_user(request, "Database in quarantine and cannot be resized", level=messages.ERROR)
+            self.message_user(
+                request, "Database in quarantine and cannot be resized", level=messages.ERROR)
             return HttpResponseRedirect(url)  # Redirect after POST
 
         if not database.database_status.is_alive:
-            self.message_user(request, "Database is dead  and cannot be resized", level=messages.ERROR)
+            self.message_user(
+                request, "Database is dead  and cannot be resized", level=messages.ERROR)
             return HttpResponseRedirect(url)  # Redirect after POST
 
         if not CloudStackPack.objects.filter(
-                                                                offering__region__environment=database.environment,
-                                                                engine_type__name= database.engine_type
-                                                            ).exclude(offering__serviceofferingid=database.offering_id):
-            self.message_user(request, "Database has no offerings availables.", level=messages.ERROR)
+            offering__region__environment=database.environment,
+            engine_type__name=database.engine_type
+        ).exclude(offering__serviceofferingid=database.offering_id):
+            self.message_user(
+                request, "Database has no offerings availables.", level=messages.ERROR)
             return HttpResponseRedirect(url)  # Redirect after POST
-
 
         form = None
         if request.method == 'POST':  # If the form has been submitted...
-            form = ResizeDatabaseForm(request.POST, initial={"database_id": database_id, "original_offering_id": database.offering_id},)  # A form bound to the POST data
+            form = ResizeDatabaseForm(request.POST, initial={
+                                      "database_id": database_id, "original_offering_id": database.offering_id},)  # A form bound to the POST data
             if form.is_valid():  # All validation rules pass
 
-                cloudstackpack = CloudStackPack.objects.get(id=request.POST.get('target_offer'))
+                cloudstackpack = CloudStackPack.objects.get(
+                    id=request.POST.get('target_offer'))
                 Database.resize(database=database, cloudstackpack=cloudstackpack,
-                                        user=request.user,)
+                                user=request.user,)
 
                 url = reverse('admin:notification_taskhistory_changelist')
 
-                return HttpResponseRedirect(url + "?user=%s" % request.user.username)  # Redirect after POST
+                # Redirect after POST
+                return HttpResponseRedirect(url + "?user=%s" % request.user.username)
         else:
-            form = ResizeDatabaseForm(initial={"database_id": database_id, "original_offering_id": database.offering_id},)  # An unbound form
+            form = ResizeDatabaseForm(initial={
+                                      "database_id": database_id, "original_offering_id": database.offering_id},)  # An unbound form
         return render_to_response("logical/database/resize.html",
+                                  locals(),
+                                  context_instance=RequestContext(request))
+
+    def restore_snapshot(self, request, database_id):
+        database = Database.objects.get(id=database_id)
+
+        url = reverse('admin:logical_database_change', args=[database.id])
+
+        if database.is_in_quarantine:
+            self.message_user(
+                request, "Database in quarantine and cannot be restored", level=messages.ERROR)
+            return HttpResponseRedirect(url)
+
+        if not database.database_status.is_alive:
+            self.message_user(
+                request, "Database is dead  and cannot be restored", level=messages.ERROR)
+            return HttpResponseRedirect(url)
+
+        form = None
+        if request.method == 'POST':
+            form = RestoreDatabaseForm(request.POST, initial={"database_id": database_id},)
+            if form.is_valid():
+                target_snapshot = request.POST.get('target_snapshot')
+                Database.recover_snapshot(database=database,
+                                          snapshot=target_snapshot, user=request.user,)
+
+                url = reverse('admin:notification_taskhistory_changelist')
+
+                return HttpResponseRedirect(url + "?user=%s" % request.user.username)
+        else:
+            form = RestoreDatabaseForm(initial={"database_id": database_id, })
+
+        return render_to_response("logical/database/restore.html",
                                   locals(),
                                   context_instance=RequestContext(request))
 
@@ -574,12 +638,6 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         database = Database.objects.get(id=database_id)
         instance = database.infra.instances.all()[0]
 
-#        if request.method == 'GET':
-#            hostname = request.GET.get('hostname')
-#
-#        if hostname is None:
-#            hostname = instance.hostname.hostname.split('.')[0]
-#
         return render_to_response("logical/database/lognit.html",
                                   locals(),
                                   context_instance=RequestContext(request))
@@ -605,7 +663,10 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                            url(r'^/?(?P<database_id>\d+)/dex/$', self.admin_site.admin_view(self.database_dex_analyze_view),
                                name="database_dex_analyze_view"),
 
-        )
+                           url(r'^/?(?P<database_id>\d+)/restore/$', self.admin_site.admin_view(self.restore_snapshot),
+                               name="database_restore_snapshot"),
+
+                           )
 
         return my_urls + urls
 
@@ -625,19 +686,21 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             queryset, opts, request.user, self.admin_site, using)
 
         # The user has already confirmed the deletion.
-        # Do the deletion and return a None to display the change list view again.
+        # Do the deletion and return a None to display the change list view
+        # again.
         if request.POST.get('post'):
             if perms_needed:
                 raise PermissionDenied
 
             n = queryset.count()
-            quarantine =any(result['is_in_quarantine']==True for result in queryset.values('is_in_quarantine'))
+            quarantine = any(result[
+                             'is_in_quarantine'] == True for result in queryset.values('is_in_quarantine'))
 
             if n:
                 for obj in queryset:
                     obj_display = force_text(obj)
                     self.log_deletion(request, obj, obj_display)
-                    #remove the object
+                    # remove the object
                     self.delete_model(request, obj)
 
                 self.message_user(request, _("Successfully deleted %(count)d %(items)s.") % {
@@ -675,7 +738,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         # Display the confirmation page
 
         return TemplateResponse(request, self.delete_selected_confirmation_template or [
-            "admin/%s/%s/delete_selected_confirmation.html" % (app_label, opts.object_name.lower()),
+            "admin/%s/%s/delete_selected_confirmation.html" % (
+                app_label, opts.object_name.lower()),
             "admin/%s/delete_selected_confirmation.html" % app_label,
             "admin/delete_selected_confirmation.html"
         ], context, current_app=self.admin_site.name)

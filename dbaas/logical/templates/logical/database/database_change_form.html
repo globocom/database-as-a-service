@@ -109,6 +109,16 @@
         </div>
     </tr>
  </table>
+ <h2>Recovery</h2>
+ <table id="table-mais" class="table table-striped">
+    <tr >
+        <div class="btn-toolbar">
+            <div class="btn-group-lg">
+                <a href="{{original.get_restore_url}}" class="btn btn-primary" title="Restore" data-content="Restore" target="_blank">Restore Snapshot</a>
+            </div>
+        </div>
+    </tr>
+ </table>
 {% endif %}
 {% endblock %}
 {% block submit_buttons_bottom %}{% submit_row_extended %}{% endblock %}
