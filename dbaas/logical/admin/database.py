@@ -621,7 +621,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             if form.is_valid():
                 target_snapshot = request.POST.get('target_snapshot')
                 Database.recover_snapshot(database=database,
-                                          snapshot=target_snapshot, user=request.user,)
+                                          snapshot=target_snapshot,
+                                          user=request.user)
 
                 url = reverse('admin:notification_taskhistory_changelist')
 

@@ -43,8 +43,12 @@ class BackupInfo(BaseModel):
     def __unicode__(self):
         return u"%s from %s started at %s" % (self.type, self.database_name, self.start_at)
 
+
 class Snapshot(BackupInfo):
 
     snapshopt_id = models.CharField(verbose_name=_("Snapshot ID"), max_length=100, null=True, blank=True)
     snapshot_name = models.CharField(verbose_name=_("Snapshot Name"), max_length=200, null=True, blank=True)
     export_path = models.CharField(verbose_name=_("Export Path"), max_length=200, null=True, blank=True)
+
+    def __unicode__(self):
+        return u"Snapshot from %s started at %s" % (self.database_name, self.start_at)
