@@ -3,18 +3,17 @@
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from util.models import BaseModel
-from logical.models import Database
 import logging
 
 LOG = logging.getLogger(__name__)
 
+
 class BackupInfo(BaseModel):
 
     SNAPSHOPT = 1
-    #DUMP = 2
+
     TYPE_CHOICES = (
         (SNAPSHOPT, 'Snapshot'),
-        #(DUMP, 'Dump'),
     )
 
     RUNNING = 1
