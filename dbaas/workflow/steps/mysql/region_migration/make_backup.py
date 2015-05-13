@@ -62,6 +62,7 @@ class MakeBackup(BaseStep):
     def undo(self, workflow_dict):
         LOG.info("Running undo...")
         try:
+            from dbaas_nfsaas.models import HostAttr
 
             databaseinfra = workflow_dict['databaseinfra']
             instance = workflow_dict['source_instances'][0]
@@ -71,10 +72,13 @@ class MakeBackup(BaseStep):
                 driver.unlock_database(client)
 
             if 'snapshopt_id' in workflow_dict:
+                host_attr = HostAttr.objects.get(host=instance.hostname,
+                                                 active=True)
+
                 NfsaasProvider.remove_snapshot(environment=databaseinfra.environment,
                                                plan=databaseinfra.plan,
-                                               host=instance.hostname,
-                                               snapshopt=workflow_dict['snapshopt_id'])
+                                               host_attr=host_attr
+                                               snapshot_id=workflow_dict['snapshopt_id'])
 
             return True
         except Exception:

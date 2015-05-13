@@ -173,7 +173,8 @@ def make_databases_backup(self):
                 continue
 
             try:
-                if make_instance_snapshot_backup(instance = instance, error = error):
+                if make_instance_snapshot_backup(instance=instance,
+                                                 error=error):
                     msg = "Backup for %s was successful" % (str(instance))
                     LOG.info(msg)
                 else:
@@ -192,16 +193,20 @@ def make_databases_backup(self):
 
     return
 
+
 def remove_snapshot_backup(snapshot):
+    from dbaas_nfsaas.models import HostAttr
 
     LOG.info("Removing backup for %s" % (snapshot))
 
     instance = snapshot.instance
     databaseinfra = instance.databaseinfra
-    NfsaasProvider.remove_snapshot(environment = databaseinfra.environment,
-                                   plan = databaseinfra.plan,
-                                   host = instance.hostname,
-                                   snapshopt = snapshot.snapshopt_id)
+    host_attr = HostAttr.objects.get(nfsaas_path=snapshot.export_path)
+
+    NfsaasProvider.remove_snapshot(environment=databaseinfra.environment,
+                                   plan=databaseinfra.plan,
+                                   host_attr=host_attr,
+                                   snapshopt=snapshot.snapshopt_id)
 
     snapshot.purge_at = datetime.datetime.now()
     snapshot.save()
@@ -214,14 +219,17 @@ def remove_database_old_backups(self):
 
     worker_name = get_worker_name()
     task_history = TaskHistory.register(request=self.request,
-        worker_name=worker_name, user=None)
+                                        worker_name=worker_name, user=None)
 
     backup_retention_days = Configuration.get_by_name_as_int('backup_retention_days')
 
     LOG.info("Removing backups older than %s days" % (backup_retention_days))
 
     backup_time_dt = date.today() - timedelta(days=backup_retention_days)
-    snapshots = Snapshot.objects.filter(start_at__lte=backup_time_dt, purge_at__isnull = True, instance__isnull = False, snapshopt_id__isnull = False)
+    snapshots = Snapshot.objects.filter(start_at__lte=backup_time_dt,
+                                        purge_at__isnull=True,
+                                        instance__isnull=False,
+                                        snapshopt_id__isnull=False)
     msgs = []
     status = TaskHistory.STATUS_SUCCESS
     if len(snapshots) == 0:
