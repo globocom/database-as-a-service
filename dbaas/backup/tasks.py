@@ -13,6 +13,9 @@ from datetime import date, timedelta
 from util import exec_remote_command
 from dbaas_cloudstack.models import HostAttr as Cloudstack_HostAttr
 from util import get_worker_name
+from workflow.settings import RESTORE_SNAPSHOT_SINGLE
+from util import build_dict
+from workflow.workflow import start_workflow, stop_workflow
 import logging
 LOG = logging.getLogger(__name__)
 
@@ -27,18 +30,20 @@ def set_backup_error(databaseinfra, snapshot, errormsg):
     snapshot.save()
     register_backup_dbmonitor(databaseinfra, snapshot)
 
+
 def register_backup_dbmonitor(databaseinfra, snapshot):
     try:
         from dbaas_dbmonitor.provider import DBMonitorProvider
-        DBMonitorProvider().register_backup(databaseinfra = databaseinfra,
-                                            start_at = snapshot.start_at,
-                                            end_at = snapshot.end_at,
-                                            size = snapshot.size,
-                                            status = snapshot.status,
-                                            type = snapshot.type,
-                                            error = snapshot.error)
+        DBMonitorProvider().register_backup(databaseinfra=databaseinfra,
+                                            start_at=snapshot.start_at,
+                                            end_at=snapshot.end_at,
+                                            size=snapshot.size,
+                                            status=snapshot.status,
+                                            type=snapshot.type,
+                                            error=snapshot.error)
     except Exception, e:
         LOG.error("Error register backup on DBMonitor %s" % (e))
+
 
 def mysql_binlog_save(client, instance, cloudstack_hostattr):
 
@@ -55,15 +60,17 @@ def mysql_binlog_save(client, instance, cloudstack_hostattr):
         datadir = row[0]['Value']
 
         output = {}
-        command = 'echo "master=%s;position=%s" > %smysql_binlog_master_file_pos' % (binlog_file, binlog_pos, datadir)
+        command = 'echo "master=%s;position=%s" > %smysql_binlog_master_file_pos' % (
+            binlog_file, binlog_pos, datadir)
 
-        exit_status = exec_remote_command(server = instance.hostname.address,
-                                        username = cloudstack_hostattr.vm_user,
-                                        password = cloudstack_hostattr.vm_password,
-                                        command = command,
-                                        output = output)
+        exit_status = exec_remote_command(server=instance.hostname.address,
+                                          username=cloudstack_hostattr.vm_user,
+                                          password=cloudstack_hostattr.vm_password,
+                                          command=command,
+                                          output=output)
     except Exception, e:
-        LOG.error("Error saving mysql master binlog file and position: %s" % (e))
+        LOG.error(
+            "Error saving mysql master binlog file and position: %s" % (e))
 
 
 def make_instance_snapshot_backup(instance, error):
@@ -72,8 +79,8 @@ def make_instance_snapshot_backup(instance, error):
 
     snapshot = Snapshot()
     snapshot.start_at = datetime.datetime.now()
-    snapshot.type=Snapshot.SNAPSHOPT
-    snapshot.status=Snapshot.RUNNING
+    snapshot.type = Snapshot.SNAPSHOPT
+    snapshot.status = Snapshot.RUNNING
     snapshot.instance = instance
     snapshot.environment = instance.databaseinfra.environment
 
@@ -90,7 +97,8 @@ def make_instance_snapshot_backup(instance, error):
     databaseinfra = instance.databaseinfra
     driver = databaseinfra.get_driver()
     client = driver.get_client(instance)
-    cloudstack_hostattr = Cloudstack_HostAttr.objects.get(host=instance.hostname)
+    cloudstack_hostattr = Cloudstack_HostAttr.objects.get(
+        host=instance.hostname)
 
     try:
         LOG.debug('Locking instance %s' % str(instance))
@@ -100,9 +108,9 @@ def make_instance_snapshot_backup(instance, error):
         if type(driver).__name__ == 'MySQL':
             mysql_binlog_save(client, instance, cloudstack_hostattr)
 
-        nfs_snapshot = NfsaasProvider.create_snapshot(environment = databaseinfra.environment,
-                                                      plan = databaseinfra.plan,
-                                                      host = instance.hostname)
+        nfs_snapshot = NfsaasProvider.create_snapshot(environment=databaseinfra.environment,
+                                                      plan=databaseinfra.plan,
+                                                      host=instance.hostname)
         if 'error' in nfs_snapshot:
             errormsg = nfs_snapshot['error']
             error['errormsg'] = errormsg
@@ -130,13 +138,14 @@ def make_instance_snapshot_backup(instance, error):
         LOG.debug('Instance %s is unlocked' % str(instance))
 
     output = {}
-    command = "du -sb /data/.snapshot/%s | awk '{print $1}'" % (snapshot.snapshot_name)
+    command = "du -sb /data/.snapshot/%s | awk '{print $1}'" % (
+        snapshot.snapshot_name)
     try:
-        exit_status = exec_remote_command(server = instance.hostname.address,
-                                          username = cloudstack_hostattr.vm_user,
-                                          password = cloudstack_hostattr.vm_password,
-                                          command = command,
-                                          output = output)
+        exit_status = exec_remote_command(server=instance.hostname.address,
+                                          username=cloudstack_hostattr.vm_user,
+                                          password=cloudstack_hostattr.vm_password,
+                                          command=command,
+                                          output=output)
         size = int(output['stdout'][0])
         snapshot.size = size
     except Exception, e:
@@ -158,18 +167,20 @@ def make_databases_backup(self):
     LOG.info("Making databases backups")
     worker_name = get_worker_name()
     task_history = TaskHistory.register(request=self.request,
-        worker_name=worker_name, user=None)
+                                        worker_name=worker_name, user=None)
 
     msgs = []
     status = TaskHistory.STATUS_SUCCESS
-    databaseinfras = DatabaseInfra.objects.filter(plan__provider=Plan.CLOUDSTACK)
+    databaseinfras = DatabaseInfra.objects.filter(
+        plan__provider=Plan.CLOUDSTACK)
     error = {}
     for databaseinfra in databaseinfras:
         instances = Instance.objects.filter(databaseinfra=databaseinfra)
         for instance in instances:
 
             if not instance.databaseinfra.get_driver().check_instance_is_eligible_for_backup(instance):
-                LOG.info('Instance %s is not eligible for backup' % (str(instance)))
+                LOG.info('Instance %s is not eligible for backup' %
+                         (str(instance)))
                 continue
 
             try:
@@ -179,12 +190,14 @@ def make_databases_backup(self):
                     LOG.info(msg)
                 else:
                     status = TaskHistory.STATUS_ERROR
-                    msg = "Backup for %s was unsuccessful. Error: %s" % (str(instance), error['errormsg'])
+                    msg = "Backup for %s was unsuccessful. Error: %s" % (
+                        str(instance), error['errormsg'])
                     LOG.error(msg)
                 print msg
             except Exception, e:
                 status = TaskHistory.STATUS_ERROR
-                msg = "Backup for %s was unsuccessful. Error: %s" % (str(instance), str(e))
+                msg = "Backup for %s was unsuccessful. Error: %s" % (
+                    str(instance), str(e))
                 LOG.error(msg)
 
             msgs.append(msg)
@@ -221,7 +234,8 @@ def remove_database_old_backups(self):
     task_history = TaskHistory.register(request=self.request,
                                         worker_name=worker_name, user=None)
 
-    backup_retention_days = Configuration.get_by_name_as_int('backup_retention_days')
+    backup_retention_days = Configuration.get_by_name_as_int(
+        'backup_retention_days')
 
     LOG.info("Removing backups older than %s days" % (backup_retention_days))
 
@@ -246,5 +260,50 @@ def remove_database_old_backups(self):
         msgs.append(msg)
 
     task_history.update_status_for(status, details="\n".join(msgs))
+
+    return
+
+
+@app.task(bind=True)
+def restore_snapshot(self, database, snapshot, user, task_history):
+    from dbaas_nfsaas.models import HostAttr
+    LOG.info("Restoring snapshot")
+    worker_name = get_worker_name()
+    task_history = TaskHistory.register(request=self.request,
+                                        worker_name=worker_name,
+                                        user=user)
+
+    databaseinfra = database.databaseinfra
+
+    snapshot = Snapshot.objects.get(id=snapshot)
+    snapshot_id = snapshot.snapshopt_id
+
+    host_attr = HostAttr.objects.get(nfsaas_path=snapshot.export_path)
+    export_id = host_attr.nfsaas_export_id
+    export_path = host_attr.nfsaas_path
+
+    host = host_attr.host
+
+    workflow_dict = build_dict(databaseinfra=databaseinfra,
+                               snapshot_id=snapshot_id,
+                               export_path=export_path,
+                               export_id=export_id,
+                               host=host,
+                               steps=RESTORE_SNAPSHOT_SINGLE,
+                               )
+
+    start_workflow(workflow_dict=workflow_dict, task=task_history)
+
+    if 'exceptions' in workflow_dict:
+        error = "\n".join(
+            ": ".join(err) for err in workflow_dict['exceptions']['error_codes'])
+        traceback = "\nException Traceback\n".join(
+            workflow_dict['exceptions']['traceback'])
+        error = "{}\n{}\n{}".format(error, traceback, error)
+        task_history.update_status_for(
+            TaskHistory.STATUS_ERROR, details=error)
+    else:
+        task_history.update_status_for(
+            TaskHistory.STATUS_SUCCESS, details='Database sucessfully recovered!')
 
     return

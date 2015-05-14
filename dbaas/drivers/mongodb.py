@@ -17,8 +17,9 @@ from workflow.settings import CLONE_MONGO
 
 LOG = logging.getLogger(__name__)
 
-CLONE_DATABASE_SCRIPT_NAME="mongodb_clone.sh"
-MONGO_CONNECTION_DEFAULT_TIMEOUT=5
+CLONE_DATABASE_SCRIPT_NAME = "mongodb_clone.sh"
+MONGO_CONNECTION_DEFAULT_TIMEOUT = 5
+
 
 class MongoDB(BaseDriver):
 
@@ -253,7 +254,6 @@ class MongoDB(BaseDriver):
             except pymongo.errors.PyMongoError, e:
                 raise ConnectionError('Error connection to databaseinfra %s: %s' % (self.databaseinfra, e.message))
 
-
     def check_instance_is_master(self, instance):
         if instance.is_arbiter:
             return False
@@ -271,3 +271,9 @@ class MongoDB(BaseDriver):
 
             except pymongo.errors.PyMongoError, e:
                 raise ConnectionError('Error connection to databaseinfra %s: %s' % (self.databaseinfra, e.message))
+
+    def initialization_script_path(self,):
+        return "/etc/init.d/mongodb"
+
+    def deprecated_files(self,):
+        return ['mongod.lock', 'mongod.running']

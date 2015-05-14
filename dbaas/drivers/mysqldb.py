@@ -270,3 +270,5 @@ class MySQL(BaseDriver):
         else:
             return True
 
+    def initialization_script_path(self,):
+        return "/etc/init.d/mysql"

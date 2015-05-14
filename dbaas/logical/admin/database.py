@@ -620,9 +620,19 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             form = RestoreDatabaseForm(request.POST, initial={"database_id": database_id},)
             if form.is_valid():
                 target_snapshot = request.POST.get('target_snapshot')
+
+                task_history = TaskHistory()
+                task_history.task_name = "restore_snapshot"
+                task_history.task_status = task_history.STATUS_WAITING
+                task_history.arguments = "Database name: {}".format(
+                    database.name)
+                task_history.user = request.user
+                task_history.save()
+
                 Database.recover_snapshot(database=database,
                                           snapshot=target_snapshot,
-                                          user=request.user)
+                                          user=request.user,
+                                          task_history=task_history)
 
                 url = reverse('admin:notification_taskhistory_changelist')
 

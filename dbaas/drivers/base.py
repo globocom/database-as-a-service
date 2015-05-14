@@ -138,18 +138,27 @@ class BaseDriver(object):
 
     def get_client(self, instance):
         raise NotImplementedError()
-    
+
     def lock_database(self, client):
         raise NotImplementedError()
 
     def unlock_database(self, client):
         raise NotImplementedError()
-    
+
     def check_instance_is_eligible_for_backup(self, instance):
         raise NotImplementedError()
 
     def check_instance_is_master(self, instance):
         raise NotImplementedError()
+
+    def initialization_script_path(self,):
+        raise NotImplementedError()
+
+    def deprecated_files(self,):
+        raise NotImplementedError()
+
+    def remove_deprectaed_files(self,):
+        return str().join(["\nrm -f " + '/data/data/' + file for file in self.deprecated_files()])
 
 
 class DatabaseStatus(object):

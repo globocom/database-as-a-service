@@ -252,3 +252,6 @@ class Redis(BaseDriver):
                     return True
             except Exception, e:
                 raise ConnectionError('Error connection to databaseinfra %s: %s' % (self.databaseinfra, str(e)))
+
+    def initialization_script_path(self,):
+        return "/etc/init.d/redis"

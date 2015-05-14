@@ -339,8 +339,15 @@ class Database(BaseModel):
                               )
 
     @classmethod
-    def recover_snapshot(cls, database, snapshot, user):
-        LOG.info("Changeging database volume")
+    def recover_snapshot(cls, database, snapshot, user, task_history):
+        from backup.tasks import restore_snapshot
+        LOG.info("Changing database volume with params: database {}\
+                 snapshot: {}, user: {}".format(database, snapshot, user))
+
+        restore_snapshot.delay(database=database,
+                               snapshot=snapshot,
+                               user=user,
+                               task_history=task_history)
 
     def get_metrics_url(self):
         return "/admin/logical/database/{}/metrics/".format(self.id)
