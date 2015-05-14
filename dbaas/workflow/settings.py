@@ -183,4 +183,5 @@ RESTORE_SNAPSHOT_SINGLE = (
     'workflow.steps.util.restore_snapshot.update_fstab.UpdateFstab',
     'workflow.steps.util.restore_snapshot.mount_data_volume.MountDataVolume',
     'workflow.steps.util.restore_snapshot.start_database.StartDatabase',
+    'workflow.steps.util.restore_snapshot.update_dbaas_metadata.UpdateDbaaSMetadata',
 )
