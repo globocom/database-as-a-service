@@ -316,6 +316,7 @@ def get_worker_name():
     p = current_process()
     return p.initargs[1].split('@')[1]
 
+
 def get_dict_lines(my_dict={}):
     final_str = ''
     for key in my_dict.keys():
@@ -325,3 +326,8 @@ def get_dict_lines(my_dict={}):
 
         final_str += '\n'
     return final_str
+
+
+def scape_nfsaas_export_path(export_path):
+    splited_path = export_path.split('/')
+    return str().join([slice + '\/' for slice in splited_path])[:-2]
