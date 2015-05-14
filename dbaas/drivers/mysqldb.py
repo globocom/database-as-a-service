@@ -31,8 +31,9 @@ ER_WRONG_STRING_LENGTH = 1470
 ER_CAN_NOT_CONNECT = 2003
 LOST_CONNECTION = 2013
 
-CLONE_DATABASE_SCRIPT_NAME="mysql_clone.sh"
-MYSQL_CONNECTION_DEFAULT_TIMEOUT=5
+CLONE_DATABASE_SCRIPT_NAME = "mysql_clone.sh"
+MYSQL_CONNECTION_DEFAULT_TIMEOUT = 5
+
 
 class MySQL(BaseDriver):
 
@@ -40,7 +41,7 @@ class MySQL(BaseDriver):
     RESERVED_DATABASES_NAME = ['admin', 'test', 'mysql', 'information_schema']
     DEPLOY = DEPLOY_MYSQL
     CLONE = CLONE_MYSQL
-    RESIZE =  RESIZE_MYSQL
+    RESIZE = RESIZE_MYSQL
 
     def get_connection(self, database=None):
         # my_instance = self.databaseinfra.instances.all()[0]
@@ -163,14 +164,14 @@ class MySQL(BaseDriver):
         for database_name in all_dbs.keys():
             database_model = None
             try:
-                #LOG.debug("checking status for database %s" % database_name)
+                # LOG.debug("checking status for database %s" % database_name)
                 database_model = Database.objects.get(name=database_name, databaseinfra=self.databaseinfra)
             except Database.DoesNotExist:
                 pass
 
             if database_model:
                 db_status = DatabaseStatus(database_model)
-                #is_alive?
+                # is_alive?
                 try:
                     if self.check_status() and (database_name in list_databases):
                         db_status.is_alive = True
@@ -272,3 +273,9 @@ class MySQL(BaseDriver):
 
     def initialization_script_path(self,):
         return "/etc/init.d/mysql"
+
+    def deprecated_files(self,):
+        return ['*.pid', ]
+
+    def data_dir(self, ):
+        return '/data/data/'

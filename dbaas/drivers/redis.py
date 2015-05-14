@@ -255,3 +255,9 @@ class Redis(BaseDriver):
 
     def initialization_script_path(self,):
         return "/etc/init.d/redis"
+
+    def deprecated_files(self,):
+        return ["*.pid", ]
+
+    def data_dir(self, ):
+        return '/data/'

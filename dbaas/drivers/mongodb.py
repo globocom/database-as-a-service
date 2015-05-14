@@ -277,3 +277,6 @@ class MongoDB(BaseDriver):
 
     def deprecated_files(self,):
         return ['mongod.lock', 'mongod.running']
+
+    def data_dir(self, ):
+        return '/data/data/'

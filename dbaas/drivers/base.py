@@ -158,7 +158,10 @@ class BaseDriver(object):
         raise NotImplementedError()
 
     def remove_deprectaed_files(self,):
-        return str().join(["\nrm -f " + '/data/data/' + file for file in self.deprecated_files()])
+        return str().join(["\nrm -f " + self.data_dir() + file for file in self.deprecated_files()])
+
+    def data_dir(self, ):
+        raise NotImplementedError()
 
 
 class DatabaseStatus(object):
