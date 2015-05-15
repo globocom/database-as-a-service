@@ -191,3 +191,27 @@ def parse_replication_info(replication_info):
 
 def split_var_and_value(info):
     return info.split('=')[1]
+
+
+def set_infra_write_ip(master_host, infra_name):
+    command = """
+        echo ""; echo $(date "+%Y-%m-%d %T") "- Setting flipper IPs"
+        sudo -u flipper /usr/bin/flipper {} ipdown write
+        sudo -u flipper /usr/bin/flipper {} set write {}
+    """
+
+    command = command.format(infra_name, master_host.address)
+
+    cs_host_attr = CsHostAttr.objects.get(host=master_host)
+
+    output = {}
+    return_code = exec_remote_command(server=master_host.address,
+                                      username=cs_host_attr.vm_user,
+                                      password=cs_host_attr.vm_password,
+                                      command=command,
+                                      output=output)
+
+    if return_code != 0:
+        raise Exception("Could Change WriteIP: {}".format(output))
+
+    return True
