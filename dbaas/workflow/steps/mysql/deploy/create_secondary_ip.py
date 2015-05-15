@@ -18,7 +18,7 @@ class CreateSecondaryIp(BaseStep):
 
     def do(self, workflow_dict):
         try:
-            if not 'hosts' in workflow_dict:
+            if 'hosts' not in workflow_dict:
                 return False
 
             if len(workflow_dict['hosts']) == 1:
@@ -33,17 +33,20 @@ class CreateSecondaryIp(BaseStep):
                 environment=workflow_dict['environment'],
                 credential_type=CredentialType.NETWORKAPI)
 
-            cs_provider = CloudStackProvider(credentials = cs_credentials, networkapi_credentials = networkapi_credentials)
+            cs_provider = CloudStackProvider(credentials=cs_credentials,
+                                             networkapi_credentials=networkapi_credentials)
             if not cs_provider:
-                raise Exception, "Could not create CloudStackProvider object"
+                raise Exception("Could not create CloudStackProvider object")
                 return False
 
             workflow_dict['databaseinfraattr'] = []
 
-            networkapi_equipment_id = cs_provider.register_networkapi_equipment(equipment_name = workflow_dict['names']['infra'])
+            networkapi_equipment_id = cs_provider.register_networkapi_equipment(equipment_name=workflow_dict['names']['infra'])
             if not networkapi_equipment_id:
-                raise Exception, "Could not register networkapi equipment"
+                raise Exception("Could not register networkapi equipment")
                 return False
+
+            workflow_dict['networkapi_equipment_id'] = networkapi_equipment_id
 
             for host in workflow_dict['hosts']:
                 LOG.info("Creating Secondary ips...")
@@ -81,9 +84,9 @@ class CreateSecondaryIp(BaseStep):
                     databaseinfraattr.is_write = False
                     ip_desc = 'Read IP'
 
-                networkapi_ip_id = cs_provider.register_networkapi_ip(equipment_id = networkapi_equipment_id,
-                                                                      ip = reserved_ip['secondary_ip'],
-                                                                      ip_desc = ip_desc)
+                networkapi_ip_id = cs_provider.register_networkapi_ip(equipment_id=networkapi_equipment_id,
+                                                                      ip=reserved_ip['secondary_ip'],
+                                                                      ip_desc=ip_desc)
 
                 databaseinfraattr.cs_ip_id = reserved_ip['cs_ip_id']
                 databaseinfraattr.networkapi_equipment_id = networkapi_equipment_id
@@ -106,7 +109,7 @@ class CreateSecondaryIp(BaseStep):
     def undo(self, workflow_dict):
         LOG.info("Running undo...")
         try:
-            if not 'databaseinfra' in workflow_dict and not 'hosts' in workflow_dict:
+            if 'databaseinfra' not in workflow_dict and 'hosts' not in workflow_dict:
                 LOG.info("We could not find a databaseinfra inside the workflow_dict")
                 return False
 
@@ -124,7 +127,10 @@ class CreateSecondaryIp(BaseStep):
                 environment=workflow_dict['environment'],
                 credential_type=CredentialType.NETWORKAPI)
 
-            cs_provider = CloudStackProvider(credentials = cs_credentials, networkapi_credentials = networkapi_credentials)
+            cs_provider = CloudStackProvider(credentials=cs_credentials,
+                                             networkapi_credentials=networkapi_credentials)
+
+            networkapi_equipment_id = workflow_dict['networkapi_equipment_id'].get()
 
             for infra_attr in databaseinfraattr:
 
@@ -132,7 +138,8 @@ class CreateSecondaryIp(BaseStep):
                 networkapi_ip_id = infra_attr.networkapi_ip_id
                 if networkapi_ip_id:
                     LOG.info("Removing network api IP for %s" % networkapi_ip_id)
-                    if not cs_provider.remove_networkapi_ip(equipment_id = networkapi_equipment_id, ip_id = networkapi_ip_id):
+                    if not cs_provider.remove_networkapi_ip(equipment_id=networkapi_equipment_id,
+                                                            ip_id=networkapi_ip_id):
                         return False
 
                 LOG.info("Removing secondary_ip for %s" % infra_attr.cs_ip_id)
@@ -145,7 +152,7 @@ class CreateSecondaryIp(BaseStep):
                 LOG.info("Databaseinfraattr deleted!")
 
             if networkapi_equipment_id:
-                cs_provider.remove_networkapi_equipment(equipment_id = networkapi_equipment_id)
+                cs_provider.remove_networkapi_equipment(equipment_id=networkapi_equipment_id)
 
             return True
 
