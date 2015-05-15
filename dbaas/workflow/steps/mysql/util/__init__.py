@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import logging
 from time import sleep
+from dbaas_cloudstack.models import HostAttr as CsHostAttr
+from util import exec_remote_command
 
 LOG = logging.getLogger(__name__)
 
@@ -152,3 +154,40 @@ def build_start_mysql_statsd_script():
         echo ""; echo $(date "+%Y-%m-%d %T") "- Starting mysql_statsd"
         /etc/init.d/mysql_statsd start > /dev/null
         """
+
+
+def get_replication_information_from_file(host,):
+    command = 'cat /data/data/mysql_binlog_master_file_pos'
+    cs_host_attr = CsHostAttr.objects.get(host=host)
+
+    output = {}
+    return_code = exec_remote_command(server=host.address,
+                                      username=cs_host_attr.vm_user,
+                                      password=cs_host_attr.vm_password,
+                                      command=command,
+                                      output=output)
+
+    if return_code != 0:
+        raise Exception("Could not read file: {}".format(output))
+
+    replication_file, replication_position = parse_replication_info(output['stdout'][0])
+
+    return replication_file, replication_position
+
+
+def parse_replication_info(replication_info):
+    split_vars = replication_info.split(';')
+    replication_file = split_var_and_value(split_vars[0])
+    replication_position = split_vars[1]
+
+    position_end_with_new_line = replication_position.find('\n')
+    if position_end_with_new_line:
+        replication_position = replication_position[:position_end_with_new_line]
+
+    replication_position = split_var_and_value(replication_position)
+
+    return replication_file, replication_position
+
+
+def split_var_and_value(info):
+    return info.split('=')[1]
