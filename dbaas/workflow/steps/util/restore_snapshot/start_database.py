@@ -17,14 +17,18 @@ class StartDatabase(BaseStep):
         try:
             databaseinfra = workflow_dict['databaseinfra']
             host = workflow_dict['host']
+            hosts = [host, ]
 
-            return_code, output = use_database_initialization_script(databaseinfra=databaseinfra,
-                                                                     host=host,
-                                                                     option='start')
+            if workflow_dict['not_primary_hosts']:
+                hosts.extend(workflow_dict['not_primary_hosts'])
 
-            if return_code != 0:
-                workflow_dict['is_database_stoped'] = True
-                raise Exception(str(output))
+            for host in hosts:
+                return_code, output = use_database_initialization_script(databaseinfra=databaseinfra,
+                                                                         host=host,
+                                                                         option='start')
+
+                if return_code != 0:
+                    raise Exception(str(output))
 
             return True
         except Exception:

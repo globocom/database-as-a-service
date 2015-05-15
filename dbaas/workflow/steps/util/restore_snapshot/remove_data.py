@@ -29,8 +29,21 @@ class RemoveData(BaseStep):
                                               output=output)
 
             if return_code != 0:
-                workflow_dict['is_database_stoped'] = True
                 raise Exception(str(output))
+
+            for host in workflow_dict['not_primary_hosts']:
+                cs_host_attr = CsHostAttr.objects.get(host=host)
+                command = 'rm -rf /data/data/*'
+
+                output = {}
+                return_code = exec_remote_command(server=host.address,
+                                                  username=cs_host_attr.vm_user,
+                                                  password=cs_host_attr.vm_password,
+                                                  command=command,
+                                                  output=output)
+
+                if return_code != 0:
+                    raise Exception(str(output))
 
             return True
         except Exception:

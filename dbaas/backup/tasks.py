@@ -283,18 +283,23 @@ def restore_snapshot(self, database, snapshot, user, task_history):
     export_path = host_attr.nfsaas_path
 
     host = host_attr.host
+    steps = RESTORE_SNAPSHOT_SINGLE
+
+    not_primary_instances = databaseinfra.instances.exclude(hostname=host)
+    not_primary_hosts = [instance.hostname for instance in not_primary_instances]
 
     workflow_dict = build_dict(databaseinfra=databaseinfra,
                                snapshot_id=snapshot_id,
                                export_path=export_path,
                                export_id=export_id,
                                host=host,
-                               steps=RESTORE_SNAPSHOT_SINGLE,
+                               steps=steps,
+                               not_primary_hosts=not_primary_hosts,
                                )
 
     start_workflow(workflow_dict=workflow_dict, task=task_history)
 
-    if 'exceptions' in workflow_dict:
+    if workflow_dict['exceptions']['traceback']:
         error = "\n".join(
             ": ".join(err) for err in workflow_dict['exceptions']['error_codes'])
         traceback = "\nException Traceback\n".join(

@@ -40,7 +40,8 @@ def start_workflow(workflow_dict, task=None):
 
             if my_instance.do(workflow_dict) != True:
                 workflow_dict['status'] = 0
-                raise Exception("We caught an error while executing the steps...")
+                raise Exception(
+                    "We caught an error while executing the steps...")
 
             workflow_dict['status'] = 1
             if task:
@@ -57,12 +58,13 @@ def start_workflow(workflow_dict, task=None):
             workflow_dict['exceptions']['error_codes'].append(DBAAS_0001)
             workflow_dict['exceptions']['traceback'].append(traceback)
 
-        LOG.warn("\n".join( ": ".join(error) for error in workflow_dict['exceptions']['error_codes']))
-        LOG.warn("\nException Traceback\n".join(workflow_dict['exceptions']['traceback']))
-
+        LOG.warn("\n".join(": ".join(error)
+                           for error in workflow_dict['exceptions']['error_codes']))
+        LOG.warn("\nException Traceback\n".join(
+            workflow_dict['exceptions']['traceback']))
 
         workflow_dict['steps'] = workflow_dict[
-                                     'steps'][:workflow_dict['step_counter']]
+            'steps'][:workflow_dict['step_counter']]
         stop_workflow(workflow_dict, task)
 
         workflow_dict['created'] = False
@@ -119,7 +121,9 @@ def stop_workflow(workflow_dict, task=None):
             workflow_dict['exceptions']['error_codes'].append(DBAAS_0001)
             workflow_dict['exceptions']['traceback'].append(traceback)
 
-        LOG.warn("\n".join( ": ".join(error) for error in workflow_dict['exceptions']['error_codes']))
-        LOG.warn("\nException Traceback\n".join(workflow_dict['exceptions']['traceback']))
+        LOG.warn("\n".join(": ".join(error)
+                           for error in workflow_dict['exceptions']['error_codes']))
+        LOG.warn("\nException Traceback\n".join(
+            workflow_dict['exceptions']['traceback']))
 
         return False

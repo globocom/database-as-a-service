@@ -17,14 +17,20 @@ class StopDatabase(BaseStep):
         try:
             databaseinfra = workflow_dict['databaseinfra']
             host = workflow_dict['host']
+            hosts = [host, ]
+            workflow_dict['stoped_hosts'] = []
 
-            return_code, output = use_database_initialization_script(databaseinfra=databaseinfra,
-                                                                     host=host,
-                                                                     option='stop')
+            if workflow_dict['not_primary_hosts']:
+                hosts.extend(workflow_dict['not_primary_hosts'])
 
-            if return_code != 0:
-                workflow_dict['is_database_stoped'] = True
-                raise Exception(str(output))
+            for host in hosts:
+                return_code, output = use_database_initialization_script(databaseinfra=databaseinfra,
+                                                                         host=host,
+                                                                         option='stop')
+                if return_code != 0:
+                    raise Exception(str(output))
+
+                workflow_dict['stoped_hosts'].append(host)
 
             return True
         except Exception:
@@ -38,16 +44,15 @@ class StopDatabase(BaseStep):
     def undo(self, workflow_dict):
         LOG.info("Running undo...")
         try:
-            if 'is_database_stoped' in workflow_dict:
-                databaseinfra = workflow_dict['databaseinfra']
-                host = workflow_dict['host']
+            databaseinfra = workflow_dict['databaseinfra']
 
+            for host in workflow_dict['stoped_hosts']:
                 return_code, output = use_database_initialization_script(databaseinfra=databaseinfra,
                                                                          host=host,
                                                                          option='start')
 
                 if return_code != 0:
-                    raise Exception(str(output))
+                    raise LOG.warn(str(output))
 
             return True
         except Exception:
