@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
-from __future__ import  unicode_literals
+from __future__ import unicode_literals
 import logging
 import _mysql as mysqldb
 import _mysql_exceptions
@@ -52,7 +52,8 @@ class MySQL(BaseDriver):
 
     def get_connection_dns(self, database=None):
         # my_instance = self.databaseinfra.instances.all()[0]
-        uri = "mysql://<user>:<password>@%s" % (self.databaseinfra.endpoint_dns)
+        uri = "mysql://<user>:<password>@%s" % (
+            self.databaseinfra.endpoint_dns)
         if database:
             uri = "%s/%s" % (uri, database.name)
         return uri
@@ -68,16 +69,20 @@ class MySQL(BaseDriver):
         return endpoint[0], int(endpoint[1])
 
     def __mysql_client__(self, instance, database='mysql'):
-        connection_address, connection_port = self.__get_admin_connection(instance)
+        connection_address, connection_port = self.__get_admin_connection(
+            instance)
         try:
-            LOG.debug('Connecting to mysql databaseinfra %s', self.databaseinfra)
+            LOG.debug(
+                'Connecting to mysql databaseinfra %s', self.databaseinfra)
             # mysql uses timeout in seconds
-            connection_timeout_in_seconds = Configuration.get_by_name_as_int('mysql_connect_timeout', default=MYSQL_CONNECTION_DEFAULT_TIMEOUT)
+            connection_timeout_in_seconds = Configuration.get_by_name_as_int(
+                'mysql_connect_timeout', default=MYSQL_CONNECTION_DEFAULT_TIMEOUT)
 
             client = mysqldb.connect(host=connection_address, port=int(connection_port),
                                      user=self.databaseinfra.user, passwd=self.databaseinfra.password,
                                      db=database, connect_timeout=connection_timeout_in_seconds)
-            LOG.debug('Successfully connected to mysql databaseinfra %s' % (self.databaseinfra))
+            LOG.debug(
+                'Successfully connected to mysql databaseinfra %s' % (self.databaseinfra))
             return client
         except Exception, e:
             raise e
@@ -110,10 +115,12 @@ class MySQL(BaseDriver):
         finally:
             try:
                 if client:
-                    LOG.debug('Disconnecting mysql databaseinfra %s', self.databaseinfra)
+                    LOG.debug(
+                        'Disconnecting mysql databaseinfra %s', self.databaseinfra)
                     client.close()
             except:
-                LOG.warn('Error disconnecting from databaseinfra %s. Ignoring...', self.databaseinfra, exc_info=True)
+                LOG.warn('Error disconnecting from databaseinfra %s. Ignoring...',
+                         self.databaseinfra, exc_info=True)
 
     def __query(self, query_string, instance=None):
         with self.mysqldb(instance=instance) as client:
@@ -145,7 +152,8 @@ class MySQL(BaseDriver):
     def info(self):
         from logical.models import Database
 
-        databaseinfra_status = DatabaseInfraStatus(databaseinfra_model=self.databaseinfra)
+        databaseinfra_status = DatabaseInfraStatus(
+            databaseinfra_model=self.databaseinfra)
 
         r = self.__query("SELECT VERSION()")
         databaseinfra_status.version = r[0]['VERSION()']
@@ -165,7 +173,8 @@ class MySQL(BaseDriver):
             database_model = None
             try:
                 # LOG.debug("checking status for database %s" % database_name)
-                database_model = Database.objects.get(name=database_name, databaseinfra=self.databaseinfra)
+                database_model = Database.objects.get(
+                    name=database_name, databaseinfra=self.databaseinfra)
             except Database.DoesNotExist:
                 pass
 
@@ -176,12 +185,14 @@ class MySQL(BaseDriver):
                     if self.check_status() and (database_name in list_databases):
                         db_status.is_alive = True
                 except Exception, e:
-                    LOG.warning("could not retrieve db status for %s: %s" % (database_name, e))
+                    LOG.warning(
+                        "could not retrieve db status for %s: %s" % (database_name, e))
 
                 db_status.total_size_in_bytes = 0
                 db_status.used_size_in_bytes = all_dbs[database_name]
 
-                databaseinfra_status.databases_status[database_name] = db_status
+                databaseinfra_status.databases_status[
+                    database_name] = db_status
 
         databaseinfra_status.used_size_in_bytes = sum(all_dbs.values())
 
@@ -194,7 +205,8 @@ class MySQL(BaseDriver):
             if result[0]['1'] == '1':
                 status = True
         except Exception, e:
-            LOG.warning("could not retrieve status for instance %s: %s" % (instance, e))
+            LOG.warning(
+                "could not retrieve status for instance %s: %s" % (instance, e))
 
         return status
 
@@ -203,13 +215,16 @@ class MySQL(BaseDriver):
         self.__query("CREATE DATABASE %s" % database.name)
 
     def create_user(self, credential, roles=["ALL PRIVILEGES"]):
-        LOG.info("creating user %s to %s" % (credential.user, credential.database))
+        LOG.info("creating user %s to %s" %
+                 (credential.user, credential.database))
         # the first release allow every host to connect to the database
         # 2 steps required to get the user create error
         if credential.user in self.list_users():
             raise CredentialAlreadyExists()
-        self.__query("CREATE USER '%s'@'%%' IDENTIFIED BY '%s'" % (credential.user, credential.password))
-        self.__query("GRANT %s ON %s.* TO '%s'@'%%'" % (','.join(roles), credential.database, credential.user))
+        self.__query("CREATE USER '%s'@'%%' IDENTIFIED BY '%s'" %
+                     (credential.user, credential.password))
+        self.__query("GRANT %s ON %s.* TO '%s'@'%%'" %
+                     (','.join(roles), credential.database, credential.user))
 
     def remove_database(self, database):
         LOG.info("removing database %s" % (database.name))
@@ -224,14 +239,15 @@ class MySQL(BaseDriver):
     def disconnect_user(self, credential):
         # It works only in mysql >= 5.5
         r = self.__query("SELECT id FROM information_schema.processlist WHERE user='%s' AND db='%s'" %
-                        (credential.user, credential.database))
+                         (credential.user, credential.database))
         for session in r:
             LOG.info("disconnecting user %s from database %s id_session %s" %
-                    (credential.user, credential.database, session['id']))
+                     (credential.user, credential.database, session['id']))
             self.__query("KILL CONNECTION %s" % session['id'])
 
     def remove_user(self, credential):
-        LOG.info("removing user %s from %s" % (credential.user, credential.database))
+        LOG.info("removing user %s from %s" %
+                 (credential.user, credential.database))
         self.disconnect_user(credential)
         self.__query("DROP USER '%s'@'%%'" % credential.user)
 
@@ -241,22 +257,24 @@ class MySQL(BaseDriver):
 
     def list_users(self, instance=None):
         LOG.info("listing users in %s" % (self.databaseinfra))
-        results = self.__query("SELECT distinct User FROM mysql.user where User != ''", instance=instance)
+        results = self.__query(
+            "SELECT distinct User FROM mysql.user where User != ''", instance=instance)
         return [result["User"] for result in results]
 
     def change_default_pwd(self, instance):
         new_password = make_db_random_password()
-        self.__query("SET PASSWORD FOR '%s'@'%%' = PASSWORD('%s')" %
-                    (instance.databaseinfra.user, new_password))
+        self.__query("SET PASSWORD FOR '%s'@'%%' = PASSWORD('%s')" (
+            instance.databaseinfra.user, new_password))
         return new_password
 
     def clone(self):
-        return CLONE_DATABASE_SCRIPT_NAME
+        return CLONE_DATABASE_SCRIPT_NAMEs
 
     def check_instance_is_eligible_for_backup(self, instance):
         if self.databaseinfra.instances.count() == 1:
             return True
-        results = self.__query(query_string="show variables like 'read_only'", instance=instance)
+        results = self.__query(
+            query_string="show variables like 'read_only'", instance=instance)
         if results[0]["Value"] == "ON":
             return True
         else:
@@ -265,7 +283,8 @@ class MySQL(BaseDriver):
     def check_instance_is_master(self, instance):
         if self.databaseinfra.instances.count() == 1:
             return True
-        results = self.__query(query_string="show variables like 'read_only'", instance=instance)
+        results = self.__query(
+            query_string="show variables like 'read_only'", instance=instance)
         if results[0]["Value"] == "ON":
             return False
         else:
@@ -275,7 +294,7 @@ class MySQL(BaseDriver):
         return "/etc/init.d/mysql"
 
     def deprecated_files(self,):
-        return ['*.pid', ]
+        return ['*.pid', "*.err", "auto.cnf"]
 
     def data_dir(self, ):
         return '/data/data/'
