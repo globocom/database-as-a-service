@@ -20,9 +20,11 @@ class StopDatabase(BaseStep):
             hosts = [host, ]
             workflow_dict['stoped_hosts'] = []
 
-            if workflow_dict['not_primary_hosts']:
+            if len(workflow_dict['not_primary_hosts']) >= 2:
+                LOG.info("SECONDARY HOSTS: {}".format(workflow_dict['not_primary_hosts']))
                 hosts.extend(workflow_dict['not_primary_hosts'])
 
+            LOG.debug("HOSTS: {}".format(hosts))
             for host in hosts:
                 return_code, output = use_database_initialization_script(databaseinfra=databaseinfra,
                                                                          host=host,

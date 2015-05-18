@@ -196,11 +196,12 @@ def split_var_and_value(info):
 def set_infra_write_ip(master_host, infra_name):
     command = """
         echo ""; echo $(date "+%Y-%m-%d %T") "- Setting flipper IPs"
-        sudo -u flipper /usr/bin/flipper {} ipdown write
-        sudo -u flipper /usr/bin/flipper {} set write {}
+        sudo -u flipper /usr/bin/flipper {infra_name} ipdown write
+        sudo -u flipper /usr/bin/flipper {infra_name} set write {master_host}
     """
 
-    command = command.format(infra_name, master_host.address)
+    command = command.format(infra_name=infra_name,
+                             master_host=master_host.address)
 
     cs_host_attr = CsHostAttr.objects.get(host=master_host)
 
@@ -212,6 +213,11 @@ def set_infra_write_ip(master_host, infra_name):
                                       output=output)
 
     if return_code != 0:
-        raise Exception("Could Change WriteIP: {}".format(output))
+        raise Exception("Could not Change WriteIP: {}".format(output))
 
     return True
+
+
+def start_slave(instance):
+    client = get_client(instance)
+    client.query("start slave")

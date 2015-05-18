@@ -14,6 +14,7 @@ from util import exec_remote_command
 from dbaas_cloudstack.models import HostAttr as Cloudstack_HostAttr
 from util import get_worker_name
 from workflow.settings import RESTORE_SNAPSHOT_SINGLE
+from workflow.settings import RESTORE_SNAPSHOT_MYSQL_HA
 from util import build_dict
 from workflow.workflow import start_workflow, stop_workflow
 import logging
@@ -283,7 +284,7 @@ def restore_snapshot(self, database, snapshot, user, task_history):
     export_path = host_attr.nfsaas_path
 
     host = host_attr.host
-    steps = RESTORE_SNAPSHOT_SINGLE
+    steps = RESTORE_SNAPSHOT_MYSQL_HA
 
     not_primary_instances = databaseinfra.instances.exclude(hostname=host)
     not_primary_hosts = [instance.hostname for instance in not_primary_instances]

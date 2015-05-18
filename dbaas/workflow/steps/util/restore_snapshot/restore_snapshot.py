@@ -28,10 +28,13 @@ class RestoreSnapshot(BaseStep):
             job_result = provider.check_restore_nfsaas_job(environment=databaseinfra.environment,
                                                            job_id=restore_result['job'])
 
-            workflow_dict['new_export_id'] = job_result['result']['id']
-            workflow_dict['new_export_path'] = job_result['result']['path']
+            if 'id' in job_result['result']:
+                workflow_dict['new_export_id'] = job_result['result']['id']
+                workflow_dict['new_export_path'] = job_result['result']['path']
 
-            return True
+                return True
+
+            return False
         except Exception:
             traceback = full_stack()
 

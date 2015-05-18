@@ -19,7 +19,7 @@ class StartDatabase(BaseStep):
             host = workflow_dict['host']
             hosts = [host, ]
 
-            if workflow_dict['not_primary_hosts']:
+            if workflow_dict['not_primary_hosts'] >= 2:
                 hosts.extend(workflow_dict['not_primary_hosts'])
 
             for host in hosts:

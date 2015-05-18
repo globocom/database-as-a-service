@@ -130,7 +130,7 @@ class CreateSecondaryIp(BaseStep):
             cs_provider = CloudStackProvider(credentials=cs_credentials,
                                              networkapi_credentials=networkapi_credentials)
 
-            networkapi_equipment_id = workflow_dict['networkapi_equipment_id'].get()
+            networkapi_equipment_id = workflow_dict.get('networkapi_equipment_id')
 
             for infra_attr in databaseinfraattr:
 

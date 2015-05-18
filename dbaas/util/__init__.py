@@ -261,6 +261,7 @@ def build_dict(**kwargs):
     my_dict = {}
     for name, value in kwargs.items():
         my_dict[name] = value
+    LOG.info(my_dict)
     return my_dict
 
 
