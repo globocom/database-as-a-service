@@ -31,7 +31,7 @@ class RemoveData(BaseStep):
             if return_code != 0:
                 raise Exception(str(output))
 
-            if len(workflow_dict['not_primary_hosts']) >= 2:
+            if len(workflow_dict['not_primary_hosts']) >= 1:
                 for host in workflow_dict['not_primary_hosts']:
                     cs_host_attr = CsHostAttr.objects.get(host=host)
                     command = 'rm -rf /data/data/*'

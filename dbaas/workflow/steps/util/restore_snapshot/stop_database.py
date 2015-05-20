@@ -20,7 +20,7 @@ class StopDatabase(BaseStep):
             hosts = [host, ]
             workflow_dict['stoped_hosts'] = []
 
-            if len(workflow_dict['not_primary_hosts']) >= 2:
+            if len(workflow_dict['not_primary_hosts']) >= 1:
                 LOG.info("SECONDARY HOSTS: {}".format(workflow_dict['not_primary_hosts']))
                 hosts.extend(workflow_dict['not_primary_hosts'])
 
