@@ -34,6 +34,20 @@ class RestoreSnapshot(BaseStep):
             else:
                 raise Exception('Error while restoring nfs snapshot')
 
+            restore_result = provider.restore_snapshot(environment=databaseinfra.environment,
+                                                       plan=databaseinfra.plan,
+                                                       export_id=nfsaas_export_id,
+                                                       snapshot_id=snapshot_id)
+
+            job_result = provider.check_restore_nfsaas_job(environment=databaseinfra.environment,
+                                                           job_id=restore_result['job'])
+
+            if 'id' in job_result['result']:
+                workflow_dict['new_export_id_2'] = job_result['result']['id']
+                workflow_dict['new_export_path_2'] = job_result['result']['path']
+            else:
+                raise Exception('Error while restoring nfs snapshot')
+
             return True
         except Exception:
             traceback = full_stack()
@@ -46,6 +60,24 @@ class RestoreSnapshot(BaseStep):
     def undo(self, workflow_dict):
         LOG.info("Running undo...")
         try:
+            if 'new_export_id' in workflow_dict:
+                provider = NfsaasProvider()
+                databaseinfra = workflow_dict['databaseinfra']
+                nfsaas_export_id = workflow_dict['new_export_id']
+
+                provider.drop_export(environment=databaseinfra.environment,
+                                     plan=databaseinfra.plan,
+                                     export_id=nfsaas_export_id)
+
+            if 'new_export_id_2' in workflow_dict:
+                provider = NfsaasProvider()
+                databaseinfra = workflow_dict['databaseinfra']
+                nfsaas_export_id = workflow_dict['new_export_id_2']
+
+                provider.drop_export(environment=databaseinfra.environment,
+                                     plan=databaseinfra.plan,
+                                     export_id=nfsaas_export_id)
+
             return True
         except Exception:
             traceback = full_stack()
