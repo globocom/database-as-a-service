@@ -112,6 +112,10 @@ class TaskHistory(BaseModel):
             task_history.arguments = "Database name: {0},\nNew Offering: {1}".format(
                 request.kwargs['database'].name, request.kwargs['cloudstackpack'])
 
+        elif request.task == 'backup.tasks.restore_snapshot':
+            task_history.arguments = "Restoring {0} to an older version.".format(
+                request.kwargs['database'].name)
+
         elif request.task=='notification.tasks.destroy_database':
             task_history.arguments = "Database name: {0},\nUser: {1}".format(
                 request.kwargs['database'].name, request.kwargs['user'])

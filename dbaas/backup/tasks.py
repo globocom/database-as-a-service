@@ -87,7 +87,7 @@ def make_instance_snapshot_backup(instance, error):
     snapshot.environment = instance.databaseinfra.environment
 
     from dbaas_nfsaas.models import HostAttr as Nfsaas_HostAttr
-    nfsaas_hostattr = Nfsaas_HostAttr.objects.get(host=instance.hostname)
+    nfsaas_hostattr = Nfsaas_HostAttr.objects.get(host=instance.hostname, is_active=True)
     snapshot.export_path = nfsaas_hostattr.nfsaas_path
 
     databases = Database.objects.filter(databaseinfra=instance.databaseinfra)
@@ -273,9 +273,8 @@ def restore_snapshot(self, database, snapshot, user, task_history):
     worker_name = get_worker_name()
 
     task_history = models.TaskHistory.objects.get(id= task_history)
-    task_history.user = user
-    task_history.context = {"worker_name": worker_name}
-    task_history.save()
+    task_history = TaskHistory.register(request=self.request, task_history=task_history,
+            user=user, worker_name=worker_name)
 
     databaseinfra = database.databaseinfra
 
@@ -283,10 +282,12 @@ def restore_snapshot(self, database, snapshot, user, task_history):
     snapshot_id = snapshot.snapshopt_id
 
     host_attr = HostAttr.objects.get(nfsaas_path=snapshot.export_path)
+    host = host_attr.host
+    host_attr = HostAttr.objects.get(host=host, is_active=True)
+
     export_id = host_attr.nfsaas_export_id
     export_path = host_attr.nfsaas_path
 
-    host = host_attr.host
     steps = RESTORE_SNAPSHOT_SINGLE
 
     not_primary_instances = databaseinfra.instances.exclude(hostname=host).exclude(instance_type__in=[Instance.MONGODB_ARBITER,
