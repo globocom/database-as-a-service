@@ -46,15 +46,6 @@ class RestoreSnapshot(BaseStep):
     def undo(self, workflow_dict):
         LOG.info("Running undo...")
         try:
-            if 'new_export_id' in workflow_dict:
-                provider = NfsaasProvider()
-                databaseinfra = workflow_dict['databaseinfra']
-                nfsaas_export_id = workflow_dict['new_export_id']
-
-                provider.drop_export(environment=databaseinfra.environment,
-                                     plan=databaseinfra.plan,
-                                     export_id=nfsaas_export_id)
-
             return True
         except Exception:
             traceback = full_stack()

@@ -36,14 +36,6 @@ class GrantNFSAccess(BaseStep):
     def undo(self, workflow_dict):
         LOG.info("Running undo...")
         try:
-            databaseinfra = workflow_dict['databaseinfra']
-            host = workflow_dict['host']
-            nfsaas_export_id = workflow_dict['new_export_id']
-            NfsaasProvider.revoke_access(environment=databaseinfra.environment,
-                                         plan=databaseinfra.plan,
-                                         host=host,
-                                         export_id=nfsaas_export_id)
-
             return True
         except Exception:
             traceback = full_stack()
