@@ -31,14 +31,21 @@ class StartDatabaseAndReplication(BaseStep):
             secondary_instance = Instance.objects.get(hostname=secondary_host)
 
             master_log_file, master_log_pos = get_replication_information_from_file(host=master_host)
+
             return_code, output = use_database_initialization_script(databaseinfra=databaseinfra,
                                                                      host=master_host,
                                                                      option='start')
-            LOG.info("Waiting 1 minute to continue")
-            sleep(60)
-
             if return_code != 0:
                 raise Exception(str(output))
+
+            return_code, output = use_database_initialization_script(databaseinfra=databaseinfra,
+                                                                     host=secondary_host,
+                                                                     option='start')
+            if return_code != 0:
+                raise Exception(str(output))
+
+            LOG.info("Waiting 1 minute to continue")
+            sleep(60)
 
             change_master_to(instance=master_instance,
                              master_host=secondary_host.address,
