@@ -31,10 +31,10 @@ class RestoreSnapshot(BaseStep):
             if 'id' in job_result['result']:
                 workflow_dict['new_export_id'] = job_result['result']['id']
                 workflow_dict['new_export_path'] = job_result['result']['path']
+            else:
+                raise Exception('Error while restoring nfs snapshot')
 
-                return True
-
-            return False
+            return True
         except Exception:
             traceback = full_stack()
 
