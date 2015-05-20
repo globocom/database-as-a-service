@@ -17,6 +17,7 @@ from workflow.settings import RESTORE_SNAPSHOT_SINGLE
 from workflow.settings import RESTORE_SNAPSHOT_MYSQL_HA
 from util import build_dict
 from workflow.workflow import start_workflow, stop_workflow
+from notification import models
 import logging
 LOG = logging.getLogger(__name__)
 
@@ -270,9 +271,11 @@ def restore_snapshot(self, database, snapshot, user, task_history):
     from dbaas_nfsaas.models import HostAttr
     LOG.info("Restoring snapshot")
     worker_name = get_worker_name()
-    task_history = TaskHistory.register(request=self.request,
-                                        worker_name=worker_name,
-                                        user=user)
+
+    task_history = models.TaskHistory.objects.get(id= task_history)
+    task_history.user = user
+    task_history.context = {"worker_name": worker_name}
+    task_history.save()
 
     databaseinfra = database.databaseinfra
 
