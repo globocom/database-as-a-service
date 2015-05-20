@@ -624,7 +624,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 task_history = TaskHistory()
                 task_history.task_name = "restore_snapshot"
                 task_history.task_status = task_history.STATUS_WAITING
-                task_history.arguments = "Database name: {}".format(
+                task_history.arguments = "Restoring {} to an older version.".format(
                     database.name)
                 task_history.user = request.user
                 task_history.save()
@@ -632,7 +632,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 Database.recover_snapshot(database=database,
                                           snapshot=target_snapshot,
                                           user=request.user,
-                                          task_history=task_history)
+                                          task_history=task_history.id)
 
                 url = reverse('admin:notification_taskhistory_changelist')
 
