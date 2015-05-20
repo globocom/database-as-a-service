@@ -286,7 +286,9 @@ def restore_snapshot(self, database, snapshot, user, task_history):
     host = host_attr.host
     steps = RESTORE_SNAPSHOT_MYSQL_HA
 
-    not_primary_instances = databaseinfra.instances.exclude(hostname=host)
+    not_primary_instances = databaseinfra.instances.exclude(hostname=host,
+                                                            instance_type__in=[Instance.MONGODB_ARBITER,
+                                                                               Instance.REDIS_SENTINEL])
     not_primary_hosts = [instance.hostname for instance in not_primary_instances]
 
     workflow_dict = build_dict(databaseinfra=databaseinfra,
