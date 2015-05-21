@@ -4,6 +4,7 @@ from util import full_stack
 from dbaas_nfsaas.provider import NfsaasProvider
 from workflow.steps.util.base import BaseStep
 from workflow.exceptions.error_codes import DBAAS_0021
+from workflow.steps.util.restore_snapshot import destroy_unused_export
 
 LOG = logging.getLogger(__name__)
 
@@ -61,22 +62,16 @@ class RestoreSnapshot(BaseStep):
         LOG.info("Running undo...")
         try:
             if 'new_export_id' in workflow_dict:
-                provider = NfsaasProvider()
-                databaseinfra = workflow_dict['databaseinfra']
-                nfsaas_export_id = workflow_dict['new_export_id']
-
-                provider.drop_export(environment=databaseinfra.environment,
-                                     plan=databaseinfra.plan,
-                                     export_id=nfsaas_export_id)
+                destroy_unused_export(export_id=workflow_dict['new_export_id'],
+                                      export_path=workflow_dict['new_export_path'],
+                                      host=workflow_dict['host'],
+                                      databaseinfra=workflow_dict['databaseinfra'])
 
             if 'new_export_id_2' in workflow_dict:
-                provider = NfsaasProvider()
-                databaseinfra = workflow_dict['databaseinfra']
-                nfsaas_export_id = workflow_dict['new_export_id_2']
-
-                provider.drop_export(environment=databaseinfra.environment,
-                                     plan=databaseinfra.plan,
-                                     export_id=nfsaas_export_id)
+                destroy_unused_export(export_id=workflow_dict['new_export_id_2'],
+                                      export_path=workflow_dict['new_export_path_2'],
+                                      host=workflow_dict['host'],
+                                      databaseinfra=workflow_dict['databaseinfra'])
 
             return True
         except Exception:
