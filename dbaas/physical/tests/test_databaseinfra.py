@@ -44,7 +44,7 @@ class DatabaseInfraTestCase(TestCase):
             database = factory_logical.DatabaseFactory(databaseinfra=choosed)
             self.assertEqual(choosed, database.databaseinfra)
 
-    
+
     def test_check_instances_status_is_alive(self):
         plan = factory.PlanFactory()
         environment = plan.environments.all()[0]
@@ -52,7 +52,7 @@ class DatabaseInfraTestCase(TestCase):
         instance1 = factory.InstanceFactory(address="127.0.0.1", port=27017, databaseinfra=datainfra1, status=1)
         instance2 = factory.InstanceFactory(address="127.0.0.2", port=27017, databaseinfra=datainfra1, status=1)
 
-        self.assertEquals(datainfra1.check_instances_status, DatabaseInfra.ALIVE)
+        self.assertEquals(datainfra1.check_instances_status(), DatabaseInfra.ALIVE)
 
     def test_check_instances_status_is_dead(self):
         plan = factory.PlanFactory()
@@ -61,7 +61,7 @@ class DatabaseInfraTestCase(TestCase):
         instance1 = factory.InstanceFactory(address="127.0.0.1", port=27017, databaseinfra=datainfra1, status=0)
         instance2 = factory.InstanceFactory(address="127.0.0.2", port=27017, databaseinfra=datainfra1, status=0)
 
-        self.assertEquals(datainfra1.check_instances_status, DatabaseInfra.DEAD)
+        self.assertEquals(datainfra1.check_instances_status(), DatabaseInfra.DEAD)
 
     def test_check_instances_status_is_alert(self):
         plan = factory.PlanFactory()
@@ -70,7 +70,7 @@ class DatabaseInfraTestCase(TestCase):
         instance1 = factory.InstanceFactory(address="127.0.0.1", port=27017, databaseinfra=datainfra1, status=1)
         instance2 = factory.InstanceFactory(address="127.0.0.2", port=27017, databaseinfra=datainfra1, status=0)
 
-        self.assertEquals(datainfra1.check_instances_status, DatabaseInfra.ALERT)
+        self.assertEquals(datainfra1.check_instances_status(), DatabaseInfra.ALERT)
 
     def test_best_for_with_only_over_capacity_datainfra_returns_None(self):
         """tests database infra capacity"""
