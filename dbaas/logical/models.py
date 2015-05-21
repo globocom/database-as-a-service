@@ -379,7 +379,8 @@ class Database(BaseModel):
     def is_beeing_used_elsewhere(self,):
         from notification.models import TaskHistory
 
-        tasks = TaskHistory.objects.filter(arguments__contains=self.name,
+        name = self.name + ','
+        tasks = TaskHistory.objects.filter(arguments__contains=name,
                                            task_status__in=['RUNNING',
                                                             'PENDING',
                                                             'WAITING'])

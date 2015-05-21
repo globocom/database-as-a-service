@@ -113,7 +113,7 @@ class TaskHistory(BaseModel):
                 request.kwargs['database'].name, request.kwargs['cloudstackpack'])
 
         elif request.task == 'backup.tasks.restore_snapshot':
-            task_history.arguments = "Restoring {0} to an older version.".format(
+            task_history.arguments = "Restoring to an older version the database: {0}, it will finish soon.".format(
                 request.kwargs['database'].name)
 
         elif request.task=='notification.tasks.destroy_database':
