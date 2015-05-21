@@ -47,13 +47,13 @@ class MongoDB(BaseDriver):
         """ Get replica name from mongodb """
         LOG.debug('Get replica name from %s', self.databaseinfra)
         repl_name = None
-        with self.pymongo() as client:
-            try:
+        try:
+            with self.pymongo() as client:
                 repl_status = client.admin.command('replSetGetStatus')
                 repl_name = repl_status.get('set', None)
-            except pymongo.errors.OperationFailure:
-                # without replica
-                pass
+        except ConnectionError, pymongo.errors.OperationFailure:
+            pass
+
         return repl_name
 
     def __concatenate_instances(self):
