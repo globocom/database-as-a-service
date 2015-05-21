@@ -244,9 +244,7 @@ class DatabaseInfra(BaseModel):
             return None
         return best_datainfra
 
-    @cached_property
     def check_instances_status(self):
-
         alive_instances = self.instances.filter(status=Instance.ALIVE).count()
         dead_instances = self.instances.filter(status=Instance.DEAD).count()
 
