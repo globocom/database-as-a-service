@@ -262,6 +262,10 @@ class ServiceAdd(APIView):
         team = data['team']
         env = get_url_env(request)
 
+        if '-' in name:
+            msg = "Your database name should not contain '-'.".format(name, env)
+            return log_and_response(msg=msg, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
         try:
             Database.objects.get(name=name, environment__name=env)
             msg = "There is already a database called {} in {}.".format(name, env)
@@ -272,7 +276,7 @@ class ServiceAdd(APIView):
         try:
             dbaas_user =  AccountUser.objects.get(email=user)
         except ObjectDoesNotExist, e:
-            msg = "User does not exist"
+            msg = "User does not exist."
             return log_and_response(msg=msg, e=e,http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         try:
@@ -284,7 +288,7 @@ class ServiceAdd(APIView):
         try:
             dbaas_user.team_set.get(name=dbaas_team.name)
         except ObjectDoesNotExist, e:
-            msg = "The user is not on {} team".format(dbaas_team.name)
+            msg = "The user is not on {} team.".format(dbaas_team.name)
             return log_and_response(msg=msg, e=e,http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         if not 'plan' in data:
@@ -382,7 +386,7 @@ def check_database_status(database_name, env):
         return log_and_response(msg=msg, e=e,
             http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     except Exception, e:
-        msg = "Something ocurred on dbaas, please get in touch with your DBA"
+        msg = "Something ocurred on dbaas, please get in touch with your DBA."
         return log_and_response(msg=msg, e=e,
             http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
