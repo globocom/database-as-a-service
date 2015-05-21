@@ -309,6 +309,11 @@ def update_database_status(self):
         for database in databases:
             if database.database_status.is_alive:
                 database.status = Database.ALIVE
+
+                instances_status = database.databaseinfra.check_instances_status()
+                if instances_status == database.databaseinfra.ALERT:
+                    database.status = Database.ALERT
+
             else:
                 database.status = Database.DEAD
 
