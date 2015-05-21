@@ -58,11 +58,13 @@ class Database(BaseModel):
     DEAD = 0
     ALIVE = 1
     INITIALIZING = 2
+    ALERT = 3
 
     DB_STATUS = (
         (DEAD, 'Dead'),
         (ALIVE, 'Alive'),
-        (INITIALIZING, 'Initializing')
+        (INITIALIZING, 'Initializing'),
+        (ALERT, 'Alert')
     )
 
     name = models.CharField(verbose_name=_("Database name"), max_length=100)
