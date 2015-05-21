@@ -374,6 +374,18 @@ class Database(BaseModel):
 
     offering_id = property(get_cloudstack_service_offering_id)
 
+    def is_beeing_used_elsewhere(self,):
+        from notification.models import TaskHistory
+
+        tasks = TaskHistory.objects.filter(arguments__contains=self.name,
+                                           task_status__in=['RUNNING',
+                                                            'PENDING',
+                                                            'WAITING'])
+        if tasks:
+            return True
+
+        return False
+
 
 class Credential(BaseModel):
     USER_PATTERN = "u_%s"
