@@ -402,6 +402,13 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
         LOG.debug("Deleting {}".format(obj))
         database = obj
+
+        if database.status != Database.ALIVE or not database.database_status.is_alive:
+            self.message_user(
+                request, "Database is not alive and cannot be deleted", level=messages.ERROR)
+            url = reverse('admin:logical_database_changelist')
+            return HttpResponseRedirect(url)
+
         if database.is_in_quarantine:
 
             if database.plan.provider == database.plan.CLOUDSTACK:
@@ -436,6 +443,18 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 request, "Database in quarantine cannot be cloned", level=messages.ERROR)
             url = reverse('admin:logical_database_changelist')
             return HttpResponseRedirect(url)  # Redirect after POST
+
+        if database.status != Database.ALIVE or not database.database_status.is_alive:
+            self.message_user(
+                request, "Database is not alive and cannot be cloned", level=messages.ERROR)
+            url = reverse('admin:logical_database_changelist')
+            return HttpResponseRedirect(url)
+
+        if database.is_beeing_used_elsewhere():
+            self.message_user(
+                request, "Database cannot be cloned because it is in use by another task.", level=messages.ERROR)
+            url = reverse('admin:logical_database_changelist')
+            return HttpResponseRedirect(url)
 
         form = None
         if request.method == 'POST':  # If the form has been submitted...
@@ -515,6 +534,18 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         return render_to_response("logical/database/metrics/metrics.html", locals(), context_instance=RequestContext(request))
 
     def database_dex_analyze_view(self, request, database_id):
+        if database.status != Database.ALIVE or not database.database_status.is_alive:
+            self.message_user(
+                request, "Database is not alive cannot be analyzed", level=messages.ERROR)
+            url = reverse('admin:logical_database_changelist')
+            return HttpResponseRedirect(url)
+
+        if database.is_beeing_used_elsewhere():
+            self.message_user(
+                request, "Database cannot be analyzed because it is in use by another task.", level=messages.ERROR)
+            url = reverse('admin:logical_database_changelist')
+            return HttpResponseRedirect(url)
+
         database = Database.objects.get(id=database_id)
 
         uri = 'mongodb://{}:{}@{}:{}/admin'.format(database.databaseinfra.user,
@@ -571,10 +602,15 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 request, "Database in quarantine and cannot be resized", level=messages.ERROR)
             return HttpResponseRedirect(url)  # Redirect after POST
 
-        if not database.database_status.is_alive:
+        if database.status != Database.ALIVE or not database.database_status.is_alive:
             self.message_user(
                 request, "Database is dead  and cannot be resized", level=messages.ERROR)
             return HttpResponseRedirect(url)  # Redirect after POST
+
+        if database.is_beeing_used_elsewhere():
+            self.message_user(
+                request, "Database is beeing used by another task, please check your tasks", level=messages.ERROR)
+            return HttpResponseRedirect(url)
 
         if not CloudStackPack.objects.filter(
             offering__region__environment=database.environment,
@@ -616,7 +652,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 request, "Database in quarantine and cannot be restored", level=messages.ERROR)
             return HttpResponseRedirect(url)
 
-        if not database.database_status.is_alive:
+        if database.status != Database.ALIVE or not database.database_status.is_alive:
             self.message_user(
                 request, "Database is dead  and cannot be restored", level=messages.ERROR)
             return HttpResponseRedirect(url)
