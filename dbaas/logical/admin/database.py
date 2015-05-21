@@ -124,13 +124,19 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
     def friendly_status(self, database):
 
-        html_ok = '<span class="label label-success">Alive</span>'
-        html_nook = '<span class="label label-important">Dead</span>'
+        html_default = '<span class="label label-{}">{}</span>'
 
         if database.status == Database.ALIVE:
-            return format_html(html_ok)
+            status = html_default.format("success","Alive")
+        elif database.status == Database.DEAD:
+            status = html_default.format("important","Dead")
+        elif database.status == Database.ALERT:
+            status = html_default.format("warning","Alert")
         else:
-            return format_html(html_nook)
+            status = html_default.format("info","Initializing")
+
+        return format_html(status)
+
 
     friendly_status.short_description = "Status"
 
@@ -613,6 +619,11 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         if not database.database_status.is_alive:
             self.message_user(
                 request, "Database is dead  and cannot be restored", level=messages.ERROR)
+            return HttpResponseRedirect(url)
+
+        if database.is_beeing_used_elsewhere():
+            self.message_user(
+                request, "Database is beeing used by another task, please check your tasks", level=messages.ERROR)
             return HttpResponseRedirect(url)
 
         form = None
