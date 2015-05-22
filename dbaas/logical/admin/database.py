@@ -393,6 +393,19 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     def delete_view(self, request, object_id, extra_context=None):
         database = Database.objects.get(id=object_id)
         extra_context = extra_context or {}
+
+        if database.status != Database.ALIVE or not database.database_status.is_alive:
+            self.message_user(
+                request, "Database {} is not alive and cannot be deleted".format(database.name), level=messages.ERROR)
+            url = reverse('admin:logical_database_changelist')
+            return HttpResponseRedirect(url)
+
+        if database.is_beeing_used_elsewhere():
+            self.message_user(
+                request, "Database {} cannot be deleted because it is in use by another task.".format(database.name), level=messages.ERROR)
+            url = reverse('admin:logical_database_changelist')
+            return HttpResponseRedirect(url)
+
         if not database.is_in_quarantine:
             extra_context['quarantine_days'] = Configuration.get_by_name_as_int(
                 'quarantine_retention_days')
@@ -404,8 +417,14 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         database = obj
 
         if database.status != Database.ALIVE or not database.database_status.is_alive:
-            self.message_user(
-                request, "Database is not alive and cannot be deleted", level=messages.ERROR)
+            modeladmin.message_user(
+                request, "Database {} is not alive and cannot be deleted".format(database.name), level=messages.ERROR)
+            url = reverse('admin:logical_database_changelist')
+            return HttpResponseRedirect(url)
+
+        if database.is_beeing_used_elsewhere():
+            modeladmin.message_user(
+                request, "Database {} cannot be deleted because it is in use by another task.".format(database.name), level=messages.ERROR)
             url = reverse('admin:logical_database_changelist')
             return HttpResponseRedirect(url)
 
