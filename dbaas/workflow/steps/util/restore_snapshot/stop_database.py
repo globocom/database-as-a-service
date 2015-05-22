@@ -54,7 +54,7 @@ class StopDatabase(BaseStep):
                                                                          option='start')
 
                 if return_code != 0:
-                    raise LOG.warn(str(output))
+                    LOG.warn(str(output))
 
             return True
         except Exception:

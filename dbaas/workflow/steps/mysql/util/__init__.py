@@ -217,6 +217,30 @@ def set_infra_write_ip(master_host, infra_name):
 
     return True
 
+def set_infra_read_ip(slave_host, infra_name):
+    command = """
+        echo ""; echo $(date "+%Y-%m-%d %T") "- Setting flipper IPs"
+        sudo -u flipper /usr/bin/flipper {infra_name} ipdown read
+        sudo -u flipper /usr/bin/flipper {infra_name} set read {slave_host}
+    """
+
+    command = command.format(infra_name=infra_name,
+                             slave_host=slave_host.address)
+
+    cs_host_attr = CsHostAttr.objects.get(host=slave_host)
+
+    output = {}
+    return_code = exec_remote_command(server=slave_host.address,
+                                      username=cs_host_attr.vm_user,
+                                      password=cs_host_attr.vm_password,
+                                      command=command,
+                                      output=output)
+
+    if return_code != 0:
+        raise Exception("Could not Change ReadIP: {}".format(output))
+
+    return True
+
 
 def start_slave(instance):
     client = get_client(instance)

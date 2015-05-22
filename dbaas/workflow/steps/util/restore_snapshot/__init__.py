@@ -51,5 +51,20 @@ def destroy_unused_export(export_id, export_path, host, databaseinfra):
 
     LOG.info(output)
     provider.drop_export(environment=databaseinfra.environment,
-                          plan=databaseinfra.plan,
-                          export_id=export_id)
+                         plan=databaseinfra.plan,
+                         export_id=export_id)
+
+
+def update_fstab(host, source_export_path, target_export_path):
+
+    cs_host_attr = CsHostAttr.objects.get(host=host)
+
+    command = """sed -i s/"{}"/"{}"/g /etc/fstab""".format(source_export_path,
+                                                           target_export_path)
+    output = {}
+    return_code = exec_remote_command(server=host.address,
+                                      username=cs_host_attr.vm_user,
+                                      password=cs_host_attr.vm_password,
+                                      command=command,
+                                      output=output)
+    return return_code, output

@@ -35,7 +35,6 @@ class UpdateFstab(BaseStep):
                                               output=output)
 
             if return_code != 0:
-                workflow_dict['is_database_stoped'] = True
                 raise Exception(str(output))
 
             return True
