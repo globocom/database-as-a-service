@@ -16,7 +16,11 @@ class MountDataVolume(BaseStep):
 
     def do(self, workflow_dict):
         try:
-            command = 'mount /data'
+            databaseinfra = workflow_dict['databaseinfra']
+            driver = databaseinfra.get_driver()
+            files_to_remove = driver.remove_deprectaed_files()
+            command = "mount /data" + files_to_remove
+
             host = workflow_dict['host']
             hosts = [host, ]
             hosts.extend(workflow_dict['not_primary_hosts'])
@@ -35,7 +39,6 @@ class MountDataVolume(BaseStep):
                 if return_code != 0:
                     raise Exception(str(output))
 
-            raise Exception('Teste mount disk')
             return True
         except Exception:
             traceback = full_stack()
