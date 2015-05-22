@@ -291,6 +291,19 @@ class ServiceAdd(APIView):
             msg = "The user is not on {} team.".format(dbaas_team.name)
             return log_and_response(msg=msg, e=e,http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+        try:
+            dbaas_environment = Environment.objects.get(name=env)
+        except(ObjectDoesNotExist), e:
+            msg = "Environment does not exist."
+            return log_and_response(msg=msg, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        databases_used_by_team = dbaas_team.count_databases_in_use(environment=dbaas_environment)
+        database_alocation_limit = dbaas_team.database_alocation_limit
+
+        if databases_used_by_team >= database_alocation_limit:
+            msg = "The database alocation limit of {} has been exceeded for the selected team: {}".format(database_alocation_limit, dbaas_team)
+            return log_and_response(msg=msg, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
         if not 'plan' in data:
             msg = "Plan was not found"
             return log_and_response(msg=msg, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -310,20 +323,15 @@ class ServiceAdd(APIView):
             msg = "Plan was not found"
             return log_and_response(msg=msg, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        try:
-            dbaas_environment = Environment.objects.get(name= env)
-        except(ObjectDoesNotExist,IndexError), e:
-            msg = "Environment does not exist."
-            return log_and_response(msg=msg, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
         task_history = TaskHistory()
         task_history.task_name="create_database"
         task_history.arguments="Database name: {}".format(name)
         task_history.save()
 
-        create_database.delay(name=name, plan=dbaas_plan, environment=dbaas_environment,
-            team=dbaas_team,project=None, description='Database from Tsuru',
-            task_history=task_history, user=dbaas_user)
+        create_database.delay(name=name, plan=dbaas_plan,
+                              environment=dbaas_environment, team=dbaas_team,
+                              project=None, description='Database from Tsuru',
+                              task_history=task_history, user=dbaas_user)
 
         return Response(status=status.HTTP_201_CREATED,)
 
