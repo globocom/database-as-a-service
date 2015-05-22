@@ -179,7 +179,7 @@ RESTORE_SNAPSHOT_SINGLE = (
     'workflow.steps.util.restore_snapshot.restore_snapshot.RestoreSnapshot',
     'workflow.steps.util.restore_snapshot.grant_nfs_access.GrantNFSAccess',
     'workflow.steps.util.restore_snapshot.stop_database.StopDatabase',
-    'workflow.steps.util.restore_snapshot.mount_data_volume.RemoveData',
+    'workflow.steps.util.restore_snapshot.umount_data_volume.UmountDataVolume',
     'workflow.steps.util.restore_snapshot.update_fstab.UpdateFstab',
     'workflow.steps.util.restore_snapshot.mount_data_volume.MountDataVolume',
     'workflow.steps.util.restore_snapshot.start_database.StartDatabase',
