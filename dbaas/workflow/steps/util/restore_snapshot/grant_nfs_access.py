@@ -17,12 +17,11 @@ class GrantNFSAccess(BaseStep):
         try:
 
             databaseinfra = workflow_dict['databaseinfra']
-            host = workflow_dict['host']
-            nfsaas_export_id = workflow_dict['new_export_id']
-            NfsaasProvider.grant_access(environment=databaseinfra.environment,
-                                        plan=databaseinfra.plan,
-                                        host=host,
-                                        export_id=nfsaas_export_id)
+            for host_and_export in workflow_dict['hosts_and_exports']:
+                NfsaasProvider.grant_access(environment=databaseinfra.environment,
+                                            plan=databaseinfra.plan,
+                                            host=host_and_export['host'],
+                                            export_id=host_and_export['new_export_id'])
 
             return True
         except Exception:

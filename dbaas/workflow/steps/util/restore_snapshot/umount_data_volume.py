@@ -9,18 +9,16 @@ from util import exec_remote_command
 LOG = logging.getLogger(__name__)
 
 
-class RemoveData(BaseStep):
+class UmountDataVolume(BaseStep):
 
     def __unicode__(self):
-        return "Removing old data..."
+        return "Umounting old data..."
 
     def do(self, workflow_dict):
         try:
             host = workflow_dict['host']
-
             cs_host_attr = CsHostAttr.objects.get(host=host)
-            command = 'rm -rf /data/* && umount /data'
-
+            command = 'umount /data'
             output = {}
             return_code = exec_remote_command(server=host.address,
                                               username=cs_host_attr.vm_user,
@@ -58,6 +56,19 @@ class RemoveData(BaseStep):
     def undo(self, workflow_dict):
         LOG.info("Running undo...")
         try:
+            host = workflow_dict['host']
+            cs_host_attr = CsHostAttr.objects.get(host=host)
+            command = 'mount /data'
+            output = {}
+            return_code = exec_remote_command(server=host.address,
+                                              username=cs_host_attr.vm_user,
+                                              password=cs_host_attr.vm_password,
+                                              command=command,
+                                              output=output)
+
+            if return_code != 0:
+                LOG.info(str(output))
+
             return True
         except Exception:
             traceback = full_stack()

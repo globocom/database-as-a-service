@@ -42,6 +42,21 @@ class StartDatabase(BaseStep):
     def undo(self, workflow_dict):
         LOG.info("Running undo...")
         try:
+            databaseinfra = workflow_dict['databaseinfra']
+            host = workflow_dict['host']
+            hosts = [host, ]
+
+            if workflow_dict['not_primary_hosts'] >= 1:
+                hosts.extend(workflow_dict['not_primary_hosts'])
+
+            for host in hosts:
+                return_code, output = use_database_initialization_script(databaseinfra=databaseinfra,
+                                                                         host=host,
+                                                                         option='stop')
+
+                if return_code != 0:
+                    LOG.info(str(output))
+
             return True
         except Exception:
             traceback = full_stack()
