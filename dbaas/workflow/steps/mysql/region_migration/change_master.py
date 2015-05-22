@@ -5,7 +5,6 @@ from workflow.steps.util.base import BaseStep
 from workflow.exceptions.error_codes import DBAAS_0020
 from workflow.steps.mysql.util import get_replication_info
 from workflow.steps.mysql.util import change_master_to
-# from workflow.steps.mysql.util import check_seconds_behind
 
 LOG = logging.getLogger(__name__)
 
@@ -54,9 +53,6 @@ class ChangeMaster(BaseStep):
 
             source_instance_zero = workflow_dict['source_instances'][0]
             source_instance_one = workflow_dict['source_instances'][1]
-
-            # check_seconds_behind(source_instance_zero, retries=90)
-            # check_seconds_behind(target_instance_zero, retries=90)
 
             master_log_file, master_log_pos = get_replication_info(source_instance_one)
             change_master_to(instance=source_instance_zero,
