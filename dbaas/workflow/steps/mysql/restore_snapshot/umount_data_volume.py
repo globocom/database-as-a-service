@@ -17,14 +17,10 @@ class UmountDataVolume(BaseStep):
     def do(self, workflow_dict):
         try:
             command = 'umount /data'
-            host = workflow_dict['host']
-            hosts = [host, ]
-            hosts.extend(workflow_dict['not_primary_hosts'])
-            LOG.debug("HOSTS: {}".format(hosts))
-
-            for host in hosts:
+            for host_and_export in workflow_dict['hosts_and_exports']:
+                host = host_and_export['host']
+                LOG.info('umount data volume on host {}'.format(host))
                 cs_host_attr = CsHostAttr.objects.get(host=host)
-
                 output = {}
                 return_code = exec_remote_command(server=host.address,
                                                   username=cs_host_attr.vm_user,
@@ -48,12 +44,9 @@ class UmountDataVolume(BaseStep):
         LOG.info("Running undo...")
         try:
             command = 'mount /data'
-            host = workflow_dict['host']
-            hosts = [host, ]
-            hosts.extend(workflow_dict['not_primary_hosts'])
-            LOG.debug("HOSTS: {}".format(hosts))
-
-            for host in hosts:
+            for host_and_export in workflow_dict['hosts_and_exports']:
+                host = host_and_export['host']
+                LOG.info('mount data volume on host {}'.format(host))
                 cs_host_attr = CsHostAttr.objects.get(host=host)
 
                 output = {}

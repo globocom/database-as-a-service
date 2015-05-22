@@ -195,5 +195,7 @@ RESTORE_SNAPSHOT_MYSQL_HA = (
     'workflow.steps.mysql.restore_snapshot.update_fstab.UpdateFstab',
     'workflow.steps.mysql.restore_snapshot.mount_data_volume.MountDataVolume',
     'workflow.steps.mysql.restore_snapshot.start_database_and_replication.StartDatabaseAndReplication',
+    'workflow.steps.mysql.restore_snapshot.make_export_snapshot.MakeExportSnapshot',
     'workflow.steps.mysql.restore_snapshot.update_dbaas_metadata.UpdateDbaaSMetadata',
+    'workflow.steps.mysql.restore_snapshot.clean_old_volumes.CleanOldVolumes',
 )

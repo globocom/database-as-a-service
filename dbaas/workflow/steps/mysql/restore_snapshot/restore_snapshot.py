@@ -2,6 +2,7 @@
 import logging
 from util import full_stack
 from dbaas_nfsaas.provider import NfsaasProvider
+from dbaas_nfsaas.models import HostAttr as nfs_HostAttr
 from workflow.steps.util.base import BaseStep
 from workflow.exceptions.error_codes import DBAAS_0021
 from workflow.steps.util.restore_snapshot import destroy_unused_export
@@ -17,6 +18,7 @@ class RestoreSnapshot(BaseStep):
     def do(self, workflow_dict):
         try:
 
+            workflow_dict['hosts_and_exports'] = []
             databaseinfra = workflow_dict['databaseinfra']
             snapshot_id = workflow_dict['snapshot_id']
             nfsaas_export_id = workflow_dict['export_id']
@@ -30,10 +32,19 @@ class RestoreSnapshot(BaseStep):
                                                            job_id=restore_result['job'])
 
             if 'id' in job_result['result']:
-                workflow_dict['new_export_id'] = job_result['result']['id']
-                workflow_dict['new_export_path'] = job_result['result']['path']
+                new_export_id = job_result['result']['id']
+                new_export_path = job_result['result']['path']
             else:
                 raise Exception('Error while restoring nfs snapshot')
+
+            host = workflow_dict['host']
+            workflow_dict['hosts_and_exports'].append({
+                'host': host,
+                'old_export_id': workflow_dict['export_id'],
+                'old_export_path': workflow_dict['export_path'],
+                'new_export_id': new_export_id,
+                'new_export_path': new_export_path,
+            })
 
             restore_result = provider.restore_snapshot(environment=databaseinfra.environment,
                                                        plan=databaseinfra.plan,
@@ -44,10 +55,20 @@ class RestoreSnapshot(BaseStep):
                                                            job_id=restore_result['job'])
 
             if 'id' in job_result['result']:
-                workflow_dict['new_export_id_2'] = job_result['result']['id']
-                workflow_dict['new_export_path_2'] = job_result['result']['path']
+                new_export_id = job_result['result']['id']
+                new_export_path = job_result['result']['path']
             else:
                 raise Exception('Error while restoring nfs snapshot')
+
+            host = workflow_dict['not_primary_hosts'][0]
+            nfs_host_attr = nfs_HostAttr.objects.get(host=host, is_active=True)
+            workflow_dict['hosts_and_exports'].append({
+                'host': host,
+                'old_export_id': nfs_host_attr.nfsaas_export_id,
+                'old_export_path': nfs_host_attr.nfsaas_path,
+                'new_export_id': new_export_id,
+                'new_export_path': new_export_path,
+            })
 
             return True
         except Exception:
@@ -61,16 +82,10 @@ class RestoreSnapshot(BaseStep):
     def undo(self, workflow_dict):
         LOG.info("Running undo...")
         try:
-            if 'new_export_id' in workflow_dict:
-                destroy_unused_export(export_id=workflow_dict['new_export_id'],
-                                      export_path=workflow_dict['new_export_path'],
-                                      host=workflow_dict['host'],
-                                      databaseinfra=workflow_dict['databaseinfra'])
-
-            if 'new_export_id_2' in workflow_dict:
-                destroy_unused_export(export_id=workflow_dict['new_export_id_2'],
-                                      export_path=workflow_dict['new_export_path_2'],
-                                      host=workflow_dict['host'],
+            for host_and_export in workflow_dict['hosts_and_exports']:
+                destroy_unused_export(export_id=host_and_export['new_export_id'],
+                                      export_path=host_and_export['new_export_path'],
+                                      host=host_and_export['host'],
                                       databaseinfra=workflow_dict['databaseinfra'])
 
             return True

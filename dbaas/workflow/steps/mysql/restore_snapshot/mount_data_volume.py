@@ -21,12 +21,8 @@ class MountDataVolume(BaseStep):
             files_to_remove = driver.remove_deprectaed_files()
             command = "mount /data" + files_to_remove
 
-            host = workflow_dict['host']
-            hosts = [host, ]
-            hosts.extend(workflow_dict['not_primary_hosts'])
-            LOG.debug("HOSTS: {}".format(hosts))
-
-            for host in hosts:
+            for host_and_export in workflow_dict['hosts_and_exports']:
+                host = host_and_export['host']
                 cs_host_attr = CsHostAttr.objects.get(host=host)
 
                 output = {}
@@ -52,12 +48,8 @@ class MountDataVolume(BaseStep):
         LOG.info("Running undo...")
         try:
             command = 'umount /data'
-            host = workflow_dict['host']
-            hosts = [host, ]
-            hosts.extend(workflow_dict['not_primary_hosts'])
-            LOG.debug("HOSTS: {}".format(hosts))
-
-            for host in hosts:
+            for host_and_export in workflow_dict['hosts_and_exports']:
+                host = host_and_export['host']
                 cs_host_attr = CsHostAttr.objects.get(host=host)
 
                 output = {}
