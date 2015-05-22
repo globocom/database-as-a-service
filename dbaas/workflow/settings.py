@@ -191,9 +191,9 @@ RESTORE_SNAPSHOT_MYSQL_HA = (
     'workflow.steps.mysql.restore_snapshot.restore_snapshot.RestoreSnapshot',
     'workflow.steps.mysql.restore_snapshot.grant_nfs_access.GrantNFSAccess',
     'workflow.steps.mysql.restore_snapshot.stop_database.StopDatabase',
-    'workflow.steps.mysql.restore_snapshot.remove_data.RemoveData',
+    'workflow.steps.mysql.restore_snapshot.umount_data_volume.UmountDataVolume',
     'workflow.steps.mysql.restore_snapshot.update_fstab.UpdateFstab',
-    'workflow.steps.mysql.restore_snapshot.mount_data_volume.MountDataVolume',
-    'workflow.steps.mysql.restore_snapshot.start_database_and_replication.StartDatabaseAndReplication',
-    'workflow.steps.mysql.restore_snapshot.update_dbaas_metadata.UpdateDbaaSMetadata',
+    #'workflow.steps.mysql.restore_snapshot.mount_data_volume.MountDataVolume',
+    #'workflow.steps.mysql.restore_snapshot.start_database_and_replication.StartDatabaseAndReplication',
+    #'workflow.steps.mysql.restore_snapshot.update_dbaas_metadata.UpdateDbaaSMetadata',
 )

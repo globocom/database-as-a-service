@@ -55,6 +55,21 @@ def destroy_unused_export(export_id, export_path, host, databaseinfra):
                           export_id=export_id)
 
 
+def update_fstab(host, source_export_path, target_export_path):
+
+    cs_host_attr = CsHostAttr.objects.get(host=host)
+
+    command = """sed -i s/"{}"/"{}"/g /etc/fstab""".format(source_export_path,
+                                                           target_export_path)
+    output = {}
+    return_code = exec_remote_command(server=host.address,
+                                      username=cs_host_attr.vm_user,
+                                      password=cs_host_attr.vm_password,
+                                      command=command,
+                                      output=output)
+    return return_code, output
+
+
 def make_host_backup(database, instance, export_id):
     from backup.models import Snapshot
     from dbaas_nfsaas.models import HostAttr as Nfsaas_HostAttr

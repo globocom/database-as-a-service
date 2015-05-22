@@ -9,14 +9,14 @@ from util import exec_remote_command
 LOG = logging.getLogger(__name__)
 
 
-class MountDataVolume(BaseStep):
+class UmountDataVolume(BaseStep):
 
     def __unicode__(self):
-        return "Mounting data volume..."
+        return "Umounting old data..."
 
     def do(self, workflow_dict):
         try:
-            command = 'mount /data'
+            command = 'umount /data'
             host = workflow_dict['host']
             hosts = [host, ]
             hosts.extend(workflow_dict['not_primary_hosts'])
@@ -35,7 +35,6 @@ class MountDataVolume(BaseStep):
                 if return_code != 0:
                     raise Exception(str(output))
 
-            raise Exception('Teste mount disk')
             return True
         except Exception:
             traceback = full_stack()
@@ -48,7 +47,7 @@ class MountDataVolume(BaseStep):
     def undo(self, workflow_dict):
         LOG.info("Running undo...")
         try:
-            command = 'umount /data'
+            command = 'mount /data'
             host = workflow_dict['host']
             hosts = [host, ]
             hosts.extend(workflow_dict['not_primary_hosts'])

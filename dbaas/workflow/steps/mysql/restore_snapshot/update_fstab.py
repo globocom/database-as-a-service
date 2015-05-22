@@ -7,6 +7,7 @@ from dbaas_cloudstack.models import HostAttr as CsHostAttr
 from dbaas_nfsaas.models import HostAttr as nfs_HostAttr
 from util import exec_remote_command
 from util import scape_nfsaas_export_path
+from workflow.steps.util.restore_snapshot import update_fstab
 
 LOG = logging.getLogger(__name__)
 
@@ -19,48 +20,28 @@ class UpdateFstab(BaseStep):
     def do(self, workflow_dict):
         try:
             host = workflow_dict['host']
-
-            cs_host_attr = CsHostAttr.objects.get(host=host)
-
             source_export_path = scape_nfsaas_export_path(workflow_dict['export_path'])
             target_export_path = scape_nfsaas_export_path(workflow_dict['new_export_path'])
-
-            command = """sed -i s/"{}"/"{}"/g /etc/fstab""".format(source_export_path,
-                                                                   target_export_path)
-
-            output = {}
-            return_code = exec_remote_command(server=host.address,
-                                              username=cs_host_attr.vm_user,
-                                              password=cs_host_attr.vm_password,
-                                              command=command,
-                                              output=output)
-
+            return_code, output = update_fstab(host=host,
+                                               source_export_path=source_export_path,
+                                               target_export_path=target_export_path)
             if return_code != 0:
-                workflow_dict['is_database_stoped'] = True
                 raise Exception(str(output))
 
             host = workflow_dict['not_primary_hosts'][0]
-
-            cs_host_attr = CsHostAttr.objects.get(host=host)
             nfs_host_attr = nfs_HostAttr.objects.get(host=host, is_active=True)
-
             source_export_path = scape_nfsaas_export_path(nfs_host_attr.nfsaas_path)
             target_export_path = scape_nfsaas_export_path(workflow_dict['new_export_path_2'])
-
-            command = """sed -i s/"{}"/"{}"/g /etc/fstab""".format(source_export_path,
-                                                                   target_export_path)
-
-            output = {}
-            return_code = exec_remote_command(server=host.address,
-                                              username=cs_host_attr.vm_user,
-                                              password=cs_host_attr.vm_password,
-                                              command=command,
-                                              output=output)
-
+            return_code, output = update_fstab(host=host,
+                                               source_export_path=source_export_path,
+                                               target_export_path=target_export_path)
             if return_code != 0:
-                workflow_dict['is_database_stoped'] = True
                 raise Exception(str(output))
 
+            from time import sleep
+            LOG.info('Test fstab')
+            sleep(30)
+            raise Exception('test exception')
             return True
         except Exception:
             traceback = full_stack()
@@ -73,6 +54,25 @@ class UpdateFstab(BaseStep):
     def undo(self, workflow_dict):
         LOG.info("Running undo...")
         try:
+            host = workflow_dict['host']
+            source_export_path = scape_nfsaas_export_path(workflow_dict['new_export_path'])
+            target_export_path = scape_nfsaas_export_path(workflow_dict['export_path'])
+            return_code, output = update_fstab(host=host,
+                                               source_export_path=source_export_path,
+                                               target_export_path=target_export_path)
+            if return_code != 0:
+                raise Exception(str(output))
+
+            host = workflow_dict['not_primary_hosts'][0]
+            nfs_host_attr = nfs_HostAttr.objects.get(host=host, is_active=True)
+            source_export_path = scape_nfsaas_export_path(workflow_dict['new_export_path_2'])
+            target_export_path = scape_nfsaas_export_path(nfs_host_attr.nfsaas_path)
+            return_code, output = update_fstab(host=host,
+                                               source_export_path=source_export_path,
+                                               target_export_path=target_export_path)
+            if return_code != 0:
+                raise Exception(str(output))
+
             return True
         except Exception:
             traceback = full_stack()

@@ -4,6 +4,11 @@ from util import full_stack
 from workflow.steps.util.base import BaseStep
 from workflow.exceptions.error_codes import DBAAS_0021
 from workflow.steps.util.restore_snapshot import use_database_initialization_script
+from workflow.steps.mysql.util import start_slave
+from workflow.steps.mysql.util import set_infra_read_ip
+from workflow.steps.mysql.util import set_infra_write_ip
+from time import sleep
+
 
 LOG = logging.getLogger(__name__)
 
@@ -52,7 +57,16 @@ class StopDatabase(BaseStep):
                                                                          option='start')
 
                 if return_code != 0:
-                    raise LOG.warn(str(output))
+                    LOG.warn(str(output))
+
+                instance = host.instance_set.all()[0]
+                start_slave(instance=instance)
+
+            sleep(30)
+            set_infra_read_ip(slave_host=workflow_dict['host'],
+                              infra_name=databaseinfra.name)
+            set_infra_write_ip(master_host=workflow_dict['not_primary_hosts'][0],
+                               infra_name=databaseinfra.name)
 
             return True
         except Exception:
