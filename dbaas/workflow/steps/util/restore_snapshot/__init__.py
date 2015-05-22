@@ -53,3 +53,35 @@ def destroy_unused_export(export_id, export_path, host, databaseinfra):
     provider.drop_export(environment=databaseinfra.environment,
                           plan=databaseinfra.plan,
                           export_id=export_id)
+
+
+def make_host_backup(database, instance, export_id):
+    from backup.models import Snapshot
+    from dbaas_nfsaas.models import HostAttr as Nfsaas_HostAttr
+    import datetime
+
+    LOG.info("Make instance backup for %s" % (instance))
+
+    nfsaas_hostattr = Nfsaas_HostAttr.objects.get(nfsaas_export_id=export_id)
+
+    snapshot = Snapshot()
+    snapshot.start_at = datetime.datetime.now()
+    snapshot.type = Snapshot.SNAPSHOPT
+    snapshot.status = Snapshot.RUNNING
+    snapshot.instance = instance
+    snapshot.environment = instance.databaseinfra.environment
+    snapshot.export_path = nfsaas_hostattr.nfsaas_path
+    snapshot.database_name = database.name
+
+    databaseinfra = instance.databaseinfra
+
+    nfs_snapshot = NfsaasProvider.create_snapshot(environment=databaseinfra.environment,
+                                                  plan=databaseinfra.plan,
+                                                  host=instance.hostname)
+
+    if 'id' in nfs_snapshot and 'snapshot' in nfs_snapshot:
+        snapshot.status = Snapshot.SUCCESS
+        snapshot.save()
+        return True
+
+    return False
