@@ -321,3 +321,31 @@ def restore_snapshot(self, database, snapshot, user, task_history):
             TaskHistory.STATUS_SUCCESS, details='Database sucessfully recovered!')
 
     return
+
+
+def purge_unused_exports():
+    databaseinfras = DatabaseInfra.objects.filter(plan__provider=Plan.CLOUDSTACK).prefetch_related('instances')
+    for databaseinfra in databaseinfras:
+        instances = databaseinfra.instances.exclude(instance_type__in=[Instance.MONGODB_ARBITER,
+                                                                       Instance.REDIS_SENTINEL])
+        for instance in instances:
+            exports = HostAttr.objects.filter(host=instance.hostname,
+                                              is_active=False)
+            for export in exports:
+                snapshots = Snapshot.objects.filter(export_path=export.nfsaas_path,
+                                                    purge_at=None)
+                if snapshots:
+                    print(snapshots)
+                    continue
+
+                environment = databaseinfra.environment
+                plan = databaseinfra.plan
+                host = export.host
+                export_id = export.nfsaas_export_id
+
+                nfsaas_client = NfsaasProvider()
+                nfsaas_client.revoke_access(environment=environment, plan=plan,
+                                            host=host, export_id=export_id)
+
+                nfsaas_client.drop_export(environment=environment, plan=plan,
+                                          export_id=export_id)
