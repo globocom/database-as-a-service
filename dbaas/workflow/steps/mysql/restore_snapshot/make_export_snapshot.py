@@ -3,29 +3,31 @@ import logging
 from util import full_stack
 from workflow.steps.util.base import BaseStep
 from workflow.exceptions.error_codes import DBAAS_0021
-from dbaas_nfsaas.models import HostAttr
+from dbaas_nfsaas.models import HostAttr as nfs_HostAttr
+from util import scape_nfsaas_export_path
+from workflow.steps.util.restore_snapshot import update_fstab
+from workflow.steps.util.restore_snapshot import make_host_backup
 
 LOG = logging.getLogger(__name__)
 
 
-class UpdateDbaaSMetadata(BaseStep):
+class MakeExportSnapshot(BaseStep):
 
     def __unicode__(self):
-        return "Updating dbaas metadata..."
+        return "Making export snapshot..."
 
     def do(self, workflow_dict):
         try:
             for host_and_export in workflow_dict['hosts_and_exports']:
-                old_host_attr = HostAttr.objects.get(nfsaas_path=host_and_export['old_export_path'])
-                old_host_attr.is_active = False
-                old_host_attr.save()
-
-                new_host_attr = HostAttr()
-                new_host_attr.host = old_host_attr.host
-                new_host_attr.nfsaas_export_id = host_and_export['new_export_id']
-                new_host_attr.nfsaas_path = host_and_export['new_export_path']
-                new_host_attr.is_active = True
-                new_host_attr.save()
+                host = host_and_export['host']
+                export_id = host_and_export['old_export_id']
+                ret = make_host_backup(database=workflow_dict['database'],
+                                       instance=host.instance_set.all()[0],
+                                       export_id=export_id)
+                if not ret:
+                    msg = 'Could not make snapshot for export_id: {} on host {}'.format(export_id, host)
+                    LOG.error(msg)
+                    raise Exception(msg)
 
             return True
         except Exception:

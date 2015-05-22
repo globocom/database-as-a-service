@@ -29,6 +29,7 @@ class StopDatabase(BaseStep):
 
             LOG.debug("HOSTS: {}".format(hosts))
             for host in hosts:
+                LOG.info('Stoping database on host {}'.format(host))
                 return_code, output = use_database_initialization_script(databaseinfra=databaseinfra,
                                                                          host=host,
                                                                          option='stop')
@@ -52,6 +53,7 @@ class StopDatabase(BaseStep):
             databaseinfra = workflow_dict['databaseinfra']
 
             for host in workflow_dict['stoped_hosts']:
+                LOG.info('Starting database on host {}'.format(host))
                 return_code, output = use_database_initialization_script(databaseinfra=databaseinfra,
                                                                          host=host,
                                                                          option='start')
@@ -62,10 +64,13 @@ class StopDatabase(BaseStep):
                 instance = host.instance_set.all()[0]
                 start_slave(instance=instance)
 
+            LOG.info('Wainting 30 seconds to setting flipper IPs')
             sleep(30)
+            LOG.info('Setting read IP on {}'.format(workflow_dict['host']))
             set_infra_read_ip(slave_host=workflow_dict['host'],
                               infra_name=databaseinfra.name)
 
+            LOG.info('Setting write IP on {}'.format(workflow_dict['not_primary_hosts'][0]))
             set_infra_write_ip(master_host=workflow_dict['not_primary_hosts'][0],
                                infra_name=databaseinfra.name)
 

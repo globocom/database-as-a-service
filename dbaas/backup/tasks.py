@@ -298,6 +298,7 @@ def restore_snapshot(self, database, snapshot, user, task_history):
     not_primary_hosts = [instance.hostname for instance in not_primary_instances]
 
     workflow_dict = build_dict(databaseinfra=databaseinfra,
+                               database=database,
                                snapshot_id=snapshot_id,
                                export_path=export_path,
                                export_id=export_id,
