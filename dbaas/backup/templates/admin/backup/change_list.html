@@ -57,18 +57,15 @@
 
 {% block content %}
   {% block object-tools %}
-    {% if has_add_permission %}
       <ul class="object-tools pull-right">
         {% block object-tools-items %}
           <li>
-            <a href="{% url cl.opts|admin_urlname:'add' %}{% if is_popup %}?_popup=1{% endif %}" class="addlink btn btn-primary">
-              {% blocktrans with cl.opts.verbose_name as name %}Add {{ name }}{% endblocktrans %}
+            <a align='left' class="addlink btn btn-primary" href="backup_databases/">{% trans "Backup databases now" %}</a>
             </a>
           </li>
         {% endblock %}
       </ul>
       <script type="text/javascript">django.jQuery("ul.object-tools li a").addClass("btn");</script>
-    {% endif %}
   {% endblock %}
   <div id="content-main">
     {% if cl.formset.errors %}
