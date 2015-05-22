@@ -38,10 +38,6 @@ class UpdateFstab(BaseStep):
             if return_code != 0:
                 raise Exception(str(output))
 
-            from time import sleep
-            LOG.info('Test fstab')
-            sleep(30)
-            raise Exception('test exception')
             return True
         except Exception:
             traceback = full_stack()

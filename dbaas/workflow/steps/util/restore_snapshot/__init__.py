@@ -51,8 +51,8 @@ def destroy_unused_export(export_id, export_path, host, databaseinfra):
 
     LOG.info(output)
     provider.drop_export(environment=databaseinfra.environment,
-                          plan=databaseinfra.plan,
-                          export_id=export_id)
+                         plan=databaseinfra.plan,
+                         export_id=export_id)
 
 
 def update_fstab(host, source_export_path, target_export_path):
