@@ -5,6 +5,9 @@ from ..service.databaseregionmigrationdetail import DatabaseRegionMigrationDetai
 from .. import models
 import logging
 from django.utils.html import format_html
+from django.contrib import messages
+from django.http import HttpResponseRedirect
+from django.core.urlresolvers import reverse
 
 LOG = logging.getLogger(__name__)
 
@@ -18,10 +21,78 @@ class DatabaseRegionMigrationDetailAdmin(admin.DjangoServicesAdmin):
                     "finished_at", "created_by", "revoked_by",)
     fields = ("database_region_migration", "step", "scheduled_for",
               "status", "started_at", "finished_at", "created_by",
-              "revoked_by", "log",)
+              "revoked_by", "log", "celery_task_id")
     readonly_fields = fields
 
     ordering = ["-scheduled_for", ]
+
+    def get_readonly_fields(self, request, obj=None):
+        detail = obj
+        self.max_num = None
+        if detail and detail.status == models.DatabaseRegionMigrationDetail.WAITING:
+            self.change_form_template = "admin/region_migration/databaseregionmigrationdetail/custom_change_form.html"
+        else:
+            self.change_form_template = None
+
+        return self.fields
+
+        return ()
+
+    def revoke_detail(request, id):
+        import celery
+        from system.models import Configuration
+        celery_inpsect = celery.current_app.control.inspect()
+
+        celery_workers = Configuration.get_by_name_as_list('celery_workers',)
+
+        try:
+            workers = celery_inpsect.ping().keys()
+        except Exception, e:
+            LOG.warn("All celery workers are down! {} :(".format(e))
+            messages.add_message(request, messages.ERROR,
+                                 "Migration can't be revoked because all celery workers are down!",)
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
+        if workers and workers != celery_workers:
+            LOG.warn("At least one celery worker is down! :(")
+            messages.add_message(request, messages.ERROR,
+                "Migration can't be revoked because at least one celery worker is down!",)
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
+        detail = models.DatabaseRegionMigrationDetail.objects.get(id=id)
+        if detail.status == detail.WAITING:
+            if detail.revoke_maintenance(request):
+                messages.add_message(request, messages.SUCCESS,
+                                     "Migration revoked!",)
+            else:
+                messages.add_message(request, messages.ERROR,
+                                     "Migration has already started!",)
+        else:
+            messages.add_message(request, messages.ERROR,
+                                 "Migration can't be revoked!",)
+
+        return HttpResponseRedirect(reverse('admin:region_migration_databaseregionmigrationdetail_changelist'))
+
+    buttons = [
+        {'url': 'revoke_detail',
+         'textname': 'Revoke Migration',
+         'func': revoke_detail,
+         'confirm': u'Do you really want to revoke this migration?',
+         'id': 'revoke_migration'},
+    ]
+
+    def change_view(self, request, object_id, form_url='', extra_context={}):
+        extra_context['buttons'] = self.buttons
+        return super(DatabaseRegionMigrationDetailAdmin, self).change_view(request,
+                                                                           object_id,
+                                                                           form_url,
+                                                                           extra_context=extra_context)
+
+    def get_urls(self):
+        from django.conf.urls import url
+        urls = super(DatabaseRegionMigrationDetailAdmin, self).get_urls()
+        my_urls = list((url(r'^(.+)/%(url)s/$' % b, self.admin_site.admin_view(b['func'])) for b in self.buttons))
+        return my_urls + urls
 
     def friendly_status(self, detail):
 

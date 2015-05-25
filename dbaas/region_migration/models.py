@@ -7,7 +7,10 @@ from django.utils.translation import ugettext_lazy as _
 from logical.models import Database
 from util.models import BaseModel
 from .migration_steps import get_engine_steps
-
+from celery.task import control
+from django.db.models.signals import post_save
+from django.db.models.signals import pre_delete
+from django.dispatch import receiver
 
 LOG = logging.getLogger(__name__)
 
@@ -82,6 +85,8 @@ class DatabaseRegionMigrationDetail(BaseModel):
     status = models.IntegerField(choices=MAINTENANCE_STATUS, default=WAITING)
     log = models.TextField(verbose_name=_("Log"), null=False, blank=False)
     is_migration_up = models.BooleanField(verbose_name=_("Log"), default=True)
+    celery_task_id = models.CharField(verbose_name=_("Celery task Id"),
+        null=True, blank=False, max_length=50,)
 
     class Meta:
         unique_together = (
@@ -95,5 +100,48 @@ class DatabaseRegionMigrationDetail(BaseModel):
     def __unicode__(self):
         return " Detail for %s" % (self.database_region_migration)
 
+    def revoke_maintenance(self, request):
+        if self.is_waiting_to_run:
+            control.revoke(self.celery_task_id,)
+
+            self.status=self.REVOKED
+            self.revoked_by = request.user.username
+            self.save()
+
+        return True
+
+    def is_waiting_to_run(self):
+        if self.status != self.WAITING:
+            LOG.info("Migration: {} has already run!".format(self))
+            return False
+
+        inspect = control.inspect()
+        scheduled_tasks = inspect.scheduled()
+        try:
+            hosts = scheduled_tasks.keys()
+        except Exception, e:
+            LOG.info("Could not retrieve celery scheduled tasks: {}".format(e))
+            return False
+
+        for host in hosts:
+            try:
+                scheduled_tasks = scheduled_tasks[host]
+            except TypeError:
+                LOG.warn("There are no scheduled tasks")
+                LOG.info(scheduled_tasks)
+                continue
+
+            for task in scheduled_tasks:
+                if  task['request']['id'] == self.celery_task_id:
+                    return True
+
+        return False
+
 
 simple_audit.register(DatabaseRegionMigration, DatabaseRegionMigrationDetail)
+
+@receiver(pre_delete, sender=DatabaseRegionMigrationDetail)
+def region_migration_detail_pre_delete(sender, **kwargs):
+    detail = kwargs.get("instance")
+    LOG.debug("maintenance pre-delete triggered")
+    control.revoke(task_id=detail.celery_task_id)
