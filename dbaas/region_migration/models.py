@@ -43,7 +43,7 @@ class DatabaseRegionMigration(BaseModel):
 
     class Meta:
         permissions = (
-            ("view_databaseregiomigration",
+            ("view_databaseregionmigration",
              "Can view database region migration"),
         )
 
@@ -85,6 +85,10 @@ class DatabaseRegionMigrationDetail(BaseModel):
     class Meta:
         unique_together = (
             ('database_region_migration', 'step', 'scheduled_for',)
+        )
+        permissions = (
+            ("view_databaseregionmigrationdetail",
+             "Can view database region migration detail"),
         )
 
     def __unicode__(self):
