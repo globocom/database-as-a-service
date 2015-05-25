@@ -325,6 +325,7 @@ def restore_snapshot(self, database, snapshot, user, task_history):
 
 
 def purge_unused_exports():
+    from dbaas_nfsaas.models import HostAttr
     databaseinfras = DatabaseInfra.objects.filter(plan__provider=Plan.CLOUDSTACK).prefetch_related('instances')
     for databaseinfra in databaseinfras:
         instances = databaseinfra.instances.exclude(instance_type__in=[Instance.MONGODB_ARBITER,
