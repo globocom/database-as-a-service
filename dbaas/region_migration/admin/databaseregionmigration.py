@@ -21,7 +21,7 @@ LOG = logging.getLogger(__name__)
 
 class DatabaseRegionMigrationAdmin(admin.DjangoServicesAdmin):
     model = DatabaseRegionMigration
-    list_display = ('database', 'steps_information',
+    list_display = ('database', 'steps_information','database_engine',
                     'status', 'description', 'schedule_next_step_html',
                     'user_friendly_warning', 'schedule_rollback_html')
 
@@ -82,6 +82,11 @@ class DatabaseRegionMigrationAdmin(admin.DjangoServicesAdmin):
         return format_html(html)
 
     schedule_rollback_html.short_description = "Schedule Rollback"
+
+    def database_engine(self, databaseregionmigration):
+        return databaseregionmigration.database.engine_type
+
+    database_engine.short_description = "Engine"
 
     def user_friendly_warning(self, databaseregionmigration):
         warning_message = databaseregionmigration.warning
