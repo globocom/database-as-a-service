@@ -12,10 +12,10 @@ LOG = logging.getLogger(__name__)
 class DatabaseRegionMigrationDetailAdmin(admin.DjangoServicesAdmin):
     actions = None
     service_class = DatabaseRegionMigrationDetailService
-    search_fields = ("step", "status")
+    search_fields = ("step", "status",)
     list_display = ("database_region_migration", "step", "scheduled_for",
-                    "friendly_status", "started_at", "finished_at", "created_by",
-                    "revoked_by",)
+                    "friendly_status", "friendly_direction", "started_at",
+                    "finished_at", "created_by", "revoked_by",)
     fields = ("database_region_migration", "step", "scheduled_for",
               "status", "started_at", "finished_at", "created_by",
               "revoked_by", "log",)
@@ -45,6 +45,17 @@ class DatabaseRegionMigrationDetailAdmin(admin.DjangoServicesAdmin):
             return format_html(html_rejected.format("Error"))
 
     friendly_status.short_description = "Status"
+
+    def friendly_direction(self, detail):
+        message = "Backward"
+
+        if detail.is_migration_up:
+            message = "Foward"
+
+        return message
+
+
+    friendly_direction.short_description = "Direction"
 
     def has_delete_permission(self, request, obj=None):
         return False

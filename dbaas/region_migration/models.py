@@ -81,6 +81,7 @@ class DatabaseRegionMigrationDetail(BaseModel):
                                   null=True, blank=True)
     status = models.IntegerField(choices=MAINTENANCE_STATUS, default=WAITING)
     log = models.TextField(verbose_name=_("Log"), null=False, blank=False)
+    is_migration_up = models.BooleanField(verbose_name=_("Log"), default=True)
 
     class Meta:
         unique_together = (
