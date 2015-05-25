@@ -167,6 +167,7 @@ def execute_database_region_migration_undo(self, database_region_migration_detai
 
         database_region_migration_detail.started_at = datetime.now()
         database_region_migration_detail.status = database_region_migration_detail.RUNNING
+        database_region_migration_detail.is_migration_up = False
         database_region_migration_detail.save()
 
         database_region_migration = database_region_migration_detail.database_region_migration
