@@ -101,7 +101,11 @@ def make_host_backup(database, instance, export_id):
 
     if 'id' in nfs_snapshot and 'snapshot' in nfs_snapshot:
         snapshot.status = Snapshot.SUCCESS
+        snapshot.snapshopt_id = nfs_snapshot['id']
+        snapshot.snapshot_name = nfs_snapshot['snapshot']
         snapshot.save()
         return True
-
-    return False
+    else:
+        snapshot.status = Snapshot.ERROR
+        snapshot.save()
+        return False
