@@ -3,9 +3,6 @@ import logging
 from util import full_stack
 from workflow.steps.util.base import BaseStep
 from workflow.exceptions.error_codes import DBAAS_0021
-from dbaas_nfsaas.models import HostAttr as nfs_HostAttr
-from util import scape_nfsaas_export_path
-from workflow.steps.util.restore_snapshot import update_fstab
 from workflow.steps.util.restore_snapshot import make_host_backup
 
 LOG = logging.getLogger(__name__)

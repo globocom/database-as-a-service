@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
 from util import full_stack
+from time import sleep
 from workflow.steps.util.base import BaseStep
 from workflow.exceptions.error_codes import DBAAS_0021
 from workflow.steps.util.restore_snapshot import use_database_initialization_script
@@ -29,6 +30,9 @@ class StartDatabase(BaseStep):
 
                 if return_code != 0:
                     raise Exception(str(output))
+
+                LOG.info('Wait 1 minute before start other instance')
+                sleep(60)
 
             return True
         except Exception:
