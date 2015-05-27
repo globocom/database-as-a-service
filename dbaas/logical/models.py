@@ -400,6 +400,12 @@ class Database(BaseModel):
 
         return False
 
+    def restore_allowed(self):
+        if Configuration.get_by_name_as_int('restore_allowed') == 1:
+            return True
+
+        return False
+
 
 class Credential(BaseModel):
     USER_PATTERN = "u_%s"
