@@ -103,9 +103,11 @@ def make_host_backup(database, instance, export_id):
         snapshot.status = Snapshot.SUCCESS
         snapshot.snapshopt_id = nfs_snapshot['id']
         snapshot.snapshot_name = nfs_snapshot['snapshot']
+        snapshot.end_at = datetime.datetime.now()
         snapshot.save()
         return True
     else:
         snapshot.status = Snapshot.ERROR
+        snapshot.end_at = datetime.datetime.now()
         snapshot.save()
         return False
