@@ -73,7 +73,7 @@ class MakeBackup(BaseStep):
 
             if 'snapshopt_id' in workflow_dict:
                 host_attr = HostAttr.objects.get(host=instance.hostname,
-                                                 active=True)
+                                                 is_active=True)
 
                 NfsaasProvider.remove_snapshot(environment=databaseinfra.environment,
                                                plan=databaseinfra.plan,

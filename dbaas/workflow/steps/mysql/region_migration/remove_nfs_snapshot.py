@@ -20,12 +20,12 @@ class RemoveNfsSnapshot(BaseStep):
             instance = workflow_dict['source_instances'][0]
 
             host_attr = HostAttr.objects.get(host=instance.hostname,
-                                             active=True)
+                                             is_active=True)
 
             NfsaasProvider.remove_snapshot(environment=databaseinfra.environment,
                                            plan=databaseinfra.plan,
                                            host_attr=host_attr,
-                                           snapshopt=workflow_dict['snapshopt_id'])
+                                           snapshot_id=workflow_dict['snapshopt_id'])
 
             del workflow_dict['snapshopt_id']
 
