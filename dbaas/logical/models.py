@@ -389,12 +389,19 @@ class Database(BaseModel):
         return False
 
     def has_migration_started(self,):
+        from region_migration.models import DatabaseRegionMigrationDetail
         try:
             migration = self.migration.get()
         except ObjectDoesNotExist, e:
             return False
 
-        details = migration.details.all()
+        if migration.current_step > 0:
+            return True
+
+        status_to_check  = [DatabaseRegionMigrationDetail.WAITING,
+                             DatabaseRegionMigrationDetail.RUNNING]
+
+        details = migration.details.filter(status__in=status_to_check)
         if details:
             return True
 
