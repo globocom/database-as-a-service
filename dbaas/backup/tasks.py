@@ -330,6 +330,9 @@ def purge_unused_exports():
     for databaseinfra in databaseinfras:
         instances = databaseinfra.instances.exclude(instance_type__in=[Instance.MONGODB_ARBITER,
                                                                        Instance.REDIS_SENTINEL])
+        environment = databaseinfra.environment
+        plan = databaseinfra.plan
+
         for instance in instances:
             exports = HostAttr.objects.filter(host=instance.hostname,
                                               is_active=False)
@@ -337,11 +340,9 @@ def purge_unused_exports():
                 snapshots = Snapshot.objects.filter(export_path=export.nfsaas_path,
                                                     purge_at=None)
                 if snapshots:
-                    print(snapshots)
                     continue
 
-                environment = databaseinfra.environment
-                plan = databaseinfra.plan
+                LOG.info('Export {} will be removed'.format(export))
                 host = export.host
                 export_id = export.nfsaas_export_id
 
@@ -351,3 +352,5 @@ def purge_unused_exports():
 
                 nfsaas_client.drop_export(environment=environment, plan=plan,
                                           export_id=export_id)
+
+                export.delete()
