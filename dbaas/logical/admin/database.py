@@ -406,6 +406,12 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             url = reverse('admin:logical_database_changelist')
             return HttpResponseRedirect(url)
 
+        if database.has_migration_started():
+            self.message_user(
+                request, "Database {} cannot be deleted because it is beeing migrated.".format(database.name), level=messages.ERROR)
+            url = reverse('admin:logical_database_changelist')
+            return HttpResponseRedirect(url)
+
         if not database.is_in_quarantine:
             extra_context['quarantine_days'] = Configuration.get_by_name_as_int(
                 'quarantine_retention_days')
@@ -425,6 +431,12 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         if database.is_beeing_used_elsewhere():
             modeladmin.message_user(
                 request, "Database {} cannot be deleted because it is in use by another task.".format(database.name), level=messages.ERROR)
+            url = reverse('admin:logical_database_changelist')
+            return HttpResponseRedirect(url)
+
+        if database.has_migration_started():
+            modeladmin.message_user(
+                request, "Database {} cannot be deleted because it is beeing migrated.".format(database.name), level=messages.ERROR)
             url = reverse('admin:logical_database_changelist')
             return HttpResponseRedirect(url)
 
@@ -631,6 +643,12 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 request, "Database is beeing used by another task, please check your tasks", level=messages.ERROR)
             return HttpResponseRedirect(url)
 
+        if database.has_migration_started():
+            self.message_user(
+                request, "Database {} cannot be resized because it is beeing migrated.".format(database.name), level=messages.ERROR)
+            url = reverse('admin:logical_database_changelist')
+            return HttpResponseRedirect(url)
+
         if not CloudStackPack.objects.filter(
             offering__region__environment=database.environment,
             engine_type__name=database.engine_type
@@ -679,6 +697,12 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         if database.is_beeing_used_elsewhere():
             self.message_user(
                 request, "Database is beeing used by another task, please check your tasks", level=messages.ERROR)
+            return HttpResponseRedirect(url)
+
+        if database.has_migration_started():
+            self.message_user(
+                request, "Database {} cannot be restored because it is beeing migrated.".format(database.name), level=messages.ERROR)
+            url = reverse('admin:logical_database_changelist')
             return HttpResponseRedirect(url)
 
         form = None

@@ -17,7 +17,7 @@ LOG = logging.getLogger(__name__)
 
 class DatabaseRegionMigration(BaseModel):
     database = models.ForeignKey(Database, verbose_name=("Database"),
-                                 null=False, unique=True)
+                                 null=False, unique=True, related_name="migration")
     current_step = models.PositiveSmallIntegerField(verbose_name=_("Current \
                                                     Step"), null=False,
                                                     blank=False, default=0)

@@ -16,10 +16,9 @@ from physical.models import DatabaseInfra, Environment, Plan
 from drivers import factory_for
 from system.models import Configuration
 from datetime import date, timedelta
-
 from account.models import Team
-
 from drivers.base import ConnectionError, DatabaseStatus
+from django.core.exceptions import ObjectDoesNotExist
 
 
 LOG = logging.getLogger(__name__)
@@ -385,6 +384,18 @@ class Database(BaseModel):
                                                             'PENDING',
                                                             'WAITING'])
         if tasks:
+            return True
+
+        return False
+
+    def has_migration_started(self,):
+        try:
+            migration = self.migration.get()
+        except ObjectDoesNotExist, e:
+            return False
+
+        details = migration.details.all()
+        if details:
             return True
 
         return False
