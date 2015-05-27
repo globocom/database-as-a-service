@@ -141,7 +141,7 @@ class DatabaseRegionMigrationAdmin(admin.DjangoServicesAdmin):
                 task_history.task_name = "execute_database_region_migration"
                 task_history.task_status = task_history.STATUS_WAITING
 
-                description = database_region_migration.description
+                description = database_region_migration.description()
                 task_history.arguments = "Database name: {},\
                                           Step: {}".format(database_region_migration.database.name,
                                                            description)
