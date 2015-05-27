@@ -221,7 +221,7 @@ def remove_snapshot_backup(snapshot):
     NfsaasProvider.remove_snapshot(environment=databaseinfra.environment,
                                    plan=databaseinfra.plan,
                                    host_attr=host_attr,
-                                   snapshopt=snapshot.snapshopt_id)
+                                   snapshot_id=snapshot.snapshopt_id)
 
     snapshot.purge_at = datetime.datetime.now()
     snapshot.save()
@@ -255,8 +255,8 @@ def remove_database_old_backups(self):
             remove_snapshot_backup(snapshot=snapshot)
             msg = "Backup %s removed" % (snapshot)
             LOG.info(msg)
-        except:
-            msg = "Error removing backup %s" % (snapshot)
+        except Exception, e:
+            msg = "Error removing backup %s. Error: %s" % (snapshot, str(e))
             status = TaskHistory.STATUS_ERROR
             LOG.error(msg)
         msgs.append(msg)
