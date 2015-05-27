@@ -342,7 +342,7 @@ def purge_unused_exports():
                 if snapshots:
                     continue
 
-                LOG.info('Export {} will be removed'.format(export))
+                LOG.info('Export {} will be removed'.format(export.nfsaas_export_id))
                 host = export.host
                 export_id = export.nfsaas_export_id
 
