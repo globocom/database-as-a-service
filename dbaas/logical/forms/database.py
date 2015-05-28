@@ -263,8 +263,9 @@ class RestoreDatabaseForm(forms.Form):
                     self.define_target_snapshot_field(database_instance=instance)
 
     def define_target_snapshot_field(self, database_instance):
+        instances = database_instance.databaseinfra.instances.all()
         self.fields['target_snapshot'] = forms.ModelChoiceField(
-            queryset=Snapshot.objects.filter(database_name=database_instance.name,
+            queryset=Snapshot.objects.filter(instance__in=instances,
                                              purge_at=None),
             label=u'Recover to point',
             required=True)
