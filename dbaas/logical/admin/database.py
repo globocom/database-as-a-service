@@ -385,6 +385,12 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             extra_context['delete_button_name'] = self.delete_button_name
         else:
             extra_context['delete_button_name'] = "Delete"
+
+        if request.user.team_set.filter(role__name="role_dba"):
+            extra_context['is_dba'] = True
+        else:
+            extra_context['is_dba'] = False
+
         return super(DatabaseAdmin, self).change_view(request, object_id, form_url, extra_context=extra_context)
 
     def delete_view(self, request, object_id, extra_context=None):

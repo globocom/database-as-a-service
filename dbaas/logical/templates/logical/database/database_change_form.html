@@ -109,18 +109,19 @@
         </div>
     </tr>
  </table>
-
-     {% if original.restore_allowed %}
-         <h2>Recovery</h2>
-         <table id="table-mais" class="table table-striped">
-            <tr >
-                <div class="btn-toolbar">
-                    <div class="btn-group-lg">
-                        <a href="{{original.get_restore_url}}" class="btn btn-primary" title="Restore" data-content="Restore">Restore Snapshot</a>
+     {% if is_dba %}
+         {% if original.restore_allowed %}
+             <h2>Recovery</h2>
+             <table id="table-mais" class="table table-striped">
+                <tr >
+                    <div class="btn-toolbar">
+                        <div class="btn-group-lg">
+                            <a href="{{original.get_restore_url}}" class="btn btn-primary" title="Restore" data-content="Restore">Restore Snapshot</a>
+                        </div>
                     </div>
-                </div>
-            </tr>
-         </table>
+                </tr>
+             </table>
+        {% endif %}
     {% endif %}
 {% endif %}
 {% endblock %}
