@@ -5,6 +5,7 @@ from django.contrib import admin
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from backup.tasks import make_databases_backup
+from system.models import Configuration
 import logging
 
 
@@ -39,3 +40,16 @@ class SnapshotAdmin(admin.ModelAdmin):
         my_urls = [(url(r'backup_databases/$', self.admin_site.admin_view(self.backup_databases)))]
         return my_urls + urls
 
+
+    def changelist_view(self, request, extra_context=None):
+        extra_context = extra_context or {}
+
+        backup_avaliable = Configuration.get_by_name_as_int(
+                'backup_avaliable')
+
+        extra_context['backup_avaliable'] = False
+        if backup_avaliable:
+            extra_context['backup_avaliable'] = True
+
+
+        return super(SnapshotAdmin, self).changelist_view(request, extra_context=extra_context)

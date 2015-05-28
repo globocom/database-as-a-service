@@ -60,8 +60,10 @@
       <ul class="object-tools pull-right">
         {% block object-tools-items %}
           <li>
-            <a align='left' class="addlink btn btn-primary" href="backup_databases/" onclick="return confirm('Are you sure?')">{% trans "Backup databases now" %}</a>
-            </a>
+            {% if backup_avaliable %}
+              <a align='left' class="addlink btn btn-primary" href="backup_databases/" onclick="return confirm('Are you sure?')">{% trans "Backup databases now" %}</a>
+              </a>
+            {% endif %}
           </li>
         {% endblock %}
       </ul>
