@@ -362,6 +362,9 @@ class Database(BaseModel):
     def get_restore_url(self):
         return "/admin/logical/database/{}/restore/".format(self.id)
 
+    def get_migration_url(self):
+        return "/admin/logical/database/{}/initialize_migration/".format(self.id)
+
     def get_cloudstack_service_offering_id(self):
         LOG.info("Get offering")
         try:

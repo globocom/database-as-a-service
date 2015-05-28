@@ -143,5 +143,5 @@ simple_audit.register(DatabaseRegionMigration, DatabaseRegionMigrationDetail)
 @receiver(pre_delete, sender=DatabaseRegionMigrationDetail)
 def region_migration_detail_pre_delete(sender, **kwargs):
     detail = kwargs.get("instance")
-    LOG.debug("maintenance pre-delete triggered")
+    LOG.debug("regionmigration pre-delete triggered")
     control.revoke(task_id=detail.celery_task_id)

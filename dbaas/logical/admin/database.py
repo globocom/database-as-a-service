@@ -97,18 +97,6 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     quarantine_dt_format.short_description = "Quarantine since"
     quarantine_dt_format.admin_order_field = 'quarantine_dt'
 
-    def initialize_database_migration(model_admin, request, queryset):
-        from region_migration.models import DatabaseRegionMigration
-
-        for database in queryset:
-            region_migration = DatabaseRegionMigration(database=database,
-                                                       current_step=0,
-                                                       )
-            try:
-                region_migration.save()
-            except IntegrityError:
-                pass
-
     def environment(self, database):
         return database.environment
 
@@ -202,6 +190,33 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             return None
 
     get_capacity_html.short_description = "Capacity"
+
+    def get_actions(self, request):
+        actions = super(DatabaseAdmin, self).get_actions(request)
+        if request.user.team_set.filter(role__name="role_dba"):
+            actions['multiple_initialize_migration'] = (self.multiple_initialize_migration,
+                                               'multiple_initialize_migration',
+                                               'Initialize Migration')
+
+        return actions
+
+    def multiple_initialize_migration(self, queryset, request, instances):
+        from region_migration.models import DatabaseRegionMigration
+        url = reverse('admin:region_migration_databaseregionmigration_changelist')
+
+        for database in instances:
+            region_migration = DatabaseRegionMigration(database=database,
+                                                       current_step=0,
+                                                       )
+            try:
+                region_migration.save()
+            except IntegrityError:
+                pass
+
+        self.message_user(
+            request, "Migration for selected database(s) started!", level=messages.SUCCESS)
+
+        return HttpResponseRedirect(url)
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         """
@@ -746,6 +761,41 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                                   locals(),
                                   context_instance=RequestContext(request))
 
+    def initialize_migration(self, request, database_id):
+        from region_migration.models import DatabaseRegionMigration
+
+        database = Database.objects.get(id=database_id)
+        url = reverse('admin:region_migration_databaseregionmigration_changelist')
+
+
+        region_migration =DatabaseRegionMigration(database=database,
+                                                  current_step=0,)
+
+        if database.is_in_quarantine:
+            self.message_user(
+                request, "Database in quarantine and cannot be migrated", level=messages.ERROR)
+            return HttpResponseRedirect(url)
+
+        if database.status != Database.ALIVE or not database.database_status.is_alive:
+            self.message_user(
+                request, "Database is dead  and cannot be migrated", level=messages.ERROR)
+            return HttpResponseRedirect(url)
+
+        if database.has_migration_started():
+            self.message_user(
+                request, "Database {} is already migrating".format(database.name), level=messages.ERROR)
+            return HttpResponseRedirect(url)
+
+        try:
+            region_migration.save()
+            self.message_user(
+            request, "Migration for {} started!".format(database.name), level=messages.SUCCESS)
+        except IntegrityError, e:
+            self.message_user(
+            request, "Database {} is already migrating!".format(database.name), level=messages.ERROR)
+
+        return HttpResponseRedirect(url)
+
     def get_urls(self):
         urls = super(DatabaseAdmin, self).get_urls()
         my_urls = patterns('',
@@ -769,6 +819,9 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
                            url(r'^/?(?P<database_id>\d+)/restore/$', self.admin_site.admin_view(self.restore_snapshot),
                                name="database_restore_snapshot"),
+
+                           url(r'^/?(?P<database_id>\d+)/initialize_migration/$', self.admin_site.admin_view(self.initialize_migration),
+                               name="database_initialize_migration"),
 
                            )
 

@@ -123,6 +123,18 @@
              </table>
         {% endif %}
     {% endif %}
+    {% if is_dba %}
+         <h2>Region Migration</h2>
+         <table id="table-mais" class="table table-striped">
+            <tr >
+                <div class="btn-toolbar">
+                    <div class="btn-group-lg">
+                        <a href="{{original.get_migration_url}}" class="btn btn-primary" title="IniMigration" data-content="IniMigration">Initialize Region Migration</a>
+                    </div>
+                </div>
+            </tr>
+         </table>
+    {% endif %}
 {% endif %}
 {% endblock %}
 {% block submit_buttons_bottom %}{% submit_row_extended %}{% endblock %}
