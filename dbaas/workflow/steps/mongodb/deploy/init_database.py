@@ -3,7 +3,6 @@ import logging
 import string
 import random
 from dbaas_credentials.models import CredentialType
-from dbaas_cloudstack.provider import CloudStackProvider
 from dbaas_nfsaas.models import HostAttr
 from dbaas_cloudstack.models import PlanAttr
 from dbaas_cloudstack.models import HostAttr as CsHostAttr
@@ -11,8 +10,10 @@ from util import full_stack
 from util import check_ssh
 from util import get_credentials_for
 from util import exec_remote_command
-from ...util.base import BaseStep
-from ....exceptions.error_codes import DBAAS_0014
+from util import build_context_script
+from workflow.steps.util.base import BaseStep
+from workflow.exceptions.error_codes import DBAAS_0014
+from time import sleep
 
 LOG = logging.getLogger(__name__)
 
@@ -23,14 +24,6 @@ class InitDatabaseMongoDB(BaseStep):
 
     def do(self, workflow_dict):
         try:
-
-            LOG.info("Getting cloudstack credentials...")
-            cs_credentials = get_credentials_for(
-                environment=workflow_dict['environment'],
-                credential_type=CredentialType.CLOUDSTACK)
-
-            cs_provider = CloudStackProvider(credentials=cs_credentials)
-
             mongodbkey = ''.join(random.choice(string.hexdigits) for i in range(50))
 
             workflow_dict['replicasetname'] = 'RepicaSet_' + workflow_dict['databaseinfra'].name
@@ -40,6 +33,8 @@ class InitDatabaseMongoDB(BaseStep):
                 credential_type=CredentialType.STATSD)
 
             statsd_host, statsd_port = statsd_credentials.endpoint.split(':')
+            mongodb_password = get_credentials_for(environment=workflow_dict['environment'],
+                                                   credential_type=CredentialType.MONGODB).password
 
             for index, instance in enumerate(workflow_dict['instances']):
                 host = instance.hostname
@@ -72,8 +67,7 @@ class InitDatabaseMongoDB(BaseStep):
                         'HOST': workflow_dict['hosts'][index].hostname.split('.')[0],
                         'DATABASENAME': workflow_dict['name'],
                         'ENGINE': 'mongodb',
-                        'DBPASSWORD': get_credentials_for(environment=workflow_dict['environment'],
-                                                          credential_type=CredentialType.MONGODB).password,
+                        'DBPASSWORD': mongodb_password,
                         'STATSD_HOST': statsd_host,
                         'STATSD_PORT': statsd_port,
                     }
@@ -93,38 +87,46 @@ class InitDatabaseMongoDB(BaseStep):
                         'HOST03': workflow_dict['hosts'][2],
                         'MONGODBKEY': mongodbkey,
                         'DATABASERULE': databaserule,
-                        'SECOND_SCRIPT_FILE': '/opt/dbaas/scripts/dbaas_second_script.sh',
                         'HOST': workflow_dict['hosts'][index].hostname.split('.')[0],
                     })
 
-                LOG.info("Updating userdata for %s" % host)
-
                 planattr = PlanAttr.objects.get(plan=workflow_dict['plan'])
-                cs_provider.update_userdata(
-                    vm_id=host_csattr.vm_id, contextdict=contextdict, userdata=planattr.userdata)
 
-                LOG.info("Executing script on %s" % host)
+                scripts = (planattr.initialization_script,
+                           planattr.configuration_script,
+                           planattr.start_database_script)
+
+                for script in scripts:
+                    LOG.info("Executing script on %s" % host)
+
+                    script = build_context_script(contextdict, script)
+                    return_code = exec_remote_command(server=host.address,
+                                                      username=host_csattr.vm_user,
+                                                      password=host_csattr.vm_password,
+                                                      command=script)
+
+                    if return_code != 0:
+                        return False
+
+            if len(workflow_dict['hosts']) > 1:
+                scripts_to_run = planattr.start_replication_script
+
+                contextdict.update({'DBPASSWORD': mongodb_password,
+                                   'DATABASERULE': 'PRIMARY'})
+
+                scripts_to_run = build_context_script(contextdict,
+                                                      scripts_to_run)
+
+                host = workflow_dict['hosts'][0]
+                host_csattr = CsHostAttr.objects.get(host=host)
 
                 return_code = exec_remote_command(server=host.address,
                                                   username=host_csattr.vm_user,
                                                   password=host_csattr.vm_password,
-                                                  command='/opt/dbaas/scripts/dbaas_userdata_script.sh')
+                                                  command=scripts_to_run)
 
                 if return_code != 0:
                     return False
-
-            if len(workflow_dict['hosts']) > 1:
-                for host in workflow_dict['hosts']:
-
-                    LOG.info("Executing script on %s" % host)
-
-                    return_code = exec_remote_command(server=host.address,
-                                                      username=host_csattr.vm_user,
-                                                      password=host_csattr.vm_password,
-                                                      command=contextdict['SECOND_SCRIPT_FILE'])
-
-                    if return_code != 0:
-                        return False
 
             return True
         except Exception:
