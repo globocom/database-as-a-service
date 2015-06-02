@@ -10,8 +10,9 @@ from util import check_ssh
 from util import get_credentials_for
 from util import exec_remote_command
 from util import full_stack
-from ...util.base import BaseStep
-from ....exceptions.error_codes import DBAAS_0013
+from util import build_context_script
+from workflow.steps.util.base import BaseStep
+from workflow.exceptions.error_codes import DBAAS_0013
 
 LOG = logging.getLogger(__name__)
 
@@ -22,14 +23,6 @@ class InitDatabase(BaseStep):
 
     def do(self, workflow_dict):
         try:
-
-            LOG.info("Getting cloudstack credentials...")
-            cs_credentials = get_credentials_for(
-                environment=workflow_dict['environment'],
-                credential_type=CredentialType.CLOUDSTACK)
-
-            cs_provider = CloudStackProvider(credentials=cs_credentials)
-
             statsd_credentials = get_credentials_for(
                 environment=workflow_dict['environment'],
                 credential_type=CredentialType.STATSD)
@@ -83,28 +76,36 @@ class InitDatabase(BaseStep):
 
                 LOG.info("Updating userdata for %s" % hosts[0])
 
-                cs_provider.update_userdata(
-                    vm_id=host_csattr.vm_id, contextdict=contextdict, userdata=planattr.userdata)
+                scripts = (planattr.initialization_script,
+                           planattr.configuration_script,
+                           planattr.start_database_script)
 
-                LOG.info("Executing script on %s" % hosts[0])
+                host = workflow_dict['hosts'][0]
 
-                return_code = exec_remote_command(server=hosts[0].address,
-                                                  username=host_csattr.vm_user,
-                                                  password=host_csattr.vm_password,
-                                                  command='/opt/dbaas/scripts/dbaas_userdata_script.sh')
+                for script in scripts:
+                    LOG.info("Executing script on %s" % host)
 
-                if return_code != 0:
-                    return False
-
-            if len(workflow_dict['hosts']) > 1:
-                for host in workflow_dict['hosts']:
-
-                    LOG.info("Executing script on %s" % hosts[0])
-
+                    script = build_context_script(contextdict, script)
                     return_code = exec_remote_command(server=host.address,
                                                       username=host_csattr.vm_user,
                                                       password=host_csattr.vm_password,
-                                                      command=contextdict['SECOND_SCRIPT_FILE'])
+                                                      command=script)
+
+                    if return_code != 0:
+                        return False
+
+            if len(workflow_dict['hosts']) > 1:
+                script = planattr.start_replication_script
+                script = build_context_script(contextdict, script)
+
+                for host in workflow_dict['hosts']:
+                    host_csattr = CsHostAttr.objects.get(host=host)
+
+                    LOG.info("Executing script on %s" % host)
+                    return_code = exec_remote_command(server=host.address,
+                                                      username=host_csattr.vm_user,
+                                                      password=host_csattr.vm_password,
+                                                      command=script)
 
                     if return_code != 0:
                         return False
