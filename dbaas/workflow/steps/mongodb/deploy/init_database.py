@@ -13,7 +13,6 @@ from util import exec_remote_command
 from util import build_context_script
 from workflow.steps.util.base import BaseStep
 from workflow.exceptions.error_codes import DBAAS_0014
-from time import sleep
 
 LOG = logging.getLogger(__name__)
 
