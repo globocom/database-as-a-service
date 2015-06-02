@@ -74,8 +74,6 @@ class InitDatabase(BaseStep):
                         'SECOND_SCRIPT_FILE': '/opt/dbaas/scripts/dbaas_second_script.sh'
                     })
 
-                LOG.info("Updating userdata for %s" % hosts[0])
-
                 scripts = (planattr.initialization_script,
                            planattr.configuration_script,
                            planattr.start_database_script)
