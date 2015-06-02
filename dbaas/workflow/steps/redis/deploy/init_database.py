@@ -9,8 +9,8 @@ from util import exec_remote_command
 from util import get_credentials_for
 from util import build_context_script
 from physical.models import Instance
-from ...util.base import BaseStep
-from ....exceptions.error_codes import DBAAS_0016
+from workflow.steps.util.base import BaseStep
+from workflow.exceptions.error_codes import DBAAS_0016
 from util import full_stack
 
 LOG = logging.getLogger(__name__)
@@ -38,16 +38,18 @@ class InitDatabaseRedis(BaseStep):
 
                 LOG.info("Cheking host ssh...")
                 host_ready = check_ssh(
-                    server=host.address, username=host_csattr.vm_user, password=host_csattr.vm_password, wait=5,
-                    interval=10)
+                    server=host.address, username=host_csattr.vm_user,
+                    password=host_csattr.vm_password, wait=5, interval=10)
 
                 if not host_ready:
                     LOG.warn("Host %s is not ready..." % host)
                     return False
-                
-                instances_redis = Instance.objects.filter(hostname=host, instance_type=Instance.REDIS)
-                instances_sentinel = Instance.objects.filter(hostname=host, instance_type=Instance.REDIS_SENTINEL)
-                
+
+                instances_redis = Instance.objects.filter(hostname=host,
+                                                          instance_type=Instance.REDIS)
+                instances_sentinel = Instance.objects.filter(hostname=host,
+                                                             instance_type=Instance.REDIS_SENTINEL)
+
                 if instances_redis:
                     host_nfsattr = HostAttr.objects.get(host=host)
                     nfsaas_path = host_nfsattr.nfsaas_path
@@ -66,7 +68,7 @@ class InitDatabaseRedis(BaseStep):
                 else:
                     instance_sentinel_address = ''
                     instance_sentinel_port = ''
-                
+
                 if index == 0:
                     master_host = instance_redis_address
                     master_port = instance_redis_port
@@ -75,7 +77,7 @@ class InitDatabaseRedis(BaseStep):
                     'EXPORTPATH': nfsaas_path,
                     'DATABASENAME': workflow_dict['name'],
                     'DBPASSWORD': workflow_dict['databaseinfra'].password,
-                    'HOSTADDRESS':  instance_redis_address,
+                    'HOSTADDRESS': instance_redis_address,
                     'PORT': instance_redis_port,
                     'ENGINE': 'redis',
                     'DATABASENAME': workflow_dict['name'],
@@ -92,22 +94,23 @@ class InitDatabaseRedis(BaseStep):
                 }
                 LOG.info(contextdict)
 
-                LOG.info("Updating userdata for %s" % host)
                 planattr = PlanAttr.objects.get(plan=workflow_dict['plan'])
-                script = build_context_script(contextdict, planattr.userdata)
+                scripts = (planattr.initialization_script,
+                           planattr.configuration_script,
+                           planattr.start_database_script,
+                           planattr.start_replication_script)
 
-                LOG.info("Executing script on %s" % host)
-                LOG.info(script)
-                output ={}
-                return_code = exec_remote_command(server=host.address,
-                                                  username=host_csattr.vm_user,
-                                                  password=host_csattr.vm_password,
-                                                  command=script,
-                                                  output=output)
+                for script in scripts:
+                    LOG.info("Executing script on %s" % host)
 
-                LOG.info(output)
-                if return_code != 0:
-                    return False
+                    script = build_context_script(contextdict, script)
+                    return_code = exec_remote_command(server=host.address,
+                                                      username=host_csattr.vm_user,
+                                                      password=host_csattr.vm_password,
+                                                      command=script)
+
+                    if return_code != 0:
+                        return False
 
                 if index > 0 and instances_redis:
                     client = instances_redis[0].databaseinfra.get_driver().get_client(instances_redis[0])
