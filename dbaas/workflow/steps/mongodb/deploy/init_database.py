@@ -57,6 +57,7 @@ class InitDatabaseMongoDB(BaseStep):
                         'ENGINE': 'mongodb',
                         'STATSD_HOST': statsd_host,
                         'STATSD_PORT': statsd_port,
+                        'IS_HA': workflow_dict['databaseinfra'].plan.is_ha
                     }
                     databaserule = 'ARBITER'
                 else:
@@ -69,6 +70,7 @@ class InitDatabaseMongoDB(BaseStep):
                         'DBPASSWORD': mongodb_password,
                         'STATSD_HOST': statsd_host,
                         'STATSD_PORT': statsd_port,
+                        'IS_HA': workflow_dict['databaseinfra'].plan.is_ha
                     }
 
                     if index == 0:
@@ -88,6 +90,8 @@ class InitDatabaseMongoDB(BaseStep):
                         'DATABASERULE': databaserule,
                         'HOST': workflow_dict['hosts'][index].hostname.split('.')[0],
                     })
+                else:
+                    contextdict.update({'DATABASERULE': databaserule})
 
                 planattr = PlanAttr.objects.get(plan=workflow_dict['plan'])
 
