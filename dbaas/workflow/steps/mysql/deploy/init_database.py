@@ -78,8 +78,7 @@ class InitDatabase(BaseStep):
                            planattr.configuration_script,
                            planattr.start_database_script)
 
-                host = workflow_dict['hosts'][0]
-
+                host = hosts[0]
                 for script in scripts:
                     LOG.info("Executing script on %s" % host)
 
