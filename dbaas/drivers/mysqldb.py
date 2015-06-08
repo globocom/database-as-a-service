@@ -268,7 +268,7 @@ class MySQL(BaseDriver):
         return new_password
 
     def clone(self):
-        return CLONE_DATABASE_SCRIPT_NAMEs
+        return CLONE_DATABASE_SCRIPT_NAME
 
     def check_instance_is_eligible_for_backup(self, instance):
         if self.databaseinfra.instances.count() == 1:
