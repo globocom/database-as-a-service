@@ -58,7 +58,7 @@ def execute_database_region_migration(self, database_region_migration_detail_id,
             if database_region_migration.current_step > 0 and not instance.future_instance:
                 continue
             source_instances.append(instance)
-            if instance.instance_type != instance.REDIS_SENTINEL:
+            if instance.instance_type != instance.REDIS:
                 source_hosts.append(instance.hostname)
 
         source_plan = databaseinfra.plan
@@ -183,13 +183,15 @@ def execute_database_region_migration_undo(self, database_region_migration_detai
         source_hosts = []
         for instance in databaseinfra.instances.filter(future_instance__isnull=False):
             source_instances.append(instance)
-            source_hosts.append(instance.hostname)
+            if instance.instance_type != instance.REDIS:
+                source_hosts.append(instance.hostname)
 
         target_instances = []
         target_hosts = []
         for instance in databaseinfra.instances.filter(future_instance__isnull=True):
             target_instances.append(instance)
-            target_hosts.append(instance.hostname)
+            if instance.instance_type != instance.REDIS:
+                target_hosts.append(instance.hostname)
 
         source_plan = databaseinfra.plan
         target_plan = source_plan.equivalent_plan_id

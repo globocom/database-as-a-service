@@ -112,7 +112,33 @@ def get_mysql_steps():
 
 
 def get_redis_steps():
-    pass
+    step1 = Step('redis', 'Ready to start Migration!',
+                 'Create new instances', 0,
+                 '',
+                 settings.REDIS_REGION_MIGRATION_1)
+
+    step2 = Step('redis', 'New instances created!',
+                 'Switch master instance', 1,
+                 'Please, check replication and ACL',
+                 settings.REDIS_REGION_MIGRATION_2)
+
+    step3 = Step('redis', 'Primary instance switched!',
+                 'Switch DNS', 2,
+                 'Please, check if the application is ok',
+                 settings.REDIS_REGION_MIGRATION_3)
+
+    step4 = Step('redis', 'DNS switched!',
+                 'Clean old instances', 3,
+                 'Please, check aplication and monitoring',
+                 settings.REDIS_REGION_MIGRATION_4)
+
+    step5 = Step('redis', 'Database migrated!',
+                 'There is not next step. Database migrated', 4,
+                 'Please, check aplication and monitoring',
+                 settings.REDIS_REGION_MIGRATION_5)
+
+    return (step1, step2, step3, step4, step5)
+
 
 
 def get_engine_steps(engine):

@@ -31,6 +31,11 @@ class DatabaseRegionMigration(BaseModel):
     def get_current_step(self,):
         return self.get_steps()[self.current_step]
 
+    def is_migration_finished(self,):
+        current_step = self.current_step
+        last_step = len(self.get_steps()) - 1
+        return current_step == last_step
+
     @property
     def warning(self,):
         return self.get_current_step().warning

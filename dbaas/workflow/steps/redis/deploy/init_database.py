@@ -80,7 +80,6 @@ class InitDatabaseRedis(BaseStep):
                     'HOSTADDRESS': instance_redis_address,
                     'PORT': instance_redis_port,
                     'ENGINE': 'redis',
-                    'DATABASENAME': workflow_dict['name'],
                     'HOST': host.hostname.split('.')[0],
                     'STATSD_HOST': statsd_host,
                     'STATSD_PORT': statsd_port,

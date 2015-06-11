@@ -16,23 +16,20 @@ from physical.models import Instance
 
 LOG = logging.getLogger(__name__)
 
-CLONE_DATABASE_SCRIPT_NAME="redis_clone.py"
-REDIS_CONNECTION_DEFAULT_TIMEOUT=5
+CLONE_DATABASE_SCRIPT_NAME = "redis_clone.py"
+REDIS_CONNECTION_DEFAULT_TIMEOUT = 5
+
 
 class Redis(BaseDriver):
 
     default_port = 6379
     DEPLOY = DEPLOY_REDIS
     CLONE = CLONE_REDIS
-    RESIZE =  RESIZE_REDIS
+    RESIZE = RESIZE_REDIS
 
     def __concatenate_instances(self):
         instance = self.databaseinfra.instances.filter(is_active=True).all()[0]
         return "%s:%s" % (instance.address, instance.port)
-
-    #def get_connection(self, database=None):
-    #    uri = "redis://:<password>@%s/0" % (self.databaseinfra.endpoint)
-    #    return uri
 
     def __concatenate_instances(self):
         if self.databaseinfra.plan.is_ha:
@@ -102,6 +99,11 @@ class Redis(BaseDriver):
             port = instance.port
         return dns, port
 
+    def get_sentinel_client(self, instance=None):
+        connection_timeout_in_seconds = Configuration.get_by_name_as_int('redis_connect_timeout', default=REDIS_CONNECTION_DEFAULT_TIMEOUT)
+        sentinels = self.__get_admin_sentinel_connection(instance)
+        sentinel = Sentinel(sentinels, socket_timeout=connection_timeout_in_seconds)
+        return sentinel
 
     def __redis_client__(self, instance):
 
@@ -112,17 +114,16 @@ class Redis(BaseDriver):
 
             if (instance and instance.instance_type == Instance.REDIS) or (not self.databaseinfra.plan.is_ha and not instance):
                 connection_address, connection_port = self.__get_admin_single_connection(instance)
-                client = redis.Redis(host = connection_address,
-                                    port = int(connection_port),
-                                    password = self.databaseinfra.password,
-                                    socket_connect_timeout = connection_timeout_in_seconds)
+                client = redis.Redis(host=connection_address,
+                                     port=int(connection_port),
+                                     password=self.databaseinfra.password,
+                                     socket_connect_timeout=connection_timeout_in_seconds)
 
             else:
-                sentinels = self.__get_admin_sentinel_connection(instance)
-                sentinel = Sentinel(sentinels, socket_timeout=connection_timeout_in_seconds)
+                sentinel = self.get_sentinel_client(instance)
                 client = sentinel.master_for(self.databaseinfra.name,
                                              socket_timeout=connection_timeout_in_seconds,
-                                             password = self.databaseinfra.password)
+                                             password=self.databaseinfra.password)
 
             LOG.debug('Successfully connected to redis databaseinfra %s' % (self.databaseinfra))
             return client
@@ -187,7 +188,6 @@ class Redis(BaseDriver):
             for database in self.databaseinfra.databases.all():
                 database_name = database.name
                 db_status = DatabaseStatus(database)
-                #is_alive?
                 try:
                     if self.check_status():
                         db_status.is_alive = True

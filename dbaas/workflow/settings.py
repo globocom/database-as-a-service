@@ -148,7 +148,29 @@ MYSQL_REGION_MIGRATION_3 = (
 
 MYSQL_REGION_MIGRATION_4 = ()
 
-REDIS_REGION_MIGRATION = ()
+REDIS_REGION_MIGRATION_1 = (
+    'workflow.steps.util.region_migration.change_ttl.DecreaseTTL',
+    'workflow.steps.redis.region_migration.create_virtualmachines.CreateVirtualMachine',
+    'workflow.steps.util.region_migration.create_nfs.CreateNfs',
+    'workflow.steps.util.region_migration.mount_disks.MountDisks',
+    'workflow.steps.redis.region_migration.config_files.ConfigFiles',
+    'workflow.steps.redis.region_migration.start_database_and_replication.StartDatabaseReplication',
+)
+REDIS_REGION_MIGRATION_2 = (
+    'workflow.steps.redis.region_migration.switch_master.SwitchMaster',
+)
+REDIS_REGION_MIGRATION_3 = (
+    'workflow.steps.util.region_migration.switch_dns.SwitchDNS',
+)
+REDIS_REGION_MIGRATION_4 = (
+    'workflow.steps.redis.region_migration.remove_old_instances.RemoveInstances',
+    'workflow.steps.util.region_migration.update_dbaas_metadata.UpdateDBaaSMetadata',
+    'workflow.steps.util.region_migration.td_agent.StartTDAgent',
+    'workflow.steps.util.region_migration.remove_disks.RemoveDisks',
+    'workflow.steps.util.region_migration.remove_vms.RemoveVms',
+    'workflow.steps.util.region_migration.change_ttl.DefaultTTL',
+)
+REDIS_REGION_MIGRATION_5 = ()
 
 MONGODB_REGION_MIGRATION_1 = (
     'workflow.steps.util.region_migration.change_ttl.DecreaseTTL',

@@ -398,11 +398,14 @@ class Database(BaseModel):
         except ObjectDoesNotExist, e:
             return False
 
+        if migration.is_migration_finished():
+            return False
+
         if migration.current_step > 0:
             return True
 
-        status_to_check  = [DatabaseRegionMigrationDetail.WAITING,
-                             DatabaseRegionMigrationDetail.RUNNING]
+        status_to_check = [DatabaseRegionMigrationDetail.WAITING,
+                           DatabaseRegionMigrationDetail.RUNNING]
 
         details = migration.details.filter(status__in=status_to_check)
         if details:
