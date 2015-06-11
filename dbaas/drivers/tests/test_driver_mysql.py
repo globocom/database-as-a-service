@@ -8,13 +8,14 @@ from physical.tests import factory as factory_physical
 from logical.tests import factory as factory_logical
 from logical.models import Database
 from ..mysqldb import MySQL
+from django.conf import settings
 
 LOG = logging.getLogger(__name__)
 
 class AbstractTestDriverMysql(TestCase):
 
     def setUp(self):
-        self.databaseinfra = factory_physical.DatabaseInfraFactory(user="root", password="", endpoint="127.0.0.1:3306")
+        self.databaseinfra = factory_physical.DatabaseInfraFactory(user="root", password=settings.DB_PASSWORD, endpoint="127.0.0.1:3306")
         self.instance = factory_physical.InstanceFactory(databaseinfra=self.databaseinfra, port=3306)
         self.driver = MySQL(databaseinfra=self.databaseinfra)
         self._mysql_client = None
