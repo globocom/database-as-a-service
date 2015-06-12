@@ -530,23 +530,56 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                                   locals(),
                                   context_instance=RequestContext(request))
 
+    @staticmethod
+    def build_select_options(selected, avaliable_options):
+        default_option = "<option value='{number}{unity}'>{number} {unity}</option>"
+
+        options = "".join([default_option.format(number=avaliable_option[0],
+                                                 unity=avaliable_option[1]) for avaliable_option in avaliable_options])
+
+        selected_beg_index = options.find(selected)
+        selected_end_index = options.find('>', selected_beg_index)
+        options_str_list = list(options)
+
+        options_str_list[selected_end_index] = ' selected>'
+
+        return "".join(options_str_list)
+
+    @staticmethod
+    def get_granurality_options():
+        return [(10, 'seconds'), (1, 'minutes'), (15, 'minutes'), (30, 'minutes')]
+
+    @staticmethod
+    def get_from_options():
+        return [(2, 'hours'), (1, 'day'), (7, 'days'), (30, 'days')]
+
     def metricdetail_view(self, request, database_id):
         from util.metrics.metrics import get_metric_datapoints_for
 
-        if request.method == 'GET':
-            hostname = request.GET.get('hostname')
-            metricname = request.GET.get('metricname')
+        hostname = request.GET.get('hostname')
+        metricname = request.GET.get('metricname')
 
         database = Database.objects.get(id=database_id)
         engine = database.infra.engine_name
         db_name = database.name
         URL = get_credentials_for(
             environment=database.environment, credential_type=CredentialType.GRAPHITE).endpoint
-        graph_data = get_metric_datapoints_for(
-            engine, db_name, hostname, url=URL, metric_name=metricname)
+
+        granurality = request.POST.get('change_granularity') or '10seconds'
+        granurality_options = self.build_select_options(granurality, self.get_granurality_options())
+
+        from_option = request.POST.get('change_from') or '2hours'
+        from_options = self.build_select_options(from_option, self.get_from_options())
+
+        graph_data = get_metric_datapoints_for(engine, db_name, hostname,
+                                               url=URL, metric_name=metricname,
+                                               granurality=granurality,
+                                               from_option=from_option)
 
         title = "{} {} Metric".format(
             database.name, graph_data[0]["graph_name"])
+
+        show_filters = True
 
         return render_to_response("logical/database/metrics/metricdetail.html", locals(), context_instance=RequestContext(request))
 
@@ -578,7 +611,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 hosts.append(host.hostname.split('.')[0])
 
             graph_data = get_metric_datapoints_for(
-                engine, db_name, hostname, url=URL)
+                engine, db_name, hostname, url=URL, granurality='10seconds', from_option='2hours')
 
         return render_to_response("logical/database/metrics/metrics.html", locals(), context_instance=RequestContext(request))
 
