@@ -24,8 +24,8 @@ CPU = {"name": "cpu",
 
 MEMORY = {"name": "mem",
           "series": [
-              {"name": "used", "data": "men.men_used"},
               {"name": "free", "data": "men.men_free"},
+              {"name": "used", "data": "men.men_used"},
           ],
           "type": "area",
           "tooltip_point_format": """ <span style="color:{series.color}">{series.name}</span>: <b>{point.percentage:.1f}%</b> <br/>""",
@@ -78,8 +78,8 @@ LOAD = {"name": "load",
 
 SWAP = {"name": "swap",
         "series": [
-            {"name": "used", "data": "swap.used"},
             {"name": "free", "data": "swap.free"},
+            {"name": "used", "data": "swap.used"},
         ],
         "type": "area",
         "tooltip_point_format": """ <span style="color:{series.color}">{series.name}</span>: <b>{point.percentage:.1f}%</b> <br/>""",
@@ -91,8 +91,8 @@ SWAP = {"name": "swap",
 
 DISK = {"name": "disk",
         "series": [
-            {"name": "used", "data": "df.used"},
             {"name": "available", "data": "df.available"},
+            {"name": "used", "data": "df.used"},
         ],
         "type": "area",
         "tooltip_point_format": """ <span style="color:{series.color}">{series.name}</span>: <b>{point.percentage:.1f}%</b> <br/>""",
