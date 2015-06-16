@@ -13,18 +13,9 @@ class DatabaseService(service.CRUDService):
 
     def create(self, database):
         super(DatabaseService, self).create(database)
-        # moved to database signal
-        
-        # engine = self.get_engine(database)
-        # engine.create_database(database)
 
     def update(self, database):
         super(DatabaseService, self).update(database)
-        # FIXME?? How can I change the name? or DatabaseInfra?
 
     def delete(self, database):
         super(DatabaseService, self).delete(database)
-        
-        #moved to database signal
-        # engine = self.get_engine(database)
-        # engine.remove_database(database)

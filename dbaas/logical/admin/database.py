@@ -112,16 +112,15 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         html_default = '<span class="label label-{}">{}</span>'
 
         if database.status == Database.ALIVE:
-            status = html_default.format("success","Alive")
+            status = html_default.format("success", "Alive")
         elif database.status == Database.DEAD:
-            status = html_default.format("important","Dead")
+            status = html_default.format("important", "Dead")
         elif database.status == Database.ALERT:
-            status = html_default.format("warning","Alert")
+            status = html_default.format("warning", "Alert")
         else:
-            status = html_default.format("info","Initializing")
+            status = html_default.format("info", "Initializing")
 
         return format_html(status)
-
 
     friendly_status.short_description = "Status"
 
@@ -195,8 +194,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         actions = super(DatabaseAdmin, self).get_actions(request)
         if request.user.team_set.filter(role__name="role_dba"):
             actions['multiple_initialize_migration'] = (self.multiple_initialize_migration,
-                                               'multiple_initialize_migration',
-                                               'Initialize Migration')
+                                                        'multiple_initialize_migration',
+                                                        'Initialize Migration')
 
         return actions
 
@@ -634,7 +633,6 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                                                    database.databaseinfra.password,
                                                    database.databaseinfra.instances.all()[
                                                        0].address,
-                                                   #'10.236.1.15',
                                                    database.databaseinfra.instances.all()[0].port)
 
         old_stdout = sys.stdout
@@ -800,7 +798,6 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         database = Database.objects.get(id=database_id)
         url = reverse('admin:region_migration_databaseregionmigration_changelist')
 
-
         region_migration =DatabaseRegionMigration(database=database,
                                                   current_step=0,)
 
@@ -821,11 +818,9 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
         try:
             region_migration.save()
-            self.message_user(
-            request, "Migration for {} started!".format(database.name), level=messages.SUCCESS)
+            self.message_user(request, "Migration for {} started!".format(database.name), level=messages.SUCCESS)
         except IntegrityError, e:
-            self.message_user(
-            request, "Database {} is already migrating!".format(database.name), level=messages.ERROR)
+            self.message_user(request, "Database {} is already migrating!".format(database.name), level=messages.ERROR)
 
         return HttpResponseRedirect(url)
 

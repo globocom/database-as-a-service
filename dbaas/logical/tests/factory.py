@@ -2,7 +2,7 @@
 from __future__ import absolute_import, unicode_literals
 import factory
 from .. import models
-from physical.tests.factory import DatabaseInfraFactory, EnvironmentFactory
+from physical.tests.factory import DatabaseInfraFactory
 from account.tests.factory import TeamFactory
 
 
@@ -31,13 +31,9 @@ class DatabaseFactory(factory.DjangoModelFactory):
         return self.databaseinfra.environment
 
 
-
 class CredentialFactory(factory.DjangoModelFactory):
     FACTORY_FOR = models.Credential
 
     user = factory.Sequence(lambda n: 'usr_{0}'.format(n))
     password = '123456'
     database = factory.SubFactory(DatabaseFactory)
-
-
-

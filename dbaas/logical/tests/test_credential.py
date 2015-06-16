@@ -31,7 +31,6 @@ class CredentialTestCase(TestCase):
         self.assertTrue(credential.pk)
         self.assertEqual(credential.user, 'a_b_c')
 
-
     def test_underscore_in_slugged_user_credential(self):
 
         credential = Credential.objects.create(user="a_b_c_d", password="super", database=self.database)
@@ -64,4 +63,3 @@ class CredentialTestCase(TestCase):
         credential = factory_logical.CredentialFactory()
         credential.delete()
         remove_user.assert_called_once_with(credential)
-

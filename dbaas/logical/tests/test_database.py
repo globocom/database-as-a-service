@@ -8,9 +8,6 @@ from physical.tests import factory as physical_factory
 from ..models import Database
 from physical.models import DatabaseInfra
 from drivers import base
-
-from notification.tasks import clone_database
-
 import logging
 
 LOG = logging.getLogger(__name__)
@@ -35,25 +32,29 @@ class DatabaseTestCase(TestCase):
 
     def test_create_database(self):
 
-        database = Database(name="blabla", databaseinfra=self.databaseinfra, environment= self.environment)
+        database = Database(name="blabla", databaseinfra=self.databaseinfra,
+                            environment=self.environment)
         database.save()
 
         self.assertTrue(database.pk)
-
 
     def test_create_duplicate_database_error(self):
 
-        database = Database(name="bleble", databaseinfra=self.databaseinfra, environment= self.environment)
+        database = Database(name="bleble", databaseinfra=self.databaseinfra,
+                            environment=self.environment)
 
         database.save()
 
         self.assertTrue(database.pk)
 
-        self.assertRaises(IntegrityError, Database(name="bleble", databaseinfra=self.databaseinfra).save)
+        self.assertRaises(IntegrityError, Database(name="bleble",
+                          databaseinfra=self.databaseinfra).save)
 
     def test_slugify_database_name_with_spaces(self):
 
-        database = factory.DatabaseFactory.build(name="w h a t", databaseinfra=self.databaseinfra, environment= self.environment)
+        database = factory.DatabaseFactory.build(name="w h a t",
+                                                 databaseinfra=self.databaseinfra,
+                                                 environment=self.environment)
 
         database.full_clean()
         database.save()
@@ -61,7 +62,9 @@ class DatabaseTestCase(TestCase):
         self.assertEqual(database.name, 'w_h_a_t')
 
     def test_slugify_database_name_with_dots(self):
-        database = factory.DatabaseFactory.build(name="w.h.e.r.e", databaseinfra=self.databaseinfra, environment= self.environment)
+        database = factory.DatabaseFactory.build(name="w.h.e.r.e",
+                                                 databaseinfra=self.databaseinfra,
+                                                 environment=self.environment)
 
         database.full_clean()
         database.save()
@@ -70,7 +73,9 @@ class DatabaseTestCase(TestCase):
 
     def test_cannot_edit_database_name(self):
 
-        database = factory.DatabaseFactory(name="w h a t", databaseinfra=self.databaseinfra, environment= self.environment)
+        database = factory.DatabaseFactory(name="w h a t",
+                                           databaseinfra=self.databaseinfra,
+                                           environment=self.environment)
 
         self.assertTrue(database.id)
 
@@ -89,7 +94,9 @@ class DatabaseTestCase(TestCase):
             return m
 
         get_info.side_effect = side_effect_get_info
-        database = factory.DatabaseFactory(name="db1cache", databaseinfra=self.databaseinfra, environment= self.environment)
+        database = factory.DatabaseFactory(name="db1cache",
+                                           databaseinfra=self.databaseinfra,
+                                           environment=self.environment)
         self.assertIsNotNone(database.database_status)
         self.assertEqual([mock.call(), mock.call(force_refresh=True)], get_info.call_args_list)
 

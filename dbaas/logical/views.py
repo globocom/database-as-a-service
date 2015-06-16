@@ -20,10 +20,9 @@ class CredentialView(BaseDetailView):
 
     def as_json(self, obj):
         if isinstance(obj, Credential):
-            obj = {"credential" : { "user": obj.user, "password": obj.password, "pk": obj.pk } }
+            obj = {"credential": {"user": obj.user, "password": obj.password, "pk": obj.pk}}
         output = json.dumps(obj, indent=4)
         return HttpResponse(output, content_type="application/json")
-
 
     @method_decorator(csrf_exempt)
     def post(self, request, *args, **kwargs):

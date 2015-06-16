@@ -11,6 +11,7 @@ import logging
 
 LOG = logging.getLogger(__name__)
 
+
 @app.task(bind=True)
 @only_one(key="purgequarantinekey", timeout=1000)
 def purge_quarantine(self,):
@@ -22,12 +23,11 @@ def purge_quarantine(self,):
 
         LOG.info("id: %s | task: %s | kwargs: %s | args: %s" % (
             self.request.id, self.request.task, self.request.kwargs, str(self.request.args)))
-        quarantine_time = Configuration.get_by_name_as_int(
-                'quarantine_retention_days')
+        quarantine_time = Configuration.get_by_name_as_int('quarantine_retention_days')
         quarantine_time_dt = date.today() - timedelta(days=quarantine_time)
 
-        databases = Database.objects.filter(
-                is_in_quarantine=True, quarantine_dt__lte=quarantine_time_dt)
+        databases = Database.objects.filter(is_in_quarantine=True,
+                                            quarantine_dt__lte=quarantine_time_dt)
 
         for database in databases:
             if database.plan.provider == database.plan.CLOUDSTACK:
@@ -39,7 +39,6 @@ def purge_quarantine(self,):
 
             LOG.info("The database %s was deleted, because it was set to quarentine %d days ago" % (
                 database.name, quarantine_time))
-
 
         task_history.update_status_for(TaskHistory.STATUS_SUCCESS, details='Databases destroyed successfully')
         return

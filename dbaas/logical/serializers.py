@@ -4,7 +4,6 @@ from django_services.api import DjangoServiceSerializer
 from . import models
 
 
-
 class DatabaseSerializer(DjangoServiceSerializer):
 
     class Meta:
@@ -15,5 +14,3 @@ class CredentialSerializer(DjangoServiceSerializer):
 
     class Meta:
         model = models.Credential
-
-

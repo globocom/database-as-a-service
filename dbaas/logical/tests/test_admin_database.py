@@ -1,12 +1,9 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 import logging
-import mock
 from django.test import TestCase
 from django.contrib.auth.models import User
-from drivers import fake, base
 from physical.tests import factory as physical_factory
-from ..models import Database
 from ..forms import DatabaseForm
 from . import factory
 
@@ -46,7 +43,7 @@ class AdminCreateDatabaseTestCase(TestCase):
             "engine": self.databaseinfra.engine.pk,
         }
         response = self.client.post("/admin/logical/database/add/", params)
-        self.assertContains(response, "Team: This field is required",  status_code=200)
+        self.assertContains(response, "Team: This field is required", status_code=200)
 
     # def test_try_create_a_new_database_but_database_already_exists(self):
     #     database_name = "test_new_database"
@@ -72,9 +69,7 @@ class AdminCreateDatabaseTestCase(TestCase):
         form = DatabaseForm(data=data)
         self.assertFalse(form.is_valid())
 
-
     '''
-
     def test_user_tries_to_create_database_but_database_alocation_is_exceeded(self):
 
         team_with_limit = Team.objects.get_or_create(name="fake_team_with_limit", role=self.role, database_alocation_limit=1)[0]

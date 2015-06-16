@@ -9,7 +9,6 @@ from physical.models import Plan, Environment, Engine
 from dbaas_cloudstack.models import CloudStackPack
 from drivers.factory import DriverFactory
 from .fields import AdvancedModelChoiceField
-from django import forms
 from logical.widgets.database_offering_field import DatabaseOfferingWidget
 from backup.models import Snapshot
 
@@ -184,10 +183,6 @@ class DatabaseForm(models.ModelForm):
                     database_alocation_limit, team, list(dbs)))
                 self._errors["team"] = self.error_class(
                     [_("The database alocation limit of %s has been exceeded for the selected team: %s") % (database_alocation_limit, list(dbs))])
-
-        # for infra in DatabaseInfra.objects.filter(environment=environment,):
-         #   if infra.databases.filter(name=cleaned_data['name']):
-          #      self._errors["name"] = self.error_class([_("this name already exists in the selected environment")])
 
         driver = DriverFactory.get_driver_class(plan.engines[0].name)
         if 'name' in cleaned_data and cleaned_data['name'] in driver.RESERVED_DATABASES_NAME:
