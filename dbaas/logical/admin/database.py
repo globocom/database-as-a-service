@@ -578,7 +578,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         title = "{} {} Metric".format(
             database.name, graph_data[0]["graph_name"])
 
-        show_filters = True
+        show_filters = Configuration.get_by_name_as_int('metric_filters')
 
         return render_to_response("logical/database/metrics/metricdetail.html", locals(), context_instance=RequestContext(request))
 
