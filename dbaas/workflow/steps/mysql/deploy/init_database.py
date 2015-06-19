@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
 from dbaas_credentials.models import CredentialType
-from dbaas_cloudstack.provider import CloudStackProvider
 from dbaas_nfsaas.models import HostAttr
 from dbaas_cloudstack.models import PlanAttr
 from dbaas_cloudstack.models import HostAttr as CsHostAttr
@@ -95,7 +94,10 @@ class InitDatabase(BaseStep):
                 script = planattr.start_replication_script
                 script = build_context_script(contextdict, script)
 
-                for host in workflow_dict['hosts']:
+                for hosts in permutations(workflow_dict['hosts']):
+                    host = hosts[0]
+                    contextdict.update({'IPMASTER': hosts[1].address})
+
                     host_csattr = CsHostAttr.objects.get(host=host)
 
                     LOG.info("Executing script on %s" % host)
