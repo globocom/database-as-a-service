@@ -157,6 +157,7 @@ REDIS_REGION_MIGRATION_1 = (
     'workflow.steps.redis.region_migration.start_database_and_replication.StartDatabaseReplication',
 )
 REDIS_REGION_MIGRATION_2 = (
+    'workflow.steps.util.region_migration.check_replication.CheckReplication',
     'workflow.steps.redis.region_migration.switch_master.SwitchMaster',
 )
 REDIS_REGION_MIGRATION_3 = (
@@ -181,6 +182,7 @@ MONGODB_REGION_MIGRATION_1 = (
     'workflow.steps.mongodb.region_migration.add_instances_replica_set.AddInstancesReplicaSet',
 )
 MONGODB_REGION_MIGRATION_2 = (
+    'workflow.steps.util.region_migration.check_replication.CheckReplication',
     'workflow.steps.mongodb.region_migration.switch_primary.SwitchPrimary',
 )
 MONGODB_REGION_MIGRATION_3 = (
