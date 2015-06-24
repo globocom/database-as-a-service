@@ -205,7 +205,7 @@ class Redis(BaseDriver):
         with self.redis(instance=instance) as client:
             server_info = client.info()
 
-            return server_info['master_last_io_seconds_ago']
+            return int(server_info['master_last_io_seconds_ago'])
 
     def is_replication_ok(self, instance):
         replication_info = int(self.get_replication_info(instance=instance))
