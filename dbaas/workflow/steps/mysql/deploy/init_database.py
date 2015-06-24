@@ -91,12 +91,12 @@ class InitDatabase(BaseStep):
                         return False
 
             if len(workflow_dict['hosts']) > 1:
-                script = planattr.start_replication_script
-                script = build_context_script(contextdict, script)
 
                 for hosts in permutations(workflow_dict['hosts']):
+                    script = planattr.start_replication_script
                     host = hosts[0]
                     contextdict.update({'IPMASTER': hosts[1].address})
+                    script = build_context_script(contextdict, script)
 
                     host_csattr = CsHostAttr.objects.get(host=host)
 

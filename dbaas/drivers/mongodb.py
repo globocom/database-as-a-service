@@ -14,6 +14,7 @@ from system.models import Configuration
 from workflow.settings import DEPLOY_MONGO
 from workflow.settings import RESIZE_MONGO
 from workflow.settings import CLONE_MONGO
+from dateutil import tz
 
 LOG = logging.getLogger(__name__)
 
@@ -271,6 +272,31 @@ class MongoDB(BaseDriver):
 
             except pymongo.errors.PyMongoError, e:
                 raise ConnectionError('Error connection to databaseinfra %s: %s' % (self.databaseinfra, e.message))
+
+    def get_replication_info(self, instance):
+        if self.check_instance_is_master(instance=instance):
+            return 0
+
+        with self.pymongo() as client:
+            result = client.admin.command('replSetGetStatus')
+            primary_opttime = result['members'][0]['optimeDate'].replace(tzinfo=tz.tzutc()).astimezone(tz.tzlocal())
+
+        with self.pymongo(instance=instance) as client:
+            result = client.admin.command('replSetGetStatus')
+            instance_opttime = result['members'][0]['optimeDate'].replace(tzinfo=tz.tzutc()).astimezone(tz.tzlocal())
+
+        delay = primary_opttime - instance_opttime
+
+        return int(delay.seconds)
+
+    def is_replication_ok(self, instance):
+        if self.check_instance_is_master(instance=instance):
+            return True
+
+        if self.get_replication_info(instance=instance) == 0:
+            return True
+
+        return False
 
     def initialization_script_path(self,):
         return "/etc/init.d/mongodb"

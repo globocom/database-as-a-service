@@ -198,6 +198,23 @@ class Redis(BaseDriver):
 
         return databaseinfra_status
 
+    def get_replication_info(self, instance):
+        if self.check_instance_is_master(instance=instance):
+            return 0
+
+        with self.redis(instance=instance) as client:
+            server_info = client.info()
+
+            return int(server_info['master_last_io_seconds_ago'])
+
+    def is_replication_ok(self, instance):
+        replication_info = int(self.get_replication_info(instance=instance))
+
+        if replication_info == 0:
+            return True
+
+        return False
+
     def create_user(self, credential, roles=["readWrite", "dbAdmin"]):
         pass
 

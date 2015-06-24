@@ -163,6 +163,12 @@ class BaseDriver(object):
     def data_dir(self, ):
         raise NotImplementedError()
 
+    def get_replication_info(self, instance):
+        raise NotImplementedError()
+
+    def is_replication_ok(self, instance):
+        raise NotImplementedError()
+
 
 class DatabaseStatus(object):
 

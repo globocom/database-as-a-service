@@ -290,6 +290,18 @@ class MySQL(BaseDriver):
         else:
             return True
 
+    def get_replication_info(self, instance):
+        results = self.__query(
+            query_string="show slave status", instance=instance)
+
+        return int(results[0]['Seconds_Behind_Master'])
+
+    def is_replication_ok(self, instance):
+        if self.get_replication_info(instance=instance) == 0:
+            return True
+
+        return False
+
     def initialization_script_path(self,):
         return "/etc/init.d/mysql"
 
