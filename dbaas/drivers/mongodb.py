@@ -287,7 +287,7 @@ class MongoDB(BaseDriver):
 
         delay = primary_opttime - instance_opttime
 
-        return delay.seconds
+        return int(delay.seconds)
 
     def is_replication_ok(self, instance):
         if self.check_instance_is_master(instance=instance):
