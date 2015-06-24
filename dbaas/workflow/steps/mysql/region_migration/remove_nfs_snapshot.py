@@ -23,7 +23,6 @@ class RemoveNfsSnapshot(BaseStep):
                                              is_active=True)
 
             NfsaasProvider.remove_snapshot(environment=databaseinfra.environment,
-                                           plan=databaseinfra.plan,
                                            host_attr=host_attr,
                                            snapshot_id=workflow_dict['snapshopt_id'])
 

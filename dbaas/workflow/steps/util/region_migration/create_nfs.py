@@ -60,7 +60,6 @@ class CreateNfs(BaseStep):
 
                 NfsaasProvider().destroy_disk(
                     environment=workflow_dict['target_environment'],
-                    plan=workflow_dict['target_plan'],
                     host=host)
 
             return True

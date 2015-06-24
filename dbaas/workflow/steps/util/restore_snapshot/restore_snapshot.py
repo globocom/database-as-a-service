@@ -22,7 +22,6 @@ class RestoreSnapshot(BaseStep):
             nfsaas_export_id = workflow_dict['export_id']
             provider = NfsaasProvider()
             restore_result = provider.restore_snapshot(environment=databaseinfra.environment,
-                                                       plan=databaseinfra.plan,
                                                        export_id=nfsaas_export_id,
                                                        snapshot_id=snapshot_id)
 

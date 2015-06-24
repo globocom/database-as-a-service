@@ -28,7 +28,6 @@ def use_database_initialization_script(databaseinfra, host, option):
 def clean_unused_data(export_id, export_path, host, databaseinfra):
     provider = NfsaasProvider()
     provider.grant_access(environment=databaseinfra.environment,
-                          plan=databaseinfra.plan,
                           host=host,
                           export_id=export_id)
 
@@ -56,7 +55,6 @@ def destroy_unused_export(export_id, export_path, host, databaseinfra):
     clean_unused_data(export_id, export_path, host, databaseinfra)
     provider = NfsaasProvider()
     provider.drop_export(environment=databaseinfra.environment,
-                         plan=databaseinfra.plan,
                          export_id=export_id)
 
 
@@ -96,7 +94,6 @@ def make_host_backup(database, instance, export_id):
     databaseinfra = instance.databaseinfra
 
     nfs_snapshot = NfsaasProvider.create_snapshot(environment=databaseinfra.environment,
-                                                  plan=databaseinfra.plan,
                                                   host=instance.hostname)
 
     if 'id' in nfs_snapshot and 'snapshot' in nfs_snapshot:

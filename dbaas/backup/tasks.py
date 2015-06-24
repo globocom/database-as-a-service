@@ -111,7 +111,6 @@ def make_instance_snapshot_backup(instance, error):
             mysql_binlog_save(client, instance, cloudstack_hostattr)
 
         nfs_snapshot = NfsaasProvider.create_snapshot(environment=databaseinfra.environment,
-                                                      plan=databaseinfra.plan,
                                                       host=instance.hostname)
         if 'error' in nfs_snapshot:
             errormsg = nfs_snapshot['error']
@@ -219,7 +218,6 @@ def remove_snapshot_backup(snapshot):
     host_attr = HostAttr.objects.get(nfsaas_path=snapshot.export_path)
 
     NfsaasProvider.remove_snapshot(environment=databaseinfra.environment,
-                                   plan=databaseinfra.plan,
                                    host_attr=host_attr,
                                    snapshot_id=snapshot.snapshopt_id)
 
@@ -347,10 +345,10 @@ def purge_unused_exports():
                 export_id = export.nfsaas_export_id
 
                 nfsaas_client = NfsaasProvider()
-                nfsaas_client.revoke_access(environment=environment, plan=plan,
+                nfsaas_client.revoke_access(environment=environment,
                                             host=host, export_id=export_id)
 
-                nfsaas_client.drop_export(environment=environment, plan=plan,
+                nfsaas_client.drop_export(environment=environment,
                                           export_id=export_id)
 
                 export.delete()

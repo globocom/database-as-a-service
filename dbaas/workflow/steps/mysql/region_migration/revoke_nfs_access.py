@@ -21,7 +21,6 @@ class RevokeNFSAccess(BaseStep):
             target_host = source_host.future_host
             nfsaas_export_id = source_host.nfsaas_host_attributes.all()[0].nfsaas_export_id
             NfsaasProvider.revoke_access(environment=databaseinfra.environment,
-                                         plan=databaseinfra.plan,
                                          host=target_host,
                                          export_id=nfsaas_export_id)
 

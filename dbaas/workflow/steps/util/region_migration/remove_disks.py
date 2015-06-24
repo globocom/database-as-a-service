@@ -31,7 +31,6 @@ class RemoveDisks(BaseStep):
 
                 LOG.info("Removing disks on host %s" % host)
                 NfsaasProvider().destroy_disk(environment=workflow_dict['source_environment'],
-                                              plan=workflow_dict['source_plan'],
                                               host=host)
 
             return True

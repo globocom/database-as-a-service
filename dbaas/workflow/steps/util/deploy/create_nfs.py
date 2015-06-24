@@ -49,7 +49,7 @@ class CreateNfs(BaseStep):
                 LOG.info("Destroying nfsaas disk...")
 
                 disk = NfsaasProvider().destroy_disk(
-                    environment=workflow_dict['environment'], plan=workflow_dict['plan'], host=host)
+                    environment=workflow_dict['environment'], host=host)
 
                 if not disk:
                     return False

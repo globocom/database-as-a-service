@@ -19,7 +19,6 @@ class GrantNFSAccess(BaseStep):
             databaseinfra = workflow_dict['databaseinfra']
             for host_and_export in workflow_dict['hosts_and_exports']:
                 NfsaasProvider.grant_access(environment=databaseinfra.environment,
-                                            plan=databaseinfra.plan,
                                             host=host_and_export['host'],
                                             export_id=host_and_export['new_export_id'])
 
