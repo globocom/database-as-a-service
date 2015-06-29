@@ -23,8 +23,6 @@ class UpdateDbaaSMetadata(BaseStep):
             volume.is_active = True
             volume.save()
 
-            raise Exception("My error!")
-
             return True
         except Exception:
             traceback = full_stack()
