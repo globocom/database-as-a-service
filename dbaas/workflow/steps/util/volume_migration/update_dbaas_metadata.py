@@ -36,6 +36,17 @@ class UpdateDbaaSMetadata(BaseStep):
     def undo(self, workflow_dict):
         LOG.info("Running undo...")
         try:
+
+            for index, host in enumerate(workflow_dict['hosts']):
+                volume = workflow_dict['volumes'][index]
+                old_volume = workflow_dict['old_volumes'][index]
+
+                old_volume.is_active = True
+                old_volume.save()
+
+                volume.is_active = False
+                volume.save()
+
             return True
         except Exception:
             traceback = full_stack()

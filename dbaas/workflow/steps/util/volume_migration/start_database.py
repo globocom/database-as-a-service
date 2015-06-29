@@ -25,7 +25,7 @@ class StartDatabase(BaseStep):
                 return_code = exec_remote_command(server=host.address,
                                                   username=cs_host_attr.vm_user,
                                                   password=cs_host_attr.vm_password,
-                                                  command='sleep 300 && mount /data',
+                                                  command='mount /data',
                                                   output=output)
 
                 if return_code != 0:

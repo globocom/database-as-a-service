@@ -56,10 +56,10 @@ class CreateVolume(BaseStep):
                 provider = NfsaasProvider()
                 provider.revoke_access(environment=environment,
                                        host=volume.host,
-                                       export_id=volume.export_id)
+                                       export_id=volume.nfsaas_export_id)
 
                 provider.drop_export(environment=environment,
-                                     export_id=volume.export_id)
+                                     export_id=volume.nfsaas_export_id)
 
                 volume.delete()
 
