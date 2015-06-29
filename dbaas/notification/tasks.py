@@ -503,13 +503,28 @@ def volume_migration(self, database, user, task_history=None):
                                         user=user, worker_name=worker_name)
 
     databaseinfra = database.databaseinfra
+    driver = databaseinfra.get_driver()
+
     environment = database.environment
     plan = database.plan
 
     instance_types = [Instance.MYSQL, Instance.MONGODB, Instance.REDIS]
-    instances = databaseinfra.instances.filter(instance_type__in=instance_types)
+
+    instances = []
+    master_instance = None
+    for instance in databaseinfra.instances.filter(instance_type__in=instance_types):
+        if driver.check_instance_is_eligible_for_backup(instance=instance):
+            instances.append(instance)
+        else:
+            master_instance = instance
+
+    #if master_instance:
+    #    instances.append(master_instance)
 
     for instance in instances:
+        if not driver.check_instance_is_eligible_for_backup(instance=instance):
+            continue
+
         host = instance.hostname
         old_volume = HostAttr.objects.get(host=host, is_active=True)
 
