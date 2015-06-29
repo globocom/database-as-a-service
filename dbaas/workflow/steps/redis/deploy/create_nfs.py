@@ -19,10 +19,10 @@ class CreateNfs(BaseStep):
             workflow_dict['disks'] = []
 
             for instance in workflow_dict['instances']:
-                
+
                 if instance.instance_type == Instance.REDIS_SENTINEL:
                     continue
-                
+
                 host = instance.hostname
 
                 LOG.info("Creating nfsaas disk...")

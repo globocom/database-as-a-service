@@ -57,8 +57,8 @@ STOP_RESIZE_START = (
 
 RESIZE_MONGO = (
     ('workflow.steps.mongodb.resize.init_variables.InitVariables',
-     'workflow.steps.mongodb.resize.stop_database.StopDatabase',)
-     + STOP_RESIZE_START +
+     'workflow.steps.mongodb.resize.stop_database.StopDatabase',) +
+    STOP_RESIZE_START +
     ('workflow.steps.mongodb.resize.start_database.StartDatabase',
      'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',)
 )
@@ -66,8 +66,8 @@ RESIZE_MONGO = (
 RESIZE_MYSQL = (
     ('workflow.steps.mysql.resize.init_variables.InitVariables',
      'workflow.steps.mysql.resize.stop_database.StopDatabase',
-     'workflow.steps.mysql.resize.change_config.ChangeDatabaseConfigFile',)
-     + STOP_RESIZE_START +
+     'workflow.steps.mysql.resize.change_config.ChangeDatabaseConfigFile',) +
+    STOP_RESIZE_START +
     ('workflow.steps.mysql.resize.start_database.StartDatabase',
      'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',)
 )
@@ -75,8 +75,8 @@ RESIZE_MYSQL = (
 RESIZE_REDIS = (
     ('workflow.steps.redis.resize.init_variables.InitVariables',
      'workflow.steps.redis.resize.stop_database.StopDatabase',
-     'workflow.steps.redis.resize.change_config.ChangeDatabaseConfigFile',)
-     + STOP_RESIZE_START +
+     'workflow.steps.redis.resize.change_config.ChangeDatabaseConfigFile',)+
+    STOP_RESIZE_START +
     ('workflow.steps.redis.resize.start_database.StartDatabase',
      'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',)
 
@@ -224,4 +224,16 @@ RESTORE_SNAPSHOT_MYSQL_HA = (
     'workflow.steps.util.restore_snapshot.make_export_snapshot.MakeExportSnapshot',
     'workflow.steps.util.restore_snapshot.update_dbaas_metadata.UpdateDbaaSMetadata',
     'workflow.steps.util.restore_snapshot.clean_old_volumes.CleanOldVolumes',
+)
+
+
+VOLUME_MIGRATION = (
+    'workflow.steps.util.volume_migration.create_volume.CreateVolume',
+    'workflow.steps.util.volume_migration.mount_volume.MountVolume',
+    'workflow.steps.util.volume_migration.stop_database.StopDatabase',
+    'workflow.steps.util.volume_migration.copy_data.CopyData',
+    'workflow.steps.util.volume_migration.umount_volumes.UmountVolumes',
+    'workflow.steps.util.volume_migration.update_fstab.UpdateFstab',
+    'workflow.steps.util.volume_migration.start_database.StartDatabase',
+    'workflow.steps.util.volume_migration.update_dbaas_metadata.UpdateDbaaSMetadata',
 )

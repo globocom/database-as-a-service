@@ -2,8 +2,8 @@
 import logging
 from util import full_stack
 from dbaas_nfsaas.provider import NfsaasProvider
-from ..base import BaseStep
-from ....exceptions.error_codes import DBAAS_0009
+from workflow.steps.util.base import BaseStep
+from workflow.exceptions.error_codes import DBAAS_0009
 
 LOG = logging.getLogger(__name__)
 

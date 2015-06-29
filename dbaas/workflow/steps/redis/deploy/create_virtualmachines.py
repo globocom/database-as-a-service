@@ -11,8 +11,8 @@ from dbaas_cloudstack.models import DatabaseInfraOffering
 from django.core.exceptions import ObjectDoesNotExist
 from physical.models import Host
 from physical.models import Instance
-from ...util.base import BaseStep
-from ....exceptions.error_codes import DBAAS_0011
+from workflow.steps.util.base import BaseStep
+from workflow.exceptions.error_codes import DBAAS_0011
 
 LOG = logging.getLogger(__name__)
 
@@ -24,7 +24,7 @@ class CreateVirtualMachine(BaseStep):
 
     def do(self, workflow_dict):
         try:
-            if not 'environment' in workflow_dict and not 'plan' in workflow_dict:
+            if 'environment' not in workflow_dict and 'plan' not in workflow_dict:
                 return False
 
             cs_credentials = get_credentials_for(
@@ -47,10 +47,10 @@ class CreateVirtualMachine(BaseStep):
 
             for index, vm_name in enumerate(workflow_dict['names']['vms']):
 
-                if len(bundles)==1:
+                if len(bundles) == 1:
                     bundle = bundles[0]
                 else:
-                    bundle = LastUsedBundle.get_next_bundle(plan=workflow_dict['plan'], bundle= bundles)
+                    bundle = LastUsedBundle.get_next_bundle(plan=workflow_dict['plan'], bundle=bundles)
 
                 if index == 2:
                     offering = cs_plan_attrs.get_weaker_offering()
@@ -58,7 +58,7 @@ class CreateVirtualMachine(BaseStep):
                     offering = cs_plan_attrs.get_stronger_offering()
 
                 try:
-                    DatabaseInfraOffering.objects.get(databaseinfra= workflow_dict['databaseinfra'])
+                    DatabaseInfraOffering.objects.get(databaseinfra=workflow_dict['databaseinfra'])
                 except ObjectDoesNotExist:
                     LOG.info("Creating databaseInfra Offering...")
                     dbinfra_offering = DatabaseInfraOffering()
@@ -66,12 +66,11 @@ class CreateVirtualMachine(BaseStep):
                     dbinfra_offering.databaseinfra = workflow_dict['databaseinfra']
                     dbinfra_offering.save()
 
-
                 LOG.debug("Deploying new vm on cs with bundle %s and offering %s" % (bundle,offering))
 
                 vm = cs_provider.deploy_virtual_machine(
                     offering=offering.serviceofferingid,
-                    bundle= bundle,
+                    bundle=bundle,
                     project_id=cs_credentials.project,
                     vmname=vm_name,
                     affinity_group_id=cs_credentials.get_parameter_by_name('affinity_group_id'),
@@ -114,11 +113,11 @@ class CreateVirtualMachine(BaseStep):
 
                     workflow_dict['instances'].append(instance)
 
-                if  workflow_dict['qt']==1:
+                if workflow_dict['qt'] == 1:
 
                     LOG.info("Updating databaseinfra endpoint...")
                     databaseinfra = workflow_dict['databaseinfra']
-                    databaseinfra.endpoint = instance.address + ":%i" %(instance.port)
+                    databaseinfra.endpoint = instance.address + ":%i" % (instance.port)
                     databaseinfra.save()
                     workflow_dict['databaseinfra'] = databaseinfra
 
@@ -159,10 +158,9 @@ class CreateVirtualMachine(BaseStep):
             if not instances:
                 for vm_id in workflow_dict['vms_id']:
                     cs_provider.destroy_virtual_machine(
-                    project_id=cs_credentials.project,
-                    environment=workflow_dict['environment'],
-                    vm_id=vm_id)
-
+                        project_id=cs_credentials.project,
+                        environment=workflow_dict['environment'],
+                        vm_id=vm_id)
 
                 for host in workflow_dict['hosts']:
                     host_attr = HostAttr.objects.filter(host=host)
@@ -175,8 +173,8 @@ class CreateVirtualMachine(BaseStep):
                         LOG.info("HostAttr deleted!")
 
             for instance in instances:
-                
-                if len(Instance.objects.filter(hostname = instance.hostname)) > 1:
+
+                if len(Instance.objects.filter(hostname=instance.hostname)) > 1:
                     instance.delete()
                     LOG.info("Instance deleted")
                     continue
