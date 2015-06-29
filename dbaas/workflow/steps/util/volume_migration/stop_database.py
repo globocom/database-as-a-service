@@ -16,18 +16,17 @@ class StopDatabase(BaseStep):
     def do(self, workflow_dict):
         try:
             databaseinfra = workflow_dict['databaseinfra']
-            workflow_dict['stoped_hosts'] = []
-            hosts = workflow_dict['hosts']
-            LOG.debug("HOSTS: {}".format(hosts))
+            workflow_dict['host_stoped'] = False
+            host = workflow_dict['host']
+            LOG.debug("HOSTS: {}".format(host))
 
-            for host in hosts:
-                return_code, output = use_database_initialization_script(databaseinfra=databaseinfra,
-                                                                         host=host,
-                                                                         option='stop')
-                if return_code != 0:
-                    raise Exception(str(output))
+            return_code, output = use_database_initialization_script(databaseinfra=databaseinfra,
+                                                                     host=host,
+                                                                     option='stop')
+            if return_code != 0:
+                raise Exception(str(output))
 
-                workflow_dict['stoped_hosts'].append(host)
+            workflow_dict['host_stoped'] = True
 
             return True
         except Exception:
@@ -43,7 +42,8 @@ class StopDatabase(BaseStep):
         try:
             databaseinfra = workflow_dict['databaseinfra']
 
-            for host in workflow_dict['stoped_hosts']:
+            if workflow_dict['host_stoped']:
+                host = workflow_dict['host']
                 return_code, output = use_database_initialization_script(databaseinfra=databaseinfra,
                                                                          host=host,
                                                                          option='start')

@@ -21,18 +21,18 @@ class CopyData(BaseStep):
             files_to_remove = driver.remove_deprectaed_files()
             command = files_to_remove + " && cp -rp /data/* /data2"
 
-            for host in workflow_dict['hosts']:
-                cs_host_attr = CsHostAttr.objects.get(host=host)
+            host = workflow_dict['host']
+            cs_host_attr = CsHostAttr.objects.get(host=host)
 
-                output = {}
-                return_code = exec_remote_command(server=host.address,
-                                                  username=cs_host_attr.vm_user,
-                                                  password=cs_host_attr.vm_password,
-                                                  command=command,
-                                                  output=output)
+            output = {}
+            return_code = exec_remote_command(server=host.address,
+                                              username=cs_host_attr.vm_user,
+                                              password=cs_host_attr.vm_password,
+                                              command=command,
+                                              output=output)
 
-                if return_code != 0:
-                    raise Exception(str(output))
+            if return_code != 0:
+                raise Exception(str(output))
 
             return True
         except Exception:
@@ -47,18 +47,18 @@ class CopyData(BaseStep):
         LOG.info("Running undo...")
         try:
             command = 'rm -rf /data2/*'
-            for host in workflow_dict['hosts']:
-                cs_host_attr = CsHostAttr.objects.get(host=host)
+            host = workflow_dict['host']
+            cs_host_attr = CsHostAttr.objects.get(host=host)
 
-                output = {}
-                return_code = exec_remote_command(server=host.address,
-                                                  username=cs_host_attr.vm_user,
-                                                  password=cs_host_attr.vm_password,
-                                                  command=command,
-                                                  output=output)
+            output = {}
+            return_code = exec_remote_command(server=host.address,
+                                              username=cs_host_attr.vm_user,
+                                              password=cs_host_attr.vm_password,
+                                              command=command,
+                                              output=output)
 
-                if return_code != 0:
-                    LOG.info(str(output))
+            if return_code != 0:
+                LOG.info(str(output))
 
             return True
         except Exception:

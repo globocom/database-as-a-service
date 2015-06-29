@@ -18,26 +18,26 @@ class StartDatabase(BaseStep):
     def do(self, workflow_dict):
         try:
             databaseinfra = workflow_dict['databaseinfra']
-            for host in workflow_dict['hosts']:
-                cs_host_attr = CsHostAttr.objects.get(host=host)
+            host = workflow_dict['host']
+            cs_host_attr = CsHostAttr.objects.get(host=host)
 
-                output = {}
-                command = 'mount /data && chown {engine_name}:{engine_name} /data'.format(engine_name=databaseinfra.engine_name)
-                return_code = exec_remote_command(server=host.address,
-                                                  username=cs_host_attr.vm_user,
-                                                  password=cs_host_attr.vm_password,
-                                                  command=command,
-                                                  output=output)
+            output = {}
+            command = 'mount /data && chown {engine_name}:{engine_name} /data && rmdir /data2'.format(engine_name=databaseinfra.engine_name)
+            return_code = exec_remote_command(server=host.address,
+                                              username=cs_host_attr.vm_user,
+                                              password=cs_host_attr.vm_password,
+                                              command=command,
+                                              output=output)
 
-                if return_code != 0:
-                    raise Exception(str(output))
+            if return_code != 0:
+                raise Exception(str(output))
 
-                return_code, output = use_database_initialization_script(databaseinfra=databaseinfra,
-                                                                         host=host,
-                                                                         option='start')
+            return_code, output = use_database_initialization_script(databaseinfra=databaseinfra,
+                                                                     host=host,
+                                                                     option='start')
 
-                if return_code != 0:
-                    raise Exception(str(output))
+            if return_code != 0:
+                raise Exception(str(output))
 
             return True
         except Exception:
@@ -52,24 +52,24 @@ class StartDatabase(BaseStep):
         LOG.info("Running undo...")
         try:
             databaseinfra = workflow_dict['databaseinfra']
-            for host in workflow_dict['hosts']:
-                return_code, output = use_database_initialization_script(databaseinfra=databaseinfra,
-                                                                         host=host,
-                                                                         option='stop')
+            host = workflow_dict['host']
+            return_code, output = use_database_initialization_script(databaseinfra=databaseinfra,
+                                                                     host=host,
+                                                                     option='stop')
 
-                if return_code != 0:
-                    LOG.info(str(output))
+            if return_code != 0:
+                LOG.info(str(output))
 
-                cs_host_attr = CsHostAttr.objects.get(host=host)
-                output = {}
-                return_code = exec_remote_command(server=host.address,
-                                                  username=cs_host_attr.vm_user,
-                                                  password=cs_host_attr.vm_password,
-                                                  command='umount /data',
-                                                  output=output)
+            cs_host_attr = CsHostAttr.objects.get(host=host)
+            output = {}
+            return_code = exec_remote_command(server=host.address,
+                                              username=cs_host_attr.vm_user,
+                                              password=cs_host_attr.vm_password,
+                                              command='umount /data',
+                                              output=output)
 
-                if return_code != 0:
-                    raise Exception(str(output))
+            if return_code != 0:
+                raise Exception(str(output))
 
             return True
         except Exception:

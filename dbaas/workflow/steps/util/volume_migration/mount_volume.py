@@ -17,25 +17,22 @@ class MountVolume(BaseStep):
     def do(self, workflow_dict):
         try:
             command = "mkdir /data2 && mount -t nfs -o bg,intr {} /data2"
-            workflow_dict['mounts'] = []
+            host = workflow_dict['host']
+            volume = workflow_dict['volume']
+            command = command.format(volume.nfsaas_path)
+            cs_host_attr = CsHostAttr.objects.get(host=host)
 
-            for index, host in enumerate(workflow_dict['hosts']):
-                volume = workflow_dict['volumes'][index]
-                command = command.format(volume.nfsaas_path)
+            output = {}
+            return_code = exec_remote_command(server=host.address,
+                                              username=cs_host_attr.vm_user,
+                                              password=cs_host_attr.vm_password,
+                                              command=command,
+                                              output=output)
 
-                cs_host_attr = CsHostAttr.objects.get(host=host)
+            if return_code != 0:
+                raise Exception(str(output))
 
-                output = {}
-                return_code = exec_remote_command(server=host.address,
-                                                  username=cs_host_attr.vm_user,
-                                                  password=cs_host_attr.vm_password,
-                                                  command=command,
-                                                  output=output)
-
-                if return_code != 0:
-                    raise Exception(str(output))
-
-                workflow_dict['mounts'].append(command)
+            workflow_dict['mount'] = command
 
             return True
         except Exception:
@@ -50,18 +47,18 @@ class MountVolume(BaseStep):
         LOG.info("Running undo...")
         try:
             command = 'umount /data2 && rmdir /data2'
-            for host in workflow_dict['hosts']:
-                cs_host_attr = CsHostAttr.objects.get(host=host)
+            host = workflow_dict['host']
+            cs_host_attr = CsHostAttr.objects.get(host=host)
 
-                output = {}
-                return_code = exec_remote_command(server=host.address,
-                                                  username=cs_host_attr.vm_user,
-                                                  password=cs_host_attr.vm_password,
-                                                  command=command,
-                                                  output=output)
+            output = {}
+            return_code = exec_remote_command(server=host.address,
+                                              username=cs_host_attr.vm_user,
+                                              password=cs_host_attr.vm_password,
+                                              command=command,
+                                              output=output)
 
-                if return_code != 0:
-                    LOG.info(str(output))
+            if return_code != 0:
+                LOG.info(str(output))
 
             return True
         except Exception:

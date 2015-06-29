@@ -15,26 +15,24 @@ class CreateVolume(BaseStep):
 
     def do(self, workflow_dict):
         try:
-
-            workflow_dict['volumes'] = []
             environment = workflow_dict['environment']
             plan = workflow_dict['plan']
 
-            for host in workflow_dict['hosts']:
-                LOG.info("Creating nfsaas volume...")
+            host = workflow_dict['host']
+            LOG.info("Creating nfsaas volume...")
 
-                volume = NfsaasProvider(
-                ).create_disk(environment=environment,
-                              plan=plan,
-                              host=host)
+            volume = NfsaasProvider(
+            ).create_disk(environment=environment,
+                          plan=plan,
+                          host=host)
 
-                if not volume:
-                    return False
+            if not volume:
+                return False
 
-                volume = HostAttr.objects.get(host=host,
-                                              nfsaas_path=volume['path'])
+            volume = HostAttr.objects.get(host=host,
+                                          nfsaas_path=volume['path'])
 
-                workflow_dict['volumes'].append(volume)
+            workflow_dict['volume'] = volume
 
             return True
 
@@ -50,7 +48,8 @@ class CreateVolume(BaseStep):
         try:
             environment = workflow_dict['environment']
 
-            for volume in workflow_dict['volumes']:
+            if 'volume' in workflow_dict:
+                volume = workflow_dict['volume']
                 LOG.info("Destroying nfsaas volume...")
 
                 provider = NfsaasProvider()

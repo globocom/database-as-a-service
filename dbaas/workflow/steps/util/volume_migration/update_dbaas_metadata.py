@@ -14,15 +14,16 @@ class UpdateDbaaSMetadata(BaseStep):
 
     def do(self, workflow_dict):
         try:
-            for index, host in enumerate(workflow_dict['hosts']):
-                volume = workflow_dict['volumes'][index]
-                old_volume = workflow_dict['old_volumes'][index]
+            volume = workflow_dict['volume']
+            old_volume = workflow_dict['old_volume']
 
-                old_volume.is_active = False
-                old_volume.save()
+            old_volume.is_active = False
+            old_volume.save()
 
-                volume.is_active = True
-                volume.save()
+            volume.is_active = True
+            volume.save()
+
+            raise Exception("My error!")
 
             return True
         except Exception:
@@ -36,16 +37,14 @@ class UpdateDbaaSMetadata(BaseStep):
     def undo(self, workflow_dict):
         LOG.info("Running undo...")
         try:
+            volume = workflow_dict['volume']
+            old_volume = workflow_dict['old_volume']
 
-            for index, host in enumerate(workflow_dict['hosts']):
-                volume = workflow_dict['volumes'][index]
-                old_volume = workflow_dict['old_volumes'][index]
+            old_volume.is_active = True
+            old_volume.save()
 
-                old_volume.is_active = True
-                old_volume.save()
-
-                volume.is_active = False
-                volume.save()
+            volume.is_active = False
+            volume.save()
 
             return True
         except Exception:

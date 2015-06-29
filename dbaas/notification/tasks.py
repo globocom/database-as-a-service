@@ -489,10 +489,12 @@ def resize_database(self, database, cloudstackpack, task_history=None, user=None
 
 @app.task(bind=True)
 def volume_migration(self, database, user, task_history=None):
-    from dbaas_nfsaas.models import HostAttr
+    from dbaas_nfsaas.models import HostAttr, PlanAttr
     from workflow.settings import VOLUME_MIGRATION
     from util import build_dict
     from workflow.workflow import start_workflow
+
+    default_plan_size = PlanAttr.objects.get(dbaas_plan=database.plan).nfsaas_plan
 
     LOG.info("Migrating {} volumes".format(database))
     worker_name = get_worker_name()
@@ -503,31 +505,41 @@ def volume_migration(self, database, user, task_history=None):
     databaseinfra = database.databaseinfra
     environment = database.environment
     plan = database.plan
-    instances = databaseinfra.instances.all()
-    hosts = [instance.hostname for instance in instances]
-    old_volumes = [HostAttr.objects.get(host=host, is_active=True) for host in hosts]
 
-    workflow_dict = build_dict(databaseinfra=databaseinfra,
-                               database=database,
-                               environment=environment,
-                               plan=plan,
-                               hosts=hosts,
-                               old_volumes=old_volumes,
-                               steps=VOLUME_MIGRATION,
-                               )
+    instance_types = [Instance.MYSQL, Instance.MONGODB, Instance.REDIS]
+    instances = databaseinfra.instances.filter(instance_type__in=instance_types)
 
-    start_workflow(workflow_dict=workflow_dict, task=task_history)
+    for instance in instances:
+        host = instance.hostname
+        old_volume = HostAttr.objects.get(host=host, is_active=True)
 
-    if workflow_dict['exceptions']['traceback']:
-        error = "\n".join(
-            ": ".join(err) for err in workflow_dict['exceptions']['error_codes'])
-        traceback = "\nException Traceback\n".join(
-            workflow_dict['exceptions']['traceback'])
-        error = "{}\n{}\n{}".format(error, traceback, error)
-        task_history.update_status_for(
-            TaskHistory.STATUS_ERROR, details=error)
-    else:
-        task_history.update_status_for(
-            TaskHistory.STATUS_SUCCESS, details='Volumes sucessfully migrated!')
+        if old_volume.nfsaas_size_id == default_plan_size:
+            continue
+
+        workflow_dict = build_dict(databaseinfra=databaseinfra,
+                                   database=database,
+                                   environment=environment,
+                                   plan=plan,
+                                   host=host,
+                                   old_volume=old_volume,
+                                   steps=VOLUME_MIGRATION,
+                                   )
+
+        start_workflow(workflow_dict=workflow_dict, task=task_history)
+
+
+    # if workflow_dict['exceptions']['traceback']:
+    #     error = "\n".join(
+    #         ": ".join(err) for err in workflow_dict['exceptions']['error_codes'])
+    #     traceback = "\nException Traceback\n".join(
+    #         workflow_dict['exceptions']['traceback'])
+    #     error = "{}\n{}\n{}".format(error, traceback, error)
+    #     task_history.update_status_for(
+    #         TaskHistory.STATUS_ERROR, details=error)
+    # else:
+    #     task_history.update_status_for(
+    #         TaskHistory.STATUS_SUCCESS, details='Volumes sucessfully migrated!')
+
+    LOG.info("Migration finished")
 
     return

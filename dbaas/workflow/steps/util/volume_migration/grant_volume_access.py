@@ -16,11 +16,11 @@ class GrantVolumeAccess(BaseStep):
     def do(self, workflow_dict):
         try:
             databaseinfra = workflow_dict['databaseinfra']
-            for index, host in enumerate(workflow_dict['hosts']):
-                volume = workflow_dict['volumes'][index]
-                NfsaasProvider.grant_access(environment=databaseinfra.environment,
-                                            host=host,
-                                            export_id=volume.nfsaas_export_id)
+            host = workflow_dict['host']
+            volume = workflow_dict['volume']
+            NfsaasProvider.grant_access(environment=databaseinfra.environment,
+                                        host=host,
+                                        export_id=volume.nfsaas_export_id)
 
             return True
         except Exception:

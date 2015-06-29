@@ -16,17 +16,17 @@ class UpdateFstab(BaseStep):
 
     def do(self, workflow_dict):
         try:
-            for index, host in enumerate(workflow_dict['hosts']):
-                volume = workflow_dict['volumes'][index]
-                old_volume = workflow_dict['old_volumes'][index]
+            volume = workflow_dict['volume']
+            host = workflow_dict['host']
+            old_volume = workflow_dict['old_volume']
 
-                source_export_path = scape_nfsaas_export_path(old_volume.nfsaas_path)
-                target_export_path = scape_nfsaas_export_path(volume.nfsaas_path)
-                return_code, output = update_fstab(host=host,
-                                                   source_export_path=source_export_path,
-                                                   target_export_path=target_export_path)
-                if return_code != 0:
-                    raise Exception(str(output))
+            source_export_path = scape_nfsaas_export_path(old_volume.nfsaas_path)
+            target_export_path = scape_nfsaas_export_path(volume.nfsaas_path)
+            return_code, output = update_fstab(host=host,
+                                               source_export_path=source_export_path,
+                                               target_export_path=target_export_path)
+            if return_code != 0:
+                raise Exception(str(output))
 
             return True
         except Exception:
@@ -40,17 +40,17 @@ class UpdateFstab(BaseStep):
     def undo(self, workflow_dict):
         LOG.info("Running undo...")
         try:
-            for index, host in enumerate(workflow_dict['hosts']):
-                volume = workflow_dict['volumes'][index]
-                old_volume = workflow_dict['old_volumes'][index]
+            volume = workflow_dict['volume']
+            host = workflow_dict['host']
+            old_volume = workflow_dict['old_volume']
 
-                source_export_path = scape_nfsaas_export_path(volume.nfsaas_path)
-                target_export_path = scape_nfsaas_export_path(old_volume.nfsaas_path)
-                return_code, output = update_fstab(host=host,
-                                                   source_export_path=source_export_path,
-                                                   target_export_path=target_export_path)
-                if return_code != 0:
-                    LOG.info(str(output))
+            source_export_path = scape_nfsaas_export_path(volume.nfsaas_path)
+            target_export_path = scape_nfsaas_export_path(old_volume.nfsaas_path)
+            return_code, output = update_fstab(host=host,
+                                               source_export_path=source_export_path,
+                                               target_export_path=target_export_path)
+            if return_code != 0:
+                LOG.info(str(output))
 
             return True
         except Exception:
