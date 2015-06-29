@@ -22,10 +22,11 @@ class StartDatabase(BaseStep):
                 cs_host_attr = CsHostAttr.objects.get(host=host)
 
                 output = {}
+                command = 'mount /data && chown {engine_name}:{engine_name} /data'.format(engine_name=databaseinfra.engine_name)
                 return_code = exec_remote_command(server=host.address,
                                                   username=cs_host_attr.vm_user,
                                                   password=cs_host_attr.vm_password,
-                                                  command='mount /data',
+                                                  command=command,
                                                   output=output)
 
                 if return_code != 0:
