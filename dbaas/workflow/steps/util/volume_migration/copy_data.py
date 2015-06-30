@@ -5,6 +5,7 @@ from workflow.steps.util.base import BaseStep
 from workflow.exceptions.error_codes import DBAAS_0022
 from dbaas_cloudstack.models import HostAttr as CsHostAttr
 from util import exec_remote_command
+from time import sleep
 
 LOG = logging.getLogger(__name__)
 
@@ -16,6 +17,7 @@ class CopyData(BaseStep):
 
     def do(self, workflow_dict):
         try:
+            sleep(60)
             databaseinfra = workflow_dict['databaseinfra']
             driver = databaseinfra.get_driver()
             files_to_remove = driver.remove_deprectaed_files()
