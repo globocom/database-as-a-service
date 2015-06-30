@@ -12,6 +12,7 @@ __all__ = ['GenericDriverError', 'ConnectionError',
 
 
 class GenericDriverError(InternalException):
+
     """ Exception raises when any kind of problem happens when executing operations on databaseinfra """
 
     def __init__(self, message=None):
@@ -28,36 +29,43 @@ class GenericDriverError(InternalException):
 
 
 class ConnectionError(GenericDriverError):
+
     """ Raised when there is any problem to connect on databaseinfra """
     pass
 
 
 class AuthenticationError(ConnectionError):
+
     """ Raised when there is any problem authenticating on databaseinfra """
     pass
 
 
 class DatabaseAlreadyExists(InternalException):
+
     """ Raised when database already exists in datainfra """
     pass
 
 
 class DatabaseDoesNotExist(InternalException):
+
     """ Raised when there is no requested database """
     pass
 
 
 class CredentialAlreadyExists(InternalException):
+
     """ Raised when credential already exists in database """
     pass
 
 
 class InvalidCredential(InternalException):
+
     """ Raised when credential no more exists in database """
     pass
 
 
 class BaseDriver(object):
+
     """
     BaseDriver interface
     """
@@ -73,6 +81,7 @@ class BaseDriver(object):
 
         if 'databaseinfra' in kwargs:
             self.databaseinfra = kwargs.get('databaseinfra')
+            self.name = self.databaseinfra.engine.name
         else:
             raise TypeError(_("DatabaseInfra is not defined"))
 
@@ -168,6 +177,30 @@ class BaseDriver(object):
 
     def is_replication_ok(self, instance):
         raise NotImplementedError()
+
+    def switch_master(self, ):
+        raise NotImplementedError()
+
+    def get_database_instances(self, ):
+        driver_name = self.name.upper()
+        instances = [instance if instance.instance_type == instance.__getattribute__(driver_name) else None for instance in self.databaseinfra.instances.all()]
+        return filter(None, instances)
+
+    def get_master_instance(self, ):
+        instances = self.get_database_instances()
+
+        for instance in instances:
+            if self.check_instance_is_master(instance):
+                return instance
+
+        return None
+
+    def get_slave_instances(self, ):
+        instances = self.get_database_instances()
+        master = self.get_master_instance()
+        instances.remove(master)
+
+        return instances
 
 
 class DatabaseStatus(object):
