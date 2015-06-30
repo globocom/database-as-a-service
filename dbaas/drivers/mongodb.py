@@ -306,3 +306,8 @@ class MongoDB(BaseDriver):
 
     def data_dir(self, ):
         return '/data/data/'
+
+    def switch_master(self):
+        pass
+
+
