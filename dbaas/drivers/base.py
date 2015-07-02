@@ -205,6 +205,7 @@ class BaseDriver(object):
     def start_slave(self, instance):
         pass
 
+
 class DatabaseStatus(object):
 
     def __init__(self, database_model):
