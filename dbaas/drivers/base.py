@@ -202,6 +202,8 @@ class BaseDriver(object):
 
         return instances
 
+    def start_slave(self, instance):
+        pass
 
 class DatabaseStatus(object):
 

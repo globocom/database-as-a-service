@@ -18,6 +18,7 @@ class StartDatabase(BaseStep):
     def do(self, workflow_dict):
         try:
             databaseinfra = workflow_dict['databaseinfra']
+            instance = workflow_dict['instance']
             host = workflow_dict['host']
             cs_host_attr = CsHostAttr.objects.get(host=host)
 
@@ -38,6 +39,10 @@ class StartDatabase(BaseStep):
 
             if return_code != 0:
                 raise Exception(str(output))
+
+            if databaseinfra.plan.is_ha:
+                driver = databaseinfra.get_driver()
+                driver.start_slave(instance=instance)
 
             return True
         except Exception:

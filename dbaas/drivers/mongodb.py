@@ -308,6 +308,9 @@ class MongoDB(BaseDriver):
         return '/data/data/'
 
     def switch_master(self):
-        pass
-
-
+        client = self.get_client(None)
+        client.admin.command('replSetFreeze', 10)
+        try:
+            client.admin.command('replSetStepDown')
+        except pymongo.errors.PyMongoError, e:
+            pass

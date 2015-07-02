@@ -26,13 +26,13 @@ class CheckReplication(BaseStep):
                 if driver.is_replication_ok(instance):
                     return True
 
+            raise Exception('The replication is not ok')
+
         except Exception:
             traceback = full_stack()
 
             workflow_dict['exceptions']['error_codes'].append(DBAAS_0020)
             workflow_dict['exceptions']['traceback'].append(traceback)
-
-            return False
 
     def undo(self, workflow_dict):
         LOG.info("Running undo...")

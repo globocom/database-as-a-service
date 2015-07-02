@@ -493,6 +493,16 @@ def volume_migration(self, database, user, task_history=None):
     from workflow.settings import VOLUME_MIGRATION
     from util import build_dict
     from workflow.workflow import start_workflow
+    from time import sleep
+
+    def switch_master(databaseinfra, instance):
+        driver = databaseinfra.get_driver()
+        for attempt in range(0, 21):
+            if driver.is_replication_ok(instance):
+                driver.switch_master()
+                return
+            LOG.info("Waiting 10s to check replication...")
+            sleep(10)
 
     default_plan_size = PlanAttr.objects.get(dbaas_plan=database.plan).nfsaas_plan
 
@@ -518,17 +528,27 @@ def volume_migration(self, database, user, task_history=None):
         else:
             master_instance = instance
 
-    #if master_instance:
-    #    instances.append(master_instance)
+    if master_instance:
+        instances.append(master_instance)
 
-    for instance in instances:
+    LOG.info('Instances: {}'.format(str(instances)))
+
+    for index, instance in enumerate(instances):
+
+        if index > 0:
+            LOG.info("Waiting 60s to check continue...")
+            sleep(60)
+
         if not driver.check_instance_is_eligible_for_backup(instance=instance):
+            LOG.info('Instance is not eligible for backup {}'.format(str(instance)))
             continue
-
+        LOG.info('Volume migration for instance {}'.format(str(instance)))
         host = instance.hostname
         old_volume = HostAttr.objects.get(host=host, is_active=True)
 
         if old_volume.nfsaas_size_id == default_plan_size:
+            if databaseinfra.plan.is_ha:
+                switch_master(databaseinfra, instance)
             continue
 
         workflow_dict = build_dict(databaseinfra=databaseinfra,
@@ -536,24 +556,25 @@ def volume_migration(self, database, user, task_history=None):
                                    environment=environment,
                                    plan=plan,
                                    host=host,
+                                   instance=instance,
                                    old_volume=old_volume,
                                    steps=VOLUME_MIGRATION,
                                    )
 
         start_workflow(workflow_dict=workflow_dict, task=task_history)
 
+        if workflow_dict['exceptions']['traceback']:
+            error = "\n".join(": ".join(err) for err in workflow_dict['exceptions']['error_codes'])
+            traceback = "\nException Traceback\n".join(workflow_dict['exceptions']['traceback'])
+            error = "{}\n{}\n{}".format(error, traceback, error)
+            task_history.update_status_for(TaskHistory.STATUS_ERROR, details=error)
+            LOG.info("Migration finished with errors")
+            return
 
-    # if workflow_dict['exceptions']['traceback']:
-    #     error = "\n".join(
-    #         ": ".join(err) for err in workflow_dict['exceptions']['error_codes'])
-    #     traceback = "\nException Traceback\n".join(
-    #         workflow_dict['exceptions']['traceback'])
-    #     error = "{}\n{}\n{}".format(error, traceback, error)
-    #     task_history.update_status_for(
-    #         TaskHistory.STATUS_ERROR, details=error)
-    # else:
-    #     task_history.update_status_for(
-    #         TaskHistory.STATUS_SUCCESS, details='Volumes sucessfully migrated!')
+        if databaseinfra.plan.is_ha:
+            switch_master(databaseinfra, instance)
+
+    task_history.update_status_for(TaskHistory.STATUS_SUCCESS, details='Volumes sucessfully migrated!')
 
     LOG.info("Migration finished")
 

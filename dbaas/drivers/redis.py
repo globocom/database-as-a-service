@@ -13,6 +13,9 @@ from workflow.settings import DEPLOY_REDIS
 from workflow.settings import RESIZE_REDIS
 from workflow.settings import CLONE_REDIS
 from physical.models import Instance
+from util import exec_remote_command
+from util import build_context_script
+from dbaas_cloudstack.models import HostAttr
 
 LOG = logging.getLogger(__name__)
 
@@ -278,3 +281,42 @@ class Redis(BaseDriver):
 
     def data_dir(self, ):
         return '/data/'
+
+    def switch_master(self):
+
+        sentinel_instance = self.databaseinfra.instances.filter(instance_type=Instance.REDIS_SENTINEL, is_active=True).all()[0]
+        host = sentinel_instance.hostname
+
+        host_attr = HostAttr.objects.get(host=host)
+
+        script = """
+        #!/bin/bash
+
+        die_if_error()
+        {
+            local err=$?
+            if [ "$err" != "0" ];
+            then
+                echo "$*"
+                exit $err
+            fi
+        }"""
+
+        script += """
+        /usr/local/redis/src/redis-cli -h {} -p {} <<EOF_DBAAS
+        SENTINEL failover {}
+        exit
+        \nEOF_DBAAS
+        die_if_error "Error reseting sentinel"
+        """.format(sentinel_instance.address, sentinel_instance.port, self.databaseinfra.name)
+
+        script = build_context_script({}, script)
+        output = {}
+        return_code = exec_remote_command(server=host.address,
+                                          username=host_attr.vm_user,
+                                          password=host_attr.vm_password,
+                                          command=script,
+                                          output=output)
+        LOG.info(output)
+        if return_code != 0:
+            raise Exception(str(output))

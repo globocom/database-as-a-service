@@ -236,4 +236,5 @@ VOLUME_MIGRATION = (
     'workflow.steps.util.volume_migration.update_fstab.UpdateFstab',
     'workflow.steps.util.volume_migration.start_database.StartDatabase',
     'workflow.steps.util.volume_migration.update_dbaas_metadata.UpdateDbaaSMetadata',
+    #'workflow.steps.util.volume_migration.switch_master.SwitchMaster',
 )

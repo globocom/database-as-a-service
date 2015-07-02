@@ -20,6 +20,9 @@ from system.models import Configuration
 from workflow.settings import DEPLOY_MYSQL
 from workflow.settings import RESIZE_MYSQL
 from workflow.settings import CLONE_MYSQL
+from util import exec_remote_command
+from util import build_context_script
+from dbaas_cloudstack.models import HostAttr
 
 LOG = logging.getLogger(__name__)
 
@@ -310,3 +313,35 @@ class MySQL(BaseDriver):
 
     def data_dir(self, ):
         return '/data/data/'
+
+    def switch_master(self):
+        master = self.get_master_instance()
+        slave = self.get_slave_instances()[0]
+        host = master.hostname
+
+        host_attr = HostAttr.objects.get(host=host)
+
+        script = """
+        sudo -u flipper /usr/bin/flipper {{MASTERPAIRNAME}} set write {{HOST01.address}}
+        sudo -u flipper /usr/bin/flipper {{MASTERPAIRNAME}} set read {{HOST02.address}}
+        """
+
+        context_dict = {
+            'MASTERPAIRNAME': self.databaseinfra.name,
+            'HOST01': slave.hostname,
+            'HOST02': master.hostname,
+        }
+        script = build_context_script(context_dict, script)
+        output = {}
+        return_code = exec_remote_command(server=host.address,
+                                          username=host_attr.vm_user,
+                                          password=host_attr.vm_password,
+                                          command=script,
+                                          output=output)
+        LOG.info(output)
+        if return_code != 0:
+            raise Exception(str(output))
+
+    def start_slave(self, instance):
+        client = self.get_client(instance)
+        client.query("start slave")
