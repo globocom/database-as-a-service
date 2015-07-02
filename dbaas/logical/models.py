@@ -378,7 +378,7 @@ class Database(BaseModel):
 
     offering_id = property(get_cloudstack_service_offering_id)
 
-    def is_beeing_used_elsewhere(self,):
+    def is_beeing_used_elsewhere(self, task_id=None):
         from notification.models import TaskHistory
 
         name = self.name + ','
@@ -386,6 +386,11 @@ class Database(BaseModel):
                                            task_status__in=['RUNNING',
                                                             'PENDING',
                                                             'WAITING'])
+
+        if len(tasks) == 1 and task_id:
+            if tasks[0].task_id == task_id:
+                return False
+
         if tasks:
             return True
 
