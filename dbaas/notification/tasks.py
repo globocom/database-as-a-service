@@ -535,10 +535,6 @@ def volume_migration(self, database, user, task_history=None):
 
     for index, instance in enumerate(instances):
 
-        if index > 0:
-            LOG.info("Waiting 60s to check continue...")
-            sleep(60)
-
         if not driver.check_instance_is_eligible_for_backup(instance=instance):
             LOG.info('Instance is not eligible for backup {}'.format(str(instance)))
             continue
@@ -572,6 +568,8 @@ def volume_migration(self, database, user, task_history=None):
             return
 
         if databaseinfra.plan.is_ha:
+            LOG.info("Waiting 60s to check continue...")
+            sleep(60)
             switch_master(databaseinfra, instance)
 
     task_history.update_status_for(TaskHistory.STATUS_SUCCESS, details='Volumes sucessfully migrated!')
