@@ -504,13 +504,30 @@ def volume_migration(self, database, user, task_history=None):
             LOG.info("Waiting 10s to check replication...")
             sleep(10)
 
-    default_plan_size = PlanAttr.objects.get(dbaas_plan=database.plan).nfsaas_plan
-
-    LOG.info("Migrating {} volumes".format(database))
     worker_name = get_worker_name()
-
     task_history = TaskHistory.register(request=self.request, task_history=task_history,
                                         user=user, worker_name=worker_name)
+
+    stop_now = False
+    if database.status != Database.ALIVE or not database.database_status.is_alive:
+        msg = "Database is not alive!"
+        stop_now = True
+
+    if database.is_beeing_used_elsewhere(task_id=self.request.id):
+        msg = "Database is in use by another task!"
+        stop_now = True
+
+    if database.has_migration_started():
+        msg = "Region migration for this database has already started!"
+        stop_now = True
+
+    if stop_now:
+        task_history.update_status_for(TaskHistory.STATUS_SUCCESS, details=msg)
+        LOG.info("Migration finished")
+        return
+
+    default_plan_size = PlanAttr.objects.get(dbaas_plan=database.plan).nfsaas_plan
+    LOG.info("Migrating {} volumes".format(database))
 
     databaseinfra = database.databaseinfra
     driver = databaseinfra.get_driver()
@@ -518,26 +535,26 @@ def volume_migration(self, database, user, task_history=None):
     environment = database.environment
     plan = database.plan
 
-    instance_types = [Instance.MYSQL, Instance.MONGODB, Instance.REDIS]
-
-    instances = []
-    master_instance = None
-    for instance in databaseinfra.instances.filter(instance_type__in=instance_types):
-        if driver.check_instance_is_eligible_for_backup(instance=instance):
-            instances.append(instance)
-        else:
-            master_instance = instance
-
-    if master_instance:
-        instances.append(master_instance)
-
+    instances = driver.get_slave_instances()
+    master_instance = driver.get_master_instance()
+    instances.append(master_instance)
     LOG.info('Instances: {}'.format(str(instances)))
 
-    for index, instance in enumerate(instances):
+    hosts = [instance.hostname for instance in instances]
+    volumes = HostAttr.objects.filter(host__in=hosts,
+                                      is_active=True,
+                                      nfsaas_size_id=default_plan_size)
 
+    if len(volumes) == len(hosts):
+        task_history.update_status_for(TaskHistory.STATUS_SUCCESS, details='Volumes already migrated!')
+        LOG.info("Migration finished")
+        return
+
+    for index, instance in enumerate(instances):
         if not driver.check_instance_is_eligible_for_backup(instance=instance):
             LOG.info('Instance is not eligible for backup {}'.format(str(instance)))
             continue
+
         LOG.info('Volume migration for instance {}'.format(str(instance)))
         host = instance.hostname
         old_volume = HostAttr.objects.get(host=host, is_active=True)
