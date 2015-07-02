@@ -116,15 +116,19 @@ class TaskHistory(BaseModel):
             task_history.arguments = "Restoring to an older version the database: {0}, it will finish soon.".format(
                 request.kwargs['database'].name)
 
-        elif request.task=='notification.tasks.destroy_database':
+        elif request.task == 'notification.tasks.destroy_database':
             task_history.arguments = "Database name: {0},\nUser: {1}".format(
                 request.kwargs['database'].name, request.kwargs['user'])
 
-        elif request.task=='notification.tasks.clone_database':
+        elif request.task == 'notification.tasks.clone_database':
             task_history.arguments = "Database name: {0},\nClone: {1},\nPlan: {2},\
             \nEnvironment: {3}".format(
                 request.kwargs['origin_database'].name, str(request.kwargs['clone_name']),
                 str(request.kwargs['plan']), str(request.kwargs['environment']))
+
+        elif request.task == 'notification.tasks.volume_migration':
+            task_history.arguments = "Database name: {0},\nPlan: {1}".format(
+                request.kwargs['database'].name, str(request.kwargs['database'].plan))
 
         else:
             task_history.arguments = request.args
