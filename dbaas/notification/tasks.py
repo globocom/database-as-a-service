@@ -571,6 +571,8 @@ def volume_migration(self, database, user, task_history=None):
             LOG.info("Waiting 60s to check continue...")
             sleep(60)
             switch_master(databaseinfra, instance)
+            LOG.info("Waiting 60s to check continue...")
+            sleep(60)
 
     task_history.update_status_for(TaskHistory.STATUS_SUCCESS, details='Volumes sucessfully migrated!')
 
