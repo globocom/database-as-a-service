@@ -545,8 +545,14 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         return "".join(options_str_list)
 
     @staticmethod
-    def get_granurality_options():
-        return [(10, 'seconds'), (1, 'minutes'), (15, 'minutes'), (30, 'minutes')]
+    def get_granurality(from_option):
+        options = {"2hours": '10seconds',
+                   "1day": '30seconds',
+                   "7days": '15minutes',
+                   "30days": '30minutes',
+                   }
+
+        return options.get(from_option)
 
     @staticmethod
     def get_from_options():
@@ -564,10 +570,9 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         URL = get_credentials_for(
             environment=database.environment, credential_type=CredentialType.GRAPHITE).endpoint
 
-        granurality = request.POST.get('change_granularity') or '10seconds'
-        granurality_options = self.build_select_options(granurality, self.get_granurality_options())
-
         from_option = request.POST.get('change_from') or '2hours'
+        granurality = self.get_granurality(from_option) or '20minutes'
+
         from_options = self.build_select_options(from_option, self.get_from_options())
 
         graph_data = get_metric_datapoints_for(engine, db_name, hostname,
