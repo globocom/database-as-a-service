@@ -28,10 +28,6 @@
     <br>
     <form method="POST">
         {% csrf_token %}
-        <h4 style="color: White;">Granularity</h4><select name="change_granularity" id="change_granularity" onchange="this.form.submit()">
-            {{granurality_options | safe}}
-        </select>
-
         <h4 style="color: White;">From</h4><select name="change_from" id="change_from" onchange="this.form.submit()">
             {{from_options | safe}}
         </select>
