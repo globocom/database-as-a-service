@@ -314,8 +314,6 @@
             */
             create: function(dns, $row, callback) {
                 var self = this;
-                console.log(dns);
-                console.log(get_database_id());
                 $.ajax({
                     "url": "/extra_dns/extradns/",
                     "type": "POST",

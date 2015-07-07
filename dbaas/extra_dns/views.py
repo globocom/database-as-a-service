@@ -26,9 +26,6 @@ class ExtraDnsView(BaseDetailView):
 
     @method_decorator(csrf_exempt)
     def post(self, request, *args, **kwargs):
-
-        import pdb
-        pdb.set_trace()
         dns = request.POST.get("dns", None)
         database_id = request.POST.get("database_id", None)
         try:

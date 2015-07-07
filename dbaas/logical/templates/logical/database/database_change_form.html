@@ -16,8 +16,8 @@
             CredentialManager.include({"credential" : { "user": "{{credential.user}}", "password": "{{credential.password}}", "pk": "{{credential.pk}}" } });
             {% endfor %}
         {% endifequal %}
-        {% for extra_dns in original.extra_dns.all %}
-        ExtraDnsManager.include({"extradns" : { "dns": "{{extra_dns.dns}}", "pk": "{{extra_dns.pk}}" } });
+        {% for extradns in original.extra_dns.all %}
+        ExtraDnsManager.include({"extradns" : { "dns": "{{extradns.dns}}", "pk": "{{extradns.pk}}" } });
         {% endfor %}
     });
     </script>
@@ -100,14 +100,14 @@
     <table id="table-extradns" class="table table-striped" data-database-id="{{original.pk}}" >
         <thead>
             <tr>
-                <th>dns</th>
+                <th>DNS</th>
             </tr>
         </thead>
         <tbody>
             {% verbatim %}
             <script id="extradns-template" type="text/template">
-                <tr class="extradns" data-extradns-pk="{{extra_dns.pk}}"  >
-                    <td>{{extra_dns.dns}}</td>
+                <tr class="extradns" data-extradns-pk="{{extradns.pk}}"  >
+                    <td>{{extradns.dns}}</td>
                     <td>
                         <a class="btn btn-danger btn-extradns-remove" href="#"><i class="icon-trash icon-white"></i></a>
                     </td>
