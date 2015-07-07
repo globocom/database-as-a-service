@@ -17,5 +17,10 @@ class ExtraDns(BaseModel):
 
     dns = models.CharField(verbose_name=_("DNS"), max_length=200, null=False, blank=False,)
 
+    class Meta:
+        permissions = (
+            ("view_extradns", "Can view extra dns"),
+        )
+
     def __unicode__(self):
         return u"Extra dns: {} for database : {}".format(self.dns, self.database)

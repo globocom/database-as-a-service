@@ -16,6 +16,9 @@
             CredentialManager.include({"credential" : { "user": "{{credential.user}}", "password": "{{credential.password}}", "pk": "{{credential.pk}}" } });
             {% endfor %}
         {% endifequal %}
+        {% for extra_dns in original.extra_dns.all %}
+        ExtraDnsManager.include({"extradns" : { "dns": "{{extra_dns.dns}}", "pk": "{{extra_dns.pk}}" } });
+        {% endfor %}
     });
     </script>
 
@@ -92,6 +95,34 @@
          {{original.get_endpoint_dns}}
      </tr>
  </table>
+
+  <h2>Extra Dns</h2>
+    <table id="table-extradns" class="table table-striped" data-database-id="{{original.pk}}" >
+        <thead>
+            <tr>
+                <th>dns</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% verbatim %}
+            <script id="extradns-template" type="text/template">
+                <tr class="extradns" data-extradns-pk="{{extra_dns.pk}}"  >
+                    <td>{{extra_dns.dns}}</td>
+                    <td>
+                        <a class="btn btn-danger btn-extradns-remove" href="#"><i class="icon-trash icon-white"></i></a>
+                    </td>
+                </tr>
+            </script>
+            {% endverbatim %}
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="3">
+                    <div class="add-row"><a href="javascript:void(0)" id="add-extradns" ><i class="icon-plus-sign"></i> Add another extra dns</a></div>
+                </td>
+            </tr>
+        </tfoot>
+    </table>
 {% if not original.get_is_preprovisioned %}
 <h2>Monitoring</h2>
  <table id="table-mais" class="table table-striped">

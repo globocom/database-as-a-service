@@ -36,6 +36,9 @@ router.register(r'database', DatabaseAPI)
 from .credential import CredentialAPI
 router.register(r'credential', CredentialAPI)
 
+from .extra_dns import ExtraDnsAPI
+router.register(r'extra_dns', ExtraDnsAPI)
+
 from .task import TaskAPI
 router.register(r'task', TaskAPI, base_name="task")
 
