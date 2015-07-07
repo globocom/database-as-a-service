@@ -231,7 +231,7 @@
             var extradns = this;
             if (confirm("Are you sure?")) {
                 $.ajax({
-                    "url": "/api/extra_dns/" + this.pk,
+                    "url": "/extra_dns/extradns/" + this.pk,
                     "type": "DELETE",
                 }).done(function(data) {
                     extradns.$row.remove();
@@ -310,14 +310,14 @@
                 return extradns;
             },
             /**
-            * Create a new credential on server and put on page
+            * Create a new extradns on server and put on page
             */
             create: function(dns, $row, callback) {
                 var self = this;
                 console.log(dns);
                 console.log(get_database_id());
                 $.ajax({
-                    "url": "/api/extra_dns/",
+                    "url": "/extra_dns/extradns/",
                     "type": "POST",
                     "data": { "dns": dns, "database_id": get_database_id() },
                 }).done(function(data) {

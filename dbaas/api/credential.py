@@ -66,9 +66,6 @@ class CredentialAPI(viewsets.ModelViewSet):
             raise exceptions.PermissionDenied
 
     def create(self, request):
-        import pdb
-        pdb.set_trace()
-
         serializer = self.get_serializer(data=request.DATA, files=request.FILES)
 
         if serializer.is_valid():

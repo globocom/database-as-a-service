@@ -25,6 +25,7 @@ urlpatterns = patterns('',
     url(r'^account/', include('account.urls')),
     url(r'^system/', include('system.urls')),
     url('^api/', include(api.urls)),
+    url('^extra_dns/', include('extra_dns.urls')),
     #url(r'^acl/', include('dbaas_aclapi.urls')),
 
     (r'^ckeditor/', include('ckeditor.urls')),
