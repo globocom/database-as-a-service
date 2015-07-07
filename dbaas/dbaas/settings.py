@@ -203,6 +203,7 @@ INSTALLED_APPS = (
     'dbaas_laas',
     'maintenance',
     'region_migration',
+    'extra_dns',
 )
 
 
