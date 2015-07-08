@@ -28,12 +28,11 @@ class ExtraDnsView(BaseDetailView):
     def post(self, request, *args, **kwargs):
         dns = request.POST.get("dns", None)
         database_id = request.POST.get("database_id", None)
+        database = get_object_or_404(Database, pk=database_id)
+
+        # check permission
+        self.check_permission(request, "extradns.add_extradns", database)
         try:
-            database = get_object_or_404(Database, pk=database_id)
-
-            # check permission
-            self.check_permission(request, "extradns.add_extradns", database)
-
             extradns = ExtraDns(dns=dns, database=database)
             extradns.save()
             return self.as_json(extradns)
