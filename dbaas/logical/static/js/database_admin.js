@@ -238,6 +238,8 @@
                     if (callback) {
                         callback(extradns);
                     }
+                }).fail(function() {
+                    show_error_message($row, 'You do not have permission to perform this!');
                 });
             }
         };
@@ -328,7 +330,7 @@
                         callback(extradns);
                     }
                 }).fail(function() {
-                    show_error_message($row, 'Invalid server response');
+                    show_error_message($row, 'You do not have permission to perform this!');
                 });
             }
         };

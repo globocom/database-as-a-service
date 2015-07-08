@@ -96,6 +96,7 @@
      </tr>
  </table>
 
+<br>
   <h2>Extra Dns</h2>
     <table id="table-extradns" class="table table-striped" data-database-id="{{original.pk}}" >
         <thead>
@@ -108,18 +109,22 @@
             <script id="extradns-template" type="text/template">
                 <tr class="extradns" data-extradns-pk="{{extradns.pk}}"  >
                     <td>{{extradns.dns}}</td>
-                    <td>
-                        <a class="btn btn-danger btn-extradns-remove" href="#"><i class="icon-trash icon-white"></i></a>
-                    </td>
+                    {%if perms.extra_dns.delete_extradns %}
+                        <td>
+                            <a class="btn btn-danger btn-extradns-remove" href="#"><i class="icon-trash icon-white"></i></a>
+                        </td>
+                    {%endif%}
                 </tr>
             </script>
             {% endverbatim %}
         </tbody>
         <tfoot>
             <tr>
-                <td colspan="3">
-                    <div class="add-row"><a href="javascript:void(0)" id="add-extradns" ><i class="icon-plus-sign"></i> Add another extra dns</a></div>
-                </td>
+                {%if perms.extra_dns.add_extradns %}
+                    <td colspan="3">
+                        <div class="add-row"><a href="javascript:void(0)" id="add-extradns" ><i class="icon-plus-sign"></i> Add another extra dns</a></div>
+                    </td>
+                {%endif%}
             </tr>
         </tfoot>
     </table>
