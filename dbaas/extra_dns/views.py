@@ -31,7 +31,7 @@ class ExtraDnsView(BaseDetailView):
         database = get_object_or_404(Database, pk=database_id)
 
         # check permission
-        self.check_permission(request, "extradns.add_extradns", database)
+        self.check_permission(request, "extra_dns.add_extradns", database)
         try:
             extradns = ExtraDns(dns=dns, database=database)
             extradns.save()
@@ -45,7 +45,7 @@ class ExtraDnsView(BaseDetailView):
         extra_dns = self.get_object()
 
         # check permission
-        self.check_permission(request, "extradns.delete_extradns", extra_dns)
+        self.check_permission(request, "extra_dns.delete_extradns", extra_dns)
 
         extra_dns.delete()
         return self.as_json(extra_dns)
