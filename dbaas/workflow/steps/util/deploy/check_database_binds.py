@@ -17,11 +17,11 @@ class CheckDatabaseBinds(BaseStep):
         return "Checking database acl binds..."
 
     def do(self, workflow_dict):
-       return True
+        return True
 
     def undo(self, workflow_dict):
         try:
-            if not 'databaseinfra' in workflow_dict:
+            if 'databaseinfra' not in workflow_dict:
                 return False
 
             action = 'deny'
@@ -29,23 +29,24 @@ class CheckDatabaseBinds(BaseStep):
             database = workflow_dict['databaseinfra'].databases.get()
             for database_bind in database.acl_binds.all():
                 acl_environment, acl_vlan = database_bind.bind_address.split('/')
-                data = {"kind":"object#acl", "rules":[]}
-                default_options = {"protocol": "tcp",
-                                             "source": "",
-                                             "destination": "",
-                                             "description": "{} access for database {} in {}".\
-                                             format(database_bind.bind_address, database.name,
-                                              database.environment.name),
-                                             "action": action,
-                                             "l4-options":{ "dest-port-start":"",
-                                                                  "dest-port-op":"eq"
-                                                                  }
-                                             }
+                data = {"kind": "object#acl", "rules": []}
+                default_options = {
+                    "protocol": "tcp",
+                    "source": "",
+                    "destination": "",
+                    "description": "{} access for database {} in {}".format(database_bind.bind_address,
+                                                                            database.name,
+                                                                            database.environment.name),
+                    "action": action,
+                    "l4-options": {"dest-port-start": "",
+                                   "dest-port-op": "eq"}
+                }
 
                 LOG.info("Default options: {}".format(default_options))
                 databaseinfra = database.infra
-                infra_instances_binds = DatabaseInfraInstanceBind.objects.\
-                    filter(databaseinfra= databaseinfra,bind_address= database_bind.bind_address)
+                infra_instances_binds = DatabaseInfraInstanceBind.objects.filter(
+                    databaseinfra=databaseinfra,
+                    bind_address=database_bind.bind_address)
 
                 for infra_instance_bind in infra_instances_binds:
                     custom_options = copy.deepcopy(default_options)
@@ -54,15 +55,15 @@ class CheckDatabaseBinds(BaseStep):
                     custom_options['l4-options']['dest-port-start'] = infra_instance_bind.instance_port
                     data['rules'].append(custom_options)
 
-
-                acl_credential = get_credentials_for(environment= database.environment,
-                    credential_type=CredentialType.ACLAPI)
-                acl_client = AclClient(acl_credential.endpoint, acl_credential.user,
-                    acl_credential.password)
+                acl_credential = get_credentials_for(environment=database.environment,
+                                                     credential_type=CredentialType.ACLAPI)
+                acl_client = AclClient(acl_credential.endpoint,
+                                       acl_credential.user,
+                                       acl_credential.password)
 
                 LOG.info("Data used on payload: {}".format(data))
-                acl_client.revoke_acl_for(environment= acl_environment,
-                    vlan= acl_vlan, payload=data)
+                acl_client.revoke_acl_for(environment=acl_environment,
+                                          vlan=acl_vlan, payload=data)
 
                 infra_instances_binds.delete()
                 database_bind.delete()
