@@ -547,9 +547,9 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     @staticmethod
     def get_granurality(from_option):
         options = {"2hours": '10seconds',
-                   "1day": '30seconds',
-                   "7days": '15minutes',
-                   "30days": '30minutes',
+                   "1day": '1minute',
+                   "7days": '10minutes',
+                   "30days": '1hour',
                    }
 
         return options.get(from_option)
@@ -584,6 +584,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             database.name, graph_data[0]["graph_name"])
 
         show_filters = Configuration.get_by_name_as_int('metric_filters')
+        if engine[:5] in metricname:
+            show_filters = False
 
         return render_to_response("logical/database/metrics/metricdetail.html", locals(), context_instance=RequestContext(request))
 
