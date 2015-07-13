@@ -122,6 +122,7 @@ MYSQL_REGION_MIGRATION_1 = (
     'workflow.steps.mysql.region_migration.revoke_nfs_access.RevokeNFSAccess',
     'workflow.steps.mysql.region_migration.remove_nfs_snapshot.RemoveNfsSnapshot',
     'workflow.steps.mysql.region_migration.start_replication.StartReplication',
+    'workflow.steps.util.region_migration.acl_database_bind.BindNewInstances',
 )
 
 
@@ -140,6 +141,7 @@ MYSQL_REGION_MIGRATION_3 = (
     'workflow.steps.util.region_migration.td_agent.StartTDAgent',
     'workflow.steps.mysql.region_migration.start_mysql_statsd.StartMySQLStasD',
     'workflow.steps.util.region_migration.update_dbaas_metadata.UpdateDBaaSMetadata',
+    'workflow.steps.util.region_migration.acl_database_bind.UnbindOldInstances',
     'workflow.steps.mysql.region_migration.remove_secondary_ip.RemoveSecondaryIp',
     'workflow.steps.util.region_migration.remove_disks.RemoveDisks',
     'workflow.steps.util.region_migration.remove_vms.RemoveVms',
@@ -155,6 +157,7 @@ REDIS_REGION_MIGRATION_1 = (
     'workflow.steps.util.region_migration.mount_disks.MountDisks',
     'workflow.steps.redis.region_migration.config_files.ConfigFiles',
     'workflow.steps.redis.region_migration.start_database_and_replication.StartDatabaseReplication',
+    'workflow.steps.util.region_migration.acl_database_bind.BindNewInstances',
 )
 REDIS_REGION_MIGRATION_2 = (
     'workflow.steps.util.region_migration.check_replication.CheckReplication',
@@ -164,6 +167,7 @@ REDIS_REGION_MIGRATION_3 = (
     'workflow.steps.util.region_migration.switch_dns.SwitchDNS',
 )
 REDIS_REGION_MIGRATION_4 = (
+    'workflow.steps.util.region_migration.acl_database_bind.UnbindOldInstances',
     'workflow.steps.redis.region_migration.remove_old_instances.RemoveInstances',
     'workflow.steps.util.region_migration.update_dbaas_metadata.UpdateDBaaSMetadata',
     'workflow.steps.util.region_migration.td_agent.StartTDAgent',
@@ -180,6 +184,7 @@ MONGODB_REGION_MIGRATION_1 = (
     'workflow.steps.util.region_migration.mount_disks.MountDisks',
     'workflow.steps.mongodb.region_migration.config_files.ConfigFiles',
     'workflow.steps.mongodb.region_migration.add_instances_replica_set.AddInstancesReplicaSet',
+    'workflow.steps.util.region_migration.acl_database_bind.BindNewInstances',
 )
 MONGODB_REGION_MIGRATION_2 = (
     'workflow.steps.util.region_migration.check_replication.CheckReplication',
@@ -191,6 +196,7 @@ MONGODB_REGION_MIGRATION_3 = (
 MONGODB_REGION_MIGRATION_4 = (
     'workflow.steps.util.region_migration.update_dbaas_metadata.UpdateDBaaSMetadata',
     'workflow.steps.util.region_migration.td_agent.StartTDAgent',
+    'workflow.steps.util.region_migration.acl_database_bind.UnbindOldInstances',
     'workflow.steps.mongodb.region_migration.remove_old_instances_replica_set.RemoveInstancesReplicaSet',
     'workflow.steps.util.region_migration.remove_disks.RemoveDisks',
     'workflow.steps.util.region_migration.remove_vms.RemoveVms',
@@ -236,5 +242,4 @@ VOLUME_MIGRATION = (
     'workflow.steps.util.volume_migration.update_fstab.UpdateFstab',
     'workflow.steps.util.volume_migration.start_database.StartDatabase',
     'workflow.steps.util.volume_migration.update_dbaas_metadata.UpdateDbaaSMetadata',
-    #'workflow.steps.util.volume_migration.switch_master.SwitchMaster',
 )
