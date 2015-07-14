@@ -412,7 +412,7 @@ def get_graphite_metrics_datapoints(*args, **kwargs):
 
 
 def get_metric_datapoints_for(engine, db_name, hostname, url, metric_name=None,
-                              granurality=None, from_option=None):
+                               granurality=None, from_option=None):
     datapoints = {}
 
     if engine == "mongodb":
@@ -462,7 +462,8 @@ def get_metric_datapoints_for(engine, db_name, hostname, url, metric_name=None,
             "y_axis_title": graph["y_axis_title"],
             "stacking": graph["stacking"],
             "graph_name": graph["graph_name"],
-            "zoomtype": zoomtype
+            "zoomtype": zoomtype,
+            "normalize_series": graph['normalize_series']
         })
 
     return newgraph

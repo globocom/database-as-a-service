@@ -584,7 +584,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             database.name, graph_data[0]["graph_name"])
 
         show_filters = Configuration.get_by_name_as_int('metric_filters')
-        if engine[:5] in metricname:
+        if graph_data[0]['normalize_series'] == True:
             show_filters = False
 
         return render_to_response("logical/database/metrics/metricdetail.html", locals(), context_instance=RequestContext(request))
