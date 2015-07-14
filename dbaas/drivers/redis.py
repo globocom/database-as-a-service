@@ -197,6 +197,9 @@ class Redis(BaseDriver):
                 except:
                     pass
 
+                db_status.total_size_in_bytes = 0
+                db_status.used_size_in_bytes = databaseinfra_status.used_size_in_bytes
+
                 databaseinfra_status.databases_status[database_name] = db_status
 
         return databaseinfra_status
