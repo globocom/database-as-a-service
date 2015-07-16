@@ -28,7 +28,7 @@ def _get_function(func_name):
 
     try:
         func_list = func_list[0]
-    except IndexError, e:
+    except IndexError as e:
         LOG.info("Function not found! {}".format(e))
         return None
 
@@ -57,7 +57,7 @@ def get_infra_name(host_id):
 
     try:
         host = host[0]
-    except IndexError, e:
+    except IndexError as e:
         LOG.warn("Host id does not exists: {}. {}".format(host_id, e))
         return None
 
@@ -74,13 +74,13 @@ def get_database_name(host_id):
 
     try:
         host = host[0]
-    except IndexError, e:
+    except IndexError as e:
         LOG.warn("Host id does not exists: {}. {}".format(host_id, e))
         return None
 
     try:
         database = host.instance_set.all()[0].databaseinfra.databases.all()[0]
-    except IndexError, e:
+    except IndexError as e:
         LOG.warn(
             "There is not a database on this host: {}. {}".format(host_id, e))
         return None
@@ -96,7 +96,7 @@ def get_infra_user(host_id):
 
     try:
         host = host[0]
-    except IndexError, e:
+    except IndexError as e:
         LOG.warn("Host id does not exists: {}. {}".format(host_id, e))
         return None
 
@@ -111,7 +111,7 @@ def get_infra_password(host_id):
 
     try:
         host = host[0]
-    except IndexError, e:
+    except IndexError as e:
         LOG.warn("Host id does not exists: {}. {}".format(host_id, e))
         return None
 
@@ -125,13 +125,13 @@ def get_host_user(host_id):
 
     try:
         host = host[0]
-    except IndexError, e:
+    except IndexError as e:
         LOG.warn("Host id does not exists: {}. {}".format(host_id, e))
         return None
 
     try:
         host_attr = host.cs_host_attributes.all()[0]
-    except IndexError, e:
+    except IndexError as e:
         LOG.warn(
             "Host id does not own a cs_host_attr: {}. {}".format(host_id, e))
         return None
@@ -146,13 +146,13 @@ def get_host_password(host_id):
 
     try:
         host = host[0]
-    except IndexError, e:
+    except IndexError as e:
         LOG.warn("Host id does not exists: {}. {}".format(host_id, e))
         return None
 
     try:
         host_attr = host.cs_host_attributes.all()[0]
-    except IndexError, e:
+    except IndexError as e:
         LOG.warn(
             "Host id does not own a cs_host_attr: {}. {}".format(host_id, e))
         return None
@@ -170,7 +170,7 @@ def get_engine_type_name(host_id):
 
     try:
         host = host[0]
-    except IndexError, e:
+    except IndexError as e:
         LOG.warn("Host id does not exists: {}. {}".format(host_id, e))
         return None
 
@@ -187,8 +187,22 @@ def get_max_database_size(host_id):
 
     try:
         host = host[0]
-    except IndexError, e:
+    except IndexError as e:
         LOG.warn("Host id does not exists: {}. {}".format(host_id, e))
         return None
 
     return host.instance_set.all()[0].databaseinfra.plan.max_db_size
+
+
+def get_offering_size(host_id):
+    """Return OFFERING_SIZE"""
+    from physical.models import Host
+    host = Host.objects.filter(id=host_id,).select_related('instance',).select_related(
+        'databaseinfra',).select_related('cs_dbinfra_offering').select_related('cs_offering')
+    try:
+        host = host[0]
+    except IndexError as e:
+        LOG.warn("Host id does not exists: {}. {}".format(host_id, e))
+        return None
+
+    return host.instance_set.all()[0].databaseinfra.cs_dbinfra_offering.get().offering.memory_size_mb
