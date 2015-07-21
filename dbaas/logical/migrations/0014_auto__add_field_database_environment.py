@@ -10,15 +10,15 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         # Adding field 'Database.environment'
         db.add_column(u'logical_database', 'environment',
-                      self.gf('django.db.models.fields.related.ForeignKey')(default=1, related_name=u'databases', on_delete=models.PROTECT, to=orm['physical.Environment']),
+                      self.gf('django.db.models.fields.related.ForeignKey')(
+                          default=1, related_name=u'databases', on_delete=models.PROTECT, to=orm['physical.Environment']),
                       keep_default=False)
-        db.execute("update logical_database join physical_databaseinfra on logical_database.databaseinfra_id = physical_databaseinfra.id set    logical_database.environment_id = physical_databaseinfra.environment_id;COMMIT;")
-
+        db.execute(
+            "update logical_database join physical_databaseinfra on logical_database.databaseinfra_id = physical_databaseinfra.id set    logical_database.environment_id = physical_databaseinfra.environment_id;COMMIT;")
 
     def backwards(self, orm):
         # Deleting field 'Database.environment'
         db.delete_column(u'logical_database', 'environment_id')
-
 
     models = {
         u'account.team': {

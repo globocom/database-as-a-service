@@ -14,8 +14,10 @@ class HostMaintenanceAdmin(admin.DjangoServicesAdmin):
     actions = None
     service_class = HostMaintenanceService
     search_fields = ("maintenance__description", "hostname", "status")
-    list_display = ("maintenance", "hostname", "started_at", "finished_at", "friendly_status")
-    fields = ("maintenance", "hostname", "status", "started_at", "finished_at", "main_log", "rollback_log")
+    list_display = (
+        "maintenance", "hostname", "started_at", "finished_at", "friendly_status")
+    fields = ("maintenance", "hostname", "status", "started_at",
+              "finished_at", "main_log", "rollback_log")
     readonly_fields = fields
     form = HostMaintenanceForm
 

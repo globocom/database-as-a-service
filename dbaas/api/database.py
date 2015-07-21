@@ -42,7 +42,8 @@ class DatabaseSerializer(serializers.HyperlinkedModelSerializer):
         if request:
             creating = request.method == 'POST'
 
-            # when database is created, user can't change plan, environment and name
+            # when database is created, user can't change plan, environment and
+            # name
             self.fields['plan'].read_only = not creating
             self.fields['environment'].read_only = not creating
             self.fields['name'].read_only = not creating
@@ -54,6 +55,7 @@ class DatabaseSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class DatabaseAPI(viewsets.ModelViewSet):
+
     """
     *   ### __List databases__
         __GET__ /api/database/
@@ -81,7 +83,8 @@ class DatabaseAPI(viewsets.ModelViewSet):
     queryset = models.Database.objects.all()
 
     def create(self, request):
-        serializer = self.get_serializer(data=request.DATA, files=request.FILES)
+        serializer = self.get_serializer(
+            data=request.DATA, files=request.FILES)
 
         if serializer.is_valid():
             self.pre_save(serializer.object)
@@ -103,7 +106,8 @@ class DatabaseAPI(viewsets.ModelViewSet):
                                            user=request.user)
 
             headers = self.get_success_headers(data)
-            task_url = Site.objects.get_current().domain + '/api/task?task_id=%s' % str(result.id)
+            task_url = Site.objects.get_current().domain + \
+                '/api/task?task_id=%s' % str(result.id)
 
             return Response({"task": task_url}, status=status.HTTP_201_CREATED,
                             headers=headers)

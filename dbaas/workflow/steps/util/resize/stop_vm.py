@@ -6,7 +6,9 @@ from ...util.base import BaseStep
 
 LOG = logging.getLogger(__name__)
 
+
 class StopVM(BaseStep):
+
     def __unicode__(self):
         return "Stoping VMs..."
 

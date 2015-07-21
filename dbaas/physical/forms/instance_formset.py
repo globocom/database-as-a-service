@@ -8,6 +8,7 @@ import logging
 
 LOG = logging.getLogger(__name__)
 
+
 class InstanceModelFormSet(BaseInlineFormSet):
 
     def get_endpoint(self, cleaned_data):
@@ -30,30 +31,34 @@ class InstanceModelFormSet(BaseInlineFormSet):
             if not cleaned_data:
                 continue
 
-            #LOG.debug(cleaned_data)
+            # LOG.debug(cleaned_data)
             is_deleted = cleaned_data.get('DELETE', False)
             databaseinfra = cleaned_data.get('databaseinfra', None)
 
             if databaseinfra and databaseinfra.engine.name == "mongodb":
-                if step == 0: #clean endpoint
+                if step == 0:  # clean endpoint
                     databaseinfra.endpoint = None
                     if not is_deleted:
-                        databaseinfra.endpoint = self.get_endpoint(cleaned_data)
+                        databaseinfra.endpoint = self.get_endpoint(
+                            cleaned_data)
                     databaseinfra.endpoint_dns = None
                     if not is_deleted:
-                        databaseinfra.endpoint_dns = self.get_endpoint_dns(cleaned_data)
+                        databaseinfra.endpoint_dns = self.get_endpoint_dns(
+                            cleaned_data)
                 elif step > 0 and databaseinfra:
                     if databaseinfra.endpoint and not is_deleted:
-                        databaseinfra.endpoint = "%s,%s" % (databaseinfra.endpoint, 
-                                                                self.get_endpoint(cleaned_data))
+                        databaseinfra.endpoint = "%s,%s" % (databaseinfra.endpoint,
+                                                            self.get_endpoint(cleaned_data))
                     elif not databaseinfra.endpoint and not is_deleted:
-                        databaseinfra.endpoint = self.get_endpoint(cleaned_data)
-                    
+                        databaseinfra.endpoint = self.get_endpoint(
+                            cleaned_data)
+
                     if databaseinfra.endpoint_dns and not is_deleted:
-                        databaseinfra.endpoint_dns = "%s,%s" % (databaseinfra.endpoint_dns, 
+                        databaseinfra.endpoint_dns = "%s,%s" % (databaseinfra.endpoint_dns,
                                                                 self.get_endpoint_dns(cleaned_data))
                     elif not databaseinfra.endpoint_dns and not is_deleted:
-                        databaseinfra.endpoint_dns = self.get_endpoint_dns(cleaned_data)
+                        databaseinfra.endpoint_dns = self.get_endpoint_dns(
+                            cleaned_data)
 
             if cleaned_data and not is_deleted:
                 completed += 1
@@ -61,25 +66,28 @@ class InstanceModelFormSet(BaseInlineFormSet):
             cleaned_data['databaseinfra'] = databaseinfra
             step += 1
 
-        
         # example custom validation across forms in the formset:
-        if completed  == 0:
-            raise ValidationError({'instances': _("Specify at least one valid instance")})
+        if completed == 0:
+            raise ValidationError(
+                {'instances': _("Specify at least one valid instance")})
 
-        #if step == 1, then set endpoint to the corresponding instance
+        # if step == 1, then set endpoint to the corresponding instance
         if step == 1:
             for cleaned_data in self.cleaned_data:
 
                 if not cleaned_data:
                     continue
-                
+
                 # form has data and we aren't deleting it.
                 is_deleted = cleaned_data.get('DELETE', False)
                 databaseinfra = cleaned_data.get('databaseinfra', None)
                 if not is_deleted:
                     databaseinfra.endpoint = self.get_endpoint(cleaned_data)
-                    databaseinfra.endpoint_dns = self.get_endpoint_dns(cleaned_data)
-        else: #if has 2 or more instances and it is not mongodb, check if endpoint were set
+                    databaseinfra.endpoint_dns = self.get_endpoint_dns(
+                        cleaned_data)
+        # if has 2 or more instances and it is not mongodb, check if endpoint
+        # were set
+        else:
             for cleaned_data in self.cleaned_data:
 
                 if not cleaned_data:
@@ -88,6 +96,8 @@ class InstanceModelFormSet(BaseInlineFormSet):
                 databaseinfra = cleaned_data.get('databaseinfra', None)
                 if databaseinfra.engine.name != "mongodb":
                     if not databaseinfra.endpoint:
-                        raise ValidationError(_("You have 2 or more instances and dit not specify an endpoint"))
+                        raise ValidationError(
+                            _("You have 2 or more instances and dit not specify an endpoint"))
                     if not databaseinfra.endpoint_dns:
-                        raise ValidationError(_("You have 2 or more instances and dit not specify an endpoint dns"))
+                        raise ValidationError(
+                            _("You have 2 or more instances and dit not specify an endpoint dns"))

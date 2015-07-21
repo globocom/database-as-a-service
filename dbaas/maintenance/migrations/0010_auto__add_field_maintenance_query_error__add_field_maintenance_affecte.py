@@ -10,14 +10,15 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         # Adding field 'Maintenance.query_error'
         db.add_column(u'maintenance_maintenance', 'query_error',
-                      self.gf('django.db.models.fields.TextField')(null=True, blank=True),
+                      self.gf('django.db.models.fields.TextField')(
+                          null=True, blank=True),
                       keep_default=False)
 
         # Adding field 'Maintenance.affected_hosts'
         db.add_column(u'maintenance_maintenance', 'affected_hosts',
-                      self.gf('django.db.models.fields.IntegerField')(default=0),
+                      self.gf('django.db.models.fields.IntegerField')(
+                          default=0),
                       keep_default=False)
-
 
     def backwards(self, orm):
         # Deleting field 'Maintenance.query_error'
@@ -25,7 +26,6 @@ class Migration(SchemaMigration):
 
         # Deleting field 'Maintenance.affected_hosts'
         db.delete_column(u'maintenance_maintenance', 'affected_hosts')
-
 
     models = {
         u'maintenance.hostmaintenance': {

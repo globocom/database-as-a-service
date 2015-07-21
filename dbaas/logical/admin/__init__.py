@@ -7,4 +7,3 @@ from .database import DatabaseAdmin
 
 admin.site.register(models.Project, ProjectAdmin)
 admin.site.register(models.Database, DatabaseAdmin)
-

@@ -10,23 +10,28 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         # Adding model 'Team'
         db.create_table(u'account_team', (
-            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('created_at', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
-            ('updated_at', self.gf('django.db.models.fields.DateTimeField')(auto_now=True, blank=True)),
-            ('name', self.gf('django.db.models.fields.CharField')(unique=True, max_length=80)),
-            ('role', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['auth.Group'])),
+            (u'id', self.gf('django.db.models.fields.AutoField')
+             (primary_key=True)),
+            ('created_at', self.gf('django.db.models.fields.DateTimeField')
+             (auto_now_add=True, blank=True)),
+            ('updated_at', self.gf('django.db.models.fields.DateTimeField')
+             (auto_now=True, blank=True)),
+            ('name', self.gf('django.db.models.fields.CharField')
+             (unique=True, max_length=80)),
+            ('role', self.gf('django.db.models.fields.related.ForeignKey')
+             (to=orm['auth.Group'])),
         ))
         db.send_create_signal(u'account', ['Team'])
 
         # Adding M2M table for field users on 'Team'
         m2m_table_name = db.shorten_name(u'account_team_users')
         db.create_table(m2m_table_name, (
-            ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True)),
+            ('id', models.AutoField(
+                verbose_name='ID', primary_key=True, auto_created=True)),
             ('team', models.ForeignKey(orm[u'account.team'], null=False)),
             ('user', models.ForeignKey(orm[u'auth.user'], null=False))
         ))
         db.create_unique(m2m_table_name, ['team_id', 'user_id'])
-
 
     def backwards(self, orm):
         # Deleting model 'Team'
@@ -34,7 +39,6 @@ class Migration(SchemaMigration):
 
         # Removing M2M table for field users on 'Team'
         db.delete_table(db.shorten_name(u'account_team_users'))
-
 
     models = {
         u'account.team': {

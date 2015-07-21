@@ -13,19 +13,19 @@ class Migration(SchemaMigration):
 
         # Adding field 'Database.team'
         db.add_column(u'logical_database', 'team',
-                      self.gf('django.db.models.fields.related.ForeignKey')(blank=True, related_name=u'databases', null=True, to=orm['account.Team']),
+                      self.gf('django.db.models.fields.related.ForeignKey')(
+                          blank=True, related_name=u'databases', null=True, to=orm['account.Team']),
                       keep_default=False)
-
 
     def backwards(self, orm):
         # Adding field 'Database.group'
         db.add_column(u'logical_database', 'group',
-                      self.gf('django.db.models.fields.related.ForeignKey')(related_name=u'databases', null=True, to=orm['auth.Group'], blank=True),
+                      self.gf('django.db.models.fields.related.ForeignKey')(
+                          related_name=u'databases', null=True, to=orm['auth.Group'], blank=True),
                       keep_default=False)
 
         # Deleting field 'Database.team'
         db.delete_column(u'logical_database', 'team_id')
-
 
     models = {
         u'account.team': {

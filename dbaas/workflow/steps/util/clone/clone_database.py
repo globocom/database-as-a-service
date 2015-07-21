@@ -12,6 +12,7 @@ LOG = logging.getLogger(__name__)
 
 
 class CloneDatabase(BaseStep):
+
     def __unicode__(self):
         return "Replicating database data..."
 
@@ -19,14 +20,16 @@ class CloneDatabase(BaseStep):
         try:
 
             if 'databaseinfra' not in workflow_dict \
-                or 'clone' not in workflow_dict :
+                    or 'clone' not in workflow_dict:
                 return False
 
-            args = get_clone_args(workflow_dict['clone'], workflow_dict['database'])
-            script_name = factory_for(workflow_dict['clone'].databaseinfra).clone()
+            args = get_clone_args(
+                workflow_dict['clone'], workflow_dict['database'])
+            script_name = factory_for(
+                workflow_dict['clone'].databaseinfra).clone()
 
-            return_code, output = call_script(script_name, working_dir=settings.SCRIPTS_PATH
-                , args=args, split_lines=False,)
+            return_code, output = call_script(
+                script_name, working_dir=settings.SCRIPTS_PATH, args=args, split_lines=False,)
 
             LOG.info("Script Output: {}".format(output))
             LOG.info("Return code: {}".format(return_code))

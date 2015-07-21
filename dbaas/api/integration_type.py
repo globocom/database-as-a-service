@@ -12,10 +12,9 @@ class CredentialTypeSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class CredentialTypeAPI(viewsets.ModelViewSet):
+
     """
     IntegrationTypeApi
     """
     serializer_class = CredentialTypeSerializer
     queryset = CredentialType.objects.all()
-
-

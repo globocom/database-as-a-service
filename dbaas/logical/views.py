@@ -20,7 +20,8 @@ class CredentialView(BaseDetailView):
 
     def as_json(self, obj):
         if isinstance(obj, Credential):
-            obj = {"credential": {"user": obj.user, "password": obj.password, "pk": obj.pk}}
+            obj = {
+                "credential": {"user": obj.user, "password": obj.password, "pk": obj.pk}}
         output = json.dumps(obj, indent=4)
         return HttpResponse(output, content_type="application/json")
 
@@ -37,9 +38,9 @@ class CredentialView(BaseDetailView):
             credential = Credential.create_new_credential(username, database)
             return self.as_json(credential)
         except CredentialAlreadyExists, e:
-            return self.as_json({ "error": "credential already exists" })
+            return self.as_json({"error": "credential already exists"})
         except ValidationError, e:
-            return self.as_json({ "error": ", ".join(e.messages) })
+            return self.as_json({"error": ", ".join(e.messages)})
 
     @method_decorator(csrf_exempt)
     def put(self, request, *args, **kwargs):

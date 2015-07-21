@@ -48,7 +48,7 @@ class DatabaseTestCase(TestCase):
         self.assertTrue(database.pk)
 
         self.assertRaises(IntegrityError, Database(name="bleble",
-                          databaseinfra=self.databaseinfra).save)
+                                                   databaseinfra=self.databaseinfra).save)
 
     def test_slugify_database_name_with_spaces(self):
 
@@ -98,7 +98,8 @@ class DatabaseTestCase(TestCase):
                                            databaseinfra=self.databaseinfra,
                                            environment=self.environment)
         self.assertIsNotNone(database.database_status)
-        self.assertEqual([mock.call(), mock.call(force_refresh=True)], get_info.call_args_list)
+        self.assertEqual(
+            [mock.call(), mock.call(force_refresh=True)], get_info.call_args_list)
 
     '''
 

@@ -9,6 +9,7 @@ LOG = logging.getLogger(__name__)
 
 
 class CredentialForm(models.ModelForm):
+
     def __init__(self, *args, **kwargs):
         super(CredentialForm, self).__init__(*args, **kwargs)
 

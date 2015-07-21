@@ -9,6 +9,7 @@ LOG = logging.getLogger(__name__)
 
 
 class CreateDbMonitor(BaseStep):
+
     def __unicode__(self):
         return "Registering dbmonitor monitoring..."
 
@@ -20,7 +21,8 @@ class CreateDbMonitor(BaseStep):
 
             LOG.info("Creating dbmonitor monitoring...")
 
-            DBMonitorProvider().create_dbmonitor_monitoring(workflow_dict['databaseinfra'])
+            DBMonitorProvider().create_dbmonitor_monitoring(
+                workflow_dict['databaseinfra'])
 
             return True
         except Exception:
@@ -38,7 +40,8 @@ class CreateDbMonitor(BaseStep):
 
             LOG.info("Destroying dbmonitor monitoring...")
 
-            DBMonitorProvider().remove_dbmonitor_monitoring(workflow_dict['databaseinfra'])
+            DBMonitorProvider().remove_dbmonitor_monitoring(
+                workflow_dict['databaseinfra'])
 
             return True
         except Exception:

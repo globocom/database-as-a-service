@@ -9,6 +9,7 @@ LOG = logging.getLogger(__name__)
 
 
 class CreateFlipper(BaseStep):
+
     def __unicode__(self):
         return "Setting up Flipper..."
 

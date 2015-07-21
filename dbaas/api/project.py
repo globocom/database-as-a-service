@@ -12,10 +12,9 @@ class ProjectSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class ProjectAPI(viewsets.ModelViewSet):
+
     """
     Project API
     """
     serializer_class = ProjectSerializer
     queryset = models.Project.objects.all()
-
-

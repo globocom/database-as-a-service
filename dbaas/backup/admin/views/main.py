@@ -14,7 +14,7 @@ from django.utils.http import urlencode
 from django.contrib.admin import FieldListFilter
 from django.contrib.admin.options import IncorrectLookupParameters
 from django.contrib.admin.util import (quote, get_fields_from_path,
-    lookup_needs_distinct, prepare_lookup_value)
+                                       lookup_needs_distinct, prepare_lookup_value)
 
 # Changelist settings
 ALL_VAR = 'all'
@@ -34,9 +34,10 @@ EMPTY_CHANGELIST_VALUE = ugettext_lazy('(None)')
 
 
 class ChangeList(object):
+
     def __init__(self, request, model, list_display, list_display_links,
-            list_filter, date_hierarchy, search_fields, list_select_related,
-            list_per_page, list_max_show_all, list_editable, model_admin):
+                 list_filter, date_hierarchy, search_fields, list_select_related,
+                 list_per_page, list_max_show_all, list_editable, model_admin):
         self.model = model
         self.opts = model._meta
         self.lookup_opts = self.opts
@@ -81,7 +82,7 @@ class ChangeList(object):
         self.pk_attname = self.lookup_opts.pk.attname
 
     def get_filters(self, request):
-        lookup_params = self.params.copy() # a dictionary of the query string
+        lookup_params = self.params.copy()  # a dictionary of the query string
         use_distinct = False
 
         # Remove all the parameters that are globally and systematically
@@ -107,11 +108,12 @@ class ChangeList(object):
                 if callable(list_filter):
                     # This is simply a custom list filter class.
                     spec = list_filter(request, lookup_params,
-                        self.model, self.model_admin)
+                                       self.model, self.model_admin)
                 else:
                     field_path = None
                     if isinstance(list_filter, (tuple, list)):
-                        # This is a custom FieldListFilter class for a given field.
+                        # This is a custom FieldListFilter class for a given
+                        # field.
                         field, field_list_filter_class = list_filter
                     else:
                         # This is simply a field name, so use the default
@@ -120,9 +122,10 @@ class ChangeList(object):
                         field, field_list_filter_class = list_filter, FieldListFilter.create
                     if not isinstance(field, models.Field):
                         field_path = field
-                        field = get_fields_from_path(self.model, field_path)[-1]
+                        field = get_fields_from_path(
+                            self.model, field_path)[-1]
                     spec = field_list_filter_class(field, request, lookup_params,
-                        self.model, self.model_admin, field_path=field_path)
+                                                   self.model, self.model_admin, field_path=field_path)
                     # Check if we need to use distinct()
                     use_distinct = (use_distinct or
                                     lookup_needs_distinct(self.lookup_opts,
@@ -146,8 +149,10 @@ class ChangeList(object):
             raise IncorrectLookupParameters(e)
 
     def get_query_string(self, new_params=None, remove=None):
-        if new_params is None: new_params = {}
-        if remove is None: remove = []
+        if new_params is None:
+            new_params = {}
+        if remove is None:
+            remove = []
         p = self.params.copy()
         for r in remove:
             for k in list(p):
@@ -162,7 +167,8 @@ class ChangeList(object):
         return '?%s' % urlencode(sorted(p.items()))
 
     def get_results(self, request):
-        paginator = self.model_admin.get_paginator(request, self.query_set, self.list_per_page)
+        paginator = self.model_admin.get_paginator(
+            request, self.query_set, self.list_per_page)
         # Get the number of objects, with admin filters applied.
         result_count = paginator.count
 
@@ -183,7 +189,7 @@ class ChangeList(object):
             result_list = self.query_set._clone()
         else:
             try:
-                result_list = paginator.page(self.page_num+1).object_list
+                result_list = paginator.page(self.page_num + 1).object_list
             except InvalidPage:
                 raise IncorrectLookupParameters
 
@@ -246,10 +252,10 @@ class ChangeList(object):
                     field_name = self.list_display[int(idx)]
                     order_field = self.get_ordering_field(field_name)
                     if not order_field:
-                        continue # No 'admin_order_field', skip it
+                        continue  # No 'admin_order_field', skip it
                     ordering.append(pfx + order_field)
                 except (IndexError, ValueError):
-                    continue # Invalid ordering specified, skip it.
+                    continue  # Invalid ordering specified, skip it.
 
         # Add the given query's ordering fields, if any.
         ordering.extend(queryset.query.order_by)
@@ -294,7 +300,7 @@ class ChangeList(object):
                 try:
                     idx = int(idx)
                 except ValueError:
-                    continue # skip it
+                    continue  # skip it
                 ordering_fields[idx] = 'desc' if pfx == '-' else 'asc'
         return ordering_fields
 

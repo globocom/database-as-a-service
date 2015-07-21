@@ -10,14 +10,13 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         # Adding field 'DatabaseInfra.endpoint'
         db.add_column(u'physical_databaseinfra', 'endpoint',
-                      self.gf('django.db.models.fields.CharField')(max_length=255, null=True, blank=True),
+                      self.gf('django.db.models.fields.CharField')(
+                          max_length=255, null=True, blank=True),
                       keep_default=False)
-
 
     def backwards(self, orm):
         # Deleting field 'DatabaseInfra.endpoint'
         db.delete_column(u'physical_databaseinfra', 'endpoint')
-
 
     models = {
         u'physical.databaseinfra': {

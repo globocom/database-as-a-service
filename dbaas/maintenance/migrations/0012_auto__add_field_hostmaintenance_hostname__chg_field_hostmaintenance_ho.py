@@ -10,20 +10,21 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         # Adding field 'HostMaintenance.hostname'
         db.add_column(u'maintenance_hostmaintenance', 'hostname',
-                      self.gf('django.db.models.fields.CharField')(default=u'', max_length=255),
+                      self.gf('django.db.models.fields.CharField')(
+                          default=u'', max_length=255),
                       keep_default=False)
 
-
         # Changing field 'HostMaintenance.host'
-        db.alter_column(u'maintenance_hostmaintenance', 'host_id', self.gf('django.db.models.fields.related.ForeignKey')(null=True, on_delete=models.SET_NULL, to=orm['physical.Host']))
+        db.alter_column(u'maintenance_hostmaintenance', 'host_id', self.gf(
+            'django.db.models.fields.related.ForeignKey')(null=True, on_delete=models.SET_NULL, to=orm['physical.Host']))
 
     def backwards(self, orm):
         # Deleting field 'HostMaintenance.hostname'
         db.delete_column(u'maintenance_hostmaintenance', 'hostname')
 
-
         # Changing field 'HostMaintenance.host'
-        db.alter_column(u'maintenance_hostmaintenance', 'host_id', self.gf('django.db.models.fields.related.ForeignKey')(default=None, to=orm['physical.Host']))
+        db.alter_column(u'maintenance_hostmaintenance', 'host_id', self.gf(
+            'django.db.models.fields.related.ForeignKey')(default=None, to=orm['physical.Host']))
 
     models = {
         u'maintenance.hostmaintenance': {

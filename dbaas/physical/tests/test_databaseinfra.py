@@ -21,68 +21,92 @@ class DatabaseInfraTestCase(TestCase):
     def test_best_for_without_plan_and_environment_options_returns_None(self):
         plan = factory.PlanFactory()
         environment = plan.environments.all()[0]
-        self.assertIsNone(DatabaseInfra.best_for(plan=plan, environment=environment, name="test"))
+        self.assertIsNone(
+            DatabaseInfra.best_for(plan=plan, environment=environment, name="test"))
 
     def test_best_for_with_only_one_datainfra_per_plan_and_environment(self):
         plan = factory.PlanFactory()
         environment = plan.environments.all()[0]
-        datainfra = factory.DatabaseInfraFactory(plan=plan, environment=environment)
-        instance = factory.InstanceFactory(address="127.0.0.1", port=27017, databaseinfra=datainfra)
-        self.assertEqual(datainfra, DatabaseInfra.best_for(plan=plan, environment=environment, name="test"))
+        datainfra = factory.DatabaseInfraFactory(
+            plan=plan, environment=environment)
+        instance = factory.InstanceFactory(
+            address="127.0.0.1", port=27017, databaseinfra=datainfra)
+        self.assertEqual(datainfra, DatabaseInfra.best_for(
+            plan=plan, environment=environment, name="test"))
 
     def test_best_for_with_only_two_datainfra_per_plan_and_environment_returns_rounding_robin_them(self):
         plan = factory.PlanFactory()
         environment = plan.environments.all()[0]
-        datainfra1 = factory.DatabaseInfraFactory(plan=plan, environment=environment, capacity=10)
-        instance1 = factory.InstanceFactory(address="127.0.0.1", port=27017, databaseinfra=datainfra1)
-        datainfra2 = factory.DatabaseInfraFactory(plan=plan, environment=environment, capacity=10)
-        instance2 = factory.InstanceFactory(address="127.0.0.2", port=27017, databaseinfra=datainfra2)
+        datainfra1 = factory.DatabaseInfraFactory(
+            plan=plan, environment=environment, capacity=10)
+        instance1 = factory.InstanceFactory(
+            address="127.0.0.1", port=27017, databaseinfra=datainfra1)
+        datainfra2 = factory.DatabaseInfraFactory(
+            plan=plan, environment=environment, capacity=10)
+        instance2 = factory.InstanceFactory(
+            address="127.0.0.2", port=27017, databaseinfra=datainfra2)
         for i in range(10):
-            should_choose = (datainfra1, datainfra2)[i%2]
-            choosed = DatabaseInfra.best_for(plan=plan, environment=environment, name="test")
+            should_choose = (datainfra1, datainfra2)[i % 2]
+            choosed = DatabaseInfra.best_for(
+                plan=plan, environment=environment, name="test")
             self.assertEqual(should_choose, choosed)
             database = factory_logical.DatabaseFactory(databaseinfra=choosed)
             self.assertEqual(choosed, database.databaseinfra)
 
-
     def test_check_instances_status_is_alive(self):
         plan = factory.PlanFactory()
         environment = plan.environments.all()[0]
-        datainfra1 = factory.DatabaseInfraFactory(plan=plan, environment=environment, capacity=10)
-        instance1 = factory.InstanceFactory(address="127.0.0.1", port=27017, databaseinfra=datainfra1, status=1)
-        instance2 = factory.InstanceFactory(address="127.0.0.2", port=27017, databaseinfra=datainfra1, status=1)
+        datainfra1 = factory.DatabaseInfraFactory(
+            plan=plan, environment=environment, capacity=10)
+        instance1 = factory.InstanceFactory(
+            address="127.0.0.1", port=27017, databaseinfra=datainfra1, status=1)
+        instance2 = factory.InstanceFactory(
+            address="127.0.0.2", port=27017, databaseinfra=datainfra1, status=1)
 
-        self.assertEquals(datainfra1.check_instances_status(), DatabaseInfra.ALIVE)
+        self.assertEquals(
+            datainfra1.check_instances_status(), DatabaseInfra.ALIVE)
 
     def test_check_instances_status_is_dead(self):
         plan = factory.PlanFactory()
         environment = plan.environments.all()[0]
-        datainfra1 = factory.DatabaseInfraFactory(plan=plan, environment=environment, capacity=10)
-        instance1 = factory.InstanceFactory(address="127.0.0.1", port=27017, databaseinfra=datainfra1, status=0)
-        instance2 = factory.InstanceFactory(address="127.0.0.2", port=27017, databaseinfra=datainfra1, status=0)
+        datainfra1 = factory.DatabaseInfraFactory(
+            plan=plan, environment=environment, capacity=10)
+        instance1 = factory.InstanceFactory(
+            address="127.0.0.1", port=27017, databaseinfra=datainfra1, status=0)
+        instance2 = factory.InstanceFactory(
+            address="127.0.0.2", port=27017, databaseinfra=datainfra1, status=0)
 
-        self.assertEquals(datainfra1.check_instances_status(), DatabaseInfra.DEAD)
+        self.assertEquals(
+            datainfra1.check_instances_status(), DatabaseInfra.DEAD)
 
     def test_check_instances_status_is_alert(self):
         plan = factory.PlanFactory()
         environment = plan.environments.all()[0]
-        datainfra1 = factory.DatabaseInfraFactory(plan=plan, environment=environment, capacity=10)
-        instance1 = factory.InstanceFactory(address="127.0.0.1", port=27017, databaseinfra=datainfra1, status=1)
-        instance2 = factory.InstanceFactory(address="127.0.0.2", port=27017, databaseinfra=datainfra1, status=0)
+        datainfra1 = factory.DatabaseInfraFactory(
+            plan=plan, environment=environment, capacity=10)
+        instance1 = factory.InstanceFactory(
+            address="127.0.0.1", port=27017, databaseinfra=datainfra1, status=1)
+        instance2 = factory.InstanceFactory(
+            address="127.0.0.2", port=27017, databaseinfra=datainfra1, status=0)
 
-        self.assertEquals(datainfra1.check_instances_status(), DatabaseInfra.ALERT)
+        self.assertEquals(
+            datainfra1.check_instances_status(), DatabaseInfra.ALERT)
 
     def test_best_for_with_only_over_capacity_datainfra_returns_None(self):
         """tests database infra capacity"""
         NUMBER_OF_DATABASES_TO_TEST = 4
         plan = factory.PlanFactory()
         environment = plan.environments.all()[0]
-        datainfra = factory.DatabaseInfraFactory(plan=plan, environment=environment, capacity=NUMBER_OF_DATABASES_TO_TEST)
-        instance = factory.InstanceFactory(address="127.0.0.1", port=27017, databaseinfra=datainfra)
+        datainfra = factory.DatabaseInfraFactory(
+            plan=plan, environment=environment, capacity=NUMBER_OF_DATABASES_TO_TEST)
+        instance = factory.InstanceFactory(
+            address="127.0.0.1", port=27017, databaseinfra=datainfra)
         for i in range(NUMBER_OF_DATABASES_TO_TEST):
-            self.assertEqual(datainfra, DatabaseInfra.best_for(plan=plan, environment=environment, name="test"))
+            self.assertEqual(datainfra, DatabaseInfra.best_for(
+                plan=plan, environment=environment, name="test"))
             factory_logical.DatabaseFactory(databaseinfra=datainfra)
-        self.assertIsNone(DatabaseInfra.best_for(plan=plan, environment=environment, name="test"))
+        self.assertIsNone(
+            DatabaseInfra.best_for(plan=plan, environment=environment, name="test"))
 
     @mock.patch.object(FakeDriver, 'info')
     def test_get_info_use_caching(self, info):
@@ -95,7 +119,6 @@ class DatabaseInfraTestCase(TestCase):
         self.assertIsNotNone(datainfra.get_info())
         info.assert_called_once_with()
 
-
     @mock.patch.object(FakeDriver, 'info')
     def test_get_info_accept_force_refresh(self, info):
         info.return_value = 'hahaha'
@@ -106,4 +129,3 @@ class DatabaseInfraTestCase(TestCase):
         datainfra = DatabaseInfra.objects.get(pk=datainfra.pk)
         self.assertIsNotNone(datainfra.get_info(force_refresh=True))
         self.assertEqual(2, info.call_count)
-

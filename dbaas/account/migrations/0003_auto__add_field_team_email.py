@@ -10,14 +10,13 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         # Adding field 'Team.email'
         db.add_column(u'account_team', 'email',
-                      self.gf('django.db.models.fields.EmailField')(max_length=75, null=True, blank=True),
+                      self.gf('django.db.models.fields.EmailField')(
+                          max_length=75, null=True, blank=True),
                       keep_default=False)
-
 
     def backwards(self, orm):
         # Deleting field 'Team.email'
         db.delete_column(u'account_team', 'email')
-
 
     models = {
         u'account.team': {

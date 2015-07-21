@@ -25,11 +25,13 @@ class ConfigFiles(BaseStep):
 
     def do(self, workflow_dict):
         try:
-            region_migration_dir = Configuration.get_by_name('region_migration_dir')
+            region_migration_dir = Configuration.get_by_name(
+                'region_migration_dir')
             if not region_migration_dir:
                 region_migration_dir = '/tmp'
 
-            workflow_dict['region_migration_dir_infra_name'] = "{}/{}".format(region_migration_dir, workflow_dict['databaseinfra'].name)
+            workflow_dict['region_migration_dir_infra_name'] = "{}/{}".format(
+                region_migration_dir, workflow_dict['databaseinfra'].name)
 
             for index, source_instance in enumerate(workflow_dict['source_instances']):
 
@@ -37,7 +39,8 @@ class ConfigFiles(BaseStep):
                 source_cs_host_attr = CS_HostAttr.objects.get(host=source_host)
 
                 hostname = source_host.hostname.split('.')[0]
-                localpath = "{}/{}".format(workflow_dict['region_migration_dir_infra_name'], hostname)
+                localpath = "{}/{}".format(
+                    workflow_dict['region_migration_dir_infra_name'], hostname)
                 os.makedirs(localpath)
 
                 LOG.info('Get source host files to {}'.format(localpath))
@@ -52,14 +55,16 @@ class ConfigFiles(BaseStep):
                 if not scp_get_file(server=source_host.address,
                                     username=source_cs_host_attr.vm_user,
                                     password=source_cs_host_attr.vm_password,
-                                    localpath="{}/mysql_statsd.conf".format(localpath),
+                                    localpath="{}/mysql_statsd.conf".format(
+                                        localpath),
                                     remotepath="/etc/mysql_statsd/mysql_statsd.conf"):
                     raise Exception("FTP Error")
 
                 if not scp_get_file(server=source_host.address,
                                     username=source_cs_host_attr.vm_user,
                                     password=source_cs_host_attr.vm_password,
-                                    localpath="{}/td-agent.conf".format(localpath),
+                                    localpath="{}/td-agent.conf".format(
+                                        localpath),
                                     remotepath="/etc/td-agent/td-agent.conf"):
                     raise Exception("FTP Error")
 
@@ -77,14 +82,16 @@ class ConfigFiles(BaseStep):
                 if not scp_put_file(server=target_host.address,
                                     username=target_cs_host_attr.vm_user,
                                     password=target_cs_host_attr.vm_password,
-                                    localpath="{}/mysql_statsd.conf".format(localpath),
+                                    localpath="{}/mysql_statsd.conf".format(
+                                        localpath),
                                     remotepath="/etc/mysql_statsd/mysql_statsd.conf"):
                     raise Exception("FTP Error")
 
                 if not scp_put_file(server=target_host.address,
                                     username=target_cs_host_attr.vm_user,
                                     password=target_cs_host_attr.vm_password,
-                                    localpath="{}/td-agent.conf".format(localpath),
+                                    localpath="{}/td-agent.conf".format(
+                                        localpath),
                                     remotepath="/etc/td-agent/td-agent.conf"):
                     raise Exception("FTP Error")
 
@@ -138,7 +145,8 @@ class ConfigFiles(BaseStep):
 
             try:
                 if 'region_migration_dir_infra_name' in workflow_dict:
-                    shutil.rmtree(workflow_dict['region_migration_dir_infra_name'])
+                    shutil.rmtree(
+                        workflow_dict['region_migration_dir_infra_name'])
             except Exception:
                 pass
 

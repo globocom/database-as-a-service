@@ -21,7 +21,7 @@ LOG = logging.getLogger(__name__)
 
 class DatabaseRegionMigrationAdmin(admin.DjangoServicesAdmin):
     model = DatabaseRegionMigration
-    list_display = ('database', 'steps_information','database_engine',
+    list_display = ('database', 'steps_information', 'database_engine',
                     'status', 'description', 'schedule_next_step_html',
                     'user_friendly_warning', 'schedule_rollback_html')
 
@@ -122,7 +122,8 @@ class DatabaseRegionMigrationAdmin(admin.DjangoServicesAdmin):
 
     def databaseregionmigration_view(self, request, databaseregionmigration_id):
         form = DatabaseRegionMigrationDetailForm
-        database_region_migration = DatabaseRegionMigration.objects.get(id=databaseregionmigration_id)
+        database_region_migration = DatabaseRegionMigration.objects.get(
+            id=databaseregionmigration_id)
 
         if request.method == 'POST':
             form = DatabaseRegionMigrationDetailForm(request.POST)
@@ -149,24 +150,24 @@ class DatabaseRegionMigrationAdmin(admin.DjangoServicesAdmin):
                 task_history.save()
 
                 is_rollback = request.GET.get('rollback')
-                scheduled_for.replace(tzinfo=tz.tzlocal()).astimezone(tz.tzutc())
+                scheduled_for.replace(
+                    tzinfo=tz.tzlocal()).astimezone(tz.tzutc())
 
                 if is_rollback:
                     LOG.info("Rollback!")
                     database_region_migration_detail.step -= 1
                     database_region_migration_detail.save()
                     task = execute_database_region_migration_undo.apply_async(args=[database_region_migration_detail.id,
-                                                                             task_history,
-                                                                             request.user],
-                                                                       eta=scheduled_for)
+                                                                                    task_history,
+                                                                                    request.user],
+                                                                              eta=scheduled_for)
                 else:
                     task = execute_database_region_migration.apply_async(args=[database_region_migration_detail.id,
-                                                                  task_history, request.user],
-                                                                  eta=scheduled_for)
+                                                                               task_history, request.user],
+                                                                         eta=scheduled_for)
 
                 database_region_migration_detail.celery_task_id = task.task_id
                 database_region_migration_detail.save()
-
 
                 url = reverse('admin:notification_taskhistory_changelist')
                 return HttpResponseRedirect(url + "?user=%s" % request.user.username)

@@ -10,6 +10,7 @@ LOG = logging.getLogger(__name__)
 
 
 class CreateNfs(BaseStep):
+
     def __unicode__(self):
         return "Requesting NFS volume..."
 

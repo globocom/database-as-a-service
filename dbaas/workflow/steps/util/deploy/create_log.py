@@ -10,6 +10,7 @@ LOG = logging.getLogger(__name__)
 
 
 class CreateLog(BaseStep):
+
     def __unicode__(self):
         return "Requesting Log..."
 
@@ -31,4 +32,3 @@ class CreateLog(BaseStep):
     def undo(self, workflow_dict):
         LOG.info("Nothing to do here...")
         return True
-

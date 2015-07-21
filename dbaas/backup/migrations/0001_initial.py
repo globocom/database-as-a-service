@@ -10,28 +10,37 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         # Adding model 'Snapshot'
         db.create_table(u'backup_snapshot', (
-            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('created_at', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
-            ('updated_at', self.gf('django.db.models.fields.DateTimeField')(auto_now=True, blank=True)),
+            (u'id', self.gf('django.db.models.fields.AutoField')
+             (primary_key=True)),
+            ('created_at', self.gf('django.db.models.fields.DateTimeField')
+             (auto_now_add=True, blank=True)),
+            ('updated_at', self.gf('django.db.models.fields.DateTimeField')
+             (auto_now=True, blank=True)),
             ('start_at', self.gf('django.db.models.fields.DateTimeField')()),
-            ('end_at', self.gf('django.db.models.fields.DateTimeField')(null=True, blank=True)),
-            ('purge_at', self.gf('django.db.models.fields.DateTimeField')(null=True, blank=True)),
+            ('end_at', self.gf('django.db.models.fields.DateTimeField')
+             (null=True, blank=True)),
+            ('purge_at', self.gf('django.db.models.fields.DateTimeField')
+             (null=True, blank=True)),
             ('type', self.gf('django.db.models.fields.IntegerField')()),
             ('status', self.gf('django.db.models.fields.IntegerField')()),
-            ('instance', self.gf('django.db.models.fields.related.ForeignKey')(blank=True, related_name='backup_instance', null=True, on_delete=models.SET_NULL, to=orm['physical.Instance'])),
-            ('database_name', self.gf('django.db.models.fields.CharField')(max_length=100, null=True, blank=True)),
-            ('size', self.gf('django.db.models.fields.BigIntegerField')(null=True, blank=True)),
-            ('snapshopt_id', self.gf('django.db.models.fields.CharField')(max_length=100, null=True, blank=True)),
-            ('snapshot_name', self.gf('django.db.models.fields.CharField')(max_length=200, null=True, blank=True)),
-            ('export_path', self.gf('django.db.models.fields.CharField')(max_length=200, null=True, blank=True)),
+            ('instance', self.gf('django.db.models.fields.related.ForeignKey')(
+                blank=True, related_name='backup_instance', null=True, on_delete=models.SET_NULL, to=orm['physical.Instance'])),
+            ('database_name', self.gf('django.db.models.fields.CharField')
+             (max_length=100, null=True, blank=True)),
+            ('size', self.gf('django.db.models.fields.BigIntegerField')
+             (null=True, blank=True)),
+            ('snapshopt_id', self.gf('django.db.models.fields.CharField')
+             (max_length=100, null=True, blank=True)),
+            ('snapshot_name', self.gf('django.db.models.fields.CharField')
+             (max_length=200, null=True, blank=True)),
+            ('export_path', self.gf('django.db.models.fields.CharField')
+             (max_length=200, null=True, blank=True)),
         ))
         db.send_create_signal(u'backup', ['Snapshot'])
-
 
     def backwards(self, orm):
         # Deleting model 'Snapshot'
         db.delete_table(u'backup_snapshot')
-
 
     models = {
         u'backup.snapshot': {

@@ -14,18 +14,18 @@ class Migration(SchemaMigration):
         # Deleting field 'Maintenance.host_query'
         db.delete_column(u'maintenance_maintenance', 'host_query')
 
-
     def backwards(self, orm):
         # Adding field 'Maintenance.query_error'
         db.add_column(u'maintenance_maintenance', 'query_error',
-                      self.gf('django.db.models.fields.TextField')(null=True, blank=True),
+                      self.gf('django.db.models.fields.TextField')(
+                          null=True, blank=True),
                       keep_default=False)
 
         # Adding field 'Maintenance.host_query'
         db.add_column(u'maintenance_maintenance', 'host_query',
-                      self.gf('django.db.models.fields.TextField')(default=None),
+                      self.gf('django.db.models.fields.TextField')(
+                          default=None),
                       keep_default=False)
-
 
     models = {
         u'maintenance.hostmaintenance': {

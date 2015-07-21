@@ -10,14 +10,13 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         # Adding field 'Plan.provider'
         db.add_column(u'physical_plan', 'provider',
-                      self.gf('django.db.models.fields.IntegerField')(default=0),
+                      self.gf('django.db.models.fields.IntegerField')(
+                          default=0),
                       keep_default=False)
-
 
     def backwards(self, orm):
         # Deleting field 'Plan.provider'
         db.delete_column(u'physical_plan', 'provider')
-
 
     models = {
         u'physical.databaseinfra': {

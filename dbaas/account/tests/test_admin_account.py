@@ -12,6 +12,7 @@ LOG = logging.getLogger(__name__)
 
 
 class AdminCreateDatabaseTestCase(TestCase):
+
     """ HTTP test cases """
     USERNAME = "test-ui-database"
     PASSWORD = "123456"
@@ -19,11 +20,12 @@ class AdminCreateDatabaseTestCase(TestCase):
     def setUp(self):
 
         self.role = Role.objects.get_or_create(name="fake_role")[0]
-        self.team = Team.objects.get_or_create(name="fake_team", role=self.role)[0]
-        self.superuser = User.objects.create_superuser(self.USERNAME, email="%s@admin.com" % self.USERNAME, password=self.PASSWORD)
+        self.team = Team.objects.get_or_create(
+            name="fake_team", role=self.role)[0]
+        self.superuser = User.objects.create_superuser(
+            self.USERNAME, email="%s@admin.com" % self.USERNAME, password=self.PASSWORD)
         self.team.users.add(self.superuser)
         self.client.login(username=self.USERNAME, password=self.PASSWORD)
-
 
     def tearDown(self):
         self.client.logout()
@@ -34,8 +36,9 @@ class AdminCreateDatabaseTestCase(TestCase):
         """
         url = reverse('admin:account_accountuser_changelist')
         response = self.client.get(url)
-        
-        self.assertContains(response, "Select user to change",  status_code=200)
+
+        self.assertContains(
+            response, "Select user to change",  status_code=200)
 
     def test_user_login_invalid(self):
         """
@@ -44,14 +47,16 @@ class AdminCreateDatabaseTestCase(TestCase):
         client = Client()
         data = {'username': 'john', 'password': 'smith'}
         response = client.post('/admin/login/', data)
-        self.assertContains(response, "Please enter the correct username and password",  status_code=200)
+        self.assertContains(
+            response, "Please enter the correct username and password",  status_code=200)
 
     def test_can_load_audit_page(self):
         """Test audit page load"""
         url = reverse('admin:simple_audit_audit_changelist')
         response = self.client.get(url)
 
-        self.assertContains(response, "Select Audit to change",  status_code=200)
+        self.assertContains(
+            response, "Select Audit to change",  status_code=200)
 
     def test_can_load_user_add_page(self):
         """Test user add page load"""
@@ -62,7 +67,8 @@ class AdminCreateDatabaseTestCase(TestCase):
 
     def test_can_load_user_edit_page(self):
         """Test user add page load"""
-        url = reverse('admin:account_accountuser_change', args=(self.superuser.id,))
+        url = reverse(
+            'admin:account_accountuser_change', args=(self.superuser.id,))
         response = self.client.get(url)
 
         self.assertContains(response, "Change user",  status_code=200)

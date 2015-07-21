@@ -10,14 +10,14 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         # Adding field 'DatabaseRegionMigrationDetail.is_migration_up'
         db.add_column(u'region_migration_databaseregionmigrationdetail', 'is_migration_up',
-                      self.gf('django.db.models.fields.BooleanField')(default=True),
+                      self.gf('django.db.models.fields.BooleanField')(
+                          default=True),
                       keep_default=False)
-
 
     def backwards(self, orm):
         # Deleting field 'DatabaseRegionMigrationDetail.is_migration_up'
-        db.delete_column(u'region_migration_databaseregionmigrationdetail', 'is_migration_up')
-
+        db.delete_column(
+            u'region_migration_databaseregionmigrationdetail', 'is_migration_up')
 
     models = {
         u'account.team': {

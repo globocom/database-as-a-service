@@ -10,14 +10,13 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         # Adding field 'TaskHistory.arguments'
         db.add_column(u'notification_taskhistory', 'arguments',
-                      self.gf('django.db.models.fields.TextField')(null=True, blank=True),
+                      self.gf('django.db.models.fields.TextField')(
+                          null=True, blank=True),
                       keep_default=False)
-
 
     def backwards(self, orm):
         # Deleting field 'TaskHistory.arguments'
         db.delete_column(u'notification_taskhistory', 'arguments')
-
 
     models = {
         u'notification.taskhistory': {

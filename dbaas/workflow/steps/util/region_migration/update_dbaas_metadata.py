@@ -24,7 +24,8 @@ class UpdateDBaaSMetadata(BaseStep):
             database.environment = workflow_dict['target_environment']
             database.save()
 
-            dbinfraoffering = DatabaseInfraOffering.objects.get(databaseinfra=databaseinfra)
+            dbinfraoffering = DatabaseInfraOffering.objects.get(
+                databaseinfra=databaseinfra)
             dbinfraoffering.offering = workflow_dict['target_offering']
             dbinfraoffering.save()
 
@@ -49,7 +50,8 @@ class UpdateDBaaSMetadata(BaseStep):
             database.environment = workflow_dict['source_environment']
             database.save()
 
-            dbinfraoffering = DatabaseInfraOffering.objects.get(databaseinfra=databaseinfra)
+            dbinfraoffering = DatabaseInfraOffering.objects.get(
+                databaseinfra=databaseinfra)
             dbinfraoffering.offering = workflow_dict['source_offering']
             dbinfraoffering.save()
 

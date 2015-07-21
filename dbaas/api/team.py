@@ -6,6 +6,7 @@ import logging
 
 LOG = logging.getLogger(__name__)
 
+
 class TeamSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
@@ -14,6 +15,7 @@ class TeamSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class TeamAPI(viewsets.ReadOnlyModelViewSet):
+
     """
     Environment API
     """
@@ -33,8 +35,8 @@ class TeamAPI(viewsets.ReadOnlyModelViewSet):
                 user = models.AccountUser.objects.get(username=username)
                 queryset = queryset.filter(users__username=username)
         except:
-            LOG.warning("username %s not found. Returning an empty list of teams." % username)
+            LOG.warning(
+                "username %s not found. Returning an empty list of teams." % username)
             queryset = models.Team.objects.none()
-    
-        return queryset
 
+        return queryset

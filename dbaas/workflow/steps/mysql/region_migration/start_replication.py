@@ -18,10 +18,13 @@ class StartReplication(BaseStep):
         try:
             master_source_instance = workflow_dict['source_instances'][0]
 
-            master_target_instance = workflow_dict['source_instances'][0].future_instance
-            slave_target_instance = workflow_dict['source_instances'][1].future_instance
+            master_target_instance = workflow_dict[
+                'source_instances'][0].future_instance
+            slave_target_instance = workflow_dict[
+                'source_instances'][1].future_instance
 
-            master_log_file, master_log_pos = get_replication_info(master_target_instance)
+            master_log_file, master_log_pos = get_replication_info(
+                master_target_instance)
 
             change_master_to(instance=master_target_instance,
                              master_host=master_source_instance.address,

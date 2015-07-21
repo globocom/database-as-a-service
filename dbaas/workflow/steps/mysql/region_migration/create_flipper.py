@@ -15,11 +15,15 @@ class CreateFlipper(BaseStep):
     def do(self, workflow_dict):
         try:
             databaseinfra = workflow_dict['databaseinfra']
-            target_host_one = workflow_dict['source_hosts'][0].future_host.address
-            target_host_two = workflow_dict['source_hosts'][1].future_host.address
+            target_host_one = workflow_dict[
+                'source_hosts'][0].future_host.address
+            target_host_two = workflow_dict[
+                'source_hosts'][1].future_host.address
 
-            target_secondary_ip_one = workflow_dict['source_secondary_ips'][0].equivalent_dbinfraattr.ip
-            target_secondary_ip_two = workflow_dict['source_secondary_ips'][1].equivalent_dbinfraattr.ip
+            target_secondary_ip_one = workflow_dict[
+                'source_secondary_ips'][0].equivalent_dbinfraattr.ip
+            target_secondary_ip_two = workflow_dict[
+                'source_secondary_ips'][1].equivalent_dbinfraattr.ip
 
             flipper = FlipperProvider()
             LOG.info("Creating Flipper...")

@@ -20,18 +20,23 @@ LOG = logging.getLogger(__name__)
 
 
 class AccountUser(User):
+
     class Meta:
         proxy = True
         verbose_name_plural = _("users")
         verbose_name = _("user")
 
+
 class Role(Group):
+
     class Meta:
         proxy = True
 
 
 class TeamUsersManager(models.Manager):
+
     """manager for returning """
+
     def get_query_set(self):
         return User.objects.filter(id__in=[user.id for user in Team.users_without_team()])
 
@@ -41,8 +46,8 @@ class Team(BaseModel):
     name = models.CharField(_('name'), max_length=80, unique=True)
     email = models.EmailField(null=False, blank=False)
     database_alocation_limit = models.PositiveSmallIntegerField(_('DB Alocation Limit'),
-                                        default=2,
-                                        help_text="This limits the number of databases that a team can create. 0 for unlimited resources.")
+                                                                default=2,
+                                                                help_text="This limits the number of databases that a team can create. 0 for unlimited resources.")
     role = models.ForeignKey(Role)
     users = models.ManyToManyField(User)
     objects = models.Manager()  # The default manager.
@@ -76,7 +81,8 @@ class Team(BaseModel):
         else:
             teams = user.team_set.all()
             role_pks = [team.role.pk for team in teams]
-            permissions = Permission.objects.select_related().filter(group__pk__in=role_pks)
+            permissions = Permission.objects.select_related().filter(
+                group__pk__in=role_pks)
 
             return set(["%s.%s" % (p.content_type.app_label, p.codename) for p in permissions])
 
@@ -98,7 +104,8 @@ class Team(BaseModel):
         from logical.models import Database
 
         infras = DatabaseInfra.objects.filter(environment=environment)
-        dbs = Database.objects.filter(team=self, databaseinfra__in=[infra.id for infra in infras])
+        dbs = Database.objects.filter(
+            team=self, databaseinfra__in=[infra.id for infra in infras])
 
         return dbs
 
@@ -106,8 +113,10 @@ class Team(BaseModel):
         try:
             return len(self.databases_in_use_for(environment))
         except Exception, e:
-            LOG.warning("could not count databases in use for team %s, reason: %s" % (self, e))
+            LOG.warning(
+                "could not count databases in use for team %s, reason: %s" % (self, e))
             return 0
+
 
 def sync_ldap_groups_with_user(user=None):
     """
@@ -115,8 +124,10 @@ def sync_ldap_groups_with_user(user=None):
     """
     LOG.debug("User %s groups before: %s" % (user, user.groups.all()))
     ldap_groups = find_ldap_groups_from_user(username=user.username)
-    groups = Group.objects.filter(name__in=ldap_groups).exclude(user__username=user.username).order_by("name")
-    LOG.info("LDAP's team created in the system and not set to user %s: %s" % (user, groups))
+    groups = Group.objects.filter(name__in=ldap_groups).exclude(
+        user__username=user.username).order_by("name")
+    LOG.info(
+        "LDAP's team created in the system and not set to user %s: %s" % (user, groups))
     group = None
     if groups:
         group = groups[0]
@@ -130,10 +141,10 @@ def sync_ldap_groups_with_user(user=None):
 simple_audit.register(Team, AccountUser, Role)
 
 
-#####################################################################################################
+##########################################################################
 # SIGNALS
-#####################################################################################################
-#all role name should start with role_
+##########################################################################
+# all role name should start with role_
 def user_post_save_wrapper(kwargs={}):
     user = kwargs.get('instance')
     created = kwargs.get('created')
@@ -142,7 +153,7 @@ def user_post_save_wrapper(kwargs={}):
         user.is_active = True
         user.is_staff = True
         user.save()
-        #notify new user create
+        # notify new user create
         notify_new_user_creation(user)
 
 
@@ -153,7 +164,7 @@ def role_pre_save(sender, **kwargs):
         role.name = "role_" + role.name
 
 
-#all users should be is_staff True
+# all users should be is_staff True
 @receiver(pre_save, sender=AccountUser)
 def user_pre_save(sender, **kwargs):
     user = kwargs.get('instance')
@@ -163,12 +174,13 @@ def user_pre_save(sender, **kwargs):
 @receiver(post_save, sender=AccountUser)
 def account_user_post_save(sender, **kwargs):
     user_post_save_wrapper(kwargs)
-    #sync_ldap_groups_with_user(user=user)
+    # sync_ldap_groups_with_user(user=user)
 
 
 @receiver(post_save, sender=User)
 def user_post_save(sender, **kwargs):
     user_post_save_wrapper(kwargs)
+
 
 def user_m2m_changed(sender, **kwargs):
     team = kwargs.get('instance')
@@ -177,7 +189,7 @@ def user_m2m_changed(sender, **kwargs):
         from util.laas import register_team_laas
         if Configuration.get_by_name_as_int('laas_integration') == 1:
             register_team_laas(team)
-        
+
 m2m_changed.connect(user_m2m_changed, sender=Team.users.through)
 
 # def user_m2m_changed(sender, **kwargs):

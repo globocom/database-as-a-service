@@ -17,20 +17,25 @@ class DatabaseInfraAttrInline(django_admin.TabularInline):
     max_num = 2
     fields = ('ip', 'dns', 'is_write',)
     template = 'admin/physical/shared/inline_form.html'
+
     def has_delete_permission(self, request, obj=None):
         return False
+
 
 class DatabaseInfraOfferingInline(django_admin.TabularInline):
     model = DatabaseInfraOffering
     max_num = 1
     readonly_fields = ('offering', )
     template = 'admin/physical/shared/inline_form.html'
+
     def has_delete_permission(self, request, obj=None):
         return False
 
+
 class InstanceAdmin(django_admin.TabularInline):
     model = Instance
-    fields = ('hostname', 'dns', 'address', 'port', 'is_active', 'is_arbiter', 'instance_type')
+    fields = ('hostname', 'dns', 'address', 'port',
+              'is_active', 'is_arbiter', 'instance_type')
     # max_num = 1
     # can_delete = False
     extra = 1
@@ -41,7 +46,8 @@ class InstanceAdmin(django_admin.TabularInline):
 class DatabaseInfraAdmin(admin.DjangoServicesAdmin):
     service_class = DatabaseInfraService
     search_fields = ("name", "user", "instances__address",)
-    list_display = ("name", "user", "environment", "show_instances", "capacity_bar")
+    list_display = (
+        "name", "user", "environment", "show_instances", "capacity_bar")
     list_filter = ("engine", "environment")
     save_on_top = True
 
@@ -63,7 +69,8 @@ class DatabaseInfraAdmin(admin.DjangoServicesAdmin):
         html_instances = []
         for instance in datainfra.instances.all():
             if not instance.is_active:
-                html_instances.append("<span style='color: #CCC'>%s</span>" % unicode(instance))
+                html_instances.append(
+                    "<span style='color: #CCC'>%s</span>" % unicode(instance))
             else:
                 if instance.is_arbiter:
                     html_instances.append("%s (arbiter)" % unicode(instance))
@@ -76,7 +83,8 @@ class DatabaseInfraAdmin(admin.DjangoServicesAdmin):
 
    # def add_view(self, request, form_url='', extra_context=None):
    #     self.form = DatabaseInfraForm
-   #     return super(DatabaseInfraAdmin, self).add_view(request, form_url, extra_context=extra_context)
+   # return super(DatabaseInfraAdmin, self).add_view(request, form_url,
+   # extra_context=extra_context)
 
     def change_view(self, request, object_id, form_url='', extra_context=None):
         self.form = DatabaseInfraForm

@@ -10,7 +10,7 @@ def custom_exception_handler(exc):
 
     if type(exc) is ValidationError:
         response = Response(status=status.HTTP_400_BAD_REQUEST)
-        response.data = { 'error': exc.messages }
+        response.data = {'error': exc.messages}
     else:
         # Call REST framework's default exception handler first,
         # to get the standard error response.
@@ -30,7 +30,9 @@ class ObjectPermissions(permissions.DjangoObjectPermissions):
         'DELETE': ['%(app_label)s.delete_%(model_name)s'],
     }
 
+
 class ObjectPermissionsFilter(object):
+
     """
     A filter backend that limits results to those where the requesting user
     has read object level permissions.
@@ -47,5 +49,5 @@ class ObjectPermissionsFilter(object):
         permission = self.perm_format % kwargs
         filtered_queryset = model_cls.objects.filter(pk__in=[
             obj.pk for obj in queryset.all() if user.has_perm(permission, obj=obj)
-            ])
+        ])
         return filtered_queryset

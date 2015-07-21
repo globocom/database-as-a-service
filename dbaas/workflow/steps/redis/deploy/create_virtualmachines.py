@@ -50,7 +50,8 @@ class CreateVirtualMachine(BaseStep):
                 if len(bundles) == 1:
                     bundle = bundles[0]
                 else:
-                    bundle = LastUsedBundle.get_next_bundle(plan=workflow_dict['plan'], bundle=bundles)
+                    bundle = LastUsedBundle.get_next_bundle(
+                        plan=workflow_dict['plan'], bundle=bundles)
 
                 if index == 2:
                     offering = cs_plan_attrs.get_weaker_offering()
@@ -58,26 +59,31 @@ class CreateVirtualMachine(BaseStep):
                     offering = cs_plan_attrs.get_stronger_offering()
 
                 try:
-                    DatabaseInfraOffering.objects.get(databaseinfra=workflow_dict['databaseinfra'])
+                    DatabaseInfraOffering.objects.get(
+                        databaseinfra=workflow_dict['databaseinfra'])
                 except ObjectDoesNotExist:
                     LOG.info("Creating databaseInfra Offering...")
                     dbinfra_offering = DatabaseInfraOffering()
                     dbinfra_offering.offering = offering
-                    dbinfra_offering.databaseinfra = workflow_dict['databaseinfra']
+                    dbinfra_offering.databaseinfra = workflow_dict[
+                        'databaseinfra']
                     dbinfra_offering.save()
 
-                LOG.debug("Deploying new vm on cs with bundle %s and offering %s" % (bundle,offering))
+                LOG.debug(
+                    "Deploying new vm on cs with bundle %s and offering %s" % (bundle, offering))
 
                 vm = cs_provider.deploy_virtual_machine(
                     offering=offering.serviceofferingid,
                     bundle=bundle,
                     project_id=cs_credentials.project,
                     vmname=vm_name,
-                    affinity_group_id=cs_credentials.get_parameter_by_name('affinity_group_id'),
+                    affinity_group_id=cs_credentials.get_parameter_by_name(
+                        'affinity_group_id'),
                 )
 
                 if not vm:
-                    raise Exception("CloudStack could not create the virtualmachine")
+                    raise Exception(
+                        "CloudStack could not create the virtualmachine")
 
                 LOG.debug("New virtualmachine: %s" % vm)
 
@@ -117,7 +123,8 @@ class CreateVirtualMachine(BaseStep):
 
                     LOG.info("Updating databaseinfra endpoint...")
                     databaseinfra = workflow_dict['databaseinfra']
-                    databaseinfra.endpoint = instance.address + ":%i" % (instance.port)
+                    databaseinfra.endpoint = instance.address + \
+                        ":%i" % (instance.port)
                     databaseinfra.save()
                     workflow_dict['databaseinfra'] = databaseinfra
 

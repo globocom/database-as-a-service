@@ -21,7 +21,8 @@ class DatabaseAPITestCase(DbaaSAPITestCase, BasicTestsMixin):
     def setUp(self):
         super(DatabaseAPITestCase, self).setUp()
         self.datainfra = physical_factory.DatabaseInfraFactory()
-        self.instance = physical_factory.InstanceFactory(address="127.0.0.1", port=27017, databaseinfra=self.datainfra)
+        self.instance = physical_factory.InstanceFactory(
+            address="127.0.0.1", port=27017, databaseinfra=self.datainfra)
         self.team = TeamFactory()
         self.project = ProjectFactory()
         self.environment = self.datainfra.environment
@@ -40,7 +41,8 @@ class DatabaseAPITestCase(DbaaSAPITestCase, BasicTestsMixin):
         response = self.client.post(url, payload, format='json')
 
         LOG.debug("Response: ".format(response))
-        LOG.debug("Call args {}, Call count {}".format(mock_delay.call_args, mock_delay.call_count))
+        LOG.debug("Call args {}, Call count {}".format(
+            mock_delay.call_args, mock_delay.call_count))
 
         self.assertEquals(mock_delay.call_count, 1)
         call_args = mock_delay.call_args[1]
@@ -72,4 +74,5 @@ class DatabaseAPITestCase(DbaaSAPITestCase, BasicTestsMixin):
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
         # assert if object gone
-        self.assertRaises(ObjectDoesNotExist, Database.objects.filter(is_in_quarantine=False, pk=obj.pk).get)
+        self.assertRaises(ObjectDoesNotExist, Database.objects.filter(
+            is_in_quarantine=False, pk=obj.pk).get)

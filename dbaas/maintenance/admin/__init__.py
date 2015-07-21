@@ -6,4 +6,3 @@ from .host_maintenance import HostMaintenanceAdmin
 
 admin.site.register(models.Maintenance, MaintenanceAdmin)
 admin.site.register(models.HostMaintenance, HostMaintenanceAdmin)
-

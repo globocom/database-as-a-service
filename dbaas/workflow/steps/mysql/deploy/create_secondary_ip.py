@@ -13,6 +13,7 @@ LOG = logging.getLogger(__name__)
 
 
 class CreateSecondaryIp(BaseStep):
+
     def __unicode__(self):
         return "Allocating secondary ips..."
 
@@ -41,7 +42,8 @@ class CreateSecondaryIp(BaseStep):
 
             workflow_dict['databaseinfraattr'] = []
 
-            networkapi_equipment_id = cs_provider.register_networkapi_equipment(equipment_name=workflow_dict['names']['infra'])
+            networkapi_equipment_id = cs_provider.register_networkapi_equipment(
+                equipment_name=workflow_dict['names']['infra'])
             if not networkapi_equipment_id:
                 raise Exception("Could not register networkapi equipment")
                 return False
@@ -73,7 +75,8 @@ class CreateSecondaryIp(BaseStep):
                     LOG.info("Updating databaseinfra endpoint...")
 
                     databaseinfra = workflow_dict['databaseinfra']
-                    databaseinfra.endpoint = databaseinfraattr.ip + ":%i" % 3306
+                    databaseinfra.endpoint = databaseinfraattr.ip + \
+                        ":%i" % 3306
                     databaseinfra.save()
 
                     workflow_dict['databaseinfra'] = databaseinfra
@@ -85,7 +88,8 @@ class CreateSecondaryIp(BaseStep):
                     ip_desc = 'Read IP'
 
                 networkapi_ip_id = cs_provider.register_networkapi_ip(equipment_id=networkapi_equipment_id,
-                                                                      ip=reserved_ip['secondary_ip'],
+                                                                      ip=reserved_ip[
+                                                                          'secondary_ip'],
                                                                       ip_desc=ip_desc)
 
                 databaseinfraattr.cs_ip_id = reserved_ip['cs_ip_id']
@@ -110,7 +114,8 @@ class CreateSecondaryIp(BaseStep):
         LOG.info("Running undo...")
         try:
             if 'databaseinfra' not in workflow_dict and 'hosts' not in workflow_dict:
-                LOG.info("We could not find a databaseinfra inside the workflow_dict")
+                LOG.info(
+                    "We could not find a databaseinfra inside the workflow_dict")
                 return False
 
             if len(workflow_dict['hosts']) == 1:
@@ -130,14 +135,16 @@ class CreateSecondaryIp(BaseStep):
             cs_provider = CloudStackProvider(credentials=cs_credentials,
                                              networkapi_credentials=networkapi_credentials)
 
-            networkapi_equipment_id = workflow_dict.get('networkapi_equipment_id')
+            networkapi_equipment_id = workflow_dict.get(
+                'networkapi_equipment_id')
 
             for infra_attr in databaseinfraattr:
 
                 networkapi_equipment_id = infra_attr.networkapi_equipment_id
                 networkapi_ip_id = infra_attr.networkapi_ip_id
                 if networkapi_ip_id:
-                    LOG.info("Removing network api IP for %s" % networkapi_ip_id)
+                    LOG.info("Removing network api IP for %s" %
+                             networkapi_ip_id)
                     if not cs_provider.remove_networkapi_ip(equipment_id=networkapi_equipment_id,
                                                             ip_id=networkapi_ip_id):
                         return False
@@ -152,7 +159,8 @@ class CreateSecondaryIp(BaseStep):
                 LOG.info("Databaseinfraattr deleted!")
 
             if networkapi_equipment_id:
-                cs_provider.remove_networkapi_equipment(equipment_id=networkapi_equipment_id)
+                cs_provider.remove_networkapi_equipment(
+                    equipment_id=networkapi_equipment_id)
 
             return True
 

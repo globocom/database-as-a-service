@@ -10,14 +10,13 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         # Adding field 'TaskHistory.db_id'
         db.add_column(u'notification_taskhistory', 'db_id',
-                      self.gf('django.db.models.fields.related.ForeignKey')(blank=True, related_name=u'database', null=True, to=orm['logical.Database']),
+                      self.gf('django.db.models.fields.related.ForeignKey')(
+                          blank=True, related_name=u'database', null=True, to=orm['logical.Database']),
                       keep_default=False)
-
 
     def backwards(self, orm):
         # Deleting field 'TaskHistory.db_id'
         db.delete_column(u'notification_taskhistory', 'db_id_id')
-
 
     models = {
         u'account.team': {

@@ -80,13 +80,15 @@ class UserAdmin(UserAdmin):
 
     fieldsets_basic = (
         (None, {'fields': ('username', 'password')}),
-        (_('Personal info'), {'fields': ('first_name', 'last_name', 'email', 'is_active', 'is_staff')}),
+        (_('Personal info'), {
+         'fields': ('first_name', 'last_name', 'email', 'is_active', 'is_staff')}),
         (_('Important dates'), {'fields': ('last_login', 'date_joined')}),
     )
 
     fieldsets_advanced = (
         (None, {'fields': ('username', 'password')}),
-        (_('Personal info'), {'fields': ('first_name', 'last_name', 'email', 'is_active', 'is_staff', 'is_superuser')}),
+        (_('Personal info'), {'fields': (
+            'first_name', 'last_name', 'email', 'is_active', 'is_staff', 'is_superuser')}),
         (_('Important dates'), {'fields': ('last_login', 'date_joined')}),
     )
 
@@ -109,7 +111,7 @@ class UserAdmin(UserAdmin):
             return self.add_fieldsets
         else:
             if request.user.is_superuser:
-                #return super(UserAdmin, self).get_fieldsets(request, obj=obj)
+                # return super(UserAdmin, self).get_fieldsets(request, obj=obj)
                 return self.fieldsets_advanced
             else:
                 return self.fieldsets_basic
@@ -133,10 +135,12 @@ class UserAdmin(UserAdmin):
         instance = form.instance
 
         teams_before_save = [team.id for team in instance.team_set.all()]
-        LOG.debug("teams for user %s before save: %s" % (instance, teams_before_save))
+        LOG.debug("teams for user %s before save: %s" %
+                  (instance, teams_before_save))
         super(UserAdmin, self).save_related(request, form, formsets, change)
         teams_after_save = [team.id for team in instance.team_set.all()]
-        LOG.debug("teams for user %s after save: %s" % (instance, teams_after_save))
+        LOG.debug("teams for user %s after save: %s" %
+                  (instance, teams_after_save))
 
         if cmp(teams_before_save, teams_after_save):
             email_notifications.notify_team_change_for(user=instance)

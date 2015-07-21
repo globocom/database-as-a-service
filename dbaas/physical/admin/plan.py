@@ -19,13 +19,16 @@ class PlanAttrInline(admin.StackedInline):
     model = PlanAttr
     max_num = 1
     template = 'admin/physical/shared/inline_form.html'
+
     def has_delete_permission(self, request, obj=None):
         return False
+
 
 class PlanAttrNfsaasInline(admin.StackedInline):
     model = PlanAttrNfsaas
     max_num = 1
     template = 'admin/physical/shared/inline_form.html'
+
     def has_delete_permission(self, request, obj=None):
         return False
 
@@ -34,8 +37,10 @@ class PlanAttrDNSAPIInline(admin.StackedInline):
     model = PlanAttrDNSAPI
     max_num = 1
     template = 'admin/physical/shared/inline_form.html'
+
     def has_delete_permission(self, request, obj=None):
         return False
+
 
 class PlanAdmin(services_admin.DjangoServicesAdmin):
     form = forms.PlanForm
@@ -43,7 +48,8 @@ class PlanAdmin(services_admin.DjangoServicesAdmin):
     save_on_top = True
     search_fields = ["name"]
     list_filter = ("is_active", )
-    list_display = ("name", "engine_type","environment", "is_active", "is_default", "provider", "is_ha")
+    list_display = ("name", "engine_type", "environment",
+                    "is_active", "is_default", "provider", "is_ha")
     filter_horizontal = ("environments",)
     inlines = [
         PlanAttributeInline,
@@ -51,4 +57,3 @@ class PlanAdmin(services_admin.DjangoServicesAdmin):
         PlanAttrNfsaasInline,
         PlanAttrDNSAPIInline,
     ]
-

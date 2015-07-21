@@ -11,18 +11,21 @@ from util import get_credentials_for
 
 LOG = logging.getLogger(__name__)
 
+
 def start_vm(workflow_dict):
     try:
         environment = workflow_dict['environment']
-        cs_credentials = get_credentials_for(environment = environment, credential_type = CredentialType.CLOUDSTACK)
-        cs_provider = CloudStackProvider(credentials = cs_credentials)
+        cs_credentials = get_credentials_for(
+            environment=environment, credential_type=CredentialType.CLOUDSTACK)
+        cs_provider = CloudStackProvider(credentials=cs_credentials)
         instances_detail = workflow_dict['instances_detail']
 
         for instance_detail in instances_detail:
             instance = instance_detail['instance']
             host = instance.hostname
             host_csattr = HostAttr.objects.get(host=host)
-            started = cs_provider.start_virtual_machine(vm_id = host_csattr.vm_id)
+            started = cs_provider.start_virtual_machine(
+                vm_id=host_csattr.vm_id)
             if not started:
                 raise Exception, "Could not start host {}".format(host)
 
@@ -30,7 +33,8 @@ def start_vm(workflow_dict):
             instance = instance_detail['instance']
             host = instance.hostname
             host_csattr = HostAttr.objects.get(host=host)
-            host_ready = check_ssh(server=host.address, username=host_csattr.vm_user, password=host_csattr.vm_password, wait=5, interval=10)
+            host_ready = check_ssh(
+                server=host.address, username=host_csattr.vm_user, password=host_csattr.vm_password, wait=5, interval=10)
             if not host_ready:
                 error = "Host %s is not ready..." % host
                 LOG.warn(error)
@@ -49,15 +53,16 @@ def start_vm(workflow_dict):
 def stop_vm(workflow_dict):
     try:
         environment = workflow_dict['environment']
-        cs_credentials = get_credentials_for(environment = environment, credential_type = CredentialType.CLOUDSTACK)
-        cs_provider = CloudStackProvider(credentials = cs_credentials)
+        cs_credentials = get_credentials_for(
+            environment=environment, credential_type=CredentialType.CLOUDSTACK)
+        cs_provider = CloudStackProvider(credentials=cs_credentials)
         instances_detail = workflow_dict['instances_detail']
 
         for instance_detail in instances_detail:
             instance = instance_detail['instance']
             host = instance.hostname
             host_csattr = HostAttr.objects.get(host=host)
-            stoped = cs_provider.stop_virtual_machine(vm_id = host_csattr.vm_id)
+            stoped = cs_provider.stop_virtual_machine(vm_id=host_csattr.vm_id)
             if not stoped:
                 raise Exception, "Could not stop host {}".format(host)
 

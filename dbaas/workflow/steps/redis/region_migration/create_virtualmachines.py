@@ -35,7 +35,8 @@ class CreateVirtualMachine(BaseStep):
 
             target_offering = workflow_dict['target_offering']
 
-            cs_plan_attrs = PlanAttr.objects.get(plan=workflow_dict['target_plan'])
+            cs_plan_attrs = PlanAttr.objects.get(
+                plan=workflow_dict['target_plan'])
             bundles = list(cs_plan_attrs.bundle.all())
 
             workflow_dict['target_hosts'] = []
@@ -43,16 +44,19 @@ class CreateVirtualMachine(BaseStep):
 
             for index, source_host in enumerate(workflow_dict['source_hosts']):
 
-                sentinel_source_instance = Instance.objects.filter(hostname=source_host, instance_type=Instance.REDIS_SENTINEL)[0]
+                sentinel_source_instance = Instance.objects.filter(
+                    hostname=source_host, instance_type=Instance.REDIS_SENTINEL)[0]
                 if index < 2:
-                    redis_source_instance = Instance.objects.filter(hostname=source_host, instance_type=Instance.REDIS)[0]
+                    redis_source_instance = Instance.objects.filter(
+                        hostname=source_host, instance_type=Instance.REDIS)[0]
 
                 vm_name = source_host.hostname.split('.')[0]
 
                 if len(bundles) == 1:
                     bundle = bundles[0]
                 else:
-                    bundle = LastUsedBundle.get_next_bundle(plan=workflow_dict['target_plan'], bundle=bundles)
+                    bundle = LastUsedBundle.get_next_bundle(
+                        plan=workflow_dict['target_plan'], bundle=bundles)
 
                 if index == 2:
                     offering = cs_plan_attrs.get_weaker_offering()
@@ -63,11 +67,13 @@ class CreateVirtualMachine(BaseStep):
                                                         bundle=bundle,
                                                         project_id=cs_credentials.project,
                                                         vmname=vm_name,
-                                                        affinity_group_id=cs_credentials.get_parameter_by_name('affinity_group_id'),
+                                                        affinity_group_id=cs_credentials.get_parameter_by_name(
+                                                            'affinity_group_id'),
                                                         )
 
                 if not vm:
-                    raise Exception("CloudStack could not create the virtualmachine")
+                    raise Exception(
+                        "CloudStack could not create the virtualmachine")
 
                 host = Host()
                 host.address = vm['virtualmachine'][0]['nic'][0]['ipaddress']
@@ -98,7 +104,8 @@ class CreateVirtualMachine(BaseStep):
                     redis_instance.instance_type = redis_source_instance.instance_type
                     redis_instance.hostname = host
 
-                    redis_instance.databaseinfra = workflow_dict['databaseinfra']
+                    redis_instance.databaseinfra = workflow_dict[
+                        'databaseinfra']
                     redis_instance.save()
                     LOG.info("Instance created!")
 
@@ -117,7 +124,8 @@ class CreateVirtualMachine(BaseStep):
                 sentinel_instance.instance_type = sentinel_source_instance.instance_type
                 sentinel_instance.hostname = host
 
-                sentinel_instance.databaseinfra = workflow_dict['databaseinfra']
+                sentinel_instance.databaseinfra = workflow_dict[
+                    'databaseinfra']
                 sentinel_instance.save()
                 LOG.info("Instance created!")
 

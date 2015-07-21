@@ -10,14 +10,13 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         # Adding field 'Snapshot.error'
         db.add_column(u'backup_snapshot', 'error',
-                      self.gf('django.db.models.fields.CharField')(max_length=400, null=True, blank=True),
+                      self.gf('django.db.models.fields.CharField')(
+                          max_length=400, null=True, blank=True),
                       keep_default=False)
-
 
     def backwards(self, orm):
         # Deleting field 'Snapshot.error'
         db.delete_column(u'backup_snapshot', 'error')
-
 
     models = {
         u'backup.snapshot': {

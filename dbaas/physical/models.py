@@ -15,9 +15,12 @@ from django.utils.functional import cached_property
 
 LOG = logging.getLogger(__name__)
 
+
 class Environment(BaseModel):
-    name = models.CharField(verbose_name=_("Environment"), max_length=100, unique=True)
-    equivalent_environment = models.ForeignKey("Environment", null=True, blank=True, on_delete=models.SET_NULL)
+    name = models.CharField(
+        verbose_name=_("Environment"), max_length=100, unique=True)
+    equivalent_environment = models.ForeignKey(
+        "Environment", null=True, blank=True, on_delete=models.SET_NULL)
 
     def __unicode__(self):
         return '%s' % (self.name)
@@ -25,7 +28,8 @@ class Environment(BaseModel):
 
 class EngineType(BaseModel):
 
-    name = models.CharField(verbose_name=_("Engine name"), max_length=100, unique=True)
+    name = models.CharField(
+        verbose_name=_("Engine name"), max_length=100, unique=True)
 
     class Meta:
         permissions = (
@@ -42,8 +46,10 @@ class EngineType(BaseModel):
 
 class Engine(BaseModel):
 
-    engine_type = models.ForeignKey(EngineType, verbose_name=_("Engine types"), related_name="engines", on_delete=models.PROTECT)
-    version = models.CharField(verbose_name=_("Engine version"), max_length=100,)
+    engine_type = models.ForeignKey(EngineType, verbose_name=_(
+        "Engine types"), related_name="engines", on_delete=models.PROTECT)
+    version = models.CharField(
+        verbose_name=_("Engine version"), max_length=100,)
     path = models.CharField(verbose_name=_("Engine path"),
                             max_length=255,
                             blank=True,
@@ -85,21 +91,25 @@ class Plan(BaseModel):
         (CLOUDSTACK, 'Cloud Stack'),
     )
 
-    name = models.CharField(verbose_name=_("Plan name"), max_length=100, unique=True)
+    name = models.CharField(
+        verbose_name=_("Plan name"), max_length=100, unique=True)
     description = models.TextField(null=True, blank=True)
-    is_active = models.BooleanField(verbose_name=_("Is plan active"), default=True)
+    is_active = models.BooleanField(
+        verbose_name=_("Is plan active"), default=True)
     is_default = models.BooleanField(verbose_name=_("Is plan default"),
                                      default=False,
                                      help_text=_("Check this option if this the default plan. There can be only one..."))
-    is_ha  = models.BooleanField(verbose_name=_("Is plan HA"), default=False)
-    engine_type = models.ForeignKey(EngineType, verbose_name=_("Engine Type"), related_name='plans')
+    is_ha = models.BooleanField(verbose_name=_("Is plan HA"), default=False)
+    engine_type = models.ForeignKey(
+        EngineType, verbose_name=_("Engine Type"), related_name='plans')
     environments = models.ManyToManyField(Environment)
     provider = models.IntegerField(choices=PROVIDER_CHOICES,
-                                default=0)
-    max_db_size= models.IntegerField(default=0,
-                                                    verbose_name=_("Max database size (MB)"),
-                                                    help_text=_("What is the maximum size of each database (MB). 0 means unlimited."))
-    equivalent_plan = models.ForeignKey("Plan", null=True, blank=True, on_delete=models.SET_NULL)
+                                   default=0)
+    max_db_size = models.IntegerField(default=0,
+                                      verbose_name=_("Max database size (MB)"),
+                                      help_text=_("What is the maximum size of each database (MB). 0 means unlimited."))
+    equivalent_plan = models.ForeignKey(
+        "Plan", null=True, blank=True, on_delete=models.SET_NULL)
 
     @property
     def engines(self):
@@ -111,7 +121,6 @@ class Plan(BaseModel):
     def environment(self):
         return ', '.join([e.name for e in self.environments.all()])
 
-
     class Meta:
         permissions = (
             ("view_plan", "Can view plans"),
@@ -120,8 +129,10 @@ class Plan(BaseModel):
 
 class PlanAttribute(BaseModel):
 
-    name = models.CharField(verbose_name=_("Plan attribute name"), max_length=200)
-    value = models.CharField(verbose_name=_("Plan attribute value"), max_length=200)
+    name = models.CharField(
+        verbose_name=_("Plan attribute name"), max_length=200)
+    value = models.CharField(
+        verbose_name=_("Plan attribute value"), max_length=200)
     plan = models.ForeignKey(Plan, related_name="plan_attributes")
 
     def __unicode__(self):
@@ -131,6 +142,7 @@ class PlanAttribute(BaseModel):
         permissions = (
             ("view_planattribute", "Can view plan attributes"),
         )
+
 
 class DatabaseInfra(BaseModel):
 
@@ -149,29 +161,37 @@ class DatabaseInfra(BaseModel):
                             help_text=_("This could be the fqdn associated to the databaseinfra."))
     user = models.CharField(verbose_name=_("DatabaseInfra User"),
                             max_length=100,
-                            help_text=_("Administrative user with permission to manage databases, create users and etc."),
+                            help_text=_(
+                                "Administrative user with permission to manage databases, create users and etc."),
                             blank=True,
                             null=False)
-    password = EncryptedCharField(verbose_name=_("DatabaseInfra Password"), max_length=255, blank=True, null=False)
-    engine = models.ForeignKey(Engine, related_name="databaseinfras", on_delete=models.PROTECT)
-    plan = models.ForeignKey(Plan, related_name="databaseinfras", on_delete=models.PROTECT)
-    environment = models.ForeignKey(Environment, related_name="databaseinfras", on_delete=models.PROTECT)
-    capacity = models.PositiveIntegerField(default=1, help_text=_("How many databases is supported"))
+    password = EncryptedCharField(
+        verbose_name=_("DatabaseInfra Password"), max_length=255, blank=True, null=False)
+    engine = models.ForeignKey(
+        Engine, related_name="databaseinfras", on_delete=models.PROTECT)
+    plan = models.ForeignKey(
+        Plan, related_name="databaseinfras", on_delete=models.PROTECT)
+    environment = models.ForeignKey(
+        Environment, related_name="databaseinfras", on_delete=models.PROTECT)
+    capacity = models.PositiveIntegerField(
+        default=1, help_text=_("How many databases is supported"))
     per_database_size_mbytes = models.IntegerField(default=0,
-                                                    verbose_name=_("Max database size (MB)"),
-                                                    help_text=_("What is the maximum size of each database (MB). 0 means unlimited."))
+                                                   verbose_name=_(
+                                                       "Max database size (MB)"),
+                                                   help_text=_("What is the maximum size of each database (MB). 0 means unlimited."))
     endpoint = models.CharField(verbose_name=_("DatabaseInfra Endpoint"),
-                            max_length=255,
-                            help_text=_("Usually it is in the form host:port[,host_n:port_n]. If the engine is mongodb this will be automatically generated."),
-                            blank=True,
-                            null=True)
+                                max_length=255,
+                                help_text=_(
+                                    "Usually it is in the form host:port[,host_n:port_n]. If the engine is mongodb this will be automatically generated."),
+                                blank=True,
+                                null=True)
 
     endpoint_dns = models.CharField(verbose_name=_("DatabaseInfra Endpoint (DNS)"),
-                            max_length=255,
-                            help_text=_("Usually it is in the form host:port[,host_n:port_n]. If the engine is mongodb this will be automatically generated."),
-                            blank=True,
-                            null=True)
-
+                                    max_length=255,
+                                    help_text=_(
+                                        "Usually it is in the form host:port[,host_n:port_n]. If the engine is mongodb this will be automatically generated."),
+                                    blank=True,
+                                    null=True)
 
     def __unicode__(self):
         return self.name
@@ -228,14 +248,17 @@ class DatabaseInfra(BaseModel):
     @classmethod
     def get_active_for(cls, plan=None, environment=None):
         """Return active databaseinfras for selected plan and environment"""
-        datainfras = DatabaseInfra.objects.filter(plan=plan, environment=environment, instances__is_active=True).distinct()
-        LOG.debug('Total of datainfra with filter plan %s and environment %s: %s', plan, environment, len(datainfras))
+        datainfras = DatabaseInfra.objects.filter(
+            plan=plan, environment=environment, instances__is_active=True).distinct()
+        LOG.debug('Total of datainfra with filter plan %s and environment %s: %s',
+                  plan, environment, len(datainfras))
         return datainfras
 
     @classmethod
     def best_for(cls, plan, environment, name):
         """ Choose the best DatabaseInfra for another database """
-        datainfras = list(DatabaseInfra.get_active_for(plan=plan, environment=environment))
+        datainfras = list(
+            DatabaseInfra.get_active_for(plan=plan, environment=environment))
         if not datainfras:
             return None
         datainfras.sort(key=lambda di: -di.available)
@@ -248,9 +271,9 @@ class DatabaseInfra(BaseModel):
         alive_instances = self.instances.filter(status=Instance.ALIVE).count()
         dead_instances = self.instances.filter(status=Instance.DEAD).count()
 
-        if dead_instances==0:
+        if dead_instances == 0:
             status = self.ALIVE
-        elif alive_instances==0:
+        elif alive_instances == 0:
             status = self.DEAD
         else:
             status = self.ALERT
@@ -276,20 +299,26 @@ class DatabaseInfra(BaseModel):
                 info = self.get_driver().info()
                 cache.set(key, info)
             except:
-                # To make cache possible if the database hangs the connection with no reply
+                # To make cache possible if the database hangs the connection
+                # with no reply
                 info = DatabaseInfraStatus(databaseinfra_model=self.__class__)
-                info.databases_status[self.databases.all()[0].name] = DatabaseInfraStatus(databaseinfra_model=self.__class__)
-                info.databases_status[self.databases.all()[0].name].is_alive = False
+                info.databases_status[self.databases.all()[0].name] = DatabaseInfraStatus(
+                    databaseinfra_model=self.__class__)
+                info.databases_status[
+                    self.databases.all()[0].name].is_alive = False
 
                 cache.set(key, info)
         return info
 
 
 class Host(BaseModel):
-    hostname = models.CharField(verbose_name=_("Hostname"), max_length=255, unique=True)
+    hostname = models.CharField(
+        verbose_name=_("Hostname"), max_length=255, unique=True)
     address = models.CharField(verbose_name=_("Host address"), max_length=255)
-    monitor_url = models.URLField(verbose_name=_("Monitor Url"), max_length=500, blank=True, null=True)
-    future_host = models.ForeignKey("Host",null=True, blank=True, on_delete=models.SET_NULL)
+    monitor_url = models.URLField(
+        verbose_name=_("Monitor Url"), max_length=500, blank=True, null=True)
+    future_host = models.ForeignKey(
+        "Host", null=True, blank=True, on_delete=models.SET_NULL)
 
     def __unicode__(self):
         return self.hostname
@@ -329,15 +358,20 @@ class Instance(BaseModel):
     )
 
     dns = models.CharField(verbose_name=_("Instance dns"), max_length=200)
-    address = models.CharField(verbose_name=_("Instance address"), max_length=200)
+    address = models.CharField(
+        verbose_name=_("Instance address"), max_length=200)
     port = models.IntegerField(verbose_name=_("Instance port"))
-    databaseinfra = models.ForeignKey(DatabaseInfra, related_name="instances", on_delete=models.CASCADE)
-    is_active = models.BooleanField(verbose_name=_("Is instance active"), default=True)
-    is_arbiter = models.BooleanField(verbose_name=_("Is arbiter"), default=False)
+    databaseinfra = models.ForeignKey(
+        DatabaseInfra, related_name="instances", on_delete=models.CASCADE)
+    is_active = models.BooleanField(
+        verbose_name=_("Is instance active"), default=True)
+    is_arbiter = models.BooleanField(
+        verbose_name=_("Is arbiter"), default=False)
     hostname = models.ForeignKey(Host)
     status = models.IntegerField(choices=INFRA_STATUS, default=2)
-    instance_type = models.IntegerField(choices=DATABASE_TYPE, default = 0)
-    future_instance = models.ForeignKey("Instance",null=True, blank=True, on_delete=models.SET_NULL)
+    instance_type = models.IntegerField(choices=DATABASE_TYPE, default=0)
+    future_instance = models.ForeignKey(
+        "Instance", null=True, blank=True, on_delete=models.SET_NULL)
 
     class Meta:
         unique_together = (
@@ -359,7 +393,8 @@ class Instance(BaseModel):
             # no connection check is needed
             return
 
-        LOG.debug('Checking instance %s (%s) status...', self.connection, self.databaseinfra)
+        LOG.debug('Checking instance %s (%s) status...',
+                  self.connection, self.databaseinfra)
         # self.clean_fields()
 
         if not self.databaseinfra.engine_id:
@@ -368,13 +403,14 @@ class Instance(BaseModel):
         from drivers import factory_for, GenericDriverError, ConnectionError, AuthenticationError
         try:
             engine = factory_for(self.databaseinfra)
-            #validate instance connection before saving
+            # validate instance connection before saving
             engine.check_status(instance=self)
             LOG.debug('Instance %s is ok', self)
         except AuthenticationError, e:
             LOG.exception(e)
             # at django 1.5, model validation throught form doesn't use field name in ValidationError.
-            # I put here, because I expected this problem can be solved in next versions
+            # I put here, because I expected this problem can be solved in next
+            # versions
             raise ValidationError({'user': e.message})
         except ConnectionError, e:
             LOG.exception(e)
@@ -383,18 +419,18 @@ class Instance(BaseModel):
             LOG.exception(e)
             raise ValidationError(e.message)
 
-
     def check_status(self):
         try:
-            status = self.databaseinfra.get_driver().check_status(instance=self)
+            status = self.databaseinfra.get_driver().check_status(
+                instance=self)
             return status
-        except Exception,e:
+        except Exception, e:
             return False
 
 
-#####################################################################################################
+##########################################################################
 # SIGNALS
-#####################################################################################################
+##########################################################################
 
 @receiver(pre_delete, sender=Instance)
 def instance_pre_delete(sender, **kwargs):
@@ -409,13 +445,15 @@ def instance_pre_delete(sender, **kwargs):
 
     LOG.debug("instance %s pre-delete" % (instance))
 
-    snapshots = Snapshot.objects.filter(instance=instance, purge_at__isnull = True)
+    snapshots = Snapshot.objects.filter(
+        instance=instance, purge_at__isnull=True)
     for snapshot in snapshots:
         LOG.debug("Setting snapshopt %s purge_at time" % (snapshot))
         snapshot.purge_at = datetime.datetime.now()
         snapshot.save()
 
     LOG.debug("instance pre-delete triggered")
+
 
 @receiver(post_save, sender=DatabaseInfra)
 def databaseinfra_post_save(sender, **kwargs):
@@ -424,7 +462,9 @@ def databaseinfra_post_save(sender, **kwargs):
     """
     databaseinfra = kwargs.get('instance')
     LOG.debug("databaseinfra post-save triggered")
-    LOG.debug("databaseinfra %s endpoint: %s" % (databaseinfra, databaseinfra.endpoint))
+    LOG.debug("databaseinfra %s endpoint: %s" %
+              (databaseinfra, databaseinfra.endpoint))
+
 
 @receiver(pre_save, sender=DatabaseInfra)
 def databaseinfra_pre_save(sender, **kwargs):
@@ -435,7 +475,8 @@ def databaseinfra_pre_save(sender, **kwargs):
     LOG.debug("databaseinfra pre-save triggered")
     if not databaseinfra.plan:
         databaseinfra.plan = databaseinfra.engine.engine_type.default_plan
-        LOG.warning("No plan specified, using default plan (%s) for engine %s" % (databaseinfra, databaseinfra.engine))
+        LOG.warning("No plan specified, using default plan (%s) for engine %s" % (
+            databaseinfra, databaseinfra.engine))
 
 
 @receiver(pre_save, sender=Plan)
@@ -448,19 +489,24 @@ def plan_pre_save(sender, **kwargs):
     plan = kwargs.get('instance')
     LOG.debug("plan pre-save triggered")
     if plan.is_default:
-        LOG.debug("looking for other plans marked as default (they will be marked as false) with engine type %s" % plan.engine_type)
+        LOG.debug(
+            "looking for other plans marked as default (they will be marked as false) with engine type %s" % plan.engine_type)
         if plan.id:
-            plans = Plan.objects.filter(is_default=True, engine_type=plan.engine_type).exclude(id=plan.id)
+            plans = Plan.objects.filter(
+                is_default=True, engine_type=plan.engine_type).exclude(id=plan.id)
         else:
-            plans = Plan.objects.filter(is_default=True, engine_type=plan.engine_type)
+            plans = Plan.objects.filter(
+                is_default=True, engine_type=plan.engine_type)
         if plans:
             with transaction.commit_on_success():
                 for plan in plans:
-                    LOG.info("marking plan %s(%s) attr is_default to False" % (plan, plan.engine_type))
+                    LOG.info(
+                        "marking plan %s(%s) attr is_default to False" % (plan, plan.engine_type))
                     plan.is_default = False
                     plan.save(update_fields=['is_default'])
         else:
             LOG.debug("No plan found")
 
 
-simple_audit.register(EngineType, Engine, Plan, PlanAttribute, DatabaseInfra, Instance)
+simple_audit.register(
+    EngineType, Engine, Plan, PlanAttribute, DatabaseInfra, Instance)

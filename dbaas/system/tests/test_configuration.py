@@ -21,4 +21,3 @@ class ConfigurationTest(TestCase):
         Tests get empty list when variable name does not exists
         """
         self.assertEquals(Configuration.get_by_name_as_list("abc"), [])
-

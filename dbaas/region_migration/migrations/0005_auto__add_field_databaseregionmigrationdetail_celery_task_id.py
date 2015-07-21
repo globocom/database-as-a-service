@@ -10,14 +10,14 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         # Adding field 'DatabaseRegionMigrationDetail.celery_task_id'
         db.add_column(u'region_migration_databaseregionmigrationdetail', 'celery_task_id',
-                      self.gf('django.db.models.fields.CharField')(max_length=50, null=True),
+                      self.gf('django.db.models.fields.CharField')(
+                          max_length=50, null=True),
                       keep_default=False)
-
 
     def backwards(self, orm):
         # Deleting field 'DatabaseRegionMigrationDetail.celery_task_id'
-        db.delete_column(u'region_migration_databaseregionmigrationdetail', 'celery_task_id')
-
+        db.delete_column(
+            u'region_migration_databaseregionmigrationdetail', 'celery_task_id')
 
     models = {
         u'account.team': {

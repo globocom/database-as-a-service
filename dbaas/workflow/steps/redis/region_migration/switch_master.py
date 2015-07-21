@@ -22,13 +22,17 @@ class SwitchMaster(BaseStep):
             for source_instance in workflow_dict['source_instances']:
                 if source_instance.instance_type == source_instance.REDIS:
                     source_host = source_instance.hostname
-                    change_slave_priority_file(host=source_host, original_value=100, final_value=0)
-                    change_slave_priority_instance(instance=source_instance, final_value=0)
+                    change_slave_priority_file(
+                        host=source_host, original_value=100, final_value=0)
+                    change_slave_priority_instance(
+                        instance=source_instance, final_value=0)
 
                     target_instance = source_instance.future_instance
                     target_host = target_instance.hostname
-                    change_slave_priority_file(host=target_host, original_value=0, final_value=100)
-                    change_slave_priority_instance(instance=target_instance, final_value=100)
+                    change_slave_priority_file(
+                        host=target_host, original_value=0, final_value=100)
+                    change_slave_priority_instance(
+                        instance=target_instance, final_value=100)
 
             for source_instance in workflow_dict['source_instances']:
                 if source_instance.instance_type == source_instance.REDIS_SENTINEL:
@@ -55,13 +59,17 @@ class SwitchMaster(BaseStep):
             for source_instance in workflow_dict['source_instances']:
                 if source_instance.instance_type == source_instance.REDIS:
                     source_host = source_instance.hostname
-                    change_slave_priority_file(host=source_host, original_value=0, final_value=100)
-                    change_slave_priority_instance(instance=source_instance, final_value=100)
+                    change_slave_priority_file(
+                        host=source_host, original_value=0, final_value=100)
+                    change_slave_priority_instance(
+                        instance=source_instance, final_value=100)
 
                     target_instance = source_instance.future_instance
                     target_host = target_instance.hostname
-                    change_slave_priority_file(host=target_host, original_value=100, final_value=0)
-                    change_slave_priority_instance(instance=target_instance, final_value=0)
+                    change_slave_priority_file(
+                        host=target_host, original_value=100, final_value=0)
+                    change_slave_priority_instance(
+                        instance=target_instance, final_value=0)
 
             for source_instance in workflow_dict['source_instances']:
                 if source_instance.instance_type == source_instance.REDIS_SENTINEL:

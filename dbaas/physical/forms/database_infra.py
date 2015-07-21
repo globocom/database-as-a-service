@@ -7,6 +7,7 @@ from .. import models
 
 log = logging.getLogger(__name__)
 
+
 class DatabaseInfraForm(forms.ModelForm):
 
     class Meta:
@@ -14,8 +15,8 @@ class DatabaseInfraForm(forms.ModelForm):
 
 
 # class DatabaseInfraAddForm(forms.ModelForm):
-# 
+#
 #     #endpoint = forms.CharField(widget=forms.HiddenInput())
-# 
+#
 #     class Meta:
 #         model = models.DatabaseInfra

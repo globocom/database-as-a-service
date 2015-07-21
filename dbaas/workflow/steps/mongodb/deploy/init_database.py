@@ -18,14 +18,17 @@ LOG = logging.getLogger(__name__)
 
 
 class InitDatabaseMongoDB(BaseStep):
+
     def __unicode__(self):
         return "Initializing database..."
 
     def do(self, workflow_dict):
         try:
-            mongodbkey = ''.join(random.choice(string.hexdigits) for i in range(50))
+            mongodbkey = ''.join(random.choice(string.hexdigits)
+                                 for i in range(50))
 
-            workflow_dict['replicasetname'] = 'RepicaSet_' + workflow_dict['databaseinfra'].name
+            workflow_dict['replicasetname'] = 'RepicaSet_' + \
+                workflow_dict['databaseinfra'].name
 
             statsd_credentials = get_credentials_for(
                 environment=workflow_dict['environment'],
@@ -115,7 +118,7 @@ class InitDatabaseMongoDB(BaseStep):
                 scripts_to_run = planattr.start_replication_script
 
                 contextdict.update({'DBPASSWORD': mongodb_password,
-                                   'DATABASERULE': 'PRIMARY'})
+                                    'DATABASERULE': 'PRIMARY'})
 
                 scripts_to_run = build_context_script(contextdict,
                                                       scripts_to_run)

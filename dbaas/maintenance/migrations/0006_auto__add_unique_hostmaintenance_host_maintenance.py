@@ -8,14 +8,16 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Adding unique constraint on 'HostMaintenance', fields ['host', 'maintenance']
-        db.create_unique(u'maintenance_hostmaintenance', ['host_id', 'maintenance_id'])
-
+        # Adding unique constraint on 'HostMaintenance', fields ['host',
+        # 'maintenance']
+        db.create_unique(
+            u'maintenance_hostmaintenance', ['host_id', 'maintenance_id'])
 
     def backwards(self, orm):
-        # Removing unique constraint on 'HostMaintenance', fields ['host', 'maintenance']
-        db.delete_unique(u'maintenance_hostmaintenance', ['host_id', 'maintenance_id'])
-
+        # Removing unique constraint on 'HostMaintenance', fields ['host',
+        # 'maintenance']
+        db.delete_unique(
+            u'maintenance_hostmaintenance', ['host_id', 'maintenance_id'])
 
     models = {
         u'maintenance.hostmaintenance': {

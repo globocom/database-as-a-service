@@ -13,7 +13,8 @@ class DatabaseRegionMigrationDetailForm(models.ModelForm):
                                         widget=AdminSplitDateTime)
 
     def __init__(self, *args, **kwargs):
-        super(DatabaseRegionMigrationDetailForm, self).__init__(*args, **kwargs)
+        super(DatabaseRegionMigrationDetailForm, self).__init__(
+            *args, **kwargs)
 
     class Meta:
         model = DatabaseRegionMigrationDetail

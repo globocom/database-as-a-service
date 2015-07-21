@@ -115,7 +115,8 @@ def change_master_to(instance, master_host, bin_log_file, bin_log_position):
     client.query('stop slave')
 
     sql_command = "change master to master_host='{}', master_log_file='{}', master_log_pos={}"
-    sql_command = sql_command.format(master_host, bin_log_file, bin_log_position)
+    sql_command = sql_command.format(
+        master_host, bin_log_file, bin_log_position)
     client.query(sql_command)
 
     client.query('start slave')
@@ -170,7 +171,8 @@ def get_replication_information_from_file(host,):
     if return_code != 0:
         raise Exception("Could not read file: {}".format(output))
 
-    replication_file, replication_position = parse_replication_info(output['stdout'][0])
+    replication_file, replication_position = parse_replication_info(
+        output['stdout'][0])
 
     return replication_file, replication_position
 
@@ -182,7 +184,8 @@ def parse_replication_info(replication_info):
 
     position_end_with_new_line = replication_position.find('\n')
     if position_end_with_new_line:
-        replication_position = replication_position[:position_end_with_new_line]
+        replication_position = replication_position[
+            :position_end_with_new_line]
 
     replication_position = split_var_and_value(replication_position)
 
@@ -216,6 +219,7 @@ def set_infra_write_ip(master_host, infra_name):
         raise Exception("Could not Change WriteIP: {}".format(output))
 
     return True
+
 
 def set_infra_read_ip(slave_host, infra_name):
     command = """

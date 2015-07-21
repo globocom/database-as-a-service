@@ -19,7 +19,8 @@ class GrantNFSAccess(BaseStep):
             databaseinfra = workflow_dict['databaseinfra']
             source_host = workflow_dict['source_hosts'][0]
             target_host = source_host.future_host
-            nfsaas_export_id = source_host.nfsaas_host_attributes.all()[0].nfsaas_export_id
+            nfsaas_export_id = source_host.nfsaas_host_attributes.all()[
+                0].nfsaas_export_id
             NfsaasProvider.grant_access(environment=databaseinfra.environment,
                                         host=target_host,
                                         export_id=nfsaas_export_id)
@@ -39,7 +40,8 @@ class GrantNFSAccess(BaseStep):
             databaseinfra = workflow_dict['databaseinfra']
             source_host = workflow_dict['source_hosts'][0]
             target_host = source_host.future_host
-            nfsaas_export_id = source_host.nfsaas_host_attributes.all()[0].nfsaas_export_id
+            nfsaas_export_id = source_host.nfsaas_host_attributes.all()[
+                0].nfsaas_export_id
             NfsaasProvider.revoke_access(environment=databaseinfra.environment,
                                          host=target_host,
                                          export_id=nfsaas_export_id)

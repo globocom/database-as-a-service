@@ -11,4 +11,3 @@ __all__ = ['site', 'autodiscover']
 
 site = AdminSitePlus()
 admin.site = site
-

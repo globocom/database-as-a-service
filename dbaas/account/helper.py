@@ -7,6 +7,7 @@ import logging
 
 LOG = logging.getLogger(__name__)
 
+
 def get_ldap_connection():
     import ldap
     server = settings.AUTH_LDAP_SERVER_URI
@@ -18,8 +19,9 @@ def get_ldap_connection():
     conn = ldap.initialize(server)
     conn.bind_s(dn, user_pw)
     LOG.debug("Done")
-    
+
     return conn
+
 
 def find_ldap_groups_from_user(username=None):
     groups = []
@@ -35,7 +37,8 @@ def find_ldap_groups_from_user(username=None):
             # user_result = conn.search_s(user_search, ldap.SCOPE_SUBTREE, search_filter,
             #                         None)
             # LOG.debug(user_result)
-            group_result = conn.search_s(group_search, ldap.SCOPE_SUBTREE, "memberUid=%s" % username, None)
+            group_result = conn.search_s(
+                group_search, ldap.SCOPE_SUBTREE, "memberUid=%s" % username, None)
 
             for entry in group_result:
                 group_name = entry[0].split(',')[0].split('=')[1].strip()

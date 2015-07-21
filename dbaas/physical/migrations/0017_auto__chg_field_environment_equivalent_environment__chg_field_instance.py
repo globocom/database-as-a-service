@@ -10,30 +10,38 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
 
         # Changing field 'Environment.equivalent_environment'
-        db.alter_column(u'physical_environment', 'equivalent_environment_id', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['physical.Environment'], null=True, on_delete=models.SET_NULL))
+        db.alter_column(u'physical_environment', 'equivalent_environment_id', self.gf(
+            'django.db.models.fields.related.ForeignKey')(to=orm['physical.Environment'], null=True, on_delete=models.SET_NULL))
 
         # Changing field 'Instance.future_instance'
-        db.alter_column(u'physical_instance', 'future_instance_id', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['physical.Instance'], null=True, on_delete=models.SET_NULL))
+        db.alter_column(u'physical_instance', 'future_instance_id', self.gf(
+            'django.db.models.fields.related.ForeignKey')(to=orm['physical.Instance'], null=True, on_delete=models.SET_NULL))
 
         # Changing field 'Host.future_host'
-        db.alter_column(u'physical_host', 'future_host_id', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['physical.Host'], null=True, on_delete=models.SET_NULL))
+        db.alter_column(u'physical_host', 'future_host_id', self.gf('django.db.models.fields.related.ForeignKey')(
+            to=orm['physical.Host'], null=True, on_delete=models.SET_NULL))
 
         # Changing field 'Plan.equivalent_plan'
-        db.alter_column(u'physical_plan', 'equivalent_plan_id', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['physical.Plan'], null=True, on_delete=models.SET_NULL))
+        db.alter_column(u'physical_plan', 'equivalent_plan_id', self.gf(
+            'django.db.models.fields.related.ForeignKey')(to=orm['physical.Plan'], null=True, on_delete=models.SET_NULL))
 
     def backwards(self, orm):
 
         # Changing field 'Environment.equivalent_environment'
-        db.alter_column(u'physical_environment', 'equivalent_environment_id', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['physical.Environment'], null=True))
+        db.alter_column(u'physical_environment', 'equivalent_environment_id', self.gf(
+            'django.db.models.fields.related.ForeignKey')(to=orm['physical.Environment'], null=True))
 
         # Changing field 'Instance.future_instance'
-        db.alter_column(u'physical_instance', 'future_instance_id', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['physical.Instance'], null=True))
+        db.alter_column(u'physical_instance', 'future_instance_id', self.gf(
+            'django.db.models.fields.related.ForeignKey')(to=orm['physical.Instance'], null=True))
 
         # Changing field 'Host.future_host'
-        db.alter_column(u'physical_host', 'future_host_id', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['physical.Host'], null=True))
+        db.alter_column(u'physical_host', 'future_host_id', self.gf(
+            'django.db.models.fields.related.ForeignKey')(to=orm['physical.Host'], null=True))
 
         # Changing field 'Plan.equivalent_plan'
-        db.alter_column(u'physical_plan', 'equivalent_plan_id', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['physical.Plan'], null=True))
+        db.alter_column(u'physical_plan', 'equivalent_plan_id', self.gf(
+            'django.db.models.fields.related.ForeignKey')(to=orm['physical.Plan'], null=True))
 
     models = {
         u'physical.databaseinfra': {

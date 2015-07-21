@@ -10,14 +10,13 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         # Adding field 'Team.database_alocation_limit'
         db.add_column(u'account_team', 'database_alocation_limit',
-                      self.gf('django.db.models.fields.PositiveSmallIntegerField')(default=2),
+                      self.gf('django.db.models.fields.PositiveSmallIntegerField')(
+                          default=2),
                       keep_default=False)
-
 
     def backwards(self, orm):
         # Deleting field 'Team.database_alocation_limit'
         db.delete_column(u'account_team', 'database_alocation_limit')
-
 
     models = {
         u'account.team': {

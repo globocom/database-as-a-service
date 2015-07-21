@@ -9,15 +9,15 @@ class Migration(SchemaMigration):
 
     def forwards(self, orm):
         # Deleting field 'DatabaseRegionMigration.next_step'
-        db.delete_column(u'region_migration_databaseregionmigration', 'next_step')
-
+        db.delete_column(
+            u'region_migration_databaseregionmigration', 'next_step')
 
     def backwards(self, orm):
         # Adding field 'DatabaseRegionMigration.next_step'
         db.add_column(u'region_migration_databaseregionmigration', 'next_step',
-                      self.gf('django.db.models.fields.PositiveSmallIntegerField')(null=True),
+                      self.gf('django.db.models.fields.PositiveSmallIntegerField')(
+                          null=True),
                       keep_default=False)
-
 
     models = {
         u'account.team': {

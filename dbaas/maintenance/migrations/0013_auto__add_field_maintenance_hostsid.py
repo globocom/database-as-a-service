@@ -10,14 +10,13 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         # Adding field 'Maintenance.hostsid'
         db.add_column(u'maintenance_maintenance', 'hostsid',
-                      self.gf('django.db.models.fields.CommaSeparatedIntegerField')(default=0, max_length=10000),
+                      self.gf('django.db.models.fields.CommaSeparatedIntegerField')(
+                          default=0, max_length=10000),
                       keep_default=False)
-
 
     def backwards(self, orm):
         # Deleting field 'Maintenance.hostsid'
         db.delete_column(u'maintenance_maintenance', 'hostsid')
-
 
     models = {
         u'maintenance.hostmaintenance': {

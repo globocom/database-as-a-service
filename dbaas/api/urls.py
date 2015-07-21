@@ -6,9 +6,10 @@ from django.conf.urls import patterns, url
 
 
 # class MyRouter(DefaultRouter):
-# 
+#
 #     def get_api_root_view(self):
-#         return lambda r: HttpResponseRedirect('https://github.com/globocom/database-as-a-service/wiki/Introduction-to-the-API')
+# return lambda r:
+# HttpResponseRedirect('https://github.com/globocom/database-as-a-service/wiki/Introduction-to-the-API')
 
 router = DefaultRouter()
 
@@ -48,7 +49,8 @@ if settings.CLOUD_STACK_ENABLED:
     router.register(r'integration_type', CredentialTypeAPI)
 
     from .integration_credential import IntegrationCredentialAPI
-    router.register(r'integration_credential', IntegrationCredentialAPI, base_name="integration_credential")
+    router.register(r'integration_credential',
+                    IntegrationCredentialAPI, base_name="integration_credential")
 
 # account
 from .team import TeamAPI
@@ -56,7 +58,6 @@ router.register(r'team', TeamAPI)
 
 from .user import UserAPI
 router.register(r'user', UserAPI)
-
 
 
 urlpatterns = router.urls

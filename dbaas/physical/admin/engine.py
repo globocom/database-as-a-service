@@ -3,6 +3,7 @@ from __future__ import absolute_import, unicode_literals
 from django_services import admin
 from ..service.engine import EngineService
 
+
 class EngineAdmin(admin.DjangoServicesAdmin):
     service_class = EngineService
     search_fields = ("engine_type__name",)

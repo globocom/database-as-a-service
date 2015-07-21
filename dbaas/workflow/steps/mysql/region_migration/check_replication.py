@@ -17,7 +17,8 @@ class CheckReplication(BaseStep):
         try:
 
             source_instance = workflow_dict['source_instances'][0]
-            target_instance = workflow_dict['source_instances'][0].future_instance
+            target_instance = workflow_dict[
+                'source_instances'][0].future_instance
             msg = "Replication check maximum attempts for instance {}"
 
             if not check_seconds_behind(source_instance):

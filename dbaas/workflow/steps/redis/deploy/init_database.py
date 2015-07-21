@@ -17,6 +17,7 @@ LOG = logging.getLogger(__name__)
 
 
 class InitDatabaseRedis(BaseStep):
+
     def __unicode__(self):
         return "Initializing database..."
 
@@ -112,7 +113,8 @@ class InitDatabaseRedis(BaseStep):
                         return False
 
                 if index > 0 and instances_redis:
-                    client = instances_redis[0].databaseinfra.get_driver().get_client(instances_redis[0])
+                    client = instances_redis[
+                        0].databaseinfra.get_driver().get_client(instances_redis[0])
                     client.slaveof(master_host, master_port)
 
             return True

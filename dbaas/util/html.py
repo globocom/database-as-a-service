@@ -2,6 +2,7 @@
 from __future__ import absolute_import, unicode_literals
 from django.utils.safestring import mark_safe, mark_for_escaping
 
+
 def render_progress_bar(current, total=100, message="%", bar_type="auto", striped=False, active=False):
     """ Returns a html code to render a bootstrap progress bar.
     Params:
@@ -11,7 +12,7 @@ def render_progress_bar(current, total=100, message="%", bar_type="auto", stripe
         striped: if you want striped bars
         active: if you want animated bars
     """
-    if total is None: # unlimited
+    if total is None:  # unlimited
         p = 0.0
         total = current
     else:
@@ -35,11 +36,13 @@ def render_progress_bar(current, total=100, message="%", bar_type="auto", stripe
         html_classes.append("progress-%s" % bar_type)
 
     if message == '%':
-        message = "%(current)d of %(total)d" % {'current': current, 'total': total}
+        message = "%(current)d of %(total)d" % {
+            'current': current, 'total': total}
 
     if message:
         # wrapper message in paragraph
-        message = "<p style='padding-left: 10px; position: absolute;'>%s</p>" % mark_for_escaping(message)
+        message = "<p style='padding-left: 10px; position: absolute;'>%s</p>" % mark_for_escaping(
+            message)
 
     html = """<div class="%(classes)s">%(message)s<div class="bar" style="width: %(p)d%%;"></div></div>""" % \
         {

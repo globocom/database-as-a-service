@@ -33,7 +33,8 @@ def clean_unused_data(export_id, export_path, host, databaseinfra):
 
     mount_path = "/mnt_{}_{}".format(databaseinfra.name, export_id)
     command = "mkdir -p {}".format(mount_path)
-    command += "\nmount -t nfs -o bg,intr {} {}".format(export_path, mount_path)
+    command += "\nmount -t nfs -o bg,intr {} {}".format(
+        export_path, mount_path)
     command += "\nrm -rf {}/*".format(mount_path)
     command += "\numount {}".format(mount_path)
     command += "\nrm -rf {}".format(mount_path)

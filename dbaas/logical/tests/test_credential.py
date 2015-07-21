@@ -13,27 +13,31 @@ class CredentialTestCase(TestCase):
     def setUp(self):
         self.instance = factory_physical.InstanceFactory()
         self.databaseinfra = self.instance.databaseinfra
-        self.database = factory_logical.DatabaseFactory(databaseinfra=self.databaseinfra)
+        self.database = factory_logical.DatabaseFactory(
+            databaseinfra=self.databaseinfra)
 
     def tearDown(self):
         self.database.delete()
 
     def test_create_credential(self):
 
-        credential = Credential.objects.create(user="super", password="super", database=self.database)
+        credential = Credential.objects.create(
+            user="super", password="super", database=self.database)
 
         self.assertTrue(credential.pk)
 
     def test_slugify_user_credential(self):
 
-        credential = Credential.create_new_credential(user="a b c", database=self.database)
+        credential = Credential.create_new_credential(
+            user="a b c", database=self.database)
 
         self.assertTrue(credential.pk)
         self.assertEqual(credential.user, 'a_b_c')
 
     def test_underscore_in_slugged_user_credential(self):
 
-        credential = Credential.objects.create(user="a_b_c_d", password="super", database=self.database)
+        credential = Credential.objects.create(
+            user="a_b_c_d", password="super", database=self.database)
 
         self.assertTrue(credential.pk)
         self.assertEqual(credential.user, "a_b_c_d")
@@ -51,7 +55,8 @@ class CredentialTestCase(TestCase):
     def test_cannot_edit_database_credential(self):
 
         credential = factory_logical.CredentialFactory(database=self.database)
-        another_database = factory_logical.DatabaseFactory(databaseinfra=self.databaseinfra)
+        another_database = factory_logical.DatabaseFactory(
+            databaseinfra=self.databaseinfra)
 
         credential.database = another_database
 

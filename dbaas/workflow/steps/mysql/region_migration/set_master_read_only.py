@@ -15,7 +15,8 @@ class SetMasterReadOnly(BaseStep):
 
     def do(self, workflow_dict):
         try:
-            client = get_client_for_infra(databaseinfra=workflow_dict['databaseinfra'])
+            client = get_client_for_infra(
+                databaseinfra=workflow_dict['databaseinfra'])
             client.query("set global read_only='ON'")
 
             return True
@@ -30,7 +31,8 @@ class SetMasterReadOnly(BaseStep):
     def undo(self, workflow_dict):
         LOG.info("Running undo...")
         try:
-            client = get_client_for_infra(databaseinfra=workflow_dict['databaseinfra'])
+            client = get_client_for_infra(
+                databaseinfra=workflow_dict['databaseinfra'])
             client.query("set global read_only='OFF'")
 
             return True

@@ -82,7 +82,8 @@ class RestoreSnapshot(BaseStep):
         try:
             for host_and_export in workflow_dict['hosts_and_exports']:
                 destroy_unused_export(export_id=host_and_export['new_export_id'],
-                                      export_path=host_and_export['new_export_path'],
+                                      export_path=host_and_export[
+                                          'new_export_path'],
                                       host=host_and_export['host'],
                                       databaseinfra=workflow_dict['databaseinfra'])
 

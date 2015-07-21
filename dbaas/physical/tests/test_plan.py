@@ -21,17 +21,18 @@ class PlanTestCase(TestCase):
         """
         Highlander test
         """
-        
+
         plan = PlanFactory()
-        
+
         self.assertTrue(plan.is_default)
-        
+
         plan_2 = PlanFactory()
-        
+
         self.assertTrue(plan_2.is_default)
-        
+
         plan = Plan.objects.get(id=plan.id)
         self.assertFalse(plan.is_default)
-        
-        default_plans = Plan.objects.filter(is_default=True, engine_type=plan_2.engine_type)
+
+        default_plans = Plan.objects.filter(
+            is_default=True, engine_type=plan_2.engine_type)
         self.assertEqual(default_plans.count(), 1)

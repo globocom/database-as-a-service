@@ -6,7 +6,9 @@ from ...util.base import BaseStep
 
 LOG = logging.getLogger(__name__)
 
+
 class StartVM(BaseStep):
+
     def __unicode__(self):
         return "Starting VMs..."
 

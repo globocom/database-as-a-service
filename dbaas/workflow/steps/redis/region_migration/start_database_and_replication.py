@@ -61,10 +61,12 @@ class StartDatabaseReplication(BaseStep):
 
             for target_instance in workflow_dict['target_instances']:
                 if target_instance.instance_type == target_instance.REDIS:
-                    LOG.info('Changing master of host: {}'.format(target_instance.address))
+                    LOG.info(
+                        'Changing master of host: {}'.format(target_instance.address))
                     client = driver.get_client(target_instance)
                     client.slaveof(master_host, master_port)
-                    LOG.info('New master: {}:{}'.format(master_host, master_port))
+                    LOG.info(
+                        'New master: {}:{}'.format(master_host, master_port))
 
             return True
 

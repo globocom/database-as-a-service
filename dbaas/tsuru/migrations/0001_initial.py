@@ -10,20 +10,24 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         # Adding model 'Bind'
         db.create_table(u'tsuru_bind', (
-            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('created_at', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
-            ('updated_at', self.gf('django.db.models.fields.DateTimeField')(auto_now=True, blank=True)),
-            ('service_name', self.gf('django.db.models.fields.CharField')(max_length=200)),
-            ('service_hostname', self.gf('django.db.models.fields.CharField')(max_length=200, null=True, blank=True)),
-            ('databaseinfra', self.gf('django.db.models.fields.related.ForeignKey')(blank=True, related_name=u'binds', null=True, on_delete=models.PROTECT, to=orm['physical.DatabaseInfra'])),
+            (u'id', self.gf('django.db.models.fields.AutoField')
+             (primary_key=True)),
+            ('created_at', self.gf('django.db.models.fields.DateTimeField')
+             (auto_now_add=True, blank=True)),
+            ('updated_at', self.gf('django.db.models.fields.DateTimeField')
+             (auto_now=True, blank=True)),
+            ('service_name', self.gf(
+                'django.db.models.fields.CharField')(max_length=200)),
+            ('service_hostname', self.gf('django.db.models.fields.CharField')
+             (max_length=200, null=True, blank=True)),
+            ('databaseinfra', self.gf('django.db.models.fields.related.ForeignKey')(
+                blank=True, related_name=u'binds', null=True, on_delete=models.PROTECT, to=orm['physical.DatabaseInfra'])),
         ))
         db.send_create_signal(u'tsuru', ['Bind'])
-
 
     def backwards(self, orm):
         # Deleting model 'Bind'
         db.delete_table(u'tsuru_bind')
-
 
     models = {
         u'physical.databaseinfra': {

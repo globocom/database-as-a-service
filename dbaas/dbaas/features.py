@@ -5,4 +5,4 @@ import logging
 from django.conf import settings
 
 
-LDAP_ENABLED=settings.LDAP_ENABLED
+LDAP_ENABLED = settings.LDAP_ENABLED

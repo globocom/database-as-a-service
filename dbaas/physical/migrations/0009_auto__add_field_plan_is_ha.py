@@ -10,14 +10,13 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         # Adding field 'Plan.is_ha'
         db.add_column(u'physical_plan', 'is_ha',
-                      self.gf('django.db.models.fields.BooleanField')(default=False),
+                      self.gf('django.db.models.fields.BooleanField')(
+                          default=False),
                       keep_default=False)
-
 
     def backwards(self, orm):
         # Deleting field 'Plan.is_ha'
         db.delete_column(u'physical_plan', 'is_ha')
-
 
     models = {
         u'physical.databaseinfra': {

@@ -3,7 +3,6 @@ from __future__ import absolute_import, unicode_literals
 import logging
 from datetime import datetime
 from django.db import models
-from django.contrib.auth.models import User, Group
 from django.utils.translation import ugettext_lazy as _
 from django.utils import simplejson
 from logical.models import Database
@@ -16,7 +15,7 @@ LOG = logging.getLogger(__name__)
 class TaskHistory(BaseModel):
 
     class Meta:
-      verbose_name_plural = "Task histories"
+        verbose_name_plural = "Task histories"
 
     STATUS_PENDING = 'PENDING'
     STATUS_RUNNING = 'RUNNING'
@@ -25,17 +24,25 @@ class TaskHistory(BaseModel):
     STATUS_WARNING = 'WARNING'
     STATUS_WAITING = 'WAITING'
 
-    _STATUS = [STATUS_PENDING, STATUS_RUNNING, STATUS_SUCCESS, STATUS_ERROR, STATUS_WARNING, STATUS_WAITING]
+    _STATUS = [STATUS_PENDING, STATUS_RUNNING, STATUS_SUCCESS,
+               STATUS_ERROR, STATUS_WARNING, STATUS_WAITING]
 
-    task_id = models.CharField(_('Task ID'), max_length=200, null=True, blank=True, editable=False)
-    task_name = models.CharField(_('Task Name'), max_length=200, null=True, blank=True)
+    task_id = models.CharField(
+        _('Task ID'), max_length=200, null=True, blank=True, editable=False)
+    task_name = models.CharField(
+        _('Task Name'), max_length=200, null=True, blank=True)
     user = models.CharField(max_length=255, null=True, blank=True)
-    ended_at = models.DateTimeField(verbose_name=_("Ended at"), null=True, blank=True, editable=False)
-    task_status = models.CharField(_('Task Status'), max_length=100, default=STATUS_PENDING)
+    ended_at = models.DateTimeField(
+        verbose_name=_("Ended at"), null=True, blank=True, editable=False)
+    task_status = models.CharField(
+        _('Task Status'), max_length=100, default=STATUS_PENDING)
     context = models.TextField(null=True, blank=True)
-    details = models.TextField(verbose_name=_("Details"), null=True, blank=True)
-    arguments = models.TextField(verbose_name=_("Arguments"), null=True, blank=True)
-    db_id = models.ForeignKey(Database, related_name="database", null=True, blank=True, on_delete=models.SET_NULL)
+    details = models.TextField(
+        verbose_name=_("Details"), null=True, blank=True)
+    arguments = models.TextField(
+        verbose_name=_("Arguments"), null=True, blank=True)
+    db_id = models.ForeignKey(
+        Database, related_name="database", null=True, blank=True, on_delete=models.SET_NULL)
 
     def __unicode__(self):
         return u"%s" % self.task_id
@@ -55,7 +62,6 @@ class TaskHistory(BaseModel):
         if self.details:
             self.details = "\n%s%s" % (self.details, details)
         else:
-            print "None"
             self.details = details
 
         if persist:
@@ -123,7 +129,8 @@ class TaskHistory(BaseModel):
         elif request.task == 'notification.tasks.clone_database':
             task_history.arguments = "Database name: {0},\nClone: {1},\nPlan: {2},\
             \nEnvironment: {3}".format(
-                request.kwargs['origin_database'].name, str(request.kwargs['clone_name']),
+                request.kwargs['origin_database'].name, str(
+                    request.kwargs['clone_name']),
                 str(request.kwargs['plan']), str(request.kwargs['environment']))
 
         elif request.task == 'notification.tasks.volume_migration':

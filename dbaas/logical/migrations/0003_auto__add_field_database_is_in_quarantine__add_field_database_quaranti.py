@@ -10,14 +10,15 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         # Adding field 'Database.is_in_quarantine'
         db.add_column(u'logical_database', 'is_in_quarantine',
-                      self.gf('django.db.models.fields.BooleanField')(default=False),
+                      self.gf('django.db.models.fields.BooleanField')(
+                          default=False),
                       keep_default=False)
 
         # Adding field 'Database.quarantine_dt'
         db.add_column(u'logical_database', 'quarantine_dt',
-                      self.gf('django.db.models.fields.DateField')(null=True, blank=True),
+                      self.gf('django.db.models.fields.DateField')(
+                          null=True, blank=True),
                       keep_default=False)
-
 
     def backwards(self, orm):
         # Deleting field 'Database.is_in_quarantine'
@@ -25,7 +26,6 @@ class Migration(SchemaMigration):
 
         # Deleting field 'Database.quarantine_dt'
         db.delete_column(u'logical_database', 'quarantine_dt')
-
 
     models = {
         u'auth.group': {

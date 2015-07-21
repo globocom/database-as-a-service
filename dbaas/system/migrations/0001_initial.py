@@ -10,19 +10,22 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         # Adding model 'Configuration'
         db.create_table(u'system_configuration', (
-            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('created_at', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
-            ('updated_at', self.gf('django.db.models.fields.DateTimeField')(auto_now=True, blank=True)),
-            ('name', self.gf('django.db.models.fields.CharField')(unique=True, max_length=100)),
-            ('value', self.gf('django.db.models.fields.CharField')(max_length=255)),
+            (u'id', self.gf('django.db.models.fields.AutoField')
+             (primary_key=True)),
+            ('created_at', self.gf('django.db.models.fields.DateTimeField')
+             (auto_now_add=True, blank=True)),
+            ('updated_at', self.gf('django.db.models.fields.DateTimeField')
+             (auto_now=True, blank=True)),
+            ('name', self.gf('django.db.models.fields.CharField')
+             (unique=True, max_length=100)),
+            ('value', self.gf('django.db.models.fields.CharField')
+             (max_length=255)),
         ))
         db.send_create_signal(u'system', ['Configuration'])
-
 
     def backwards(self, orm):
         # Deleting model 'Configuration'
         db.delete_table(u'system_configuration')
-
 
     models = {
         u'system.configuration': {

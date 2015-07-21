@@ -12,10 +12,9 @@ class EnvironmentSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class EnvironmentAPI(viewsets.ReadOnlyModelViewSet):
+
     """
     Environment API
     """
     serializer_class = EnvironmentSerializer
     queryset = models.Environment.objects.all()
-
-

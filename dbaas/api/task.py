@@ -6,16 +6,19 @@ from rest_framework.response import Response
 from rest_framework import filters
 from notification.models import TaskHistory
 
+
 class TaskSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = TaskHistory
-        fields = ('task_id','task_status', 'db_id')
+        fields = ('task_id', 'task_status', 'db_id')
 
     def get_id(self, obj):
         return obj.task_id
 
+
 class TaskAPI(viewsets.ReadOnlyModelViewSet):
+
     """
     Task API
     """
@@ -23,6 +26,4 @@ class TaskAPI(viewsets.ReadOnlyModelViewSet):
     #queryset = models.Engine.objects.all()
     queryset = TaskHistory.objects.all()
     filter_backends = (filters.DjangoFilterBackend,)
-    filter_fields = ('task_id','task_status')
-
-
+    filter_fields = ('task_id', 'task_status')

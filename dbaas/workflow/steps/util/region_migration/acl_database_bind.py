@@ -16,6 +16,7 @@ LOG = logging.getLogger(__name__)
 
 
 class BindNewInstances(BaseStep):
+
     def __unicode__(self):
         return "Binding new instances ..."
 
@@ -34,7 +35,8 @@ class BindNewInstances(BaseStep):
                                    acl_credential.user,
                                    acl_credential.password)
 
-            instances = databaseinfra.instances.filter(future_instance__isnull=True)
+            instances = databaseinfra.instances.filter(
+                future_instance__isnull=True)
             port = instances[0].port
 
             databaseinfraattr_instances = DatabaseInfraAttr.objects.filter(databaseinfra=databaseinfra,
@@ -46,7 +48,8 @@ class BindNewInstances(BaseStep):
                 instance_address_list.append(instance.ip)
 
             for database_bind in database.acl_binds.all():
-                acl_environment, acl_vlan = database_bind.bind_address.split('/')
+                acl_environment, acl_vlan = database_bind.bind_address.split(
+                    '/')
                 data = {"kind": "object#acl", "rules": []}
                 default_options = {
                     "protocol": "tcp",
@@ -66,10 +69,12 @@ class BindNewInstances(BaseStep):
                     custom_options = copy.deepcopy(default_options)
                     custom_options['source'] = database_bind.bind_address
                     custom_options['destination'] = instance.address + '/32'
-                    custom_options['l4-options']['dest-port-start'] = instance.port
+                    custom_options[
+                        'l4-options']['dest-port-start'] = instance.port
                     data['rules'].append(custom_options)
 
-                    LOG.debug("Creating bind for instance: {}".format(instance))
+                    LOG.debug(
+                        "Creating bind for instance: {}".format(instance))
 
                     instance_bind = DatabaseInfraInstanceBind(instance=instance.address,
                                                               databaseinfra=databaseinfra,
@@ -88,7 +93,8 @@ class BindNewInstances(BaseStep):
                     custom_options['l4-options']['dest-port-start'] = port
                     data['rules'].append(custom_options)
 
-                    LOG.debug("Creating bind for instance: {}".format(instance))
+                    LOG.debug(
+                        "Creating bind for instance: {}".format(instance))
 
                     instance_bind = DatabaseInfraInstanceBind(instance=instance.ip,
                                                               databaseinfra=databaseinfra,
@@ -96,7 +102,8 @@ class BindNewInstances(BaseStep):
                                                               instance_port=port)
                     instance_bind.save()
 
-                    LOG.debug("DatabaseInraAttrInstanceBind: {}".format(instance_bind))
+                    LOG.debug(
+                        "DatabaseInraAttrInstanceBind: {}".format(instance_bind))
 
                 LOG.info("Data used on payload: {}".format(data))
                 response = acl_client.grant_acl_for(environment=acl_environment,
@@ -140,7 +147,8 @@ class BindNewInstances(BaseStep):
                                    acl_credential.user,
                                    acl_credential.password)
 
-            instances = databaseinfra.instances.filter(future_instance__isnull=True)
+            instances = databaseinfra.instances.filter(
+                future_instance__isnull=True)
             databaseinfraattr_instances = DatabaseInfraAttr.objects.filter(databaseinfra=databaseinfra,
                                                                            equivalent_dbinfraattr__isnull=True)
 
@@ -151,7 +159,8 @@ class BindNewInstances(BaseStep):
                 instance_address_list.append(instance.ip)
 
             for database_bind in database.acl_binds.all():
-                acl_environment, acl_vlan = database_bind.bind_address.split('/')
+                acl_environment, acl_vlan = database_bind.bind_address.split(
+                    '/')
                 data = {"kind": "object#acl", "rules": []}
                 default_options = {
                     "protocol": "tcp",
@@ -171,12 +180,15 @@ class BindNewInstances(BaseStep):
                     databaseinfra=databaseinfra,
                     instance__in=instance_address_list,
                     bind_address=database_bind.bind_address)
-                LOG.info("infra_instances_binds: {}".format(infra_instances_binds))
+                LOG.info(
+                    "infra_instances_binds: {}".format(infra_instances_binds))
                 for infra_instance_bind in infra_instances_binds:
                     custom_options = copy.deepcopy(default_options)
                     custom_options['source'] = database_bind.bind_address
-                    custom_options['destination'] = infra_instance_bind.instance + '/32'
-                    custom_options['l4-options']['dest-port-start'] = infra_instance_bind.instance_port
+                    custom_options[
+                        'destination'] = infra_instance_bind.instance + '/32'
+                    custom_options[
+                        'l4-options']['dest-port-start'] = infra_instance_bind.instance_port
                     data['rules'].append(custom_options)
 
                 LOG.info("Data used on payload: {}".format(data))
@@ -197,6 +209,7 @@ class BindNewInstances(BaseStep):
 
 
 class UnbindOldInstances(BaseStep):
+
     def __unicode__(self):
         return "Unbinding old instances ..."
 
@@ -214,7 +227,8 @@ class UnbindOldInstances(BaseStep):
                                    acl_credential.user,
                                    acl_credential.password)
 
-            instances = databaseinfra.instances.filter(future_instance__isnull=False)
+            instances = databaseinfra.instances.filter(
+                future_instance__isnull=False)
             databaseinfraattr_instances = DatabaseInfraAttr.objects.filter(databaseinfra=databaseinfra,
                                                                            equivalent_dbinfraattr__isnull=False)
 
@@ -225,7 +239,8 @@ class UnbindOldInstances(BaseStep):
                 instance_address_list.append(instance.ip)
 
             for database_bind in database.acl_binds.all():
-                acl_environment, acl_vlan = database_bind.bind_address.split('/')
+                acl_environment, acl_vlan = database_bind.bind_address.split(
+                    '/')
                 data = {"kind": "object#acl", "rules": []}
                 default_options = {
                     "protocol": "tcp",
@@ -245,12 +260,15 @@ class UnbindOldInstances(BaseStep):
                     databaseinfra=databaseinfra,
                     instance__in=instance_address_list,
                     bind_address=database_bind.bind_address)
-                LOG.info("infra_instances_binds: {}".format(infra_instances_binds))
+                LOG.info(
+                    "infra_instances_binds: {}".format(infra_instances_binds))
                 for infra_instance_bind in infra_instances_binds:
                     custom_options = copy.deepcopy(default_options)
                     custom_options['source'] = database_bind.bind_address
-                    custom_options['destination'] = infra_instance_bind.instance + '/32'
-                    custom_options['l4-options']['dest-port-start'] = infra_instance_bind.instance_port
+                    custom_options[
+                        'destination'] = infra_instance_bind.instance + '/32'
+                    custom_options[
+                        'l4-options']['dest-port-start'] = infra_instance_bind.instance_port
                     data['rules'].append(custom_options)
 
                 LOG.info("Data used on payload: {}".format(data))
@@ -285,7 +303,8 @@ class UnbindOldInstances(BaseStep):
                                    acl_credential.user,
                                    acl_credential.password)
 
-            instances = databaseinfra.instances.filter(future_instance__isnull=False)
+            instances = databaseinfra.instances.filter(
+                future_instance__isnull=False)
             port = instances[0].port
 
             databaseinfraattr_instances = DatabaseInfraAttr.objects.filter(databaseinfra=databaseinfra,
@@ -297,7 +316,8 @@ class UnbindOldInstances(BaseStep):
                 instance_address_list.append(instance.ip)
 
             for database_bind in database.acl_binds.all():
-                acl_environment, acl_vlan = database_bind.bind_address.split('/')
+                acl_environment, acl_vlan = database_bind.bind_address.split(
+                    '/')
                 data = {"kind": "object#acl", "rules": []}
                 default_options = {
                     "protocol": "tcp",
@@ -317,10 +337,12 @@ class UnbindOldInstances(BaseStep):
                     custom_options = copy.deepcopy(default_options)
                     custom_options['source'] = database_bind.bind_address
                     custom_options['destination'] = instance.address + '/32'
-                    custom_options['l4-options']['dest-port-start'] = instance.port
+                    custom_options[
+                        'l4-options']['dest-port-start'] = instance.port
                     data['rules'].append(custom_options)
 
-                    LOG.debug("Creating bind for instance: {}".format(instance))
+                    LOG.debug(
+                        "Creating bind for instance: {}".format(instance))
 
                     instance_bind = DatabaseInfraInstanceBind(instance=instance.address,
                                                               databaseinfra=databaseinfra,
@@ -339,7 +361,8 @@ class UnbindOldInstances(BaseStep):
                     custom_options['l4-options']['dest-port-start'] = port
                     data['rules'].append(custom_options)
 
-                    LOG.debug("Creating bind for instance: {}".format(instance))
+                    LOG.debug(
+                        "Creating bind for instance: {}".format(instance))
 
                     instance_bind = DatabaseInfraInstanceBind(instance=instance.ip,
                                                               databaseinfra=databaseinfra,
@@ -347,7 +370,8 @@ class UnbindOldInstances(BaseStep):
                                                               instance_port=port)
                     instance_bind.save()
 
-                    LOG.debug("DatabaseInraAttrInstanceBind: {}".format(instance_bind))
+                    LOG.debug(
+                        "DatabaseInraAttrInstanceBind: {}".format(instance_bind))
 
                 LOG.info("Data used on payload: {}".format(data))
                 response = acl_client.grant_acl_for(environment=acl_environment,

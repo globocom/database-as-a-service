@@ -13,6 +13,7 @@ syspath = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 if not syspath in sys.path:
     sys.path.insert(0, syspath)
 
+
 def LOCAL_FILES(path):
     new_path = os.path.abspath(os.path.join(__file__, path))
     return new_path
@@ -26,7 +27,7 @@ except ImportError:
 SITE_ROOT = LOCAL_FILES('../')
 SCRIPTS_PATH = syspath + "/drivers/scripts/"
 
-#Keyczar key's directory
+# Keyczar key's directory
 ENCRYPTED_FIELD_KEYS_DIR = SITE_ROOT + '/keys'
 
 DEBUG = os.getenv('DBAAS_DEBUG', '1') == '1'
@@ -38,7 +39,7 @@ ADMINS = (
 
 MANAGERS = ADMINS
 
-#get environment variables for the database
+# get environment variables for the database
 DB_ENGINE = os.getenv('DBAAS_DATABASE_ENGINE', 'django.db.backends.mysql')
 DB_NAME = os.getenv('DBAAS_DATABASE_NAME', 'dbaas')
 DB_USER = os.getenv('DBAAS_DATABASE_USER', 'root')
@@ -51,17 +52,22 @@ DB_DEFAULT_PASSWORD = os.getenv('DBAAS_MONGODB_DEFAULT_PASSWORD', 'adminpwd')
 
 DATABASES = {
     'default': {
-        'ENGINE': DB_ENGINE, # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': DB_NAME,                      # Or path to database file if using sqlite3.
+        # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
+        'ENGINE': DB_ENGINE,
+        # Or path to database file if using sqlite3.
+        'NAME': DB_NAME,
         # The following settings are not used with sqlite3:
         'USER': DB_USER,
         'PASSWORD': DB_PASSWORD,
-        'HOST': DB_HOST,                      # Empty for localhost through domain sockets or '127.0.0.1' for localhost through TCP.
-        'PORT': DB_PORT,                      # Set to empty string for default.
+        # Empty for localhost through domain sockets or '127.0.0.1' for
+        # localhost through TCP.
+        'HOST': DB_HOST,
+        # Set to empty string for default.
+        'PORT': DB_PORT,
     }
 }
 
-#get variables for the analytics
+# get variables for the analytics
 GANALYTICS_TRACKING_CODE = os.getenv('DBAAS_ANALYTICS', '')
 
 
@@ -123,7 +129,7 @@ STATICFILES_DIRS = (
 STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
-#    'django.contrib.staticfiles.finders.DefaultStorageFinder',
+    #    'django.contrib.staticfiles.finders.DefaultStorageFinder',
 )
 
 # Make this unique, and don't share it with anybody.
@@ -133,7 +139,7 @@ SECRET_KEY = 'n3#i=z^st83t5-k_xw!v9t_ey@h=!&6!3e$l6n&sn^o9@f&jxv'
 TEMPLATE_LOADERS = (
     'django.template.loaders.filesystem.Loader',
     'django.template.loaders.app_directories.Loader',
-#     'django.template.loaders.eggs.Loader',
+    #     'django.template.loaders.eggs.Loader',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -211,21 +217,21 @@ CKEDITOR_UPLOAD_PATH = ''
 CKEDITOR_CONFIGS = {
     'default': {
         'toolbar': [
-            [      'Undo', 'Redo',
-              '-', 'Bold', 'Italic', 'Underline',
-              '-', 'Link', 'Unlink', 'Anchor',
-              '-', 'Format',
-              '-', 'SpellChecker', 'Scayt',
-              '-', 'Maximize',
-            ],
-            [      'HorizontalRule',
-              '-', 'Table',
-              '-', 'BulletedList', 'NumberedList',
-              '-', 'Cut','Copy','Paste','PasteText','PasteFromWord',
-              '-', 'SpecialChar',
-              '-', 'Source',
-              '-', 'About',
-            ]
+            ['Undo', 'Redo',
+             '-', 'Bold', 'Italic', 'Underline',
+             '-', 'Link', 'Unlink', 'Anchor',
+             '-', 'Format',
+             '-', 'SpellChecker', 'Scayt',
+             '-', 'Maximize',
+             ],
+            ['HorizontalRule',
+             '-', 'Table',
+             '-', 'BulletedList', 'NumberedList',
+             '-', 'Cut', 'Copy', 'Paste', 'PasteText', 'PasteFromWord',
+             '-', 'SpecialChar',
+             '-', 'Source',
+             '-', 'About',
+             ]
         ],
         'toolbarCanCollapse': False,
     }
@@ -243,7 +249,8 @@ TEMPLATE_CONTEXT_PROCESSORS = (
 )
 
 # backend for haystack
-HAYSTACK_PATH =  os.getenv('HAYSTACK_PATH', os.path.join(SITE_ROOT, '../','whoosh_index'))
+HAYSTACK_PATH = os.getenv(
+    'HAYSTACK_PATH', os.path.join(SITE_ROOT, '../', 'whoosh_index'))
 HAYSTACK_CONNECTIONS = {
     'default': {
         'ENGINE': 'haystack.backends.whoosh_backend.WhooshEngine',
@@ -255,7 +262,7 @@ if not DB_ENGINE.endswith('sqlite3'):
     # support migrations
     INSTALLED_APPS += ('south',)
 
-#http://django-email-extras.readthedocs.org/en/latest/
+# http://django-email-extras.readthedocs.org/en/latest/
 EMAIL_EXTRAS_USE_GNUPG = False
 EMAIL_HOST = os.getenv('EMAIL_HOST', 'localhost')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
@@ -264,10 +271,10 @@ EMAIL_PORT = os.getenv('EMAIL_PORT', 25)
 EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', False)
 
 # conf to redis
-REDIS_HOST=os.getenv('REDIS_HOST', 'localhost')
-REDIS_PORT=os.getenv('REDIS_PORT', 6379)
-REDIS_PASSWORD=os.getenv('REDIS_PASSWORD')
-REDIS_DB=os.getenv('REDIS_DB', 0)
+REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
+REDIS_PORT = os.getenv('REDIS_PORT', 6379)
+REDIS_PASSWORD = os.getenv('REDIS_PASSWORD')
+REDIS_DB = os.getenv('REDIS_DB', 0)
 
 
 SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'
@@ -297,16 +304,16 @@ if CI:
 # )
 
 AUTHENTICATION_BACKENDS = [
-  'account.backends.DbaasBackend',
-  'django.contrib.auth.backends.ModelBackend',
+    'account.backends.DbaasBackend',
+    'django.contrib.auth.backends.ModelBackend',
 ]
 
-#enable m2m fields audit
+# enable m2m fields audit
 DJANGO_SIMPLE_AUDIT_ACTIVATED = True
 DJANGO_SIMPLE_AUDIT_M2M_FIELDS = True
 
 ##################################
-### LDAP_AUTHENTICATION
+# LDAP_AUTHENTICATION
 ##################################
 LDAP_ENABLED = os.getenv('DBAAS_LDAP_ENABLED', '0')
 if LDAP_ENABLED == "1":
@@ -337,8 +344,8 @@ if LDAP_ENABLED:
                                        ldap.SCOPE_SUBTREE, "(&(uid=%(user)s)(!(nsaccountlock=TRUE)))")
     AUTH_LDAP_GROUP_SEARCH_STR = os.getenv('AUTH_LDAP_GROUP_SEARCH', '')
     AUTH_LDAP_GROUP_SEARCH = LDAPSearch(AUTH_LDAP_GROUP_SEARCH_STR,
-       ldap.SCOPE_SUBTREE, "(objectClass=groupOfNames)"
-    )
+                                        ldap.SCOPE_SUBTREE, "(objectClass=groupOfNames)"
+                                        )
     AUTH_LDAP_GROUP_TYPE = GroupOfNamesType()
     AUTH_LDAP_ALWAYS_UPDATE_USER = True
 
@@ -349,7 +356,8 @@ if LDAP_ENABLED:
         "email": "mail"
     }
 
-    AUTHENTICATION_BACKENDS = ['django_auth_ldap.backend.LDAPBackend'] + AUTHENTICATION_BACKENDS
+    AUTHENTICATION_BACKENDS = [
+        'django_auth_ldap.backend.LDAPBackend'] + AUTHENTICATION_BACKENDS
 
 
 REST_FRAMEWORK = {
@@ -370,15 +378,17 @@ REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': ('api.base.ObjectPermissionsFilter',),
     'EXCEPTION_HANDLER': 'api.base.custom_exception_handler',
     'PAGINATE_BY': 10,                 # Default to 10
-    'PAGINATE_BY_PARAM': 'page_size',  # Allow client to override, using `?page_size=xxx`.
-    'MAX_PAGINATE_BY': 100,            # Maximum limit allowed when using `?page_size=xxx`.
+    # Allow client to override, using `?page_size=xxx`.
+    'PAGINATE_BY_PARAM': 'page_size',
+    # Maximum limit allowed when using `?page_size=xxx`.
+    'MAX_PAGINATE_BY': 100,
     'TEST_REQUEST_RENDERER_CLASSES': (
         'api.renderers.JSONHalRenderer',
     ),
     'TEST_REQUEST_DEFAULT_FORMAT': 'json',
 }
 
-LOGIN_URL="/admin/"
+LOGIN_URL = "/admin/"
 
 # sentry configuration
 RAVEN_CONFIG = {
@@ -467,11 +477,11 @@ LOGFILE = os.getenv('DBAAS_LOGFILE', None)
 if LOGFILE:
     # log only to file
     LOGGING['handlers']['logfile'] = {
-            'class': 'logging.handlers.WatchedFileHandler',
-            'formatter': 'simple',
-            'filename': LOGFILE,
-            'encoding': 'utf-8',
-            'mode': 'a'
+        'class': 'logging.handlers.WatchedFileHandler',
+        'formatter': 'simple',
+        'filename': LOGFILE,
+        'encoding': 'utf-8',
+        'mode': 'a'
     }
     LOGGING['root']['handlers'].remove('console')
     LOGGING['root']['handlers'] += ['logfile']
@@ -480,8 +490,8 @@ if LOGFILE:
 EC2_ACCESS_KEY = os.getenv('EC2_ACCESS_KEY', None)
 EC2_SECRET_KEY = os.getenv('EC2_SECRET_KEY', None)
 EC2_URL = os.getenv('EC2_URL', None)
-EC2_REGION = os.getenv('EC2_REGION', None) #us-east-1
-EC2_SUBNET_ID = os.getenv('EC2_SUBNET_ID', None) #'vpc-1212'
+EC2_REGION = os.getenv('EC2_REGION', None)  # us-east-1
+EC2_SUBNET_ID = os.getenv('EC2_SUBNET_ID', None)  # 'vpc-1212'
 EC2_AMI_ID = 'ami-b91043d0'
 
 USER_ROLES = (
@@ -489,7 +499,7 @@ USER_ROLES = (
     'regular',
 )
 
-#CloudStack IaaS Integration credentials
+# CloudStack IaaS Integration credentials
 CLOUD_STACK_ENABLED = os.getenv('CLOUD_STACK_ENABLED', '0')
 if CLOUD_STACK_ENABLED == "1":
     CLOUD_STACK_ENABLED = True
@@ -501,4 +511,3 @@ if NFSAAS_ENABLED == "1":
     NFSAAS_ENABLED = True
 else:
     NFSAAS_ENABLED = False
-

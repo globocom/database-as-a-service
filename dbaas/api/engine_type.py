@@ -4,8 +4,8 @@ from rest_framework import viewsets, serializers
 from physical import models
 from .plan import PlanSerializer
 
-class EngineTypeSerializer(serializers.HyperlinkedModelSerializer):
 
+class EngineTypeSerializer(serializers.HyperlinkedModelSerializer):
 
     plans = PlanSerializer(many=True, read_only=True)
 
@@ -15,10 +15,9 @@ class EngineTypeSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class EngineTypeAPI(viewsets.ReadOnlyModelViewSet):
+
     """
     EngineType API
     """
     serializer_class = EngineTypeSerializer
     queryset = models.EngineType.objects.all()
-
-

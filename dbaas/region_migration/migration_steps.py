@@ -5,11 +5,13 @@ import re
 
 
 class Step(tuple):
+
     'Step(engine, status, description, order, warning, step_classes)'
 
     __slots__ = ()
 
-    _fields = ('engine', 'status', 'description', 'order', 'warning', 'step_classes')
+    _fields = ('engine', 'status', 'description',
+               'order', 'warning', 'step_classes')
 
     def __new__(_cls, engine, status, description, order, warning, step_classes):
         'Create new instance of Step(engine, status, description, order, warning, step_classes)'
@@ -35,7 +37,7 @@ class Step(tuple):
     def _replace(_self, **kwds):
         'Return a new Step object replacing specified fields with new values'
         result = _self._make(map(kwds.pop, ('engine', 'status', 'description',
-                             'order', 'warning', 'step_classes'), _self))
+                                            'order', 'warning', 'step_classes'), _self))
         if kwds:
             raise ValueError('Got unexpected field names: %r' % kwds.keys())
         return result
@@ -138,7 +140,6 @@ def get_redis_steps():
                  settings.REDIS_REGION_MIGRATION_5)
 
     return (step1, step2, step3, step4, step5)
-
 
 
 def get_engine_steps(engine):

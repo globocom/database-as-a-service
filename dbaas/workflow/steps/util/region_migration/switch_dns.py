@@ -10,6 +10,7 @@ LOG = logging.getLogger(__name__)
 
 
 class SwitchDNS(BaseStep):
+
     def __unicode__(self):
         return "Switching DNS..."
 
@@ -20,21 +21,24 @@ class SwitchDNS(BaseStep):
             workflow_dict['objects_changed'] = []
 
             switch_dns_forward(databaseinfra=databaseinfra,
-                               source_object_list=workflow_dict['source_hosts'],
+                               source_object_list=workflow_dict[
+                                   'source_hosts'],
                                ip_attribute_name='address',
                                dns_attribute_name='hostname',
                                equivalent_atribute_name='future_host',
                                workflow_dict=workflow_dict)
 
             switch_dns_forward(databaseinfra=databaseinfra,
-                               source_object_list=workflow_dict['source_instances'],
+                               source_object_list=workflow_dict[
+                                   'source_instances'],
                                ip_attribute_name='address',
                                dns_attribute_name='dns',
                                equivalent_atribute_name='future_instance',
                                workflow_dict=workflow_dict)
 
             switch_dns_forward(databaseinfra=databaseinfra,
-                               source_object_list=workflow_dict['source_secondary_ips'],
+                               source_object_list=workflow_dict[
+                                   'source_secondary_ips'],
                                ip_attribute_name='ip',
                                dns_attribute_name='dns',
                                equivalent_atribute_name='equivalent_dbinfraattr',
@@ -60,24 +64,28 @@ class SwitchDNS(BaseStep):
                         databaseinfra=databaseinfra,
                         source_object_list=[object_changed['source_object'], ],
                         ip_attribute_name=object_changed['ip_attribute_name'],
-                        dns_attribute_name=object_changed['dns_attribute_name'],
+                        dns_attribute_name=object_changed[
+                            'dns_attribute_name'],
                         equivalent_atribute_name=object_changed['equivalent_atribute_name'])
                 return True
 
             switch_dns_backward(databaseinfra=databaseinfra,
-                                source_object_list=workflow_dict['source_hosts'],
+                                source_object_list=workflow_dict[
+                                    'source_hosts'],
                                 ip_attribute_name='address',
                                 dns_attribute_name='hostname',
                                 equivalent_atribute_name='future_host')
 
             switch_dns_backward(databaseinfra=databaseinfra,
-                                source_object_list=workflow_dict['source_instances'],
+                                source_object_list=workflow_dict[
+                                    'source_instances'],
                                 ip_attribute_name='address',
                                 dns_attribute_name='dns',
                                 equivalent_atribute_name='future_instance')
 
             switch_dns_backward(databaseinfra=databaseinfra,
-                                source_object_list=workflow_dict['source_secondary_ips'],
+                                source_object_list=workflow_dict[
+                                    'source_secondary_ips'],
                                 ip_attribute_name='ip',
                                 dns_attribute_name='dns',
                                 equivalent_atribute_name='equivalent_dbinfraattr')

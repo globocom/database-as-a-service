@@ -18,7 +18,8 @@ class ExtraDns(BaseModel):
                                  unique=False, null=False, blank=False,
                                  on_delete=models.CASCADE)
 
-    dns = models.CharField(verbose_name=_("DNS"), max_length=200, null=False, blank=False,)
+    dns = models.CharField(
+        verbose_name=_("DNS"), max_length=200, null=False, blank=False,)
 
     class Meta:
         permissions = (
@@ -41,7 +42,8 @@ def extra_dns_post_save(sender, **kwargs):
 
     if is_new:
         database = extra_dns.database
-        DBMonitorProvider().insert_extra_dns(database=database, extra_dns=extra_dns.dns)
+        DBMonitorProvider().insert_extra_dns(
+            database=database, extra_dns=extra_dns.dns)
 
 
 @receiver(post_delete, sender=ExtraDns)
@@ -54,4 +56,5 @@ def extra_dns_post_delete(sender, **kwargs):
     extra_dns = kwargs.get("instance")
     database = extra_dns.database
 
-    DBMonitorProvider().remove_extra_dns(database=database, extra_dns=extra_dns.dns)
+    DBMonitorProvider().remove_extra_dns(
+        database=database, extra_dns=extra_dns.dns)

@@ -67,7 +67,7 @@ class MaintenanceAdmin(admin.DjangoServicesAdmin):
         if workers and workers != celery_workers:
             LOG.warn("At least one celery worker is down! :(")
             messages.add_message(request, messages.ERROR,
-                "Maintenance can't be revoked because at least one celery worker is down!",)
+                                 "Maintenance can't be revoked because at least one celery worker is down!",)
             return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
         maintenance = models.Maintenance.objects.get(id=id)
@@ -99,7 +99,8 @@ class MaintenanceAdmin(admin.DjangoServicesAdmin):
     def get_urls(self):
         from django.conf.urls import url
         urls = super(MaintenanceAdmin, self).get_urls()
-        my_urls = list((url(r'^(.+)/%(url)s/$' % b, self.admin_site.admin_view(b['func'])) for b in self.buttons))
+        my_urls = list(
+            (url(r'^(.+)/%(url)s/$' % b, self.admin_site.admin_view(b['func'])) for b in self.buttons))
         return my_urls + urls
 
     def get_readonly_fields(self, request, obj=None):
@@ -136,7 +137,8 @@ class MaintenanceAdmin(admin.DjangoServicesAdmin):
 
     def affected_hosts_html(self, maintenance):
         html = []
-        html.append("<a href='../hostmaintenance/?maintenance__id=%s'>%s</a>" % (maintenance.id, maintenance.affected_hosts))
+        html.append("<a href='../hostmaintenance/?maintenance__id=%s'>%s</a>" %
+                    (maintenance.id, maintenance.affected_hosts))
 
         return format_html("".join(html))
 

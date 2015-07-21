@@ -201,7 +201,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
     def multiple_initialize_migration(self, queryset, request, instances):
         from region_migration.models import DatabaseRegionMigration
-        url = reverse('admin:region_migration_databaseregionmigration_changelist')
+        url = reverse(
+            'admin:region_migration_databaseregionmigration_changelist')
 
         for database in instances:
             region_migration = DatabaseRegionMigration(database=database,
@@ -573,7 +574,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         from_option = request.POST.get('change_from') or '2hours'
         granurality = self.get_granurality(from_option) or '20minutes'
 
-        from_options = self.build_select_options(from_option, self.get_from_options())
+        from_options = self.build_select_options(
+            from_option, self.get_from_options())
 
         graph_data = get_metric_datapoints_for(engine, db_name, hostname,
                                                url=URL, metric_name=metricname,
@@ -763,7 +765,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
         form = None
         if request.method == 'POST':
-            form = RestoreDatabaseForm(request.POST, initial={"database_id": database_id},)
+            form = RestoreDatabaseForm(
+                request.POST, initial={"database_id": database_id},)
             if form.is_valid():
                 target_snapshot = request.POST.get('target_snapshot')
 
@@ -803,10 +806,11 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         from region_migration.models import DatabaseRegionMigration
 
         database = Database.objects.get(id=database_id)
-        url = reverse('admin:region_migration_databaseregionmigration_changelist')
+        url = reverse(
+            'admin:region_migration_databaseregionmigration_changelist')
 
-        region_migration =DatabaseRegionMigration(database=database,
-                                                  current_step=0,)
+        region_migration = DatabaseRegionMigration(database=database,
+                                                   current_step=0,)
 
         if database.is_in_quarantine:
             self.message_user(
@@ -825,9 +829,11 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
         try:
             region_migration.save()
-            self.message_user(request, "Migration for {} started!".format(database.name), level=messages.SUCCESS)
+            self.message_user(request, "Migration for {} started!".format(
+                database.name), level=messages.SUCCESS)
         except IntegrityError, e:
-            self.message_user(request, "Database {} is already migrating!".format(database.name), level=messages.ERROR)
+            self.message_user(request, "Database {} is already migrating!".format(
+                database.name), level=messages.ERROR)
 
         return HttpResponseRedirect(url)
 

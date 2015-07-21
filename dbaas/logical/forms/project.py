@@ -6,6 +6,7 @@ from ..models import Project
 
 
 class ProjectForm(models.ModelForm):
+
     class Meta:
         model = Project
         widgets = {

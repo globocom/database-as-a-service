@@ -10,19 +10,21 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         # Adding field 'Environment.equivalent_environment'
         db.add_column(u'physical_environment', 'equivalent_environment',
-                      self.gf('django.db.models.fields.related.ForeignKey')(to=orm['physical.Environment'], null=True),
+                      self.gf('django.db.models.fields.related.ForeignKey')(
+                          to=orm['physical.Environment'], null=True),
                       keep_default=False)
 
         # Adding field 'Host.future_host'
         db.add_column(u'physical_host', 'future_host',
-                      self.gf('django.db.models.fields.related.ForeignKey')(to=orm['physical.Host'], null=True),
+                      self.gf('django.db.models.fields.related.ForeignKey')(
+                          to=orm['physical.Host'], null=True),
                       keep_default=False)
 
         # Adding field 'Plan.equivalent_plan'
         db.add_column(u'physical_plan', 'equivalent_plan',
-                      self.gf('django.db.models.fields.related.ForeignKey')(to=orm['physical.Plan'], null=True),
+                      self.gf('django.db.models.fields.related.ForeignKey')(
+                          to=orm['physical.Plan'], null=True),
                       keep_default=False)
-
 
     def backwards(self, orm):
         # Deleting field 'Environment.equivalent_environment'
@@ -33,7 +35,6 @@ class Migration(SchemaMigration):
 
         # Deleting field 'Plan.equivalent_plan'
         db.delete_column(u'physical_plan', 'equivalent_plan_id')
-
 
     models = {
         u'physical.databaseinfra': {

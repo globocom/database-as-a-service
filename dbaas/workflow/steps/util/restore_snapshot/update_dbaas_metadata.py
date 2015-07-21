@@ -16,13 +16,15 @@ class UpdateDbaaSMetadata(BaseStep):
     def do(self, workflow_dict):
         try:
             for host_and_export in workflow_dict['hosts_and_exports']:
-                old_host_attr = HostAttr.objects.get(nfsaas_path=host_and_export['old_export_path'])
+                old_host_attr = HostAttr.objects.get(
+                    nfsaas_path=host_and_export['old_export_path'])
                 old_host_attr.is_active = False
                 old_host_attr.save()
 
                 new_host_attr = HostAttr()
                 new_host_attr.host = old_host_attr.host
-                new_host_attr.nfsaas_export_id = host_and_export['new_export_id']
+                new_host_attr.nfsaas_export_id = host_and_export[
+                    'new_export_id']
                 new_host_attr.nfsaas_path = host_and_export['new_export_path']
                 new_host_attr.is_active = True
                 new_host_attr.save()

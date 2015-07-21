@@ -16,7 +16,7 @@ class ExtraDnsSerializer(serializers.HyperlinkedModelSerializer):
     def save_object(self, obj, force_insert=False, **kwargs):
         if force_insert:
             # ignore password, generating a new random
-            self.object = models.ExtraDns(database= obj.database, dns=obj)
+            self.object = models.ExtraDns(database=obj.database, dns=obj)
         # else:
         #     # it's allowed only change password
         #     self.object.save()
@@ -24,6 +24,7 @@ class ExtraDnsSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class ExtraDnsAPI(viewsets.ModelViewSet):
+
     """
     *   ### __List ExtraDns__
 
@@ -51,10 +52,12 @@ class ExtraDnsAPI(viewsets.ModelViewSet):
             raise exceptions.PermissionDenied
 
     def create(self, request):
-        serializer = self.get_serializer(data=request.DATA, files=request.FILES)
+        serializer = self.get_serializer(
+            data=request.DATA, files=request.FILES)
 
         if serializer.is_valid():
-            self.check_perm(request.user, 'extra_dns.add_extradns', serializer.object)
+            self.check_perm(
+                request.user, 'extra_dns.add_extradns', serializer.object)
             self.pre_save(serializer.object)
             self.object = serializer.save(force_insert=True)
             data = serializer.to_native(self.object)

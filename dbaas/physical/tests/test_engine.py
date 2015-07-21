@@ -8,7 +8,9 @@ from django.db import transaction
 
 from ..models import Engine, EngineType
 
+
 class EngineTestCase(TestCase):
+
     """
     Tests Engine and EngineType
     """
@@ -29,7 +31,8 @@ class EngineTestCase(TestCase):
 
     def test_error_duplicate_engine_type(self):
         with transaction.atomic():
-            self.assertRaises(IntegrityError, EngineType.objects.create, name="Test")
+            self.assertRaises(
+                IntegrityError, EngineType.objects.create, name="Test")
 
     def test_create_engine_in_bd(self):
 
@@ -37,8 +40,7 @@ class EngineTestCase(TestCase):
 
         self.assertTrue(engine_type.id)
 
-        engine = Engine.objects.create(version="1.2.3", engine_type=engine_type)
+        engine = Engine.objects.create(
+            version="1.2.3", engine_type=engine_type)
 
         self.assertTrue(engine.id)
-
-

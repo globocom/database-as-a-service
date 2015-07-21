@@ -10,14 +10,13 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         # Adding field 'Plan.max_db_size'
         db.add_column(u'physical_plan', 'max_db_size',
-                      self.gf('django.db.models.fields.IntegerField')(default=0),
+                      self.gf('django.db.models.fields.IntegerField')(
+                          default=0),
                       keep_default=False)
-
 
     def backwards(self, orm):
         # Deleting field 'Plan.max_db_size'
         db.delete_column(u'physical_plan', 'max_db_size')
-
 
     models = {
         u'physical.databaseinfra': {

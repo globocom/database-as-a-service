@@ -23,7 +23,8 @@ def purge_quarantine(self,):
 
         LOG.info("id: %s | task: %s | kwargs: %s | args: %s" % (
             self.request.id, self.request.task, self.request.kwargs, str(self.request.args)))
-        quarantine_time = Configuration.get_by_name_as_int('quarantine_retention_days')
+        quarantine_time = Configuration.get_by_name_as_int(
+            'quarantine_retention_days')
         quarantine_time_dt = date.today() - timedelta(days=quarantine_time)
 
         databases = Database.objects.filter(is_in_quarantine=True,
@@ -40,11 +41,13 @@ def purge_quarantine(self,):
             LOG.info("The database %s was deleted, because it was set to quarentine %d days ago" % (
                 database.name, quarantine_time))
 
-        task_history.update_status_for(TaskHistory.STATUS_SUCCESS, details='Databases destroyed successfully')
+        task_history.update_status_for(
+            TaskHistory.STATUS_SUCCESS, details='Databases destroyed successfully')
         return
 
     except Exception:
-        task_history.update_status_for(TaskHistory.STATUS_ERROR, details="Error")
+        task_history.update_status_for(
+            TaskHistory.STATUS_ERROR, details="Error")
         return
     finally:
         AuditRequest.cleanup_request()

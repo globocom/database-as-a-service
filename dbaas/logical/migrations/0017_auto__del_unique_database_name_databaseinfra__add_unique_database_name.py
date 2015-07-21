@@ -8,20 +8,22 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Removing unique constraint on 'Database', fields ['name', 'databaseinfra']
+        # Removing unique constraint on 'Database', fields ['name',
+        # 'databaseinfra']
         db.delete_unique(u'logical_database', ['name', 'databaseinfra_id'])
 
-        # Adding unique constraint on 'Database', fields ['name', 'environment']
+        # Adding unique constraint on 'Database', fields ['name',
+        # 'environment']
         db.create_unique(u'logical_database', ['name', 'environment_id'])
 
-
     def backwards(self, orm):
-        # Removing unique constraint on 'Database', fields ['name', 'environment']
+        # Removing unique constraint on 'Database', fields ['name',
+        # 'environment']
         db.delete_unique(u'logical_database', ['name', 'environment_id'])
 
-        # Adding unique constraint on 'Database', fields ['name', 'databaseinfra']
+        # Adding unique constraint on 'Database', fields ['name',
+        # 'databaseinfra']
         db.create_unique(u'logical_database', ['name', 'databaseinfra_id'])
-
 
     models = {
         u'account.team': {

@@ -14,6 +14,7 @@ LOG = logging.getLogger(__name__)
 
 
 class CreateDns(BaseStep):
+
     def __unicode__(self):
         return "Requesting DNS..."
 
@@ -53,7 +54,8 @@ class CreateDns(BaseStep):
                 if workflow_dict['qt'] == 1:
                     LOG.info("Updating databaseinfra dns endpoint")
                     databaseinfra = workflow_dict['databaseinfra']
-                    databaseinfra.endpoint_dns = instance.dns + ':%i' % instance.port
+                    databaseinfra.endpoint_dns = instance.dns + \
+                        ':%i' % instance.port
                     databaseinfra.save()
                     workflow_dict['databaseinfra'] = databaseinfra
 
@@ -66,9 +68,8 @@ class CreateDns(BaseStep):
                     name=instance_name[1],
                     ip=instance.address,
                     type=INSTANCE,
-                    database_sufix = 'sentinel')
+                    database_sufix='sentinel')
                 instance.save()
-
 
             LOG.info("Calling dnsapi provider...")
             DNSAPIProvider.create_database_dns(
@@ -102,4 +103,3 @@ class CreateDns(BaseStep):
             workflow_dict['exceptions']['traceback'].append(traceback)
 
             return False
-

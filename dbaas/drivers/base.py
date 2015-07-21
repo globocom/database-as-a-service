@@ -183,7 +183,8 @@ class BaseDriver(object):
 
     def get_database_instances(self, ):
         driver_name = self.name.upper()
-        instances = [instance if instance.instance_type == instance.__getattribute__(driver_name) else None for instance in self.databaseinfra.instances.all()]
+        instances = [instance if instance.instance_type == instance.__getattribute__(
+            driver_name) else None for instance in self.databaseinfra.instances.all()]
         return filter(None, instances)
 
     def get_master_instance(self, ):

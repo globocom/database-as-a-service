@@ -16,18 +16,20 @@ from logical.models import Database
 
 LOG = logging.getLogger(__name__)
 
+
 @login_required
 def profile(request, user_id=None):
     user = None
     databases = None
     teams = None
     roles = None
-    try :
+    try:
         user = User.objects.get(id=user_id)
         teams = Team.objects.filter(users=user)
-        databases = Database.alive.filter(team__in=[team.id for team in teams]).order_by('team')
+        databases = Database.alive.filter(
+            team__in=[team.id for team in teams]).order_by('team')
         roles = [team.role for team in teams]
     except Exception, e:
         LOG.warning("Ops... %s" % e)
-    
+
     return render_to_response("account/profile.html", locals(), context_instance=RequestContext(request))

@@ -10,14 +10,13 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         # Adding field 'Instance.future_instance'
         db.add_column(u'physical_instance', 'future_instance',
-                      self.gf('django.db.models.fields.related.ForeignKey')(to=orm['physical.Instance'], null=True, blank=True),
+                      self.gf('django.db.models.fields.related.ForeignKey')(
+                          to=orm['physical.Instance'], null=True, blank=True),
                       keep_default=False)
-
 
     def backwards(self, orm):
         # Deleting field 'Instance.future_instance'
         db.delete_column(u'physical_instance', 'future_instance_id')
-
 
     models = {
         u'physical.databaseinfra': {

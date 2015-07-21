@@ -8,6 +8,7 @@ LOG = logging.getLogger(__name__)
 
 
 class CheckDatabaseConnection(BaseStep):
+
     def __unicode__(self):
         return "Checking database connection..."
 

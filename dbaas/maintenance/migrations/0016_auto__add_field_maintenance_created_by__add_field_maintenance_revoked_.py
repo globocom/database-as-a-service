@@ -10,14 +10,15 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         # Adding field 'Maintenance.created_by'
         db.add_column(u'maintenance_maintenance', 'created_by',
-                      self.gf('django.db.models.fields.CharField')(max_length=255, null=True, blank=True),
+                      self.gf('django.db.models.fields.CharField')(
+                          max_length=255, null=True, blank=True),
                       keep_default=False)
 
         # Adding field 'Maintenance.revoked_by'
         db.add_column(u'maintenance_maintenance', 'revoked_by',
-                      self.gf('django.db.models.fields.CharField')(max_length=255, null=True, blank=True),
+                      self.gf('django.db.models.fields.CharField')(
+                          max_length=255, null=True, blank=True),
                       keep_default=False)
-
 
     def backwards(self, orm):
         # Deleting field 'Maintenance.created_by'
@@ -25,7 +26,6 @@ class Migration(SchemaMigration):
 
         # Deleting field 'Maintenance.revoked_by'
         db.delete_column(u'maintenance_maintenance', 'revoked_by')
-
 
     models = {
         u'maintenance.hostmaintenance': {

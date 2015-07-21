@@ -8,6 +8,7 @@ LOG = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
+
     '''
         remove database automatically when quarantine date expired
     '''

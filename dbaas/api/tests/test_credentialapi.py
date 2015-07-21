@@ -43,11 +43,13 @@ class CredentialAPITestCase(DbaaSAPITestCase, BasicTestsMixin):
 
         # assert response
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(self.url_detail(obj.pk), response.data['_links']['self'])
+        self.assertEqual(
+            self.url_detail(obj.pk), response.data['_links']['self'])
 
         # check fields
         new_obj = Credential.objects.get(pk=obj.pk)
-        self.assertNotEqual(new_obj.password, obj.password, 'Passwod not changed')
+        self.assertNotEqual(
+            new_obj.password, obj.password, 'Passwod not changed')
         self.assertEqual(new_obj.password, data['password'])
 
     def test_post_only_allow_you_create_credential_if_you_have_permission_on_datatabase(self):
@@ -55,11 +57,13 @@ class CredentialAPITestCase(DbaaSAPITestCase, BasicTestsMixin):
 
         # create new team
         self.role = Role.objects.get_or_create(name="other_role")[0]
-        obj.database.team = Team.objects.get_or_create(name="other_team", role=self.role)[0]
+        obj.database.team = Team.objects.get_or_create(
+            name="other_team", role=self.role)[0]
         obj.database.save()
 
         url = "%s" % self.url_list()
-        response = self.client.post(url, self.payload(obj, creation=True), content_type='application/json')
+        response = self.client.post(
+            url, self.payload(obj, creation=True), content_type='application/json')
 
         # assert response
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -73,4 +77,5 @@ class CredentialAPITestCase(DbaaSAPITestCase, BasicTestsMixin):
 
         # assert response
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertTrue('already exists' in response.data['__all__'][0], "Wrong response: %s" % response.data['__all__'][0])
+        self.assertTrue('already exists' in response.data['__all__'][
+                        0], "Wrong response: %s" % response.data['__all__'][0])

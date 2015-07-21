@@ -3,5 +3,6 @@ from .views import CeleryHealthCheckView
 
 
 urlpatterns = patterns('',
-    url(r"^celery/healthcheck.html", CeleryHealthCheckView, name="celery-healthcheck"),
-)
+                       url(r"^celery/healthcheck.html",
+                           CeleryHealthCheckView, name="celery-healthcheck"),
+                       )

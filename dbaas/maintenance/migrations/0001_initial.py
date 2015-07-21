@@ -10,34 +10,48 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         # Adding model 'Maintenance'
         db.create_table(u'maintenance_maintenance', (
-            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('created_at', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
-            ('updated_at', self.gf('django.db.models.fields.DateTimeField')(auto_now=True, blank=True)),
+            (u'id', self.gf('django.db.models.fields.AutoField')
+             (primary_key=True)),
+            ('created_at', self.gf('django.db.models.fields.DateTimeField')
+             (auto_now_add=True, blank=True)),
+            ('updated_at', self.gf('django.db.models.fields.DateTimeField')
+             (auto_now=True, blank=True)),
             ('description', self.gf('django.db.models.fields.TextField')()),
-            ('scheduled_for', self.gf('django.db.models.fields.DateTimeField')()),
+            ('scheduled_for', self.gf(
+                'django.db.models.fields.DateTimeField')()),
             ('main_script', self.gf('django.db.models.fields.TextField')()),
-            ('rollback_script', self.gf('django.db.models.fields.TextField')(null=True, blank=True)),
-            ('check_script', self.gf('django.db.models.fields.TextField')(null=True, blank=True)),
+            ('rollback_script', self.gf('django.db.models.fields.TextField')
+             (null=True, blank=True)),
+            ('check_script', self.gf('django.db.models.fields.TextField')
+             (null=True, blank=True)),
             ('host_query', self.gf('django.db.models.fields.TextField')()),
         ))
         db.send_create_signal(u'maintenance', ['Maintenance'])
 
         # Adding model 'HostMaintenance'
         db.create_table(u'maintenance_hostmaintenance', (
-            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('created_at', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
-            ('updated_at', self.gf('django.db.models.fields.DateTimeField')(auto_now=True, blank=True)),
+            (u'id', self.gf('django.db.models.fields.AutoField')
+             (primary_key=True)),
+            ('created_at', self.gf('django.db.models.fields.DateTimeField')
+             (auto_now_add=True, blank=True)),
+            ('updated_at', self.gf('django.db.models.fields.DateTimeField')
+             (auto_now=True, blank=True)),
             ('started_at', self.gf('django.db.models.fields.DateTimeField')()),
-            ('finished_at', self.gf('django.db.models.fields.DateTimeField')()),
+            ('finished_at', self.gf(
+                'django.db.models.fields.DateTimeField')()),
             ('main_log', self.gf('django.db.models.fields.TextField')()),
-            ('rollback_log', self.gf('django.db.models.fields.TextField')(null=True, blank=True)),
-            ('check_log', self.gf('django.db.models.fields.TextField')(null=True, blank=True)),
-            ('status', self.gf('django.db.models.fields.IntegerField')(default=4)),
-            ('host', self.gf('django.db.models.fields.related.ForeignKey')(related_name=u'host_maintenance', to=orm['physical.Host'])),
-            ('maintenance', self.gf('django.db.models.fields.related.ForeignKey')(related_name=u'maintenance', to=orm['maintenance.Maintenance'])),
+            ('rollback_log', self.gf('django.db.models.fields.TextField')
+             (null=True, blank=True)),
+            ('check_log', self.gf('django.db.models.fields.TextField')
+             (null=True, blank=True)),
+            ('status', self.gf(
+                'django.db.models.fields.IntegerField')(default=4)),
+            ('host', self.gf('django.db.models.fields.related.ForeignKey')
+             (related_name=u'host_maintenance', to=orm['physical.Host'])),
+            ('maintenance', self.gf('django.db.models.fields.related.ForeignKey')(
+                related_name=u'maintenance', to=orm['maintenance.Maintenance'])),
         ))
         db.send_create_signal(u'maintenance', ['HostMaintenance'])
-
 
     def backwards(self, orm):
         # Deleting model 'Maintenance'
@@ -45,7 +59,6 @@ class Migration(SchemaMigration):
 
         # Deleting model 'HostMaintenance'
         db.delete_table(u'maintenance_hostmaintenance')
-
 
     models = {
         u'maintenance.hostmaintenance': {

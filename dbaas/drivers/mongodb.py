@@ -59,18 +59,19 @@ class MongoDB(BaseDriver):
 
     def __concatenate_instances(self):
         return ",".join(["%s:%s" % (instance.address, instance.port)
-                        for instance in self.databaseinfra.instances.filter(is_arbiter=False, is_active=True).all()])
+                         for instance in self.databaseinfra.instances.filter(is_arbiter=False, is_active=True).all()])
 
     def __concatenate_instances_dns(self):
         return ",".join(["%s:%s" % (instance.dns, instance.port)
-                        for instance in self.databaseinfra.instances.filter(is_arbiter=False, is_active=True).all()])
+                         for instance in self.databaseinfra.instances.filter(is_arbiter=False, is_active=True).all()])
 
     def __concatenate_instances_dns_only(self):
         return ",".join(["%s" % (instance.dns)
-                        for instance in self.databaseinfra.instances.filter(is_arbiter=False, is_active=True).all()])
+                         for instance in self.databaseinfra.instances.filter(is_arbiter=False, is_active=True).all()])
 
     def get_dns_port(self):
-        port = self.databaseinfra.instances.filter(is_arbiter=False, is_active=True).all()[0].port
+        port = self.databaseinfra.instances.filter(
+            is_arbiter=False, is_active=True).all()[0].port
         dns = self.__concatenate_instances_dns_only()
         return dns, port
 
@@ -109,15 +110,20 @@ class MongoDB(BaseDriver):
             self.databaseinfra = instance.databaseinfra
         try:
             # mongo uses timeout in mili seconds
-            connection_timeout_in_miliseconds = Configuration.get_by_name_as_int('mongo_connect_timeout', default=MONGO_CONNECTION_DEFAULT_TIMEOUT) * 1000
+            connection_timeout_in_miliseconds = Configuration.get_by_name_as_int(
+                'mongo_connect_timeout', default=MONGO_CONNECTION_DEFAULT_TIMEOUT) * 1000
 
-            client = pymongo.MongoClient(connection_address, connectTimeoutMS=connection_timeout_in_miliseconds)
+            client = pymongo.MongoClient(
+                connection_address, connectTimeoutMS=connection_timeout_in_miliseconds)
             if self.databaseinfra.user and self.databaseinfra.password:
-                LOG.debug('Authenticating databaseinfra %s', self.databaseinfra)
-                client.admin.authenticate(self.databaseinfra.user, self.databaseinfra.password)
+                LOG.debug(
+                    'Authenticating databaseinfra %s', self.databaseinfra)
+                client.admin.authenticate(
+                    self.databaseinfra.user, self.databaseinfra.password)
             return client
         except TypeError:
-            raise AuthenticationError(message='Invalid address: ' % connection_address)
+            raise AuthenticationError(
+                message='Invalid address: ' % connection_address)
 
     def get_client(self, instance):
         return self.__mongo_client__(instance)
@@ -142,18 +148,19 @@ class MongoDB(BaseDriver):
         except pymongo.errors.OperationFailure, e:
             if e.code == 18:
                 raise AuthenticationError('Invalid credentials to databaseinfra %s: %s' %
-                                         (self.databaseinfra, self.__get_admin_connection()))
+                                          (self.databaseinfra, self.__get_admin_connection()))
             raise ConnectionError('Error connecting to databaseinfra %s (%s): %s' %
-                                 (self.databaseinfra, self.__get_admin_connection(), e.message))
+                                  (self.databaseinfra, self.__get_admin_connection(), e.message))
         except pymongo.errors.PyMongoError, e:
             raise ConnectionError('Error connecting to databaseinfra %s (%s): %s' %
-                                 (self.databaseinfra, self.__get_admin_connection(), e.message))
+                                  (self.databaseinfra, self.__get_admin_connection(), e.message))
         finally:
             try:
                 if client:
                     client.disconnect()
             except:
-                LOG.warn('Error disconnecting from databaseinfra %s. Ignoring...', self.databaseinfra, exc_info=True)
+                LOG.warn('Error disconnecting from databaseinfra %s. Ignoring...',
+                         self.databaseinfra, exc_info=True)
 
     def check_status(self, instance=None):
         with self.pymongo(instance=instance) as client:
@@ -161,10 +168,12 @@ class MongoDB(BaseDriver):
                 ok = client.admin.command('ping')
                 return True
             except pymongo.errors.PyMongoError, e:
-                raise ConnectionError('Error connection to databaseinfra %s: %s' % (self.databaseinfra, e.message))
+                raise ConnectionError(
+                    'Error connection to databaseinfra %s: %s' % (self.databaseinfra, e.message))
 
             if isinstance(ok, dict) and ok.get('ok', 0) != 1.0:
-                raise ConnectionError('Invalid status for ping command to databaseinfra %s' % self.databaseinfra)
+                raise ConnectionError(
+                    'Invalid status for ping command to databaseinfra %s' % self.databaseinfra)
 
     def list_databases(self, instance=None):
         dbs_names = []
@@ -175,24 +184,29 @@ class MongoDB(BaseDriver):
                     dbs_names.append(db['name'])
                 return dbs_names
             except pymongo.errors.PyMongoError, e:
-                raise ConnectionError('Error connection to databaseinfra %s: %s' % (self.databaseinfra, e.message))
+                raise ConnectionError(
+                    'Error connection to databaseinfra %s: %s' % (self.databaseinfra, e.message))
 
     def info(self):
-        databaseinfra_status = DatabaseInfraStatus(databaseinfra_model=self.databaseinfra)
+        databaseinfra_status = DatabaseInfraStatus(
+            databaseinfra_model=self.databaseinfra)
 
         with self.pymongo() as client:
             json_server_info = client.server_info()
             json_list_databases = client.admin.command('listDatabases')
 
-            databaseinfra_status.version = json_server_info.get('version', None)
-            databaseinfra_status.used_size_in_bytes = json_list_databases.get('totalSize', 0)
+            databaseinfra_status.version = json_server_info.get(
+                'version', None)
+            databaseinfra_status.used_size_in_bytes = json_list_databases.get(
+                'totalSize', 0)
 
             list_databases = self.list_databases()
             for database in self.databaseinfra.databases.all():
                 database_name = database.name
-                json_db_status = getattr(client, database_name).command('dbStats')
+                json_db_status = getattr(
+                    client, database_name).command('dbStats')
                 db_status = DatabaseStatus(database)
-                #is_alive?
+                # is_alive?
                 try:
                     if self.check_status() and (database_name in list_databases):
                         db_status.is_alive = True
@@ -202,14 +216,17 @@ class MongoDB(BaseDriver):
                 dataSize = json_db_status.get("dataSize") or 0
                 indexSize = json_db_status.get("indexSize") or 0
                 db_status.used_size_in_bytes = dataSize + indexSize
-                db_status.total_size_in_bytes = json_db_status.get("fileSize") or 0
-                databaseinfra_status.databases_status[database_name] = db_status
+                db_status.total_size_in_bytes = json_db_status.get(
+                    "fileSize") or 0
+                databaseinfra_status.databases_status[
+                    database_name] = db_status
 
         return databaseinfra_status
 
     def create_user(self, credential, roles=["readWrite", "dbAdmin"]):
         with self.pymongo(database=credential.database) as mongo_database:
-            mongo_database.add_user(credential.user, password=credential.password, roles=roles)
+            mongo_database.add_user(
+                credential.user, password=credential.password, roles=roles)
 
     def update_user(self, credential):
         self.create_user(credential)
@@ -231,7 +248,8 @@ class MongoDB(BaseDriver):
     def change_default_pwd(self, instance):
         with self.pymongo(instance=instance) as client:
             new_password = make_db_random_password()
-            client.admin.add_user(name=instance.databaseinfra.user, password=new_password)
+            client.admin.add_user(
+                name=instance.databaseinfra.user, password=new_password)
             return new_password
 
     def clone(self):
@@ -253,7 +271,8 @@ class MongoDB(BaseDriver):
                     return True
 
             except pymongo.errors.PyMongoError, e:
-                raise ConnectionError('Error connection to databaseinfra %s: %s' % (self.databaseinfra, e.message))
+                raise ConnectionError(
+                    'Error connection to databaseinfra %s: %s' % (self.databaseinfra, e.message))
 
     def check_instance_is_master(self, instance):
         if instance.is_arbiter:
@@ -271,7 +290,8 @@ class MongoDB(BaseDriver):
                     return False
 
             except pymongo.errors.PyMongoError, e:
-                raise ConnectionError('Error connection to databaseinfra %s: %s' % (self.databaseinfra, e.message))
+                raise ConnectionError(
+                    'Error connection to databaseinfra %s: %s' % (self.databaseinfra, e.message))
 
     def get_replication_info(self, instance):
         if self.check_instance_is_master(instance=instance):
@@ -279,11 +299,13 @@ class MongoDB(BaseDriver):
 
         with self.pymongo() as client:
             result = client.admin.command('replSetGetStatus')
-            primary_opttime = result['members'][0]['optimeDate'].replace(tzinfo=tz.tzutc()).astimezone(tz.tzlocal())
+            primary_opttime = result['members'][0]['optimeDate'].replace(
+                tzinfo=tz.tzutc()).astimezone(tz.tzlocal())
 
         with self.pymongo(instance=instance) as client:
             result = client.admin.command('replSetGetStatus')
-            instance_opttime = result['members'][0]['optimeDate'].replace(tzinfo=tz.tzutc()).astimezone(tz.tzlocal())
+            instance_opttime = result['members'][0]['optimeDate'].replace(
+                tzinfo=tz.tzutc()).astimezone(tz.tzlocal())
 
         delay = primary_opttime - instance_opttime
 

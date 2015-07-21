@@ -19,7 +19,8 @@ def run_vm_script(workflow_dict, context_dict, script, reverse=False, wait=0):
     try:
         instances_detail = workflow_dict['instances_detail']
 
-        final_context_dict = dict(context_dict.items() + workflow_dict['initial_context_dict'].items())
+        final_context_dict = dict(
+            context_dict.items() + workflow_dict['initial_context_dict'].items())
 
         if reverse:
             instances_detail_final = instances_detail[::-1]
@@ -38,7 +39,8 @@ def run_vm_script(workflow_dict, context_dict, script, reverse=False, wait=0):
                                               command=command,
                                               output=output)
             if return_code:
-                raise Exception("Could not run script. Output: {}".format(output))
+                raise Exception(
+                    "Could not run script. Output: {}".format(output))
 
             sleep(wait)
 
@@ -56,7 +58,8 @@ def run_vm_script(workflow_dict, context_dict, script, reverse=False, wait=0):
 def start_vm(workflow_dict):
     try:
         environment = workflow_dict['environment']
-        cs_credentials = get_credentials_for(environment=environment, credential_type=CredentialType.CLOUDSTACK)
+        cs_credentials = get_credentials_for(
+            environment=environment, credential_type=CredentialType.CLOUDSTACK)
         cs_provider = CloudStackProvider(credentials=cs_credentials)
         instances_detail = workflow_dict['instances_detail']
 
@@ -64,7 +67,8 @@ def start_vm(workflow_dict):
             instance = instance_detail['instance']
             host = instance.hostname
             host_csattr = HostAttr.objects.get(host=host)
-            started = cs_provider.start_virtual_machine(vm_id=host_csattr.vm_id)
+            started = cs_provider.start_virtual_machine(
+                vm_id=host_csattr.vm_id)
             if not started:
                 raise Exception("Could not start host {}".format(host))
 
@@ -72,7 +76,8 @@ def start_vm(workflow_dict):
             instance = instance_detail['instance']
             host = instance.hostname
             host_csattr = HostAttr.objects.get(host=host)
-            host_ready = check_ssh(server=host.address, username=host_csattr.vm_user, password=host_csattr.vm_password, wait=5, interval=10)
+            host_ready = check_ssh(
+                server=host.address, username=host_csattr.vm_user, password=host_csattr.vm_password, wait=5, interval=10)
             if not host_ready:
                 error = "Host %s is not ready..." % host
                 LOG.warn(error)
@@ -94,7 +99,8 @@ def start_vm(workflow_dict):
 def stop_vm(workflow_dict):
     try:
         environment = workflow_dict['environment']
-        cs_credentials = get_credentials_for(environment=environment, credential_type=CredentialType.CLOUDSTACK)
+        cs_credentials = get_credentials_for(
+            environment=environment, credential_type=CredentialType.CLOUDSTACK)
         cs_provider = CloudStackProvider(credentials=cs_credentials)
         instances_detail = workflow_dict['instances_detail']
 
@@ -158,7 +164,8 @@ def switch_dns_forward(databaseinfra, source_object_list, ip_attribute_name,
         dns = source_object.__getattribute__(dns_attribute_name)
         source_object.__setattr__(dns_attribute_name, old_ip)
 
-        target_object = source_object.__getattribute__(equivalent_atribute_name)
+        target_object = source_object.__getattribute__(
+            equivalent_atribute_name)
         new_ip = target_object.__getattribute__(ip_attribute_name)
         target_object.__setattr__(dns_attribute_name, dns)
 
@@ -184,7 +191,8 @@ def switch_dns_backward(databaseinfra, source_object_list, ip_attribute_name,
                         dns_attribute_name, equivalent_atribute_name):
 
     for source_object in source_object_list:
-        target_object = source_object.__getattribute__(equivalent_atribute_name)
+        target_object = source_object.__getattribute__(
+            equivalent_atribute_name)
         old_ip = target_object.__getattribute__(ip_attribute_name)
         dns = target_object.__getattribute__(dns_attribute_name)
         target_object.__setattr__(dns_attribute_name, old_ip)

@@ -17,7 +17,8 @@ class CleanOldVolumes(BaseStep):
         try:
             for host_and_export in workflow_dict['hosts_and_exports']:
                 clean_unused_data(export_id=host_and_export['old_export_id'],
-                                  export_path=host_and_export['old_export_path'],
+                                  export_path=host_and_export[
+                                      'old_export_path'],
                                   host=host_and_export['host'],
                                   databaseinfra=workflow_dict['databaseinfra'])
 

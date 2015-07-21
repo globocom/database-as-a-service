@@ -10,46 +10,66 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         # Adding model 'DatabaseRegionMigration'
         db.create_table(u'region_migration_databaseregionmigration', (
-            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('created_at', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
-            ('updated_at', self.gf('django.db.models.fields.DateTimeField')(auto_now=True, blank=True)),
-            ('database', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['logical.Database'], unique=True)),
-            ('current_step', self.gf('django.db.models.fields.CharField')(max_length=500)),
-            ('next_step', self.gf('django.db.models.fields.PositiveSmallIntegerField')(null=True)),
+            (u'id', self.gf('django.db.models.fields.AutoField')
+             (primary_key=True)),
+            ('created_at', self.gf('django.db.models.fields.DateTimeField')
+             (auto_now_add=True, blank=True)),
+            ('updated_at', self.gf('django.db.models.fields.DateTimeField')
+             (auto_now=True, blank=True)),
+            ('database', self.gf('django.db.models.fields.related.ForeignKey')
+             (to=orm['logical.Database'], unique=True)),
+            ('current_step', self.gf(
+                'django.db.models.fields.CharField')(max_length=500)),
+            ('next_step', self.gf(
+                'django.db.models.fields.PositiveSmallIntegerField')(null=True)),
         ))
         db.send_create_signal(u'region_migration', ['DatabaseRegionMigration'])
 
         # Adding model 'DatabaseRegionMigrationDetail'
         db.create_table(u'region_migration_databaseregionmigrationdetail', (
-            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('created_at', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
-            ('updated_at', self.gf('django.db.models.fields.DateTimeField')(auto_now=True, blank=True)),
-            ('database_region_migration', self.gf('django.db.models.fields.related.ForeignKey')(related_name=u'details', to=orm['region_migration.DatabaseRegionMigration'])),
-            ('step', self.gf('django.db.models.fields.PositiveSmallIntegerField')()),
-            ('scheduled_for', self.gf('django.db.models.fields.DateTimeField')()),
-            ('started_at', self.gf('django.db.models.fields.DateTimeField')(null=True, blank=True)),
-            ('finished_at', self.gf('django.db.models.fields.DateTimeField')(null=True, blank=True)),
-            ('created_by', self.gf('django.db.models.fields.CharField')(max_length=255)),
-            ('revoked_by', self.gf('django.db.models.fields.CharField')(max_length=255, null=True, blank=True)),
-            ('status', self.gf('django.db.models.fields.IntegerField')(default=0)),
+            (u'id', self.gf('django.db.models.fields.AutoField')
+             (primary_key=True)),
+            ('created_at', self.gf('django.db.models.fields.DateTimeField')
+             (auto_now_add=True, blank=True)),
+            ('updated_at', self.gf('django.db.models.fields.DateTimeField')
+             (auto_now=True, blank=True)),
+            ('database_region_migration', self.gf('django.db.models.fields.related.ForeignKey')(
+                related_name=u'details', to=orm['region_migration.DatabaseRegionMigration'])),
+            ('step', self.gf(
+                'django.db.models.fields.PositiveSmallIntegerField')()),
+            ('scheduled_for', self.gf(
+                'django.db.models.fields.DateTimeField')()),
+            ('started_at', self.gf('django.db.models.fields.DateTimeField')
+             (null=True, blank=True)),
+            ('finished_at', self.gf('django.db.models.fields.DateTimeField')
+             (null=True, blank=True)),
+            ('created_by', self.gf(
+                'django.db.models.fields.CharField')(max_length=255)),
+            ('revoked_by', self.gf('django.db.models.fields.CharField')
+             (max_length=255, null=True, blank=True)),
+            ('status', self.gf(
+                'django.db.models.fields.IntegerField')(default=0)),
             ('log', self.gf('django.db.models.fields.TextField')()),
         ))
-        db.send_create_signal(u'region_migration', ['DatabaseRegionMigrationDetail'])
+        db.send_create_signal(
+            u'region_migration', ['DatabaseRegionMigrationDetail'])
 
-        # Adding unique constraint on 'DatabaseRegionMigrationDetail', fields ['database_region_migration', 'step', 'scheduled_for']
-        db.create_unique(u'region_migration_databaseregionmigrationdetail', ['database_region_migration_id', 'step', 'scheduled_for'])
-
+        # Adding unique constraint on 'DatabaseRegionMigrationDetail', fields
+        # ['database_region_migration', 'step', 'scheduled_for']
+        db.create_unique(u'region_migration_databaseregionmigrationdetail', [
+                         'database_region_migration_id', 'step', 'scheduled_for'])
 
     def backwards(self, orm):
-        # Removing unique constraint on 'DatabaseRegionMigrationDetail', fields ['database_region_migration', 'step', 'scheduled_for']
-        db.delete_unique(u'region_migration_databaseregionmigrationdetail', ['database_region_migration_id', 'step', 'scheduled_for'])
+        # Removing unique constraint on 'DatabaseRegionMigrationDetail', fields
+        # ['database_region_migration', 'step', 'scheduled_for']
+        db.delete_unique(u'region_migration_databaseregionmigrationdetail', [
+                         'database_region_migration_id', 'step', 'scheduled_for'])
 
         # Deleting model 'DatabaseRegionMigration'
         db.delete_table(u'region_migration_databaseregionmigration')
 
         # Deleting model 'DatabaseRegionMigrationDetail'
         db.delete_table(u'region_migration_databaseregionmigrationdetail')
-
 
     models = {
         u'account.team': {

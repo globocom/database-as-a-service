@@ -31,7 +31,8 @@ class StartDatabaseAndReplication(BaseStep):
             secondary_host = workflow_dict['not_primary_hosts'][0]
             secondary_instance = Instance.objects.get(hostname=secondary_host)
 
-            master_log_file, master_log_pos = get_replication_information_from_file(host=master_host)
+            master_log_file, master_log_pos = get_replication_information_from_file(
+                host=master_host)
 
             return_code, output = use_database_initialization_script(databaseinfra=databaseinfra,
                                                                      host=master_host,

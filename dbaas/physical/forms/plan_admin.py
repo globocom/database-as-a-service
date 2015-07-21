@@ -8,11 +8,12 @@ from ckeditor.widgets import CKEditorWidget
 
 log = logging.getLogger(__name__)
 
+
 class PlanForm(forms.ModelForm):
     description = forms.CharField(widget=CKEditorWidget(), required=False)
+
     class Meta:
         model = models.Plan
-
 
     def clean(self):
         """Validates the form to make sure that there is at least one default plan"""
@@ -26,15 +27,18 @@ class PlanForm(forms.ModelForm):
             raise forms.ValidationError(msg)
         if not is_default:
             if self.instance.id:
-                plans = models.Plan.objects.filter(is_default=True, engine_type=engine_type).exclude(id=self.instance.id)
+                plans = models.Plan.objects.filter(
+                    is_default=True, engine_type=engine_type).exclude(id=self.instance.id)
             else:
-                plans = models.Plan.objects.filter(is_default=True, engine_type=engine_type)
+                plans = models.Plan.objects.filter(
+                    is_default=True, engine_type=engine_type)
             if not plans:
                 msg = _("At least one plan must be default")
                 log.warning(u"%s" % msg)
                 raise forms.ValidationError(msg)
 
         return cleaned_data
+
 
 class PlanAttributeInlineFormset(forms.models.BaseInlineFormSet):
 
@@ -52,4 +56,3 @@ class PlanAttributeInlineFormset(forms.models.BaseInlineFormSet):
         # if count < 1:
         #     log.warning(u"%s" % _("You must have at least one plan attribute"))
         #     raise forms.ValidationError(_("You must have at least one plan attribute"))
-        

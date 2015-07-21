@@ -10,7 +10,8 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         db.delete_foreign_key(u'logical_database', 'group_id')
         db.delete_unique(u'logical_database', ['group_id'])
-        db.execute("ALTER TABLE `logical_database` ADD CONSTRAINT `group_id_refs_id_1a2ad92c` FOREIGN KEY (`group_id`) REFERENCES `auth_group` (`id`);")
+        db.execute(
+            "ALTER TABLE `logical_database` ADD CONSTRAINT `group_id_refs_id_1a2ad92c` FOREIGN KEY (`group_id`) REFERENCES `auth_group` (`id`);")
         db.create_index('logical_database', ['group_id'])
 
     def backwards(self, orm):

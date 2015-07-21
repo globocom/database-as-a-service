@@ -10,19 +10,22 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         # Adding model 'ExtraDns'
         db.create_table(u'extra_dns_extradns', (
-            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('created_at', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
-            ('updated_at', self.gf('django.db.models.fields.DateTimeField')(auto_now=True, blank=True)),
-            ('database', self.gf('django.db.models.fields.related.ForeignKey')(related_name='extra_dns', to=orm['logical.Database'])),
-            ('dns', self.gf('django.db.models.fields.CharField')(max_length=200)),
+            (u'id', self.gf('django.db.models.fields.AutoField')
+             (primary_key=True)),
+            ('created_at', self.gf('django.db.models.fields.DateTimeField')
+             (auto_now_add=True, blank=True)),
+            ('updated_at', self.gf('django.db.models.fields.DateTimeField')
+             (auto_now=True, blank=True)),
+            ('database', self.gf('django.db.models.fields.related.ForeignKey')
+             (related_name='extra_dns', to=orm['logical.Database'])),
+            ('dns', self.gf('django.db.models.fields.CharField')
+             (max_length=200)),
         ))
         db.send_create_signal(u'extra_dns', ['ExtraDns'])
-
 
     def backwards(self, orm):
         # Deleting model 'ExtraDns'
         db.delete_table(u'extra_dns_extradns')
-
 
     models = {
         u'account.team': {

@@ -10,14 +10,13 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         # Adding field 'Snapshot.environment'
         db.add_column(u'backup_snapshot', 'environment',
-                      self.gf('django.db.models.fields.related.ForeignKey')(blank=True, related_name='backup_environment', null=True, on_delete=models.SET_NULL, to=orm['physical.Environment']),
+                      self.gf('django.db.models.fields.related.ForeignKey')(
+                          blank=True, related_name='backup_environment', null=True, on_delete=models.SET_NULL, to=orm['physical.Environment']),
                       keep_default=False)
-
 
     def backwards(self, orm):
         # Deleting field 'Snapshot.environment'
         db.delete_column(u'backup_snapshot', 'environment_id')
-
 
     models = {
         u'backup.snapshot': {

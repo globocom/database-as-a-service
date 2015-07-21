@@ -25,6 +25,7 @@ def extract_pk_form_url(url):
         return int(m.group(1))
     return None
 
+
 class DbaaSClient(test.APIClient):
 
     def request(self, **kwargs):
@@ -44,8 +45,10 @@ class DbaaSAPITestCase(test.APITestCase):
 
     def setUp(self):
         self.role = Role.objects.get_or_create(name="fake_role")[0]
-        self.team = Team.objects.get_or_create(name="fake_team", role=self.role)[0]
-        self.superuser = User.objects.create_superuser(self.USERNAME, email="%s@admin.com" % self.USERNAME, password=self.PASSWORD)
+        self.team = Team.objects.get_or_create(
+            name="fake_team", role=self.role)[0]
+        self.superuser = User.objects.create_superuser(
+            self.USERNAME, email="%s@admin.com" % self.USERNAME, password=self.PASSWORD)
         self.team.users.add(self.superuser)
         # self.client =
         self.client.login(username=self.USERNAME, password=self.PASSWORD)
@@ -81,10 +84,9 @@ class BasicTestsMixin(object):
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
-
     def test_get_returns_a_list_of_all_objecs_with_pagination(self):
         NUM_PAGES = 3
-        NUM_OBJECTS = settings.REST_FRAMEWORK['PAGINATE_BY']*NUM_PAGES
+        NUM_OBJECTS = settings.REST_FRAMEWORK['PAGINATE_BY'] * NUM_PAGES
         for i in range(NUM_OBJECTS):
             self.model_create()
 
@@ -94,7 +96,8 @@ class BasicTestsMixin(object):
             pages += 1
             response = self.client.get(next)
             data = response.data
-            self.assertEqual(self.model.objects.count(), data['_links']['count'])
+            self.assertEqual(
+                self.model.objects.count(), data['_links']['count'])
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             for obj_data in data[self.url_prefix]:
                 self.assertIsNotNone(obj_data['id'])
@@ -108,7 +111,6 @@ class BasicTestsMixin(object):
             # import pudb; pu.db
         self.assertEqual(NUM_PAGES, pages)
 
-
     def test_get(self):
         obj = self.model_create()
         url = self.url_detail(obj.pk)
@@ -118,7 +120,8 @@ class BasicTestsMixin(object):
 
         # assert response
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(self.url_detail(obj.pk), response.data['_links']['self'])
+        self.assertEqual(
+            self.url_detail(obj.pk), response.data['_links']['self'])
 
         # check fields
         self.compare_object_and_dict(obj, data)
@@ -135,9 +138,9 @@ class BasicTestsMixin(object):
             else:
                 expected_value = data[k]
                 value = getattr(test_obj, k)
-            LOG.info('Comparing field %s: expected "%s" and found "%s"', k, expected_value, value)
+            LOG.info(
+                'Comparing field %s: expected "%s" and found "%s"', k, expected_value, value)
             self.assertEqual(expected_value, value)
-
 
     def test_post_create_new(self):
         url = self.url_list()
@@ -149,7 +152,8 @@ class BasicTestsMixin(object):
         # assert response
         self.assertEqual(response.status_code, status.HTTP_201_CREATED, data)
 
-        self.assertEqual(self.url_detail(data['id']), data['_links']['self'], data)
+        self.assertEqual(
+            self.url_detail(data['id']), data['_links']['self'], data)
 
         # assert object
         obj = self.model_get(data['id'])
@@ -184,7 +188,6 @@ class BasicTestsMixin(object):
         # check fields
         obj = self.model_get(data['id'])
         self.compare_object_and_dict(obj, data)
-
 
     def get_env(self, data):
         if 'environment' in data:

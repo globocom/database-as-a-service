@@ -37,18 +37,18 @@ class Redis(BaseDriver):
     def __concatenate_instances(self):
         if self.databaseinfra.plan.is_ha:
             return ",".join(["%s:%s" % (instance.address, instance.port)
-                        for instance in self.databaseinfra.instances.filter(instance_type=Instance.REDIS_SENTINEL, is_active=True).all()])
+                             for instance in self.databaseinfra.instances.filter(instance_type=Instance.REDIS_SENTINEL, is_active=True).all()])
         else:
             return ",".join(["%s:%s" % (instance.address, instance.port)
-                        for instance in self.databaseinfra.instances.filter(instance_type=Instance.REDIS, is_active=True).all()])
+                             for instance in self.databaseinfra.instances.filter(instance_type=Instance.REDIS, is_active=True).all()])
 
     def __concatenate_instances_dns(self):
         if self.databaseinfra.plan.is_ha:
             return ",".join(["%s:%s" % (instance.dns, instance.port)
-                        for instance in self.databaseinfra.instances.filter(instance_type=Instance.REDIS_SENTINEL, is_active=True).all()])
+                             for instance in self.databaseinfra.instances.filter(instance_type=Instance.REDIS_SENTINEL, is_active=True).all()])
         else:
             return ",".join(["%s:%s" % (instance.dns, instance.port)
-                        for instance in self.databaseinfra.instances.filter(instance_type=Instance.REDIS, is_active=True).all()])
+                             for instance in self.databaseinfra.instances.filter(instance_type=Instance.REDIS, is_active=True).all()])
 
     def get_connection(self, database=None):
         if self.databaseinfra.plan.is_ha:
@@ -57,7 +57,8 @@ class Redis(BaseDriver):
         else:
             uri_instance_type = 'redis'
             database_name = '0'
-        uri = "%s://:<password>@%s/%s" % (uri_instance_type, self.__concatenate_instances(), database_name)
+        uri = "%s://:<password>@%s/%s" % (uri_instance_type,
+                                          self.__concatenate_instances(), database_name)
         return uri
 
     def get_connection_dns(self, database=None):
@@ -67,7 +68,8 @@ class Redis(BaseDriver):
         else:
             uri_instance_type = 'redis'
             database_name = '0'
-        uri = "%s://:<password>@%s/%s" % (uri_instance_type, self.__concatenate_instances_dns(), database_name)
+        uri = "%s://:<password>@%s/%s" % (uri_instance_type,
+                                          self.__concatenate_instances_dns(), database_name)
         return uri
 
     def __get_admin_sentinel_connection(self, instance=None):
@@ -85,17 +87,19 @@ class Redis(BaseDriver):
         if instance:
             return instance.address, instance.port
 
-        instances = self.databaseinfra.instances.filter(instance_type=Instance.REDIS, is_active=True).all()
+        instances = self.databaseinfra.instances.filter(
+            instance_type=Instance.REDIS, is_active=True).all()
         return instances[0].address, instances[0].port
 
     def __concatenate_instances_dns_only(self):
         return ",".join(["%s" % (instance.dns)
-                        for instance in self.databaseinfra.instances.filter(instance_type=Instance.REDIS_SENTINEL, is_active=True).all()])
+                         for instance in self.databaseinfra.instances.filter(instance_type=Instance.REDIS_SENTINEL, is_active=True).all()])
 
     def get_dns_port(self):
         if self.databaseinfra.plan.is_ha:
             dns = self.__concatenate_instances_dns_only()
-            port = self.databaseinfra.instances.filter(instance_type=Instance.REDIS_SENTINEL, is_active=True).all()[0].port
+            port = self.databaseinfra.instances.filter(
+                instance_type=Instance.REDIS_SENTINEL, is_active=True).all()[0].port
         else:
             instance = self.databaseinfra.instances.all()[0]
             dns = instance.dns
@@ -103,20 +107,25 @@ class Redis(BaseDriver):
         return dns, port
 
     def get_sentinel_client(self, instance=None):
-        connection_timeout_in_seconds = Configuration.get_by_name_as_int('redis_connect_timeout', default=REDIS_CONNECTION_DEFAULT_TIMEOUT)
+        connection_timeout_in_seconds = Configuration.get_by_name_as_int(
+            'redis_connect_timeout', default=REDIS_CONNECTION_DEFAULT_TIMEOUT)
         sentinels = self.__get_admin_sentinel_connection(instance)
-        sentinel = Sentinel(sentinels, socket_timeout=connection_timeout_in_seconds)
+        sentinel = Sentinel(
+            sentinels, socket_timeout=connection_timeout_in_seconds)
         return sentinel
 
     def __redis_client__(self, instance):
 
         try:
-            LOG.debug('Connecting to redis databaseinfra %s', self.databaseinfra)
+            LOG.debug(
+                'Connecting to redis databaseinfra %s', self.databaseinfra)
             # redis uses timeout in seconds
-            connection_timeout_in_seconds = Configuration.get_by_name_as_int('redis_connect_timeout', default=REDIS_CONNECTION_DEFAULT_TIMEOUT)
+            connection_timeout_in_seconds = Configuration.get_by_name_as_int(
+                'redis_connect_timeout', default=REDIS_CONNECTION_DEFAULT_TIMEOUT)
 
             if (instance and instance.instance_type == Instance.REDIS) or (not self.databaseinfra.plan.is_ha and not instance):
-                connection_address, connection_port = self.__get_admin_single_connection(instance)
+                connection_address, connection_port = self.__get_admin_single_connection(
+                    instance)
                 client = redis.Redis(host=connection_address,
                                      port=int(connection_port),
                                      password=self.databaseinfra.password,
@@ -128,7 +137,8 @@ class Redis(BaseDriver):
                                              socket_timeout=connection_timeout_in_seconds,
                                              password=self.databaseinfra.password)
 
-            LOG.debug('Successfully connected to redis databaseinfra %s' % (self.databaseinfra))
+            LOG.debug(
+                'Successfully connected to redis databaseinfra %s' % (self.databaseinfra))
             return client
         except Exception, e:
             raise e
@@ -151,7 +161,8 @@ class Redis(BaseDriver):
             return_value = client
             yield return_value
         except Exception, e:
-            raise ConnectionError('Error connecting to databaseinfra %s : %s' % (self.databaseinfra, str(e)))
+            raise ConnectionError(
+                'Error connecting to databaseinfra %s : %s' % (self.databaseinfra, str(e)))
 
     def check_status(self, instance=None):
         with self.redis(instance=instance) as client:
@@ -159,10 +170,12 @@ class Redis(BaseDriver):
                 ok = client.ping()
                 return True
             except Exception, e:
-                raise ConnectionError('Error connection to databaseinfra %s: %s' % (self.databaseinfra, str(e)))
+                raise ConnectionError(
+                    'Error connection to databaseinfra %s: %s' % (self.databaseinfra, str(e)))
 
             if not ok:
-                raise ConnectionError('Invalid status for ping command to databaseinfra %s' % self.databaseinfra)
+                raise ConnectionError(
+                    'Invalid status for ping command to databaseinfra %s' % self.databaseinfra)
 
     def list_databases(self, instance=None):
         dbs_names = []
@@ -175,17 +188,21 @@ class Redis(BaseDriver):
                     for db in keyspace:
                         dbs_names.append(db)
             except Exception, e:
-                raise ConnectionError('Error connection to databaseinfra %s: %s' % (self.databaseinfra, str(e)))
+                raise ConnectionError(
+                    'Error connection to databaseinfra %s: %s' % (self.databaseinfra, str(e)))
         return dbs_names
 
     def info(self):
-        databaseinfra_status = DatabaseInfraStatus(databaseinfra_model=self.databaseinfra)
+        databaseinfra_status = DatabaseInfraStatus(
+            databaseinfra_model=self.databaseinfra)
 
         with self.redis() as client:
             json_server_info = client.info()
 
-            databaseinfra_status.version = json_server_info.get('redis_version', None)
-            databaseinfra_status.used_size_in_bytes = json_server_info.get('used_memory', 0)
+            databaseinfra_status.version = json_server_info.get(
+                'redis_version', None)
+            databaseinfra_status.used_size_in_bytes = json_server_info.get(
+                'used_memory', 0)
 
             list_databases = self.list_databases()
             for database in self.databaseinfra.databases.all():
@@ -200,7 +217,8 @@ class Redis(BaseDriver):
                 db_status.total_size_in_bytes = 0
                 db_status.used_size_in_bytes = databaseinfra_status.used_size_in_bytes
 
-                databaseinfra_status.databases_status[database_name] = db_status
+                databaseinfra_status.databases_status[
+                    database_name] = db_status
 
         return databaseinfra_status
 
@@ -257,7 +275,8 @@ class Redis(BaseDriver):
                 else:
                     return False
             except Exception, e:
-                raise ConnectionError('Error connection to databaseinfra %s: %s' % (self.databaseinfra, str(e)))
+                raise ConnectionError(
+                    'Error connection to databaseinfra %s: %s' % (self.databaseinfra, str(e)))
 
     def check_instance_is_master(self, instance):
         if instance.instance_type == Instance.REDIS_SENTINEL:
@@ -274,7 +293,8 @@ class Redis(BaseDriver):
                 else:
                     return True
             except Exception, e:
-                raise ConnectionError('Error connection to databaseinfra %s: %s' % (self.databaseinfra, str(e)))
+                raise ConnectionError(
+                    'Error connection to databaseinfra %s: %s' % (self.databaseinfra, str(e)))
 
     def initialization_script_path(self,):
         return "/etc/init.d/redis"
@@ -287,7 +307,8 @@ class Redis(BaseDriver):
 
     def switch_master(self):
 
-        sentinel_instance = self.databaseinfra.instances.filter(instance_type=Instance.REDIS_SENTINEL, is_active=True).all()[0]
+        sentinel_instance = self.databaseinfra.instances.filter(
+            instance_type=Instance.REDIS_SENTINEL, is_active=True).all()[0]
         host = sentinel_instance.hostname
 
         host_attr = HostAttr.objects.get(host=host)

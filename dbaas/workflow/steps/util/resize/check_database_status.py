@@ -16,7 +16,8 @@ class CheckDatabaseStatus(BaseStep):
                 return False
 
             if not 'databaseinfra' in workflow_dict:
-                workflow_dict['databaseinfra'] = workflow_dict['database'].databaseinfra
+                workflow_dict['databaseinfra'] = workflow_dict[
+                    'database'].databaseinfra
 
             LOG.info("Getting driver class")
             driver = workflow_dict['databaseinfra'].get_driver()
@@ -26,12 +27,12 @@ class CheckDatabaseStatus(BaseStep):
 
             if driver.check_status():
                 LOG.info("Database is ok...")
-                workflow_dict['database'].status=1
+                workflow_dict['database'].status = 1
                 workflow_dict['database'].save()
                 return True
 
             return False
-        except Exception,e:
+        except Exception, e:
             LOG.info("Error: {}".format(e))
             pass
 

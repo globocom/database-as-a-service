@@ -17,9 +17,12 @@ LOG = logging.getLogger(__name__)
 
 class Configuration(BaseModel):
 
-    name = models.CharField(verbose_name=_("Configuration name"), max_length=100, unique=True)
-    value = models.CharField(verbose_name=_("Configuration value"), max_length=255)
-    description = models.TextField(verbose_name=_("Description"), null=True, blank=True)
+    name = models.CharField(
+        verbose_name=_("Configuration name"), max_length=100, unique=True)
+    value = models.CharField(
+        verbose_name=_("Configuration value"), max_length=255)
+    description = models.TextField(
+        verbose_name=_("Description"), null=True, blank=True)
 
     def clear_cache(self):
         key = self.get_cache_key(self.name)
@@ -66,8 +69,10 @@ class Configuration(BaseModel):
             LOG.warning("configuration %s not found" % name)
             return None
         except Exception, e:
-            LOG.warning("ops.. could not retrieve configuration value for %s: %s" % (name, e))
-            return None    
+            LOG.warning(
+                "ops.. could not retrieve configuration value for %s: %s" % (name, e))
+            return None
+
 
 @receiver([post_save, post_delete], sender=Configuration)
 def clear_configuration_cache(sender, **kwargs):
@@ -81,17 +86,20 @@ simple_audit.register(Configuration)
 
 class CeleryHealthCheck(BaseModel):
     last_update = models.DateTimeField()
-    
+
     @classmethod
     def set_last_update(cls):
-        obj, created = cls.objects.get_or_create(pk=1, defaults={'last_update': datetime.datetime.now()})
+        obj, created = cls.objects.get_or_create(
+            pk=1, defaults={'last_update': datetime.datetime.now()})
         obj.last_update = datetime.datetime.now()
         obj.save()
-    
+
     @classmethod
     def get_healthcheck_string(cls):
-        celery_healthcheck_threshold_seconds = Configuration.get_by_name_as_int(name='celery_healthcheck_threshold_seconds', default=300)
-        obj, created = cls.objects.get_or_create(pk=1, defaults={'last_update': datetime.datetime.now()})
+        celery_healthcheck_threshold_seconds = Configuration.get_by_name_as_int(
+            name='celery_healthcheck_threshold_seconds', default=300)
+        obj, created = cls.objects.get_or_create(
+            pk=1, defaults={'last_update': datetime.datetime.now()})
         if (datetime.datetime.now() - obj.last_update).total_seconds() > celery_healthcheck_threshold_seconds:
             return 'FAILURE. The last celery update was %s' % (str(obj.last_update))
         else:

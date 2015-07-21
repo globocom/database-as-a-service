@@ -10,12 +10,14 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
 
         # Changing field 'Team.email'
-        db.alter_column(u'account_team', 'email', self.gf('django.db.models.fields.EmailField')(default='team@globo.com', max_length=75))
+        db.alter_column(u'account_team', 'email', self.gf(
+            'django.db.models.fields.EmailField')(default='team@globo.com', max_length=75))
 
     def backwards(self, orm):
 
         # Changing field 'Team.email'
-        db.alter_column(u'account_team', 'email', self.gf('django.db.models.fields.EmailField')(max_length=75, null=True))
+        db.alter_column(u'account_team', 'email', self.gf(
+            'django.db.models.fields.EmailField')(max_length=75, null=True))
 
     models = {
         u'account.team': {

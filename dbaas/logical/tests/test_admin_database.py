@@ -15,6 +15,7 @@ LOG = logging.getLogger(__name__)
 
 
 class AdminCreateDatabaseTestCase(TestCase):
+
     """ HTTP test cases """
     USERNAME = "test-ui-database"
     PASSWORD = "123456"
@@ -22,12 +23,16 @@ class AdminCreateDatabaseTestCase(TestCase):
     def setUp(self):
         self.plan = physical_factory.PlanFactory()
         self.environment = self.plan.environments.all()[0]
-        self.databaseinfra = physical_factory.DatabaseInfraFactory(plan=self.plan, environment=self.environment, capacity=10)
-        self.instance = physical_factory.InstanceFactory(address="127.0.0.1", port=27017, databaseinfra=self.databaseinfra)
+        self.databaseinfra = physical_factory.DatabaseInfraFactory(
+            plan=self.plan, environment=self.environment, capacity=10)
+        self.instance = physical_factory.InstanceFactory(
+            address="127.0.0.1", port=27017, databaseinfra=self.databaseinfra)
         self.project = factory.ProjectFactory()
         self.role = Role.objects.get_or_create(name="fake_role")[0]
-        self.team = Team.objects.get_or_create(name="fake_team", role=self.role, database_alocation_limit=0)[0]
-        self.user = User.objects.create_superuser(self.USERNAME, email="%s@admin.com" % self.USERNAME, password=self.PASSWORD)
+        self.team = Team.objects.get_or_create(
+            name="fake_team", role=self.role, database_alocation_limit=0)[0]
+        self.user = User.objects.create_superuser(
+            self.USERNAME, email="%s@admin.com" % self.USERNAME, password=self.PASSWORD)
         self.team.users.add(self.user)
         self.client.login(username=self.USERNAME, password=self.PASSWORD)
         self.description = "My database"
@@ -47,7 +52,8 @@ class AdminCreateDatabaseTestCase(TestCase):
             "description": self.description
         }
         response = self.client.post("/admin/logical/database/add/", params)
-        self.assertContains(response, "Team: This field is required", status_code=200)
+        self.assertContains(
+            response, "Team: This field is required", status_code=200)
 
     def test_user_tries_to_create_database_without_description(self):
         database_name = "test_new_database_without_team"
@@ -60,11 +66,13 @@ class AdminCreateDatabaseTestCase(TestCase):
             "team": self.team.pk
         }
         response = self.client.post("/admin/logical/database/add/", params)
-        self.assertContains(response, "Description: This field is required.", status_code=200)
+        self.assertContains(
+            response, "Description: This field is required.", status_code=200)
 
     def test_try_create_a_new_database_but_database_already_exists(self):
         database_name = "test_new_database"
-        self.database = factory.DatabaseFactory(databaseinfra=self.databaseinfra, name=database_name)
+        self.database = factory.DatabaseFactory(
+            databaseinfra=self.databaseinfra, name=database_name)
         params = {
             "name": database_name,
             "project": self.project.pk,
@@ -75,7 +83,8 @@ class AdminCreateDatabaseTestCase(TestCase):
             "description": self.description
         }
         response = self.client.post("/admin/logical/database/add/", params)
-        self.assertContains(response, "this name already exists in the selected environment", status_code=200)
+        self.assertContains(
+            response, "this name already exists in the selected environment", status_code=200)
 
     def test_db_name(self):
         data = {'name': '', 'project': 'any_project'}

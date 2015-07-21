@@ -13,6 +13,7 @@ LOG = logging.getLogger(__name__)
 
 
 class CheckDatabaseBinds(BaseStep):
+
     def __unicode__(self):
         return "Checking database acl binds..."
 
@@ -28,7 +29,8 @@ class CheckDatabaseBinds(BaseStep):
 
             database = workflow_dict['databaseinfra'].databases.get()
             for database_bind in database.acl_binds.all():
-                acl_environment, acl_vlan = database_bind.bind_address.split('/')
+                acl_environment, acl_vlan = database_bind.bind_address.split(
+                    '/')
                 data = {"kind": "object#acl", "rules": []}
                 default_options = {
                     "protocol": "tcp",
@@ -51,8 +53,10 @@ class CheckDatabaseBinds(BaseStep):
                 for infra_instance_bind in infra_instances_binds:
                     custom_options = copy.deepcopy(default_options)
                     custom_options['source'] = database_bind.bind_address
-                    custom_options['destination'] = infra_instance_bind.instance + '/32'
-                    custom_options['l4-options']['dest-port-start'] = infra_instance_bind.instance_port
+                    custom_options[
+                        'destination'] = infra_instance_bind.instance + '/32'
+                    custom_options[
+                        'l4-options']['dest-port-start'] = infra_instance_bind.instance_port
                     data['rules'].append(custom_options)
 
                 acl_credential = get_credentials_for(environment=database.environment,

@@ -87,7 +87,8 @@ def make_instance_snapshot_backup(instance, error):
     snapshot.environment = instance.databaseinfra.environment
 
     from dbaas_nfsaas.models import HostAttr as Nfsaas_HostAttr
-    nfsaas_hostattr = Nfsaas_HostAttr.objects.get(host=instance.hostname, is_active=True)
+    nfsaas_hostattr = Nfsaas_HostAttr.objects.get(
+        host=instance.hostname, is_active=True)
     snapshot.export_path = nfsaas_hostattr.nfsaas_path
 
     databases = Database.objects.filter(databaseinfra=instance.databaseinfra)
@@ -270,9 +271,9 @@ def restore_snapshot(self, database, snapshot, user, task_history):
     LOG.info("Restoring snapshot")
     worker_name = get_worker_name()
 
-    task_history = models.TaskHistory.objects.get(id= task_history)
+    task_history = models.TaskHistory.objects.get(id=task_history)
     task_history = TaskHistory.register(request=self.request, task_history=task_history,
-            user=user, worker_name=worker_name)
+                                        user=user, worker_name=worker_name)
 
     databaseinfra = database.databaseinfra
 
@@ -292,8 +293,9 @@ def restore_snapshot(self, database, snapshot, user, task_history):
         steps = RESTORE_SNAPSHOT_MYSQL_HA
 
     not_primary_instances = databaseinfra.instances.exclude(hostname=host).exclude(instance_type__in=[Instance.MONGODB_ARBITER,
-                                                                                  Instance.REDIS_SENTINEL])
-    not_primary_hosts = [instance.hostname for instance in not_primary_instances]
+                                                                                                      Instance.REDIS_SENTINEL])
+    not_primary_hosts = [
+        instance.hostname for instance in not_primary_instances]
 
     workflow_dict = build_dict(databaseinfra=databaseinfra,
                                database=database,
@@ -324,7 +326,8 @@ def restore_snapshot(self, database, snapshot, user, task_history):
 
 def purge_unused_exports():
     from dbaas_nfsaas.models import HostAttr
-    databaseinfras = DatabaseInfra.objects.filter(plan__provider=Plan.CLOUDSTACK).prefetch_related('instances')
+    databaseinfras = DatabaseInfra.objects.filter(
+        plan__provider=Plan.CLOUDSTACK).prefetch_related('instances')
     for databaseinfra in databaseinfras:
         instances = databaseinfra.instances.exclude(instance_type__in=[Instance.MONGODB_ARBITER,
                                                                        Instance.REDIS_SENTINEL])
@@ -340,7 +343,8 @@ def purge_unused_exports():
                 if snapshots:
                     continue
 
-                LOG.info('Export {} will be removed'.format(export.nfsaas_export_id))
+                LOG.info(
+                    'Export {} will be removed'.format(export.nfsaas_export_id))
                 host = export.host
                 export_id = export.nfsaas_export_id
 

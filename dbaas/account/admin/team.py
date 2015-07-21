@@ -12,6 +12,7 @@ from ..models import Role
 
 LOG = logging.getLogger(__name__)
 
+
 class RoleListFilter(SimpleListFilter):
     title = _('roles')
 
@@ -27,6 +28,7 @@ class RoleListFilter(SimpleListFilter):
                 return queryset.exclude(role_id__in=[role.id for role in Role.objects.all()])
             else:
                 return queryset.filter(role_id=self.value())
+
 
 class TeamAdmin(admin.ModelAdmin):
 

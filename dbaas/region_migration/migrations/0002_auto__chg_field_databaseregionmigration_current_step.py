@@ -10,12 +10,14 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
 
         # Changing field 'DatabaseRegionMigration.current_step'
-        db.alter_column(u'region_migration_databaseregionmigration', 'current_step', self.gf('django.db.models.fields.PositiveSmallIntegerField')())
+        db.alter_column(u'region_migration_databaseregionmigration', 'current_step', self.gf(
+            'django.db.models.fields.PositiveSmallIntegerField')())
 
     def backwards(self, orm):
 
         # Changing field 'DatabaseRegionMigration.current_step'
-        db.alter_column(u'region_migration_databaseregionmigration', 'current_step', self.gf('django.db.models.fields.CharField')(max_length=500))
+        db.alter_column(u'region_migration_databaseregionmigration', 'current_step', self.gf(
+            'django.db.models.fields.CharField')(max_length=500))
 
     models = {
         u'account.team': {

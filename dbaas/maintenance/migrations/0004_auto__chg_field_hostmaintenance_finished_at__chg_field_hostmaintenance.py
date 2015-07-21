@@ -10,24 +10,30 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
 
         # Changing field 'HostMaintenance.finished_at'
-        db.alter_column(u'maintenance_hostmaintenance', 'finished_at', self.gf('django.db.models.fields.DateTimeField')(null=True))
+        db.alter_column(u'maintenance_hostmaintenance', 'finished_at', self.gf(
+            'django.db.models.fields.DateTimeField')(null=True))
 
         # Changing field 'HostMaintenance.started_at'
-        db.alter_column(u'maintenance_hostmaintenance', 'started_at', self.gf('django.db.models.fields.DateTimeField')(null=True))
+        db.alter_column(u'maintenance_hostmaintenance', 'started_at', self.gf(
+            'django.db.models.fields.DateTimeField')(null=True))
 
         # Changing field 'HostMaintenance.main_log'
-        db.alter_column(u'maintenance_hostmaintenance', 'main_log', self.gf('django.db.models.fields.TextField')(null=True))
+        db.alter_column(u'maintenance_hostmaintenance', 'main_log', self.gf(
+            'django.db.models.fields.TextField')(null=True))
 
     def backwards(self, orm):
 
         # Changing field 'HostMaintenance.finished_at'
-        db.alter_column(u'maintenance_hostmaintenance', 'finished_at', self.gf('django.db.models.fields.DateTimeField')(default=None))
+        db.alter_column(u'maintenance_hostmaintenance', 'finished_at', self.gf(
+            'django.db.models.fields.DateTimeField')(default=None))
 
         # Changing field 'HostMaintenance.started_at'
-        db.alter_column(u'maintenance_hostmaintenance', 'started_at', self.gf('django.db.models.fields.DateTimeField')(default=None))
+        db.alter_column(u'maintenance_hostmaintenance', 'started_at', self.gf(
+            'django.db.models.fields.DateTimeField')(default=None))
 
         # Changing field 'HostMaintenance.main_log'
-        db.alter_column(u'maintenance_hostmaintenance', 'main_log', self.gf('django.db.models.fields.TextField')(default=None))
+        db.alter_column(u'maintenance_hostmaintenance', 'main_log', self.gf(
+            'django.db.models.fields.TextField')(default=None))
 
     models = {
         u'maintenance.hostmaintenance': {

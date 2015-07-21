@@ -70,7 +70,8 @@ class StopDatabase(BaseStep):
             set_infra_read_ip(slave_host=workflow_dict['host'],
                               infra_name=databaseinfra.name)
 
-            LOG.info('Setting write IP on {}'.format(workflow_dict['not_primary_hosts'][0]))
+            LOG.info('Setting write IP on {}'.format(
+                workflow_dict['not_primary_hosts'][0]))
             set_infra_write_ip(master_host=workflow_dict['not_primary_hosts'][0],
                                infra_name=databaseinfra.name)
 

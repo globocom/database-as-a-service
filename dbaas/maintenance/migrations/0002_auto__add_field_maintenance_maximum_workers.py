@@ -10,14 +10,13 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         # Adding field 'Maintenance.maximum_workers'
         db.add_column(u'maintenance_maintenance', 'maximum_workers',
-                      self.gf('django.db.models.fields.PositiveSmallIntegerField')(default=1),
+                      self.gf('django.db.models.fields.PositiveSmallIntegerField')(
+                          default=1),
                       keep_default=False)
-
 
     def backwards(self, orm):
         # Deleting field 'Maintenance.maximum_workers'
         db.delete_column(u'maintenance_maintenance', 'maximum_workers')
-
 
     models = {
         u'maintenance.hostmaintenance': {

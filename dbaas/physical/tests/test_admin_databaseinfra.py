@@ -12,6 +12,7 @@ LOG = logging.getLogger(__name__)
 
 
 class AdminCreateDatabaseInfraTestCase(TestCase):
+
     """ HTTP test cases """
     USERNAME = "test-ui-database"
     PASSWORD = "123456"
@@ -20,7 +21,8 @@ class AdminCreateDatabaseInfraTestCase(TestCase):
         self.engine = factory.EngineFactory()
         self.plan = factory.PlanFactory(engine_type=self.engine.engine_type)
         self.environment = self.plan.environments.all()[0]
-        self.user = User.objects.create_superuser(self.USERNAME, email="%s@admin.com" % self.USERNAME, password=self.PASSWORD)
+        self.user = User.objects.create_superuser(
+            self.USERNAME, email="%s@admin.com" % self.USERNAME, password=self.PASSWORD)
         self.client.login(username=self.USERNAME, password=self.PASSWORD)
 
     def tearDown(self):
@@ -72,7 +74,7 @@ class AdminCreateDatabaseInfraTestCase(TestCase):
             params["instances-%d-is_arbiter" % i] = False,
             params["instances-%d-instance_type" % i] = 2,
 
-            if i == (NUM_INSTANCES -1):
+            if i == (NUM_INSTANCES - 1):
                 databaseinfra_endpoint += "%s:%s" % (address, instance_port)
             else:
                 databaseinfra_endpoint += "%s:%s," % (address, instance_port)
@@ -80,7 +82,8 @@ class AdminCreateDatabaseInfraTestCase(TestCase):
         params["endpoint"] = databaseinfra_endpoint
         params["endpoint_dns"] = databaseinfra_endpoint
 
-        response = self.client.post("/admin/physical/databaseinfra/add/", params)
+        response = self.client.post(
+            "/admin/physical/databaseinfra/add/", params)
         self.assertEqual(response.status_code, 302, response.content)
         # self.assertTrue(fake.database_created(self.databaseinfra.name, databaseinfra_name))
 

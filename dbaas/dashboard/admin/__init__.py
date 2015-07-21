@@ -4,4 +4,3 @@ from ..views import dashboard
 
 import admin
 admin.site.register_view('/dashboard/', view=dashboard)
-

@@ -10,14 +10,13 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         # Adding field 'DatabaseInfra.per_database_size_mbytes'
         db.add_column(u'physical_databaseinfra', 'per_database_size_mbytes',
-                      self.gf('django.db.models.fields.IntegerField')(default=0),
+                      self.gf('django.db.models.fields.IntegerField')(
+                          default=0),
                       keep_default=False)
-
 
     def backwards(self, orm):
         # Deleting field 'DatabaseInfra.per_database_size_mbytes'
         db.delete_column(u'physical_databaseinfra', 'per_database_size_mbytes')
-
 
     models = {
         u'physical.databaseinfra': {

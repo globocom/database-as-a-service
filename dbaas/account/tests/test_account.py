@@ -22,7 +22,6 @@ class AccountTest(TestCase):
         """
         self.assertTrue(self.new_user.pk)
 
-
     def test_new_user_is_staff(self):
         """
         Tests new_user is staff

@@ -11,11 +11,9 @@ class Migration(SchemaMigration):
         # Adding unique constraint on 'Maintenance', fields ['scheduled_for']
         db.create_unique(u'maintenance_maintenance', ['scheduled_for'])
 
-
     def backwards(self, orm):
         # Removing unique constraint on 'Maintenance', fields ['scheduled_for']
         db.delete_unique(u'maintenance_maintenance', ['scheduled_for'])
-
 
     models = {
         u'maintenance.hostmaintenance': {

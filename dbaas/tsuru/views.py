@@ -42,6 +42,7 @@ class ListPlans(APIView):
 
 
 class GetServiceStatus(APIView):
+
     """
     Return the database status
     """
@@ -56,7 +57,8 @@ class GetServiceStatus(APIView):
                                                       environment__name=env).values_list('status', flat=True)[0]
         except IndexError as e:
             database_status = 0
-            LOG.warn("There is not a database with this {} name on {}. {}".format(database_name, env, e))
+            LOG.warn("There is not a database with this {} name on {}. {}".format(
+                database_name, env, e))
 
         LOG.info("Status = {}".format(database_status))
         task = TaskHistory.objects.filter(Q(arguments__contains=database_name) &
@@ -81,11 +83,13 @@ class GetServiceInfo(APIView):
     def get(self, request, database_name, format=None):
         env = get_url_env(request)
         try:
-            info = Database.objects.filter(name=database_name, environment__name=env).values('used_size_in_bytes', )[0]
+            info = Database.objects.filter(
+                name=database_name, environment__name=env).values('used_size_in_bytes', )[0]
             info['used_size_in_bytes'] = str(info['used_size_in_bytes'])
         except IndexError as e:
             info = {}
-            LOG.warn("There is not a database {} on {}. {}".format(database_name, env, e))
+            LOG.warn(
+                "There is not a database {} on {}. {}".format(database_name, env, e))
 
         LOG.info("Info = {}".format(info))
 
@@ -109,7 +113,8 @@ class ServiceAppBind(APIView):
 
         if database.databaseinfra.engine.name == 'redis':
             redis_password = database.databaseinfra.password
-            endpoint = database.get_endpoint_dns().replace('<password>', redis_password)
+            endpoint = database.get_endpoint_dns().replace(
+                '<password>', redis_password)
 
             env_vars = {"DBAAS_REDIS_PASSWORD": redis_password,
                         "DBAAS_REDIS_ENDPOINT": endpoint
@@ -125,7 +130,8 @@ class ServiceAppBind(APIView):
             try:
                 credential = database.credentials.all()[0]
             except IndexError as e:
-                msg = "Database {} in env {} does not have credentials.".format(database_name, env)
+                msg = "Database {} in env {} does not have credentials.".format(
+                    database_name, env)
                 return log_and_response(msg=msg, e=e, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
             endpoint = database.endpoint.replace('<user>:<password>', "{}:{}".format(
@@ -188,7 +194,8 @@ class ServiceUnitBind(APIView):
                 db_bind = DatabaseBind.objects.get(database=database,
                                                    bind_address=unit_host)
 
-                bind = DatabaseBind.objects.select_for_update().filter(id=db_bind.id)[0]
+                bind = DatabaseBind.objects.select_for_update().filter(
+                    id=db_bind.id)[0]
                 if bind.bind_status != DESTROYING:
                     bind.binds_requested += 1
                     bind.save()
@@ -226,7 +233,8 @@ class ServiceUnitBind(APIView):
             db_bind = DatabaseBind.objects.get(database=database,
                                                bind_address=unbind_ip)
 
-            database_bind = DatabaseBind.objects.select_for_update().filter(id=db_bind.id)[0]
+            database_bind = DatabaseBind.objects.select_for_update().filter(
+                id=db_bind.id)[0]
 
             if database_bind.bind_status != DESTROYING:
                 if database_bind.binds_requested > 0:
@@ -272,7 +280,8 @@ class ServiceAdd(APIView):
 
         try:
             Database.objects.get(name=name, environment__name=env)
-            msg = "There is already a database called {} in {}.".format(name, env)
+            msg = "There is already a database called {} in {}.".format(
+                name, env)
             return log_and_response(msg=msg,
                                     http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         except ObjectDoesNotExist as e:
@@ -306,11 +315,13 @@ class ServiceAdd(APIView):
             return log_and_response(msg=msg,
                                     http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        databases_used_by_team = dbaas_team.count_databases_in_use(environment=dbaas_environment)
+        databases_used_by_team = dbaas_team.count_databases_in_use(
+            environment=dbaas_environment)
         database_alocation_limit = dbaas_team.database_alocation_limit
 
         if databases_used_by_team >= database_alocation_limit:
-            msg = "The database alocation limit of {} has been exceeded for the selected team: {}".format(database_alocation_limit, dbaas_team)
+            msg = "The database alocation limit of {} has been exceeded for the selected team: {}".format(
+                database_alocation_limit, dbaas_team)
             return log_and_response(msg=msg,
                                     http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -355,9 +366,11 @@ class ServiceRemove(APIView):
     def delete(self, request, database_name, format=None):
         env = get_url_env(request)
         try:
-            database = Database.objects.filter(name=database_name, environment__name=env).exclude(is_in_quarantine=True)[0]
+            database = Database.objects.filter(
+                name=database_name, environment__name=env).exclude(is_in_quarantine=True)[0]
         except IndexError as e:
-            msg = "Database id provided does not exist {} in {}.".format(database_name, env)
+            msg = "Database id provided does not exist {} in {}.".format(
+                database_name, env)
             return log_and_response(msg=msg, e=e, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         database.delete()
@@ -367,7 +380,8 @@ class ServiceRemove(APIView):
 def get_plans_dict(hard_plans):
     plans = []
     for hard_plan in hard_plans:
-        hard_plan['description'] = hard_plan['name'] + '-' + hard_plan['environments__name']
+        hard_plan['description'] = hard_plan[
+            'name'] + '-' + hard_plan['environments__name']
         hard_plan['name'] = slugify(hard_plan['description'])
         del hard_plan['environments__name']
         plans.append(hard_plan)
@@ -386,22 +400,27 @@ def log_and_response(msg, http_status, e="Conditional Error."):
 
 
 def check_database_status(database_name, env):
-    task = TaskHistory.objects.filter(arguments__contains="Database name: {}, Environment: {}".format(database_name, env), task_status="RUNNING",)
+    task = TaskHistory.objects.filter(arguments__contains="Database name: {}, Environment: {}".format(
+        database_name, env), task_status="RUNNING",)
 
     LOG.info("Task {}".format(task))
     if task:
-        msg = "Database {} in env {} is beeing created.".format(database_name, env)
+        msg = "Database {} in env {} is beeing created.".format(
+            database_name, env)
         return log_and_response(msg=msg,
                                 http_status=status.HTTP_412_PRECONDITION_FAILED)
 
     try:
-        database = Database.objects.get(name=database_name, environment__name=env)
+        database = Database.objects.get(
+            name=database_name, environment__name=env)
     except ObjectDoesNotExist as e:
-        msg = "Database {} does not exist in env {}.".format(database_name, env)
+        msg = "Database {} does not exist in env {}.".format(
+            database_name, env)
         return log_and_response(msg=msg, e=e,
                                 http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     except MultipleObjectsReturned as e:
-        msg = "There are multiple databases called {} in {}.".format(database_name, env)
+        msg = "There are multiple databases called {} in {}.".format(
+            database_name, env)
         return log_and_response(msg=msg, e=e,
                                 http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     except Exception as e:
@@ -410,8 +429,8 @@ def check_database_status(database_name, env):
                                 http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     if not(database and database.status):
-            msg = "Database {} is not Alive.".format(database_name)
-            return log_and_response(msg=msg,
-                                    http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        msg = "Database {} is not Alive.".format(database_name)
+        return log_and_response(msg=msg,
+                                http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     return database

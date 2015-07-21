@@ -10,20 +10,24 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         # Adding model 'MaintenanceParameters'
         db.create_table(u'maintenance_maintenanceparameters', (
-            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('created_at', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
-            ('updated_at', self.gf('django.db.models.fields.DateTimeField')(auto_now=True, blank=True)),
-            ('parameter_name', self.gf('django.db.models.fields.CharField')(max_length=100)),
-            ('function_name', self.gf('django.db.models.fields.CharField')(max_length=100)),
-            ('maintenance', self.gf('django.db.models.fields.related.ForeignKey')(related_name=u'maintenance_params', to=orm['maintenance.Maintenance'])),
+            (u'id', self.gf('django.db.models.fields.AutoField')
+             (primary_key=True)),
+            ('created_at', self.gf('django.db.models.fields.DateTimeField')
+             (auto_now_add=True, blank=True)),
+            ('updated_at', self.gf('django.db.models.fields.DateTimeField')
+             (auto_now=True, blank=True)),
+            ('parameter_name', self.gf(
+                'django.db.models.fields.CharField')(max_length=100)),
+            ('function_name', self.gf(
+                'django.db.models.fields.CharField')(max_length=100)),
+            ('maintenance', self.gf('django.db.models.fields.related.ForeignKey')(
+                related_name=u'maintenance_params', to=orm['maintenance.Maintenance'])),
         ))
         db.send_create_signal(u'maintenance', ['MaintenanceParameters'])
-
 
     def backwards(self, orm):
         # Deleting model 'MaintenanceParameters'
         db.delete_table(u'maintenance_maintenanceparameters')
-
 
     models = {
         u'maintenance.hostmaintenance': {

@@ -11,6 +11,7 @@ LOG = logging.getLogger(__name__)
 
 
 class BuildDatabaseInfra(BaseStep):
+
     def __unicode__(self):
         return "Initializing databaseinfra..."
 
@@ -19,12 +20,11 @@ class BuildDatabaseInfra(BaseStep):
             workflow_dict['names'] = gen_infra_names(
                 name=workflow_dict['name'], qt=workflow_dict['qt'])
 
-
             databaseinfra = DatabaseInfra()
             databaseinfra.name = workflow_dict['names']['infra']
 
             credentials = get_engine_credentials(engine=str(workflow_dict['plan'].engine_type),
-                                                environment=workflow_dict['environment'])
+                                                 environment=workflow_dict['environment'])
             databaseinfra.user = credentials.user
             databaseinfra.password = credentials.password
             databaseinfra.engine = workflow_dict[
@@ -32,7 +32,8 @@ class BuildDatabaseInfra(BaseStep):
             databaseinfra.plan = workflow_dict['plan']
             databaseinfra.environment = workflow_dict['environment']
             databaseinfra.capacity = 1
-            databaseinfra.per_database_size_mbytes = workflow_dict['plan'].max_db_size
+            databaseinfra.per_database_size_mbytes = workflow_dict[
+                'plan'].max_db_size
             databaseinfra.save()
 
             LOG.info("DatabaseInfra created!")

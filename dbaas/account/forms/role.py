@@ -9,10 +9,11 @@ from django.contrib.auth.models import User
 from ..models import Role
 
 
-#as in http://stackoverflow.com/questions/6097210/assign-user-objects-to-a-group-while-editing-group-object-in-django-admin
+# as in
+# http://stackoverflow.com/questions/6097210/assign-user-objects-to-a-group-while-editing-group-object-in-django-admin
 class RoleAdminForm(forms.ModelForm):
     users = forms.ModelMultipleChoiceField(
-        queryset=User.objects.all(), 
+        queryset=User.objects.all(),
         required=False,
         widget=FilteredSelectMultiple(
             verbose_name=_('Users'),
@@ -36,6 +37,7 @@ class RoleAdminForm(forms.ModelForm):
             role.user_set = self.cleaned_data['users']
         else:
             old_save_m2m = self.save_m2m
+
             def new_save_m2m():
                 old_save_m2m()
                 role.user_set = self.cleaned_data['users']

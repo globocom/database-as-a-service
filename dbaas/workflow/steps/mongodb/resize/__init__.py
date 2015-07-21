@@ -14,7 +14,8 @@ def run_vm_script(workflow_dict, context_dict, script, reverse=False, wait=0):
     try:
         instances_detail = workflow_dict['instances_detail']
 
-        final_context_dict = dict(context_dict.items() + workflow_dict['initial_context_dict'].items())
+        final_context_dict = dict(
+            context_dict.items() + workflow_dict['initial_context_dict'].items())
 
         if reverse:
             instances_detail_final = instances_detail[::-1]
@@ -26,13 +27,14 @@ def run_vm_script(workflow_dict, context_dict, script, reverse=False, wait=0):
             host_csattr = HostAttr.objects.get(host=host)
             command = build_context_script(final_context_dict, script)
             output = {}
-            return_code = exec_remote_command(server = host.address,
-                                              username = host_csattr.vm_user,
-                                              password = host_csattr.vm_password,
-                                              command = command,
-                                              output = output)
+            return_code = exec_remote_command(server=host.address,
+                                              username=host_csattr.vm_user,
+                                              password=host_csattr.vm_password,
+                                              command=command,
+                                              output=output)
             if return_code:
-                raise Exception, "Could not run script. Output: {}".format(output)
+                raise Exception, "Could not run script. Output: {}".format(
+                    output)
 
             sleep(wait)
 

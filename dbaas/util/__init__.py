@@ -1,4 +1,4 @@
- # -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 from time import sleep
 import paramiko
@@ -12,27 +12,32 @@ import logging
 import subprocess
 import signal
 import os
-import traceback, sys
+import traceback
+import sys
 from billiard import current_process
 LOG = logging.getLogger(__name__)
 
 # See http://docs.python.org/2/library/subprocess.html#popen-constructor if you
 # have questions about this variable
 DEFAULT_OUTPUT_BUFFER_SIZE = 16384
-PROCESS_TIMEOUT=4*60*60 # 4 horas
+PROCESS_TIMEOUT = 4 * 60 * 60  # 4 horas
 
 
 class AlarmException(Exception):
     pass
 
+
 def alarm_handler(signum, frame):
     raise AlarmException
+
 
 def slugify(string):
     return slugify_function(string, separator="_")
 
+
 def make_db_random_password():
     return User.objects.make_random_password()
+
 
 def as_json(f):
     def wrapper(request, *args, **kw):
@@ -50,7 +55,7 @@ def call_script(script_name, working_dir=None, split_lines=True, args=[], envs={
 
     args_copy = []
     for arg in args:
-        if type(arg)=='str' and arg.startswith("PASSWORD"):
+        if type(arg) == 'str' and arg.startswith("PASSWORD"):
             args_copy.append("xxx")
         else:
             args_copy.append(arg)
@@ -59,13 +64,15 @@ def call_script(script_name, working_dir=None, split_lines=True, args=[], envs={
         raise RuntimeError("Working dir is null")
 
     logging_cmdline = "%s %s" % (
-        " ".join([ "%s=%s" % (k, "xxx" if k.endswith("_PASSWORD") else v) for (k,v) in envs.items()]),
+        " ".join(["%s=%s" % (k, "xxx" if k.endswith("_PASSWORD") else v)
+                  for (k, v) in envs.items()]),
         " ".join([script_name] + args_copy),
     )
     return_code = None
     output = []
     try:
-        LOG.debug('Running on path %s command: %s', working_dir, logging_cmdline)
+        LOG.debug(
+            'Running on path %s command: %s', working_dir, logging_cmdline)
 
         envs_with_path = {'PATH': os.getenv("PATH")}
 
@@ -74,7 +81,8 @@ def call_script(script_name, working_dir=None, split_lines=True, args=[], envs={
 
         # For future, if scripts have lot of output can be better
         # create a temporary file for stdout. Scripts with lot of output and subprocess.PIPE
-        # can lock because this method not consume stdout without script finish execute.
+        # can lock because this method not consume stdout without script finish
+        # execute.
 
         LOG.info("Args: {}".format(args))
 
@@ -83,13 +91,12 @@ def call_script(script_name, working_dir=None, split_lines=True, args=[], envs={
         else:
             exec_script = [working_dir + script_name] + args
 
-
         process = subprocess.Popen(
             exec_script,
             bufsize=DEFAULT_OUTPUT_BUFFER_SIZE,
             stdin=None,
             stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT, # stderr and stdout are the same
+            stderr=subprocess.STDOUT,  # stderr and stdout are the same
             close_fds=True,
             cwd=working_dir,
             env=envs_with_path,
@@ -101,9 +108,10 @@ def call_script(script_name, working_dir=None, split_lines=True, args=[], envs={
             signal.alarm(PROCESS_TIMEOUT)
         try:
             process.wait()
-            signal.alarm(0) # Disable the alarm
+            signal.alarm(0)  # Disable the alarm
         except AlarmException:
-            LOG.error("Timeout %s exceeded for process id %s" % (PROCESS_TIMEOUT, process.pid))
+            LOG.error("Timeout %s exceeded for process id %s" %
+                      (PROCESS_TIMEOUT, process.pid))
             process.kill()
 
         output = process.stdout.read()
@@ -117,26 +125,29 @@ def call_script(script_name, working_dir=None, split_lines=True, args=[], envs={
             return return_code, output
     except:
         # if any error happen, log cmdline to error
-        LOG.error("Error running cmdline (exit code %s): %s", return_code, logging_cmdline, exc_info=True)
+        LOG.error("Error running cmdline (exit code %s): %s",
+                  return_code, logging_cmdline, exc_info=True)
         if not return_code:
             return_code = 1
 
         return return_code, output
 
 
-def check_nslookup(dns_to_check, dns_server, retries= 90, wait= 10):
+def check_nslookup(dns_to_check, dns_server, retries=90, wait=10):
     try:
         LOG.info("Cheking dns...")
         for attempt in range(0, retries):
             LOG.info("Cheking dns... attempt number %s..." % str(attempt + 1))
 
-            result = subprocess.Popen("nslookup %s %s" % (dns_to_check, dns_server), stdout=subprocess.PIPE, shell=True)
+            result = subprocess.Popen("nslookup %s %s" % (
+                dns_to_check, dns_server), stdout=subprocess.PIPE, shell=True)
             (output, err) = result.communicate()
-            indexes = [i for i, x in enumerate(output.split('\n')) if re.match(r'\W*' + "Address" + r'\W*', x)]
+            indexes = [i for i, x in enumerate(output.split('\n')) if re.match(
+                r'\W*' + "Address" + r'\W*', x)]
 
             LOG.info("Nslookup output: %s" % output)
 
-            if len(indexes)==2:
+            if len(indexes) == 2:
                 LOG.info("%s is available!" % dns_to_check)
                 return True
             sleep(wait)
@@ -146,11 +157,12 @@ def check_nslookup(dns_to_check, dns_server, retries= 90, wait= 10):
         LOG.warn("We caught an exception %s" % e)
         return None
 
+
 def scp_file(server, username, password, localpath, remotepath, option):
 
     try:
         transport = paramiko.Transport((server, 22))
-        transport.connect(username = username, password = password)
+        transport.connect(username=username, password=password)
 
         sftp = paramiko.SFTPClient.from_transport(transport)
         if option == 'PUT':
@@ -168,8 +180,10 @@ def scp_file(server, username, password, localpath, remotepath, option):
         LOG.error("We caught an exception: %s ." % (e))
         return False
 
+
 def scp_put_file(server, username, password, localpath, remotepath):
     return scp_file(server, username, password, localpath, remotepath, 'PUT')
+
 
 def scp_get_file(server, username, password, localpath, remotepath):
     return scp_file(server, username, password, localpath, remotepath, 'GET')
@@ -178,24 +192,26 @@ def scp_get_file(server, username, password, localpath, remotepath):
 def exec_remote_command(server, username, password, command, output={}):
 
     try:
-        LOG.info("Executing command [%s] on remote server %s" % (command, server))
+        LOG.info(
+            "Executing command [%s] on remote server %s" % (command, server))
         client = paramiko.SSHClient()
         client.load_system_host_keys()
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        client.connect(server, username= username, password= password)
+        client.connect(server, username=username, password=password)
 
         stdin, stdout, stderr = client.exec_command(command)
         log_stdout = stdout.readlines()
         log_stderr = stderr.readlines()
         exit_status = stdout.channel.recv_exit_status()
-        LOG.info("Comand return code: %s, stdout: %s, stderr %s" % (exit_status, log_stdout, log_stderr))
+        LOG.info("Comand return code: %s, stdout: %s, stderr %s" %
+                 (exit_status, log_stdout, log_stderr))
         output['stdout'] = log_stdout
         output['stderr'] = log_stderr
         return exit_status
     except (paramiko.ssh_exception.BadHostKeyException,
-                    paramiko.ssh_exception.AuthenticationException,
-                    paramiko.ssh_exception.SSHException,
-                    socket.error) as e:
+            paramiko.ssh_exception.AuthenticationException,
+            paramiko.ssh_exception.SSHException,
+            socket.error) as e:
         LOG.warning("We caught an exception: %s ." % (e))
         output['exception'] = str(e)
         return None
@@ -208,30 +224,31 @@ def check_ssh(server, username, password, retries=6, wait=30, interval=40):
     ssh.load_system_host_keys()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
-    LOG.info("Waiting %s seconds to check %s ssh connection..." % (wait, server))
+    LOG.info("Waiting %s seconds to check %s ssh connection..." %
+             (wait, server))
     sleep(wait)
 
     for attempt in range(retries):
         try:
 
-            LOG.info("Login attempt number %i on %s " % (attempt+1, server))
+            LOG.info("Login attempt number %i on %s " % (attempt + 1, server))
 
-            ssh.connect( server, port=22, username=username,
-                                 password=password, timeout= None, allow_agent= True,
-                                 look_for_keys= True, compress= False)
+            ssh.connect(server, port=22, username=username,
+                        password=password, timeout=None, allow_agent=True,
+                        look_for_keys=True, compress=False)
             return True
 
         except (paramiko.ssh_exception.BadHostKeyException,
-                    paramiko.ssh_exception.AuthenticationException,
-                    paramiko.ssh_exception.SSHException,
-                    socket.error) as e:
+                paramiko.ssh_exception.AuthenticationException,
+                paramiko.ssh_exception.SSHException,
+                socket.error) as e:
 
-            if attempt == retries-1:
+            if attempt == retries - 1:
                 LOG.error("Maximum number of login attempts : %s ." % (e))
                 return False
 
             LOG.warning("We caught an exception: %s ." % (e))
-            LOG.info("Wating %i seconds to try again..." % ( interval))
+            LOG.info("Wating %i seconds to try again..." % (interval))
             sleep(interval)
 
 
@@ -239,15 +256,15 @@ def gen_infra_names(name, qt):
     import time
     import re
 
-    stamp = str(time.time()).replace(".","")
+    stamp = str(time.time()).replace(".", "")
 
     name = re.compile("[^\w']|_").sub("", name.lower())
     name = name[:10]
 
-    names = {"infra": name + stamp, "vms":[]}
+    names = {"infra": name + stamp, "vms": []}
 
     for x in range(qt):
-        names['vms'].append(name + "-0%i-" % (x+1)+ stamp)
+        names['vms'].append(name + "-0%i-" % (x + 1) + stamp)
 
     return names
 
@@ -270,7 +287,7 @@ def full_stack():
     stack = traceback.extract_stack()[:-1]  # last one would be full_stack()
     if exc is not None:  # i.e. if an exception is present
         del stack[-1]    # remove call of full_stack, the printed exception
-                         # will contain the caught exception caller instead
+        # will contain the caught exception caller instead
     trc = 'Traceback (most recent call last):\n'
     stackstr = trc + ''.join(traceback.format_list(stack))
     if exc is not None:

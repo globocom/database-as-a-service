@@ -12,4 +12,3 @@ class ConfigurationAdmin(admin.ModelAdmin):
 
     list_display = ["name", "value", "description"]
     search_fields = ("name",)
-

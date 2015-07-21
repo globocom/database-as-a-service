@@ -15,10 +15,12 @@ class JSONHalRenderer(renderers.UnicodeJSONRenderer):
 
         if isinstance(data, dict):
             data = self.represent_as_hal(data, renderer_context)
-        elif hasattr(data, "__iter__"): # list
-            data = [ self.represent_as_hal(data_obj, renderer_context) for data_obj in data ]
+        elif hasattr(data, "__iter__"):  # list
+            data = [self.represent_as_hal(
+                data_obj, renderer_context) for data_obj in data]
         else:
-            raise RuntimeError("Unknown type %s for rendering with json-hal. Acceptable types are list and dict")
+            raise RuntimeError(
+                "Unknown type %s for rendering with json-hal. Acceptable types are list and dict")
 
         return super(JSONHalRenderer, self).render(data, accepted_media_type, renderer_context)
 
@@ -58,12 +60,14 @@ class JSONHalRenderer(renderers.UnicodeJSONRenderer):
                 "count": object_dict["count"],
             }
             base_name = self.get_default_base_name(renderer_context["view"])
-            hal[base_name] = [self.represent_as_hal(obj, renderer_context) for obj in object_dict["results"]]
+            hal[base_name] = [
+                self.represent_as_hal(obj, renderer_context) for obj in object_dict["results"]]
 
         else:
             hal["_links"] = {
                 "self": self.get_current_url(object_dict, renderer_context),
             }
-            hal.update([ (k,v) for (k,v) in object_dict.iteritems() if k != "url"])
+            hal.update([(k, v)
+                        for (k, v) in object_dict.iteritems() if k != "url"])
 
         return hal

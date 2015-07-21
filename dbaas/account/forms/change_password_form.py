@@ -6,6 +6,7 @@ import ldap
 
 
 class ChangePasswordForm(forms.Form):
+
     """
     A form that lets a user change set his/her password without entering the
     old password

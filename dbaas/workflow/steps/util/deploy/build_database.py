@@ -10,6 +10,7 @@ LOG = logging.getLogger(__name__)
 
 
 class BuildDatabase(BaseStep):
+
     def __unicode__(self):
         return "Creating logical database..."
 
@@ -17,12 +18,13 @@ class BuildDatabase(BaseStep):
         try:
 
             if  'team' not in workflow_dict or \
-                'description' not in workflow_dict or \
-                'databaseinfra' not in workflow_dict:
+                    'description' not in workflow_dict or \
+                    'databaseinfra' not in workflow_dict:
                 return False
 
             LOG.info("Creating Database...")
-            database = Database.provision(name=workflow_dict['name'], databaseinfra=workflow_dict['databaseinfra'])
+            database = Database.provision(
+                name=workflow_dict['name'], databaseinfra=workflow_dict['databaseinfra'])
 
             LOG.info("Database %s created!" % database)
 
@@ -42,9 +44,8 @@ class BuildDatabase(BaseStep):
             driver = workflow_dict['databaseinfra'].get_driver()
             if driver.check_status():
                 LOG.info("Database is ok...")
-                database.status=database.ALIVE
+                database.status = database.ALIVE
                 database.save()
-
 
             return True
         except Exception:

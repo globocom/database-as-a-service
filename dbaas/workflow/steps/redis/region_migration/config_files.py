@@ -55,7 +55,8 @@ class ConfigFiles(BaseStep):
                                            wait=5, interval=10)
 
                     if not host_ready:
-                        raise Exception(str("Host %s is not ready..." % target_host))
+                        raise Exception(
+                            str("Host %s is not ready..." % target_host))
 
                 script = test_bash_script_error()
                 script += build_permission_script()
@@ -111,8 +112,10 @@ class ConfigFiles(BaseStep):
                     'ONLY_SENTINEL': only_sentinel,
                 }
 
-                planattr = PlanAttr.objects.get(plan=workflow_dict['source_plan'])
-                script = build_context_script(contextdict, planattr.configuration_script)
+                planattr = PlanAttr.objects.get(
+                    plan=workflow_dict['source_plan'])
+                script = build_context_script(
+                    contextdict, planattr.configuration_script)
 
                 output = {}
                 LOG.info(script)

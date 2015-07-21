@@ -12,6 +12,7 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class UserAPI(viewsets.ReadOnlyModelViewSet):
+
     """
     Environment API
     """

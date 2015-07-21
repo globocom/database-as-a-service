@@ -9,13 +9,13 @@ class Migration(SchemaMigration):
 
     def forwards(self, orm):
         # Adding index on 'HostMaintenance', fields ['host', 'maintenance']
-        db.create_index(u'maintenance_hostmaintenance', ['host_id', 'maintenance_id'])
-
+        db.create_index(
+            u'maintenance_hostmaintenance', ['host_id', 'maintenance_id'])
 
     def backwards(self, orm):
         # Removing index on 'HostMaintenance', fields ['host', 'maintenance']
-        db.delete_index(u'maintenance_hostmaintenance', ['host_id', 'maintenance_id'])
-
+        db.delete_index(
+            u'maintenance_hostmaintenance', ['host_id', 'maintenance_id'])
 
     models = {
         u'maintenance.hostmaintenance': {

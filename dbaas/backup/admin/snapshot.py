@@ -16,13 +16,16 @@ class SnapshotAdmin(admin.ModelAdmin):
 
     actions = None
 
-    list_display = ("database_name", "instance", "start_at", "end_at", "purge_at", "type", "status", "environment")
+    list_display = ("database_name", "instance", "start_at",
+                    "end_at", "purge_at", "type", "status", "environment")
     search_fields = ("database_name", "instance__dns", )
-    readonly_fields = ("database_name", "instance", "start_at", "end_at", "purge_at", "type", "status", "snapshopt_id", "snapshot_name", "export_path", "size", "environment", "error")
+    readonly_fields = ("database_name", "instance", "start_at", "end_at", "purge_at", "type",
+                       "status", "snapshopt_id", "snapshot_name", "export_path", "size", "environment", "error")
     ordering = ["-start_at"]
 
     def has_delete_permission(self, request, obj=None):
         return False
+
     def has_add_permission(self, request, obj=None):
         return False
 
@@ -37,19 +40,18 @@ class SnapshotAdmin(admin.ModelAdmin):
     def get_urls(self):
         from django.conf.urls import url
         urls = super(SnapshotAdmin, self).get_urls()
-        my_urls = [(url(r'backup_databases/$', self.admin_site.admin_view(self.backup_databases)))]
+        my_urls = [
+            (url(r'backup_databases/$', self.admin_site.admin_view(self.backup_databases)))]
         return my_urls + urls
-
 
     def changelist_view(self, request, extra_context=None):
         extra_context = extra_context or {}
 
         backup_avaliable = Configuration.get_by_name_as_int(
-                'backup_avaliable')
+            'backup_avaliable')
 
         extra_context['backup_avaliable'] = False
         if backup_avaliable:
             extra_context['backup_avaliable'] = True
-
 
         return super(SnapshotAdmin, self).changelist_view(request, extra_context=extra_context)

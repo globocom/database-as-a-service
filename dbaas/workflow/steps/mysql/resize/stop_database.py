@@ -7,6 +7,7 @@ LOG = logging.getLogger(__name__)
 
 
 class StopDatabase(BaseStep):
+
     def __unicode__(self):
         return "Stoping Database..."
 
@@ -16,9 +17,9 @@ class StopDatabase(BaseStep):
         }
 
         ret_script = run_vm_script(
-            workflow_dict = workflow_dict,
-            context_dict = context_dict,
-            script = workflow_dict['cloudstackpack'].script,
+            workflow_dict=workflow_dict,
+            context_dict=context_dict,
+            script=workflow_dict['cloudstackpack'].script,
         )
 
         return ret_script
@@ -32,11 +33,9 @@ class StopDatabase(BaseStep):
         }
 
         ret_script = run_vm_script(
-            workflow_dict = workflow_dict,
-            context_dict = context_dict,
-            script = workflow_dict['original_cloudstackpack'].script,
+            workflow_dict=workflow_dict,
+            context_dict=context_dict,
+            script=workflow_dict['original_cloudstackpack'].script,
         )
 
         return ret_script
-
-

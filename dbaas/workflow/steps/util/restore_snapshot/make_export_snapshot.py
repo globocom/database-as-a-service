@@ -22,7 +22,8 @@ class MakeExportSnapshot(BaseStep):
                                        instance=host.instance_set.all()[0],
                                        export_id=export_id)
                 if not ret:
-                    msg = 'Could not make snapshot for export_id: {} on host {}'.format(export_id, host)
+                    msg = 'Could not make snapshot for export_id: {} on host {}'.format(
+                        export_id, host)
                     LOG.error(msg)
                     raise Exception(msg)
 

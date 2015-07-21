@@ -145,7 +145,8 @@ def execute_database_region_migration(self, database_region_migration_detail_id,
 
 @app.task(bind=True)
 def execute_database_region_migration_undo(self, database_region_migration_detail_id, task_history=None, user=None):
-    AuditRequest.new_request("execute_database_region_migration", user, "localhost")
+    AuditRequest.new_request(
+        "execute_database_region_migration", user, "localhost")
     try:
 
         if task_history:

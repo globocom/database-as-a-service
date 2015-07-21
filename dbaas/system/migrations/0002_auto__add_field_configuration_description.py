@@ -10,14 +10,13 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         # Adding field 'Configuration.description'
         db.add_column(u'system_configuration', 'description',
-                      self.gf('django.db.models.fields.TextField')(null=True, blank=True),
+                      self.gf('django.db.models.fields.TextField')(
+                          null=True, blank=True),
                       keep_default=False)
-
 
     def backwards(self, orm):
         # Deleting field 'Configuration.description'
         db.delete_column(u'system_configuration', 'description')
-
 
     models = {
         u'system.configuration': {

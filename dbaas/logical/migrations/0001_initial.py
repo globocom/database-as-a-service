@@ -10,37 +10,54 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         # Adding model 'Project'
         db.create_table(u'logical_project', (
-            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('created_at', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
-            ('updated_at', self.gf('django.db.models.fields.DateTimeField')(auto_now=True, blank=True)),
-            ('name', self.gf('django.db.models.fields.CharField')(unique=True, max_length=100)),
-            ('is_active', self.gf('django.db.models.fields.BooleanField')(default=True)),
-            ('slug', self.gf('django.db.models.fields.SlugField')(max_length=50)),
+            (u'id', self.gf('django.db.models.fields.AutoField')
+             (primary_key=True)),
+            ('created_at', self.gf('django.db.models.fields.DateTimeField')
+             (auto_now_add=True, blank=True)),
+            ('updated_at', self.gf('django.db.models.fields.DateTimeField')
+             (auto_now=True, blank=True)),
+            ('name', self.gf('django.db.models.fields.CharField')
+             (unique=True, max_length=100)),
+            ('is_active', self.gf(
+                'django.db.models.fields.BooleanField')(default=True)),
+            ('slug', self.gf('django.db.models.fields.SlugField')
+             (max_length=50)),
         ))
         db.send_create_signal(u'logical', ['Project'])
 
         # Adding model 'Database'
         db.create_table(u'logical_database', (
-            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('created_at', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
-            ('updated_at', self.gf('django.db.models.fields.DateTimeField')(auto_now=True, blank=True)),
-            ('name', self.gf('django.db.models.fields.CharField')(unique=True, max_length=100)),
-            ('databaseinfra', self.gf('django.db.models.fields.related.ForeignKey')(related_name=u'databases', on_delete=models.PROTECT, to=orm['physical.DatabaseInfra'])),
-            ('project', self.gf('django.db.models.fields.related.ForeignKey')(blank=True, related_name=u'databases', null=True, on_delete=models.PROTECT, to=orm['logical.Project'])),
+            (u'id', self.gf('django.db.models.fields.AutoField')
+             (primary_key=True)),
+            ('created_at', self.gf('django.db.models.fields.DateTimeField')
+             (auto_now_add=True, blank=True)),
+            ('updated_at', self.gf('django.db.models.fields.DateTimeField')
+             (auto_now=True, blank=True)),
+            ('name', self.gf('django.db.models.fields.CharField')
+             (unique=True, max_length=100)),
+            ('databaseinfra', self.gf('django.db.models.fields.related.ForeignKey')(
+                related_name=u'databases', on_delete=models.PROTECT, to=orm['physical.DatabaseInfra'])),
+            ('project', self.gf('django.db.models.fields.related.ForeignKey')(
+                blank=True, related_name=u'databases', null=True, on_delete=models.PROTECT, to=orm['logical.Project'])),
         ))
         db.send_create_signal(u'logical', ['Database'])
 
         # Adding model 'Credential'
         db.create_table(u'logical_credential', (
-            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('created_at', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
-            ('updated_at', self.gf('django.db.models.fields.DateTimeField')(auto_now=True, blank=True)),
-            ('user', self.gf('django.db.models.fields.CharField')(unique=True, max_length=100)),
-            ('password', self.gf('django.db.models.fields.CharField')(max_length=406)),
-            ('database', self.gf('django.db.models.fields.related.ForeignKey')(related_name=u'credentials', to=orm['logical.Database'])),
+            (u'id', self.gf('django.db.models.fields.AutoField')
+             (primary_key=True)),
+            ('created_at', self.gf('django.db.models.fields.DateTimeField')
+             (auto_now_add=True, blank=True)),
+            ('updated_at', self.gf('django.db.models.fields.DateTimeField')
+             (auto_now=True, blank=True)),
+            ('user', self.gf('django.db.models.fields.CharField')
+             (unique=True, max_length=100)),
+            ('password', self.gf('django.db.models.fields.CharField')
+             (max_length=406)),
+            ('database', self.gf('django.db.models.fields.related.ForeignKey')
+             (related_name=u'credentials', to=orm['logical.Database'])),
         ))
         db.send_create_signal(u'logical', ['Credential'])
-
 
     def backwards(self, orm):
         # Deleting model 'Project'
@@ -51,7 +68,6 @@ class Migration(SchemaMigration):
 
         # Deleting model 'Credential'
         db.delete_table(u'logical_credential')
-
 
     models = {
         u'logical.credential': {

@@ -11,17 +11,17 @@ class Migration(SchemaMigration):
         # Removing unique constraint on 'Database', fields ['name']
         db.delete_unique(u'logical_database', ['name'])
 
-        # Adding unique constraint on 'Database', fields ['name', 'databaseinfra']
+        # Adding unique constraint on 'Database', fields ['name',
+        # 'databaseinfra']
         db.create_unique(u'logical_database', ['name', 'databaseinfra_id'])
 
-
     def backwards(self, orm):
-        # Removing unique constraint on 'Database', fields ['name', 'databaseinfra']
+        # Removing unique constraint on 'Database', fields ['name',
+        # 'databaseinfra']
         db.delete_unique(u'logical_database', ['name', 'databaseinfra_id'])
 
         # Adding unique constraint on 'Database', fields ['name']
         db.create_unique(u'logical_database', ['name'])
-
 
     models = {
         u'auth.group': {

@@ -11,5 +11,3 @@ class NotificationHistoryFactory(factory.DjangoModelFactory):
     task_id = factory.Sequence(lambda n: 'task_id_{0}'.format(n))
     user = factory.Sequence(lambda n: 'user_{0}'.format(n))
     task_status = "PENDING"
-
-

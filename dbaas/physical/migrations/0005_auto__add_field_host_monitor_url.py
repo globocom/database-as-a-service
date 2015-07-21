@@ -10,14 +10,13 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         # Adding field 'Host.monitor_url'
         db.add_column(u'physical_host', 'monitor_url',
-                      self.gf('django.db.models.fields.URLField')(max_length=255, null=True, blank=True),
+                      self.gf('django.db.models.fields.URLField')(
+                          max_length=255, null=True, blank=True),
                       keep_default=False)
-
 
     def backwards(self, orm):
         # Deleting field 'Host.monitor_url'
         db.delete_column(u'physical_host', 'monitor_url')
-
 
     models = {
         u'physical.databaseinfra': {

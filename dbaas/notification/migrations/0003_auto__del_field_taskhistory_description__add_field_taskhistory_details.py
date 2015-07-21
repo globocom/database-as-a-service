@@ -13,19 +13,19 @@ class Migration(SchemaMigration):
 
         # Adding field 'TaskHistory.details'
         db.add_column(u'notification_taskhistory', 'details',
-                      self.gf('django.db.models.fields.TextField')(null=True, blank=True),
+                      self.gf('django.db.models.fields.TextField')(
+                          null=True, blank=True),
                       keep_default=False)
-
 
     def backwards(self, orm):
         # Adding field 'TaskHistory.description'
         db.add_column(u'notification_taskhistory', 'description',
-                      self.gf('django.db.models.fields.TextField')(null=True, blank=True),
+                      self.gf('django.db.models.fields.TextField')(
+                          null=True, blank=True),
                       keep_default=False)
 
         # Deleting field 'TaskHistory.details'
         db.delete_column(u'notification_taskhistory', 'details')
-
 
     models = {
         u'notification.taskhistory': {

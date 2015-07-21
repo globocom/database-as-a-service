@@ -10,19 +10,21 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         # Adding field 'Instance.dns'
         db.add_column(u'physical_instance', 'dns',
-                      self.gf('django.db.models.fields.CharField')(default='', max_length=200),
+                      self.gf('django.db.models.fields.CharField')(
+                          default='', max_length=200),
                       keep_default=False)
 
         # Adding field 'DatabaseInfra.endpoint_dns'
         db.add_column(u'physical_databaseinfra', 'endpoint_dns',
-                      self.gf('django.db.models.fields.CharField')(max_length=255, null=True, blank=True),
+                      self.gf('django.db.models.fields.CharField')(
+                          max_length=255, null=True, blank=True),
                       keep_default=False)
 
         # Adding field 'Host.address'
         db.add_column(u'physical_host', 'address',
-                      self.gf('django.db.models.fields.CharField')(default='', max_length=255),
+                      self.gf('django.db.models.fields.CharField')(
+                          default='', max_length=255),
                       keep_default=False)
-
 
     def backwards(self, orm):
         # Deleting field 'Instance.dns'
@@ -33,7 +35,6 @@ class Migration(SchemaMigration):
 
         # Deleting field 'Host.address'
         db.delete_column(u'physical_host', 'address')
-
 
     models = {
         u'physical.databaseinfra': {

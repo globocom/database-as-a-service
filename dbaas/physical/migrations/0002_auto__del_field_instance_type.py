@@ -11,13 +11,12 @@ class Migration(SchemaMigration):
         # Deleting field 'Instance.type'
         db.delete_column(u'physical_instance', 'type')
 
-
     def backwards(self, orm):
         # Adding field 'Instance.type'
         db.add_column(u'physical_instance', 'type',
-                      self.gf('django.db.models.fields.CharField')(default=u'2', max_length=2),
+                      self.gf('django.db.models.fields.CharField')(
+                          default=u'2', max_length=2),
                       keep_default=False)
-
 
     models = {
         u'physical.databaseinfra': {

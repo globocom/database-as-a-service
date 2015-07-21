@@ -20,7 +20,8 @@ class UpdateFstab(BaseStep):
             host = workflow_dict['host']
             old_volume = workflow_dict['old_volume']
 
-            source_export_path = scape_nfsaas_export_path(old_volume.nfsaas_path)
+            source_export_path = scape_nfsaas_export_path(
+                old_volume.nfsaas_path)
             target_export_path = scape_nfsaas_export_path(volume.nfsaas_path)
             return_code, output = update_fstab(host=host,
                                                source_export_path=source_export_path,
@@ -45,7 +46,8 @@ class UpdateFstab(BaseStep):
             old_volume = workflow_dict['old_volume']
 
             source_export_path = scape_nfsaas_export_path(volume.nfsaas_path)
-            target_export_path = scape_nfsaas_export_path(old_volume.nfsaas_path)
+            target_export_path = scape_nfsaas_export_path(
+                old_volume.nfsaas_path)
             return_code, output = update_fstab(host=host,
                                                source_export_path=source_export_path,
                                                target_export_path=target_export_path)

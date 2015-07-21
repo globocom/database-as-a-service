@@ -10,12 +10,14 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
 
         # Changing field 'Host.monitor_url'
-        db.alter_column(u'physical_host', 'monitor_url', self.gf('django.db.models.fields.URLField')(max_length=500, null=True))
+        db.alter_column(u'physical_host', 'monitor_url', self.gf(
+            'django.db.models.fields.URLField')(max_length=500, null=True))
 
     def backwards(self, orm):
 
         # Changing field 'Host.monitor_url'
-        db.alter_column(u'physical_host', 'monitor_url', self.gf('django.db.models.fields.URLField')(max_length=255, null=True))
+        db.alter_column(u'physical_host', 'monitor_url', self.gf(
+            'django.db.models.fields.URLField')(max_length=255, null=True))
 
     models = {
         u'physical.databaseinfra': {

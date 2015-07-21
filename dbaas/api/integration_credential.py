@@ -13,14 +13,14 @@ class IntegrationCredentialSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Credential
-        fields = ('user', 'password', 'integration_type', 'token', 'secret', 'endpoint', 'environments',"project","team")
+        fields = ('user', 'password', 'integration_type', 'token',
+                  'secret', 'endpoint', 'environments', "project", "team")
 
 
 class IntegrationCredentialAPI(viewsets.ModelViewSet):
+
     """
     Integration Credential Api
     """
     serializer_class = IntegrationCredentialSerializer
     queryset = Credential.objects.all()
-
-

@@ -6,7 +6,7 @@ from .service.databaseinfra import DatabaseInfraService
 from .service.plan import PlanService
 from .service.engine import EngineService, EngineTypeService
 from .serializers import InstanceSerializer, DatabaseInfraSerializer, \
-                        EngineSerializer, EngineTypeSerializer, PlanSerializer
+    EngineSerializer, EngineTypeSerializer, PlanSerializer
 
 
 class EngineTypeAPI(DjangoServiceAPI):
@@ -41,4 +41,3 @@ register('engine', EngineAPI)
 register('plan', PlanAPI)
 register('instance', InstanceAPI)
 register('databaseinfra', DatabaseInfraAPI)
-

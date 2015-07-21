@@ -526,7 +526,8 @@ def volume_migration(self, database, user, task_history=None):
         LOG.info("Migration finished")
         return
 
-    default_plan_size = PlanAttr.objects.get(dbaas_plan=database.plan).nfsaas_plan
+    default_plan_size = PlanAttr.objects.get(
+        dbaas_plan=database.plan).nfsaas_plan
     LOG.info("Migrating {} volumes".format(database))
 
     databaseinfra = database.databaseinfra
@@ -546,13 +547,15 @@ def volume_migration(self, database, user, task_history=None):
                                       nfsaas_size_id=default_plan_size)
 
     if len(volumes) == len(hosts):
-        task_history.update_status_for(TaskHistory.STATUS_SUCCESS, details='Volumes already migrated!')
+        task_history.update_status_for(
+            TaskHistory.STATUS_SUCCESS, details='Volumes already migrated!')
         LOG.info("Migration finished")
         return
 
     for index, instance in enumerate(instances):
         if not driver.check_instance_is_eligible_for_backup(instance=instance):
-            LOG.info('Instance is not eligible for backup {}'.format(str(instance)))
+            LOG.info(
+                'Instance is not eligible for backup {}'.format(str(instance)))
             continue
 
         LOG.info('Volume migration for instance {}'.format(str(instance)))
@@ -577,10 +580,13 @@ def volume_migration(self, database, user, task_history=None):
         start_workflow(workflow_dict=workflow_dict, task=task_history)
 
         if workflow_dict['exceptions']['traceback']:
-            error = "\n".join(": ".join(err) for err in workflow_dict['exceptions']['error_codes'])
-            traceback = "\nException Traceback\n".join(workflow_dict['exceptions']['traceback'])
+            error = "\n".join(": ".join(err)
+                              for err in workflow_dict['exceptions']['error_codes'])
+            traceback = "\nException Traceback\n".join(
+                workflow_dict['exceptions']['traceback'])
             error = "{}\n{}\n{}".format(error, traceback, error)
-            task_history.update_status_for(TaskHistory.STATUS_ERROR, details=error)
+            task_history.update_status_for(
+                TaskHistory.STATUS_ERROR, details=error)
             LOG.info("Migration finished with errors")
             return
 
@@ -591,7 +597,8 @@ def volume_migration(self, database, user, task_history=None):
             LOG.info("Waiting 60s to check continue...")
             sleep(60)
 
-    task_history.update_status_for(TaskHistory.STATUS_SUCCESS, details='Volumes sucessfully migrated!')
+    task_history.update_status_for(
+        TaskHistory.STATUS_SUCCESS, details='Volumes sucessfully migrated!')
 
     LOG.info("Migration finished")
 

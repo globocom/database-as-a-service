@@ -10,12 +10,14 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
 
         # Changing field 'Maintenance.description'
-        db.alter_column(u'maintenance_maintenance', 'description', self.gf('django.db.models.fields.CharField')(max_length=500))
+        db.alter_column(u'maintenance_maintenance', 'description', self.gf(
+            'django.db.models.fields.CharField')(max_length=500))
 
     def backwards(self, orm):
 
         # Changing field 'Maintenance.description'
-        db.alter_column(u'maintenance_maintenance', 'description', self.gf('django.db.models.fields.TextField')())
+        db.alter_column(u'maintenance_maintenance', 'description', self.gf(
+            'django.db.models.fields.TextField')())
 
     models = {
         u'maintenance.hostmaintenance': {

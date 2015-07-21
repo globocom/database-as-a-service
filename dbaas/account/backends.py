@@ -8,6 +8,7 @@ from logical.models import Database, Credential
 
 LOG = logging.getLogger(__name__)
 
+
 class DbaasBackend(ModelBackend):
     perm_manage_quarantine_database = "logical.can_manage_quarantine_databases"
 
@@ -16,7 +17,8 @@ class DbaasBackend(ModelBackend):
         if user_obj.is_anonymous() or obj is not None:
             return set()
         if not hasattr(user_obj, '_perm_cache'):
-            user_obj._perm_cache = (Team.get_all_permissions_for(user=user_obj))
+            user_obj._perm_cache = (
+                Team.get_all_permissions_for(user=user_obj))
 
         return user_obj._perm_cache
 
@@ -48,7 +50,7 @@ class DbaasBackend(ModelBackend):
 
         if not settings.LDAP_ENABLED:
             return super(DbaasBackend, self).change_password(username, old_password, new_password)
-        else :
+        else:
             conn = None
             server = settings.AUTH_LDAP_SERVER_URI
             dn = settings.AUTH_LDAP_BIND_DN
@@ -63,7 +65,8 @@ class DbaasBackend(ModelBackend):
                 ret = conn.passwd_s(dn_, old_password, new_password)
                 LOG.info("Return: %s" % ret)
             except Exception, e:
-                LOG.error("Ops... got an error while changing password: %s" % e)
+                LOG.error(
+                    "Ops... got an error while changing password: %s" % e)
                 ret = e
             finally:
                 conn.unbind()

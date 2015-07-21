@@ -10,14 +10,13 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         # Adding field 'Database.used_size_in_bytes'
         db.add_column(u'logical_database', 'used_size_in_bytes',
-                      self.gf('django.db.models.fields.FloatField')(default=0.0),
+                      self.gf('django.db.models.fields.FloatField')(
+                          default=0.0),
                       keep_default=False)
-
 
     def backwards(self, orm):
         # Deleting field 'Database.used_size_in_bytes'
         db.delete_column(u'logical_database', 'used_size_in_bytes')
-
 
     models = {
         u'account.team': {

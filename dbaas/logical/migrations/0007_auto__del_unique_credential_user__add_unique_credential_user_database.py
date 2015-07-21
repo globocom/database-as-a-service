@@ -14,14 +14,13 @@ class Migration(SchemaMigration):
         # Adding unique constraint on 'Credential', fields ['user', 'database']
         db.create_unique(u'logical_credential', ['user', 'database_id'])
 
-
     def backwards(self, orm):
-        # Removing unique constraint on 'Credential', fields ['user', 'database']
+        # Removing unique constraint on 'Credential', fields ['user',
+        # 'database']
         db.delete_unique(u'logical_credential', ['user', 'database_id'])
 
         # Adding unique constraint on 'Credential', fields ['user']
         db.create_unique(u'logical_credential', ['user'])
-
 
     models = {
         u'auth.group': {

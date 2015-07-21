@@ -17,7 +17,8 @@ class DecreaseTTL(BaseStep):
         try:
 
             LOG.info("Calling dnsapi provider...")
-            DNSAPIProvider.update_database_dns_ttl(databaseinfra=workflow_dict['databaseinfra'], ttl=5)
+            DNSAPIProvider.update_database_dns_ttl(
+                databaseinfra=workflow_dict['databaseinfra'], ttl=5)
 
             return True
         except Exception:
@@ -32,7 +33,8 @@ class DecreaseTTL(BaseStep):
         LOG.info("Running undo...")
         try:
 
-            DNSAPIProvider.update_database_dns_ttl(databaseinfra=workflow_dict['databaseinfra'], ttl=None)
+            DNSAPIProvider.update_database_dns_ttl(
+                databaseinfra=workflow_dict['databaseinfra'], ttl=None)
             return True
         except Exception:
             traceback = full_stack()
@@ -52,7 +54,8 @@ class DefaultTTL(BaseStep):
         try:
 
             LOG.info("Calling dnsapi provider...")
-            DNSAPIProvider.update_database_dns_ttl(databaseinfra=workflow_dict['databaseinfra'], ttl=None)
+            DNSAPIProvider.update_database_dns_ttl(
+                databaseinfra=workflow_dict['databaseinfra'], ttl=None)
 
             return True
         except Exception:

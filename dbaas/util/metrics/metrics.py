@@ -412,7 +412,7 @@ def get_graphite_metrics_datapoints(*args, **kwargs):
 
 
 def get_metric_datapoints_for(engine, db_name, hostname, url, metric_name=None,
-                               granurality=None, from_option=None):
+                              granurality=None, from_option=None):
     datapoints = {}
 
     if engine == "mongodb":

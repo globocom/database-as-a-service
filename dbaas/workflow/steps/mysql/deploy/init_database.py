@@ -17,6 +17,7 @@ LOG = logging.getLogger(__name__)
 
 
 class InitDatabase(BaseStep):
+
     def __unicode__(self):
         return "Initializing database..."
 
@@ -35,7 +36,8 @@ class InitDatabase(BaseStep):
 
                 LOG.info("Cheking host ssh...")
                 host_ready = check_ssh(
-                    server=hosts[0].address, username=host_csattr.vm_user, password=host_csattr.vm_password, wait=5,
+                    server=hosts[
+                        0].address, username=host_csattr.vm_user, password=host_csattr.vm_password, wait=5,
                     interval=10)
 
                 if not host_ready:

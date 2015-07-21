@@ -56,7 +56,7 @@ class DatabaseRegionMigrationDetailAdmin(admin.DjangoServicesAdmin):
         if workers and workers != celery_workers:
             LOG.warn("At least one celery worker is down! :(")
             messages.add_message(request, messages.ERROR,
-                "Migration can't be revoked because at least one celery worker is down!",)
+                                 "Migration can't be revoked because at least one celery worker is down!",)
             return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
         detail = models.DatabaseRegionMigrationDetail.objects.get(id=id)
@@ -91,7 +91,8 @@ class DatabaseRegionMigrationDetailAdmin(admin.DjangoServicesAdmin):
     def get_urls(self):
         from django.conf.urls import url
         urls = super(DatabaseRegionMigrationDetailAdmin, self).get_urls()
-        my_urls = list((url(r'^(.+)/%(url)s/$' % b, self.admin_site.admin_view(b['func'])) for b in self.buttons))
+        my_urls = list(
+            (url(r'^(.+)/%(url)s/$' % b, self.admin_site.admin_view(b['func'])) for b in self.buttons))
         return my_urls + urls
 
     def friendly_status(self, detail):
@@ -124,7 +125,6 @@ class DatabaseRegionMigrationDetailAdmin(admin.DjangoServicesAdmin):
             message = "Foward"
 
         return message
-
 
     friendly_direction.short_description = "Direction"
 

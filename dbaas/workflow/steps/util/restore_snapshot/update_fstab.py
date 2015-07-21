@@ -19,8 +19,10 @@ class UpdateFstab(BaseStep):
         try:
             for host_and_export in workflow_dict['hosts_and_exports']:
                 host = host_and_export['host']
-                source_export_path = scape_nfsaas_export_path(host_and_export['old_export_path'])
-                target_export_path = scape_nfsaas_export_path(host_and_export['new_export_path'])
+                source_export_path = scape_nfsaas_export_path(
+                    host_and_export['old_export_path'])
+                target_export_path = scape_nfsaas_export_path(
+                    host_and_export['new_export_path'])
                 return_code, output = update_fstab(host=host,
                                                    source_export_path=source_export_path,
                                                    target_export_path=target_export_path)
@@ -41,8 +43,10 @@ class UpdateFstab(BaseStep):
         try:
             for host_and_export in workflow_dict['hosts_and_exports']:
                 host = host_and_export['host']
-                source_export_path = scape_nfsaas_export_path(host_and_export['new_export_path'])
-                target_export_path = scape_nfsaas_export_path(host_and_export['old_export_path'])
+                source_export_path = scape_nfsaas_export_path(
+                    host_and_export['new_export_path'])
+                target_export_path = scape_nfsaas_export_path(
+                    host_and_export['old_export_path'])
                 return_code, output = update_fstab(host=host,
                                                    source_export_path=source_export_path,
                                                    target_export_path=target_export_path)

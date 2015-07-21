@@ -54,7 +54,8 @@ class FakeDriver(BaseDriver):
         instance_data = self.__get_database_infra()
         # if credential.user in instance_data[credential.database.name]:
         # raise CredentialAlreadyExists
-        instance_data[credential.database.name][credential.user] = credential.password
+        instance_data[credential.database.name][
+            credential.user] = credential.password
         LOG.info('Created user %s', credential)
 
     def remove_user(self, credential):
@@ -67,7 +68,8 @@ class FakeDriver(BaseDriver):
         instance_data = self.__get_database_infra()
         # if credential.user not in instance_data[credential.database.name]:
         # raise InvalidCredential
-        instance_data[credential.database.name][credential.user] = credential.password
+        instance_data[credential.database.name][
+            credential.user] = credential.password
         LOG.info('Created user %s', credential)
 
     def check_status(self, instance=None):
@@ -75,7 +77,8 @@ class FakeDriver(BaseDriver):
         return True
 
     def info(self):
-        databaseinfra_status = DatabaseInfraStatus(databaseinfra_model=self.databaseinfra)
+        databaseinfra_status = DatabaseInfraStatus(
+            databaseinfra_model=self.databaseinfra)
         LOG.info('Info')
         return databaseinfra_status
 

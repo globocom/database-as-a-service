@@ -75,7 +75,7 @@ RESIZE_MYSQL = (
 RESIZE_REDIS = (
     ('workflow.steps.redis.resize.init_variables.InitVariables',
      'workflow.steps.redis.resize.stop_database.StopDatabase',
-     'workflow.steps.redis.resize.change_config.ChangeDatabaseConfigFile',)+
+     'workflow.steps.redis.resize.change_config.ChangeDatabaseConfigFile',) +
     STOP_RESIZE_START +
     ('workflow.steps.redis.resize.start_database.StartDatabase',
      'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',)

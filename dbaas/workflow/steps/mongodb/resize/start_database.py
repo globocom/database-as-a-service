@@ -7,6 +7,7 @@ LOG = logging.getLogger(__name__)
 
 
 class StartDatabase(BaseStep):
+
     def __unicode__(self):
         return "Starting Database..."
 
@@ -16,10 +17,10 @@ class StartDatabase(BaseStep):
         }
 
         ret_script = run_vm_script(
-            workflow_dict = workflow_dict,
-            context_dict = context_dict,
-            script = workflow_dict['cloudstackpack'].script,
-            wait = 10,
+            workflow_dict=workflow_dict,
+            context_dict=context_dict,
+            script=workflow_dict['cloudstackpack'].script,
+            wait=10,
         )
 
         return ret_script
@@ -30,10 +31,10 @@ class StartDatabase(BaseStep):
         }
 
         ret_script = run_vm_script(
-            workflow_dict = workflow_dict,
-            context_dict = context_dict,
-            script = workflow_dict['original_cloudstackpack'].script,
-            reverse = True,
+            workflow_dict=workflow_dict,
+            context_dict=context_dict,
+            script=workflow_dict['original_cloudstackpack'].script,
+            reverse=True,
         )
 
         return ret_script

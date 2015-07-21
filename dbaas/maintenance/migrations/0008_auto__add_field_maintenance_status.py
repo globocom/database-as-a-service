@@ -10,14 +10,13 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         # Adding field 'Maintenance.status'
         db.add_column(u'maintenance_maintenance', 'status',
-                      self.gf('django.db.models.fields.IntegerField')(default=0),
+                      self.gf('django.db.models.fields.IntegerField')(
+                          default=0),
                       keep_default=False)
-
 
     def backwards(self, orm):
         # Deleting field 'Maintenance.status'
         db.delete_column(u'maintenance_maintenance', 'status')
-
 
     models = {
         u'maintenance.hostmaintenance': {

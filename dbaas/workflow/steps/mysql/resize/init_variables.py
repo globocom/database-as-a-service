@@ -8,6 +8,7 @@ LOG = logging.getLogger(__name__)
 
 
 class InitVariables(BaseStep):
+
     def __unicode__(self):
         return "Init variables..."
 

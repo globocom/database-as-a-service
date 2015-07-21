@@ -33,28 +33,33 @@ class Maintenance(BaseModel):
     )
 
     description = models.CharField(verbose_name=_("Description"),
-        null=False, blank=False, max_length=500,)
+                                   null=False, blank=False, max_length=500,)
     scheduled_for = models.DateTimeField(verbose_name=_("Schedule for"),
-        unique=True,)
+                                         unique=True,)
     main_script = models.TextField(verbose_name=_("Main Script"),
-        null=False, blank=False)
+                                   null=False, blank=False)
     rollback_script = models.TextField(verbose_name=_("Rollback Script"),
-        null=True, blank=True)
+                                       null=True, blank=True)
     maximum_workers = models.PositiveSmallIntegerField(verbose_name=_("Maximum workers"),
-        null=False, default=1)
+                                                       null=False, default=1)
     celery_task_id = models.CharField(verbose_name=_("Celery task Id"),
-        null=True, blank=True, max_length=50,)
+                                      null=True, blank=True, max_length=50,)
     status = models.IntegerField(choices=MAINTENANCE_STATUS, default=WAITING)
-    affected_hosts = models.IntegerField(verbose_name=_("Affected hosts"), default=0)
-    started_at = models.DateTimeField(verbose_name=_("Started at"), null=True, blank=True)
-    finished_at = models.DateTimeField(verbose_name=_("Finished at"),null=True, blank=True)
+    affected_hosts = models.IntegerField(
+        verbose_name=_("Affected hosts"), default=0)
+    started_at = models.DateTimeField(
+        verbose_name=_("Started at"), null=True, blank=True)
+    finished_at = models.DateTimeField(
+        verbose_name=_("Finished at"), null=True, blank=True)
     hostsid = models.CommaSeparatedIntegerField(verbose_name=_("Hosts id"),
-        null=False, blank=False, max_length=10000)
-    created_by = models.CharField(verbose_name=_("Created by"), max_length=255, null=True, blank=True)
-    revoked_by = models.CharField(verbose_name=_("Revoked by"), max_length=255, null=True, blank=True)
+                                                null=False, blank=False, max_length=10000)
+    created_by = models.CharField(
+        verbose_name=_("Created by"), max_length=255, null=True, blank=True)
+    revoked_by = models.CharField(
+        verbose_name=_("Revoked by"), max_length=255, null=True, blank=True)
 
     def __unicode__(self):
-       return "%s" % self.description
+        return "%s" % self.description
 
     class Meta:
         permissions = (
@@ -103,12 +108,12 @@ class Maintenance(BaseModel):
         if self.is_waiting_to_run:
             control.revoke(self.celery_task_id,)
 
-            self.status=self.REVOKED
+            self.status = self.REVOKED
             self.revoked_by = request.user.username
             self.save()
 
             HostMaintenance.objects.filter(maintenance=self,
-                ).update(status=HostMaintenance.REVOKED)
+                                           ).update(status=HostMaintenance.REVOKED)
             return True
 
         return False
@@ -138,11 +143,10 @@ class Maintenance(BaseModel):
                 continue
 
             for task in scheduled_tasks:
-                if  task['request']['id'] == self.celery_task_id:
+                if task['request']['id'] == self.celery_task_id:
                     return True
 
         return False
-
 
 
 class HostMaintenance(BaseModel):
@@ -171,21 +175,22 @@ class HostMaintenance(BaseModel):
     )
 
     started_at = models.DateTimeField(verbose_name=_("Started at"), null=True)
-    finished_at = models.DateTimeField(verbose_name=_("Finished at"),null=True)
+    finished_at = models.DateTimeField(
+        verbose_name=_("Finished at"), null=True)
     main_log = models.TextField(verbose_name=_("Main Log"),
-        null=True, blank=True)
+                                null=True, blank=True)
     rollback_log = models.TextField(verbose_name=_("Rollback Log"),
-        null=True, blank=True)
+                                    null=True, blank=True)
     status = models.IntegerField(choices=MAINTENANCE_STATUS, default=WAITING)
     host = models.ForeignKey(Host, related_name="host_maintenance",
-     on_delete=models.SET_NULL, null=True)
+                             on_delete=models.SET_NULL, null=True)
     hostname = models.CharField(verbose_name=_("Hostname"), max_length=255,
-     default='')
+                                default='')
     maintenance = models.ForeignKey(Maintenance, related_name="maintenance",)
 
     class Meta:
         unique_together = (("host", "maintenance"),)
-        index_together = [["host", "maintenance"],]
+        index_together = [["host", "maintenance"], ]
         permissions = (
             ("view_hostmaintenance", "Can view host maintenance"),
         )
@@ -194,17 +199,16 @@ class HostMaintenance(BaseModel):
         return "%s %s" % (self.host, self.maintenance)
 
 
-
 class MaintenanceParameters(BaseModel):
     parameter_name = models.CharField(verbose_name=_(" Parameter name"),
-        null=False, blank=False, max_length=100,)
+                                      null=False, blank=False, max_length=100,)
     function_name = models.CharField(verbose_name=_(" Function name"),
-        null=False, blank=False, max_length=100,choices=(_get_registered_functions()))
+                                     null=False, blank=False, max_length=100, choices=(_get_registered_functions()))
     maintenance = models.ForeignKey(Maintenance,
-        related_name="maintenance_params",)
+                                    related_name="maintenance_params",)
 
     def __unicode__(self):
-       return "{} - {}".format(self.parameter_name, self.function_name)
+        return "{} - {}".format(self.parameter_name, self.function_name)
 
     class Meta:
         permissions = (
@@ -214,7 +218,6 @@ class MaintenanceParameters(BaseModel):
 simple_audit.register(Maintenance)
 simple_audit.register(HostMaintenance)
 simple_audit.register(MaintenanceParameters)
-
 
 
 #########
@@ -233,7 +236,6 @@ def maintenance_pre_delete(sender, **kwargs):
     control.revoke(task_id=maintenance.celery_task_id)
 
 
-
 @receiver(post_save, sender=Maintenance)
 def maintenance_post_save(sender, **kwargs):
     """
@@ -250,10 +252,10 @@ def maintenance_post_save(sender, **kwargs):
         if maintenance.save_host_maintenance():
             if maintenance.scheduled_for > datetime.now():
                 task = execute_scheduled_maintenance.apply_async(args=[maintenance.id],
-                    eta=maintenance.scheduled_for.replace(tzinfo=tz.tzlocal()).astimezone(tz.tzutc()))
+                                                                 eta=maintenance.scheduled_for.replace(tzinfo=tz.tzlocal()).astimezone(tz.tzutc()))
             else:
                 task = execute_scheduled_maintenance.apply_async(args=[maintenance.id],
-                    countdown=5)
+                                                                 countdown=5)
 
             maintenance.celery_task_id = task.task_id
             maintenance.save()

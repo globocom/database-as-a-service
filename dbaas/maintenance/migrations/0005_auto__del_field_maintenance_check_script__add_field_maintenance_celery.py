@@ -13,17 +13,18 @@ class Migration(SchemaMigration):
 
         # Adding field 'Maintenance.celery_task_id'
         db.add_column(u'maintenance_maintenance', 'celery_task_id',
-                      self.gf('django.db.models.fields.CharField')(max_length=50, null=True, blank=True),
+                      self.gf('django.db.models.fields.CharField')(
+                          max_length=50, null=True, blank=True),
                       keep_default=False)
 
         # Deleting field 'HostMaintenance.check_log'
         db.delete_column(u'maintenance_hostmaintenance', 'check_log')
 
-
     def backwards(self, orm):
         # Adding field 'Maintenance.check_script'
         db.add_column(u'maintenance_maintenance', 'check_script',
-                      self.gf('django.db.models.fields.TextField')(null=True, blank=True),
+                      self.gf('django.db.models.fields.TextField')(
+                          null=True, blank=True),
                       keep_default=False)
 
         # Deleting field 'Maintenance.celery_task_id'
@@ -31,9 +32,9 @@ class Migration(SchemaMigration):
 
         # Adding field 'HostMaintenance.check_log'
         db.add_column(u'maintenance_hostmaintenance', 'check_log',
-                      self.gf('django.db.models.fields.TextField')(null=True, blank=True),
+                      self.gf('django.db.models.fields.TextField')(
+                          null=True, blank=True),
                       keep_default=False)
-
 
     models = {
         u'maintenance.hostmaintenance': {

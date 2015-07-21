@@ -10,14 +10,13 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         # Adding field 'Database.group'
         db.add_column(u'logical_database', 'group',
-                      self.gf('django.db.models.fields.related.OneToOneField')(blank=True, related_name=u'databases', unique=True, null=True, to=orm['auth.Group']),
+                      self.gf('django.db.models.fields.related.OneToOneField')(
+                          blank=True, related_name=u'databases', unique=True, null=True, to=orm['auth.Group']),
                       keep_default=False)
-
 
     def backwards(self, orm):
         # Deleting field 'Database.group'
         db.delete_column(u'logical_database', 'group_id')
-
 
     models = {
         u'auth.group': {

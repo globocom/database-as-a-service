@@ -12,6 +12,7 @@ LOG = logging.getLogger(__name__)
 
 
 class RemoveSecondaryIp(BaseStep):
+
     def __unicode__(self):
         return "Removing secondary ips..."
 
@@ -33,7 +34,8 @@ class RemoveSecondaryIp(BaseStep):
                 networkapi_equipment_id = infra_attr.networkapi_equipment_id
                 networkapi_ip_id = infra_attr.networkapi_ip_id
                 if networkapi_ip_id:
-                    LOG.info("Removing network api IP for %s" % networkapi_ip_id)
+                    LOG.info("Removing network api IP for %s" %
+                             networkapi_ip_id)
                     ip_removed = cs_provider.remove_networkapi_ip(equipment_id=networkapi_equipment_id,
                                                                   ip_id=networkapi_ip_id)
                     if not ip_removed:

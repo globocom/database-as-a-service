@@ -91,7 +91,7 @@ class DatabaseRegionMigrationDetail(BaseModel):
     log = models.TextField(verbose_name=_("Log"), null=False, blank=False)
     is_migration_up = models.BooleanField(verbose_name=_("Log"), default=True)
     celery_task_id = models.CharField(verbose_name=_("Celery task Id"),
-        null=True, blank=False, max_length=50,)
+                                      null=True, blank=False, max_length=50,)
 
     class Meta:
         unique_together = (
@@ -109,7 +109,7 @@ class DatabaseRegionMigrationDetail(BaseModel):
         if self.is_waiting_to_run:
             control.revoke(self.celery_task_id,)
 
-            self.status=self.REVOKED
+            self.status = self.REVOKED
             self.revoked_by = request.user.username
             self.save()
 
@@ -137,13 +137,14 @@ class DatabaseRegionMigrationDetail(BaseModel):
                 continue
 
             for task in scheduled_tasks:
-                if  task['request']['id'] == self.celery_task_id:
+                if task['request']['id'] == self.celery_task_id:
                     return True
 
         return False
 
 
 simple_audit.register(DatabaseRegionMigration, DatabaseRegionMigrationDetail)
+
 
 @receiver(pre_delete, sender=DatabaseRegionMigrationDetail)
 def region_migration_detail_pre_delete(sender, **kwargs):

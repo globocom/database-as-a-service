@@ -11,6 +11,7 @@ LOG = logging.getLogger(__name__)
 
 
 class BuildDatabaseInfra(BaseStep):
+
     def __unicode__(self):
         return "Initializing databaseinfra..."
 
@@ -28,7 +29,8 @@ class BuildDatabaseInfra(BaseStep):
             databaseinfra.plan = workflow_dict['plan']
             databaseinfra.environment = workflow_dict['environment']
             databaseinfra.capacity = 1
-            databaseinfra.per_database_size_mbytes = workflow_dict['plan'].max_db_size
+            databaseinfra.per_database_size_mbytes = workflow_dict[
+                'plan'].max_db_size
             databaseinfra.save()
 
             LOG.info("DatabaseInfra created!")

@@ -10,18 +10,20 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         # Adding model 'CeleryHealthCheck'
         db.create_table(u'system_celeryhealthcheck', (
-            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('created_at', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
-            ('updated_at', self.gf('django.db.models.fields.DateTimeField')(auto_now=True, blank=True)),
-            ('last_update', self.gf('django.db.models.fields.DateTimeField')()),
+            (u'id', self.gf('django.db.models.fields.AutoField')
+             (primary_key=True)),
+            ('created_at', self.gf('django.db.models.fields.DateTimeField')
+             (auto_now_add=True, blank=True)),
+            ('updated_at', self.gf('django.db.models.fields.DateTimeField')
+             (auto_now=True, blank=True)),
+            ('last_update', self.gf(
+                'django.db.models.fields.DateTimeField')()),
         ))
         db.send_create_signal(u'system', ['CeleryHealthCheck'])
-
 
     def backwards(self, orm):
         # Deleting model 'CeleryHealthCheck'
         db.delete_table(u'system_celeryhealthcheck')
-
 
     models = {
         u'system.celeryhealthcheck': {

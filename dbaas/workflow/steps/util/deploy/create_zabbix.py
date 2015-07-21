@@ -9,6 +9,7 @@ LOG = logging.getLogger(__name__)
 
 
 class CreateZabbix(BaseStep):
+
     def __unicode__(self):
         return "Registering zabbix monitoring..."
 
@@ -18,8 +19,10 @@ class CreateZabbix(BaseStep):
             if not 'databaseinfra' in workflow_dict:
                 return False
 
-            LOG.info("Creating zabbix monitoring for %s..." % workflow_dict['dbtype'])
-            ZabbixProvider().create_monitoring(dbinfra=workflow_dict['databaseinfra'], dbtype=workflow_dict['dbtype'])
+            LOG.info("Creating zabbix monitoring for %s..." %
+                     workflow_dict['dbtype'])
+            ZabbixProvider().create_monitoring(
+                dbinfra=workflow_dict['databaseinfra'], dbtype=workflow_dict['dbtype'])
 
             return True
         except Exception:
@@ -30,14 +33,15 @@ class CreateZabbix(BaseStep):
 
             return False
 
-
     def undo(self, workflow_dict):
         try:
             if not 'databaseinfra' in workflow_dict:
                 return False
 
-            LOG.info("Destroying zabbix monitoring for %s..." % workflow_dict['dbtype'])
-            ZabbixProvider().destroy_monitoring(dbinfra=workflow_dict['databaseinfra'], dbtype=workflow_dict['dbtype'])
+            LOG.info("Destroying zabbix monitoring for %s..." %
+                     workflow_dict['dbtype'])
+            ZabbixProvider().destroy_monitoring(
+                dbinfra=workflow_dict['databaseinfra'], dbtype=workflow_dict['dbtype'])
 
             return True
         except Exception:

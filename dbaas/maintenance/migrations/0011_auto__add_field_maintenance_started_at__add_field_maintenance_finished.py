@@ -10,14 +10,15 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         # Adding field 'Maintenance.started_at'
         db.add_column(u'maintenance_maintenance', 'started_at',
-                      self.gf('django.db.models.fields.DateTimeField')(null=True),
+                      self.gf('django.db.models.fields.DateTimeField')(
+                          null=True),
                       keep_default=False)
 
         # Adding field 'Maintenance.finished_at'
         db.add_column(u'maintenance_maintenance', 'finished_at',
-                      self.gf('django.db.models.fields.DateTimeField')(null=True),
+                      self.gf('django.db.models.fields.DateTimeField')(
+                          null=True),
                       keep_default=False)
-
 
     def backwards(self, orm):
         # Deleting field 'Maintenance.started_at'
@@ -25,7 +26,6 @@ class Migration(SchemaMigration):
 
         # Deleting field 'Maintenance.finished_at'
         db.delete_column(u'maintenance_maintenance', 'finished_at')
-
 
     models = {
         u'maintenance.hostmaintenance': {

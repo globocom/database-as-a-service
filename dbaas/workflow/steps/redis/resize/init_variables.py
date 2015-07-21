@@ -9,6 +9,7 @@ LOG = logging.getLogger(__name__)
 
 
 class InitVariables(BaseStep):
+
     def __unicode__(self):
         return "Init variables..."
 
@@ -17,7 +18,7 @@ class InitVariables(BaseStep):
 
             database = workflow_dict['database']
             instances_detail = []
-            for instance in database.databaseinfra.instances.filter(instance_type = Instance.REDIS):
+            for instance in database.databaseinfra.instances.filter(instance_type=Instance.REDIS):
                 instances_detail.append({
                     'instance': instance,
                     #'is_master': is_master,

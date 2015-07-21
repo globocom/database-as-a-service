@@ -35,7 +35,8 @@ class CreateVirtualMachine(BaseStep):
 
             target_offering = workflow_dict['target_offering']
 
-            cs_plan_attrs = PlanAttr.objects.get(plan=workflow_dict['target_plan'])
+            cs_plan_attrs = PlanAttr.objects.get(
+                plan=workflow_dict['target_plan'])
             bundles = list(cs_plan_attrs.bundle.all())
 
             workflow_dict['target_hosts'] = []
@@ -49,7 +50,8 @@ class CreateVirtualMachine(BaseStep):
                 if len(bundles) == 1:
                     bundle = bundles[0]
                 else:
-                    bundle = LastUsedBundle.get_next_bundle(plan=workflow_dict['target_plan'], bundle=bundles)
+                    bundle = LastUsedBundle.get_next_bundle(
+                        plan=workflow_dict['target_plan'], bundle=bundles)
 
                 if index == 2:
                     offering = cs_plan_attrs.get_weaker_offering()
@@ -60,11 +62,13 @@ class CreateVirtualMachine(BaseStep):
                                                         bundle=bundle,
                                                         project_id=cs_credentials.project,
                                                         vmname=vm_name,
-                                                        affinity_group_id=cs_credentials.get_parameter_by_name('affinity_group_id'),
+                                                        affinity_group_id=cs_credentials.get_parameter_by_name(
+                                                            'affinity_group_id'),
                                                         )
 
                 if not vm:
-                    raise Exception("CloudStack could not create the virtualmachine")
+                    raise Exception(
+                        "CloudStack could not create the virtualmachine")
 
                 host = Host()
                 host.address = vm['virtualmachine'][0]['nic'][0]['ipaddress']

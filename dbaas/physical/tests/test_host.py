@@ -11,7 +11,6 @@ class HostTestCase(TestCase):
     def setUp(self):
         self.host = HostFactory(hostname='unique_localhost')
 
-
     def test_create_host(self):
 
         host = HostFactory()
@@ -21,7 +20,5 @@ class HostTestCase(TestCase):
 
         another_instance = self.host
         another_instance.id = None
-        
-        self.assertRaises(IntegrityError, another_instance.save)
 
-        
+        self.assertRaises(IntegrityError, another_instance.save)

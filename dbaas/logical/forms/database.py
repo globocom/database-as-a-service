@@ -47,7 +47,8 @@ class CloneDatabaseForm(forms.Form):
     def define_available_plans(self, database):
         self.fields['plan'] = forms.ModelChoiceField(queryset=Plan.objects.filter(engine_type__name=database.infra.engine.name,
                                                                                   is_active=True),
-                                                     widget=forms.Select(attrs={'class': 'plan'}),
+                                                     widget=forms.Select(
+                                                         attrs={'class': 'plan'}),
                                                      required=True,)
 
     def clean(self):
@@ -186,7 +187,8 @@ class DatabaseForm(models.ModelForm):
 
             if Database.objects.filter(name=database_name,
                                        environment=environment):
-                self._errors["name"] = self.error_class([_("this name already exists in the selected environment")])
+                self._errors["name"] = self.error_class(
+                    [_("this name already exists in the selected environment")])
                 del cleaned_data["name"]
 
             # validate if the team has available resources
@@ -270,7 +272,8 @@ class RestoreDatabaseForm(forms.Form):
                 LOG.debug("instance database form found! %s" % instance)
                 if instance.plan.provider == instance.plan.CLOUDSTACK:
                     LOG.debug("Cloudstack plan found!")
-                    self.define_target_snapshot_field(database_instance=instance)
+                    self.define_target_snapshot_field(
+                        database_instance=instance)
 
     def define_target_snapshot_field(self, database_instance):
         instances = database_instance.databaseinfra.instances.all()
