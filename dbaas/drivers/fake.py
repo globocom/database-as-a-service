@@ -13,9 +13,15 @@ LOG = logging.getLogger(__name__)
 #   }
 # }
 DATABASES_INFRA = {}
+DATABASES_CREATED = {}
+
 
 def database_created(databaseinfra_name, database_name):
     return database_name in DATABASES_INFRA.get(databaseinfra_name, {})
+
+
+def database_created_list(database_name):
+    return DATABASES_CREATED.get(database_name, None)
 
 
 class FakeDriver(BaseDriver):
@@ -28,16 +34,15 @@ class FakeDriver(BaseDriver):
         return DATABASES_INFRA[self.databaseinfra.name]
 
     def __concatenate_instances(self):
-        return ",".join([ "%s:%s" % (instance.address, instance.port) for instance in self.databaseinfra.instances.filter(is_arbiter=False, is_active=True).all() ])
+        return ",".join(["%s:%s" % (instance.address, instance.port) for instance in self.databaseinfra.instances.filter(is_arbiter=False, is_active=True).all()])
 
     def get_connection(self, database=None):
         return "fake://%s" % self.__concatenate_instances()
 
     def create_database(self, database):
         instance_data = self.__get_database_infra()
-        # if database.name in instance_data:
-            # raise DatabaseAlreadyExists
         instance_data[database.name] = {}
+        DATABASES_CREATED[database.name] = database
         LOG.info('Created database %s', database)
 
     def remove_database(self, database):
@@ -48,7 +53,7 @@ class FakeDriver(BaseDriver):
     def create_user(self, credential, roles=["readWrite", "dbAdmin"]):
         instance_data = self.__get_database_infra()
         # if credential.user in instance_data[credential.database.name]:
-            # raise CredentialAlreadyExists
+        # raise CredentialAlreadyExists
         instance_data[credential.database.name][credential.user] = credential.password
         LOG.info('Created user %s', credential)
 
@@ -61,7 +66,7 @@ class FakeDriver(BaseDriver):
         LOG.info('Update user %s', credential)
         instance_data = self.__get_database_infra()
         # if credential.user not in instance_data[credential.database.name]:
-            # raise InvalidCredential
+        # raise InvalidCredential
         instance_data[credential.database.name][credential.user] = credential.password
         LOG.info('Created user %s', credential)
 
