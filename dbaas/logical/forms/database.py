@@ -81,6 +81,15 @@ class CloneDatabaseForm(forms.Form):
                 raise forms.ValidationError(
                     _("%s is a reserved database name" % cleaned_data['database_clone']))
 
+            environment = cleaned_data.get('environment', None)
+            database_name = cleaned_data.get('database_clone', None)
+
+            if Database.objects.filter(name=database_name,
+                                       environment=environment):
+                raise forms.ValidationError(
+                    _("There is already a database called {} on {}".format(database_name,
+                                                                           environment)))
+
             if self._errors:
                 return cleaned_data
 
@@ -170,9 +179,15 @@ class DatabaseForm(models.ModelForm):
 
         if 'environment' in cleaned_data:
             environment = cleaned_data.get('environment', None)
+            database_name = cleaned_data.get('name', None)
             if not environment or environment not in plan.environments.all():
                 raise forms.ValidationError(
                     _("Invalid plan for selected environment."))
+
+            if Database.objects.filter(name=database_name,
+                                       environment=environment):
+                self._errors["name"] = self.error_class([_("this name already exists in the selected environment")])
+                del cleaned_data["name"]
 
             # validate if the team has available resources
             dbs = team.databases_in_use_for(environment)

@@ -3,7 +3,7 @@ from __future__ import absolute_import, unicode_literals
 from rest_framework import viewsets, serializers, status
 from rest_framework.response import Response
 from logical import models
-from physical.models import Plan, Environment, DatabaseInfra
+from physical.models import Plan, Environment
 from account.models import Team
 from .credential import CredentialSerializer
 from django.contrib.sites.models import Site
@@ -13,11 +13,12 @@ import logging
 
 LOG = logging.getLogger(__name__)
 
+
 class DatabaseSerializer(serializers.HyperlinkedModelSerializer):
     plan = serializers.HyperlinkedRelatedField(
         source='plan', view_name='plan-detail', queryset=Plan.objects.filter(is_active=True))
-    environment =serializers.HyperlinkedRelatedField(source='environment', view_name='environment-detail'
-        , queryset=Environment.objects)
+    environment = serializers.HyperlinkedRelatedField(source='environment', view_name='environment-detail',
+                                                      queryset=Environment.objects)
     team = serializers.HyperlinkedRelatedField(
         source='team', view_name='team-detail', queryset=Team.objects)
     endpoint = serializers.Field(source='endpoint')
@@ -29,10 +30,10 @@ class DatabaseSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = models.Database
-        fields = ('url', 'id', 'name', 'endpoint', 'plan', 'environment', 'project', 'team',
-            'quarantine_dt', 'total_size_in_bytes', 'credentials','description', 'status', 'used_size_in_bytes')
+        fields = ('url', 'id', 'name', 'endpoint', 'plan', 'environment',
+                  'project', 'team', 'quarantine_dt', 'total_size_in_bytes',
+                  'credentials', 'description', 'status', 'used_size_in_bytes')
         read_only = ('credentials', 'status', 'used_size_in_bytes')
-
 
     def __init__(self, *args, **kwargs):
         super(DatabaseSerializer, self).__init__(*args, **kwargs)
@@ -87,26 +88,24 @@ class DatabaseAPI(viewsets.ModelViewSet):
             data = serializer.restore_fields(request.DATA, request.FILES)
 
             task_history = TaskHistory()
-            task_history.task_name="create_database"
-            task_history.task_status= task_history.STATUS_PENDING
-            task_history.arguments="Database name: {}".format(data['name'])
+            task_history.task_name = "create_database"
+            task_history.task_status = task_history.STATUS_PENDING
+            task_history.arguments = "Database name: {}".format(data['name'])
             task_history.save()
 
             result = create_database.delay(name=data['name'],
-                                               plan=data['plan'],
-                                               environment=data['environment'],
-                                               team=data['team'],
-                                               project=data['project'],
-                                               description=data['description'],
-                                               task_history=task_history,
-                                               user=request.user)
-
+                                           plan=data['plan'],
+                                           environment=data['environment'],
+                                           team=data['team'],
+                                           project=data['project'],
+                                           description=data['description'],
+                                           task_history=task_history,
+                                           user=request.user)
 
             headers = self.get_success_headers(data)
+            task_url = Site.objects.get_current().domain + '/api/task?task_id=%s' % str(result.id)
 
-            task_url = Site.objects.get_current().domain + '/api/task?task_id=%s' %  str(result.id)
-
-            return Response({"task":task_url}, status=status.HTTP_201_CREATED,
+            return Response({"task": task_url}, status=status.HTTP_201_CREATED,
                             headers=headers)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
