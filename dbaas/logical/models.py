@@ -104,7 +104,7 @@ class Database(BaseModel):
             ("view_database", "Can view databases"),
         )
         unique_together = (
-            ('name', 'databaseinfra'),
+            ('name', 'environment'),
         )
 
         ordering = ('name', )
