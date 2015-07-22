@@ -10,7 +10,6 @@ CELERY_RESULT_BACKEND = 'djcelery.backends.cache:CacheBackend'
 CELERYBEAT_MAX_LOOP_INTERVAL = 5
 CELERY_TIMEZONE = os.getenv('DJANGO_TIME_ZONE', 'America/Sao_Paulo')
 CELERYBEAT_SCHEDULER = 'djcelery.schedulers.DatabaseScheduler'
-# CELERY_RESULT_BACKEND='djcelery.backends.database:DatabaseBackend'
-# set this variable to True to run celery tasks synchronously
+CELERYD_LOG_FORMAT = "[%(asctime)s: %(processName)s %(name)s %(levelname)s] %(message)s"
 CELERY_ALWAYS_EAGER = False
 CELERYD_LOG_COLOR = False
