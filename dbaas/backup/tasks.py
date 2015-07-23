@@ -16,6 +16,7 @@ from util import get_worker_name
 from workflow.settings import RESTORE_SNAPSHOT_SINGLE
 from workflow.settings import RESTORE_SNAPSHOT_MYSQL_HA
 from util import build_dict
+from util import clean_unused_data
 from workflow.workflow import start_workflow, stop_workflow
 from notification import models
 import logging
@@ -329,8 +330,7 @@ def purge_unused_exports():
     databaseinfras = DatabaseInfra.objects.filter(
         plan__provider=Plan.CLOUDSTACK).prefetch_related('instances')
     for databaseinfra in databaseinfras:
-        instances = databaseinfra.instances.exclude(instance_type__in=[Instance.MONGODB_ARBITER,
-                                                                       Instance.REDIS_SENTINEL])
+        instances = databaseinfra.get_driver().get_database_instances()
         environment = databaseinfra.environment
         plan = databaseinfra.plan
 
@@ -347,6 +347,11 @@ def purge_unused_exports():
                     'Export {} will be removed'.format(export.nfsaas_export_id))
                 host = export.host
                 export_id = export.nfsaas_export_id
+
+                clean_unused_data(export_id=export_id,
+                                  export_path=export.nfsaas_path,
+                                  host=instance.hostname,
+                                  databaseinfra=databaseinfra)
 
                 nfsaas_client = NfsaasProvider()
                 nfsaas_client.revoke_access(environment=environment,
