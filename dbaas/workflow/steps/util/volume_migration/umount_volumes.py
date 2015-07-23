@@ -16,7 +16,7 @@ class UmountVolumes(BaseStep):
 
     def do(self, workflow_dict):
         try:
-            command = 'rm -rf /data/* && umount /data && umount /data2'
+            command = 'sleep 60 && umount /data && umount /data2'
             host = workflow_dict['host']
             cs_host_attr = CsHostAttr.objects.get(host=host)
             output = {}
@@ -41,7 +41,7 @@ class UmountVolumes(BaseStep):
     def undo(self, workflow_dict):
         LOG.info("Running undo...")
         try:
-            command = 'rm -rf /data2 && {} && mount /data && cp -rp /data2/* /data'
+            command = 'rm -rf /data2 && {} && mount /data'
             host = workflow_dict['host']
             cs_host_attr = CsHostAttr.objects.get(host=host)
             mount = workflow_dict['mount']
