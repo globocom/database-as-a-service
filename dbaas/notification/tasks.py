@@ -449,34 +449,94 @@ def purge_task_history(self):
 
 @app.task(bind=True)
 def resize_database(self, database, cloudstackpack, task_history=None, user=None):
-
     AuditRequest.new_request("resize_database", user, "localhost")
 
     try:
         worker_name = get_worker_name()
         task_history = TaskHistory.register(request=self.request, task_history=task_history,
                                             user=user, worker_name=worker_name)
-        from util.providers import resize_database
+        from util.providers import resize_database_instance
+        from util.providers import undo_resize_database_instance
+        from util import get_credentials_for
+        from dbaas_cloudstack.provider import CloudStackProvider
+        from dbaas_credentials.models import CredentialType
 
-        result = resize_database(
-            database=database, cloudstackpack=cloudstackpack, task=task_history)
+        cs_credentials = get_credentials_for(environment=database.environment,
+                                             credential_type=CredentialType.CLOUDSTACK)
+        cs_provider = CloudStackProvider(credentials=cs_credentials)
 
-        if result['created'] == False:
+        databaseinfra = database.databaseinfra
+        driver = databaseinfra.get_driver()
+        instances = driver.get_database_instances()
+        resized_instances = []
 
-            if 'exceptions' in result:
-                error = "\n".join(": ".join(err)
-                                  for err in result['exceptions']['error_codes'])
-                traceback = "\nException Traceback\n".join(
-                    result['exceptions']['traceback'])
-                error = "{}\n{}\n{}".format(error, traceback, error)
+        for instance in instances:
+            host = instance.hostname
+            host_attr = host.cs_host_attributes.get()
+            offering = cs_provider.get_vm_offering_id(vm_id=host_attr.vm_id,
+                                                      project_id=cs_credentials.project)
+
+            if offering == cloudstackpack.offering:
+                LOG.info("Instance offering: {}".format(offering))
+                continue
+
+            if databaseinfra.plan.is_ha:
+                LOG.info("Waiting 60s to check continue...")
+                sleep(60)
+                driver.check_replication_and_switch(instance)
+                LOG.info("Waiting 60s to check continue...")
+                sleep(60)
+
+            result = resize_database_instance(database=database,
+                                              cloudstackpack=cloudstackpack,
+                                              instance=instance,
+                                              task=task_history)
+            result = {"created": True}
+
+            if result['created'] == False:
+                if 'exceptions' in result:
+                    error = "\n".join(": ".join(err)
+                                      for err in result['exceptions']['error_codes'])
+                    traceback = "\nException Traceback\n".join(
+                        result['exceptions']['traceback'])
+                    error = "{}\n{}\n{}".format(error, traceback, error)
+                else:
+                    error = "Something went wrong."
+
+                break
+
             else:
-                error = "Something went wrong."
+                resized_instances.append(instance)
 
-            task_history.update_status_for(
-                TaskHistory.STATUS_ERROR, details=error)
-        else:
-            task_history.update_status_for(
-                TaskHistory.STATUS_SUCCESS, details='Resize successfully done.')
+        if len(instances) == len(resized_instances):
+            from dbaas_cloudstack.models import DatabaseInfraOffering
+            LOG.info('Updating offering DatabaseInfra.')
+
+            databaseinfraoffering = DatabaseInfraOffering.objects.get(
+                databaseinfra=databaseinfra)
+            databaseinfraoffering.offering = cloudstackpack.offering
+            databaseinfraoffering.save()
+
+            task_history.update_status_for(TaskHistory.STATUS_SUCCESS,
+                                           details='Resize successfully done.')
+            return
+
+        for instance in resized_instances:
+            if databaseinfra.plan.is_ha:
+                if driver.check_instance_is_master(instance):
+                    LOG.info("Waiting 60s to check continue...")
+                    sleep(60)
+                    driver.check_replication_and_switch(instance, attempts=60)
+                    LOG.info("Waiting 60s to check continue...")
+                    sleep(60)
+
+            undo_resize_database_instance(database=database,
+                                          cloudstackpack=cloudstackpack,
+                                          instance=instance,
+                                          task=task_history)
+
+        task_history.update_status_for(TaskHistory.STATUS_ERROR, details=error)
+        return
 
     except Exception, e:
         error = "Resize Database ERROR: {}".format(e)
