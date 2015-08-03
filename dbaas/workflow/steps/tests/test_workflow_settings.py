@@ -122,34 +122,31 @@ class WorkflowSettingsTestCase(TestCase):
                                        ))
 
     def test_resize_settings(self):
-        self.assertEqual(RESIZE_MONGO, ('workflow.steps.mongodb.resize.init_variables.InitVariables',
-                                        'workflow.steps.mongodb.resize.stop_database.StopDatabase',
+        self.assertEqual(RESIZE_MONGO, ('workflow.steps.util.volume_migration.stop_database.StopDatabase',
                                         'workflow.steps.util.resize.stop_vm.StopVM',
                                         'workflow.steps.util.resize.resize_vm.ResizeVM',
                                         'workflow.steps.util.resize.start_vm.StartVM',
-                                        'workflow.steps.mongodb.resize.start_database.StartDatabase',
+                                        'workflow.steps.util.resize.start_database.StartDatabase',
                                         'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',
                                         )
                          )
 
-        self.assertEqual(RESIZE_MYSQL, ('workflow.steps.mysql.resize.init_variables.InitVariables',
-                                        'workflow.steps.mysql.resize.stop_database.StopDatabase',
+        self.assertEqual(RESIZE_MYSQL, ('workflow.steps.util.volume_migration.stop_database.StopDatabase',
                                         'workflow.steps.mysql.resize.change_config.ChangeDatabaseConfigFile',
                                         'workflow.steps.util.resize.stop_vm.StopVM',
                                         'workflow.steps.util.resize.resize_vm.ResizeVM',
                                         'workflow.steps.util.resize.start_vm.StartVM',
-                                        'workflow.steps.mysql.resize.start_database.StartDatabase',
+                                        'workflow.steps.util.resize.start_database.StartDatabase',
                                         'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',
                                         )
                          )
 
-        self.assertEqual(RESIZE_REDIS, ('workflow.steps.redis.resize.init_variables.InitVariables',
-                                        'workflow.steps.redis.resize.stop_database.StopDatabase',
+        self.assertEqual(RESIZE_REDIS, ('workflow.steps.util.volume_migration.stop_database.StopDatabase',
                                         'workflow.steps.redis.resize.change_config.ChangeDatabaseConfigFile',
                                         'workflow.steps.util.resize.stop_vm.StopVM',
                                         'workflow.steps.util.resize.resize_vm.ResizeVM',
                                         'workflow.steps.util.resize.start_vm.StartVM',
-                                        'workflow.steps.redis.resize.start_database.StartDatabase',
+                                        'workflow.steps.util.resize.start_database.StartDatabase',
                                         'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',
                                         )
                          )
