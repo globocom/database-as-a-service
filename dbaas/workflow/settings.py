@@ -56,28 +56,34 @@ STOP_RESIZE_START = (
 )
 
 RESIZE_MONGO = (
-    ('workflow.steps.mongodb.resize.init_variables.InitVariables',
-     'workflow.steps.mongodb.resize.stop_database.StopDatabase',) +
+    (#'workflow.steps.mongodb.resize.init_variables.InitVariables',
+     #'workflow.steps.mongodb.resize.stop_database.StopDatabase',
+     'workflow.steps.util.volume_migration.stop_database.StopDatabase',) +
     STOP_RESIZE_START +
-    ('workflow.steps.mongodb.resize.start_database.StartDatabase',
+    (#'workflow.steps.mongodb.resize.start_database.StartDatabase',
+     'workflow.steps.util.resize.start_database.StartDatabase',
      'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',)
 )
 
 RESIZE_MYSQL = (
-    ('workflow.steps.mysql.resize.init_variables.InitVariables',
-     'workflow.steps.mysql.resize.stop_database.StopDatabase',
+    (#'workflow.steps.mysql.resize.init_variables.InitVariables',
+     #'workflow.steps.mysql.resize.stop_database.StopDatabase',
+     'workflow.steps.util.volume_migration.stop_database.StopDatabase',
      'workflow.steps.mysql.resize.change_config.ChangeDatabaseConfigFile',) +
     STOP_RESIZE_START +
-    ('workflow.steps.mysql.resize.start_database.StartDatabase',
+    (#'workflow.steps.mysql.resize.start_database.StartDatabase',
+     'workflow.steps.util.resize.start_database.StartDatabase',
      'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',)
 )
 
 RESIZE_REDIS = (
-    ('workflow.steps.redis.resize.init_variables.InitVariables',
-     'workflow.steps.redis.resize.stop_database.StopDatabase',
+    (#'workflow.steps.redis.resize.init_variables.InitVariables',
+     #'workflow.steps.redis.resize.stop_database.StopDatabase',
+     'workflow.steps.util.volume_migration.stop_database.StopDatabase',
      'workflow.steps.redis.resize.change_config.ChangeDatabaseConfigFile',) +
     STOP_RESIZE_START +
-    ('workflow.steps.redis.resize.start_database.StartDatabase',
+    (#'workflow.steps.redis.resize.start_database.StartDatabase',
+     'workflow.steps.util.resize.start_database.StartDatabase',
      'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',)
 
 )

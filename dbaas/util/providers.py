@@ -123,33 +123,16 @@ def resize_database_instance(database, cloudstackpack, instance, task=None):
                                                          engine_type__name=database.engine_type)
 
     workflow_dict = build_dict(database=database,
+                               databaseinfra=database.databaseinfra,
                                cloudstackpack=cloudstackpack,
                                original_cloudstackpack=original_cloudstackpack,
                                environment=database.environment,
                                instance=instance,
+                               host=instance.hostname,
                                steps=get_resize_settings(database.engine_type),
                                )
 
     start_workflow(workflow_dict=workflow_dict, task=task)
-
-    return workflow_dict
-
-
-def undo_resize_database_instance(database, cloudstackpack, instance, task=None):
-    from dbaas_cloudstack.models import CloudStackPack
-    original_cloudstackpack = CloudStackPack.objects.get(offering__serviceofferingid=database.offering_id,
-                                                         offering__region__environment=database.environment,
-                                                         engine_type__name=database.engine_type)
-
-    workflow_dict = build_dict(database=database,
-                               cloudstackpack=cloudstackpack,
-                               original_cloudstackpack=original_cloudstackpack,
-                               environment=database.environment,
-                               instance=instance,
-                               steps=get_resize_settings(database.engine_type),
-                               )
-
-    stop_workflow(workflow_dict=workflow_dict, task=task)
 
     return workflow_dict
 

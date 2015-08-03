@@ -456,7 +456,6 @@ def resize_database(self, database, cloudstackpack, task_history=None, user=None
         task_history = TaskHistory.register(request=self.request, task_history=task_history,
                                             user=user, worker_name=worker_name)
         from util.providers import resize_database_instance
-        from util.providers import undo_resize_database_instance
         from util import get_credentials_for
         from dbaas_cloudstack.provider import CloudStackProvider
         from dbaas_credentials.models import CredentialType
@@ -467,20 +466,22 @@ def resize_database(self, database, cloudstackpack, task_history=None, user=None
 
         databaseinfra = database.databaseinfra
         driver = databaseinfra.get_driver()
-        instances = driver.get_database_instances()
+        instances = driver.get_slave_instances()
+        instances.append(driver.get_master_instance())
         resized_instances = []
 
         for instance in instances:
             host = instance.hostname
             host_attr = host.cs_host_attributes.get()
-            offering = cs_provider.get_vm_offering_id(vm_id=host_attr.vm_id,
-                                                      project_id=cs_credentials.project)
+            offering_id = cs_provider.get_vm_offering_id(vm_id=host_attr.vm_id,
+                                                         project_id=cs_credentials.project)
 
-            if offering == cloudstackpack.offering:
-                LOG.info("Instance offering: {}".format(offering))
+            if offering_id == cloudstackpack.offering.serviceofferingid:
+                LOG.info("Instance offering: {}".format(offering_id))
+                resized_instances.append(instance)
                 continue
 
-            if databaseinfra.plan.is_ha:
+            if databaseinfra.plan.is_ha and driver.check_instance_is_master(instance):
                 LOG.info("Waiting 60s to check continue...")
                 sleep(60)
                 driver.check_replication_and_switch(instance)
@@ -491,8 +492,6 @@ def resize_database(self, database, cloudstackpack, task_history=None, user=None
                                               cloudstackpack=cloudstackpack,
                                               instance=instance,
                                               task=task_history)
-            result = {"created": True}
-
             if result['created'] == False:
                 if 'exceptions' in result:
                     error = "\n".join(": ".join(err)
@@ -520,20 +519,6 @@ def resize_database(self, database, cloudstackpack, task_history=None, user=None
             task_history.update_status_for(TaskHistory.STATUS_SUCCESS,
                                            details='Resize successfully done.')
             return
-
-        for instance in resized_instances:
-            if databaseinfra.plan.is_ha:
-                if driver.check_instance_is_master(instance):
-                    LOG.info("Waiting 60s to check continue...")
-                    sleep(60)
-                    driver.check_replication_and_switch(instance, attempts=60)
-                    LOG.info("Waiting 60s to check continue...")
-                    sleep(60)
-
-            undo_resize_database_instance(database=database,
-                                          cloudstackpack=cloudstackpack,
-                                          instance=instance,
-                                          task=task_history)
 
         task_history.update_status_for(TaskHistory.STATUS_ERROR, details=error)
         return

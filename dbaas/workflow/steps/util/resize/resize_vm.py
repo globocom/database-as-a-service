@@ -20,9 +20,7 @@ class ResizeVM(BaseStep):
     def do(self, workflow_dict):
         try:
 
-            database = workflow_dict['database']
             cloudstackpack = workflow_dict['cloudstackpack']
-            instances_detail = workflow_dict['instances_detail']
             environment = workflow_dict['environment']
 
             cs_credentials = get_credentials_for(
@@ -31,22 +29,13 @@ class ResizeVM(BaseStep):
 
             serviceofferingid = cloudstackpack.offering.serviceofferingid
 
-            for instance_detail in instances_detail:
-                instance = instance_detail['instance']
-                host = instance.hostname
-                host_csattr = HostAttr.objects.get(host=host)
-                offering_changed = cs_provider.change_service_for_vm(
-                    vm_id=host_csattr.vm_id, serviceofferingid=serviceofferingid)
-                if not offering_changed:
-                    raise Exception, "Could not change offering for Host {}".format(
-                        host)
-                instance_detail['offering_changed'] = True
-
-            LOG.info('Updating offering DatabaseInfra.')
-            databaseinfraoffering = DatabaseInfraOffering.objects.get(
-                databaseinfra=database.databaseinfra)
-            databaseinfraoffering.offering = cloudstackpack.offering
-            databaseinfraoffering.save()
+            host = workflow_dict['host']
+            host_csattr = HostAttr.objects.get(host=host)
+            offering_changed = cs_provider.change_service_for_vm(
+                vm_id=host_csattr.vm_id, serviceofferingid=serviceofferingid)
+            if not offering_changed:
+                raise Exception("Could not change offering for Host {}".format(host))
+            workflow_dict['offering_changed'] = True
 
             return True
         except Exception:
@@ -59,9 +48,8 @@ class ResizeVM(BaseStep):
 
     def undo(self, workflow_dict):
         try:
-            database = workflow_dict['database']
+
             original_cloudstackpack = workflow_dict['original_cloudstackpack']
-            instances_detail = workflow_dict['instances_detail']
             environment = workflow_dict['environment']
 
             cs_credentials = get_credentials_for(
@@ -70,25 +58,15 @@ class ResizeVM(BaseStep):
 
             original_serviceofferingid = original_cloudstackpack.offering.serviceofferingid
 
-            for instance_detail in instances_detail:
-                if instance_detail['offering_changed']:
-                    instance = instance_detail['instance']
-                    host = instance.hostname
-                    host_csattr = HostAttr.objects.get(host=host)
-                    offering_changed = cs_provider.change_service_for_vm(
-                        vm_id=host_csattr.vm_id, serviceofferingid=original_serviceofferingid)
-                    if not offering_changed:
-                        raise Exception, "Could not change offering for Host {}".format(
-                            host)
+            if workflow_dict['offering_changed']:
+                host = workflow_dict['host']
+                host_csattr = HostAttr.objects.get(host=host)
+                offering_changed = cs_provider.change_service_for_vm(
+                    vm_id=host_csattr.vm_id, serviceofferingid=original_serviceofferingid)
+                if not offering_changed:
+                    raise Exception("Could not change offering for Host {}".format(host))
                 else:
-                    instance = instance_detail['instance']
-                    LOG.info('No resize to instance {}'.format(instance))
-
-            LOG.info('Updating offering DatabaseInfra.')
-            databaseinfraoffering = DatabaseInfraOffering.objects.get(
-                databaseinfra=database.databaseinfra)
-            databaseinfraoffering.offering = original_cloudstackpack.offering
-            databaseinfraoffering.save()
+                    LOG.info('No resize to instance {}'.format(workflow_dict['instance']))
 
             return True
         except Exception:

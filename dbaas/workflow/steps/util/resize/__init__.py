@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 import logging
 from dbaas_cloudstack.models import HostAttr
-from util import exec_remote_command, check_ssh
+from util import check_ssh
 from workflow.exceptions.error_codes import DBAAS_0015
 from util import full_stack
 from dbaas_cloudstack.provider import CloudStackProvider
@@ -18,27 +18,23 @@ def start_vm(workflow_dict):
         cs_credentials = get_credentials_for(
             environment=environment, credential_type=CredentialType.CLOUDSTACK)
         cs_provider = CloudStackProvider(credentials=cs_credentials)
-        instances_detail = workflow_dict['instances_detail']
 
-        for instance_detail in instances_detail:
-            instance = instance_detail['instance']
-            host = instance.hostname
-            host_csattr = HostAttr.objects.get(host=host)
-            started = cs_provider.start_virtual_machine(
-                vm_id=host_csattr.vm_id)
-            if not started:
-                raise Exception, "Could not start host {}".format(host)
+        host = workflow_dict['host']
+        host_csattr = HostAttr.objects.get(host=host)
+        started = cs_provider.start_virtual_machine(vm_id=host_csattr.vm_id)
+        if not started:
+            raise Exception("Could not start host {}".format(host))
 
-        for instance_detail in instances_detail:
-            instance = instance_detail['instance']
-            host = instance.hostname
-            host_csattr = HostAttr.objects.get(host=host)
-            host_ready = check_ssh(
-                server=host.address, username=host_csattr.vm_user, password=host_csattr.vm_password, wait=5, interval=10)
-            if not host_ready:
-                error = "Host %s is not ready..." % host
-                LOG.warn(error)
-                raise Exception, error
+        host_ready = check_ssh(server=host.address,
+                               username=host_csattr.vm_user,
+                               password=host_csattr.vm_password,
+                               wait=5,
+                               interval=10)
+
+        if not host_ready:
+            error = "Host %s is not ready..." % host
+            LOG.warn(error)
+            raise Exception(error)
 
         return True
     except Exception:
@@ -56,15 +52,11 @@ def stop_vm(workflow_dict):
         cs_credentials = get_credentials_for(
             environment=environment, credential_type=CredentialType.CLOUDSTACK)
         cs_provider = CloudStackProvider(credentials=cs_credentials)
-        instances_detail = workflow_dict['instances_detail']
-
-        for instance_detail in instances_detail:
-            instance = instance_detail['instance']
-            host = instance.hostname
-            host_csattr = HostAttr.objects.get(host=host)
-            stoped = cs_provider.stop_virtual_machine(vm_id=host_csattr.vm_id)
-            if not stoped:
-                raise Exception, "Could not stop host {}".format(host)
+        host = workflow_dict['host']
+        host_csattr = HostAttr.objects.get(host=host)
+        stoped = cs_provider.stop_virtual_machine(vm_id=host_csattr.vm_id)
+        if not stoped:
+            raise Exception("Could not stop host {}".format(host))
 
         return True
 
