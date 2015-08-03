@@ -4,6 +4,7 @@ from util import full_stack
 from workflow.steps.util.base import BaseStep
 from workflow.exceptions.error_codes import DBAAS_0022
 from workflow.steps.util.restore_snapshot import use_database_initialization_script
+from time import sleep
 
 LOG = logging.getLogger(__name__)
 
@@ -19,6 +20,7 @@ class StartDatabase(BaseStep):
             instance = workflow_dict['instance']
 
             if databaseinfra.plan.is_ha:
+                sleep(60)
                 driver = databaseinfra.get_driver()
                 driver.start_slave(instance=instance)
 
