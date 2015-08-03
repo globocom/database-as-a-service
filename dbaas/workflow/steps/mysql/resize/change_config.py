@@ -14,7 +14,8 @@ class ChangeDatabaseConfigFile(BaseStep):
     def do(self, workflow_dict):
         context_dict = {
             'CONFIGFILE': True,
-        }
+            'IS_HA': workflow_dict['databaseinfra'].plan.is_ha
+        },
 
         ret_script = run_vm_script(
             workflow_dict=workflow_dict,
@@ -27,8 +28,6 @@ class ChangeDatabaseConfigFile(BaseStep):
     def undo(self, workflow_dict):
         context_dict = {
             'CONFIGFILE': True,
-            'STOPDB': True,
-            'STARTDB': True,
         }
 
         ret_script = run_vm_script(

@@ -63,7 +63,8 @@ RESIZE_MONGO = (
 )
 
 RESIZE_MYSQL = (
-    ('workflow.steps.util.volume_migration.stop_database.StopDatabase',
+    (#'workflow.steps.mysql.resize.init_variables.InitVariables',
+     'workflow.steps.util.volume_migration.stop_database.StopDatabase',
      'workflow.steps.mysql.resize.change_config.ChangeDatabaseConfigFile',) +
     STOP_RESIZE_START +
     ('workflow.steps.util.resize.start_database.StartDatabase',
@@ -71,7 +72,8 @@ RESIZE_MYSQL = (
 )
 
 RESIZE_REDIS = (
-    ('workflow.steps.util.volume_migration.stop_database.StopDatabase',
+    (#'workflow.steps.redis.resize.init_variables.InitVariables',
+     'workflow.steps.util.volume_migration.stop_database.StopDatabase',
      'workflow.steps.redis.resize.change_config.ChangeDatabaseConfigFile',) +
     STOP_RESIZE_START +
     ('workflow.steps.util.resize.start_database.StartDatabase',
