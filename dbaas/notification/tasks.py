@@ -20,6 +20,7 @@ from system.models import Configuration
 from simple_audit.models import AuditRequest
 from .models import TaskHistory
 import datetime
+from time import sleep
 
 LOG = get_task_logger(__name__)
 
