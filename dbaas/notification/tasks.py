@@ -508,6 +508,12 @@ def resize_database(self, database, cloudstackpack, task_history=None, user=None
             else:
                 resized_instances.append(instance)
 
+        if databaseinfra.plan.is_ha:
+            LOG.info("Waiting 60s to check continue...")
+            sleep(60)
+            instance = driver.get_slave_instances()[0]
+            driver.check_replication_and_switch(instance)
+
         if len(instances) == len(resized_instances):
             from dbaas_cloudstack.models import DatabaseInfraOffering
             LOG.info('Updating offering DatabaseInfra.')

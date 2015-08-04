@@ -140,7 +140,7 @@ class Redis(BaseDriver):
             LOG.debug(
                 'Successfully connected to redis databaseinfra %s' % (self.databaseinfra))
             return client
-        except Exception, e:
+        except Exception as e:
             raise e
 
     def get_client(self, instance):
@@ -160,7 +160,7 @@ class Redis(BaseDriver):
 
             return_value = client
             yield return_value
-        except Exception, e:
+        except Exception as e:
             raise ConnectionError(
                 'Error connecting to databaseinfra %s : %s' % (self.databaseinfra, str(e)))
 
@@ -169,7 +169,7 @@ class Redis(BaseDriver):
             try:
                 ok = client.ping()
                 return True
-            except Exception, e:
+            except Exception as e:
                 raise ConnectionError(
                     'Error connection to databaseinfra %s: %s' % (self.databaseinfra, str(e)))
 
@@ -187,7 +187,7 @@ class Redis(BaseDriver):
                 else:
                     for db in keyspace:
                         dbs_names.append(db)
-            except Exception, e:
+            except Exception as e:
                 raise ConnectionError(
                     'Error connection to databaseinfra %s: %s' % (self.databaseinfra, str(e)))
         return dbs_names
@@ -274,7 +274,7 @@ class Redis(BaseDriver):
                     return True
                 else:
                     return False
-            except Exception, e:
+            except Exception as e:
                 raise ConnectionError(
                     'Error connection to databaseinfra %s: %s' % (self.databaseinfra, str(e)))
 
@@ -292,7 +292,7 @@ class Redis(BaseDriver):
                     return False
                 else:
                     return True
-            except Exception, e:
+            except Exception as e:
                 raise ConnectionError(
                     'Error connection to databaseinfra %s: %s' % (self.databaseinfra, str(e)))
 
@@ -344,3 +344,6 @@ class Redis(BaseDriver):
         LOG.info(output)
         if return_code != 0:
             raise Exception(str(output))
+
+    def get_database_agents(self):
+        return ['td-agent', 'httpd']

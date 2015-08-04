@@ -59,24 +59,25 @@ RESIZE_MONGO = (
     ('workflow.steps.util.volume_migration.stop_database.StopDatabase',) +
     STOP_RESIZE_START +
     ('workflow.steps.util.resize.start_database.StartDatabase',
+     'workflow.steps.util.resize.start_agents.StartAgents',
      'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',)
 )
 
 RESIZE_MYSQL = (
-    (#'workflow.steps.mysql.resize.init_variables.InitVariables',
-     'workflow.steps.util.volume_migration.stop_database.StopDatabase',
+    ('workflow.steps.util.volume_migration.stop_database.StopDatabase',
      'workflow.steps.mysql.resize.change_config.ChangeDatabaseConfigFile',) +
     STOP_RESIZE_START +
     ('workflow.steps.util.resize.start_database.StartDatabase',
+     'workflow.steps.util.resize.start_agents.StartAgents',
      'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',)
 )
 
 RESIZE_REDIS = (
-    (#'workflow.steps.redis.resize.init_variables.InitVariables',
-     'workflow.steps.util.volume_migration.stop_database.StopDatabase',
+    ('workflow.steps.util.volume_migration.stop_database.StopDatabase',
      'workflow.steps.redis.resize.change_config.ChangeDatabaseConfigFile',) +
     STOP_RESIZE_START +
     ('workflow.steps.util.resize.start_database.StartDatabase',
+     'workflow.steps.util.resize.start_agents.StartAgents',
      'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',)
 
 )

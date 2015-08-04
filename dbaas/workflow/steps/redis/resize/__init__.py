@@ -19,6 +19,7 @@ def run_vm_script(workflow_dict, context_dict, script):
         host_csattr = HostAttr.objects.get(host=host)
         final_context_dict['HOSTADDRESS'] = instance.address
         final_context_dict['PORT'] = instance.port
+        final_context_dict['DBPASSWORD'] = workflow_dict['databaseinfra'].password
         command = build_context_script(final_context_dict, script)
         output = {}
         return_code = exec_remote_command(server=host.address,

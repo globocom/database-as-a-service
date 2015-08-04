@@ -336,3 +336,6 @@ class MongoDB(BaseDriver):
             client.admin.command('replSetStepDown')
         except pymongo.errors.PyMongoError, e:
             pass
+
+    def get_database_agents(self):
+        return ['td-agent']

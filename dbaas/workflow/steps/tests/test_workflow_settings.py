@@ -127,6 +127,7 @@ class WorkflowSettingsTestCase(TestCase):
                                         'workflow.steps.util.resize.resize_vm.ResizeVM',
                                         'workflow.steps.util.resize.start_vm.StartVM',
                                         'workflow.steps.util.resize.start_database.StartDatabase',
+                                        'workflow.steps.util.resize.start_agents.StartAgents',
                                         'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',
                                         )
                          )
@@ -137,6 +138,7 @@ class WorkflowSettingsTestCase(TestCase):
                                         'workflow.steps.util.resize.resize_vm.ResizeVM',
                                         'workflow.steps.util.resize.start_vm.StartVM',
                                         'workflow.steps.util.resize.start_database.StartDatabase',
+                                        'workflow.steps.util.resize.start_agents.StartAgents',
                                         'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',
                                         )
                          )
@@ -147,6 +149,7 @@ class WorkflowSettingsTestCase(TestCase):
                                         'workflow.steps.util.resize.resize_vm.ResizeVM',
                                         'workflow.steps.util.resize.start_vm.StartVM',
                                         'workflow.steps.util.resize.start_database.StartDatabase',
+                                        'workflow.steps.util.resize.start_agents.StartAgents',
                                         'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',
                                         )
                          )

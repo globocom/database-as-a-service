@@ -87,7 +87,7 @@ class MySQL(BaseDriver):
             LOG.debug(
                 'Successfully connected to mysql databaseinfra %s' % (self.databaseinfra))
             return client
-        except Exception, e:
+        except Exception as e:
             raise e
 
     def get_client(self, instance):
@@ -106,7 +106,7 @@ class MySQL(BaseDriver):
         client = None
         try:
             yield self.__mysql_client__(instance)
-        except _mysql_exceptions.OperationalError, e:
+        except _mysql_exceptions.OperationalError as e:
             if e.args[0] == ER_ACCESS_DENIED_ERROR:
                 raise AuthenticationError(e.args[1])
             elif e.args[0] == ER_CAN_NOT_CONNECT:
@@ -133,13 +133,13 @@ class MySQL(BaseDriver):
                 r = client.store_result()
                 if r is not None:
                     return r.fetch_row(maxrows=0, how=1)
-            except _mysql_exceptions.ProgrammingError, e:
+            except _mysql_exceptions.ProgrammingError as e:
                 LOG.error("__query ProgrammingError: %s" % e)
                 if e.args[0] == ER_DB_CREATE_EXISTS:
                     raise DatabaseAlreadyExists(e.args[1])
                 else:
                     raise GenericDriverError(e.args)
-            except _mysql_exceptions.OperationalError, e:
+            except _mysql_exceptions.OperationalError as e:
                 LOG.error("__query OperationalError: %s" % e)
                 if e.args[0] == ER_DB_DROP_EXISTS:
                     raise DatabaseDoesNotExist(e.args[1])
@@ -149,7 +149,7 @@ class MySQL(BaseDriver):
                     raise InvalidCredential(e.args[1])
                 else:
                     raise GenericDriverError(e.args)
-            except Exception, e:
+            except Exception as e:
                 GenericDriverError(e.args)
 
     def info(self):
@@ -187,7 +187,7 @@ class MySQL(BaseDriver):
                 try:
                     if self.check_status() and (database_name in list_databases):
                         db_status.is_alive = True
-                except Exception, e:
+                except Exception as e:
                     LOG.warning(
                         "could not retrieve db status for %s: %s" % (database_name, e))
 
@@ -207,7 +207,7 @@ class MySQL(BaseDriver):
             result = self.__query("SELECT 1", instance=instance)
             if result[0]['1'] == '1':
                 status = True
-        except Exception, e:
+        except Exception as e:
             LOG.warning(
                 "could not retrieve status for instance %s: %s" % (instance, e))
 
@@ -345,3 +345,9 @@ class MySQL(BaseDriver):
     def start_slave(self, instance):
         client = self.get_client(instance)
         client.query("start slave")
+
+    def get_database_agents(self):
+        if self.databaseinfra.plan.is_ha:
+            return ['td-agent', 'mysql_statsd', 'httpd', 'mk-heartbeat-daemon']
+        else:
+            return ['td-agent', 'mysql_statsd']

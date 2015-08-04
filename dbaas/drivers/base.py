@@ -216,6 +216,10 @@ class BaseDriver(object):
             sleep(10)
         raise Exception("Could not switch master because of replication's delay")
 
+    def get_database_agents(self):
+        """ Returns database agents list"""
+        raise NotImplementedError()
+
 
 class DatabaseStatus(object):
 
