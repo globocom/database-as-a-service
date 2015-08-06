@@ -10,7 +10,7 @@ LOG = logging.getLogger(__name__)
 
 def start_workflow(workflow_dict, task=None):
     try:
-        if not 'steps' in workflow_dict:
+        if 'steps' not in workflow_dict:
             return False
         workflow_dict['step_counter'] = 0
 
@@ -75,10 +75,10 @@ def start_workflow(workflow_dict, task=None):
 def stop_workflow(workflow_dict, task=None):
     LOG.info("Running undo...")
 
-    if not 'steps' in workflow_dict:
+    if 'steps' not in workflow_dict:
         return False
 
-    if not 'exceptions' in workflow_dict:
+    if 'exceptions' not in workflow_dict:
         workflow_dict['exceptions'] = {}
         workflow_dict['exceptions']['traceback'] = []
         workflow_dict['exceptions']['error_codes'] = []
@@ -87,6 +87,7 @@ def stop_workflow(workflow_dict, task=None):
     if 'step_counter' not in workflow_dict:
         workflow_dict['step_counter'] = len(workflow_dict['steps'])
     workflow_dict['msgs'] = []
+    workflow_dict['created'] = False
 
     try:
 
@@ -114,7 +115,8 @@ def stop_workflow(workflow_dict, task=None):
                 task.update_details(persist=True, details="DONE!")
 
         return True
-    except Exception:
+    except Exception as e:
+        LOG.info("Exception: {}".format(e))
 
         if not workflow_dict['exceptions']['error_codes'] or not workflow_dict['exceptions']['traceback']:
             traceback = full_stack()
