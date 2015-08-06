@@ -14,7 +14,7 @@ class CheckDatabaseConnection(BaseStep):
 
     def do(self, workflow_dict):
         try:
-            if not 'databaseinfra' in workflow_dict:
+            if 'databaseinfra' not in workflow_dict:
                 return False
 
             LOG.info("Getting driver class")
