@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 import logging
-from . import start_vm
-from . import stop_vm
-from ...util.base import BaseStep
+from workflow.steps.util.resize import start_vm
+from workflow.steps.util.resize import stop_vm
+from workflow.steps.util.base import BaseStep
 
 LOG = logging.getLogger(__name__)
 
@@ -13,7 +13,13 @@ class StartVM(BaseStep):
         return "Starting VMs..."
 
     def do(self, workflow_dict):
-        return start_vm(workflow_dict)
+        try:
+            return start_vm(workflow_dict)
+        except Exception:
+            return False
 
     def undo(self, workflow_dict):
-        return stop_vm(workflow_dict)
+        try:
+            return stop_vm(workflow_dict)
+        except Exception:
+            return False
