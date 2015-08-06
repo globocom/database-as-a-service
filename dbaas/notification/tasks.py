@@ -509,7 +509,7 @@ def resize_database(self, database, cloudstackpack, task_history=None, user=None
             else:
                 resized_instances.append(instance)
 
-        if databaseinfra.plan.is_ha and result['created'] == True:
+        if databaseinfra.plan.is_ha:
             LOG.info("Waiting 60s to check continue...")
             sleep(60)
             instance = driver.get_slave_instances()[0]

@@ -41,6 +41,7 @@ class StopDatabase(BaseStep):
         LOG.info("Running undo...")
         try:
             databaseinfra = workflow_dict['databaseinfra']
+            instance = workflow_dict['instance']
 
             if workflow_dict['host_stoped']:
                 host = workflow_dict['host']
@@ -50,6 +51,10 @@ class StopDatabase(BaseStep):
 
                 if return_code != 0:
                     LOG.warn(str(output))
+
+            if databaseinfra.plan.is_ha:
+                driver = databaseinfra.get_driver()
+                driver.start_slave(instance=instance)
 
             return True
         except Exception:
