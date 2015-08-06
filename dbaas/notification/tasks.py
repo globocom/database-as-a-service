@@ -83,7 +83,7 @@ def create_database(self, name, plan, environment, team, project, description, t
 
         return
 
-    except Exception, e:
+    except Exception as e:
         traceback = full_stack()
         LOG.error("Ops... something went wrong: %s" % e)
         LOG.error(traceback)
@@ -176,7 +176,7 @@ def clone_database(self, origin_database, clone_name, plan, environment, task_hi
             destroy_infra(
                 databaseinfra=result['databaseinfra'], task=task_history)
             return
-    except Exception, e:
+    except Exception as e:
         traceback = full_stack()
         LOG.error("Ops... something went wrong: %s" % e)
         LOG.error(traceback)
@@ -249,7 +249,7 @@ def database_notification_for_team(team=None):
         LOG.warning("database notification is disabled")
         return
 
-    databases = Database.objects.filter(team=team)
+    databases = Database.objects.filter(team=team, is_in_quarantine=False)
     msgs = []
     for database in databases:
         used = database.used_size_in_mb
@@ -312,7 +312,7 @@ def database_notification(self):
             request=self.request, user=None, worker_name=worker_name)
         task_history.update_status_for(TaskHistory.STATUS_SUCCESS, details="\n".join(
             str(key) + ': ' + ', '.join(value) for key, value in msgs.items()))
-    except Exception, e:
+    except Exception as e:
         task_history.update_status_for(TaskHistory.STATUS_ERROR, details=e)
 
     return
@@ -347,7 +347,7 @@ def update_database_status(self):
 
         task_history.update_status_for(TaskHistory.STATUS_SUCCESS, details="\n".join(
             value for value in msgs))
-    except Exception, e:
+    except Exception as e:
         task_history.update_status_for(TaskHistory.STATUS_ERROR, details=e)
 
     return
@@ -378,7 +378,7 @@ def update_database_used_size(self):
 
         task_history.update_status_for(TaskHistory.STATUS_SUCCESS, details="\n".join(
             value for value in msgs))
-    except Exception, e:
+    except Exception as e:
         task_history.update_status_for(TaskHistory.STATUS_ERROR, details=e)
 
     return
@@ -413,7 +413,7 @@ def update_instances_status(self):
 
         task_history.update_status_for(TaskHistory.STATUS_SUCCESS, details="\n".join(
             value for value in msgs))
-    except Exception, e:
+    except Exception as e:
         task_history.update_status_for(TaskHistory.STATUS_ERROR, details=e)
 
     return
@@ -444,7 +444,7 @@ def purge_task_history(self):
 
         task_history.update_status_for(TaskHistory.STATUS_SUCCESS,
                                        details='Purge succesfully done!')
-    except Exception, e:
+    except Exception as e:
         task_history.update_status_for(TaskHistory.STATUS_ERROR, details=e)
 
 
@@ -470,6 +470,7 @@ def resize_database(self, database, cloudstackpack, task_history=None, user=None
         instances = driver.get_slave_instances()
         instances.append(driver.get_master_instance())
         resized_instances = []
+        result = {'created': False}
 
         for instance in instances:
             host = instance.hostname
@@ -508,7 +509,7 @@ def resize_database(self, database, cloudstackpack, task_history=None, user=None
             else:
                 resized_instances.append(instance)
 
-        if databaseinfra.plan.is_ha:
+        if databaseinfra.plan.is_ha and result['created'] == True:
             LOG.info("Waiting 60s to check continue...")
             sleep(60)
             instance = driver.get_slave_instances()[0]
@@ -530,7 +531,7 @@ def resize_database(self, database, cloudstackpack, task_history=None, user=None
         task_history.update_status_for(TaskHistory.STATUS_ERROR, details=error)
         return
 
-    except Exception, e:
+    except Exception as e:
         error = "Resize Database ERROR: {}".format(e)
         LOG.error(error)
         task_history.update_status_for(TaskHistory.STATUS_ERROR, details=error)
