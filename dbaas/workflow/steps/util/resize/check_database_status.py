@@ -12,10 +12,10 @@ class CheckDatabaseStatus(BaseStep):
 
     def do(self, workflow_dict):
         try:
-            if not 'database' in workflow_dict:
+            if 'database' not in workflow_dict:
                 return False
 
-            if not 'databaseinfra' in workflow_dict:
+            if 'databaseinfra' not in workflow_dict:
                 workflow_dict['databaseinfra'] = workflow_dict[
                     'database'].databaseinfra
 
@@ -29,10 +29,9 @@ class CheckDatabaseStatus(BaseStep):
                 LOG.info("Database is ok...")
                 workflow_dict['database'].status = 1
                 workflow_dict['database'].save()
-                return True
 
-            return False
-        except Exception, e:
+            return True
+        except Exception as e:
             LOG.info("Error: {}".format(e))
             pass
 
