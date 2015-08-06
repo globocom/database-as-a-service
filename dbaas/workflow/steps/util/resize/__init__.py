@@ -28,8 +28,9 @@ def start_vm(workflow_dict):
         host_ready = check_ssh(server=host.address,
                                username=host_csattr.vm_user,
                                password=host_csattr.vm_password,
-                               wait=5,
-                               interval=10)
+                               retries=50,
+                               wait=20,
+                               interval=30)
 
         if not host_ready:
             error = "Host %s is not ready..." % host
