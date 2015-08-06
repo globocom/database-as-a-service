@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
-from . import run_vm_script
-from ...util.base import BaseStep
+from workflow.steps.mysql.resize import run_vm_script
+from workflow.steps.util.base import BaseStep
 
 LOG = logging.getLogger(__name__)
 
@@ -28,6 +28,7 @@ class ChangeDatabaseConfigFile(BaseStep):
     def undo(self, workflow_dict):
         context_dict = {
             'CONFIGFILE': True,
+            'IS_HA': workflow_dict['databaseinfra'].plan.is_ha,
         }
 
         ret_script = run_vm_script(
