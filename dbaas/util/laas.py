@@ -70,7 +70,7 @@ def register_database_laas(database):
     try:
         LaaSProvider.update_laas_workspace(
             environment=database.environment, laas_workspace=workspace_json)
-    except Exception, e:
+    except Exception as e:
         LOG.error("Ops... something went wrong: %s" % e)
 
 
@@ -92,7 +92,7 @@ def register_team_laas(team):
             try:
                 LaaSProvider.update_laas_team(
                     environment=environment, laas_team=team_json)
-            except Exception, e:
+            except Exception as e:
                 LOG.error("Ops... something went wrong: %s" % e)
 
 

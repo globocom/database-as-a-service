@@ -55,7 +55,8 @@ def as_json(f):
     return wrapper
 
 
-def call_script(script_name, working_dir=None, split_lines=True, args=[], envs={}, shell=False, python_bin=None):
+def call_script(script_name, working_dir=None, split_lines=True, args=[],
+                envs={}, shell=False, python_bin=None):
 
     args_copy = []
     for arg in args:
@@ -84,7 +85,8 @@ def call_script(script_name, working_dir=None, split_lines=True, args=[], envs={
             envs_with_path.update(envs)
 
         # For future, if scripts have lot of output can be better
-        # create a temporary file for stdout. Scripts with lot of output and subprocess.PIPE
+        # create a temporary file for stdout. Scripts with lot
+        # of output and subprocess.PIPE
         # can lock because this method not consume stdout without script finish
         # execute.
 
@@ -275,7 +277,8 @@ def gen_infra_names(name, qt):
 
 def get_credentials_for(environment, credential_type):
     from dbaas_credentials.models import Credential
-    return Credential.objects.filter(integration_type__type=credential_type, environments=environment)[0]
+    return Credential.objects.filter(integration_type__type=credential_type,
+                                     environments=environment)[0]
 
 
 def build_dict(**kwargs):
