@@ -9,15 +9,16 @@ from simple_audit.models import AuditRequest
 from models import DatabaseRegionMigrationDetail
 from workflow.workflow import start_workflow, stop_workflow
 from .migration_steps import get_engine_steps
-from physical.models import Environment, Instance
+from physical.models import Instance
 from dbaas_cloudstack.models import DatabaseInfraAttr
-from sets import Set
 
 LOG = logging.getLogger(__name__)
 
 
 @app.task(bind=True)
-def execute_database_region_migration(self, database_region_migration_detail_id, task_history=None, user=None):
+def execute_database_region_migration(self,
+                                      database_region_migration_detail_id,
+                                      task_history=None, user=None):
     AuditRequest.new_request(
         "execute_database_region_migration", user, "localhost")
     try:
@@ -125,7 +126,7 @@ def execute_database_region_migration(self, database_region_migration_detail_id,
                 TaskHistory.STATUS_SUCCESS, details='Database region migration was succesfully')
             return
 
-    except Exception, e:
+    except Exception as e:
         traceback = full_stack()
         LOG.error("Ops... something went wrong: %s" % e)
         LOG.error(traceback)
@@ -144,7 +145,9 @@ def execute_database_region_migration(self, database_region_migration_detail_id,
 
 
 @app.task(bind=True)
-def execute_database_region_migration_undo(self, database_region_migration_detail_id, task_history=None, user=None):
+def execute_database_region_migration_undo(self,
+                                           database_region_migration_detail_id,
+                                           task_history=None, user=None):
     AuditRequest.new_request(
         "execute_database_region_migration", user, "localhost")
     try:
@@ -241,7 +244,7 @@ def execute_database_region_migration_undo(self, database_region_migration_detai
         task_history.update_status_for(
             TaskHistory.STATUS_SUCCESS, details='Database region migration was succesfully')
 
-    except Exception, e:
+    except Exception as e:
         traceback = full_stack()
         LOG.error("Ops... something went wrong: %s" % e)
         LOG.error(traceback)
