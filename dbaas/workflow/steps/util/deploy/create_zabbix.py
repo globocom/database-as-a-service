@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 import logging
 from util import full_stack
-from dbaas_zabbix.provider import ZabbixProvider
+from dbaas_credentials.credential import Credential
+from dbaas_credentials.models import CredentialType
+from dbaas_zabbix import factory_for
 from ..base import BaseStep
 from ....exceptions.error_codes import DBAAS_0012
 
@@ -16,13 +18,18 @@ class CreateZabbix(BaseStep):
     def do(self, workflow_dict):
         try:
 
-            if not 'databaseinfra' in workflow_dict:
+            if 'databaseinfra' not in workflow_dict:
                 return False
 
-            LOG.info("Creating zabbix monitoring for %s..." %
-                     workflow_dict['dbtype'])
-            ZabbixProvider().create_monitoring(
-                dbinfra=workflow_dict['databaseinfra'], dbtype=workflow_dict['dbtype'])
+            databaseinfra = workflow_dict['databaseinfra']
+            environment = workflow_dict['environment']
+            integration = CredentialType.objects.get(type=CredentialType.ZABBIX)
+            credentials = Credential.get_credentials(environment=environment,
+                                                     integration=integration)
+            zabbix_provider = factory_for(databaseinfra=databaseinfra, credentials=credentials)
+            LOG.info("Creating zabbix monitoring for {}...".format(workflow_dict['dbtype']))
+            zabbix_provider.create_basic_monitors()
+            zabbix_provider.create_database_monitors()
 
             return True
         except Exception:
@@ -35,13 +42,18 @@ class CreateZabbix(BaseStep):
 
     def undo(self, workflow_dict):
         try:
-            if not 'databaseinfra' in workflow_dict:
+            if 'databaseinfra' not in workflow_dict:
                 return False
 
-            LOG.info("Destroying zabbix monitoring for %s..." %
-                     workflow_dict['dbtype'])
-            ZabbixProvider().destroy_monitoring(
-                dbinfra=workflow_dict['databaseinfra'], dbtype=workflow_dict['dbtype'])
+            databaseinfra = workflow_dict['databaseinfra']
+            environment = workflow_dict['environment']
+            integration = CredentialType.objects.get(type=CredentialType.ZABBIX)
+            credentials = Credential.get_credentials(environment=environment,
+                                                     integration=integration)
+            zabbix_provider = factory_for(databaseinfra=databaseinfra, credentials=credentials)
+            LOG.info("Deleting zabbix monitoring for {}...".format(workflow_dict['dbtype']))
+            zabbix_provider.delete_basic_monitors()
+            zabbix_provider.delete_database_monitors()
 
             return True
         except Exception:

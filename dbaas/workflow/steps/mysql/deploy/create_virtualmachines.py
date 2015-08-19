@@ -45,14 +45,13 @@ class CreateVirtualMachine(BaseStep):
             workflow_dict['vms_id'] = []
             bundles = list(cs_plan_attrs.bundle.all())
 
+            if len(bundles) == 1:
+                bundle = bundles[0]
+            else:
+                bundle = LastUsedBundle.get_next_bundle(plan=workflow_dict['plan'],
+                                                        bundle=bundles)
+
             for index, vm_name in enumerate(workflow_dict['names']['vms']):
-
-                if bundles.__len__() == 1:
-                    bundle = bundles[0]
-                else:
-                    bundle = LastUsedBundle.get_next_bundle(
-                        plan=workflow_dict['plan'], bundle=bundles)
-
                 offering = cs_plan_attrs.get_stronger_offering()
 
                 try:

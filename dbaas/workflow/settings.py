@@ -127,6 +127,7 @@ MYSQL_REGION_MIGRATION_1 = (
 
 
 MYSQL_REGION_MIGRATION_2 = (
+    'workflow.steps.util.region_migration.check_instances_status.CheckInstancesStatus',
     'workflow.steps.mysql.region_migration.set_master_read_only.SetMasterReadOnly',
     'workflow.steps.mysql.region_migration.turn_flipper_ip_down.TurnFlipperIpDown',
     'workflow.steps.mysql.region_migration.check_replication.CheckReplication',
@@ -160,6 +161,7 @@ REDIS_REGION_MIGRATION_1 = (
     'workflow.steps.util.region_migration.acl_database_bind.BindNewInstances',
 )
 REDIS_REGION_MIGRATION_2 = (
+    'workflow.steps.util.region_migration.check_instances_status.CheckInstancesStatus',
     'workflow.steps.util.region_migration.check_replication.CheckReplication',
     'workflow.steps.redis.region_migration.switch_master.SwitchMaster',
 )
@@ -187,6 +189,7 @@ MONGODB_REGION_MIGRATION_1 = (
     'workflow.steps.util.region_migration.acl_database_bind.BindNewInstances',
 )
 MONGODB_REGION_MIGRATION_2 = (
+    'workflow.steps.util.region_migration.check_instances_status.CheckInstancesStatus',
     'workflow.steps.util.region_migration.check_replication.CheckReplication',
     'workflow.steps.mongodb.region_migration.switch_primary.SwitchPrimary',
 )
