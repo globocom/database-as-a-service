@@ -55,10 +55,6 @@ class RemoveInstancesReplicaSet(BaseStep):
             if return_code != 0:
                 raise Exception(str(output))
 
-            for source_instance in workflow_dict['source_instances']:
-                source_instance.delete()
-                LOG.info("Source instance deleted")
-
             return True
         except Exception:
             traceback = full_stack()
