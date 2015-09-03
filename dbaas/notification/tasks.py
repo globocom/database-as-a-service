@@ -524,6 +524,16 @@ def resize_database(self, database, cloudstackpack, task_history=None, user=None
             databaseinfraoffering.offering = cloudstackpack.offering
             databaseinfraoffering.save()
 
+            if databaseinfra.engine.engine_type.name == 'redis':
+                new_max_memory = databaseinfraoffering.offering.memory_size_mb
+                resize_factor = 0.5
+                if new_max_memory > 1024:
+                    resize_factor = 0.75
+
+                new_max_memory *= resize_factor
+                databaseinfra.databaseinfra.per_database_size_mbytes = int(new_max_memory)
+                databaseinfra.save()
+
             task_history.update_status_for(TaskHistory.STATUS_SUCCESS,
                                            details='Resize successfully done.')
             return
