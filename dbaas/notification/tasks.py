@@ -531,7 +531,7 @@ def resize_database(self, database, cloudstackpack, task_history=None, user=None
                     resize_factor = 0.75
 
                 new_max_memory *= resize_factor
-                databaseinfra.databaseinfra.per_database_size_mbytes = int(new_max_memory)
+                databaseinfra.per_database_size_mbytes = int(new_max_memory)
                 databaseinfra.save()
 
             task_history.update_status_for(TaskHistory.STATUS_SUCCESS,
