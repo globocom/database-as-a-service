@@ -123,6 +123,7 @@ MYSQL_REGION_MIGRATION_1 = (
     'workflow.steps.mysql.region_migration.remove_nfs_snapshot.RemoveNfsSnapshot',
     'workflow.steps.mysql.region_migration.start_replication.StartReplication',
     'workflow.steps.util.region_migration.acl_database_bind.BindNewInstances',
+    'workflow.steps.util.region_migration.replicate_old_acls.ReplicateOldAcl',
 )
 
 
@@ -160,6 +161,7 @@ REDIS_REGION_MIGRATION_1 = (
     'workflow.steps.redis.region_migration.config_files.ConfigFiles',
     'workflow.steps.redis.region_migration.start_database_and_replication.StartDatabaseReplication',
     'workflow.steps.util.region_migration.acl_database_bind.BindNewInstances',
+    'workflow.steps.util.region_migration.replicate_old_acls.ReplicateOldAcl',
 )
 REDIS_REGION_MIGRATION_2 = (
     'workflow.steps.util.region_migration.check_instances_status.CheckInstancesStatus',
@@ -189,6 +191,7 @@ MONGODB_REGION_MIGRATION_1 = (
     'workflow.steps.mongodb.region_migration.config_files.ConfigFiles',
     'workflow.steps.mongodb.region_migration.add_instances_replica_set.AddInstancesReplicaSet',
     'workflow.steps.util.region_migration.acl_database_bind.BindNewInstances',
+    'workflow.steps.util.region_migration.replicate_old_acls.ReplicateOldAcl',
 )
 MONGODB_REGION_MIGRATION_2 = (
     'workflow.steps.util.region_migration.check_instances_status.CheckInstancesStatus',
