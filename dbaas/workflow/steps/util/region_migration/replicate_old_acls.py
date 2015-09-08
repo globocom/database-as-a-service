@@ -17,16 +17,19 @@ class ReplicateOldAcl(BaseStep):
         try:
             source_instances = workflow_dict['source_instances']
             source_secondary_ips = workflow_dict['source_secondary_ips']
+            database = workflow_dict['database']
 
             for source_instance in source_instances:
                 target_instance = source_instance.future_instance
-                replicate_acl_for(old_ip=source_instance.address,
+                replicate_acl_for(database=database,
+                                  old_ip=source_instance.address,
                                   new_ip=target_instance.address)
 
             for source_secondary_ip in source_secondary_ips:
-                target_secondary_ip = source_secondary_ip.future_instance
-                replicate_acl_for(old_ip=source_secondary_ip.address,
-                                  new_ip=target_secondary_ip.equivalent_dbinfraattr)
+                target_secondary_ip = source_secondary_ip.equivalent_dbinfraattr
+                replicate_acl_for(database=database,
+                                  old_ip=source_secondary_ip.ip,
+                                  new_ip=target_secondary_ip.ip)
 
             return True
 

@@ -16,27 +16,30 @@ class DatabaseRegionMigrationDetailAdmin(admin.DjangoServicesAdmin):
     actions = None
     service_class = DatabaseRegionMigrationDetailService
     search_fields = ("step", "status",)
-    list_display = ("database_region_migration", "step", "scheduled_for",
+    list_display = ("database_region_migration", "step_friendly", "scheduled_for",
                     "friendly_status", "friendly_direction", "started_at",
                     "finished_at", "created_by", "revoked_by",)
-    fields = ("database_region_migration", "step", "scheduled_for",
+    fields = ("database_region_migration", "step_friendly", "scheduled_for",
               "status", "started_at", "finished_at", "created_by",
               "revoked_by", "log", "celery_task_id")
     readonly_fields = fields
 
     ordering = ["-scheduled_for", ]
 
+    def step_friendly(self, detail):
+        return detail.step + 1
+    step_friendly.short_description = 'Step'
+
     def get_readonly_fields(self, request, obj=None):
         detail = obj
         self.max_num = None
+        custom_template = "admin/region_migration/databaseregionmigrationdetail/custom_change_form.html"
         if detail and detail.status == models.DatabaseRegionMigrationDetail.WAITING:
-            self.change_form_template = "admin/region_migration/databaseregionmigrationdetail/custom_change_form.html"
+            self.change_form_template = custom_template
         else:
             self.change_form_template = None
 
         return self.fields
-
-        return ()
 
     def revoke_detail(request, id):
         import celery
@@ -47,7 +50,7 @@ class DatabaseRegionMigrationDetailAdmin(admin.DjangoServicesAdmin):
 
         try:
             workers = celery_inpsect.ping().keys()
-        except Exception, e:
+        except Exception as e:
             LOG.warn("All celery workers are down! {} :(".format(e))
             messages.add_message(request, messages.ERROR,
                                  "Migration can't be revoked because all celery workers are down!",)

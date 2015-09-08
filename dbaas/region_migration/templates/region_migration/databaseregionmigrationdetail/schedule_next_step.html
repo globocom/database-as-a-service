@@ -29,7 +29,7 @@
             <a href="{% url 'admin:region_migration_databaseregionmigration_changelist' %}">Databas Region MIgrations</a> <span class="divider">/</span>
         </li>
         <li>
-            Schedule Next Step<span class="divider">/</span>
+            Schedule Next Macro Step<span class="divider">/</span>
         </li>
     </ul>
 {% endblock %}
@@ -41,7 +41,7 @@
     <form id="region_migration_detail" action="" class="form-horizontal well" method="POST">{% csrf_token %}
 
         <fieldset class="module">
-        <h2>Step {{database_region_migration.current_step}} to migrate database "{{ database_region_migration.database.name }}"</h2>
+        <h2>Macro Step {{database_region_migration.current_step|add:1}} to migrate database "{{ database_region_migration.database.name }}"</h2>
             {{ form.as_p }}
             <input class="btn" type="submit" value="Submit" onclick="return confirm('Are you sure?')"/>
         </fieldset>

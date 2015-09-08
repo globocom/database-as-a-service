@@ -69,7 +69,7 @@ class DatabaseRegionMigrationAdmin(admin.DjangoServicesAdmin):
 
         return format_html(html)
 
-    schedule_next_step_html.short_description = "Schedule next step"
+    schedule_next_step_html.short_description = "Schedule Next Macro Step"
 
     def schedule_rollback_html(self, databaseregionmigration):
         id = self.get_step_id(databaseregionmigration)
@@ -101,16 +101,19 @@ class DatabaseRegionMigrationAdmin(admin.DjangoServicesAdmin):
     user_friendly_warning.short_description = "Warning"
 
     def steps_information(self, databaseregionmigration):
-        current_step = str(databaseregionmigration.current_step)
+        current_step = databaseregionmigration.current_step + 1
         steps_len = str(len(databaseregionmigration.get_steps()) - 1)
         html = "<a href='../databaseregionmigrationdetail/?database_region_migration={}'>{}</a>"
         information = '{} of {}'.format(current_step, steps_len)
 
-        html = html.format(databaseregionmigration.id, information)
+        if current_step > int(steps_len):
+            html = '<center>-</center>'
+        else:
+            html = html.format(databaseregionmigration.id, information)
 
         return format_html(html)
 
-    steps_information.short_description = "Current Step"
+    steps_information.short_description = "Current Macro Step"
 
     def get_urls(self):
         urls = super(DatabaseRegionMigrationAdmin, self).get_urls()
@@ -144,8 +147,8 @@ class DatabaseRegionMigrationAdmin(admin.DjangoServicesAdmin):
 
                 description = database_region_migration.description()
                 task_history.arguments = "Database name: {},\
-                                          Step: {}".format(database_region_migration.database.name,
-                                                           description)
+                                          Macro step: {}".format(database_region_migration.database.name,
+                                                                 description)
                 task_history.user = request.user
                 task_history.save()
 
