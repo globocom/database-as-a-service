@@ -138,11 +138,11 @@ MYSQL_REGION_MIGRATION_2 = (
     'workflow.steps.mysql.region_migration.set_flipper_ips.SetFlipperIps',
     'workflow.steps.util.region_migration.update_zabbix_host.UpdateZabbixHost',
     'workflow.steps.util.region_migration.switch_dns.SwitchDNS',
+    'workflow.steps.util.region_migration.td_agent.StartTDAgent',
+    'workflow.steps.mysql.region_migration.start_mysql_statsd.StartMySQLStasD',
 )
 
 MYSQL_REGION_MIGRATION_3 = (
-    'workflow.steps.util.region_migration.td_agent.StartTDAgent',
-    'workflow.steps.mysql.region_migration.start_mysql_statsd.StartMySQLStasD',
     'workflow.steps.util.region_migration.update_dbaas_metadata.UpdateDBaaSMetadata',
     'workflow.steps.util.region_migration.acl_database_bind.UnbindOldInstances',
     'workflow.steps.mysql.region_migration.remove_secondary_ip.RemoveSecondaryIp',
@@ -171,12 +171,12 @@ REDIS_REGION_MIGRATION_2 = (
 REDIS_REGION_MIGRATION_3 = (
     'workflow.steps.util.region_migration.update_zabbix_host.UpdateZabbixHost',
     'workflow.steps.util.region_migration.switch_dns.SwitchDNS',
+    'workflow.steps.util.region_migration.td_agent.StartTDAgent',
 )
 REDIS_REGION_MIGRATION_4 = (
     'workflow.steps.util.region_migration.acl_database_bind.UnbindOldInstances',
     'workflow.steps.redis.region_migration.remove_old_instances.RemoveInstances',
     'workflow.steps.util.region_migration.update_dbaas_metadata.UpdateDBaaSMetadata',
-    'workflow.steps.util.region_migration.td_agent.StartTDAgent',
     'workflow.steps.util.region_migration.remove_disks.RemoveDisks',
     'workflow.steps.util.region_migration.remove_vms.RemoveVms',
     'workflow.steps.util.region_migration.change_ttl.DefaultTTL',
@@ -201,10 +201,10 @@ MONGODB_REGION_MIGRATION_2 = (
 MONGODB_REGION_MIGRATION_3 = (
     'workflow.steps.util.region_migration.update_zabbix_host.UpdateZabbixHost',
     'workflow.steps.util.region_migration.switch_dns.SwitchDNS',
+    'workflow.steps.util.region_migration.td_agent.StartTDAgent',
 )
 MONGODB_REGION_MIGRATION_4 = (
     'workflow.steps.util.region_migration.update_dbaas_metadata.UpdateDBaaSMetadata',
-    'workflow.steps.util.region_migration.td_agent.StartTDAgent',
     'workflow.steps.util.region_migration.acl_database_bind.UnbindOldInstances',
     'workflow.steps.mongodb.region_migration.remove_old_instances_replica_set.RemoveInstancesReplicaSet',
     'workflow.steps.util.region_migration.remove_disks.RemoveDisks',
