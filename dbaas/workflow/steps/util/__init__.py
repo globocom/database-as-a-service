@@ -148,11 +148,11 @@ def build_mount_disk_script():
         """
 
 
-def build_start_td_agent_script():
+def td_agent_script(option='start'):
     return """
         echo ""; echo $(date "+%Y-%m-%d %T") "- Starting td_agent"
-        /etc/init.d/td-agent start
-        """
+        /etc/init.d/td-agent {}
+        """.format(option)
 
 
 def switch_dns_forward(databaseinfra, source_object_list, ip_attribute_name,

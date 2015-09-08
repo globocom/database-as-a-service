@@ -150,11 +150,11 @@ def build_turn_flipper_ip_down_script():
     """
 
 
-def build_start_mysql_statsd_script():
+def build_mysql_statsd_script(option='start'):
     return """
         echo ""; echo $(date "+%Y-%m-%d %T") "- Starting mysql_statsd"
-        /etc/init.d/mysql_statsd start > /dev/null
-        """
+        /etc/init.d/mysql_statsd {} > /dev/null
+        """.format(option)
 
 
 def get_replication_information_from_file(host,):
