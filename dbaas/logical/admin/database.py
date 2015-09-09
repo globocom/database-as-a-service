@@ -624,6 +624,24 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         return render_to_response("logical/database/metrics/metrics.html", locals(), context_instance=RequestContext(request))
 
     def database_dex_analyze_view(self, request, database_id):
+        import json
+        import random
+        from dbaas_laas.provider import LaaSProvider
+        from util import get_credentials_for
+        from util.laas import get_group_name
+        from dbaas_credentials.models import CredentialType
+        import os
+        import string
+        from datetime import datetime, timedelta
+
+
+        def generate_random_string(length, stringset=string.ascii_letters+string.digits):
+            return ''.join([stringset[i%len(stringset)] \
+            for i in [ord(x) for x in os.urandom(length)]])
+
+
+        database = Database.objects.get(id=database_id)
+
         if database.status != Database.ALIVE or not database.database_status.is_alive:
             self.message_user(
                 request, "Database is not alive cannot be analyzed", level=messages.ERROR)
@@ -636,7 +654,44 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             url = reverse('admin:logical_database_changelist')
             return HttpResponseRedirect(url)
 
-        database = Database.objects.get(id=database_id)
+
+        credential =get_credentials_for(environment=database.environment,
+                                        credential_type=CredentialType.LAAS)
+
+        db_name = database.name
+        environment = database.environment
+        endpoint = credential.endpoint
+        username = credential.user
+        password = credential.password
+        lognit_environment = credential.get_parameter_by_name('lognit_environment')
+
+        provider = LaaSProvider()
+
+        group_name = get_group_name(database)
+        yesterday = (datetime.now() - timedelta(days=1)).strftime('%Y%m%d')
+        uri = "group:{} text:query date:{} time:[000000 TO 235959]".format(group_name,yesterday)
+
+
+        parsed_logs = ''
+        database_logs = provider.get_logs_for_group(environment, lognit_environment, uri)
+        try:
+            database_logs = json.loads(database_logs)
+        except Exception, e:
+            pass
+        else:
+            for database_log in database_logs:
+                try:
+                    items = database_log['items']
+                except KeyError, e:
+                    pass
+                else:
+                    parsed_logs = "\n".join((item['message'] for item in items))
+
+        arq_path = Configuration.get_by_name('database_clone_dir') + '/' + database.name + generate_random_string(20) + '.txt'
+
+        arq = open(arq_path,'w')
+        arq.write(parsed_logs)
+        arq.close()
 
         uri = 'mongodb://{}:{}@{}:{}/admin'.format(database.databaseinfra.user,
                                                    database.databaseinfra.password,
@@ -648,16 +703,21 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         sys.stdout = mystdout = StringIO()
 
         md = dex.Dex(db_uri=uri, verbose=False, namespaces_list=[],
-                     slowms=0, check_indexes=True, timeout=0)
-        md.analyze_profile()
+                      slowms=0, check_indexes=True, timeout=0)
+
+        md.analyze_logfile(arq_path)
 
         sys.stdout = old_stdout
 
         dexanalyzer = loads(
             mystdout.getvalue().replace("\"", "&&").replace("'", "\"").replace("&&", "'"))
 
+        os.remove(arq_path)
+
         import ast
         final_mask = """<div>"""
+
+        print dexanalyzer['results']
 
         for result in dexanalyzer['results']:
 
