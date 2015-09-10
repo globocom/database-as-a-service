@@ -143,6 +143,7 @@ MYSQL_REGION_MIGRATION_2 = (
 )
 
 MYSQL_REGION_MIGRATION_3 = (
+    'workflow.steps.util.region_migration.remove_old_acl.RemoveOldAcl',
     'workflow.steps.util.region_migration.update_dbaas_metadata.UpdateDBaaSMetadata',
     'workflow.steps.util.region_migration.acl_database_bind.UnbindOldInstances',
     'workflow.steps.mysql.region_migration.remove_secondary_ip.RemoveSecondaryIp',
@@ -174,6 +175,7 @@ REDIS_REGION_MIGRATION_3 = (
     'workflow.steps.util.region_migration.td_agent.StartTDAgent',
 )
 REDIS_REGION_MIGRATION_4 = (
+    'workflow.steps.util.region_migration.remove_old_acl.RemoveOldAcl',
     'workflow.steps.util.region_migration.acl_database_bind.UnbindOldInstances',
     'workflow.steps.redis.region_migration.remove_old_instances.RemoveInstances',
     'workflow.steps.util.region_migration.update_dbaas_metadata.UpdateDBaaSMetadata',
@@ -204,6 +206,7 @@ MONGODB_REGION_MIGRATION_3 = (
     'workflow.steps.util.region_migration.td_agent.StartTDAgent',
 )
 MONGODB_REGION_MIGRATION_4 = (
+    'workflow.steps.util.region_migration.remove_old_acl.RemoveOldAcl',
     'workflow.steps.util.region_migration.update_dbaas_metadata.UpdateDBaaSMetadata',
     'workflow.steps.util.region_migration.acl_database_bind.UnbindOldInstances',
     'workflow.steps.mongodb.region_migration.remove_old_instances_replica_set.RemoveInstancesReplicaSet',
