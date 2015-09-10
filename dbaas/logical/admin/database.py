@@ -668,8 +668,9 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         provider = LaaSProvider()
 
         group_name = get_group_name(database)
+        today = (datetime.now()).strftime('%Y%m%d')
         yesterday = (datetime.now() - timedelta(days=1)).strftime('%Y%m%d')
-        uri = "group:{} text:query date:{} time:[000000 TO 235959]".format(group_name,yesterday)
+        uri = "group:{} text:query date:[{} TO {}] time:[000000 TO 235959]".format(group_name,yesterday,today)
 
 
         parsed_logs = ''
