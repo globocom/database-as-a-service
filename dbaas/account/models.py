@@ -15,6 +15,7 @@ from util.models import BaseModel
 from util.email_notifications import notify_new_user_creation
 from .helper import find_ldap_groups_from_user
 from system.models import Configuration
+from dbaas.celery import app
 
 LOG = logging.getLogger(__name__)
 
@@ -186,9 +187,14 @@ def user_m2m_changed(sender, **kwargs):
     team = kwargs.get('instance')
     action = kwargs.get('action')
     if action == 'post_add':
-        from util.laas import register_team_laas
         if Configuration.get_by_name_as_int('laas_integration') == 1:
-            register_team_laas(team)
+            register_team_laas_task.delay(team)
+
+
+@app.task(bind=True)
+def register_team_laas_task(self, team):
+    from util.laas import register_team_laas
+    register_team_laas(team)
 
 m2m_changed.connect(user_m2m_changed, sender=Team.users.through)
 
