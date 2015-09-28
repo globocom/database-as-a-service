@@ -150,8 +150,14 @@ def build_mount_disk_script():
 
 def td_agent_script(option='start'):
     return """
-        echo ""; echo $(date "+%Y-%m-%d %T") "- Starting td_agent"
+        echo ""; echo $(date "+%Y-%m-%d %T") "- td_agent"
         /etc/init.d/td-agent {}
+        """.format(option)
+
+def monit_script(option='start'):
+    return """
+        echo ""; echo $(date "+%Y-%m-%d %T") "- Monit"
+        /etc/init.d/monit {}
         """.format(option)
 
 
