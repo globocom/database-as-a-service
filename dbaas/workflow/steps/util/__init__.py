@@ -154,6 +154,7 @@ def td_agent_script(option='start'):
         /etc/init.d/td-agent {}
         """.format(option)
 
+
 def monit_script(option='start'):
     return """
         echo ""; echo $(date "+%Y-%m-%d %T") "- Monit"

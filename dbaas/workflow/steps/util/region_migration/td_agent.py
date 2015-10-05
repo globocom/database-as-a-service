@@ -6,6 +6,7 @@ from dbaas_cloudstack.models import HostAttr as CS_HostAttr
 from workflow.steps.util.base import BaseStep
 from workflow.steps.util import test_bash_script_error
 from workflow.steps.util import td_agent_script
+from workflow.steps.util import monit_script
 from workflow.exceptions.error_codes import DBAAS_0020
 
 LOG = logging.getLogger(__name__)
@@ -26,6 +27,7 @@ class StartTDAgent(BaseStep):
                     cs_host_attr = CS_HostAttr.objects.get(host=host)
 
                     script = test_bash_script_error()
+                    script += monit_script(option)
                     script += td_agent_script(option)
 
                     LOG.info(script)
@@ -60,6 +62,7 @@ class StartTDAgent(BaseStep):
                     cs_host_attr = CS_HostAttr.objects.get(host=host)
 
                     script = test_bash_script_error()
+                    script += monit_script(option)
                     script += td_agent_script(option)
 
                     LOG.info(script)
