@@ -347,7 +347,7 @@ class MySQL(BaseDriver):
         client.query("start slave")
 
     def get_database_agents(self):
-        common = ['td-agent', 'mysql_statsd']
+        common = ['td-agent', 'mysql_statsd', 'monit']
         if self.databaseinfra.plan.is_ha:
             return common + ['httpd', 'mk-heartbeat-daemon']
 

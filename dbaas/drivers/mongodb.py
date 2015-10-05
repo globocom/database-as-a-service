@@ -338,4 +338,4 @@ class MongoDB(BaseDriver):
             pass
 
     def get_database_agents(self):
-        return ['td-agent']
+        return ['td-agent', 'monit']
