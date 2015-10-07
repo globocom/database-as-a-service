@@ -41,6 +41,7 @@ class CreateVirtualMachine(BaseStep):
 
             workflow_dict['target_hosts'] = []
             workflow_dict['target_instances'] = []
+            source_instances = []
 
             for index, source_host in enumerate(workflow_dict['source_hosts']):
 
@@ -112,6 +113,8 @@ class CreateVirtualMachine(BaseStep):
                     redis_source_instance.future_instance = redis_instance
                     redis_source_instance.save()
 
+                    source_instances.append(redis_source_instance)
+
                     workflow_dict['target_instances'].append(redis_instance)
 
                 sentinel_instance = Instance()
@@ -132,7 +135,11 @@ class CreateVirtualMachine(BaseStep):
                 sentinel_source_instance.future_instance = sentinel_instance
                 sentinel_source_instance.save()
 
+                source_instances.append(sentinel_source_instance)
+
                 workflow_dict['target_instances'].append(sentinel_instance)
+
+            workflow_dict['source_instances'] = source_instances
 
             return True
         except Exception:
