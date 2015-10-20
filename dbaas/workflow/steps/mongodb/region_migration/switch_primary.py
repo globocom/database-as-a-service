@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
+from time import sleep
 from util import full_stack
 from util import exec_remote_command
 from util import build_context_script
@@ -47,6 +48,23 @@ class SwitchPrimary(BaseStep):
             LOG.info(output)
             if return_code != 0:
                 raise Exception(str(output))
+
+            sleep(30)
+            driver = databaseinfra.get_driver()
+            client = driver.get_client(instance=None)
+            rsconf = client['local'].system.replset.find_one()
+            priority_0 = rsconf['members'][0].get('priority', 1)
+            priority_1 = rsconf['members'][1].get('priority', 1)
+            if priority_0 != 0 or priority_1 != 0:
+                errormsg = "The priority of the old mongodb instances should be zero."
+                LOG.error(errormsg)
+                raise Exception(errormsg)
+            replSetGetStatus = client.admin.command('replSetGetStatus')
+            if 'PRIMARY' not in (replSetGetStatus['members'][3]['stateStr'],
+                                 replSetGetStatus['members'][4]['stateStr']):
+                errormsg = "One of the new instances should be PRIMARY."
+                LOG.error(errormsg)
+                raise Exception(errormsg)
 
             return True
         except Exception:
