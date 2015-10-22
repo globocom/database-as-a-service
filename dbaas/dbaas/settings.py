@@ -210,7 +210,7 @@ INSTALLED_APPS = (
     'maintenance',
     'region_migration',
     'extra_dns',
-    'dbaas_services',
+    'dbaas_services.analyzing',
 )
 
 
