@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import requests
-from services.analyzing.exceptions.analyze import ServiceNotAvailable
+from dbaas_services.analyzing.exceptions import ServiceNotAvailable
 
 
 class AnalyzeService(object):

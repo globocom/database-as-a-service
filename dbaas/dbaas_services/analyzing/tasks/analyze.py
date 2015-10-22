@@ -4,7 +4,7 @@ from account.models import User
 from logical.models import Database
 from util.decorators import only_one
 from simple_audit.models import AuditRequest
-from services.analyzing.integration.analyze import AnalyzeService
+from dbaas_services.analyzing.integration import AnalyzeService
 
 
 @app.task
