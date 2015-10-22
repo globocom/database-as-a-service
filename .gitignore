@@ -12,3 +12,4 @@ test-report.xml
 .wiki
 dbaas/whoosh_index/*
 .env
+dump.rdb
