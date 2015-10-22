@@ -21,3 +21,6 @@ class AnalyzeRepository(BaseModel):
         unique_together = (
             ('analyzed_at', 'instance_name',)
         )
+        permissions = (
+            ("view_analyzerepository", "Can view analyze repository"),
+        )
