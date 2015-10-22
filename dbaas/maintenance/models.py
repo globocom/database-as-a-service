@@ -12,7 +12,7 @@ from django.db.models.signals import post_save
 from django.db.models.signals import pre_delete
 from django.dispatch import receiver
 from celery.task import control
-from .tasks import execute_scheduled_maintenance
+from maintenance.tasks import execute_scheduled_maintenance
 from .registered_functions.functools import _get_registered_functions
 LOG = logging.getLogger(__name__)
 
