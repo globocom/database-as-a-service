@@ -210,6 +210,7 @@ INSTALLED_APPS = (
     'maintenance',
     'region_migration',
     'extra_dns',
+    'services',
 )
 
 
