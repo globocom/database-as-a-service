@@ -11,3 +11,4 @@ test-report.xml
 *.bak
 .wiki
 dbaas/whoosh_index/*
+.env
