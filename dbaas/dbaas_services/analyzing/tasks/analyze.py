@@ -1,19 +1,30 @@
 # -*- coding: utf-8 -*-
+import logging
 from dbaas.celery import app
 from account.models import User
 from logical.models import Database
 from util.decorators import only_one
 from simple_audit.models import AuditRequest
 from dbaas_services.analyzing.integration import AnalyzeService
+from dbaas_services.analyzing.exceptions import ServiceNotAvailable
+
+LOG = logging.getLogger(__name__)
 
 
-@app.task
+@app.task(bind=True)
 @only_one(key="analyze_databases_service_task", timeout=6000)
 def analyze_databases(self, endpoint, healh_check_route, healh_check_string,
                       **kwargs):
     user = User.objects.get(username='admin')
     AuditRequest.new_request("analyze_databases", user, "localhost")
     try:
+        try:
+            analyze_service = AnalyzeService(endpoint, healh_check_route,
+                                             healh_check_string)
+        except ServiceNotAvailable as e:
+            LOG.warn(e)
+            return
+
         databases = Database.objects.filter(is_in_quarantine=False)
         for database in databases:
             database_name, engine, instances = setup_database_info(database)
