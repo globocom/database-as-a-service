@@ -181,27 +181,32 @@ def make_databases_backup(self):
         instances = Instance.objects.filter(databaseinfra=databaseinfra)
         for instance in instances:
 
-            if not instance.databaseinfra.get_driver().check_instance_is_eligible_for_backup(instance):
-                LOG.info('Instance %s is not eligible for backup' %
-                         (str(instance)))
-                continue
-
             try:
-                if make_instance_snapshot_backup(instance=instance,
-                                                 error=error):
-                    msg = "Backup for %s was successful" % (str(instance))
-                    LOG.info(msg)
-                else:
-                    status = TaskHistory.STATUS_ERROR
-                    msg = "Backup for %s was unsuccessful. Error: %s" % (
-                        str(instance), error['errormsg'])
-                    LOG.error(msg)
-                print msg
+                if not instance.databaseinfra.get_driver().check_instance_is_eligible_for_backup(instance):
+                    LOG.info('Instance %s is not eligible for backup' % (str(instance)))
+                    continue
             except Exception, e:
                 status = TaskHistory.STATUS_ERROR
                 msg = "Backup for %s was unsuccessful. Error: %s" % (
                     str(instance), str(e))
                 LOG.error(msg)
+            else:
+                try:
+                    if make_instance_snapshot_backup(instance=instance,
+                                                     error=error):
+                        msg = "Backup for %s was successful" % (str(instance))
+                        LOG.info(msg)
+                    else:
+                        status = TaskHistory.STATUS_ERROR
+                        msg = "Backup for %s was unsuccessful. Error: %s" % (
+                            str(instance), error['errormsg'])
+                        LOG.error(msg)
+                    print msg
+                except Exception, e:
+                    status = TaskHistory.STATUS_ERROR
+                    msg = "Backup for %s was unsuccessful. Error: %s" % (
+                        str(instance), str(e))
+                    LOG.error(msg)
 
             msgs.append(msg)
 
