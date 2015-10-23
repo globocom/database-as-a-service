@@ -31,8 +31,9 @@ def analyze_databases(self, endpoint, healh_check_route, healh_check_string,
             result = analyze_service.run(engine=engine, database_name=database_name,
                                          instances=instances, **kwargs)
             print result
-    except Exception:
-        pass
+    except Exception as e:
+        LOG.warn(e)
+        return
     finally:
         AuditRequest.cleanup_request()
 
