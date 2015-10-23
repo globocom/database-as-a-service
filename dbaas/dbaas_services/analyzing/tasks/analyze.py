@@ -28,7 +28,7 @@ def analyze_databases(self, endpoint, healh_check_route, healh_check_string,
         databases = Database.objects.filter(is_in_quarantine=False)
         for database in databases:
             database_name, engine, instances = setup_database_info(database)
-            result = analyze_service.run(engine=engine, database_name=database_name,
+            result = analyze_service.run(engine=engine, database=database_name,
                                          instances=instances, **kwargs)
             print result
     except Exception as e:
