@@ -21,7 +21,8 @@ class AnalyzeRepository(BaseModel):
                                         db_index=True)
     cpu_alarm = models.BooleanField(verbose_name=_("CPU alarm"), default=False)
     memory_alarm = models.BooleanField(verbose_name=_("Memory alarm"), default=False)
-    email_sent = models.BooleanField(verbose_name=_("Memory alarm"), default=False,
+    volume_alarm = models.BooleanField(verbose_name=_("Volume alarm"), default=False)
+    email_sent = models.BooleanField(verbose_name=_("Email sent?"), default=False,
                                      db_index=True)
 
     class Meta:

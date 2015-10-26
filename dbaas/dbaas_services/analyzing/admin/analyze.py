@@ -10,7 +10,7 @@ class AnalyzeRepositoryAdmin(admin.DjangoServicesAdmin):
     service_class = AnalyzeRepositoryService
     search_fields = ("database_name", "engine_name",
                      "environment_name", "instance_name",)
-    list_filter = ("analyzed_at", "memory_alarm", "cpu_alarm")
+    list_filter = ("analyzed_at", "memory_alarm", "cpu_alarm", "volume_alarm")
     list_display = ("analyzed_at", "database_name", "engine_name",
                     "environment_name", "instance_name", "cpu_alarm",
-                    "memory_alarm")
+                    "memory_alarm", "volume_alarm")
