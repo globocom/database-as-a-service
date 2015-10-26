@@ -5,9 +5,10 @@ from account.models import User
 from logical.models import Database
 from util.decorators import only_one
 from simple_audit.models import AuditRequest
+from dbaas_services.analyzing.models import AnalyzeRepository
 from dbaas_services.analyzing.integration import AnalyzeService
 from dbaas_services.analyzing.exceptions import ServiceNotAvailable
-from dbaas_services.analyzing.models import AnalyzeRepository
+
 
 LOG = logging.getLogger(__name__)
 

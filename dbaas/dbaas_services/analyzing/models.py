@@ -31,3 +31,24 @@ class AnalyzeRepository(BaseModel):
         permissions = (
             ("view_analyzerepository", "Can view analyze repository"),
         )
+
+
+
+class ExecutionPlan(BaseModel):
+    plan_name = models.CharField(verbose_name=_("Execution plan name"), max_length=60,
+                                     unique=True, null=False, blank=False,
+                                     db_index=True)
+    metrics = models.CharField(verbose_name=_("Metrics used by plan"), max_length=200,
+                               unique=True, null=False, blank=False, db_index=True,
+                               help_text='Comma separated list of metrics. Ex.: cpu.cpu_used,cpu.cpu_free,...')
+    threshold = models.IntegerField(verbose_name=_("Threshold"), unique=False,
+                                    null=False, default=50)
+    proccess_function = models.CharField(verbose_name=_("Proccess function used by service"),
+                                         max_length=150, unique=False, null=False, blank=False,)
+    adapter = models.CharField(verbose_name=_("Adapter used by service"),
+                               max_length=150, unique=False, null=False, blank=False,)
+
+    class Meta:
+        permissions = (
+            ("view_executionplan", "Can view Execution Plan"),
+        )
