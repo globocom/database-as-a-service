@@ -10,6 +10,9 @@ class AnalyzeRepository(BaseModel):
     database_name = models.CharField(verbose_name=_("Database name"), max_length=60,
                                      unique=False, null=False, blank=False,
                                      db_index=True)
+    databaseinfra_name = models.CharField(verbose_name=_("Database Infra name"), max_length=60,
+                                     unique=False, null=False, blank=False,
+                                     db_index=True)
     instance_name = models.CharField(verbose_name=_("Instance name"), max_length=100,
                                      unique=False, null=False, blank=False,
                                      db_index=True)

@@ -31,7 +31,7 @@ def analyze_databases(self,):
 
         databases = Database.objects.filter(is_in_quarantine=False)
         for database in databases:
-            database_name, engine, instances, environment_name = setup_database_info(database)
+            database_name, engine, instances, environment_name, databaseinfra_name = setup_database_info(database)
             for execution_plan in ExecutionPlan.objects.all():
                 params = execution_plan.setup_execution_params()
                 result = analyze_service.run(engine=engine, database=database_name,
@@ -45,12 +45,14 @@ def analyze_databases(self,):
                                                                   database_name=database_name,
                                                                   instance_name=instance,
                                                                   engine_name=engine,
+                                                                  databaseinfra_name=databaseinfra_name,
                                                                   environment_name=environment_name,)
                         except AnalyzeRepository.DoesNotExist as e:
                             LOG.info(e)
                             repo_instance = AnalyzeRepository(database_name=database_name,
                                                               instance_name=instance,
                                                               engine_name=engine,
+                                                              databaseinfra_name=databaseinfra_name,
                                                               environment_name=environment_name)
 
                         setattr(repo_instance, execution_plan.alarm_repository_attr, True)
@@ -74,4 +76,4 @@ def setup_database_info(database):
     driver = databaseinfra.get_driver()
     database_instances = driver.get_database_instances()
     instances = [db_instance.dns.split('.')[0] for db_instance in database_instances]
-    return database.name, database.engine_type, instances, database.environment.name
+    return database.name, database.engine_type, instances, database.environment.name, database.databaseinfra
