@@ -37,6 +37,8 @@ def analyze_databases(self,):
                 result = analyze_service.run(engine=engine, database=database_name,
                                              instances=instances, **params)
                 if result['status'] == 'success':
+                    if result['msg'] != instances:
+                        continue
                     for instance in result['msg']:
                         try:
                             repo_instance = AnalyzeRepository.objects.get(analyzed_at__startswith=date.today(),
