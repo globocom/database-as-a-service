@@ -4,10 +4,11 @@ from datetime import date
 from dbaas.celery import app
 from account.models import User
 from logical.models import Database
+from util import get_credentials_for
 from util.decorators import only_one
 from simple_audit.models import AuditRequest
-from dbaas_services.analyzing.models import AnalyzeRepository
 from dbaas_services.analyzing.models import ExecutionPlan
+from dbaas_services.analyzing.models import AnalyzeRepository
 from dbaas_services.analyzing.integration import AnalyzeService
 from dbaas_services.analyzing.exceptions import ServiceNotAvailable
 
@@ -17,13 +18,13 @@ LOG = logging.getLogger(__name__)
 
 @app.task(bind=True)
 @only_one(key="analyze_databases_service_task", timeout=6000)
-def analyze_databases(self, endpoint, healh_check_route, healh_check_string,):
+def analyze_databases(self,):
+    endpoint, healh_check_route, healh_check_string = get_analyzing_credentials()
     user = User.objects.get(username='admin')
     AuditRequest.new_request("analyze_databases", user, "localhost")
     try:
         try:
-            analyze_service = AnalyzeService(endpoint, healh_check_route,
-                                             healh_check_string)
+            analyze_service = AnalyzeService(endpoint, healh_check_route, healh_check_string)
         except ServiceNotAvailable as e:
             LOG.warn(e)
             return
@@ -58,6 +59,13 @@ def analyze_databases(self, endpoint, healh_check_route, healh_check_string,):
     finally:
         AuditRequest.cleanup_request()
 
+
+def get_analyzing_credentials():
+    from dbaas_credentials.models import CredentialType
+    from dbaas_credentials.models import Credential
+    credential = Credential.objects.get(integration_type__type=CredentialType.DBAAS_SERVICES_ANALYZING)
+
+    return credential.endpoint, credential.get_parameter_by_name('healh_check_route'), credential.get_parameter_by_name('healh_check_string')
 
 def setup_database_info(database):
     databaseinfra = database.databaseinfra
