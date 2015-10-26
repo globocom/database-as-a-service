@@ -19,5 +19,5 @@ class AnalyzeService(object):
         return not response.content == self.healh_check_string
 
     def run(self, **kwargs):
-        response = requests.post(self.endpoint, data=kwargs)
+        response = requests.post(self.endpoint, json=kwargs)
         return response.json()
