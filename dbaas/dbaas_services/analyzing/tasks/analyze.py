@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 import logging
+from datetime import date
 from dbaas.celery import app
 from account.models import User
 from logical.models import Database
 from util.decorators import only_one
 from simple_audit.models import AuditRequest
 from dbaas_services.analyzing.models import AnalyzeRepository
+from dbaas_services.analyzing.models import ExecutionPlan
 from dbaas_services.analyzing.integration import AnalyzeService
 from dbaas_services.analyzing.exceptions import ServiceNotAvailable
 
@@ -15,8 +17,7 @@ LOG = logging.getLogger(__name__)
 
 @app.task(bind=True)
 @only_one(key="analyze_databases_service_task", timeout=6000)
-def analyze_databases(self, endpoint, healh_check_route, healh_check_string,
-                      **kwargs):
+def analyze_databases(self, endpoint, healh_check_route, healh_check_string,):
     user = User.objects.get(username='admin')
     AuditRequest.new_request("analyze_databases", user, "localhost")
     try:
@@ -29,17 +30,28 @@ def analyze_databases(self, endpoint, healh_check_route, healh_check_string,
 
         databases = Database.objects.filter(is_in_quarantine=False)
         for database in databases:
-            database_name, engine, instances, environment_name= setup_database_info(database)
-            result = analyze_service.run(engine=engine, database=database_name,
-                                         instances=instances, **kwargs)
-            if result['status'] == 'success':
-                for instance in result['msg']:
-                    repo_instance = AnalyzeRepository(database_name=database_name,
-                                                      instance_name=instance,
-                                                      engine_name=engine,
-                                                      environment_name=environment_name,
-                                                      )
-                    repo_instance.save()
+            database_name, engine, instances, environment_name = setup_database_info(database)
+            for execution_plan in ExecutionPlan.objects.all():
+                params = execution_plan.setup_execution_params()
+                result = analyze_service.run(engine=engine, database=database_name,
+                                             instances=instances, **params)
+                if result['status'] == 'success':
+                    for instance in result['msg']:
+                        try:
+                            repo_instance = AnalyzeRepository.objects.get(analyzed_at__startswith=date.today(),
+                                                                  database_name=database_name,
+                                                                  instance_name=instance,
+                                                                  engine_name=engine,
+                                                                  environment_name=environment_name,)
+                        except AnalyzeRepository.DoesNotExist as e:
+                            LOG.info(e)
+                            repo_instance = AnalyzeRepository(database_name=database_name,
+                                                              instance_name=instance,
+                                                              engine_name=engine,
+                                                              environment_name=environment_name)
+
+                        setattr(repo_instance, execution_plan.alarm_repository_attr, True)
+                        repo_instance.save()
     except Exception as e:
         LOG.warn(e)
         return

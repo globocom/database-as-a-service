@@ -32,6 +32,9 @@ class AnalyzeRepository(BaseModel):
             ("view_analyzerepository", "Can view analyze repository"),
         )
 
+    def __unicode__(self):
+        return self.instance_name
+
 
 
 class ExecutionPlan(BaseModel):
@@ -47,8 +50,22 @@ class ExecutionPlan(BaseModel):
                                          max_length=150, unique=False, null=False, blank=False,)
     adapter = models.CharField(verbose_name=_("Adapter used by service"),
                                max_length=150, unique=False, null=False, blank=False,)
+    alarm_repository_attr = models.CharField(verbose_name=_("Alarm field on repository"),
+                                             max_length=150, unique=True, null=False,
+                                             blank=False,)
 
     class Meta:
         permissions = (
             ("view_executionplan", "Can view Execution Plan"),
         )
+
+    def __parse_metrics(self):
+        return self.metrics.split(',')
+
+    def setup_execution_params(self):
+        return {'metrics': self.__parse_metrics(), 'proccess_function': self.proccess_function,
+                'threshold': self.threshold, 'adapter':self.adapter}
+
+    def __unicode__(self):
+        return self.plan_name
+
