@@ -34,13 +34,19 @@ class AnalyzeRepositoryAdmin(admin.DjangoServicesAdmin):
     database_metrics_link.short_description = "Instance name"
 
     def __format_alarm_msg(self, analyze_repository, alarm_attr, threshold_attr):
-        msg = ""
         alarm = getattr(analyze_repository, alarm_attr)
         if alarm:
-            threshold = getattr(analyze_repository, threshold_attr)
-            msg = '<span class="label label-important">Using less than {}%</span>'.format(threshold)
-
+            msg = self.__format_alarm_true(analyze_repository, threshold_attr)
+        else:
+            msg = self.__format_alarm_false()
         return format_html(msg)
+
+    def __format_alarm_true(self, analyze_repository, threshold_attr):
+        threshold = getattr(analyze_repository, threshold_attr)
+        return '<span class="label label-important">Using less than {}%</span>'.format(threshold)
+
+    def __format_alarm_false(self,):
+        return '<span class="label label-success">OK</span>'
 
     def cpu_threshold_msg(self, analyze_repository):
         return self.__format_alarm_msg(analyze_repository, 'cpu_alarm', 'cpu_threshold')
