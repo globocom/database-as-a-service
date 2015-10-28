@@ -62,6 +62,9 @@ class ExecutionPlan(BaseModel):
     alarm_repository_attr = models.CharField(verbose_name=_("Alarm field on repository"),
                                              max_length=150, unique=True, null=False,
                                              blank=False,)
+    threshold_repository_attr = models.CharField(verbose_name=_("Threshold field on repository"),
+                                                 max_length=150, unique=True, null=False,
+                                                 blank=False,)
 
     class Meta:
         permissions = (
