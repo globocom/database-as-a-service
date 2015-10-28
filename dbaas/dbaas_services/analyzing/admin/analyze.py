@@ -15,8 +15,8 @@ class AnalyzeRepositoryAdmin(admin.DjangoServicesAdmin):
     list_filter = ("analyzed_at", "memory_alarm", "cpu_alarm", "volume_alarm", "engine_name",
                    "environment_name", "databaseinfra_name")
     list_display = ("analyzed_at", "databaseinfra_name", "database_name", "engine_name",
-                    "environment_name", "database_metrics_link", "cpu_alarm",
-                    "memory_alarm", "volume_alarm")
+                    "environment_name", "database_metrics_link", "cpu_threshold_msg",
+                    "memory_threshold_msg", "volume_threshold_msg")
 
     def database_metrics_link(self, analyze_repository):
         try:
@@ -25,9 +25,31 @@ class AnalyzeRepositoryAdmin(admin.DjangoServicesAdmin):
         except Database.DoesNotExist:
             html_link = analyze_repository.instance_name
         else:
-            html_link = "<a href={}>{}</a>".format(database.get_metrics_url(),
+            host_metrics_url = database.get_metrics_url() + '?hostname={}'.format(analyze_repository.instance_name)
+            html_link = "<a href={}>{}</a>".format(host_metrics_url,
                                                    analyze_repository.instance_name)
 
         return format_html(html_link)
 
     database_metrics_link.short_description = "Instance name"
+
+    def __format_alarm_msg(self, analyze_repository, alarm_attr, threshold_attr):
+        msg = ""
+        alarm = getattr(analyze_repository, alarm_attr)
+        if alarm:
+            threshold = getattr(analyze_repository, threshold_attr)
+            msg = '<span class="label label-important">Using less than {}%</span>'.format(threshold)
+
+        return format_html(msg)
+
+    def cpu_threshold_msg(self, analyze_repository):
+        return self.__format_alarm_msg(analyze_repository, 'cpu_alarm', 'cpu_threshold')
+    cpu_threshold_msg.short_description = "CPU"
+
+    def memory_threshold_msg(self, analyze_repository):
+        return self.__format_alarm_msg(analyze_repository, 'memory_alarm', 'memory_threshold')
+    memory_threshold_msg.short_description = "Memory"
+
+    def volume_threshold_msg(self, analyze_repository):
+        return self.__format_alarm_msg(analyze_repository, 'volume_alarm', 'volume_threshold')
+    volume_threshold_msg.short_description = "Volume"
