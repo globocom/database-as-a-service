@@ -4,7 +4,6 @@ from datetime import date
 from dbaas.celery import app
 from account.models import User
 from logical.models import Database
-from util import get_credentials_for
 from util.decorators import only_one
 from simple_audit.models import AuditRequest
 from dbaas_services.analyzing.models import ExecutionPlan
@@ -41,7 +40,8 @@ def analyze_databases(self,):
                         continue
                     for instance in result['msg']:
                         try:
-                            repo_instance = AnalyzeRepository.objects.get(analyzed_at__startswith=date.today(),
+                            get_analyzing_objects = AnalyzeRepository.objects.get
+                            repo_instance = get_analyzing_objects(analyzed_at__startswith=date.today(),
                                                                   database_name=database_name,
                                                                   instance_name=instance,
                                                                   engine_name=engine,
@@ -56,6 +56,8 @@ def analyze_databases(self,):
                                                               environment_name=environment_name)
 
                         setattr(repo_instance, execution_plan.alarm_repository_attr, True)
+                        setattr(repo_instance, execution_plan.threshold_repository_attr,
+                                execution_plan.threshold)
                         repo_instance.save()
     except Exception as e:
         LOG.warn(e)
@@ -70,6 +72,7 @@ def get_analyzing_credentials():
     credential = Credential.objects.get(integration_type__type=CredentialType.DBAAS_SERVICES_ANALYZING)
 
     return credential.endpoint, credential.get_parameter_by_name('healh_check_route'), credential.get_parameter_by_name('healh_check_string')
+
 
 def setup_database_info(database):
     databaseinfra = database.databaseinfra
