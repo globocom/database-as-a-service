@@ -396,7 +396,7 @@ def get_graphite_metrics_datapoints(*args, **kwargs):
     try:
         data = json.loads(response.data)
         data = data[0]
-    except IndexError, e:
+    except IndexError as e:
         LOG.warn("No data received... {}".format(e))
         return None
 
@@ -406,7 +406,7 @@ def get_graphite_metrics_datapoints(*args, **kwargs):
         if not data:
             data = []
         return data
-    except KeyError, e:
+    except KeyError as e:
         LOG.warn("No datapoints received... {}".format(e))
         return None
 
