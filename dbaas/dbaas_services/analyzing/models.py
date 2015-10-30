@@ -65,6 +65,8 @@ class ExecutionPlan(BaseModel):
     threshold_repository_attr = models.CharField(verbose_name=_("Threshold field on repository"),
                                                  max_length=150, unique=True, null=False,
                                                  blank=False,)
+    minimum_value = models.IntegerField(verbose_name=_("Minimum value to alarm"), unique=False,
+                                        null=False, blank=False,)
 
     class Meta:
         permissions = (

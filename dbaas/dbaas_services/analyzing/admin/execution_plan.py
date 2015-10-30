@@ -9,4 +9,5 @@ class ExecutionPlanAdmin(admin.DjangoServicesAdmin):
     form = ExecutionPlanForm
     service_class = ExecutionPlanService
     list_display = ("plan_name", "metrics", "threshold",
-                    "proccess_function", "adapter", "alarm_repository_attr")
+                    "proccess_function", "adapter", "alarm_repository_attr",
+                    "minimum_value")
