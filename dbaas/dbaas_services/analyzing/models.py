@@ -52,7 +52,7 @@ class ExecutionPlan(BaseModel):
                                  db_index=True)
     metrics = models.CharField(verbose_name=_("Metrics used by plan"), max_length=200,
                                unique=True, null=False, blank=False, db_index=True,
-                               help_text='Comma separated list of metrics. Ex.: cpu.cpu_used,cpu.cpu_free,...')
+                               help_text=_('Comma separated list of metrics. Ex.: cpu.cpu_used,cpu.cpu_free,...'))
     threshold = models.IntegerField(verbose_name=_("Threshold"), unique=False,
                                     null=False, default=50)
     proccess_function = models.CharField(verbose_name=_("Proccess function used by service"),
@@ -65,8 +65,11 @@ class ExecutionPlan(BaseModel):
     threshold_repository_attr = models.CharField(verbose_name=_("Threshold field on repository"),
                                                  max_length=150, unique=True, null=False,
                                                  blank=False,)
-    minimum_value = models.IntegerField(verbose_name=_("Minimum value to alarm"), unique=False,
+    minimum_value = models.IntegerField(verbose_name=_("Minimum resource"), unique=False,
                                         null=False, blank=False,)
+    field_to_check_value = models.CharField(verbose_name=_("Field to check minimum value"),
+                                            max_length=150, unique=True, null=False,
+                                            blank=False, help_text=_('{model}.{field}'))
 
     class Meta:
         permissions = (

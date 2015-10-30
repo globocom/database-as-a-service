@@ -7,6 +7,7 @@ from logical.models import Database
 from util.decorators import only_one
 from simple_audit.models import AuditRequest
 from dbaas_services.analyzing.models import ExecutionPlan
+from dbaas_services.analyzing.actions import database_can_not_be_resized
 from dbaas_services.analyzing.models import AnalyzeRepository
 from dbaas_services.analyzing.integration import AnalyzeService
 from dbaas_services.analyzing.exceptions import ServiceNotAvailable
@@ -32,6 +33,8 @@ def analyze_databases(self,):
         for database in databases:
             database_name, engine, instances, environment_name, databaseinfra_name = setup_database_info(database)
             for execution_plan in ExecutionPlan.objects.all():
+                if database_can_not_be_resized(database, execution_plan):
+                    continue
                 params = execution_plan.setup_execution_params()
                 result = analyze_service.run(engine=engine, database=database_name,
                                              instances=instances, **params)
