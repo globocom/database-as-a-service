@@ -21,9 +21,7 @@ def get_field_value(model_name, field, database):
 
 
 def parse_model_field(model_field_str):
-    model, field_value = model_field_str.split('.')
-    field, value = field_value.split('=')
-    return model, field
+    return model_field_str.split('.')
 
 
 def get_service_offering(database, field):
