@@ -1,0 +1,18 @@
+<h2>Database {{database}} is overestimated</h2>
+<br>
+The Database {{database}} on {{environment}} environment {{msg}} in the past 30 days.
+<br><br>
+Maybe it is overestimated.
+<br><br>
+Please consider resizing your database to a plan with less resources.
+<br><br>
+{% if team.email %}
+You are receiving this email because in our records you are in team {{ team.name }}.<br>
+If this is not right, contact the Dbaas system administrators.
+{% else %}
+<h3>Team {{ team.name }} has no email set!</h3>
+{% endif %}
+<br><br><br>
+Regards,<br>
+DBaaS notification robot<br>
+{{domain}}<br>

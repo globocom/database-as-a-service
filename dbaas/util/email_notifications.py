@@ -89,3 +89,22 @@ def database_usage(context={}):
 
     send_mail_template(subject, template, addr_from, addr_to,
                        fail_silently=False, attachments=None, context=context)
+
+
+def database_analyzing(context={}):
+    LOG.info("Notifying Database alayzing with context %s" % context)
+    subject = _("[DBAAS] Database overestimated")
+    template = "analyzing_notification"
+    addr_from = Configuration.get_by_name("email_addr_from")
+    send_email = Configuration.get_by_name("send_analysis_email")
+    team = context.get("team")
+    if team and team.email and send_email:
+        addr_to = [
+            team.email, Configuration.get_by_name("new_user_notify_email")]
+    else:
+        addr_to = Configuration.get_by_name("new_user_notify_email")
+
+    context['domain'] = get_domain()
+
+    send_mail_template(subject, template, addr_from, addr_to,
+                       fail_silently=False, attachments=None, context=context)

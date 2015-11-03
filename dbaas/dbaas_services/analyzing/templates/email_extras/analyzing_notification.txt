@@ -1,0 +1,12 @@
+The Database {{database}} on {{environment}} environment {{msg}} in the past 30 days.
+
+Maybe it is overestimated.
+
+Please consider resizing your database to a plan with less resources.
+
+You are receiving this email because in our records you are in team {{ team }}.
+If this is not right, contact the DBaaS system administrators.
+
+Regards,
+DBaaS Notification Robot
+{{domain}}
