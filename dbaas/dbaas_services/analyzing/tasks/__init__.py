@@ -1,2 +1,2 @@
 from analyze import analyze_databases
-from send_email import database_notification
+from send_email import analyzing_notification_for_team
