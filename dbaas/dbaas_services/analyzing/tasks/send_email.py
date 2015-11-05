@@ -60,17 +60,22 @@ def analyzing_notification_for_team(team=None):
                                                                                                                          'volume_threshold').annotate()
         if not analyzing_repositories:
             continue
+        else:
+            analyzing_repositories = analyzing_repositories[0]
 
         msg = 'used less than {}% of {}'
         sub_msg = []
         if analyzing_repositories['memory_alarm']:
-            m_msg = msg.format('memory_threshold', 'memory')
+            threshold = analyzing_repositories['memory_threshold']
+            m_msg = msg.format(threshold, 'memory')
             sub_msg.append(m_msg)
         if analyzing_repositories['cpu_alarm']:
-            c_msg = msg.format('cpu_threshold', 'cpu')
+            threshold = analyzing_repositories['cpu_threshold']
+            c_msg = msg.format(threshold, 'cpu')
             sub_msg.append(c_msg)
         if analyzing_repositories['volume_alarm']:
-            v_msg = msg.format('volume_threshold', 'volume')
+            threshold = analyzing_repositories['volume_threshold']
+            v_msg = msg.format(threshold, 'volume')
             sub_msg.append(v_msg)
 
         msg = ", ".join(sub_msg)
