@@ -100,8 +100,8 @@ class Plan(BaseModel):
                                      default=False,
                                      help_text=_("Check this option if this the default plan. There can be only one..."))
     is_ha = models.BooleanField(verbose_name=_("Is plan HA"), default=False)
-    engine_type = models.ForeignKey(
-        EngineType, verbose_name=_("Engine Type"), related_name='plans')
+    engine = models.ForeignKey(Engine, verbose_name=_("Engine"),
+                               related_name='plans')
     environments = models.ManyToManyField(Environment)
     provider = models.IntegerField(choices=PROVIDER_CHOICES,
                                    default=0)
@@ -112,8 +112,12 @@ class Plan(BaseModel):
         "Plan", null=True, blank=True, on_delete=models.SET_NULL)
 
     @property
+    def engine_type(self):
+        return self.engine.engine_type
+
+    @property
     def engines(self):
-        return Engine.objects.filter(engine_type_id=self.engine_type_id)
+        return Engine.objects.filter(id=self.engine_id)
 
     def __unicode__(self):
         return "%s" % (self.name)
@@ -493,10 +497,10 @@ def plan_pre_save(sender, **kwargs):
             "looking for other plans marked as default (they will be marked as false) with engine type %s" % plan.engine_type)
         if plan.id:
             plans = Plan.objects.filter(
-                is_default=True, engine_type=plan.engine_type).exclude(id=plan.id)
+                is_default=True, engine=plan.engine).exclude(id=plan.id)
         else:
             plans = Plan.objects.filter(
-                is_default=True, engine_type=plan.engine_type)
+                is_default=True, engine=plan.engine)
         if plans:
             with transaction.commit_on_success():
                 for plan in plans:
