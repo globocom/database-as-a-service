@@ -119,6 +119,10 @@ class Database(BaseModel):
         return self.infra.engine_name
 
     @property
+    def engine(self):
+        return self.infra.engine
+
+    @property
     def plan(self):
         return self.databaseinfra and self.databaseinfra.plan
 
