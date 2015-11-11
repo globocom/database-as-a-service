@@ -42,10 +42,10 @@ class CloneDatabaseForm(forms.Form):
         self.initial['old_plan'] = instance.plan.id
 
     def define_engine_field(self, database):
-        self.initial['engine'] = database.infra.engine.engine_type.id
+        self.initial['engine'] = database.infra.engine.id
 
     def define_available_plans(self, database):
-        self.fields['plan'] = forms.ModelChoiceField(queryset=Plan.objects.filter(engine_type__name=database.infra.engine.name,
+        self.fields['plan'] = forms.ModelChoiceField(queryset=Plan.objects.filter(engine=database.infra.engine,
                                                                                   is_active=True),
                                                      widget=forms.Select(
                                                          attrs={'class': 'plan'}),
