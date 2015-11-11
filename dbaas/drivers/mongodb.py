@@ -157,7 +157,7 @@ class MongoDB(BaseDriver):
         finally:
             try:
                 if client:
-                    client.disconnect()
+                    client.close()
             except:
                 LOG.warn('Error disconnecting from databaseinfra %s. Ignoring...',
                          self.databaseinfra, exc_info=True)
@@ -238,7 +238,7 @@ class MongoDB(BaseDriver):
     def create_database(self, database):
         LOG.info("creating database %s" % database.name)
         with self.pymongo(database=database) as mongo_database:
-            mongo_database.collection_names()
+            mongo_database.create_collection('dbaas.dummy')
 
     def remove_database(self, database):
         LOG.info("removing database %s" % database.name)
