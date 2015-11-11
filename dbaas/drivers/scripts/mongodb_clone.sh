@@ -38,7 +38,7 @@ then
 fi
 
 echo ""; echo $(date "+%Y-%m-%d %T") "- Deleting users from dump..."
-rm ${path_of_dump}/${db2clone}/system.users.metadata.json
+rm -f ${path_of_dump}/${db2clone}/system.users.metadata.json
 ret=$?
 if [ ${ret} -ne 0 ]
 then
@@ -47,7 +47,7 @@ then
     exit ${ret}
 fi
 
-rm ${path_of_dump}/${db2clone}/system.users.bson
+rm -f ${path_of_dump}/${db2clone}/system.users.bson
 ret=$?
 if [ ${ret} -ne 0 ]
 then
