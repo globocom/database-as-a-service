@@ -12,7 +12,7 @@ class PlanSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = models.Plan
         fields = ('url', 'id', 'name', 'description', 'is_active',
-                  'is_default', 'engine_type', 'environments',)
+                  'is_default', 'engine', 'environments',)
 
 
 class PlanAPI(viewsets.ReadOnlyModelViewSet):
@@ -36,16 +36,15 @@ class PlanAPI(viewsets.ReadOnlyModelViewSet):
 
         try:
             if (engine_id is not None) and (environment_id is not None) and (old_plan is not None):
-                queryset = models.Plan.objects.filter(engine_type=models.Engine.objects.get(id=engine_id).engine_type,
+                queryset = models.Plan.objects.filter(engine=engine_id,
                                                       environments=models.Environment.objects.get(id=environment_id)).exclude(id=old_plan)
 
             elif (engine_id is not None) and (environment_id is not None) and (active is not None):
-                queryset = models.Plan.objects.filter(engine_type=models.Engine.objects.get(id=engine_id).engine_type,
+                queryset = models.Plan.objects.filter(engine=engine_id,
                                                       environments=models.Environment.objects.get(id=environment_id), is_active=bool(active))
 
             elif engine_id is not None:
-                queryset = models.Plan.objects.filter(
-                    engine_type=models.Engine.objects.get(id=engine_id).engine_type)
+                queryset = models.Plan.objects.filter(engine=engine_id)
 
             elif environment_id is not None:
                 queryset = models.Plan.objects.filter(
