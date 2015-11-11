@@ -25,7 +25,7 @@ class BuildDatabaseInfra(BaseStep):
             databaseinfra.user = ''
             databaseinfra.password = make_db_random_password()
             databaseinfra.engine = workflow_dict[
-                'plan'].engine_type.engines.all()[0]
+                'plan'].engine
             databaseinfra.plan = workflow_dict['plan']
             databaseinfra.environment = workflow_dict['environment']
             databaseinfra.capacity = 1
