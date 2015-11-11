@@ -20,18 +20,18 @@ class PlanForm(forms.ModelForm):
 
         cleaned_data = super(PlanForm, self).clean()
         is_default = cleaned_data.get("is_default")
-        engine_type = cleaned_data.get("engine_type")
-        if not engine_type:
+        engine = cleaned_data.get("engine")
+        if not engine:
             msg = _("Please select a Engyne Type")
             log.warning(u"%s" % msg)
             raise forms.ValidationError(msg)
         if not is_default:
             if self.instance.id:
                 plans = models.Plan.objects.filter(
-                    is_default=True, engine_type=engine_type).exclude(id=self.instance.id)
+                    is_default=True, engine=engine).exclude(id=self.instance.id)
             else:
                 plans = models.Plan.objects.filter(
-                    is_default=True, engine_type=engine_type)
+                    is_default=True, engine=engine)
             if not plans:
                 msg = _("At least one plan must be default")
                 log.warning(u"%s" % msg)
