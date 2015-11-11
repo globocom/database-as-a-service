@@ -34,5 +34,5 @@ class PlanTestCase(TestCase):
         self.assertFalse(plan.is_default)
 
         default_plans = Plan.objects.filter(
-            is_default=True, engine_type=plan_2.engine_type)
+            is_default=True, engine=plan_2.engine)
         self.assertEqual(default_plans.count(), 1)

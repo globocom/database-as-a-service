@@ -37,7 +37,7 @@ class PlanFactory(factory.DjangoModelFactory):
     name = factory.Sequence(lambda n: 'plan-{0}'.format(n))
     is_active = True
     is_default = True
-    engine_type = factory.SubFactory(EngineTypeFactory)
+    engine = factory.SubFactory(EngineFactory)
     provider = 0
 
     @factory.post_generation
