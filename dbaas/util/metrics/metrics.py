@@ -394,20 +394,16 @@ def get_graphite_metrics_datapoints(*args, **kwargs):
     response = make_request(url)
 
     try:
+        LOG.debug('URL: {}'.format(url))
         data = json.loads(response.data)
         data = data[0]
-    except IndexError as e:
-        LOG.warn("No data received... {}".format(e))
-        return None
-
-    try:
         data = format_datapoints(
             data['datapoints'], kwargs['normalize_series'])
         if not data:
             data = []
         return data
-    except KeyError as e:
-        LOG.warn("No datapoints received... {}".format(e))
+    except Exception as e:
+        LOG.warn("No data received... {}".format(e))
         return None
 
 
