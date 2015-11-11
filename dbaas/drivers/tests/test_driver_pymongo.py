@@ -22,7 +22,7 @@ class AbstractTestDriverMongo(TestCase):
         if not Database.objects.filter(databaseinfra_id=self.databaseinfra.id):
             self.databaseinfra.delete()
         if self._mongo_client:
-            self._mongo_client.disconnect()
+            self._mongo_client.close()
         self.driver = self.databaseinfra = self._mongo_client = None
 
     @property
