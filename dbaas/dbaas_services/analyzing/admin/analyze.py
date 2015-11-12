@@ -16,7 +16,7 @@ class AnalyzeRepositoryAdmin(admin.DjangoServicesAdmin):
                    "environment_name", "databaseinfra_name")
     list_display = ("analyzed_at", "databaseinfra_name", "database_name", "engine_name",
                     "environment_name", "database_metrics_link", "cpu_threshold_msg",
-                    "memory_threshold_msg", "volume_threshold_msg")
+                    "memory_threshold_msg", "volume_threshold_msg", "get_database_team")
 
     def database_metrics_link(self, analyze_repository):
         try:
@@ -32,6 +32,18 @@ class AnalyzeRepositoryAdmin(admin.DjangoServicesAdmin):
         return format_html(html_link)
 
     database_metrics_link.short_description = "Instance name"
+
+    def get_database_team(self, analyze_repository):
+        try:
+            database = Database.objects.get(name=analyze_repository.database_name,
+                                            databaseinfra__name=analyze_repository.databaseinfra_name)
+        except Database.DoesNotExist:
+            team = ''
+        else:
+            team = database.team.name
+
+        return team
+    get_database_team.short_description = "Team"
 
     def __format_alarm_msg(self, analyze_repository, alarm_attr, threshold_attr):
         alarm = getattr(analyze_repository, alarm_attr)
