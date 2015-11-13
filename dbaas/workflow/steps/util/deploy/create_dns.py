@@ -22,6 +22,7 @@ class CreateDns(BaseStep):
             LOG.info("Creating dns for hosts...")
             for host_name in zip(workflow_dict['hosts'], workflow_dict['names']['vms']):
                 host = host_name[0]
+                LOG.info("Updating host dns - host: {}".format(host))
 
                 host.hostname = add_dns_record(
                     databaseinfra=workflow_dict['databaseinfra'],
@@ -30,10 +31,12 @@ class CreateDns(BaseStep):
                     ip=host.address,
                     type=HOST)
                 host.save()
+                LOG.info("DNS host updated - dns: {}".format(host.hostname))
 
             LOG.info("Creating dns for instances...")
             for instance_name in zip(workflow_dict['instances'], workflow_dict['names']['vms']):
                 instance = instance_name[0]
+                LOG.info("Updating instance dns - instance: {}".format(instance))
 
                 instance.dns = add_dns_record(
                     databaseinfra=workflow_dict['databaseinfra'],
@@ -42,6 +45,7 @@ class CreateDns(BaseStep):
                     ip=instance.address,
                     type=INSTANCE)
                 instance.save()
+                LOG.info("DNS instance updated - dns: {}".format(instance.dns))
 
                 if workflow_dict['qt'] == 1:
                     LOG.info("Updating databaseinfra dns endpoint")
