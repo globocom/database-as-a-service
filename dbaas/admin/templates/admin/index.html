@@ -94,8 +94,8 @@
                             {% for model in app.models %}
                                 <tr>
                                 {% if model.admin_url %}
-                                    {% if model.name == "Sub used resources reports" %}
-                                        <td class="model-name"><a href="{% url 'sub_used_resource_report' %}">Sub used resources report</a></td>
+                                    {% if model.name == "Resource use reports" %}
+                                        <td class="model-name"><a href="{% url 'sub_used_resource_report' %}">Resource use reports</a></td>
                                     {% else %}
                                         <td class="model-name"><a href="{{ model.admin_url }}">{{ model.name }}</a></td>
                                     {% endif %}

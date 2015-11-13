@@ -40,7 +40,7 @@ class AnalyzeRepository(BaseModel):
         permissions = (
             ("view_analyzerepository", "Can view analyze repository"),
         )
-        verbose_name = 'Sub used resources report'
+        verbose_name = 'Resource use report'
 
     def __unicode__(self):
         return self.instance_name
