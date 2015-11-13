@@ -5,6 +5,7 @@ from workflow.steps.util.base import BaseStep
 from workflow.exceptions.error_codes import DBAAS_0021
 from dbaas_cloudstack.models import HostAttr as CsHostAttr
 from util import exec_remote_command
+from time import sleep
 
 LOG = logging.getLogger(__name__)
 
@@ -16,6 +17,7 @@ class UmountDataVolume(BaseStep):
 
     def do(self, workflow_dict):
         try:
+            sleep(10)
             host = workflow_dict['host']
             cs_host_attr = CsHostAttr.objects.get(host=host)
             command = 'umount /data'
