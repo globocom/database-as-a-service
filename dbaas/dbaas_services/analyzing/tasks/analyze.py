@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
-from datetime import date
 from dbaas.celery import app
+from datetime import datetime
 from account.models import User
 from logical.models import Database
 from util.decorators import only_one
@@ -30,6 +30,7 @@ def analyze_databases(self,):
             return
 
         databases = Database.objects.filter(is_in_quarantine=False)
+        today = datetime.now()
         for database in databases:
             database_name, engine, instances, environment_name, databaseinfra_name = setup_database_info(database)
             for execution_plan in ExecutionPlan.objects.all():
@@ -44,7 +45,8 @@ def analyze_databases(self,):
                     for instance in result['msg']:
                         try:
                             get_analyzing_objects = AnalyzeRepository.objects.get
-                            repo_instance = get_analyzing_objects(analyzed_at__startswith=date.today(),
+                            LOG.info(today)
+                            repo_instance = get_analyzing_objects(analyzed_at=today,
                                                                   database_name=database_name,
                                                                   instance_name=instance,
                                                                   engine_name=engine,
@@ -52,7 +54,8 @@ def analyze_databases(self,):
                                                                   environment_name=environment_name,)
                         except AnalyzeRepository.DoesNotExist as e:
                             LOG.info(e)
-                            repo_instance = AnalyzeRepository(database_name=database_name,
+                            repo_instance = AnalyzeRepository(analyzed_at=today,
+                                                              database_name=database_name,
                                                               instance_name=instance,
                                                               engine_name=engine,
                                                               databaseinfra_name=databaseinfra_name,

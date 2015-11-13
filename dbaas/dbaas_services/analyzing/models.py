@@ -5,8 +5,7 @@ from django.utils.translation import ugettext_lazy as _
 
 
 class AnalyzeRepository(BaseModel):
-    analyzed_at = models.DateTimeField(verbose_name=_("Analyzed at"), auto_now_add=True,
-                                       db_index=True)
+    analyzed_at = models.DateTimeField(verbose_name=_("Analyzed at"), db_index=True)
     database_name = models.CharField(verbose_name=_("Database name"), max_length=60,
                                      unique=False, null=False, blank=False,
                                      db_index=True)
@@ -41,6 +40,7 @@ class AnalyzeRepository(BaseModel):
         permissions = (
             ("view_analyzerepository", "Can view analyze repository"),
         )
+        verbose_name = 'Sub used resources report'
 
     def __unicode__(self):
         return self.instance_name

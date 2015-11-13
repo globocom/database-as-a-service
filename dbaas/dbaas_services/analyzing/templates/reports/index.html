@@ -1,0 +1,45 @@
+{% extends "admin/change_form.html" %}
+{% load i18n admin_static %}
+
+
+{% block extrahead %}
+    {{ block.super }}
+    <script type="text/javascript" src="/static/0.0.11/admin/js/jquery.min.js"></script>
+    <script type="text/javascript" src="/static/0.0.11/admin/js/jquery.init.js"></script>
+    <script type="text/javascript" src="{% static 'js/clone.js' %}"> </script>
+
+{% endblock %}
+
+
+{% block extrastyle %}
+    {{ block.super }}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/database_admin.css' %}" />
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ul class="breadcrumb">
+        <li>
+            <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a> <span class="divider">/</span>
+        </li>
+        <li>
+            <a href="{% url 'admin:analyzing_analyzerepository_changelist' %}">Reports</a> <span class="divider">/</span>
+        </li>
+        <li>
+            Sub used Resources Reports<span class="divider">/</span>
+        </li>
+    </ul>
+{% endblock %}
+
+{% block content %}
+    <div class="container-fluid">
+        {% for report in reports %}
+        <div class="row-fluid">
+            <div class="span12">
+                <a href="../analyzerepository/?analyzed_at={{ report|urlencode }}" class="btn btn-primary" >Reported at {{ report|date:"m-d-Y H:m:s"  }}</a>
+            <div>
+            <br>
+        </div>
+        {% endfor %}
+    </div>
+{% endblock %}
+
