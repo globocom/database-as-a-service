@@ -333,7 +333,7 @@ class MongoDB(BaseDriver):
         client = self.get_client(None)
         client.admin.command('replSetFreeze', 10)
         try:
-            client.admin.command('replSetStepDown')
+            client.admin.command('replSetStepDown', 10)
         except pymongo.errors.PyMongoError, e:
             pass
 
