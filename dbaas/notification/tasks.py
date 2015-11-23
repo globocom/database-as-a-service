@@ -339,7 +339,7 @@ def update_database_status(self):
             else:
                 database.status = Database.DEAD
 
-            database.save()
+            database.save(update_fields=['status'])
             msg = "\nUpdating status for database: {}, status: {}".format(
                 database, database.status)
             msgs.append(msg)
@@ -370,7 +370,7 @@ def update_database_used_size(self):
             else:
                 database.used_size_in_bytes = 0.0
 
-            database.save()
+            database.save(update_fields=['used_size_in_bytes'])
             msg = "\nUpdating used size in bytes for database: {}, used size: {}".format(
                 database, database.used_size_in_bytes)
             msgs.append(msg)
@@ -404,7 +404,7 @@ def update_instances_status(self):
                 else:
                     instance.status = Instance.DEAD
 
-                instance.save()
+                instance.save(update_fields=['status'])
 
                 msg = "\nUpdating instance status, instance: {}, status: {}".format(
                     instance, instance.status)
