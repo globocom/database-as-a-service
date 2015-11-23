@@ -34,7 +34,7 @@
                     {% for infra in dbinfra %}
                         <tr>
                             <td><a href="{% url 'databaseinfra.index' infra.id %}">{{ infra.name }}</a></td>
-                            <td>{{ infra.engine_name }}</td>
+                            <td>{{ infra.engine.name }} {{infra.engine.version}}</td>
                             <td>
                                 {% if infra.environment.name == 'laboratory' %}
                                     <li class="label label-default">{{ infra.environment.name }}</li>

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from django import template
 
-from physical.models import EngineType, Environment
+from physical.models import EngineType, Environment, Plan
 
 register = template.Library()
 
@@ -16,7 +16,7 @@ def render_menu():
             'environments': [],
         }
 
-        for environment in Environment.objects.filter(plan__in=engine_type.plans.all()).distinct():
+        for environment in Environment.objects.filter(plan__in=Plan.objects.filter(engine__engine_type=engine_type)).distinct():
             data_environment = {
                 'id': environment.id,
                 'name': environment.name,
