@@ -21,15 +21,9 @@ class UpdateDbaaSMetadata(BaseStep):
                 old_host_attr.is_active = False
                 old_host_attr.save()
 
-                new_host_attr = HostAttr()
-                new_host_attr.host = old_host_attr.host
-                new_host_attr.nfsaas_export_id = host_and_export['new_export_id']
-                new_host_attr.nfsaas_path = host_and_export['new_export_path']
+                new_host_attr = HostAttr.objects.get(
+                    nfsaas_path=host_and_export['new_export_path'])
                 new_host_attr.is_active = True
-                new_host_attr.nfsaas_team_id = old_host_attr.nfsaas_team_id
-                new_host_attr.nfsaas_project_id = old_host_attr.nfsaas_project_id
-                new_host_attr.nfsaas_environment_id = old_host_attr.nfsaas_environment_id
-                new_host_attr.nfsaas_size_id = old_host_attr.nfsaas_size_id
                 new_host_attr.save()
 
             return True
@@ -44,6 +38,18 @@ class UpdateDbaaSMetadata(BaseStep):
     def undo(self, workflow_dict):
         LOG.info("Running undo...")
         try:
+
+            for host_and_export in workflow_dict['hosts_and_exports']:
+                old_host_attr = HostAttr.objects.get(
+                    nfsaas_path=host_and_export['old_export_path'])
+                old_host_attr.is_active = True
+                old_host_attr.save()
+
+                new_host_attr = HostAttr.objects.get(
+                    nfsaas_path=host_and_export['new_export_path'])
+                new_host_attr.is_active = False
+                new_host_attr.save()
+
             return True
         except Exception:
             traceback = full_stack()
