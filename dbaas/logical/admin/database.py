@@ -59,8 +59,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     service_class = DatabaseService
     search_fields = ("name", "databaseinfra__name", "team__name",
                      "project__name", "environment__name", "databaseinfra__engine__engine_type__name")
-    list_display_basic = ["name_html", "engine", "environment", "plan", "friendly_status", "clone_html",
-                          "get_capacity_html", "metrics_html", ]
+    list_display_basic = ["name_html", "team_admin_page", "engine", "environment", "plan", "friendly_status", "clone_html", "get_capacity_html", "metrics_html", ]
     list_display_advanced = list_display_basic + ["quarantine_dt_format"]
     list_filter_basic = ["project", "databaseinfra__environment",
                          "databaseinfra__engine", "databaseinfra__plan"]
@@ -136,6 +135,14 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         return format_html("".join(html))
 
     clone_html.short_description = "Clone"
+
+    def team_admin_page(self, database):
+        team_name = database.team.name
+        if self.list_filter == self.list_filter_advanced:
+            url = reverse('admin:account_team_change', args=(database.team.id,))
+            team_name = """<a href="{}"> {} </a> """.format(url, team_name)
+            return format_html(team_name)
+        return team_name
 
     def metrics_html(self, database):
         html = []
