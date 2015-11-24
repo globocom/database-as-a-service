@@ -144,6 +144,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             return format_html(team_name)
         return team_name
 
+    team_admin_page.short_description = "Team"
+
     def metrics_html(self, database):
         html = []
         if database.databaseinfra.plan.provider == Plan.PREPROVISIONED:
