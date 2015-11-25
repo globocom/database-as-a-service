@@ -43,7 +43,7 @@
         {% for report in reports %}
         <div class="row-fluid">
             <div class="span12">
-                <a href="../analyzerepository/?analyzed_at={{ report|urlencode }}" class="btn btn-block btn-large btn-primary" >Reported at {{ report|date:"m-d-Y H:m:s"  }}</a>
+                <a href="../analyzerepository/?analyzed_at={{ report|urlencode }}" class="btn btn-block btn-large btn-primary" >Reported at {{ report|date:"m-d-Y H:i:s"  }}</a>
             <div>
             <br>
         </div>
