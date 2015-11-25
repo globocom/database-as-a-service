@@ -11,6 +11,7 @@ from dbaas_services.analyzing.actions import database_can_not_be_resized
 from dbaas_services.analyzing.models import AnalyzeRepository
 from dbaas_services.analyzing.integration import AnalyzeService
 from dbaas_services.analyzing.exceptions import ServiceNotAvailable
+from django.db import transaction
 
 
 LOG = logging.getLogger(__name__)
@@ -22,54 +23,38 @@ def analyze_databases(self,):
     endpoint, healh_check_route, healh_check_string = get_analyzing_credentials()
     user = User.objects.get(username='admin')
     AuditRequest.new_request("analyze_databases", user, "localhost")
+
     try:
-        try:
-            analyze_service = AnalyzeService(endpoint, healh_check_route, healh_check_string)
-        except ServiceNotAvailable as e:
-            LOG.warn(e)
-            return
-
-        databases = Database.objects.filter(is_in_quarantine=False)
-        today = datetime.now()
-        for database in databases:
-            database_name, engine, instances, environment_name, databaseinfra_name = setup_database_info(database)
-            for execution_plan in ExecutionPlan.objects.all():
-                if database_can_not_be_resized(database, execution_plan):
-                    continue
-                params = execution_plan.setup_execution_params()
-                result = analyze_service.run(engine=engine, database=database_name,
-                                             instances=instances, **params)
-                if result['status'] == 'success':
-                    if result['msg'] != instances:
-                        continue
-                    for instance in result['msg']:
-                        try:
-                            get_analyzing_objects = AnalyzeRepository.objects.get
-                            LOG.info(today)
-                            repo_instance = get_analyzing_objects(analyzed_at=today,
-                                                                  database_name=database_name,
-                                                                  instance_name=instance,
-                                                                  engine_name=engine,
-                                                                  databaseinfra_name=databaseinfra_name,
-                                                                  environment_name=environment_name,)
-                        except AnalyzeRepository.DoesNotExist as e:
-                            LOG.info(e)
-                            repo_instance = AnalyzeRepository(analyzed_at=today,
-                                                              database_name=database_name,
-                                                              instance_name=instance,
-                                                              engine_name=engine,
-                                                              databaseinfra_name=databaseinfra_name,
-                                                              environment_name=environment_name)
-
-                        setattr(repo_instance, execution_plan.alarm_repository_attr, True)
-                        setattr(repo_instance, execution_plan.threshold_repository_attr,
-                                execution_plan.threshold)
-                        repo_instance.save()
-    except Exception as e:
+        analyze_service = AnalyzeService(endpoint, healh_check_route,
+                                         healh_check_string)
+    except ServiceNotAvailable as e:
         LOG.warn(e)
         return
-    finally:
-        AuditRequest.cleanup_request()
+
+    with transaction.atomic():
+        try:
+            databases = Database.objects.filter(is_in_quarantine=False)
+            today = datetime.now()
+            for database in databases:
+                database_name, engine, instances, environment_name, databaseinfra_name = setup_database_info(database)
+                for execution_plan in ExecutionPlan.objects.all():
+                    if database_can_not_be_resized(database, execution_plan):
+                        continue
+                    params = execution_plan.setup_execution_params()
+                    result = analyze_service.run(engine=engine, database=database_name,
+                                                 instances=instances, **params)
+                    if result['status'] == 'success':
+                        if result['msg'] != instances:
+                            continue
+                        for instance in result['msg']:
+                            insert_analyze_repository_record(today, database_name, instance,
+                                                             engine, databaseinfra_name,
+                                                             environment_name,
+                                                             execution_plan)
+                    else:
+                        raise Exception("Check your service logs..")
+        finally:
+            AuditRequest.cleanup_request()
 
 
 def get_analyzing_credentials():
@@ -78,6 +63,33 @@ def get_analyzing_credentials():
     credential = Credential.objects.get(integration_type__type=CredentialType.DBAAS_SERVICES_ANALYZING)
 
     return credential.endpoint, credential.get_parameter_by_name('healh_check_route'), credential.get_parameter_by_name('healh_check_string')
+
+
+def insert_analyze_repository_record(date_time, database_name, instance,
+                                     engine, databaseinfra_name, environment_name,
+                                     execution_plan):
+    try:
+        get_analyzing_objects = AnalyzeRepository.objects.get
+        LOG.info(date_time)
+        repo_instance = get_analyzing_objects(analyzed_at=date_time,
+                                              database_name=database_name,
+                                              instance_name=instance,
+                                              engine_name=engine,
+                                              databaseinfra_name=databaseinfra_name,
+                                              environment_name=environment_name,)
+    except AnalyzeRepository.DoesNotExist as e:
+        LOG.info(e)
+        repo_instance = AnalyzeRepository(analyzed_at=date_time,
+                                          database_name=database_name,
+                                          instance_name=instance,
+                                          engine_name=engine,
+                                          databaseinfra_name=databaseinfra_name,
+                                          environment_name=environment_name)
+
+    setattr(repo_instance, execution_plan.alarm_repository_attr, True)
+    setattr(repo_instance, execution_plan.threshold_repository_attr,
+            execution_plan.threshold)
+    repo_instance.save()
 
 
 def setup_database_info(database):
