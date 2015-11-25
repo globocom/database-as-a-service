@@ -22,10 +22,18 @@
             <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a> <span class="divider">/</span>
         </li>
         <li>
-            <a href="{% url 'admin:analyzing_analyzerepository_changelist' %}">Reports</a> <span class="divider">/</span>
+            <a href="../">Analyzing</a> <span class="divider">/</span>
         </li>
         <li>
             Resource use reports<span class="divider">/</span>
+        </li>
+        <li style="margin-top: -5px; position: relative; float: right">
+            <form method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-warning">
+                    Run Analisys now!
+                </button>
+            </form>
         </li>
     </ul>
 {% endblock %}

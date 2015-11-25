@@ -19,11 +19,11 @@ LOG = logging.getLogger(__name__)
 
 @app.task(bind=True)
 @only_one(key="analyze_databases_service_task", timeout=6000)
-def analyze_databases(self,):
+def analyze_databases(self, task_history=None):
     endpoint, healh_check_route, healh_check_string = get_analyzing_credentials()
     user = User.objects.get(username='admin')
     worker_name = get_worker_name()
-    task_history = TaskHistory.register(request=self.request, user=user,
+    task_history = TaskHistory.register(task_history=task_history, request=self.request, user=user,
                                         worker_name=worker_name)
     task_history.update_details(persist=True, details="Loading Process...")
     AuditRequest.new_request("analyze_databases", user, "localhost")
