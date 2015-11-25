@@ -3,16 +3,16 @@ import logging
 from dbaas.celery import app
 from datetime import datetime
 from account.models import User
+from util import get_worker_name
+from django.db import transaction
 from logical.models import Database
 from util.decorators import only_one
 from simple_audit.models import AuditRequest
+from notification.models import TaskHistory
 from dbaas_services.analyzing.models import ExecutionPlan
-from dbaas_services.analyzing.actions import database_can_not_be_resized
 from dbaas_services.analyzing.models import AnalyzeRepository
 from dbaas_services.analyzing.integration import AnalyzeService
-from dbaas_services.analyzing.exceptions import ServiceNotAvailable
-from django.db import transaction
-
+from dbaas_services.analyzing.actions import database_can_not_be_resized
 
 LOG = logging.getLogger(__name__)
 
@@ -22,17 +22,16 @@ LOG = logging.getLogger(__name__)
 def analyze_databases(self,):
     endpoint, healh_check_route, healh_check_string = get_analyzing_credentials()
     user = User.objects.get(username='admin')
+    worker_name = get_worker_name()
+    task_history = TaskHistory.register(request=self.request, user=user,
+                                        worker_name=worker_name)
+    task_history.update_details(persist=True, details="Loading Process...")
     AuditRequest.new_request("analyze_databases", user, "localhost")
 
     try:
         analyze_service = AnalyzeService(endpoint, healh_check_route,
                                          healh_check_string)
-    except ServiceNotAvailable as e:
-        LOG.warn(e)
-        return
-
-    with transaction.atomic():
-        try:
+        with transaction.atomic():
             databases = Database.objects.filter(is_in_quarantine=False)
             today = datetime.now()
             for database in databases:
@@ -44,6 +43,7 @@ def analyze_databases(self,):
                     result = analyze_service.run(engine=engine, database=database_name,
                                                  instances=instances, **params)
                     if result['status'] == 'success':
+                        task_history.update_details(persist=True, details="\nDatabase {} {} was analised.".format(database, execution_plan.plan_name))
                         if result['msg'] != instances:
                             continue
                         for instance in result['msg']:
@@ -53,8 +53,20 @@ def analyze_databases(self,):
                                                              execution_plan)
                     else:
                         raise Exception("Check your service logs..")
-        finally:
-            AuditRequest.cleanup_request()
+        task_history.update_status_for(TaskHistory.STATUS_SUCCESS,
+                                       details='Analisys ok!')
+    except Exception:
+        try:
+            task_history.update_details(persist=True,
+                                        details="\nDatabase {} {} could not be analised.".format(database,
+                                                                                                 execution_plan.plan_name))
+            task_history.update_status_for(TaskHistory.STATUS_ERROR,
+                                           details='Analisys finished with errors!\nError: {}'.format(result['msg']))
+        except UnboundLocalError:
+            task_history.update_details(persist=True, details="\nProccess crashed")
+            task_history.update_status_for(TaskHistory.STATUS_ERROR, details='Analisys could not be started')
+    finally:
+        AuditRequest.cleanup_request()
 
 
 def get_analyzing_credentials():
