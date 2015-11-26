@@ -20,7 +20,7 @@ class RestoreSnapshot(BaseStep):
             workflow_dict['hosts_and_exports'] = []
             databaseinfra = workflow_dict['databaseinfra']
             snapshot_id = workflow_dict['snapshot_id']
-            nfsaas_export_id = workflow_dict['export_id']
+            nfsaas_export_id = workflow_dict['export_id_snapshot']
             provider = NfsaasProvider()
             restore_result = provider.restore_snapshot(environment=databaseinfra.environment,
                                                        export_id=nfsaas_export_id,
@@ -44,8 +44,7 @@ class RestoreSnapshot(BaseStep):
                 'new_export_path': new_export_path,
             })
 
-            export_path = workflow_dict['export_path']
-            old_host_attr = HostAttr.objects.get(nfsaas_path=export_path)
+            old_host_attr = HostAttr.objects.get(nfsaas_export_id=nfsaas_export_id)
             new_host_attr = HostAttr()
             new_host_attr.host = old_host_attr.host
             new_host_attr.nfsaas_export_id = new_export_id

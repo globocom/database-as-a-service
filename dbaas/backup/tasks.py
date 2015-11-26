@@ -286,10 +286,11 @@ def restore_snapshot(self, database, snapshot, user, task_history):
     snapshot = Snapshot.objects.get(id=snapshot)
     snapshot_id = snapshot.snapshopt_id
 
-    host_attr = HostAttr.objects.get(nfsaas_path=snapshot.export_path)
-    host = host_attr.host
+    host_attr_snapshot = HostAttr.objects.get(nfsaas_path=snapshot.export_path)
+    host = host_attr_snapshot.host
     host_attr = HostAttr.objects.get(host=host, is_active=True)
 
+    export_id_snapshot = host_attr_snapshot.nfsaas_export_id
     export_id = host_attr.nfsaas_export_id
     export_path = host_attr.nfsaas_path
 
@@ -308,6 +309,7 @@ def restore_snapshot(self, database, snapshot, user, task_history):
                                snapshot_id=snapshot_id,
                                export_path=export_path,
                                export_id=export_id,
+                               export_id_snapshot=export_id_snapshot,
                                host=host,
                                steps=steps,
                                not_primary_hosts=not_primary_hosts,

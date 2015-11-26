@@ -21,7 +21,7 @@ class RestoreSnapshot(BaseStep):
             workflow_dict['hosts_and_exports'] = []
             databaseinfra = workflow_dict['databaseinfra']
             snapshot_id = workflow_dict['snapshot_id']
-            nfsaas_export_id = workflow_dict['export_id']
+            nfsaas_export_id = workflow_dict['export_id_snapshot']
             provider = NfsaasProvider()
             restore_result = provider.restore_snapshot(environment=databaseinfra.environment,
                                                        export_id=nfsaas_export_id,
@@ -44,6 +44,18 @@ class RestoreSnapshot(BaseStep):
                 'new_export_id': new_export_id,
                 'new_export_path': new_export_path,
             })
+
+            old_host_attr = nfs_HostAttr.objects.get(nfsaas_export_id=nfsaas_export_id)
+            new_host_attr = nfs_HostAttr()
+            new_host_attr.host = old_host_attr.host
+            new_host_attr.nfsaas_export_id = new_export_id
+            new_host_attr.nfsaas_path = new_export_path
+            new_host_attr.is_active = False
+            new_host_attr.nfsaas_team_id = old_host_attr.nfsaas_team_id
+            new_host_attr.nfsaas_project_id = old_host_attr.nfsaas_project_id
+            new_host_attr.nfsaas_environment_id = old_host_attr.nfsaas_environment_id
+            new_host_attr.nfsaas_size_id = old_host_attr.nfsaas_size_id
+            new_host_attr.save()
 
             restore_result = provider.restore_snapshot(environment=databaseinfra.environment,
                                                        export_id=nfsaas_export_id,
@@ -68,6 +80,17 @@ class RestoreSnapshot(BaseStep):
                 'new_export_path': new_export_path,
             })
 
+            new_host_attr = nfs_HostAttr()
+            new_host_attr.host = old_host_attr.host
+            new_host_attr.nfsaas_export_id = new_export_id
+            new_host_attr.nfsaas_path = new_export_path
+            new_host_attr.is_active = False
+            new_host_attr.nfsaas_team_id = old_host_attr.nfsaas_team_id
+            new_host_attr.nfsaas_project_id = old_host_attr.nfsaas_project_id
+            new_host_attr.nfsaas_environment_id = old_host_attr.nfsaas_environment_id
+            new_host_attr.nfsaas_size_id = old_host_attr.nfsaas_size_id
+            new_host_attr.save()
+
             return True
         except Exception:
             traceback = full_stack()
@@ -86,6 +109,9 @@ class RestoreSnapshot(BaseStep):
                                           'new_export_path'],
                                       host=host_and_export['host'],
                                       databaseinfra=workflow_dict['databaseinfra'])
+
+                new_host_attr = nfs_HostAttr.objects.get(nfsaas_path=host_and_export['new_export_path'])
+                new_host_attr.delete()
 
             return True
         except Exception:
