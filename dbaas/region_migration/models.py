@@ -8,7 +8,6 @@ from logical.models import Database
 from util.models import BaseModel
 from .migration_steps import get_engine_steps
 from celery.task import control
-from django.db.models.signals import post_save
 from django.db.models.signals import pre_delete
 from django.dispatch import receiver
 
@@ -124,7 +123,7 @@ class DatabaseRegionMigrationDetail(BaseModel):
         scheduled_tasks = inspect.scheduled()
         try:
             hosts = scheduled_tasks.keys()
-        except Exception, e:
+        except Exception as e:
             LOG.info("Could not retrieve celery scheduled tasks: {}".format(e))
             return False
 
