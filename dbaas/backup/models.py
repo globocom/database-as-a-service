@@ -41,7 +41,8 @@ class BackupInfo(BaseModel):
     instance = models.ForeignKey('physical.Instance', related_name="backup_instance",
                                  unique=False, null=True, blank=True, on_delete=models.SET_NULL)
     database_name = models.CharField(
-        verbose_name=_("Database name"), max_length=100, null=True, blank=True,)
+        verbose_name=_("Database name"), max_length=100, null=True, blank=True,
+        db_index=True)
     size = models.BigIntegerField(
         verbose_name=_("Size"), null=True, blank=True)
     environment = models.ForeignKey(

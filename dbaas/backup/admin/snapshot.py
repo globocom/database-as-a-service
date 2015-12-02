@@ -15,6 +15,7 @@ LOG = logging.getLogger(__name__)
 class SnapshotAdmin(admin.ModelAdmin):
 
     actions = None
+    list_filter = ("start_at", "database_name", "environment", "status")
 
     list_display = ("database_name", "instance", "start_at",
                     "end_at", "purge_at", "type", "status", "environment")
