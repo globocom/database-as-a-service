@@ -96,9 +96,9 @@ class Database(BaseModel):
         Environment, related_name="databases", on_delete=models.PROTECT,
         db_index=True)
 
-    backup_path = models.CharField(verbose_name=_("Back up path"), max_length=300,
+    backup_path = models.CharField(verbose_name=_("Backup path"), max_length=300,
                                    help_text=_("Full path to backup file"),
-                                   null=True,)
+                                   null=True, blank=True)
 
     def __unicode__(self):
         return u"%s" % self.name
