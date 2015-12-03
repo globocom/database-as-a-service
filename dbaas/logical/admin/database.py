@@ -77,14 +77,14 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
     fieldsets_change_basic = (
         (None, {
-            'fields': ['name', 'description', 'project', 'team', ]
+            'fields': ['name', 'description', 'project', 'team']
         }
         ),
     )
 
     fieldsets_change_advanced = (
         (None, {
-            'fields': fieldsets_change_basic[0][1]['fields'] + ["is_in_quarantine"]
+            'fields': fieldsets_change_basic[0][1]['fields'] + ["backup_path", "is_in_quarantine"]
         }
         ),
     )
