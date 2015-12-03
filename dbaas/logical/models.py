@@ -66,7 +66,8 @@ class Database(BaseModel):
         (ALERT, 'Alert')
     )
 
-    name = models.CharField(verbose_name=_("Database name"), max_length=100)
+    name = models.CharField(verbose_name=_("Database name"), max_length=100,
+                            db_index=True)
     databaseinfra = models.ForeignKey(
         DatabaseInfra, related_name="databases", on_delete=models.PROTECT)
     project = models.ForeignKey(
@@ -92,7 +93,12 @@ class Database(BaseModel):
                                  default=2)
     used_size_in_bytes = models.FloatField(default=0.0)
     environment = models.ForeignKey(
-        Environment, related_name="databases", on_delete=models.PROTECT)
+        Environment, related_name="databases", on_delete=models.PROTECT,
+        db_index=True)
+
+    backup_path = models.CharField(verbose_name=_("Back up path"), max_length=300,
+                                   help_text=_("Full path to backup file"),
+                                   null=True,)
 
     def __unicode__(self):
         return u"%s" % self.name
