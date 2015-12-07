@@ -4,8 +4,8 @@ from util import full_stack
 from dbaas_credentials.credential import Credential
 from dbaas_credentials.models import CredentialType
 from dbaas_zabbix import factory_for
-from ..base import BaseStep
-from ....exceptions.error_codes import DBAAS_0012
+from workflow.steps.util.base import BaseStep
+from workflow.exceptions.error_codes import DBAAS_0012
 
 LOG = logging.getLogger(__name__)
 
