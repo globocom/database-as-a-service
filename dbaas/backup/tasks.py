@@ -155,6 +155,38 @@ def make_instance_snapshot_backup(instance, error):
         snapshot.size = 0
         LOG.error("Error exec remote command %s" % (e))
 
+    backup_path = databases[0].backup_path
+    if backup_path:
+        infraname = databaseinfra.name
+        now = datetime.datetime.now()
+        target_path = "{backup_path}/{today_str}/{hostname}/{now_str}/{infraname}".format(
+            backup_path=backup_path,
+            today_str=now.strftime("%Y_%m_%d"),
+            hostname=instance.hostname.hostname.split('.')[0],
+            now_str=now.strftime("%Y%m%d%H%M%S"),
+            infraname=infraname)
+        snapshot_path = "/data/.snapshot/{}/data/".format(snapshot.snapshot_name)
+        output = {}
+        command = """
+        if [ -d "{backup_path}" ]
+        then
+            rm -rf {backup_path}/20[0-9][0-9]_[0-1][0-12]_[0-3][0-9]
+            mkdir -p {target_path}
+            cp -r {snapshot_path} {target_path} &
+        fi
+        """.format(backup_path=backup_path,
+                   target_path=target_path,
+                   snapshot_path=snapshot_path)
+        try:
+            pass
+            exit_status = exec_remote_command(server=instance.hostname.address,
+                                              username=cloudstack_hostattr.vm_user,
+                                              password=cloudstack_hostattr.vm_password,
+                                              command=command,
+                                              output=output)
+        except Exception, e:
+            LOG.error("Error exec remote command %s" % (e))
+
     snapshot.status = Snapshot.SUCCESS
     snapshot.end_at = datetime.datetime.now()
     snapshot.save()
