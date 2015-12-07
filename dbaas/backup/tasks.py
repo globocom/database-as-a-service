@@ -17,7 +17,7 @@ from workflow.settings import RESTORE_SNAPSHOT_SINGLE
 from workflow.settings import RESTORE_SNAPSHOT_MYSQL_HA
 from util import build_dict
 from util import clean_unused_data
-from workflow.workflow import start_workflow, stop_workflow
+from workflow.workflow import start_workflow
 from notification import models
 import logging
 LOG = logging.getLogger(__name__)
@@ -66,11 +66,11 @@ def mysql_binlog_save(client, instance, cloudstack_hostattr):
         command = 'echo "master=%s;position=%s" > %smysql_binlog_master_file_pos' % (
             binlog_file, binlog_pos, datadir)
 
-        exit_status = exec_remote_command(server=instance.hostname.address,
-                                          username=cloudstack_hostattr.vm_user,
-                                          password=cloudstack_hostattr.vm_password,
-                                          command=command,
-                                          output=output)
+        exec_remote_command(server=instance.hostname.address,
+                            username=cloudstack_hostattr.vm_user,
+                            password=cloudstack_hostattr.vm_password,
+                            command=command,
+                            output=output)
     except Exception as e:
         LOG.error(
             "Error saving mysql master binlog file and position: %s" % (e))
@@ -144,11 +144,11 @@ def make_instance_snapshot_backup(instance, error):
     command = "du -sb /data/.snapshot/%s | awk '{print $1}'" % (
         snapshot.snapshot_name)
     try:
-        exit_status = exec_remote_command(server=instance.hostname.address,
-                                          username=cloudstack_hostattr.vm_user,
-                                          password=cloudstack_hostattr.vm_password,
-                                          command=command,
-                                          output=output)
+        exec_remote_command(server=instance.hostname.address,
+                            username=cloudstack_hostattr.vm_user,
+                            password=cloudstack_hostattr.vm_password,
+                            command=command,
+                            output=output)
         size = int(output['stdout'][0])
         snapshot.size = size
     except Exception as e:
@@ -178,12 +178,11 @@ def make_instance_snapshot_backup(instance, error):
                    target_path=target_path,
                    snapshot_path=snapshot_path)
         try:
-            pass
-            exit_status = exec_remote_command(server=instance.hostname.address,
-                                              username=cloudstack_hostattr.vm_user,
-                                              password=cloudstack_hostattr.vm_password,
-                                              command=command,
-                                              output=output)
+            exec_remote_command(server=instance.hostname.address,
+                                username=cloudstack_hostattr.vm_user,
+                                password=cloudstack_hostattr.vm_password,
+                                command=command,
+                                output=output)
         except Exception as e:
             LOG.error("Error exec remote command %s" % (e))
 
