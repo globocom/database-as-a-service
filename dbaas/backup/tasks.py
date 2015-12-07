@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 from dbaas.celery import app
 from util.decorators import only_one
 from physical.models import DatabaseInfra, Plan, Instance
@@ -19,6 +18,7 @@ from util import build_dict
 from util import clean_unused_data
 from workflow.workflow import start_workflow
 from notification import models
+from notification import tasks
 import logging
 LOG = logging.getLogger(__name__)
 
@@ -327,6 +327,8 @@ def restore_snapshot(self, database, snapshot, user, task_history):
 
     steps = RESTORE_SNAPSHOT_SINGLE
 
+    tasks.disable_zabbix_alarms(database)
+
     if databaseinfra.plan.is_ha and databaseinfra.engine_name == 'mysql':
         steps = RESTORE_SNAPSHOT_MYSQL_HA
 
@@ -357,6 +359,7 @@ def restore_snapshot(self, database, snapshot, user, task_history):
         task_history.update_status_for(
             TaskHistory.STATUS_ERROR, details=error)
     else:
+        tasks.enable_zabbix_alarms(database)
         task_history.update_status_for(
             TaskHistory.STATUS_SUCCESS, details='Database sucessfully recovered!')
 
