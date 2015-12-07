@@ -359,9 +359,10 @@ def restore_snapshot(self, database, snapshot, user, task_history):
         task_history.update_status_for(
             TaskHistory.STATUS_ERROR, details=error)
     else:
-        tasks.enable_zabbix_alarms(database)
         task_history.update_status_for(
             TaskHistory.STATUS_SUCCESS, details='Database sucessfully recovered!')
+
+    tasks.enable_zabbix_alarms(database)
 
     return
 
