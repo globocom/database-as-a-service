@@ -44,7 +44,7 @@ def register_backup_dbmonitor(databaseinfra, snapshot):
                                             status=snapshot.status,
                                             type=snapshot.type,
                                             error=snapshot.error)
-    except Exception, e:
+    except Exception as e:
         LOG.error("Error register backup on DBMonitor %s" % (e))
 
 
@@ -71,7 +71,7 @@ def mysql_binlog_save(client, instance, cloudstack_hostattr):
                                           password=cloudstack_hostattr.vm_password,
                                           command=command,
                                           output=output)
-    except Exception, e:
+    except Exception as e:
         LOG.error(
             "Error saving mysql master binlog file and position: %s" % (e))
 
@@ -129,7 +129,7 @@ def make_instance_snapshot_backup(instance, error):
             set_backup_error(databaseinfra, snapshot, errormsg)
             return False
 
-    except Exception, e:
+    except Exception as e:
         errormsg = "Error creating snapshot: %s" % (e)
         error['errormsg'] = errormsg
         set_backup_error(databaseinfra, snapshot, errormsg)
@@ -151,7 +151,7 @@ def make_instance_snapshot_backup(instance, error):
                                           output=output)
         size = int(output['stdout'][0])
         snapshot.size = size
-    except Exception, e:
+    except Exception as e:
         snapshot.size = 0
         LOG.error("Error exec remote command %s" % (e))
 
@@ -184,7 +184,7 @@ def make_instance_snapshot_backup(instance, error):
                                               password=cloudstack_hostattr.vm_password,
                                               command=command,
                                               output=output)
-        except Exception, e:
+        except Exception as e:
             LOG.error("Error exec remote command %s" % (e))
 
     snapshot.status = Snapshot.SUCCESS
@@ -217,7 +217,7 @@ def make_databases_backup(self):
                 if not instance.databaseinfra.get_driver().check_instance_is_eligible_for_backup(instance):
                     LOG.info('Instance %s is not eligible for backup' % (str(instance)))
                     continue
-            except Exception, e:
+            except Exception as e:
                 status = TaskHistory.STATUS_ERROR
                 msg = "Backup for %s was unsuccessful. Error: %s" % (
                     str(instance), str(e))
@@ -233,8 +233,8 @@ def make_databases_backup(self):
                         msg = "Backup for %s was unsuccessful. Error: %s" % (
                             str(instance), error['errormsg'])
                         LOG.error(msg)
-                    print msg
-                except Exception, e:
+                    LOG.info(msg)
+                except Exception as e:
                     status = TaskHistory.STATUS_ERROR
                     msg = "Backup for %s was unsuccessful. Error: %s" % (
                         str(instance), str(e))
@@ -292,7 +292,7 @@ def remove_database_old_backups(self):
             remove_snapshot_backup(snapshot=snapshot)
             msg = "Backup %s removed" % (snapshot)
             LOG.info(msg)
-        except Exception, e:
+        except Exception as e:
             msg = "Error removing backup %s. Error: %s" % (snapshot, str(e))
             status = TaskHistory.STATUS_ERROR
             LOG.error(msg)
@@ -371,7 +371,6 @@ def purge_unused_exports():
     for databaseinfra in databaseinfras:
         instances = databaseinfra.get_driver().get_database_instances()
         environment = databaseinfra.environment
-        plan = databaseinfra.plan
 
         for instance in instances:
             exports = HostAttr.objects.filter(host=instance.hostname,
