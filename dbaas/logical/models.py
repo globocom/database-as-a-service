@@ -253,7 +253,7 @@ class Database(BaseModel):
                 # try get without cache
                 info = self.databaseinfra.get_info(force_refresh=True)
                 database_status = info.get_database_status(self.name)
-        except ConnectionError, e:
+        except ConnectionError as e:
             LOG.error(
                 "ConnectionError calling database_status for database %s: %s" % (self, e))
             database_status = DatabaseStatus(self)
@@ -265,7 +265,7 @@ class Database(BaseModel):
         try:
             offer_name = self.databaseinfra.cs_dbinfra_offering.get(
             ).offering.name
-        except Exception, e:
+        except Exception as e:
             LOG.info("Oops...{}".format(e))
             offer_name = None
 
@@ -380,7 +380,7 @@ class Database(BaseModel):
         try:
             offer_id = self.databaseinfra.cs_dbinfra_offering.get(
             ).offering.serviceofferingid
-        except Exception, e:
+        except Exception as e:
             LOG.info("Oops...{}".format(e))
             offer_id = None
 
@@ -410,7 +410,7 @@ class Database(BaseModel):
         from region_migration.models import DatabaseRegionMigrationDetail
         try:
             migration = self.migration.get()
-        except ObjectDoesNotExist, e:
+        except ObjectDoesNotExist:
             return False
 
         if migration.is_migration_finished():
