@@ -472,6 +472,8 @@ def resize_database(self, database, cloudstackpack, task_history=None, user=None
         resized_instances = []
         result = {'created': False}
 
+        disable_zabbix_alarms(database)
+
         for instance in instances:
             host = instance.hostname
             host_attr = host.cs_host_attributes.get()
@@ -536,6 +538,7 @@ def resize_database(self, database, cloudstackpack, task_history=None, user=None
 
             task_history.update_status_for(TaskHistory.STATUS_SUCCESS,
                                            details='Resize successfully done.')
+            enable_zabbix_alarms(database)
             return
 
         task_history.update_status_for(TaskHistory.STATUS_ERROR, details=error)
@@ -594,6 +597,8 @@ def volume_migration(self, database, user, task_history=None):
     master_instance = driver.get_master_instance()
     instances.append(master_instance)
     LOG.info('Instances: {}'.format(str(instances)))
+
+    disable_zabbix_alarms(database)
 
     hosts = [instance.hostname for instance in instances]
     volumes = HostAttr.objects.filter(host__in=hosts,
@@ -655,9 +660,33 @@ def volume_migration(self, database, user, task_history=None):
         task_history.update_status_for(
             TaskHistory.STATUS_SUCCESS, details='Volumes sucessfully migrated!')
 
+        enable_zabbix_alarms(database)
         LOG.info("Migration finished")
 
         return
     except Exception as e:
         task_history.update_status_for(TaskHistory.STATUS_ERROR, details=e)
         LOG.warning("Migration finished with errors")
+
+
+def disable_zabbix_alarms(database):
+    LOG.info("{} alarms will be disabled!".format(database))
+    zabbix_provider = handle_zabbix_alarms(database)
+    zabbix_provider.disable_alarms()
+
+
+def enable_zabbix_alarms(database):
+    LOG.info("{} alarms will be enabled!".format(database))
+    zabbix_provider = handle_zabbix_alarms(database)
+    zabbix_provider.enable_alarms()
+
+
+def handle_zabbix_alarms(database):
+    from dbaas_zabbix import factory_for
+    from dbaas_credentials.credential import Credential
+    from dbaas_credentials.models import CredentialType
+    integration = CredentialType.objects.get(type=CredentialType.ZABBIX)
+    credentials = Credential.get_credentials(environment=database.databaseinfra.environment,
+                                             integration=integration)
+
+    return factory_for(databaseinfra=database.databaseinfra, credentials=credentials)
