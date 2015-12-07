@@ -49,7 +49,7 @@ def execute_scheduled_maintenance(self, maintenance_id):
 
         try:
             cloudstack_host_attributes = host.cs_host_attributes.get()
-        except ObjectDoesNotExist, e:
+        except ObjectDoesNotExist as e:
             LOG.warn(
                 "Host {} does not have cloudstack attrs...{}".format(hm.host, e))
             hm.status = hm.UNAVAILABLECSHOSTATTR
