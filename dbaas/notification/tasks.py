@@ -538,7 +538,6 @@ def resize_database(self, database, cloudstackpack, task_history=None, user=None
 
             task_history.update_status_for(TaskHistory.STATUS_SUCCESS,
                                            details='Resize successfully done.')
-            enable_zabbix_alarms(database)
             return
 
         task_history.update_status_for(TaskHistory.STATUS_ERROR, details=error)
@@ -550,6 +549,7 @@ def resize_database(self, database, cloudstackpack, task_history=None, user=None
         task_history.update_status_for(TaskHistory.STATUS_ERROR, details=error)
 
     finally:
+        enable_zabbix_alarms(database)
         AuditRequest.cleanup_request()
 
 
@@ -660,13 +660,12 @@ def volume_migration(self, database, user, task_history=None):
         task_history.update_status_for(
             TaskHistory.STATUS_SUCCESS, details='Volumes sucessfully migrated!')
 
-        enable_zabbix_alarms(database)
         LOG.info("Migration finished")
-
-        return
     except Exception as e:
         task_history.update_status_for(TaskHistory.STATUS_ERROR, details=e)
         LOG.warning("Migration finished with errors")
+    finally:
+        enable_zabbix_alarms(database)
 
 
 def disable_zabbix_alarms(database):
