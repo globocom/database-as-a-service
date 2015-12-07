@@ -304,67 +304,68 @@ def remove_database_old_backups(self):
 
 @app.task(bind=True)
 def restore_snapshot(self, database, snapshot, user, task_history):
-    from dbaas_nfsaas.models import HostAttr
-    LOG.info("Restoring snapshot")
-    worker_name = get_worker_name()
+    try:
+        from dbaas_nfsaas.models import HostAttr
+        LOG.info("Restoring snapshot")
+        worker_name = get_worker_name()
 
-    task_history = models.TaskHistory.objects.get(id=task_history)
-    task_history = TaskHistory.register(request=self.request, task_history=task_history,
-                                        user=user, worker_name=worker_name)
+        task_history = models.TaskHistory.objects.get(id=task_history)
+        task_history = TaskHistory.register(request=self.request, task_history=task_history,
+                                            user=user, worker_name=worker_name)
 
-    databaseinfra = database.databaseinfra
+        databaseinfra = database.databaseinfra
 
-    snapshot = Snapshot.objects.get(id=snapshot)
-    snapshot_id = snapshot.snapshopt_id
+        snapshot = Snapshot.objects.get(id=snapshot)
+        snapshot_id = snapshot.snapshopt_id
 
-    host_attr_snapshot = HostAttr.objects.get(nfsaas_path=snapshot.export_path)
-    host = host_attr_snapshot.host
-    host_attr = HostAttr.objects.get(host=host, is_active=True)
+        host_attr_snapshot = HostAttr.objects.get(nfsaas_path=snapshot.export_path)
+        host = host_attr_snapshot.host
+        host_attr = HostAttr.objects.get(host=host, is_active=True)
 
-    export_id_snapshot = host_attr_snapshot.nfsaas_export_id
-    export_id = host_attr.nfsaas_export_id
-    export_path = host_attr.nfsaas_path
+        export_id_snapshot = host_attr_snapshot.nfsaas_export_id
+        export_id = host_attr.nfsaas_export_id
+        export_path = host_attr.nfsaas_path
 
-    steps = RESTORE_SNAPSHOT_SINGLE
+        steps = RESTORE_SNAPSHOT_SINGLE
 
-    tasks.disable_zabbix_alarms(database)
+        tasks.disable_zabbix_alarms(database)
 
-    if databaseinfra.plan.is_ha and databaseinfra.engine_name == 'mysql':
-        steps = RESTORE_SNAPSHOT_MYSQL_HA
+        if databaseinfra.plan.is_ha and databaseinfra.engine_name == 'mysql':
+            steps = RESTORE_SNAPSHOT_MYSQL_HA
 
-    not_primary_instances = databaseinfra.instances.exclude(hostname=host).exclude(instance_type__in=[Instance.MONGODB_ARBITER,
-                                                                                                      Instance.REDIS_SENTINEL])
-    not_primary_hosts = [
-        instance.hostname for instance in not_primary_instances]
+        not_primary_instances = databaseinfra.instances.exclude(hostname=host).exclude(instance_type__in=[Instance.MONGODB_ARBITER,
+                                                                                                          Instance.REDIS_SENTINEL])
+        not_primary_hosts = [
+            instance.hostname for instance in not_primary_instances]
 
-    workflow_dict = build_dict(databaseinfra=databaseinfra,
-                               database=database,
-                               snapshot_id=snapshot_id,
-                               export_path=export_path,
-                               export_id=export_id,
-                               export_id_snapshot=export_id_snapshot,
-                               host=host,
-                               steps=steps,
-                               not_primary_hosts=not_primary_hosts,
-                               )
+        workflow_dict = build_dict(databaseinfra=databaseinfra,
+                                   database=database,
+                                   snapshot_id=snapshot_id,
+                                   export_path=export_path,
+                                   export_id=export_id,
+                                   export_id_snapshot=export_id_snapshot,
+                                   host=host,
+                                   steps=steps,
+                                   not_primary_hosts=not_primary_hosts,
+                                   )
 
-    start_workflow(workflow_dict=workflow_dict, task=task_history)
+        start_workflow(workflow_dict=workflow_dict, task=task_history)
 
-    if workflow_dict['exceptions']['traceback']:
-        error = "\n".join(
-            ": ".join(err) for err in workflow_dict['exceptions']['error_codes'])
-        traceback = "\nException Traceback\n".join(
-            workflow_dict['exceptions']['traceback'])
+        if workflow_dict['exceptions']['traceback']:
+            raise Exception('Restore could not be finished')
+        else:
+            task_history.update_status_for(
+                TaskHistory.STATUS_SUCCESS, details='Database sucessfully recovered!')
+
+    except Exception:
+        error = "\n".join(": ".join(err) for err in
+                          workflow_dict['exceptions']['error_codes'])
+        traceback = "\nException Traceback\n".join(workflow_dict['exceptions']['traceback'])
         error = "{}\n{}\n{}".format(error, traceback, error)
         task_history.update_status_for(
             TaskHistory.STATUS_ERROR, details=error)
-    else:
-        task_history.update_status_for(
-            TaskHistory.STATUS_SUCCESS, details='Database sucessfully recovered!')
-
-    tasks.enable_zabbix_alarms(database)
-
-    return
+    finally:
+        tasks.enable_zabbix_alarms(database)
 
 
 def purge_unused_exports():
