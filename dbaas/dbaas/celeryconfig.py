@@ -13,3 +13,4 @@ CELERYBEAT_SCHEDULER = 'djcelery.schedulers.DatabaseScheduler'
 CELERYD_LOG_FORMAT = "[%(asctime)s: %(processName)s %(name)s %(levelname)s] %(message)s"
 CELERY_ALWAYS_EAGER = False
 CELERYD_LOG_COLOR = False
+CELERYD_PREFETCH_MULTIPLIER = 1
