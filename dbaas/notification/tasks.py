@@ -701,7 +701,26 @@ def upgrade_mongodb_24_to_30(self, database, user, task_history=None):
     task_history = TaskHistory.register(request=self.request, task_history=task_history,
                                         user=user, worker_name=worker_name)
 
+    databaseinfra = database.databaseinfra
+    driver = databaseinfra.get_driver()
+
+    instances = driver.get_database_instances()
+    source_plan = databaseinfra.plan
+    target_plan = source_plan.engine_equivalent_plan
+
+    source_engine = databaseinfra.engine
+    target_engine = source_engine.engine_upgrade_option
+
     stop_now = False
+
+    if not target_plan:
+        msg = "There is not Engine Equivalent Plan!"
+        stop_now = True
+
+    if not target_engine:
+        msg = "There is not Engine Upgrade Option!"
+        stop_now = True
+
     if database.status != Database.ALIVE or not database.database_status.is_alive:
         msg = "Database is not alive!"
         stop_now = True
@@ -719,18 +738,17 @@ def upgrade_mongodb_24_to_30(self, database, user, task_history=None):
         LOG.info("Upgrade finished")
         return
 
-    databaseinfra = database.databaseinfra
-    driver = databaseinfra.get_driver()
-
-    instances = driver.get_database_instances()
-
     try:
 
         #disable_zabbix_alarms(database)
 
         workflow_dict = build_dict(steps=MONGODB_UPGRADE_24_TO_30,
                                    databaseinfra=databaseinfra,
-                                   instances=instances)
+                                   instances=instances,
+                                   source_plan=source_plan,
+                                   target_plan=target_plan,
+                                   source_engine=source_engine,
+                                   target_engine=target_engine)
 
         start_workflow(workflow_dict=workflow_dict, task=task_history)
 

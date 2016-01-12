@@ -55,7 +55,7 @@ dbaas_cloudstack==0.7.8
 dbaas_credentials==1.0.7
 dbaas_nfsaas==0.6.7
 dbaas_zabbix==0.2.8
-dbaas_dbmonitor==0.1.7
+dbaas_dbmonitor==0.2.2
 dbaas_flipper==0.0.9
 django-filter==0.9.1
 dbaas-aclapi==0.0.52

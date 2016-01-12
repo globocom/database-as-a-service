@@ -209,12 +209,11 @@ def build_change_release_alias_script():
 def build_authschemaupgrade_script():
     return """
         sleep 10
-        echo ""; echo $(date "+%Y-%m-%d %T") "- Adding new database members"
         /usr/local/mongodb/bin/mongo {{CONNECT_STRING}} <<EOF_DBAAS
         db.adminCommand({authSchemaUpgrade: 1});
         exit
         \nEOF_DBAAS
-        die_if_error "Error adding new replica set members"
+        die_if_error "Error running authSchemaUpgrade"
     """
 
 
@@ -242,6 +241,40 @@ def build_restart_database_script():
         echo ""; echo $(date "+%Y-%m-%d %T") "- Starting the database"
         /etc/init.d/mongodb restart > /dev/null
         die_if_error "Error restarting database"
+    """
+
+
+def build_clean_data_data_script():
+    return """
+        rm -rf /data/data/*
+    """
+
+
+def build_dump_database_script():
+    return """
+        mkdir /data/dump
+        /usr/local/mongodb/bin/mongodump --out /data/dump/
+        die_if_error "Error dumping database"
+    """
+
+
+def build_mongorestore_database_script():
+    return """
+        /usr/local/mongodb/bin/mongorestore /data/dump/
+        die_if_error "Error restoring database"
+        rm -rf /data/dump/
+    """
+
+
+def build_change_mongodb_conf_file_script():
+    return """
+        line=$(cat '/data/mongodb.conf' | grep -n 'dbpath' | grep -o '^[0-9]*')
+        line=$((line + 2))
+        sed -i ${line}'i\# Storage Engine\\nstorageEngine = wiredTiger\\n' /data/mongodb.conf
+
+        line=$(cat '/data/mongodb.conf' | grep -n 'rest' | grep -o '^[0-9]*')
+        line=$((line + 1))
+        sed -i ${line}'i\httpinterface = true' /data/mongodb.conf
     """
 
 
