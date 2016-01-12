@@ -108,8 +108,13 @@ class Plan(BaseModel):
     max_db_size = models.IntegerField(default=0,
                                       verbose_name=_("Max database size (MB)"),
                                       help_text=_("What is the maximum size of each database (MB). 0 means unlimited."))
-    equivalent_plan = models.ForeignKey(
-        "Plan", null=True, blank=True, on_delete=models.SET_NULL)
+    equivalent_plan = models.ForeignKey("Plan", null=True, blank=True,
+                                        verbose_name=_("Region Migration plan"),
+                                        on_delete=models.SET_NULL)
+    engine_equivalent_plan = models.ForeignKey("Plan", null=True, blank=True,
+                                               verbose_name=_("Engine version upgrade plan"),
+                                               on_delete=models.SET_NULL,
+                                               related_name='backwards_plan')
 
     @property
     def engine_type(self):
