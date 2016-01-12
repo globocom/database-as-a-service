@@ -598,8 +598,6 @@ def volume_migration(self, database, user, task_history=None):
     instances.append(master_instance)
     LOG.info('Instances: {}'.format(str(instances)))
 
-    disable_zabbix_alarms(database)
-
     hosts = [instance.hostname for instance in instances]
     volumes = HostAttr.objects.filter(host__in=hosts,
                                       is_active=True,
@@ -612,6 +610,7 @@ def volume_migration(self, database, user, task_history=None):
         return
 
     try:
+        disable_zabbix_alarms(database)
         for index, instance in enumerate(instances):
             if not driver.check_instance_is_eligible_for_backup(instance=instance):
                 LOG.info(
