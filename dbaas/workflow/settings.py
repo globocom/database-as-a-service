@@ -258,3 +258,8 @@ VOLUME_MIGRATION = (
     'workflow.steps.util.volume_migration.start_database.StartDatabase',
     'workflow.steps.util.volume_migration.update_dbaas_metadata.UpdateDbaaSMetadata',
 )
+
+MONGODB_UPGRADE_24_TO_30 = (
+    'workflow.steps.mongodb.upgrade.upgrade_mongodb_24_to_26_single.UpgradeMongoDB_24_to_26',
+    'workflow.steps.mongodb.upgrade.upgrade_mongodb_26_to_30_single.UpgradeMongoDB_26_to_30',
+)
