@@ -688,3 +688,66 @@ def handle_zabbix_alarms(database):
                                              integration=integration)
 
     return factory_for(databaseinfra=database.databaseinfra, credentials=credentials)
+
+
+@app.task(bind=True)
+def upgrade_mongodb_24_to_30(self, database, user, task_history=None):
+
+    from workflow.settings import MONGODB_UPGRADE_24_TO_30
+    from util import build_dict
+    from workflow.workflow import start_workflow
+
+    worker_name = get_worker_name()
+    task_history = TaskHistory.register(request=self.request, task_history=task_history,
+                                        user=user, worker_name=worker_name)
+
+    stop_now = False
+    if database.status != Database.ALIVE or not database.database_status.is_alive:
+        msg = "Database is not alive!"
+        stop_now = True
+
+    if database.is_beeing_used_elsewhere(task_id=self.request.id):
+        msg = "Database is in use by another task!"
+        stop_now = True
+
+    if database.has_migration_started():
+        msg = "Region migration for this database has already started!"
+        stop_now = True
+
+    if stop_now:
+        task_history.update_status_for(TaskHistory.STATUS_SUCCESS, details=msg)
+        LOG.info("Upgrade finished")
+        return
+
+    databaseinfra = database.databaseinfra
+    driver = databaseinfra.get_driver()
+
+    instances = driver.get_database_instances()
+
+    try:
+
+        #disable_zabbix_alarms(database)
+
+        workflow_dict = build_dict(steps=MONGODB_UPGRADE_24_TO_30,
+                                   databaseinfra=databaseinfra,
+                                   instances=instances)
+
+        start_workflow(workflow_dict=workflow_dict, task=task_history)
+
+        if workflow_dict['exceptions']['traceback']:
+            error = "\n".join(": ".join(err) for err in workflow_dict['exceptions']['error_codes'])
+            traceback = "\nException Traceback\n".join(workflow_dict['exceptions']['traceback'])
+            error = "{}\n{}\n{}".format(error, traceback, error)
+            task_history.update_status_for(TaskHistory.STATUS_ERROR, details=error)
+            LOG.info("MongoDB Upgrade finished with errors")
+            return
+
+        task_history.update_status_for(
+            TaskHistory.STATUS_SUCCESS, details='MongoDB sucessfully upgraded!')
+
+        LOG.info("MongoDB Upgrade finished")
+    except Exception as e:
+        task_history.update_status_for(TaskHistory.STATUS_ERROR, details=e)
+        LOG.warning("MongoDB Upgrade finished with errors")
+    #finally:
+    #    enable_zabbix_alarms(database)
