@@ -64,6 +64,10 @@ class Engine(BaseModel):
                                         blank=True,
                                         null=True,
                                         help_text="Script that will be sent as an user-data to provision the virtual machine")
+    engine_upgrade_option = models.ForeignKey("Engine", null=True, blank=True,
+                                              verbose_name=_("Engine version upgrade"),
+                                              on_delete=models.SET_NULL,
+                                              related_name='backwards_engine')
 
     class Meta:
         unique_together = (
