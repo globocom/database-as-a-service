@@ -7,23 +7,18 @@ from dbaas_cloudstack.models import HostAttr as CS_HostAttr
 from workflow.steps.util.base import BaseStep
 from workflow.exceptions.error_codes import DBAAS_0023
 from workflow.steps.util import test_bash_script_error
-from workflow.steps.mongodb.util import build_enable_authentication_single_instance_script
-from workflow.steps.mongodb.util import build_mongorestore_database_script
-from workflow.steps.mongodb.util import build_change_mongodb_conf_file_script
+from workflow.steps.mongodb.util import build_disable_authentication_single_instance_script
+from workflow.steps.mongodb.util import build_dump_database_script
 from workflow.steps.mongodb.util import build_restart_database_script
-from workflow.steps.mongodb.util import build_start_database_script
-from workflow.steps.mongodb.util import build_stop_database_script
-
-from workflow.steps.mongodb.util import build_clean_data_data_script
 
 
 LOG = logging.getLogger(__name__)
 
 
-class ChangeMongoDBStorageEngine(BaseStep):
+class PreReqChangeMongoDBStorageEngine(BaseStep):
 
     def __unicode__(self):
-        return "Changing Storage Engine to wiredTiger ..."
+        return "Prerequisites to changing Storage engine to wiredTiger ..."
 
     def do(self, workflow_dict):
         try:
@@ -31,13 +26,9 @@ class ChangeMongoDBStorageEngine(BaseStep):
             instances = workflow_dict['instances']
 
             script = test_bash_script_error()
-            script += build_change_mongodb_conf_file_script()
-            script += build_stop_database_script(clean_data=False)
-            script += build_clean_data_data_script()
-            script += build_start_database_script()
-            script += build_mongorestore_database_script()
-            script += build_enable_authentication_single_instance_script()
+            script += build_disable_authentication_single_instance_script()
             script += build_restart_database_script()
+            script += build_dump_database_script()
 
             context_dict = {
             }

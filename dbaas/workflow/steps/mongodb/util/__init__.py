@@ -174,6 +174,13 @@ def build_switch_primary_to_old_instances_script():
     """
 
 
+def clean_files_old_binary_files():
+    return """
+        cd {{TARGET_PATH}}
+        rm -rf {{MONGODB_OLD_RELEASE_FOLDER}}
+    """
+
+
 def build_cp_mongodb_binary_file():
     return """
         cd {{TARGET_PATH}}

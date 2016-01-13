@@ -733,8 +733,16 @@ def upgrade_mongodb_24_to_30(self, database, user, task_history=None):
         msg = "Region migration for this database has already started!"
         stop_now = True
 
+    if not source_engine.version.startswith('2.4.'):
+        msg = "Database version must be 2.4!"
+        stop_now = True
+
+    if target_engine and target_engine.version != '3.0.8':
+        msg = "Target database version must be 3.0.8!"
+        stop_now = True
+
     if stop_now:
-        task_history.update_status_for(TaskHistory.STATUS_SUCCESS, details=msg)
+        task_history.update_status_for(TaskHistory.STATUS_ERROR, details=msg)
         LOG.info("Upgrade finished")
         return
 
