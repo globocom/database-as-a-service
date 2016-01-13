@@ -930,7 +930,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
         if not database.is_mongodb_24:
             self.message_user(
-                request, "Database {} cannot be migrated, please contact you DBA.".format(database.name), level=messages.ERROR)
+                request, "Database {} cannot be upgraded, please contact you DBA.".format(database.name), level=messages.ERROR)
             return HttpResponseRedirect(url)
 
         task_history = TaskHistory()
