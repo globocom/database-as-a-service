@@ -901,9 +901,47 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             region_migration.save()
             self.message_user(request, "Migration for {} started!".format(
                 database.name), level=messages.SUCCESS)
-        except IntegrityError, e:
+        except IntegrityError:
             self.message_user(request, "Database {} is already migrating!".format(
                 database.name), level=messages.ERROR)
+
+        return HttpResponseRedirect(url)
+
+    def mongodb_engine_version_upgrade(self, request, database_id):
+        from notification.tasks import upgrade_mongodb_24_to_30
+        database = Database.objects.get(id=database_id)
+
+        url = reverse('admin:logical_database_change', args=[database_id,])
+
+        if database.is_in_quarantine:
+            self.message_user(
+                request, "Database in quarantine and cannot be upgraded!", level=messages.ERROR)
+            return HttpResponseRedirect(url)
+
+        if database.status != Database.ALIVE or not database.database_status.is_alive:
+            self.message_user(
+                request, "Database is dead  and cannot be upgraded!", level=messages.ERROR)
+            return HttpResponseRedirect(url)
+
+        if database.has_migration_started():
+            self.message_user(
+                request, "Database {} is beeing migrated and cannot be upgraded!".format(database.name), level=messages.ERROR)
+            return HttpResponseRedirect(url)
+
+        if not database.is_mongodb_24:
+            self.message_user(
+                request, "Database {} cannot be migrated, please contact you DBA.".format(database.name), level=messages.ERROR)
+            return HttpResponseRedirect(url)
+
+        task_history = TaskHistory()
+        task_history.task_name = "upgrade_mongodb_24_to_30"
+        task_history.task_status = task_history.STATUS_WAITING
+        task_history.arguments = "Upgrading MongoDB 2.4 to 3.0"
+        task_history.user = request.user
+        task_history.save()
+
+        upgrade_mongodb_24_to_30.delay(database, request.user, task_history)
+        url = reverse('admin:notification_taskhistory_changelist')
 
         return HttpResponseRedirect(url)
 
@@ -933,6 +971,9 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
                            url(r'^/?(?P<database_id>\d+)/initialize_migration/$', self.admin_site.admin_view(self.initialize_migration),
                                name="database_initialize_migration"),
+
+                           url(r'^/?(?P<database_id>\d+)/mongodb_engine_version_upgrade/$', self.admin_site.admin_view(self.mongodb_engine_version_upgrade),
+                               name="mongodb_engine_version_upgrade"),
 
                            )
 
