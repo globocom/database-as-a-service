@@ -58,11 +58,15 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
     service_class = DatabaseService
     search_fields = ("name", "databaseinfra__name", "team__name",
-                     "project__name", "environment__name", "databaseinfra__engine__engine_type__name")
-    list_display_basic = ["name_html", "team_admin_page", "engine", "environment", "plan", "friendly_status", "clone_html", "get_capacity_html", "metrics_html", ]
+                     "project__name", "environment__name",
+                     "databaseinfra__engine__engine_type__name")
+    list_display_basic = ["name_html", "team_admin_page", "engine", "environment",
+                          "plan", "friendly_status", "clone_html", "get_capacity_html",
+                          "metrics_html", ]
     list_display_advanced = list_display_basic + ["quarantine_dt_format"]
     list_filter_basic = ["project", "databaseinfra__environment",
-                         "databaseinfra__engine", "databaseinfra__plan", "databaseinfra__engine__engine_type"]
+                         "databaseinfra__engine", "databaseinfra__plan",
+                         "databaseinfra__engine__engine_type"]
     list_filter_advanced = list_filter_basic + \
         ["databaseinfra", "is_in_quarantine", "team"]
     add_form_template = "logical/database/database_add_form.html"
@@ -70,7 +74,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     delete_button_name = "Delete"
     fieldsets_add = (
         (None, {
-            'fields': ('name', 'description', 'project', 'engine', 'environment', 'team', 'plan', 'is_in_quarantine', )
+            'fields': ('name', 'description', 'project', 'engine', 'environment',
+                       'team', 'plan', 'is_in_quarantine', )
         }
         ),
     )
@@ -223,7 +228,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 pass
 
         self.message_user(
-            request, "Migration for selected database(s) started!", level=messages.SUCCESS)
+            request, "Migration for selected database(s) started!",
+            level=messages.SUCCESS)
 
         return HttpResponseRedirect(url)
 
@@ -235,7 +241,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         if not request.user.has_perm(self.perm_add_database_infra):
             if db_field.name == "team":
                 kwargs["queryset"] = Team.objects.filter(users=request.user)
-        return super(DatabaseAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
+        return super(DatabaseAdmin, self).formfield_for_foreignkey(db_field,
+                                                                   request, **kwargs)
 
     def get_fieldsets(self, request, obj=None):
         if obj:  # In edit mode
@@ -305,7 +312,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             "form": self.form,
             "fields": fields,
             "exclude": exclude,
-            "formfield_callback": partial(self.formfield_for_dbfield, request=request),
+            "formfield_callback": partial(self.formfield_for_dbfield,
+                                          request=request),
         }
         defaults.update(kwargs)
 
@@ -326,7 +334,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         else:
             self.list_filter = self.list_filter_basic
 
-        return super(DatabaseAdmin, self).changelist_view(request, extra_context=extra_context)
+        return super(DatabaseAdmin, self).changelist_view(request,
+                                                          extra_context=extra_context)
 
     def add_view(self, request, form_url='', extra_context=None):
         self.form = DatabaseForm
@@ -356,7 +365,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 form = DatabaseForm(request.POST)
 
                 if not form.is_valid():
-                    return super(DatabaseAdmin, self).add_view(request, form_url, extra_context=extra_context)
+                    return super(DatabaseAdmin, self).add_view(request, form_url,
+                                                               extra_context=extra_context)
 
                 LOG.debug(
                     "call create_database - name=%s, plan=%s, environment=%s, team=%s, project=%s, description=%s, user=%s" % (
@@ -415,7 +425,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         else:
             extra_context['is_dba'] = False
 
-        return super(DatabaseAdmin, self).change_view(request, object_id, form_url, extra_context=extra_context)
+        return super(DatabaseAdmin, self).change_view(request, object_id,
+                                                      form_url,extra_context=extra_context)
 
     def delete_view(self, request, object_id, extra_context=None):
         database = Database.objects.get(id=object_id)
@@ -498,13 +509,15 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         database = Database.objects.get(id=database_id)
         if database.is_in_quarantine:
             self.message_user(
-                request, "Database in quarantine cannot be cloned", level=messages.ERROR)
+                request, "Database in quarantine cannot be cloned",
+                level=messages.ERROR)
             url = reverse('admin:logical_database_changelist')
             return HttpResponseRedirect(url)  # Redirect after POST
 
         if database.status != Database.ALIVE or not database.database_status.is_alive:
             self.message_user(
-                request, "Database is not alive and cannot be cloned", level=messages.ERROR)
+                request, "Database is not alive and cannot be cloned",
+                level=messages.ERROR)
             url = reverse('admin:logical_database_changelist')
             return HttpResponseRedirect(url)
 
@@ -577,8 +590,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         database = Database.objects.get(id=database_id)
         engine = database.infra.engine_name
         db_name = database.name
-        URL = get_credentials_for(
-            environment=database.environment, credential_type=CredentialType.GRAPHITE).endpoint
+        URL = get_credentials_for(environment=database.environment,
+                                  credential_type=CredentialType.GRAPHITE).endpoint
 
         from_option = request.POST.get('change_from') or '2hours'
         granurality = self.get_granurality(from_option) or '20minutes'
@@ -598,7 +611,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         if graph_data[0]['normalize_series'] == True:
             show_filters = False
 
-        return render_to_response("logical/database/metrics/metricdetail.html", locals(), context_instance=RequestContext(request))
+        return render_to_response("logical/database/metrics/metricdetail.html",
+                                  locals(), context_instance=RequestContext(request))
 
     def metrics_view(self, request, database_id):
         database = Database.objects.get(id=database_id)
@@ -627,10 +641,11 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             for host in Host.objects.filter(instance__databaseinfra=database.infra).distinct():
                 hosts.append(host.hostname.split('.')[0])
 
-            graph_data = get_metric_datapoints_for(
-                engine, db_name, hostname, url=URL, granurality='10seconds', from_option='2hours')
+            graph_data = get_metric_datapoints_for(engine, db_name, hostname, url=URL,
+                                                   granurality='10seconds', from_option='2hours')
 
-        return render_to_response("logical/database/metrics/metrics.html", locals(), context_instance=RequestContext(request))
+        return render_to_response("logical/database/metrics/metrics.html", locals(),
+                                  context_instance=RequestContext(request))
 
     def database_dex_analyze_view(self, request, database_id):
         import json
@@ -643,11 +658,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         import string
         from datetime import datetime, timedelta
 
-
-        def generate_random_string(length, stringset=string.ascii_letters+string.digits):
-            return ''.join([stringset[i%len(stringset)] \
-            for i in [ord(x) for x in os.urandom(length)]])
-
+        def generate_random_string(length, stringset=string.ascii_letters + string.digits):
+            return ''.join([stringset[i % len(stringset)] for i in [ord(x) for x in os.urandom(length)]])
 
         database = Database.objects.get(id=database_id)
 
@@ -663,9 +675,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             url = reverse('admin:logical_database_changelist')
             return HttpResponseRedirect(url)
 
-
-        credential =get_credentials_for(environment=database.environment,
-                                        credential_type=CredentialType.LAAS)
+        credential = get_credentials_for(environment=database.environment,
+                                         credential_type=CredentialType.LAAS)
 
         db_name = database.name
         environment = database.environment
@@ -680,7 +691,6 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         today = (datetime.now()).strftime('%Y%m%d')
         yesterday = (datetime.now() - timedelta(days=1)).strftime('%Y%m%d')
         uri = "group:{} text:query date:[{} TO {}] time:[000000 TO 235959]".format(group_name,yesterday,today)
-
 
         parsed_logs = ''
         database_logs = provider.get_logs_for_group(environment, lognit_environment, uri)
@@ -699,7 +709,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
         arq_path = Configuration.get_by_name('database_clone_dir') + '/' + database.name + generate_random_string(20) + '.txt'
 
-        arq = open(arq_path,'w')
+        arq = open(arq_path, 'w')
         arq.write(parsed_logs)
         arq.close()
 
@@ -712,15 +722,17 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         old_stdout = sys.stdout
         sys.stdout = mystdout = StringIO()
 
-        md = dex.Dex(db_uri=uri, verbose=False, namespaces_list=[],
-                      slowms=0, check_indexes=True, timeout=0)
+        md = dex.Dex(db_uri=uri, verbose=False, namespaces_list=[], slowms=0,
+                     check_indexes=True, timeout=0)
 
         md.analyze_logfile(arq_path)
 
         sys.stdout = old_stdout
 
         dexanalyzer = loads(
-            mystdout.getvalue().replace("\"", "&&").replace("'", "\"").replace("&&", "'"))
+            mystdout.getvalue().replace("\"",
+                                        "&&").replace("'",
+                                                      "\"").replace("&&", "'"))
 
         os.remove(arq_path)
 
@@ -747,7 +759,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
         final_mask += """</ul> </div>"""
 
-        return render_to_response("logical/database/dex_analyze.html", locals(), context_instance=RequestContext(request))
+        return render_to_response("logical/database/dex_analyze.html",
+                                  locals(), context_instance=RequestContext(request))
 
     def database_resize_view(self, request, database_id):
         from dbaas_cloudstack.models import CloudStackPack
@@ -758,17 +771,21 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
         if database.is_in_quarantine:
             self.message_user(
-                request, "Database in quarantine and cannot be resized", level=messages.ERROR)
+                request, "Database in quarantine and cannot be resized",
+                level=messages.ERROR)
             return HttpResponseRedirect(url)  # Redirect after POST
 
         if database.status != Database.ALIVE or not database.database_status.is_alive:
             self.message_user(
-                request, "Database is dead  and cannot be resized", level=messages.ERROR)
+                request, "Database is dead  and cannot be resized",
+                level=messages.ERROR)
             return HttpResponseRedirect(url)  # Redirect after POST
 
         if database.is_beeing_used_elsewhere():
             self.message_user(
-                request, "Database is beeing used by another task, please check your tasks", level=messages.ERROR)
+                request,
+                "Database is beeing used by another task, please check your tasks",
+                level=messages.ERROR)
             return HttpResponseRedirect(url)
 
         if database.has_migration_started():
@@ -782,13 +799,15 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             engine_type__name=database.engine_type
         ).exclude(offering__serviceofferingid=database.offering_id):
             self.message_user(
-                request, "Database has no offerings availables.", level=messages.ERROR)
+                request, "Database has no offerings availables.",
+                level=messages.ERROR)
             return HttpResponseRedirect(url)  # Redirect after POST
 
         form = None
         if request.method == 'POST':  # If the form has been submitted...
             form = ResizeDatabaseForm(request.POST, initial={
-                                      "database_id": database_id, "original_offering_id": database.offering_id},)  # A form bound to the POST data
+                                      "database_id": database_id,
+                                      "original_offering_id": database.offering_id},)  # A form bound to the POST data
             if form.is_valid():  # All validation rules pass
 
                 cloudstackpack = CloudStackPack.objects.get(
@@ -802,7 +821,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 return HttpResponseRedirect(url + "?user=%s" % request.user.username)
         else:
             form = ResizeDatabaseForm(initial={
-                                      "database_id": database_id, "original_offering_id": database.offering_id},)  # An unbound form
+                                      "database_id": database_id,
+                                      "original_offering_id": database.offering_id},)  # An unbound form
         return render_to_response("logical/database/resize.html",
                                   locals(),
                                   context_instance=RequestContext(request))
@@ -814,12 +834,14 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
         if database.is_in_quarantine:
             self.message_user(
-                request, "Database in quarantine and cannot be restored", level=messages.ERROR)
+                request, "Database in quarantine and cannot be restored",
+                level=messages.ERROR)
             return HttpResponseRedirect(url)
 
         if database.status != Database.ALIVE or not database.database_status.is_alive:
             self.message_user(
-                request, "Database is dead  and cannot be restored", level=messages.ERROR)
+                request, "Database is dead  and cannot be restored",
+                level=messages.ERROR)
             return HttpResponseRedirect(url)
 
         if database.is_beeing_used_elsewhere():
@@ -884,17 +906,20 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
         if database.is_in_quarantine:
             self.message_user(
-                request, "Database in quarantine and cannot be migrated", level=messages.ERROR)
+                request, "Database in quarantine and cannot be migrated",
+                level=messages.ERROR)
             return HttpResponseRedirect(url)
 
         if database.status != Database.ALIVE or not database.database_status.is_alive:
             self.message_user(
-                request, "Database is dead  and cannot be migrated", level=messages.ERROR)
+                request, "Database is dead  and cannot be migrated",
+                level=messages.ERROR)
             return HttpResponseRedirect(url)
 
         if database.has_migration_started():
             self.message_user(
-                request, "Database {} is already migrating".format(database.name), level=messages.ERROR)
+                request, "Database {} is already migrating".format(database.name),
+                level=messages.ERROR)
             return HttpResponseRedirect(url)
 
         try:
@@ -911,16 +936,18 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         from notification.tasks import upgrade_mongodb_24_to_30
         database = Database.objects.get(id=database_id)
 
-        url = reverse('admin:logical_database_change', args=[database_id,])
+        url = reverse('admin:logical_database_change', args=[database_id])
 
         if database.is_in_quarantine:
             self.message_user(
-                request, "Database in quarantine and cannot be upgraded!", level=messages.ERROR)
+                request, "Database in quarantine and cannot be upgraded!",
+                level=messages.ERROR)
             return HttpResponseRedirect(url)
 
         if database.status != Database.ALIVE or not database.database_status.is_alive:
             self.message_user(
-                request, "Database is dead  and cannot be upgraded!", level=messages.ERROR)
+                request, "Database is dead  and cannot be upgraded!",
+                level=messages.ERROR)
             return HttpResponseRedirect(url)
 
         if database.has_migration_started():
@@ -948,31 +975,40 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     def get_urls(self):
         urls = super(DatabaseAdmin, self).get_urls()
         my_urls = patterns('',
-                           url(r'^/?(?P<database_id>\d+)/clone/$', self.admin_site.admin_view(self.clone_view),
+                           url(r'^/?(?P<database_id>\d+)/clone/$',
+                               self.admin_site.admin_view(self.clone_view),
                                name="database_clone"),
 
-                           url(r'^/?(?P<database_id>\d+)/metrics/$', self.admin_site.admin_view(self.metrics_view),
+                           url(r'^/?(?P<database_id>\d+)/metrics/$',
+                               self.admin_site.admin_view(self.metrics_view),
                                name="database_metrics"),
 
-                           url(r'^/?(?P<database_id>\d+)/metricdetail/$', self.admin_site.admin_view(self.metricdetail_view),
+                           url(r'^/?(?P<database_id>\d+)/metricdetail/$',
+                               self.admin_site.admin_view(self.metricdetail_view),
                                name="database_metricdetail"),
 
-                           url(r'^/?(?P<database_id>\d+)/resize/$', self.admin_site.admin_view(self.database_resize_view),
+                           url(r'^/?(?P<database_id>\d+)/resize/$',
+                               self.admin_site.admin_view(self.database_resize_view),
                                name="database_resize"),
 
-                           url(r'^/?(?P<database_id>\d+)/lognit/$', self.admin_site.admin_view(self.database_log_view),
+                           url(r'^/?(?P<database_id>\d+)/lognit/$',
+                               self.admin_site.admin_view(self.database_log_view),
                                name="database_resize"),
 
-                           url(r'^/?(?P<database_id>\d+)/dex/$', self.admin_site.admin_view(self.database_dex_analyze_view),
+                           url(r'^/?(?P<database_id>\d+)/dex/$',
+                               self.admin_site.admin_view(self.database_dex_analyze_view),
                                name="database_dex_analyze_view"),
 
-                           url(r'^/?(?P<database_id>\d+)/restore/$', self.admin_site.admin_view(self.restore_snapshot),
+                           url(r'^/?(?P<database_id>\d+)/restore/$',
+                               self.admin_site.admin_view(self.restore_snapshot),
                                name="database_restore_snapshot"),
 
-                           url(r'^/?(?P<database_id>\d+)/initialize_migration/$', self.admin_site.admin_view(self.initialize_migration),
+                           url(r'^/?(?P<database_id>\d+)/initialize_migration/$',
+                               self.admin_site.admin_view(self.initialize_migration),
                                name="database_initialize_migration"),
 
-                           url(r'^/?(?P<database_id>\d+)/mongodb_engine_version_upgrade/$', self.admin_site.admin_view(self.mongodb_engine_version_upgrade),
+                           url(r'^/?(?P<database_id>\d+)/mongodb_engine_version_upgrade/$',
+                               self.admin_site.admin_view(self.mongodb_engine_version_upgrade),
                                name="mongodb_engine_version_upgrade"),
 
                            )
@@ -1002,8 +1038,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 raise PermissionDenied
 
             n = queryset.count()
-            quarantine = any(result[
-                             'is_in_quarantine'] == True for result in queryset.values('is_in_quarantine'))
+            quarantine = any(result['is_in_quarantine'] == True for result in queryset.values('is_in_quarantine'))
 
             if n:
                 for obj in queryset:
