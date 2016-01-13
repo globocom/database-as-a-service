@@ -217,6 +217,7 @@ class BaseDriver(object):
         for attempt in range(0, attempts):
             if self.is_replication_ok(instance):
                 self.switch_master()
+                LOG.info("Switch master ok...")
                 return
             LOG.info("Waiting 10s to check replication...")
             sleep(10)

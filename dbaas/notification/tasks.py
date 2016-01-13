@@ -693,7 +693,8 @@ def handle_zabbix_alarms(database):
 @app.task(bind=True)
 def upgrade_mongodb_24_to_30(self, database, user, task_history=None):
 
-    from workflow.settings import MONGODB_UPGRADE_24_TO_30
+    from workflow.settings import MONGODB_UPGRADE_24_TO_30_SINGLE
+    from workflow.settings import MONGODB_UPGRADE_24_TO_30_HA
     from util import build_dict
     from workflow.workflow import start_workflow
 
@@ -710,6 +711,11 @@ def upgrade_mongodb_24_to_30(self, database, user, task_history=None):
 
     source_engine = databaseinfra.engine
     target_engine = source_engine.engine_upgrade_option
+
+    if source_plan.is_ha:
+        steps = MONGODB_UPGRADE_24_TO_30_HA
+    else:
+        steps = MONGODB_UPGRADE_24_TO_30_SINGLE
 
     stop_now = False
 
@@ -750,7 +756,7 @@ def upgrade_mongodb_24_to_30(self, database, user, task_history=None):
 
         #disable_zabbix_alarms(database)
 
-        workflow_dict = build_dict(steps=MONGODB_UPGRADE_24_TO_30,
+        workflow_dict = build_dict(steps=steps,
                                    databaseinfra=databaseinfra,
                                    instances=instances,
                                    source_plan=source_plan,
