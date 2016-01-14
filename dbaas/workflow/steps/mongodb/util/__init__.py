@@ -40,12 +40,13 @@ def build_permission_script():
         """
 
 
-def build_start_database_script():
+def build_start_database_script(wait_time=0):
     return """
         echo ""; echo $(date "+%Y-%m-%d %T") "- Starting the database"
         /etc/init.d/mongodb start > /dev/null
         die_if_error "Error starting database"
-    """
+        sleep {}
+    """.format(wait_time)
 
 
 def build_stop_database_script(clean_data=True):
@@ -240,6 +241,19 @@ def build_disable_authentication_single_instance_script():
 def build_enable_authentication_single_instance_script():
     return """
         sed -i 's/#auth/auth/g' /data/mongodb.conf
+    """
+
+
+def build_wait_admin_be_created_script():
+    return """
+        while true
+        do
+           if [ -d "/data/data/admin" ]; then
+              break
+           fi
+           sleep 10
+        done
+        sleep 10
     """
 
 

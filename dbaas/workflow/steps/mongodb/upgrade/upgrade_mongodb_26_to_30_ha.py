@@ -13,15 +13,18 @@ from workflow.steps.mongodb.util import build_start_database_script
 from workflow.steps.mongodb.util import build_change_release_alias_script
 from workflow.steps.mongodb.util import build_authschemaupgrade_script
 from workflow.steps.mongodb.util import build_mongodb_connect_string
+from workflow.steps.mongodb.util import build_change_limits_script
+from workflow.steps.mongodb.util import build_reinstal_mongo_gen_script
+from workflow.steps.mongodb.util import build_change_in_serverstatus_file_script
 
 
 LOG = logging.getLogger(__name__)
 
 
-class UpgradeMongoDB_24_to_26(BaseStep):
+class UpgradeMongoDB_26_to_30(BaseStep):
 
     def __unicode__(self):
-        return "Upgrade MongoDB 2.4 to 2.6 ..."
+        return "Upgrade MongoDB 2.6 to 3.0 ..."
 
     def do(self, workflow_dict):
         try:
@@ -88,14 +91,18 @@ class UpgradeMongoDB_24_to_26(BaseStep):
         script += build_stop_database_script(clean_data=False)
         script += build_change_release_alias_script()
         script += build_start_database_script(wait_time=30)
+        script += build_change_limits_script()
+        script += build_change_in_serverstatus_file_script()
+        script += build_reinstal_mongo_gen_script()
+
         if run_authschemaupgrade:
             script += build_authschemaupgrade_script()
 
         context_dict = {
             'SOURCE_PATH': '/mnt/software/db/mongodb',
             'TARGET_PATH': '/usr/local/',
-            'MONGODB_RELEASE_FILE': 'mongodb-linux-x86_64-2.6.11.tgz',
-            'MONGODB_RELEASE_FOLDER': 'mongodb-linux-x86_64-2.6.11',
+            'MONGODB_RELEASE_FILE': 'mongodb-linux-x86_64-3.0.8.tgz',
+            'MONGODB_RELEASE_FOLDER': 'mongodb-linux-x86_64-3.0.8',
             'CONNECT_STRING': connect_string,
         }
 

@@ -7,57 +7,44 @@ from dbaas_cloudstack.models import HostAttr as CS_HostAttr
 from workflow.steps.util.base import BaseStep
 from workflow.exceptions.error_codes import DBAAS_0023
 from workflow.steps.util import test_bash_script_error
-from workflow.steps.mongodb.util import build_cp_mongodb_binary_file
-from workflow.steps.mongodb.util import build_stop_database_script
+from workflow.steps.mongodb.util import build_change_mongodb_conf_file_script
 from workflow.steps.mongodb.util import build_start_database_script
-from workflow.steps.mongodb.util import build_change_release_alias_script
-from workflow.steps.mongodb.util import build_authschemaupgrade_script
-from workflow.steps.mongodb.util import build_mongodb_connect_string
+from workflow.steps.mongodb.util import build_stop_database_script
+from workflow.steps.mongodb.util import build_clean_data_data_script
+from workflow.steps.mongodb.util import build_wait_admin_be_created_script
 
 
 LOG = logging.getLogger(__name__)
 
 
-class UpgradeMongoDB_24_to_26(BaseStep):
+class ChangeMongoDBStorageEngine(BaseStep):
 
     def __unicode__(self):
-        return "Upgrade MongoDB 2.4 to 2.6 ..."
+        return "Changing Storage Engine to wiredTiger ..."
 
     def do(self, workflow_dict):
         try:
 
             databaseinfra = workflow_dict['databaseinfra']
-            instances = workflow_dict['instances']
             driver = databaseinfra.get_driver()
-
-            connect_string = build_mongodb_connect_string(instances=instances,
-                                                          databaseinfra=databaseinfra)
-
-            arbiter_instance = driver.get_non_database_instances()[0]
-            LOG.info('Changing Arbiter binaries {}...'.format(arbiter_instance))
-            self.change_instance_binaries(instance=arbiter_instance,
-                                          connect_string=connect_string,
-                                          run_authschemaupgrade=False)
 
             secondary_instance = driver.get_slave_instances()[0]
             LOG.info('Changing Secondary binaries {}...'.format(secondary_instance))
-            self.change_instance_binaries(instance=secondary_instance,
-                                          connect_string=connect_string,
-                                          run_authschemaupgrade=False)
+            self.change_instance_binaries(instance=secondary_instance)
 
             master_instance = driver.get_master_instance()
 
             LOG.info('Switching Databases')
-            driver.check_replication_and_switch(instance=secondary_instance)
+            driver.check_replication_and_switch(instance=secondary_instance,
+                                                attempts=10000)
             new_secondary = master_instance
 
             LOG.info('Changing old master binaries {}...'.format(new_secondary))
-            self.change_instance_binaries(instance=new_secondary,
-                                          connect_string=connect_string,
-                                          run_authschemaupgrade=True)
+            self.change_instance_binaries(instance=new_secondary)
 
             LOG.info('Switching Databases')
-            driver.check_replication_and_switch(instance=new_secondary)
+            driver.check_replication_and_switch(instance=new_secondary,
+                                                attempts=10000)
 
             return True
 
@@ -82,21 +69,16 @@ class UpgradeMongoDB_24_to_26(BaseStep):
 
             return False
 
-    def change_instance_binaries(self, instance, connect_string, run_authschemaupgrade):
+    def change_instance_binaries(self, instance):
+
         script = test_bash_script_error()
-        script += build_cp_mongodb_binary_file()
+        script += build_change_mongodb_conf_file_script()
         script += build_stop_database_script(clean_data=False)
-        script += build_change_release_alias_script()
-        script += build_start_database_script(wait_time=30)
-        if run_authschemaupgrade:
-            script += build_authschemaupgrade_script()
+        script += build_clean_data_data_script()
+        script += build_start_database_script()
+        script += build_wait_admin_be_created_script()
 
         context_dict = {
-            'SOURCE_PATH': '/mnt/software/db/mongodb',
-            'TARGET_PATH': '/usr/local/',
-            'MONGODB_RELEASE_FILE': 'mongodb-linux-x86_64-2.6.11.tgz',
-            'MONGODB_RELEASE_FOLDER': 'mongodb-linux-x86_64-2.6.11',
-            'CONNECT_STRING': connect_string,
         }
 
         script = build_context_script(context_dict, script)
