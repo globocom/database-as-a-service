@@ -688,3 +688,98 @@ def handle_zabbix_alarms(database):
                                              integration=integration)
 
     return factory_for(databaseinfra=database.databaseinfra, credentials=credentials)
+
+
+@app.task(bind=True)
+def upgrade_mongodb_24_to_30(self, database, user, task_history=None):
+
+    from workflow.settings import MONGODB_UPGRADE_24_TO_30_SINGLE
+    from workflow.settings import MONGODB_UPGRADE_24_TO_30_HA
+    from util import build_dict
+    from workflow.workflow import start_workflow
+
+    worker_name = get_worker_name()
+    task_history = TaskHistory.register(request=self.request, task_history=task_history,
+                                        user=user, worker_name=worker_name)
+
+    databaseinfra = database.databaseinfra
+    driver = databaseinfra.get_driver()
+
+    instances = driver.get_database_instances()
+    source_plan = databaseinfra.plan
+    target_plan = source_plan.engine_equivalent_plan
+
+    source_engine = databaseinfra.engine
+    target_engine = source_engine.engine_upgrade_option
+
+    if source_plan.is_ha:
+        steps = MONGODB_UPGRADE_24_TO_30_HA
+    else:
+        steps = MONGODB_UPGRADE_24_TO_30_SINGLE
+
+    stop_now = False
+
+    if not target_plan:
+        msg = "There is not Engine Equivalent Plan!"
+        stop_now = True
+
+    if not target_engine:
+        msg = "There is not Engine Upgrade Option!"
+        stop_now = True
+
+    if database.status != Database.ALIVE or not database.database_status.is_alive:
+        msg = "Database is not alive!"
+        stop_now = True
+
+    if database.is_beeing_used_elsewhere(task_id=self.request.id):
+        msg = "Database is in use by another task!"
+        stop_now = True
+
+    if database.has_migration_started():
+        msg = "Region migration for this database has already started!"
+        stop_now = True
+
+    if not source_engine.version.startswith('2.4.'):
+        msg = "Database version must be 2.4!"
+        stop_now = True
+
+    if target_engine and target_engine.version != '3.0.8':
+        msg = "Target database version must be 3.0.8!"
+        stop_now = True
+
+    if stop_now:
+        task_history.update_status_for(TaskHistory.STATUS_ERROR, details=msg)
+        LOG.info("Upgrade finished")
+        return
+
+    try:
+
+        #disable_zabbix_alarms(database)
+
+        workflow_dict = build_dict(steps=steps,
+                                   databaseinfra=databaseinfra,
+                                   instances=instances,
+                                   source_plan=source_plan,
+                                   target_plan=target_plan,
+                                   source_engine=source_engine,
+                                   target_engine=target_engine)
+
+        start_workflow(workflow_dict=workflow_dict, task=task_history)
+
+        if workflow_dict['exceptions']['traceback']:
+            error = "\n".join(": ".join(err) for err in workflow_dict['exceptions']['error_codes'])
+            traceback = "\nException Traceback\n".join(workflow_dict['exceptions']['traceback'])
+            error = "{}\n{}\n{}".format(error, traceback, error)
+            task_history.update_status_for(TaskHistory.STATUS_ERROR, details=error)
+            LOG.info("MongoDB Upgrade finished with errors")
+            return
+
+        task_history.update_status_for(
+            TaskHistory.STATUS_SUCCESS, details='MongoDB sucessfully upgraded!')
+
+        LOG.info("MongoDB Upgrade finished")
+    except Exception as e:
+        task_history.update_status_for(TaskHistory.STATUS_ERROR, details=e)
+        LOG.warning("MongoDB Upgrade finished with errors")
+    #finally:
+    #    enable_zabbix_alarms(database)

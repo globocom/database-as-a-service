@@ -298,18 +298,34 @@ class MongoDB(BaseDriver):
             return 0
 
         with self.pymongo() as client:
-            result = client.admin.command('replSetGetStatus')
-            primary_opttime = result['members'][0]['optimeDate'].replace(
-                tzinfo=tz.tzutc()).astimezone(tz.tzlocal())
 
-        with self.pymongo(instance=instance) as client:
-            result = client.admin.command('replSetGetStatus')
-            instance_opttime = result['members'][0]['optimeDate'].replace(
-                tzinfo=tz.tzutc()).astimezone(tz.tzlocal())
+            replSetGetStatus = client.admin.command('replSetGetStatus')
+            primary_opttime = None
+            for member in replSetGetStatus['members']:
+                if member['stateStr'] == 'PRIMARY':
+                    primary_opttime = member['optimeDate'].replace(tzinfo=tz.tzutc()).astimezone(tz.tzlocal())
+
+            if primary_opttime is None:
+                raise Exception("There is not any Primary in the Replica Set")
+
+            instance_opttime = None
+            for member in replSetGetStatus['members']:
+                if member["name"] == "{}:{}".format(instance.address, instance.port):
+                    instance_opttime = member['optimeDate'].replace(tzinfo=tz.tzutc()).astimezone(tz.tzlocal())
+                    instance_member = member
+
+            if instance_opttime is None:
+                raise Exception("Could not find the instance in the Replica Set")
 
         delay = primary_opttime - instance_opttime
+        seconds_delay = delay.days * 24 * 3600 + delay.seconds
+        LOG.info("The instance {} is {} seconds behind Primary".format(instance, seconds_delay))
 
-        return int(delay.seconds)
+        if seconds_delay == 0 and instance_member["stateStr"] not in ["PRIMARY", "SECONDARY"]:
+            LOG.info("The instance {} is 0 seconds behind Primary, but it is not Secondary. It is {}".format(instance, instance_member["stateStr"]))
+            return 100000
+
+        return seconds_delay
 
     def is_replication_ok(self, instance):
         if self.check_instance_is_master(instance=instance):

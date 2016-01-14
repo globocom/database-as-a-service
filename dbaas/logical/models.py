@@ -375,6 +375,15 @@ class Database(BaseModel):
     def get_migration_url(self):
         return "/admin/logical/database/{}/initialize_migration/".format(self.id)
 
+    def get_mongodb_engine_version_upgrade_url(self):
+        return "/admin/logical/database/{}/mongodb_engine_version_upgrade/".format(self.id)
+
+    def is_mongodb_24(self):
+        engine = self.engine
+        if engine.name == 'mongodb' and engine.version.startswith('2.4'):
+            return True
+        return False
+
     def get_cloudstack_service_offering_id(self):
         LOG.info("Get offering")
         try:
