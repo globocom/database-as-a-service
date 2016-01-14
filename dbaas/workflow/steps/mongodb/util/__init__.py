@@ -253,7 +253,7 @@ def build_wait_admin_be_created_script():
            fi
            sleep 10
         done
-        sleep 10
+        sleep 60
     """
 
 
