@@ -59,8 +59,9 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     service_class = DatabaseService
     search_fields = ("name", "databaseinfra__name", "team__name",
                      "project__name", "environment__name", "databaseinfra__engine__engine_type__name")
-    list_display_basic = ["name_html", "team_admin_page", "engine", "environment", "plan", "friendly_status", "clone_html", "get_capacity_html", "metrics_html", "created_dt_format", ]
-    list_display_advanced = list_display_basic + ["quarantine_dt_format"] 
+    list_display_basic = ["name_html", "team_admin_page", "engine", "environment", "plan",
+                          "friendly_status", "clone_html", "get_capacity_html", "metrics_html", "created_dt_format", ]
+    list_display_advanced = list_display_basic + ["quarantine_dt_format"]
     list_filter_basic = ["project", "databaseinfra__environment",
                          "databaseinfra__engine", "databaseinfra__plan", "databaseinfra__engine__engine_type"]
     list_filter_advanced = list_filter_basic + \
@@ -145,7 +146,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     def team_admin_page(self, database):
         team_name = database.team.name
         if self.list_filter == self.list_filter_advanced:
-            url = reverse('admin:account_team_change', args=(database.team.id,))
+            url = reverse('admin:account_team_change',
+                          args=(database.team.id,))
             team_name = """<a href="{}"> {} </a> """.format(url, team_name)
             return format_html(team_name)
         return team_name
@@ -649,11 +651,9 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         import string
         from datetime import datetime, timedelta
 
-
-        def generate_random_string(length, stringset=string.ascii_letters+string.digits):
-            return ''.join([stringset[i%len(stringset)] \
-            for i in [ord(x) for x in os.urandom(length)]])
-
+        def generate_random_string(length, stringset=string.ascii_letters + string.digits):
+            return ''.join([stringset[i % len(stringset)]
+                            for i in [ord(x) for x in os.urandom(length)]])
 
         database = Database.objects.get(id=database_id)
 
@@ -669,27 +669,28 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             url = reverse('admin:logical_database_changelist')
             return HttpResponseRedirect(url)
 
-
-        credential =get_credentials_for(environment=database.environment,
-                                        credential_type=CredentialType.LAAS)
+        credential = get_credentials_for(environment=database.environment,
+                                         credential_type=CredentialType.LAAS)
 
         db_name = database.name
         environment = database.environment
         endpoint = credential.endpoint
         username = credential.user
         password = credential.password
-        lognit_environment = credential.get_parameter_by_name('lognit_environment')
+        lognit_environment = credential.get_parameter_by_name(
+            'lognit_environment')
 
         provider = LaaSProvider()
 
         group_name = get_group_name(database)
         today = (datetime.now()).strftime('%Y%m%d')
         yesterday = (datetime.now() - timedelta(days=1)).strftime('%Y%m%d')
-        uri = "group:{} text:query date:[{} TO {}] time:[000000 TO 235959]".format(group_name,yesterday,today)
-
+        uri = "group:{} text:query date:[{} TO {}] time:[000000 TO 235959]".format(
+            group_name, yesterday, today)
 
         parsed_logs = ''
-        database_logs = provider.get_logs_for_group(environment, lognit_environment, uri)
+        database_logs = provider.get_logs_for_group(
+            environment, lognit_environment, uri)
         try:
             database_logs = json.loads(database_logs)
         except Exception, e:
@@ -701,11 +702,13 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 except KeyError, e:
                     pass
                 else:
-                    parsed_logs = "\n".join((item['message'] for item in items))
+                    parsed_logs = "\n".join(
+                        (item['message'] for item in items))
 
-        arq_path = Configuration.get_by_name('database_clone_dir') + '/' + database.name + generate_random_string(20) + '.txt'
+        arq_path = Configuration.get_by_name(
+            'database_clone_dir') + '/' + database.name + generate_random_string(20) + '.txt'
 
-        arq = open(arq_path,'w')
+        arq = open(arq_path, 'w')
         arq.write(parsed_logs)
         arq.close()
 
@@ -719,7 +722,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         sys.stdout = mystdout = StringIO()
 
         md = dex.Dex(db_uri=uri, verbose=False, namespaces_list=[],
-                      slowms=0, check_indexes=True, timeout=0)
+                     slowms=0, check_indexes=True, timeout=0)
 
         md.analyze_logfile(arq_path)
 
@@ -913,6 +916,47 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
         return HttpResponseRedirect(url)
 
+    def mongodb_engine_version_upgrade(self, request, database_id):
+        from notification.tasks import upgrade_mongodb_24_to_30
+        database = Database.objects.get(id=database_id)
+
+        url = reverse('admin:logical_database_change', args=[database_id])
+
+        if database.is_in_quarantine:
+            self.message_user(
+                request, "Database in quarantine and cannot be upgraded!",
+                level=messages.ERROR)
+            return HttpResponseRedirect(url)
+
+        if database.status != Database.ALIVE or not database.database_status.is_alive:
+            self.message_user(
+                request, "Database is dead  and cannot be upgraded!",
+                level=messages.ERROR)
+            return HttpResponseRedirect(url)
+
+        if database.has_migration_started():
+            self.message_user(
+                request, "Database {} is beeing migrated and cannot be upgraded!".format(database.name), level=messages.ERROR)
+            return HttpResponseRedirect(url)
+
+        if not database.is_mongodb_24:
+            self.message_user(
+                request, "Database {} cannot be upgraded, please contact you DBA.".format(database.name), level=messages.ERROR)
+            return HttpResponseRedirect(url)
+
+        task_history = TaskHistory()
+        task_history.task_name = "upgrade_mongodb_24_to_30"
+        task_history.task_status = task_history.STATUS_WAITING
+        task_history.arguments = "Upgrading MongoDB 2.4 to 3.0"
+        task_history.user = request.user
+        task_history.save()
+
+        upgrade_mongodb_24_to_30.delay(database=database, user=request.user,
+                                       task_history=task_history)
+        url = reverse('admin:notification_taskhistory_changelist')
+
+        return HttpResponseRedirect(url)
+
     def get_urls(self):
         urls = super(DatabaseAdmin, self).get_urls()
         my_urls = patterns('',
@@ -940,6 +984,10 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                            url(r'^/?(?P<database_id>\d+)/initialize_migration/$', self.admin_site.admin_view(self.initialize_migration),
                                name="database_initialize_migration"),
 
+                           url(r'^/?(?P<database_id>\d+)/mongodb_engine_version_upgrade/$',
+                               self.admin_site.admin_view(
+                                   self.mongodb_engine_version_upgrade),
+                               name="mongodb_engine_version_upgrade"),
                            )
 
         return my_urls + urls
