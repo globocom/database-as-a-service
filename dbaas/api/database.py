@@ -32,7 +32,7 @@ class DatabaseSerializer(serializers.HyperlinkedModelSerializer):
         model = models.Database
         fields = ('url', 'id', 'name', 'endpoint', 'plan', 'environment',
                   'project', 'team', 'quarantine_dt', 'total_size_in_bytes',
-                  'credentials', 'description', 'status', 'used_size_in_bytes')
+                  'credentials', 'description', 'status', 'used_size_in_bytes', 'created_at')
         read_only = ('credentials', 'status', 'used_size_in_bytes')
 
     def __init__(self, *args, **kwargs):
