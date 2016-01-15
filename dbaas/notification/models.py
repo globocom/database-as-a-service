@@ -140,6 +140,10 @@ class TaskHistory(BaseModel):
         elif request.task == 'dbaas_services.analyzing.tasks.analyze.analyze_databases':
             task_history.arguments = "Analizing all databases"
 
+        elif request.task == 'notification.tasks.upgrade_mongodb_24_to_30':
+            task_history.arguments = "Upgrading database {0}, to MongoDB 3.0".format(
+                request.kwargs['database'].name,)
+
         else:
             task_history.arguments = request.args
 
