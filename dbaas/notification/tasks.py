@@ -754,7 +754,7 @@ def upgrade_mongodb_24_to_30(self, database, user, task_history=None):
 
     try:
 
-        #disable_zabbix_alarms(database)
+        disable_zabbix_alarms(database)
 
         workflow_dict = build_dict(steps=steps,
                                    databaseinfra=databaseinfra,
@@ -781,5 +781,5 @@ def upgrade_mongodb_24_to_30(self, database, user, task_history=None):
     except Exception as e:
         task_history.update_status_for(TaskHistory.STATUS_ERROR, details=e)
         LOG.warning("MongoDB Upgrade finished with errors")
-    #finally:
-    #    enable_zabbix_alarms(database)
+    finally:
+        enable_zabbix_alarms(database)
