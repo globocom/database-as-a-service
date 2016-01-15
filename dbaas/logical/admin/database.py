@@ -967,7 +967,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         task_history.user = request.user
         task_history.save()
 
-        upgrade_mongodb_24_to_30.delay(database, request.user, task_history)
+        upgrade_mongodb_24_to_30.delay(database=database, user=request.user,
+                                       task_history=task_history)
         url = reverse('admin:notification_taskhistory_changelist')
 
         return HttpResponseRedirect(url)
