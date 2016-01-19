@@ -65,8 +65,8 @@ def build_add_replica_set_members_script():
     return """
         echo ""; echo $(date "+%Y-%m-%d %T") "- Adding new database members"
         /usr/local/mongodb/bin/mongo {{CONNECT_STRING}} <<EOF_DBAAS
-        rs.add( { "_id": {{SECUNDARY_ONE_MEMBER_ID}}, "host": "{{SECUNDARY_ONE}}", "priority": 0 } )
-        rs.add( { "_id": {{SECUNDARY_TWO_MEMBER_ID}}, "host": "{{SECUNDARY_TWO}}", "priority": 0 } )
+        rs.add( { "_id": {{SECUNDARY_ONE_MEMBER_ID}}, "host": "{{SECUNDARY_ONE}}", "priority": 0, "hidden": true } )
+        rs.add( { "_id": {{SECUNDARY_TWO_MEMBER_ID}}, "host": "{{SECUNDARY_TWO}}", "priority": 0, "hidden": true } )
         rs.addArb("{{ARBITER}}")
         exit
         \nEOF_DBAAS
@@ -110,8 +110,11 @@ def build_switch_primary_to_new_instances_script():
        if (status["members"][1].stateStr == "SECONDARY") {var_secundary_member = 1}
        cfg = rs.conf()
        cfg.members[var_secundary_member].priority = 0
+       cfg.members[var_secundary_member].hidden = true
        cfg.members[3].priority = 1
+       cfg.members[3].hidden = false
        cfg.members[4].priority = 1
+       cfg.members[4].hidden = false
        rs.reconfig(cfg)
        exit
        \nEOF_DBAAS
@@ -130,7 +133,9 @@ def build_switch_primary_to_new_instances_script():
        /usr/local/mongodb/bin/mongo {{CONNECT_STRING}} <<EOF_DBAAS
        cfg = rs.conf()
        cfg.members[0].priority = 0
+       cfg.members[0].hidden = true
        cfg.members[1].priority = 0
+       cfg.members[1].hidden = true
        rs.reconfig(cfg)
        exit
        \nEOF_DBAAS
@@ -147,8 +152,11 @@ def build_switch_primary_to_old_instances_script():
        if (status["members"][4].stateStr == "SECONDARY") {var_secundary_member = 4}
        cfg = rs.conf()
        cfg.members[var_secundary_member].priority = 0
+       cfg.members[var_secundary_member].hidden = true
        cfg.members[0].priority = 1
+       cfg.members[0].hidden = false
        cfg.members[1].priority = 1
+       cfg.members[1].hidden = false
        rs.reconfig(cfg)
        exit
        \nEOF_DBAAS
@@ -167,7 +175,9 @@ def build_switch_primary_to_old_instances_script():
        /usr/local/mongodb/bin/mongo {{CONNECT_STRING}} <<EOF_DBAAS
        cfg = rs.conf()
        cfg.members[3].priority = 0
+       cfg.members[3].hidden = true
        cfg.members[4].priority = 0
+       cfg.members[4].hidden = true
        rs.reconfig(cfg)
        exit
        \nEOF_DBAAS
