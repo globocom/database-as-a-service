@@ -6,6 +6,7 @@ DEPLOY_MYSQL = (
     'workflow.steps.util.deploy.create_nfs.CreateNfs',
     'workflow.steps.mysql.deploy.create_flipper.CreateFlipper',
     'workflow.steps.mysql.deploy.init_database.InitDatabase',
+    'workflow.steps.util.deploy.config_backup_log.ConfigBackupLog',
     'workflow.steps.util.deploy.check_database_connection.CheckDatabaseConnection',
     'workflow.steps.util.deploy.check_dns.CheckDns',
     'workflow.steps.util.deploy.create_zabbix.CreateZabbix',
@@ -22,6 +23,7 @@ DEPLOY_MONGO = (
     'workflow.steps.util.deploy.create_dns.CreateDns',
     'workflow.steps.mongodb.deploy.create_nfs.CreateNfs',
     'workflow.steps.mongodb.deploy.init_database.InitDatabaseMongoDB',
+    'workflow.steps.util.deploy.config_backup_log.ConfigBackupLog',
     'workflow.steps.util.deploy.check_database_connection.CheckDatabaseConnection',
     'workflow.steps.util.deploy.check_dns.CheckDns',
     'workflow.steps.util.deploy.create_zabbix.CreateZabbix',
@@ -38,6 +40,7 @@ DEPLOY_REDIS = (
     'workflow.steps.redis.deploy.create_dns.CreateDns',
     'workflow.steps.redis.deploy.create_nfs.CreateNfs',
     'workflow.steps.redis.deploy.init_database.InitDatabaseRedis',
+    'workflow.steps.util.deploy.config_backup_log.ConfigBackupLog',
     'workflow.steps.util.deploy.check_database_connection.CheckDatabaseConnection',
     'workflow.steps.util.deploy.check_dns.CheckDns',
     'workflow.steps.util.deploy.create_zabbix.CreateZabbix',
@@ -125,6 +128,7 @@ MYSQL_REGION_MIGRATION_1 = (
     'workflow.steps.mysql.region_migration.revoke_nfs_access.RevokeNFSAccess',
     'workflow.steps.mysql.region_migration.remove_nfs_snapshot.RemoveNfsSnapshot',
     'workflow.steps.mysql.region_migration.start_replication.StartReplication',
+    'workflow.steps.util.region_migration.config_backup_log.ConfigBackupLog',
     'workflow.steps.util.region_migration.acl_database_bind.BindNewInstances',
     'workflow.steps.util.region_migration.replicate_old_acls.ReplicateOldAcl',
 )
@@ -151,6 +155,7 @@ MYSQL_REGION_MIGRATION_3 = (
     'workflow.steps.util.region_migration.acl_database_bind.UnbindOldInstances',
     'workflow.steps.mysql.region_migration.remove_secondary_ip.RemoveSecondaryIp',
     'workflow.steps.util.region_migration.remove_disks.RemoveDisks',
+    'workflow.steps.util.region_migration.remove_backup_log.RemoveBackupLog',
     'workflow.steps.util.region_migration.remove_vms.RemoveVms',
     'workflow.steps.util.region_migration.change_ttl.DefaultTTL',
 )
@@ -164,6 +169,7 @@ REDIS_REGION_MIGRATION_1 = (
     'workflow.steps.util.region_migration.mount_disks.MountDisks',
     'workflow.steps.redis.region_migration.config_files.ConfigFiles',
     'workflow.steps.redis.region_migration.start_database_and_replication.StartDatabaseReplication',
+    'workflow.steps.util.region_migration.config_backup_log.ConfigBackupLog',
     'workflow.steps.util.region_migration.acl_database_bind.BindNewInstances',
     'workflow.steps.util.region_migration.replicate_old_acls.ReplicateOldAcl',
 )
@@ -183,6 +189,7 @@ REDIS_REGION_MIGRATION_4 = (
     'workflow.steps.redis.region_migration.remove_old_instances.RemoveInstances',
     'workflow.steps.util.region_migration.update_dbaas_metadata.UpdateDBaaSMetadata',
     'workflow.steps.util.region_migration.remove_disks.RemoveDisks',
+    'workflow.steps.util.region_migration.remove_backup_log.RemoveBackupLog',
     'workflow.steps.util.region_migration.remove_vms.RemoveVms',
     'workflow.steps.util.region_migration.change_ttl.DefaultTTL',
 )
@@ -195,6 +202,7 @@ MONGODB_REGION_MIGRATION_1 = (
     'workflow.steps.util.region_migration.mount_disks.MountDisks',
     'workflow.steps.mongodb.region_migration.config_files.ConfigFiles',
     'workflow.steps.mongodb.region_migration.add_instances_replica_set.AddInstancesReplicaSet',
+    'workflow.steps.util.region_migration.config_backup_log.ConfigBackupLog',
     'workflow.steps.util.region_migration.acl_database_bind.BindNewInstances',
     'workflow.steps.util.region_migration.replicate_old_acls.ReplicateOldAcl',
 )
@@ -214,6 +222,7 @@ MONGODB_REGION_MIGRATION_4 = (
     'workflow.steps.util.region_migration.acl_database_bind.UnbindOldInstances',
     'workflow.steps.mongodb.region_migration.remove_old_instances_replica_set.RemoveInstancesReplicaSet',
     'workflow.steps.util.region_migration.remove_disks.RemoveDisks',
+    'workflow.steps.util.region_migration.remove_backup_log.RemoveBackupLog',
     'workflow.steps.util.region_migration.remove_vms.RemoveVms',
     'workflow.steps.util.region_migration.change_ttl.DefaultTTL',
 )
