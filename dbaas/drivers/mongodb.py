@@ -331,7 +331,7 @@ class MongoDB(BaseDriver):
         if self.check_instance_is_master(instance=instance):
             return True
 
-        if self.get_replication_info(instance=instance) == 0:
+        if self.get_replication_info(instance=instance) <= 2:
             return True
 
         return False
