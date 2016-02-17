@@ -4,10 +4,10 @@
 {% block extrajs %}
     <script type="text/javascript" src="{% static "assets/js/jquery.tablesorter.js" %}"></script>
     <script>
-    $(document).ready(function() 
-        { 
-            $("#searchtable").tablesorter(); 
-        } 
+    $(document).ready(function()
+        {
+            $("#searchtable").tablesorter();
+        }
     );
     </script>
 {% endblock %}
@@ -23,7 +23,9 @@
                         <tr>
                             <th>Database</th>
                             <th>Infra Name</th>
+                            <th>Environment</th>
                             <th>Project</th>
+                            <th>Status</th>
                             <th>Team</th>
                         </tr>
                     </thead>
@@ -32,7 +34,33 @@
                         <tr>
                             <td>{{ search.object.name }}</td>
                             <td><a href="{% url 'databaseinfra.index' search.object.infra.id %}">{{ search.object.infra }}</a></td>
+                            <td>
+                                {% if search.object.infra.environment.name == 'laboratory' %}
+                                    <li class="label label-default">{{ search.object.infra.environment.name }}</li>
+                                {% endif %}
+                                {% if search.object.infra.environment.name == 'qa2' %}
+                                    <li class="label label-default">{{ search.object.infra.environment.name }}</li>
+                                {% endif %}
+                                {% if search.object.infra.environment.name == 'dev' %}
+                                    <li class="label label-info">{{ search.object.infra.environment.name }}</li>
+                                {% endif %}
+                                {% if search.object.infra.environment.name == 'qa01' %}
+                                    <li class="label label-inverse">{{ search.object.infra.environment.name }}</li>
+                                {% endif %}
+                                {% if search.object.infra.environment.name == 'prod' %}
+                                    <li class="label label-primary">{{ search.object.infra.environment.name }}</li>
+                                {% endif %}
+                            </td>
                             <td>{{ search.object.project }}</td>
+                            <td>
+                                {% if search.object.infra.check_instances_status == search.object.infra.ALIVE %}
+                                    <li class="label label-success">Alive</li>
+                                {% elif search.object.infra.check_instances_status == infra.DEAD %}
+                                    <li class="label label-danger">Dead</li>
+                                {% else %}
+                                     <li class="label label-alert">Alert</li>
+                                {% endif %}
+                            </td>
                             <td>{{ search.object.team }}</td>
                         </tr>
                     {% endfor %}
