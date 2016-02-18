@@ -9,7 +9,6 @@ from workflow.exceptions.error_codes import DBAAS_0023
 from workflow.steps.util import test_bash_script_error
 from workflow.steps.mongodb import util
 
-
 LOG = logging.getLogger(__name__)
 
 
