@@ -444,5 +444,6 @@ EOF_IN_SERVERSTATUS_FILE
 def build_remove_reprecated_index_counter_metrics():
     return """
         sed -i '271,314 d' /etc/td-agent/td-agent.conf
+        sleep 20
         /etc/init.d/td-agent start
     """
