@@ -212,7 +212,7 @@ class BaseDriver(object):
     def start_slave(self, instance):
         pass
 
-    def check_replication_and_switch(self, instance, attempts=21):
+    def check_replication_and_switch(self, instance, attempts=100):
         from time import sleep
         for attempt in range(0, attempts):
             if self.is_replication_ok(instance):
