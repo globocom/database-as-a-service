@@ -315,7 +315,6 @@ def build_reinstal_mongo_gen_script():
         yum install -y gcc44
         yes | td-agent-gem uninstall mongo
         td-agent-gem install mongo
-        /etc/init.d/td-agent start
     """
 
 
@@ -351,7 +350,7 @@ module Fluent
         uri_str = "mongodb://#{uri_str}" if not uri_str.start_with?("mongodb://")
         user, password = uri_str.split('@')[0].split('//')[1].split(':')
         uri = Mongo::URI.new(uri_str, :connect => :direct, :user => user, :password => password)
-  client = Mongo::Client.new(uri.servers, uri.options)
+        client = Mongo::Client.new(uri.servers, uri.options)
         [client, uri]
       end
     end
@@ -380,9 +379,9 @@ module Fluent
         for conn, conn_uri in @conns
           database = conn.database
           stats = database.command(:serverStatus => :true).first
-    make_data_msgpack_compatible(stats)
+          make_data_msgpack_compatible(stats)
           host, port = conn_uri.servers[0].split(':')
-    tag = [@tag_prefix, host.gsub(/[\.-]/, "_"), port].join(".")
+          tag = [@tag_prefix, host.gsub(/[\.-]/, "_"), port].join(".")
           Engine.emit(tag, Engine.now, stats)
         end
 
@@ -401,6 +400,8 @@ module Fluent
             make_data_msgpack_compatible(v)
           elsif v.class == Time
             data[k] = v.to_i
+          elsif v.class == BSON::ObjectId
+            data[k] = v.to_s
           end
         }
         # serverStatus's "locks" field has "." as a key, which can't be
@@ -437,4 +438,11 @@ end
 
 EOF_IN_SERVERSTATUS_FILE
 ) > /etc/td-agent/plugin/in_serverstatus.rb
+    """
+
+
+def build_remove_reprecated_index_counter_metrics():
+    return """
+        sed -i '271,314 d' /etc/td-agent/td-agent.conf
+        /etc/init.d/td-agent start
     """

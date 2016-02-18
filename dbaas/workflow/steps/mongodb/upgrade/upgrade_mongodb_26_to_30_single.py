@@ -7,15 +7,7 @@ from dbaas_cloudstack.models import HostAttr as CS_HostAttr
 from workflow.steps.util.base import BaseStep
 from workflow.exceptions.error_codes import DBAAS_0023
 from workflow.steps.util import test_bash_script_error
-from workflow.steps.mongodb.util import build_cp_mongodb_binary_file
-from workflow.steps.mongodb.util import build_stop_database_script
-from workflow.steps.mongodb.util import build_start_database_script
-from workflow.steps.mongodb.util import build_change_release_alias_script
-from workflow.steps.mongodb.util import build_authschemaupgrade_script
-from workflow.steps.mongodb.util import build_mongodb_connect_string
-from workflow.steps.mongodb.util import build_change_limits_script
-from workflow.steps.mongodb.util import build_reinstal_mongo_gen_script
-from workflow.steps.mongodb.util import build_change_in_serverstatus_file_script
+from workflow.steps.mongodb import util
 
 
 LOG = logging.getLogger(__name__)
@@ -32,18 +24,19 @@ class UpgradeMongoDB_26_to_30(BaseStep):
             instances = workflow_dict['instances']
             databaseinfra = workflow_dict['databaseinfra']
 
-            connect_string = build_mongodb_connect_string(instances=instances,
-                                                          databaseinfra=databaseinfra)
+            connect_string = util.build_mongodb_connect_string(instances=instances,
+                                                               databaseinfra=databaseinfra)
 
             script = test_bash_script_error()
-            script += build_cp_mongodb_binary_file()
-            script += build_stop_database_script(clean_data=False)
-            script += build_change_release_alias_script()
-            script += build_start_database_script()
-            script += build_authschemaupgrade_script()
-            script += build_change_limits_script()
-            script += build_change_in_serverstatus_file_script()
-            script += build_reinstal_mongo_gen_script()
+            script += util.build_cp_mongodb_binary_file()
+            script += util.build_stop_database_script(clean_data=False)
+            script += util.build_change_release_alias_script()
+            script += util.build_start_database_script()
+            script += util.build_authschemaupgrade_script()
+            script += util.build_change_limits_script()
+            script += util.build_change_in_serverstatus_file_script()
+            script += util.build_reinstal_mongo_gen_script()
+            script += util.build_remove_reprecated_index_counter_metrics()
 
             context_dict = {
                 'SOURCE_PATH': '/mnt/software/db/mongodb',
@@ -79,14 +72,4 @@ class UpgradeMongoDB_26_to_30(BaseStep):
             return False
 
     def undo(self, workflow_dict):
-        try:
-            pass
-
-            return True
-        except Exception:
-            traceback = full_stack()
-
-            workflow_dict['exceptions']['error_codes'].append(DBAAS_0023)
-            workflow_dict['exceptions']['traceback'].append(traceback)
-
-            return False
+        return True
