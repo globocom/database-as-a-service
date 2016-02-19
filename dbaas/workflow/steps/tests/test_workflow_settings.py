@@ -33,6 +33,7 @@ class WorkflowSettingsTestCase(TestCase):
             'workflow.steps.util.deploy.build_database.BuildDatabase',
             'workflow.steps.util.deploy.create_log.CreateLog',
             'workflow.steps.util.deploy.check_database_binds.CheckDatabaseBinds',
+            'workflow.steps.util.deploy.restart_td_agent.ReStartTdAgent',
         )
         )
 
@@ -89,6 +90,7 @@ class WorkflowSettingsTestCase(TestCase):
                                        'workflow.steps.util.deploy.build_database.BuildDatabase',
                                        'workflow.steps.util.deploy.create_log.CreateLog',
                                        'workflow.steps.util.deploy.check_database_binds.CheckDatabaseBinds',
+                                       'workflow.steps.util.deploy.restart_td_agent.ReStartTdAgent',
                                        'workflow.steps.util.clone.clone_database.CloneDatabase',
                                        'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',
                                        )
