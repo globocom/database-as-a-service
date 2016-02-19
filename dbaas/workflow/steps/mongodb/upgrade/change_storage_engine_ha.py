@@ -12,6 +12,7 @@ from workflow.steps.mongodb.util import build_start_database_script
 from workflow.steps.mongodb.util import build_stop_database_script
 from workflow.steps.mongodb.util import build_clean_data_data_script
 from workflow.steps.mongodb.util import build_wait_admin_be_created_script
+from workflow.steps.util import td_agent_script
 
 
 LOG = logging.getLogger(__name__)
@@ -57,17 +58,7 @@ class ChangeMongoDBStorageEngine(BaseStep):
             return False
 
     def undo(self, workflow_dict):
-        try:
-            pass
-
-            return True
-        except Exception:
-            traceback = full_stack()
-
-            workflow_dict['exceptions']['error_codes'].append(DBAAS_0023)
-            workflow_dict['exceptions']['traceback'].append(traceback)
-
-            return False
+        return True
 
     def change_instance_binaries(self, instance):
 
@@ -77,6 +68,7 @@ class ChangeMongoDBStorageEngine(BaseStep):
         script += build_clean_data_data_script()
         script += build_start_database_script()
         script += build_wait_admin_be_created_script()
+        script += td_agent_script(option='restart')
 
         context_dict = {
         }

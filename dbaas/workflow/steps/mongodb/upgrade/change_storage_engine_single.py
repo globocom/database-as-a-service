@@ -13,8 +13,8 @@ from workflow.steps.mongodb.util import build_change_mongodb_conf_file_script
 from workflow.steps.mongodb.util import build_restart_database_script
 from workflow.steps.mongodb.util import build_start_database_script
 from workflow.steps.mongodb.util import build_stop_database_script
-
 from workflow.steps.mongodb.util import build_clean_data_data_script
+from workflow.steps.util import td_agent_script
 
 
 LOG = logging.getLogger(__name__)
@@ -38,6 +38,7 @@ class ChangeMongoDBStorageEngine(BaseStep):
             script += build_mongorestore_database_script()
             script += build_enable_authentication_single_instance_script()
             script += build_restart_database_script()
+            script += td_agent_script(option='restart')
 
             context_dict = {
             }
@@ -68,14 +69,4 @@ class ChangeMongoDBStorageEngine(BaseStep):
             return False
 
     def undo(self, workflow_dict):
-        try:
-            pass
-
-            return True
-        except Exception:
-            traceback = full_stack()
-
-            workflow_dict['exceptions']['error_codes'].append(DBAAS_0023)
-            workflow_dict['exceptions']['traceback'].append(traceback)
-
-            return False
+        return True
