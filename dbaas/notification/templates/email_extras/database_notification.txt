@@ -2,7 +2,7 @@ Database {{database}} is almost full
 
 The Database {{database}} in {{environment}} environment is {{percent}}% in use.
 
-It is using {{used}} {{measure_unity}} of {{capacity}} {{measure_unity}}
+It is using {{used|floatformat}} {{measure_unity}} of {{capacity}} {{measure_unity}}
 
 You are receiving this email because in our records you are in team {{ team }}.
 If this is not right, contact the Dbaas system administrators.
