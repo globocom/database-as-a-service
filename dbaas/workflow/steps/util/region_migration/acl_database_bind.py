@@ -33,7 +33,8 @@ class BindNewInstances(BaseStep):
                                                  credential_type=CredentialType.ACLAPI)
             acl_client = AclClient(acl_credential.endpoint,
                                    acl_credential.user,
-                                   acl_credential.password)
+                                   acl_credential.password,
+                                   database.environment)
 
             instances = databaseinfra.instances.filter(
                 future_instance__isnull=True)
@@ -145,7 +146,8 @@ class BindNewInstances(BaseStep):
                                                  credential_type=CredentialType.ACLAPI)
             acl_client = AclClient(acl_credential.endpoint,
                                    acl_credential.user,
-                                   acl_credential.password)
+                                   acl_credential.password,
+                                   database.environment)
 
             instances = databaseinfra.instances.filter(
                 future_instance__isnull=True)
@@ -225,7 +227,8 @@ class UnbindOldInstances(BaseStep):
                                                  credential_type=CredentialType.ACLAPI)
             acl_client = AclClient(acl_credential.endpoint,
                                    acl_credential.user,
-                                   acl_credential.password)
+                                   acl_credential.password,
+                                   database.environment)
 
             instances = databaseinfra.instances.filter(
                 future_instance__isnull=False)
@@ -301,7 +304,8 @@ class UnbindOldInstances(BaseStep):
                                                  credential_type=CredentialType.ACLAPI)
             acl_client = AclClient(acl_credential.endpoint,
                                    acl_credential.user,
-                                   acl_credential.password)
+                                   acl_credential.password,
+                                   database.environment)
 
             instances = databaseinfra.instances.filter(
                 future_instance__isnull=False)

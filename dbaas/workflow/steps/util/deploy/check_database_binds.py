@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
+import copy
 import logging
 from util import full_stack
-from ..base import BaseStep
-from ....exceptions.error_codes import DBAAS_0019
-from dbaas_aclapi.models import DatabaseInfraInstanceBind
-from dbaas_aclapi.acl_base_client import AclClient
 from util import get_credentials_for
+from workflow.steps.util.base import BaseStep
+from dbaas_aclapi.acl_base_client import AclClient
 from dbaas_credentials.models import CredentialType
-import copy
+from workflow.exceptions.error_codes import DBAAS_0019
+from dbaas_aclapi.models import DatabaseInfraInstanceBind
+
 
 LOG = logging.getLogger(__name__)
 
@@ -63,7 +64,8 @@ class CheckDatabaseBinds(BaseStep):
                                                      credential_type=CredentialType.ACLAPI)
                 acl_client = AclClient(acl_credential.endpoint,
                                        acl_credential.user,
-                                       acl_credential.password)
+                                       acl_credential.password,
+                                       database.environment)
 
                 LOG.info("Data used on payload: {}".format(data))
                 acl_client.revoke_acl_for(environment=acl_environment,
