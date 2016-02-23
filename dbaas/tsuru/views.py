@@ -284,7 +284,7 @@ class ServiceAdd(APIView):
                 name, env)
             return log_and_response(msg=msg,
                                     http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        except ObjectDoesNotExist as e:
+        except ObjectDoesNotExist:
             pass
 
         try:
