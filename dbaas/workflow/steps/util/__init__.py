@@ -238,6 +238,8 @@ def get_backup_log_configuration_dict(environment, databaseinfra):
         'CONFIG_BACKUP_LOG_SCRIPT': log_configuration.config_backup_log_script,
         'CLEAN_BACKUP_LOG_SCRIPT': log_configuration.clean_backup_log_script,
         'DATABASEINFRA_NAME': databaseinfra.name,
+        'BACKUP_LOG_CRON_MINUTE': log_configuration.cron_minute,
+        'BACKUP_LOG_CRON_HOUR': log_configuration.cron_hour,
     }
 
 
@@ -330,7 +332,7 @@ EOF_DBAAS_BACKUP_LOG
     chmod u+x {{BACKUP_LOG_SCRIPT}}
     die_if_error "Error changing {{BACKUP_LOG_SCRIPT}} permission"
 
-    echo "*/30 * * * * {{BACKUP_LOG_SCRIPT}} > /tmp/backup_log.txt" >> /var/spool/cron/root
+    echo "{{BACKUP_LOG_CRON_MINUTE}} {{BACKUP_LOG_CRON_HOUR}} * * * {{BACKUP_LOG_SCRIPT}} > /tmp/backup_log.txt" >> /var/spool/cron/root
     die_if_error "Error adding backup log script in cron"
 }
 

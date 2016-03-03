@@ -91,6 +91,10 @@ class LogConfiguration(BaseModel):
         verbose_name=_("Config Backup Log Script"), max_length=200, null=False, blank=False)
     clean_backup_log_script = models.CharField(
         verbose_name=_("Clean Backup Log Script"), max_length=200, null=False, blank=False)
+    cron_minute = models.CharField(
+        verbose_name=_("Crontab minute"), max_length=10, null=False, blank=False)
+    cron_hour = models.CharField(
+        verbose_name=_("Crontab hour"), max_length=10, null=False, blank=False)
 
     class Meta:
         unique_together = (
