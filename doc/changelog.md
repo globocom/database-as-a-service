@@ -1,5 +1,227 @@
 # Changelog
 
+## 0.0.71
+* Return True if the seconds delay is less than 2
+* Change the default attempts on check_replication_and_switch function
+
+## 0.0.70
+* Config Backup Log Database
+
+## 0.0.69
+* Set new mongodb instances to hidden
+
+## 0.0.68
+* General bug fixes
+
+## 0.0.67
+* Created at column being displayed at databases list
+
+## 0.0.66
+* Change database admin: refactor database mongo upgrade to call task with name args
+* Improve upgrade task history arguments
+* Disable zabbix alarms in upgrade_mongodb_24_to_30 function
+
+## 0.0.65
+* Upgrade MongoDB - HA
+* Improve resize message - HA
+* Database: add new button to provide mongodb engine version upgrade
+* Change physical engine: Add engine_upgrade option
+* Add support for engine version upgrade plan
+* Change pkg version
+* General bug fixes
+
+## 0.0.64
+* kombu 3.0.30
+* python-ldap 2.4.22
+* dbaas_credentials 1.0.7
+* dbaas_nfsaas 0.6.7
+* zabbix version 0.2.8
+* dbaas_cloudstack 0.7.8
+* Improve restore snapshot
+* Add disable/enable zabbix alarms on tasks which may impact on host availability
+* BSD-3 License file added
+* Add filter by engine type
+* Add missing migration
+* Add button to start analysis on resource use reports
+* Add task "Analyzing all databases"
+* Save restored snapshot
+* Add team field on database change list
+* use update_fields on save instance/database
+* Improvements on exception handling, remove unused vars, some filters and indexes
+* Small fixes
+
+## 0.0.63
+* pymongo 3.0.3
+* Change dbaas_credentials 1.0.5
+* acl_api 0.0.52
+* improve css
+* Add team field on analyze repository
+* database migration - add engine and remove engine_type field on plan
+* remove engine_type field, add engine_type property and engine field
+* Add new property: engine
+* Add task to send email to users when the database is overestimated
+* Add msg on false alarm
+* Improve ux
+* Add engine, environment and databaseinfra options on filter and metrics link on repository list
+* Add volume alarm field
+* Check if service is working
+* Add analyze service and analyze repository
+* Check if the switch primary step was ok
+* Update source_instances on workflow_dict
+* Create task to update laas team
+* Add step to delete old acls
+* Setup steps to stop old instances and start new instances
+* Change resize to update databaseinfra max database size when it is a redis infra
+* Small fixes
+* General bug fixes
+
+## 0.0.62
+* General bug fixes
+
+## 0.0.61
+* Fix region migrations settings
+
+## 0.0.60
+* Zabbix 0.2.7
+
+## 0.0.59
+* Zabbix 0.2.6
+
+## 0.0.58
+* Zabbix 0.2.5
+
+## 0.0.57
+* Remove bundle picking from for loop
+* Change dbaas_zabbix version
+* Small fixes
+
+## 0.0.56
+* Zabbix 0.2.3
+* Add non database instances
+
+## 0.0.55
+* dbaas-aclapi 0.0.47
+* dbaas_nfsaas 0.6.6
+* dbaas_cloudstack 0.7.7
+* dbaas_dbmonitor 0.1.7
+* improve start vm, workflow and get_database_agents
+* Add resize with high availability and helper function to rollback resize
+* Add clean unused data
+* New function check_replication_and_switch
+* Add normalize series to metrics graph data
+* Add time filters for host metrics
+* Add acl binds file
+* Check user permission before showing the add delete link
+* Create model ExtraDns and add extra dns signals to insert and remove dbmonitor's reference
+* Change metric detail to automatically get granularity options
+* Small fixes
+
+## 0.0.54
+* Add support for volume migration task
+* Improve volume migration task
+* Improve is_beeing used to query for currently executing tasks
+* Volume migration ha
+* Add method to deal with switch master
+* Add methods to deal with databaseinfra instances
+
+## 0.0.53
+* dbaas_nfsaas 0.6.4
+* Volume migrate only secondary instance
+* Setup volume migration to deal with ha databases
+* Add chown on start database
+* Initial steps for volume migration
+* New NFS HostAttr attributes
+* Improve mysql replication methods
+* Change workflow settings
+* Add replication info
+
+## 0.0.52
+* Fix master-slave configuration
+* General bug fixes
+
+## 0.0.51
+* Add new param to show metric filters or not
+
+## 0.0.50
+* dbaas_aclapi 0.0.46
+* Add filters to graph options
+* Changing mysql test to retrieve database password from settings.py
+* Add redis region migration
+* Add support for redis on new configuration scripts
+* Add to mysql support for new plan scripts
+* Change mongodb initi database to use new user data scripts
+* Small fixes
+
+## 0.0.49
+* Improve database backup lookup
+* Add buttons to help database region migration
+
+## 0.0.48
+* Add check to show recovery button
+
+## 0.0.47
+* Add check to backup_databases_now
+
+## 0.0.46
+* dbaas_nfsaas 0.6.1
+* dbaas_flipper 0.0.9
+* dbaas_aclapi 0.0.39
+* dbaas_cloudstack version to 0.7.1
+* Save snapshot info
+* Add initial support to database migration task revoke
+* Add new field on migration detail to know its direction
+* Add engine on database region migration list view
+* Add button to make databases backup
+* Improve tsuru validation: check database allocation limit
+* Add new method to know whether the database is being used elsewhere
+* Add support for redis_sentinel
+* Add mysql HA support
+* Add function to get replication information from files
+* Add step to update dbaas metadata
+* Add snapshot restore
+* Fix bug: this step was removing all secondary ips instead of only the olds
+* Add new flipper steps
+* Add mysql start replication step
+* Add new scripts to RestoreBackupOnTargets
+* Add steps to revoke nfs access, to remove nfs snapshot and to create secondary ips for target_hosts
+* add mysql steps and mysql steps region migration
+* Add start td_agent step
+* Small fixes and improvements
+* General bug fixes
+
+## 0.0.45
+* Comment unused call
+
+## 0.0.44
+* dbaas_dnsapi 0.1.0
+* dbaas_cloudstack 0.7.0
+* acl_api version 0.0.15c
+* Create functions to build scripts
+* Add initial method to initialize migration
+* Add 'test_bash_error'
+* Add mongodb utils
+* Improve database_region_migration
+* Add region migration detail
+* Add new steps: remove_old_instances, switch_dns, switch_primary, check_database_binds and create_virtualmachines
+* Add new status - ERROR
+* Add rollback
+* New exception on undo to prevent destroy database
+* Change schedule next step logic
+* mongodb migration step one
+* Add database migration steps
+* Add mongodb steps database migration
+* Add get_current_step and get_engine_steps methods
+* Improve physical models to make region migration easier
+* Check if databasebind is being destroyed
+* Improve transaction commit
+* Change service bind to be atomic
+* Improve tsuru bind/unbind
+* Small fixes
+* General bug fixes
+
+## 0.0.43
+* Change is_waiting_to_run to get AttributeError exception
+
 ## 0.0.42
 * Maintenance hosts
 
@@ -12,7 +234,7 @@
 * General bug fixes
 
 ## 0.0.37
-* Fix resize button 
+* Fix resize button
 * Create TaskHistory object outside celery task
 * Description and project are obligatory for databases created from admin interface.
 

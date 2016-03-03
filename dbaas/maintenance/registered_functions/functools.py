@@ -418,3 +418,55 @@ def get_log_configuration_clean_backup_log_script(host_id):
         return None
 
     return log_configuration.clean_backup_log_script
+
+
+def get_log_configuration_cron_minute(host_id):
+    """Return LOG_CONFIGURATION_CRON_MINUTE"""
+    from django.core.exceptions import ObjectDoesNotExist
+    from physical.models import Host
+    from backup.models import LogConfiguration
+
+    host = Host.objects.filter(id=host_id,
+                               ).select_related('instance').select_related('databaseinfra')
+
+    try:
+        host = host[0]
+    except IndexError as e:
+        LOG.warn("Host id does not exists: {}. {}".format(host_id, e))
+        return None
+
+    databaseinfra = host.instance_set.all()[0].databaseinfra
+
+    try:
+        log_configuration = LogConfiguration.objects.get(environment=databaseinfra.environment,
+                                                         engine_type=databaseinfra.engine.engine_type)
+    except ObjectDoesNotExist:
+        return None
+
+    return log_configuration.cron_minute
+
+
+def get_log_configuration_cron_hour(host_id):
+    """Return LOG_CONFIGURATION_CRON_HOUR"""
+    from django.core.exceptions import ObjectDoesNotExist
+    from physical.models import Host
+    from backup.models import LogConfiguration
+
+    host = Host.objects.filter(id=host_id,
+                               ).select_related('instance').select_related('databaseinfra')
+
+    try:
+        host = host[0]
+    except IndexError as e:
+        LOG.warn("Host id does not exists: {}. {}".format(host_id, e))
+        return None
+
+    databaseinfra = host.instance_set.all()[0].databaseinfra
+
+    try:
+        log_configuration = LogConfiguration.objects.get(environment=databaseinfra.environment,
+                                                         engine_type=databaseinfra.engine.engine_type)
+    except ObjectDoesNotExist:
+        return None
+
+    return log_configuration.cron_hour
