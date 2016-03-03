@@ -14,7 +14,7 @@ from notification.models import TaskHistory
 from dbaas_aclapi.tasks import bind_address_on_database
 from dbaas_aclapi.tasks import unbind_address_on_database
 from dbaas_aclapi.models import DatabaseBind
-from dbaas_aclapi.models import DESTROYING
+from dbaas_aclapi.models import DESTROYING, CREATED, CREATING
 from django.core.exceptions import MultipleObjectsReturned
 from django.db import transaction
 from django.db import IntegrityError
@@ -196,12 +196,14 @@ class ServiceUnitBind(APIView):
 
                 bind = DatabaseBind.objects.select_for_update().filter(
                     id=db_bind.id)[0]
-                if bind.bind_status != DESTROYING:
+                if bind.bind_status in [CREATED, CREATING]:
                     bind.binds_requested += 1
                     bind.save()
+                else:
+                    raise Exception("Binds are beeing destroyed!")
             except (IndexError, ObjectDoesNotExist) as e:
                 LOG.debug("DatabaseBind is under destruction! {}".format(e))
-                msg = "DatabaseBind does not exist"
+                msg = "We are destroying your binds to {}. Please wait.".format(database_name)
                 return log_and_response(msg=msg, e=e,
                                         http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
