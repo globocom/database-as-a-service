@@ -12,4 +12,5 @@ class LogConfigurationAdmin(admin.ModelAdmin):
     list_filter = ("environment", "engine_type")
 
     list_display = ("environment", "engine_type", "retention_days",
-                    "filer_path", "mount_point_path", "log_path")
+                    "filer_path", "mount_point_path", "log_path",
+                    "cron_minute", "cron_hour")
