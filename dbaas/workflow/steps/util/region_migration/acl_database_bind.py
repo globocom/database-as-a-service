@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 import logging
 from util import full_stack
-from ..base import BaseStep
-from ....exceptions.error_codes import DBAAS_0020
+from workflow.steps.utils.base import BaseStep
+from workflow.exceptions.error_codes import DBAAS_0020
 from dbaas_aclapi.models import DatabaseInfraInstanceBind
 from dbaas_aclapi.acl_base_client import AclClient
 from dbaas_aclapi.tasks import monitor_acl_job
@@ -112,9 +112,7 @@ class BindNewInstances(BaseStep):
                                                     payload=data)
 
                 if 'job' in response:
-                    monitor_acl_job(job_id=response['job'],
-                                    database_bind=database_bind,
-                                    instances=instances + databaseinfraattr_instances)
+                    monitor_acl_job(job_id=response['job'], acl_client)
                 else:
                     LOG.error("The AclApi is not working properly.")
                     database_bind.bind_status = ERROR
@@ -383,9 +381,7 @@ class UnbindOldInstances(BaseStep):
                                                     payload=data)
 
                 if 'job' in response:
-                    monitor_acl_job(job_id=response['job'],
-                                    database_bind=database_bind,
-                                    instances=instances + databaseinfraattr_instances)
+                    monitor_acl_job(job_id=response['job'], acl_client)
                 else:
                     LOG.error("The AclApi is not working properly.")
                     database_bind.bind_status = ERROR
