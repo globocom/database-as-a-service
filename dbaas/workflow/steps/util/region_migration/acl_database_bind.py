@@ -6,6 +6,7 @@ from workflow.exceptions.error_codes import DBAAS_0020
 from dbaas_aclapi.models import DatabaseInfraInstanceBind
 from dbaas_aclapi.acl_base_client import AclClient
 from dbaas_aclapi.tasks import monitor_acl_job
+from dbaas_aclapi import helpers
 from dbaas_aclapi.models import ERROR
 from dbaas_cloudstack.models import DatabaseInfraAttr
 from util import get_credentials_for
@@ -112,7 +113,7 @@ class BindNewInstances(BaseStep):
                                                     payload=data)
 
                 if 'job' in response:
-                    monitor_acl_job(job_id=response['job'], acl_client)
+                    monitor_acl_job(job_id=response['job'], acl_client=acl_client)
                 else:
                     LOG.error("The AclApi is not working properly.")
                     database_bind.bind_status = ERROR
@@ -182,6 +183,8 @@ class BindNewInstances(BaseStep):
                     bind_address=database_bind.bind_address)
                 LOG.info(
                     "infra_instances_binds: {}".format(infra_instances_binds))
+
+                job_list = []
                 for infra_instance_bind in infra_instances_binds:
                     custom_options = copy.deepcopy(default_options)
                     custom_options['source'] = database_bind.bind_address
@@ -191,11 +194,19 @@ class BindNewInstances(BaseStep):
                         'l4-options']['dest-port-start'] = infra_instance_bind.instance_port
                     data['rules'].append(custom_options)
 
-                LOG.info("Data used on payload: {}".format(data))
-                acl_client.revoke_acl_for(environment=acl_environment,
-                                          vlan=acl_vlan,
-                                          payload=data)
-                infra_instances_binds.delete()
+                    try:
+                        for environment_id, vlan_id, rule_id in helpers.iter_on_acl_query_results(acl_client, custom_options):
+                            response = acl_client.delete_acl(environment_id, vlan_id, rule_id)
+                            if 'job' in response:
+                                job_list.append(response['job'])
+                        infra_instance_bind.delete()
+                    except Exception as e:
+                        raise Exception("Access {} could not be deleted! Error: {}".format(
+                            infra_instance_bind, e))
+
+                for job in job_list:
+                    if monitor_acl_job(job_id=job, acl_client=acl_client):
+                        continue
 
             return True
 
@@ -381,7 +392,7 @@ class UnbindOldInstances(BaseStep):
                                                     payload=data)
 
                 if 'job' in response:
-                    monitor_acl_job(job_id=response['job'], acl_client)
+                    monitor_acl_job(job_id=response['job'], acl_client=acl_client)
                 else:
                     LOG.error("The AclApi is not working properly.")
                     database_bind.bind_status = ERROR
