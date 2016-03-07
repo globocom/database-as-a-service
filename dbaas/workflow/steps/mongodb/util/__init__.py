@@ -495,7 +495,7 @@ module Fluent
     def run
       @loop.run
     rescue
-      log.error "unexpected error", :error=>$!.to_s
+      log.error "unexpected error", :error=>\$!.to_s
       log.error_backtrace
     end
 
@@ -560,7 +560,7 @@ module Fluent
       def on_timer
         @callback.call
       rescue
-        @log.error $!.to_s
+        @log.error \$!.to_s
         @log.error_backtrace
       end
     end
