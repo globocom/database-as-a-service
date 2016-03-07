@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
-import copy
 import logging
 from util import full_stack
 from util import get_credentials_for
 from workflow.steps.util.base import BaseStep
-from dbaas_aclapi.acl_base_client import AclClient
-from dbaas_credentials.models import CredentialType
 from workflow.exceptions.error_codes import DBAAS_0019
 from dbaas_aclapi.models import DatabaseInfraInstanceBind
+from dbaas_aclapi.acl_base_client import AclClient
+from dbaas_credentials import helpers
+from dbaas_credentials.models import CredentialType
 
 
 LOG = logging.getLogger(__name__)
@@ -26,53 +26,25 @@ class CheckDatabaseBinds(BaseStep):
             if 'databaseinfra' not in workflow_dict:
                 return False
 
-            action = 'deny'
-
             database = workflow_dict['databaseinfra'].databases.get()
-            for database_bind in database.acl_binds.all():
-                acl_environment, acl_vlan = database_bind.bind_address.split(
-                    '/')
-                data = {"kind": "object#acl", "rules": []}
-                default_options = {
-                    "protocol": "tcp",
-                    "source": "",
-                    "destination": "",
-                    "description": "{} access for database {} in {}".format(database_bind.bind_address,
-                                                                            database.name,
-                                                                            database.environment.name),
-                    "action": action,
-                    "l4-options": {"dest-port-start": "",
-                                   "dest-port-op": "eq"}
-                }
+            databaseinfra = database.databaseinfra
 
-                LOG.info("Default options: {}".format(default_options))
-                databaseinfra = database.infra
+            acl_credential = get_credentials_for(
+                environment=database.environment,
+                credential_type=CredentialType.ACLAPI)
+            acl_client = AclClient(
+                acl_credential.endpoint, acl_credential.user,
+                acl_credential.password, database.environment)
+
+            for database_bind in database.acl_binds.all():
                 infra_instances_binds = DatabaseInfraInstanceBind.objects.filter(
                     databaseinfra=databaseinfra,
                     bind_address=database_bind.bind_address)
-
-                for infra_instance_bind in infra_instances_binds:
-                    custom_options = copy.deepcopy(default_options)
-                    custom_options['source'] = database_bind.bind_address
-                    custom_options[
-                        'destination'] = infra_instance_bind.instance + '/32'
-                    custom_options[
-                        'l4-options']['dest-port-start'] = infra_instance_bind.instance_port
-                    data['rules'].append(custom_options)
-
-                acl_credential = get_credentials_for(environment=database.environment,
-                                                     credential_type=CredentialType.ACLAPI)
-                acl_client = AclClient(acl_credential.endpoint,
-                                       acl_credential.user,
-                                       acl_credential.password,
-                                       database.environment)
-
-                LOG.info("Data used on payload: {}".format(data))
-                acl_client.revoke_acl_for(environment=acl_environment,
-                                          vlan=acl_vlan, payload=data)
-
-                infra_instances_binds.delete()
-                database_bind.delete()
+                try:
+                    helpers.unbind_address(database_bind, acl_client, infra_instances_binds)
+                except Exception as e:
+                    LOG.warn(e)
+                    continue
 
                 return True
         except Exception:

@@ -1,17 +1,16 @@
 # -*- coding: utf-8 -*-
 import logging
 from util import full_stack
+from util import get_credentials_for
 from workflow.steps.utils.base import BaseStep
 from workflow.exceptions.error_codes import DBAAS_0020
+from dbaas_credentials.models import CredentialType
+from dbaas_cloudstack.models import DatabaseInfraAttr
 from dbaas_aclapi.models import DatabaseInfraInstanceBind
 from dbaas_aclapi.acl_base_client import AclClient
-from dbaas_aclapi.tasks import monitor_acl_job
 from dbaas_aclapi import helpers
 from dbaas_aclapi.models import ERROR
-from dbaas_cloudstack.models import DatabaseInfraAttr
-from util import get_credentials_for
-from dbaas_credentials.models import CredentialType
-import copy
+
 
 LOG = logging.getLogger(__name__)
 
@@ -24,9 +23,6 @@ class BindNewInstances(BaseStep):
     def do(self, workflow_dict):
 
         try:
-
-            action = 'permit'
-
             database = workflow_dict['database']
             databaseinfra = workflow_dict['databaseinfra']
 
@@ -39,7 +35,6 @@ class BindNewInstances(BaseStep):
 
             instances = databaseinfra.instances.filter(
                 future_instance__isnull=True)
-            port = instances[0].port
 
             databaseinfraattr_instances = DatabaseInfraAttr.objects.filter(databaseinfra=databaseinfra,
                                                                            equivalent_dbinfraattr__isnull=True)
@@ -50,70 +45,10 @@ class BindNewInstances(BaseStep):
                 instance_address_list.append(instance.ip)
 
             for database_bind in database.acl_binds.all():
-                acl_environment, acl_vlan = database_bind.bind_address.split(
-                    '/')
-                data = {"kind": "object#acl", "rules": []}
-                default_options = {
-                    "protocol": "tcp",
-                    "source": "",
-                    "destination": "",
-                    "description": "{} access for database {} in {}".format(database_bind.bind_address,
-                                                                            database.name,
-                                                                            database.environment.name),
-                    "action": action,
-                    "l4-options": {"dest-port-start": "",
-                                   "dest-port-op": "eq"}
-                }
-
-                LOG.info("Default options: {}".format(default_options))
-
-                for instance in instances:
-                    custom_options = copy.deepcopy(default_options)
-                    custom_options['source'] = database_bind.bind_address
-                    custom_options['destination'] = instance.address + '/32'
-                    custom_options[
-                        'l4-options']['dest-port-start'] = instance.port
-                    data['rules'].append(custom_options)
-
-                    LOG.debug(
-                        "Creating bind for instance: {}".format(instance))
-
-                    instance_bind = DatabaseInfraInstanceBind(instance=instance.address,
-                                                              databaseinfra=databaseinfra,
-                                                              bind_address=database_bind.bind_address,
-                                                              instance_port=instance.port)
-                    instance_bind.save()
-
-                    LOG.debug("InstanceBind: {}".format(instance_bind))
-
-                LOG.debug("Instance binds created!")
-
-                for instance in databaseinfraattr_instances:
-                    custom_options = copy.deepcopy(default_options)
-                    custom_options['source'] = database_bind.bind_address
-                    custom_options['destination'] = instance.ip + '/32'
-                    custom_options['l4-options']['dest-port-start'] = port
-                    data['rules'].append(custom_options)
-
-                    LOG.debug(
-                        "Creating bind for instance: {}".format(instance))
-
-                    instance_bind = DatabaseInfraInstanceBind(instance=instance.ip,
-                                                              databaseinfra=databaseinfra,
-                                                              bind_address=database_bind.bind_address,
-                                                              instance_port=port)
-                    instance_bind.save()
-
-                    LOG.debug(
-                        "DatabaseInraAttrInstanceBind: {}".format(instance_bind))
-
-                LOG.info("Data used on payload: {}".format(data))
-                response = acl_client.grant_acl_for(environment=acl_environment,
-                                                    vlan=acl_vlan,
-                                                    payload=data)
-
-                if 'job' in response:
-                    monitor_acl_job(job_id=response['job'], acl_client=acl_client)
+                if helpers.bind_address(
+                        database_bind, acl_client, instances=instances,
+                        infra_attr_instances=databaseinfraattr_instances):
+                    continue
                 else:
                     LOG.error("The AclApi is not working properly.")
                     database_bind.bind_status = ERROR
@@ -136,8 +71,6 @@ class BindNewInstances(BaseStep):
 
         LOG.info("Running undo...")
         try:
-            action = 'deny'
-
             database = workflow_dict['database']
             databaseinfra = workflow_dict['databaseinfra']
 
@@ -160,53 +93,12 @@ class BindNewInstances(BaseStep):
                 instance_address_list.append(instance.ip)
 
             for database_bind in database.acl_binds.all():
-                acl_environment, acl_vlan = database_bind.bind_address.split(
-                    '/')
-                data = {"kind": "object#acl", "rules": []}
-                default_options = {
-                    "protocol": "tcp",
-                    "source": "",
-                    "destination": "",
-                    "description": "{} access for database {} in {}".format(database_bind.bind_address,
-                                                                            database.name,
-                                                                            database.environment.name),
-                    "action": action,
-                    "l4-options": {"dest-port-start": "",
-                                   "dest-port-op": "eq"}
-                }
-
-                LOG.info("Default options: {}".format(default_options))
-
                 infra_instances_binds = DatabaseInfraInstanceBind.objects.filter(
                     databaseinfra=databaseinfra,
                     instance__in=instance_address_list,
                     bind_address=database_bind.bind_address)
-                LOG.info(
-                    "infra_instances_binds: {}".format(infra_instances_binds))
-
-                job_list = []
-                for infra_instance_bind in infra_instances_binds:
-                    custom_options = copy.deepcopy(default_options)
-                    custom_options['source'] = database_bind.bind_address
-                    custom_options[
-                        'destination'] = infra_instance_bind.instance + '/32'
-                    custom_options[
-                        'l4-options']['dest-port-start'] = infra_instance_bind.instance_port
-                    data['rules'].append(custom_options)
-
-                    try:
-                        for environment_id, vlan_id, rule_id in helpers.iter_on_acl_query_results(acl_client, custom_options):
-                            response = acl_client.delete_acl(environment_id, vlan_id, rule_id)
-                            if 'job' in response:
-                                job_list.append(response['job'])
-                        infra_instance_bind.delete()
-                    except Exception as e:
-                        raise Exception("Access {} could not be deleted! Error: {}".format(
-                            infra_instance_bind, e))
-
-                for job in job_list:
-                    if monitor_acl_job(job_id=job, acl_client=acl_client):
-                        continue
+                if helpers.unbind_address(database_bind, acl_client, infra_instances_binds):
+                    continue
 
             return True
 
@@ -227,8 +119,6 @@ class UnbindOldInstances(BaseStep):
     def do(self, workflow_dict):
 
         try:
-            action = 'deny'
-
             database = workflow_dict['database']
             databaseinfra = workflow_dict['databaseinfra']
 
@@ -251,43 +141,12 @@ class UnbindOldInstances(BaseStep):
                 instance_address_list.append(instance.ip)
 
             for database_bind in database.acl_binds.all():
-                acl_environment, acl_vlan = database_bind.bind_address.split(
-                    '/')
-                data = {"kind": "object#acl", "rules": []}
-                default_options = {
-                    "protocol": "tcp",
-                    "source": "",
-                    "destination": "",
-                    "description": "{} access for database {} in {}".format(database_bind.bind_address,
-                                                                            database.name,
-                                                                            database.environment.name),
-                    "action": action,
-                    "l4-options": {"dest-port-start": "",
-                                   "dest-port-op": "eq"}
-                }
-
-                LOG.info("Default options: {}".format(default_options))
-
                 infra_instances_binds = DatabaseInfraInstanceBind.objects.filter(
                     databaseinfra=databaseinfra,
                     instance__in=instance_address_list,
                     bind_address=database_bind.bind_address)
-                LOG.info(
-                    "infra_instances_binds: {}".format(infra_instances_binds))
-                for infra_instance_bind in infra_instances_binds:
-                    custom_options = copy.deepcopy(default_options)
-                    custom_options['source'] = database_bind.bind_address
-                    custom_options[
-                        'destination'] = infra_instance_bind.instance + '/32'
-                    custom_options[
-                        'l4-options']['dest-port-start'] = infra_instance_bind.instance_port
-                    data['rules'].append(custom_options)
-
-                LOG.info("Data used on payload: {}".format(data))
-                acl_client.revoke_acl_for(environment=acl_environment,
-                                          vlan=acl_vlan,
-                                          payload=data)
-                infra_instances_binds.delete()
+                if helpers.unbind_address(database_bind, acl_client, infra_instances_binds):
+                    continue
 
             return True
 
@@ -303,9 +162,6 @@ class UnbindOldInstances(BaseStep):
 
         LOG.info("Running undo...")
         try:
-
-            action = 'permit'
-
             database = workflow_dict['database']
             databaseinfra = workflow_dict['databaseinfra']
 
@@ -318,7 +174,6 @@ class UnbindOldInstances(BaseStep):
 
             instances = databaseinfra.instances.filter(
                 future_instance__isnull=False)
-            port = instances[0].port
 
             databaseinfraattr_instances = DatabaseInfraAttr.objects.filter(databaseinfra=databaseinfra,
                                                                            equivalent_dbinfraattr__isnull=False)
@@ -329,70 +184,10 @@ class UnbindOldInstances(BaseStep):
                 instance_address_list.append(instance.ip)
 
             for database_bind in database.acl_binds.all():
-                acl_environment, acl_vlan = database_bind.bind_address.split(
-                    '/')
-                data = {"kind": "object#acl", "rules": []}
-                default_options = {
-                    "protocol": "tcp",
-                    "source": "",
-                    "destination": "",
-                    "description": "{} access for database {} in {}".format(database_bind.bind_address,
-                                                                            database.name,
-                                                                            database.environment.name),
-                    "action": action,
-                    "l4-options": {"dest-port-start": "",
-                                   "dest-port-op": "eq"}
-                }
-
-                LOG.info("Default options: {}".format(default_options))
-
-                for instance in instances:
-                    custom_options = copy.deepcopy(default_options)
-                    custom_options['source'] = database_bind.bind_address
-                    custom_options['destination'] = instance.address + '/32'
-                    custom_options[
-                        'l4-options']['dest-port-start'] = instance.port
-                    data['rules'].append(custom_options)
-
-                    LOG.debug(
-                        "Creating bind for instance: {}".format(instance))
-
-                    instance_bind = DatabaseInfraInstanceBind(instance=instance.address,
-                                                              databaseinfra=databaseinfra,
-                                                              bind_address=database_bind.bind_address,
-                                                              instance_port=instance.port)
-                    instance_bind.save()
-
-                    LOG.debug("InstanceBind: {}".format(instance_bind))
-
-                LOG.debug("Instance binds created!")
-
-                for instance in databaseinfraattr_instances:
-                    custom_options = copy.deepcopy(default_options)
-                    custom_options['source'] = database_bind.bind_address
-                    custom_options['destination'] = instance.ip + '/32'
-                    custom_options['l4-options']['dest-port-start'] = port
-                    data['rules'].append(custom_options)
-
-                    LOG.debug(
-                        "Creating bind for instance: {}".format(instance))
-
-                    instance_bind = DatabaseInfraInstanceBind(instance=instance.ip,
-                                                              databaseinfra=databaseinfra,
-                                                              bind_address=database_bind.bind_address,
-                                                              instance_port=port)
-                    instance_bind.save()
-
-                    LOG.debug(
-                        "DatabaseInraAttrInstanceBind: {}".format(instance_bind))
-
-                LOG.info("Data used on payload: {}".format(data))
-                response = acl_client.grant_acl_for(environment=acl_environment,
-                                                    vlan=acl_vlan,
-                                                    payload=data)
-
-                if 'job' in response:
-                    monitor_acl_job(job_id=response['job'], acl_client=acl_client)
+                if helpers.bind_address(
+                        database_bind, acl_client, instances=instances,
+                        infra_attr_instances=databaseinfraattr_instances):
+                    continue
                 else:
                     LOG.error("The AclApi is not working properly.")
                     database_bind.bind_status = ERROR
