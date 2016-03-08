@@ -6,7 +6,7 @@ from workflow.steps.util.base import BaseStep
 from workflow.exceptions.error_codes import DBAAS_0019
 from dbaas_aclapi.models import DatabaseInfraInstanceBind
 from dbaas_aclapi.acl_base_client import AclClient
-from dbaas_credentials import helpers
+from dbaas_aclapi import helpers
 from dbaas_credentials.models import CredentialType
 
 
