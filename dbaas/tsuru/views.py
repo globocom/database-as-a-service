@@ -1,25 +1,26 @@
 # -*- coding: utf-8 -*-
-from rest_framework.views import APIView
-from rest_framework.renderers import JSONRenderer, JSONPRenderer
-from rest_framework.response import Response
+import re
 import logging
+from slugify import slugify
 from logical.models import Database
 from physical.models import Plan, Environment
 from account.models import AccountUser, Team
-from rest_framework import status
-from slugify import slugify
-from notification.tasks import create_database
-from django.core.exceptions import ObjectDoesNotExist
-from django.db.models import Q
-from notification.models import TaskHistory
 from dbaas_aclapi.tasks import bind_address_on_database
 from dbaas_aclapi.tasks import unbind_address_on_database
 from dbaas_aclapi.models import DatabaseBind
 from dbaas_aclapi.models import DESTROYING, CREATED, CREATING
+from notification.models import TaskHistory
+from notification.tasks import create_database
 from django.core.exceptions import MultipleObjectsReturned
 from django.db import transaction
 from django.db import IntegrityError
-import re
+from django.db.models import Q
+from django.core.exceptions import ObjectDoesNotExist
+from rest_framework import status
+from rest_framework.views import APIView
+from rest_framework.renderers import JSONRenderer, JSONPRenderer
+from rest_framework.response import Response
+
 
 LOG = logging.getLogger(__name__)
 
@@ -34,8 +35,10 @@ class ListPlans(APIView):
         """
         env = get_url_env(request)
 
-        hard_plans = Plan.objects.filter(environments__name=env).values('name', 'description',
-                                                                        'environments__name').extra(where=['is_active=True', 'provider={}'.format(Plan.CLOUDSTACK)])
+        hard_plans = Plan.objects.filter(environments__name=env).values(
+            'name', 'description', 'environments__name'
+        ).extra(
+            where=['is_active=True', 'provider={}'.format(Plan.CLOUDSTACK)])
 
         plans = get_plans_dict(hard_plans)
 
@@ -54,16 +57,21 @@ class GetServiceStatus(APIView):
         env = get_url_env(request)
         LOG.info("Database name {}. Environment {}".format(database_name, env))
         try:
-            database_status = Database.objects.filter(name=database_name,
-                                                      environment__name=env).values_list('status', flat=True)[0]
+            database_status = Database.objects.filter(
+                name=database_name, environment__name=env
+            ).values_list('status', flat=True)[0]
+
         except IndexError as e:
             database_status = 0
             LOG.warn("There is not a database with this {} name on {}. {}".format(
                 database_name, env, e))
 
         LOG.info("Status = {}".format(database_status))
-        task = TaskHistory.objects.filter(Q(arguments__contains=database_name) &
-                                          Q(arguments__contains=env), task_status="RUNNING",).order_by("created_at")
+
+        task = TaskHistory.objects.filter(
+            Q(arguments__contains=database_name) &
+            Q(arguments__contains=env), task_status="RUNNING",
+        ).order_by("created_at")
 
         LOG.info("Task {}".format(task))
 
@@ -85,7 +93,9 @@ class GetServiceInfo(APIView):
         env = get_url_env(request)
         try:
             info = Database.objects.filter(
-                name=database_name, environment__name=env).values('used_size_in_bytes', )[0]
+                name=database_name, environment__name=env
+            ).values('used_size_in_bytes', )[0]
+
             info['used_size_in_bytes'] = str(info['used_size_in_bytes'])
         except IndexError as e:
             info = {}
@@ -117,15 +127,17 @@ class ServiceAppBind(APIView):
             endpoint = database.get_endpoint_dns().replace(
                 '<password>', redis_password)
 
-            env_vars = {"DBAAS_REDIS_PASSWORD": redis_password,
-                        "DBAAS_REDIS_ENDPOINT": endpoint
-                        }
+            env_vars = {
+                "DBAAS_REDIS_PASSWORD": redis_password,
+                "DBAAS_REDIS_ENDPOINT": endpoint
+            }
 
             if database.plan.is_ha:
-                env_vars = {"DBAAS_SENTINEL_PASSWORD": redis_password,
-                            "DBAAS_SENTINEL_ENDPOINT": endpoint,
-                            "DBAAS_SENTINEL_SERVICE_NAME": database.databaseinfra.name
-                            }
+                env_vars = {
+                    "DBAAS_SENTINEL_PASSWORD": redis_password,
+                    "DBAAS_SENTINEL_ENDPOINT": endpoint,
+                    "DBAAS_SENTINEL_SERVICE_NAME": database.databaseinfra.name
+                }
 
         else:
             try:
@@ -133,10 +145,13 @@ class ServiceAppBind(APIView):
             except IndexError as e:
                 msg = "Database {} in env {} does not have credentials.".format(
                     database_name, env)
-                return log_and_response(msg=msg, e=e, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                return log_and_response(
+                    msg=msg, e=e,
+                    http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-            endpoint = database.endpoint.replace('<user>:<password>', "{}:{}".format(
-                credential.user, credential.password))
+            endpoint = database.endpoint.replace(
+                '<user>:<password>', "{}:{}".format(
+                    credential.user, credential.password))
 
             kind = ''
             if endpoint.startswith('mysql'):
@@ -205,8 +220,8 @@ class ServiceUnitBind(APIView):
             except (IndexError, ObjectDoesNotExist) as e:
                 LOG.debug("DatabaseBind is under destruction! {}".format(e))
                 msg = "We are destroying your binds to {}. Please wait.".format(database_name)
-                return log_and_response(msg=msg, e=e,
-                                        http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                return log_and_response(
+                    msg=msg, e=e, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         finally:
             LOG.debug("Finishing transaction!")
@@ -249,8 +264,8 @@ class ServiceUnitBind(APIView):
                 database_bind.save()
         except (IndexError, ObjectDoesNotExist) as e:
             msg = "DatabaseBind does not exist"
-            return log_and_response(msg=msg, e=e,
-                                    http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return log_and_response(
+                msg=msg, e=e, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         finally:
             LOG.debug("Finishing transaction!")
             transaction.commit()
@@ -278,15 +293,16 @@ class ServiceAdd(APIView):
         name_regexp = re.compile('^[a-z][a-z0-9_]+$')
         if name_regexp.match(name) is None:
             msg = "Your database name must match /^[a-z][a-z0-9_]+$/ ."
-            return log_and_response(msg=msg,
-                                    http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return log_and_response(
+                msg=msg, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         try:
             Database.objects.get(name=name, environment__name=env)
             msg = "There is already a database called {} in {}.".format(
                 name, env)
-            return log_and_response(msg=msg,
-                                    http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return log_and_response(
+                msg=msg, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
         except ObjectDoesNotExist:
             pass
 
@@ -294,29 +310,29 @@ class ServiceAdd(APIView):
             dbaas_user = AccountUser.objects.get(email=user)
         except ObjectDoesNotExist as e:
             msg = "User does not exist."
-            return log_and_response(msg=msg, e=e,
-                                    http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return log_and_response(
+                msg=msg, e=e, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         try:
             dbaas_team = Team.objects.get(name=team)
         except ObjectDoesNotExist as e:
             msg = "Team does not exist."
-            return log_and_response(msg=msg, e=e,
-                                    http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return log_and_response(
+                msg=msg, e=e, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         try:
             dbaas_user.team_set.get(name=dbaas_team.name)
         except ObjectDoesNotExist as e:
             msg = "The user is not on {} team.".format(dbaas_team.name)
-            return log_and_response(msg=msg, e=e,
-                                    http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return log_and_response(
+                msg=msg, e=e, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         try:
             dbaas_environment = Environment.objects.get(name=env)
         except(ObjectDoesNotExist) as e:
             msg = "Environment does not exist."
-            return log_and_response(msg=msg,
-                                    http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return log_and_response(
+                msg=msg, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         databases_used_by_team = dbaas_team.count_databases_in_use(
             environment=dbaas_environment)
@@ -325,18 +341,20 @@ class ServiceAdd(APIView):
         if databases_used_by_team >= database_alocation_limit:
             msg = "The database alocation limit of {} has been exceeded for the selected team: {}".format(
                 database_alocation_limit, dbaas_team)
-            return log_and_response(msg=msg,
-                                    http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return log_and_response(
+                msg=msg, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         if 'plan' not in data:
             msg = "Plan was not found"
-            return log_and_response(msg=msg,
-                                    http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return log_and_response(
+                msg=msg, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         plan = data['plan']
-        hard_plans = Plan.objects.values('name', 'description', 'pk',
-                                         'environments__name').extra(where=['is_active=True',
-                                                                            'provider={}'.format(Plan.CLOUDSTACK)])
+        hard_plans = Plan.objects.values(
+            'name', 'description', 'pk', 'environments__name'
+        ).extra(
+            where=['is_active=True', 'provider={}'.format(Plan.CLOUDSTACK)]
+        )
 
         plans = get_plans_dict(hard_plans)
         plan = [splan for splan in plans if splan['name'] == plan]
@@ -346,8 +364,8 @@ class ServiceAdd(APIView):
             dbaas_plan = Plan.objects.get(pk=plan[0]['pk'])
         else:
             msg = "Plan was not found"
-            return log_and_response(msg=msg,
-                                    http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return log_and_response(
+                msg=msg, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         task_history = TaskHistory()
         task_history.task_name = "create_database"
@@ -370,11 +388,13 @@ class ServiceRemove(APIView):
         env = get_url_env(request)
         try:
             database = Database.objects.filter(
-                name=database_name, environment__name=env).exclude(is_in_quarantine=True)[0]
+                name=database_name, environment__name=env
+            ).exclude(is_in_quarantine=True)[0]
         except IndexError as e:
             msg = "Database id provided does not exist {} in {}.".format(
                 database_name, env)
-            return log_and_response(msg=msg, e=e, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return log_and_response(
+                msg=msg, e=e, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         database.delete()
         return Response(status.HTTP_204_NO_CONTENT)
@@ -403,15 +423,17 @@ def log_and_response(msg, http_status, e="Conditional Error."):
 
 
 def check_database_status(database_name, env):
-    task = TaskHistory.objects.filter(arguments__contains="Database name: {}, Environment: {}".format(
-        database_name, env), task_status="RUNNING",)
+    task = TaskHistory.objects.filter(
+        arguments__contains="Database name: {}, Environment: {}".format(
+            database_name, env
+        ), task_status="RUNNING")
 
     LOG.info("Task {}".format(task))
     if task:
         msg = "Database {} in env {} is beeing created.".format(
             database_name, env)
-        return log_and_response(msg=msg,
-                                http_status=status.HTTP_412_PRECONDITION_FAILED)
+        return log_and_response(
+            msg=msg, http_status=status.HTTP_412_PRECONDITION_FAILED)
 
     try:
         database = Database.objects.get(
@@ -419,21 +441,21 @@ def check_database_status(database_name, env):
     except ObjectDoesNotExist as e:
         msg = "Database {} does not exist in env {}.".format(
             database_name, env)
-        return log_and_response(msg=msg, e=e,
-                                http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return log_and_response(
+            msg=msg, e=e, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     except MultipleObjectsReturned as e:
         msg = "There are multiple databases called {} in {}.".format(
             database_name, env)
-        return log_and_response(msg=msg, e=e,
-                                http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return log_and_response(
+            msg=msg, e=e, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     except Exception as e:
         msg = "Something ocurred on dbaas, please get in touch with your DBA."
-        return log_and_response(msg=msg, e=e,
-                                http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return log_and_response(
+            msg=msg, e=e, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     if not(database and database.status):
         msg = "Database {} is not Alive.".format(database_name)
-        return log_and_response(msg=msg,
-                                http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return log_and_response(
+            msg=msg, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     return database
