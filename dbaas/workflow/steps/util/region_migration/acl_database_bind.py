@@ -2,7 +2,7 @@
 import logging
 from util import full_stack
 from util import get_credentials_for
-from workflow.steps.utils.base import BaseStep
+from workflow.steps.util.base import BaseStep
 from workflow.exceptions.error_codes import DBAAS_0020
 from dbaas_credentials.models import CredentialType
 from dbaas_cloudstack.models import DatabaseInfraAttr
