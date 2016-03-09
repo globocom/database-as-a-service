@@ -68,6 +68,9 @@ class CreateVirtualMachine(BaseStep):
                 else:
                     offering = target_offering
 
+                LOG.debug(
+                    "Deploying new vm on cs with bundle %s and offering %s" % (bundle, offering))
+
                 vm = cs_provider.deploy_virtual_machine(offering=offering.serviceofferingid,
                                                         bundle=bundle,
                                                         project_id=cs_credentials.project,
