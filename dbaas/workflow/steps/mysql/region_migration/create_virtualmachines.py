@@ -39,29 +39,19 @@ class CreateVirtualMachine(BaseStep):
                 plan=workflow_dict['target_plan'])
             bundles = list(cs_plan_attrs.bundle.all())
 
+            if len(bundles) == 1:
+                bundle = bundles[0]
+            else:
+                bundle = LastUsedBundle.get_next_infra_bundle(
+                    plan=workflow_dict['target_plan'], bundles=bundles)
+
             workflow_dict['target_hosts'] = []
             workflow_dict['target_instances'] = []
-            source_instances = []
 
-            for index, source_host in enumerate(workflow_dict['source_hosts']):
+            for index, source_instance in enumerate(workflow_dict['source_instances']):
 
-                sentinel_source_instance = Instance.objects.filter(
-                    hostname=source_host, instance_type=Instance.REDIS_SENTINEL)[0]
-                if index < 2:
-                    redis_source_instance = Instance.objects.filter(
-                        hostname=source_host, instance_type=Instance.REDIS)[0]
-
+                source_host = workflow_dict['source_hosts'][index]
                 vm_name = source_host.hostname.split('.')[0]
-
-                if len(bundles) == 1:
-                    bundle = bundles[0]
-                else:
-                    if index == 0:
-                        bundle = LastUsedBundle.get_next_infra_bundle(
-                            plan=workflow_dict['target_plan'], bundles=bundles)
-                    else:
-                        bundle = LastUsedBundle.get_next_bundle(
-                            bundle=bundle, bundles=bundles)
 
                 if index == 2:
                     offering = cs_plan_attrs.get_weaker_offering()
@@ -97,53 +87,24 @@ class CreateVirtualMachine(BaseStep):
                 host_attr.save()
                 LOG.info("Host attrs custom attributes created!")
 
-                if index < 2:
+                instance = Instance()
+                instance.address = host.address
+                instance.dns = host.address
+                instance.port = source_instance.port
 
-                    redis_instance = Instance()
-                    redis_instance.address = host.address
-                    redis_instance.dns = host.address
-                    redis_instance.port = redis_source_instance.port
+                instance.is_active = source_instance.is_active
+                instance.is_arbiter = source_instance.is_arbiter
+                instance.instance_type = source_instance.instance_type
+                instance.hostname = host
 
-                    redis_instance.is_active = redis_source_instance.is_active
-                    redis_instance.is_arbiter = redis_source_instance.is_arbiter
-                    redis_instance.instance_type = redis_source_instance.instance_type
-                    redis_instance.hostname = host
-
-                    redis_instance.databaseinfra = workflow_dict[
-                        'databaseinfra']
-                    redis_instance.save()
-                    LOG.info("Instance created!")
-
-                    redis_source_instance.future_instance = redis_instance
-                    redis_source_instance.save()
-
-                    source_instances.append(redis_source_instance)
-
-                    workflow_dict['target_instances'].append(redis_instance)
-
-                sentinel_instance = Instance()
-                sentinel_instance.address = host.address
-                sentinel_instance.dns = host.address
-                sentinel_instance.port = sentinel_source_instance.port
-
-                sentinel_instance.is_active = sentinel_source_instance.is_active
-                sentinel_instance.is_arbiter = sentinel_source_instance.is_arbiter
-                sentinel_instance.instance_type = sentinel_source_instance.instance_type
-                sentinel_instance.hostname = host
-
-                sentinel_instance.databaseinfra = workflow_dict[
-                    'databaseinfra']
-                sentinel_instance.save()
+                instance.databaseinfra = workflow_dict['databaseinfra']
+                instance.save()
                 LOG.info("Instance created!")
 
-                sentinel_source_instance.future_instance = sentinel_instance
-                sentinel_source_instance.save()
+                source_instance.future_instance = instance
+                source_instance.save()
 
-                source_instances.append(sentinel_source_instance)
-
-                workflow_dict['target_instances'].append(sentinel_instance)
-
-            workflow_dict['source_instances'] = source_instances
+                workflow_dict['target_instances'].append(instance)
 
             return True
         except Exception:
