@@ -24,7 +24,7 @@ class CreateVirtualMachine(BaseStep):
 
     def do(self, workflow_dict):
         try:
-            if not 'environment' in workflow_dict and not 'plan' in workflow_dict:
+            if 'environment' not in workflow_dict or 'plan' not in workflow_dict:
                 return False
 
             cs_credentials = get_credentials_for(
@@ -49,8 +49,12 @@ class CreateVirtualMachine(BaseStep):
                 if len(bundles) == 1:
                     bundle = bundles[0]
                 else:
-                    bundle = LastUsedBundle.get_next_bundle(
-                        plan=workflow_dict['plan'], bundle=bundles)
+                    if index == 0:
+                        bundle = LastUsedBundle.get_next_infra_bundle(
+                            plan=workflow_dict['plan'], bundles=bundles)
+                    else:
+                        bundle = LastUsedBundle.get_next_bundle(
+                            bundle=bundle, bundles=bundles)
 
                 if index == 2:
                     offering = cs_plan_attrs.get_weaker_offering()

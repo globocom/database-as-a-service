@@ -118,7 +118,7 @@ CLONE_UNKNOWN = (
 
 MYSQL_REGION_MIGRATION_1 = (
     'workflow.steps.util.region_migration.change_ttl.DecreaseTTL',
-    'workflow.steps.util.region_migration.create_virtualmachines.CreateVirtualMachine',
+    'workflow.steps.mysql.region_migration.create_virtualmachines.CreateVirtualMachine',
     'workflow.steps.util.region_migration.create_nfs.CreateNfs',
     'workflow.steps.util.region_migration.mount_disks.MountDisks',
     'workflow.steps.mysql.region_migration.create_secondary_ip.CreateSecondaryIp',
@@ -198,7 +198,7 @@ REDIS_REGION_MIGRATION_5 = ()
 
 MONGODB_REGION_MIGRATION_1 = (
     'workflow.steps.util.region_migration.change_ttl.DecreaseTTL',
-    'workflow.steps.util.region_migration.create_virtualmachines.CreateVirtualMachine',
+    'workflow.steps.mongodb.region_migration.create_virtualmachines.CreateVirtualMachine',
     'workflow.steps.util.region_migration.create_nfs.CreateNfs',
     'workflow.steps.util.region_migration.mount_disks.MountDisks',
     'workflow.steps.mongodb.region_migration.config_files.ConfigFiles',
