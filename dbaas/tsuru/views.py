@@ -216,7 +216,7 @@ class ServiceUnitBind(APIView):
 
             try:
                 db_bind = DatabaseBind.objects.get(database=database,
-                                                   bind_address=unit_net_work)
+                                                   bind_address=unit_network)
 
                 bind = DatabaseBind.objects.select_for_update().filter(
                     id=db_bind.id)[0]
