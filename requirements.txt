@@ -58,7 +58,7 @@ dbaas_zabbix==0.2.8
 dbaas_dbmonitor==0.2.2
 dbaas_flipper==0.0.9
 django-filter==0.9.1
-dbaas-aclapi==0.0.81
+dbaas-aclapi==0.0.78
 dbaas_dnsapi==0.1.0
 dbaas_laas==0.0.4
 GloboNetworkAPI==0.2.2
