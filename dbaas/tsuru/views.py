@@ -2,17 +2,15 @@
 import re
 import logging
 from slugify import slugify
-from util import get_credentials_for
 from logical.models import Database
 from physical.models import Plan, Environment
 from account.models import AccountUser, Team
-from notification.models import TaskHistory
-from notification.tasks import create_database
 from dbaas_aclapi.tasks import bind_address_on_database
 from dbaas_aclapi.tasks import unbind_address_on_database
 from dbaas_aclapi.models import DatabaseBind
 from dbaas_aclapi.models import DESTROYING, CREATED, CREATING
-from dbaas_credentials.models import CredentialType
+from notification.models import TaskHistory
+from notification.tasks import create_database
 from django.core.exceptions import MultipleObjectsReturned
 from django.db import transaction
 from django.db import IntegrityError
@@ -22,7 +20,6 @@ from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.renderers import JSONRenderer, JSONPRenderer
 from rest_framework.response import Response
-from networkapiclient import Ip, Network
 
 
 LOG = logging.getLogger(__name__)
@@ -196,17 +193,12 @@ class ServiceUnitBind(APIView):
         database = response
         data = request.DATA
         LOG.debug("Request DATA {}".format(data))
-
-        unit_network = get_network_from_ip(
-            data.get('unit-host'), database.environment
-        )
-
+        unit_host = data.get('unit-host') + '/32'
         created = False
 
         transaction.set_autocommit(False)
-        database_bind = DatabaseBind(
-            database=database, bind_address=unit_network, binds_requested=1
-        )
+        database_bind = DatabaseBind(database=database, bind_address=unit_host,
+                                     binds_requested=1)
 
         try:
             database_bind.save()
@@ -216,7 +208,7 @@ class ServiceUnitBind(APIView):
 
             try:
                 db_bind = DatabaseBind.objects.get(database=database,
-                                                   bind_address=unit_network)
+                                                   bind_address=unit_host)
 
                 bind = DatabaseBind.objects.select_for_update().filter(
                     id=db_bind.id)[0]
@@ -252,15 +244,12 @@ class ServiceUnitBind(APIView):
             return response
 
         database = response
-
-        unit_network = get_network_from_ip(
-            data.get('unit-host'), database.environment
-        )
+        unbind_ip = data.get('unit-host') + '/32'
         transaction.set_autocommit(False)
 
         try:
             db_bind = DatabaseBind.objects.get(database=database,
-                                               bind_address=unit_network)
+                                               bind_address=unbind_ip)
 
             database_bind = DatabaseBind.objects.select_for_update().filter(
                 id=db_bind.id)[0]
@@ -470,31 +459,3 @@ def check_database_status(database_name, env):
             msg=msg, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     return database
-
-
-def get_network_from_ip(ip, database_environment):
-    net_api_credentials = get_credentials_for(
-        environment=database_environment,
-        credential_type=CredentialType.NETWORKAPI
-    )
-
-    ip_client = Ip.Ip(
-        net_api_credentials.endpoint, net_api_credentials.user,
-        net_api_credentials.password
-    )
-
-    ips = ip_client.get_ipv4_or_ipv6(ip)
-    ips = ips['ips']
-    if type(ips) != list:
-        ips = [ips]
-
-    net_ip = ips[0]
-    network_client = Network.Network(
-        net_api_credentials.endpoint, net_api_credentials.user,
-        net_api_credentials.password
-    )
-
-    network = network_client.get_network_ipv4(net_ip['networkipv4'])
-    network = network['network']
-
-    return network['oct1'] + '.' + network['oct2'] + '.' + network['oct3'] + '.' + network['oct4'] + '/' + network['block']
