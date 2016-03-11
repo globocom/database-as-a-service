@@ -84,11 +84,6 @@ class UpgradeMongoDB_26_to_30(BaseStep):
         script += util.build_start_database_script(wait_time=30)
         script += util.build_change_limits_script()
 
-        if instance.instance_type == instance.MONGODB_ARBITER:
-            script += util.build_change_in_serverstatus_file_script_for_arbiter()
-        else:
-            script += util.build_change_in_serverstatus_file_script()
-
         script += util.build_reinstal_mongo_gen_script()
         script += util.build_remove_reprecated_index_counter_metrics()
 

@@ -32,7 +32,6 @@ DEPLOY_MONGO = (
     'workflow.steps.util.deploy.build_database.BuildDatabase',
     'workflow.steps.util.deploy.create_log.CreateLog',
     'workflow.steps.util.deploy.check_database_binds.CheckDatabaseBinds',
-    'workflow.steps.util.deploy.restart_td_agent.ReStartTdAgent',
 )
 
 DEPLOY_REDIS = (
