@@ -309,15 +309,6 @@ def build_change_mongodb_conf_file_script():
     """
 
 
-def build_reinstal_mongo_gen_script():
-    return """
-        /etc/init.d/td-agent stop
-        yum install -y gcc44
-        yes | td-agent-gem uninstall mongo
-        td-agent-gem install mongo
-    """
-
-
 def build_remove_reprecated_index_counter_metrics():
     return """
         sed -i '271,314 d' /etc/td-agent/td-agent.conf

@@ -83,8 +83,6 @@ class UpgradeMongoDB_26_to_30(BaseStep):
         script += util.build_change_release_alias_script()
         script += util.build_start_database_script(wait_time=30)
         script += util.build_change_limits_script()
-
-        script += util.build_reinstal_mongo_gen_script()
         script += util.build_remove_reprecated_index_counter_metrics()
 
         if run_authschemaupgrade:
