@@ -52,9 +52,9 @@ sphinx-me==0.2.1
 urllib3==1.7.1
 wsgiref==0.1.2
 dbaas_cloudstack==0.7.9
-dbaas_credentials==1.0.7
+dbaas_credentials==1.1.0
 dbaas_nfsaas==0.6.7
-dbaas_zabbix==0.2.8
+dbaas_zabbix==0.2.9
 dbaas_dbmonitor==0.2.2
 dbaas_flipper==0.0.9
 django-filter==0.9.1
