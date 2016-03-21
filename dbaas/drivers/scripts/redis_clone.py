@@ -231,7 +231,7 @@ def restore_dst_cluster(dump_path, cluster_info, redis_time_out):
 
         click.echo("Restore successful! :)")
 
-        return True
+    return True
 
 
 @click.command()
