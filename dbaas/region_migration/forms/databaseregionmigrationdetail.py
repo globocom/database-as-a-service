@@ -15,6 +15,8 @@ class DatabaseRegionMigrationDetailForm(models.ModelForm):
     def __init__(self, *args, **kwargs):
         super(DatabaseRegionMigrationDetailForm, self).__init__(
             *args, **kwargs)
+        self.fields['scheduled_for'] = forms.DateTimeField(
+            initial=datetime.now(), widget=AdminSplitDateTime)
 
     class Meta:
         model = DatabaseRegionMigrationDetail
