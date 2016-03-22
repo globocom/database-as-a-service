@@ -205,7 +205,11 @@ class BaseDriver(object):
     def get_slave_instances(self, ):
         instances = self.get_database_instances()
         master = self.get_master_instance()
-        instances.remove(master)
+
+        try:
+            instances.remove(master)
+        except ValueError:
+            raise Exception("Master could not be detected")
 
         return instances
 
