@@ -223,7 +223,7 @@ def exec_remote_command(server, username, password, command, output={}):
         return None
 
 
-def check_ssh(server, username, password, retries=6, wait=30, interval=40):
+def check_ssh(server, username, password, retries=30, wait=30, interval=40):
     username = username
     password = password
     ssh = paramiko.SSHClient()
