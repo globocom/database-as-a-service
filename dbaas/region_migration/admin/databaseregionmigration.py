@@ -20,11 +20,20 @@ LOG = logging.getLogger(__name__)
 
 
 class DatabaseRegionMigrationAdmin(admin.DjangoServicesAdmin):
-    model = DatabaseRegionMigration
-    list_display = ('database', 'steps_information', 'database_engine',
-                    'status', 'description', 'schedule_next_step_html',
-                    'user_friendly_warning', 'schedule_rollback_html')
+    search_fields = ("database__name", "database__team__name",
+                     "database__databaseinfra__name")
 
+    list_filter = ["database__project", "database__environment",
+                   "database__databaseinfra__engine", "database__team",
+                   "database__databaseinfra__plan",
+                   "database__databaseinfra__engine__engine_type"]
+
+    list_display = ('database', 'steps_information', 'database_engine',
+                    'get_database_team', 'status', 'description',
+                    'schedule_next_step_html', 'user_friendly_warning',
+                    'schedule_rollback_html',)
+
+    model = DatabaseRegionMigration
     actions = None
     service_class = DatabaseRegionMigrationService
     list_display_links = ()
@@ -99,6 +108,11 @@ class DatabaseRegionMigrationAdmin(admin.DjangoServicesAdmin):
         return warning_message
 
     user_friendly_warning.short_description = "Warning"
+
+    def get_database_team(self, databaseregionmigration):
+        return databaseregionmigration.database.team
+
+    get_database_team.short_description = "Team"
 
     def steps_information(self, databaseregionmigration):
         current_step = databaseregionmigration.current_step + 1
