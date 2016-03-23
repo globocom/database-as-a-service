@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.0.72
+* Add step on mysql migration to start mk-heartbeat-daemon
+
 ## 0.0.71
 * Return True if the seconds delay is less than 2
 * Change the default attempts on check_replication_and_switch function
