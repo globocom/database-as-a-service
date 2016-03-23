@@ -280,7 +280,7 @@ EOF_DBAAS_PURGE_BACKUPS
     echo ""; echo $(date "+%Y-%m-%d %T") "- Creating the database backup log config file"
 (cat <<EOF_DBAAS_BACKUP_LOG_CONFIG
 export DATABASE_LOG_PATH="{{DATABASE_LOG_PATH}}"
-export DST_PATH="{{MOUNT_PATH}}/{{DATABASEINFRA_NAME}}/$(hostname)"
+export DST_PATH="{{MOUNT_PATH}}/{{DATABASEINFRA_NAME}}/$(hostname -s)"
 export RETENTION_BACKUP_LOG_DAYS={{RETENTION_BACKUP_LOG_DAYS}}
 EOF_DBAAS_BACKUP_LOG_CONFIG
 ) > {{CONFIG_BACKUP_LOG_SCRIPT}}
