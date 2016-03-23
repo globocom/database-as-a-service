@@ -157,6 +157,13 @@ def build_mysql_statsd_script(option='start'):
         """.format(option)
 
 
+def build_mk_heartbeat_daemon_script(option='start'):
+    return """
+        echo ""; echo $(date "+%Y-%m-%d %T") "- Starting mk-heartbeat-daemon"
+        /etc/init.d/mk-heartbeat-daemon {} > /dev/null
+        """.format(option)
+
+
 def get_replication_information_from_file(host,):
     command = 'cat /data/data/mysql_binlog_master_file_pos'
     cs_host_attr = CsHostAttr.objects.get(host=host)
