@@ -147,6 +147,7 @@ MYSQL_REGION_MIGRATION_2 = (
     'workflow.steps.util.region_migration.switch_dns.SwitchDNS',
     'workflow.steps.util.region_migration.td_agent.StartTDAgent',
     'workflow.steps.mysql.region_migration.start_mysql_statsd.StartMySQLStasD',
+    'workflow.steps.mysql.region_migration.start_mkheartbeat.StartMkHeartbeat',
 )
 
 MYSQL_REGION_MIGRATION_3 = (
