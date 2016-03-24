@@ -1,16 +1,17 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
-from django.utils.translation import ugettext_lazy as _
 import logging
+from django.utils.translation import ugettext_lazy as _
 from django.forms import models
 from django import forms
-from ..models import Database
-from physical.models import Plan, Environment, Engine
+from logical.widgets.database_offering_field import DatabaseOfferingWidget
 from dbaas_cloudstack.models import CloudStackPack
 from drivers.factory import DriverFactory
-from .fields import AdvancedModelChoiceField
-from logical.widgets.database_offering_field import DatabaseOfferingWidget
 from backup.models import Snapshot
+from physical.models import Plan, Environment, Engine
+from logical.forms.fields import AdvancedModelChoiceField
+from logical.models import Database
+
 
 LOG = logging.getLogger(__name__)
 
@@ -68,6 +69,7 @@ class CloneDatabaseForm(forms.Form):
 
             dbs = origindatabase.team.databases_in_use_for(
                 origindatabase.environment)
+
             database_alocation_limit = origindatabase.team.database_alocation_limit
             LOG.debug("dbs: %s | type: %s" % (dbs, type(dbs)))
             if (database_alocation_limit != 0 and len(dbs) >= database_alocation_limit):
