@@ -11,6 +11,7 @@ from backup.models import Snapshot
 from physical.models import Plan, Environment, Engine
 from logical.forms.fields import AdvancedModelChoiceField
 from logical.models import Database
+from logical.validators import database_name_evironment_constraint
 
 
 LOG = logging.getLogger(__name__)
@@ -92,6 +93,11 @@ class CloneDatabaseForm(forms.Form):
                 raise forms.ValidationError(
                     _("There is already a database called {} on {}".format(database_name,
                                                                            environment)))
+
+        if database_name_evironment_constraint(database_name, environment.name):
+            raise forms.ValidationError(
+                _('%s already exists in production!') % database_name
+            )
 
             if self._errors:
                 return cleaned_data
@@ -207,6 +213,11 @@ class DatabaseForm(models.ModelForm):
         if 'name' in cleaned_data and cleaned_data['name'] in driver.RESERVED_DATABASES_NAME:
             raise forms.ValidationError(
                 _("%s is a reserved database name" % cleaned_data['name']))
+
+        if database_name_evironment_constraint(database_name, environment.name):
+            raise forms.ValidationError(
+                _('%s already exists in production!') % database_name
+            )
 
         if self._errors:
             return cleaned_data
