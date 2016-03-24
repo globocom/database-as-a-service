@@ -23,6 +23,8 @@ from rest_framework.views import APIView
 from rest_framework.renderers import JSONRenderer, JSONPRenderer
 from rest_framework.response import Response
 from networkapiclient import Ip, Network
+from logical.validators import database_name_evironment_constraint
+from system import models
 
 
 LOG = logging.getLogger(__name__)
@@ -60,9 +62,8 @@ class GetServiceStatus(APIView):
         env = get_url_env(request)
         LOG.info("Database name {}. Environment {}".format(database_name, env))
         try:
-            database_status = Database.objects.filter(
-                name=database_name, environment__name=env
-            ).values_list('status', flat=True)[0]
+            database = get_database(database_name, env)
+            database_status = database.status
 
         except IndexError as e:
             database_status = 0
@@ -95,11 +96,8 @@ class GetServiceInfo(APIView):
     def get(self, request, database_name, format=None):
         env = get_url_env(request)
         try:
-            info = Database.objects.filter(
-                name=database_name, environment__name=env
-            ).values('used_size_in_bytes', )[0]
-
-            info['used_size_in_bytes'] = str(info['used_size_in_bytes'])
+            database = get_database(database_name, env)
+            info = {'used_size_in_bytes': str(database.used_size_in_bytes)}
         except IndexError as e:
             info = {}
             LOG.warn(
@@ -250,7 +248,6 @@ class ServiceUnitBind(APIView):
         response = check_database_status(database_name, env)
         if type(response) != Database:
             return response
-
         database = response
 
         unit_network = get_network_from_ip(
@@ -316,6 +313,11 @@ class ServiceAdd(APIView):
 
         except ObjectDoesNotExist:
             pass
+
+        if database_name_evironment_constraint(name, env):
+            msg = "{} already exists in production!".format(name)
+            return log_and_response(
+                msg=msg, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         try:
             dbaas_user = AccountUser.objects.get(email=user)
@@ -398,9 +400,7 @@ class ServiceRemove(APIView):
     def delete(self, request, database_name, format=None):
         env = get_url_env(request)
         try:
-            database = Database.objects.filter(
-                name=database_name, environment__name=env
-            ).exclude(is_in_quarantine=True)[0]
+            database = get_database(database_name, env)
         except IndexError as e:
             msg = "Database id provided does not exist {} in {}.".format(
                 database_name, env)
@@ -424,7 +424,10 @@ def get_plans_dict(hard_plans):
 
 
 def get_url_env(request):
-    return request._request.path.split('/')[1]
+    env = request._request.path.split('/')[1]
+    if env == 'prod':
+        env = 'prod-cm'
+    return env
 
 
 def log_and_response(msg, http_status, e="Conditional Error."):
@@ -447,9 +450,8 @@ def check_database_status(database_name, env):
             msg=msg, http_status=status.HTTP_412_PRECONDITION_FAILED)
 
     try:
-        database = Database.objects.get(
-            name=database_name, environment__name=env)
-    except ObjectDoesNotExist as e:
+        database = get_database(database_name, env)
+    except IndexError as e:
         msg = "Database {} does not exist in env {}.".format(
             database_name, env)
         return log_and_response(
@@ -498,3 +500,17 @@ def get_network_from_ip(ip, database_environment):
     network = network['network']
 
     return network['oct1'] + '.' + network['oct2'] + '.' + network['oct3'] + '.' + network['oct4'] + '/' + network['block']
+
+
+def get_database(name, env):
+    if env in models.Configuration.get_by_name_as_list('dev_envs'):
+        database = Database.objects.filter(
+            name=name, environment__name=env
+        ).exclude(is_in_quarantine=True)[0]
+    else:
+        prod_envs = models.Configuration.get_by_name_as_list('prod_envs')
+        database = Database.objects.filter(
+            name=name, environment__name__in=prod_envs
+        ).exclude(is_in_quarantine=True)[0]
+
+    return database
