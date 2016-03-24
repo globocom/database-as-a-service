@@ -259,7 +259,7 @@ def build_backup_log_script():
             echo "Could not mount {{MOUNT_PATH}}"
             exit 100
         fi
-        mkdir -p {{MOUNT_PATH}}/{{DATABASEINFRA_NAME}}/$(hostname)
+        mkdir -p {{MOUNT_PATH}}/{{DATABASEINFRA_NAME}}/$(hostname -s)
         die_if_error "Could not create backup log dir"
     }
 
