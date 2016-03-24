@@ -1,20 +1,19 @@
 # -*- coding: utf-8 -*-
-from logical.models import Database
-from django.core.exceptions import ObjectDoesNotExist
 from system.models import Configuration
 
 
 def database_name_evironment_constraint(database_name, environment_name):
-    try:
-        database = Database.objects.get(name=database_name)
-    except ObjectDoesNotExist:
+    from logical.models import Database
+
+    databases = Database.objects.filter(name=database_name)
+    if not databases:
         return False
-    else:
-        dev_envs = Configuration.get_by_name_as_list('dev_envs')
-        new_db_env_is_not_dev = environment_name not in dev_envs
 
-        prod_envs = Configuration.get_by_name_as_list('prod_envs')
-        db_env_is_prod = database.environment.name in prod_envs
+    dev_envs = Configuration.get_by_name_as_list('dev_envs')
+    if environment_name in dev_envs:
+        return False
 
-        if new_db_env_is_not_dev and db_env_is_prod:
-            return True
+    prod_envs = Configuration.get_by_name_as_list('prod_envs')
+    return any((
+        database.environment.name in prod_envs
+        for database in databases))
