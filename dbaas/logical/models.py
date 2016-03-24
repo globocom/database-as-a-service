@@ -19,7 +19,7 @@ from datetime import date, timedelta
 from account.models import Team
 from drivers.base import ConnectionError, DatabaseStatus
 from django.core.exceptions import ObjectDoesNotExist
-
+from logical.validators import database_name_evironment_constraint
 
 LOG = logging.getLogger(__name__)
 MB_FACTOR = 1.0 / 1024.0 / 1024.0
@@ -542,6 +542,12 @@ def database_pre_save(sender, **kwargs):
             raise AttributeError(_("Attribute name cannot be edited"))
     else:
         # new database
+        if database_name_evironment_constraint(
+           database.name, database.environment.name):
+            raise AttributeError(
+                _('%s already exists in production!') % database.name
+            )
+
         LOG.debug("slugfying database's name for %s" % database.name)
         database.name = slugify(database.name)
 
