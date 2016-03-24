@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-from system.models import Configuration
 
 
 def database_name_evironment_constraint(database_name, environment_name):
     from logical.models import Database
+    from system.models import Configuration
 
     databases = Database.objects.filter(name=database_name)
     if not databases:
