@@ -35,6 +35,7 @@ class AddInstancesReplicaSet(BaseStep):
             max_member_id = max(member_ids)
             secundary_one_member_id = max_member_id + 1
             secundary_two_member_id = max_member_id + 2
+            arbiter_member_id = max_member_id + 3
 
             context_dict = {
                 'CONNECT_STRING': connect_string,
@@ -43,6 +44,7 @@ class AddInstancesReplicaSet(BaseStep):
                 'ARBITER': "{}:{}".format(workflow_dict['target_instances'][2].address, workflow_dict['target_instances'][2].port),
                 'SECUNDARY_ONE_MEMBER_ID': secundary_one_member_id,
                 'SECUNDARY_TWO_MEMBER_ID': secundary_two_member_id,
+                'ARBITER_MEMBER_ID': arbiter_member_id,
             }
 
             script = test_bash_script_error()

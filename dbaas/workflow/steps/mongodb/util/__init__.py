@@ -67,7 +67,7 @@ def build_add_replica_set_members_script():
         /usr/local/mongodb/bin/mongo {{CONNECT_STRING}} <<EOF_DBAAS
         rs.add( { "_id": {{SECUNDARY_ONE_MEMBER_ID}}, "host": "{{SECUNDARY_ONE}}", "priority": 0, "hidden": true } )
         rs.add( { "_id": {{SECUNDARY_TWO_MEMBER_ID}}, "host": "{{SECUNDARY_TWO}}", "priority": 0, "hidden": true } )
-        rs.addArb("{{ARBITER}}")
+        rs.add( { "_id": {{ARBITER_MEMBER_ID}}, "host": "{{ARBITER}}", "priority": 0, "hidden": true, "arbiterOnly": true } )
         exit
         \nEOF_DBAAS
         die_if_error "Error adding new replica set members"
@@ -111,10 +111,14 @@ def build_switch_primary_to_new_instances_script():
        cfg = rs.conf()
        cfg.members[var_secundary_member].priority = 0
        cfg.members[var_secundary_member].hidden = true
+       cfg.members[2].priority = 0
+       cfg.members[2].hidden = true
        cfg.members[3].priority = 1
        cfg.members[3].hidden = false
        cfg.members[4].priority = 1
        cfg.members[4].hidden = false
+       cfg.members[5].priority = 1
+       cfg.members[5].hidden = false
        rs.reconfig(cfg)
        exit
        \nEOF_DBAAS
@@ -157,6 +161,8 @@ def build_switch_primary_to_old_instances_script():
        cfg.members[0].hidden = false
        cfg.members[1].priority = 1
        cfg.members[1].hidden = false
+       cfg.members[2].priority = 1
+       cfg.members[2].hidden = false
        rs.reconfig(cfg)
        exit
        \nEOF_DBAAS
@@ -178,6 +184,8 @@ def build_switch_primary_to_old_instances_script():
        cfg.members[3].hidden = true
        cfg.members[4].priority = 0
        cfg.members[4].hidden = true
+       cfg.members[5].priority = 0
+       cfg.members[5].hidden = true
        rs.reconfig(cfg)
        exit
        \nEOF_DBAAS
