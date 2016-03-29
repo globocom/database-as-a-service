@@ -131,6 +131,7 @@ MYSQL_REGION_MIGRATION_1 = (
     'workflow.steps.util.region_migration.config_backup_log.ConfigBackupLog',
     'workflow.steps.util.region_migration.acl_database_bind.BindNewInstances',
     'workflow.steps.util.region_migration.replicate_old_acls.ReplicateOldAcl',
+    'workflow.steps.util.region_migration.td_agent.StopTDAgent',
 )
 
 
@@ -173,6 +174,7 @@ REDIS_REGION_MIGRATION_1 = (
     'workflow.steps.util.region_migration.config_backup_log.ConfigBackupLog',
     'workflow.steps.util.region_migration.acl_database_bind.BindNewInstances',
     'workflow.steps.util.region_migration.replicate_old_acls.ReplicateOldAcl',
+    'workflow.steps.util.region_migration.td_agent.StopTDAgent',
 )
 REDIS_REGION_MIGRATION_2 = (
     'workflow.steps.util.region_migration.check_instances_status.CheckInstancesStatus',
@@ -206,6 +208,7 @@ MONGODB_REGION_MIGRATION_1 = (
     'workflow.steps.util.region_migration.config_backup_log.ConfigBackupLog',
     'workflow.steps.util.region_migration.acl_database_bind.BindNewInstances',
     'workflow.steps.util.region_migration.replicate_old_acls.ReplicateOldAcl',
+    'workflow.steps.util.region_migration.td_agent.StopTDAgent',
 )
 MONGODB_REGION_MIGRATION_2 = (
     'workflow.steps.util.region_migration.check_instances_status.CheckInstancesStatus',
