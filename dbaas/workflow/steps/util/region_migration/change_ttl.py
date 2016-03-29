@@ -18,7 +18,7 @@ class DecreaseTTL(BaseStep):
 
             LOG.info("Calling dnsapi provider...")
             DNSAPIProvider.update_database_dns_ttl(
-                databaseinfra=workflow_dict['databaseinfra'], ttl=5)
+                databaseinfra=workflow_dict['databaseinfra'], ttl=60)
 
             return True
         except Exception:
