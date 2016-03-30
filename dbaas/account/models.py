@@ -101,14 +101,24 @@ class Team(BaseModel):
         return list(all_users.difference(Set(users)))
 
     def databases_in_use_for(self, environment):
-        from physical.models import DatabaseInfra
+        #from physical.models import DatabaseInfra
         from logical.models import Database
 
-        infras = DatabaseInfra.objects.filter(environment=environment)
+        #infras = DatabaseInfra.objects.filter(environment=environment)
         dbs = Database.objects.filter(
-            team=self, databaseinfra__in=[infra.id for infra in infras])
+            team=self, environment=environment)
 
         return dbs
+
+    def environments_in_use_for(self):
+        #from physical.models import DatabaseInfra
+        from logical.models import Database
+
+        #infras = DatabaseInfra.objects.filter(environment=environment)
+        envs = Database.objects.filter(
+            team=self).values_list('environment_id',flat=True)
+
+        return envs
 
     def count_databases_in_use(self, environment):
         try:

@@ -17,13 +17,20 @@ def get_environments():
 
 @register.simple_tag
 def render_usage(team):
+    from logical.models import Database
     environments = get_environments()
     html = []
+
+    envs = team.environments_in_use_for()
     html.append("<ul>")
     for environment in environments:
-        html.append("<li>%s: %s of %s in use</li>" % (environment,
-                                                      team.count_databases_in_use(
-                                                          environment),
+        count = 0
+        for env in envs:
+            if ( env==environment.id):
+                count = count + 1
+        html.append("<li>%s: %d of %s in use</li>" % (environment,
+                                                      count,
                                                       team.database_alocation_limit))
+
 
     return format_html("".join(html))
