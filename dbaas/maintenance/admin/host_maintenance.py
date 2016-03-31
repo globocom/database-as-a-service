@@ -4,13 +4,14 @@ from django_services import admin
 from ..service.host_maintenance import HostMaintenanceService
 from ..forms import HostMaintenanceForm
 from .. import models
+from django.contrib import admin
 import logging
 from django.utils.html import format_html
 
 LOG = logging.getLogger(__name__)
 
 
-class HostMaintenanceAdmin(admin.DjangoServicesAdmin):
+class HostMaintenanceAdmin(admin.ModelAdmin):
     actions = None
     service_class = HostMaintenanceService
     search_fields = ("maintenance__description", "hostname", "status")
