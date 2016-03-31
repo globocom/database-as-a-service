@@ -97,7 +97,9 @@ class BindNewInstances(BaseStep):
                     databaseinfra=databaseinfra,
                     instance__in=instance_address_list,
                     bind_address=database_bind.bind_address)
-                if helpers.unbind_address(database_bind, acl_client, infra_instances_binds):
+                if helpers.unbind_address(
+                    database_bind, acl_client, infra_instances_binds, False
+                ):
                     continue
 
             return True
@@ -145,7 +147,9 @@ class UnbindOldInstances(BaseStep):
                     databaseinfra=databaseinfra,
                     instance__in=instance_address_list,
                     bind_address=database_bind.bind_address)
-                if helpers.unbind_address(database_bind, acl_client, infra_instances_binds):
+                if helpers.unbind_address(
+                    database_bind, acl_client, infra_instances_binds, False
+                ):
                     continue
 
             return True

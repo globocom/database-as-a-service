@@ -41,7 +41,8 @@ class CheckDatabaseBinds(BaseStep):
                     databaseinfra=databaseinfra,
                     bind_address=database_bind.bind_address)
                 try:
-                    helpers.unbind_address(database_bind, acl_client, infra_instances_binds)
+                    helpers.unbind_address(
+                        database_bind, acl_client, infra_instances_binds, True)
                 except Exception as e:
                     LOG.warn(e)
                     continue
