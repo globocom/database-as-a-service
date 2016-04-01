@@ -150,7 +150,7 @@ class ServiceAppBind(APIView):
                     msg=msg, e=e,
                     http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-            endpoint = database.endpoint.replace(
+            endpoint = database.get_endpoint_dns().replace(
                 '<user>:<password>', "{}:{}".format(
                     credential.user, credential.password))
 
