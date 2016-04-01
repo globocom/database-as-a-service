@@ -62,12 +62,14 @@ class MongoDB(BaseDriver):
                          for instance in self.databaseinfra.instances.filter(is_arbiter=False, is_active=True).all()])
 
     def __concatenate_instances_dns(self):
-        return ",".join(["%s:%s" % (instance.dns, instance.port)
-                         for instance in self.databaseinfra.instances.filter(is_arbiter=False, is_active=True).all()])
+        return ",".join(
+            ["%s:%s" % (instance.dns, instance.port)
+                for instance in self.databaseinfra.instances.filter(is_arbiter=False, is_active=True).all() if not instance.dns.startswith('10.')]
+        )
 
     def __concatenate_instances_dns_only(self):
         return ",".join(["%s" % (instance.dns)
-                         for instance in self.databaseinfra.instances.filter(is_arbiter=False, is_active=True).all()])
+                         for instance in self.databaseinfra.instances.filter(is_arbiter=False, is_active=True).all() if not instance.dns.startswith('10.')])
 
     def get_dns_port(self):
         port = self.databaseinfra.instances.filter(

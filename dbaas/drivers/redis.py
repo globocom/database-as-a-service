@@ -45,10 +45,10 @@ class Redis(BaseDriver):
     def __concatenate_instances_dns(self):
         if self.databaseinfra.plan.is_ha:
             return ",".join(["%s:%s" % (instance.dns, instance.port)
-                             for instance in self.databaseinfra.instances.filter(instance_type=Instance.REDIS_SENTINEL, is_active=True).all()])
+                             for instance in self.databaseinfra.instances.filter(instance_type=Instance.REDIS_SENTINEL, is_active=True).all() if not instance.dns.startswith('10.')])
         else:
             return ",".join(["%s:%s" % (instance.dns, instance.port)
-                             for instance in self.databaseinfra.instances.filter(instance_type=Instance.REDIS, is_active=True).all()])
+                             for instance in self.databaseinfra.instances.filter(instance_type=Instance.REDIS, is_active=True).all() if not instance.dns.startswith('10.')])
 
     def get_connection(self, database=None):
         if self.databaseinfra.plan.is_ha:
