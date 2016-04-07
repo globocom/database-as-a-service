@@ -37,17 +37,15 @@
                             <td>
                                 {% if search.object.infra.environment.name == 'laboratory' %}
                                     <li class="label label-default">{{ search.object.infra.environment.name }}</li>
-                                {% endif %}
-                                {% if search.object.infra.environment.name == 'qa2' %}
+                                {% elif search.object.infra.environment.name == 'qa2' %}
                                     <li class="label label-default">{{ search.object.infra.environment.name }}</li>
-                                {% endif %}
-                                {% if search.object.infra.environment.name == 'dev' %}
+                                {% elif search.object.infra.environment.name == 'dev' %}
                                     <li class="label label-info">{{ search.object.infra.environment.name }}</li>
-                                {% endif %}
-                                {% if search.object.infra.environment.name == 'qa01' %}
+                                {% elif search.object.infra.environment.name == 'qa01' %}
                                     <li class="label label-inverse">{{ search.object.infra.environment.name }}</li>
-                                {% endif %}
-                                {% if search.object.infra.environment.name == 'prod' %}
+                                {% elif search.object.infra.environment.name == 'prod' %}
+                                    <li class="label label-primary">{{ search.object.infra.environment.name }}</li>
+                                {% elif search.object.infra.environment.name == 'prod-cm' %}
                                     <li class="label label-primary">{{ search.object.infra.environment.name }}</li>
                                 {% endif %}
                             </td>
