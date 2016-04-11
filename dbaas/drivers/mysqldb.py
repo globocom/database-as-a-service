@@ -296,8 +296,10 @@ class MySQL(BaseDriver):
     def get_replication_info(self, instance):
         results = self.__query(
             query_string="show slave status", instance=instance)
-
-        return int(results[0]['Seconds_Behind_Master'])
+        seconds_behind_master = results[0]['Seconds_Behind_Master']
+        if seconds_behind_master is None:
+            raise Exception("Replication is not running")
+        return int(seconds_behind_master)
 
     def is_replication_ok(self, instance):
         if self.get_replication_info(instance=instance) == 0:
