@@ -100,6 +100,9 @@ def check_seconds_behind(instance, retries=50):
         row = r.fetch_row(maxrows=0, how=1)
         seconds_behind = row[0]['Seconds_Behind_Master']
 
+        if seconds_behind is None:
+            raise Exception("Replication is not running")
+
         if seconds_behind == '0':
             return True
 
