@@ -16,16 +16,15 @@ class CheckReplication(BaseStep):
     def do(self, workflow_dict):
         try:
 
-            source_instance = workflow_dict['source_instances'][0]
-            target_instance = workflow_dict[
-                'source_instances'][0].future_instance
             msg = "Replication check maximum attempts for instance {}"
+            for source_instance in workflow_dict['source_instances']:
 
-            if not check_seconds_behind(source_instance):
-                raise Exception(msg.format(source_instance))
+                if not check_seconds_behind(source_instance):
+                    raise Exception(msg.format(source_instance))
 
-            if not check_seconds_behind(target_instance):
-                raise Exception(msg.format(target_instance))
+                target_instance = source_instance.future_instance
+                if not check_seconds_behind(target_instance):
+                    raise Exception(msg.format(target_instance))
 
             return True
         except Exception:
