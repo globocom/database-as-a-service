@@ -1,7 +1,10 @@
 <ul id="menu" class="collapse">
   <li class="nav-header">Menu</li>
   <li class="nav-divider"></li>
-
+    <li class="">
+              <a href="{% url 'dashboard.index' %}">
+                <i class="fa fa-tasks"></i>&nbsp;all</a>
+    </li>
     {% for engine in engines %}
     <li class="">
         <a href="javascript:;">
