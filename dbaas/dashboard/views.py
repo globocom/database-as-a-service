@@ -16,15 +16,12 @@ def dashboard(request):
     dbinfra_list = DatabaseInfra.objects.all().order_by('name')
     url_par = "?"
     if env_id or engine_type:
-        url_par = "?"
         if env_id:
             url_par += "env_id=" + str(env_id) + "&"
             dbinfra_list = dbinfra_list.filter(environment__id=env_id)
         if engine_type:
             url_par += "engine_type=" + str(engine_type) + "&"
             dbinfra_list = dbinfra_list.filter(engine__engine_type__name=engine_type)
-    #else:
-    #    url_par = "?"
 
     paginator = Paginator(dbinfra_list,100)
 
