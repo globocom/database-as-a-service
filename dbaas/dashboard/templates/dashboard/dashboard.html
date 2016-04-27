@@ -31,27 +31,22 @@
                         </tr>
                     </thead>
                     <tbody>
-                    {% for infra in dbinfra %}
+                    {% for infra in dbinfra.object_list %}
                         <tr>
                             <td><a href="{% url 'databaseinfra.index' infra.id %}">{{ infra.name }}</a></td>
                             <td>{{ infra.engine.name }} {{infra.engine.version}}</td>
                             <td>
                                 {% if infra.environment.name == 'laboratory' %}
                                     <li class="label label-default">{{ infra.environment.name }}</li>
-                                {% endif %}
-                                {% if infra.environment.name == 'qa2' %}
+                                {% elif infra.environment.name == 'qa2' %}
                                     <li class="label label-default">{{ infra.environment.name }}</li>
-                                {% endif %}
-                                {% if infra.environment.name == 'dev' %}
+                                {% elif infra.environment.name == 'dev' %}
                                     <li class="label label-info">{{ infra.environment.name }}</li>
-                                {% endif %}
-                                {% if infra.environment.name == 'qa01' %}
+                                {% elif infra.environment.name == 'qa01' %}
                                     <li class="label label-inverse">{{ infra.environment.name }}</li>
-                                {% endif %}
-                                {% if infra.environment.name == 'prod' %}
+                                {% elif infra.environment.name == 'prod' %}
                                     <li class="label label-primary">{{ infra.environment.name }}</li>
-                                {% endif %}
-                                {% if infra.environment.name == 'prod-cm' %}
+                                {% elif infra.environment.name == 'prod-cm' %}
                                     <li class="label label-primary">{{ infra.environment.name }}</li>
                                 {% endif %}
                             </td>
@@ -73,8 +68,27 @@
                             </td>
                         </tr>
                     {% endfor %}
+
                     </tbody>
                 </table>
+                {% if dbinfra %}
+                    <div class="pagination">
+                          {% if dbinfra.has_previous %}
+                              <li><a href="{{url_par}}page={{ dbinfra.previous_page_number }}">Previous</a></li>
+                          {% endif %}
+                          {% for pg in dbinfra.paginator.page_range %}
+                              {% if dbinfra.number == pg %}
+                                  <li class="active"><a href="{{url_par}}page={{ pg }}">{{ pg }}</a></li>
+                              {% else %}
+                                  <li><a href="{{url_par}}page={{ pg }}">{{ pg }}</a></li>
+                              {% endif %}
+                          {% endfor %}
+                          {% if dbinfra.has_next %}
+                              <li><a href="{{url_par}}page={{ dbinfra.next_page_number }}">Next</a></li>
+                          {% endif %}
+                      </ul>
+                    </div>
+                {% endif %}
             </div>
             <!-- end infranode -->
           </div>

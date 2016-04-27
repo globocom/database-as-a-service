@@ -64,6 +64,24 @@
                     {% endfor %}
                     </tbody>
                 </table>
+                {% if page %}
+                    <div class="pagination">
+                          {% if page.has_previous %}
+                              <li><a href="?q={{ request.GET.q }}&page={{ page.previous_page_number }}">Previous</a></li>
+                          {% endif %}
+                          {% for pg in page.paginator.page_range %}
+                              {% if page.number == pg %}
+                                  <li class="active"><a href="?q={{ request.GET.q }}&page={{ pg }}">{{ pg }}</a></li>
+                              {% else %}
+                                  <li><a href="?q={{ request.GET.q }}&page={{ pg }}">{{ pg }}</a></li>
+                              {% endif %}
+                          {% endfor %}
+                          {% if page.has_next %}
+                              <li><a href="?q={{ request.GET.q }}&page={{ page.next_page_number }}">Next</a></li>
+                          {% endif %}
+                      </ul>
+                    </div>
+                {% endif %}
             </div>
             <!-- end infranode -->
           </div>
