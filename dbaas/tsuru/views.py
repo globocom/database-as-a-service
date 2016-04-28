@@ -137,6 +137,7 @@ class ServiceAppBind(APIView):
                 env_vars = {
                     "DBAAS_SENTINEL_PASSWORD": redis_password,
                     "DBAAS_SENTINEL_ENDPOINT": endpoint,
+                    "DBAAS_SENTINEL_ENDPOINT_SIMPLE": database.get_endpoint_dns_simple(),
                     "DBAAS_SENTINEL_SERVICE_NAME": database.databaseinfra.name
                 }
 
