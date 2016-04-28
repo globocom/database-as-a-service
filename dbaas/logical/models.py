@@ -205,6 +205,9 @@ class Database(BaseModel):
     def get_endpoint_dns(self):
         return self.driver.get_connection_dns(database=self)
 
+    def get_endpoint_dns_simple(self):
+        return self.driver.get_connection_dns_simple(database=self)
+
     def get_log_url(self):
 
         if Configuration.get_by_name_as_int('laas_integration') != 1:

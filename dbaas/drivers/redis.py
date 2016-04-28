@@ -72,6 +72,17 @@ class Redis(BaseDriver):
                                           self.__concatenate_instances_dns(), database_name)
         return uri
 
+    def get_connection_dns_simple(self, database=None):
+        if self.databaseinfra.plan.is_ha:
+            uri_instance_type = 'sentinel'
+            #database_name = 'service_name:%s' % (self.databaseinfra.name)
+        else:
+            uri_instance_type = 'redis'
+            database_name = '0'
+        uri = "%s://%s" % (uri_instance_type,
+                                          self.__concatenate_instances_dns())
+        return uri
+
     def __get_admin_sentinel_connection(self, instance=None):
         sentinels = []
 
