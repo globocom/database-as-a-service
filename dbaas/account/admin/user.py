@@ -15,20 +15,28 @@ from django.utils.decorators import method_decorator
 from django.core.exceptions import PermissionDenied
 from django.http import Http404
 from django.core.exceptions import ValidationError
-
+from django.contrib.admin import helpers
+from django.forms.formsets import all_valid
+from django.utils.encoding import force_text
+from django.core.urlresolvers import reverse
+from django.contrib.admin.util import unquote
 from util import email_notifications
+from django.utils.html import escape
 
 LOG = logging.getLogger(__name__)
 
 csrf_protect_m = method_decorator(csrf_protect)
 sensitive_post_parameters_m = method_decorator(sensitive_post_parameters())
 
+IS_POPUP_VAR = '_popup'
+
 
 def validate_user_length(value):
     username_length = len(value)
     if username_length > 100:
         return ValidationError(
-            'Ensure this value has at most 100 characters (it has {}).'.format(username_length)
+            'Ensure this value has at most 100 characters (it has {}).'.format(
+                username_length)
         )
 
 
@@ -199,3 +207,113 @@ class CustomUserAdmin(UserAdmin):
         extra_context.update(defaults)
         return super(CustomUserAdmin, self).add_view(
             request, form_url, extra_context)
+
+    # @csrf_protect_m
+    # @transaction.atomic
+    # def change_view(self, request, form_url='', extra_context=None):
+        username_field = self.model._meta.get_field(self.model.USERNAME_FIELD)
+        username_field.max_length = 100
+        username_field.help_text = "Required. 100 characters or fewer. Letters, digits and @/./+/-/_ only."
+        username_field.validators[1] = validate_user_length
+        import pdb; pdb.set_trace()
+
+    @csrf_protect_m
+    @transaction.atomic
+    def change_view(self, request, object_id, form_url='', extra_context=None):
+        "The 'change' admin view for this model."
+        model = self.model
+        opts = model._meta
+
+        obj = self.get_object(request, unquote(object_id))
+
+        if not self.has_change_permission(request, obj):
+            raise PermissionDenied
+
+        if obj is None:
+            raise Http404(_('%(name)s object with primary key %(key)r does not exist.') % {
+                          'name': force_text(opts.verbose_name), 'key': escape(object_id)})
+
+        if request.method == 'POST' and "_saveasnew" in request.POST:
+            return self.add_view(request, form_url=reverse('admin:%s_%s_add' %
+                                                           (opts.app_label,
+                                                            opts.model_name),
+                                                           current_app=self.admin_site.name))
+
+        ModelForm = self.get_form(request, obj)
+        formsets = []
+        inline_instances = self.get_inline_instances(request, obj)
+        if request.method == 'POST':
+            username_field = self.model._meta.get_field(self.model.USERNAME_FIELD)
+            username_field.max_length = 100
+            username_field.help_text = "Required. 100 characters or fewer. Letters, digits and @/./+/-/_ only."
+            username_field.validators[1] = validate_user_length
+            form = ModelForm(request.POST, request.FILES, instance=obj)
+            if form.is_valid():
+                form_validated = True
+                new_object = self.save_form(request, form, change=True)
+            else:
+                form_validated = False
+                new_object = obj
+            prefixes = {}
+            for FormSet, inline in zip(self.get_formsets(request, new_object), inline_instances):
+                prefix = FormSet.get_default_prefix()
+                prefixes[prefix] = prefixes.get(prefix, 0) + 1
+                if prefixes[prefix] != 1 or not prefix:
+                    prefix = "%s-%s" % (prefix, prefixes[prefix])
+                formset = FormSet(request.POST, request.FILES,
+                                  instance=new_object, prefix=prefix,
+                                  queryset=inline.get_queryset(request))
+
+                formsets.append(formset)
+
+            if all_valid(formsets) and form_validated:
+                self.save_model(request, new_object, form, True)
+                self.save_related(request, form, formsets, True)
+                change_message = self.construct_change_message(
+                    request, form, formsets)
+                self.log_change(request, new_object, change_message)
+                return self.response_change(request, new_object)
+
+        else:
+            form = ModelForm(instance=obj)
+            prefixes = {}
+            for FormSet, inline in zip(self.get_formsets(request, obj), inline_instances):
+                prefix = FormSet.get_default_prefix()
+                prefixes[prefix] = prefixes.get(prefix, 0) + 1
+                if prefixes[prefix] != 1 or not prefix:
+                    prefix = "%s-%s" % (prefix, prefixes[prefix])
+                formset = FormSet(instance=obj, prefix=prefix,
+                                  queryset=inline.get_queryset(request))
+                formsets.append(formset)
+
+        adminForm = helpers.AdminForm(form, self.get_fieldsets(request, obj),
+                                      self.get_prepopulated_fields(
+                                          request, obj),
+                                      self.get_readonly_fields(request, obj),
+                                      model_admin=self)
+        media = self.media + adminForm.media
+
+        inline_admin_formsets = []
+        for inline, formset in zip(inline_instances, formsets):
+            fieldsets = list(inline.get_fieldsets(request, obj))
+            readonly = list(inline.get_readonly_fields(request, obj))
+            prepopulated = dict(inline.get_prepopulated_fields(request, obj))
+            inline_admin_formset = helpers.InlineAdminFormSet(inline, formset,
+                                                              fieldsets, prepopulated, readonly, model_admin=self)
+            inline_admin_formsets.append(inline_admin_formset)
+            media = media + inline_admin_formset.media
+
+        context = {
+            'title': _('Change %s') % force_text(opts.verbose_name),
+            'adminform': adminForm,
+            'object_id': object_id,
+            'original': obj,
+            'is_popup': IS_POPUP_VAR in request.REQUEST,
+            'media': media,
+            'inline_admin_formsets': inline_admin_formsets,
+            'errors': helpers.AdminErrorList(form, formsets),
+            'app_label': opts.app_label,
+            'preserved_filters': self.get_preserved_filters(request),
+        }
+        context.update(extra_context or {})
+        return self.render_change_form(request, context, change=True, obj=obj, form_url=form_url)
