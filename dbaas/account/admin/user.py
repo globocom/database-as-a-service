@@ -6,11 +6,30 @@ from django.utils.html import format_html
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.admin import SimpleListFilter
 from account.models import Role, Team
-
+from ..forms.user import CustomUserChangeForm, CustomUserCreationForm
+from django.db import transaction
+from django.views.decorators.csrf import csrf_protect
+from django.views.decorators.debug import sensitive_post_parameters
+from django.conf import settings
+from django.utils.decorators import method_decorator
+from django.core.exceptions import PermissionDenied
+from django.http import Http404
+from django.core.exceptions import ValidationError
 
 from util import email_notifications
 
 LOG = logging.getLogger(__name__)
+
+csrf_protect_m = method_decorator(csrf_protect)
+sensitive_post_parameters_m = method_decorator(sensitive_post_parameters())
+
+
+def validate_user_length(value):
+    username_length = len(value)
+    if username_length > 100:
+        return ValidationError(
+            'Ensure this value has at most 100 characters (it has {}).'.format(username_length)
+        )
 
 
 class RoleListFilter(SimpleListFilter):
@@ -71,12 +90,14 @@ class TeamListFilter(SimpleListFilter):
                 return queryset.filter(id__in=users)
 
 
-class UserAdmin(UserAdmin):
+class CustomUserAdmin(UserAdmin):
 
     list_display = ('username', 'email', 'get_team_for_user')
     list_filter = ('is_active', RoleListFilter, TeamListFilter,)
     search_fields = ('username', 'first_name', 'last_name', 'email')
     ordering = ('username',)
+    form = CustomUserChangeForm
+    add_form = CustomUserCreationForm
 
     fieldsets_basic = (
         (None, {'fields': ('username', 'password')}),
@@ -144,3 +165,37 @@ class UserAdmin(UserAdmin):
 
         if cmp(teams_before_save, teams_after_save):
             email_notifications.notify_team_change_for(user=instance)
+
+    @sensitive_post_parameters_m
+    @csrf_protect_m
+    @transaction.atomic
+    def add_view(self, request, form_url='', extra_context=None):
+        # It's an error for a user to have add permission but NOT change
+        # permission for users. If we allowed such users to add users, they
+        # could create superusers, which would mean they would essentially have
+        # the permission to change users. To avoid the problem entirely, we
+        # disallow users from adding users if they don't have change
+        # permission.
+        if not self.has_change_permission(request):
+            if self.has_add_permission(request) and settings.DEBUG:
+                # Raise Http404 in debug mode so that the user gets a helpful
+                # error message.
+                raise Http404(
+                    'Your user does not have the "Change user" permission. In '
+                    'order to add users, Django requires that your user '
+                    'account have both the "Add user" and "Change user" '
+                    'permissions set.')
+            raise PermissionDenied
+        if extra_context is None:
+            extra_context = {}
+        username_field = self.model._meta.get_field(self.model.USERNAME_FIELD)
+        username_field.max_length = 100
+        username_field.help_text = "Required. 100 characters or fewer. Letters, digits and @/./+/-/_ only."
+        username_field.validators[1] = validate_user_length
+        defaults = {
+            'auto_populated_fields': (),
+            'username_help_text': username_field.help_text,
+        }
+        extra_context.update(defaults)
+        return super(CustomUserAdmin, self).add_view(
+            request, form_url, extra_context)
