@@ -36,7 +36,7 @@ def build_start_stop_scripts():
     return """
         stopdatabase() {
             /etc/init.d/redis stop
-            die_if_error "Error stoping database"
+            die_if_error "Error stopping database"
         }
 
         startdatabase() {
@@ -46,7 +46,7 @@ def build_start_stop_scripts():
 
         stopsentinel() {
             /etc/init.d/sentinel stop
-            die_if_error "Error stoping sentinel"
+            die_if_error "Error stopping sentinel"
         }
 
         startsentinel() {
@@ -56,14 +56,14 @@ def build_start_stop_scripts():
 
         restart_http() {
             /etc/init.d/httpd stop > /dev/null
-            die_if_error "Error stoping httpd"
+            die_if_error "Error stopping httpd"
             /etc/init.d/httpd start > /dev/null
             die_if_error "Error starting httpd"
         }
 
         restart_td_agent() {
             /etc/init.d/td-agent stop > /dev/null
-            die_if_error "Error stoping td_agent"
+            die_if_error "Error stopping td_agent"
             /etc/init.d/td-agent start > /dev/null
             die_if_error "Error starting td_agent"
         }

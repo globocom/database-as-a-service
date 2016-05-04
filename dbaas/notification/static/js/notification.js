@@ -31,7 +31,7 @@
 
         $("#disable_auto_refresh").click(function() {
           if(!this.checked){
-            console.log('Stoping countdown!');
+            console.log('Stopping countdown!');
             $('.countdown.callback').css("background-color", "#BAB9B9");
             $('.countdown.callback').data('countdown').stop();
           }else{

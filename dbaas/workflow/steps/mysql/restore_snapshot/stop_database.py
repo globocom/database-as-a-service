@@ -16,7 +16,7 @@ LOG = logging.getLogger(__name__)
 class StopDatabase(BaseStep):
 
     def __unicode__(self):
-        return "Stoping database..."
+        return "Stopping database..."
 
     def do(self, workflow_dict):
         try:
@@ -29,7 +29,7 @@ class StopDatabase(BaseStep):
 
             LOG.debug("HOSTS: {}".format(hosts))
             for host in hosts:
-                LOG.info('Stoping database on host {}'.format(host))
+                LOG.info('Stopping database on host {}'.format(host))
                 return_code, output = use_database_initialization_script(databaseinfra=databaseinfra,
                                                                          host=host,
                                                                          option='stop')

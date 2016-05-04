@@ -11,7 +11,7 @@ LOG = logging.getLogger(__name__)
 class StopDatabase(BaseStep):
 
     def __unicode__(self):
-        return "Stoping database..."
+        return "Stopping database..."
 
     def do(self, workflow_dict):
         try:
