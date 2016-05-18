@@ -743,8 +743,8 @@ def upgrade_mongodb_24_to_30(self, database, user, task_history=None):
         msg = "Database version must be 2.4!"
         stop_now = True
 
-    if target_engine and target_engine.version != '3.0.8':
-        msg = "Target database version must be 3.0.8!"
+    if target_engine and target_engine.version != '3.0.12':
+        msg = "Target database version must be 3.0.12!"
         stop_now = True
 
     if stop_now:

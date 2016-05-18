@@ -91,8 +91,8 @@ class UpgradeMongoDB_26_to_30(BaseStep):
         context_dict = {
             'SOURCE_PATH': '/mnt/software/db/mongodb',
             'TARGET_PATH': '/usr/local/',
-            'MONGODB_RELEASE_FILE': 'mongodb-linux-x86_64-3.0.8.tgz',
-            'MONGODB_RELEASE_FOLDER': 'mongodb-linux-x86_64-3.0.8',
+            'MONGODB_RELEASE_FILE': 'mongodb-linux-x86_64-3.0.12.tgz',
+            'MONGODB_RELEASE_FOLDER': 'mongodb-linux-x86_64-3.0.12',
             'CONNECT_STRING': connect_string,
         }
 
