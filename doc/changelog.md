@@ -2,6 +2,7 @@
 
 ## 0.0.72
 * Add step on mysql migration to start mk-heartbeat-daemon
+* Upgrade mongodb (3.0.8 to 3.0.12)
 
 ## 0.0.71
 * Return True if the seconds delay is less than 2
