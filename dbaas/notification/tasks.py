@@ -555,7 +555,7 @@ def resize_database(self, database, cloudstackpack, task_history=None, user=None
 
 @app.task(bind=True)
 def volume_migration(self, database, user, task_history=None):
-    from dbaas_nfsaas.models import HostAttr, PlanAttr
+    from dbaas_nfsaas.models import HostAttr, PlanAttr, EnvironmentAttr
     from workflow.settings import VOLUME_MIGRATION
     from util import build_dict
     from workflow.workflow import start_workflow
@@ -583,15 +583,18 @@ def volume_migration(self, database, user, task_history=None):
         LOG.info("Migration finished")
         return
 
-    default_plan_size = PlanAttr.objects.get(
-        dbaas_plan=database.plan).nfsaas_plan
-    LOG.info("Migrating {} volumes".format(database))
-
     databaseinfra = database.databaseinfra
     driver = databaseinfra.get_driver()
 
     environment = database.environment
     plan = database.plan
+
+    default_nfsaas_environment = EnvironmentAttr.objects.get(
+        dbaas_environment=environment).nfsaas_environment
+
+    default_plan_size = PlanAttr.objects.get(
+        dbaas_plan=database.plan).nfsaas_plan
+    LOG.info("Migrating {} volumes".format(database))
 
     instances = driver.get_slave_instances()
     master_instance = driver.get_master_instance()
@@ -601,7 +604,8 @@ def volume_migration(self, database, user, task_history=None):
     hosts = [instance.hostname for instance in instances]
     volumes = HostAttr.objects.filter(host__in=hosts,
                                       is_active=True,
-                                      nfsaas_size_id=default_plan_size)
+                                      nfsaas_size_id=default_plan_size,
+                                      nfsaas_environment_id=default_nfsaas_environment)
 
     if len(volumes) == len(hosts):
         task_history.update_status_for(
@@ -621,7 +625,9 @@ def volume_migration(self, database, user, task_history=None):
             host = instance.hostname
             old_volume = HostAttr.objects.get(host=host, is_active=True)
 
-            if old_volume.nfsaas_size_id == default_plan_size:
+            same_volume = old_volume.nfsaas_size_id == default_plan_size
+            same_environment = old_volume.nfsaas_environment_id == default_nfsaas_environment
+            if same_volume and same_environment:
                 if databaseinfra.plan.is_ha:
                     driver.check_replication_and_switch(instance)
                 continue
