@@ -224,7 +224,7 @@ class ServiceUnitBind(APIView):
                     bind.save()
                 else:
                     raise Exception("Binds are beeing destroyed!")
-            except (IndexError, ObjectDoesNotExist) as e:
+            except Exception as e:
                 LOG.debug("DatabaseBind is under destruction! {}".format(e))
                 msg = "We are destroying your binds to {}. Please wait.".format(database_name)
                 return log_and_response(
