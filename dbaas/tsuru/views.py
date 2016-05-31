@@ -268,7 +268,7 @@ class ServiceUnitBind(APIView):
                     database_bind.binds_requested -= 1
 
                 if database_bind.binds_requested == 0:
-                    database_bind.status = DESTROYING
+                    database_bind.bind_status = DESTROYING
 
                 database_bind.save()
         except (IndexError, ObjectDoesNotExist) as e:
