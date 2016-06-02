@@ -215,9 +215,8 @@ class MongoDB(BaseDriver):
                 except:
                     pass
 
-                dataSize = json_db_status.get("dataSize") or 0
-                indexSize = json_db_status.get("indexSize") or 0
-                db_status.used_size_in_bytes = dataSize + indexSize
+                storageSize = json_db_status.get("storageSize") or 0
+                db_status.used_size_in_bytes = storageSize
                 db_status.total_size_in_bytes = json_db_status.get(
                     "fileSize") or 0
                 databaseinfra_status.databases_status[
