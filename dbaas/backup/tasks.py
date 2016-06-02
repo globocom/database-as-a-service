@@ -357,11 +357,14 @@ def restore_snapshot(self, database, snapshot, user, task_history):
             task_history.update_status_for(
                 TaskHistory.STATUS_SUCCESS, details='Database sucessfully recovered!')
 
-    except Exception:
-        error = "\n".join(": ".join(err) for err in
-                          workflow_dict['exceptions']['error_codes'])
-        traceback = "\nException Traceback\n".join(workflow_dict['exceptions']['traceback'])
-        error = "{}\n{}\n{}".format(error, traceback, error)
+    except Exception, e:
+        if 'workflow_dict' in locals():
+            error = "\n".join(": ".join(err) for err in
+                              workflow_dict['exceptions']['error_codes'])
+            traceback = "\nException Traceback\n".join(workflow_dict['exceptions']['traceback'])
+            error = "{}\n{}\n{}".format(error, traceback, error)
+        else:
+            error = str(e)
         task_history.update_status_for(
             TaskHistory.STATUS_ERROR, details=error)
     finally:
