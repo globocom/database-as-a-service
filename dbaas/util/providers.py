@@ -3,12 +3,12 @@ import re
 from util import build_dict
 from util import slugify
 from util import get_credentials_for
+from util import get_replication_topology_instance
 from dbaas_credentials.models import CredentialType
 from physical.models import DatabaseInfra
 from logical.models import Database
 from workflow.workflow import stop_workflow
 from workflow.workflow import start_workflow
-from drivers.factory import DriverFactory
 
 LOG = logging.getLogger(__name__)
 
@@ -34,7 +34,7 @@ def make_infra(plan, environment, name, team, project, description, task=None,):
                                plan=plan,
                                environment=environment,
                                steps=get_deploy_settings(
-                                   plan.engine_type.name),
+                                   plan.replication_topology.class_path),
                                qt=get_vm_qt(plan=plan, ),
                                dbtype=str(plan.engine_type),
                                team=team,
@@ -65,7 +65,7 @@ def clone_infra(plan, environment, name, team, project, description, task=None, 
     workflow_dict = build_dict(name=slugify(name),
                                plan=plan,
                                environment=environment,
-                               steps=get_clone_settings(plan.engine_type.name),
+                               steps=get_clone_settings(plan.replication_topology.class_path),
                                qt=get_vm_qt(plan=plan, ),
                                dbtype=str(plan.engine_type),
                                team=team,
@@ -100,7 +100,7 @@ def destroy_infra(databaseinfra, task=None):
     workflow_dict = build_dict(plan=databaseinfra.plan,
                                environment=databaseinfra.environment,
                                steps=get_deploy_settings(
-                                   databaseinfra.plan.engine_type.name),
+                                   databaseinfra.plan.replication_topology.class_path),
                                qt=get_vm_qt(plan=databaseinfra.plan),
                                dbtype=str(databaseinfra.plan.engine_type),
                                hosts=hosts,
@@ -122,15 +122,16 @@ def resize_database_instance(database, cloudstackpack, instance, task=None):
                                                          offering__region__environment=database.environment,
                                                          engine_type__name=database.engine_type)
 
-    workflow_dict = build_dict(database=database,
-                               databaseinfra=database.databaseinfra,
-                               cloudstackpack=cloudstackpack,
-                               original_cloudstackpack=original_cloudstackpack,
-                               environment=database.environment,
-                               instance=instance,
-                               host=instance.hostname,
-                               steps=get_resize_settings(database.engine_type),
-                               )
+    workflow_dict = build_dict(
+        database=database,
+        databaseinfra=database.databaseinfra,
+        cloudstackpack=cloudstackpack,
+        original_cloudstackpack=original_cloudstackpack,
+        environment=database.environment,
+        instance=instance,
+        host=instance.hostname,
+        steps=get_resize_settings(database.databaseinfra.plan.replication_topology.class_path),
+    )
 
     start_workflow(workflow_dict=workflow_dict, task=task)
 
@@ -151,19 +152,16 @@ def get_vm_qt(plan):
     return qt
 
 
-def get_deploy_settings(engine_type):
-    db_driver_class = DriverFactory.get_driver_class(driver_name=engine_type)
-    return db_driver_class.DEPLOY
+def get_deploy_settings(class_path):
+    return get_replication_topology_instance(class_path).get_deploy_steps()
 
 
-def get_clone_settings(engine_type):
-    db_driver_class = DriverFactory.get_driver_class(driver_name=engine_type)
-    return db_driver_class.CLONE
+def get_clone_settings(class_path):
+    return get_replication_topology_instance(class_path).get_clone_steps()
 
 
-def get_resize_settings(engine_type):
-    db_driver_class = DriverFactory.get_driver_class(driver_name=engine_type)
-    return db_driver_class.RESIZE
+def get_resize_settings(class_path):
+    return get_replication_topology_instance(class_path).get_resize_steps()
 
 
 def get_engine_credentials(engine, environment):

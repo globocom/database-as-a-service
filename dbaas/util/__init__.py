@@ -17,6 +17,7 @@ import sys
 from billiard import current_process
 from dbaas_nfsaas.provider import NfsaasProvider
 from dbaas_cloudstack.models import HostAttr as CsHostAttr
+from django.utils.module_loading import import_by_path
 
 
 LOG = logging.getLogger(__name__)
@@ -383,3 +384,8 @@ def clean_unused_data(export_id, export_path, host, databaseinfra):
                         output=output)
 
     LOG.info(output)
+
+
+def get_replication_topology_instance(class_path):
+    topology_class = import_by_path(class_path)
+    return topology_class()
