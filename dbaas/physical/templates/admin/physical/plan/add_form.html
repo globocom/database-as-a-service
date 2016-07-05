@@ -1,0 +1,51 @@
+{% extends "admin/change_form.html" %}
+{% load i18n admin_static admin_modify %}
+
+
+{% block extrahead %}
+    {{ block.super }}
+    <script type="text/javascript" src="{% static 'js/plan_admin.js' %}"></script>
+{% endblock %}
+
+
+{% block footer %}
+    <script>
+        function get_current_topologies() {
+            engine_select = document.getElementById('id_engine')
+            engine = engine_select.options[engine_select.selectedIndex].text;
+
+            engines = {}
+            {% for engine, topologies in replication_topologies_engines.items %}
+                engines['{{ engine }}'] = [{
+                {% for topology in topologies %}
+                    'id': {{ topology.id }}, 'name': '{{topology.name}}' }, {
+                {% endfor %} }]
+            {% endfor %}
+
+            return engines[engine];
+        }
+
+        document.getElementById('id_engine').onchange = function() {
+            var topology_select = document.getElementById('id_replication_topology');
+            value = topology_select.value;
+            while (topology_select.length > 0){
+                topology_select.remove(0);
+            }
+            topology_select.selectedIndex = -1;
+
+            topologies = get_current_topologies();
+            for (topology in topologies) {
+                if ('id' in topologies[topology]) {
+                    var opt = document.createElement('option');
+                    opt.value = topologies[topology].id;
+                    opt.innerHTML = topologies[topology].name;
+                    topology_select.appendChild(opt);
+
+                    if (value == topologies[topology].id)
+                        topology_select.value = value;
+                }
+            }
+        }
+        document.getElementById('id_engine').onchange();
+    </script>
+{% endblock %}

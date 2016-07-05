@@ -11,6 +11,9 @@ log = logging.getLogger(__name__)
 
 class PlanForm(forms.ModelForm):
     description = forms.CharField(widget=CKEditorWidget(), required=False)
+    replication_topology = forms.ModelChoiceField(
+        queryset=models.ReplicationTopology.objects.all()
+    )
 
     class Meta:
         model = models.Plan

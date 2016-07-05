@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
-from django.test.client import Client
 from django.test import TestCase
-from django.test.client import RequestFactory
-from django.db import IntegrityError
 
 from ..models import Plan
 from .factory import PlanFactory

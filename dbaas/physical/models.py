@@ -85,6 +85,23 @@ class Engine(BaseModel):
         return "%s_%s" % (self.name, self.version)
 
 
+class ReplicationTopology(BaseModel):
+
+    class Meta:
+        verbose_name_plural = "replication topologies"
+
+    name = models.CharField(
+        verbose_name=_("Topology name"), max_length=200
+    )
+    engine = models.ManyToManyField(
+        Engine, verbose_name=_("Engine"), related_name='replication_topologies'
+    )
+    class_path = models.CharField(
+        verbose_name=_("Replication Class"), max_length=200,
+        help_text="your.module.name.Class"
+    )
+
+
 class Plan(BaseModel):
 
     PREPROVISIONED = 0
@@ -106,6 +123,10 @@ class Plan(BaseModel):
     is_ha = models.BooleanField(verbose_name=_("Is plan HA"), default=False)
     engine = models.ForeignKey(Engine, verbose_name=_("Engine"),
                                related_name='plans')
+    replication_topology = models.ForeignKey(
+        ReplicationTopology, verbose_name=_("Replication Topology"),
+        related_name='replication_topology', null=True
+    )
     environments = models.ManyToManyField(Environment)
     provider = models.IntegerField(choices=PROVIDER_CHOICES,
                                    default=0)

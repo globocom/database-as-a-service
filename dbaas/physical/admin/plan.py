@@ -8,6 +8,7 @@ from dbaas_cloudstack.models import PlanAttr
 from dbaas_nfsaas.models import PlanAttr as PlanAttrNfsaas
 from dbaas_dnsapi.models import PlanAttr as PlanAttrDNSAPI
 from .. import forms
+from physical import models
 
 
 class PlanAttributeInline(admin.TabularInline):
@@ -57,3 +58,39 @@ class PlanAdmin(services_admin.DjangoServicesAdmin):
         PlanAttrNfsaasInline,
         PlanAttrDNSAPIInline,
     ]
+
+    add_form_template = "admin/physical/plan/add_form.html"
+    change_form_template = "admin/physical/plan/add_form.html"
+
+    def change_view(self, request, object_id, form_url='', extra_context=None):
+        extra_context = self._add_replication_topologies_engines(extra_context)
+
+        return super(PlanAdmin, self).change_view(
+            request=request, object_id=object_id, form_url=form_url,
+            extra_context=extra_context
+        )
+
+    def add_view(self, request, form_url='', extra_context=None):
+        extra_context = self._add_replication_topologies_engines(extra_context)
+
+        return super(PlanAdmin, self).add_view(
+            request=request, form_url=form_url, extra_context=extra_context
+        )
+
+    def _add_replication_topologies_engines(self, context):
+        if not context:
+            context = {}
+        context['replication_topologies_engines'] = self._get_replication_topologies_engines()
+        return context
+
+
+    def _get_replication_topologies_engines(self):
+        engines = {}
+        for topology in models.ReplicationTopology.objects.all():
+            for engine in topology.engine.all():
+                current_engine = str(engine)
+                if current_engine not in engines:
+                    engines[current_engine] = []
+                engines[current_engine].append(topology)
+
+        return engines
