@@ -9,9 +9,6 @@ from . import DatabaseInfraStatus
 from . import DatabaseStatus
 from . import ConnectionError
 from system.models import Configuration
-from workflow.settings import DEPLOY_REDIS
-from workflow.settings import RESIZE_REDIS
-from workflow.settings import CLONE_REDIS
 from physical.models import Instance
 from util import exec_remote_command
 from util import build_context_script
@@ -26,13 +23,6 @@ REDIS_CONNECTION_DEFAULT_TIMEOUT = 5
 class Redis(BaseDriver):
 
     default_port = 6379
-    DEPLOY = DEPLOY_REDIS
-    CLONE = CLONE_REDIS
-    RESIZE = RESIZE_REDIS
-
-    def __concatenate_instances(self):
-        instance = self.databaseinfra.instances.filter(is_active=True).all()[0]
-        return "%s:%s" % (instance.address, instance.port)
 
     def __concatenate_instances(self):
         if self.databaseinfra.plan.is_ha:

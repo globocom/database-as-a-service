@@ -1,10 +1,14 @@
 # -*- coding: utf-8 -*-
-from mysql_single import MySQLSingle
+from drivers.replication_topologies.mysql_flipper import MySQLFlipper
+from drivers.tests.test_replication_topologies.test_mysql_single import TestMySQLSingleSettings
 
 
-class MySQLFlipper(MySQLSingle):
+class TestMySQLFlipper(TestMySQLSingleSettings):
 
-    def get_restore_snapshot_steps(self):
+    def _get_replication_topology_driver(self):
+        return MySQLFlipper()
+
+    def _get_restore_snapshot_settings(self):
         return (
             'workflow.steps.mysql.restore_snapshot.restore_snapshot.RestoreSnapshot',
             'workflow.steps.util.restore_snapshot.grant_nfs_access.GrantNFSAccess',

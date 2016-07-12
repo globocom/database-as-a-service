@@ -11,9 +11,6 @@ from . import AuthenticationError
 from . import ConnectionError
 from util import make_db_random_password
 from system.models import Configuration
-from workflow.settings import DEPLOY_MONGO
-from workflow.settings import RESIZE_MONGO
-from workflow.settings import CLONE_MONGO
 from dateutil import tz
 
 LOG = logging.getLogger(__name__)
@@ -27,9 +24,6 @@ class MongoDB(BaseDriver):
     default_port = 27017
 
     RESERVED_DATABASES_NAME = ['admin', 'config', 'local']
-    DEPLOY = DEPLOY_MONGO
-    CLONE = CLONE_MONGO
-    RESIZE = RESIZE_MONGO
 
     def get_replica_name(self):
         """ Get replica name from databaseinfra. Use cache """

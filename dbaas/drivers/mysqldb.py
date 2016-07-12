@@ -17,9 +17,6 @@ from . import DatabaseDoesNotExist
 from . import CredentialAlreadyExists
 from util import make_db_random_password
 from system.models import Configuration
-from workflow.settings import DEPLOY_MYSQL
-from workflow.settings import RESIZE_MYSQL
-from workflow.settings import CLONE_MYSQL
 from util import exec_remote_command
 from util import build_context_script
 from dbaas_cloudstack.models import HostAttr
@@ -42,9 +39,6 @@ class MySQL(BaseDriver):
 
     default_port = 3306
     RESERVED_DATABASES_NAME = ['admin', 'test', 'mysql', 'information_schema']
-    DEPLOY = DEPLOY_MYSQL
-    CLONE = CLONE_MYSQL
-    RESIZE = RESIZE_MYSQL
 
     def get_connection(self, database=None):
         # my_instance = self.databaseinfra.instances.all()[0]

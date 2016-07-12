@@ -556,8 +556,8 @@ def resize_database(self, database, cloudstackpack, task_history=None, user=None
 @app.task(bind=True)
 def volume_migration(self, database, user, task_history=None):
     from dbaas_nfsaas.models import HostAttr, PlanAttr, EnvironmentAttr
-    from workflow.settings import VOLUME_MIGRATION
     from util import build_dict
+    from util.providers import get_volume_migration_settings
     from workflow.workflow import start_workflow
     from time import sleep
 
@@ -632,15 +632,18 @@ def volume_migration(self, database, user, task_history=None):
                     driver.check_replication_and_switch(instance)
                 continue
 
-            workflow_dict = build_dict(databaseinfra=databaseinfra,
-                                       database=database,
-                                       environment=environment,
-                                       plan=plan,
-                                       host=host,
-                                       instance=instance,
-                                       old_volume=old_volume,
-                                       steps=VOLUME_MIGRATION,
-                                       )
+            workflow_dict = build_dict(
+                databaseinfra=databaseinfra,
+                database=database,
+                environment=environment,
+                plan=plan,
+                host=host,
+                instance=instance,
+                old_volume=old_volume,
+                steps=get_volume_migration_settings(
+                    database.plan.replication_topology.class_path,
+                )
+            )
 
             start_workflow(workflow_dict=workflow_dict, task=task_history)
 

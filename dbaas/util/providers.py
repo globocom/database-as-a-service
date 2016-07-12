@@ -25,22 +25,27 @@ def make_infra(plan, environment, name, team, project, description, task=None,):
             database.project = project
             database.save()
 
-            return build_dict(databaseinfra=dbinfra, database=database,
-                              created=True)
+            return build_dict(
+                databaseinfra=dbinfra,
+                database=database,
+                created=True
+            )
 
         return build_dict(databaseinfra=None, created=False)
 
-    workflow_dict = build_dict(name=slugify(name),
-                               plan=plan,
-                               environment=environment,
-                               steps=get_deploy_settings(
-                                   plan.replication_topology.class_path),
-                               qt=get_vm_qt(plan=plan, ),
-                               dbtype=str(plan.engine_type),
-                               team=team,
-                               project=project,
-                               description=description,
-                               )
+    workflow_dict = build_dict(
+        name=slugify(name),
+        plan=plan,
+        environment=environment,
+        steps=get_deploy_settings(
+            plan.replication_topology.class_path
+        ),
+        qt=get_vm_qt(plan=plan, ),
+        dbtype=str(plan.engine_type),
+        team=team,
+        project=project,
+        description=description,
+    )
 
     start_workflow(workflow_dict=workflow_dict, task=task)
     return workflow_dict
@@ -62,17 +67,20 @@ def clone_infra(plan, environment, name, team, project, description, task=None, 
 
         return build_dict(databaseinfra=None, created=False)
 
-    workflow_dict = build_dict(name=slugify(name),
-                               plan=plan,
-                               environment=environment,
-                               steps=get_clone_settings(plan.replication_topology.class_path),
-                               qt=get_vm_qt(plan=plan, ),
-                               dbtype=str(plan.engine_type),
-                               team=team,
-                               project=project,
-                               description=description,
-                               clone=clone
-                               )
+    workflow_dict = build_dict(
+        name=slugify(name),
+        plan=plan,
+        environment=environment,
+        steps=get_clone_settings(
+            plan.replication_topology.class_path
+        ),
+        qt=get_vm_qt(plan=plan),
+        dbtype=str(plan.engine_type),
+        team=team,
+        project=project,
+        description=description,
+        clone=clone
+    )
 
     start_workflow(workflow_dict=workflow_dict, task=task)
     return workflow_dict
@@ -97,17 +105,19 @@ def destroy_infra(databaseinfra, task=None):
         instances.append(instance)
         hosts.append(instance.hostname)
 
-    workflow_dict = build_dict(plan=databaseinfra.plan,
-                               environment=databaseinfra.environment,
-                               steps=get_deploy_settings(
-                                   databaseinfra.plan.replication_topology.class_path),
-                               qt=get_vm_qt(plan=databaseinfra.plan),
-                               dbtype=str(databaseinfra.plan.engine_type),
-                               hosts=hosts,
-                               instances=instances,
-                               databaseinfra=databaseinfra,
-                               database=database
-                               )
+    workflow_dict = build_dict(
+        plan=databaseinfra.plan,
+        environment=databaseinfra.environment,
+        steps=get_deploy_settings(
+            databaseinfra.plan.replication_topology.class_path
+        ),
+        qt=get_vm_qt(plan=databaseinfra.plan),
+        dbtype=str(databaseinfra.plan.engine_type),
+        hosts=hosts,
+        instances=instances,
+        databaseinfra=databaseinfra,
+        database=database
+    )
 
     if stop_workflow(workflow_dict=workflow_dict, task=task):
         return workflow_dict
@@ -118,9 +128,12 @@ def destroy_infra(databaseinfra, task=None):
 def resize_database_instance(database, cloudstackpack, instance, task=None):
 
     from dbaas_cloudstack.models import CloudStackPack
-    original_cloudstackpack = CloudStackPack.objects.get(offering__serviceofferingid=database.offering_id,
-                                                         offering__region__environment=database.environment,
-                                                         engine_type__name=database.engine_type)
+
+    original_cloudstackpack = CloudStackPack.objects.get(
+        offering__serviceofferingid=database.offering_id,
+        offering__region__environment=database.environment,
+        engine_type__name=database.engine_type
+    )
 
     workflow_dict = build_dict(
         database=database,
@@ -130,11 +143,12 @@ def resize_database_instance(database, cloudstackpack, instance, task=None):
         environment=database.environment,
         instance=instance,
         host=instance.hostname,
-        steps=get_resize_settings(database.databaseinfra.plan.replication_topology.class_path),
+        steps=get_resize_settings(
+            database.databaseinfra.plan.replication_topology.class_path
+        )
     )
 
     start_workflow(workflow_dict=workflow_dict, task=task)
-
     return workflow_dict
 
 
@@ -164,6 +178,14 @@ def get_resize_settings(class_path):
     return get_replication_topology_instance(class_path).get_resize_steps()
 
 
+def get_volume_migration_settings(class_path):
+    return get_replication_topology_instance(class_path).get_volume_migration_steps()
+
+
+def get_restore_snapshot_settings(class_path):
+    return get_replication_topology_instance(class_path).get_restore_snapshot_steps()
+
+
 def get_engine_credentials(engine, environment):
     engine = engine.lower()
 
@@ -175,4 +197,6 @@ def get_engine_credentials(engine, environment):
         credential_type = CredentialType.MYSQL
 
     return get_credentials_for(
-        environment=environment, credential_type=credential_type)
+        environment=environment,
+        credential_type=credential_type
+    )

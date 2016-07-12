@@ -12,10 +12,9 @@ from datetime import date, timedelta
 from util import exec_remote_command
 from dbaas_cloudstack.models import HostAttr as Cloudstack_HostAttr
 from util import get_worker_name
-from workflow.settings import RESTORE_SNAPSHOT_SINGLE
-from workflow.settings import RESTORE_SNAPSHOT_MYSQL_HA
 from util import build_dict
 from util import clean_unused_data
+from util.providers import get_restore_snapshot_settings
 from workflow.workflow import start_workflow
 from notification import models
 from notification import tasks
@@ -326,12 +325,9 @@ def restore_snapshot(self, database, snapshot, user, task_history):
         export_id = host_attr.nfsaas_export_id
         export_path = host_attr.nfsaas_path
 
-        steps = RESTORE_SNAPSHOT_SINGLE
-
-        tasks.disable_zabbix_alarms(database)
-
-        if databaseinfra.plan.is_ha and databaseinfra.engine_name == 'mysql':
-            steps = RESTORE_SNAPSHOT_MYSQL_HA
+        steps = get_restore_snapshot_settings(
+            database.plan.replication_topology.class_path
+        )
 
         not_primary_instances = databaseinfra.instances.exclude(hostname=host).exclude(instance_type__in=[Instance.MONGODB_ARBITER,
                                                                                                           Instance.REDIS_SENTINEL])

@@ -1,10 +1,15 @@
 # -*- coding: utf-8 -*-
-from base import BaseTopology, STOP_RESIZE_START
+from drivers.replication_topologies.base import STOP_RESIZE_START
+from drivers.replication_topologies.mysql_single import MySQLSingle
+from drivers.tests.test_replication_topologies import AbstractReplicationTopologySettingsTestCase
 
 
-class MySQLSingle(BaseTopology):
+class TestMySQLSingleSettings(AbstractReplicationTopologySettingsTestCase):
 
-    def get_deploy_steps(self):
+    def _get_replication_topology_driver(self):
+        return MySQLSingle()
+
+    def _get_deploy_settings(self):
         return (
             'workflow.steps.util.deploy.build_databaseinfra.BuildDatabaseInfra',
             'workflow.steps.mysql.deploy.create_virtualmachines.CreateVirtualMachine',
@@ -24,13 +29,13 @@ class MySQLSingle(BaseTopology):
             'workflow.steps.util.deploy.check_database_binds.CheckDatabaseBinds',
         )
 
-    def get_clone_steps(self):
-        return self.get_deploy_steps() + (
+    def _get_clone_settings(self):
+        return self._get_deploy_settings() + (
             'workflow.steps.util.clone.clone_database.CloneDatabase',
             'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',
         )
 
-    def get_resize_steps(self):
+    def _get_resize_settings(self):
         return (
             ('workflow.steps.util.volume_migration.stop_database.StopDatabase',
              'workflow.steps.mysql.resize.change_config.ChangeDatabaseConfigFile',
