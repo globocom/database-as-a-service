@@ -32,6 +32,9 @@
                 topology_select.remove(0);
             }
             topology_select.selectedIndex = -1;
+            var opt = document.createElement('option');
+            opt.innerHTML = '---------';
+            topology_select.appendChild(opt);
 
             topologies = get_current_topologies();
             for (topology in topologies) {
