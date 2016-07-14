@@ -310,7 +310,7 @@ class MySQL(BaseDriver):
         return '/data/data/'
 
     def switch_master(self):
-        return self.replication_topology_driver().switch_master(driver=self)
+        return self.replication_topology_driver.switch_master(driver=self)
 
     def start_slave(self, instance):
         client = self.get_client(instance)
