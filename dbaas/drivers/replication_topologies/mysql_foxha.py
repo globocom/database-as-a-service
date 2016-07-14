@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
-from base import BaseTopology
+from mysql_single import MySQLSingle
 from util import get_credentials_for
 from dbaas_credentials.models import CredentialType
 from dbaas_foxha.provider import FoxHAProvider
 from dbaas_foxha.dbaas_api import DatabaseAsAServiceApi
 
 
-class MySQLFoxHA(BaseTopology):
+class MySQLFoxHA(MySQLSingle):
 
     def get_deploy_steps(self):
         return (
