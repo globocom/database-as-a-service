@@ -44,7 +44,12 @@ class ConfigVMsForeman(BaseStep):
                     raise Exception(str(output))
                 fqdn = output['stdout'][0].strip()
 
-                LOG.info("Call forman for fqdn={}, vip={}, dsrc={}".format(fqdn, vip.vip_ip, vip.dscp))
+                if fqdn == "localhost.localdomain":
+                    errormsg = "The fqdn {} is not valid.".format(fqdn)
+                    LOG.error(errormsg)
+                    raise Exception(errormsg)
+
+                LOG.info("Call foreman for fqdn={}, vip={}, dsrc={}".format(fqdn, vip.vip_ip, vip.dscp))
                 forman_provider.setup_database_dscp(fqdn=fqdn,
                                                     vip_ip=vip.vip_ip,
                                                     dsrc=vip.dscp,
