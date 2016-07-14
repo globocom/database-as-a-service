@@ -50,10 +50,6 @@ class ConfigVMsForeman(BaseStep):
                                                     dsrc=vip.dscp,
                                                     port=3306)
 
-            from time import sleep
-            LOG.info("sleep 240 - test RICK")
-            sleep(240)
-
             return True
 
         except Exception:
