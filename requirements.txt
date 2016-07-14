@@ -63,7 +63,7 @@ dbaas_dnsapi==0.1.4
 dbaas_laas==0.0.4
 dbaas_networkapi==0.1.8
 dbaas_foreman==0.1.4
-dbaas_foxha==0.2.0
+dbaas_foxha==0.2.2
 foxha==0.7.0.5
 GloboNetworkAPI==0.6.24
 Dex==0.6
