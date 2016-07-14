@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 import logging
-from dbaas import util
 from django.utils.translation import ugettext_lazy as _
 from django_services.service.exceptions import InternalException
 
@@ -92,6 +91,7 @@ class BaseDriver(object):
 
     @property
     def replication_topology_driver(self):
+        import util
         return util.get_replication_topology_instance(
             self.replication_topology.class_path
         )
