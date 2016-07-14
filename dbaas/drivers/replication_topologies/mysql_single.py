@@ -39,3 +39,6 @@ class MySQLSingle(BaseTopology):
              'workflow.steps.util.resize.start_agents.StartAgents',
              'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',)
         )
+
+    def switch_master(self, driver):
+        return True
