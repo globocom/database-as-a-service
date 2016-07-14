@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 from base import BaseTopology
+from util import get_credentials_for
+from dbaas_credentials.models import CredentialType
+from dbaas_foxha.provider import FoxHAProvider
+from dbaas_foxha.dbaas_api import DatabaseAsAServiceApi
 
 
 class MySQLFoxHA(BaseTopology):
@@ -26,3 +30,15 @@ class MySQLFoxHA(BaseTopology):
             'workflow.steps.util.deploy.create_log.CreateLog',
             'workflow.steps.util.deploy.check_database_binds.CheckDatabaseBinds',
         )
+
+    def switch_master(self, driver):
+        databaseinfra = driver.databaseinfra
+
+        foxha_credentials = get_credentials_for(
+            environment=databaseinfra.environment,
+            credential_type=CredentialType.FOXHA
+        )
+        dbaas_api = DatabaseAsAServiceApi(databaseinfra, foxha_credentials)
+        provider = FoxHAProvider(dbaas_api)
+
+        provider.switchover(databaseinfra.name)
