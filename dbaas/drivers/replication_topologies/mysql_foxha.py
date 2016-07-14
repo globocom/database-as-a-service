@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from base import BaseTopology
 
+
 class MySQLFoxHA(BaseTopology):
 
     def get_deploy_steps(self):
