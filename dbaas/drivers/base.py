@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 import logging
+from dbaas import util
 from django.utils.translation import ugettext_lazy as _
 from django_services.service.exceptions import InternalException
 
@@ -84,6 +85,16 @@ class BaseDriver(object):
             self.name = self.databaseinfra.engine.name
         else:
             raise TypeError(_("DatabaseInfra is not defined"))
+
+    @property
+    def replication_topology(self):
+        return self.databaseinfra.plan.replication_topology
+
+    @property
+    def replication_topology_driver(self):
+        return util.get_replication_topology_instance(
+            self.replication_topology.class_path
+        )
 
     def test_connection(self, credential=None):
         """ Tests the connection to the database """
