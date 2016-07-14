@@ -54,7 +54,7 @@ wsgiref==0.1.2
 dbaas_cloudstack==0.7.9
 dbaas_credentials==1.1.6
 dbaas_nfsaas==0.6.7
-dbaas_zabbix==0.4.3
+dbaas_zabbix==0.4.5
 dbaas_dbmonitor==0.2.2
 dbaas_flipper==0.0.9
 django-filter==0.9.1
@@ -64,6 +64,7 @@ dbaas_laas==0.0.4
 dbaas_networkapi==0.1.8
 dbaas_foreman==0.1.4
 dbaas_foxha==0.2.0
+foxha==0.7.0.5
 GloboNetworkAPI==0.6.24
 Dex==0.6
 click==3.3
