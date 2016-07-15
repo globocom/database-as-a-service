@@ -59,6 +59,9 @@ class MySQLSingle(BaseMysql):
     def switch_master(self, driver):
         return True
 
+    def check_instance_is_master(self, driver, instance):
+        return True
+
 
 class MySQLFlipper(BaseMysql):
 
@@ -105,6 +108,15 @@ class MySQLFlipper(BaseMysql):
         if return_code != 0:
             raise Exception(str(output))
 
+    def check_instance_is_master(self, driver, instance):
+        results = driver.query(
+            query_string="show variables like 'read_only'", instance=instance
+        )
+        if results[0]["Value"] == "ON":
+            return False
+        else:
+            return True
+
 
 class MySQLFoxHA(MySQLSingle):
 
@@ -145,7 +157,7 @@ class MySQLFoxHA(MySQLSingle):
             'workflow.steps.util.deploy.check_database_binds.CheckDatabaseBinds',
         )
 
-    def switch_master(self, driver):
+    def _get_fox_provider(self, driver):
         databaseinfra = driver.databaseinfra
 
         foxha_credentials = get_credentials_for(
@@ -153,6 +165,14 @@ class MySQLFoxHA(MySQLSingle):
             credential_type=CredentialType.FOXHA
         )
         dbaas_api = DatabaseAsAServiceApi(databaseinfra, foxha_credentials)
-        provider = FoxHAProvider(dbaas_api)
+        return FoxHAProvider(dbaas_api)
 
-        provider.switchover(databaseinfra.name)
+    def switch_master(self, driver):
+        self._get_fox_provider(driver).switchover(
+            driver.databaseinfra.name
+        )
+
+    def check_instance_is_master(self, driver, instance):
+        return self._get_fox_provider(driver).node_is_master(
+            driver.databaseinfra.name, instance.address
+        )

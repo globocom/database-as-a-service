@@ -145,6 +145,9 @@ class MySQL(BaseDriver):
             except Exception as e:
                 GenericDriverError(e.args)
 
+    def query(self, query_string, instance=None):
+        return self.__query(query_string, instance)
+
     def info(self):
         from logical.models import Database
 
@@ -277,14 +280,9 @@ class MySQL(BaseDriver):
             return False
 
     def check_instance_is_master(self, instance):
-        if self.databaseinfra.instances.count() == 1:
-            return True
-        results = self.__query(
-            query_string="show variables like 'read_only'", instance=instance)
-        if results[0]["Value"] == "ON":
-            return False
-        else:
-            return True
+        return self.replication_topology_driver.check_instance_is_master(
+            driver=self, instance=instance
+        )
 
     def get_replication_info(self, instance):
         results = self.__query(
