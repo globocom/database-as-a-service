@@ -56,6 +56,9 @@ class BaseMysql(BaseTopology):
     def check_instance_is_master(self, driver, instance):
         raise NotImplementedError
 
+    def get_database_agents(self):
+        return ['td-agent', 'mysql_statsd', 'monit']
+
 
 class MySQLSingle(BaseMysql):
 
@@ -120,6 +123,10 @@ class MySQLFlipper(BaseMysql):
         else:
             return True
 
+    def get_database_agents(self):
+        agents = ['httpd', 'mk-heartbeat-daemon']
+        return super(MySQLFlipper, self).get_database_agents() + agents
+
 
 class MySQLFoxHA(MySQLSingle):
 
@@ -179,3 +186,7 @@ class MySQLFoxHA(MySQLSingle):
         return self._get_fox_provider(driver).node_is_master(
             driver.databaseinfra.name, instance.address
         )
+
+    def get_database_agents(self):
+        agents = ['httpd', '/etc/init.d/pt-heartbeat']
+        return super(MySQLFoxHA, self).get_database_agents() + agents
