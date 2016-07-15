@@ -2,7 +2,7 @@
 from base import BaseTopology, STOP_RESIZE_START
 
 
-class RedisSentinel(BaseTopology):
+class BaseRedis(BaseTopology):
 
     def get_deploy_steps(self):
         return (
@@ -37,3 +37,11 @@ class RedisSentinel(BaseTopology):
              'workflow.steps.util.resize.start_agents.StartAgents',
              'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',)
         )
+
+
+class RedisSingle(BaseRedis):
+    pass
+
+
+class RedisSentinel(BaseRedis):
+    pass

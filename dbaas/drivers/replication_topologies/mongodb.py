@@ -2,7 +2,7 @@
 from base import BaseTopology, STOP_RESIZE_START
 
 
-class MongoDBReplicaset(BaseTopology):
+class BaseMongoDB(BaseTopology):
 
     def get_deploy_steps(self):
         return (
@@ -37,3 +37,11 @@ class MongoDBReplicaset(BaseTopology):
              'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',
              )
         )
+
+
+class MongoDBSingle(BaseMongoDB):
+    pass
+
+
+class MongoDBReplicaset(BaseMongoDB):
+    pass
