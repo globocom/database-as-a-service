@@ -53,6 +53,9 @@ class BaseMysql(BaseTopology):
     def switch_master(self, driver):
         raise NotImplementedError()
 
+    def check_instance_is_master(self, driver, instance):
+        raise NotImplementedError
+
 
 class MySQLSingle(BaseMysql):
 
