@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.0.73
+* Add framework to engine topology
+* Add MySQL FOXHA topology
+
 ## 0.0.72
 * Add step on mysql migration to start mk-heartbeat-daemon
 * Upgrade mongodb (3.0.8 to 3.0.12)
