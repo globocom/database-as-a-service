@@ -93,7 +93,7 @@ class TestMySQLFoxHA(AbstractBaseMySQLTestCase):
     def _get_deploy_settings(self):
         return (
             'workflow.steps.util.deploy.build_databaseinfra.BuildDatabaseInfra',
-            'workflow.steps.mysql.deploy.create_virtualmachines.CreateVirtualMachine',
+            'workflow.steps.mysql.deploy.create_virtualmachines_fox.CreateVirtualMachine',
             'workflow.steps.mysql.deploy.create_vip.CreateVip',
             'workflow.steps.mysql.deploy.create_dns_foxha.CreateDnsFoxHA',
             'workflow.steps.util.deploy.create_nfs.CreateNfs',
