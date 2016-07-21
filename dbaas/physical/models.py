@@ -461,6 +461,27 @@ class Instance(BaseModel):
         except Exception, e:
             return False
 
+class DiskOffering(BaseModel):
+
+    name = models.CharField(
+        verbose_name=_("Offering"), max_length=255, unique=True)
+    size_kb = models.PositiveIntegerField(verbose_name=_("Size KB"))
+
+    def size_gb(self):
+        return self.converter_kb_to_gb(self.size_kb)
+    size_gb.short_description = "Size GB"
+
+    def converter_kb_to_gb(self, value):
+        if value:
+            return (value / 1000.0) / 1000.0
+
+    def converter_gb_to_kb(self, value):
+        if value:
+            return (value * 1000) * 1000
+
+    def __unicode__(self):
+        return '{} ({} GB)'.format(self.name, self.size_gb())
+
 
 ##########################################################################
 # SIGNALS
