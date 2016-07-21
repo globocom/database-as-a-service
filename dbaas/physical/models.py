@@ -102,6 +102,28 @@ class ReplicationTopology(BaseModel):
     )
 
 
+class DiskOffering(BaseModel):
+
+    name = models.CharField(
+        verbose_name=_("Offering"), max_length=255, unique=True)
+    size_kb = models.PositiveIntegerField(verbose_name=_("Size KB"))
+
+    def size_gb(self):
+        return self.converter_kb_to_gb(self.size_kb)
+    size_gb.short_description = "Size GB"
+
+    def converter_kb_to_gb(self, value):
+        if value:
+            return (value / 1000.0) / 1000.0
+
+    def converter_gb_to_kb(self, value):
+        if value:
+            return (value * 1000) * 1000
+
+    def __unicode__(self):
+        return '{} ({} GB)'.format(self.name, self.size_gb())
+
+
 class Plan(BaseModel):
 
     PREPROVISIONED = 0
@@ -140,6 +162,9 @@ class Plan(BaseModel):
                                                verbose_name=_("Engine version upgrade plan"),
                                                on_delete=models.SET_NULL,
                                                related_name='backwards_plan')
+    disk_offering = models.ForeignKey(
+        DiskOffering, related_name="plans", on_delete=models.PROTECT, null=True
+    )
 
     @property
     def engine_type(self):
@@ -226,6 +251,10 @@ class DatabaseInfra(BaseModel):
                                         "Usually it is in the form host:port[,host_n:port_n]. If the engine is mongodb this will be automatically generated."),
                                     blank=True,
                                     null=True)
+    disk_offering = models.ForeignKey(
+        DiskOffering, related_name="databaseinfras",
+        on_delete=models.PROTECT, null=True
+    )
 
     def __unicode__(self):
         return self.name
@@ -460,27 +489,6 @@ class Instance(BaseModel):
             return status
         except Exception, e:
             return False
-
-class DiskOffering(BaseModel):
-
-    name = models.CharField(
-        verbose_name=_("Offering"), max_length=255, unique=True)
-    size_kb = models.PositiveIntegerField(verbose_name=_("Size KB"))
-
-    def size_gb(self):
-        return self.converter_kb_to_gb(self.size_kb)
-    size_gb.short_description = "Size GB"
-
-    def converter_kb_to_gb(self, value):
-        if value:
-            return (value / 1000.0) / 1000.0
-
-    def converter_gb_to_kb(self, value):
-        if value:
-            return (value * 1000) * 1000
-
-    def __unicode__(self):
-        return '{} ({} GB)'.format(self.name, self.size_gb())
 
 
 ##########################################################################

@@ -49,6 +49,7 @@ class DatabaseInfraAdmin(admin.DjangoServicesAdmin):
     list_display = (
         "name", "user", "environment", "show_instances", "capacity_bar")
     list_filter = ("engine", "environment")
+    readonly_fields = ('disk_offering', )
     save_on_top = True
 
     add_form_template = "admin/physical/databaseinfra/add_form.html"
