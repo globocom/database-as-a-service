@@ -1,14 +1,14 @@
 import logging
+from dbaas_credentials.models import CredentialType
 from dbaas_nfsaas.models import HostAttr
+from dbaas_nfsaas.dbaas_api import DatabaseAsAServiceApi
+from dbaas_nfsaas.faas_provider import Provider
 from util import get_credentials_for
 
 LOG = logging.getLogger(__name__)
 
 
 def get_faas_provider(environment):
-    from dbaas_nfsaas.dbaas_api import DatabaseAsAServiceApi
-    from dbaas_nfsaas.faas_provider import Provider
-    from dbaas_credentials.models import CredentialType
 
     faas_credentials = get_credentials_for(
         environment=environment,
