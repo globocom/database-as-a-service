@@ -2,8 +2,8 @@
 import logging
 from util import full_stack
 from physical.models import Instance
-from dbaas_nfsaas.provider import NfsaasProvider
 from ...util.base import BaseStep
+from ...util.nfsaas_utils import create_disk, delete_disk
 from ....exceptions.error_codes import DBAAS_0009
 
 LOG = logging.getLogger(__name__)
@@ -16,24 +16,16 @@ class CreateNfs(BaseStep):
 
     def do(self, workflow_dict):
         try:
-
             workflow_dict['disks'] = []
 
             for instance in workflow_dict['instances']:
-
                 if instance.instance_type == Instance.REDIS_SENTINEL:
                     continue
 
-                host = instance.hostname
-
-                LOG.info("Creating nfsaas disk...")
-
-                disk = NfsaasProvider(
-                ).create_disk(environment=workflow_dict['environment'],
-                              plan=workflow_dict[
-                                  'plan'],
-                              host=host)
-
+                disk = create_disk(
+                    workflow_dict['environment'], instance.hostname,
+                    workflow_dict['plan']
+                )
                 if not disk:
                     return False
 
@@ -52,12 +44,7 @@ class CreateNfs(BaseStep):
     def undo(self, workflow_dict):
         try:
             for host in workflow_dict['hosts']:
-                LOG.info("Destroying nfsaas disk...")
-
-                disk = NfsaasProvider().destroy_disk(
-                    environment=workflow_dict['environment'], host=host)
-
-                if not disk:
+                if not delete_disk(workflow_dict['environment'], host):
                     return False
 
             return True
