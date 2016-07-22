@@ -27,9 +27,9 @@ class BuildDatabaseInfra(BaseStep):
                                                  environment=workflow_dict['environment'])
             databaseinfra.user = credentials.user
             databaseinfra.password = credentials.password
-            databaseinfra.engine = workflow_dict[
-                'plan'].engine
+            databaseinfra.engine = workflow_dict['plan'].engine
             databaseinfra.plan = workflow_dict['plan']
+            databaseinfra.disk_offering = workflow_dict['plan'].disk_offering
             databaseinfra.environment = workflow_dict['environment']
             databaseinfra.capacity = 1
             databaseinfra.per_database_size_mbytes = workflow_dict[
