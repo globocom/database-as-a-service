@@ -5,8 +5,7 @@ from workflow.steps.util.base import BaseStep
 from workflow.exceptions.error_codes import DBAAS_0021
 from workflow.steps.util.restore_snapshot import use_database_initialization_script
 from workflow.steps.mysql.util import start_slave
-from workflow.steps.mysql.util import set_infra_read_ip
-from workflow.steps.mysql.util import set_infra_write_ip
+from physical.models import Instance
 from time import sleep
 
 
@@ -64,16 +63,17 @@ class StopDatabase(BaseStep):
                 instance = host.instance_set.all()[0]
                 start_slave(instance=instance)
 
-            LOG.info('Wainting 30 seconds to setting flipper IPs')
+            LOG.info('Wainting 30 seconds to setting write/read instances')
             sleep(30)
-            LOG.info('Setting read IP on {}'.format(workflow_dict['host']))
-            set_infra_read_ip(slave_host=workflow_dict['host'],
-                              infra_name=databaseinfra.name)
-
-            LOG.info('Setting write IP on {}'.format(
-                workflow_dict['not_primary_hosts'][0]))
-            set_infra_write_ip(master_host=workflow_dict['not_primary_hosts'][0],
-                               infra_name=databaseinfra.name)
+            driver = databaseinfra.get_driver()
+            master_host = workflow_dict['host']
+            master_instance = Instance.objects.get(hostname=master_host)
+            secondary_host = workflow_dict['not_primary_hosts'][0]
+            secondary_instance = Instance.objects.get(hostname=secondary_host)
+            LOG.info('Setting read on {}'.format(master_instance))
+            driver.set_read_ip(instance=master_instance)
+            LOG.info('Setting write on {}'.format(secondary_instance))
+            driver.set_master(instance=secondary_instance)
 
             return True
         except Exception:
