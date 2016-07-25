@@ -284,6 +284,16 @@ class MySQL(BaseDriver):
             driver=self, instance=instance
         )
 
+    def set_master(self, instance):
+        return self.replication_topology_driver.set_master(
+            driver=self, instance=instance
+        )
+
+    def set_read_ip(self, instance):
+        return self.replication_topology_driver.set_read_ip(
+            driver=self, instance=instance
+        )
+
     def get_replication_info(self, instance):
         results = self.__query(
             query_string="show slave status", instance=instance)
