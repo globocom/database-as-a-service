@@ -8,6 +8,7 @@ from models import Snapshot
 from notification.models import TaskHistory
 from system.models import Configuration
 import datetime
+import time
 from datetime import date, timedelta
 from util import exec_remote_command
 from dbaas_cloudstack.models import HostAttr as Cloudstack_HostAttr
@@ -202,12 +203,20 @@ def make_databases_backup(self):
     task_history = TaskHistory.register(request=self.request,
                                         worker_name=worker_name, user=None)
 
-    msgs = []
     status = TaskHistory.STATUS_SUCCESS
     databaseinfras = DatabaseInfra.objects.filter(
         plan__provider=Plan.CLOUDSTACK)
     error = {}
+    backup_number = 0
+    backups_per_group = len(databaseinfras) / 12
     for databaseinfra in databaseinfras:
+        if backup_number < backups_per_group:
+            backup_number += 1
+        else:
+            backup_number = 0
+            waiting_msg = "\nWaiting 5 minutes to start the next backup group"
+            task_history.update_details(persist=True, details=waiting_msg)
+            time.sleep(300)
         instances = Instance.objects.filter(databaseinfra=databaseinfra)
         for instance in instances:
 
@@ -221,6 +230,9 @@ def make_databases_backup(self):
                     str(instance), str(e))
                 LOG.error(msg)
             else:
+                time_now = str(time.strftime("%m/%d/%Y %H:%M:%S"))
+                start_msg = "\n{} - Starting backup for {} ...".format(time_now, instance)
+                task_history.update_details(persist=True, details=start_msg)
                 try:
                     if make_instance_snapshot_backup(instance=instance,
                                                      error=error):
@@ -238,9 +250,11 @@ def make_databases_backup(self):
                         str(instance), str(e))
                     LOG.error(msg)
 
-            msgs.append(msg)
+            time_now = str(time.strftime("%m/%d/%Y %H:%M:%S"))
+            msg = "\n{} - {}".format(time_now, msg)
+            task_history.update_details(persist=True, details=msg)
 
-    task_history.update_status_for(status, details="\n".join(msgs))
+    task_history.update_status_for(status, details="\nBackup finished")
 
     return
 
