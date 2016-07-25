@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
 from util import full_stack
+from physical.models import Instance
 from workflow.steps.util.nfsaas_utils import create_disk, delete_disk
 from workflow.steps.util.base import BaseStep
 from workflow.exceptions.error_codes import DBAAS_0009
@@ -15,10 +16,15 @@ class CreateNfs(BaseStep):
 
     def do(self, workflow_dict):
         try:
-
             workflow_dict['disks'] = []
 
             for instance in workflow_dict['instances']:
+                driver = workflow_dict['databaseinfra'].get_driver()
+                if instance in driver.get_non_database_instances():
+                    LOG.info(
+                        "Do not create NFS disk for '{}'...".format(instance)
+                    )
+                    continue
 
                 disk = create_disk(
                     workflow_dict['environment'], instance.hostname,
