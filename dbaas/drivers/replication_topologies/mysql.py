@@ -56,6 +56,12 @@ class BaseMysql(BaseTopology):
     def check_instance_is_master(self, driver, instance):
         raise NotImplementedError
 
+    def set_master(self, driver, instance):
+        raise NotImplementedError
+
+    def set_read_ip(self, driver, instance):
+        raise NotImplementedError
+
     def get_database_agents(self):
         return ['td-agent', 'mysql_statsd', 'monit']
 
@@ -67,6 +73,12 @@ class MySQLSingle(BaseMysql):
 
     def check_instance_is_master(self, driver, instance):
         return True
+
+    def set_master(self, driver, instance):
+        raise True
+
+    def set_read_ip(self, driver, instance):
+        raise True
 
 
 class MySQLFlipper(BaseMysql):
@@ -113,6 +125,54 @@ class MySQLFlipper(BaseMysql):
         LOG.info(output)
         if return_code != 0:
             raise Exception(str(output))
+
+    def set_master(self, driver, instance):
+        command = """
+            echo ""; echo $(date "+%Y-%m-%d %T") "- Setting flipper IPs"
+            sudo -u flipper /usr/bin/flipper {infra_name} ipdown write
+            sudo -u flipper /usr/bin/flipper {infra_name} set write {master_host}
+        """
+
+        command = command.format(infra_name=driver.databaseinfra.name,
+                                 master_host=instance.address)
+
+        cs_host_attr = HostAttr.objects.get(host=instance.hostname)
+
+        output = {}
+        return_code = exec_remote_command(server=instance.address,
+                                          username=cs_host_attr.vm_user,
+                                          password=cs_host_attr.vm_password,
+                                          command=command,
+                                          output=output)
+
+        if return_code != 0:
+            raise Exception("Could not Change WriteIP: {}".format(output))
+
+        return True
+
+    def set_read_ip(self, driver, instance):
+        command = """
+            echo ""; echo $(date "+%Y-%m-%d %T") "- Setting flipper IPs"
+            sudo -u flipper /usr/bin/flipper {infra_name} ipdown read
+            sudo -u flipper /usr/bin/flipper {infra_name} set read {slave_host}
+        """
+
+        command = command.format(infra_name=driver.databaseinfra.name,
+                                 slave_host=instance.address)
+
+        cs_host_attr = HostAttr.objects.get(host=instance.hostname)
+
+        output = {}
+        return_code = exec_remote_command(server=instance.address,
+                                          username=cs_host_attr.vm_user,
+                                          password=cs_host_attr.vm_password,
+                                          command=command,
+                                          output=output)
+
+        if return_code != 0:
+            raise Exception("Could not Change ReadIP: {}".format(output))
+
+        return True
 
     def check_instance_is_master(self, driver, instance):
         results = driver.query(
@@ -179,12 +239,25 @@ class MySQLFoxHA(MySQLSingle):
 
     def switch_master(self, driver):
         self._get_fox_provider(driver).switchover(
-            driver.databaseinfra.name
+            group_name=driver.databaseinfra.name
         )
 
     def check_instance_is_master(self, driver, instance):
         return self._get_fox_provider(driver).node_is_master(
-            driver.databaseinfra.name, instance.address
+            group_name=driver.databaseinfra.name,
+            node_ip=instance.address
+        )
+
+    def set_master(self, driver, instance):
+        self._get_fox_provider(driver).set_master(
+            group_name=driver.databaseinfra.name,
+            node_ip=instance.address
+        )
+
+    def set_read_ip(self, driver, instance):
+        self._get_fox_provider(driver).set_read_only(
+            group_name=driver.databaseinfra.name,
+            node_ip=instance.address
         )
 
     def get_database_agents(self):
