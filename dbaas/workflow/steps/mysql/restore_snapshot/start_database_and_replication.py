@@ -6,8 +6,6 @@ from workflow.exceptions.error_codes import DBAAS_0020
 from workflow.steps.mysql.util import get_replication_information_from_file
 from workflow.steps.util.restore_snapshot import use_database_initialization_script
 from workflow.steps.mysql.util import change_master_to
-from workflow.steps.mysql.util import set_infra_write_ip
-from workflow.steps.mysql.util import set_infra_read_ip
 from workflow.steps.mysql.util import start_slave
 from physical.models import Instance
 from time import sleep
@@ -64,11 +62,9 @@ class StartDatabaseAndReplication(BaseStep):
 
             LOG.info("Waiting 30 seconds to continue")
             sleep(30)
-            set_infra_read_ip(slave_host=workflow_dict['host'],
-                              infra_name=databaseinfra.name)
-
-            set_infra_write_ip(master_host=workflow_dict['not_primary_hosts'][0],
-                               infra_name=databaseinfra.name)
+            driver = databaseinfra.get_driver()
+            driver.set_read_ip(instance=master_instance)
+            driver.set_master(instance=secondary_instance)
 
             return True
         except Exception:
