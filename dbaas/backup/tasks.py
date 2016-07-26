@@ -170,7 +170,7 @@ def make_instance_snapshot_backup(instance, error):
         command = """
         if [ -d "{backup_path}" ]
         then
-            rm -rf {backup_path}/20[0-9][0-9]_[0-1][0-12]_[0-3][0-9]
+            rm -rf {backup_path}/20[0-9][0-9]_[0-1][0-9]_[0-3][0-9] &
             mkdir -p {target_path}
             cp -r {snapshot_path} {target_path} &
         fi
