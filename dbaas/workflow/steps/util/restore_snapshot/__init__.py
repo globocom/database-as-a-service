@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 import logging
 from dbaas_cloudstack.models import HostAttr as CsHostAttr
-from dbaas_nfsaas.provider import NfsaasProvider
+from workflow.steps.util.nfsaas_utils import create_snapshot
 from util import exec_remote_command
-from util import clean_unused_data
 
 LOG = logging.getLogger(__name__)
 
@@ -26,15 +25,7 @@ def use_database_initialization_script(databaseinfra, host, option):
     return return_code, output
 
 
-def destroy_unused_export(export_id, export_path, host, databaseinfra):
-    clean_unused_data(export_id, export_path, host, databaseinfra)
-    provider = NfsaasProvider()
-    provider.drop_export(environment=databaseinfra.environment,
-                         export_id=export_id)
-
-
 def update_fstab(host, source_export_path, target_export_path):
-
     cs_host_attr = CsHostAttr.objects.get(host=host)
 
     command = """sed -i s/"{}"/"{}"/g /etc/fstab""".format(source_export_path,
@@ -50,31 +41,31 @@ def update_fstab(host, source_export_path, target_export_path):
 
 def make_host_backup(database, instance, export_id):
     from backup.models import Snapshot
-    from dbaas_nfsaas.models import HostAttr as Nfsaas_HostAttr
+    from dbaas_nfsaas.models import HostAttr as Disk
     import datetime
 
     LOG.info("Make instance backup for %s" % (instance))
 
-    nfsaas_hostattr = Nfsaas_HostAttr.objects.get(nfsaas_export_id=export_id)
+    disk = Disk.objects.get(nfsaas_export_id=export_id)
+    databaseinfra = instance.databaseinfra
 
     snapshot = Snapshot()
     snapshot.start_at = datetime.datetime.now()
     snapshot.type = Snapshot.SNAPSHOPT
     snapshot.status = Snapshot.RUNNING
     snapshot.instance = instance
-    snapshot.environment = instance.databaseinfra.environment
-    snapshot.export_path = nfsaas_hostattr.nfsaas_path
+    snapshot.environment = databaseinfra.environment
+    snapshot.export_path = disk.nfsaas_path
     snapshot.database_name = database.name
 
-    databaseinfra = instance.databaseinfra
+    nfs_snapshot = create_snapshot(
+        environment=databaseinfra.environment, host=instance.hostname
+    )
 
-    nfs_snapshot = NfsaasProvider.create_snapshot(environment=databaseinfra.environment,
-                                                  host=instance.hostname)
-
-    if 'id' in nfs_snapshot and 'snapshot' in nfs_snapshot:
+    if 'id' in nfs_snapshot and 'name' in nfs_snapshot:
         snapshot.status = Snapshot.SUCCESS
         snapshot.snapshopt_id = nfs_snapshot['id']
-        snapshot.snapshot_name = nfs_snapshot['snapshot']
+        snapshot.snapshot_name = nfs_snapshot['name']
         snapshot.end_at = datetime.datetime.now()
         snapshot.save()
         return True
