@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 import logging
 from util import full_stack
-from dbaas_nfsaas.provider import NfsaasProvider
 from workflow.steps.util.base import BaseStep
+from workflow.steps.util.nfsaas_utils import create_disk, delete_disk
 from workflow.exceptions.error_codes import DBAAS_0022
-from dbaas_nfsaas.models import HostAttr
 
 LOG = logging.getLogger(__name__)
 
@@ -22,16 +21,9 @@ class CreateVolume(BaseStep):
             host = workflow_dict['host']
             LOG.info("Creating nfsaas volume...")
 
-            volume = NfsaasProvider(
-            ).create_disk(environment=environment,
-                          plan=plan,
-                          host=host)
-
+            volume = create_disk(environment=environment, host=host, plan=plan)
             if not volume:
                 return False
-
-            volume = HostAttr.objects.get(host=host,
-                                          nfsaas_path=volume['path'])
 
             workflow_dict['volume'] = volume
 
@@ -47,21 +39,12 @@ class CreateVolume(BaseStep):
 
     def undo(self, workflow_dict):
         try:
-            environment = workflow_dict['environment']
-
             if 'volume' in workflow_dict:
-                volume = workflow_dict['volume']
-                LOG.info("Destroying nfsaas volume...")
-
-                provider = NfsaasProvider()
-                provider.revoke_access(environment=environment,
-                                       host=volume.host,
-                                       export_id=volume.nfsaas_export_id)
-
-                provider.drop_export(environment=environment,
-                                     export_id=volume.nfsaas_export_id)
-
-                volume.delete()
+                LOG.info("Destroying NFS volume...")
+                delete_disk(
+                    environment=workflow_dict['environment'],
+                    host=workflow_dict['volume'].host
+                )
 
             return True
         except Exception:

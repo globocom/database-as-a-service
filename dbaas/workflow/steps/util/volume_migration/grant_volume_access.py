@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 import logging
 from util import full_stack
-from dbaas_nfsaas.provider import NfsaasProvider
 from workflow.steps.util.base import BaseStep
+from workflow.steps.util.nfsaas_utils import create_access
 from workflow.exceptions.error_codes import DBAAS_0022
 
 LOG = logging.getLogger(__name__)
@@ -18,9 +18,12 @@ class GrantVolumeAccess(BaseStep):
             databaseinfra = workflow_dict['databaseinfra']
             host = workflow_dict['host']
             volume = workflow_dict['volume']
-            NfsaasProvider.grant_access(environment=databaseinfra.environment,
-                                        host=host,
-                                        export_id=volume.nfsaas_export_id)
+
+            create_access(
+                environment=databaseinfra.environment,
+                export_path=volume.nfsaas_path_host,
+                host=host
+            )
 
             return True
         except Exception:
