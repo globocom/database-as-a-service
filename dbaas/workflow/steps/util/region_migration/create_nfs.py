@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 import logging
 from util import full_stack
-from dbaas_nfsaas.provider import NfsaasProvider
 from workflow.steps.util.base import BaseStep
+from workflow.steps.util.nfsaas_utils import create_disk, delete_disk
 from workflow.exceptions.error_codes import DBAAS_0020
 
 LOG = logging.getLogger(__name__)
@@ -15,30 +15,25 @@ class CreateNfs(BaseStep):
 
     def do(self, workflow_dict):
         try:
-
+            driver = workflow_dict['databaseinfra'].get_driver()
             workflow_dict['disks'] = []
 
             for instance in workflow_dict['target_instances']:
-
-                if instance.instance_type == instance.MONGODB_ARBITER:
-                    LOG.info("Do not creat nfsaas disk for Arbiter...")
+                if instance in driver.get_non_database_instances():
+                    LOG.info(
+                        "Do not create NFS disk for '{}'...".format(instance)
+                    )
                     continue
 
-                if instance.instance_type == instance.REDIS_SENTINEL:
-                    LOG.info("Do not creat nfsaas disk for Redis Sentinel...")
-                    continue
-
-                LOG.info("Creating nfsaas disk...")
-
-                host = instance.hostname
-
-                disk = NfsaasProvider().create_disk(
+                LOG.info("Creating NFS disk...")
+                disk = create_disk(
                     environment=workflow_dict['target_environment'],
-                    plan=workflow_dict['target_plan'],
-                    host=host)
+                    host=instance.hostname,
+                    plan=workflow_dict['target_plan']
+                )
 
                 if not disk:
-                    LOG.info("nfsaas disk could not be created...")
+                    LOG.info("NFS disk could not be created...")
                     return False
 
                 workflow_dict['disks'].append(disk)
@@ -56,11 +51,12 @@ class CreateNfs(BaseStep):
         LOG.info("Running undo...")
         try:
             for host in workflow_dict['target_hosts']:
-                LOG.info("Destroying nfsaas disk...")
+                LOG.info("Destroying NFS disk...")
 
-                NfsaasProvider().destroy_disk(
+                delete_disk(
                     environment=workflow_dict['target_environment'],
-                    host=host)
+                    host=host
+                )
 
             return True
         except Exception:
