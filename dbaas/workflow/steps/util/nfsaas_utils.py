@@ -91,6 +91,23 @@ def create_access(environment, export_path, host):
     )
 
 
+def delete_access(environment, export_id, host_delete):
+    provider = get_faas_provider(environment=environment)
+    disk = HostAttr.objects.get(nfsaas_export_id=export_id)
+
+    accesses = provider.list_access(disk.nfsaas_path_host)
+    if not accesses:
+        return True
+
+    for access in accesses:
+        if access['host'] == host_delete.address:
+            return provider.delete_access(
+                disk.nfsaas_path_host, host_delete.address
+            )
+
+    return False
+
+
 def clean_unused_data(export_id, host):
     disk = HostAttr.objects.get(nfsaas_export_id=export_id)
     cs_host_attr = CsHostAttr.objects.get(host=host)
