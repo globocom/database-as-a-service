@@ -207,16 +207,17 @@ def make_databases_backup(self):
     backup_number = 0
     backups_per_group = len(databaseinfras) / 12
     for databaseinfra in databaseinfras:
-        if backup_number < backups_per_group:
-            backup_number += 1
-        else:
-            backup_number = 0
-            waiting_msg = "\nWaiting 5 minutes to start the next backup group"
-            task_history.update_details(persist=True, details=waiting_msg)
-            time.sleep(300)
+        if backups_per_group > 0:
+            if backup_number < backups_per_group:
+                backup_number += 1
+            else:
+                backup_number = 0
+                waiting_msg = "\nWaiting 5 minutes to start the next backup group"
+                task_history.update_details(persist=True, details=waiting_msg)
+                time.sleep(300)
+
         instances = Instance.objects.filter(databaseinfra=databaseinfra)
         for instance in instances:
-
             try:
                 if not instance.databaseinfra.get_driver().check_instance_is_eligible_for_backup(instance):
                     LOG.info('Instance %s is not eligible for backup' % (str(instance)))
