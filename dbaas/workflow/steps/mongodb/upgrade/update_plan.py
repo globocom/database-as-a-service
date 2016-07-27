@@ -18,6 +18,7 @@ class UpdatePlan(BaseStep):
 
             databaseinfra = workflow_dict['databaseinfra']
             databaseinfra.plan = workflow_dict['target_plan']
+            databaseinfra.disk_offering = databaseinfra.plan.disk_offering
             databaseinfra.save()
 
             return True

@@ -540,6 +540,7 @@ def databaseinfra_pre_save(sender, **kwargs):
         databaseinfra.plan = databaseinfra.engine.engine_type.default_plan
         LOG.warning("No plan specified, using default plan (%s) for engine %s" % (
             databaseinfra, databaseinfra.engine))
+        databaseinfra.disk_offering = databaseinfra.plan.disk_offering
 
 
 @receiver(pre_save, sender=Plan)
