@@ -1,5 +1,4 @@
 import logging
-from dbaas_cloudstack.models import HostAttr as CsHostAttr
 from dbaas_credentials.models import CredentialType
 from dbaas_nfsaas.models import HostAttr
 from dbaas_nfsaas.dbaas_api import DatabaseAsAServiceApi
@@ -108,11 +107,10 @@ def delete_access(environment, export_id, host_delete):
     return False
 
 
-def clean_unused_data(export_id, host):
+def clean_unused_data(export_id):
     disk = HostAttr.objects.get(nfsaas_export_id=export_id)
-    cs_host_attr = CsHostAttr.objects.get(host=host)
 
     delete_all_disk_files(
         disk.nfsaas_path, disk.nfsaas_path_host,
-        disk.nfsaas_export_id, disk.host, cs_host_attr
+        disk.nfsaas_export_id, disk.host
     )

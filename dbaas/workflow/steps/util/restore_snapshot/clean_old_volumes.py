@@ -16,10 +16,7 @@ class CleanOldVolumes(BaseStep):
     def do(self, workflow_dict):
         try:
             for host_and_export in workflow_dict['hosts_and_exports']:
-                clean_unused_data(
-                    export_id=host_and_export['old_export_id'],
-                    host=host_and_export['host']
-                )
+                clean_unused_data(export_id=host_and_export['old_export_id'])
 
             return True
         except Exception:
