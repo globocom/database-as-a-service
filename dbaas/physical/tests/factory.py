@@ -54,6 +54,13 @@ class PlanFactory(factory.DjangoModelFactory):
             self.environments.add(EnvironmentFactory())
 
 
+class DiskOfferingFactory(factory.DjangoModelFactory):
+    FACTORY_FOR = models.DiskOffering
+
+    name = factory.Sequence(lambda n: 'disk-{0}'.format(n))
+    size_kb = 5000
+
+
 class DatabaseInfraFactory(factory.DjangoModelFactory):
     FACTORY_FOR = models.DatabaseInfra
 
