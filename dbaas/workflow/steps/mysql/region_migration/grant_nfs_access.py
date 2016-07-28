@@ -18,10 +18,7 @@ class GrantNFSAccess(BaseStep):
         try:
             databaseinfra = workflow_dict['databaseinfra']
             source_host = workflow_dict['source_hosts'][0]
-
-            hosts = source_host.nfsaas_host_attributes.all()
-            disk_id = hosts[0].nfsaas_export_id
-            disk = HostAttr.objects.get(nfsaas_export_id=disk_id)
+            disk = source_host.nfsaas_host_attributes.all()[0]
 
             return create_access(
                 environment=databaseinfra.environment,
@@ -41,11 +38,11 @@ class GrantNFSAccess(BaseStep):
         try:
             databaseinfra = workflow_dict['databaseinfra']
             source_host = workflow_dict['source_hosts'][0]
+            disks = source_host.nfsaas_host_attributes.all()
 
-            hosts = source_host.nfsaas_host_attributes.all()
             return delete_access(
                 environment=databaseinfra.environment,
-                export_id=hosts[0].nfsaas_export_id,
+                export_id=disks[0].nfsaas_export_id,
                 host_delete=source_host.future_host
             )
         except Exception:
