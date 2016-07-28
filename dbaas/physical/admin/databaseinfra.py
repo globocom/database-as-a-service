@@ -49,7 +49,6 @@ class DatabaseInfraAdmin(admin.DjangoServicesAdmin):
     list_display = (
         "name", "user", "environment", "show_instances", "capacity_bar")
     list_filter = ("engine", "environment")
-    readonly_fields = ('disk_offering', )
     save_on_top = True
 
     add_form_template = "admin/physical/databaseinfra/add_form.html"
@@ -60,6 +59,11 @@ class DatabaseInfraAdmin(admin.DjangoServicesAdmin):
         DatabaseInfraAttrInline,
         DatabaseInfraOfferingInline,
     ]
+
+    def get_readonly_fields(self, request, obj=None):
+        if obj:
+            return self.readonly_fields + ('disk_offering', )
+        return self.readonly_fields
 
     def capacity_bar(self, datainfra):
         return render_progress_bar(datainfra.used, datainfra.capacity)
