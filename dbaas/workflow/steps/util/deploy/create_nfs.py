@@ -18,9 +18,11 @@ class CreateNfs(BaseStep):
         try:
             workflow_dict['disks'] = []
 
+            driver = workflow_dict['databaseinfra'].get_driver()
+            non_database_instances = driver.get_non_database_instances()
+
             for instance in workflow_dict['instances']:
-                driver = workflow_dict['databaseinfra'].get_driver()
-                if instance in driver.get_non_database_instances():
+                if instance in non_database_instances:
                     LOG.info(
                         "Do not create NFS disk for '{}'...".format(instance)
                     )
