@@ -20,6 +20,7 @@ class AdminCreateDatabaseInfraTestCase(TestCase):
     def setUp(self):
         self.engine = factory.EngineFactory()
         self.plan = factory.PlanFactory(engine_type=self.engine.engine_type)
+        self.disk_offering = factory.DiskOfferingFactory()
         self.environment = self.plan.environments.all()[0]
         self.user = User.objects.create_superuser(
             self.USERNAME, email="%s@admin.com" % self.USERNAME, password=self.PASSWORD)
@@ -43,6 +44,7 @@ class AdminCreateDatabaseInfraTestCase(TestCase):
             "password": databaseinfra_pass,
             "engine": self.engine.pk,
             "plan": self.plan.pk,
+            "disk_offering": self.disk_offering.pk,
             "environment": self.environment.pk,
             "capacity": 1,
             "per_database_size_mbytes": 10,
