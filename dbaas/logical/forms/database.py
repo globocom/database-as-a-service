@@ -126,10 +126,19 @@ class DatabaseForm(models.ModelForm):
 
     @classmethod
     def setup_offering_field(cls, form, db_instance):
+        widget = DatabaseOfferingWidget(
+            id='resizeDatabase',
+            url=db_instance.get_resize_url(),
+            label='Resize VM',
+            attrs={
+                'readonly': 'readonly',
+                'database': db_instance
+            }
+        )
+
         form.declared_fields['offering'] = forms.CharField(
-            widget=DatabaseOfferingWidget(attrs={'readonly': 'readonly',
-                                                 'database': db_instance}),
-            required=False, initial=db_instance.offering)
+            widget=widget, required=False, initial=db_instance.offering
+        )
 
     def __init__(self, *args, **kwargs):
 
