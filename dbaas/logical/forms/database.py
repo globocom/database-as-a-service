@@ -372,7 +372,13 @@ class DiskResizeDatabaseForm(forms.Form):
                     _("New offering must be different from the current")
                 )
 
-            if self._errors:
-                return cleaned_data
+            current_database_size = round(self.database.total_size_in_gb, 2)
+            new_disk_size = round(cleaned_data['target_offer'].size_gb(), 2)
+            if current_database_size >= new_disk_size:
+                raise forms.ValidationError(
+                    _("Your database has {} GB, please choose "
+                      "a bigger disk".format(current_database_size)
+                      )
+                )
 
         return cleaned_data
