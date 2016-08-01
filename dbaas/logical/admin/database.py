@@ -12,9 +12,10 @@ from django.conf.urls import patterns, url
 from django.contrib import messages
 from django.utils.html import format_html, escape
 from ..service.database import DatabaseService
-from ..forms import DatabaseForm, CloneDatabaseForm, ResizeDatabaseForm
+from ..forms import DatabaseForm, CloneDatabaseForm, ResizeDatabaseForm, \
+    DiskResizeDatabaseForm
 from ..forms import RestoreDatabaseForm
-from physical.models import Plan, Host
+from physical.models import Plan, Host, DiskOffering
 from django.forms.models import modelform_factory
 from account.models import Team
 from drivers import DatabaseAlreadyExists
@@ -41,6 +42,8 @@ from bson.json_util import loads
 from django.contrib.admin import site
 from django.db import IntegrityError
 from ..models import Database
+from ..validators import check_is_database_enabled, check_resize_options
+from ..errors import DisabledDatabase, NoResizeOption
 
 LOG = logging.getLogger(__name__)
 
@@ -306,8 +309,15 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 del self.form.declared_fields['offering']
             else:
                 self.fieldsets_change[0][1]['fields'].append('offering')
-
             DatabaseForm.setup_offering_field(form=self.form, db_instance=obj)
+
+        if obj:
+            if 'disk_offering' in self.fieldsets_change[0][1]['fields']:
+                self.fieldsets_change[0][1]['fields'].remove('disk_offering')
+            self.fieldsets_change[0][1]['fields'].append('disk_offering')
+            DatabaseForm.setup_disk_offering_field(
+                form=self.form, db_instance=obj
+            )
 
         defaults = {
             "form": self.form,
@@ -759,40 +769,19 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         return render_to_response("logical/database/dex_analyze.html", locals(), context_instance=RequestContext(request))
 
     def database_resize_view(self, request, database_id):
-        from dbaas_cloudstack.models import CloudStackPack
+        try:
+            database = check_is_database_enabled(database_id, 'VM resize')
 
-        database = Database.objects.get(id=database_id)
+            from dbaas_cloudstack.models import CloudStackPack
+            offerings = CloudStackPack.objects.filter(
+                offering__region__environment=database.environment,
+                engine_type__name=database.engine_type
+            ).exclude(offering__serviceofferingid=database.offering_id)
+            check_resize_options(database_id, offerings)
 
-        url = reverse('admin:logical_database_change', args=[database.id])
-
-        if database.is_in_quarantine:
-            self.message_user(
-                request, "Database in quarantine and cannot be resized", level=messages.ERROR)
-            return HttpResponseRedirect(url)  # Redirect after POST
-
-        if database.status != Database.ALIVE or not database.database_status.is_alive:
-            self.message_user(
-                request, "Database is dead  and cannot be resized", level=messages.ERROR)
-            return HttpResponseRedirect(url)  # Redirect after POST
-
-        if database.is_beeing_used_elsewhere():
-            self.message_user(
-                request, "Database is beeing used by another task, please check your tasks", level=messages.ERROR)
-            return HttpResponseRedirect(url)
-
-        if database.has_migration_started():
-            self.message_user(
-                request, "Database {} cannot be resized because it is beeing migrated.".format(database.name), level=messages.ERROR)
-            url = reverse('admin:logical_database_changelist')
-            return HttpResponseRedirect(url)
-
-        if not CloudStackPack.objects.filter(
-            offering__region__environment=database.environment,
-            engine_type__name=database.engine_type
-        ).exclude(offering__serviceofferingid=database.offering_id):
-            self.message_user(
-                request, "Database has no offerings availables.", level=messages.ERROR)
-            return HttpResponseRedirect(url)  # Redirect after POST
+        except (DisabledDatabase, NoResizeOption) as err:
+            self.message_user(request, err.message, messages.ERROR)
+            return HttpResponseRedirect(err.url)
 
         form = None
         if request.method == 'POST':  # If the form has been submitted...
@@ -815,6 +804,40 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         return render_to_response("logical/database/resize.html",
                                   locals(),
                                   context_instance=RequestContext(request))
+
+    def database_disk_resize_view(self, request, database_id):
+        try:
+            database = check_is_database_enabled(database_id, 'disk resize')
+
+            offerings = DiskOffering.objects.all().exclude(
+                id=database.databaseinfra.disk_offering.id
+            )
+            check_resize_options(database_id, offerings)
+        except (DisabledDatabase, NoResizeOption) as err:
+            self.message_user(request, err.message, messages.ERROR)
+            return HttpResponseRedirect(err.url)
+
+        form = None
+        if request.method == 'POST':
+            form = DiskResizeDatabaseForm(database=database, data=request.POST)
+            if form.is_valid():
+                Database.disk_resize(
+                    database=database,
+                    new_disk_offering=request.POST.get('target_offer'),
+                    user=request.user
+                )
+
+                url = reverse('admin:notification_taskhistory_changelist')
+                return HttpResponseRedirect(
+                    "{}?user={}".format(url, request.user.username)
+                )
+        else:
+            form = DiskResizeDatabaseForm(database=database)
+
+        return render_to_response("logical/database/disk_resize.html",
+                                  locals(),
+                                  context_instance=RequestContext(request))
+
 
     def restore_snapshot(self, request, database_id):
         database = Database.objects.get(id=database_id)
@@ -957,38 +980,53 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
         return HttpResponseRedirect(url)
 
+    # Create your views here.
     def get_urls(self):
         urls = super(DatabaseAdmin, self).get_urls()
-        my_urls = patterns('',
-                           url(r'^/?(?P<database_id>\d+)/clone/$', self.admin_site.admin_view(self.clone_view),
-                               name="database_clone"),
+        my_urls = patterns(
+            '',
+            url(r'^/?(?P<database_id>\d+)/clone/$',
+                self.admin_site.admin_view(self.clone_view),
+                name="database_clone"),
 
-                           url(r'^/?(?P<database_id>\d+)/metrics/$', self.admin_site.admin_view(self.metrics_view),
-                               name="database_metrics"),
+            url(r'^/?(?P<database_id>\d+)/metrics/$',
+                self.admin_site.admin_view(self.metrics_view),
+                name="database_metrics"),
 
-                           url(r'^/?(?P<database_id>\d+)/metricdetail/$', self.admin_site.admin_view(self.metricdetail_view),
-                               name="database_metricdetail"),
+            url(r'^/?(?P<database_id>\d+)/metricdetail/$',
+                self.admin_site.admin_view(self.metricdetail_view),
+                name="database_metricdetail"),
 
-                           url(r'^/?(?P<database_id>\d+)/resize/$', self.admin_site.admin_view(self.database_resize_view),
-                               name="database_resize"),
+            url(r'^/?(?P<database_id>\d+)/resize/$',
+                self.admin_site.admin_view(self.database_resize_view),
+                name="database_resize"),
 
-                           url(r'^/?(?P<database_id>\d+)/lognit/$', self.admin_site.admin_view(self.database_log_view),
-                               name="database_resize"),
+            url(r'^/?(?P<database_id>\d+)/disk_resize/$',
+                self.admin_site.admin_view(
+                    self.database_disk_resize_view),
+                name="database_disk_resize"),
 
-                           url(r'^/?(?P<database_id>\d+)/dex/$', self.admin_site.admin_view(self.database_dex_analyze_view),
-                               name="database_dex_analyze_view"),
+            url(r'^/?(?P<database_id>\d+)/lognit/$',
+                self.admin_site.admin_view(self.database_log_view),
+                name="database_resize"),
 
-                           url(r'^/?(?P<database_id>\d+)/restore/$', self.admin_site.admin_view(self.restore_snapshot),
-                               name="database_restore_snapshot"),
+            url(r'^/?(?P<database_id>\d+)/dex/$',
+                self.admin_site.admin_view(self.database_dex_analyze_view),
+                name="database_dex_analyze_view"),
 
-                           url(r'^/?(?P<database_id>\d+)/initialize_migration/$', self.admin_site.admin_view(self.initialize_migration),
-                               name="database_initialize_migration"),
+            url(r'^/?(?P<database_id>\d+)/restore/$',
+                self.admin_site.admin_view(self.restore_snapshot),
+                name="database_restore_snapshot"),
 
-                           url(r'^/?(?P<database_id>\d+)/mongodb_engine_version_upgrade/$',
-                               self.admin_site.admin_view(
-                                   self.mongodb_engine_version_upgrade),
-                               name="mongodb_engine_version_upgrade"),
-                           )
+            url(r'^/?(?P<database_id>\d+)/initialize_migration/$',
+                self.admin_site.admin_view(self.initialize_migration),
+                name="database_initialize_migration"),
+
+            url(r'^/?(?P<database_id>\d+)/mongodb_engine_version_upgrade/$',
+                self.admin_site.admin_view(
+                    self.mongodb_engine_version_upgrade),
+                name="mongodb_engine_version_upgrade"),
+        )
 
         return my_urls + urls
 

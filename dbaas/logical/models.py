@@ -369,6 +369,9 @@ class Database(BaseModel):
     def get_resize_url(self):
         return "/admin/logical/database/{}/resize/".format(self.id)
 
+    def get_disk_resize_url(self):
+        return "/admin/logical/database/{}/disk_resize/".format(self.id)
+
     def get_lognit_url(self):
         return "/admin/logical/database/{}/lognit/".format(self.id)
 
@@ -445,6 +448,26 @@ class Database(BaseModel):
             return True
 
         return False
+
+    def is_dead(self):
+        return self.status != Database.ALIVE
+
+    @classmethod
+    def disk_resize(cls, database, new_disk_offering, user):
+        from notification.tasks import database_disk_resize
+        from notification.models import TaskHistory
+
+        task_history = TaskHistory()
+        task_history.task_name = "database_disk_resize"
+        task_history.task_status = task_history.STATUS_WAITING
+        task_history.arguments = "Database name: {}".format(database.name)
+        task_history.user = user
+        task_history.save()
+
+        database_disk_resize.delay(
+            database=database, new_disk_offering=new_disk_offering,
+            user=user, task_history=task_history
+        )
 
 
 class Credential(BaseModel):
