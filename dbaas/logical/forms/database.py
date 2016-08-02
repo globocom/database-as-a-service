@@ -352,16 +352,18 @@ class DiskResizeDatabaseForm(forms.Form):
     def __init__(self, database, data=None):
         super(DiskResizeDatabaseForm, self).__init__(data=data)
 
+        self.database = database
+        self.disk_offering = database.databaseinfra.disk_offering
+
         self.fields['target_offer'] = forms.ModelChoiceField(
-            queryset=DiskOffering.objects.all().exclude(
+            queryset=DiskOffering.objects.filter(
+                size_kb__gt=self.database.used_size_in_kb
+            ).exclude(
                 id=database.databaseinfra.disk_offering.id
             ),
             label=u'New Disk',
             required=True
         )
-
-        self.database = database
-        self.disk_offering = database.databaseinfra.disk_offering
 
     def clean(self):
         cleaned_data = super(DiskResizeDatabaseForm, self).clean()
@@ -372,7 +374,7 @@ class DiskResizeDatabaseForm(forms.Form):
                     _("New offering must be different from the current")
                 )
 
-            current_database_size = round(self.database.total_size_in_gb, 2)
+            current_database_size = round(self.database.used_size_in_gb, 2)
             new_disk_size = round(cleaned_data['target_offer'].size_gb(), 2)
             if current_database_size >= new_disk_size:
                 raise forms.ValidationError(

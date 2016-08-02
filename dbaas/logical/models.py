@@ -22,6 +22,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from logical.validators import database_name_evironment_constraint
 
 LOG = logging.getLogger(__name__)
+KB_FACTOR = 1.0 / 1024.0
 MB_FACTOR = 1.0 / 1024.0 / 1024.0
 GB_FACTOR = 1.0 / 1024.0 / 1024.0 / 1024.0
 
@@ -282,23 +283,27 @@ class Database(BaseModel):
         return self.databaseinfra.per_database_size_bytes
 
     @property
+    def total_size_in_kb(self):
+        return self.databaseinfra.per_database_size_bytes * KB_FACTOR
+
+    @property
     def total_size_in_mb(self):
-        """ Total size of database (in bytes) """
         return self.databaseinfra.per_database_size_bytes * MB_FACTOR
 
     @property
     def total_size_in_gb(self):
-        """ Total size of database (in bytes) """
         return self.databaseinfra.per_database_size_bytes * GB_FACTOR
 
     @property
+    def used_size_in_kb(self):
+        return self.used_size_in_bytes * KB_FACTOR
+
+    @property
     def used_size_in_mb(self):
-        """ Used size of database (in bytes) """
         return self.used_size_in_bytes * MB_FACTOR
 
     @property
     def used_size_in_gb(self):
-        """ Used size of database (in bytes) """
         return self.used_size_in_bytes * GB_FACTOR
 
     @property
