@@ -109,16 +109,24 @@ class DiskOffering(BaseModel):
     size_kb = models.PositiveIntegerField(verbose_name=_("Size KB"))
 
     def size_gb(self):
-        return self.converter_kb_to_gb(self.size_kb)
+        return round(self.converter_kb_to_gb(self.size_kb), 2)
     size_gb.short_description = "Size GB"
+
+    def size_bytes(self):
+        return self.converter_kb_to_bytes(self.size_kb)
+    size_bytes.short_description = "Size Bytes"
 
     def converter_kb_to_gb(self, value):
         if value:
-            return (value / 1000.0) / 1000.0
+            return (value / 1024.0) / 1024.0
+
+    def converter_kb_to_bytes(self, value):
+        if value:
+            return value * 1024.0
 
     def converter_gb_to_kb(self, value):
         if value:
-            return (value * 1000) * 1000
+            return (value * 1024) * 1024
 
     def __unicode__(self):
         return '{} ({} GB)'.format(self.name, self.size_gb())
@@ -276,9 +284,11 @@ class DatabaseInfra(BaseModel):
 
     @property
     def per_database_size_bytes(self):
-        if not self.per_database_size_mbytes:
-            return 0
-        return self.per_database_size_mbytes * 1024 * 1024
+        if self.engine.engine_type.name == 'redis':
+            if not self.per_database_size_mbytes:
+                return 0
+            return self.per_database_size_mbytes * 1024 * 1024
+        return self.disk_offering.size_bytes()
 
     @property
     def used(self):
