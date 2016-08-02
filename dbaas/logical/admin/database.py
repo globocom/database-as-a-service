@@ -62,7 +62,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     service_class = DatabaseService
     search_fields = ("name", "databaseinfra__name", "team__name",
                      "project__name", "environment__name", "databaseinfra__engine__engine_type__name")
-    list_display_basic = ["name_html", "team_admin_page", "engine", "environment", "plan",
+    list_display_basic = ["name_html", "team_admin_page", "engine", "environment", "offering",
                           "friendly_status", "clone_html", "get_capacity_html", "metrics_html", "created_dt_format", ]
     list_display_advanced = list_display_basic + ["quarantine_dt_format"]
     list_filter_basic = ["project", "databaseinfra__environment",
