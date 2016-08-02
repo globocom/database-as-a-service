@@ -795,9 +795,8 @@ def upgrade_mongodb_24_to_30(self, database, user, task_history=None):
 
 
 @app.task(bind=True)
-def database_disk_resize(self, database, new_disk_offering, task_history, user):
+def database_disk_resize(self, database, disk_offering, task_history, user):
     from workflow.steps.util.nfsaas_utils import resize_disk
-    from physical.models import DiskOffering
 
     AuditRequest.new_request("database_disk_resize", user, "localhost")
 
@@ -816,7 +815,6 @@ def database_disk_resize(self, database, new_disk_offering, task_history, user):
             persist=True,
             details='\nLoading Disk offering'
         )
-        disk_offering = DiskOffering.objects.get(id=new_disk_offering)
 
         for instance in databaseinfra.instances.all():
             task_history.update_details(
