@@ -284,11 +284,12 @@ class DatabaseInfra(BaseModel):
 
     @property
     def per_database_size_bytes(self):
-        if self.engine.engine_type.name == 'redis':
-            if not self.per_database_size_mbytes:
-                return 0
-            return self.per_database_size_mbytes * 1024 * 1024
-        return self.disk_offering.size_bytes()
+        if self.disk_offering and self.engine.engine_type.name != 'redis':
+            return self.disk_offering.size_bytes()
+
+        if not self.per_database_size_mbytes:
+            return 0
+        return self.per_database_size_mbytes * 1024 * 1024
 
     @property
     def used(self):
