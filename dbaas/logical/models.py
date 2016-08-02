@@ -456,6 +456,7 @@ class Database(BaseModel):
     def disk_resize(cls, database, new_disk_offering, user):
         from notification.tasks import database_disk_resize
         from notification.models import TaskHistory
+        from physical.models import DiskOffering
 
         task_history = TaskHistory()
         task_history.task_name = "database_disk_resize"
@@ -464,8 +465,10 @@ class Database(BaseModel):
         task_history.user = user
         task_history.save()
 
+        disk_offering = DiskOffering.objects.get(id=new_disk_offering)
+
         database_disk_resize.delay(
-            database=database, new_disk_offering=new_disk_offering,
+            database=database, disk_offering=disk_offering,
             user=user, task_history=task_history
         )
 
