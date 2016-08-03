@@ -11,9 +11,6 @@ class DiskOfferingForm(forms.ModelForm):
     class Meta:
         model = DiskOffering
         fields = ("name", "size_gb")
-        search_fields = ("name",)
-        list_display = ("name", "size_gb", "size_kb")
-        save_on_top = True
 
     def __init__(self, *args, **kwargs):
         super(DiskOfferingForm, self).__init__(*args, **kwargs)
