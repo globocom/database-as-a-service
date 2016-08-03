@@ -18,4 +18,4 @@ def render_capacity_html(database):
         # any error show Unkown message and log error. This avoid break page if there is a problem
         # with some database
         LOG.exception('Error getting capacity of database %s', database)
-        return "Unkown"
+        return "Unknown"
