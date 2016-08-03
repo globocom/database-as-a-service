@@ -109,7 +109,8 @@ class DiskOffering(BaseModel):
     size_kb = models.PositiveIntegerField(verbose_name=_("Size KB"))
 
     def size_gb(self):
-        return round(self.converter_kb_to_gb(self.size_kb), 2)
+        if self.size_kb:
+            return round(self.converter_kb_to_gb(self.size_kb), 2)
     size_gb.short_description = "Size GB"
 
     def size_bytes(self):
