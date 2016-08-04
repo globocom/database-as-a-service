@@ -94,3 +94,4 @@ class DiskOfferingFactory(factory.DjangoModelFactory):
 
     name = factory.Sequence(lambda n: 'disk-offering-{0}'.format(n))
     size_kb = 1048576 # 1gb
+    available_size_kb = 524288 # 500mb
