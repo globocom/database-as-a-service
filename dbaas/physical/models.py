@@ -298,7 +298,7 @@ class DatabaseInfra(BaseModel):
     @property
     def per_database_size_bytes(self):
         if self.disk_offering and self.engine.engine_type.name != 'redis':
-            return self.disk_offering.size_bytes()
+            return self.disk_offering.available_size_bytes()
 
         if not self.per_database_size_mbytes:
             return 0
