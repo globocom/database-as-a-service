@@ -284,15 +284,15 @@ class Database(BaseModel):
 
     @property
     def total_size_in_kb(self):
-        return self.databaseinfra.per_database_size_bytes * KB_FACTOR
+        return round(self.databaseinfra.per_database_size_bytes * KB_FACTOR, 2)
 
     @property
     def total_size_in_mb(self):
-        return self.databaseinfra.per_database_size_bytes * MB_FACTOR
+        return round(self.databaseinfra.per_database_size_bytes * MB_FACTOR, 2)
 
     @property
     def total_size_in_gb(self):
-        return self.databaseinfra.per_database_size_bytes * GB_FACTOR
+        return round(self.databaseinfra.per_database_size_bytes * GB_FACTOR, 2)
 
     @property
     def used_size_in_kb(self):

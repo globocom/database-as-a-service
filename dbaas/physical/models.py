@@ -142,7 +142,7 @@ class DiskOffering(BaseModel):
             return (value * 1024) * 1024
 
     def __unicode__(self):
-        return '{} ({} GB)'.format(self.name, self.size_gb())
+        return '{} ({} GB)'.format(self.name, self.available_size_gb())
 
 
 class Plan(BaseModel):

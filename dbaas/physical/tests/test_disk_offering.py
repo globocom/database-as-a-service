@@ -186,16 +186,16 @@ class DiskOfferingTestCase(TestCase):
 
     def test_unicode(self):
         disk_factory = DiskOfferingFactory()
-        self.assertEqual(
-            UNICODE_FORMAT.format(disk_factory.name, disk_factory.size_gb()),
-            str(disk_factory)
+        expected_unicode = UNICODE_FORMAT.format(
+            disk_factory.name, disk_factory.available_size_gb()
         )
+        self.assertEqual(expected_unicode, str(disk_factory))
 
         disk_offering = DiskOffering()
-        self.assertEqual(
-            UNICODE_FORMAT.format(disk_offering.name, disk_offering.size_gb()),
-            str(disk_offering)
+        expected_unicode = UNICODE_FORMAT.format(
+            disk_offering.name, disk_offering.available_size_gb()
         )
+        self.assertEqual(expected_unicode, str(disk_offering))
 
     def test_disk_offering_is_in_admin(self):
         self.assertIn(DiskOffering, admin.site._registry)

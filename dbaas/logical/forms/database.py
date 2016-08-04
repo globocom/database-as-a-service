@@ -357,7 +357,7 @@ class DiskResizeDatabaseForm(forms.Form):
 
         self.fields['target_offer'] = forms.ModelChoiceField(
             queryset=DiskOffering.objects.filter(
-                size_kb__gt=self.database.used_size_in_kb
+                available_size_kb__gt=self.database.used_size_in_kb
             ).exclude(
                 id=database.databaseinfra.disk_offering.id
             ),
@@ -375,7 +375,9 @@ class DiskResizeDatabaseForm(forms.Form):
                 )
 
             current_database_size = round(self.database.used_size_in_gb, 2)
-            new_disk_size = round(cleaned_data['target_offer'].size_gb(), 2)
+            new_disk_size = round(
+                cleaned_data['target_offer'].available_size_gb(), 2
+            )
             if current_database_size >= new_disk_size:
                 raise forms.ValidationError(
                     _("Your database has {} GB, please choose "
