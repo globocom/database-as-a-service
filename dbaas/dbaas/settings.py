@@ -152,6 +152,7 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'simple_audit.middleware.TrackingRequestOnThreadLocalMiddleware',
     'django.contrib.flatpages.middleware.FlatpageFallbackMiddleware',
+    'dbaas.middleware.AutoLogout',
 )
 
 ROOT_URLCONF = 'dbaas.urls'
@@ -281,11 +282,11 @@ REDIS_PORT = os.getenv('REDIS_PORT', 6379)
 REDIS_PASSWORD = os.getenv('REDIS_PASSWORD')
 REDIS_DB = os.getenv('REDIS_DB', 0)
 
-
-SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'
-SESSION_COOKIE_AGE = 43200  # 12 hours
+SESSION_SERIALIZER = 'django.contrib.sessions.serializers.PickleSerializer'
+SESSION_COOKIE_AGE = 86400 * 30  # 30 Days
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # Expire session when browser is closed
 SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
+AUTO_LOGOUT_DELAY = 720 # 12 hours
 
 CACHES = {
     'default': {
