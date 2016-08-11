@@ -199,48 +199,9 @@ class ServiceUnitBind(APIView):
         data = request.DATA
         LOG.debug("Request DATA {}".format(data))
 
-        health_check_info = get_credentials_for(
-            environment=database.environment,
-            credential_type=CredentialType.ACLAPI
-        ).get_parameters_by_group('hc')
-
-        try:
-            simple_hc = simple_health_check.SimpleHealthCheck(
-                health_check_url=health_check_info['health_check_url'],
-                service_key=health_check_info['key_name'], redis_client=REDIS_CLIENT,
-                http_client=requests, http_request_exceptions=(Exception,),
-                verify_ssl=False, health_check_request_timeout=5
-            )
-        except KeyError as e:
-            msg = "AclApi Credential configured improperly."
-            return log_and_response(
-                msg=msg, e=e,
-                http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-
-        try:
-            simple_hc.check_service()
-        except simple_health_check.HealthCheckError as e:
-            LOG.warn(e)
-            msg = "We are experiencing errors with the acl api, please try again later."
-            return log_and_response(
-                msg=msg, e=e,
-                http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-        except Exception as e:
-            LOG.warn(e)
-
-        try:
-            unit_network = get_network_from_ip(
-                data.get('unit-host'), database.environment
-            )
-        except Exception as e:
-            LOG.warn(e)
-            msg = "We are experiencing errors with the network api, please try again later"
-            return log_and_response(
-                msg=msg, e=e,
-                http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+        unit_network = check_acl_service_and_get_unit_network(database, data)
+        if type(unit_network) == Response:
+            return unit_network
 
         created = False
         transaction.set_autocommit(False)
@@ -292,17 +253,20 @@ class ServiceUnitBind(APIView):
             return response
         database = response
 
-        unit_network = get_network_from_ip(
-            data.get('unit-host'), database.environment
-        )
+        unit_network = check_acl_service_and_get_unit_network(database, data)
+        if type(unit_network) == Response:
+            return unit_network
+
         transaction.set_autocommit(False)
 
         try:
-            db_bind = DatabaseBind.objects.get(database=database,
-                                               bind_address=unit_network)
+            db_bind = DatabaseBind.objects.get(
+                database=database, bind_address=unit_network
+            )
 
             database_bind = DatabaseBind.objects.select_for_update().filter(
-                id=db_bind.id)[0]
+                id=db_bind.id
+            )[0]
 
             if database_bind.bind_status != DESTROYING:
                 if database_bind.binds_requested > 0:
@@ -315,7 +279,8 @@ class ServiceUnitBind(APIView):
         except (IndexError, ObjectDoesNotExist) as e:
             msg = "DatabaseBind does not exist"
             return log_and_response(
-                msg=msg, e=e, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                msg=msg, e=e, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
         finally:
             LOG.debug("Finishing transaction!")
             transaction.commit()
@@ -556,3 +521,48 @@ def get_database(name, env):
         ).exclude(is_in_quarantine=True)[0]
 
     return database
+
+
+def check_acl_service_and_get_unit_network(database, data):
+    health_check_info = get_credentials_for(
+        environment=database.environment,
+        credential_type=CredentialType.ACLAPI
+    ).get_parameters_by_group('hc')
+
+    try:
+        simple_hc = simple_health_check.SimpleHealthCheck(
+            health_check_url=health_check_info['health_check_url'],
+            service_key=health_check_info['key_name'], redis_client=REDIS_CLIENT,
+            http_client=requests, http_request_exceptions=(Exception,),
+            verify_ssl=False, health_check_request_timeout=5
+        )
+    except KeyError as e:
+        msg = "AclApi Credential configured improperly."
+        return log_and_response(
+            msg=msg, e=e,
+            http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+    try:
+        simple_hc.check_service()
+    except simple_health_check.HealthCheckError as e:
+        LOG.warn(e)
+        msg = "We are experiencing errors with the acl api, please try again later."
+        return log_and_response(
+            msg=msg, e=e,
+            http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+    except Exception as e:
+        LOG.warn(e)
+
+    try:
+        return get_network_from_ip(
+            data.get('unit-host'), database.environment
+        )
+    except Exception as e:
+        LOG.warn(e)
+        msg = "We are experiencing errors with the network api, please try again later"
+        return log_and_response(
+            msg=msg, e=e,
+            http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
