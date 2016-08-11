@@ -3,6 +3,8 @@ import re
 import logging
 from slugify import slugify
 from util import get_credentials_for
+from util.decorators import REDIS_CLIENT
+from util import simple_health_check
 from logical.models import Database
 from physical.models import Plan, Environment
 from account.models import AccountUser, Team
@@ -22,6 +24,7 @@ from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.renderers import JSONRenderer, JSONPRenderer
 from rest_framework.response import Response
+import requests
 from networkapiclient import Ip, Network
 from logical.validators import database_name_evironment_constraint
 from system import models
@@ -196,12 +199,50 @@ class ServiceUnitBind(APIView):
         data = request.DATA
         LOG.debug("Request DATA {}".format(data))
 
-        unit_network = get_network_from_ip(
-            data.get('unit-host'), database.environment
-        )
+        health_check_info = get_credentials_for(
+            environment=database.environment,
+            credential_type=CredentialType.ACLAPI
+        ).get_parameters_by_group('hc')
+
+        try:
+            simple_hc = simple_health_check.SimpleHealthCheck(
+                health_check_url=health_check_info['health_check_url'],
+                service_key=health_check_info['key_name'], redis_client=REDIS_CLIENT,
+                http_client=requests, http_request_exceptions=(Exception,),
+                verify_ssl=False, health_check_request_timeout=5
+            )
+        except KeyError as e:
+            msg = "AclApi Credential configured improperly."
+            return log_and_response(
+                msg=msg, e=e,
+                http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+        try:
+            simple_hc.check_service()
+        except simple_health_check.HealthCheckError as e:
+            LOG.warn(e)
+            msg = "We are experiencing errors with the acl api, please try again later."
+            return log_and_response(
+                msg=msg, e=e,
+                http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        except Exception as e:
+            LOG.warn(e)
+
+        try:
+            unit_network = get_network_from_ip(
+                data.get('unit-host'), database.environment
+            )
+        except Exception as e:
+            LOG.warn(e)
+            msg = "We are experiencing errors with the network api, please try again later"
+            return log_and_response(
+                msg=msg, e=e,
+                http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
         created = False
-
         transaction.set_autocommit(False)
         database_bind = DatabaseBind(
             database=database, bind_address=unit_network, binds_requested=1
