@@ -47,7 +47,7 @@ pytz==2013.7
 raven==3.5.0
 redis==2.10.3
 simple-db-migrate==1.5.3
-six==1.4.1
+six==1.10.0
 sphinx-me==0.2.1
 urllib3==1.7.1
 wsgiref==0.1.2
