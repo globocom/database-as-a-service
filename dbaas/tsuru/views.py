@@ -524,14 +524,15 @@ def get_database(name, env):
 
 
 def check_acl_service_and_get_unit_network(database, data):
-    health_check_info = get_credentials_for(
+    acl_credential = get_credentials_for(
         environment=database.environment,
         credential_type=CredentialType.ACLAPI
-    ).get_parameters_by_group('hc')
-
+    )
+    health_check_info = acl_credential.get_parameters_by_group('hc')
     try:
+        health_check_url = acl_credential.endpoint + health_check_info['health_check_url']
         simple_hc = simple_health_check.SimpleHealthCheck(
-            health_check_url=health_check_info['health_check_url'],
+            health_check_url=health_check_url,
             service_key=health_check_info['key_name'], redis_client=REDIS_CLIENT,
             http_client=requests, http_request_exceptions=(Exception,),
             verify_ssl=False, health_check_request_timeout=5
