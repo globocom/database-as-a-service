@@ -268,6 +268,11 @@ class ServiceUnitBind(APIView):
                 id=db_bind.id
             )[0]
 
+            if database_bind.bind_status == CREATING:
+                raise Exception(
+                    "Bind for {} has not yet been created!".format(unit_network)
+                )
+
             if database_bind.bind_status != DESTROYING:
                 if database_bind.binds_requested > 0:
                     database_bind.binds_requested -= 1
@@ -278,6 +283,11 @@ class ServiceUnitBind(APIView):
                 database_bind.save()
         except (IndexError, ObjectDoesNotExist) as e:
             msg = "DatabaseBind does not exist"
+            return log_and_response(
+                msg=msg, e=e, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        except Exception as e:
+            msg = "Bind for {} has not yet been created!".format(unit_network)
             return log_and_response(
                 msg=msg, e=e, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
