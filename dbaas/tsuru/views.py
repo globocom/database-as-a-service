@@ -321,10 +321,13 @@ class ServiceAdd(APIView):
         name = data['name']
         user = data['user']
         team = data['team']
-        description = data['description']
         env = get_url_env(request)
 
-        if not description:
+        try:
+            description = data['description']
+            if not description:
+                raise Exception("A description must be provided")
+        except Exception as e:
             msg = "A description must be provided."
             return log_and_response(
                 msg=msg, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
