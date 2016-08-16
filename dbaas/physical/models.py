@@ -140,6 +140,10 @@ class Plan(BaseModel):
                                                verbose_name=_("Engine version upgrade plan"),
                                                on_delete=models.SET_NULL,
                                                related_name='backwards_plan')
+    flipperfox_equivalent_plan = models.ForeignKey("Plan", null=True, blank=True,
+                                                   verbose_name=_("Flipper Fox Migration plan"),
+                                                   on_delete=models.SET_NULL,
+                                                   related_name='flipperfox_migration_plan')
 
     @property
     def engine_type(self):

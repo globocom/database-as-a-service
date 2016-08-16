@@ -137,3 +137,52 @@ MONGODB_REGION_MIGRATION_4 = (
     'workflow.steps.util.region_migration.change_ttl.DefaultTTL',
 )
 MONGODB_REGION_MIGRATION_5 = ()
+
+MYSQL_FLIPPER_FOX_MIGRATION_1 = (
+    #'workflow.steps.util.region_migration.change_ttl.DecreaseTTL',
+    'workflow.steps.mysql.flipperfox_migration.create_virtualmachines.CreateVirtualMachine',
+    #'workflow.steps.util.region_migration.create_nfs.CreateNfs',
+    #'workflow.steps.util.region_migration.mount_disks.MountDisks',
+    #'workflow.steps.mysql.flipperfox_migration.create_secondary_ip.CreateSecondaryIp',
+    #'workflow.steps.mysql.flipperfox_migration.config_files.ConfigFiles',
+    #'workflow.steps.mysql.flipperfox_migration.make_backup.MakeBackup',
+    #'workflow.steps.mysql.flipperfox_migration.grant_nfs_access.GrantNFSAccess',
+    #'workflow.steps.mysql.flipperfox_migration.restore_backup_on_targets.RetoreBackupOnTargets',
+    #'workflow.steps.mysql.flipperfox_migration.revoke_nfs_access.RevokeNFSAccess',
+    #'workflow.steps.mysql.flipperfox_migration.remove_nfs_snapshot.RemoveNfsSnapshot',
+    #'workflow.steps.mysql.flipperfox_migration.start_replication.StartReplication',
+    #'workflow.steps.util.region_migration.config_backup_log.ConfigBackupLog',
+    #'workflow.steps.util.region_migration.acl_database_bind.BindNewInstances',
+    #'workflow.steps.util.region_migration.replicate_old_acls.ReplicateOldAcl',
+    #'workflow.steps.util.region_migration.td_agent.StopTDAgent',
+)
+
+
+MYSQL_FLIPPER_FOX_MIGRATION_2 = (
+    'workflow.steps.util.region_migration.check_instances_status.CheckInstancesStatus',
+    'workflow.steps.mysql.flipperfox_migration.set_master_read_only.SetMasterReadOnly',
+    'workflow.steps.mysql.flipperfox_migration.turn_flipper_ip_down.TurnFlipperIpDown',
+    'workflow.steps.mysql.flipperfox_migration.check_replication.CheckReplication',
+    'workflow.steps.mysql.flipperfox_migration.change_master.ChangeMaster',
+    'workflow.steps.mysql.flipperfox_migration.rename_flipper_masterpair.RenameFlipperMasterPair',
+    'workflow.steps.mysql.flipperfox_migration.create_flipper.CreateFlipper',
+    'workflow.steps.mysql.flipperfox_migration.set_flipper_ips.SetFlipperIps',
+    'workflow.steps.util.region_migration.update_zabbix_host.UpdateZabbixHost',
+    'workflow.steps.util.region_migration.switch_dns.SwitchDNS',
+    'workflow.steps.util.region_migration.td_agent.StartTDAgent',
+    'workflow.steps.mysql.flipperfox_migration.start_mysql_statsd.StartMySQLStasD',
+    'workflow.steps.mysql.flipperfox_migration.start_mkheartbeat.StartMkHeartbeat',
+)
+
+MYSQL_FLIPPER_FOX_MIGRATION_3 = (
+    'workflow.steps.util.region_migration.remove_old_acl.RemoveOldAcl',
+    'workflow.steps.util.region_migration.update_dbaas_metadata.UpdateDBaaSMetadata',
+    'workflow.steps.util.region_migration.acl_database_bind.UnbindOldInstances',
+    'workflow.steps.mysql.flipperfox_migration.remove_secondary_ip.RemoveSecondaryIp',
+    'workflow.steps.util.region_migration.remove_disks.RemoveDisks',
+    'workflow.steps.util.region_migration.remove_backup_log.RemoveBackupLog',
+    'workflow.steps.util.region_migration.remove_vms.RemoveVms',
+    'workflow.steps.util.region_migration.change_ttl.DefaultTTL',
+)
+
+MYSQL_FLIPPER_FOX_MIGRATION_4 = ()

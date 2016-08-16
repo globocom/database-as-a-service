@@ -1,0 +1,1 @@
+from .databaseflipperfoxmigrationdetail import DatabaseFlipperFoxMigrationDetailForm
