@@ -45,9 +45,12 @@ class InstanceAdmin(django_admin.TabularInline):
 
 class DatabaseInfraAdmin(admin.DjangoServicesAdmin):
     service_class = DatabaseInfraService
-    search_fields = ("name", "user", "instances__address",)
+    search_fields = (
+        "name", "user", "instances__address", "instances__hostname__hostname"
+    )
     list_display = (
-        "name", "user", "environment", "show_instances", "capacity_bar")
+        "name", "user", "environment", "show_instances", "capacity_bar"
+    )
     list_filter = ("engine", "environment")
     save_on_top = True
 
