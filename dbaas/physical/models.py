@@ -84,6 +84,10 @@ class Engine(BaseModel):
     def __unicode__(self):
         return "%s_%s" % (self.name, self.version)
 
+    @property
+    def is_redis(self):
+        return self.name == 'redis'
+
 
 class ReplicationTopology(BaseModel):
 
