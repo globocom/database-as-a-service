@@ -44,10 +44,11 @@ class InstanceAdmin(django_admin.TabularInline):
 
 
 class DatabaseInfraAdmin(admin.DjangoServicesAdmin):
-    service_class = DatabaseInfraService
     search_fields = (
-        "name", "user", "instances__address", "instances__hostname__hostname"
+        "name", "user", "instances__address", "instances__dns",
+        "instances__hostname__hostname"
     )
+    service_class = DatabaseInfraService
     list_display = (
         "name", "user", "environment", "show_instances", "capacity_bar"
     )
