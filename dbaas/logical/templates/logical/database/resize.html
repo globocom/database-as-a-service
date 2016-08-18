@@ -31,12 +31,12 @@
         <div class="alert alert-warning">
             <h3>Warning!</h3>
             {% if database.databaseinfra.engine.is_redis %}
-                <h4>After resizing, you may need to resize your disk offering, please check it.</h4>
+                <h4>After resizing a Redis instance, you may need to resize your disk offering, please check it.</h4>
                 <br>
             {% endif %}
 
             {% if database.databaseinfra.plan.is_ha %}
-                <h4> The resize process will switch hosts what can cause connections errors during the process.</h4>
+                <h4> The resize process will switch hosts, and it may cause connections errors during the process.</h4>
             {% else %}
                  <h4>The resize process will stop the database and, consequently, it will be unavailable until the the end of the process.</h4>
             {% endif %}
