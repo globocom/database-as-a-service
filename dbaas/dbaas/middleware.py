@@ -15,7 +15,6 @@ class AutoLogout:
 
             if current_inactive > max_inactive:
                 auth.logout(request)
-                del request.session['last_touch']
                 return
 
         request.session['last_touch'] = datetime.now()
