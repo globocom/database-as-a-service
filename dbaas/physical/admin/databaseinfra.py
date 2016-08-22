@@ -64,6 +64,11 @@ class DatabaseInfraAdmin(admin.DjangoServicesAdmin):
         DatabaseInfraOfferingInline,
     ]
 
+    def get_readonly_fields(self, request, obj=None):
+        if obj:
+            return self.readonly_fields + ('disk_offering', )
+        return self.readonly_fields
+
     def capacity_bar(self, datainfra):
         return render_progress_bar(datainfra.used, datainfra.capacity)
     capacity_bar.short_description = "Capacity"

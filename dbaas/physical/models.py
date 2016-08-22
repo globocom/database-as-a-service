@@ -102,6 +102,37 @@ class ReplicationTopology(BaseModel):
     )
 
 
+class DiskOffering(BaseModel):
+
+    name = models.CharField(
+        verbose_name=_("Offering"), max_length=255, unique=True)
+    size_kb = models.PositiveIntegerField(verbose_name=_("Size KB"))
+
+    def size_gb(self):
+        if self.size_kb:
+            return round(self.converter_kb_to_gb(self.size_kb), 2)
+    size_gb.short_description = "Size GB"
+
+    def size_bytes(self):
+        return self.converter_kb_to_bytes(self.size_kb)
+    size_bytes.short_description = "Size Bytes"
+
+    def converter_kb_to_gb(self, value):
+        if value:
+            return (value / 1024.0) / 1024.0
+
+    def converter_kb_to_bytes(self, value):
+        if value:
+            return value * 1024.0
+
+    def converter_gb_to_kb(self, value):
+        if value:
+            return (value * 1024) * 1024
+
+    def __unicode__(self):
+        return '{} ({} GB)'.format(self.name, self.size_gb())
+
+
 class Plan(BaseModel):
 
     PREPROVISIONED = 0
@@ -140,6 +171,9 @@ class Plan(BaseModel):
                                                verbose_name=_("Engine version upgrade plan"),
                                                on_delete=models.SET_NULL,
                                                related_name='backwards_plan')
+    disk_offering = models.ForeignKey(
+        DiskOffering, related_name="plans", on_delete=models.PROTECT, null=True
+    )
 
     @property
     def engine_type(self):
@@ -226,6 +260,10 @@ class DatabaseInfra(BaseModel):
                                         "Usually it is in the form host:port[,host_n:port_n]. If the engine is mongodb this will be automatically generated."),
                                     blank=True,
                                     null=True)
+    disk_offering = models.ForeignKey(
+        DiskOffering, related_name="databaseinfras",
+        on_delete=models.PROTECT, null=True
+    )
 
     def __unicode__(self):
         return self.name
@@ -247,6 +285,9 @@ class DatabaseInfra(BaseModel):
 
     @property
     def per_database_size_bytes(self):
+        if self.disk_offering and self.engine.engine_type.name != 'redis':
+            return self.disk_offering.size_bytes()
+
         if not self.per_database_size_mbytes:
             return 0
         return self.per_database_size_mbytes * 1024 * 1024
@@ -511,6 +552,7 @@ def databaseinfra_pre_save(sender, **kwargs):
         databaseinfra.plan = databaseinfra.engine.engine_type.default_plan
         LOG.warning("No plan specified, using default plan (%s) for engine %s" % (
             databaseinfra, databaseinfra.engine))
+        databaseinfra.disk_offering = databaseinfra.plan.disk_offering
 
 
 @receiver(pre_save, sender=Plan)

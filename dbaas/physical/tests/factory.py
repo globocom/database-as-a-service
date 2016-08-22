@@ -87,3 +87,10 @@ class InstanceFactory(factory.DjangoModelFactory):
     hostname = factory.SubFactory(HostFactory)
     status = 1
     instance_type = 1
+
+
+class DiskOfferingFactory(factory.DjangoModelFactory):
+    FACTORY_FOR = models.DiskOffering
+
+    name = factory.Sequence(lambda n: 'disk-offering-{0}'.format(n))
+    size_kb = 1048576 # 1gb

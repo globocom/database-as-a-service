@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 import logging
 from util import full_stack
+from backup.models import Snapshot
 from workflow.steps.util.base import BaseStep
-from dbaas_nfsaas.provider import NfsaasProvider
+from workflow.steps.util.nfsaas_utils import create_snapshot, delete_snapshot
 from workflow.exceptions.error_codes import DBAAS_0020
 
 LOG = logging.getLogger(__name__)
@@ -15,7 +16,6 @@ class MakeBackup(BaseStep):
 
     def do(self, workflow_dict):
         try:
-
             databaseinfra = workflow_dict['databaseinfra']
             driver = databaseinfra.get_driver()
             instance = workflow_dict['source_instances'][0]
@@ -31,17 +31,18 @@ class MakeBackup(BaseStep):
             workflow_dict['binlog_file'] = row[0]['File']
             workflow_dict['binlog_pos'] = row[0]['Position']
 
-            nfs_snapshot = NfsaasProvider.create_snapshot(environment=databaseinfra.environment,
-                                                          host=instance.hostname)
+            nfs_snapshot = create_snapshot(
+                environment=databaseinfra.environment, host=instance.hostname
+            )
 
             LOG.info('nfs_snapshot: {}'.format(nfs_snapshot))
             if 'error' in nfs_snapshot:
                 errormsg = nfs_snapshot['error']
                 raise Exception(errormsg)
 
-            if 'id' in nfs_snapshot and 'snapshot' in nfs_snapshot:
+            if 'id' in nfs_snapshot and 'name' in nfs_snapshot:
                 workflow_dict['snapshopt_id'] = nfs_snapshot['id']
-                workflow_dict['snapshot_name'] = nfs_snapshot['snapshot']
+                workflow_dict['snapshot_name'] = nfs_snapshot['name']
             else:
                 errormsg = 'There is no snapshot information'
                 raise Exception(errormsg)
@@ -71,12 +72,10 @@ class MakeBackup(BaseStep):
                 driver.unlock_database(client)
 
             if 'snapshopt_id' in workflow_dict:
-                host_attr = HostAttr.objects.get(host=instance.hostname,
-                                                 is_active=True)
-
-                NfsaasProvider.remove_snapshot(environment=databaseinfra.environment,
-                                               host_attr=host_attr,
-                                               snapshot_id=workflow_dict['snapshopt_id'])
+                snapshot = Snapshot.objects.get(
+                    snapshopt_id=workflow_dict['snapshopt_id']
+                )
+                delete_snapshot(snapshot=snapshot)
 
             return True
         except Exception:

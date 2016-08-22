@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 import logging
 from util import full_stack
-from dbaas_nfsaas.provider import NfsaasProvider
 from workflow.steps.util.base import BaseStep
 from workflow.exceptions.error_codes import DBAAS_0021
+from workflow.steps.util.nfsaas_utils import create_access
 
 LOG = logging.getLogger(__name__)
 
@@ -15,12 +15,14 @@ class GrantNFSAccess(BaseStep):
 
     def do(self, workflow_dict):
         try:
-
             databaseinfra = workflow_dict['databaseinfra']
+
             for host_and_export in workflow_dict['hosts_and_exports']:
-                NfsaasProvider.grant_access(environment=databaseinfra.environment,
-                                            host=host_and_export['host'],
-                                            export_id=host_and_export['new_export_id'])
+                create_access(
+                    environment=databaseinfra.environment,
+                    export_path=host_and_export['new_export_path_host'],
+                    host=host_and_export['host']
+                )
 
             return True
         except Exception:

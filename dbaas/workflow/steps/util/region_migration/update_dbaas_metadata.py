@@ -19,6 +19,7 @@ class UpdateDBaaSMetadata(BaseStep):
             databaseinfra = workflow_dict['databaseinfra']
             databaseinfra.environment = workflow_dict['target_environment']
             databaseinfra.plan = workflow_dict['target_plan']
+            databaseinfra.disk_offering = databaseinfra.plan.disk_offering
             databaseinfra.save()
             database = workflow_dict['database']
             database.environment = workflow_dict['target_environment']
@@ -45,6 +46,7 @@ class UpdateDBaaSMetadata(BaseStep):
             databaseinfra = workflow_dict['databaseinfra']
             databaseinfra.environment = workflow_dict['source_environment']
             databaseinfra.plan = workflow_dict['source_plan']
+            databaseinfra.disk_offering = databaseinfra.plan.disk_offering
             databaseinfra.save()
             database = workflow_dict['database']
             database.environment = workflow_dict['source_environment']
