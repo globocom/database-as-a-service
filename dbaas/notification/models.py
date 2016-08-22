@@ -152,6 +152,16 @@ class TaskHistory(BaseModel):
             task_history.arguments = "Upgrading database {0}, to MongoDB 3.0".format(
                 request.kwargs['database'].name,)
 
+        elif request.task == 'dbaas_aclapi.tasks.unbind_address_on_database':
+            task_history.arguments = "Removing binds for {0} from {1}".format(
+                request.kwargs['database_bind'],
+                request.kwargs['database_bind'].database)
+
+        elif request.task == 'dbaas_aclapi.tasks.bind_address_on_database':
+            task_history.arguments = "Creating binds for {0} from {1}".format(
+                request.kwargs['database_bind'],
+                request.kwargs['database_bind'].database)
+
         else:
             task_history.arguments = request.args
 
