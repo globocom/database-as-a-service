@@ -141,8 +141,8 @@ MONGODB_REGION_MIGRATION_5 = ()
 MYSQL_FLIPPER_FOX_MIGRATION_1 = (
     #'workflow.steps.util.region_migration.change_ttl.DecreaseTTL',
     'workflow.steps.mysql.flipperfox_migration.create_virtualmachines.CreateVirtualMachine',
-    #'workflow.steps.util.region_migration.create_nfs.CreateNfs',
-    #'workflow.steps.util.region_migration.mount_disks.MountDisks',
+    'workflow.steps.mysql.flipperfox_migration.create_nfs.CreateNfs',
+    'workflow.steps.mysql.flipperfox_migration.mount_disks.MountDisks',
     #'workflow.steps.mysql.flipperfox_migration.create_secondary_ip.CreateSecondaryIp',
     #'workflow.steps.mysql.flipperfox_migration.config_files.ConfigFiles',
     #'workflow.steps.mysql.flipperfox_migration.make_backup.MakeBackup',
