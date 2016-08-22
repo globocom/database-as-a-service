@@ -118,6 +118,14 @@ class TaskHistory(BaseModel):
             task_history.arguments = "Database name: {0},\nNew Offering: {1}".format(
                 request.kwargs['database'].name, request.kwargs['cloudstackpack'])
 
+        elif request.task == 'notification.tasks.database_disk_resize':
+            task_history.arguments = \
+                "Database name: {0}," \
+                "\nNew Disk Offering: {1}".format(
+                    request.kwargs['database'].name,
+                    request.kwargs['disk_offering']
+                )
+
         elif request.task == 'backup.tasks.restore_snapshot':
             task_history.arguments = "Restoring to an older version the database: {0}, it will finish soon.".format(
                 request.kwargs['database'].name)

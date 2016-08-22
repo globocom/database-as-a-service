@@ -22,6 +22,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from logical.validators import database_name_evironment_constraint
 
 LOG = logging.getLogger(__name__)
+KB_FACTOR = 1.0 / 1024.0
 MB_FACTOR = 1.0 / 1024.0 / 1024.0
 GB_FACTOR = 1.0 / 1024.0 / 1024.0 / 1024.0
 
@@ -282,23 +283,27 @@ class Database(BaseModel):
         return self.databaseinfra.per_database_size_bytes
 
     @property
+    def total_size_in_kb(self):
+        return round(self.databaseinfra.per_database_size_bytes * KB_FACTOR, 2)
+
+    @property
     def total_size_in_mb(self):
-        """ Total size of database (in bytes) """
-        return self.databaseinfra.per_database_size_bytes * MB_FACTOR
+        return round(self.databaseinfra.per_database_size_bytes * MB_FACTOR, 2)
 
     @property
     def total_size_in_gb(self):
-        """ Total size of database (in bytes) """
-        return self.databaseinfra.per_database_size_bytes * GB_FACTOR
+        return round(self.databaseinfra.per_database_size_bytes * GB_FACTOR, 2)
+
+    @property
+    def used_size_in_kb(self):
+        return self.used_size_in_bytes * KB_FACTOR
 
     @property
     def used_size_in_mb(self):
-        """ Used size of database (in bytes) """
         return self.used_size_in_bytes * MB_FACTOR
 
     @property
     def used_size_in_gb(self):
-        """ Used size of database (in bytes) """
         return self.used_size_in_bytes * GB_FACTOR
 
     @property
@@ -368,6 +373,9 @@ class Database(BaseModel):
 
     def get_resize_url(self):
         return "/admin/logical/database/{}/resize/".format(self.id)
+
+    def get_disk_resize_url(self):
+        return "/admin/logical/database/{}/disk_resize/".format(self.id)
 
     def get_lognit_url(self):
         return "/admin/logical/database/{}/lognit/".format(self.id)
@@ -445,6 +453,29 @@ class Database(BaseModel):
             return True
 
         return False
+
+    def is_dead(self):
+        return self.status != Database.ALIVE
+
+    @classmethod
+    def disk_resize(cls, database, new_disk_offering, user):
+        from notification.tasks import database_disk_resize
+        from notification.models import TaskHistory
+        from physical.models import DiskOffering
+
+        task_history = TaskHistory()
+        task_history.task_name = "database_disk_resize"
+        task_history.task_status = task_history.STATUS_WAITING
+        task_history.arguments = "Database name: {}".format(database.name)
+        task_history.user = user
+        task_history.save()
+
+        disk_offering = DiskOffering.objects.get(id=new_disk_offering)
+
+        database_disk_resize.delay(
+            database=database, disk_offering=disk_offering,
+            user=user, task_history=task_history
+        )
 
 
 class Credential(BaseModel):

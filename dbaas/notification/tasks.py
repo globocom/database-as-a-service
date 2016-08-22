@@ -792,3 +792,78 @@ def upgrade_mongodb_24_to_30(self, database, user, task_history=None):
         LOG.warning("MongoDB Upgrade finished with errors")
     finally:
         enable_zabbix_alarms(database)
+
+
+@app.task(bind=True)
+def database_disk_resize(self, database, disk_offering, task_history, user):
+    from workflow.steps.util.nfsaas_utils import resize_disk
+
+    AuditRequest.new_request("database_disk_resize", user, "localhost")
+
+    databaseinfra = database.databaseinfra
+    old_disk_offering = database.databaseinfra.disk_offering
+    resized = []
+
+    try:
+        worker_name = get_worker_name()
+        task_history = TaskHistory.register(
+            request=self.request, task_history=task_history,
+            user=user, worker_name=worker_name
+        )
+
+        task_history.update_details(
+            persist=True,
+            details='\nLoading Disk offering'
+        )
+
+        for instance in databaseinfra.instances.all():
+            task_history.update_details(
+                persist=True,
+                details='\nChanging instance {} to '
+                        'NFS {}'.format(instance, disk_offering)
+            )
+            if resize_disk(
+                    environment=database.environment,
+                    host=instance.hostname,
+                    disk_offering=disk_offering):
+                resized.append(instance)
+
+        task_history.update_details(
+            persist=True,
+            details='\nUpdate DBaaS metadata from {} to '
+                    '{}'.format(databaseinfra.disk_offering, disk_offering)
+        )
+        databaseinfra.disk_offering = disk_offering
+        databaseinfra.save()
+
+        task_history.update_status_for(
+            status=TaskHistory.STATUS_SUCCESS,
+            details='\nDisk resize successfully done.'
+        )
+        return True
+
+    except Exception as e:
+        error = "Disk resize ERROR: {}".format(e)
+        LOG.error(error)
+
+        if databaseinfra.disk_offering != old_disk_offering:
+            task_history.update_details(
+                persist=True, details='\nUndo update DBaaS metadata'
+            )
+            databaseinfra.disk_offering = old_disk_offering
+            databaseinfra.save()
+
+        for instance in resized:
+            task_history.update_details(
+                persist=True,
+                details='\nUndo NFS change for instance {}'.format(instance)
+            )
+            resize_disk(
+                environment=database.environment,
+                host=instance.hostname,
+                disk_offering=old_disk_offering
+            )
+
+        task_history.update_status_for(TaskHistory.STATUS_ERROR, details=error)
+    finally:
+        AuditRequest.cleanup_request()

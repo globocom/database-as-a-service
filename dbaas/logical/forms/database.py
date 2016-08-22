@@ -8,7 +8,7 @@ from logical.widgets.database_offering_field import DatabaseOfferingWidget
 from dbaas_cloudstack.models import CloudStackPack
 from drivers.factory import DriverFactory
 from backup.models import Snapshot
-from physical.models import Plan, Environment, Engine
+from physical.models import Plan, Environment, Engine, DiskOffering
 from logical.forms.fields import AdvancedModelChoiceField
 from logical.models import Database
 from logical.validators import database_name_evironment_constraint
@@ -126,10 +126,36 @@ class DatabaseForm(models.ModelForm):
 
     @classmethod
     def setup_offering_field(cls, form, db_instance):
+        widget = DatabaseOfferingWidget(
+            id='resizeDatabase',
+            url=db_instance.get_resize_url(),
+            label='Resize VM',
+            attrs={
+                'readonly': 'readonly',
+                'database': db_instance
+            }
+        )
+
         form.declared_fields['offering'] = forms.CharField(
-            widget=DatabaseOfferingWidget(attrs={'readonly': 'readonly',
-                                                 'database': db_instance}),
-            required=False, initial=db_instance.offering)
+            widget=widget, required=False, initial=db_instance.offering
+        )
+
+    @classmethod
+    def setup_disk_offering_field(cls, form, db_instance):
+        widget = DatabaseOfferingWidget(
+            id='resizeDisk',
+            url=db_instance.get_disk_resize_url(),
+            label='Resize Disk',
+            attrs={
+                'readonly': 'readonly',
+                'database': db_instance
+            }
+        )
+
+        form.declared_fields['disk_offering'] = forms.CharField(
+            widget=widget, required=False,
+            initial=db_instance.databaseinfra.disk_offering
+        )
 
     def __init__(self, *args, **kwargs):
 
@@ -319,3 +345,44 @@ class LogDatabaseForm(forms.Form):
 
             if instance:
                 LOG.debug("instance database form found! %s" % instance)
+
+
+class DiskResizeDatabaseForm(forms.Form):
+
+    def __init__(self, database, data=None):
+        super(DiskResizeDatabaseForm, self).__init__(data=data)
+
+        self.database = database
+        self.disk_offering = database.databaseinfra.disk_offering
+
+        self.fields['target_offer'] = forms.ModelChoiceField(
+            queryset=DiskOffering.objects.filter(
+                available_size_kb__gt=self.database.used_size_in_kb
+            ).exclude(
+                id=database.databaseinfra.disk_offering.id
+            ),
+            label=u'New Disk',
+            required=True
+        )
+
+    def clean(self):
+        cleaned_data = super(DiskResizeDatabaseForm, self).clean()
+
+        if 'target_offer' in cleaned_data:
+            if cleaned_data['target_offer'] == self.disk_offering:
+                raise forms.ValidationError(
+                    _("New offering must be different from the current")
+                )
+
+            current_database_size = round(self.database.used_size_in_gb, 2)
+            new_disk_size = round(
+                cleaned_data['target_offer'].available_size_gb(), 2
+            )
+            if current_database_size >= new_disk_size:
+                raise forms.ValidationError(
+                    _("Your database has {} GB, please choose "
+                      "a bigger disk".format(current_database_size)
+                      )
+                )
+
+        return cleaned_data

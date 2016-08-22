@@ -84,6 +84,10 @@ class Engine(BaseModel):
     def __unicode__(self):
         return "%s_%s" % (self.name, self.version)
 
+    @property
+    def is_redis(self):
+        return self.name == 'redis'
+
 
 class ReplicationTopology(BaseModel):
 
@@ -107,6 +111,9 @@ class DiskOffering(BaseModel):
     name = models.CharField(
         verbose_name=_("Offering"), max_length=255, unique=True)
     size_kb = models.PositiveIntegerField(verbose_name=_("Size KB"))
+    available_size_kb = models.PositiveIntegerField(
+        verbose_name=_("Available Size KB")
+    )
 
     def size_gb(self):
         if self.size_kb:
@@ -116,6 +123,15 @@ class DiskOffering(BaseModel):
     def size_bytes(self):
         return self.converter_kb_to_bytes(self.size_kb)
     size_bytes.short_description = "Size Bytes"
+
+    def available_size_gb(self):
+        if self.available_size_kb:
+            return round(self.converter_kb_to_gb(self.available_size_kb), 2)
+    available_size_gb.short_description = "Available Size GB"
+
+    def available_size_bytes(self):
+        return self.converter_kb_to_bytes(self.available_size_kb)
+    size_bytes.short_description = "Available Size Bytes"
 
     def converter_kb_to_gb(self, value):
         if value:
@@ -130,7 +146,7 @@ class DiskOffering(BaseModel):
             return (value * 1024) * 1024
 
     def __unicode__(self):
-        return '{} ({} GB)'.format(self.name, self.size_gb())
+        return '{} ({} GB)'.format(self.name, self.available_size_gb())
 
 
 class Plan(BaseModel):
@@ -286,7 +302,7 @@ class DatabaseInfra(BaseModel):
     @property
     def per_database_size_bytes(self):
         if self.disk_offering and self.engine.engine_type.name != 'redis':
-            return self.disk_offering.size_bytes()
+            return self.disk_offering.available_size_bytes()
 
         if not self.per_database_size_mbytes:
             return 0
