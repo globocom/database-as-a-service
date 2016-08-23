@@ -67,42 +67,49 @@ class Database(BaseModel):
         (ALERT, 'Alert')
     )
 
-    name = models.CharField(verbose_name=_("Database name"), max_length=100,
-                            db_index=True)
+    name = models.CharField(
+        verbose_name=_("Database name"), max_length=100, db_index=True
+    )
     databaseinfra = models.ForeignKey(
-        DatabaseInfra, related_name="databases", on_delete=models.PROTECT)
+        DatabaseInfra, related_name="databases", on_delete=models.PROTECT
+    )
     project = models.ForeignKey(
-        Project, related_name="databases", on_delete=models.PROTECT, null=True, blank=True)
-    team = models.ForeignKey(Team, related_name="databases",
-                             help_text=_(
-                                 "Team that is accountable for the database"),
-                             null=True,
-                             blank=True)
+        Project, related_name="databases", on_delete=models.PROTECT, null=True,
+        blank=True
+    )
+    team = models.ForeignKey(
+        Team, related_name="databases", null=True, blank=True,
+        help_text=_("Team that is accountable for the database")
+    )
     is_in_quarantine = models.BooleanField(
-        verbose_name=_("Is database in quarantine?"), default=False)
+        verbose_name=_("Is database in quarantine?"), default=False
+    )
     quarantine_dt = models.DateField(
-        verbose_name=_("Quarantine date"), null=True, blank=True, editable=False)
+        verbose_name=_("Quarantine date"), null=True, blank=True,
+        editable=False
+    )
     description = models.TextField(
-        verbose_name=_("Description"), null=True, blank=True)
-
-    objects = models.Manager()  # The default manager.
-    alive = DatabaseAliveManager()  # The alive dbs specific manager.
-
-    quarantine_time = Configuration.get_by_name_as_int(
-        'quarantine_retention_days')
-    status = models.IntegerField(choices=DB_STATUS,
-                                 default=2)
+        verbose_name=_("Description"), null=True, blank=True
+    )
+    status = models.IntegerField(choices=DB_STATUS, default=2)
     used_size_in_bytes = models.FloatField(default=0.0)
     environment = models.ForeignKey(
         Environment, related_name="databases", on_delete=models.PROTECT,
-        db_index=True)
+        db_index=True
+    )
+    backup_path = models.CharField(
+        verbose_name=_("Backup path"), max_length=300, null=True, blank=True,
+        help_text=_("Full path to backup file")
+    )
 
-    backup_path = models.CharField(verbose_name=_("Backup path"), max_length=300,
-                                   help_text=_("Full path to backup file"),
-                                   null=True, blank=True)
+    objects = models.Manager()
+    alive = DatabaseAliveManager()
+    quarantine_time = Configuration.get_by_name_as_int(
+        'quarantine_retention_days'
+    )
 
     def __unicode__(self):
-        return u"%s" % self.name
+        return u"{}".format(self.name)
 
     class Meta:
         permissions = (
@@ -118,7 +125,6 @@ class Database(BaseModel):
 
     @property
     def infra(self):
-        """ Total size of database (in bytes) """
         return self.databaseinfra
 
     @property
@@ -133,22 +139,20 @@ class Database(BaseModel):
     def plan(self):
         return self.databaseinfra and self.databaseinfra.plan
 
-    # @property
-    # def environment(self):
-    #     return self.databaseinfra and self.databaseinfra.environment
-
     def delete(self, *args, **kwargs):
         if self.is_in_quarantine:
             LOG.warning(
-                "Database %s is in quarantine and will be removed" % self.name)
+                "Database {} is in quarantine and will be removed".format(
+                    self.name
+                )
+            )
             for credential in self.credentials.all():
                 instance = factory_for(self.databaseinfra)
                 instance.remove_user(credential)
-            # Call the "real" delete() method.
             super(Database, self).delete(*args, **kwargs)
 
         else:
-            LOG.warning("Putting database %s in quarantine" % self.name)
+            LOG.warning("Putting database {} in quarantine".format(self.name))
             self.is_in_quarantine = True
             self.save()
             if self.credentials.exists():
@@ -162,17 +166,18 @@ class Database(BaseModel):
                     instance.update_user(new_credential)
 
     def clean(self):
-        # slugify name
         if not self.pk:
-            # new database
             self.name = slugify(self.name)
 
         if self.name in self.__get_database_reserved_names():
             raise ValidationError(
-                _("%s is a reserved database name" % self.name))
+                _("{} is a reserved database name".format(
+                    self.name
+                ))
+            )
 
     def automatic_create_first_credential(self):
-        LOG.info("creating new credential for database %s" % self.name)
+        LOG.info("creating new credential for database {}".format(self.name))
         user = Credential.USER_PATTERN % self.name
         credential = Credential.create_new_credential(user, self)
         return credential
@@ -181,7 +186,10 @@ class Database(BaseModel):
     def provision(cls, name, databaseinfra):
         if not isinstance(databaseinfra, DatabaseInfra):
             raise ValidationError(
-                'Invalid databaseinfra type %s - %s' % (type(databaseinfra), databaseinfra))
+                'Invalid databaseinfra type {} - {}'.format(
+                    type(databaseinfra), databaseinfra
+                )
+            )
 
         database = Database()
         database.databaseinfra = databaseinfra
@@ -210,7 +218,6 @@ class Database(BaseModel):
         return self.driver.get_connection_dns_simple(database=self)
 
     def get_log_url(self):
-
         if Configuration.get_by_name_as_int('laas_integration') != 1:
             return ""
 
@@ -222,9 +229,9 @@ class Database(BaseModel):
         from dbaas_credentials.models import CredentialType
 
         credential = get_credentials_for(
-            environment=self.environment, credential_type=CredentialType.LOGNIT)
-        url = "%s%s" % (credential.endpoint, get_group_name(self))
-        return "%s" % (url)
+            environment=self.environment, credential_type=CredentialType.LOGNIT
+        )
+        return credential.endpoint + get_group_name(self)
 
     def get_dex_url(self):
         if Configuration.get_by_name_as_int('dex_analyze') != 1:
@@ -258,8 +265,8 @@ class Database(BaseModel):
                 info = self.databaseinfra.get_info(force_refresh=True)
                 database_status = info.get_database_status(self.name)
         except ConnectionError as e:
-            LOG.error(
-                "ConnectionError calling database_status for database %s: %s" % (self, e))
+            msg = "ConnectionError calling database_status for database {}: {}".format(self, e)
+            LOG.error(msg)
             database_status = DatabaseStatus(self)
 
         return database_status
@@ -279,7 +286,6 @@ class Database(BaseModel):
 
     @property
     def total_size(self):
-        """ Total size of database (in bytes) """
         return self.databaseinfra.per_database_size_bytes
 
     @property
@@ -308,7 +314,6 @@ class Database(BaseModel):
 
     @property
     def capacity(self):
-        """ Float number about used capacity """
         if self.status:
             return round((1.0 * self.used_size_in_bytes / self.total_size) if self.total_size else 0, 2)
 
@@ -318,11 +323,13 @@ class Database(BaseModel):
             'quarantine_retention_days')
         quarantine_time_dt = date.today() - timedelta(days=quarantine_time)
         databases = Database.objects.filter(
-            is_in_quarantine=True, quarantine_dt__lte=quarantine_time_dt)
+            is_in_quarantine=True, quarantine_dt__lte=quarantine_time_dt
+        )
         for database in databases:
             database.delete()
             LOG.info("The database %s was deleted, because it was set to quarentine %d days ago" % (
-                database.name, quarantine_time))
+                database.name, quarantine_time)
+            )
 
     @classmethod
     def clone(cls, database, clone_name, plan, environment, user):
