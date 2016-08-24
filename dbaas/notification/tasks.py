@@ -40,46 +40,55 @@ def rollback_database(dest_database):
 
 
 @app.task(bind=True)
-def create_database(self, name, plan, environment, team, project, description, task_history=None, user=None):
+def create_database(
+    self, name, plan, environment, team, project, description,
+    subscribe_to_email_events=True, task_history=None, user=None
+):
     AuditRequest.new_request("create_database", user, "localhost")
     try:
 
         worker_name = get_worker_name()
-        task_history = TaskHistory.register(request=self.request, task_history=task_history,
-                                            user=user, worker_name=worker_name)
+        task_history = TaskHistory.register(
+            request=self.request, task_history=task_history, user=user,
+            worker_name=worker_name
+        )
 
-        LOG.info("id: %s | task: %s | kwargs: %s | args: %s" % (
-            self.request.id, self.request.task, self.request.kwargs, str(self.request.args)))
+        LOG.info(
+            "id: %s | task: %s | kwargs: %s | args: %s" % (
+                self.request.id, self.request.task, self.request.kwargs,
+                str(self.request.args)
+            )
+        )
 
         task_history.update_details(persist=True, details="Loading Process...")
 
-        result = make_infra(plan=plan,
-                            environment=environment,
-                            name=name,
-                            team=team,
-                            project=project,
-                            description=description,
-                            task=task_history,
-                            )
+        result = make_infra(
+            plan=plan, environment=environment, name=name, team=team,
+            project=project, description=description,
+            subscribe_to_email_events=subscribe_to_email_events, task=task_history,
+        )
 
-        if result['created'] == False:
-
+        if result['created'] is False:
             if 'exceptions' in result:
-                error = "\n".join(": ".join(err)
-                                  for err in result['exceptions']['error_codes'])
+                error = "\n".join(
+                    ": ".join(err) for err in result['exceptions']['error_codes']
+                )
                 traceback = "\nException Traceback\n".join(
-                    result['exceptions']['traceback'])
+                    result['exceptions']['traceback']
+                )
                 error = "{}\n{}\n{}".format(error, traceback, error)
             else:
                 error = "There is not any infra-structure to allocate this database."
 
             task_history.update_status_for(
-                TaskHistory.STATUS_ERROR, details=error)
+                TaskHistory.STATUS_ERROR, details=error
+            )
             return
 
         task_history.update_dbid(db=result['database'])
         task_history.update_status_for(
-            TaskHistory.STATUS_SUCCESS, details='Database created successfully')
+            TaskHistory.STATUS_SUCCESS, details='Database created successfully'
+        )
 
         return
 
@@ -139,21 +148,18 @@ def clone_database(self, origin_database, clone_name, plan, environment, task_hi
         LOG.info("origin_database: %s" % origin_database)
 
         task_history.update_details(persist=True, details="Loading Process...")
-        result = clone_infra(plan=plan,
-                             environment=environment,
-                             name=clone_name,
-                             team=origin_database.team,
-                             project=origin_database.project,
-                             description=origin_database.description,
-                             task=task_history,
-                             clone=origin_database,
-                             )
+        result = clone_infra(
+            plan=plan, environment=environment, name=clone_name,
+            team=origin_database.team, project=origin_database.project,
+            description=origin_database.description, task=task_history,
+            clone=origin_database,
+        )
 
-        if result['created'] == False:
-
+        if result['created'] is False:
             if 'exceptions' in result:
-                error = "\n\n".join(": ".join(err)
-                                    for err in result['exceptions']['error_codes'])
+                error = "\n\n".join(
+                    ": ".join(err) for err in result['exceptions']['error_codes']
+                )
                 traceback = "\n\nException Traceback\n".join(
                     result['exceptions']['traceback'])
                 error = "{}\n{}".format(error, traceback)
@@ -161,7 +167,8 @@ def clone_database(self, origin_database, clone_name, plan, environment, task_hi
                 error = "There is not any infra-structure to allocate this database."
 
             task_history.update_status_for(
-                TaskHistory.STATUS_ERROR, details=error)
+                TaskHistory.STATUS_ERROR, details=error
+            )
             return
 
         task_history.update_dbid(db=result['database'])
@@ -207,17 +214,25 @@ def databaseinfra_notification(self, user=None):
         return
 
     # Sum capacity per databseinfra with parameter plan, environment and engine
-    infras = DatabaseInfra.objects.values('plan__name', 'environment__name', 'engine__engine_type__name',
-                                          'plan__provider').annotate(capacity=Sum('capacity'))
+    infras = DatabaseInfra.objects.values(
+        'plan__name', 'environment__name', 'engine__engine_type__name',
+        'plan__provider'
+    ).annotate(capacity=Sum('capacity'))
     for infra in infras:
-        # total database created in databaseinfra per plan, environment and
-        # engine
-        used = DatabaseInfra.objects.filter(plan__name=infra['plan__name'],
-                                            environment__name=infra[
-                                                'environment__name'],
-                                            engine__engine_type__name=infra['engine__engine_type__name']).aggregate(
-            used=Count('databases'))
+        try:
+            database = infra.databases.get()
+        except Database.MultipleObjectsReturned:
+            pass
+        else:
+            if not database.subscribe_to_email_events:
+                continue
+
+        used = DatabaseInfra.objects.filter(
+            plan__name=infra['plan__name'], environment__name=infra['environment__name'],
+            engine__engine_type__name=infra['engine__engine_type__name']
+        ).aggregate(used=Count('databases'))
         # calculate the percentage
+
         percent = int(used['used'] * 100 / infra['capacity'])
         if percent >= threshold_infra_notification and infra['plan__provider'] != Plan.CLOUDSTACK:
             LOG.info('Plan %s in environment %s with %s%% occupied' % (
@@ -231,8 +246,10 @@ def databaseinfra_notification(self, user=None):
             context['percent'] = percent
             email_notifications.databaseinfra_ending(context=context)
 
-        task_history.update_status_for(TaskHistory.STATUS_SUCCESS,
-                                       details='Databaseinfra Notification successfully sent to dbaas admins!')
+        task_history.update_status_for(
+            TaskHistory.STATUS_SUCCESS,
+            details='Databaseinfra Notification successfully sent to dbaas admins!'
+        )
     return
 
 

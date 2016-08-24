@@ -115,8 +115,8 @@ class DatabaseForm(models.ModelForm):
     class Meta:
         model = Database
         fields = (
-            'name', 'description', 'contacts', 'project', 'team',
-            'is_in_quarantine',
+            'name', 'description', 'contacts', 'subscribe_to_email_events',
+            'project', 'team', 'is_in_quarantine',
         )
 
     def remove_fields_not_in_models(self):

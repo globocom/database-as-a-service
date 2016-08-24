@@ -16,17 +16,19 @@ class BuildDatabase(BaseStep):
 
     def do(self, workflow_dict):
         try:
-
-            if  'team' not in workflow_dict or \
-                    'description' not in workflow_dict or \
-                    'databaseinfra' not in workflow_dict:
+            team_nin_wfd = 'team' not in workflow_dict
+            description_nin_wfd = 'description' not in workflow_dict
+            dbinfra_nin_wfd = 'databaseinfra' not in workflow_dict
+            if team_nin_wfd or description_nin_wfd or dbinfra_nin_wfd:
                 return False
 
             LOG.info("Creating Database...")
             database = Database.provision(
-                name=workflow_dict['name'], databaseinfra=workflow_dict['databaseinfra'])
+                name=workflow_dict['name'],
+                databaseinfra=workflow_dict['databaseinfra']
+            )
 
-            LOG.info("Database %s created!" % database)
+            LOG.info("Database {} created!".format(database))
 
             LOG.info("Updating database team")
             database.team = workflow_dict['team']
@@ -37,6 +39,9 @@ class BuildDatabase(BaseStep):
 
             LOG.info("Updating database description")
             database.description = workflow_dict['description']
+
+            LOG.info("Updating database subscribe_to_email_events")
+            database.subscribe_to_email_events = workflow_dict['subscribe_to_email_events']
 
             database.save()
             workflow_dict['database'] = database
@@ -59,15 +64,15 @@ class BuildDatabase(BaseStep):
     def undo(self, workflow_dict):
         try:
 
-            if not 'database' in workflow_dict:
+            if 'database' not in workflow_dict:
                 return False
 
             database = workflow_dict['database']
-
             if not database.is_in_quarantine:
                 LOG.info("Putting Database in quarentine...")
                 database.is_in_quarantine = True
                 database.quarantine_dt = datetime.datetime.now().date()
+                database.subscribe_to_email_events = False
                 database.save()
 
             database.delete()
