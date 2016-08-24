@@ -60,13 +60,20 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     perm_add_database_infra = constants.PERM_ADD_DATABASE_INFRA
 
     service_class = DatabaseService
-    search_fields = ("name", "databaseinfra__name", "team__name",
-                     "project__name", "environment__name", "databaseinfra__engine__engine_type__name")
-    list_display_basic = ["name_html", "team_admin_page", "engine", "environment", "offering",
-                          "friendly_status", "clone_html", "get_capacity_html", "metrics_html", "created_dt_format", ]
+    search_fields = (
+        "name", "databaseinfra__name", "team__name", "project__name",
+        "environment__name", "databaseinfra__engine__engine_type__name"
+    )
+    list_display_basic = [
+        "name_html", "team_admin_page", "engine", "environment", "offering",
+        "friendly_status", "clone_html", "get_capacity_html", "metrics_html",
+        "created_dt_format"
+    ]
     list_display_advanced = list_display_basic + ["quarantine_dt_format"]
-    list_filter_basic = ["project", "databaseinfra__environment",
-                         "databaseinfra__engine", "databaseinfra__plan", "databaseinfra__engine__engine_type"]
+    list_filter_basic = [
+        "project", "databaseinfra__environment", "databaseinfra__engine",
+        "databaseinfra__plan", "databaseinfra__engine__engine_type",
+    ]
     list_filter_advanced = list_filter_basic + \
         ["databaseinfra", "is_in_quarantine", "team"]
     add_form_template = "logical/database/database_add_form.html"
@@ -74,14 +81,17 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     delete_button_name = "Delete"
     fieldsets_add = (
         (None, {
-            'fields': ('name', 'description', 'project', 'engine', 'environment', 'team', 'plan', 'is_in_quarantine', )
+            'fields': (
+                'name', 'description', 'contacts', 'project', 'engine',
+                'environment', 'team', 'plan', 'is_in_quarantine',
+            )
         }
         ),
     )
 
     fieldsets_change_basic = (
         (None, {
-            'fields': ['name', 'description', 'project', 'team']
+            'fields': ['name', 'description', 'contacts', 'project', 'team', ]
         }
         ),
     )
@@ -357,8 +367,12 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 LOG.info("user %s teams: %s" % (request.user, teams))
                 if not teams:
                     self.message_user(
-                        request, self.database_add_perm_message, level=messages.ERROR)
-                    return HttpResponseRedirect(reverse('admin:logical_database_changelist'))
+                        request, self.database_add_perm_message,
+                        level=messages.ERROR
+                    )
+                    return HttpResponseRedirect(
+                        reverse('admin:logical_database_changelist')
+                    )
 
                 # if no team is specified and the user has only one team, then
                 # set it to the database
