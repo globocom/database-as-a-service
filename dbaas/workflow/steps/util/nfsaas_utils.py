@@ -118,5 +118,7 @@ def clean_unused_data(export_id):
 
 def resize_disk(environment, host, disk_offering):
     provider = get_faas_provider(environment=environment)
-    disk = HostAttr.objects.get(host=host)
-    return provider.resize(disk.nfsaas_path_host, disk_offering.size_kb)
+    for disk in HostAttr.objects.filter(host=host):
+        if not provider.resize(disk.nfsaas_path_host, disk_offering.size_kb):
+            return False
+    return True
