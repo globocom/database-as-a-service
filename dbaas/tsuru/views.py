@@ -578,7 +578,7 @@ def check_acl_service_and_get_unit_network(database, data):
             service_key=health_check_info['key_name'],
             redis_client=REDIS_CLIENT, http_client=requests,
             http_request_exceptions=(Exception,), verify_ssl=False,
-            health_check_request_timeout=health_check_info['timeout']
+            health_check_request_timeout=int(health_check_info['timeout'])
         )
     except KeyError as e:
         msg = "AclApi Credential configured improperly."
