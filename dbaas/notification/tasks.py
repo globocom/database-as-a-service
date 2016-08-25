@@ -40,7 +40,7 @@ def rollback_database(dest_database):
 
 
 @app.task(bind=True)
-def create_database(self, name, plan, environment, team, project, description, task_history=None, user=None):
+def create_database(self, name, plan, environment, team, project, description, contacts, task_history=None, user=None):
     AuditRequest.new_request("create_database", user, "localhost")
     try:
 
@@ -60,6 +60,7 @@ def create_database(self, name, plan, environment, team, project, description, t
                             project=project,
                             description=description,
                             task=task_history,
+                            contacts=contacts
                             )
 
         if result['created'] == False:

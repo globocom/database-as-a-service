@@ -32,7 +32,8 @@ class DatabaseSerializer(serializers.HyperlinkedModelSerializer):
         model = models.Database
         fields = ('url', 'id', 'name', 'endpoint', 'plan', 'environment',
                   'project', 'team', 'quarantine_dt', 'total_size_in_bytes',
-                  'credentials', 'description', 'status', 'used_size_in_bytes', 'created_at')
+                  'credentials', 'description', 'contacts', 'status',
+                  'used_size_in_bytes', 'created_at')
         read_only = ('credentials', 'status', 'used_size_in_bytes')
 
     def __init__(self, *args, **kwargs):
@@ -48,7 +49,6 @@ class DatabaseSerializer(serializers.HyperlinkedModelSerializer):
             self.fields['environment'].read_only = not creating
             self.fields['name'].read_only = not creating
             self.fields['credentials'].read_only = True
-            self.fields['description'].read_only = not creating
 
         # quarantine is always readonly
         # self.fields['quarantine_dt'].read_only = True
@@ -67,7 +67,8 @@ class DatabaseAPI(viewsets.ModelViewSet):
                 "environment": "{api_url}/environment/{environment_id}/",
                 "project": "{api_url}/project/{project_id}/",
                 "team": "{api_url}/team/{team_id}/",
-                "description": "{description}"
+                "description": "{description}",
+                "contacts": "{contacts}"
             }
     *   ### __Show details about a database__
         __GET__ /api/database/`database_id`/
@@ -76,7 +77,8 @@ class DatabaseAPI(viewsets.ModelViewSet):
     *   ### __To change database project__
         __PUT__ /api/database/`database_id`/
             {
-                "project": "{api_url}/project/{project_id}/"
+                "project": "{api_url}/project/{project_id}/",
+                "contacts": "{contacts}"
             }
     """
     serializer_class = DatabaseSerializer
@@ -102,6 +104,7 @@ class DatabaseAPI(viewsets.ModelViewSet):
                                            team=data['team'],
                                            project=data['project'],
                                            description=data['description'],
+                                           contacts=data['contacts'],
                                            task_history=task_history,
                                            user=request.user)
 

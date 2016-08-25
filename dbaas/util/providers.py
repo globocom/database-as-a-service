@@ -13,7 +13,7 @@ from workflow.workflow import start_workflow
 LOG = logging.getLogger(__name__)
 
 
-def make_infra(plan, environment, name, team, project, description, task=None,):
+def make_infra(plan, environment, name, team, project, description, contacts, task=None,):
     if not plan.provider == plan.CLOUDSTACK:
         dbinfra = DatabaseInfra.best_for(plan=plan, environment=environment,
                                          name=name)
@@ -23,6 +23,7 @@ def make_infra(plan, environment, name, team, project, description, task=None,):
             database.team = team
             database.description = description
             database.project = project
+            database.contacts = contacts
             database.save()
 
             return build_dict(
@@ -45,6 +46,7 @@ def make_infra(plan, environment, name, team, project, description, task=None,):
         team=team,
         project=project,
         description=description,
+        contacts=contacts,
     )
 
     start_workflow(workflow_dict=workflow_dict, task=task)
