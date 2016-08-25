@@ -14,7 +14,7 @@ LOG = logging.getLogger(__name__)
 
 
 def make_infra(
-    plan, environment, name, team, project, description,
+    plan, environment, name, team, project, description, contacts,
     subscribe_to_email_events=True, task=None,
 ):
     if not plan.provider == plan.CLOUDSTACK:
@@ -28,6 +28,7 @@ def make_infra(
             database.description = description
             database.project = project
             database.subscribe_to_email_events = subscribe_to_email_events
+            database.contacts = contacts
             database.save()
 
             return build_dict(
@@ -41,7 +42,8 @@ def make_infra(
             plan.replication_topology.class_path
         ), qt=get_vm_qt(plan=plan, ), dbtype=str(plan.engine_type),
         team=team, project=project, description=description,
-        subscribe_to_email_events=subscribe_to_email_events
+        subscribe_to_email_events=subscribe_to_email_events,
+        contacts=contacts,
     )
 
     start_workflow(workflow_dict=workflow_dict, task=task)

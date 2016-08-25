@@ -38,8 +38,9 @@ class DatabaseSerializer(serializers.HyperlinkedModelSerializer):
         fields = (
             'url', 'id', 'name', 'endpoint', 'plan', 'environment',
             'project', 'team', 'quarantine_dt', 'total_size_in_bytes',
-            'credentials', 'description', 'status', 'used_size_in_bytes',
-            'subscribe_to_email_events', 'created_at',
+            'credentials', 'description', 'contacts', 'status',
+            'used_size_in_bytes', 'subscribe_to_email_events',
+            'created_at',
         )
         read_only = ('credentials', 'status', 'used_size_in_bytes')
 
@@ -70,7 +71,8 @@ class DatabaseAPI(viewsets.ModelViewSet):
                 "project": "{api_url}/project/{project_id}/",
                 "team": "{api_url}/team/{team_id}/",
                 "description": "{description}",
-                "subscribe_to_email_events" "{subscribe_to_email_events}"
+                "subscribe_to_email_events" "{subscribe_to_email_events}",
+                "contacts": "{contacts}"
             }
     *   ### __Show details about a database__
         __GET__ /api/database/`database_id`/
@@ -82,6 +84,7 @@ class DatabaseAPI(viewsets.ModelViewSet):
                 "project": "{api_url}/project/{project_id}/",
                 "description": "{description}",
                 "subscribe_to_email_events" "{subscribe_to_email_events}"
+                "contacts": "{contacts}"
             }
     """
     serializer_class = DatabaseSerializer
@@ -106,7 +109,8 @@ class DatabaseAPI(viewsets.ModelViewSet):
                 environment=data['environment'], team=data['team'],
                 project=data['project'], description=data['description'],
                 subscribe_to_email_events=data['subscribe_to_email_events'],
-                task_history=task_history, user=request.user
+                contacts=data['contacts'], task_history=task_history,
+                user=request.user
             )
 
             headers = self.get_success_headers(data)

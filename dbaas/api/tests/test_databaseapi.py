@@ -57,6 +57,7 @@ class DatabaseAPITestCase(DbaaSAPITestCase, BasicTestsMixin):
         self.assertEquals(test_obj.team, call_args['team'])
         self.assertEquals(test_obj.project, call_args['project'])
         self.assertEquals(test_obj.description, call_args['description'])
+        self.assertEquals(test_obj.contacts, call_args['contacts'])
 
     def payload(self, database, **kwargs):
         data = {
@@ -66,6 +67,7 @@ class DatabaseAPITestCase(DbaaSAPITestCase, BasicTestsMixin):
             'team': reverse('team-detail', kwargs={'pk': database.team.pk}),
             'project': reverse('project-detail', kwargs={'pk': database.project.pk}),
             'description': database.description,
+            'contacts': database.contacts
         }
         return data
 

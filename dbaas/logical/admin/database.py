@@ -418,6 +418,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                     project=form.cleaned_data['project'],
                     description=form.cleaned_data['description'],
                     subscribe_to_email_events=form.cleaned_data['subscribe_to_email_events'],
+                    contacts=form.cleaned_data['contacts'],
                     task_history=task_history,
                     user=request.user
                 )
