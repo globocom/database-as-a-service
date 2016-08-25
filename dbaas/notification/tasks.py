@@ -817,7 +817,7 @@ def database_disk_resize(self, database, disk_offering, task_history, user):
             details='\nLoading Disk offering'
         )
 
-        for instance in databaseinfra.instances.all():
+        for instance in databaseinfra.get_driver().get_database_instances():
             if not HostAttr.objects.filter(host_id=instance.hostname_id).exists():
                 continue
 
