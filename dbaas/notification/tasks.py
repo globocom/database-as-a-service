@@ -796,6 +796,7 @@ def upgrade_mongodb_24_to_30(self, database, user, task_history=None):
 
 @app.task(bind=True)
 def database_disk_resize(self, database, disk_offering, task_history, user):
+    from dbaas_nfsaas.models import HostAttr
     from workflow.steps.util.nfsaas_utils import resize_disk
 
     AuditRequest.new_request("database_disk_resize", user, "localhost")
@@ -816,7 +817,10 @@ def database_disk_resize(self, database, disk_offering, task_history, user):
             details='\nLoading Disk offering'
         )
 
-        for instance in databaseinfra.instances.all():
+        for instance in databaseinfra.get_driver().get_database_instances():
+            if not HostAttr.objects.filter(host_id=instance.hostname_id).exists():
+                continue
+
             task_history.update_details(
                 persist=True,
                 details='\nChanging instance {} to '
