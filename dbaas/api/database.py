@@ -71,7 +71,7 @@ class DatabaseAPI(viewsets.ModelViewSet):
                 "project": "{api_url}/project/{project_id}/",
                 "team": "{api_url}/team/{team_id}/",
                 "description": "{description}",
-                "subscribe_to_email_events" "{subscribe_to_email_events}",
+                "subscribe_to_email_events": "{subscribe_to_email_events}",
                 "contacts": "{contacts}"
             }
     *   ### __Show details about a database__
@@ -83,7 +83,7 @@ class DatabaseAPI(viewsets.ModelViewSet):
             {
                 "project": "{api_url}/project/{project_id}/",
                 "description": "{description}",
-                "subscribe_to_email_events" "{subscribe_to_email_events}"
+                "subscribe_to_email_events": "{subscribe_to_email_events}",
                 "contacts": "{contacts}"
             }
     """
