@@ -589,6 +589,7 @@ database post save signal. Creates the database in the driver and creates a new 
 def database_pre_save(sender, **kwargs):
     database = kwargs.get('instance')
     if database.is_in_quarantine:
+        database.subscribe_to_email_events = True
         if database.quarantine_dt is None:
             database.quarantine_dt = datetime.datetime.now().date()
     else:

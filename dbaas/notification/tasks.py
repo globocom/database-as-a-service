@@ -225,6 +225,8 @@ def databaseinfra_notification(self, user=None):
         except Database.MultipleObjectsReturned:
             pass
         else:
+            if database.is_in_quarantine:
+                continue
             if not database.subscribe_to_email_events:
                 continue
 
