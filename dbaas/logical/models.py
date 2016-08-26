@@ -105,6 +105,12 @@ class Database(BaseModel):
             "People to be reached in case of a critical incident. Eg.: 99999999 - Jhon Doe."
         )
     )
+    subscribe_to_email_events = models.BooleanField(
+        verbose_name=_("Subscribe to email events"), default=True,
+        help_text=_(
+            "Check this box if you'd like to receive information regarding this database by email."
+        )
+    )
 
     objects = models.Manager()
     alive = DatabaseAliveManager()
@@ -347,10 +353,10 @@ class Database(BaseModel):
         task_history.user = user
         task_history.save()
 
-        clone_database.delay(origin_database=database, clone_name=clone_name,
-                             plan=plan, environment=environment, user=user,
-                             task_history=task_history
-                             )
+        clone_database.delay(
+            origin_database=database, clone_name=clone_name, plan=plan,
+            environment=environment, user=user, task_history=task_history
+        )
 
     @classmethod
     def resize(cls, database, cloudstackpack, user):
@@ -364,20 +370,24 @@ class Database(BaseModel):
         task_history.user = user
         task_history.save()
 
-        resize_database.delay(database=database, cloudstackpack=cloudstackpack,
-                              user=user, task_history=task_history
-                              )
+        resize_database.delay(
+            database=database, cloudstackpack=cloudstackpack,
+            user=user, task_history=task_history
+        )
 
     @classmethod
     def recover_snapshot(cls, database, snapshot, user, task_history):
         from backup.tasks import restore_snapshot
-        LOG.info("Changing database volume with params: database {}\
-                 snapshot: {}, user: {}".format(database, snapshot, user))
+        LOG.info(
+            "Changing database volume with params: database {} snapshot: {}, user: {}".format(
+                database, snapshot, user
+            )
+        )
 
-        restore_snapshot.delay(database=database,
-                               snapshot=snapshot,
-                               user=user,
-                               task_history=task_history)
+        restore_snapshot.delay(
+            database=database, snapshot=snapshot, user=user,
+            task_history=task_history
+        )
 
     def get_metrics_url(self):
         return "/admin/logical/database/{}/metrics/".format(self.id)
@@ -423,10 +433,12 @@ class Database(BaseModel):
         from notification.models import TaskHistory
 
         name = self.name + ','
-        tasks = TaskHistory.objects.filter(arguments__contains=name,
-                                           task_status__in=['RUNNING',
-                                                            'PENDING',
-                                                            'WAITING'])
+        tasks = TaskHistory.objects.filter(
+            arguments__contains=name,
+            task_status__in=[
+                'RUNNING', 'PENDING', 'WAITING'
+            ]
+        )
 
         if len(tasks) == 1 and task_id:
             if tasks[0].task_id == task_id:

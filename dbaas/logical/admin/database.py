@@ -83,7 +83,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         (None, {
             'fields': (
                 'name', 'description', 'contacts', 'project', 'engine',
-                'environment', 'team', 'plan', 'is_in_quarantine',
+                'environment', 'team', 'subscribe_to_email_events', 'plan',
+                'is_in_quarantine',
             )
         }
         ),
@@ -91,7 +92,10 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
     fieldsets_change_basic = (
         (None, {
-            'fields': ['name', 'description', 'contacts', 'project', 'team', ]
+            'fields': [
+                'name', 'description', 'contacts', 'project', 'team',
+                'subscribe_to_email_events',
+            ]
         }
         ),
     )
@@ -390,13 +394,13 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 if not form.is_valid():
                     return super(DatabaseAdmin, self).add_view(request, form_url, extra_context=extra_context)
 
-                LOG.debug(
-                    "call create_database - name=%s, plan=%s, environment=%s, team=%s, project=%s, description=%s, user=%s" % (
-                        form.cleaned_data['name'], form.cleaned_data[
-                            'plan'], form.cleaned_data['environment'],
-                        form.cleaned_data['team'], form.cleaned_data[
-                            'project'], form.cleaned_data['description'],
-                        request.user))
+                database_creation_message = "call create_database - name={}, plan={}, environment={}, team={}, project={}, description={}, user={}, subscribe_to_email_events {}".format(
+                    form.cleaned_data['name'], form.cleaned_data['plan'],
+                    form.cleaned_data['environment'], form.cleaned_data['team'],
+                    form.cleaned_data['project'], form.cleaned_data['description'],
+                    request.user, form.cleaned_data['subscribe_to_email_events']
+                )
+                LOG.debug(database_creation_message)
 
                 task_history = TaskHistory()
                 task_history.task_name = "create_database"
@@ -406,17 +410,18 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 task_history.user = request.user
                 task_history.save()
 
-                create_database.delay(name=form.cleaned_data['name'],
-                                      plan=form.cleaned_data['plan'],
-                                      environment=form.cleaned_data[
-                                          'environment'],
-                                      team=form.cleaned_data['team'],
-                                      project=form.cleaned_data['project'],
-                                      description=form.cleaned_data[
-                                          'description'],
-                                      contacts=form.cleaned_data['contacts'],
-                                      task_history=task_history,
-                                      user=request.user)
+                create_database.delay(
+                    name=form.cleaned_data['name'],
+                    plan=form.cleaned_data['plan'],
+                    environment=form.cleaned_data['environment'],
+                    team=form.cleaned_data['team'],
+                    project=form.cleaned_data['project'],
+                    description=form.cleaned_data['description'],
+                    subscribe_to_email_events=form.cleaned_data['subscribe_to_email_events'],
+                    contacts=form.cleaned_data['contacts'],
+                    task_history=task_history,
+                    user=request.user
+                )
 
                 url = reverse('admin:notification_taskhistory_changelist')
                 # Redirect after POST
@@ -448,7 +453,16 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         else:
             extra_context['is_dba'] = False
 
-        return super(DatabaseAdmin, self).change_view(request, object_id, form_url, extra_context=extra_context)
+        if request.method == 'POST':
+            form = DatabaseForm(request.POST)
+            if not form.is_valid():
+                return super(DatabaseAdmin, self).change_view(
+                    request, object_id, form_url, extra_context=extra_context
+                )
+
+        return super(DatabaseAdmin, self).change_view(
+            request, object_id, form_url, extra_context=extra_context
+        )
 
     def delete_view(self, request, object_id, extra_context=None):
         database = Database.objects.get(id=object_id)
@@ -853,7 +867,6 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                                   locals(),
                                   context_instance=RequestContext(request))
 
-
     def restore_snapshot(self, request, database_id):
         database = Database.objects.get(id=database_id)
 
@@ -1068,8 +1081,9 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 raise PermissionDenied
 
             n = queryset.count()
-            quarantine = any(result[
-                             'is_in_quarantine'] == True for result in queryset.values('is_in_quarantine'))
+            quarantine = any(
+                result['is_in_quarantine'] is True for result in queryset.values('is_in_quarantine')
+            )
 
             if n:
                 for obj in queryset:

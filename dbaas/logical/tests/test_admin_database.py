@@ -1,22 +1,20 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
+import logging
 from django.test import TestCase
 from django.contrib.auth.models import User
 from physical.tests import factory as physical_factory
+from account.models import Team, Role
+from drivers import fake, base
 from ..forms import DatabaseForm
 from ..models import Database
 from . import factory
-from drivers import fake, base
-from account.models import Team, Role
-import logging
-import mock
 
 LOG = logging.getLogger(__name__)
 
 
 class AdminCreateDatabaseTestCase(TestCase):
 
-    """ HTTP test cases """
     USERNAME = "test-ui-database"
     PASSWORD = "123456"
 
