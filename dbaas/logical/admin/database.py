@@ -858,7 +858,6 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                                   locals(),
                                   context_instance=RequestContext(request))
 
-
     def restore_snapshot(self, request, database_id):
         database = Database.objects.get(id=database_id)
 
@@ -1073,8 +1072,9 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 raise PermissionDenied
 
             n = queryset.count()
-            quarantine = any(result[
-                             'is_in_quarantine'] == True for result in queryset.values('is_in_quarantine'))
+            quarantine = any(
+                result['is_in_quarantine'] is True for result in queryset.values('is_in_quarantine')
+            )
 
             if n:
                 for obj in queryset:
