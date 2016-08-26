@@ -38,6 +38,9 @@ class BuildDatabase(BaseStep):
             LOG.info("Updating database description")
             database.description = workflow_dict['description']
 
+            LOG.info("Updating database contacts")
+            database.contacts = workflow_dict['contacts']
+
             database.save()
             workflow_dict['database'] = database
 

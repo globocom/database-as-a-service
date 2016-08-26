@@ -114,11 +114,12 @@ class DatabaseForm(models.ModelForm):
 
     class Meta:
         model = Database
-        fields = ('name', 'description', 'project', 'team',
-                  'is_in_quarantine',)
+        fields = (
+            'name', 'description', 'contacts', 'project', 'team',
+            'is_in_quarantine',
+        )
 
     def remove_fields_not_in_models(self):
-        """remove fields not int models"""
         fields_to_remove = ["plan", "engine", "environment"]
         for field_name in fields_to_remove:
             if field_name in self.fields:
@@ -211,6 +212,12 @@ class DatabaseForm(models.ModelForm):
             if not description:
                 self._errors["description"] = self.error_class(
                     [_("Description: This field is required.")])
+
+        if 'contacts' in cleaned_data:
+            contacts = cleaned_data.get('contacts', None)
+            if not contacts:
+                self._errors["contacts"] = self.error_class(
+                    [_("This field is required.")])
 
         if 'environment' in cleaned_data:
             environment = cleaned_data.get('environment', None)

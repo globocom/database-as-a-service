@@ -48,8 +48,6 @@ class Project(BaseModel):
 
 class DatabaseAliveManager(models.Manager):
 
-    """manager for returning """
-
     def get_query_set(self):
         return Database.objects.filter(is_in_quarantine=False)
 
@@ -100,6 +98,12 @@ class Database(BaseModel):
     backup_path = models.CharField(
         verbose_name=_("Backup path"), max_length=300, null=True, blank=True,
         help_text=_("Full path to backup file")
+    )
+    contacts = models.TextField(
+        verbose_name=_("Emergency Contacts"), null=True, blank=True,
+        help_text=_(
+            "People to be reached in case of a critical incident. Eg.: 99999999 - Jhon Doe."
+        )
     )
 
     objects = models.Manager()
