@@ -164,7 +164,6 @@ class Database(BaseModel):
         else:
             LOG.warning("Putting database {} in quarantine".format(self.name))
             self.is_in_quarantine = True
-            self.subscribe_to_email_events = False
             self.save()
             if self.credentials.exists():
                 for credential in self.credentials.all():
@@ -591,8 +590,6 @@ def database_pre_save(sender, **kwargs):
     if database.is_in_quarantine:
         if database.quarantine_dt is None:
             database.quarantine_dt = datetime.datetime.now().date()
-        else:
-            database.subscribe_to_email_events = True
     else:
         database.quarantine_dt = None
 
