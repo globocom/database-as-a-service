@@ -453,7 +453,16 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         else:
             extra_context['is_dba'] = False
 
-        return super(DatabaseAdmin, self).change_view(request, object_id, form_url, extra_context=extra_context)
+        if request.method == 'POST':
+            form = DatabaseForm(request.POST)
+            if not form.is_valid():
+                return super(DatabaseAdmin, self).change_view(
+                    request, object_id, form_url, extra_context=extra_context
+                )
+
+        return super(DatabaseAdmin, self).change_view(
+            request, object_id, form_url, extra_context=extra_context
+        )
 
     def delete_view(self, request, object_id, extra_context=None):
         database = Database.objects.get(id=object_id)
