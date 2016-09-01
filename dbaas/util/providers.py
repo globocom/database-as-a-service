@@ -50,21 +50,31 @@ def make_infra(
     return workflow_dict
 
 
-def clone_infra(plan, environment, name, team, project, description, task=None, clone=None):
+def clone_infra(
+        plan, environment, name, team, project, description,
+        subscribe_to_email_events, contacts, task=None, clone=None
+):
     if not plan.provider == plan.CLOUDSTACK:
-        dbinfra = DatabaseInfra.best_for(
+        infra = DatabaseInfra.best_for(
             plan=plan, environment=environment, name=name)
 
-        if dbinfra:
-            database = Database.provision(databaseinfra=dbinfra, name=name)
+        if infra:
+            database = Database.provision(databaseinfra=infra, name=name)
             database.team = team
             database.description = description
             database.project = project
             database.save()
 
-            return build_dict(databaseinfra=dbinfra, database=database, created=True)
+            return build_dict(
+                databaseinfra=infra, database=database, created=True,
+                contacts=contacts,
+                subscribe_to_email_events=subscribe_to_email_events
+            )
 
-        return build_dict(databaseinfra=None, created=False)
+        return build_dict(
+            databaseinfra=None, created=False, contacts=contacts,
+            subscribe_to_email_events=subscribe_to_email_events
+        )
 
     workflow_dict = build_dict(
         name=slugify(name),
@@ -78,7 +88,9 @@ def clone_infra(plan, environment, name, team, project, description, task=None, 
         team=team,
         project=project,
         description=description,
-        clone=clone
+        clone=clone,
+        subscribe_to_email_events=subscribe_to_email_events,
+        contacts=contacts
     )
 
     start_workflow(workflow_dict=workflow_dict, task=task)

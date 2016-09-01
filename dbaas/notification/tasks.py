@@ -153,7 +153,8 @@ def clone_database(self, origin_database, clone_name, plan, environment, task_hi
             plan=plan, environment=environment, name=clone_name,
             team=origin_database.team, project=origin_database.project,
             description=origin_database.description, task=task_history,
-            clone=origin_database,
+            clone=origin_database, contacts=origin_database.contacts,
+            subscribe_to_email_events=origin_database.subscribe_to_email_events
         )
 
         if result['created'] is False:
