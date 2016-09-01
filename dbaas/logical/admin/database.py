@@ -732,13 +732,13 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             environment, lognit_environment, uri)
         try:
             database_logs = json.loads(database_logs)
-        except Exception, e:
+        except Exception as e:
             pass
         else:
             for database_log in database_logs:
                 try:
                     items = database_log['items']
-                except KeyError, e:
+                except KeyError as e:
                     pass
                 else:
                     parsed_logs = "\n".join(
