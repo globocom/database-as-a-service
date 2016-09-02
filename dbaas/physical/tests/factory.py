@@ -31,6 +31,14 @@ class HostFactory(factory.DjangoModelFactory):
     hostname = factory.Sequence(lambda n: 'host{0}.mydomain.com'.format(n))
 
 
+class DiskOfferingFactory(factory.DjangoModelFactory):
+    FACTORY_FOR = models.DiskOffering
+
+    name = factory.Sequence(lambda n: 'disk-offering-{0}'.format(n))
+    size_kb = 1048576 # 1gb
+    available_size_kb = 524288 # 500mb
+
+
 class PlanFactory(factory.DjangoModelFactory):
     FACTORY_FOR = models.Plan
 
@@ -39,6 +47,7 @@ class PlanFactory(factory.DjangoModelFactory):
     is_default = True
     engine = factory.SubFactory(EngineFactory)
     provider = 0
+    disk_offering = DiskOfferingFactory()
 
     @factory.post_generation
     def environments(self, create, extracted, **kwargs):
@@ -87,11 +96,3 @@ class InstanceFactory(factory.DjangoModelFactory):
     hostname = factory.SubFactory(HostFactory)
     status = 1
     instance_type = 1
-
-
-class DiskOfferingFactory(factory.DjangoModelFactory):
-    FACTORY_FOR = models.DiskOffering
-
-    name = factory.Sequence(lambda n: 'disk-offering-{0}'.format(n))
-    size_kb = 1048576 # 1gb
-    available_size_kb = 524288 # 500mb

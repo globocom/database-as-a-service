@@ -5,14 +5,15 @@ from django.test import TestCase
 from django.contrib.admin.sites import AdminSite
 from logical.tests import factory as factory_logical
 from ..admin.databaseinfra import DatabaseInfraAdmin
-from ..models import DatabaseInfra
+from ..models import DatabaseInfra, Plan
 from . import factory
 from drivers.fake import FakeDriver
 from django.core.cache import cache
 import logging
 
 LOG = logging.getLogger(__name__)
-EDITING_READ_ONLY_FIELDS = ('disk_offering', )
+EDITING_CLOUDSTACK_READ_ONLY_FIELDS = ('disk_offering', )
+EDITING_PRE_PROVISIONED_READ_ONLY_FIELDS = tuple()
 
 
 class DatabaseInfraTestCase(TestCase):
@@ -141,11 +142,21 @@ class DatabaseInfraTestCase(TestCase):
         admin_read_only = self.admin.get_readonly_fields(
             request=None, obj=infra_model
         )
-        self.assertEqual(EDITING_READ_ONLY_FIELDS, admin_read_only)
+        self.assertEqual(
+            EDITING_PRE_PROVISIONED_READ_ONLY_FIELDS, admin_read_only
+        )
+
+        infra_model.plan.provider = Plan.CLOUDSTACK
+        admin_read_only = self.admin.get_readonly_fields(
+            request=None, obj=infra_model
+        )
+        self.assertEqual(EDITING_CLOUDSTACK_READ_ONLY_FIELDS, admin_read_only)
 
     def test_read_only_fields_adding(self):
         admin_read_only = self.admin.get_readonly_fields(
             request=None, obj=None
         )
-        self.assertNotEqual(EDITING_READ_ONLY_FIELDS, admin_read_only)
+        self.assertNotEqual(
+            EDITING_CLOUDSTACK_READ_ONLY_FIELDS, admin_read_only
+        )
         self.assertEqual(tuple(), admin_read_only)
