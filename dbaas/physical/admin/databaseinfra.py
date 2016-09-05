@@ -66,7 +66,8 @@ class DatabaseInfraAdmin(admin.DjangoServicesAdmin):
 
     def get_readonly_fields(self, request, obj=None):
         if obj:
-            return self.readonly_fields + ('disk_offering', )
+            if obj.plan and not obj.plan.is_pre_provisioned:
+                return self.readonly_fields + ('disk_offering', )
         return self.readonly_fields
 
     def capacity_bar(self, datainfra):

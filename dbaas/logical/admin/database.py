@@ -173,7 +173,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
     def metrics_html(self, database):
         html = []
-        if database.databaseinfra.plan.provider == Plan.PREPROVISIONED:
+        if database.databaseinfra.plan.is_pre_provisioned:
             html.append("N/A")
         else:
             html.append("<a class='btn btn-info' href='%s'><i class='icon-list-alt icon-white'></i></a>" % reverse(

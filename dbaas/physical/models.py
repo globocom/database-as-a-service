@@ -199,6 +199,10 @@ class Plan(BaseModel):
     def engines(self):
         return Engine.objects.filter(id=self.engine_id)
 
+    @property
+    def is_pre_provisioned(self):
+        return self.provider == Plan.PREPROVISIONED
+
     def __unicode__(self):
         return "%s" % (self.name)
 

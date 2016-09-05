@@ -231,7 +231,7 @@ class Database(BaseModel):
         if Configuration.get_by_name_as_int('laas_integration') != 1:
             return ""
 
-        if self.databaseinfra.plan.provider == Plan.PREPROVISIONED:
+        if self.databaseinfra.plan.is_pre_provisioned:
             return ""
 
         from util import get_credentials_for
@@ -247,7 +247,7 @@ class Database(BaseModel):
         if Configuration.get_by_name_as_int('dex_analyze') != 1:
             return ""
 
-        if self.databaseinfra.plan.provider == Plan.PREPROVISIONED:
+        if self.databaseinfra.plan.is_pre_provisioned:
             return ""
 
         if self.engine_type != 'mongodb':
@@ -256,8 +256,7 @@ class Database(BaseModel):
         return 1
 
     def get_is_preprovisioned(self):
-        if self.databaseinfra.plan.provider == Plan.PREPROVISIONED:
-            return True
+        return self.databaseinfra.plan.is_pre_provisioned
 
     endpoint = property(get_endpoint)
     endpoint_dns = property(get_endpoint_dns)

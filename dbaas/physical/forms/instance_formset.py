@@ -68,8 +68,7 @@ class InstanceModelFormSet(BaseInlineFormSet):
 
         # example custom validation across forms in the formset:
         if completed == 0:
-            raise ValidationError(
-                {'instances': _("Specify at least one valid instance")})
+            raise ValidationError(_("Specify at least one valid instance"))
 
         # if step == 1, then set endpoint to the corresponding instance
         if step == 1:
