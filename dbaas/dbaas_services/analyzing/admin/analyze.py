@@ -14,9 +14,26 @@ class AnalyzeRepositoryAdmin(admin.DjangoServicesAdmin):
                      "environment_name", "instance_name", "databaseinfra_name")
     list_filter = ("analyzed_at", "memory_alarm", "cpu_alarm", "volume_alarm", "engine_name",
                    "environment_name", "databaseinfra_name")
-    list_display = ("analyzed_at", "databaseinfra_name", "database_name", "engine_name",
-                    "environment_name", "database_metrics_link", "cpu_threshold_msg",
-                    "memory_threshold_msg", "volume_threshold_msg", "get_database_team")
+    list_display = ("analyzed_at", "databaseinfra_name", "database_name_link",
+                    "engine_name", "environment_name", "database_metrics_link",
+                    "cpu_threshold_msg", "memory_threshold_msg",
+                    "volume_threshold_msg", "get_database_team")
+
+    def database_name_link(self, analyze_repository):
+        try:
+            database = Database.objects.get(
+                name=analyze_repository.database_name,
+                databaseinfra__name=analyze_repository.databaseinfra_name
+            )
+        except Database.DoesNotExist:
+            return analyze_repository.database_name
+        else:
+            return format_html(
+                "<a href=/admin/logical/database/{}>{}</a>".format(
+                    database.id, database.name
+                )
+            )
+    database_name_link.short_description = "Database name"
 
     def database_metrics_link(self, analyze_repository):
         try:
