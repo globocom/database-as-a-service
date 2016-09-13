@@ -34,6 +34,7 @@ class AnalyzeRepositoryAdmin(admin.DjangoServicesAdmin):
                 )
             )
     database_name_link.short_description = "Database name"
+    database_name_link.admin_order_field = "database_name"
 
     def database_metrics_link(self, analyze_repository):
         try:
@@ -47,8 +48,8 @@ class AnalyzeRepositoryAdmin(admin.DjangoServicesAdmin):
                                                    analyze_repository.instance_name)
 
         return format_html(html_link)
-
     database_metrics_link.short_description = "Instance name"
+    database_metrics_link.admin_order_field = "instance_name"
 
     def get_database_team(self, analyze_repository):
         try:
@@ -80,11 +81,14 @@ class AnalyzeRepositoryAdmin(admin.DjangoServicesAdmin):
     def cpu_threshold_msg(self, analyze_repository):
         return self.__format_alarm_msg(analyze_repository, 'cpu_alarm', 'cpu_threshold')
     cpu_threshold_msg.short_description = "CPU"
+    cpu_threshold_msg.admin_order_field = "cpu_alarm"
 
     def memory_threshold_msg(self, analyze_repository):
         return self.__format_alarm_msg(analyze_repository, 'memory_alarm', 'memory_threshold')
     memory_threshold_msg.short_description = "Memory"
+    memory_threshold_msg.admin_order_field = "memory_alarm"
 
     def volume_threshold_msg(self, analyze_repository):
         return self.__format_alarm_msg(analyze_repository, 'volume_alarm', 'volume_threshold')
     volume_threshold_msg.short_description = "Volume"
+    volume_threshold_msg.admin_order_field = "volume_alarm"
