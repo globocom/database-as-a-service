@@ -603,9 +603,9 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
     @staticmethod
     def get_granurality(from_option):
-        options = {"2hours": '10seconds',
+        options = {"2hours": '1minute',
                    "1day": '1minute',
-                   "7days": '10minutes',
+                   "7days": '10minute',
                    "30days": '1hour',
                    }
 
