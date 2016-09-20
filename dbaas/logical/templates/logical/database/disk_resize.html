@@ -24,13 +24,25 @@
 {% endblock %}
 
 {% block content %}
+<script>
+    function resize_confirmation(element) {
+      if (!confirm('Are you sure?')) {
+        return false;
+      } else {
+        element.disabled=true;
+        element.form.submit();
+        return true;
+      }
+    }
+</script>
+
 <div id="content-main">
     <form id="database_resize_form" action="" class="form-horizontal well" method="POST">{% csrf_token %}
         <fieldset class="module">
         <h2>Resizing {{ database.name }}</h2>
         <h4>Current Disk Size: {{ database.databaseinfra.disk_offering }}</h4>
             {{ form.as_p }}
-            <input class="btn" type="submit" value="Submit" onclick="this.disabled=true,this.form.submit(); return confirm('Are you sure?')"/>
+            <input class="btn" type="button" value="Submit" onclick="resize_confirmation(this)"/>
         </fieldset>
     </form>
 </div>
