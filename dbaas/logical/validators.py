@@ -29,15 +29,22 @@ def check_is_database_enabled(database_id, operation):
     if database.is_in_quarantine:
         raise DatabaseInQuarantineError(operation, url)
 
-    if database.is_dead() or not database.database_status.is_alive:
-        raise DatabaseIsDeadError(operation, url)
-
     if database.is_beeing_used_elsewhere():
         raise BusyDatabaseError(url)
 
     if database.has_migration_started():
         url = reverse('admin:logical_database_changelist')
         raise MigrationDatabaseError(operation, database.name, url)
+
+    return database
+
+def check_is_database_dead(database_id, operation):
+    from logical.models import Database
+    database = Database.objects.get(id=database_id)
+
+    url = _get_database_error_url(database_id)
+    if database.is_dead() or not database.database_status.is_alive:
+        raise DatabaseIsDeadError(operation, url)
 
     return database
 

@@ -42,7 +42,8 @@ from bson.json_util import loads
 from django.contrib.admin import site
 from django.db import IntegrityError
 from ..models import Database
-from ..validators import check_is_database_enabled, check_resize_options
+from ..validators import check_is_database_enabled, check_is_database_dead, \
+    check_resize_options
 from ..errors import DisabledDatabase, NoResizeOption
 
 LOG = logging.getLogger(__name__)
@@ -799,6 +800,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
     def database_resize_view(self, request, database_id):
         try:
+            check_is_database_dead(database_id, 'VM resize')
             database = check_is_database_enabled(database_id, 'VM resize')
 
             from dbaas_cloudstack.models import CloudStackPack
