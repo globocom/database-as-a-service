@@ -14,7 +14,7 @@ CPU = {"name": "cpu",
            {"name": "system", "data": "cpu.cpu_sys"},
 
        ],
-       "type": "area",
+       "type": "areaspline",
        "tooltip_point_format": """ <span style="color:{series.color}">{series.name}</span>: <b>{point.percentage:.1f}%</b> <br/>""",
        "y_axis_title": "percent",
        "stacking": 'percent',
@@ -27,7 +27,7 @@ MEMORY = {"name": "mem",
               {"name": "free", "data": "men.men_free"},
               {"name": "used", "data": "men.men_used"},
           ],
-          "type": "area",
+          "type": "areaspline",
           "tooltip_point_format": """ <span style="color:{series.color}">{series.name}</span>: <b>{point.percentage:.1f}%</b> <br/>""",
           "y_axis_title": "percent",
           "stacking": 'percent',
@@ -81,7 +81,7 @@ SWAP = {"name": "swap",
             {"name": "free", "data": "swap.free"},
             {"name": "used", "data": "swap.used"},
         ],
-        "type": "area",
+        "type": "areaspline",
         "tooltip_point_format": """ <span style="color:{series.color}">{series.name}</span>: <b>{point.percentage:.1f}%</b> <br/>""",
         "y_axis_title": "percent",
         "stacking": 'percent',
@@ -94,7 +94,7 @@ DISK = {"name": "disk",
             {"name": "available", "data": "df.available"},
             {"name": "used", "data": "df.used"},
         ],
-        "type": "area",
+        "type": "areaspline",
         "tooltip_point_format": """ <span style="color:{series.color}">{series.name}</span>: <b>{point.percentage:.1f}%</b> <br/>""",
         "y_axis_title": "percent",
         "stacking": 'percent',
@@ -455,7 +455,7 @@ def get_metric_datapoints_for(
                     'name': serie['name'],
                     'data': []})
 
-        if graph['type'] == 'area':
+        if graph['type'] in ['area', 'areaspline']:
             newserie = _complete_empty_points(newserie)
 
         newgraph.append({
