@@ -99,13 +99,14 @@ def make_instance_snapshot_backup(instance, error):
 
     snapshot.save()
 
-    databaseinfra = instance.databaseinfra
-    driver = databaseinfra.get_driver()
-    client = driver.get_client(instance)
-    cloudstack_hostattr = Cloudstack_HostAttr.objects.get(
-        host=instance.hostname)
-
     try:
+
+        databaseinfra = instance.databaseinfra
+        driver = databaseinfra.get_driver()
+        client = driver.get_client(instance)
+        cloudstack_hostattr = Cloudstack_HostAttr.objects.get(
+            host=instance.hostname)
+
         LOG.debug('Locking instance %s' % str(instance))
         driver.lock_database(client)
         LOG.debug('Instance %s is locked' % str(instance))
