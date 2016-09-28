@@ -270,7 +270,9 @@ def database_notification_for_team(team=None):
         LOG.warning("database notification is disabled")
         return
 
-    databases = Database.objects.filter(team=team, is_in_quarantine=False)
+    databases = Database.objects.filter(
+        team=team, is_in_quarantine=False, subscribe_to_email_events=True
+    )
     msgs = []
     for database in databases:
         used = database.used_size_in_mb
