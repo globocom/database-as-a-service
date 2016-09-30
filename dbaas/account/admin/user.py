@@ -211,7 +211,6 @@ class CustomUserAdmin(UserAdmin):
         username_field.max_length = 100
         username_field.help_text = "Required. 100 characters or fewer. Letters, digits and @/./+/-/_ only."
         username_field.validators[1] = validate_user_length
-        import pdb; pdb.set_trace()
 
     @csrf_protect_m
     @transaction.atomic

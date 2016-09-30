@@ -15,8 +15,6 @@ import os
 import traceback
 import sys
 from billiard import current_process
-from dbaas_nfsaas.provider import NfsaasProvider
-from dbaas_cloudstack.models import HostAttr as CsHostAttr
 from django.utils.module_loading import import_by_path
 
 
@@ -357,33 +355,6 @@ def get_dict_lines(my_dict={}):
 def scape_nfsaas_export_path(export_path):
     splited_path = export_path.split('/')
     return str().join([slice + '\/' for slice in splited_path])[:-2]
-
-
-def clean_unused_data(export_id, export_path, host, databaseinfra):
-    provider = NfsaasProvider()
-    provider.grant_access(environment=databaseinfra.environment,
-                          host=host,
-                          export_id=export_id)
-
-    mount_path = "/mnt_{}_{}".format(databaseinfra.name, export_id)
-    command = "mkdir -p {}".format(mount_path)
-    command += "\nmount -t nfs -o bg,intr {} {}".format(
-        export_path, mount_path)
-    command += "\nrm -rf {}/*".format(mount_path)
-    command += "\numount {}".format(mount_path)
-    command += "\nrm -rf {}".format(mount_path)
-    LOG.info(command)
-
-    cs_host_attr = CsHostAttr.objects.get(host=host)
-
-    output = {}
-    exec_remote_command(server=host.address,
-                        username=cs_host_attr.vm_user,
-                        password=cs_host_attr.vm_password,
-                        command=command,
-                        output=output)
-
-    LOG.info(output)
 
 
 def get_replication_topology_instance(class_path):

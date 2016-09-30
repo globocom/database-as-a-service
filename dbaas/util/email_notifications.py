@@ -43,7 +43,6 @@ def notify_team_change_for(user=None):
     template = "team_change_notification"
     addr_from = Configuration.get_by_name("email_addr_from")
     if user.email:
-        #addr_to=Configuration.get_by_name_as_list("new_user_notify_email") + [user.email]
         addr_to = [user.email]
         context = {}
         context['user'] = user

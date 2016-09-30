@@ -7,7 +7,7 @@
 
 - fields:
     engine_type: 1
-    version: "2.4.5"
+    version: "2.4.10"
     created_at: !!timestamp '2013-01-01 00:00:00+00:00'
     updated_at: !!timestamp '2013-01-01 00:00:00+00:00'
   model: physical.Engine

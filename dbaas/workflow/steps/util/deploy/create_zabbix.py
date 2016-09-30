@@ -16,8 +16,9 @@ class CreateZabbix(BaseStep):
         return "Registering zabbix monitoring..."
 
     def do(self, workflow_dict):
-        try:
+        zabbix_provider = None
 
+        try:
             if 'databaseinfra' not in workflow_dict:
                 return False
 
@@ -39,8 +40,13 @@ class CreateZabbix(BaseStep):
             workflow_dict['exceptions']['traceback'].append(traceback)
 
             return False
+        finally:
+            if zabbix_provider:
+                zabbix_provider.logout()
 
     def undo(self, workflow_dict):
+        zabbix_provider = None
+
         try:
             if 'databaseinfra' not in workflow_dict:
                 return False
@@ -63,3 +69,6 @@ class CreateZabbix(BaseStep):
             workflow_dict['exceptions']['traceback'].append(traceback)
 
             return False
+        finally:
+            if zabbix_provider:
+                zabbix_provider.logout()

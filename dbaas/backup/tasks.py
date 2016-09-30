@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
+import logging
 from dbaas.celery import app
 from util.decorators import only_one
 from physical.models import DatabaseInfra, Plan, Instance
 from logical.models import Database
-from dbaas_nfsaas.provider import NfsaasProvider
 from models import Snapshot
 from notification.models import TaskHistory
 from system.models import Configuration
@@ -14,12 +14,13 @@ from util import exec_remote_command
 from dbaas_cloudstack.models import HostAttr as Cloudstack_HostAttr
 from util import get_worker_name
 from util import build_dict
-from util import clean_unused_data
 from util.providers import get_restore_snapshot_settings
 from workflow.workflow import start_workflow
 from notification import models
 from notification import tasks
-import logging
+from workflow.steps.util.nfsaas_utils import create_snapshot, delete_snapshot, \
+    delete_export
+
 LOG = logging.getLogger(__name__)
 
 
@@ -98,13 +99,14 @@ def make_instance_snapshot_backup(instance, error):
 
     snapshot.save()
 
-    databaseinfra = instance.databaseinfra
-    driver = databaseinfra.get_driver()
-    client = driver.get_client(instance)
-    cloudstack_hostattr = Cloudstack_HostAttr.objects.get(
-        host=instance.hostname)
-
     try:
+
+        databaseinfra = instance.databaseinfra
+        driver = databaseinfra.get_driver()
+        client = driver.get_client(instance)
+        cloudstack_hostattr = Cloudstack_HostAttr.objects.get(
+            host=instance.hostname)
+
         LOG.debug('Locking instance %s' % str(instance))
         driver.lock_database(client)
         LOG.debug('Instance %s is locked' % str(instance))
@@ -112,17 +114,13 @@ def make_instance_snapshot_backup(instance, error):
         if type(driver).__name__ == 'MySQL':
             mysql_binlog_save(client, instance, cloudstack_hostattr)
 
-        nfs_snapshot = NfsaasProvider.create_snapshot(environment=databaseinfra.environment,
-                                                      host=instance.hostname)
-        if 'error' in nfs_snapshot:
-            errormsg = nfs_snapshot['error']
-            error['errormsg'] = errormsg
-            set_backup_error(databaseinfra, snapshot, errormsg)
-            return False
+        nfs_snapshot = create_snapshot(
+            environment=databaseinfra.environment, host=instance.hostname
+        )
 
-        if 'id' in nfs_snapshot and 'snapshot' in nfs_snapshot:
+        if 'id' in nfs_snapshot and 'name' in nfs_snapshot:
             snapshot.snapshopt_id = nfs_snapshot['id']
-            snapshot.snapshot_name = nfs_snapshot['snapshot']
+            snapshot.snapshot_name = nfs_snapshot['name']
         else:
             errormsg = 'There is no snapshot information'
             error['errormsg'] = errormsg
@@ -261,17 +259,9 @@ def make_databases_backup(self):
 
 
 def remove_snapshot_backup(snapshot):
-    from dbaas_nfsaas.models import HostAttr
-
     LOG.info("Removing backup for %s" % (snapshot))
 
-    instance = snapshot.instance
-    databaseinfra = instance.databaseinfra
-    host_attr = HostAttr.objects.get(nfsaas_path=snapshot.export_path)
-
-    NfsaasProvider.remove_snapshot(environment=databaseinfra.environment,
-                                   host_attr=host_attr,
-                                   snapshot_id=snapshot.snapshopt_id)
+    delete_snapshot(snapshot)
 
     snapshot.purge_at = datetime.datetime.now()
     snapshot.save()
@@ -391,29 +381,20 @@ def purge_unused_exports():
         environment = databaseinfra.environment
 
         for instance in instances:
-            exports = HostAttr.objects.filter(host=instance.hostname,
-                                              is_active=False)
+            exports = HostAttr.objects.filter(
+                host=instance.hostname, is_active=False
+            )
             for export in exports:
-                snapshots = Snapshot.objects.filter(export_path=export.nfsaas_path,
-                                                    purge_at=None)
+                snapshots = Snapshot.objects.filter(
+                    export_path=export.nfsaas_path, purge_at=None
+                )
                 if snapshots:
                     continue
 
                 LOG.info(
-                    'Export {} will be removed'.format(export.nfsaas_export_id))
-                host = export.host
-                export_id = export.nfsaas_export_id
+                    'Export {} will be removed'.format(export.nfsaas_export_id)
+                )
 
-                clean_unused_data(export_id=export_id,
-                                  export_path=export.nfsaas_path,
-                                  host=instance.hostname,
-                                  databaseinfra=databaseinfra)
-
-                nfsaas_client = NfsaasProvider()
-                nfsaas_client.revoke_access(environment=environment,
-                                            host=host, export_id=export_id)
-
-                nfsaas_client.drop_export(environment=environment,
-                                          export_id=export_id)
+                delete_export(environment, export.nfsaas_path_host)
 
                 export.delete()

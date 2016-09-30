@@ -24,29 +24,40 @@
 {% endblock %}
 
 {% block content %}
+<script>
+    function resize_confirmation(element) {
+      if (!confirm('Are you sure?')) {
+        return false;
+      } else {
+        element.disabled=true;
+        element.form.submit();
+        return true;
+      }
+    }
+</script>
+
 <div id="content-main">
 
 
     <form id="database_resize_form" action="" class="form-horizontal well" method="POST">{% csrf_token %}
-        {% if database.databaseinfra.plan.is_ha %}
-            <div class="alert alert-warning">
-                 <h3>Warning!</h3>
-                 <h4> The resize process will switch hosts what can cause connections errors during the process.
-                </h4>
-            </div>
-        {% else %}
-             <div class="alert alert-danger">
-                 <h3>Warning!</h3>
-                 <h4>The resize process will stop the database and, consequently, it will be unavailable until the the end of the process.
-                </h4>
-            </div>
+        <div class="alert alert-warning">
+            <h3>Warning!</h3>
+            {% if database.databaseinfra.engine.is_redis %}
+                <h4>After resizing a Redis instance, you may need to resize your disk offering, please check it.</h4>
+                <br>
+            {% endif %}
 
-        {% endif %}
+            {% if database.databaseinfra.plan.is_ha %}
+                <h4> The resize process will switch hosts, and it may cause connections errors during the process.</h4>
+            {% else %}
+                 <h4>The resize process will stop the database and, consequently, it will be unavailable until the the end of the process.</h4>
+            {% endif %}
+        </div>
 
         <fieldset class="module">
         <h2>Resizing {{ database.name }}</h2>
             {{ form.as_p }}
-            <input class="btn" type="submit" value="Submit" onclick="this.disabled=true,this.form.submit(); return confirm('Are you sure?')"/>
+            <input class="btn" type="button" value="Submit" onclick="resize_confirmation(this)"/>
         </fieldset>
 
     </form>

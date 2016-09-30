@@ -28,7 +28,10 @@ class DatabaseAPITestCase(DbaaSAPITestCase, BasicTestsMixin):
         self.environment = self.datainfra.environment
 
     def model_new(self):
-        return factory.DatabaseFactory.build(databaseinfra=self.datainfra, team=self.team, project=self.project, environment=self.environment)
+        return factory.DatabaseFactory.build(
+            databaseinfra=self.datainfra, team=self.team, project=self.project,
+            environment=self.environment
+        )
 
     def model_create(self):
         return factory.DatabaseFactory(databaseinfra=self.datainfra)
@@ -42,7 +45,8 @@ class DatabaseAPITestCase(DbaaSAPITestCase, BasicTestsMixin):
 
         LOG.debug("Response: ".format(response))
         LOG.debug("Call args {}, Call count {}".format(
-            mock_delay.call_args, mock_delay.call_count))
+            mock_delay.call_args, mock_delay.call_count)
+        )
 
         self.assertEquals(mock_delay.call_count, 1)
         call_args = mock_delay.call_args[1]
@@ -53,6 +57,7 @@ class DatabaseAPITestCase(DbaaSAPITestCase, BasicTestsMixin):
         self.assertEquals(test_obj.team, call_args['team'])
         self.assertEquals(test_obj.project, call_args['project'])
         self.assertEquals(test_obj.description, call_args['description'])
+        self.assertEquals(test_obj.contacts, call_args['contacts'])
 
     def payload(self, database, **kwargs):
         data = {
@@ -62,6 +67,7 @@ class DatabaseAPITestCase(DbaaSAPITestCase, BasicTestsMixin):
             'team': reverse('team-detail', kwargs={'pk': database.team.pk}),
             'project': reverse('project-detail', kwargs={'pk': database.project.pk}),
             'description': database.description,
+            'contacts': database.contacts
         }
         return data
 
@@ -70,9 +76,11 @@ class DatabaseAPITestCase(DbaaSAPITestCase, BasicTestsMixin):
         url = self.url_detail(obj.pk)
         response = self.client.delete(url)
 
-        # assert status code
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
-        # assert if object gone
-        self.assertRaises(ObjectDoesNotExist, Database.objects.filter(
-            is_in_quarantine=False, pk=obj.pk).get)
+        self.assertRaises(
+            ObjectDoesNotExist,
+            Database.objects.filter(
+                is_in_quarantine=False, pk=obj.pk
+            ).get
+        )

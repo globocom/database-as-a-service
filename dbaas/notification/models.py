@@ -118,6 +118,14 @@ class TaskHistory(BaseModel):
             task_history.arguments = "Database name: {0},\nNew Offering: {1}".format(
                 request.kwargs['database'].name, request.kwargs['cloudstackpack'])
 
+        elif request.task == 'notification.tasks.database_disk_resize':
+            task_history.arguments = \
+                "Database name: {0}," \
+                "\nNew Disk Offering: {1}".format(
+                    request.kwargs['database'].name,
+                    request.kwargs['disk_offering']
+                )
+
         elif request.task == 'backup.tasks.restore_snapshot':
             task_history.arguments = "Restoring to an older version the database: {0}, it will finish soon.".format(
                 request.kwargs['database'].name)
@@ -143,6 +151,16 @@ class TaskHistory(BaseModel):
         elif request.task == 'notification.tasks.upgrade_mongodb_24_to_30':
             task_history.arguments = "Upgrading database {0}, to MongoDB 3.0".format(
                 request.kwargs['database'].name,)
+
+        elif request.task == 'dbaas_aclapi.tasks.unbind_address_on_database':
+            task_history.arguments = "Removing binds for {0} from {1}".format(
+                request.kwargs['database_bind'],
+                request.kwargs['database_bind'].database)
+
+        elif request.task == 'dbaas_aclapi.tasks.bind_address_on_database':
+            task_history.arguments = "Creating binds for {0} from {1}".format(
+                request.kwargs['database_bind'],
+                request.kwargs['database_bind'].database)
 
         else:
             task_history.arguments = request.args

@@ -3,7 +3,7 @@ from __future__ import absolute_import, unicode_literals
 import simple_audit
 import logging
 import datetime
-from django.db import models, transaction
+from django.db import models
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 from django.db.models.signals import pre_save, post_save, pre_delete
@@ -22,6 +22,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from logical.validators import database_name_evironment_constraint
 
 LOG = logging.getLogger(__name__)
+KB_FACTOR = 1.0 / 1024.0
 MB_FACTOR = 1.0 / 1024.0 / 1024.0
 GB_FACTOR = 1.0 / 1024.0 / 1024.0 / 1024.0
 
@@ -47,8 +48,6 @@ class Project(BaseModel):
 
 class DatabaseAliveManager(models.Manager):
 
-    """manager for returning """
-
     def get_query_set(self):
         return Database.objects.filter(is_in_quarantine=False)
 
@@ -66,42 +65,61 @@ class Database(BaseModel):
         (ALERT, 'Alert')
     )
 
-    name = models.CharField(verbose_name=_("Database name"), max_length=100,
-                            db_index=True)
+    name = models.CharField(
+        verbose_name=_("Database name"), max_length=100, db_index=True
+    )
     databaseinfra = models.ForeignKey(
-        DatabaseInfra, related_name="databases", on_delete=models.PROTECT)
+        DatabaseInfra, related_name="databases", on_delete=models.PROTECT
+    )
     project = models.ForeignKey(
-        Project, related_name="databases", on_delete=models.PROTECT, null=True, blank=True)
-    team = models.ForeignKey(Team, related_name="databases",
-                             help_text=_(
-                                 "Team that is accountable for the database"),
-                             null=True,
-                             blank=True)
+        Project, related_name="databases", on_delete=models.PROTECT, null=True,
+        blank=True
+    )
+    team = models.ForeignKey(
+        Team, related_name="databases", null=True, blank=True,
+        help_text=_("Team that is accountable for the database")
+    )
     is_in_quarantine = models.BooleanField(
-        verbose_name=_("Is database in quarantine?"), default=False)
+        verbose_name=_("Is database in quarantine?"), default=False
+    )
     quarantine_dt = models.DateField(
-        verbose_name=_("Quarantine date"), null=True, blank=True, editable=False)
+        verbose_name=_("Quarantine date"), null=True, blank=True,
+        editable=False
+    )
     description = models.TextField(
-        verbose_name=_("Description"), null=True, blank=True)
-
-    objects = models.Manager()  # The default manager.
-    alive = DatabaseAliveManager()  # The alive dbs specific manager.
-
-    quarantine_time = Configuration.get_by_name_as_int(
-        'quarantine_retention_days')
-    status = models.IntegerField(choices=DB_STATUS,
-                                 default=2)
+        verbose_name=_("Description"), null=True, blank=True
+    )
+    status = models.IntegerField(choices=DB_STATUS, default=2)
     used_size_in_bytes = models.FloatField(default=0.0)
     environment = models.ForeignKey(
         Environment, related_name="databases", on_delete=models.PROTECT,
-        db_index=True)
+        db_index=True
+    )
+    backup_path = models.CharField(
+        verbose_name=_("Backup path"), max_length=300, null=True, blank=True,
+        help_text=_("Full path to backup file")
+    )
+    contacts = models.TextField(
+        verbose_name=_("Emergency Contacts"), null=True, blank=True,
+        help_text=_(
+            "People to be reached in case of a critical incident. Eg.: 99999999 - Jhon Doe."
+        )
+    )
+    subscribe_to_email_events = models.BooleanField(
+        verbose_name=_("Subscribe to email events"), default=True,
+        help_text=_(
+            "Check this box if you'd like to receive information regarding this database by email."
+        )
+    )
 
-    backup_path = models.CharField(verbose_name=_("Backup path"), max_length=300,
-                                   help_text=_("Full path to backup file"),
-                                   null=True, blank=True)
+    objects = models.Manager()
+    alive = DatabaseAliveManager()
+    quarantine_time = Configuration.get_by_name_as_int(
+        'quarantine_retention_days'
+    )
 
     def __unicode__(self):
-        return u"%s" % self.name
+        return u"{}".format(self.name)
 
     class Meta:
         permissions = (
@@ -117,7 +135,6 @@ class Database(BaseModel):
 
     @property
     def infra(self):
-        """ Total size of database (in bytes) """
         return self.databaseinfra
 
     @property
@@ -132,22 +149,20 @@ class Database(BaseModel):
     def plan(self):
         return self.databaseinfra and self.databaseinfra.plan
 
-    # @property
-    # def environment(self):
-    #     return self.databaseinfra and self.databaseinfra.environment
-
     def delete(self, *args, **kwargs):
         if self.is_in_quarantine:
             LOG.warning(
-                "Database %s is in quarantine and will be removed" % self.name)
+                "Database {} is in quarantine and will be removed".format(
+                    self.name
+                )
+            )
             for credential in self.credentials.all():
                 instance = factory_for(self.databaseinfra)
                 instance.remove_user(credential)
-            # Call the "real" delete() method.
             super(Database, self).delete(*args, **kwargs)
 
         else:
-            LOG.warning("Putting database %s in quarantine" % self.name)
+            LOG.warning("Putting database {} in quarantine".format(self.name))
             self.is_in_quarantine = True
             self.save()
             if self.credentials.exists():
@@ -161,17 +176,18 @@ class Database(BaseModel):
                     instance.update_user(new_credential)
 
     def clean(self):
-        # slugify name
         if not self.pk:
-            # new database
             self.name = slugify(self.name)
 
         if self.name in self.__get_database_reserved_names():
             raise ValidationError(
-                _("%s is a reserved database name" % self.name))
+                _("{} is a reserved database name".format(
+                    self.name
+                ))
+            )
 
     def automatic_create_first_credential(self):
-        LOG.info("creating new credential for database %s" % self.name)
+        LOG.info("creating new credential for database {}".format(self.name))
         user = Credential.USER_PATTERN % self.name
         credential = Credential.create_new_credential(user, self)
         return credential
@@ -180,7 +196,10 @@ class Database(BaseModel):
     def provision(cls, name, databaseinfra):
         if not isinstance(databaseinfra, DatabaseInfra):
             raise ValidationError(
-                'Invalid databaseinfra type %s - %s' % (type(databaseinfra), databaseinfra))
+                'Invalid databaseinfra type {} - {}'.format(
+                    type(databaseinfra), databaseinfra
+                )
+            )
 
         database = Database()
         database.databaseinfra = databaseinfra
@@ -209,11 +228,10 @@ class Database(BaseModel):
         return self.driver.get_connection_dns_simple(database=self)
 
     def get_log_url(self):
-
         if Configuration.get_by_name_as_int('laas_integration') != 1:
             return ""
 
-        if self.databaseinfra.plan.provider == Plan.PREPROVISIONED:
+        if self.databaseinfra.plan.is_pre_provisioned:
             return ""
 
         from util import get_credentials_for
@@ -221,15 +239,15 @@ class Database(BaseModel):
         from dbaas_credentials.models import CredentialType
 
         credential = get_credentials_for(
-            environment=self.environment, credential_type=CredentialType.LOGNIT)
-        url = "%s%s" % (credential.endpoint, get_group_name(self))
-        return "%s" % (url)
+            environment=self.environment, credential_type=CredentialType.LOGNIT
+        )
+        return credential.endpoint + get_group_name(self)
 
     def get_dex_url(self):
         if Configuration.get_by_name_as_int('dex_analyze') != 1:
             return ""
 
-        if self.databaseinfra.plan.provider == Plan.PREPROVISIONED:
+        if self.databaseinfra.plan.is_pre_provisioned:
             return ""
 
         if self.engine_type != 'mongodb':
@@ -238,8 +256,7 @@ class Database(BaseModel):
         return 1
 
     def get_is_preprovisioned(self):
-        if self.databaseinfra.plan.provider == Plan.PREPROVISIONED:
-            return True
+        return self.databaseinfra.plan.is_pre_provisioned
 
     endpoint = property(get_endpoint)
     endpoint_dns = property(get_endpoint_dns)
@@ -257,8 +274,8 @@ class Database(BaseModel):
                 info = self.databaseinfra.get_info(force_refresh=True)
                 database_status = info.get_database_status(self.name)
         except ConnectionError as e:
-            LOG.error(
-                "ConnectionError calling database_status for database %s: %s" % (self, e))
+            msg = "ConnectionError calling database_status for database {}: {}".format(self, e)
+            LOG.error(msg)
             database_status = DatabaseStatus(self)
 
         return database_status
@@ -278,32 +295,34 @@ class Database(BaseModel):
 
     @property
     def total_size(self):
-        """ Total size of database (in bytes) """
         return self.databaseinfra.per_database_size_bytes
 
     @property
+    def total_size_in_kb(self):
+        return round(self.databaseinfra.per_database_size_bytes * KB_FACTOR, 2)
+
+    @property
     def total_size_in_mb(self):
-        """ Total size of database (in bytes) """
-        return self.databaseinfra.per_database_size_bytes * MB_FACTOR
+        return round(self.databaseinfra.per_database_size_bytes * MB_FACTOR, 2)
 
     @property
     def total_size_in_gb(self):
-        """ Total size of database (in bytes) """
-        return self.databaseinfra.per_database_size_bytes * GB_FACTOR
+        return round(self.databaseinfra.per_database_size_bytes * GB_FACTOR, 2)
+
+    @property
+    def used_size_in_kb(self):
+        return self.used_size_in_bytes * KB_FACTOR
 
     @property
     def used_size_in_mb(self):
-        """ Used size of database (in bytes) """
         return self.used_size_in_bytes * MB_FACTOR
 
     @property
     def used_size_in_gb(self):
-        """ Used size of database (in bytes) """
         return self.used_size_in_bytes * GB_FACTOR
 
     @property
     def capacity(self):
-        """ Float number about used capacity """
         if self.status:
             return round((1.0 * self.used_size_in_bytes / self.total_size) if self.total_size else 0, 2)
 
@@ -313,11 +332,13 @@ class Database(BaseModel):
             'quarantine_retention_days')
         quarantine_time_dt = date.today() - timedelta(days=quarantine_time)
         databases = Database.objects.filter(
-            is_in_quarantine=True, quarantine_dt__lte=quarantine_time_dt)
+            is_in_quarantine=True, quarantine_dt__lte=quarantine_time_dt
+        )
         for database in databases:
             database.delete()
             LOG.info("The database %s was deleted, because it was set to quarentine %d days ago" % (
-                database.name, quarantine_time))
+                database.name, quarantine_time)
+            )
 
     @classmethod
     def clone(cls, database, clone_name, plan, environment, user):
@@ -331,10 +352,10 @@ class Database(BaseModel):
         task_history.user = user
         task_history.save()
 
-        clone_database.delay(origin_database=database, clone_name=clone_name,
-                             plan=plan, environment=environment, user=user,
-                             task_history=task_history
-                             )
+        clone_database.delay(
+            origin_database=database, clone_name=clone_name, plan=plan,
+            environment=environment, user=user, task_history=task_history
+        )
 
     @classmethod
     def resize(cls, database, cloudstackpack, user):
@@ -348,26 +369,33 @@ class Database(BaseModel):
         task_history.user = user
         task_history.save()
 
-        resize_database.delay(database=database, cloudstackpack=cloudstackpack,
-                              user=user, task_history=task_history
-                              )
+        resize_database.delay(
+            database=database, cloudstackpack=cloudstackpack,
+            user=user, task_history=task_history
+        )
 
     @classmethod
     def recover_snapshot(cls, database, snapshot, user, task_history):
         from backup.tasks import restore_snapshot
-        LOG.info("Changing database volume with params: database {}\
-                 snapshot: {}, user: {}".format(database, snapshot, user))
+        LOG.info(
+            "Changing database volume with params: database {} snapshot: {}, user: {}".format(
+                database, snapshot, user
+            )
+        )
 
-        restore_snapshot.delay(database=database,
-                               snapshot=snapshot,
-                               user=user,
-                               task_history=task_history)
+        restore_snapshot.delay(
+            database=database, snapshot=snapshot, user=user,
+            task_history=task_history
+        )
 
     def get_metrics_url(self):
         return "/admin/logical/database/{}/metrics/".format(self.id)
 
     def get_resize_url(self):
         return "/admin/logical/database/{}/resize/".format(self.id)
+
+    def get_disk_resize_url(self):
+        return "/admin/logical/database/{}/disk_resize/".format(self.id)
 
     def get_lognit_url(self):
         return "/admin/logical/database/{}/lognit/".format(self.id)
@@ -414,10 +442,12 @@ class Database(BaseModel):
         from notification.models import TaskHistory
 
         name = self.name + ','
-        tasks = TaskHistory.objects.filter(arguments__contains=name,
-                                           task_status__in=['RUNNING',
-                                                            'PENDING',
-                                                            'WAITING'])
+        tasks = TaskHistory.objects.filter(
+            arguments__contains=name,
+            task_status__in=[
+                'RUNNING', 'PENDING', 'WAITING'
+            ]
+        )
 
         if len(tasks) == 1 and task_id:
             if tasks[0].task_id == task_id:
@@ -477,6 +507,29 @@ class Database(BaseModel):
             return True
 
         return False
+
+    def is_dead(self):
+        return self.status != Database.ALIVE
+
+    @classmethod
+    def disk_resize(cls, database, new_disk_offering, user):
+        from notification.tasks import database_disk_resize
+        from notification.models import TaskHistory
+        from physical.models import DiskOffering
+
+        task_history = TaskHistory()
+        task_history.task_name = "database_disk_resize"
+        task_history.task_status = task_history.STATUS_WAITING
+        task_history.arguments = "Database name: {}".format(database.name)
+        task_history.user = user
+        task_history.save()
+
+        disk_offering = DiskOffering.objects.get(id=new_disk_offering)
+
+        database_disk_resize.delay(
+            database=database, disk_offering=disk_offering,
+            user=user, task_history=task_history
+        )
 
 
 class Credential(BaseModel):

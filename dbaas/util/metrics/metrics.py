@@ -14,7 +14,7 @@ CPU = {"name": "cpu",
            {"name": "system", "data": "cpu.cpu_sys"},
 
        ],
-       "type": "area",
+       "type": "areaspline",
        "tooltip_point_format": """ <span style="color:{series.color}">{series.name}</span>: <b>{point.percentage:.1f}%</b> <br/>""",
        "y_axis_title": "percent",
        "stacking": 'percent',
@@ -27,7 +27,7 @@ MEMORY = {"name": "mem",
               {"name": "free", "data": "men.men_free"},
               {"name": "used", "data": "men.men_used"},
           ],
-          "type": "area",
+          "type": "areaspline",
           "tooltip_point_format": """ <span style="color:{series.color}">{series.name}</span>: <b>{point.percentage:.1f}%</b> <br/>""",
           "y_axis_title": "percent",
           "stacking": 'percent',
@@ -81,7 +81,7 @@ SWAP = {"name": "swap",
             {"name": "free", "data": "swap.free"},
             {"name": "used", "data": "swap.used"},
         ],
-        "type": "area",
+        "type": "areaspline",
         "tooltip_point_format": """ <span style="color:{series.color}">{series.name}</span>: <b>{point.percentage:.1f}%</b> <br/>""",
         "y_axis_title": "percent",
         "stacking": 'percent',
@@ -94,7 +94,7 @@ DISK = {"name": "disk",
             {"name": "available", "data": "df.available"},
             {"name": "used", "data": "df.used"},
         ],
-        "type": "area",
+        "type": "areaspline",
         "tooltip_point_format": """ <span style="color:{series.color}">{series.name}</span>: <b>{point.percentage:.1f}%</b> <br/>""",
         "y_axis_title": "percent",
         "stacking": 'percent',
@@ -378,14 +378,22 @@ def format_url(*args, **kwargs):
 
 
 def format_datapoints(datapoints, normalize_series):
+    points = []
+
     if normalize_series:
-        dp_list = [[dp[1] * 1000, 0] if index == 0 else [dp[1] * 1000,
-                                                         dp[0] - datapoints[index - 1][0]] for index,
-                   dp in enumerate(datapoints) if dp[0] is not None and datapoints[index - 1][0] is not None]
+        for index, dp in enumerate(datapoints):
+            if dp[0] is not None and datapoints[index - 1][0] is not None:
+                if index == 0:
+                    points.append([dp[1] * 1000, 0])
+                else:
+                    points.append(
+                        [dp[1] * 1000, dp[0] - datapoints[index - 1][0]]
+                    )
     else:
-        dp_list = [[dp[1] * 1000, dp[0]]
-                   for dp in datapoints if dp[0] is not None]
-    return dp_list
+        for point in datapoints:
+            if point[0] is not None:
+                points.append([point[1] * 1000, point[0]])
+    return points
 
 
 def get_graphite_metrics_datapoints(*args, **kwargs):
@@ -407,9 +415,10 @@ def get_graphite_metrics_datapoints(*args, **kwargs):
         return None
 
 
-def get_metric_datapoints_for(engine, db_name, hostname, url, metric_name=None,
-                              granurality=None, from_option=None):
-    datapoints = {}
+def get_metric_datapoints_for(
+        engine, db_name, hostname, url,
+        metric_name=None, granurality=None, from_option=None
+):
 
     if engine == "mongodb":
         graphs = MONGODB_METRICS
@@ -432,14 +441,10 @@ def get_metric_datapoints_for(engine, db_name, hostname, url, metric_name=None,
             zoomtype = 'x'
 
         for serie in graph['series']:
-
-            datapoints = get_graphite_metrics_datapoints(from_option,
-                                                         engine, db_name,
-                                                         hostname, serie[
-                                                             'data'],
-                                                         granurality,
-                                                         url=url,
-                                                         normalize_series=graph['normalize_series'])
+            datapoints = get_graphite_metrics_datapoints(
+                from_option, engine, db_name, hostname, serie['data'],
+                granurality, url=url, normalize_series=graph['normalize_series']
+            )
 
             if datapoints:
                 newserie.append({
@@ -450,9 +455,12 @@ def get_metric_datapoints_for(engine, db_name, hostname, url, metric_name=None,
                     'name': serie['name'],
                     'data': []})
 
+        if graph['type'] in ['area', 'areaspline']:
+            newserie = _complete_empty_points(newserie)
+
         newgraph.append({
             "name": graph["name"],
-            "series": str(ast.literal_eval(json.dumps(newserie))),
+            "series": json.dumps(newserie),
             "type": graph["type"],
             "tooltip_point_format": graph["tooltip_point_format"],
             "y_axis_title": graph["y_axis_title"],
@@ -463,3 +471,49 @@ def get_metric_datapoints_for(engine, db_name, hostname, url, metric_name=None,
         })
 
     return newgraph
+
+
+def _complete_empty_points(series):
+    points = {}
+    for serie in series:
+        for point in serie['data']:
+            time, value = point
+            if not time in points:
+                points[time] = {}
+            points[time].update({serie['name']: value})
+
+    from collections import OrderedDict
+    points = OrderedDict(sorted(points.items()))
+    cleaned_serie = []
+    for serie in series:
+        cleaned_serie.append({
+            'name': serie['name'],
+            'data': []
+        })
+
+    total = 0.0
+    for time, values in points.items():
+        if len(values) == len(cleaned_serie):
+            total = 0.0
+            for value in values.values():
+                total += value
+        values['total'] = total
+
+    for time, values in points.items():
+        total = values['total']
+        problems = []
+        for serie in cleaned_serie:
+            if serie['name'] in values:
+                total -= values[serie['name']]
+            else:
+                problems.append([serie['data'], time])
+
+        for serie in cleaned_serie:
+            value = None
+            if len(problems) <= 1 and serie['name'] in values:
+                value = values[serie['name']]
+            elif total > 0 and len(problems) == 1 and problems[0][0] == serie['data']:
+                value = total
+            serie['data'].append([time, value])
+
+    return cleaned_serie

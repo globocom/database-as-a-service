@@ -12,9 +12,10 @@ from django.conf.urls import patterns, url
 from django.contrib import messages
 from django.utils.html import format_html, escape
 from ..service.database import DatabaseService
-from ..forms import DatabaseForm, CloneDatabaseForm, ResizeDatabaseForm
+from ..forms import DatabaseForm, CloneDatabaseForm, ResizeDatabaseForm, \
+    DiskResizeDatabaseForm
 from ..forms import RestoreDatabaseForm
-from physical.models import Plan, Host
+from physical.models import Plan, Host, DiskOffering
 from django.forms.models import modelform_factory
 from account.models import Team
 from drivers import DatabaseAlreadyExists
@@ -41,6 +42,9 @@ from bson.json_util import loads
 from django.contrib.admin import site
 from django.db import IntegrityError
 from ..models import Database
+from ..validators import check_is_database_enabled, check_is_database_dead, \
+    check_resize_options
+from ..errors import DisabledDatabase, NoResizeOption
 
 LOG = logging.getLogger(__name__)
 
@@ -57,13 +61,20 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     perm_add_database_infra = constants.PERM_ADD_DATABASE_INFRA
 
     service_class = DatabaseService
-    search_fields = ("name", "databaseinfra__name", "team__name",
-                     "project__name", "environment__name", "databaseinfra__engine__engine_type__name")
-    list_display_basic = ["name_html", "team_admin_page", "engine", "environment", "plan",
-                          "friendly_status", "clone_html", "get_capacity_html", "metrics_html", "created_dt_format", ]
+    search_fields = (
+        "name", "databaseinfra__name", "team__name", "project__name",
+        "environment__name", "databaseinfra__engine__engine_type__name"
+    )
+    list_display_basic = [
+        "name_html", "team_admin_page", "engine", "environment", "offering",
+        "friendly_status", "clone_html", "get_capacity_html", "metrics_html",
+        "created_dt_format"
+    ]
     list_display_advanced = list_display_basic + ["quarantine_dt_format"]
-    list_filter_basic = ["project", "databaseinfra__environment",
-                         "databaseinfra__engine", "databaseinfra__plan", "databaseinfra__engine__engine_type"]
+    list_filter_basic = [
+        "project", "databaseinfra__environment", "databaseinfra__engine",
+        "databaseinfra__plan", "databaseinfra__engine__engine_type",
+    ]
     list_filter_advanced = list_filter_basic + \
         ["databaseinfra", "is_in_quarantine", "team"]
     add_form_template = "logical/database/database_add_form.html"
@@ -71,14 +82,21 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     delete_button_name = "Delete"
     fieldsets_add = (
         (None, {
-            'fields': ('name', 'description', 'project', 'engine', 'environment', 'team', 'plan', 'is_in_quarantine', )
+            'fields': (
+                'name', 'description', 'contacts', 'project', 'engine',
+                'environment', 'team', 'subscribe_to_email_events', 'plan',
+                'is_in_quarantine',
+            )
         }
         ),
     )
 
     fieldsets_change_basic = (
         (None, {
-            'fields': ['name', 'description', 'project', 'team']
+            'fields': [
+                'name', 'description', 'contacts', 'project', 'team',
+                'subscribe_to_email_events',
+            ]
         }
         ),
     )
@@ -156,7 +174,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
     def metrics_html(self, database):
         html = []
-        if database.databaseinfra.plan.provider == Plan.PREPROVISIONED:
+        if database.databaseinfra.plan.is_pre_provisioned:
             html.append("N/A")
         else:
             html.append("<a class='btn btn-info' href='%s'><i class='icon-list-alt icon-white'></i></a>" % reverse(
@@ -306,8 +324,15 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 del self.form.declared_fields['offering']
             else:
                 self.fieldsets_change[0][1]['fields'].append('offering')
-
             DatabaseForm.setup_offering_field(form=self.form, db_instance=obj)
+
+        if obj:
+            if 'disk_offering' in self.fieldsets_change[0][1]['fields']:
+                self.fieldsets_change[0][1]['fields'].remove('disk_offering')
+            self.fieldsets_change[0][1]['fields'].append('disk_offering')
+            DatabaseForm.setup_disk_offering_field(
+                form=self.form, db_instance=obj
+            )
 
         defaults = {
             "form": self.form,
@@ -347,8 +372,12 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 LOG.info("user %s teams: %s" % (request.user, teams))
                 if not teams:
                     self.message_user(
-                        request, self.database_add_perm_message, level=messages.ERROR)
-                    return HttpResponseRedirect(reverse('admin:logical_database_changelist'))
+                        request, self.database_add_perm_message,
+                        level=messages.ERROR
+                    )
+                    return HttpResponseRedirect(
+                        reverse('admin:logical_database_changelist')
+                    )
 
                 # if no team is specified and the user has only one team, then
                 # set it to the database
@@ -366,13 +395,13 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 if not form.is_valid():
                     return super(DatabaseAdmin, self).add_view(request, form_url, extra_context=extra_context)
 
-                LOG.debug(
-                    "call create_database - name=%s, plan=%s, environment=%s, team=%s, project=%s, description=%s, user=%s" % (
-                        form.cleaned_data['name'], form.cleaned_data[
-                            'plan'], form.cleaned_data['environment'],
-                        form.cleaned_data['team'], form.cleaned_data[
-                            'project'], form.cleaned_data['description'],
-                        request.user))
+                database_creation_message = "call create_database - name={}, plan={}, environment={}, team={}, project={}, description={}, user={}, subscribe_to_email_events {}".format(
+                    form.cleaned_data['name'], form.cleaned_data['plan'],
+                    form.cleaned_data['environment'], form.cleaned_data['team'],
+                    form.cleaned_data['project'], form.cleaned_data['description'],
+                    request.user, form.cleaned_data['subscribe_to_email_events']
+                )
+                LOG.debug(database_creation_message)
 
                 task_history = TaskHistory()
                 task_history.task_name = "create_database"
@@ -382,16 +411,18 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 task_history.user = request.user
                 task_history.save()
 
-                create_database.delay(name=form.cleaned_data['name'],
-                                      plan=form.cleaned_data['plan'],
-                                      environment=form.cleaned_data[
-                                          'environment'],
-                                      team=form.cleaned_data['team'],
-                                      project=form.cleaned_data['project'],
-                                      description=form.cleaned_data[
-                                          'description'],
-                                      task_history=task_history,
-                                      user=request.user)
+                create_database.delay(
+                    name=form.cleaned_data['name'],
+                    plan=form.cleaned_data['plan'],
+                    environment=form.cleaned_data['environment'],
+                    team=form.cleaned_data['team'],
+                    project=form.cleaned_data['project'],
+                    description=form.cleaned_data['description'],
+                    subscribe_to_email_events=form.cleaned_data['subscribe_to_email_events'],
+                    contacts=form.cleaned_data['contacts'],
+                    task_history=task_history,
+                    user=request.user
+                )
 
                 url = reverse('admin:notification_taskhistory_changelist')
                 # Redirect after POST
@@ -423,7 +454,16 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         else:
             extra_context['is_dba'] = False
 
-        return super(DatabaseAdmin, self).change_view(request, object_id, form_url, extra_context=extra_context)
+        if request.method == 'POST':
+            form = DatabaseForm(request.POST)
+            if not form.is_valid():
+                return super(DatabaseAdmin, self).change_view(
+                    request, object_id, form_url, extra_context=extra_context
+                )
+
+        return super(DatabaseAdmin, self).change_view(
+            request, object_id, form_url, extra_context=extra_context
+        )
 
     def delete_view(self, request, object_id, extra_context=None):
         database = Database.objects.get(id=object_id)
@@ -564,9 +604,9 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
     @staticmethod
     def get_granurality(from_option):
-        options = {"2hours": '10seconds',
+        options = {"2hours": '1minute',
                    "1day": '1minute',
-                   "7days": '10minutes',
+                   "7days": '10minute',
                    "30days": '1hour',
                    }
 
@@ -693,13 +733,13 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             environment, lognit_environment, uri)
         try:
             database_logs = json.loads(database_logs)
-        except Exception, e:
+        except Exception as e:
             pass
         else:
             for database_log in database_logs:
                 try:
                     items = database_log['items']
-                except KeyError, e:
+                except KeyError as e:
                     pass
                 else:
                     parsed_logs = "\n".join(
@@ -759,40 +799,20 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         return render_to_response("logical/database/dex_analyze.html", locals(), context_instance=RequestContext(request))
 
     def database_resize_view(self, request, database_id):
-        from dbaas_cloudstack.models import CloudStackPack
+        try:
+            check_is_database_dead(database_id, 'VM resize')
+            database = check_is_database_enabled(database_id, 'VM resize')
 
-        database = Database.objects.get(id=database_id)
+            from dbaas_cloudstack.models import CloudStackPack
+            offerings = CloudStackPack.objects.filter(
+                offering__region__environment=database.environment,
+                engine_type__name=database.engine_type
+            ).exclude(offering__serviceofferingid=database.offering_id)
+            check_resize_options(database_id, offerings)
 
-        url = reverse('admin:logical_database_change', args=[database.id])
-
-        if database.is_in_quarantine:
-            self.message_user(
-                request, "Database in quarantine and cannot be resized", level=messages.ERROR)
-            return HttpResponseRedirect(url)  # Redirect after POST
-
-        if database.status != Database.ALIVE or not database.database_status.is_alive:
-            self.message_user(
-                request, "Database is dead  and cannot be resized", level=messages.ERROR)
-            return HttpResponseRedirect(url)  # Redirect after POST
-
-        if database.is_beeing_used_elsewhere():
-            self.message_user(
-                request, "Database is beeing used by another task, please check your tasks", level=messages.ERROR)
-            return HttpResponseRedirect(url)
-
-        if database.has_migration_started():
-            self.message_user(
-                request, "Database {} cannot be resized because it is beeing migrated.".format(database.name), level=messages.ERROR)
-            url = reverse('admin:logical_database_changelist')
-            return HttpResponseRedirect(url)
-
-        if not CloudStackPack.objects.filter(
-            offering__region__environment=database.environment,
-            engine_type__name=database.engine_type
-        ).exclude(offering__serviceofferingid=database.offering_id):
-            self.message_user(
-                request, "Database has no offerings availables.", level=messages.ERROR)
-            return HttpResponseRedirect(url)  # Redirect after POST
+        except (DisabledDatabase, NoResizeOption) as err:
+            self.message_user(request, err.message, messages.ERROR)
+            return HttpResponseRedirect(err.url)
 
         form = None
         if request.method == 'POST':  # If the form has been submitted...
@@ -813,6 +833,39 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             form = ResizeDatabaseForm(initial={
                                       "database_id": database_id, "original_offering_id": database.offering_id},)  # An unbound form
         return render_to_response("logical/database/resize.html",
+                                  locals(),
+                                  context_instance=RequestContext(request))
+
+    def database_disk_resize_view(self, request, database_id):
+        try:
+            database = check_is_database_enabled(database_id, 'disk resize')
+
+            offerings = DiskOffering.objects.all().exclude(
+                id=database.databaseinfra.disk_offering.id
+            )
+            check_resize_options(database_id, offerings)
+        except (DisabledDatabase, NoResizeOption) as err:
+            self.message_user(request, err.message, messages.ERROR)
+            return HttpResponseRedirect(err.url)
+
+        form = None
+        if request.method == 'POST':
+            form = DiskResizeDatabaseForm(database=database, data=request.POST)
+            if form.is_valid():
+                Database.disk_resize(
+                    database=database,
+                    new_disk_offering=request.POST.get('target_offer'),
+                    user=request.user
+                )
+
+                url = reverse('admin:notification_taskhistory_changelist')
+                return HttpResponseRedirect(
+                    "{}?user={}".format(url, request.user.username)
+                )
+        else:
+            form = DiskResizeDatabaseForm(database=database)
+
+        return render_to_response("logical/database/disk_resize.html",
                                   locals(),
                                   context_instance=RequestContext(request))
 
@@ -992,41 +1045,57 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
         return HttpResponseRedirect(url)
 
+    # Create your views here.
     def get_urls(self):
         urls = super(DatabaseAdmin, self).get_urls()
-        my_urls = patterns('',
-                           url(r'^/?(?P<database_id>\d+)/clone/$', self.admin_site.admin_view(self.clone_view),
-                               name="database_clone"),
+        my_urls = patterns(
+            '',
+            url(r'^/?(?P<database_id>\d+)/clone/$',
+                self.admin_site.admin_view(self.clone_view),
+                name="database_clone"),
 
-                           url(r'^/?(?P<database_id>\d+)/metrics/$', self.admin_site.admin_view(self.metrics_view),
-                               name="database_metrics"),
+            url(r'^/?(?P<database_id>\d+)/metrics/$',
+                self.admin_site.admin_view(self.metrics_view),
+                name="database_metrics"),
 
-                           url(r'^/?(?P<database_id>\d+)/metricdetail/$', self.admin_site.admin_view(self.metricdetail_view),
-                               name="database_metricdetail"),
+            url(r'^/?(?P<database_id>\d+)/metricdetail/$',
+                self.admin_site.admin_view(self.metricdetail_view),
+                name="database_metricdetail"),
 
-                           url(r'^/?(?P<database_id>\d+)/resize/$', self.admin_site.admin_view(self.database_resize_view),
-                               name="database_resize"),
+            url(r'^/?(?P<database_id>\d+)/resize/$',
+                self.admin_site.admin_view(self.database_resize_view),
+                name="database_resize"),
 
-                           url(r'^/?(?P<database_id>\d+)/lognit/$', self.admin_site.admin_view(self.database_log_view),
-                               name="database_resize"),
+            url(r'^/?(?P<database_id>\d+)/disk_resize/$',
+                self.admin_site.admin_view(
+                    self.database_disk_resize_view),
+                name="database_disk_resize"),
 
-                           url(r'^/?(?P<database_id>\d+)/dex/$', self.admin_site.admin_view(self.database_dex_analyze_view),
-                               name="database_dex_analyze_view"),
+            url(r'^/?(?P<database_id>\d+)/lognit/$',
+                self.admin_site.admin_view(self.database_log_view),
+                name="database_resize"),
 
-                           url(r'^/?(?P<database_id>\d+)/restore/$', self.admin_site.admin_view(self.restore_snapshot),
-                               name="database_restore_snapshot"),
+            url(r'^/?(?P<database_id>\d+)/dex/$',
+                self.admin_site.admin_view(self.database_dex_analyze_view),
+                name="database_dex_analyze_view"),
 
-                           url(r'^/?(?P<database_id>\d+)/initialize_migration/$', self.admin_site.admin_view(self.initialize_migration),
-                               name="database_initialize_migration"),
+            url(r'^/?(?P<database_id>\d+)/restore/$',
+                self.admin_site.admin_view(self.restore_snapshot),
+                name="database_restore_snapshot"),
 
-                           url(r'^/?(?P<database_id>\d+)/initialize_flipperfox_migration/$', self.admin_site.admin_view(self.initialize_flipperfox_migration),
-                               name="database_initialize_flipperfox_migration"),
+            url(r'^/?(?P<database_id>\d+)/initialize_migration/$',
+                self.admin_site.admin_view(self.initialize_migration),
+                name="database_initialize_migration"),
 
-                           url(r'^/?(?P<database_id>\d+)/mongodb_engine_version_upgrade/$',
-                               self.admin_site.admin_view(
-                                   self.mongodb_engine_version_upgrade),
-                               name="mongodb_engine_version_upgrade"),
-                           )
+            url(r'^/?(?P<database_id>\d+)/initialize_flipperfox_migration/$',
+                self.admin_site.admin_view(self.initialize_flipperfox_migration),
+                name="database_initialize_flipperfox_migration"),
+
+            url(r'^/?(?P<database_id>\d+)/mongodb_engine_version_upgrade/$',
+                self.admin_site.admin_view(
+                    self.mongodb_engine_version_upgrade),
+                name="mongodb_engine_version_upgrade"),
+        )
 
         return my_urls + urls
 
@@ -1053,8 +1122,9 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 raise PermissionDenied
 
             n = queryset.count()
-            quarantine = any(result[
-                             'is_in_quarantine'] == True for result in queryset.values('is_in_quarantine'))
+            quarantine = any(
+                result['is_in_quarantine'] is True for result in queryset.values('is_in_quarantine')
+            )
 
             if n:
                 for obj in queryset:

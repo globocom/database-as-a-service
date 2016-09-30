@@ -40,46 +40,56 @@ def rollback_database(dest_database):
 
 
 @app.task(bind=True)
-def create_database(self, name, plan, environment, team, project, description, task_history=None, user=None):
+def create_database(
+    self, name, plan, environment, team, project, description, contacts,
+    subscribe_to_email_events=True, task_history=None, user=None
+):
     AuditRequest.new_request("create_database", user, "localhost")
     try:
 
         worker_name = get_worker_name()
-        task_history = TaskHistory.register(request=self.request, task_history=task_history,
-                                            user=user, worker_name=worker_name)
+        task_history = TaskHistory.register(
+            request=self.request, task_history=task_history, user=user,
+            worker_name=worker_name
+        )
 
-        LOG.info("id: %s | task: %s | kwargs: %s | args: %s" % (
-            self.request.id, self.request.task, self.request.kwargs, str(self.request.args)))
+        LOG.info(
+            "id: %s | task: %s | kwargs: %s | args: %s" % (
+                self.request.id, self.request.task, self.request.kwargs,
+                str(self.request.args)
+            )
+        )
 
         task_history.update_details(persist=True, details="Loading Process...")
 
-        result = make_infra(plan=plan,
-                            environment=environment,
-                            name=name,
-                            team=team,
-                            project=project,
-                            description=description,
-                            task=task_history,
-                            )
+        result = make_infra(
+            plan=plan, environment=environment, name=name, team=team,
+            project=project, description=description,
+            subscribe_to_email_events=subscribe_to_email_events, task=task_history,
+            contacts=contacts
+        )
 
-        if result['created'] == False:
-
+        if result['created'] is False:
             if 'exceptions' in result:
-                error = "\n".join(": ".join(err)
-                                  for err in result['exceptions']['error_codes'])
+                error = "\n".join(
+                    ": ".join(err) for err in result['exceptions']['error_codes']
+                )
                 traceback = "\nException Traceback\n".join(
-                    result['exceptions']['traceback'])
+                    result['exceptions']['traceback']
+                )
                 error = "{}\n{}\n{}".format(error, traceback, error)
             else:
                 error = "There is not any infra-structure to allocate this database."
 
             task_history.update_status_for(
-                TaskHistory.STATUS_ERROR, details=error)
+                TaskHistory.STATUS_ERROR, details=error
+            )
             return
 
         task_history.update_dbid(db=result['database'])
         task_history.update_status_for(
-            TaskHistory.STATUS_SUCCESS, details='Database created successfully')
+            TaskHistory.STATUS_SUCCESS, details='Database created successfully'
+        )
 
         return
 
@@ -139,21 +149,19 @@ def clone_database(self, origin_database, clone_name, plan, environment, task_hi
         LOG.info("origin_database: %s" % origin_database)
 
         task_history.update_details(persist=True, details="Loading Process...")
-        result = clone_infra(plan=plan,
-                             environment=environment,
-                             name=clone_name,
-                             team=origin_database.team,
-                             project=origin_database.project,
-                             description=origin_database.description,
-                             task=task_history,
-                             clone=origin_database,
-                             )
+        result = clone_infra(
+            plan=plan, environment=environment, name=clone_name,
+            team=origin_database.team, project=origin_database.project,
+            description=origin_database.description, task=task_history,
+            clone=origin_database, contacts=origin_database.contacts,
+            subscribe_to_email_events=origin_database.subscribe_to_email_events
+        )
 
-        if result['created'] == False:
-
+        if result['created'] is False:
             if 'exceptions' in result:
-                error = "\n\n".join(": ".join(err)
-                                    for err in result['exceptions']['error_codes'])
+                error = "\n\n".join(
+                    ": ".join(err) for err in result['exceptions']['error_codes']
+                )
                 traceback = "\n\nException Traceback\n".join(
                     result['exceptions']['traceback'])
                 error = "{}\n{}".format(error, traceback)
@@ -161,7 +169,8 @@ def clone_database(self, origin_database, clone_name, plan, environment, task_hi
                 error = "There is not any infra-structure to allocate this database."
 
             task_history.update_status_for(
-                TaskHistory.STATUS_ERROR, details=error)
+                TaskHistory.STATUS_ERROR, details=error
+            )
             return
 
         task_history.update_dbid(db=result['database'])
@@ -207,17 +216,27 @@ def databaseinfra_notification(self, user=None):
         return
 
     # Sum capacity per databseinfra with parameter plan, environment and engine
-    infras = DatabaseInfra.objects.values('plan__name', 'environment__name', 'engine__engine_type__name',
-                                          'plan__provider').annotate(capacity=Sum('capacity'))
+    infras = DatabaseInfra.objects.values(
+        'plan__name', 'environment__name', 'engine__engine_type__name',
+        'plan__provider'
+    ).annotate(capacity=Sum('capacity'))
     for infra in infras:
-        # total database created in databaseinfra per plan, environment and
-        # engine
-        used = DatabaseInfra.objects.filter(plan__name=infra['plan__name'],
-                                            environment__name=infra[
-                                                'environment__name'],
-                                            engine__engine_type__name=infra['engine__engine_type__name']).aggregate(
-            used=Count('databases'))
+        try:
+            database = infra.databases.get()
+        except Database.MultipleObjectsReturned:
+            pass
+        else:
+            if database.is_in_quarantine:
+                continue
+            if not database.subscribe_to_email_events:
+                continue
+
+        used = DatabaseInfra.objects.filter(
+            plan__name=infra['plan__name'], environment__name=infra['environment__name'],
+            engine__engine_type__name=infra['engine__engine_type__name']
+        ).aggregate(used=Count('databases'))
         # calculate the percentage
+
         percent = int(used['used'] * 100 / infra['capacity'])
         if percent >= threshold_infra_notification and infra['plan__provider'] != Plan.CLOUDSTACK:
             LOG.info('Plan %s in environment %s with %s%% occupied' % (
@@ -231,8 +250,10 @@ def databaseinfra_notification(self, user=None):
             context['percent'] = percent
             email_notifications.databaseinfra_ending(context=context)
 
-        task_history.update_status_for(TaskHistory.STATUS_SUCCESS,
-                                       details='Databaseinfra Notification successfully sent to dbaas admins!')
+        task_history.update_status_for(
+            TaskHistory.STATUS_SUCCESS,
+            details='Databaseinfra Notification successfully sent to dbaas admins!'
+        )
     return
 
 
@@ -249,7 +270,9 @@ def database_notification_for_team(team=None):
         LOG.warning("database notification is disabled")
         return
 
-    databases = Database.objects.filter(team=team, is_in_quarantine=False)
+    databases = Database.objects.filter(
+        team=team, is_in_quarantine=False, subscribe_to_email_events=True
+    )
     msgs = []
     for database in databases:
         used = database.used_size_in_mb
@@ -792,3 +815,82 @@ def upgrade_mongodb_24_to_30(self, database, user, task_history=None):
         LOG.warning("MongoDB Upgrade finished with errors")
     finally:
         enable_zabbix_alarms(database)
+
+
+@app.task(bind=True)
+def database_disk_resize(self, database, disk_offering, task_history, user):
+    from dbaas_nfsaas.models import HostAttr
+    from workflow.steps.util.nfsaas_utils import resize_disk
+
+    AuditRequest.new_request("database_disk_resize", user, "localhost")
+
+    databaseinfra = database.databaseinfra
+    old_disk_offering = database.databaseinfra.disk_offering
+    resized = []
+
+    try:
+        worker_name = get_worker_name()
+        task_history = TaskHistory.register(
+            request=self.request, task_history=task_history,
+            user=user, worker_name=worker_name
+        )
+
+        task_history.update_details(
+            persist=True,
+            details='\nLoading Disk offering'
+        )
+
+        for instance in databaseinfra.get_driver().get_database_instances():
+            if not HostAttr.objects.filter(host_id=instance.hostname_id).exists():
+                continue
+
+            task_history.update_details(
+                persist=True,
+                details='\nChanging instance {} to '
+                        'NFS {}'.format(instance, disk_offering)
+            )
+            if resize_disk(
+                    environment=database.environment,
+                    host=instance.hostname,
+                    disk_offering=disk_offering):
+                resized.append(instance)
+
+        task_history.update_details(
+            persist=True,
+            details='\nUpdate DBaaS metadata from {} to '
+                    '{}'.format(databaseinfra.disk_offering, disk_offering)
+        )
+        databaseinfra.disk_offering = disk_offering
+        databaseinfra.save()
+
+        task_history.update_status_for(
+            status=TaskHistory.STATUS_SUCCESS,
+            details='\nDisk resize successfully done.'
+        )
+        return True
+
+    except Exception as e:
+        error = "Disk resize ERROR: {}".format(e)
+        LOG.error(error)
+
+        if databaseinfra.disk_offering != old_disk_offering:
+            task_history.update_details(
+                persist=True, details='\nUndo update DBaaS metadata'
+            )
+            databaseinfra.disk_offering = old_disk_offering
+            databaseinfra.save()
+
+        for instance in resized:
+            task_history.update_details(
+                persist=True,
+                details='\nUndo NFS change for instance {}'.format(instance)
+            )
+            resize_disk(
+                environment=database.environment,
+                host=instance.hostname,
+                disk_offering=old_disk_offering
+            )
+
+        task_history.update_status_for(TaskHistory.STATUS_ERROR, details=error)
+    finally:
+        AuditRequest.cleanup_request()

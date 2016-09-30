@@ -44,10 +44,14 @@ class InstanceAdmin(django_admin.TabularInline):
 
 
 class DatabaseInfraAdmin(admin.DjangoServicesAdmin):
+    search_fields = (
+        "name", "user", "instances__address", "instances__dns",
+        "instances__hostname__hostname"
+    )
     service_class = DatabaseInfraService
-    search_fields = ("name", "user", "instances__address",)
     list_display = (
-        "name", "user", "environment", "show_instances", "capacity_bar")
+        "name", "user", "environment", "show_instances", "capacity_bar"
+    )
     list_filter = ("engine", "environment")
     save_on_top = True
 
@@ -59,6 +63,12 @@ class DatabaseInfraAdmin(admin.DjangoServicesAdmin):
         DatabaseInfraAttrInline,
         DatabaseInfraOfferingInline,
     ]
+
+    def get_readonly_fields(self, request, obj=None):
+        if obj:
+            if obj.plan and not obj.plan.is_pre_provisioned:
+                return self.readonly_fields + ('disk_offering', )
+        return self.readonly_fields
 
     def capacity_bar(self, datainfra):
         return render_progress_bar(datainfra.used, datainfra.capacity)

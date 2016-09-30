@@ -84,6 +84,10 @@ class Engine(BaseModel):
     def __unicode__(self):
         return "%s_%s" % (self.name, self.version)
 
+    @property
+    def is_redis(self):
+        return self.name == 'redis'
+
 
 class ReplicationTopology(BaseModel):
 
@@ -100,6 +104,49 @@ class ReplicationTopology(BaseModel):
         verbose_name=_("Replication Class"), max_length=200,
         help_text="your.module.name.Class"
     )
+
+
+class DiskOffering(BaseModel):
+
+    name = models.CharField(
+        verbose_name=_("Offering"), max_length=255, unique=True)
+    size_kb = models.PositiveIntegerField(verbose_name=_("Size KB"))
+    available_size_kb = models.PositiveIntegerField(
+        verbose_name=_("Available Size KB")
+    )
+
+    def size_gb(self):
+        if self.size_kb:
+            return round(self.converter_kb_to_gb(self.size_kb), 2)
+    size_gb.short_description = "Size GB"
+
+    def size_bytes(self):
+        return self.converter_kb_to_bytes(self.size_kb)
+    size_bytes.short_description = "Size Bytes"
+
+    def available_size_gb(self):
+        if self.available_size_kb:
+            return round(self.converter_kb_to_gb(self.available_size_kb), 2)
+    available_size_gb.short_description = "Available Size GB"
+
+    def available_size_bytes(self):
+        return self.converter_kb_to_bytes(self.available_size_kb)
+    size_bytes.short_description = "Available Size Bytes"
+
+    def converter_kb_to_gb(self, value):
+        if value:
+            return (value / 1024.0) / 1024.0
+
+    def converter_kb_to_bytes(self, value):
+        if value:
+            return value * 1024.0
+
+    def converter_gb_to_kb(self, value):
+        if value:
+            return (value * 1024) * 1024
+
+    def __unicode__(self):
+        return '{} ({} GB)'.format(self.name, self.available_size_gb())
 
 
 class Plan(BaseModel):
@@ -144,6 +191,9 @@ class Plan(BaseModel):
                                                    verbose_name=_("Flipper Fox Migration plan"),
                                                    on_delete=models.SET_NULL,
                                                    related_name='flipperfox_migration_plan')
+    disk_offering = models.ForeignKey(
+        DiskOffering, related_name="plans", on_delete=models.PROTECT, null=True
+    )
 
     @property
     def engine_type(self):
@@ -152,6 +202,10 @@ class Plan(BaseModel):
     @property
     def engines(self):
         return Engine.objects.filter(id=self.engine_id)
+
+    @property
+    def is_pre_provisioned(self):
+        return self.provider == Plan.PREPROVISIONED
 
     def __unicode__(self):
         return "%s" % (self.name)
@@ -230,6 +284,10 @@ class DatabaseInfra(BaseModel):
                                         "Usually it is in the form host:port[,host_n:port_n]. If the engine is mongodb this will be automatically generated."),
                                     blank=True,
                                     null=True)
+    disk_offering = models.ForeignKey(
+        DiskOffering, related_name="databaseinfras",
+        on_delete=models.PROTECT, null=True
+    )
 
     def __unicode__(self):
         return self.name
@@ -251,6 +309,9 @@ class DatabaseInfra(BaseModel):
 
     @property
     def per_database_size_bytes(self):
+        if self.disk_offering and self.engine.engine_type.name != 'redis':
+            return self.disk_offering.available_size_bytes()
+
         if not self.per_database_size_mbytes:
             return 0
         return self.per_database_size_mbytes * 1024 * 1024
@@ -515,6 +576,7 @@ def databaseinfra_pre_save(sender, **kwargs):
         databaseinfra.plan = databaseinfra.engine.engine_type.default_plan
         LOG.warning("No plan specified, using default plan (%s) for engine %s" % (
             databaseinfra, databaseinfra.engine))
+        databaseinfra.disk_offering = databaseinfra.plan.disk_offering
 
 
 @receiver(pre_save, sender=Plan)
