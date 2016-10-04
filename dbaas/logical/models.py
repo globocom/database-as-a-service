@@ -499,6 +499,14 @@ class Database(BaseModel):
             user=user, task_history=task_history
         )
 
+    def update_host_disk_used_size(self, host_address, used_size_kb):
+        instance = self.databaseinfra.instances.get(address=host_address)
+        nfsaas_host = instance.hostname.nfsaas_host_attributes.first()
+        if nfsaas_host:
+            nfsaas_host.nfsaas_used_size_kb = used_size_kb
+            nfsaas_host.save()
+        return nfsaas_host
+
 
 class Credential(BaseModel):
     USER_PATTERN = "u_%s"

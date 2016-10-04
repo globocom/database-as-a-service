@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 import mock
-from django.test import TestCase
-from django.db import IntegrityError
-from . import factory
-from physical.tests import factory as physical_factory
-from ..models import Database
-from physical.models import DatabaseInfra
-from drivers import base
 import logging
 from unittest import skip
+from django.test import TestCase
+from django.db import IntegrityError
+from drivers import base
+from physical.tests import factory as physical_factory
+from physical.models import DatabaseInfra
+from ..models import Database
+from . import factory
 
 LOG = logging.getLogger(__name__)
 
@@ -103,6 +103,36 @@ class DatabaseTestCase(TestCase):
         self.assertEqual(
             [mock.call(), mock.call(force_refresh=True)], get_info.call_args_list)
 
+    def test_can_update_nfsaas_used_disk_size(self):
+        database = factory.DatabaseFactory()
+        database.databaseinfra = self.databaseinfra
+
+        nfsaas_host = physical_factory.NFSaaSHostAttr()
+        nfsaas_host.host = self.instance.hostname
+        nfsaas_host.save()
+
+        old_used_size = nfsaas_host.nfsaas_used_size_kb
+        nfsaas_host = database.update_host_disk_used_size(
+            host_address=self.instance.address, used_size_kb=300
+        )
+        self.assertNotEqual(nfsaas_host.nfsaas_used_size_kb, old_used_size)
+        self.assertEqual(nfsaas_host.nfsaas_used_size_kb, 300)
+
+        old_used_size = nfsaas_host.nfsaas_used_size_kb
+        nfsaas_host = database.update_host_disk_used_size(
+            host_address=self.instance.address, used_size_kb=500
+        )
+        self.assertNotEqual(nfsaas_host.nfsaas_used_size_kb, old_used_size)
+        self.assertEqual(nfsaas_host.nfsaas_used_size_kb, 500)
+
+    def test_cannot_update_nfsaas_used_disk_size_host_not_nfsaas(self):
+        database = factory.DatabaseFactory()
+        database.databaseinfra = self.databaseinfra
+
+        nfsaas_host = database.update_host_disk_used_size(
+            host_address=self.instance.address, used_size_kb=300
+        )
+        self.assertIsNone(nfsaas_host)
     '''
 
     @mock.patch.object(clone_database, 'delay')

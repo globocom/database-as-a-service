@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 import factory
+from dbaas_nfsaas.models import HostAttr
 from .. import models
 
 
@@ -96,3 +97,15 @@ class InstanceFactory(factory.DjangoModelFactory):
     hostname = factory.SubFactory(HostFactory)
     status = 1
     instance_type = 1
+
+
+class NFSaaSHostAttr(factory.DjangoModelFactory):
+    FACTORY_FOR = HostAttr
+
+    host = factory.SubFactory(HostFactory)
+    nfsaas_export_id = factory.Sequence(lambda n: n)
+    nfsaas_path = factory.Sequence(lambda n: 'vol/testing-{0}'.format(n))
+    nfsaas_path_host = factory.Sequence(lambda n: 'testing-{0}'.format(n))
+    is_active = True
+    nfsaas_size_kb = 1000
+    nfsaas_used_size_kb = 10
