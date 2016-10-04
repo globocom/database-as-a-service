@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 from django.test import TestCase
-from notification.errors import NoDiskOfferingError
+from physical.errors import NoDiskOfferingError
 
 
 class TaskHistoryTestCase(TestCase):

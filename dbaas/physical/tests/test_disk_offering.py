@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 import logging
+from django.core.cache import cache
 from django.test import TestCase
 from django.contrib import admin
-from django.core.cache import cache
+from physical.tests.factory import DiskOfferingFactory
+from physical.errors import NoDiskOfferingError
 from ..admin.disk_offering import DiskOfferingAdmin
 from ..forms.disk_offerring import DiskOfferingForm
 from ..models import DiskOffering
-from physical.tests.factory import DiskOfferingFactory
 
 LOG = logging.getLogger(__name__)
 SEARCH_FIELDS = ('name', )
@@ -18,9 +19,23 @@ UNICODE_FORMAT = '{} ({} GB)'
 
 class DiskOfferingTestCase(TestCase):
 
-    def setUp(self):
-        # to avoid caching, clear it before tests
+    def create_basic_disks(self):
+        DiskOffering.objects.all().delete()
         cache.clear()
+
+        self.bigger = DiskOfferingFactory()
+        self.bigger.size_kb *= 2
+        self.bigger.available_size_kb *= 2
+        self.bigger.save()
+
+        self.medium = DiskOfferingFactory()
+
+        self.smaller = DiskOfferingFactory()
+        self.smaller.size_kb /= 2
+        self.smaller.available_size_kb /= 2
+        self.smaller.save()
+
+    def setUp(self):
         self.admin = DiskOfferingAdmin(DiskOffering, admin.sites.AdminSite())
 
     def test_search_fields(self):
@@ -201,3 +216,28 @@ class DiskOfferingTestCase(TestCase):
         self.assertIn(DiskOffering, admin.site._registry)
         admin_class = admin.site._registry[DiskOffering]
         self.assertIsInstance(admin_class, DiskOfferingAdmin)
+
+    def test_can_found_greater_disk(self):
+        self.create_basic_disks()
+
+        found = DiskOffering.first_greater_than(self.smaller.available_size_kb)
+        self.assertEqual(self.medium, found)
+
+        found = DiskOffering.first_greater_than(self.medium.available_size_kb)
+        self.assertEqual(self.bigger, found)
+
+    def test_cannot_found_greater_disk(self):
+        self.create_basic_disks()
+
+        self.assertRaises(
+            NoDiskOfferingError,
+            DiskOffering.first_greater_than, self.bigger.available_size_kb
+        )
+
+    def test_can_found_greater_disk_with_exclude(self):
+        self.create_basic_disks()
+
+        found = DiskOffering.first_greater_than(
+            self.smaller.available_size_kb, exclude_id=self.medium.id
+        )
+        self.assertEqual(self.bigger, found)
