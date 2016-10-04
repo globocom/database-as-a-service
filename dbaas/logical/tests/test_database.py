@@ -8,8 +8,8 @@ from django.db import IntegrityError
 from drivers import base
 from physical.tests import factory as physical_factory
 from physical.models import DatabaseInfra
+from logical.tests import factory
 from ..models import Database
-from . import factory
 
 LOG = logging.getLogger(__name__)
 
