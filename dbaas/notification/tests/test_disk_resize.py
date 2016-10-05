@@ -4,7 +4,7 @@ from django.test import TestCase
 from dbaas_nfsaas.models import HostAttr
 from physical.tests import factory as physical_factory
 from logical.tests import factory as logical_factory
-from ..tasks_disk_resize import update_used_kb, disk_auto_resize
+from ..tasks_disk_resize import update_used_kb
 from .factory import NotificationHistoryFactory
 
 UPDATE_USED_SIZE_SUCCESS = '---> Used disk size updated. NFS: {}'

@@ -70,7 +70,7 @@ def zabbix_collect_used_disk(task):
                 if usage_percentage >= threshold_disk_resize:
                     try:
                         task_resize = disk_auto_resize(
-                            database=database, used_size=disk_used
+                            database=database, current_size=disk_size
                         )
                     except Exception as e:
                         problems += 1
@@ -133,8 +133,8 @@ def update_used_kb(database, address, used_size, task):
     return True
 
 
-def disk_auto_resize(database, used_size):
-    disk = DiskOffering.first_greater_than(used_size + 1024)
+def disk_auto_resize(database, current_size):
+    disk = DiskOffering.first_greater_than(current_size + 1024)
 
     task = TaskHistory()
     task.task_name = "database_disk_auto_resize"
