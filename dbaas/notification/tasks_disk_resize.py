@@ -96,7 +96,7 @@ def zabbix_collect_used_disk(task):
 
             zabbix_provider.logout()
 
-    details = 'Collected {} | Resizes: {} | Problems: {}'.format(
+    details = 'Collected: {} | Resize: {} | Problems: {}'.format(
         collected, resizes, problems
     )
     task.update_status_for(status=status, details=details)
