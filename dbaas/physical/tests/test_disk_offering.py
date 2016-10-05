@@ -5,7 +5,7 @@ from django.core.cache import cache
 from django.test import TestCase
 from django.contrib import admin
 from physical.tests.factory import DiskOfferingFactory
-from physical.errors import NoDiskOfferingError
+from physical.errors import NoDiskOfferingGreaterError
 from ..admin.disk_offering import DiskOfferingAdmin
 from ..forms.disk_offerring import DiskOfferingForm
 from ..models import DiskOffering
@@ -230,7 +230,7 @@ class DiskOfferingTestCase(TestCase):
         self.create_basic_disks()
 
         self.assertRaises(
-            NoDiskOfferingError,
+            NoDiskOfferingGreaterError,
             DiskOffering.first_greater_than, self.bigger.available_size_kb
         )
 
