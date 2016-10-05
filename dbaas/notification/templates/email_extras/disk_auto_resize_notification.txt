@@ -1,0 +1,12 @@
+Database {{database.name}} disk was resized
+
+The Database {{database.name}} in {{database.environment}} environment was almost full ({{usage_percentage}}% in use).
+
+We automatically did the disk resize to {{new_disk_offering}}.
+
+You are receiving this email because in our records you are in team {{ database.team.name }}.
+If this is not right, contact the DBaaS system administrators.
+
+Regards,
+DBaaS notification robot
+{{domain}}

@@ -12,6 +12,7 @@ from logical.models import Database
 from system.models import Configuration
 from .models import TaskHistory
 from .tasks import database_disk_resize
+from util import email_notifications
 
 
 def zabbix_collect_used_disk(task):
@@ -70,7 +71,9 @@ def zabbix_collect_used_disk(task):
                 if usage_percentage >= threshold_disk_resize:
                     try:
                         task_resize = disk_auto_resize(
-                            database=database, current_size=disk_size
+                            database=database,
+                            current_size=disk_size,
+                            usage_percentage=usage_percentage
                         )
                     except Exception as e:
                         problems += 1
@@ -133,7 +136,7 @@ def update_used_kb(database, address, used_size, task):
     return True
 
 
-def disk_auto_resize(database, current_size):
+def disk_auto_resize(database, current_size, usage_percentage):
     disk = DiskOffering.first_greater_than(current_size + 1024)
 
     task = TaskHistory()
@@ -145,6 +148,10 @@ def disk_auto_resize(database, current_size):
     user = AccountUser.objects.get(username='admin')
     database_disk_resize.delay(
         database=database, disk_offering=disk, user=user, task_history=task
+    )
+
+    email_notifications.disk_resize_notification(
+        database=database, new_disk=disk, usage_percentage=usage_percentage
     )
 
     return task

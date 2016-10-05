@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 import logging
-from django.contrib.auth.models import User, Group
 from django.utils.translation import ugettext_lazy as _
 from django.core.urlresolvers import reverse
 from django.contrib.sites.models import Site
-from email_extras.utils import send_mail, send_mail_template
+from email_extras.utils import send_mail_template
 from system.models import Configuration
 
 LOG = logging.getLogger(__name__)
@@ -14,9 +13,19 @@ LOG = logging.getLogger(__name__)
 def get_domain():
     domain = Site.objects.get(id=1).domain
     if not domain.startswith('http'):
-        domain = "http://" + domain
+        return "http://" + domain
 
     return domain
+
+
+def email_from():
+    return Configuration.get_by_name("email_addr_from")
+
+
+def email_to(team):
+    if team and team.email:
+        return [team.email, Configuration.get_by_name("new_user_notify_email")]
+    return Configuration.get_by_name("new_user_notify_email")
 
 
 def notify_new_user_creation(user=None):
@@ -107,3 +116,28 @@ def database_analyzing(context={}):
 
     send_mail_template(subject, template, addr_from, addr_to,
                        fail_silently=False, attachments=None, context=context)
+
+
+def disk_resize_notification(database, new_disk, usage_percentage):
+    LOG.info(
+        'Notifying disk resize {} - {}'.format(database, new_disk)
+    )
+
+    subject = _(
+        '[DBaaS] Database {} auto disk resize to {}'.format(
+            database.name, new_disk
+        )
+    )
+    template = "disk_auto_resize_notification"
+
+    context = {
+        'domain': get_domain(),
+        'database': database,
+        'usage_percentage': usage_percentage,
+        'new_disk_offering': new_disk
+    }
+
+    send_mail_template(
+        subject, template, email_from(), email_to(database.team),
+        fail_silently=False, attachments=None, context=context
+    )
