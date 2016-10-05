@@ -454,12 +454,18 @@ def purge_task_history(self):
 
         n_days_before = now - datetime.timedelta(days=retention_days)
 
-        tasks_to_purge = TaskHistory.objects.filter(task_name__in=['notification.tasks.database_notification',
-                                                                   'notification.tasks.database_notification_for_team',
-                                                                   'notification.tasks.update_database_status',
-                                                                   'notification.tasks.update_database_used_size',
-                                                                   'notification.tasks.update_instances_status',
-                                                                   'system.tasks.set_celery_healthcheck_last_update'], ended_at__lt=n_days_before, task_status__in=["SUCCESS", "ERROR"])
+        tasks_to_purge = TaskHistory.objects.filter(
+            task_name__in=[
+                'notification.tasks.database_notification',
+                'notification.tasks.database_notification_for_team',
+                'notification.tasks.update_database_used_size',
+                'notification.tasks.update_disk_used_size',
+                'notification.tasks.update_database_status',
+                'notification.tasks.update_instances_status',
+                'system.tasks.set_celery_healthcheck_last_update'
+            ],
+            ended_at__lt=n_days_before,
+            task_status__in=["SUCCESS", "ERROR", "WARNING"])
 
         tasks_to_purge.delete()
 
