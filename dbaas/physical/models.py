@@ -11,7 +11,8 @@ from django.utils.translation import ugettext_lazy as _
 from django_extensions.db.fields.encrypted import EncryptedCharField
 from util.models import BaseModel
 from drivers import DatabaseInfraStatus
-from .errors import NoDiskOfferingError
+from system.models import Configuration
+from .errors import NoDiskOfferingGreaterError, NoDiskOfferingLesserError
 
 LOG = logging.getLogger(__name__)
 
@@ -133,15 +134,18 @@ class DiskOffering(BaseModel):
         return self.converter_kb_to_bytes(self.available_size_kb)
     size_bytes.short_description = "Available Size Bytes"
 
-    def converter_kb_to_gb(self, value):
+    @classmethod
+    def converter_kb_to_gb(cls, value):
         if value:
             return (value / 1024.0) / 1024.0
 
-    def converter_kb_to_bytes(self, value):
+    @classmethod
+    def converter_kb_to_bytes(cls, value):
         if value:
             return value * 1024.0
 
-    def converter_gb_to_kb(self, value):
+    @classmethod
+    def converter_gb_to_kb(cls, value):
         if value:
             return (value * 1024) * 1024
 
@@ -158,8 +162,25 @@ class DiskOffering(BaseModel):
         ).order_by('available_size_kb')
 
         if not disks:
-            raise NoDiskOfferingError(base_size)
+            raise NoDiskOfferingGreaterError(base_size)
 
+        return disks[0]
+
+
+    @classmethod
+    def last_offering_available_for_auto_resize(cls):
+        parameter_in_kb = cls.converter_gb_to_kb(
+            Configuration.get_by_name_as_int(
+                name='auto_resize_max_size_in_gb', default=100
+            )
+        )
+
+        disks = DiskOffering.objects.filter(
+            available_size_kb__lte=parameter_in_kb
+        ).order_by('-available_size_kb')
+
+        if not disks:
+            raise NoDiskOfferingLesserError(parameter_in_kb)
         return disks[0]
 
 

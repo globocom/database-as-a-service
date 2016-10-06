@@ -5,7 +5,8 @@ from django.core.cache import cache
 from django.test import TestCase
 from django.contrib import admin
 from physical.tests.factory import DiskOfferingFactory
-from physical.errors import NoDiskOfferingGreaterError
+from physical.errors import NoDiskOfferingGreaterError, NoDiskOfferingLesserError
+from system.models import Configuration
 from ..admin.disk_offering import DiskOfferingAdmin
 from ..forms.disk_offerring import DiskOfferingForm
 from ..models import DiskOffering
@@ -24,19 +25,29 @@ class DiskOfferingTestCase(TestCase):
         cache.clear()
 
         self.bigger = DiskOfferingFactory()
-        self.bigger.size_kb *= 2
-        self.bigger.available_size_kb *= 2
+        self.bigger.size_kb *= 30
+        self.bigger.available_size_kb *= 30
         self.bigger.save()
 
         self.medium = DiskOfferingFactory()
+        self.medium.size_kb *= 20
+        self.medium.available_size_kb *= 20
+        self.medium.save()
 
         self.smaller = DiskOfferingFactory()
-        self.smaller.size_kb /= 2
-        self.smaller.available_size_kb /= 2
+        self.smaller.size_kb *= 10
+        self.smaller.available_size_kb *= 10
         self.smaller.save()
 
     def setUp(self):
         self.admin = DiskOfferingAdmin(DiskOffering, admin.sites.AdminSite())
+        self.auto_resize_max_size_in_gb = Configuration(
+            name='auto_resize_max_size_in_gb', value=100
+        )
+        self.auto_resize_max_size_in_gb.save()
+
+    def tearDown(self):
+        self.auto_resize_max_size_in_gb.delete()
 
     def test_search_fields(self):
         self.assertEqual(SEARCH_FIELDS, self.admin.search_fields)
@@ -241,3 +252,26 @@ class DiskOfferingTestCase(TestCase):
             self.smaller.available_size_kb, exclude_id=self.medium.id
         )
         self.assertEqual(self.bigger, found)
+
+    def test_can_found_disk_for_auto_resize(self):
+        self.create_basic_disks()
+
+        self.auto_resize_max_size_in_gb.value = int(self.bigger.available_size_gb())
+        self.auto_resize_max_size_in_gb.save()
+        found = DiskOffering.last_offering_available_for_auto_resize()
+        self.assertEqual(self.bigger, found)
+
+        self.auto_resize_max_size_in_gb.value = int(self.bigger.available_size_gb()) - 1
+        self.auto_resize_max_size_in_gb.save()
+        found = DiskOffering.last_offering_available_for_auto_resize()
+        self.assertEqual(self.medium, found)
+
+    def test_cannot_found_disk_for_auto_resize(self):
+        self.create_basic_disks()
+
+        self.auto_resize_max_size_in_gb.value = int(self.smaller.available_size_gb()) - 1
+        self.auto_resize_max_size_in_gb.save()
+        self.assertRaises(
+            NoDiskOfferingLesserError,
+            DiskOffering.last_offering_available_for_auto_resize
+        )
