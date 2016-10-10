@@ -12,9 +12,6 @@ from workflow.steps.mysql.util import build_permission_script
 from workflow.steps.mysql.util import build_mount_snapshot_volume_script
 from workflow.steps.mysql.util import build_remove_deprecated_files_script
 from workflow.steps.mysql.util import build_start_database_script
-from workflow.steps.mysql.util import build_flipper_script
-from util import get_credentials_for
-from dbaas_credentials.models import CredentialType
 
 LOG = logging.getLogger(__name__)
 
@@ -27,11 +24,6 @@ class RetoreBackupOnTargets(BaseStep):
     def do(self, workflow_dict):
         try:
 
-            flipper_crdentials = get_credentials_for(workflow_dict['source_environment'],
-                                                     CredentialType.FLIPPER)
-
-            flipper_vip = flipper_crdentials.get_parameter_by_name('vip')
-
             for host in workflow_dict['target_hosts']:
                 cs_host_attr = CS_HostAttr.objects.get(host=host)
                 source_host = workflow_dict['source_hosts'][0]
@@ -42,16 +34,10 @@ class RetoreBackupOnTargets(BaseStep):
                 script += build_remove_deprecated_files_script()
                 script += build_permission_script()
                 script += build_start_database_script()
-                script += build_flipper_script()
 
                 context_dict = {
                     'EXPORT_PATH': nf_host_attr.nfsaas_path,
                     'SNAPSHOPT_NAME': workflow_dict['snapshot_name'],
-                    'VIP_FLIPPER': flipper_vip,
-                    'IPWRITE': workflow_dict['target_secondary_ips'][0].ip,
-                    'HOST01': workflow_dict['target_hosts'][0],
-                    'HOST02': workflow_dict['target_hosts'][1]
-
                 }
 
                 script = build_context_script(context_dict, script)

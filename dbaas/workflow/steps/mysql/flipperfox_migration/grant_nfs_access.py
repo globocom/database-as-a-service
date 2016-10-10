@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 import logging
 from util import full_stack
-from dbaas_nfsaas.provider import NfsaasProvider
 from workflow.steps.util.base import BaseStep
+from workflow.steps.util.nfsaas_utils import create_access, delete_access
 from workflow.exceptions.error_codes import DBAAS_0020
 
 LOG = logging.getLogger(__name__)
@@ -15,16 +15,13 @@ class GrantNFSAccess(BaseStep):
 
     def do(self, workflow_dict):
         try:
-
             databaseinfra = workflow_dict['databaseinfra']
             source_host = workflow_dict['source_hosts'][0]
-            target_host = source_host.future_host
-            nfsaas_export_id = source_host.nfsaas_host_attributes.all()[
-                0].nfsaas_export_id
-            NfsaasProvider.grant_access(environment=databaseinfra.environment,
-                                        host=target_host,
-                                        export_id=nfsaas_export_id)
-
+            disk = source_host.nfsaas_host_attributes.all()[0]
+            for target_host in workflow_dict['target_hosts']:
+                create_access(environment=databaseinfra.environment,
+                              export_path=disk.nfsaas_path_host,
+                              host=target_host)
             return True
         except Exception:
             traceback = full_stack()
@@ -39,13 +36,11 @@ class GrantNFSAccess(BaseStep):
         try:
             databaseinfra = workflow_dict['databaseinfra']
             source_host = workflow_dict['source_hosts'][0]
-            target_host = source_host.future_host
-            nfsaas_export_id = source_host.nfsaas_host_attributes.all()[
-                0].nfsaas_export_id
-            NfsaasProvider.revoke_access(environment=databaseinfra.environment,
-                                         host=target_host,
-                                         export_id=nfsaas_export_id)
-
+            disk = source_host.nfsaas_host_attributes.all()[0]
+            for target_host in workflow_dict['target_hosts']:
+                delete_access(environment=databaseinfra.environment,
+                              export_id=disk.nfsaas_export_id,
+                              host_delete=target_host)
             return True
         except Exception:
             traceback = full_stack()

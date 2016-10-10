@@ -44,6 +44,13 @@ class CreateVirtualMachine(BaseStep):
 
             for index, source_instance in enumerate(workflow_dict['source_instances']):
 
+                source_host = workflow_dict['source_hosts'][index]
+                vm_name = source_host.hostname.split('.')[0]
+                source_host_attr = HostAttr.objects.get(host=source_host)
+                source_network_id = cs_provider.get_vm_network_id(
+                    vm_id=source_host_attr.vm_id,
+                    project_id=cs_credentials.project)
+
                 if len(bundles) == 1:
                     bundle = bundles[0]
                 else:
@@ -54,8 +61,9 @@ class CreateVirtualMachine(BaseStep):
                         bundle = LastUsedBundle.get_next_bundle(
                             bundle=bundle, bundles=bundles)
 
-                source_host = workflow_dict['source_hosts'][index]
-                vm_name = source_host.hostname.split('.')[0].replace('-0', '-f')
+                    if bundle.networkid == source_network_id:
+                        bundle = LastUsedBundle.get_next_bundle(
+                            bundle=bundle, bundles=bundles)
 
                 LOG.debug(
                     "Deploying new vm on cs with bundle %s and offering %s" % (bundle, offering))
