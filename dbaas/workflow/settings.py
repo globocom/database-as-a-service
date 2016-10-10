@@ -158,6 +158,8 @@ MYSQL_FLIPPER_FOX_MIGRATION_1 = (
     'workflow.steps.mysql.flipperfox_migration.run_pupet_setup.RunPuppetSetup',
     'workflow.steps.mysql.flipperfox_migration.config_fox.ConfigFox',
 
+    'workflow.steps.mysql.flipperfox_migration.create_foxha_mysql_users.CreateFoxHAMySQLUser',
+
     'workflow.steps.mysql.flipperfox_migration.config_backup_log.ConfigBackupLog',
     'workflow.steps.util.region_migration.acl_database_bind.BindNewInstances',
     'workflow.steps.mysql.flipperfox_migration.replicate_old_acls.ReplicateOldAcl',
