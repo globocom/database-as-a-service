@@ -10,6 +10,7 @@ from models import DatabaseFlipperFoxMigrationDetail
 from workflow.workflow import start_workflow, stop_workflow
 from .migration_steps import get_flipeerfox_migration_steps
 from physical.models import Instance
+from dbaas_cloudstack.models import DatabaseInfraAttr
 
 LOG = logging.getLogger(__name__)
 
@@ -63,6 +64,11 @@ def execute_database_flipperfox_migration(self,
 
         offering = databaseinfra.cs_dbinfra_offering.get().offering
 
+        source_secondary_ips = []
+
+        for secondary_ip in DatabaseInfraAttr.objects.filter(databaseinfra=databaseinfra):
+            source_secondary_ips.append(secondary_ip)
+
         workflow_dict = build_dict(
             databaseinfra=databaseinfra,
             environment=databaseinfra.environment,
@@ -73,6 +79,7 @@ def execute_database_flipperfox_migration(self,
             source_plan=source_plan,
             target_plan=target_plan,
             offering=offering,
+            source_secondary_ips=source_secondary_ips,
         )
 
         start_workflow(workflow_dict=workflow_dict, task=task_history)
@@ -190,6 +197,11 @@ def execute_database_flipperfox_migration_undo(self,
         if not target_instances:
             raise Exception('There is no target instance')
 
+        source_secondary_ips = []
+
+        for secondary_ip in DatabaseInfraAttr.objects.filter(databaseinfra=databaseinfra):
+            source_secondary_ips.append(secondary_ip)
+
         workflow_dict = build_dict(database_flipperfox_migration_detail=database_flipperfox_migration_detail,
                                    database_flipperfox_migration=database_flipperfox_migration,
                                    database=database,
@@ -202,6 +214,7 @@ def execute_database_flipperfox_migration_undo(self,
                                    source_hosts=source_hosts,
                                    target_instances=target_instances,
                                    target_hosts=target_hosts,
+                                   source_secondary_ips=source_secondary_ips,
                                    )
 
         stop_workflow(workflow_dict=workflow_dict, task=task_history)
