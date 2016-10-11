@@ -54,7 +54,7 @@ def zabbix_collect_used_disk(task):
                 )
 
                 try:
-                    disk_size = metrics.get_current_disk_data_size(host)
+                    disk_size = database.databaseinfra.disk_offering.size_kb
                     disk_used = metrics.get_current_disk_data_used(host)
                     usage_percentage = (disk_used * 100)/disk_size
                 except ZabbixMetricsError as error:
