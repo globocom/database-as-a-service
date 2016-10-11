@@ -152,7 +152,6 @@ class DiskOffering(BaseModel):
     def __unicode__(self):
         return '{} ({} GB)'.format(self.name, self.available_size_gb())
 
-
     @classmethod
     def first_greater_than(cls, base_size, exclude_id=None):
         disks = DiskOffering.objects.filter(
@@ -165,7 +164,6 @@ class DiskOffering(BaseModel):
             raise NoDiskOfferingGreaterError(base_size)
 
         return disks[0]
-
 
     @classmethod
     def last_offering_available_for_auto_resize(cls):
@@ -182,6 +180,16 @@ class DiskOffering(BaseModel):
         if not disks:
             raise NoDiskOfferingLesserError(parameter_in_kb)
         return disks[0]
+
+    def __gt__(self, other):
+        if other:
+            return self.available_size_kb > other.available_size_kb
+        return True
+
+    def __lt__(self, other):
+        if other:
+            return self.available_size_kb < other.available_size_kb
+        return True
 
 
 class Plan(BaseModel):

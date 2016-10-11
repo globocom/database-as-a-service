@@ -8,6 +8,7 @@ from dbaas_zabbix.metrics import ZabbixMetrics
 from dbaas_zabbix.errors import ZabbixMetricsError
 from account.models import AccountUser
 from physical.models import Environment, DiskOffering
+from physical.errors import DiskOfferingMaxAutoResize
 from logical.models import Database
 from system.models import Configuration
 from .models import TaskHistory
@@ -138,6 +139,9 @@ def update_used_kb(database, address, used_size, task):
 
 def disk_auto_resize(database, current_size, usage_percentage):
     disk = DiskOffering.first_greater_than(current_size + 1024)
+
+    if disk > DiskOffering.last_offering_available_for_auto_resize():
+        raise DiskOfferingMaxAutoResize()
 
     task = TaskHistory()
     task.task_name = "database_disk_auto_resize"

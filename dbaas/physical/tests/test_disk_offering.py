@@ -275,3 +275,19 @@ class DiskOfferingTestCase(TestCase):
             NoDiskOfferingLesserError,
             DiskOffering.last_offering_available_for_auto_resize
         )
+
+    def test_compare_disks(self):
+        self.create_basic_disks()
+
+        self.assertGreater(self.bigger, self.smaller)
+        self.assertLess(self.smaller, self.bigger)
+
+        self.medium_twice = DiskOfferingFactory()
+        self.medium_twice.size_kb *= 20
+        self.medium_twice.available_size_kb *= 20
+        self.medium_twice.save()
+
+        self.assertEqual(self.medium, self.medium)
+        self.assertNotEqual(self.medium, self.medium_twice)
+
+        self.medium_twice.delete()
