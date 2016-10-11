@@ -457,6 +457,15 @@ class DatabaseInfra(BaseModel):
                 cache.set(key, info)
         return info
 
+    @property
+    def disk_used_size_in_kb(self):
+        greater_disk = None
+        for instance in self.instances.all():
+            for disk in instance.hostname.nfsaas_host_attributes.all():
+                if disk.nfsaas_used_size_kb > greater_disk:
+                    greater_disk = disk.nfsaas_used_size_kb
+        return greater_disk
+
 
 class Host(BaseModel):
     hostname = models.CharField(
