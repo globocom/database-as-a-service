@@ -47,7 +47,8 @@ class DiskOfferingTestCase(TestCase):
         self.auto_resize_max_size_in_gb.save()
 
     def tearDown(self):
-        self.auto_resize_max_size_in_gb.delete()
+        if self.auto_resize_max_size_in_gb.id:
+            self.auto_resize_max_size_in_gb.delete()
 
     def test_search_fields(self):
         self.assertEqual(SEARCH_FIELDS, self.admin.search_fields)
@@ -291,3 +292,20 @@ class DiskOfferingTestCase(TestCase):
         self.assertNotEqual(self.medium, self.medium_twice)
 
         self.medium_twice.delete()
+
+    def test_disk_is_last_offering(self):
+        self.create_basic_disks()
+        self.auto_resize_max_size_in_gb.value = int(self.medium.available_size_gb()) + 1
+        self.auto_resize_max_size_in_gb.save()
+
+        self.assertFalse(self.smaller.is_last_auto_resize_offering)
+        self.assertTrue(self.medium.is_last_auto_resize_offering)
+        self.assertFalse(self.bigger.is_last_auto_resize_offering)
+
+    def test_disk_is_last_offering_without_param(self):
+        self.create_basic_disks()
+        self.auto_resize_max_size_in_gb.delete()
+
+        self.assertFalse(self.smaller.is_last_auto_resize_offering)
+        self.assertFalse(self.medium.is_last_auto_resize_offering)
+        self.assertTrue(self.bigger.is_last_auto_resize_offering)

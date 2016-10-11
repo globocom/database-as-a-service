@@ -191,6 +191,15 @@ class DiskOffering(BaseModel):
             return self.available_size_kb < other.available_size_kb
         return True
 
+    @property
+    def is_last_auto_resize_offering(self):
+        try:
+            last_offering = DiskOffering.last_offering_available_for_auto_resize()
+        except NoDiskOfferingLesserError:
+            return False
+        else:
+            return self.id == last_offering.id
+
 
 class Plan(BaseModel):
 
