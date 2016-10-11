@@ -1,5 +1,14 @@
 <h2>Database {{database.name}} disk was resized</h2>
 <br>
+
+{% if new_disk_offering.is_last_auto_resize_offering %}
+<br>
+<br>
+<font color="red">This is the <b><u>final</u></b> disk auto resize</font>
+<br>
+<br>
+{% endif %}
+
 The Database {{database.name}} in {{database.environment}} environment was almost full ({{usage_percentage}}% in use).
 <br><br>
 We automatically did the disk resize to {{new_disk_offering}}.

@@ -123,11 +123,11 @@ def disk_resize_notification(database, new_disk, usage_percentage):
         'Notifying disk resize {} - {}'.format(database, new_disk)
     )
 
-    subject = _(
-        '[DBaaS] Database {} auto disk resize to {}'.format(
-            database.name, new_disk
-        )
-    )
+    subject = _('[DBaaS] Database {} auto disk resize to {}')
+    if new_disk.is_last_auto_resize_offering:
+        subject = _('[DBaaS] Database {} final auto disk resize to {}')
+    subject = subject.format(database.name, new_disk)
+
     template = "disk_auto_resize_notification"
 
     context = {

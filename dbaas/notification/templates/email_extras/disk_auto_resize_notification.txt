@@ -1,5 +1,9 @@
 Database {{database.name}} disk was resized
 
+{% if new_disk_offering.is_last_auto_resize_offering %}
+This is the FINAL disk auto resize
+{% endif %}
+
 The Database {{database.name}} in {{database.environment}} environment was almost full ({{usage_percentage}}% in use).
 
 We automatically did the disk resize to {{new_disk_offering}}.

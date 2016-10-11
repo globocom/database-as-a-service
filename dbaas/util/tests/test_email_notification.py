@@ -10,7 +10,8 @@ from logical.tests.factory import DatabaseFactory
 from util.email_notifications import get_domain, email_from, email_to, \
     disk_resize_notification
 
-SUBJECT_DISK_RESIZE = '[DBaaS] Database {} auto disk resize to {}'
+SUBJECT_DISK_AUTO_RESIZE = '[DBaaS] Database {} auto disk resize to {}'
+SUBJECT_DISK_FINAL_AUTO_RESIZE = '[DBaaS] Database {} final auto disk resize to {}'
 
 
 class DiskResizeTestCase(TestCase):
@@ -29,6 +30,13 @@ class DiskResizeTestCase(TestCase):
         )
         self.email_adm.save()
         self.team = TeamFactory()
+
+        self.greater_disk = DiskOfferingFactory()
+        self.greater_disk.size_kb *= 2
+        self.greater_disk.available_size_kb *= 2
+        self.greater_disk.save()
+
+        self.disk = DiskOfferingFactory()
 
     def test_can_get_domain(self):
         my_domain = Site.objects.get(id=1).domain
@@ -51,22 +59,41 @@ class DiskResizeTestCase(TestCase):
         self.team.email = ''
         self.assertEqual(self.email_adm.value, email_to(self.team))
 
-    def test_can_send_email_disk_resize(self):
+    def test_can_send_email_disk_auto_resize(self):
         database = DatabaseFactory()
-        new_disk = DiskOfferingFactory()
         usage_percentage = 76.89
 
         disk_resize_notification(
-            database=database, new_disk=new_disk,
+            database=database, new_disk=self.disk,
             usage_percentage=usage_percentage
         )
 
         self.assertEqual(len(mail.outbox), 2)
         self.assertEqual(
             mail.outbox[0].subject,
-            SUBJECT_DISK_RESIZE.format(database, new_disk)
+            SUBJECT_DISK_AUTO_RESIZE.format(database, self.disk)
         )
         self.assertEqual(
             mail.outbox[1].subject,
-            SUBJECT_DISK_RESIZE.format(database, new_disk)
+            SUBJECT_DISK_AUTO_RESIZE.format(database, self.disk)
+        )
+
+    def test_can_send_email_disk_final_auto_resize(self):
+        database = DatabaseFactory()
+        new_disk = DiskOfferingFactory()
+        usage_percentage = 76.89
+
+        disk_resize_notification(
+            database=database, new_disk=self.greater_disk,
+            usage_percentage=usage_percentage
+        )
+
+        self.assertEqual(len(mail.outbox), 2)
+        self.assertEqual(
+            mail.outbox[0].subject,
+            SUBJECT_DISK_FINAL_AUTO_RESIZE.format(database, self.greater_disk)
+        )
+        self.assertEqual(
+            mail.outbox[1].subject,
+            SUBJECT_DISK_FINAL_AUTO_RESIZE.format(database, self.greater_disk)
         )
