@@ -4,14 +4,14 @@
 {% if new_disk_offering.is_last_auto_resize_offering %}
 <br>
 <br>
-<font color="red">This is the <b><u>final</u></b> disk auto resize</font>
+<font color="red">This is the <b><u>final</u></b> disk auto resize. Please contact your DBA.</font>
 <br>
 <br>
 {% endif %}
 
 The Database {{database.name}} in {{database.environment}} environment was almost full ({{usage_percentage}}% in use).
 <br><br>
-We automatically did the disk resize to {{new_disk_offering}}.
+It was automatically resized from {{database.databaseinfra.disk_offering}} to {{new_disk_offering}}.
 <br><br>
 {% if database.team.email %}
 You are receiving this email because in our records you are in team {{ database.team.name }}.<br>

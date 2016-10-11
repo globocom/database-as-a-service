@@ -1,15 +1,19 @@
 Database {{database.name}} disk was resized
 
 {% if new_disk_offering.is_last_auto_resize_offering %}
-This is the FINAL disk auto resize
+This is the FINAL disk auto resize. Please contact your DBA.
 {% endif %}
 
 The Database {{database.name}} in {{database.environment}} environment was almost full ({{usage_percentage}}% in use).
 
-We automatically did the disk resize to {{new_disk_offering}}.
+It was automatically resized from {{database.databaseinfra.disk_offering}} to {{new_disk_offering}}.
 
+{% if database.team.email %}
 You are receiving this email because in our records you are in team {{ database.team.name }}.
 If this is not right, contact the DBaaS system administrators.
+{% else %}
+Team {{ database.team.name }} has no email set!
+{% endif %}
 
 Regards,
 DBaaS notification robot
