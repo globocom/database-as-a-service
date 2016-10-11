@@ -155,10 +155,10 @@ class DiskOffering(BaseModel):
     @classmethod
     def first_greater_than(cls, base_size, exclude_id=None):
         disks = DiskOffering.objects.filter(
-            available_size_kb__gt=base_size
+            size_kb__gt=base_size
         ).exclude(
             id=exclude_id
-        ).order_by('available_size_kb')
+        ).order_by('size_kb')
 
         if not disks:
             raise NoDiskOfferingGreaterError(base_size)
@@ -174,8 +174,8 @@ class DiskOffering(BaseModel):
         )
 
         disks = DiskOffering.objects.filter(
-            available_size_kb__lte=parameter_in_kb
-        ).order_by('-available_size_kb')
+            size_kb__lte=parameter_in_kb
+        ).order_by('-size_kb')
 
         if not disks:
             raise NoDiskOfferingLesserError(parameter_in_kb)
@@ -183,12 +183,12 @@ class DiskOffering(BaseModel):
 
     def __gt__(self, other):
         if other:
-            return self.available_size_kb > other.available_size_kb
+            return self.size_kb > other.size_kb
         return True
 
     def __lt__(self, other):
         if other:
-            return self.available_size_kb < other.available_size_kb
+            return self.size_kb < other.size_kb
         return True
 
     @property

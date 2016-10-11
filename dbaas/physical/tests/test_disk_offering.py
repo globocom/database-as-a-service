@@ -232,10 +232,10 @@ class DiskOfferingTestCase(TestCase):
     def test_can_found_greater_disk(self):
         self.create_basic_disks()
 
-        found = DiskOffering.first_greater_than(self.smaller.available_size_kb)
+        found = DiskOffering.first_greater_than(self.smaller.size_kb)
         self.assertEqual(self.medium, found)
 
-        found = DiskOffering.first_greater_than(self.medium.available_size_kb)
+        found = DiskOffering.first_greater_than(self.medium.size_kb)
         self.assertEqual(self.bigger, found)
 
     def test_cannot_found_greater_disk(self):
@@ -243,26 +243,26 @@ class DiskOfferingTestCase(TestCase):
 
         self.assertRaises(
             NoDiskOfferingGreaterError,
-            DiskOffering.first_greater_than, self.bigger.available_size_kb
+            DiskOffering.first_greater_than, self.bigger.size_kb
         )
 
     def test_can_found_greater_disk_with_exclude(self):
         self.create_basic_disks()
 
         found = DiskOffering.first_greater_than(
-            self.smaller.available_size_kb, exclude_id=self.medium.id
+            self.smaller.size_kb, exclude_id=self.medium.id
         )
         self.assertEqual(self.bigger, found)
 
     def test_can_found_disk_for_auto_resize(self):
         self.create_basic_disks()
 
-        self.auto_resize_max_size_in_gb.value = int(self.bigger.available_size_gb())
+        self.auto_resize_max_size_in_gb.value = int(self.bigger.size_gb())
         self.auto_resize_max_size_in_gb.save()
         found = DiskOffering.last_offering_available_for_auto_resize()
         self.assertEqual(self.bigger, found)
 
-        self.auto_resize_max_size_in_gb.value = int(self.bigger.available_size_gb()) - 1
+        self.auto_resize_max_size_in_gb.value = int(self.bigger.size_gb()) - 1
         self.auto_resize_max_size_in_gb.save()
         found = DiskOffering.last_offering_available_for_auto_resize()
         self.assertEqual(self.medium, found)
@@ -270,7 +270,7 @@ class DiskOfferingTestCase(TestCase):
     def test_cannot_found_disk_for_auto_resize(self):
         self.create_basic_disks()
 
-        self.auto_resize_max_size_in_gb.value = int(self.smaller.available_size_gb()) - 1
+        self.auto_resize_max_size_in_gb.value = int(self.smaller.size_gb()) - 1
         self.auto_resize_max_size_in_gb.save()
         self.assertRaises(
             NoDiskOfferingLesserError,
@@ -295,7 +295,7 @@ class DiskOfferingTestCase(TestCase):
 
     def test_disk_is_last_offering(self):
         self.create_basic_disks()
-        self.auto_resize_max_size_in_gb.value = int(self.medium.available_size_gb()) + 1
+        self.auto_resize_max_size_in_gb.value = int(self.medium.size_gb()) + 1
         self.auto_resize_max_size_in_gb.save()
 
         self.assertFalse(self.smaller.is_last_auto_resize_offering)
