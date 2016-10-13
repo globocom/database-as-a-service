@@ -7,13 +7,13 @@ from dbaas_zabbix import factory_for
 from dbaas_zabbix.metrics import ZabbixMetrics
 from dbaas_zabbix.errors import ZabbixMetricsError
 from account.models import AccountUser
-from physical.models import Environment, DiskOffering
+from physical.models import Environment, DiskOffering, Host
 from physical.errors import DiskOfferingMaxAutoResize
 from logical.models import Database
 from system.models import Configuration
 from .models import TaskHistory
 from .tasks import database_disk_resize
-from util import email_notifications
+from util import email_notifications, exec_remote_command
 
 
 def zabbix_collect_used_disk(task):
@@ -70,6 +70,10 @@ def zabbix_collect_used_disk(task):
                 )
 
                 if usage_percentage >= threshold_disk_resize:
+                    mount_percentage = host_mount_data_percentage(
+                        address=host.address, task=task
+                    )
+
                     try:
                         task_resize = disk_auto_resize(
                             database=database,
@@ -159,3 +163,38 @@ def disk_auto_resize(database, current_size, usage_percentage):
     )
 
     return task
+
+
+def host_mount_data_percentage(address, task):
+    host = Host.objects.filter(address=address).first()
+    vm = host.cs_host_attributes.first()
+
+    output_message = {}
+    command_status = exec_remote_command(
+        server=host.address,
+        username=vm.vm_user,
+        password=vm.vm_password,
+        command='df -hk | grep /data',
+        output=output_message
+    )
+
+    if command_status != 0:
+        task.add_detail(
+            message='Could not load mount size: {}'.format(output_message),
+            level=4
+        )
+        return None
+
+    values = output_message['stdout'][0].strip().split()
+    values = {
+        'total': values[0],
+        'used': values[1],
+        'free': values[2],
+        'percentage': values[3].replace('%', '')
+    }
+
+    task.add_detail(
+        message='Mount /data: {}'.format(values),
+        level=4
+    )
+    return values['percentage']
