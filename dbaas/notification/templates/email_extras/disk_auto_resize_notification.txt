@@ -1,7 +1,7 @@
 Database {{database.name}} disk was resized
 
 {% if new_disk_offering.is_last_auto_resize_offering %}
-This is the FINAL disk auto resize. Please contact your DBA.
+This is the FINAL disk auto resize. You must contact your DBA.
 {% endif %}
 
 The Database {{database.name}} in {{database.environment}} environment was almost full ({{usage_percentage}}% in use).
