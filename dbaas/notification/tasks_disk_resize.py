@@ -54,9 +54,9 @@ def zabbix_collect_used_disk(task):
                 )
 
                 try:
-                    disk_size = metrics.get_current_disk_data_size(host)
-                    disk_used = metrics.get_current_disk_data_used(host)
-                    usage_percentage = (disk_used * 100)/disk_size
+                    zabbix_size = metrics.get_current_disk_data_size(host)
+                    zabbix_used = metrics.get_current_disk_data_used(host)
+                    zabbix_percentage = (zabbix_used * 100)/zabbix_size
                 except ZabbixMetricsError as error:
                     problems += 1
                     task.add_detail(message='Error: {}'.format(error), level=3)
@@ -64,21 +64,31 @@ def zabbix_collect_used_disk(task):
                     continue
 
                 task.add_detail(
-                    message='Usage: {}% ({}kb/{}kb)'.format(
-                        usage_percentage, disk_used, disk_size
+                    message='Zabbix /data: {}% ({}kb/{}kb)'.format(
+                        zabbix_percentage, zabbix_used, zabbix_size
                     ), level=3
                 )
 
-                if usage_percentage >= threshold_disk_resize:
-                    mount_percentage = host_mount_data_percentage(
+                current_percentage = zabbix_percentage
+                current_used = zabbix_used
+                current_size = zabbix_size
+                if zabbix_percentage >= threshold_disk_resize:
+                    current_percentage, current_used, current_size = host_mount_data_percentage(
                         address=host.address, task=task
                     )
+                    if zabbix_percentage > current_percentage:
+                        problems += 1
+                        status = TaskHistory.STATUS_WARNING
+                        task.add_detail(
+                            message='Zabbix metrics not updated', level=4
+                        )
 
+                if current_percentage >= threshold_disk_resize:
                     try:
                         task_resize = disk_auto_resize(
                             database=database,
-                            current_size=disk_size,
-                            usage_percentage=usage_percentage
+                            current_size=current_size,
+                            usage_percentage=current_percentage
                         )
                     except Exception as e:
                         problems += 1
@@ -96,8 +106,8 @@ def zabbix_collect_used_disk(task):
                         )
 
                 if not update_used_kb(
-                        database=database, address=host.address,
-                        used_size=disk_used, task=task
+                    database=database, address=host.address,
+                    used_size=current_used, task=task
                 ):
                     problems += 1
                     status = TaskHistory.STATUS_WARNING
@@ -183,18 +193,21 @@ def host_mount_data_percentage(address, task):
             message='Could not load mount size: {}'.format(output_message),
             level=4
         )
-        return None
+        return None, None, None
 
     values = output_message['stdout'][0].strip().split()
     values = {
-        'total': values[0],
-        'used': values[1],
-        'free': values[2],
-        'percentage': values[3].replace('%', '')
+        'total': int(values[0]),
+        'used': int(values[1]),
+        'free': int(values[2]),
+        'percentage': int(values[3].replace('%', ''))
     }
 
     task.add_detail(
-        message='Mount /data: {}'.format(values),
-        level=4
+        message='Mount /data: {}% ({}kb/{}kb)'.format(
+            values['percentage'], values['used'], values['total']
+        ),
+        level=3
     )
-    return values['percentage']
+
+    return values['percentage'], values['used'], values['total']
