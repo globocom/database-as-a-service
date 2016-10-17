@@ -45,7 +45,15 @@ def zabbix_collect_used_disk(task):
             metrics = ZabbixMetrics(
                 zabbix_provider.api, zabbix_provider.main_clientgroup
             )
+
+            driver = database.databaseinfra.get_driver()
+            non_database_instances = driver.get_non_database_instances()
+
             for host in zabbix_provider.hosts:
+                instance = database.databaseinfra.instances.filter(address=host.address).first()
+                if instance in non_database_instances:
+                    continue
+
                 collected += 1
                 task.add_detail(
                     message='Host: {} ({})'.format(
