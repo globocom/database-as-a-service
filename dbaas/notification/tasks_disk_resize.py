@@ -137,7 +137,6 @@ def update_used_kb(database, address, used_size, task):
             raise EnvironmentError(
                 'Instance {} do not have NFSaaS disk'.format(address)
             )
-
     except ObjectDoesNotExist:
         task.add_detail(
             message='{} not found for: {}'.format(address, database.name),

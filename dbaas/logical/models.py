@@ -502,9 +502,9 @@ class Database(BaseModel):
     def update_host_disk_used_size(self, host_address, used_size_kb):
         instance = self.databaseinfra.instances.filter(address=host_address).first()
         if not instance:
-            return None
+            raise ObjectDoesNotExist()
 
-        nfsaas_host = instance.hostname.nfsaas_host_attributes.first()
+        nfsaas_host = instance.hostname.nfsaas_host_attributes.last()
         if not nfsaas_host:
             return None
 
