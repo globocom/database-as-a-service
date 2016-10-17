@@ -113,9 +113,9 @@ def zabbix_collect_used_disk(task):
                             ), level=4
                         )
 
-                if not update_used_kb(
-                    database=database, address=host.address,
-                    used_size=current_used, task=task
+                if not update_disk(
+                    database=database, address=host.address, task=task,
+                    total_size=current_size, used_size=current_used
                 ):
                     problems += 1
                     status = TaskHistory.STATUS_WARNING
@@ -128,10 +128,12 @@ def zabbix_collect_used_disk(task):
     task.update_status_for(status=status, details=details)
 
 
-def update_used_kb(database, address, used_size, task):
+def update_disk(database, address, total_size, used_size, task):
     try:
         nfsaas_host = database.update_host_disk_used_size(
-            host_address=address, used_size_kb=used_size
+            host_address=address,
+            used_size_kb=used_size,
+            total_size_kb=total_size
         )
         if not nfsaas_host:
             raise EnvironmentError(

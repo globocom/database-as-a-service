@@ -4,7 +4,7 @@ from django.test import TestCase
 from dbaas_nfsaas.models import HostAttr
 from physical.tests import factory as physical_factory
 from logical.tests import factory as logical_factory
-from ..tasks_disk_resize import update_used_kb
+from ..tasks_disk_resize import update_disk
 from .factory import NotificationHistoryFactory
 
 UPDATE_USED_SIZE_SUCCESS = '---> Used disk size updated. NFS: {}'
@@ -24,17 +24,18 @@ class DiskResizeTestCase(TestCase):
         self.database.databaseinfra = self.databaseinfra
         self.database.save()
 
-    def test_can_update_used_kb(self):
+    def test_can_update_disk_kb(self):
         nfsaas_host = physical_factory.NFSaaSHostAttr()
         nfsaas_host.host = self.instance.hostname
         nfsaas_host.save()
 
+        old_size = nfsaas_host.nfsaas_size_kb
         old_used_size = nfsaas_host.nfsaas_used_size_kb
 
         self.assertIsNone(self.task.details)
-        is_updated = update_used_kb(
+        is_updated = update_disk(
             database=self.database, task=self.task,
-            address=self.instance.address, used_size=300
+            address=self.instance.address, used_size=300, total_size=100
         )
         self.assertTrue(is_updated)
 
@@ -44,13 +45,15 @@ class DiskResizeTestCase(TestCase):
         self.assertEqual(expected_message, self.task.details)
 
         nfsaas_host = HostAttr.objects.get(pk=nfsaas_host.pk)
+        self.assertNotEqual(nfsaas_host.nfsaas_size_kb, old_size)
         self.assertNotEqual(nfsaas_host.nfsaas_used_size_kb, old_used_size)
+        self.assertEqual(nfsaas_host.nfsaas_size_kb, 100)
         self.assertEqual(nfsaas_host.nfsaas_used_size_kb, 300)
 
-    def test_cannot_update_used_kb_without_nfsaas(self):
-        is_updated = update_used_kb(
+    def test_cannot_update_disk_kb_without_nfsaas(self):
+        is_updated = update_disk(
             database=self.database, task=self.task,
-            address=self.instance.address, used_size=300
+            address=self.instance.address, used_size=300, total_size=100
         )
         self.assertFalse(is_updated)
 
@@ -59,10 +62,10 @@ class DiskResizeTestCase(TestCase):
         )
         self.assertEqual(expected_message, self.task.details)
 
-    def test_cannot_update_used_kb_wrong_host(self):
-        is_updated = update_used_kb(
+    def test_cannot_update_disk_kb_wrong_host(self):
+        is_updated = update_disk(
             database=self.database, task=self.task,
-            address=self.instance.address[::-1], used_size=300
+            address=self.instance.address[::-1], used_size=300, total_size=100
         )
         self.assertFalse(is_updated)
 
