@@ -499,7 +499,7 @@ class Database(BaseModel):
             user=user, task_history=task_history
         )
 
-    def update_host_disk_used_size(self, host_address, used_size_kb):
+    def update_host_disk_used_size(self, host_address, used_size_kb, total_size_kb=None):
         instance = self.databaseinfra.instances.filter(address=host_address).first()
         if not instance:
             raise ObjectDoesNotExist()
@@ -507,6 +507,9 @@ class Database(BaseModel):
         nfsaas_host = instance.hostname.nfsaas_host_attributes.last()
         if not nfsaas_host:
             return None
+
+        if total_size_kb:
+            nfsaas_host.nfsaas_size_kb = total_size_kb
 
         nfsaas_host.nfsaas_used_size_kb = used_size_kb
         nfsaas_host.save()
