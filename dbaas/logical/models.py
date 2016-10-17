@@ -500,11 +500,16 @@ class Database(BaseModel):
         )
 
     def update_host_disk_used_size(self, host_address, used_size_kb):
-        instance = self.databaseinfra.instances.get(address=host_address)
+        instance = self.databaseinfra.instances.filter(address=host_address).first()
+        if not instance:
+            return None
+
         nfsaas_host = instance.hostname.nfsaas_host_attributes.first()
-        if nfsaas_host:
-            nfsaas_host.nfsaas_used_size_kb = used_size_kb
-            nfsaas_host.save()
+        if not nfsaas_host:
+            return None
+
+        nfsaas_host.nfsaas_used_size_kb = used_size_kb
+        nfsaas_host.save()
         return nfsaas_host
 
 
