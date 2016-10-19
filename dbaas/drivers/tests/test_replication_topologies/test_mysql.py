@@ -8,7 +8,7 @@ from drivers.tests.test_replication_topologies import AbstractReplicationTopolog
 
 class AbstractBaseMySQLTestCase(AbstractReplicationTopologySettingsTestCase):
 
-    def _get_deploy_settings(self):
+    def _get_deploy_first_settings(self):
         return (
             'workflow.steps.util.deploy.build_databaseinfra.BuildDatabaseInfra',
             'workflow.steps.mysql.deploy.create_virtualmachines.CreateVirtualMachine',
@@ -20,7 +20,10 @@ class AbstractBaseMySQLTestCase(AbstractReplicationTopologySettingsTestCase):
             'workflow.steps.util.deploy.config_backup_log.ConfigBackupLog',
             'workflow.steps.util.deploy.check_database_connection.CheckDatabaseConnection',
             'workflow.steps.util.deploy.check_dns.CheckDns',
-            'workflow.steps.util.deploy.create_zabbix.CreateZabbix',
+        )
+
+    def _get_deploy_last_settings(self):
+        return (
             'workflow.steps.util.deploy.start_monit.StartMonit',
             'workflow.steps.util.deploy.create_dbmonitor.CreateDbMonitor',
             'workflow.steps.util.deploy.build_database.BuildDatabase',
@@ -29,10 +32,10 @@ class AbstractBaseMySQLTestCase(AbstractReplicationTopologySettingsTestCase):
         )
 
     def _get_clone_settings(self):
-        return self._get_deploy_settings() + (
+        return self._get_deploy_first_settings() + self._get_deploy_last_settings() + (
             'workflow.steps.util.clone.clone_database.CloneDatabase',
             'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',
-        )
+        ) + self._get_zabbix_settings()
 
     def _get_resize_settings(self):
         return (
@@ -90,7 +93,7 @@ class TestMySQLFoxHA(AbstractBaseMySQLTestCase):
             'workflow.steps.util.restore_snapshot.clean_old_volumes.CleanOldVolumes',
         )
 
-    def _get_deploy_settings(self):
+    def _get_deploy_first_settings(self):
         return (
             'workflow.steps.util.deploy.build_databaseinfra.BuildDatabaseInfra',
             'workflow.steps.mysql.deploy.create_virtualmachines_fox.CreateVirtualMachine',
@@ -105,7 +108,10 @@ class TestMySQLFoxHA(AbstractBaseMySQLTestCase):
             'workflow.steps.util.deploy.config_backup_log.ConfigBackupLog',
             'workflow.steps.util.deploy.check_database_connection.CheckDatabaseConnection',
             'workflow.steps.util.deploy.check_dns.CheckDns',
-            'workflow.steps.util.deploy.create_zabbix.CreateZabbix',
+        )
+
+    def _get_deploy_last_settings(self):
+        return (
             'workflow.steps.util.deploy.start_monit.StartMonit',
             'workflow.steps.util.deploy.create_dbmonitor.CreateDbMonitor',
             'workflow.steps.util.deploy.build_database.BuildDatabase',
