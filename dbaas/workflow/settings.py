@@ -171,16 +171,16 @@ MYSQL_FLIPPER_FOX_MIGRATION_2 = (
     'workflow.steps.util.region_migration.check_instances_status.CheckInstancesStatus',
     'workflow.steps.mysql.flipperfox_migration.set_master_read_only.SetMasterReadOnly',
     'workflow.steps.mysql.flipperfox_migration.turn_flipper_ip_down.TurnFlipperIpDown',
-    'workflow.steps.mysql.flipperfox_migration.check_replication.CheckReplication',
+    'workflow.steps.mysql.flipperfox_migration.check_replication.CheckReplicationFlipperFox',
     'workflow.steps.mysql.flipperfox_migration.change_master.ChangeMaster',
-    'workflow.steps.mysql.flipperfox_migration.rename_flipper_masterpair.RenameFlipperMasterPair',
-    'workflow.steps.mysql.flipperfox_migration.create_flipper.CreateFlipper',
-    'workflow.steps.mysql.flipperfox_migration.set_flipper_ips.SetFlipperIps',
-    'workflow.steps.util.region_migration.update_zabbix_host.UpdateZabbixHost',
-    'workflow.steps.util.region_migration.switch_dns.SwitchDNS',
+    'workflow.steps.mysql.flipperfox_migration.check_replication.CheckReplicationFoxFlipper',
+    'workflow.steps.mysql.flipperfox_migration.start_fox.StartFox',
+    'workflow.steps.mysql.flipperfox_migration.set_infra_endpoint.SetInfraEndpoint',
+    'workflow.steps.mysql.flipperfox_migration.update_zabbix_host.UpdateZabbixHost',
+    'workflow.steps.mysql.flipperfox_migration.switch_dns.SwitchDNS',
     'workflow.steps.util.region_migration.td_agent.StartTDAgent',
     'workflow.steps.mysql.flipperfox_migration.start_mysql_statsd.StartMySQLStasD',
-    'workflow.steps.mysql.flipperfox_migration.start_mkheartbeat.StartMkHeartbeat',
+
 )
 
 MYSQL_FLIPPER_FOX_MIGRATION_3 = (

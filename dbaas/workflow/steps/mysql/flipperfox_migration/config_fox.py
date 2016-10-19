@@ -3,7 +3,6 @@ import logging
 from dbaas_foxha.dbaas_api import DatabaseAsAServiceApi
 from dbaas_foxha.provider import FoxHAProvider
 from dbaas_credentials.models import CredentialType
-from time import sleep
 from util import get_credentials_for
 from util import full_stack
 from workflow.steps.util.base import BaseStep
@@ -59,12 +58,6 @@ class ConfigFox(BaseStep):
                                      mode=mode,
                                      status='enabled')
 
-            #LOG.info('Starting foxha on DatabaseInfra {}'.format(databaseinfra.name))
-            #foxprovider.start(group_name=databaseinfra.name)
-
-            #LOG.info("Waiting 30 seconds to start VIP")
-            #sleep(30)
-
             return True
         except Exception:
             traceback = full_stack()
@@ -84,7 +77,7 @@ class ConfigFox(BaseStep):
             dbaas_api = DatabaseAsAServiceApi(databaseinfra=databaseinfra,
                                               credentials=foxha_credentials)
             foxprovider = FoxHAProvider(dbaas_api=dbaas_api)
-            for instance in workflow_dict['instances']:
+            for instance in workflow_dict['target_instances']:
                 LOG.info('Deleting foxah node {}'.format(instance.address))
                 foxprovider.delete_node(group_name=databaseinfra.name,
                                         node_ip=instance.address)

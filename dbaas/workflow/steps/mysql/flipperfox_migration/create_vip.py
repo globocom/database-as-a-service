@@ -70,10 +70,6 @@ class CreateVip(BaseStep):
     def undo(self, workflow_dict):
         LOG.info("Running undo...")
         try:
-            if 'databaseinfra' not in workflow_dict and 'hosts' not in workflow_dict:
-                LOG.info(
-                    "We could not find a databaseinfra inside the workflow_dict")
-                return False
 
             databaseinfra = workflow_dict['databaseinfra']
             try:
