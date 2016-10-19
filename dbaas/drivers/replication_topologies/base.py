@@ -9,8 +9,17 @@ STOP_RESIZE_START = (
 
 class BaseTopology(object):
 
-    def get_deploy_steps(self):
+    def deploy_first_steps(self):
         raise NotImplementedError()
+
+    def deploy_last_steps(self):
+        raise NotImplementedError()
+
+    def zabbix_step(self):
+        return ('workflow.steps.util.deploy.create_zabbix.CreateZabbix', )
+
+    def get_deploy_steps(self):
+        return self.deploy_first_steps() + self.zabbix_step() + self.deploy_last_steps()
 
     def get_clone_steps(self):
         raise NotImplementedError()

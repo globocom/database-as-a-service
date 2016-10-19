@@ -3,8 +3,7 @@ from base import BaseTopology, STOP_RESIZE_START
 
 
 class BaseRedis(BaseTopology):
-
-    def get_deploy_steps(self):
+    def deploy_first_steps(self):
         return (
             'workflow.steps.redis.deploy.build_databaseinfra.BuildDatabaseInfra',
             'workflow.steps.redis.deploy.create_virtualmachines.CreateVirtualMachine',
@@ -14,7 +13,10 @@ class BaseRedis(BaseTopology):
             'workflow.steps.util.deploy.config_backup_log.ConfigBackupLog',
             'workflow.steps.util.deploy.check_database_connection.CheckDatabaseConnection',
             'workflow.steps.util.deploy.check_dns.CheckDns',
-            'workflow.steps.util.deploy.create_zabbix.CreateZabbix',
+        )
+
+    def deploy_last_steps(self):
+        return (
             'workflow.steps.util.deploy.start_monit.StartMonit',
             'workflow.steps.util.deploy.create_dbmonitor.CreateDbMonitor',
             'workflow.steps.util.deploy.build_database.BuildDatabase',
@@ -23,10 +25,10 @@ class BaseRedis(BaseTopology):
         )
 
     def get_clone_steps(self):
-        return self.get_deploy_steps() + (
+        return self.deploy_first_steps() + self.deploy_last_steps() + (
             'workflow.steps.redis.clone.clone_database.CloneDatabase',
             'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',
-        )
+        ) + self.zabbix_step()
 
     def get_resize_steps(self):
         return (
