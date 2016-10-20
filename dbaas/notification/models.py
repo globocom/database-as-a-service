@@ -67,6 +67,15 @@ class TaskHistory(BaseModel):
         if persist:
             self.save()
 
+    def add_detail(self, message, level=None):
+        extra = ''
+        if level > 0:
+            extra = '{}> '.format('-' * level)
+
+        self.details = "{}\n".format(self.details) if self.details else ""
+        self.details = '{}{}{}'.format(self.details, extra, message)
+        self.save()
+
     def update_status_for(self, status, details=None):
         if status not in TaskHistory._STATUS:
             raise RuntimeError("Invalid task status")
