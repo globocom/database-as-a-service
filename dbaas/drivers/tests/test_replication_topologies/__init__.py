@@ -46,18 +46,6 @@ class AbstractReplicationTopologySettingsTestCase(TestCase):
             'workflow.steps.util.restore_snapshot.clean_old_volumes.CleanOldVolumes',
         )
 
-    def _get_get_volume_migration_settings(self):
-        return (
-            'workflow.steps.util.volume_migration.create_volume.CreateVolume',
-            'workflow.steps.util.volume_migration.mount_volume.MountVolume',
-            'workflow.steps.util.volume_migration.stop_database.StopDatabase',
-            'workflow.steps.util.volume_migration.copy_data.CopyData',
-            'workflow.steps.util.volume_migration.umount_volumes.UmountVolumes',
-            'workflow.steps.util.volume_migration.update_fstab.UpdateFstab',
-            'workflow.steps.util.volume_migration.start_database.StartDatabase',
-            'workflow.steps.util.volume_migration.update_dbaas_metadata.UpdateDbaaSMetadata',
-        )
-
     @skip_unless_not_abstract
     def test_deploy_settings(self):
         self.assertEqual(
@@ -84,11 +72,4 @@ class AbstractReplicationTopologySettingsTestCase(TestCase):
         self.assertEqual(
             self._get_restore_snapshot_settings(),
             self.replication_topology.get_restore_snapshot_steps()
-        )
-
-    @skip_unless_not_abstract
-    def test_resize_stepsvolume_migration_steps(self):
-        self.assertEqual(
-            self._get_get_volume_migration_settings(),
-            self.replication_topology.get_volume_migration_steps()
         )
