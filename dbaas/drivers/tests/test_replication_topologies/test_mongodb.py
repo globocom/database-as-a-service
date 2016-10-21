@@ -33,7 +33,7 @@ class AbstractBaseMondodbTestCase(AbstractReplicationTopologySettingsTestCase):
 
     def _get_resize_settings(self):
         return (
-            ('workflow.steps.util..stop_database.StopDatabase',) +
+            ('workflow.steps.util.resize.stop_database.StopDatabase',) +
             STOP_RESIZE_START +
             ('workflow.steps.util.resize.start_database.StartDatabase',
              'workflow.steps.util.resize.start_agents.StartAgents',
