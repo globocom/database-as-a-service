@@ -15,11 +15,14 @@ class BaseTopology(object):
     def deploy_last_steps(self):
         raise NotImplementedError()
 
-    def zabbix_step(self):
-        return ('workflow.steps.util.deploy.create_zabbix.CreateZabbix', )
+    def monitoring_steps(self):
+        return (
+            'workflow.steps.util.deploy.create_zabbix.CreateZabbix',
+            'workflow.steps.util.deploy.create_dbmonitor.CreateDbMonitor',
+        )
 
     def get_deploy_steps(self):
-        return self.deploy_first_steps() + self.zabbix_step() + self.deploy_last_steps()
+        return self.deploy_first_steps() + self.monitoring_steps() + self.deploy_last_steps()
 
     def get_clone_steps(self):
         raise NotImplementedError()

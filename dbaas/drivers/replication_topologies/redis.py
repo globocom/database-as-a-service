@@ -13,12 +13,11 @@ class BaseRedis(BaseTopology):
             'workflow.steps.util.deploy.config_backup_log.ConfigBackupLog',
             'workflow.steps.util.deploy.check_database_connection.CheckDatabaseConnection',
             'workflow.steps.util.deploy.check_dns.CheckDns',
+            'workflow.steps.util.deploy.start_monit.StartMonit',
         )
 
     def deploy_last_steps(self):
         return (
-            'workflow.steps.util.deploy.start_monit.StartMonit',
-            'workflow.steps.util.deploy.create_dbmonitor.CreateDbMonitor',
             'workflow.steps.util.deploy.build_database.BuildDatabase',
             'workflow.steps.util.deploy.create_log.CreateLog',
             'workflow.steps.util.deploy.check_database_binds.CheckDatabaseBinds',
@@ -28,7 +27,7 @@ class BaseRedis(BaseTopology):
         return self.deploy_first_steps() + self.deploy_last_steps() + (
             'workflow.steps.redis.clone.clone_database.CloneDatabase',
             'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',
-        ) + self.zabbix_step()
+        ) + self.monitoring_steps()
 
     def get_resize_steps(self):
         return (

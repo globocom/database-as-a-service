@@ -29,12 +29,15 @@ class AbstractReplicationTopologySettingsTestCase(TestCase):
     def _get_deploy_last_settings(self):
         raise NotImplementedError
 
-    def _get_zabbix_settings(self):
-        return ('workflow.steps.util.deploy.create_zabbix.CreateZabbix', )
+    def _get_monitoring_settings(self):
+        return (
+            'workflow.steps.util.deploy.create_zabbix.CreateZabbix',
+            'workflow.steps.util.deploy.create_dbmonitor.CreateDbMonitor',
+        )
 
     def _get_deploy_settings(self):
         return self._get_deploy_first_settings() + \
-               self._get_zabbix_settings() + \
+               self._get_monitoring_settings() + \
                self._get_deploy_last_settings()
 
     def _get_clone_settings(self):

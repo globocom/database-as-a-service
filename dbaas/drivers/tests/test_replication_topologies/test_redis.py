@@ -17,12 +17,11 @@ class AbstractBaseRedisTestCase(AbstractReplicationTopologySettingsTestCase):
             'workflow.steps.util.deploy.config_backup_log.ConfigBackupLog',
             'workflow.steps.util.deploy.check_database_connection.CheckDatabaseConnection',
             'workflow.steps.util.deploy.check_dns.CheckDns',
+            'workflow.steps.util.deploy.start_monit.StartMonit',
         )
 
     def _get_deploy_last_settings(self):
         return (
-            'workflow.steps.util.deploy.start_monit.StartMonit',
-            'workflow.steps.util.deploy.create_dbmonitor.CreateDbMonitor',
             'workflow.steps.util.deploy.build_database.BuildDatabase',
             'workflow.steps.util.deploy.create_log.CreateLog',
             'workflow.steps.util.deploy.check_database_binds.CheckDatabaseBinds',
@@ -32,7 +31,7 @@ class AbstractBaseRedisTestCase(AbstractReplicationTopologySettingsTestCase):
         return self._get_deploy_first_settings() + self._get_deploy_last_settings() + (
             'workflow.steps.redis.clone.clone_database.CloneDatabase',
             'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',
-        ) + self._get_zabbix_settings()
+        ) + self._get_monitoring_settings()
 
     def _get_resize_settings(self):
         return (
