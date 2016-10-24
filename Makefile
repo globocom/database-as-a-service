@@ -59,7 +59,7 @@ reset_data: db_reset # drop and create database and insert sample data
 
 
 run_migrate: # run all migrations
-	@cd dbaas && python manage.py syncdb --migrate --noinput
+	@cd dbaas && python manage.py syncdb --migrate --noinput --no-initial-data
 
 
 test: # run tests
