@@ -874,24 +874,36 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
         url = reverse('admin:logical_database_change', args=[database.id])
 
-        if database.is_in_quarantine:
+        if not database.restore_allowed():
             self.message_user(
-                request, "Database in quarantine and cannot be restored", level=messages.ERROR)
+                request,
+                "Restore is not allowed. Please, contact DBaaS team for more information",
+                level=messages.WARNING
+            )
+            return HttpResponseRedirect(url)
+
+        if database.is_in_quarantine:
+            self.message_user(request, "Database in quarantine and cannot be restored", level=messages.ERROR)
             return HttpResponseRedirect(url)
 
         if database.status != Database.ALIVE or not database.database_status.is_alive:
-            self.message_user(
-                request, "Database is dead  and cannot be restored", level=messages.ERROR)
+            self.message_user(request, "Database is dead and cannot be restored", level=messages.ERROR)
             return HttpResponseRedirect(url)
 
         if database.is_beeing_used_elsewhere():
             self.message_user(
-                request, "Database is beeing used by another task, please check your tasks", level=messages.ERROR)
+                request,
+                "Database is beeing used by another task, please check your tasks",
+                level=messages.ERROR
+            )
             return HttpResponseRedirect(url)
 
         if database.has_migration_started():
             self.message_user(
-                request, "Database {} cannot be restored because it is beeing migrated.".format(database.name), level=messages.ERROR)
+                request,
+                "Database {} cannot be restored because it is beeing migrated.".format(database.name),
+                level=messages.ERROR
+            )
             url = reverse('admin:logical_database_changelist')
             return HttpResponseRedirect(url)
 
@@ -938,63 +950,76 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         from region_migration.models import DatabaseRegionMigration
 
         database = Database.objects.get(id=database_id)
-        url = reverse(
-            'admin:region_migration_databaseregionmigration_changelist')
+        url = reverse('admin:logical_database_change', args=[database_id])
 
-        region_migration = DatabaseRegionMigration(database=database,
-                                                   current_step=0,)
+        region_migration = DatabaseRegionMigration(database=database, current_step=0,)
 
         if database.is_in_quarantine:
-            self.message_user(
-                request, "Database in quarantine and cannot be migrated", level=messages.ERROR)
+            self.message_user(request, "Database in quarantine and cannot be migrated", level=messages.ERROR)
             return HttpResponseRedirect(url)
 
         if database.status != Database.ALIVE or not database.database_status.is_alive:
-            self.message_user(
-                request, "Database is dead  and cannot be migrated", level=messages.ERROR)
+            self.message_user(request, "Database is dead and cannot be migrated", level=messages.ERROR)
             return HttpResponseRedirect(url)
 
-        if database.has_migration_started():
+        if not request.user.team_set.filter(role__name="role_dba"):
             self.message_user(
-                request, "Database {} is already migrating".format(database.name), level=messages.ERROR)
+                request,
+                "You have no permissions to migrate {}. Please, contact your DBA".format(database.name),
+                level=messages.ERROR
+            )
+            return HttpResponseRedirect(url)
+
+        url = reverse('admin:region_migration_databaseregionmigration_changelist')
+
+        if database.has_migration_started():
+            self.message_user(request, "Database {} is already migrating".format(database.name), level=messages.ERROR)
             return HttpResponseRedirect(url)
 
         try:
             region_migration.save()
-            self.message_user(request, "Migration for {} started!".format(
-                database.name), level=messages.SUCCESS)
+            self.message_user(request, "Migration for {} started!".format(database.name), level=messages.SUCCESS)
         except IntegrityError, e:
-            self.message_user(request, "Database {} is already migrating!".format(
-                database.name), level=messages.ERROR)
+            self.message_user(request, "Database {} is already migrating!".format(database.name), level=messages.ERROR)
 
         return HttpResponseRedirect(url)
 
     def mongodb_engine_version_upgrade(self, request, database_id):
         from notification.tasks import upgrade_mongodb_24_to_30
-        database = Database.objects.get(id=database_id)
 
         url = reverse('admin:logical_database_change', args=[database_id])
 
+        database = Database.objects.get(id=database_id)
         if database.is_in_quarantine:
-            self.message_user(
-                request, "Database in quarantine and cannot be upgraded!",
-                level=messages.ERROR)
+            self.message_user(request, "Database in quarantine and cannot be upgraded!", level=messages.ERROR)
             return HttpResponseRedirect(url)
 
         if database.status != Database.ALIVE or not database.database_status.is_alive:
-            self.message_user(
-                request, "Database is dead  and cannot be upgraded!",
-                level=messages.ERROR)
+            self.message_user(request, "Database is dead and cannot be upgraded!", level=messages.ERROR)
             return HttpResponseRedirect(url)
 
         if database.has_migration_started():
             self.message_user(
-                request, "Database {} is beeing migrated and cannot be upgraded!".format(database.name), level=messages.ERROR)
+                request,
+                "Database {} is being migrated and cannot be upgraded!".format(database.name),
+                level=messages.ERROR
+            )
             return HttpResponseRedirect(url)
 
         if not database.is_mongodb_24:
             self.message_user(
-                request, "Database {} cannot be upgraded, please contact you DBA.".format(database.name), level=messages.ERROR)
+                request,
+                "Database {} cannot be upgraded. Please contact you DBA".format(database.name),
+                level=messages.ERROR
+            )
+            return HttpResponseRedirect(url)
+
+        if not request.user.team_set.filter(role__name="role_dba"):
+            self.message_user(
+                request,
+                "You have no permissions to upgrade {}. Please, contact your DBA".format(database.name),
+                level=messages.ERROR
+            )
             return HttpResponseRedirect(url)
 
         task_history = TaskHistory()
@@ -1004,8 +1029,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         task_history.user = request.user
         task_history.save()
 
-        upgrade_mongodb_24_to_30.delay(database=database, user=request.user,
-                                       task_history=task_history)
+        upgrade_mongodb_24_to_30.delay(database=database, user=request.user, task_history=task_history)
         url = reverse('admin:notification_taskhistory_changelist')
 
         return HttpResponseRedirect(url)
