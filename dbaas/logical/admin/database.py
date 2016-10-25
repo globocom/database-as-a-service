@@ -887,7 +887,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             return HttpResponseRedirect(url)
 
         if database.status != Database.ALIVE or not database.database_status.is_alive:
-            self.message_user(request, "Database is dead  and cannot be restored", level=messages.ERROR)
+            self.message_user(request, "Database is dead and cannot be restored", level=messages.ERROR)
             return HttpResponseRedirect(url)
 
         if database.is_beeing_used_elsewhere():
