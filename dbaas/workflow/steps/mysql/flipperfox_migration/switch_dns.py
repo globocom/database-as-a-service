@@ -55,16 +55,6 @@ class SwitchDNS(BaseStep):
                                equivalent_atribute_name='future_instance',
                                workflow_dict=workflow_dict)
 
-            """
-            switch_dns_forward(databaseinfra=databaseinfra,
-                               source_object_list=workflow_dict[
-                                   'source_secondary_ips'],
-                               ip_attribute_name='ip',
-                               dns_attribute_name='dns',
-                               equivalent_atribute_name='equivalent_dbinfraattr',
-                               workflow_dict=workflow_dict)
-            """
-
             return True
         except Exception:
             traceback = full_stack()
@@ -121,16 +111,6 @@ class SwitchDNS(BaseStep):
                                 ip_attribute_name='address',
                                 dns_attribute_name='dns',
                                 equivalent_atribute_name='future_instance')
-
-            """
-            switch_dns_backward(databaseinfra=databaseinfra,
-                                source_object_list=workflow_dict[
-                                    'source_secondary_ips'],
-                                ip_attribute_name='ip',
-                                dns_attribute_name='dns',
-                                equivalent_atribute_name='equivalent_dbinfraattr')
-
-            """
 
             return True
         except Exception:
