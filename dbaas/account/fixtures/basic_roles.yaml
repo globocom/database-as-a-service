@@ -72,6 +72,7 @@
     - [add_auditrequest, simple_audit, auditrequest]
     - [change_auditrequest, simple_audit, auditrequest]
     - [delete_auditrequest, simple_audit, auditrequest]
+    - [upgrade_mongo24_to_30, logical, database]
   model: auth.group
   pk: 3
 - fields:

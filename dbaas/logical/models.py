@@ -123,9 +123,9 @@ class Database(BaseModel):
 
     class Meta:
         permissions = (
-            ("can_manage_quarantine_databases",
-             "Can manage databases in quarantine"),
+            ("can_manage_quarantine_databases", "Can manage databases in quarantine"),
             ("view_database", "Can view databases"),
+            ("upgrade_mongo24_to_30", "Can upgrade mongoDB version from 2.4 to 3.0"),
         )
         unique_together = (
             ('name', 'environment'),

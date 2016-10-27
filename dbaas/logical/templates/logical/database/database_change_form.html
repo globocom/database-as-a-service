@@ -157,6 +157,18 @@
             </tr>
          </table>
     {% endif %}
+    {% if original.is_mongodb_24 and has_perm_upgrade_mongo %}
+            <h2>Engine Version Upgrade</h2>
+             <table id="table-mais" class="table table-striped">
+                <tr >
+                    <div class="btn-toolbar">
+                        <div class="btn-group-lg">
+                            <a href="{{original.get_mongodb_engine_version_upgrade_url}}" class="btn btn-primary" title="StaEngVerUp" data-content="IniMigration" onclick="return confirm('Are you sure?')">Migrate MongoDB 2.4 to 3.0</a>
+                        </div>
+                    </div>
+                </tr>
+             </table>
+    {% endif %}
     {% if is_dba %}
          <h2>Region Migration</h2>
          <table id="table-mais" class="table table-striped">
@@ -168,18 +180,6 @@
                 </div>
             </tr>
          </table>
-         {% if original.is_mongodb_24 %}
-            <h2>Engine Version Upgrade</h2>
-             <table id="table-mais" class="table table-striped">
-                <tr >
-                    <div class="btn-toolbar">
-                        <div class="btn-group-lg">
-                            <a href="{{original.get_mongodb_engine_version_upgrade_url}}" class="btn btn-primary" title="StaEngVerUp" data-content="IniMigration" onclick="return confirm('Are you sure?')">Migrate MongoDB 2.4 to 3.0</a>
-                        </div>
-                    </div>
-                </tr>
-             </table>
-        {% endif %}
      {% endif %}
 {% endif %}
 {% endblock %}
