@@ -444,6 +444,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         self.form = DatabaseForm
         extra_context = extra_context or {}
 
+        extra_context['has_perm_upgrade_mongo'] = request.user.has_perm(constants.PERM_UPGRADE_MONGO24_TO_30)
+
         if database.is_in_quarantine:
             extra_context['delete_button_name'] = self.delete_button_name
         else:
@@ -1049,7 +1051,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             )
             return HttpResponseRedirect(url)
 
-        if not request.user.team_set.filter(role__name="role_dba"):
+        if not request.user.has_perm(constants.PERM_UPGRADE_MONGO24_TO_30):
             self.message_user(
                 request,
                 "You have no permissions to upgrade {}. Please, contact your DBA".format(database.name),
