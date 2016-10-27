@@ -35,7 +35,7 @@ class AbstractBaseRedisTestCase(AbstractReplicationTopologySettingsTestCase):
 
     def _get_resize_settings(self):
         return (
-            ('workflow.steps.util.volume_migration.stop_database.StopDatabase',
+            ('workflow.steps.util.resize.stop_database.StopDatabase',
              'workflow.steps.redis.resize.change_config.ChangeDatabaseConfigFile',) +
             STOP_RESIZE_START +
             ('workflow.steps.util.resize.start_database.StartDatabase',

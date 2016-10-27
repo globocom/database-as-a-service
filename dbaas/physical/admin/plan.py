@@ -5,7 +5,6 @@ from django_services import admin as services_admin
 from ..service.plan import PlanService
 from ..models import PlanAttribute
 from dbaas_cloudstack.models import PlanAttr
-from dbaas_nfsaas.models import PlanAttr as PlanAttrNfsaas
 from dbaas_dnsapi.models import PlanAttr as PlanAttrDNSAPI
 from .. import forms
 from physical import models
@@ -18,15 +17,6 @@ class PlanAttributeInline(admin.TabularInline):
 
 class PlanAttrInline(admin.StackedInline):
     model = PlanAttr
-    max_num = 1
-    template = 'admin/physical/shared/inline_form.html'
-
-    def has_delete_permission(self, request, obj=None):
-        return False
-
-
-class PlanAttrNfsaasInline(admin.StackedInline):
-    model = PlanAttrNfsaas
     max_num = 1
     template = 'admin/physical/shared/inline_form.html'
 
@@ -55,7 +45,6 @@ class PlanAdmin(services_admin.DjangoServicesAdmin):
     inlines = [
         PlanAttributeInline,
         PlanAttrInline,
-        PlanAttrNfsaasInline,
         PlanAttrDNSAPIInline,
     ]
 
