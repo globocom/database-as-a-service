@@ -139,7 +139,7 @@ MONGODB_REGION_MIGRATION_4 = (
 MONGODB_REGION_MIGRATION_5 = ()
 
 MYSQL_FLIPPER_FOX_MIGRATION_1 = (
-    'workflow.steps.util.region_migration.change_ttl.DecreaseTTL',
+    'workflow.steps.mysql.flipperfox_migration.change_ttl.DecreaseTTL',
     'workflow.steps.mysql.flipperfox_migration.create_virtualmachines.CreateVirtualMachine',
     'workflow.steps.mysql.flipperfox_migration.create_vip.CreateVip',
     'workflow.steps.mysql.flipperfox_migration.create_nfs.CreateNfs',
@@ -176,7 +176,8 @@ MYSQL_FLIPPER_FOX_MIGRATION_2 = (
     'workflow.steps.mysql.flipperfox_migration.check_replication.CheckReplicationFoxFlipper',
     'workflow.steps.mysql.flipperfox_migration.start_fox.StartFox',
     'workflow.steps.mysql.flipperfox_migration.set_infra_endpoint.SetInfraEndpoint',
-    'workflow.steps.mysql.flipperfox_migration.update_zabbix_host.UpdateZabbixHost',
+
+    'workflow.steps.mysql.flipperfox_migration.update_zabbix_monitoring.UpdateZabbixMonitoring',
     'workflow.steps.mysql.flipperfox_migration.switch_dns.SwitchDNS',
     'workflow.steps.util.region_migration.td_agent.StartTDAgent',
     'workflow.steps.mysql.flipperfox_migration.start_mysql_statsd.StartMySQLStasD',
@@ -184,14 +185,14 @@ MYSQL_FLIPPER_FOX_MIGRATION_2 = (
 )
 
 MYSQL_FLIPPER_FOX_MIGRATION_3 = (
-    'workflow.steps.util.region_migration.remove_old_acl.RemoveOldAcl',
-    'workflow.steps.util.region_migration.update_dbaas_metadata.UpdateDBaaSMetadata',
-    'workflow.steps.util.region_migration.acl_database_bind.UnbindOldInstances',
+    'workflow.steps.mysql.flipperfox_migration.remove_old_acl.RemoveOldAcl',
+    'workflow.steps.mysql.flipperfox_migration.update_dbaas_metadata.UpdateDBaaSMetadata',
+    'workflow.steps.mysql.flipperfox_migration.acl_database_bind.UnbindOldInstances',
+    'workflow.steps.mysql.flipperfox_migration.delete_flipper_dns.DeleteFlipperDNS',
     'workflow.steps.mysql.flipperfox_migration.remove_secondary_ip.RemoveSecondaryIp',
-    'workflow.steps.util.region_migration.remove_disks.RemoveDisks',
-    'workflow.steps.util.region_migration.remove_backup_log.RemoveBackupLog',
-    'workflow.steps.util.region_migration.remove_vms.RemoveVms',
-    'workflow.steps.util.region_migration.change_ttl.DefaultTTL',
+    'workflow.steps.mysql.flipperfox_migration.remove_disks.RemoveDisks',
+    'workflow.steps.mysql.flipperfox_migration.remove_vms.RemoveVms',
+    'workflow.steps.mysql.flipperfox_migration.change_ttl.DefaultTTL',
 )
 
 MYSQL_FLIPPER_FOX_MIGRATION_4 = ()
