@@ -3,7 +3,6 @@ import logging
 from dbaas_credentials.models import CredentialType
 from util import get_credentials_for
 from util import full_stack
-from dbaas_cloudstack.models import DatabaseInfraAttr
 from dbaas_cloudstack.provider import CloudStackProvider
 from workflow.steps.util.base import BaseStep
 from workflow.exceptions.error_codes import DBAAS_0010
@@ -19,11 +18,11 @@ class RemoveSecondaryIp(BaseStep):
     def do(self, workflow_dict):
         try:
             cs_credentials = get_credentials_for(
-                environment=workflow_dict['source_environment'],
+                environment=workflow_dict['environment'],
                 credential_type=CredentialType.CLOUDSTACK)
 
             networkapi_credentials = get_credentials_for(
-                environment=workflow_dict['source_environment'],
+                environment=workflow_dict['environment'],
                 credential_type=CredentialType.NETWORKAPI)
 
             cs_provider = CloudStackProvider(credentials=cs_credentials,
