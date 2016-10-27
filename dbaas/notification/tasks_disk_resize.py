@@ -91,7 +91,7 @@ def zabbix_collect_used_disk(task):
                             message='Zabbix metrics not updated', level=4
                         )
 
-                if current_percentage >= threshold_disk_resize:
+                if current_percentage >= threshold_disk_resize and database.disk_auto_resize:
                     try:
                         task_resize = disk_auto_resize(
                             database=database,

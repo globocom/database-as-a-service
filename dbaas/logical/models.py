@@ -111,6 +111,12 @@ class Database(BaseModel):
             "Check this box if you'd like to receive information regarding this database by email."
         )
     )
+    disk_auto_resize = models.BooleanField(
+        verbose_name=_("Disk auto resize"), default=True,
+        help_text=_(
+            "When marked, the disk will be resized automatically."
+        )
+    )
 
     objects = models.Manager()
     alive = DatabaseAliveManager()
