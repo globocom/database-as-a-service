@@ -27,7 +27,7 @@ class InitDatabaseMongoDB(BaseStep):
             mongodbkey = ''.join(random.choice(string.hexdigits)
                                  for i in range(50))
 
-            workflow_dict['replicasetname'] = 'RepicaSet_' + \
+            workflow_dict['replicasetname'] = 'ReplicaSet_' + \
                 workflow_dict['databaseinfra'].name
 
             statsd_credentials = get_credentials_for(

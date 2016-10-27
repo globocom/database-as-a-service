@@ -13,8 +13,7 @@ LOG = logging.getLogger(__name__)
 
 
 class BaseMysql(BaseTopology):
-
-    def get_deploy_steps(self):
+    def deploy_first_steps(self):
         return (
             'workflow.steps.util.deploy.build_databaseinfra.BuildDatabaseInfra',
             'workflow.steps.mysql.deploy.create_virtualmachines.CreateVirtualMachine',
@@ -26,23 +25,25 @@ class BaseMysql(BaseTopology):
             'workflow.steps.util.deploy.config_backup_log.ConfigBackupLog',
             'workflow.steps.util.deploy.check_database_connection.CheckDatabaseConnection',
             'workflow.steps.util.deploy.check_dns.CheckDns',
-            'workflow.steps.util.deploy.create_zabbix.CreateZabbix',
             'workflow.steps.util.deploy.start_monit.StartMonit',
-            'workflow.steps.util.deploy.create_dbmonitor.CreateDbMonitor',
+        )
+
+    def deploy_last_steps(self):
+        return (
             'workflow.steps.util.deploy.build_database.BuildDatabase',
             'workflow.steps.util.deploy.create_log.CreateLog',
             'workflow.steps.util.deploy.check_database_binds.CheckDatabaseBinds',
         )
 
     def get_clone_steps(self):
-        return self.get_deploy_steps() + (
+        return self.deploy_first_steps() + self.deploy_last_steps() + (
             'workflow.steps.util.clone.clone_database.CloneDatabase',
             'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',
-        )
+        ) + self.monitoring_steps()
 
     def get_resize_steps(self):
         return (
-            ('workflow.steps.util.volume_migration.stop_database.StopDatabase',
+            ('workflow.steps.util.resize.stop_database.StopDatabase',
              'workflow.steps.mysql.resize.change_config.ChangeDatabaseConfigFile',
              ) + STOP_RESIZE_START +
             ('workflow.steps.util.resize.start_database.StartDatabase',
@@ -204,7 +205,7 @@ class MySQLFoxHA(MySQLSingle):
             'workflow.steps.util.restore_snapshot.clean_old_volumes.CleanOldVolumes',
         )
 
-    def get_deploy_steps(self):
+    def deploy_first_steps(self):
         return (
             'workflow.steps.util.deploy.build_databaseinfra.BuildDatabaseInfra',
             'workflow.steps.mysql.deploy.create_virtualmachines_fox.CreateVirtualMachine',
@@ -219,9 +220,11 @@ class MySQLFoxHA(MySQLSingle):
             'workflow.steps.util.deploy.config_backup_log.ConfigBackupLog',
             'workflow.steps.util.deploy.check_database_connection.CheckDatabaseConnection',
             'workflow.steps.util.deploy.check_dns.CheckDns',
-            'workflow.steps.util.deploy.create_zabbix.CreateZabbix',
             'workflow.steps.util.deploy.start_monit.StartMonit',
-            'workflow.steps.util.deploy.create_dbmonitor.CreateDbMonitor',
+        )
+
+    def deploy_last_steps(self):
+        return (
             'workflow.steps.util.deploy.build_database.BuildDatabase',
             'workflow.steps.util.deploy.create_log.CreateLog',
             'workflow.steps.util.deploy.check_database_binds.CheckDatabaseBinds',

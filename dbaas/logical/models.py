@@ -111,6 +111,12 @@ class Database(BaseModel):
             "Check this box if you'd like to receive information regarding this database by email."
         )
     )
+    disk_auto_resize = models.BooleanField(
+        verbose_name=_("Disk auto resize"), default=True,
+        help_text=_(
+            "When marked, the disk will be resized automatically."
+        )
+    )
 
     objects = models.Manager()
     alive = DatabaseAliveManager()
@@ -498,6 +504,22 @@ class Database(BaseModel):
             database=database, disk_offering=disk_offering,
             user=user, task_history=task_history
         )
+
+    def update_host_disk_used_size(self, host_address, used_size_kb, total_size_kb=None):
+        instance = self.databaseinfra.instances.filter(address=host_address).first()
+        if not instance:
+            raise ObjectDoesNotExist()
+
+        nfsaas_host = instance.hostname.nfsaas_host_attributes.last()
+        if not nfsaas_host:
+            return None
+
+        if total_size_kb:
+            nfsaas_host.nfsaas_size_kb = total_size_kb
+
+        nfsaas_host.nfsaas_used_size_kb = used_size_kb
+        nfsaas_host.save()
+        return nfsaas_host
 
 
 class Credential(BaseModel):
