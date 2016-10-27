@@ -9,8 +9,20 @@ STOP_RESIZE_START = (
 
 class BaseTopology(object):
 
-    def get_deploy_steps(self):
+    def deploy_first_steps(self):
         raise NotImplementedError()
+
+    def deploy_last_steps(self):
+        raise NotImplementedError()
+
+    def monitoring_steps(self):
+        return (
+            'workflow.steps.util.deploy.create_zabbix.CreateZabbix',
+            'workflow.steps.util.deploy.create_dbmonitor.CreateDbMonitor',
+        )
+
+    def get_deploy_steps(self):
+        return self.deploy_first_steps() + self.monitoring_steps() + self.deploy_last_steps()
 
     def get_clone_steps(self):
         raise NotImplementedError()
@@ -30,16 +42,4 @@ class BaseTopology(object):
             'workflow.steps.util.restore_snapshot.make_export_snapshot.MakeExportSnapshot',
             'workflow.steps.util.restore_snapshot.update_dbaas_metadata.UpdateDbaaSMetadata',
             'workflow.steps.util.restore_snapshot.clean_old_volumes.CleanOldVolumes',
-        )
-
-    def get_volume_migration_steps(self):
-        return (
-            'workflow.steps.util.volume_migration.create_volume.CreateVolume',
-            'workflow.steps.util.volume_migration.mount_volume.MountVolume',
-            'workflow.steps.util.volume_migration.stop_database.StopDatabase',
-            'workflow.steps.util.volume_migration.copy_data.CopyData',
-            'workflow.steps.util.volume_migration.umount_volumes.UmountVolumes',
-            'workflow.steps.util.volume_migration.update_fstab.UpdateFstab',
-            'workflow.steps.util.volume_migration.start_database.StartDatabase',
-            'workflow.steps.util.volume_migration.update_dbaas_metadata.UpdateDbaaSMetadata',
         )

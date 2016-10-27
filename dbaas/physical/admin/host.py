@@ -21,6 +21,11 @@ class HostAttrNfsaasInline(admin.StackedInline):
     max_num = 0
     template = 'admin/physical/shared/inline_form.html'
 
+    def get_readonly_fields(self, request, obj=None):
+        if obj:
+            return self.readonly_fields + ('nfsaas_size_kb', 'nfsaas_used_size_kb')
+        return self.readonly_fields
+
     def has_delete_permission(self, request, obj=None):
         return False
 

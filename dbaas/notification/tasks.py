@@ -11,9 +11,7 @@ from util.providers import destroy_infra
 from util import get_worker_name
 from util import full_stack
 from django.db.models import Sum, Count
-from physical.models import Plan
-from physical.models import DatabaseInfra
-from physical.models import Instance
+from physical.models import Plan, DatabaseInfra, Instance
 from logical.models import Database
 from account.models import Team
 from system.models import Configuration
@@ -456,12 +454,18 @@ def purge_task_history(self):
 
         n_days_before = now - datetime.timedelta(days=retention_days)
 
-        tasks_to_purge = TaskHistory.objects.filter(task_name__in=['notification.tasks.database_notification',
-                                                                   'notification.tasks.database_notification_for_team',
-                                                                   'notification.tasks.update_database_status',
-                                                                   'notification.tasks.update_database_used_size',
-                                                                   'notification.tasks.update_instances_status',
-                                                                   'system.tasks.set_celery_healthcheck_last_update'], ended_at__lt=n_days_before, task_status__in=["SUCCESS", "ERROR"])
+        tasks_to_purge = TaskHistory.objects.filter(
+            task_name__in=[
+                'notification.tasks.database_notification',
+                'notification.tasks.database_notification_for_team',
+                'notification.tasks.update_database_used_size',
+                'notification.tasks.update_disk_used_size',
+                'notification.tasks.update_database_status',
+                'notification.tasks.update_instances_status',
+                'system.tasks.set_celery_healthcheck_last_update'
+            ],
+            ended_at__lt=n_days_before,
+            task_status__in=["SUCCESS", "ERROR", "WARNING"])
 
         tasks_to_purge.delete()
 
@@ -574,129 +578,6 @@ def resize_database(self, database, cloudstackpack, task_history=None, user=None
     finally:
         enable_zabbix_alarms(database)
         AuditRequest.cleanup_request()
-
-
-@app.task(bind=True)
-def volume_migration(self, database, user, task_history=None):
-    from dbaas_nfsaas.models import HostAttr, PlanAttr, EnvironmentAttr
-    from util import build_dict
-    from util.providers import get_volume_migration_settings
-    from workflow.workflow import start_workflow
-    from time import sleep
-
-    worker_name = get_worker_name()
-    task_history = TaskHistory.register(request=self.request, task_history=task_history,
-                                        user=user, worker_name=worker_name)
-
-    stop_now = False
-    if database.status != Database.ALIVE or not database.database_status.is_alive:
-        msg = "Database is not alive!"
-        stop_now = True
-
-    if database.is_beeing_used_elsewhere(task_id=self.request.id):
-        msg = "Database is in use by another task!"
-        stop_now = True
-
-    if database.has_migration_started():
-        msg = "Region migration for this database has already started!"
-        stop_now = True
-
-    if stop_now:
-        task_history.update_status_for(TaskHistory.STATUS_SUCCESS, details=msg)
-        LOG.info("Migration finished")
-        return
-
-    databaseinfra = database.databaseinfra
-    driver = databaseinfra.get_driver()
-
-    environment = database.environment
-    plan = database.plan
-
-    default_nfsaas_environment = EnvironmentAttr.objects.get(
-        dbaas_environment=environment).nfsaas_environment
-
-    default_plan_size = PlanAttr.objects.get(
-        dbaas_plan=database.plan).nfsaas_plan
-    LOG.info("Migrating {} volumes".format(database))
-
-    instances = driver.get_slave_instances()
-    master_instance = driver.get_master_instance()
-    instances.append(master_instance)
-    LOG.info('Instances: {}'.format(str(instances)))
-
-    hosts = [instance.hostname for instance in instances]
-    volumes = HostAttr.objects.filter(host__in=hosts,
-                                      is_active=True,
-                                      nfsaas_size_id=default_plan_size,
-                                      nfsaas_environment_id=default_nfsaas_environment)
-
-    if len(volumes) == len(hosts):
-        task_history.update_status_for(
-            TaskHistory.STATUS_SUCCESS, details='Volumes already migrated!')
-        LOG.info("Migration finished")
-        return
-
-    try:
-        disable_zabbix_alarms(database)
-        for index, instance in enumerate(instances):
-            if not driver.check_instance_is_eligible_for_backup(instance=instance):
-                LOG.info(
-                    'Instance is not eligible for backup {}'.format(str(instance)))
-                continue
-
-            LOG.info('Volume migration for instance {}'.format(str(instance)))
-            host = instance.hostname
-            old_volume = HostAttr.objects.get(host=host, is_active=True)
-
-            same_volume = old_volume.nfsaas_size_id == default_plan_size
-            same_environment = old_volume.nfsaas_environment_id == default_nfsaas_environment
-            if same_volume and same_environment:
-                if databaseinfra.plan.is_ha:
-                    driver.check_replication_and_switch(instance)
-                continue
-
-            workflow_dict = build_dict(
-                databaseinfra=databaseinfra,
-                database=database,
-                environment=environment,
-                plan=plan,
-                host=host,
-                instance=instance,
-                old_volume=old_volume,
-                steps=get_volume_migration_settings(
-                    database.plan.replication_topology.class_path,
-                )
-            )
-
-            start_workflow(workflow_dict=workflow_dict, task=task_history)
-
-            if workflow_dict['exceptions']['traceback']:
-                error = "\n".join(": ".join(err)
-                                  for err in workflow_dict['exceptions']['error_codes'])
-                traceback = "\nException Traceback\n".join(
-                    workflow_dict['exceptions']['traceback'])
-                error = "{}\n{}\n{}".format(error, traceback, error)
-                task_history.update_status_for(
-                    TaskHistory.STATUS_ERROR, details=error)
-                LOG.info("Migration finished with errors")
-                return
-
-            if databaseinfra.plan.is_ha:
-                LOG.info("Waiting 60s to check continue...")
-                sleep(60)
-                driver.check_replication_and_switch(instance)
-                LOG.info("Waiting 60s to check continue...")
-                sleep(60)
-
-        task_history.update_status_for(
-            TaskHistory.STATUS_SUCCESS, details='Volumes sucessfully migrated!')
-
-        LOG.info("Migration finished")
-    except Exception as e:
-        task_history.update_status_for(TaskHistory.STATUS_ERROR, details=e)
-        LOG.warning("Migration finished with errors")
-    finally:
-        enable_zabbix_alarms(database)
 
 
 def disable_zabbix_alarms(database):
@@ -894,3 +775,16 @@ def database_disk_resize(self, database, disk_offering, task_history, user):
         task_history.update_status_for(TaskHistory.STATUS_ERROR, details=error)
     finally:
         AuditRequest.cleanup_request()
+
+
+@app.task(bind=True)
+@only_one(key="disk_auto_resize", timeout=600)
+def update_disk_used_size(self):
+    worker_name = get_worker_name()
+    task = TaskHistory.register(
+        request=self.request, user=None, worker_name=worker_name
+    )
+    task.add_detail(message='Collecting disk used space from Zabbix')
+
+    from .tasks_disk_resize import zabbix_collect_used_disk
+    zabbix_collect_used_disk(task=task)

@@ -189,10 +189,6 @@ def get_resize_settings(class_path):
     return get_replication_topology_instance(class_path).get_resize_steps()
 
 
-def get_volume_migration_settings(class_path):
-    return get_replication_topology_instance(class_path).get_volume_migration_steps()
-
-
 def get_restore_snapshot_settings(class_path):
     return get_replication_topology_instance(class_path).get_restore_snapshot_steps()
 

@@ -7,7 +7,7 @@ from drivers.tests.test_replication_topologies import AbstractReplicationTopolog
 
 class AbstractBaseRedisTestCase(AbstractReplicationTopologySettingsTestCase):
 
-    def _get_deploy_settings(self):
+    def _get_deploy_first_settings(self):
         return (
             'workflow.steps.redis.deploy.build_databaseinfra.BuildDatabaseInfra',
             'workflow.steps.redis.deploy.create_virtualmachines.CreateVirtualMachine',
@@ -17,23 +17,25 @@ class AbstractBaseRedisTestCase(AbstractReplicationTopologySettingsTestCase):
             'workflow.steps.util.deploy.config_backup_log.ConfigBackupLog',
             'workflow.steps.util.deploy.check_database_connection.CheckDatabaseConnection',
             'workflow.steps.util.deploy.check_dns.CheckDns',
-            'workflow.steps.util.deploy.create_zabbix.CreateZabbix',
             'workflow.steps.util.deploy.start_monit.StartMonit',
-            'workflow.steps.util.deploy.create_dbmonitor.CreateDbMonitor',
+        )
+
+    def _get_deploy_last_settings(self):
+        return (
             'workflow.steps.util.deploy.build_database.BuildDatabase',
             'workflow.steps.util.deploy.create_log.CreateLog',
             'workflow.steps.util.deploy.check_database_binds.CheckDatabaseBinds',
         )
 
     def _get_clone_settings(self):
-        return self._get_deploy_settings() + (
+        return self._get_deploy_first_settings() + self._get_deploy_last_settings() + (
             'workflow.steps.redis.clone.clone_database.CloneDatabase',
             'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',
-        )
+        ) + self._get_monitoring_settings()
 
     def _get_resize_settings(self):
         return (
-            ('workflow.steps.util.volume_migration.stop_database.StopDatabase',
+            ('workflow.steps.util.resize.stop_database.StopDatabase',
              'workflow.steps.redis.resize.change_config.ChangeDatabaseConfigFile',) +
             STOP_RESIZE_START +
             ('workflow.steps.util.resize.start_database.StartDatabase',

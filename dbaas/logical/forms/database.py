@@ -376,9 +376,13 @@ class DiskResizeDatabaseForm(forms.Form):
         self.database = database
         self.disk_offering = database.databaseinfra.disk_offering
 
+        disk_used_size_kb = self.database.databaseinfra.disk_used_size_in_kb
+        if not disk_used_size_kb:
+            disk_used_size_kb = self.database.used_size_in_kb
+
         self.fields['target_offer'] = forms.ModelChoiceField(
             queryset=DiskOffering.objects.filter(
-                available_size_kb__gt=self.database.used_size_in_kb
+                available_size_kb__gt=disk_used_size_kb
             ).exclude(
                 id=database.databaseinfra.disk_offering.id
             ),

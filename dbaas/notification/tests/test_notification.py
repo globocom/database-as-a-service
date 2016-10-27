@@ -8,7 +8,7 @@ from system.models import Configuration
 from notification.tasks import database_notification_for_team
 
 
-class TasksTestCase(TestCase):
+class NotificationTestCase(TestCase):
 
     def setUp(self):
         self.team = TeamFactory()

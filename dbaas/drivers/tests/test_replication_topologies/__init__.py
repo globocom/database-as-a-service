@@ -23,8 +23,22 @@ class AbstractReplicationTopologySettingsTestCase(TestCase):
     def _get_replication_topology_driver(self):
         return None
 
-    def _get_deploy_settings(self):
+    def _get_deploy_first_settings(self):
         raise NotImplementedError
+
+    def _get_deploy_last_settings(self):
+        raise NotImplementedError
+
+    def _get_monitoring_settings(self):
+        return (
+            'workflow.steps.util.deploy.create_zabbix.CreateZabbix',
+            'workflow.steps.util.deploy.create_dbmonitor.CreateDbMonitor',
+        )
+
+    def _get_deploy_settings(self):
+        return self._get_deploy_first_settings() + \
+               self._get_monitoring_settings() + \
+               self._get_deploy_last_settings()
 
     def _get_clone_settings(self):
         raise NotImplementedError
@@ -44,18 +58,6 @@ class AbstractReplicationTopologySettingsTestCase(TestCase):
             'workflow.steps.util.restore_snapshot.make_export_snapshot.MakeExportSnapshot',
             'workflow.steps.util.restore_snapshot.update_dbaas_metadata.UpdateDbaaSMetadata',
             'workflow.steps.util.restore_snapshot.clean_old_volumes.CleanOldVolumes',
-        )
-
-    def _get_get_volume_migration_settings(self):
-        return (
-            'workflow.steps.util.volume_migration.create_volume.CreateVolume',
-            'workflow.steps.util.volume_migration.mount_volume.MountVolume',
-            'workflow.steps.util.volume_migration.stop_database.StopDatabase',
-            'workflow.steps.util.volume_migration.copy_data.CopyData',
-            'workflow.steps.util.volume_migration.umount_volumes.UmountVolumes',
-            'workflow.steps.util.volume_migration.update_fstab.UpdateFstab',
-            'workflow.steps.util.volume_migration.start_database.StartDatabase',
-            'workflow.steps.util.volume_migration.update_dbaas_metadata.UpdateDbaaSMetadata',
         )
 
     @skip_unless_not_abstract
@@ -84,11 +86,4 @@ class AbstractReplicationTopologySettingsTestCase(TestCase):
         self.assertEqual(
             self._get_restore_snapshot_settings(),
             self.replication_topology.get_restore_snapshot_steps()
-        )
-
-    @skip_unless_not_abstract
-    def test_resize_stepsvolume_migration_steps(self):
-        self.assertEqual(
-            self._get_get_volume_migration_settings(),
-            self.replication_topology.get_volume_migration_steps()
         )

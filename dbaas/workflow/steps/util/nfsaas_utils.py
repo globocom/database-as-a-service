@@ -121,4 +121,7 @@ def resize_disk(environment, host, disk_offering):
     for disk in HostAttr.objects.filter(host=host):
         if not provider.resize(disk.nfsaas_path_host, disk_offering.size_kb):
             return False
+
+        disk.nfsaas_size_kb = disk_offering.size_kb
+        disk.save()
     return True

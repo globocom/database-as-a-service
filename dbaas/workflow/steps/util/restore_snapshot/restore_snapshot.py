@@ -57,10 +57,6 @@ class RestoreSnapshot(BaseStep):
             new_disk.nfsaas_path = new_export_path
             new_disk.nfsaas_path_host = new_export_path_host
             new_disk.is_active = False
-            new_disk.nfsaas_team_id = old_disk.nfsaas_team_id
-            new_disk.nfsaas_project_id = old_disk.nfsaas_project_id
-            new_disk.nfsaas_environment_id = old_disk.nfsaas_environment_id
-            new_disk.nfsaas_size_id = old_disk.nfsaas_size_id
             new_disk.nfsaas_size_kb = old_disk.nfsaas_size_kb
             new_disk.save()
 

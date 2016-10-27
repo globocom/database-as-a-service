@@ -5,7 +5,6 @@ Markdown==2.3.1
 MarkupSafe==0.18
 MySQL-python==1.2.5
 Pillow==2.3.0
-PyHamcrest==1.7.2
 PyYAML==3.10
 South==1.0
 Unidecode==0.04.14
@@ -53,7 +52,7 @@ urllib3==1.7.1
 wsgiref==0.1.2
 dbaas_cloudstack==0.8.0
 dbaas_credentials==1.1.9
-dbaas_nfsaas==0.6.10
+dbaas_nfsaas==0.6.12
 dbaas_zabbix==0.4.9
 dbaas_dbmonitor==0.2.2
 dbaas_flipper==0.0.9
@@ -63,7 +62,7 @@ dbaas_dnsapi==0.1.5
 dbaas_laas==0.0.4
 dbaas_networkapi==0.1.8
 dbaas_foreman==0.1.4
-dbaas_foxha==0.2.6
+dbaas_foxha==0.2.8
 GloboNetworkAPI==0.6.24
 Dex==0.6
 click==3.3
