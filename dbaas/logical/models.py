@@ -421,6 +421,16 @@ class Database(BaseModel):
             return True
         return False
 
+    def get_flipperfox_migration_url(self):
+        return "/admin/logical/database/{}/initialize_flipperfox_migration/".format(self.id)
+
+    def is_mysql_flipper(self):
+        if self.engine.name == 'mysql' and \
+           self.engine.version == '5.6.15' and \
+           self.databaseinfra.plan.is_ha:
+            return True
+        return False
+
     def get_cloudstack_service_offering_id(self):
         LOG.info("Get offering")
         try:
@@ -469,6 +479,28 @@ class Database(BaseModel):
 
         status_to_check = [DatabaseRegionMigrationDetail.WAITING,
                            DatabaseRegionMigrationDetail.RUNNING]
+
+        details = migration.details.filter(status__in=status_to_check)
+        if details:
+            return True
+
+        return False
+
+    def has_flipperfox_migration_started(self,):
+        from flipperfox_migration.models import DatabaseFlipperFoxMigrationDetail
+        try:
+            migration = self.migration.get()
+        except ObjectDoesNotExist:
+            return False
+
+        if migration.is_migration_finished():
+            return False
+
+        if migration.current_step > 0:
+            return True
+
+        status_to_check = [DatabaseFlipperFoxMigrationDetail.WAITING,
+                           DatabaseFlipperFoxMigrationDetail.RUNNING]
 
         details = migration.details.filter(status__in=status_to_check)
         if details:

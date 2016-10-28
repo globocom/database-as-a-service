@@ -214,7 +214,8 @@ INSTALLED_APPS = (
     'dbaas_services.analyzing',
     'dbaas_networkapi',
     'dbaas_foreman',
-    'dbaas_foxha'
+    'dbaas_foxha',
+    'flipperfox_migration',
 )
 
 

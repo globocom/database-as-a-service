@@ -71,7 +71,7 @@ class CreateDns(BaseStep):
 
     def undo(self, workflow_dict):
         try:
-            DNSAPIProvider.remove_database_dns(
+            DNSAPIProvider.remove_databases_dns(
                 environment=workflow_dict['environment'],
                 databaseinfraid=workflow_dict['databaseinfra'].id)
 

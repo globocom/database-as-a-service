@@ -180,6 +180,18 @@
                 </div>
             </tr>
          </table>
+         {% if original.is_mysql_flipper %}
+            <h2>Flipper to FoxHA Migration</h2>
+             <table id="table-mais" class="table table-striped">
+                <tr >
+                    <div class="btn-toolbar">
+                        <div class="btn-group-lg">
+                            <a href="{{original.get_flipperfox_migration_url}}" class="btn btn-primary" title="IniFlipFoxMigration" data-content="IniFlipFoxMigration">Initialize Flipper to FoxHA Migration</a>
+                        </div>
+                    </div>
+                </tr>
+             </table>
+        {% endif %}
      {% endif %}
 {% endif %}
 {% endblock %}

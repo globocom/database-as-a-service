@@ -7,6 +7,20 @@ from util import exec_remote_command
 LOG = logging.getLogger(__name__)
 
 
+def build_uncomment_skip_slave_script():
+
+    return """
+        sed -e 's/^#skip_slave_start/skip_slave_start/' -i /etc/my.cnf
+        """
+
+
+def build_comment_skip_slave_script():
+
+    return """
+        sed -e 's/^skip_slave_start/#skip_slave_start/' -i /etc/my.cnf
+        """
+
+
 def build_permission_script():
 
     return """
