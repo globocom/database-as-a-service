@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.0.78
+* Add Migration from MySQL Flipper to MySQL FoxHA
+
 ## 0.0.73
 * Add framework to engine topology
 * Add MySQL FOXHA topology
