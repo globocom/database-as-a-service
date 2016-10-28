@@ -60,7 +60,7 @@ django-filter==0.9.1
 dbaas-aclapi==0.1.00
 dbaas_dnsapi==0.1.5
 dbaas_laas==0.0.4
-dbaas_networkapi==0.1.8
+dbaas_networkapi==0.1.9
 dbaas_foreman==0.1.4
 dbaas_foxha==0.2.8
 GloboNetworkAPI==0.6.24
