@@ -35,6 +35,7 @@ def zabbix_collect_used_disk(task):
         )
 
         for database in Database.objects.filter(environment=environment):
+            database_resized = False
             task.add_detail(
                 message='Database: {}'.format(database.name), level=1
             )
@@ -91,13 +92,16 @@ def zabbix_collect_used_disk(task):
                             message='Zabbix metrics not updated', level=4
                         )
 
-                if current_percentage >= threshold_disk_resize and database.disk_auto_resize:
+                if current_percentage >= threshold_disk_resize and \
+                        database.disk_auto_resize and \
+                        not database_resized:
                     try:
                         task_resize = disk_auto_resize(
                             database=database,
                             current_size=current_size,
                             usage_percentage=current_percentage
                         )
+                        database_resized = True
                     except Exception as e:
                         problems += 1
                         status = TaskHistory.STATUS_WARNING
