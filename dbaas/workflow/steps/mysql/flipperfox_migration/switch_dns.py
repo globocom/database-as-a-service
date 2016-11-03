@@ -26,7 +26,7 @@ class SwitchDNS(BaseStep):
             databaseinfraattr = workflow_dict['source_secondary_ips'][0]
 
             infradns = DatabaseInfraDNSList.objects.get(
-                name__startswith="{}.".format(databaseinfra.name),
+                dns__startswith="{}.".format(databaseinfra.name),
                 type=FLIPPER)
             infradns.type = FOXHA
             infradns.save()
@@ -74,7 +74,7 @@ class SwitchDNS(BaseStep):
             databaseinfraattr = workflow_dict['source_secondary_ips'][0]
 
             dnslist = DatabaseInfraDNSList.objects.filter(
-                name__startswith="{}.".format(databaseinfra.name),
+                dns__startswith="{}.".format(databaseinfra.name),
                 type=FOXHA)
             if dnslist:
                 infradns = dnslist[0]
