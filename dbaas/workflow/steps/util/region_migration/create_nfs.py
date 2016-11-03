@@ -17,7 +17,8 @@ class CreateNfs(BaseStep):
         try:
             workflow_dict['disks'] = []
 
-            driver = workflow_dict['databaseinfra'].get_driver()
+            databaseinfra = workflow_dict['databaseinfra']
+            driver = databaseinfra.get_driver()
             non_database_instances = driver.get_non_database_instances()
 
             for instance in workflow_dict['target_instances']:
@@ -31,7 +32,7 @@ class CreateNfs(BaseStep):
                 disk = create_disk(
                     environment=workflow_dict['target_environment'],
                     host=instance.hostname,
-                    plan=workflow_dict['target_plan']
+                    size_kb=databaseinfra.disk_offering.size_kb
                 )
 
                 if not disk:

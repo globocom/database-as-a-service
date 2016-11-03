@@ -22,10 +22,11 @@ class CreateNfs(BaseStep):
 
                 LOG.info("Creating nfsaas disk...")
 
+                databaseinfra = workflow_dict['databaseinfra']
                 disk = create_disk(
                     environment=workflow_dict['environment'],
                     host=instance.hostname,
-                    plan=workflow_dict['target_plan']
+                    size_kb=databaseinfra.disk_offering.size_kb
                 )
 
                 if not disk:

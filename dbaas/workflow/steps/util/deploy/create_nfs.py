@@ -28,9 +28,11 @@ class CreateNfs(BaseStep):
                     )
                     continue
 
+                plan = workflow_dict['plan']
                 disk = create_disk(
-                    workflow_dict['environment'], instance.hostname,
-                    workflow_dict['plan']
+                    environment=workflow_dict['environment'],
+                    host=instance.hostname,
+                    size_kb=plan.disk_offering.size_kb
                 )
                 if not disk:
                     return False

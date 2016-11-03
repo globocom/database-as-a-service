@@ -19,12 +19,12 @@ def get_faas_provider(environment):
     return Provider(dbaas_api, HostAttr)
 
 
-def create_disk(environment, host, plan):
+def create_disk(environment, host, size_kb):
     provider = get_faas_provider(environment=environment)
 
     LOG.info("Creating NFS disk...")
     disk = provider.create_export(
-        host=host, size_kb=plan.disk_offering.size_kb
+        host=host, size_kb=size_kb
     )
 
     LOG.info(
