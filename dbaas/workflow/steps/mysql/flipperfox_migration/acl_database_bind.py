@@ -36,18 +36,20 @@ class BindNewInstances(BaseStep):
             instances = databaseinfra.instances.filter(
                 future_instance__isnull=True)
 
-            databaseinfraattr_instances = DatabaseInfraAttr.objects.filter(databaseinfra=databaseinfra,
-                                                                           equivalent_dbinfraattr__isnull=True)
+            databaseinfra_vips = databaseinfra.vip_databaseinfra.all()
+
             instance_address_list = []
             for instance in instances:
                 instance_address_list.append(instance.address)
-            for instance in databaseinfraattr_instances:
-                instance_address_list.append(instance.ip)
+            for vip in databaseinfra_vips:
+                instance_address_list.append(vip.vip_ip)
 
             for database_bind in database.acl_binds.all():
-                if helpers.bind_address(
-                        database_bind, acl_client, instances=instances,
-                        infra_attr_instances=databaseinfraattr_instances):
+                if helpers.bind_address(database_bind=database_bind,
+                                        acl_client=acl_client,
+                                        instances=instances,
+                                        infra_attr_instances=[],
+                                        infra_vips=databaseinfra_vips):
                     continue
                 else:
                     LOG.error("The AclApi is not working properly.")
@@ -83,14 +85,13 @@ class BindNewInstances(BaseStep):
 
             instances = databaseinfra.instances.filter(
                 future_instance__isnull=True)
-            databaseinfraattr_instances = DatabaseInfraAttr.objects.filter(databaseinfra=databaseinfra,
-                                                                           equivalent_dbinfraattr__isnull=True)
+            databaseinfra_vips = databaseinfra.vip_databaseinfra.all()
 
             instance_address_list = []
             for instance in instances:
                 instance_address_list.append(instance.address)
-            for instance in databaseinfraattr_instances:
-                instance_address_list.append(instance.ip)
+            for vip in databaseinfra_vips:
+                instance_address_list.append(vip.vip_ip)
 
             for database_bind in database.acl_binds.all():
                 infra_instances_binds = DatabaseInfraInstanceBind.objects.filter(
@@ -188,9 +189,11 @@ class UnbindOldInstances(BaseStep):
                 instance_address_list.append(instance.ip)
 
             for database_bind in database.acl_binds.all():
-                if helpers.bind_address(
-                        database_bind, acl_client, instances=instances,
-                        infra_attr_instances=databaseinfraattr_instances):
+                if helpers.bind_address(database_bind=database_bind,
+                                        acl_client=acl_client,
+                                        instances=instances,
+                                        infra_attr_instances=databaseinfraattr_instances,
+                                        infra_vips=[]):
                     continue
                 else:
                     LOG.error("The AclApi is not working properly.")
