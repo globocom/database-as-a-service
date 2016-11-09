@@ -22,5 +22,6 @@ class TeamFactory(factory.DjangoModelFactory):
 
     name = factory.Sequence(lambda n: 'team_{0}'.format(n))
     email = factory.Sequence(lambda n: 'team_{0}@email.test.com'.format(n))
+    contacts = factory.Sequence(lambda n: '{0} - contact'.format(n))
 
     role = factory.SubFactory(RoleFactory)

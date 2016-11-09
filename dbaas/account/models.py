@@ -49,6 +49,12 @@ class Team(BaseModel):
     database_alocation_limit = models.PositiveSmallIntegerField(_('DB Alocation Limit'),
                                                                 default=2,
                                                                 help_text="This limits the number of databases that a team can create. 0 for unlimited resources.")
+    contacts = models.TextField(
+        verbose_name=_("Emergency Contacts"), null=True, blank=True,
+        help_text=_(
+            "People to be reached in case of a critical incident. Eg.: 99999999 - Jhon Doe."
+        )
+    )
     role = models.ForeignKey(Role)
     users = models.ManyToManyField(User)
     objects = models.Manager()  # The default manager.
@@ -72,6 +78,10 @@ class Team(BaseModel):
 
     def natural_key(self):
         return (self.name,)
+
+    def clean(self):
+        if not self.contacts:
+            raise ValidationError({'contacts': ('This field is required',)})
 
     @classmethod
     def get_all_permissions_for(cls, user=None):
@@ -127,6 +137,12 @@ class Team(BaseModel):
             LOG.warning(
                 "could not count databases in use for team %s, reason: %s" % (self, e))
             return 0
+
+    @property
+    def emergency_contacts(self):
+        if self.contacts:
+            return self.contacts
+        return 'Not defined. Please, contact the team'
 
 
 def sync_ldap_groups_with_user(user=None):

@@ -118,6 +118,11 @@ class Database(BaseModel):
         )
     )
 
+    def team_contact(self):
+        if self.team:
+            return self.team.emergency_contacts
+    team_contact.short_description = 'Emergency contacts'
+
     objects = models.Manager()
     alive = DatabaseAliveManager()
     quarantine_time = Configuration.get_by_name_as_int(

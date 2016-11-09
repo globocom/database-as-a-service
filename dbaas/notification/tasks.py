@@ -39,7 +39,7 @@ def rollback_database(dest_database):
 
 @app.task(bind=True)
 def create_database(
-    self, name, plan, environment, team, project, description, contacts,
+    self, name, plan, environment, team, project, description,
     subscribe_to_email_events=True, task_history=None, user=None
 ):
     AuditRequest.new_request("create_database", user, "localhost")
@@ -63,8 +63,7 @@ def create_database(
         result = make_infra(
             plan=plan, environment=environment, name=name, team=team,
             project=project, description=description,
-            subscribe_to_email_events=subscribe_to_email_events, task=task_history,
-            contacts=contacts
+            subscribe_to_email_events=subscribe_to_email_events, task=task_history
         )
 
         if result['created'] is False:
@@ -151,7 +150,7 @@ def clone_database(self, origin_database, clone_name, plan, environment, task_hi
             plan=plan, environment=environment, name=clone_name,
             team=origin_database.team, project=origin_database.project,
             description=origin_database.description, task=task_history,
-            clone=origin_database, contacts=origin_database.contacts,
+            clone=origin_database,
             subscribe_to_email_events=origin_database.subscribe_to_email_events
         )
 

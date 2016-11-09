@@ -1,16 +1,13 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 import logging
+import json
 from django.contrib.auth.models import User
-from django.contrib import messages
+from django.core.exceptions import ObjectDoesNotExist
 from django.template import RequestContext
 from django.http import HttpResponse
-from django.http import HttpResponseRedirect
-from django.conf import settings
 from django.shortcuts import render_to_response
-from django.template.loader import render_to_string
-from django.contrib.auth.decorators import login_required, user_passes_test
-from django.utils.datastructures import SortedDict
+from django.contrib.auth.decorators import login_required
 from account.models import Team
 from logical.models import Database
 
@@ -33,3 +30,19 @@ def profile(request, user_id=None):
         LOG.warning("Ops... %s" % e)
 
     return render_to_response("account/profile.html", locals(), context_instance=RequestContext(request))
+
+
+def emergency_contacts(team_id):
+    try:
+        team = Team.objects.get(id=team_id)
+    except (ObjectDoesNotExist, ValueError):
+        return
+    else:
+        return team.emergency_contacts
+
+
+def team_contacts(self, team_id):
+    response_json = json.dumps({
+        "contacts": emergency_contacts(team_id)
+    })
+    return HttpResponse(response_json, content_type="application/json")

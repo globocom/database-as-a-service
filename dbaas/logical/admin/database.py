@@ -83,8 +83,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     fieldsets_add = (
         (None, {
             'fields': (
-                'name', 'description', 'contacts', 'project', 'engine',
-                'environment', 'team', 'subscribe_to_email_events', 'plan',
+                'name', 'description', 'project', 'engine',
+                'environment', 'team', 'team_contact', 'subscribe_to_email_events', 'plan',
                 'is_in_quarantine',
             )
         }
@@ -94,12 +94,13 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     fieldsets_change_basic = (
         (None, {
             'fields': [
-                'name', 'description', 'contacts', 'project', 'team',
+                'name', 'description', 'project', 'team', 'team_contact',
                 'subscribe_to_email_events', 'disk_auto_resize',
             ]
-        }
-        ),
+        }),
     )
+
+    readonly_fields = ('team_contact',)
 
     fieldsets_change_advanced = (
         (None, {
@@ -419,7 +420,6 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                     project=form.cleaned_data['project'],
                     description=form.cleaned_data['description'],
                     subscribe_to_email_events=form.cleaned_data['subscribe_to_email_events'],
-                    contacts=form.cleaned_data['contacts'],
                     task_history=task_history,
                     user=request.user
                 )

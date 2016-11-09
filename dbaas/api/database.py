@@ -38,7 +38,7 @@ class DatabaseSerializer(serializers.HyperlinkedModelSerializer):
         fields = (
             'url', 'id', 'name', 'endpoint', 'plan', 'environment',
             'project', 'team', 'quarantine_dt', 'total_size_in_bytes',
-            'credentials', 'description', 'contacts', 'status',
+            'credentials', 'description', 'status',
             'used_size_in_bytes', 'subscribe_to_email_events',
             'created_at',
         )
@@ -109,8 +109,7 @@ class DatabaseAPI(viewsets.ModelViewSet):
                 environment=data['environment'], team=data['team'],
                 project=data['project'], description=data['description'],
                 subscribe_to_email_events=data['subscribe_to_email_events'],
-                contacts=data['contacts'], task_history=task_history,
-                user=request.user
+                task_history=task_history, user=request.user
             )
 
             headers = self.get_success_headers(data)

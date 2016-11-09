@@ -34,7 +34,6 @@ class AdminCreateDatabaseTestCase(TestCase):
         self.team.users.add(self.user)
         self.client.login(username=self.USERNAME, password=self.PASSWORD)
         self.description = "My database"
-        self.contacts = "Jhon Doe - 99999999"
 
     def tearDown(self):
         self.engine = None
@@ -49,7 +48,6 @@ class AdminCreateDatabaseTestCase(TestCase):
             "environment": self.environment.pk,
             "engine": self.databaseinfra.engine.pk,
             "description": self.description,
-            "contacts": self.contacts
         }
         response = self.client.post("/admin/logical/database/add/", params)
         self.assertContains(
@@ -69,22 +67,6 @@ class AdminCreateDatabaseTestCase(TestCase):
         self.assertContains(
             response, "Description: This field is required.", status_code=200)
 
-    def test_user_tries_to_create_database_without_contacts(self):
-        database_name = "test_new_database_without_team"
-        params = {
-            "name": database_name,
-            "project": self.project.pk,
-            "plan": self.plan.pk,
-            "environment": self.environment.pk,
-            "engine": self.databaseinfra.engine.pk,
-            "description": self.description,
-            "team": self.team.pk
-        }
-        response = self.client.post("/admin/logical/database/add/", params)
-        self.assertContains(
-            response, "This field is required.", status_code=200
-        )
-
     def test_try_create_a_new_database_but_database_already_exists(self):
         database_name = "test_new_database"
         self.database = factory.DatabaseFactory(
@@ -97,7 +79,6 @@ class AdminCreateDatabaseTestCase(TestCase):
             "engine": self.databaseinfra.engine.pk,
             "team": self.team.pk,
             "description": self.description,
-            "contacts": self.contacts
         }
         response = self.client.post("/admin/logical/database/add/", params)
         self.assertContains(
@@ -123,7 +104,6 @@ class AdminCreateDatabaseTestCase(TestCase):
             "engine": self.databaseinfra.engine.pk,
             "team": self.team.pk,
             "description": self.description,
-            "contacts": self.contacts
         }
         response = self.client.post("/admin/logical/database/add/", params)
         self.assertEqual(response.status_code, 302, response.content)

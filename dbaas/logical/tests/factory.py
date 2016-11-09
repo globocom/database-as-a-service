@@ -23,7 +23,6 @@ class DatabaseFactory(factory.DjangoModelFactory):
     project = factory.SubFactory(ProjectFactory)
     team = factory.SubFactory(TeamFactory)
     description = factory.Sequence(lambda n: 'desc{0}'.format(n))
-    contacts = factory.Sequence(lambda n: 'Jhon{0} Doe'.format(n))
 
     @factory.lazy_attribute
     def environment(self):
