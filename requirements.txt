@@ -52,7 +52,7 @@ urllib3==1.7.1
 wsgiref==0.1.2
 dbaas_cloudstack==0.8.0
 dbaas_credentials==1.1.9
-dbaas_nfsaas==0.6.12
+dbaas_nfsaas==0.6.13
 dbaas_zabbix==0.4.9
 dbaas_dbmonitor==0.2.2
 dbaas_flipper==0.0.9
