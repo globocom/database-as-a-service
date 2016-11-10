@@ -33,6 +33,16 @@ class PlanAttrDNSAPIInline(admin.StackedInline):
         return False
 
 
+def action_activate_plans(modeladmin, request, queryset):
+    queryset.update(is_active=True)
+action_activate_plans.short_description = "Activate plans"
+
+
+def action_deactivate_plans(modeladmin, request, queryset):
+    queryset.update(is_active=False)
+action_deactivate_plans.short_description = "Deactivate plans"
+
+
 class PlanAdmin(services_admin.DjangoServicesAdmin):
     form = forms.PlanForm
     service_class = PlanService
@@ -50,6 +60,7 @@ class PlanAdmin(services_admin.DjangoServicesAdmin):
 
     add_form_template = "admin/physical/plan/add_form.html"
     change_form_template = "admin/physical/plan/add_form.html"
+    actions = [action_activate_plans, action_deactivate_plans]
 
     def change_view(self, request, object_id, form_url='', extra_context=None):
         extra_context = self._add_replication_topologies_engines(extra_context)
