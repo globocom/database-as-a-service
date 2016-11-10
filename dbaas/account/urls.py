@@ -2,11 +2,11 @@ from django.conf.urls import *
 from forms.change_password_form import ChangePasswordForm
 from dbaas import settings
 
-urlpatterns = patterns('account.views',
-                       url(r'^profile/(?P<user_id>\d+)/?$',
-                           "profile", name="account.profile"),
-
-                       )
+urlpatterns = patterns(
+    'account.views',
+    url(r'^profile/(?P<user_id>\d+)/?$', "profile", name="account.profile"),
+    url(r"^team_contacts/(?P<team_id>\d*)$", "team_contacts", name="contacts"),
+)
 
 if settings.LDAP_ENABLED:
     urlpatterns += patterns('',

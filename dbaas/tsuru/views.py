@@ -436,7 +436,6 @@ class ServiceAdd(APIView):
         create_database.delay(
             name=name, plan=dbaas_plan, environment=dbaas_environment,
             team=dbaas_team, project=None, description=description,
-            contacts=None,
             task_history=task_history, user=dbaas_user
         )
 

@@ -14,7 +14,7 @@ LOG = logging.getLogger(__name__)
 
 
 def make_infra(
-    plan, environment, name, team, project, description, contacts,
+    plan, environment, name, team, project, description,
     subscribe_to_email_events=True, task=None,
 ):
     if not plan.provider == plan.CLOUDSTACK:
@@ -28,7 +28,6 @@ def make_infra(
             database.description = description
             database.project = project
             database.subscribe_to_email_events = subscribe_to_email_events
-            database.contacts = contacts
             database.save()
 
             return build_dict(
@@ -43,7 +42,6 @@ def make_infra(
         ), qt=get_vm_qt(plan=plan, ), dbtype=str(plan.engine_type),
         team=team, project=project, description=description,
         subscribe_to_email_events=subscribe_to_email_events,
-        contacts=contacts,
     )
 
     start_workflow(workflow_dict=workflow_dict, task=task)
@@ -52,7 +50,7 @@ def make_infra(
 
 def clone_infra(
         plan, environment, name, team, project, description,
-        subscribe_to_email_events, contacts, task=None, clone=None
+        subscribe_to_email_events, task=None, clone=None
 ):
     if not plan.provider == plan.CLOUDSTACK:
         infra = DatabaseInfra.best_for(
@@ -67,12 +65,11 @@ def clone_infra(
 
             return build_dict(
                 databaseinfra=infra, database=database, created=True,
-                contacts=contacts,
                 subscribe_to_email_events=subscribe_to_email_events
             )
 
         return build_dict(
-            databaseinfra=None, created=False, contacts=contacts,
+            databaseinfra=None, created=False,
             subscribe_to_email_events=subscribe_to_email_events
         )
 
@@ -90,7 +87,6 @@ def clone_infra(
         description=description,
         clone=clone,
         subscribe_to_email_events=subscribe_to_email_events,
-        contacts=contacts
     )
 
     start_workflow(workflow_dict=workflow_dict, task=task)

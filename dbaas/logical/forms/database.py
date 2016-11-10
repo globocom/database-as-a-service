@@ -13,7 +13,6 @@ from logical.forms.fields import AdvancedModelChoiceField
 from logical.models import Database
 from logical.validators import database_name_evironment_constraint
 
-
 LOG = logging.getLogger(__name__)
 
 
@@ -104,7 +103,6 @@ class CloneDatabaseForm(forms.Form):
 
         return cleaned_data
 
-
 class DatabaseForm(models.ModelForm):
     plan = AdvancedModelChoiceField(queryset=Plan.objects.filter(is_active='True'),
                                     required=False, widget=forms.RadioSelect,
@@ -115,7 +113,7 @@ class DatabaseForm(models.ModelForm):
     class Meta:
         model = Database
         fields = (
-            'name', 'description', 'contacts', 'subscribe_to_email_events',
+            'name', 'description', 'subscribe_to_email_events',
             'project', 'team', 'is_in_quarantine',
         )
 
@@ -176,12 +174,6 @@ class DatabaseForm(models.ModelForm):
                 self._errors["description"] = self.error_class(
                     [_("Description: This field is required.")])
 
-    def _validate_contacts(self, cleaned_data):
-        if 'contacts' in cleaned_data:
-            if not cleaned_data.get('contacts', None):
-                self._errors["contacts"] = self.error_class(
-                    [_("Contacts: This field is required.")])
-
     def _validate_project(self, cleaned_data):
         if 'project' in cleaned_data:
             if not cleaned_data.get('project', None):
@@ -228,7 +220,6 @@ class DatabaseForm(models.ModelForm):
         if self.instance and self.instance.id:
             self._validate_project(cleaned_data)
             self._validate_description(cleaned_data)
-            self._validate_contacts(cleaned_data)
             self._validate_team(cleaned_data)
             return cleaned_data
 
@@ -244,7 +235,6 @@ class DatabaseForm(models.ModelForm):
         self._validate_name(cleaned_data)
         self._validate_project(cleaned_data)
         self._validate_description(cleaned_data)
-        self._validate_contacts(cleaned_data)
         self._validate_team(cleaned_data)
 
         if 'environment' in cleaned_data:

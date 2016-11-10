@@ -43,9 +43,6 @@ class BuildDatabase(BaseStep):
             LOG.info("Updating database subscribe_to_email_events")
             database.subscribe_to_email_events = workflow_dict['subscribe_to_email_events']
 
-            LOG.info("Updating database contacts")
-            database.contacts = workflow_dict['contacts']
-
             database.save()
             workflow_dict['database'] = database
 
