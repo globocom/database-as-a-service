@@ -99,7 +99,7 @@ class ConfigFiles(BaseStep):
                 script += build_server_id_conf_script()
 
                 context_dict = {
-                    'SERVERID': index + 3,
+                    'SERVERID': index + 5,
                 }
 
                 script = build_context_script(context_dict, script)
