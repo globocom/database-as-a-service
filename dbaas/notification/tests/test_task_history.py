@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 from django.test import TestCase
-from .factory import TaskHistoryFactory
+from notification.models import TaskHistory
+from notification.tests.factory import TaskHistoryFactory
 
 
 class TaskHistoryTestCase(TestCase):
@@ -26,3 +27,15 @@ class TaskHistoryTestCase(TestCase):
 
         self.task.add_detail(message='Again, with new line', level=2)
         self.assertEqual('-> Testing\n--> Again, with new line', self.task.details)
+
+    def test_can_get_running_tasks(self):
+        self.task.task_status = TaskHistory.STATUS_RUNNING
+        self.task.save()
+
+        tasks = TaskHistory.running_tasks()
+        self.assertIsNotNone(tasks)
+        self.assertIn(self.task, tasks)
+
+    def test_can_get_running_tasks_empty(self):
+        tasks = TaskHistory.running_tasks()
+        self.assertEqual(len(tasks), 0)
