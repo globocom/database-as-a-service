@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 from django.test import TestCase
-from .factory import NotificationHistoryFactory
+from .factory import TaskHistoryFactory
 
 
 class TaskHistoryTestCase(TestCase):
 
     def setUp(self):
-        self.task = NotificationHistoryFactory()
+        self.task = TaskHistoryFactory()
 
     def test_can_add_message_detail(self):
         self.assertIsNone(self.task.details)

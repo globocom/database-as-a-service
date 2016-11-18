@@ -4,7 +4,7 @@ import factory
 from .. import models
 
 
-class NotificationHistoryFactory(factory.DjangoModelFactory):
+class TaskHistoryFactory(factory.DjangoModelFactory):
     FACTORY_FOR = models.TaskHistory
 
     task_name = factory.Sequence(lambda n: 'task_name_{0}'.format(n))
