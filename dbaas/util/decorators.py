@@ -1,15 +1,17 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 import logging
-from dbaas.settings import REDIS_HOST, REDIS_PORT, REDIS_DB, REDIS_PASSWORD
 import redis
+from redis.exceptions import LockError
 from functools import wraps
+from dbaas.settings import REDIS_HOST, REDIS_PORT, REDIS_DB, REDIS_PASSWORD
 
 LOG = logging.getLogger(__name__)
 
 
 REDIS_CLIENT = redis.Redis(
-    host=REDIS_HOST, port=REDIS_PORT, db=REDIS_DB, password=REDIS_PASSWORD)
+    host=REDIS_HOST, port=REDIS_PORT, db=REDIS_DB, password=REDIS_PASSWORD
+)
 
 
 def only_one(key="", timeout=None):
@@ -29,6 +31,9 @@ def only_one(key="", timeout=None):
                     LOG.info("key %s locked..." % key)
             finally:
                 if have_lock:
-                    lock.release()
+                    try:
+                        lock.release()
+                    except LockError:
+                        pass
         return wrapper
     return real_decorator
