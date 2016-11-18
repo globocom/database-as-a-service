@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
+import datetime
+from time import sleep
 from celery.utils.log import get_task_logger
 from celery.exceptions import SoftTimeLimitExceeded
+from django.db.models import Sum, Count
 from dbaas.celery import app
 from util.decorators import only_one
 from util import email_notifications
@@ -10,15 +13,12 @@ from util.providers import clone_infra
 from util.providers import destroy_infra
 from util import get_worker_name
 from util import full_stack
-from django.db.models import Sum, Count
 from physical.models import Plan, DatabaseInfra, Instance
 from logical.models import Database
 from account.models import Team
 from system.models import Configuration
 from simple_audit.models import AuditRequest
 from .models import TaskHistory
-import datetime
-from time import sleep
 
 LOG = get_task_logger(__name__)
 
@@ -665,9 +665,16 @@ def upgrade_mongodb_24_to_30(self, database, user, task_history=None):
         return
 
     try:
-
         disable_zabbix_alarms(database)
+    except Exception as e:
+        message = "Could not disable Zabbix alarms: {}".format(e)
+        task_history.update_status_for(
+            TaskHistory.STATUS_ERROR, details=message
+        )
+        LOG.error(message)
+        return
 
+    try:
         workflow_dict = build_dict(steps=steps,
                                    databaseinfra=databaseinfra,
                                    instances=instances,
@@ -693,8 +700,15 @@ def upgrade_mongodb_24_to_30(self, database, user, task_history=None):
     except Exception as e:
         task_history.update_status_for(TaskHistory.STATUS_ERROR, details=e)
         LOG.warning("MongoDB Upgrade finished with errors")
-    finally:
+
+    try:
         enable_zabbix_alarms(database)
+    except Exception as e:
+        message = "Could not enable Zabbix alarms: {}".format(e)
+        task_history.update_status_for(
+            TaskHistory.STATUS_ERROR, details=message
+        )
+        LOG.error(message)
 
 
 @app.task(bind=True)
