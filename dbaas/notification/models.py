@@ -180,3 +180,7 @@ class TaskHistory(BaseModel):
     @classmethod
     def running_tasks(cls):
         return cls.objects.filter(task_status=cls.STATUS_RUNNING)
+
+    @classmethod
+    def waiting_tasks(cls):
+        return cls.objects.filter(task_status=cls.STATUS_WAITING)
