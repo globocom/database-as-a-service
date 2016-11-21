@@ -193,7 +193,7 @@ def make_instance_snapshot_backup(instance, error):
 
 
 @app.task(bind=True)
-@only_one(key="makedatabasebackupkey", timeout=1200)
+@only_one(key="makedatabasebackupkey")
 def make_databases_backup(self):
 
     LOG.info("Making databases backups")
@@ -269,7 +269,7 @@ def remove_snapshot_backup(snapshot):
 
 
 @app.task(bind=True)
-@only_one(key="removedatabaseoldbackupkey", timeout=1200)
+@only_one(key="removedatabaseoldbackupkey")
 def remove_database_old_backups(self):
 
     worker_name = get_worker_name()

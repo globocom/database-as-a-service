@@ -5,7 +5,7 @@ from dbaas_nfsaas.models import HostAttr
 from physical.tests import factory as physical_factory
 from logical.tests import factory as logical_factory
 from ..tasks_disk_resize import update_disk
-from .factory import NotificationHistoryFactory
+from .factory import TaskHistoryFactory
 
 UPDATE_USED_SIZE_SUCCESS = '---> Used disk size updated. NFS: {}'
 UPDATE_USED_SIZE_WRONG_HOST = '---> {} not found for: {}'
@@ -16,7 +16,7 @@ UPDATE_USED_SIZE_WITHOUT_NFSAAS = \
 class DiskResizeTestCase(TestCase):
 
     def setUp(self):
-        self.task = NotificationHistoryFactory()
+        self.task = TaskHistoryFactory()
         self.instance = physical_factory.InstanceFactory()
         self.databaseinfra = self.instance.databaseinfra
 
