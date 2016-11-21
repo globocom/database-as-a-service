@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from json import dumps
 from django.http import HttpResponse
 from models import TaskHistory
