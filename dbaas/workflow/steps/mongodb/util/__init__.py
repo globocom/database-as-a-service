@@ -243,6 +243,31 @@ def build_authschemaupgrade_script():
     """
 
 
+def build_addrole_mongo3_script():
+    return """
+        sleep 10
+        /usr/local/mongodb/bin/mongo {{CONNECT_STRING}} <<EOF_DBAAS
+
+        db.createRole({
+            role: "dbEvalUser",
+            privileges: [{
+                resource: { anyResource: true },
+                actions: [ "anyAction" ]}],
+            roles: []
+        })
+
+        db.grantRolesToUser("admin", [ { role: "dbEvalUser", db: "admin" } ])
+
+        db.grantRolesToUser("admindbaas", [ { role: "dbEvalUser", db: "admin" } ])
+
+        db.grantRolesToUser("usr_zabbix", [ { role: "clusterMonitor", db: "admin" } ])
+
+        exit
+        \nEOF_DBAAS
+        die_if_error "Error running authSchemaUpgrade"
+    """
+
+
 def build_change_limits_script():
     return """
         sed -i 's/soft nofile 32756/soft nofile 65536/g' /etc/security/limits.conf

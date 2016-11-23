@@ -31,13 +31,13 @@ class UpgradeMongoDB_26_to_30(BaseStep):
             LOG.info('Changing Arbiter binaries {}...'.format(arbiter_instance))
             self.change_instance_binaries(instance=arbiter_instance,
                                           connect_string=connect_string,
-                                          run_authschemaupgrade=False)
+                                          is_primary=False)
 
             secondary_instance = driver.get_slave_instances()[0]
             LOG.info('Changing Secondary binaries {}...'.format(secondary_instance))
             self.change_instance_binaries(instance=secondary_instance,
                                           connect_string=connect_string,
-                                          run_authschemaupgrade=False)
+                                          is_primary=False)
 
             master_instance = driver.get_master_instance()
 
@@ -48,7 +48,7 @@ class UpgradeMongoDB_26_to_30(BaseStep):
             LOG.info('Changing old master binaries {}...'.format(new_secondary))
             self.change_instance_binaries(instance=new_secondary,
                                           connect_string=connect_string,
-                                          run_authschemaupgrade=True)
+                                          is_primary=True)
 
             LOG.info('Switching Databases')
             driver.check_replication_and_switch(instance=new_secondary)
@@ -76,7 +76,7 @@ class UpgradeMongoDB_26_to_30(BaseStep):
 
             return False
 
-    def change_instance_binaries(self, instance, connect_string, run_authschemaupgrade):
+    def change_instance_binaries(self, instance, connect_string, is_primary):
         script = test_bash_script_error()
         script += util.build_cp_mongodb_binary_file()
         script += util.build_stop_database_script(clean_data=False)
@@ -85,8 +85,9 @@ class UpgradeMongoDB_26_to_30(BaseStep):
         script += util.build_change_limits_script()
         script += util.build_remove_reprecated_index_counter_metrics()
 
-        if run_authschemaupgrade:
+        if is_primary:
             script += util.build_authschemaupgrade_script()
+            script += util.build_addrole_mongo3_script()
 
         context_dict = {
             'SOURCE_PATH': '/mnt/software/db/mongodb',
