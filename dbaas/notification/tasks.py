@@ -591,6 +591,20 @@ def enable_zabbix_alarms(database):
     zabbix_provider.enable_alarms()
 
 
+def create_zabbix_alarms(database):
+    LOG.info("{} alarms will be created!".format(database))
+    zabbix_provider = handle_zabbix_alarms(database)
+    zabbix_provider.create_basic_monitors()
+    zabbix_provider.create_database_monitors()
+
+
+def delete_zabbix_alarms(database):
+    LOG.info("{} alarms will be deleted!".format(database))
+    zabbix_provider = handle_zabbix_alarms(database)
+    zabbix_provider.delete_basic_monitors()
+    zabbix_provider.delete_database_monitors()
+
+
 def handle_zabbix_alarms(database):
     from dbaas_zabbix import factory_for
     from dbaas_credentials.credential import Credential
@@ -665,9 +679,9 @@ def upgrade_mongodb_24_to_30(self, database, user, task_history=None):
         return
 
     try:
-        disable_zabbix_alarms(database)
+        delete_zabbix_alarms(database)
     except Exception as e:
-        message = "Could not disable Zabbix alarms: {}".format(e)
+        message = "Could not delete Zabbix alarms: {}".format(e)
         task_history.update_status_for(
             TaskHistory.STATUS_ERROR, details=message
         )
@@ -702,9 +716,9 @@ def upgrade_mongodb_24_to_30(self, database, user, task_history=None):
         LOG.warning("MongoDB Upgrade finished with errors")
 
     try:
-        enable_zabbix_alarms(database)
+        create_zabbix_alarms(database)
     except Exception as e:
-        message = "Could not enable Zabbix alarms: {}".format(e)
+        message = "Could not create Zabbix alarms: {}".format(e)
         task_history.update_status_for(
             TaskHistory.STATUS_ERROR, details=message
         )
