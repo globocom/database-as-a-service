@@ -29,7 +29,7 @@ class CheckPuppetIsRunning(BaseStep):
                 interval = 20
                 sleep(interval)
                 while True:
-                    LOG.info("Check if puppet-setup is runnig on {} - attempt {} of {}"
+                    LOG.info("Check if puppet-setup is running on {} - attempt {} of {}"
                              .format(host, attempt, retries))
                     output = {}
                     return_code = exec_remote_command(server=host.address,
@@ -42,10 +42,10 @@ class CheckPuppetIsRunning(BaseStep):
 
                     ret_value = int(output['stdout'][0])
                     if ret_value == 0:
-                        LOG.info("Puppet-setup is not runnig on {}".format(host))
+                        LOG.info("Puppet-setup is not running on {}".format(host))
                         break
 
-                    LOG.info("Puppet-setup is runnig on {}".format(host))
+                    LOG.info("Puppet-setup is running on {}".format(host))
 
                     attempt += 1
                     if attempt == retries:
@@ -54,6 +54,11 @@ class CheckPuppetIsRunning(BaseStep):
                         raise Exception(error)
 
                     sleep(interval)
+
+                puppet_code_status, output = self.get_puppet_code_status(host, host_csattr)
+                if puppet_code_status != 0:
+                    message = "Puppet-setup returned an error on {}. Output: {}".format(host, output)
+                    raise EnvironmentError(message)
 
             return True
         except Exception:
@@ -66,7 +71,6 @@ class CheckPuppetIsRunning(BaseStep):
 
     def undo(self, workflow_dict):
         try:
-
             return True
 
         except Exception:
@@ -76,3 +80,19 @@ class CheckPuppetIsRunning(BaseStep):
             workflow_dict['exceptions']['traceback'].append(traceback)
 
             return False
+
+    def get_puppet_code_status(self, host, cloudstack):
+        output = {}
+        LOG.info("Puppet-setup LOG info:")
+        exec_remote_command(
+            server=host.address,
+            username=cloudstack.vm_user,
+            password=cloudstack.vm_password,
+            command="tail -7 /var/log/ks-post.log",
+            output=output
+        )
+
+        for line in output["stdout"]:
+            if "puppet-setup" in line and "return code:" in line:
+                return int(line.split("return code: ")[1]), output
+        return 0, output
