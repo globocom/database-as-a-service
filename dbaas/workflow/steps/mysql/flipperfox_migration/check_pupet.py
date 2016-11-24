@@ -55,6 +55,11 @@ class CheckPuppetIsRunning(BaseStep):
 
                     sleep(interval)
 
+                puppet_code_status, output = self.get_puppet_code_status(host, host_csattr)
+                if puppet_code_status != 0:
+                    message = "Puppet-setup returned an error on {}. Output: {}".format(host, output)
+                    raise EnvironmentError(message)
+
             return True
         except Exception:
             traceback = full_stack()
@@ -76,3 +81,19 @@ class CheckPuppetIsRunning(BaseStep):
             workflow_dict['exceptions']['traceback'].append(traceback)
 
             return False
+
+    def get_puppet_code_status(self, host, cloudstack):
+        output = {}
+        LOG.info("Puppet-setup LOG info:")
+        exec_remote_command(
+            server=host.address,
+            username=cloudstack.vm_user,
+            password=cloudstack.vm_password,
+            command="tail -7 /var/log/ks-post.log",
+            output=output
+        )
+
+        for line in output["stdout"]:
+            if "puppet-setup" in line and "return code:" in line:
+                return int(line.split("return code: ")[1]), output
+        return 0, output
