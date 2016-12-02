@@ -226,34 +226,6 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
     get_capacity_html.short_description = "Capacity"
 
-    def get_actions(self, request):
-        actions = super(DatabaseAdmin, self).get_actions(request)
-        if request.user.team_set.filter(role__name="role_dba"):
-            actions['multiple_initialize_migration'] = (self.multiple_initialize_migration,
-                                                        'multiple_initialize_migration',
-                                                        'Initialize Migration')
-
-        return actions
-
-    def multiple_initialize_migration(self, queryset, request, instances):
-        from region_migration.models import DatabaseRegionMigration
-        url = reverse(
-            'admin:region_migration_databaseregionmigration_changelist')
-
-        for database in instances:
-            region_migration = DatabaseRegionMigration(database=database,
-                                                       current_step=0,
-                                                       )
-            try:
-                region_migration.save()
-            except IntegrityError:
-                pass
-
-        self.message_user(
-            request, "Migration for selected database(s) started!", level=messages.SUCCESS)
-
-        return HttpResponseRedirect(url)
-
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         """
         filter teams for the ones that the user is associated, unless the user has ther
@@ -483,7 +455,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             url = reverse('admin:logical_database_changelist')
             return HttpResponseRedirect(url)
 
-        if database.has_migration_started():
+        if database.has_flipperfox_migration_started():
             self.message_user(
                 request, "Database {} cannot be deleted because it is beeing migrated.".format(database.name), level=messages.ERROR)
             url = reverse('admin:logical_database_changelist')
@@ -511,7 +483,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             url = reverse('admin:logical_database_changelist')
             return HttpResponseRedirect(url)
 
-        if database.has_migration_started():
+        if database.has_flipperfox_migration_started():
             modeladmin.message_user(
                 request, "Database {} cannot be deleted because it is beeing migrated.".format(database.name), level=messages.ERROR)
             url = reverse('admin:logical_database_changelist')
@@ -900,7 +872,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             )
             return HttpResponseRedirect(url)
 
-        if database.has_migration_started():
+        if database.has_flipperfox_migration_started():
             self.message_user(
                 request,
                 "Database {} cannot be restored because it is beeing migrated.".format(database.name),
@@ -947,44 +919,6 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         return render_to_response("logical/database/lognit.html",
                                   locals(),
                                   context_instance=RequestContext(request))
-
-    def initialize_migration(self, request, database_id):
-        from region_migration.models import DatabaseRegionMigration
-
-        database = Database.objects.get(id=database_id)
-        url = reverse('admin:logical_database_change', args=[database_id])
-
-        region_migration = DatabaseRegionMigration(database=database, current_step=0,)
-
-        if database.is_in_quarantine:
-            self.message_user(request, "Database in quarantine and cannot be migrated", level=messages.ERROR)
-            return HttpResponseRedirect(url)
-
-        if database.status != Database.ALIVE or not database.database_status.is_alive:
-            self.message_user(request, "Database is dead and cannot be migrated", level=messages.ERROR)
-            return HttpResponseRedirect(url)
-
-        if not request.user.team_set.filter(role__name="role_dba"):
-            self.message_user(
-                request,
-                "You have no permissions to migrate {}. Please, contact your DBA".format(database.name),
-                level=messages.ERROR
-            )
-            return HttpResponseRedirect(url)
-
-        url = reverse('admin:region_migration_databaseregionmigration_changelist')
-
-        if database.has_migration_started():
-            self.message_user(request, "Database {} is already migrating".format(database.name), level=messages.ERROR)
-            return HttpResponseRedirect(url)
-
-        try:
-            region_migration.save()
-            self.message_user(request, "Migration for {} started!".format(database.name), level=messages.SUCCESS)
-        except IntegrityError, e:
-            self.message_user(request, "Database {} is already migrating!".format(database.name), level=messages.ERROR)
-
-        return HttpResponseRedirect(url)
 
     def initialize_flipperfox_migration(self, request, database_id):
         from flipperfox_migration.models import DatabaseFlipperFoxMigration
@@ -1035,7 +969,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             self.message_user(request, "Database is dead and cannot be upgraded!", level=messages.ERROR)
             return HttpResponseRedirect(url)
 
-        if database.has_migration_started():
+        if database.has_flipperfox_migration_started():
             self.message_user(
                 request,
                 "Database {} is being migrated and cannot be upgraded!".format(database.name),
@@ -1108,10 +1042,6 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             url(r'^/?(?P<database_id>\d+)/restore/$',
                 self.admin_site.admin_view(self.restore_snapshot),
                 name="database_restore_snapshot"),
-
-            url(r'^/?(?P<database_id>\d+)/initialize_migration/$',
-                self.admin_site.admin_view(self.initialize_migration),
-                name="database_initialize_migration"),
 
             url(r'^/?(?P<database_id>\d+)/initialize_flipperfox_migration/$',
                 self.admin_site.admin_view(self.initialize_flipperfox_migration),
