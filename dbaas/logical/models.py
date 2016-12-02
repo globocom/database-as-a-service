@@ -408,9 +408,6 @@ class Database(BaseModel):
     def get_restore_url(self):
         return "/admin/logical/database/{}/restore/".format(self.id)
 
-    def get_migration_url(self):
-        return "/admin/logical/database/{}/initialize_migration/".format(self.id)
-
     def get_mongodb_engine_version_upgrade_url(self):
         return "/admin/logical/database/{}/mongodb_engine_version_upgrade/".format(self.id)
 
@@ -459,28 +456,6 @@ class Database(BaseModel):
                 return False
 
         if tasks:
-            return True
-
-        return False
-
-    def has_migration_started(self,):
-        from region_migration.models import DatabaseRegionMigrationDetail
-        try:
-            migration = self.migration.get()
-        except ObjectDoesNotExist:
-            return False
-
-        if migration.is_migration_finished():
-            return False
-
-        if migration.current_step > 0:
-            return True
-
-        status_to_check = [DatabaseRegionMigrationDetail.WAITING,
-                           DatabaseRegionMigrationDetail.RUNNING]
-
-        details = migration.details.filter(status__in=status_to_check)
-        if details:
             return True
 
         return False
