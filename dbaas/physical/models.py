@@ -30,7 +30,13 @@ class Environment(BaseModel):
 class EngineType(BaseModel):
 
     name = models.CharField(
-        verbose_name=_("Engine name"), max_length=100, unique=True)
+        verbose_name=_("Engine name"), max_length=100, unique=True
+    )
+    is_in_memory = models.BooleanField(
+        verbose_name="Is in memory database",
+        default=False,
+        help_text="Check this option if this is in memory engine, e.g. Redis"
+    )
 
     class Meta:
         permissions = (
