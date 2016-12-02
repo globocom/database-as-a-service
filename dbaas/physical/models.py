@@ -241,6 +241,10 @@ class Plan(BaseModel):
         ReplicationTopology, verbose_name=_("Replication Topology"),
         related_name='replication_topology', null=True
     )
+    has_persistence = models.BooleanField(
+        verbose_name="Disk persistence", default=True,
+        help_text="Check this option if the plan will save data in disk"
+    )
     environments = models.ManyToManyField(Environment)
     provider = models.IntegerField(choices=PROVIDER_CHOICES, default=0)
     max_db_size = models.IntegerField(
