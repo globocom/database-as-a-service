@@ -160,12 +160,12 @@ MYSQL_FLIPPER_FOX_MIGRATION_1 = (
     'workflow.steps.mysql.flipperfox_migration.config_backup_log.ConfigBackupLog',
     'workflow.steps.mysql.flipperfox_migration.acl_database_bind.BindNewInstances',
     'workflow.steps.mysql.flipperfox_migration.replicate_old_acls.ReplicateOldAcl',
-    'workflow.steps.util.region_migration.td_agent.StopTDAgent',
+    'workflow.steps.mysql.flipperfox_migration.td_agent.StopTDAgent',
 )
 
 
 MYSQL_FLIPPER_FOX_MIGRATION_2 = (
-    'workflow.steps.util.region_migration.check_instances_status.CheckInstancesStatus',
+    'workflow.steps.mysql.flipperfox_migration.check_instances_status.CheckInstancesStatus',
     'workflow.steps.mysql.flipperfox_migration.set_master_read_only.SetMasterReadOnly',
     'workflow.steps.mysql.flipperfox_migration.turn_flipper_ip_down.TurnFlipperIpDown',
     'workflow.steps.mysql.flipperfox_migration.check_replication.CheckReplicationFlipperFox',
@@ -175,7 +175,7 @@ MYSQL_FLIPPER_FOX_MIGRATION_2 = (
     'workflow.steps.mysql.flipperfox_migration.set_infra_endpoint.SetInfraEndpoint',
     'workflow.steps.mysql.flipperfox_migration.update_zabbix_monitoring.UpdateZabbixMonitoring',
     'workflow.steps.mysql.flipperfox_migration.switch_dns.SwitchDNS',
-    'workflow.steps.util.region_migration.td_agent.StartTDAgent',
+    'workflow.steps.mysql.flipperfox_migration.td_agent.StartTDAgent',
     'workflow.steps.mysql.flipperfox_migration.start_mysql_statsd.StartMySQLStasD',
 
 )
