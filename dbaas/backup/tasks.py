@@ -203,7 +203,8 @@ def make_databases_backup(self):
 
     status = TaskHistory.STATUS_SUCCESS
     databaseinfras = DatabaseInfra.objects.filter(
-        plan__provider=Plan.CLOUDSTACK)
+        plan__provider=Plan.CLOUDSTACK, plan__has_persistence=True
+    )
     error = {}
     backup_number = 0
     backups_per_group = len(databaseinfras) / 12
