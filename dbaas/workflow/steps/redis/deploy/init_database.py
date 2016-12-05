@@ -21,9 +21,11 @@ class InitDatabaseRedis(BaseStep):
     def __unicode__(self):
         return "Initializing database..."
 
+    def _nfs_path(self, host):
+        raise NotImplemented
+
     def do(self, workflow_dict):
         try:
-
             LOG.info("Getting cloudstack credentials...")
 
             statsd_credentials = get_credentials_for(
@@ -52,8 +54,7 @@ class InitDatabaseRedis(BaseStep):
                                                              instance_type=Instance.REDIS_SENTINEL)
 
                 if instances_redis:
-                    host_nfsattr = HostAttr.objects.get(host=host)
-                    nfsaas_path = host_nfsattr.nfsaas_path
+                    nfsaas_path = self._nfs_path(host)
                     only_sentinel = False
                     instance_redis_address = instances_redis[0].address
                     instance_redis_port = instances_redis[0].port
@@ -148,3 +149,15 @@ class InitDatabaseRedis(BaseStep):
             workflow_dict['exceptions']['traceback'].append(traceback)
 
             return False
+
+
+class InitDatabaseRedisPersistence(InitDatabaseRedis):
+
+    def _nfs_path(self, host):
+        return HostAttr.objects.get(host=host).nfsaas_path
+
+
+class InitDatabaseRedisNoPersistence(InitDatabaseRedis):
+
+    def _nfs_path(self, host):
+        return ""
