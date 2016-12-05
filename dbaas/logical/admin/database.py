@@ -152,7 +152,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     def clone_html(self, database):
         html = []
 
-        if database.is_in_quarantine or database.status != database.ALIVE:
+        can_be_cloned, _ = database.can_be_cloned
+        if not can_be_cloned:
             html.append("N/A")
         else:
             html.append("<a class='btn btn-info' href='%s'><i class='icon-file icon-white'></i></a>" % reverse(
@@ -546,15 +547,10 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
     def clone_view(self, request, database_id):
         database = Database.objects.get(id=database_id)
-        if database.is_in_quarantine:
-            self.message_user(
-                request, "Database in quarantine cannot be cloned", level=messages.ERROR)
-            url = reverse('admin:logical_database_changelist')
-            return HttpResponseRedirect(url)  # Redirect after POST
 
-        if database.status != Database.ALIVE or not database.database_status.is_alive:
-            self.message_user(
-                request, "Database is not alive and cannot be cloned", level=messages.ERROR)
+        can_be_cloned, error = database.can_be_cloned
+        if not can_be_cloned:
+            self.message_user(request, error, level=messages.ERROR)
             url = reverse('admin:logical_database_changelist')
             return HttpResponseRedirect(url)
 
