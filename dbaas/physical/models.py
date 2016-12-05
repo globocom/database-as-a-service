@@ -269,7 +269,8 @@ class Plan(BaseModel):
         related_name='flipperfox_migration_plan'
     )
     disk_offering = models.ForeignKey(
-        DiskOffering, related_name="plans", on_delete=models.PROTECT, null=True
+        DiskOffering, related_name="plans",
+        on_delete=models.PROTECT, null=True, blank=True
     )
 
     @property
