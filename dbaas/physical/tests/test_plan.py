@@ -80,8 +80,6 @@ class PlanTestCase(TestCase):
         engine_disk.version = 'in_disk'
         engine_disk.save()
 
-        import pdb; pdb.set_trace()
-
         engines = self.admin._get_engines_type()
         self.assertIsInstance(engines, dict)
         self.assertIn(engine_disk, engines)
