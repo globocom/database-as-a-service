@@ -25,7 +25,7 @@ class PlanForm(forms.ModelForm):
         is_default = cleaned_data.get("is_default")
         engine = cleaned_data.get("engine")
         if not engine:
-            msg = _("Please select a Engyne Type")
+            msg = _("Please select a Engine Type")
             log.warning(u"%s" % msg)
             raise forms.ValidationError(msg)
         if not is_default:
