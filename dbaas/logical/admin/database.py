@@ -1,7 +1,13 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
-from django.utils.translation import ugettext_lazy as _
 import logging
+import sys
+from dex import dex
+from cStringIO import StringIO
+from functools import partial
+from bson.json_util import loads
+from django.db import IntegrityError
+from django.utils.translation import ugettext_lazy as _
 from django_services import admin
 from django.shortcuts import render_to_response
 from django.template import RequestContext
@@ -11,40 +17,35 @@ from django.core.urlresolvers import reverse
 from django.conf.urls import patterns, url
 from django.contrib import messages
 from django.utils.html import format_html, escape
-from ..service.database import DatabaseService
-from ..forms import DatabaseForm, CloneDatabaseForm, ResizeDatabaseForm, \
-    DiskResizeDatabaseForm
-from ..forms import RestoreDatabaseForm
-from physical.models import Plan, Host, DiskOffering
 from django.forms.models import modelform_factory
-from account.models import Team
-from drivers import DatabaseAlreadyExists
-from logical.templatetags import capacity
-from system.models import Configuration
-from dbaas import constants
 from django.db import router
 from django.utils.encoding import force_text
 from django.core.exceptions import PermissionDenied
 from django.contrib.admin.util import get_deleted_objects, model_ngettext
 from django.contrib.admin import helpers
 from django.template.response import TemplateResponse
+from django.core.exceptions import FieldError
+from dbaas_credentials.models import CredentialType
+from dbaas import constants
+from account.models import Team
+from drivers import DatabaseAlreadyExists
 from notification.tasks import destroy_database
 from notification.tasks import create_database
 from notification.models import TaskHistory
+from physical.models import Plan, Host, DiskOffering
+from system.models import Configuration
 from util import get_credentials_for
-from dbaas_credentials.models import CredentialType
-from django.core.exceptions import FieldError
-from dex import dex
-from cStringIO import StringIO
-from functools import partial
-import sys
-from bson.json_util import loads
-from django.contrib.admin import site
-from django.db import IntegrityError
-from ..models import Database
-from ..validators import check_is_database_enabled, check_is_database_dead, \
-    check_resize_options
-from ..errors import DisabledDatabase, NoResizeOption
+from logical.templatetags import capacity
+from logical.service.database import DatabaseService
+from logical.forms import DatabaseForm, CloneDatabaseForm, ResizeDatabaseForm, \
+    DiskResizeDatabaseForm
+from logical.forms import RestoreDatabaseForm
+from logical.models import Database
+from logical.validators import check_is_database_enabled, \
+    check_is_database_dead, check_resize_options, \
+    check_database_has_persistence
+from logical.errors import DisabledDatabase, NoResizeOption, \
+    DatabaseWithoutPersistence
 
 LOG = logging.getLogger(__name__)
 
@@ -837,12 +838,13 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     def database_disk_resize_view(self, request, database_id):
         try:
             database = check_is_database_enabled(database_id, 'disk resize')
+            check_database_has_persistence(database, 'disk resize')
 
             offerings = DiskOffering.objects.all().exclude(
                 id=database.databaseinfra.disk_offering.id
             )
             check_resize_options(database_id, offerings)
-        except (DisabledDatabase, NoResizeOption) as err:
+        except (DisabledDatabase, NoResizeOption, DatabaseWithoutPersistence) as err:
             self.message_user(request, err.message, messages.ERROR)
             return HttpResponseRedirect(err.url)
 
