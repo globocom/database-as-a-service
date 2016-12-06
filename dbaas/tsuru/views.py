@@ -428,6 +428,14 @@ class ServiceAdd(APIView):
                 msg=msg, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
+        if dbaas_environment not in dbaas_plan.environments.all():
+            msg = 'Plan "{}" is not available to "{}" environment'.format(
+                dbaas_plan, dbaas_environment
+            )
+            return log_and_response(
+                msg=msg, http_status=status.HTTP_400_BAD_REQUEST
+            )
+
         task_history = TaskHistory()
         task_history.task_name = "create_database"
         task_history.arguments = "Database name: {}".format(name)
