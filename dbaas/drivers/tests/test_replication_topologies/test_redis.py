@@ -37,7 +37,7 @@ class AbstractBaseRedisTestCase(AbstractReplicationTopologySettingsTestCase):
     def _get_resize_settings(self):
         return (
             ('workflow.steps.util.resize.stop_database.StopDatabase',
-             'workflow.steps.redis.resize.change_config.ChangeDatabaseConfigFile',) +
+             'workflow.steps.redis.resize.change_config.RedisWithPersistence',) +
             STOP_RESIZE_START +
             ('workflow.steps.util.resize.start_database.StartDatabase',
              'workflow.steps.util.resize.start_agents.StartAgents',
@@ -68,6 +68,16 @@ class AbstractBaseRedisNoPersistenceTestCase(AbstractBaseRedisTestCase):
             'workflow.steps.util.deploy.check_database_connection.CheckDatabaseConnection',
             'workflow.steps.util.deploy.check_dns.CheckDns',
             'workflow.steps.util.deploy.start_monit.StartMonit',
+        )
+
+    def _get_resize_settings(self):
+        return (
+            ('workflow.steps.util.resize.stop_database.StopDatabase',
+             'workflow.steps.redis.resize.change_config.RedisWithoutPersistence',) +
+            STOP_RESIZE_START +
+            ('workflow.steps.util.resize.start_database.StartDatabase',
+             'workflow.steps.util.resize.start_agents.StartAgents',
+             'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',)
         )
 
 
