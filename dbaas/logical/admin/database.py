@@ -332,10 +332,12 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         if obj:
             if 'disk_offering' in self.fieldsets_change[0][1]['fields']:
                 self.fieldsets_change[0][1]['fields'].remove('disk_offering')
-            self.fieldsets_change[0][1]['fields'].append('disk_offering')
-            DatabaseForm.setup_disk_offering_field(
-                form=self.form, db_instance=obj
-            )
+
+            if obj.plan.has_persistence:
+                self.fieldsets_change[0][1]['fields'].append('disk_offering')
+                DatabaseForm.setup_disk_offering_field(
+                    form=self.form, db_instance=obj
+                )
 
         defaults = {
             "form": self.form,

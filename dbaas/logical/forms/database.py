@@ -141,16 +141,15 @@ class DatabaseForm(models.ModelForm):
 
     @classmethod
     def setup_disk_offering_field(cls, form, db_instance):
-        attrs = {'readonly':'readonly', 'database': db_instance}
-
-        widget=forms.TextInput(attrs=attrs)
-        if db_instance.plan.has_persistence:
-            widget = DatabaseOfferingWidget(
-                id='resizeDisk',
-                url=db_instance.get_disk_resize_url(),
-                label='Resize Disk',
-                attrs=attrs
-            )
+        widget = DatabaseOfferingWidget(
+            id='resizeDisk',
+            url=db_instance.get_disk_resize_url(),
+            label='Resize Disk',
+            attrs={
+                'readonly':'readonly',
+                'database': db_instance
+            }
+        )
 
         form.declared_fields['disk_offering'] = forms.CharField(
             widget=widget, required=False,
