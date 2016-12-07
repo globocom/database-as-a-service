@@ -96,7 +96,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         (None, {
             'fields': [
                 'name', 'description', 'project', 'team', 'team_contact',
-                'subscribe_to_email_events',
+                'subscribe_to_email_events', 'disk_auto_resize',
             ]
         }),
     )
@@ -337,11 +337,11 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 self.fieldsets_change[0][1]['fields'].remove('disk_auto_resize')
 
             if obj.plan.has_persistence:
+                self.fieldsets_change[0][1]['fields'].append('disk_auto_resize')
                 self.fieldsets_change[0][1]['fields'].append('disk_offering')
                 DatabaseForm.setup_disk_offering_field(
                     form=self.form, db_instance=obj
                 )
-                self.fieldsets_change[0][1]['fields'].append('disk_auto_resize')
 
         defaults = {
             "form": self.form,
