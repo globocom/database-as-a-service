@@ -143,7 +143,7 @@ class DatabaseTestCase(TestCase):
         database = factory.DatabaseFactory()
         database.status = database.ALIVE
 
-        can_be_cloned, error = database.can_be_cloned
+        can_be_cloned, error = database.can_be_cloned()
         self.assertTrue(can_be_cloned)
         self.assertIsNone(error)
 
@@ -152,7 +152,7 @@ class DatabaseTestCase(TestCase):
         database.status = database.ALIVE
         database.plan.has_persistence = False
 
-        can_be_cloned, error = database.can_be_cloned
+        can_be_cloned, error = database.can_be_cloned()
         self.assertFalse(can_be_cloned)
         self.assertEqual(error, ERROR_CLONE_WITHOUT_PERSISTENCE)
 
@@ -161,7 +161,7 @@ class DatabaseTestCase(TestCase):
         database.status = database.ALIVE
         database.is_in_quarantine = True
 
-        can_be_cloned, error = database.can_be_cloned
+        can_be_cloned, error = database.can_be_cloned()
         self.assertFalse(can_be_cloned)
         self.assertEqual(error, ERROR_CLONE_IN_QUARANTINE)
 
@@ -169,7 +169,7 @@ class DatabaseTestCase(TestCase):
         database = factory.DatabaseFactory()
         database.status = database.DEAD
 
-        can_be_cloned, error = database.can_be_cloned
+        can_be_cloned, error = database.can_be_cloned()
         self.assertFalse(can_be_cloned)
         self.assertEqual(error, ERROR_CLONE_NOT_ALIVE)
 

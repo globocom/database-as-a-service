@@ -552,7 +552,6 @@ class Database(BaseModel):
         nfsaas_host.save()
         return nfsaas_host
 
-    @property
     def can_be_cloned(self):
         if not self.plan.has_persistence:
             return False, "Database does not have persistence cannot be cloned"

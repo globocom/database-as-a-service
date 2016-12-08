@@ -152,7 +152,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     def clone_html(self, database):
         html = []
 
-        can_be_cloned, _ = database.can_be_cloned
+        can_be_cloned, _ = database.can_be_cloned()
         if not can_be_cloned:
             html.append("N/A")
         else:
@@ -549,7 +549,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     def clone_view(self, request, database_id):
         database = Database.objects.get(id=database_id)
 
-        can_be_cloned, error = database.can_be_cloned
+        can_be_cloned, error = database.can_be_cloned()
         if not can_be_cloned:
             self.message_user(request, error, level=messages.ERROR)
             url = reverse('admin:logical_database_changelist')
