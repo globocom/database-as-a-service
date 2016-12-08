@@ -18,21 +18,6 @@ class PlanForm(forms.ModelForm):
     class Meta:
         model = models.Plan
 
-    def clean_disk_offering(self):
-        has_persistence = self.cleaned_data.get("has_persistence")
-        disk_offering = self.cleaned_data.get("disk_offering")
-        if has_persistence and not disk_offering:
-            msg = _("Disk offering is required when plan has persistence")
-            log.warning(u"%s" % msg)
-            raise forms.ValidationError(msg)
-
-        if not has_persistence and disk_offering:
-            msg = _("Disk offering should be empty when plan is without persistence")
-            log.warning(u"%s" % msg)
-            raise forms.ValidationError(msg)
-
-        return disk_offering
-
     def clean(self):
         cleaned_data = super(PlanForm, self).clean()
 

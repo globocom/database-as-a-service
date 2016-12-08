@@ -87,26 +87,3 @@ class PlanTestCase(TestCase):
         self.assertFalse(engines[engine_disk])
         self.assertIn(engine_memory, engines)
         self.assertTrue(engines[engine_memory])
-
-    def test_can_add_plan_with_persistence_with_disk(self):
-        form = PlanForm(data={'disk_offering': '1', 'has_persistence': True})
-        form.is_valid()
-        self.assertNotIn('disk_offering', form.errors)
-
-    def test_cannot_add_plan_with_persistence_without_disk(self):
-        form = PlanForm(data={'disk_offering': None, 'has_persistence': True})
-        form.is_valid()
-        self.assertIn('disk_offering', form.errors)
-        self.assertEqual(
-            form.errors['disk_offering'][0],
-            "Disk offering is required when plan has persistence"
-        )
-
-    def test_cannot_add_plan_without_persistence_with_disk(self):
-        form = PlanForm(data={'disk_offering': '1', 'has_persistence': False})
-        form.is_valid()
-        self.assertIn('disk_offering', form.errors)
-        self.assertEqual(
-            form.errors['disk_offering'][0],
-            "Disk offering should be empty when plan is without persistence"
-        )
