@@ -44,8 +44,7 @@ from logical.models import Database
 from logical.validators import check_is_database_enabled, \
     check_is_database_dead, check_resize_options, \
     check_database_has_persistence
-from logical.errors import DisabledDatabase, NoResizeOption, \
-    DatabaseWithoutPersistence
+from logical.errors import DisabledDatabase, NoResizeOption
 
 LOG = logging.getLogger(__name__)
 
@@ -333,15 +332,10 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             if 'disk_offering' in self.fieldsets_change[0][1]['fields']:
                 self.fieldsets_change[0][1]['fields'].remove('disk_offering')
 
-            if 'disk_auto_resize' in self.fieldsets_change[0][1]['fields']:
-                self.fieldsets_change[0][1]['fields'].remove('disk_auto_resize')
-
-            if obj.plan.has_persistence:
-                self.fieldsets_change[0][1]['fields'].append('disk_auto_resize')
-                self.fieldsets_change[0][1]['fields'].append('disk_offering')
-                DatabaseForm.setup_disk_offering_field(
-                    form=self.form, db_instance=obj
-                )
+            self.fieldsets_change[0][1]['fields'].append('disk_offering')
+            DatabaseForm.setup_disk_offering_field(
+                form=self.form, db_instance=obj
+            )
 
         defaults = {
             "form": self.form,
@@ -844,13 +838,11 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     def database_disk_resize_view(self, request, database_id):
         try:
             database = check_is_database_enabled(database_id, 'disk resize')
-            check_database_has_persistence(database, 'disk resize')
-
             offerings = DiskOffering.objects.all().exclude(
                 id=database.databaseinfra.disk_offering.id
             )
             check_resize_options(database_id, offerings)
-        except (DisabledDatabase, NoResizeOption, DatabaseWithoutPersistence) as err:
+        except (DisabledDatabase, NoResizeOption) as err:
             self.message_user(request, err.message, messages.ERROR)
             return HttpResponseRedirect(err.url)
 

@@ -146,7 +146,7 @@ class DatabaseForm(models.ModelForm):
             url=db_instance.get_disk_resize_url(),
             label='Resize Disk',
             attrs={
-                'readonly':'readonly',
+                'readonly': 'readonly',
                 'database': db_instance
             }
         )
