@@ -34,11 +34,7 @@ def zabbix_collect_used_disk(task):
             environment=environment, integration=integration
         )
 
-        databases = Database.objects.filter(
-            environment=environment,
-            databaseinfra__plan__has_persistence=True
-        )
-        for database in databases:
+        for database in Database.objects.filter(environment=environment):
             database_resized = False
             task.add_detail(
                 message='Database: {}'.format(database.name), level=1
