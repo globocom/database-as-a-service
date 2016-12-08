@@ -9,7 +9,7 @@ class BaseRedis(BaseTopology):
             'workflow.steps.redis.deploy.create_virtualmachines.CreateVirtualMachine',
             'workflow.steps.redis.deploy.create_dns.CreateDns',
             'workflow.steps.util.deploy.create_nfs.CreateNfs',
-            'workflow.steps.redis.deploy.init_database.InitDatabaseRedisPersistence',
+            'workflow.steps.redis.deploy.init_database.InitDatabaseRedis',
             'workflow.steps.util.deploy.config_backup_log.ConfigBackupLog',
             'workflow.steps.util.deploy.check_database_connection.CheckDatabaseConnection',
             'workflow.steps.util.deploy.check_dns.CheckDns',
@@ -49,17 +49,6 @@ class RedisSentinel(BaseRedis):
 
 
 class RedisNoPersistence(BaseRedis):
-    def deploy_first_steps(self):
-        return (
-            'workflow.steps.redis.deploy.build_databaseinfra.BuildDatabaseInfra',
-            'workflow.steps.redis.deploy.create_virtualmachines.CreateVirtualMachine',
-            'workflow.steps.redis.deploy.create_dns.CreateDns',
-            'workflow.steps.redis.deploy.init_database.InitDatabaseRedisNoPersistence',
-            'workflow.steps.util.deploy.config_backup_log.ConfigBackupLog',
-            'workflow.steps.util.deploy.check_database_connection.CheckDatabaseConnection',
-            'workflow.steps.util.deploy.check_dns.CheckDns',
-            'workflow.steps.util.deploy.start_monit.StartMonit',
-        )
 
     def get_resize_steps(self):
         return (
