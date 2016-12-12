@@ -23,7 +23,6 @@ class InitDatabaseRedis(BaseStep):
 
     def do(self, workflow_dict):
         try:
-
             LOG.info("Getting cloudstack credentials...")
 
             statsd_credentials = get_credentials_for(

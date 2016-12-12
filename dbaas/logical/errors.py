@@ -34,3 +34,10 @@ class NoResizeOption(EnvironmentError):
         self.url = url
         msg = 'Database has no offerings availables'
         super(EnvironmentError, self).__init__(msg)
+
+
+class DatabaseWithoutPersistence(DisabledDatabase):
+    def __init__(self, database, operation, url):
+        msg = 'Database {} cannot do {} ' \
+              'because it is without persistence'.format(database, operation)
+        super(DatabaseWithoutPersistence, self).__init__(msg, url)

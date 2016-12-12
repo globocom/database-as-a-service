@@ -19,15 +19,15 @@ class PlanForm(forms.ModelForm):
         model = models.Plan
 
     def clean(self):
-        """Validates the form to make sure that there is at least one default plan"""
-
         cleaned_data = super(PlanForm, self).clean()
-        is_default = cleaned_data.get("is_default")
+
         engine = cleaned_data.get("engine")
         if not engine:
-            msg = _("Please select a Engyne Type")
+            msg = _("Please select a Engine Type")
             log.warning(u"%s" % msg)
             raise forms.ValidationError(msg)
+
+        is_default = cleaned_data.get("is_default")
         if not is_default:
             if self.instance.id:
                 plans = models.Plan.objects.filter(
