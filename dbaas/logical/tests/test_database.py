@@ -11,7 +11,12 @@ from physical.models import DatabaseInfra
 from logical.tests import factory
 from ..models import Database
 
+
 LOG = logging.getLogger(__name__)
+ERROR_CLONE_WITHOUT_PERSISTENCE = \
+    "Database does not have persistence cannot be cloned"
+ERROR_CLONE_IN_QUARANTINE = "Database in quarantine cannot be cloned"
+ERROR_CLONE_NOT_ALIVE = "Database is not alive and cannot be cloned"
 
 
 class FakeDriver(base.BaseDriver):
@@ -133,6 +138,41 @@ class DatabaseTestCase(TestCase):
             host_address=self.instance.address, used_size_kb=300
         )
         self.assertIsNone(nfsaas_host)
+
+    def test_can_clone(self):
+        database = factory.DatabaseFactory()
+        database.status = database.ALIVE
+
+        can_be_cloned, error = database.can_be_cloned()
+        self.assertTrue(can_be_cloned)
+        self.assertIsNone(error)
+
+    def test_cannot_clone_no_persistence(self):
+        database = factory.DatabaseFactory()
+        database.status = database.ALIVE
+        database.plan.has_persistence = False
+
+        can_be_cloned, error = database.can_be_cloned()
+        self.assertFalse(can_be_cloned)
+        self.assertEqual(error, ERROR_CLONE_WITHOUT_PERSISTENCE)
+
+    def test_cannot_clone_in_quarantine(self):
+        database = factory.DatabaseFactory()
+        database.status = database.ALIVE
+        database.is_in_quarantine = True
+
+        can_be_cloned, error = database.can_be_cloned()
+        self.assertFalse(can_be_cloned)
+        self.assertEqual(error, ERROR_CLONE_IN_QUARANTINE)
+
+    def test_cannot_clone_dead(self):
+        database = factory.DatabaseFactory()
+        database.status = database.DEAD
+
+        can_be_cloned, error = database.can_be_cloned()
+        self.assertFalse(can_be_cloned)
+        self.assertEqual(error, ERROR_CLONE_NOT_ALIVE)
+
     '''
 
     @mock.patch.object(clone_database, 'delay')

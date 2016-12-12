@@ -32,7 +32,7 @@ class BaseRedis(BaseTopology):
     def get_resize_steps(self):
         return (
             ('workflow.steps.util.resize.stop_database.StopDatabase',
-             'workflow.steps.redis.resize.change_config.ChangeDatabaseConfigFile',) +
+             'workflow.steps.redis.resize.change_config.RedisWithPersistence',) +
             STOP_RESIZE_START +
             ('workflow.steps.util.resize.start_database.StartDatabase',
              'workflow.steps.util.resize.start_agents.StartAgents',
@@ -45,4 +45,25 @@ class RedisSingle(BaseRedis):
 
 
 class RedisSentinel(BaseRedis):
+    pass
+
+
+class RedisNoPersistence(BaseRedis):
+
+    def get_resize_steps(self):
+        return (
+            ('workflow.steps.util.resize.stop_database.StopDatabase',
+             'workflow.steps.redis.resize.change_config.RedisWithoutPersistence',) +
+            STOP_RESIZE_START +
+            ('workflow.steps.util.resize.start_database.StartDatabase',
+             'workflow.steps.util.resize.start_agents.StartAgents',
+             'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',)
+        )
+
+
+class RedisSingleNoPersistence(RedisNoPersistence):
+    pass
+
+
+class RedisSentinelNoPersistence(RedisNoPersistence):
     pass

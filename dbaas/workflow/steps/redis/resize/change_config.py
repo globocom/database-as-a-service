@@ -11,9 +11,14 @@ class ChangeDatabaseConfigFile(BaseStep):
     def __unicode__(self):
         return "Changing database config file..."
 
+    @property
+    def has_persistence(self):
+        raise NotImplemented
+
     def do(self, workflow_dict):
         context_dict = {
             'CONFIGFILE': True,
+            'HAS_PERSISTENCE': self.has_persistence
         }
 
         ret_script = run_vm_script(
@@ -27,6 +32,7 @@ class ChangeDatabaseConfigFile(BaseStep):
     def undo(self, workflow_dict):
         context_dict = {
             'CONFIGFILE': True,
+            'HAS_PERSISTENCE': self.has_persistence
         }
 
         ret_script = run_vm_script(
@@ -36,3 +42,17 @@ class ChangeDatabaseConfigFile(BaseStep):
         )
 
         return ret_script
+
+
+class RedisWithPersistence(ChangeDatabaseConfigFile):
+
+    @property
+    def has_persistence(self):
+        return True
+
+
+class RedisWithoutPersistence(ChangeDatabaseConfigFile):
+
+    @property
+    def has_persistence(self):
+        return False
