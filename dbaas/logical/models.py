@@ -463,7 +463,7 @@ class Database(BaseModel):
     def has_flipperfox_migration_started(self,):
         from flipperfox_migration.models import DatabaseFlipperFoxMigrationDetail
         try:
-            migration = self.migration.get()
+            migration = self.flipperfoxmigration.get()
         except ObjectDoesNotExist:
             return False
 
