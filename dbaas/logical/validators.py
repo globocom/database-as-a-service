@@ -34,7 +34,7 @@ def check_is_database_enabled(database_id, operation):
     if database.is_beeing_used_elsewhere():
         raise BusyDatabaseError(url)
 
-    if database.has_migration_started():
+    if database.has_flipperfox_migration_started():
         url = reverse('admin:logical_database_changelist')
         raise MigrationDatabaseError(operation, database.name, url)
 

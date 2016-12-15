@@ -44,7 +44,6 @@ class DatabaseTestCase(TestCase):
 
         self.assertTrue(database.pk)
 
-    @skip("aovid this test due to region migration")
     def test_create_duplicate_database_error(self):
 
         database = Database(name="bleble", databaseinfra=self.databaseinfra,
@@ -55,7 +54,8 @@ class DatabaseTestCase(TestCase):
         self.assertTrue(database.pk)
 
         self.assertRaises(IntegrityError, Database(name="bleble",
-                                                   databaseinfra=self.databaseinfra).save)
+                                                   databaseinfra=self.databaseinfra,
+                                                   environment=self.environment).save)
 
     def test_slugify_database_name_with_spaces(self):
 
