@@ -25,13 +25,13 @@ class ConfigFiles(BaseStep):
 
     def do(self, workflow_dict):
         try:
-            region_migration_dir = Configuration.get_by_name(
-                'region_migration_dir')
-            if not region_migration_dir:
-                region_migration_dir = '/tmp'
+            flipper_fox_migration_dir = Configuration.get_by_name(
+                'flipper_fox_migration_dir')
+            if not flipper_fox_migration_dir:
+                flipper_fox_migration_dir = '/tmp'
 
-            workflow_dict['region_migration_dir_infra_name'] = "{}/{}".format(
-                region_migration_dir, workflow_dict['databaseinfra'].name)
+            workflow_dict['flipper_fox_migration_dir_infra_name'] = "{}/{}".format(
+                flipper_fox_migration_dir, workflow_dict['databaseinfra'].name)
 
             for index, source_instance in enumerate(workflow_dict['source_instances']):
 
@@ -40,7 +40,7 @@ class ConfigFiles(BaseStep):
 
                 hostname = source_host.hostname.split('.')[0]
                 localpath = "{}/{}".format(
-                    workflow_dict['region_migration_dir_infra_name'], hostname)
+                    workflow_dict['flipper_fox_migration_dir_infra_name'], hostname)
                 os.makedirs(localpath)
 
                 LOG.info('Get source host files to {}'.format(localpath))
@@ -115,7 +115,7 @@ class ConfigFiles(BaseStep):
                 if return_code != 0:
                     raise Exception(str(output))
 
-            shutil.rmtree(workflow_dict['region_migration_dir_infra_name'])
+            shutil.rmtree(workflow_dict['flipper_fox_migration_dir_infra_name'])
 
             return True
         except Exception:
@@ -144,9 +144,9 @@ class ConfigFiles(BaseStep):
                 LOG.info(output)
 
             try:
-                if 'region_migration_dir_infra_name' in workflow_dict:
+                if 'flipper_fox_migration_dir_infra_name' in workflow_dict:
                     shutil.rmtree(
-                        workflow_dict['region_migration_dir_infra_name'])
+                        workflow_dict['flipper_fox_migration_dir_infra_name'])
             except Exception:
                 pass
 
