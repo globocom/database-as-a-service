@@ -652,35 +652,43 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
     def metrics_view(self, request, database_id):
         database = Database.objects.get(id=database_id)
-        instance = database.infra.instances.all()[0]
 
-        if request.method == 'GET':
+        if 'hostname' in request.GET:
             hostname = request.GET.get('hostname')
-
-        if hostname is None:
+        else:
+            instance = database.infra.instances.all()[0]
             hostname = instance.hostname.hostname.split('.')[0]
 
         return self.database_host_metrics_view(request, database, hostname)
 
     def database_host_metrics_view(self, request, database, hostname):
-        from util.metrics.metrics import get_metric_datapoints_for
-        URL = get_credentials_for(
-            environment=database.environment, credential_type=CredentialType.GRAPHITE).endpoint
-
         title = "{} Metrics".format(database.name)
+        instance = database.infra.instances.get(
+            hostname__hostname__contains=hostname
+        )
 
-        if request.method == 'GET':
-            engine = database.infra.engine_name
-            db_name = database.name
-            hosts = []
+        hosts = []
+        for host in Host.objects.filter(instance__databaseinfra=database.infra).distinct():
+            hosts.append(host.hostname.split('.')[0])
 
-            for host in Host.objects.filter(instance__databaseinfra=database.infra).distinct():
-                hosts.append(host.hostname.split('.')[0])
+        credential = get_credentials_for(
+            environment=database.databaseinfra.environment,
+            credential_type=CredentialType.GRAFANA
+        )
+        grafana_url = '{}/dashboard/{}?{}={}&{}={}&{}={}'.format(
+            credential.endpoint,
+            credential.project.format(database.engine_type),
+            credential.get_parameter_by_name('db_param'), instance.dns,
+            credential.get_parameter_by_name('os_param'), instance.hostname.hostname,
+            credential.get_parameter_by_name('env_param'),
+            credential.get_parameter_by_name('environment')
+        )
 
-            graph_data = get_metric_datapoints_for(
-                engine, db_name, hostname, url=URL, granurality='10seconds', from_option='2hours')
-
-        return render_to_response("logical/database/metrics/metrics.html", locals(), context_instance=RequestContext(request))
+        return render_to_response(
+            "logical/database/metrics/grafana.html",
+            locals(),
+            context_instance=RequestContext(request)
+        )
 
     def database_dex_analyze_view(self, request, database_id):
         import json
