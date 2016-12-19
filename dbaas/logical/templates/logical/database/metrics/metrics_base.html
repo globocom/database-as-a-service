@@ -7,7 +7,6 @@
 {% block extrastyle %}
 {{ block.super }}
 <link rel="stylesheet" type="text/css" href="{% static 'admin/css/admin-dbaas.css' %}" />
- <link rel="stylesheet" type="text/css" href="{% static 'css/metrics.css' %}" />
 
 {% endblock %}
 
@@ -21,26 +20,14 @@
 {% endblock %}
 
 {% block content_title %}
-    {% if title %}<h1 style="color: White;">{{ title }}</h1>{% endif %}
-
-{% if show_filters %}
-    <br>
-    <br>
-    <form method="POST">
-        {% csrf_token %}
-        <h4 style="color: White;">From</h4><select name="change_from" id="change_from" onchange="this.form.submit()">
-            {{from_options | safe}}
-        </select>
-    </form>
-{%endif%}
+    {% if title %}
+        <h1 >{{ title }}</h1>
+    {% endif %}
 {% endblock %}
 
 {% block content %}
-
     {% block graphs %}
     {% endblock %}
-
-
 {% endblock %}
 
 {% block breadcrumbs %}{% endblock %}
