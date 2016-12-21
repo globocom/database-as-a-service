@@ -3,7 +3,7 @@
 {% block graphs %}
 
     <ul class="nav nav-pills" id="navFinished" >
-        <li><p class="navbar-text">Hosts:&nbsp;&nbsp;</p></li>
+        <li><p class="navbar-text"><b>HOSTS:&nbsp;&nbsp;</b></p></li>
         {% for host in hosts %}
             <li {% ifequal hostname host %} class="active" {% endifequal %}>
                 <a href="?hostname={{host}}">{{host}}</a>
