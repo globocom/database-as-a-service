@@ -18,6 +18,12 @@ class PlanForm(forms.ModelForm):
     class Meta:
         model = models.Plan
 
+    def clean_has_persistence(self):
+        engine = self.cleaned_data['engine']
+        if not engine.engine_type.is_in_memory:
+            return True
+        return self.cleaned_data['has_persistence']
+
     def clean(self):
         cleaned_data = super(PlanForm, self).clean()
 
