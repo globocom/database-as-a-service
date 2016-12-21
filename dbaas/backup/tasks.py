@@ -77,8 +77,24 @@ def mysql_binlog_save(client, instance, cloudstack_hostattr):
             "Error saving mysql master binlog file and position: %s" % (e))
 
 
-def make_instance_snapshot_backup(instance, error):
+def lock_instance(driver, instance, client):
+    try:
+        LOG.debug('Locking instance {}'.format(instance))
+        driver.lock_database(client)
+        LOG.debug('Instance {} is locked'.format(instance))
+        return True
+    except Exception as e:
+        LOG.warning('Could not lock {} - {}'.format(instance, e))
+        return False
 
+
+def unlock_instance(driver, instance, client):
+    LOG.debug('Unlocking instance {}'.format(instance))
+    driver.unlock_database(client)
+    LOG.debug('Instance {} is unlocked'.format(instance))
+
+
+def make_instance_snapshot_backup(instance, error):
     LOG.info("Make instance backup for %s" % (instance))
 
     snapshot = Snapshot()
@@ -100,16 +116,14 @@ def make_instance_snapshot_backup(instance, error):
     snapshot.save()
 
     try:
-
         databaseinfra = instance.databaseinfra
         driver = databaseinfra.get_driver()
         client = driver.get_client(instance)
         cloudstack_hostattr = Cloudstack_HostAttr.objects.get(
-            host=instance.hostname)
+            host=instance.hostname
+        )
 
-        LOG.debug('Locking instance %s' % str(instance))
-        driver.lock_database(client)
-        LOG.debug('Instance %s is locked' % str(instance))
+        locked = lock_instance(driver, instance, client)
 
         if type(driver).__name__ == 'MySQL':
             mysql_binlog_save(client, instance, cloudstack_hostattr)
@@ -132,11 +146,9 @@ def make_instance_snapshot_backup(instance, error):
         error['errormsg'] = errormsg
         set_backup_error(databaseinfra, snapshot, errormsg)
         return False
-
     finally:
-        LOG.debug('Unlocking instance %s' % str(instance))
-        driver.unlock_database(client)
-        LOG.debug('Instance %s is unlocked' % str(instance))
+        if locked:
+            unlock_instance(driver, instance, client)
 
     output = {}
     command = "du -sb /data/.snapshot/%s | awk '{print $1}'" % (
