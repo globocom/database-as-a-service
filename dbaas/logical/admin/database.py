@@ -95,7 +95,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         (None, {
             'fields': [
                 'name', 'description', 'project', 'team', 'team_contact',
-                'subscribe_to_email_events', 'disk_auto_resize',
+                'subscribe_to_email_events', 'is_protected', 'disk_auto_resize',
             ]
         }),
     )
