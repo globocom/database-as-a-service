@@ -111,6 +111,12 @@ class Database(BaseModel):
             "When marked, the disk will be resized automatically."
         )
     )
+    is_protected = models.BooleanField(
+        verbose_name=_("Protected"), default=False,
+        help_text=_(
+            "When marked, the database can not be deleted."
+        )
+    )
 
     def team_contact(self):
         if self.team:
