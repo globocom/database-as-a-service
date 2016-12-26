@@ -106,14 +106,16 @@ def make_instance_snapshot_backup(instance, error):
 
     from dbaas_nfsaas.models import HostAttr as Nfsaas_HostAttr
     nfsaas_hostattr = Nfsaas_HostAttr.objects.get(
-        host=instance.hostname, is_active=True)
+        host=instance.hostname, is_active=True
+    )
     snapshot.export_path = nfsaas_hostattr.nfsaas_path
 
     databases = Database.objects.filter(databaseinfra=instance.databaseinfra)
     if databases:
         snapshot.database_name = databases[0].name
-
     snapshot.save()
+
+    snapshot_final_status = Snapshot.SUCCESS
 
     try:
         databaseinfra = instance.databaseinfra
@@ -124,6 +126,8 @@ def make_instance_snapshot_backup(instance, error):
         )
 
         locked = lock_instance(driver, instance, client)
+        if not locked:
+            snapshot_final_status = Snapshot.WARNING
 
         if type(driver).__name__ == 'MySQL':
             mysql_binlog_save(client, instance, cloudstack_hostattr)
@@ -196,7 +200,7 @@ def make_instance_snapshot_backup(instance, error):
         except Exception as e:
             LOG.error("Error exec remote command %s" % (e))
 
-    snapshot.status = Snapshot.SUCCESS
+    snapshot.status = snapshot_final_status
     snapshot.end_at = datetime.datetime.now()
     snapshot.save()
     register_backup_dbmonitor(databaseinfra, snapshot)
