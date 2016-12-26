@@ -443,58 +443,31 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
     def delete_view(self, request, object_id, extra_context=None):
         database = Database.objects.get(id=object_id)
+
+        can_be_deleted, error = database.can_be_deleted()
+        if not can_be_deleted:
+            self.message_user(request, error, level=messages.ERROR)
+            url = reverse('admin:logical_database_changelist')
+            return HttpResponseRedirect(url)
+
         extra_context = extra_context or {}
-
-        if database.status != Database.ALIVE or not database.database_status.is_alive:
-            self.message_user(
-                request, "Database {} is not alive and cannot be deleted".format(database.name), level=messages.ERROR)
-            url = reverse('admin:logical_database_changelist')
-            return HttpResponseRedirect(url)
-
-        if database.is_beeing_used_elsewhere():
-            self.message_user(
-                request, "Database {} cannot be deleted because it is in use by another task.".format(database.name), level=messages.ERROR)
-            url = reverse('admin:logical_database_changelist')
-            return HttpResponseRedirect(url)
-
-        if database.has_flipperfox_migration_started():
-            self.message_user(
-                request, "Database {} cannot be deleted because it is beeing migrated.".format(database.name), level=messages.ERROR)
-            url = reverse('admin:logical_database_changelist')
-            return HttpResponseRedirect(url)
-
         if not database.is_in_quarantine:
-            extra_context['quarantine_days'] = Configuration.get_by_name_as_int(
-                'quarantine_retention_days')
+            extra_context['quarantine_days'] = Configuration.get_by_name_as_int('quarantine_retention_days')
+
         return super(DatabaseAdmin, self).delete_view(request, object_id, extra_context=extra_context)
 
     def delete_model(modeladmin, request, obj):
-
         LOG.debug("Deleting {}".format(obj))
         database = obj
 
-        if database.status != Database.ALIVE or not database.database_status.is_alive:
-            modeladmin.message_user(
-                request, "Database {} is not alive and cannot be deleted".format(database.name), level=messages.ERROR)
-            url = reverse('admin:logical_database_changelist')
-            return HttpResponseRedirect(url)
-
-        if database.is_beeing_used_elsewhere():
-            modeladmin.message_user(
-                request, "Database {} cannot be deleted because it is in use by another task.".format(database.name), level=messages.ERROR)
-            url = reverse('admin:logical_database_changelist')
-            return HttpResponseRedirect(url)
-
-        if database.has_flipperfox_migration_started():
-            modeladmin.message_user(
-                request, "Database {} cannot be deleted because it is beeing migrated.".format(database.name), level=messages.ERROR)
+        can_be_deleted, error = database.can_be_deleted()
+        if not can_be_deleted:
+            modeladmin.message_user(request, error, level=messages.ERROR)
             url = reverse('admin:logical_database_changelist')
             return HttpResponseRedirect(url)
 
         if database.is_in_quarantine:
-
             if database.plan.provider == database.plan.CLOUDSTACK:
-
                 LOG.debug(
                     "call destroy_database - name=%s, team=%s, project=%s, user=%s" % (
                         database.name, database.team, database.project, request.user))
@@ -511,8 +484,6 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                                        task_history=task_history,
                                        user=request.user
                                        )
-
-                url = reverse('admin:notification_taskhistory_changelist')
             else:
                 database.delete()
         else:

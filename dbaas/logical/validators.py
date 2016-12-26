@@ -45,7 +45,7 @@ def check_is_database_dead(database_id, operation):
     database = Database.objects.get(id=database_id)
 
     url = _get_database_error_url(database_id)
-    if database.is_dead() or not database.database_status.is_alive:
+    if database.is_dead:
         raise DatabaseIsDeadError(operation, url)
 
     return database

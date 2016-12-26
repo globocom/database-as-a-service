@@ -168,6 +168,7 @@ class DatabaseTestCase(TestCase):
     def test_cannot_clone_dead(self):
         database = factory.DatabaseFactory()
         database.status = database.DEAD
+        database.database_status = None
 
         can_be_cloned, error = database.can_be_cloned()
         self.assertFalse(can_be_cloned)
