@@ -143,13 +143,13 @@ def make_instance_snapshot_backup(instance, error):
             errormsg = 'There is no snapshot information'
             error['errormsg'] = errormsg
             set_backup_error(databaseinfra, snapshot, errormsg)
-            return False
+            return snapshot
 
     except Exception as e:
         errormsg = "Error creating snapshot: %s" % (e)
         error['errormsg'] = errormsg
         set_backup_error(databaseinfra, snapshot, errormsg)
-        return False
+        return snapshot
     finally:
         if locked:
             unlock_instance(driver, instance, client)
@@ -205,7 +205,7 @@ def make_instance_snapshot_backup(instance, error):
     snapshot.save()
     register_backup_dbmonitor(databaseinfra, snapshot)
 
-    return True
+    return snapshot
 
 
 @app.task(bind=True)
@@ -250,9 +250,15 @@ def make_databases_backup(self):
                 start_msg = "\n{} - Starting backup for {} ...".format(time_now, instance)
                 task_history.update_details(persist=True, details=start_msg)
                 try:
-                    if make_instance_snapshot_backup(instance=instance,
-                                                     error=error):
+                    snapshot = make_instance_snapshot_backup(
+                        instance=instance, error=error
+                    )
+                    if snapshot and snapshot.was_successful:
                         msg = "Backup for %s was successful" % (str(instance))
+                        LOG.info(msg)
+                    elif snapshot and snapshot.has_warning:
+                        status = TaskHistory.STATUS_WARNING
+                        msg = "Backup for %s has warning" % (str(instance))
                         LOG.info(msg)
                     else:
                         status = TaskHistory.STATUS_ERROR
