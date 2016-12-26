@@ -60,6 +60,18 @@ class BackupInfo(BaseModel):
     def __unicode__(self):
         return u"%s from %s started at %s" % (self.type, self.database_name, self.start_at)
 
+    @property
+    def was_successful(self):
+        return self.status == Snapshot.SUCCESS
+
+    @property
+    def has_warning(self):
+        return self.status == Snapshot.WARNING
+
+    @property
+    def was_error(self):
+        return self.status == Snapshot.ERROR
+
 
 class Snapshot(BackupInfo):
 
