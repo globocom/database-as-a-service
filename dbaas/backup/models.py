@@ -24,10 +24,12 @@ class BackupInfo(BaseModel):
     RUNNING = 1
     SUCCESS = 2
     ERROR = 3
+    WARNING = 4
     STATUS_CHOICES = (
         (RUNNING, 'Running'),
         (SUCCESS, 'Success'),
         (ERROR, 'Error'),
+        (WARNING, 'Warning'),
     )
 
     class Meta:
