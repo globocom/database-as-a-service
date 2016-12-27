@@ -498,6 +498,9 @@ class Host(BaseModel):
         verbose_name=_("Monitor Url"), max_length=500, blank=True, null=True)
     future_host = models.ForeignKey(
         "Host", null=True, blank=True, on_delete=models.SET_NULL)
+    os_description = models.CharField(
+        verbose_name=_("Operating system description"),
+        max_length=255, null=True, blank=True)
 
     def __unicode__(self):
         return self.hostname
@@ -506,6 +509,19 @@ class Host(BaseModel):
         permissions = (
             ("view_host", "Can view hosts"),
         )
+
+    def update_os_description(self, ):
+        from util import get_host_os_description
+
+        try:
+            os = get_host_os_description(self)
+        except Exception as e:
+            error = "Could not get os description for host {}. Error: {}"
+            error = error.format(self, e)
+            LOG.error(error)
+        else:
+            self.os_description = os
+            self.save()
 
 
 class Instance(BaseModel):
