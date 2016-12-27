@@ -194,6 +194,24 @@ def scp_get_file(server, username, password, localpath, remotepath):
     return scp_file(server, username, password, localpath, remotepath, 'GET')
 
 
+def get_host_os_description(host):
+    from dbaas_cloudstack.models import HostAttr
+
+    output = {}
+    host_attr = HostAttr.objects.get(host=host)
+    script = 'cat /etc/redhat-release'
+    return_code = exec_remote_command(server=host.address,
+                                      username=host_attr.vm_user,
+                                      password=host_attr.vm_password,
+                                      command=script,
+                                      output=output)
+
+    if return_code != 0:
+        raise Exception(str(output))
+
+    return output['stdout'][0].strip()
+
+
 def exec_remote_command(server, username, password, command, output={}):
 
     try:

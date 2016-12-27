@@ -74,6 +74,7 @@ class InitDatabaseFoxHA(BaseStep):
                            planattr.start_database_script)
 
                 host = hosts[0]
+                host.update_os_description()
                 for script in scripts:
                     LOG.info("Executing script on %s" % host)
 
