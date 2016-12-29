@@ -15,7 +15,7 @@ LOG = logging.getLogger(__name__)
 
 def make_infra(
     plan, environment, name, team, project, description,
-    subscribe_to_email_events=True, task=None,
+    subscribe_to_email_events=True, task=None, is_protected=False
 ):
     if not plan.provider == plan.CLOUDSTACK:
         dbinfra = DatabaseInfra.best_for(
@@ -42,6 +42,7 @@ def make_infra(
         ), qt=get_vm_qt(plan=plan, ), dbtype=str(plan.engine_type),
         team=team, project=project, description=description,
         subscribe_to_email_events=subscribe_to_email_events,
+        is_protected=is_protected
     )
 
     start_workflow(workflow_dict=workflow_dict, task=task)
