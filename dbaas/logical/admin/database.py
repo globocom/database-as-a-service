@@ -1044,21 +1044,28 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             if perms_needed:
                 raise PermissionDenied
 
-            n = queryset.count()
             quarantine = any(
                 result['is_in_quarantine'] is True for result in queryset.values('is_in_quarantine')
             )
 
-            if n:
-                for obj in queryset:
-                    obj_display = force_text(obj)
-                    self.log_deletion(request, obj, obj_display)
-                    # remove the object
-                    self.delete_model(request, obj)
+            successful = 0
+            for obj in queryset:
+                obj_display = force_text(obj)
+                self.log_deletion(request, obj, obj_display)
 
-                self.message_user(request, _("Successfully deleted %(count)d %(items)s.") % {
-                    "count": n, "items": model_ngettext(self.opts, n)
-                })
+                # remove the object
+                remove = self.delete_model(request, obj)
+                if not isinstance(remove, HttpResponseRedirect):
+                    successful =+ 1
+
+            if successful:
+                self.message_user(
+                    request, "Successfully deleted {} of {} {}.".format(
+                        successful, len(queryset),
+                        model_ngettext(self.opts, len(queryset))
+                    )
+                )
+
             # Return None to display the change list page again.
             if quarantine:
                 url = reverse('admin:notification_taskhistory_changelist')
