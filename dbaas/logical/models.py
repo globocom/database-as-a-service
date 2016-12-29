@@ -111,6 +111,12 @@ class Database(BaseModel):
             "When marked, the disk will be resized automatically."
         )
     )
+    is_protected = models.BooleanField(
+        verbose_name=_("Protected"), default=False,
+        help_text=_(
+            "When marked, the database can not be deleted."
+        )
+    )
 
     def team_contact(self):
         if self.team:
@@ -488,8 +494,15 @@ class Database(BaseModel):
 
         return False
 
+    @property
     def is_dead(self):
-        return self.status != Database.ALIVE
+        if self.status != Database.ALIVE:
+            return True
+
+        if self.database_status and not self.database_status.is_alive:
+            return True
+
+        return False
 
     @classmethod
     def disk_resize(cls, database, new_disk_offering, user):
@@ -534,9 +547,24 @@ class Database(BaseModel):
         if self.is_in_quarantine:
             return False, "Database in quarantine cannot be cloned"
 
-        if self.is_dead() or (self.database_status and not self.database_status.is_alive):
+        if self.is_dead:
             return False, "Database is not alive and cannot be cloned"
 
+        return True, None
+
+    def can_be_deleted(self):
+        error = None
+        if self.is_protected:
+            error = "Database {} is protected and cannot be deleted"
+        elif self.is_dead:
+            error = "Database {} is not alive and cannot be deleted"
+        elif self.is_beeing_used_elsewhere():
+            error = "Database {} cannot be deleted because it is in use by another task."
+        elif self.has_flipperfox_migration_started():
+            error = "Database {} cannot be deleted because it is beeing migrated."
+
+        if error:
+            return False, error.format(self.name)
         return True, None
 
 

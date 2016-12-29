@@ -43,6 +43,10 @@ class BuildDatabase(BaseStep):
             LOG.info("Updating database subscribe_to_email_events")
             database.subscribe_to_email_events = workflow_dict['subscribe_to_email_events']
 
+            if 'is_protected' in workflow_dict:
+                LOG.info("Updating database is_protected")
+                database.is_protected = workflow_dict['is_protected']
+
             database.save()
             workflow_dict['database'] = database
 
@@ -73,6 +77,7 @@ class BuildDatabase(BaseStep):
                 database.is_in_quarantine = True
                 database.quarantine_dt = datetime.datetime.now().date()
                 database.subscribe_to_email_events = False
+                database.is_protected = False
                 database.save()
 
             database.delete()

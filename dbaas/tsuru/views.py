@@ -444,7 +444,7 @@ class ServiceAdd(APIView):
         create_database.delay(
             name=name, plan=dbaas_plan, environment=dbaas_environment,
             team=dbaas_team, project=None, description=description,
-            task_history=task_history, user=dbaas_user
+            task_history=task_history, user=dbaas_user, is_protected=True
         )
 
         return Response(status=status.HTTP_201_CREATED)
