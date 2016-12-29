@@ -53,6 +53,8 @@ class InitDatabaseMongoDB(BaseStep):
                     LOG.warn("Host %s is not ready..." % host)
                     return False
 
+                host.update_os_description()
+
                 if instance.is_arbiter:
                     contextdict = {
                         'HOST': workflow_dict['hosts'][index].hostname.split('.')[0],

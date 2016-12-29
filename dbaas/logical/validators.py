@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 from django.core.urlresolvers import reverse
 from errors import DatabaseInQuarantineError, DatabaseIsDeadError, \
-    BusyDatabaseError, MigrationDatabaseError, NoResizeOption
+    BusyDatabaseError, MigrationDatabaseError, NoResizeOption, \
+    DatabaseWithoutPersistence
+
 
 def database_name_evironment_constraint(database_name, environment_name):
     from logical.models import Database
@@ -32,7 +34,7 @@ def check_is_database_enabled(database_id, operation):
     if database.is_beeing_used_elsewhere():
         raise BusyDatabaseError(url)
 
-    if database.has_migration_started():
+    if database.has_flipperfox_migration_started():
         url = reverse('admin:logical_database_changelist')
         raise MigrationDatabaseError(operation, database.name, url)
 
@@ -52,6 +54,13 @@ def check_is_database_dead(database_id, operation):
 def check_resize_options(database_id, offerings):
     if not offerings:
         raise NoResizeOption(_get_database_error_url(database_id))
+
+
+def check_database_has_persistence(database, operation):
+    if not database.plan.has_persistence:
+        raise DatabaseWithoutPersistence(
+            database, operation, _get_database_error_url(database.id)
+        )
 
 
 def _get_database_error_url(database_id):

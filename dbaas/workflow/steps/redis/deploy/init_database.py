@@ -23,7 +23,6 @@ class InitDatabaseRedis(BaseStep):
 
     def do(self, workflow_dict):
         try:
-
             LOG.info("Getting cloudstack credentials...")
 
             statsd_credentials = get_credentials_for(
@@ -45,6 +44,8 @@ class InitDatabaseRedis(BaseStep):
                 if not host_ready:
                     LOG.warn("Host %s is not ready..." % host)
                     return False
+
+                host.update_os_description()
 
                 instances_redis = Instance.objects.filter(hostname=host,
                                                           instance_type=Instance.REDIS)

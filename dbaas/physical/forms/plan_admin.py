@@ -18,16 +18,22 @@ class PlanForm(forms.ModelForm):
     class Meta:
         model = models.Plan
 
-    def clean(self):
-        """Validates the form to make sure that there is at least one default plan"""
+    def clean_has_persistence(self):
+        engine = self.cleaned_data['engine']
+        if not engine.engine_type.is_in_memory:
+            return True
+        return self.cleaned_data['has_persistence']
 
+    def clean(self):
         cleaned_data = super(PlanForm, self).clean()
-        is_default = cleaned_data.get("is_default")
+
         engine = cleaned_data.get("engine")
         if not engine:
-            msg = _("Please select a Engyne Type")
+            msg = _("Please select a Engine Type")
             log.warning(u"%s" % msg)
             raise forms.ValidationError(msg)
+
+        is_default = cleaned_data.get("is_default")
         if not is_default:
             if self.instance.id:
                 plans = models.Plan.objects.filter(

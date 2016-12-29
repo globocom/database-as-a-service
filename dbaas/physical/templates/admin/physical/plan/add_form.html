@@ -10,10 +10,22 @@
 
 {% block footer %}
     <script>
-        function get_current_topologies() {
-            engine_select = document.getElementById('id_engine')
-            engine = engine_select.options[engine_select.selectedIndex].text;
+        function is_engine_in_memory(current) {
+            engines = {}
 
+            {% for engine, is_in_memory in engines.items %}
+                engines['{{ engine }}'] =
+                {% if is_in_memory %}
+                    {{ 'true' }}
+                {% else %}
+                    {{ 'false' }}
+                {% endif %};
+            {% endfor %}
+
+            return engines[current]
+        }
+
+        function get_current_topologies(engine_select) {
             engines = {}
             {% for engine, topologies in replication_topologies_engines.items %}
                 engines['{{ engine }}'] = [{
@@ -22,10 +34,13 @@
                 {% endfor %} }]
             {% endfor %}
 
-            return engines[engine];
+            return engines[engine_select];
         }
 
         document.getElementById('id_engine').onchange = function() {
+            engine_select = document.getElementById('id_engine')
+            current_engine = engine_select.options[engine_select.selectedIndex].text;
+
             var topology_select = document.getElementById('id_replication_topology');
             value = topology_select.value;
             while (topology_select.length > 0){
@@ -36,7 +51,7 @@
             opt.innerHTML = '---------';
             topology_select.appendChild(opt);
 
-            topologies = get_current_topologies();
+            topologies = get_current_topologies(current_engine);
             for (topology in topologies) {
                 if ('id' in topologies[topology]) {
                     var opt = document.createElement('option');
@@ -47,6 +62,15 @@
                     if (value == topologies[topology].id)
                         topology_select.value = value;
                 }
+            }
+
+            has_persistence_element = document.getElementById('id_has_persistence')
+            if (is_engine_in_memory(current_engine)) {
+                has_persistence_element.disabled = false;
+            }
+            else {
+                has_persistence_element.disabled = true;
+                has_persistence_element.checked = true;
             }
         }
         document.getElementById('id_engine').onchange();

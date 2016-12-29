@@ -20,8 +20,6 @@ LOG = logging.getLogger(__name__)
 class Environment(BaseModel):
     name = models.CharField(
         verbose_name=_("Environment"), max_length=100, unique=True)
-    equivalent_environment = models.ForeignKey(
-        "Environment", null=True, blank=True, on_delete=models.SET_NULL)
 
     def __unicode__(self):
         return '%s' % (self.name)
@@ -30,7 +28,13 @@ class Environment(BaseModel):
 class EngineType(BaseModel):
 
     name = models.CharField(
-        verbose_name=_("Engine name"), max_length=100, unique=True)
+        verbose_name=_("Engine name"), max_length=100, unique=True
+    )
+    is_in_memory = models.BooleanField(
+        verbose_name="Is in memory database",
+        default=False,
+        help_text="Check this option if this is in memory engine, e.g. Redis"
+    )
 
     class Meta:
         permissions = (
@@ -212,39 +216,54 @@ class Plan(BaseModel):
     )
 
     name = models.CharField(
-        verbose_name=_("Plan name"), max_length=100, unique=True)
+        verbose_name=_("Plan name"), max_length=100, unique=True
+    )
     description = models.TextField(null=True, blank=True)
     is_active = models.BooleanField(
-        verbose_name=_("Is plan active"), default=True)
-    is_default = models.BooleanField(verbose_name=_("Is plan default"),
-                                     default=False,
-                                     help_text=_("Check this option if this the default plan. There can be only one..."))
+        verbose_name=_("Is plan active"), default=True
+    )
+    is_default = models.BooleanField(
+        verbose_name=_("Is plan default"),
+        default=False,
+        help_text=_(
+            "Check this option if this the default plan. "
+            "There can be only one..."
+        )
+    )
     is_ha = models.BooleanField(verbose_name=_("Is plan HA"), default=False)
-    engine = models.ForeignKey(Engine, verbose_name=_("Engine"),
-                               related_name='plans')
+    engine = models.ForeignKey(
+        Engine, verbose_name=_("Engine"),
+        related_name='plans'
+    )
     replication_topology = models.ForeignKey(
         ReplicationTopology, verbose_name=_("Replication Topology"),
         related_name='replication_topology', null=True
     )
+    has_persistence = models.BooleanField(
+        verbose_name="Disk persistence", default=True,
+        help_text="Check this option if the plan will save data in disk"
+    )
     environments = models.ManyToManyField(Environment)
-    provider = models.IntegerField(choices=PROVIDER_CHOICES,
-                                   default=0)
-    max_db_size = models.IntegerField(default=0,
-                                      verbose_name=_("Max database size (MB)"),
-                                      help_text=_("What is the maximum size of each database (MB). 0 means unlimited."))
-    equivalent_plan = models.ForeignKey("Plan", null=True, blank=True,
-                                        verbose_name=_("Region Migration plan"),
-                                        on_delete=models.SET_NULL)
-    engine_equivalent_plan = models.ForeignKey("Plan", null=True, blank=True,
-                                               verbose_name=_("Engine version upgrade plan"),
-                                               on_delete=models.SET_NULL,
-                                               related_name='backwards_plan')
-    flipperfox_equivalent_plan = models.ForeignKey("Plan", null=True, blank=True,
-                                                   verbose_name=_("Flipper Fox Migration plan"),
-                                                   on_delete=models.SET_NULL,
-                                                   related_name='flipperfox_migration_plan')
+    provider = models.IntegerField(choices=PROVIDER_CHOICES, default=0)
+    max_db_size = models.IntegerField(
+        default=0, verbose_name=_("Max database size (MB)"),
+        help_text=_("What is the maximum size of each database (MB). 0 means unlimited.")
+    )
+    engine_equivalent_plan = models.ForeignKey(
+        "Plan", null=True, blank=True,
+        verbose_name=_("Engine version upgrade plan"),
+        on_delete=models.SET_NULL,
+        related_name='backwards_plan'
+    )
+    flipperfox_equivalent_plan = models.ForeignKey(
+        "Plan", null=True, blank=True,
+        verbose_name=_("Flipper Fox Migration plan"),
+        on_delete=models.SET_NULL,
+        related_name='flipperfox_migration_plan'
+    )
     disk_offering = models.ForeignKey(
-        DiskOffering, related_name="plans", on_delete=models.PROTECT, null=True
+        DiskOffering, related_name="plans",
+        on_delete=models.PROTECT, null=True, blank=True
     )
 
     @property
@@ -479,6 +498,9 @@ class Host(BaseModel):
         verbose_name=_("Monitor Url"), max_length=500, blank=True, null=True)
     future_host = models.ForeignKey(
         "Host", null=True, blank=True, on_delete=models.SET_NULL)
+    os_description = models.CharField(
+        verbose_name=_("Operating system description"),
+        max_length=255, null=True, blank=True)
 
     def __unicode__(self):
         return self.hostname
@@ -487,6 +509,19 @@ class Host(BaseModel):
         permissions = (
             ("view_host", "Can view hosts"),
         )
+
+    def update_os_description(self, ):
+        from util import get_host_os_description
+
+        try:
+            os = get_host_os_description(self)
+        except Exception as e:
+            error = "Could not get os description for host {}. Error: {}"
+            error = error.format(self, e)
+            LOG.error(error)
+        else:
+            self.os_description = os
+            self.save()
 
 
 class Instance(BaseModel):

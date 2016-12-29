@@ -51,7 +51,7 @@ class PlanTestCase(TestCase):
         pass
 
     def test_context_replication_topologies(self):
-        context = PlanAdmin(Plan, AdminSite())._add_replication_topologies_engines(None)
+        context = PlanAdmin(Plan, AdminSite()).add_extra_context(None)
         self.assertIn('replication_topologies_engines', context)
         topologies = context['replication_topologies_engines']
 
