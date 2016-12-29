@@ -20,8 +20,14 @@ class TakeInstanceBackup(BaseStep):
             for instance in workflow_dict['instances']:
 
                 error = {}
-                if make_instance_snapshot_backup(instance=instance, error=error):
+                snapshot = make_instance_snapshot_backup(
+                    instance=instance, error=error
+                )
+                if snapshot and snapshot.was_successful:
                     msg = "Backup for %s was successful" % (str(instance))
+                    LOG.info(msg)
+                elif snapshot and snapshot.has_warning:
+                    msg = "Backup for %s has warning" % (str(instance))
                     LOG.info(msg)
                 else:
                     msg = "Backup for %s was unsuccessful. Error: %s" % (str(instance), error['errormsg'])

@@ -106,14 +106,16 @@ def make_instance_snapshot_backup(instance, error):
 
     from dbaas_nfsaas.models import HostAttr as Nfsaas_HostAttr
     nfsaas_hostattr = Nfsaas_HostAttr.objects.get(
-        host=instance.hostname, is_active=True)
+        host=instance.hostname, is_active=True
+    )
     snapshot.export_path = nfsaas_hostattr.nfsaas_path
 
     databases = Database.objects.filter(databaseinfra=instance.databaseinfra)
     if databases:
         snapshot.database_name = databases[0].name
-
     snapshot.save()
+
+    snapshot_final_status = Snapshot.SUCCESS
 
     try:
         databaseinfra = instance.databaseinfra
@@ -124,6 +126,8 @@ def make_instance_snapshot_backup(instance, error):
         )
 
         locked = lock_instance(driver, instance, client)
+        if not locked:
+            snapshot_final_status = Snapshot.WARNING
 
         if type(driver).__name__ == 'MySQL':
             mysql_binlog_save(client, instance, cloudstack_hostattr)
@@ -139,13 +143,13 @@ def make_instance_snapshot_backup(instance, error):
             errormsg = 'There is no snapshot information'
             error['errormsg'] = errormsg
             set_backup_error(databaseinfra, snapshot, errormsg)
-            return False
+            return snapshot
 
     except Exception as e:
         errormsg = "Error creating snapshot: %s" % (e)
         error['errormsg'] = errormsg
         set_backup_error(databaseinfra, snapshot, errormsg)
-        return False
+        return snapshot
     finally:
         if locked:
             unlock_instance(driver, instance, client)
@@ -196,12 +200,12 @@ def make_instance_snapshot_backup(instance, error):
         except Exception as e:
             LOG.error("Error exec remote command %s" % (e))
 
-    snapshot.status = Snapshot.SUCCESS
+    snapshot.status = snapshot_final_status
     snapshot.end_at = datetime.datetime.now()
     snapshot.save()
     register_backup_dbmonitor(databaseinfra, snapshot)
 
-    return True
+    return snapshot
 
 
 @app.task(bind=True)
@@ -246,9 +250,15 @@ def make_databases_backup(self):
                 start_msg = "\n{} - Starting backup for {} ...".format(time_now, instance)
                 task_history.update_details(persist=True, details=start_msg)
                 try:
-                    if make_instance_snapshot_backup(instance=instance,
-                                                     error=error):
+                    snapshot = make_instance_snapshot_backup(
+                        instance=instance, error=error
+                    )
+                    if snapshot and snapshot.was_successful:
                         msg = "Backup for %s was successful" % (str(instance))
+                        LOG.info(msg)
+                    elif snapshot and snapshot.has_warning:
+                        status = TaskHistory.STATUS_WARNING
+                        msg = "Backup for %s has warning" % (str(instance))
                         LOG.info(msg)
                     else:
                         status = TaskHistory.STATUS_ERROR
