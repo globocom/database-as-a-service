@@ -603,9 +603,9 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
     def database_host_metrics_view(self, request, database, hostname):
         title = "{} Metrics".format(database.name)
-        instance = database.infra.instances.get(
+        instance = database.infra.instances.filter(
             hostname__hostname__contains=hostname
-        )
+        ).first()
 
         hosts = []
         for host in Host.objects.filter(instance__databaseinfra=database.infra).distinct():
