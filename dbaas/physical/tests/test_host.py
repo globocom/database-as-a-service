@@ -7,7 +7,8 @@ from ..admin.host import HostAdmin, HostAttrNfsaasInline, HostAttrNfsaas
 from ..models import Host
 from .factory import HostFactory
 
-SEARCH_FIELDS = ('hostname', 'nfsaas_host_attributes__nfsaas_path', 'address')
+SEARCH_FIELDS = ('hostname', 'nfsaas_host_attributes__nfsaas_path',
+                 'address', 'os_description')
 EDITING_READ_ONLY_FIELDS = ('nfsaas_size_kb', 'nfsaas_used_size_kb')
 
 
