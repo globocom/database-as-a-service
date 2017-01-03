@@ -51,6 +51,13 @@ class Configuration(BaseModel):
             return default
 
     @classmethod
+    def get_by_name_as_float(cls, name, default=None):
+        try:
+            return float(Configuration.get_by_name(name))
+        except:
+            return default
+
+    @classmethod
     def get_by_name(cls, name):
         key = cls.get_cache_key(name)
         value = cache.get(key, CACHE_MISS)
