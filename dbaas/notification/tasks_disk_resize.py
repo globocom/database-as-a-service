@@ -92,7 +92,17 @@ def zabbix_collect_used_disk(task):
                             message='Zabbix metrics not updated', level=4
                         )
 
-                if current_percentage >= threshold_disk_resize and \
+                size_metadata = database.databaseinfra.disk_offering.size_kb
+                if has_difference_between(size_metadata, current_size):
+                    problems += 1
+                    task.add_detail(
+                        message='Disk size different in metadata: {}kb'.format(
+                            size_metadata
+                        ),
+                        level=4
+                    )
+                    status = TaskHistory.STATUS_WARNING
+                elif current_percentage >= threshold_disk_resize and \
                         database.disk_auto_resize and \
                         not database_resized:
                     try:
@@ -224,3 +234,15 @@ def host_mount_data_percentage(address, task):
     )
 
     return values['percentage'], values['used'], values['total']
+
+
+def has_difference_between(metadata, collected):
+    threshold = Configuration.get_by_name_as_float(
+        "threshold_disk_size_difference", default=1.0
+    )
+
+    difference = (metadata * threshold)/100
+    max_value = metadata + difference
+    min_value = metadata - difference
+
+    return collected > max_value or collected < min_value
