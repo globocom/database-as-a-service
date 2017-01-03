@@ -447,7 +447,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         can_be_deleted, error = database.can_be_deleted()
         if not can_be_deleted:
             self.message_user(request, error, level=messages.ERROR)
-            url = reverse('admin:logical_database_changelist')
+            url = '/admin/logical/database/{}/'.format(object_id)
             return HttpResponseRedirect(url)
 
         extra_context = extra_context or {}
