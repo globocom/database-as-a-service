@@ -2,11 +2,8 @@
 import logging
 from util import full_stack
 from util import exec_remote_command
-from util import build_context_script
 from dbaas_cloudstack.models import HostAttr as CS_HostAttr
 from workflow.steps.util.base import BaseStep
-from workflow.steps.util import test_bash_script_error
-from workflow.steps.mysql.util import build_mysql_statsd_script
 from workflow.exceptions.error_codes import DBAAS_0020
 
 LOG = logging.getLogger(__name__)
@@ -25,8 +22,7 @@ class ConfigLog(BaseStep):
 
                 LOG.info("Configuring rsyslog {}".format(future_host))
 
-                script = test_bash_script_error()
-                script += self.rsyslog_create_config(workflow_dict['database'])
+                script = self.rsyslog_create_config(workflow_dict['database'])
                 LOG.info(script)
 
                 output = {}
@@ -61,8 +57,7 @@ class ConfigLog(BaseStep):
 
                 LOG.info("Removing rsyslog config in {}".format(future_host))
 
-                script = test_bash_script_error()
-                script += self.rsyslog_remove_config()
+                script = self.rsyslog_remove_config()
                 LOG.info(script)
 
                 output = {}
@@ -90,13 +85,10 @@ class ConfigLog(BaseStep):
 
     def rsyslog_create_config(self, database):
         return \
-            'configure_graylog(){{' \
-            '    echo "\$EscapeControlCharactersOnReceive off" >> /etc/rsyslog.d/globologging.conf' \
-            '    sed -i "\$a \$template db-log, \"<%PRI%>%TIMESTAMP% %HOSTNAME% %syslogtag%%msg%	tags: dbaas,{}\"" /etc/rsyslog.d/globologging.conf' \
-            '    sed -i "\$a*.*                    @logging.udp.globoi.com:5140; db-log" /etc/rsyslog.d/globologging.conf' \
-            '    /etc/init.d/rsyslog restart' \
-            '}}' \
-            'configure_graylog'.format(database.name)
+            ' echo "\$EscapeControlCharactersOnReceive off" >> /etc/rsyslog.d/globologging.conf &&' \
+            ' sed -i "\$a \$template db-log, \\\"<%PRI%>%TIMESTAMP% %HOSTNAME% %syslogtag%%msg%   tags: dbaas,{}\\\"" /etc/rsyslog.d/globologging.conf &&' \
+            ' sed -i "\$a*.*                    @logging.udp.globoi.com:5140; db-log" /etc/rsyslog.d/globologging.conf &&' \
+            ' /etc/init.d/rsyslog restart'.format(database.name)
 
     def rsyslog_remove_config(self):
         return 'rm -f /etc/rsyslog.d/globologging.conf'
