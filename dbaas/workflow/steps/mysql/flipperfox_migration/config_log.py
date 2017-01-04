@@ -98,5 +98,5 @@ class ConfigLog(BaseStep):
             '}' \
             'configure_graylog'.format(database.name)
 
-    def rsyslog_remove_config(self, database):
+    def rsyslog_remove_config(self):
         return 'rm -f /etc/rsyslog.d/globologging.conf'
