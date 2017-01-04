@@ -39,6 +39,7 @@ MYSQL_FLIPPER_FOX_MIGRATION_1 = (
     'workflow.steps.mysql.flipperfox_migration.check_pupet.CheckPuppetIsRunning',
     'workflow.steps.mysql.flipperfox_migration.config_vms_foreman.ConfigVMsForeman',
     'workflow.steps.mysql.flipperfox_migration.run_pupet_setup.RunPuppetSetup',
+    'workflow.steps.mysql.flipperfox_migration.config_log.ConfigLog',
     'workflow.steps.mysql.flipperfox_migration.config_fox.ConfigFox',
     'workflow.steps.mysql.flipperfox_migration.create_foxha_mysql_users.CreateFoxHAMySQLUser',
     'workflow.steps.mysql.flipperfox_migration.config_backup_log.ConfigBackupLog',
