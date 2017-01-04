@@ -90,12 +90,12 @@ class ConfigLog(BaseStep):
 
     def rsyslog_create_config(self, database):
         return \
-            'configure_graylog(){' \
+            'configure_graylog(){{' \
             '    echo "\$EscapeControlCharactersOnReceive off" >> /etc/rsyslog.d/globologging.conf' \
             '    sed -i "\$a \$template db-log, \"<%PRI%>%TIMESTAMP% %HOSTNAME% %syslogtag%%msg%	tags: dbaas,{}\"" /etc/rsyslog.d/globologging.conf' \
             '    sed -i "\$a*.*                    @logging.udp.globoi.com:5140; db-log" /etc/rsyslog.d/globologging.conf' \
             '    /etc/init.d/rsyslog restart' \
-            '}' \
+            '}}' \
             'configure_graylog'.format(database.name)
 
     def rsyslog_remove_config(self):
