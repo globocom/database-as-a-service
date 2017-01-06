@@ -175,6 +175,7 @@ class Database(BaseModel):
         else:
             LOG.warning("Putting database {} in quarantine".format(self.name))
             self.is_in_quarantine = True
+            self.is_protected = False
             self.save()
             if self.credentials.exists():
                 for credential in self.credentials.all():
