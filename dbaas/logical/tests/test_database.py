@@ -198,7 +198,6 @@ class DatabaseTestCase(TestCase):
         database.status = database.ALIVE
         database.is_protected = True
         database.is_in_quarantine = True
-        import pdb; pdb.set_trace()
 
         can_be_deleted, error = database.can_be_deleted()
         self.assertTrue(can_be_deleted)
