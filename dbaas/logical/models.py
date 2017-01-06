@@ -554,7 +554,7 @@ class Database(BaseModel):
 
     def can_be_deleted(self):
         error = None
-        if self.is_protected:
+        if self.is_protected and not self.is_in_quarantine:
             error = "Database {} is protected and cannot be deleted"
         elif self.is_dead:
             error = "Database {} is not alive and cannot be deleted"
