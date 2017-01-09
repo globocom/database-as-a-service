@@ -17,6 +17,8 @@ ERROR_CLONE_WITHOUT_PERSISTENCE = \
     "Database does not have persistence cannot be cloned"
 ERROR_CLONE_IN_QUARANTINE = "Database in quarantine cannot be cloned"
 ERROR_CLONE_NOT_ALIVE = "Database is not alive and cannot be cloned"
+ERROR_DELETE_PROTECTED = "Database {} is protected and cannot be deleted"
+ERROR_DELETE_DEAD = "Database {} is not alive and cannot be deleted"
 
 
 class FakeDriver(base.BaseDriver):
@@ -173,6 +175,50 @@ class DatabaseTestCase(TestCase):
         can_be_cloned, error = database.can_be_cloned()
         self.assertFalse(can_be_cloned)
         self.assertEqual(error, ERROR_CLONE_NOT_ALIVE)
+
+    def test_can_delete(self):
+        database = factory.DatabaseFactory()
+        database.status = database.ALIVE
+
+        can_be_deleted, error = database.can_be_deleted()
+        self.assertTrue(can_be_deleted)
+        self.assertIsNone(error)
+
+    def test_cannot_delete_protected(self):
+        database = factory.DatabaseFactory()
+        database.status = database.ALIVE
+        database.is_protected = True
+
+        can_be_deleted, error = database.can_be_deleted()
+        self.assertFalse(can_be_deleted)
+        self.assertEqual(error, ERROR_DELETE_PROTECTED.format(database.name))
+
+    def test_can_delete_protected_in_quarantine(self):
+        database = factory.DatabaseFactory()
+        database.status = database.ALIVE
+        database.is_protected = True
+        database.is_in_quarantine = True
+
+        can_be_deleted, error = database.can_be_deleted()
+        self.assertTrue(can_be_deleted)
+        self.assertIsNone(error)
+
+    def test_can_delete_in_quarantine(self):
+        database = factory.DatabaseFactory()
+        database.status = database.ALIVE
+        database.is_in_quarantine = True
+
+        can_be_deleted, error = database.can_be_deleted()
+        self.assertTrue(can_be_deleted)
+        self.assertIsNone(error)
+
+    def test_cannot_delete_dead(self):
+        database = factory.DatabaseFactory()
+        database.status = database.DEAD
+
+        can_be_deleted, error = database.can_be_deleted()
+        self.assertFalse(can_be_deleted)
+        self.assertEqual(error, ERROR_DELETE_DEAD.format(database.name))
 
     '''
 
