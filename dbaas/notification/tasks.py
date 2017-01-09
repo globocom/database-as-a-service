@@ -484,7 +484,7 @@ def resize_database(self, database, cloudstackpack, task_history=None, user=None
         worker_name = get_worker_name()
         task_history = TaskHistory.register(request=self.request, task_history=task_history,
                                             user=user, worker_name=worker_name)
-        from util.providers import resize_database_instance
+        from util.providers import resize_database_instances
         from util import get_credentials_for
         from dbaas_cloudstack.provider import CloudStackProvider
         from dbaas_credentials.models import CredentialType
@@ -497,47 +497,47 @@ def resize_database(self, database, cloudstackpack, task_history=None, user=None
         driver = databaseinfra.get_driver()
         instances = driver.get_slave_instances()
         instances.append(driver.get_master_instance())
+        instances_to_resize = []
         resized_instances = []
-        result = {'created': False}
 
         disable_zabbix_alarms(database)
 
         for instance in instances:
             host = instance.hostname
             host_attr = host.cs_host_attributes.get()
-            offering_id = cs_provider.get_vm_offering_id(vm_id=host_attr.vm_id,
-                                                         project_id=cs_credentials.project)
+            offering_id = cs_provider.get_vm_offering_id(
+                vm_id=host_attr.vm_id,
+                project_id=cs_credentials.project
+            )
 
             if offering_id == cloudstackpack.offering.serviceofferingid:
                 LOG.info("Instance offering: {}".format(offering_id))
                 resized_instances.append(instance)
-                continue
-
-            if databaseinfra.plan.is_ha and driver.check_instance_is_master(instance):
-                LOG.info("Waiting 60s to check continue...")
-                sleep(60)
-                driver.check_replication_and_switch(instance)
-                LOG.info("Waiting 60s to check continue...")
-                sleep(60)
-
-            result = resize_database_instance(database=database,
-                                              cloudstackpack=cloudstackpack,
-                                              instance=instance,
-                                              task=task_history)
-            if result['created'] == False:
-                if 'exceptions' in result:
-                    error = "\n".join(": ".join(err)
-                                      for err in result['exceptions']['error_codes'])
-                    traceback = "\nException Traceback\n".join(
-                        result['exceptions']['traceback'])
-                    error = "{}\n{}\n{}".format(error, traceback, error)
-                else:
-                    error = "Something went wrong."
-
-                break
-
             else:
-                resized_instances.append(instance)
+                instances_to_resize.append(instance)
+
+        result = resize_database_instances(
+            database=database,
+            cloudstackpack=cloudstackpack,
+            instances=instances_to_resize,
+            task=task_history
+        )
+
+        if result['created']:
+            resized_instances += result['completed_instances']
+        else:
+            if 'exceptions' not in result:
+                error = "Something went wrong."
+            else:
+                error = "\n".join(
+                    ": ".join(err) for err in
+                    result['exceptions']['error_codes']
+                )
+                traceback = "\nException Traceback\n".join(
+                    result['exceptions']['traceback']
+                )
+
+                error = "{}\n{}\n{}".format(error, traceback, error)
 
         if databaseinfra.plan.is_ha:
             LOG.info("Waiting 60s to check continue...")

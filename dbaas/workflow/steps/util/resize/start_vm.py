@@ -10,7 +10,7 @@ LOG = logging.getLogger(__name__)
 class StartVM(BaseStep):
 
     def __unicode__(self):
-        return "Starting VMs..."
+        return "Starting VM..."
 
     def do(self, workflow_dict):
         try:

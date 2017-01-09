@@ -15,7 +15,7 @@ LOG = logging.getLogger(__name__)
 class ResizeVM(BaseStep):
 
     def __unicode__(self):
-        return "Resizing VMs..."
+        return "Resizing VM..."
 
     def do(self, workflow_dict):
         try:
