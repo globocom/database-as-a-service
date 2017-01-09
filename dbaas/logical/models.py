@@ -418,6 +418,9 @@ class Database(BaseModel):
     def get_mongodb_engine_version_upgrade_url(self):
         return "/admin/logical/database/{}/mongodb_engine_version_upgrade/".format(self.id)
 
+    def get_upgrade_url(self):
+        return "/admin/logical/database/{}/upgrade/".format(self.id)
+
     def is_mongodb_24(self):
         engine = self.engine
         if engine.name == 'mongodb' and engine.version.startswith('2.4'):
@@ -566,6 +569,25 @@ class Database(BaseModel):
 
         if error:
             return False, error.format(self.name)
+        return True, None
+
+    def can_do_upgrade(self):
+        error = None
+        if self.is_mongodb_24():
+            error = "MongoDB 2.4 cannot be upgraded by this task."
+        elif self.is_in_quarantine:
+            error = "Database in quarantine and cannot be upgraded."
+        elif self.is_dead:
+            error = "Database is dead and cannot be upgraded."
+        elif self.is_beeing_used_elsewhere():
+            error = "Database cannot be deleted because it is in use by another task."
+        elif self.has_flipperfox_migration_started():
+            error = "Database is being migrated and cannot be upgraded."
+        elif not self.infra.plan.engine_equivalent_plan:
+            error = "Source plan do not has equivalent plan to upgrade."
+
+        if error:
+            return False, error
         return True, None
 
 
