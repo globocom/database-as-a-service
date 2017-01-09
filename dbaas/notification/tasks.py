@@ -5,19 +5,17 @@ from time import sleep
 from celery.utils.log import get_task_logger
 from celery.exceptions import SoftTimeLimitExceeded
 from django.db.models import Sum, Count
+from django.utils.module_loading import import_by_path
 from dbaas.celery import app
-from util.decorators import only_one
-from util import email_notifications
-from util.providers import make_infra
-from util.providers import clone_infra
-from util.providers import destroy_infra
-from util import get_worker_name
-from util import full_stack
-from physical.models import Plan, DatabaseInfra, Instance
-from logical.models import Database
 from account.models import Team
-from system.models import Configuration
+from logical.models import Database
+from physical.models import Plan, DatabaseInfra, Instance
+from util import email_notifications, get_worker_name, full_stack
+from util.decorators import only_one
+from util.providers import make_infra, clone_infra, destroy_infra, \
+    get_database_upgrade_setting
 from simple_audit.models import AuditRequest
+from system.models import Configuration
 from .models import TaskHistory
 
 LOG = get_task_logger(__name__)
@@ -817,3 +815,36 @@ def update_disk_used_size(self):
 
     from .tasks_disk_resize import zabbix_collect_used_disk
     zabbix_collect_used_disk(task=task)
+
+
+@app.task(bind=True)
+def upgrade_database(self, database, user, task):
+    worker_name = get_worker_name()
+    task = TaskHistory.register(self.request, user, task, worker_name)
+
+    source_plan = database.infra.plan
+    target_plan = source_plan.engine_equivalent_plan
+
+    class_path = target_plan.replication_topology.class_path
+    steps = get_database_upgrade_setting(class_path)
+
+    steps_for_instances(steps, database.infra.instances.all(), task)
+
+    task.update_status_for(status=TaskHistory.STATUS_SUCCESS, details='Done')
+
+
+def steps_for_instances(steps, instances, task):
+    for instance in instances:
+        task.add_detail('{}'.format(instance))
+        for step in steps:
+            step_class = import_by_path(step)
+            step_instance = step_class()
+
+            LOG.info(str(step_instance))
+            task.update_details(persist=True, details=str(step_instance))
+
+            try:
+                step_instance.do(instance)
+            except Exception as e:
+                LOG.info(str(e))
+                task.update_details(persist=True, details=str(e))
