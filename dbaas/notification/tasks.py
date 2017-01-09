@@ -838,13 +838,13 @@ def steps_for_instances(steps, instances, task):
         task.add_detail('{}'.format(instance))
         for step in steps:
             step_class = import_by_path(step)
-            step_instance = step_class()
+            step_instance = step_class(instance)
 
             LOG.info(str(step_instance))
             task.update_details(persist=True, details=str(step_instance))
 
             try:
-                step_instance.do(instance)
+                step_instance.do()
             except Exception as e:
                 LOG.info(str(e))
                 task.update_details(persist=True, details=str(e))
