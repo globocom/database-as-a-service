@@ -43,3 +43,18 @@ class BaseTopology(object):
             'workflow.steps.util.restore_snapshot.update_dbaas_metadata.UpdateDbaaSMetadata',
             'workflow.steps.util.restore_snapshot.clean_old_volumes.CleanOldVolumes',
         )
+
+    def get_upgrade_steps(self):
+        return (
+            'workflow.steps.util.upgrade.zabbix.DisableAlarms',
+            'workflow.steps.util.upgrade.db_monitor.DisableMonitoring',
+            'workflow.steps.util.upgrade.database.Stop',
+            'workflow.steps.util.upgrade.vm.Stop',
+            'workflow.steps.util.upgrade.vm.InstallNewTemplate',
+            'workflow.steps.util.upgrade.plan.Configure',
+            'workflow.steps.util.upgrade.pack.Configure',
+            'workflow.steps.util.upgrade.plan.StartDatabase',
+            'workflow.steps.util.upgrade.db_monitor.EnableMonitoring',
+            'workflow.steps.util.upgrade.zabbix.DestroyAlarms',
+            'workflow.steps.util.upgrade.zabbix.CreateAlarms',
+        )
