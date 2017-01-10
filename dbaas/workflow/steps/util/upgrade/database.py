@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 from time import sleep
-from util import full_stack
-from workflow.exceptions.error_codes import DBAAS_0004
 from workflow.steps.util.restore_snapshot import use_database_initialization_script
 from workflow.steps.util.base import BaseInstanceStep
 
@@ -22,7 +20,7 @@ class DatabaseStep(BaseInstanceStep):
         raise NotImplementedError
 
     def undo(self):
-        raise NotImplementedError
+        pass
 
     def _execute_init_script(self, command):
         return use_database_initialization_script(
@@ -62,12 +60,9 @@ class Stop(DatabaseStep):
     def do(self):
         return_code, output = self.stop_database()
         if return_code != 0:
-            return False, DBAAS_0004, '{}: {}'.format(return_code, output)
-
-        return True, None, None
-
-    def undo(self):
-        return True, None, None
+            raise EnvironmentError(
+                'Could not stop database {}: {}'.format(return_code, output)
+            )
 
 
 class Start(DatabaseStep):
@@ -78,12 +73,9 @@ class Start(DatabaseStep):
     def do(self):
         return_code, output = self.start_database()
         if return_code != 0:
-            return False, DBAAS_0004, '{}: {}'.format(return_code, output)
-
-        return True, None, None
-
-    def undo(self):
-        return True, None, None
+            raise EnvironmentError(
+                'Could not start database {}: {}'.format(return_code, output)
+            )
 
 
 class CheckIsUp(DatabaseStep):
@@ -92,12 +84,8 @@ class CheckIsUp(DatabaseStep):
         return "Checking database is up..."
 
     def do(self):
-        if self.is_up:
-            return True, None, None
-        return False, DBAAS_0004, 'Database is down'
-
-    def undo(self):
-        return True, None, None
+        if not self.is_up:
+            raise EnvironmentError('Database is down, should be up')
 
 
 class CheckIsDown(DatabaseStep):
@@ -106,9 +94,5 @@ class CheckIsDown(DatabaseStep):
         return "Checking database is down..."
 
     def do(self):
-        if self.is_down:
-            return True, None, None
-        return False, DBAAS_0004, 'Database is up'
-
-    def undo(self):
-        return True, None, None
+        if not self.is_down:
+            raise EnvironmentError('Database is up, should be down')

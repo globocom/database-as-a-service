@@ -4,7 +4,6 @@ from dbaas_credentials.credential import Credential
 from dbaas_credentials.models import CredentialType
 from dbaas_zabbix import factory_for
 from workflow.steps.util.base import BaseInstanceStep
-from workflow.exceptions.error_codes import DBAAS_0012
 
 
 class ZabbixStep(BaseInstanceStep):
@@ -28,7 +27,7 @@ class ZabbixStep(BaseInstanceStep):
         raise NotImplementedError
 
     def undo(self):
-        raise NotImplementedError
+        pass
 
 
 class DisableAlarms(ZabbixStep):
@@ -38,18 +37,21 @@ class DisableAlarms(ZabbixStep):
 
     def do(self):
         try:
-            self.zabbix_provider.disable_alarms_to(self.instance.hostname.hostname)
+            self.zabbix_provider.disable_alarms_to(
+                self.instance.hostname.hostname
+            )
             self.zabbix_provider.disable_alarms_to(self.instance.dns)
-        except Exception:
-            self.zabbix_provider.enable_alarms_to(self.instance.hostname.hostname)
+        except Exception as e:
+            self.zabbix_provider.enable_alarms_to(
+                self.instance.hostname.hostname
+            )
             self.zabbix_provider.enable_alarms_to(self.instance.dns)
 
-            return False, DBAAS_0012, full_stack()
-
-        return True, None, None
-
-    def undo(self):
-        return True, None, None
+            raise EnvironmentError(
+                'Could not disable Zabbix alarms: {}\n\n{}'.format(
+                    e, full_stack()
+                )
+            )
 
 
 class DestroyAlarms(ZabbixStep):
@@ -63,13 +65,12 @@ class DestroyAlarms(ZabbixStep):
                 self.instance.hostname.hostname
             )
             self.zabbix_provider.delete_instance_monitors(self.instance.dns)
-        except Exception:
-            return False, DBAAS_0012, full_stack()
-
-        return True, None, None
-
-    def undo(self):
-        return True, None, None
+        except Exception as e:
+            raise EnvironmentError(
+                'Could not destroy Zabbix alarms: {}\n\n{}'.format(
+                    e, full_stack()
+                )
+            )
 
 
 class CreateAlarms(ZabbixStep):
@@ -83,10 +84,9 @@ class CreateAlarms(ZabbixStep):
                 self.instance.hostname
             )
             self.zabbix_provider.create_instance_monitors(self.instance)
-        except Exception:
-            return False, DBAAS_0012, full_stack()
-
-        return True, None, None
-
-    def undo(self):
-        return True, None, None
+        except Exception as e:
+            raise EnvironmentError(
+                'Could not create Zabbix alarms: {}\n\n{}'.format(
+                    e, full_stack()
+                )
+            )

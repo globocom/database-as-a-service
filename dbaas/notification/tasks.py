@@ -828,23 +828,34 @@ def upgrade_database(self, database, user, task):
     class_path = target_plan.replication_topology.class_path
     steps = get_database_upgrade_setting(class_path)
 
-    steps_for_instances(steps, database.infra.instances.all(), task)
+    success = steps_for_instances(steps, database.infra.instances.all(), task)
 
-    task.update_status_for(status=TaskHistory.STATUS_SUCCESS, details='Done')
+    if success:
+        task.update_status_for(TaskHistory.STATUS_SUCCESS, 'Done')
+    else:
+        task.update_status_for(
+            TaskHistory.STATUS_ERROR,
+            'Could not do upgrade.\nUpgrade don\'t has rollback'
+        )
 
 
 def steps_for_instances(steps, instances, task):
+    steps_total = len(steps) * len(instances)
+    step_current = 0
+
     for instance in instances:
-        task.add_detail('{}'.format(instance))
+        task.add_detail('Instance: {}'.format(instance))
         for step in steps:
             step_class = import_by_path(step)
             step_instance = step_class(instance)
+            step_current += 1
 
-            LOG.info(str(step_instance))
-            task.update_details(persist=True, details=str(step_instance))
+            task.add_step(step_current, steps_total, str(step_instance))
 
             try:
                 step_instance.do()
             except Exception as e:
-                LOG.info(str(e))
-                task.update_details(persist=True, details=str(e))
+                task.add_detail(str(e))
+                return False
+
+    return True
