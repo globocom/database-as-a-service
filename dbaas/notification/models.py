@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 import logging
+import time
 from datetime import datetime
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
@@ -75,6 +76,14 @@ class TaskHistory(BaseModel):
         self.details = "{}\n".format(self.details) if self.details else ""
         self.details = '{}{}{}'.format(self.details, extra, message)
         self.save()
+
+    def add_step(self, step, total, description):
+        current_time = str(time.strftime("%m/%d/%Y %H:%M:%S"))
+        self.add_detail(
+            '{} - Step {} of {} - {}'.format(
+                current_time, step, total, description
+            )
+        )
 
     def update_status_for(self, status, details=None):
         if status not in TaskHistory._STATUS:

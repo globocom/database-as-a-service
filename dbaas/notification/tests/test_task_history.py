@@ -28,6 +28,16 @@ class TaskHistoryTestCase(TestCase):
         self.task.add_detail(message='Again, with new line', level=2)
         self.assertEqual('-> Testing\n--> Again, with new line', self.task.details)
 
+    def test_can_add_step(self):
+        self.assertIsNone(self.task.details)
+
+        step = 1
+        total = 15
+        description = 'testing'
+        message = '- Step {} of {} - {}'.format(step, total, description)
+        self.task.add_step(step=step, total=total, description=description)
+        self.assertIn(message, self.task.details)
+
     def test_can_get_running_tasks(self):
         self.task.task_status = TaskHistory.STATUS_RUNNING
         self.task.save()
