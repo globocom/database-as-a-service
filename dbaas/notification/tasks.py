@@ -856,6 +856,7 @@ def steps_for_instances(steps, instances, task):
                 step_instance.do()
             except Exception as e:
                 task.add_detail(str(e))
+                task.add_detail(full_stack())
                 return False
 
     return True
