@@ -3,21 +3,21 @@ from util import full_stack
 from dbaas_credentials.credential import Credential
 from dbaas_credentials.models import CredentialType
 from dbaas_zabbix import factory_for
-from workflow.steps.util.base import BaseStep
+from workflow.steps.util.base import BaseInstanceStep
 from workflow.exceptions.error_codes import DBAAS_0012
 
 
-class ZabbixStep(BaseStep):
+class ZabbixStep(BaseInstanceStep):
 
     def __init__(self, instance):
-        self.instance = instance
+        super(ZabbixStep, self).__init__(instance)
 
         integration = CredentialType.objects.get(type=CredentialType.ZABBIX)
-        environment = instance.databaseinfra.environment
+        environment = self.instance.databaseinfra.environment
         credentials = Credential.get_credentials(environment, integration)
 
         self.zabbix_provider = factory_for(
-            databaseinfra=instance.databaseinfra,
+            databaseinfra=self.instance.databaseinfra,
             credentials=credentials
         )
 

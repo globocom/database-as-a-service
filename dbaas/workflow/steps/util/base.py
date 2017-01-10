@@ -14,3 +14,9 @@ class BaseStep(object):
 
     def undo(self, workflow_dict):
         raise NotImplementedError
+
+
+class BaseInstanceStep(BaseStep):
+
+    def __init__(self, instance):
+        self.instance = instance
