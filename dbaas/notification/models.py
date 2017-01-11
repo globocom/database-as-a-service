@@ -79,11 +79,11 @@ class TaskHistory(BaseModel):
 
     def add_step(self, step, total, description):
         current_time = str(time.strftime("%m/%d/%Y %H:%M:%S"))
-        self.add_detail(
-            '{} - Step {} of {} - {}'.format(
-                current_time, step, total, description
-            )
+        message = '{} - Step {} of {} - {}'.format(
+            current_time, step, total, description
         )
+        self.add_detail(message)
+        LOG.info(message)
 
     def update_status_for(self, status, details=None):
         if status not in TaskHistory._STATUS:
