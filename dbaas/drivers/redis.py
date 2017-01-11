@@ -347,4 +347,4 @@ class Redis(BaseDriver):
             raise Exception(str(output))
 
     def get_database_agents(self):
-        return ['td-agent', 'httpd', 'monit']
+        return ['httpd']
