@@ -1095,7 +1095,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 # remove the object
                 remove = self.delete_model(request, obj)
                 if not isinstance(remove, HttpResponseRedirect):
-                    successful =+ 1
+                    successful += 1
 
             if successful:
                 self.message_user(
