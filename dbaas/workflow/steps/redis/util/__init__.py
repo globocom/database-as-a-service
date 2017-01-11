@@ -61,13 +61,6 @@ def build_start_stop_scripts():
             die_if_error "Error starting httpd"
         }
 
-        restart_td_agent() {
-            /etc/init.d/td-agent stop > /dev/null
-            die_if_error "Error stopping td_agent"
-            /etc/init.d/td-agent start > /dev/null
-            die_if_error "Error starting td_agent"
-        }
-
     """
 
 

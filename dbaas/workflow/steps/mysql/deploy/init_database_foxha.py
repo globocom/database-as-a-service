@@ -23,11 +23,6 @@ class InitDatabaseFoxHA(BaseStep):
 
     def do(self, workflow_dict):
         try:
-            statsd_credentials = get_credentials_for(
-                environment=workflow_dict['environment'],
-                credential_type=CredentialType.STATSD)
-
-            statsd_host, statsd_port = statsd_credentials.endpoint.split(':')
 
             for index, hosts in enumerate(permutations(workflow_dict['hosts'])):
 
@@ -57,8 +52,6 @@ class InitDatabaseFoxHA(BaseStep):
                                                       credential_type=CredentialType.MYSQL).password,
                     'HOST': workflow_dict['hosts'][index].hostname.split('.')[0],
                     'ENGINE': 'mysql',
-                    'STATSD_HOST': statsd_host,
-                    'STATSD_PORT': statsd_port,
                 }
 
                 if len(workflow_dict['hosts']) > 1:

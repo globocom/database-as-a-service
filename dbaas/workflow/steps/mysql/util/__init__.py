@@ -167,13 +167,6 @@ def build_turn_flipper_ip_down_script():
     """
 
 
-def build_mysql_statsd_script(option='start'):
-    return """
-        echo ""; echo $(date "+%Y-%m-%d %T") "- Starting mysql_statsd"
-        /etc/init.d/mysql_statsd {} > /dev/null
-        """.format(option)
-
-
 def build_mk_heartbeat_daemon_script(option='start'):
     return """
         echo ""; echo $(date "+%Y-%m-%d %T") "- Starting mk-heartbeat-daemon"
