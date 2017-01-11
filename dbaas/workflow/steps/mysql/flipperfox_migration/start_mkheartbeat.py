@@ -23,7 +23,7 @@ class StartMkHeartbeat(BaseStep):
                 future_host = source_host.future_host
                 hosts_option = [(source_host, 'stop'), (future_host, 'start')]
                 for host, option in hosts_option:
-                    LOG.info("Starting td_agent on host {}".format(host))
+                    LOG.info("Starting mk-heartbeat-daemon on host {}".format(host))
 
                     cs_host_attr = CS_HostAttr.objects.get(host=host)
                     context_dict = {}
@@ -40,7 +40,7 @@ class StartMkHeartbeat(BaseStep):
                                                       output=output)
                     LOG.info(output)
                     if return_code != 0:
-                        LOG.error("Error starting mysql_statsd")
+                        LOG.error("Error starting mk-heartbeat-daemon")
                         LOG.error(str(output))
 
             return True
@@ -59,7 +59,7 @@ class StartMkHeartbeat(BaseStep):
                 future_host = source_host.future_host
                 hosts_option = [(future_host, 'stop'), (source_host, 'start')]
                 for host, option in hosts_option:
-                    LOG.info("Starting td_agent on host {}".format(host))
+                    LOG.info("Starting mk-heartbeat-daemon on host {}".format(host))
 
                     cs_host_attr = CS_HostAttr.objects.get(host=host)
                     context_dict = {}
@@ -76,7 +76,7 @@ class StartMkHeartbeat(BaseStep):
                                                       output=output)
                     LOG.info(output)
                     if return_code != 0:
-                        LOG.error("Error starting mysql_statsd")
+                        LOG.error("Error starting mk-heartbeat-daemon")
                         LOG.error(str(output))
 
             return True
