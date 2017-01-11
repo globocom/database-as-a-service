@@ -64,7 +64,7 @@ class BaseMysql(BaseTopology):
         raise NotImplementedError
 
     def get_database_agents(self):
-        return ['td-agent', 'mysql_statsd', 'monit']
+        return ['monit']
 
 
 class MySQLSingle(BaseMysql):

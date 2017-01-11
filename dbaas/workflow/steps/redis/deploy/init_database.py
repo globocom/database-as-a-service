@@ -23,13 +23,6 @@ class InitDatabaseRedis(BaseStep):
 
     def do(self, workflow_dict):
         try:
-            LOG.info("Getting cloudstack credentials...")
-
-            statsd_credentials = get_credentials_for(
-                environment=workflow_dict['environment'],
-                credential_type=CredentialType.STATSD)
-
-            statsd_host, statsd_port = statsd_credentials.endpoint.split(':')
 
             for index, host in enumerate(workflow_dict['hosts']):
 
@@ -83,8 +76,6 @@ class InitDatabaseRedis(BaseStep):
                     'PORT': instance_redis_port,
                     'ENGINE': 'redis',
                     'HOST': host.hostname.split('.')[0],
-                    'STATSD_HOST': statsd_host,
-                    'STATSD_PORT': statsd_port,
                     'IS_HA': workflow_dict['databaseinfra'].plan.is_ha,
                     'SENTINELMASTER': master_host,
                     'SENTINELMASTERPORT': master_port,
