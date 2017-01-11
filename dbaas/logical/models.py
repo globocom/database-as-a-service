@@ -175,6 +175,7 @@ class Database(BaseModel):
         else:
             LOG.warning("Putting database {} in quarantine".format(self.name))
             self.is_in_quarantine = True
+            self.is_protected = False
             self.save()
             if self.credentials.exists():
                 for credential in self.credentials.all():
@@ -554,7 +555,7 @@ class Database(BaseModel):
 
     def can_be_deleted(self):
         error = None
-        if self.is_protected:
+        if self.is_protected and not self.is_in_quarantine:
             error = "Database {} is protected and cannot be deleted"
         elif self.is_dead:
             error = "Database {} is not alive and cannot be deleted"
