@@ -77,3 +77,12 @@ class WaitingBeReady(VmStep):
         )
         if not host_ready:
             raise EnvironmentError('VM is not ready')
+
+
+class UpdateOSDescription(VmStep):
+
+    def __unicode__(self):
+        return "Updating instance OS description..."
+
+    def do(self):
+        self.instance.hostname.update_os_description()
