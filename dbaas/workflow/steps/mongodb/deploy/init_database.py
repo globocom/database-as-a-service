@@ -30,11 +30,6 @@ class InitDatabaseMongoDB(BaseStep):
             workflow_dict['replicasetname'] = 'ReplicaSet_' + \
                 workflow_dict['databaseinfra'].name
 
-            statsd_credentials = get_credentials_for(
-                environment=workflow_dict['environment'],
-                credential_type=CredentialType.STATSD)
-
-            statsd_host, statsd_port = statsd_credentials.endpoint.split(':')
             mongodb_password = get_credentials_for(environment=workflow_dict['environment'],
                                                    credential_type=CredentialType.MONGODB).password
 
@@ -60,8 +55,6 @@ class InitDatabaseMongoDB(BaseStep):
                         'HOST': workflow_dict['hosts'][index].hostname.split('.')[0],
                         'DATABASENAME': workflow_dict['name'],
                         'ENGINE': 'mongodb',
-                        'STATSD_HOST': statsd_host,
-                        'STATSD_PORT': statsd_port,
                         'IS_HA': workflow_dict['databaseinfra'].plan.is_ha
                     }
                     databaserule = 'ARBITER'
@@ -73,8 +66,6 @@ class InitDatabaseMongoDB(BaseStep):
                         'DATABASENAME': workflow_dict['name'],
                         'ENGINE': 'mongodb',
                         'DBPASSWORD': mongodb_password,
-                        'STATSD_HOST': statsd_host,
-                        'STATSD_PORT': statsd_port,
                         'IS_HA': workflow_dict['databaseinfra'].plan.is_ha
                     }
 
