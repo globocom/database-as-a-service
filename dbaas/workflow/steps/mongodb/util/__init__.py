@@ -340,11 +340,3 @@ def build_change_mongodb_conf_file_script():
         line=$((line + 1))
         sed -i ${line}'i\httpinterface = true' /data/mongodb.conf
     """
-
-
-def build_remove_reprecated_index_counter_metrics():
-    return """
-        sed -i '271,315 d' /etc/td-agent/td-agent.conf
-        sleep 20
-        /etc/init.d/td-agent start
-    """
