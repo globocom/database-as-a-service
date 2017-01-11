@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from util import full_stack, build_context_script, exec_remote_command
+from util import build_context_script, exec_remote_command
 from logical.models import Credential
 from dbaas_cloudstack.models import HostAttr, PlanAttr
 from dbaas_nfsaas.models import HostAttr as HostAttrNfsaas
