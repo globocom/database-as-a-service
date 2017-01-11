@@ -23,8 +23,6 @@ class RunPuppetSetup(BaseStep):
                 LOG.info("Getting vm credentials...")
                 host_csattr = CsHostAttr.objects.get(host=host)
 
-                host.update_os_description()
-
                 LOG.info("Run puppet-setup on host {}".format(host))
                 output = {}
                 return_code = exec_remote_command(server=host.address,
