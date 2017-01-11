@@ -417,13 +417,19 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         self.form = DatabaseForm
         extra_context = extra_context or {}
 
+        extra_context['has_perm_upgrade_mongo'] = False
+        extra_context['can_upgrade'] = False
 
         if database.is_mongodb_24():
             extra_context['has_perm_upgrade_mongo'] = request.user.has_perm(constants.PERM_UPGRADE_MONGO24_TO_30)
-            extra_context['can_upgrade'] = False
         else:
-            extra_context['has_perm_upgrade_mongo'] = False
-            extra_context['can_upgrade'] = bool(database.infra.plan.engine_equivalent_plan)
+            has_permission = request.user.has_perm(
+                constants.PERM_UPGRADE_DATABASE
+            )
+            has_equivalent_plan = bool(
+                database.infra.plan.engine_equivalent_plan
+            )
+            extra_context['can_upgrade'] = has_equivalent_plan and has_permission
 
         if database.is_in_quarantine:
             extra_context['delete_button_name'] = self.delete_button_name

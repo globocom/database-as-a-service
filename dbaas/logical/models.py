@@ -137,6 +137,7 @@ class Database(BaseModel):
             ("can_manage_quarantine_databases", "Can manage databases in quarantine"),
             ("view_database", "Can view databases"),
             ("upgrade_mongo24_to_30", "Can upgrade mongoDB version from 2.4 to 3.0"),
+            ("upgrade_database", "Can upgrade databases"),
         )
         unique_together = (
             ('name', 'environment'),
