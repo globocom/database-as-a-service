@@ -96,3 +96,13 @@ class CheckIsDown(DatabaseStep):
     def do(self):
         if not self.is_down:
             raise EnvironmentError('Database is up, should be down')
+
+
+class UpdatePlan(DatabaseStep):
+
+    def __unicode__(self):
+        return "Updating Plan..."
+
+    def do(self):
+        self.infra.plan = self.infra.plan.engine_equivalent_plan
+        self.infra.save()
