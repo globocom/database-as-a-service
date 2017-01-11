@@ -52,22 +52,6 @@ class ConfigFiles(BaseStep):
                                     remotepath="/etc/my.cnf"):
                     raise Exception("FTP Error")
 
-                if not scp_get_file(server=source_host.address,
-                                    username=source_cs_host_attr.vm_user,
-                                    password=source_cs_host_attr.vm_password,
-                                    localpath="{}/mysql_statsd.conf".format(
-                                        localpath),
-                                    remotepath="/etc/mysql_statsd/mysql_statsd.conf"):
-                    raise Exception("FTP Error")
-
-                if not scp_get_file(server=source_host.address,
-                                    username=source_cs_host_attr.vm_user,
-                                    password=source_cs_host_attr.vm_password,
-                                    localpath="{}/td-agent.conf".format(
-                                        localpath),
-                                    remotepath="/etc/td-agent/td-agent.conf"):
-                    raise Exception("FTP Error")
-
                 target_host = source_host.future_host
                 LOG.info(target_host)
                 target_cs_host_attr = CS_HostAttr.objects.get(host=target_host)
@@ -77,22 +61,6 @@ class ConfigFiles(BaseStep):
                                     password=target_cs_host_attr.vm_password,
                                     localpath="{}/my.cnf".format(localpath),
                                     remotepath="/etc/my.cnf"):
-                    raise Exception("FTP Error")
-
-                if not scp_put_file(server=target_host.address,
-                                    username=target_cs_host_attr.vm_user,
-                                    password=target_cs_host_attr.vm_password,
-                                    localpath="{}/mysql_statsd.conf".format(
-                                        localpath),
-                                    remotepath="/etc/mysql_statsd/mysql_statsd.conf"):
-                    raise Exception("FTP Error")
-
-                if not scp_put_file(server=target_host.address,
-                                    username=target_cs_host_attr.vm_user,
-                                    password=target_cs_host_attr.vm_password,
-                                    localpath="{}/td-agent.conf".format(
-                                        localpath),
-                                    remotepath="/etc/td-agent/td-agent.conf"):
                     raise Exception("FTP Error")
 
                 script = test_bash_script_error()
