@@ -7,7 +7,7 @@ from workflow.steps.util.base import BaseInstanceStep
 class DBMonitorStep(BaseInstanceStep):
 
     def __init__(self, instance):
-        super(PackStep, self).__init__(instance)
+        super(DBMonitorStep, self).__init__(instance)
 
     def do(self):
         raise NotImplementedError
