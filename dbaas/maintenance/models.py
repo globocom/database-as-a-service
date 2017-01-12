@@ -409,7 +409,13 @@ class DatabaseCreate(DatabaseMaintenanceTask):
         Database, related_name='databases_create', null=True, blank=True,
     )
     infra = models.ForeignKey(DatabaseInfra, related_name='databases_create')
-    plan = models.ForeignKey(Plan, related_name='databases_create')
+    plan = models.ForeignKey(
+        Plan, null=True, blank=True,
+        related_name='databases_create', on_delete=models.SET_NULL
+    )
+    plan_name = models.CharField(
+        verbose_name="Plan", max_length=100, null=True, blank=True
+    )
     environment = models.ForeignKey(
         Environment, related_name='databases_create'
     )
@@ -436,6 +442,12 @@ class DatabaseCreate(DatabaseMaintenanceTask):
             self.database = maintenance.database
 
         super(DatabaseCreate, self).update_step(step)
+
+    def save(self, *args, **kwargs):
+        if self.plan:
+            self.plan_name = self.plan.name
+
+        super(DatabaseCreate, self).save(*args, **kwargs)
 
 
 class DatabaseRestore(DatabaseMaintenanceTask):
