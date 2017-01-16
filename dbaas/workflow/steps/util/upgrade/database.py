@@ -106,3 +106,13 @@ class UpdatePlan(DatabaseStep):
     def do(self):
         self.infra.plan = self.infra.plan.engine_equivalent_plan
         self.infra.save()
+
+
+class UpdateEngine(DatabaseStep):
+
+    def __unicode__(self):
+        return "Updating Engine..."
+
+    def do(self):
+        self.infra.engine = self.infra.plan.engine
+        self.infra.save()

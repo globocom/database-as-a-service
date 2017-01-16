@@ -64,4 +64,5 @@ class BaseTopology(object):
             'workflow.steps.util.upgrade.zabbix.DestroyAlarms',
             'workflow.steps.util.upgrade.zabbix.CreateAlarms',
             'workflow.steps.util.upgrade.database.UpdatePlan',
+            'workflow.steps.util.upgrade.database.UpdateEngine',
         )
