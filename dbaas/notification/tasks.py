@@ -661,10 +661,6 @@ def upgrade_mongodb_24_to_30(self, database, user, task_history=None):
         msg = "Database is in use by another task!"
         stop_now = True
 
-    if database.has_migration_started():
-        msg = "Region migration for this database has already started!"
-        stop_now = True
-
     if not source_engine.version.startswith('2.4.'):
         msg = "Database version must be 2.4!"
         stop_now = True
