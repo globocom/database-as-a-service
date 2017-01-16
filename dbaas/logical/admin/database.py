@@ -29,22 +29,21 @@ from dbaas_credentials.models import CredentialType
 from dbaas import constants
 from account.models import Team
 from drivers import DatabaseAlreadyExists
-from notification.tasks import destroy_database
-from notification.tasks import create_database
+from notification.tasks import destroy_database, create_database, \
+    upgrade_database
 from notification.models import TaskHistory
 from physical.models import Plan, Host, DiskOffering
 from system.models import Configuration
 from util import get_credentials_for
 from logical.templatetags import capacity
-from logical.service.database import DatabaseService
-from logical.forms import DatabaseForm, CloneDatabaseForm, ResizeDatabaseForm, \
-    DiskResizeDatabaseForm
-from logical.forms import RestoreDatabaseForm
 from logical.models import Database
+from logical.forms import DatabaseForm, CloneDatabaseForm, ResizeDatabaseForm, \
+    DiskResizeDatabaseForm, RestoreDatabaseForm
 from logical.validators import check_is_database_enabled, \
     check_is_database_dead, check_resize_options, \
     check_database_has_persistence
 from logical.errors import DisabledDatabase, NoResizeOption
+from logical.service.database import DatabaseService
 
 LOG = logging.getLogger(__name__)
 
@@ -418,7 +417,19 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         self.form = DatabaseForm
         extra_context = extra_context or {}
 
-        extra_context['has_perm_upgrade_mongo'] = request.user.has_perm(constants.PERM_UPGRADE_MONGO24_TO_30)
+        extra_context['has_perm_upgrade_mongo'] = False
+        extra_context['can_upgrade'] = False
+
+        if database.is_mongodb_24():
+            extra_context['has_perm_upgrade_mongo'] = request.user.has_perm(constants.PERM_UPGRADE_MONGO24_TO_30)
+        else:
+            has_permission = request.user.has_perm(
+                constants.PERM_UPGRADE_DATABASE
+            )
+            has_equivalent_plan = bool(
+                database.infra.plan.engine_equivalent_plan
+            )
+            extra_context['can_upgrade'] = has_equivalent_plan and has_permission
 
         if database.is_in_quarantine:
             extra_context['delete_button_name'] = self.delete_button_name
@@ -980,6 +991,27 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
         return HttpResponseRedirect(url)
 
+    def upgrade(self, request, database_id):
+        database = Database.objects.get(id=database_id)
+
+        can_do_upgrade, error = database.can_do_upgrade()
+        if not can_do_upgrade:
+            url = reverse('admin:logical_database_change', args=[database.id])
+            self.message_user(request, error, level=messages.ERROR)
+            return HttpResponseRedirect(url)
+
+        task_history = TaskHistory()
+        task_history.task_name = "upgrade_database"
+        task_history.task_status = task_history.STATUS_WAITING
+        task_history.arguments = "Upgrading database {}".format(database)
+        task_history.user = request.user
+        task_history.save()
+
+        upgrade_database.delay(database, request.user, task_history)
+
+        url = reverse('admin:notification_taskhistory_changelist')
+        return HttpResponseRedirect(url)
+
     # Create your views here.
     def get_urls(self):
         urls = super(DatabaseAdmin, self).get_urls()
@@ -1026,6 +1058,11 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 self.admin_site.admin_view(
                     self.mongodb_engine_version_upgrade),
                 name="mongodb_engine_version_upgrade"),
+
+            url(
+                r'^/?(?P<database_id>\d+)/upgrade/$',
+                self.admin_site.admin_view(self.upgrade), name="upgrade"
+            ),
         )
 
         return my_urls + urls

@@ -169,6 +169,18 @@
                 </tr>
              </table>
     {% endif %}
+    {% if can_upgrade %}
+            <h2>Engine Version Upgrade</h2>
+             <table id="table-mais" class="table table-striped">
+                <tr >
+                    <div class="btn-toolbar">
+                        <div class="btn-group-lg">
+                            <a href="{{original.get_upgrade_url}}" class="btn btn-primary" title="StaEngVerUp" data-content="IniMigration" onclick="return confirm('Are you sure?')">Migrate {{original.infra.engine_name}} {{original.infra.plan.engine.version}} to {{original.infra.plan.engine_equivalent_plan.engine.version}}</a>
+                        </div>
+                    </div>
+                </tr>
+             </table>
+    {% endif %}
     {% if is_dba %}
          {% if original.is_mysql_flipper %}
             <h2>Flipper to FoxHA Migration</h2>

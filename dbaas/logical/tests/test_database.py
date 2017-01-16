@@ -2,14 +2,13 @@
 from __future__ import absolute_import, unicode_literals
 import mock
 import logging
-from unittest import skip
 from django.test import TestCase
 from django.db import IntegrityError
 from drivers import base
 from physical.tests import factory as physical_factory
 from physical.models import DatabaseInfra
 from logical.tests import factory
-from ..models import Database
+from logical.models import Database
 
 
 LOG = logging.getLogger(__name__)
@@ -19,6 +18,11 @@ ERROR_CLONE_IN_QUARANTINE = "Database in quarantine cannot be cloned"
 ERROR_CLONE_NOT_ALIVE = "Database is not alive and cannot be cloned"
 ERROR_DELETE_PROTECTED = "Database {} is protected and cannot be deleted"
 ERROR_DELETE_DEAD = "Database {} is not alive and cannot be deleted"
+ERROR_UPGRADE_MONGO24 = "MongoDB 2.4 cannot be upgraded by this task."
+ERROR_UPGRADE_IN_QUARANTINE = "Database in quarantine and cannot be upgraded."
+ERROR_UPGRADE_IS_DEAD = "Database is dead and cannot be upgraded."
+ERROR_UPGRADE_NO_EQUIVALENT_PLAN = "Source plan do not has equivalent plan to upgrade."
+UPGRADE_URL = "/admin/logical/database/{}/upgrade/"
 
 
 class FakeDriver(base.BaseDriver):
@@ -34,6 +38,7 @@ class DatabaseTestCase(TestCase):
         self.databaseinfra = self.instance.databaseinfra
         self.engine = FakeDriver(databaseinfra=self.databaseinfra)
         self.environment = physical_factory.EnvironmentFactory()
+        self.plan_upgrade = physical_factory.PlanFactory()
 
     def tearDown(self):
         self.engine = None
@@ -219,6 +224,66 @@ class DatabaseTestCase(TestCase):
         can_be_deleted, error = database.can_be_deleted()
         self.assertFalse(can_be_deleted)
         self.assertEqual(error, ERROR_DELETE_DEAD.format(database.name))
+
+    def test_can_upgrade(self):
+        database = factory.DatabaseFactory()
+        database.status = database.ALIVE
+        database.databaseinfra.plan.engine_equivalent_plan = self.plan_upgrade
+
+        can_do_upgrade, error = database.can_do_upgrade()
+        self.assertTrue(can_do_upgrade)
+        self.assertIsNone(error)
+
+    def test_cannot_upgrade_mongo24(self):
+        mongo = physical_factory.EngineTypeFactory()
+        mongo.name = 'mongodb'
+
+        mongo24 = physical_factory.EngineFactory()
+        mongo24.engine_type = mongo
+        mongo24.version = '2.4.xxx'
+
+        database = factory.DatabaseFactory()
+        database.status = database.ALIVE
+
+        infra = database.databaseinfra
+        infra.engine = mongo24
+        database.databaseinfra = infra
+
+        can_do_upgrade, error = database.can_do_upgrade()
+        self.assertFalse(can_do_upgrade)
+        self.assertEqual(error, ERROR_UPGRADE_MONGO24)
+
+    def test_cannot_upgrade_in_quarantine(self):
+        database = factory.DatabaseFactory()
+        database.status = database.ALIVE
+        database.is_in_quarantine = True
+
+        can_do_upgrade, error = database.can_do_upgrade()
+        self.assertFalse(can_do_upgrade)
+        self.assertEqual(error, ERROR_UPGRADE_IN_QUARANTINE)
+
+    def test_cannot_upgrade_dead(self):
+        database = factory.DatabaseFactory()
+        database.status = database.DEAD
+
+        can_do_upgrade, error = database.can_do_upgrade()
+        self.assertFalse(can_do_upgrade)
+        self.assertEqual(error, ERROR_UPGRADE_IS_DEAD)
+
+    def test_cannot_upgrade_no_equivalent_plan(self):
+        database = factory.DatabaseFactory()
+        database.status = database.ALIVE
+
+        can_do_upgrade, error = database.can_do_upgrade()
+        self.assertFalse(can_do_upgrade)
+        self.assertEqual(error, ERROR_UPGRADE_NO_EQUIVALENT_PLAN)
+
+
+    def test_get_upgrade_url(self):
+        database = factory.DatabaseFactory()
+        expected_url = UPGRADE_URL.format(database.id)
+        returned_url = database.get_upgrade_url()
+        self.assertEqual(returned_url, expected_url)
 
     '''
 
