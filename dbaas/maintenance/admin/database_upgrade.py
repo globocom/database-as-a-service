@@ -59,7 +59,7 @@ class DatabaseUpgradeAdmin(admin.ModelAdmin):
             'admin:notification_taskhistory_change', args=[upgrade.task.id]
         )
         return format_html(
-            "<a href={}'>{}</a>".format(url, upgrade.task.id)
+            "<a href={}>{}</a>".format(url, upgrade.task.id)
         )
     link_task.short_description = "Task"
 
