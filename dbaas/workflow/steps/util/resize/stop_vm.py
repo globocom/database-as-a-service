@@ -10,7 +10,7 @@ LOG = logging.getLogger(__name__)
 class StopVM(BaseStep):
 
     def __unicode__(self):
-        return "Stopping VMs..."
+        return "Stopping VM..."
 
     def do(self, workflow_dict):
         return stop_vm(workflow_dict)

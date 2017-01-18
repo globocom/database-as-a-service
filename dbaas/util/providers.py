@@ -8,7 +8,7 @@ from dbaas_credentials.models import CredentialType
 from physical.models import DatabaseInfra
 from logical.models import Database
 from workflow.workflow import stop_workflow
-from workflow.workflow import start_workflow
+from workflow.workflow import start_workflow, start_workflow_ha
 
 LOG = logging.getLogger(__name__)
 
@@ -133,9 +133,10 @@ def destroy_infra(databaseinfra, task=None):
         return False
 
 
-def resize_database_instance(database, cloudstackpack, instance, task=None):
+def resize_database_instances(database, cloudstackpack, instances, task=None):
 
     from dbaas_cloudstack.models import CloudStackPack
+
 
     original_cloudstackpack = CloudStackPack.objects.get(
         offering__serviceofferingid=database.offering_id,
@@ -149,14 +150,13 @@ def resize_database_instance(database, cloudstackpack, instance, task=None):
         cloudstackpack=cloudstackpack,
         original_cloudstackpack=original_cloudstackpack,
         environment=database.environment,
-        instance=instance,
-        host=instance.hostname,
+        instances=instances,
         steps=get_resize_settings(
             database.databaseinfra.plan.replication_topology.class_path
         )
     )
 
-    start_workflow(workflow_dict=workflow_dict, task=task)
+    start_workflow_ha(workflow_dict=workflow_dict, task=task)
     return workflow_dict
 
 
