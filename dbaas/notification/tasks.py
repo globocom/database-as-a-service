@@ -842,13 +842,14 @@ def steps_for_instances(steps, instances, task):
     for instance in instances:
         task.add_detail('Instance: {}'.format(instance))
         for step in steps:
-            step_class = import_by_path(step)
-            step_instance = step_class(instance)
             step_current += 1
 
-            task.add_step(step_current, steps_total, str(step_instance))
-
             try:
+                step_class = import_by_path(step)
+                step_instance = step_class(instance)
+
+                task.add_step(step_current, steps_total, str(step_instance))
+
                 step_instance.do()
             except Exception as e:
                 task.add_detail(str(e))
