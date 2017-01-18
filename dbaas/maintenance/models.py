@@ -261,6 +261,28 @@ class DatabaseUpgrade(BaseModel):
         verbose_name="Finished at", null=True, blank=True
     )
 
+    def __unicode__(self):
+        return "{} upgrade".format(self.database.name)
+
+    def update_step(self, step):
+        if not self.started_at:
+            self.started_at = datetime.now()
+
+        self.status = self.RUNNING
+        self.current_step = step
+        self.save()
+
+    def __update_final_status(self, status):
+        self.finished_at = datetime.now()
+        self.status = status
+        self.save()
+
+    def set_success(self):
+        self.__update_final_status(self.SUCCESS)
+
+    def set_error(self):
+        self.__update_final_status(self.ERROR)
+
 
 simple_audit.register(Maintenance)
 simple_audit.register(HostMaintenance)
