@@ -29,18 +29,6 @@ class ZabbixStep(BaseInstanceStep):
         pass
 
 
-class DisableAlarms(ZabbixStep):
-
-    def __unicode__(self):
-        return "Disable Zabbix alarms..."
-
-    def do(self):
-        self.zabbix_provider.disable_alarms_to(
-            self.instance.hostname.hostname
-        )
-        self.zabbix_provider.disable_alarms_to(self.instance.dns)
-
-
 class DestroyAlarms(ZabbixStep):
 
     def __unicode__(self):

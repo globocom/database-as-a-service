@@ -62,7 +62,7 @@ class AbstractReplicationTopologySettingsTestCase(TestCase):
 
     def _get_upgrade_settings(self):
         return (
-            'workflow.steps.util.upgrade.zabbix.DisableAlarms',
+            'workflow.steps.util.upgrade.zabbix.DestroyAlarms',
             'workflow.steps.util.upgrade.db_monitor.DisableMonitoring',
             'workflow.steps.util.upgrade.database.Stop',
             'workflow.steps.util.upgrade.database.CheckIsDown',
@@ -77,7 +77,6 @@ class AbstractReplicationTopologySettingsTestCase(TestCase):
             'workflow.steps.util.upgrade.database.CheckIsUp',
             'workflow.steps.util.upgrade.vm.UpdateOSDescription',
             'workflow.steps.util.upgrade.db_monitor.EnableMonitoring',
-            'workflow.steps.util.upgrade.zabbix.DestroyAlarms',
             'workflow.steps.util.upgrade.zabbix.CreateAlarms',
             'workflow.steps.util.upgrade.database.UpdatePlan',
             'workflow.steps.util.upgrade.database.UpdateEngine',
