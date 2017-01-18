@@ -62,6 +62,5 @@ class BaseTopology(object):
             'workflow.steps.util.upgrade.vm.UpdateOSDescription',
             'workflow.steps.util.upgrade.db_monitor.EnableMonitoring',
             'workflow.steps.util.upgrade.zabbix.CreateAlarms',
-            'workflow.steps.util.upgrade.database.UpdatePlan',
-            'workflow.steps.util.upgrade.database.UpdateEngine',
+            'workflow.steps.util.upgrade.database.UpdateInfra',
         )

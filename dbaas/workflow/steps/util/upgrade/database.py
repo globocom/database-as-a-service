@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from time import sleep
+from django.db import transaction
 from workflow.steps.util.restore_snapshot import use_database_initialization_script
 from workflow.steps.util.base import BaseInstanceStep
 
@@ -15,6 +16,7 @@ class DatabaseStep(BaseInstanceStep):
 
         self.infra = self.instance.databaseinfra
         self.driver = self.infra.get_driver()
+        self.future_plan = self.infra.plan.engine_equivalent_plan
 
     def do(self):
         raise NotImplementedError
@@ -98,21 +100,14 @@ class CheckIsDown(DatabaseStep):
             raise EnvironmentError('Database is up, should be down')
 
 
-class UpdatePlan(DatabaseStep):
+class UpdateInfra(DatabaseStep):
 
     def __unicode__(self):
-        return "Updating Plan..."
+        return "Updating Database Infra..."
 
     def do(self):
-        self.infra.plan = self.infra.plan.engine_equivalent_plan
-        self.infra.save()
+        self.infra.plan = self.future_plan
+        self.infra.engine = self.future_plan.engine
 
-
-class UpdateEngine(DatabaseStep):
-
-    def __unicode__(self):
-        return "Updating Engine..."
-
-    def do(self):
-        self.infra.engine = self.infra.plan.engine
-        self.infra.save()
+        with transaction.atomic():
+            self.infra.save()
