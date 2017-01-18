@@ -813,7 +813,7 @@ def update_disk_used_size(self):
 
 
 @app.task(bind=True)
-def upgrade_database(self, database, user, task):
+def upgrade_database(self, database, user, task, since_step=0):
     from workflow.workflow import steps_for_instances
     from maintenance.models import DatabaseUpgrade
 
@@ -835,7 +835,7 @@ def upgrade_database(self, database, user, task):
 
     success = steps_for_instances(
         steps, database.infra.instances.all(), task,
-        database_upgrade.update_step
+        database_upgrade.update_step, since_step
     )
 
     if success:

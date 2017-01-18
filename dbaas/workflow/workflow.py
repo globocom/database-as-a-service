@@ -302,9 +302,14 @@ def execute(step, workflow_dict, is_rollback, task):
         task.update_details(persist=True, details="DONE!")
 
 
-def steps_for_instances(steps, instances, task, step_counter_method=None):
+def steps_for_instances(
+        steps, instances, task, step_counter_method=None, since_step=0
+):
     steps_total = len(steps) * len(instances)
     step_current = 0
+
+    if since_step:
+        task.add_detail('Skipping until step {}'.format(since_step))
 
     for instance in instances:
         task.add_detail('Instance: {}'.format(instance))
@@ -320,8 +325,14 @@ def steps_for_instances(steps, instances, task, step_counter_method=None):
 
                 task.add_step(step_current, steps_total, str(step_instance))
 
-                step_instance.do()
+                if step_current < since_step:
+                    task.update_details("SKIPPED!", persist=True)
+                else:
+                    step_instance.do()
+                    task.update_details("SUCCESS!", persist=True)
+
             except Exception as e:
+                task.update_details("FAILED!", persist=True)
                 task.add_detail(str(e))
                 task.add_detail(full_stack())
                 return False
