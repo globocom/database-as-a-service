@@ -38,7 +38,7 @@ def start_workflow(workflow_dict, task=None):
                 workflow_dict['msgs'].append(msg)
                 task.update_details(persist=True, details=msg)
 
-            if my_instance.do(workflow_dict) != True:
+            if not my_instance.do(workflow_dict):
                 workflow_dict['status'] = 0
                 raise Exception(
                     "We caught an error while executing the steps...")
@@ -48,7 +48,6 @@ def start_workflow(workflow_dict, task=None):
                 task.update_details(persist=True, details="DONE!")
 
         workflow_dict['created'] = True
-
         return True
 
     except Exception:
@@ -66,8 +65,6 @@ def start_workflow(workflow_dict, task=None):
         workflow_dict['steps'] = workflow_dict[
             'steps'][:workflow_dict['step_counter']]
         stop_workflow(workflow_dict, task)
-
-        workflow_dict['created'] = False
 
         return False
 
@@ -129,3 +126,177 @@ def stop_workflow(workflow_dict, task=None):
             workflow_dict['exceptions']['traceback']))
 
         return False
+
+
+def start_workflow_ha(workflow_dict, task=None):
+    if 'steps' not in workflow_dict:
+        return False
+
+    init_workflow_vars(workflow_dict)
+
+    try:
+        for instance in workflow_dict['instances']:
+            workflow_dict['instance_step_counter'] = 0
+            task.update_details(
+                persist=True,
+                details='\n>> Starting steps for VM {}:'.format(instance.hostname)
+            )
+            workflow_dict['instance'] = instance
+            workflow_dict['host'] = instance.hostname
+
+            if workflow_dict['databaseinfra'].plan.is_ha and workflow_dict['driver'].check_instance_is_master(instance):
+                LOG.info("Waiting 60s to check continue...")
+                time.sleep(60)
+                workflow_dict['driver'].check_replication_and_switch(instance)
+                LOG.info("Waiting 60s to check continue...")
+                time.sleep(60)
+
+            for step in workflow_dict['steps']:
+                workflow_dict['global_step_counter'] += 1
+                workflow_dict['instance_step_counter'] += 1
+                execute(step, workflow_dict, False, task)
+
+            workflow_dict['completed_instances'].append(instance)
+
+        workflow_dict['created'] = True
+        return True
+
+    except Exception:
+
+        if not workflow_dict['exceptions']['error_codes'] or not workflow_dict['exceptions']['traceback']:
+            traceback = full_stack()
+            workflow_dict['exceptions']['error_codes'].append(DBAAS_0001)
+            workflow_dict['exceptions']['traceback'].append(traceback)
+
+        LOG.warn("\n".join(": ".join(error)
+                           for error in workflow_dict['exceptions']['error_codes']))
+        LOG.warn("\nException Traceback\n".join(
+            workflow_dict['exceptions']['traceback']))
+
+        workflow_dict['steps_until_stopped'] = workflow_dict[
+            'steps'][:workflow_dict['instance_step_counter']]
+
+        stop_workflow_ha(workflow_dict, task)
+
+        return False
+
+
+def stop_workflow_ha(workflow_dict, task=None):
+    LOG.info("Running undo...")
+
+    if 'steps' not in workflow_dict:
+        return False
+
+    init_rollback_vars(workflow_dict)
+
+    try:
+        for step in workflow_dict['steps_until_stopped'][::-1]:
+            execute(step, workflow_dict, True, task)
+            workflow_dict['global_step_counter'] -= 1
+
+        for instance in workflow_dict['completed_instances']:
+            workflow_dict['instance'] = instance
+            workflow_dict['host'] = instance.hostname
+
+            if workflow_dict['databaseinfra'].plan.is_ha and workflow_dict['driver'].check_instance_is_master(instance):
+                LOG.info("Waiting 60s to check continue...")
+                time.sleep(60)
+                workflow_dict['driver'].check_replication_and_switch(instance)
+                LOG.info("Waiting 60s to check continue...")
+                time.sleep(60)
+
+            for step in workflow_dict['steps'][::-1]:
+                execute(step, workflow_dict, True, task)
+                workflow_dict['global_step_counter'] -= 1
+
+        return True
+    except Exception as e:
+        LOG.info("Exception: {}".format(e))
+
+        if not workflow_dict['exceptions']['error_codes'] or not workflow_dict['exceptions']['traceback']:
+            traceback = full_stack()
+            workflow_dict['exceptions']['error_codes'].append(DBAAS_0001)
+            workflow_dict['exceptions']['traceback'].append(traceback)
+
+        LOG.warn("\n".join(
+            ": ".join(error) for error in workflow_dict['exceptions']['error_codes']
+        ))
+        LOG.warn("\nException Traceback\n".join(
+            workflow_dict['exceptions']['traceback'])
+        )
+
+        return False
+
+
+def init_workflow_vars(workflow_dict):
+    workflow_dict['driver'] = workflow_dict['databaseinfra'].get_driver()
+    workflow_dict['instance_step_counter'] = 0
+    workflow_dict['global_step_counter'] = 0
+    workflow_dict['completed_instances'] = []
+    workflow_dict['created'] = False
+
+    workflow_dict['msgs'] = []
+    workflow_dict['status'] = 0
+
+    workflow_dict['exceptions'] = {}
+    workflow_dict['exceptions']['traceback'] = []
+    workflow_dict['exceptions']['error_codes'] = []
+
+    workflow_dict['total_steps'] = \
+        len(workflow_dict['steps']) * len(workflow_dict['instances'])
+
+
+def init_rollback_vars(workflow_dict):
+    workflow_dict['driver'] = workflow_dict['databaseinfra'].get_driver()
+    if 'exceptions' not in workflow_dict:
+        workflow_dict['exceptions'] = {}
+        workflow_dict['exceptions']['traceback'] = []
+        workflow_dict['exceptions']['error_codes'] = []
+
+    if 'steps_until_stopped' not in workflow_dict:
+        workflow_dict['steps_until_stopped'] = workflow_dict['steps']
+        workflow_dict['completed_instances'] = []
+        workflow_dict['global_step_counter'] = \
+            len(workflow_dict['steps']) * len(workflow_dict['instances'])
+
+    workflow_dict['msgs'] = []
+
+    workflow_dict['total_steps'] = \
+        len(workflow_dict['steps'])*\
+        len(workflow_dict['completed_instances'])+\
+        len(workflow_dict['steps_until_stopped'])
+
+
+def execute(step, workflow_dict, is_rollback, task):
+    my_class = import_by_path(step)
+    my_instance = my_class()
+
+    time_now = str(time.strftime("%m/%d/%Y %H:%M:%S"))
+
+    kind_of = "Rollback " if is_rollback else ""
+
+    msg = "\n%s - %sStep %i of %i - %s" % (
+        time_now,
+        kind_of,
+        workflow_dict['global_step_counter'],
+        workflow_dict['total_steps'],
+        str(my_instance)
+    )
+
+    LOG.info(msg)
+
+    if task:
+        workflow_dict['msgs'].append(msg)
+        task.update_details(persist=True, details=msg)
+
+    if is_rollback:
+        my_instance.undo(workflow_dict)
+    else:
+        if not my_instance.do(workflow_dict):
+            workflow_dict['status'] = 0
+            raise Exception(
+                "We caught an error while executing the steps...")
+        workflow_dict['status'] = 1
+
+    if task:
+        task.update_details(persist=True, details="DONE!")
