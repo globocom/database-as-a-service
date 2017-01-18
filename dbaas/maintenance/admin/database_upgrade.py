@@ -5,7 +5,6 @@ from django.core.urlresolvers import reverse
 from django.contrib import admin
 from django.utils.html import format_html
 from ..models import DatabaseUpgrade
-from ..service.database_upgrade import DatabaseUpgradeService
 
 
 LOG = logging.getLogger(__name__)
@@ -31,7 +30,6 @@ class DatabaseUpgradeAdmin(admin.ModelAdmin):
     )
 
     model = DatabaseUpgrade
-    service_class = DatabaseUpgradeService
     ordering = ["-started_at"]
 
     def friendly_status(self, upgrade):
