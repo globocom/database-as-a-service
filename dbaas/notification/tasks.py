@@ -815,6 +815,7 @@ def update_disk_used_size(self):
 @app.task(bind=True)
 def upgrade_database(self, database, user, task):
     from workflow.workflow import steps_for_instances
+    from maintenance.models import DatabaseUpgrade
 
     worker_name = get_worker_name()
     task = TaskHistory.register(self.request, user, task, worker_name)
@@ -825,11 +826,23 @@ def upgrade_database(self, database, user, task):
     class_path = target_plan.replication_topology.class_path
     steps = get_database_upgrade_setting(class_path)
 
-    success = steps_for_instances(steps, database.infra.instances.all(), task)
+    database_upgrade = DatabaseUpgrade()
+    database_upgrade.database = database
+    database_upgrade.source_plan = source_plan
+    database_upgrade.target_plan = target_plan
+    database_upgrade.task = task
+    database_upgrade.save()
+
+    success = steps_for_instances(
+        steps, database.infra.instances.all(), task,
+        database_upgrade.update_step
+    )
 
     if success:
+        database_upgrade.set_success()
         task.update_status_for(TaskHistory.STATUS_SUCCESS, 'Done')
     else:
+        database_upgrade.set_error()
         task.update_status_for(
             TaskHistory.STATUS_ERROR,
             'Could not do upgrade.\nUpgrade don\'t has rollback'
