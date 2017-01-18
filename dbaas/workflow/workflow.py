@@ -300,3 +300,27 @@ def execute(step, workflow_dict, is_rollback, task):
 
     if task:
         task.update_details(persist=True, details="DONE!")
+
+
+def steps_for_instances(steps, instances, task):
+    steps_total = len(steps) * len(instances)
+    step_current = 0
+
+    for instance in instances:
+        task.add_detail('Instance: {}'.format(instance))
+        for step in steps:
+            step_current += 1
+
+            try:
+                step_class = import_by_path(step)
+                step_instance = step_class(instance)
+
+                task.add_step(step_current, steps_total, str(step_instance))
+
+                step_instance.do()
+            except Exception as e:
+                task.add_detail(str(e))
+                task.add_detail(full_stack())
+                return False
+
+    return True

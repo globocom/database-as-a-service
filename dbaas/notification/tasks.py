@@ -5,7 +5,6 @@ from time import sleep
 from celery.utils.log import get_task_logger
 from celery.exceptions import SoftTimeLimitExceeded
 from django.db.models import Sum, Count
-from django.utils.module_loading import import_by_path
 from dbaas.celery import app
 from account.models import Team
 from logical.models import Database
@@ -815,6 +814,8 @@ def update_disk_used_size(self):
 
 @app.task(bind=True)
 def upgrade_database(self, database, user, task):
+    from workflow.workflow import steps_for_instances
+
     worker_name = get_worker_name()
     task = TaskHistory.register(self.request, user, task, worker_name)
 
@@ -833,26 +834,3 @@ def upgrade_database(self, database, user, task):
             TaskHistory.STATUS_ERROR,
             'Could not do upgrade.\nUpgrade don\'t has rollback'
         )
-
-
-def steps_for_instances(steps, instances, task):
-    steps_total = len(steps) * len(instances)
-    step_current = 0
-
-    for instance in instances:
-        task.add_detail('Instance: {}'.format(instance))
-        for step in steps:
-            step_class = import_by_path(step)
-            step_instance = step_class(instance)
-            step_current += 1
-
-            task.add_step(step_current, steps_total, str(step_instance))
-
-            try:
-                step_instance.do()
-            except Exception as e:
-                task.add_detail(str(e))
-                task.add_detail(full_stack())
-                return False
-
-    return True
