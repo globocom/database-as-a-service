@@ -54,6 +54,8 @@ class CreateAlarms(ZabbixStep):
         return "Creating Zabbix alarms..."
 
     def do(self):
+        DestroyAlarms(self.instance).do()
+
         self.zabbix_provider.create_instance_basic_monitors(
             self.instance.hostname
         )
