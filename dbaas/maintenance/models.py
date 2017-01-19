@@ -283,6 +283,10 @@ class DatabaseUpgrade(BaseModel):
     def set_error(self):
         self.__update_final_status(self.ERROR)
 
+    @property
+    def is_status_error(self):
+        return self.status == self.ERROR
+
 
 simple_audit.register(Maintenance)
 simple_audit.register(HostMaintenance)

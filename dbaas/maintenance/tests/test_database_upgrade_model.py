@@ -44,3 +44,9 @@ class DatabaseUpgradeTestCase(TestCase):
         self.database_upgrade.set_success()
         self.assertIsNotNone(self.database_upgrade.finished_at)
         self.assertEqual(self.database_upgrade.status, DatabaseUpgrade.SUCCESS)
+
+    def test_is_status_error(self):
+        self.assertFalse(self.database_upgrade.is_status_error)
+
+        self.database_upgrade.set_error()
+        self.assertTrue(self.database_upgrade.is_status_error)
