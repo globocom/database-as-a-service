@@ -991,6 +991,44 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
         return HttpResponseRedirect(url)
 
+    def upgrade_retry(self, request, database_id):
+        database = Database.objects.get(id=database_id)
+
+        can_do_upgrade, error = database.can_do_upgrade()
+        if can_do_upgrade:
+            source_plan = database.databaseinfra.plan
+            upgrades = database.upgrades.filter(source_plan=source_plan)
+            last_upgrade = upgrades.last()
+            if not last_upgrade:
+                error = "Database does not have upgrades from {} {}!".format(
+                    source_plan.engine.engine_type, source_plan.engine.version
+                )
+            elif not last_upgrade.is_status_error:
+                error = "Cannot do retry, last upgrade status is '{}'!".format(
+                    last_upgrade.get_status_display()
+                )
+            else:
+                since_step = last_upgrade.current_step
+
+        if error:
+            url = reverse('admin:logical_database_change', args=[database.id])
+            self.message_user(request, error, level=messages.ERROR)
+            return HttpResponseRedirect(url)
+
+        task_history = TaskHistory()
+        task_history.task_name = "upgrade_database_retry"
+        task_history.task_status = task_history.STATUS_WAITING
+        task_history.arguments = "Retrying upgrade database {}".format(database)
+        task_history.user = request.user
+        task_history.save()
+
+        upgrade_database.delay(
+            database, request.user, task_history, since_step
+        )
+
+        url = reverse('admin:notification_taskhistory_changelist')
+        return HttpResponseRedirect(url)
+
     def upgrade(self, request, database_id):
         database = Database.objects.get(id=database_id)
 
@@ -1062,6 +1100,12 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             url(
                 r'^/?(?P<database_id>\d+)/upgrade/$',
                 self.admin_site.admin_view(self.upgrade), name="upgrade"
+            ),
+
+            url(
+                r'^/?(?P<database_id>\d+)/upgrade_retry/$',
+                self.admin_site.admin_view(self.upgrade_retry),
+                name="upgrade_retry"
             ),
         )
 
