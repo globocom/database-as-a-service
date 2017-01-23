@@ -23,6 +23,7 @@ ERROR_UPGRADE_IN_QUARANTINE = "Database in quarantine and cannot be upgraded."
 ERROR_UPGRADE_IS_DEAD = "Database is dead and cannot be upgraded."
 ERROR_UPGRADE_NO_EQUIVALENT_PLAN = "Source plan do not has equivalent plan to upgrade."
 UPGRADE_URL = "/admin/logical/database/{}/upgrade/"
+UPGRADE_RETRY_URL = "/admin/logical/database/{}/upgrade_retry/"
 
 
 class FakeDriver(base.BaseDriver):
@@ -278,11 +279,16 @@ class DatabaseTestCase(TestCase):
         self.assertFalse(can_do_upgrade)
         self.assertEqual(error, ERROR_UPGRADE_NO_EQUIVALENT_PLAN)
 
-
     def test_get_upgrade_url(self):
         database = factory.DatabaseFactory()
         expected_url = UPGRADE_URL.format(database.id)
         returned_url = database.get_upgrade_url()
+        self.assertEqual(returned_url, expected_url)
+
+    def test_get_upgrade_retry_url(self):
+        database = factory.DatabaseFactory()
+        expected_url = UPGRADE_RETRY_URL.format(database.id)
+        returned_url = database.get_upgrade_retry_url()
         self.assertEqual(returned_url, expected_url)
 
     '''
