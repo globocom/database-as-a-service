@@ -35,6 +35,7 @@ from notification.models import TaskHistory
 from physical.models import Plan, Host, DiskOffering
 from system.models import Configuration
 from util import get_credentials_for
+from util.html import show_info_popup
 from logical.templatetags import capacity
 from logical.models import Database
 from logical.forms import DatabaseForm, CloneDatabaseForm, ResizeDatabaseForm, \
@@ -65,7 +66,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         "environment__name", "databaseinfra__engine__engine_type__name"
     )
     list_display_basic = [
-        "name_html", "team_admin_page", "engine", "environment", "offering",
+        "name_html", "team_admin_page", "engine_html", "environment", "offering",
         "friendly_status", "clone_html", "get_capacity_html", "metrics_html",
         "created_dt_format"
     ]
@@ -203,20 +204,37 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             ed_point = escape(database.get_endpoint_dns())
         except:
             ed_point = None
-        html = '%(name)s <a href="javascript:void(0)" title="%(title)s" data-content="%(endpoint)s" class="show-endpoint"><span class="icon-info-sign"></span></a>' % {
-            'name': database.name,
-            'endpoint': ed_point,
-            'title': _("Show Endpoint")
-        }
-        return format_html(html)
-
+        return show_info_popup(
+            database.name, "Show Endpoint", ed_point,
+            "icon-info-sign", "show-endpoint"
+        )
     name_html.short_description = _("name")
     name_html.admin_order_field = "name"
 
     def engine_type(self, database):
         return database.engine_type
-
     engine_type.admin_order_field = 'name'
+
+    def engine_html(self, database):
+        last_upgrade = database.upgrades.last()
+        if not(last_upgrade and last_upgrade.is_status_error):
+            return database.engine
+
+        upgrade_url = reverse('admin:maintenance_databaseupgrade_change', args=[last_upgrade.id])
+        task_url = reverse('admin:notification_taskhistory_change', args=[last_upgrade.task.id])
+        retry_url = database.get_upgrade_retry_url()
+        upgrade_content = \
+            "<a href='{}' target='_blank'>Last upgrade</a> has an <b>error</b>, " \
+            "please check the <a href='{}' target='_blank'>task</a> and " \
+            "<a href='{}'>retry</a> the database upgrade".format(
+                upgrade_url, task_url, retry_url
+            )
+        return show_info_popup(
+            database.engine, "Database Upgrade", upgrade_content,
+            icon="icon-exclamation-sign", css_class="show-upgrade"
+        )
+    engine_html.short_description = _("engine")
+    engine_html.admin_order_field = "Engine"
 
     def get_capacity_html(self, database):
         try:
