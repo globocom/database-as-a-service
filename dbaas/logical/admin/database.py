@@ -449,6 +449,12 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             )
             extra_context['can_upgrade'] = has_equivalent_plan and has_permission
 
+        last_upgrade = database.upgrades.last()
+        extra_context['last_upgrade'] = last_upgrade
+        extra_context['retry_upgrade'] = False
+        if last_upgrade:
+            extra_context['retry_upgrade'] = last_upgrade.is_status_error
+
         if database.is_in_quarantine:
             extra_context['delete_button_name'] = self.delete_button_name
         else:
