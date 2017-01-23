@@ -19,7 +19,7 @@ LIST_DISPLAY = (
 )
 READONLY_FIELDS = (
     "database", "source_plan", "target_plan", "task", "started_at",
-    "finished_at"
+    "finished_at", "current_step", "status"
 )
 ORDERING = ["-started_at"]
 ACTIONS = None

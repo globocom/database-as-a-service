@@ -26,7 +26,7 @@ class DatabaseUpgradeAdmin(admin.ModelAdmin):
 
     readonly_fields = (
         "database", "source_plan", "target_plan", "task", "started_at",
-        "finished_at"
+        "finished_at", "current_step", "status"
     )
 
     model = DatabaseUpgrade
