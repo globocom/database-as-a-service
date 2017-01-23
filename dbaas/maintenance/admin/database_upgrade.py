@@ -21,7 +21,7 @@ class DatabaseUpgradeAdmin(admin.ModelAdmin):
     list_display = (
         "database", "database_team", "source_plan", "target_plan",
         "current_step", "friendly_status", "link_task", "started_at",
-        "finished_at"
+        "finished_at", "button_retry"
     )
 
     readonly_fields = (
@@ -60,6 +60,19 @@ class DatabaseUpgradeAdmin(admin.ModelAdmin):
             "<a href={}>{}</a>".format(url, upgrade.task.id)
         )
     link_task.short_description = "Task"
+
+    def button_retry(self, upgrade):
+        if not upgrade.is_status_error:
+            return 'N/A'
+
+
+        url = upgrade.database.get_upgrade_retry_url()
+        html = "<a class='btn btn-info' href='{}'>" \
+               "<i class='icon-repeat icon-white'></i>" \
+               "</a>".format(url)
+
+        return format_html(html)
+    button_retry.short_description = "Retry"
 
     def has_delete_permission(self, request, obj=None):
         return False

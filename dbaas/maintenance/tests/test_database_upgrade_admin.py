@@ -15,7 +15,7 @@ LIST_FILTER = [
 LIST_DISPLAY = (
     "database", "database_team", "source_plan", "target_plan",
     "current_step", "friendly_status", "link_task", "started_at",
-    "finished_at"
+    "finished_at", "button_retry"
 )
 READONLY_FIELDS = (
     "database", "source_plan", "target_plan", "task", "started_at",
@@ -92,3 +92,15 @@ class DatabaseUpgradeTestCase(TestCase):
     def test_link_task(self):
         admin_task = self.admin.link_task(self.database_upgrade)
         self.assertIn(str(self.database_upgrade.task.id), admin_task)
+
+    def test_button_retry(self):
+        self.database_upgrade.status = DatabaseUpgrade.ERROR
+        url = self.database_upgrade.database.get_upgrade_retry_url()
+
+        button = self.admin.button_retry(self.database_upgrade)
+        self.assertIn(url, button)
+
+    def test_button_retry_without_error(self):
+        self.database_upgrade.status = DatabaseUpgrade.SUCCESS
+        button = self.admin.button_retry(self.database_upgrade)
+        self.assertEqual('N/A', button)
