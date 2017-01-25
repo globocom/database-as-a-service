@@ -260,6 +260,9 @@ class DatabaseUpgrade(BaseModel):
     finished_at = models.DateTimeField(
         verbose_name="Finished at", null=True, blank=True
     )
+    can_do_retry = models.BooleanField(
+        verbose_name=_("Can Do Retry"), default=True
+    )
 
     def __unicode__(self):
         return "{} upgrade".format(self.database.name)
@@ -286,6 +289,14 @@ class DatabaseUpgrade(BaseModel):
     @property
     def is_status_error(self):
         return self.status == self.ERROR
+
+    def save(self, *args, **kwargs):
+        super(DatabaseUpgrade, self).save(*args, **kwargs)
+
+        older_upgrades = DatabaseUpgrade.objects.filter(
+            database=self.database, source_plan=self.source_plan
+        ).exclude(id=self.id)
+        older_upgrades.update(can_do_retry=False)
 
 
 simple_audit.register(Maintenance)

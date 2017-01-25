@@ -50,3 +50,26 @@ class DatabaseUpgradeTestCase(TestCase):
 
         self.database_upgrade.set_error()
         self.assertTrue(self.database_upgrade.is_status_error)
+
+    def test_can_do_retry(self):
+        self.assertTrue(self.database_upgrade.can_do_retry)
+
+    def test_can_do_retry_to_other_database(self):
+        self.assertTrue(self.database_upgrade.can_do_retry)
+
+        new_upgrade = DatabaseUpgradeFactory()
+        self.assertTrue(new_upgrade.can_do_retry)
+
+        self.assertTrue(self.database_upgrade.can_do_retry)
+
+    def test_cannot_do_retry(self):
+        self.assertTrue(self.database_upgrade.can_do_retry)
+
+        new_upgrade = DatabaseUpgradeFactory(
+            database=self.database_upgrade.database,
+            source_plan=self.database_upgrade.source_plan
+        )
+        self.assertTrue(new_upgrade.can_do_retry)
+
+        old_upgrade = DatabaseUpgrade.objects.get(id=self.database_upgrade.id)
+        self.assertFalse(old_upgrade.can_do_retry)
