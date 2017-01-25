@@ -14,15 +14,17 @@ LIST_FILTER = [
 ]
 LIST_DISPLAY = (
     "database", "database_team", "source_plan", "target_plan",
-    "current_step", "friendly_status", "link_task", "started_at",
-    "finished_at", "button_retry"
+    "current_step", "friendly_status", "upgrade_action", "link_task",
+    "started_at", "finished_at"
 )
 READONLY_FIELDS = (
-    "database", "source_plan", "target_plan", "task", "started_at",
-    "finished_at", "current_step", "status"
+    "database", "source_plan", "target_plan", "link_task", "started_at",
+    "finished_at", "current_step", "status", "upgrade_action"
 )
+EXCLUDE = ("task", )
 ORDERING = ["-started_at"]
 ACTIONS = None
+LIST_SELECT_RELATED = None
 
 
 class DatabaseUpgradeTestCase(TestCase):
@@ -48,11 +50,17 @@ class DatabaseUpgradeTestCase(TestCase):
     def test_readonly_fields(self):
         self.assertEqual(READONLY_FIELDS, self.admin.readonly_fields)
 
+    def test_exclude(self):
+        self.assertEqual(EXCLUDE, self.admin.exclude)
+
     def test_ordering(self):
         self.assertEqual(ORDERING, self.admin.ordering)
 
     def test_actions(self):
         self.assertEqual(ACTIONS, self.admin.actions)
+
+    def test_list_select_related(self):
+        self.assertEqual(LIST_SELECT_RELATED, self.admin.list_select_related)
 
     def test_cannot_add(self):
         self.assertFalse(self.admin.has_add_permission(None))
@@ -93,14 +101,14 @@ class DatabaseUpgradeTestCase(TestCase):
         admin_task = self.admin.link_task(self.database_upgrade)
         self.assertIn(str(self.database_upgrade.task.id), admin_task)
 
-    def test_button_retry(self):
+    def test_upgrade_action(self):
         self.database_upgrade.status = DatabaseUpgrade.ERROR
         url = self.database_upgrade.database.get_upgrade_retry_url()
 
-        button = self.admin.button_retry(self.database_upgrade)
+        button = self.admin.upgrade_action(self.database_upgrade)
         self.assertIn(url, button)
 
-    def test_button_retry_without_error(self):
+    def test_test_upgrade_action_without_error(self):
         self.database_upgrade.status = DatabaseUpgrade.SUCCESS
-        button = self.admin.button_retry(self.database_upgrade)
+        button = self.admin.upgrade_action(self.database_upgrade)
         self.assertEqual('N/A', button)
