@@ -1,21 +1,19 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
-import logging
-from django.core.urlresolvers import reverse
 from django.contrib import admin
+from django.core.urlresolvers import reverse
 from django.utils.html import format_html
 from ..models import DatabaseUpgrade
 
 
-LOG = logging.getLogger(__name__)
-
-
 class DatabaseUpgradeAdmin(admin.ModelAdmin):
+    list_select_related = None
     search_fields = ("database__name", "task__id", "task__task_id")
     list_filter = [
         "database__team", "source_plan", "target_plan", "source_plan__engine",
         "status",
     ]
+    exclude = ("task", )
 
     actions = None
     list_display = (
@@ -25,11 +23,10 @@ class DatabaseUpgradeAdmin(admin.ModelAdmin):
     )
 
     readonly_fields = (
-        "database", "source_plan", "target_plan", "task", "started_at",
-        "finished_at", "current_step", "status"
+        "database", "source_plan", "target_plan", "link_task", "started_at",
+        "finished_at", "current_step", "status", "upgrade_action"
     )
 
-    model = DatabaseUpgrade
     ordering = ["-started_at"]
 
     def friendly_status(self, upgrade):
