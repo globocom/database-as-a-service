@@ -169,22 +169,24 @@
                 </tr>
              </table>
     {% endif %}
-    {% if can_upgrade %}
-            <h2>Engine Version Upgrade</h2>
-             <table id="table-mais" class="table table-striped">
-                <tr >
-                    <div class="btn-toolbar">
-                        <div class="btn-group-lg">
-                            {% if retry_upgrade %}
-                                <a href="{{original.get_upgrade_retry_url}}" class="btn btn-primary" title="Upgrade database" data-content="Start upgrade" onclick="return confirm('Are you sure?')">Retry migrate {{original.infra.engine_name}} {{original.infra.plan.engine.version}} to {{original.infra.plan.engine_equivalent_plan.engine.version}}</a>
-                                <a href="{% url 'admin:notification_taskhistory_change' last_upgrade.task.id %}" class="btn btn-warning" title="Task History" data-content="Last upgrade error">Last upgrade error</a>
-                            {% else %}
-                                <a href="{{original.get_upgrade_url}}" class="btn btn-primary" title="Upgrade database" data-content="Start upgrade" onclick="return confirm('Are you sure?')">Migrate {{original.infra.engine_name}} {{original.infra.plan.engine.version}} to {{original.infra.plan.engine_equivalent_plan.engine.version}}</a>
-                            {% endif %}
-                        </div>
-                    </div>
-                </tr>
-             </table>
+     {% if can_upgrade %}
+         <h2>Engine Version Upgrade</h2>
+         <table id="table-mais" class="table table-striped">
+             <tr>
+             {% if retry_upgrade %}
+                 <p><a href="{% url 'admin:maintenance_databaseupgrade_change' last_upgrade.id %}" target='_blank'>Last upgrade</a> has an <b>error</b>, please check the <a href="{% url 'admin:notification_taskhistory_change' last_upgrade.task.id %}" target='_blank'>task</a> and retry the database upgrade clicking in button below</p>
+             {% endif %}
+                 <div class="btn-toolbar">
+                     <div class="btn-group-lg">
+                         {% if retry_upgrade %}
+                             <a href="{{original.get_upgrade_retry_url}}" class="btn btn-warning" title="Upgrade database" data-content="Start upgrade" onclick="return confirm('Are you sure?')">Retry migrate {{original.infra.engine_name}} {{original.infra.plan.engine.version}} to {{original.infra.plan.engine_equivalent_plan.engine.version}}</a>
+                         {% else %}
+                             <a href="{{original.get_upgrade_url}}" class="btn btn-primary" title="Upgrade database" data-content="Start upgrade" onclick="return confirm('Are you sure?')">Migrate {{original.infra.engine_name}} {{original.infra.plan.engine.version}} to {{original.infra.plan.engine_equivalent_plan.engine.version}}</a>
+                         {% endif %}
+                     </div>
+                 </div>
+             </tr>
+         </table>
     {% endif %}
     {% if is_dba %}
          {% if original.is_mysql_flipper %}

@@ -231,7 +231,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             )
         return show_info_popup(
             database.engine, "Database Upgrade", upgrade_content,
-            icon="icon-exclamation-sign", css_class="show-upgrade"
+            icon="icon-warning-sign", css_class="show-upgrade"
         )
     engine_html.short_description = _("engine")
     engine_html.admin_order_field = "Engine"

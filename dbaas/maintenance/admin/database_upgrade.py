@@ -20,8 +20,8 @@ class DatabaseUpgradeAdmin(admin.ModelAdmin):
     actions = None
     list_display = (
         "database", "database_team", "source_plan", "target_plan",
-        "current_step", "friendly_status", "link_task", "started_at",
-        "finished_at", "button_retry"
+        "current_step", "friendly_status", "upgrade_action", "link_task",
+        "started_at", "finished_at"
     )
 
     readonly_fields = (
@@ -38,14 +38,17 @@ class DatabaseUpgradeAdmin(admin.ModelAdmin):
         html_error = '<span class="label label-important">Error</span>'
         html_success = '<span class="label label-info">Success</span>'
 
+        html_status = ''
         if upgrade.status == DatabaseUpgrade.WAITING:
-            return format_html(html_waiting)
+            html_status = html_waiting
         elif upgrade.status == DatabaseUpgrade.RUNNING:
-            return format_html(html_running)
+            html_status = html_running
         elif upgrade.status == DatabaseUpgrade.ERROR:
-            return format_html(html_error)
+            html_status = html_error
         elif upgrade.status == DatabaseUpgrade.SUCCESS:
-            return format_html(html_success)
+            html_status = html_success
+
+        return format_html(html_status)
     friendly_status.short_description = "Status"
 
     def database_team(self, upgrade):
@@ -61,18 +64,14 @@ class DatabaseUpgradeAdmin(admin.ModelAdmin):
         )
     link_task.short_description = "Task"
 
-    def button_retry(self, upgrade):
+    def upgrade_action(self, upgrade):
         if not upgrade.is_status_error:
             return 'N/A'
 
-
         url = upgrade.database.get_upgrade_retry_url()
-        html = "<a class='btn btn-info' href='{}'>" \
-               "<i class='icon-repeat icon-white'></i>" \
-               "</a>".format(url)
-
+        html = "<a title='Retry' class='btn btn-info' href='{}'>Retry</a>".format(url)
         return format_html(html)
-    button_retry.short_description = "Retry"
+    upgrade_action.short_description = "Action"
 
     def has_delete_permission(self, request, obj=None):
         return False
