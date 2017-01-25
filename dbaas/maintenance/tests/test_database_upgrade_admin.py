@@ -21,10 +21,11 @@ READONLY_FIELDS = (
     "database", "source_plan", "target_plan", "link_task", "started_at",
     "finished_at", "current_step", "status", "upgrade_action"
 )
-EXCLUDE = ("task", )
+EXCLUDE = ("task", "can_do_retry")
 ORDERING = ["-started_at"]
 ACTIONS = None
 LIST_SELECT_RELATED = None
+NO_ACTION = 'N/A'
 
 
 class DatabaseUpgradeTestCase(TestCase):
@@ -108,7 +109,28 @@ class DatabaseUpgradeTestCase(TestCase):
         button = self.admin.upgrade_action(self.database_upgrade)
         self.assertIn(url, button)
 
-    def test_test_upgrade_action_without_error(self):
+    def test_upgrade_action_without_error_and_cannot_do_retry(self):
         self.database_upgrade.status = DatabaseUpgrade.SUCCESS
+        self.database_upgrade.can_do_retry = False
         button = self.admin.upgrade_action(self.database_upgrade)
-        self.assertEqual('N/A', button)
+        self.assertEqual(NO_ACTION, button)
+
+    def test_upgrade_action_with_error_and_cannot_do_retry(self):
+        self.database_upgrade.status = DatabaseUpgrade.ERROR
+        self.database_upgrade.can_do_retry = False
+        button = self.admin.upgrade_action(self.database_upgrade)
+        self.assertEqual(NO_ACTION, button)
+
+    def test_upgrade_action_without_error_and_can_do_retry(self):
+        self.database_upgrade.status = DatabaseUpgrade.SUCCESS
+        self.database_upgrade.can_do_retry = True
+        button = self.admin.upgrade_action(self.database_upgrade)
+        self.assertEqual(NO_ACTION, button)
+
+    def test_upgrade_action_with_error_and_can_do_retry(self):
+        self.database_upgrade.status = DatabaseUpgrade.ERROR
+        self.database_upgrade.can_do_retry = True
+
+        url = self.database_upgrade.database.get_upgrade_retry_url()
+        button = self.admin.upgrade_action(self.database_upgrade)
+        self.assertIn(url, button)

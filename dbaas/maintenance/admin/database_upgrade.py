@@ -13,7 +13,7 @@ class DatabaseUpgradeAdmin(admin.ModelAdmin):
         "database__team", "source_plan", "target_plan", "source_plan__engine",
         "status",
     ]
-    exclude = ("task", )
+    exclude = ("task", "can_do_retry")
 
     actions = None
     list_display = (
@@ -62,7 +62,7 @@ class DatabaseUpgradeAdmin(admin.ModelAdmin):
     link_task.short_description = "Task"
 
     def upgrade_action(self, upgrade):
-        if not upgrade.is_status_error:
+        if not upgrade.is_status_error or not upgrade.can_do_retry:
             return 'N/A'
 
         url = upgrade.database.get_upgrade_retry_url()
