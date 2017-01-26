@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 import logging
 from util import full_stack
-from . import start_vm_func
-from . import stop_vm_func
-from ...util.base import BaseStep
-from ....exceptions.error_codes import DBAAS_0015
+from workflow.steps.util.resize import start_vm_func
+from workflow.steps.util.resize import stop_vm_func
+from workflow.steps.util.base import BaseStep
+from workflow.exceptions.error_codes import DBAAS_0015
 
 LOG = logging.getLogger(__name__)
 
