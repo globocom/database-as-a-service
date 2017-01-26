@@ -216,7 +216,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     engine_type.admin_order_field = 'name'
 
     def engine_html(self, database):
-        last_upgrade = database.upgrades.last()
+        upgrades = database.upgrades.filter(source_plan=database.infra.plan)
+        last_upgrade = upgrades.last()
         if not(last_upgrade and last_upgrade.is_status_error):
             return database.engine
 
@@ -449,7 +450,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             )
             extra_context['can_upgrade'] = has_equivalent_plan and has_permission
 
-        last_upgrade = database.upgrades.last()
+        upgrades = database.upgrades.filter(source_plan=database.infra.plan)
+        last_upgrade = upgrades.last()
         extra_context['last_upgrade'] = last_upgrade
         extra_context['retry_upgrade'] = False
         if last_upgrade:
