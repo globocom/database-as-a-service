@@ -12,7 +12,7 @@ from util import get_credentials_for
 LOG = logging.getLogger(__name__)
 
 
-def start_vm(workflow_dict):
+def start_vm_func(workflow_dict):
     try:
         environment = workflow_dict['environment']
         cs_credentials = get_credentials_for(
@@ -47,7 +47,7 @@ def start_vm(workflow_dict):
         return False
 
 
-def stop_vm(workflow_dict):
+def stop_vm_func(workflow_dict):
     try:
         environment = workflow_dict['environment']
         cs_credentials = get_credentials_for(
