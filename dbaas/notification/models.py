@@ -193,3 +193,7 @@ class TaskHistory(BaseModel):
     @classmethod
     def waiting_tasks(cls):
         return cls.objects.filter(task_status=cls.STATUS_WAITING)
+
+    @property
+    def is_running(self):
+        return self.task_status == self.STATUS_RUNNING

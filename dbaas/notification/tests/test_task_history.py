@@ -61,3 +61,11 @@ class TaskHistoryTestCase(TestCase):
     def test_can_get_waiting_tasks_empty(self):
         tasks = TaskHistory.waiting_tasks()
         self.assertEqual(len(tasks), 0)
+
+    def test_is_running(self):
+        self.task.task_status = TaskHistory.STATUS_RUNNING
+        self.assertTrue(self.task.is_running)
+
+    def test_is_not_running(self):
+        self.task.task_status = TaskHistory.STATUS_SUCCESS
+        self.assertFalse(self.task.is_running)
