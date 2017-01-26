@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 from django.utils.safestring import mark_safe, mark_for_escaping
+from django.utils.html import format_html, escape
 
 
 def render_progress_bar(current, total=100, message="%", bar_type="auto", striped=False, active=False):
@@ -51,3 +52,13 @@ def render_progress_bar(current, total=100, message="%", bar_type="auto", stripe
             "p": p,
         }
     return mark_safe(html)
+
+
+def show_info_popup(field, title, content, icon, css_class):
+    html = '{} <a href="javascript:void(0)" ' \
+           'title="{}" ' \
+           'data-content="{}" ' \
+           'class="{}">' \
+           '<span class="{}"></span>' \
+           '</a>'.format(field, title, content, css_class, icon)
+    return format_html(html)

@@ -6,7 +6,9 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from dateutil import tz
 from datetime import datetime
-from physical.models import Host
+from logical.models import Database
+from physical.models import Host, Plan
+from notification.models import TaskHistory
 from util.models import BaseModel
 from django.db.models.signals import post_save
 from django.db.models.signals import pre_delete
@@ -14,6 +16,8 @@ from django.dispatch import receiver
 from celery.task import control
 from maintenance.tasks import execute_scheduled_maintenance
 from .registered_functions.functools import _get_registered_functions
+
+
 LOG = logging.getLogger(__name__)
 
 
@@ -215,9 +219,90 @@ class MaintenanceParameters(BaseModel):
             ("view_maintenance_parameters", "Can view maintenance parameters"),
         )
 
+
+class DatabaseUpgrade(BaseModel):
+    WAITING = 0
+    RUNNING = 1
+    ERROR = 2
+    SUCCESS = 3
+    UPGRADE_STATUS = (
+        (WAITING, 'Waiting'),
+        (RUNNING, 'Running'),
+        (ERROR, 'Error'),
+        (SUCCESS, 'Success'),
+    )
+
+    database = models.ForeignKey(
+        Database, verbose_name="Database",
+        null=False, unique=False, related_name="upgrades"
+    )
+    source_plan = models.ForeignKey(
+        Plan, verbose_name="Source", null=False, unique=False,
+        related_name="database_upgrades_source"
+    )
+    target_plan = models.ForeignKey(
+        Plan, verbose_name="Target", null=False, unique=False,
+        related_name="database_upgrades_target"
+    )
+    current_step = models.PositiveSmallIntegerField(
+        verbose_name="Current Step", null=False, blank=False, default=0
+    )
+    task = models.ForeignKey(
+        TaskHistory, verbose_name="Task History",
+        null=False, unique=False, related_name="database_upgrades"
+    )
+    status = models.IntegerField(
+        verbose_name="Status", choices=UPGRADE_STATUS, default=WAITING
+    )
+    started_at = models.DateTimeField(
+        verbose_name="Started at", null=True, blank=True
+    )
+    finished_at = models.DateTimeField(
+        verbose_name="Finished at", null=True, blank=True
+    )
+    can_do_retry = models.BooleanField(
+        verbose_name=_("Can Do Retry"), default=True
+    )
+
+    def __unicode__(self):
+        return "{} upgrade".format(self.database.name)
+
+    def update_step(self, step):
+        if not self.started_at:
+            self.started_at = datetime.now()
+
+        self.status = self.RUNNING
+        self.current_step = step
+        self.save()
+
+    def __update_final_status(self, status):
+        self.finished_at = datetime.now()
+        self.status = status
+        self.save()
+
+    def set_success(self):
+        self.__update_final_status(self.SUCCESS)
+
+    def set_error(self):
+        self.__update_final_status(self.ERROR)
+
+    @property
+    def is_status_error(self):
+        return self.status == self.ERROR
+
+    def save(self, *args, **kwargs):
+        super(DatabaseUpgrade, self).save(*args, **kwargs)
+
+        older_upgrades = DatabaseUpgrade.objects.filter(
+            database=self.database, source_plan=self.source_plan
+        ).exclude(id=self.id)
+        older_upgrades.update(can_do_retry=False)
+
+
 simple_audit.register(Maintenance)
 simple_audit.register(HostMaintenance)
 simple_audit.register(MaintenanceParameters)
+simple_audit.register(DatabaseUpgrade)
 
 
 #########

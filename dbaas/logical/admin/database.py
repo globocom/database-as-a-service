@@ -35,6 +35,7 @@ from notification.models import TaskHistory
 from physical.models import Plan, Host, DiskOffering
 from system.models import Configuration
 from util import get_credentials_for
+from util.html import show_info_popup
 from logical.templatetags import capacity
 from logical.models import Database
 from logical.forms import DatabaseForm, CloneDatabaseForm, ResizeDatabaseForm, \
@@ -65,7 +66,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         "environment__name", "databaseinfra__engine__engine_type__name"
     )
     list_display_basic = [
-        "name_html", "team_admin_page", "engine", "environment", "offering",
+        "name_html", "team_admin_page", "engine_html", "environment", "offering",
         "friendly_status", "clone_html", "get_capacity_html", "metrics_html",
         "created_dt_format"
     ]
@@ -203,20 +204,38 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             ed_point = escape(database.get_endpoint_dns())
         except:
             ed_point = None
-        html = '%(name)s <a href="javascript:void(0)" title="%(title)s" data-content="%(endpoint)s" class="show-endpoint"><span class="icon-info-sign"></span></a>' % {
-            'name': database.name,
-            'endpoint': ed_point,
-            'title': _("Show Endpoint")
-        }
-        return format_html(html)
-
+        return show_info_popup(
+            database.name, "Show Endpoint", ed_point,
+            "icon-info-sign", "show-endpoint"
+        )
     name_html.short_description = _("name")
     name_html.admin_order_field = "name"
 
     def engine_type(self, database):
         return database.engine_type
-
     engine_type.admin_order_field = 'name'
+
+    def engine_html(self, database):
+        upgrades = database.upgrades.filter(source_plan=database.infra.plan)
+        last_upgrade = upgrades.last()
+        if not(last_upgrade and last_upgrade.is_status_error):
+            return database.engine
+
+        upgrade_url = reverse('admin:maintenance_databaseupgrade_change', args=[last_upgrade.id])
+        task_url = reverse('admin:notification_taskhistory_change', args=[last_upgrade.task.id])
+        retry_url = database.get_upgrade_retry_url()
+        upgrade_content = \
+            "<a href='{}' target='_blank'>Last upgrade</a> has an <b>error</b>, " \
+            "please check the <a href='{}' target='_blank'>task</a> and " \
+            "<a href='{}'>retry</a> the database upgrade".format(
+                upgrade_url, task_url, retry_url
+            )
+        return show_info_popup(
+            database.engine, "Database Upgrade", upgrade_content,
+            icon="icon-warning-sign", css_class="show-upgrade"
+        )
+    engine_html.short_description = _("engine")
+    engine_html.admin_order_field = "Engine"
 
     def get_capacity_html(self, database):
         try:
@@ -430,6 +449,13 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 database.infra.plan.engine_equivalent_plan
             )
             extra_context['can_upgrade'] = has_equivalent_plan and has_permission
+
+        upgrades = database.upgrades.filter(source_plan=database.infra.plan)
+        last_upgrade = upgrades.last()
+        extra_context['last_upgrade'] = last_upgrade
+        extra_context['retry_upgrade'] = False
+        if last_upgrade:
+            extra_context['retry_upgrade'] = last_upgrade.is_status_error
 
         if database.is_in_quarantine:
             extra_context['delete_button_name'] = self.delete_button_name
@@ -991,6 +1017,44 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
         return HttpResponseRedirect(url)
 
+    def upgrade_retry(self, request, database_id):
+        database = Database.objects.get(id=database_id)
+
+        can_do_upgrade, error = database.can_do_upgrade()
+        if can_do_upgrade:
+            source_plan = database.databaseinfra.plan
+            upgrades = database.upgrades.filter(source_plan=source_plan)
+            last_upgrade = upgrades.last()
+            if not last_upgrade:
+                error = "Database does not have upgrades from {} {}!".format(
+                    source_plan.engine.engine_type, source_plan.engine.version
+                )
+            elif not last_upgrade.is_status_error:
+                error = "Cannot do retry, last upgrade status is '{}'!".format(
+                    last_upgrade.get_status_display()
+                )
+            else:
+                since_step = last_upgrade.current_step
+
+        if error:
+            url = reverse('admin:logical_database_change', args=[database.id])
+            self.message_user(request, error, level=messages.ERROR)
+            return HttpResponseRedirect(url)
+
+        task_history = TaskHistory()
+        task_history.task_name = "upgrade_database_retry"
+        task_history.task_status = task_history.STATUS_WAITING
+        task_history.arguments = "Retrying upgrade database {}".format(database)
+        task_history.user = request.user
+        task_history.save()
+
+        upgrade_database.delay(
+            database, request.user, task_history, since_step
+        )
+
+        url = reverse('admin:notification_taskhistory_changelist')
+        return HttpResponseRedirect(url)
+
     def upgrade(self, request, database_id):
         database = Database.objects.get(id=database_id)
 
@@ -1062,6 +1126,12 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             url(
                 r'^/?(?P<database_id>\d+)/upgrade/$',
                 self.admin_site.admin_view(self.upgrade), name="upgrade"
+            ),
+
+            url(
+                r'^/?(?P<database_id>\d+)/upgrade_retry/$',
+                self.admin_site.admin_view(self.upgrade_retry),
+                name="upgrade_retry"
             ),
         )
 

@@ -59,6 +59,10 @@
     vertical-align: middle;
 }
 
+.show-upgrade span {
+    vertical-align: middle;
+}
+
 .sortpriority {
     display:none;
 }

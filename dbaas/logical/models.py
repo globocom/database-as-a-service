@@ -422,6 +422,9 @@ class Database(BaseModel):
     def get_upgrade_url(self):
         return "/admin/logical/database/{}/upgrade/".format(self.id)
 
+    def get_upgrade_retry_url(self):
+        return "/admin/logical/database/{}/upgrade_retry/".format(self.id)
+
     def is_mongodb_24(self):
         engine = self.engine
         if engine.name == 'mongodb' and engine.version.startswith('2.4'):
