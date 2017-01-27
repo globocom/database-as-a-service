@@ -460,6 +460,7 @@ def purge_task_history(self):
                 'notification.tasks.update_disk_used_size',
                 'notification.tasks.update_database_status',
                 'notification.tasks.update_instances_status',
+                'sync_celery_tasks',
                 'system.tasks.set_celery_healthcheck_last_update'
             ],
             ended_at__lt=n_days_before,
