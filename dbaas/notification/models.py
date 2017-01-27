@@ -36,7 +36,8 @@ class TaskHistory(BaseModel):
     ended_at = models.DateTimeField(
         verbose_name=_("Ended at"), null=True, blank=True, editable=False)
     task_status = models.CharField(
-        _('Task Status'), max_length=100, default=STATUS_PENDING)
+        _('Task Status'), max_length=100, default=STATUS_PENDING, db_index=True
+    )
     context = models.TextField(null=True, blank=True)
     details = models.TextField(
         verbose_name=_("Details"), null=True, blank=True)
