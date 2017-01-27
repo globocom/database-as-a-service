@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
+import datetime
 from optparse import make_option
+import socket
 from django.core.management.base import BaseCommand, CommandError
 from dbaas.celery import app
 from util import full_stack
@@ -14,8 +16,8 @@ class Command(BaseCommand):
         make_option(
             "-n",
             "--celery_hosts",
-            dest = "celery_hosts",
-            help = "Number of celery hosts",
+            dest="celery_hosts",
+            help="Number of celery hosts",
             type="int",
         ),
     )
@@ -24,13 +26,15 @@ class Command(BaseCommand):
         super(Command, self).__init__()
 
         self.task = TaskHistory()
-        self.task.task_id = "crontab"
+        self.task.task_id = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
         self.task.task_name = "sync_celery_tasks"
         self.task.task_status = TaskHistory.STATUS_RUNNING
+        self.task.context = {'hostname': socket.gethostname()}
         self.task.save()
         self.task.add_detail('Syncing metadata tasks with celery tasks')
 
     def handle(self, *args, **kwargs):
+        self.task.arguments = {'args': args, 'kwargs': kwargs}
         if not kwargs['celery_hosts']:
             raise CommandError("Please specified the --celery_hosts count")
 
@@ -94,15 +98,15 @@ class Command(BaseCommand):
 
         return tasks_with_problem
 
-    def get_celery_active_tasks(self, celery_hosts):
+    def get_celery_active_tasks(self, expected_hosts):
         self.task.add_detail('Collecting celery tasks...')
         actives = app.control.inspect().active()
 
         activated_hosts = actives.keys()
-        if len(activated_hosts) != celery_hosts:
+        if len(activated_hosts) != expected_hosts:
             raise EnvironmentError(
                 "I'm expecting {} celery hosts and found {}! {}".format(
-                    celery_hosts, len(activated_hosts), activated_hosts
+                    expected_hosts, len(activated_hosts), activated_hosts
                 )
             )
 
