@@ -456,6 +456,7 @@ def purge_task_history(self):
             task_name__in=[
                 'notification.tasks.database_notification',
                 'notification.tasks.database_notification_for_team',
+                'notification.tasks.sync_celery_tasks',
                 'notification.tasks.update_database_used_size',
                 'notification.tasks.update_disk_used_size',
                 'notification.tasks.update_database_status',
