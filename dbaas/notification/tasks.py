@@ -847,3 +847,28 @@ def upgrade_database(self, database, user, task, since_step=0):
             TaskHistory.STATUS_ERROR,
             'Could not do upgrade.\nUpgrade don\'t has rollback'
         )
+
+
+@app.task(bind=True)
+def sync_celery_tasks(self, *args, **kwargs):
+    task = TaskHistory.register(
+        request=self.request, user=None, worker_name=get_worker_name()
+    )
+    task.add_detail(message='Syncing metadata tasks with celery tasks')
+
+
+    try:
+        from .tasks_sync_celery import check_tasks
+        tasks_with_problem = check_tasks(task, self.request.kwargs['celery_hosts'])
+    except Exception as e:
+        task.update_status_for(
+            TaskHistory.STATUS_ERROR,
+            'Could not check celery tasks.\n{}{}'.format(full_stack(), e)
+        )
+        return
+
+    problems = len(tasks_with_problem)
+    status = TaskHistory.STATUS_SUCCESS
+    if problems > 0:
+        status = TaskHistory.STATUS_WARNING
+    task.update_status_for(status, 'Problems: {}'.format(problems))
