@@ -3,7 +3,6 @@ from system.models import Configuration
 from datetime import date, timedelta
 from dbaas.celery import app
 from util.decorators import only_one
-from util.providers import destroy_infra
 from simple_audit.models import AuditRequest
 from notification.models import TaskHistory
 from account.models import AccountUser
@@ -17,37 +16,45 @@ LOG = logging.getLogger(__name__)
 def purge_quarantine(self,):
     user = AccountUser.objects.get(username='admin')
     AuditRequest.new_request("purge_quarantine", user, "localhost")
-    try:
 
+    try:
         task_history = TaskHistory.register(request=self.request, user=user)
 
-        LOG.info("id: %s | task: %s | kwargs: %s | args: %s" % (
-            self.request.id, self.request.task, self.request.kwargs, str(self.request.args)))
-        quarantine_time = Configuration.get_by_name_as_int(
-            'quarantine_retention_days')
-        quarantine_time_dt = date.today() - timedelta(days=quarantine_time)
+        LOG.info(
+            "id: {} | task: {} | kwargs: {} | args: {}".format(
+                self.request.id, self.request.task,
+                self.request.kwargs, str(self.request.args)
+            )
+        )
 
-        databases = Database.objects.filter(is_in_quarantine=True,
-                                            quarantine_dt__lte=quarantine_time_dt)
+        quarantine_time = Configuration.get_by_name_as_int(
+            'quarantine_retention_days'
+        )
+        quarantine_time_dt = date.today() - timedelta(days=quarantine_time)
+        task_history.add_detail(
+            "Quarantine date older than {}".format(quarantine_time_dt)
+        )
+
+        databases = Database.objects.filter(
+            is_in_quarantine=True, quarantine_dt__lte=quarantine_time_dt
+        )
+        task_history.add_detail(
+            "Databases to purge: {}".format(len(databases))
+        )
 
         for database in databases:
-            if database.plan.provider == database.plan.CLOUDSTACK:
-                databaseinfra = database.databaseinfra
-
-                destroy_infra(databaseinfra=databaseinfra, task=task_history)
-            else:
-                database.delete()
-
-            LOG.info("The database %s was deleted, because it was set to quarentine %d days ago" % (
-                database.name, quarantine_time))
+            task_history.add_detail('Deleting {}...'.format(database), level=2)
+            database.destroy(user)
 
         task_history.update_status_for(
-            TaskHistory.STATUS_SUCCESS, details='Databases destroyed successfully')
+            TaskHistory.STATUS_SUCCESS,
+            details='Databases destroyed successfully'
+        )
         return
 
-    except Exception:
+    except Exception as e:
         task_history.update_status_for(
-            TaskHistory.STATUS_ERROR, details="Error")
+            TaskHistory.STATUS_ERROR, details="Error\n{}".format(e))
         return
     finally:
         AuditRequest.cleanup_request()
