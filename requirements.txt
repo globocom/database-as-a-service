@@ -37,7 +37,7 @@ logilab-common==0.60.0
 paramiko==1.13.0
 pyasn1==0.1.7
 pycrypto==2.6
-pymongo==3.0.3
+pymongo==3.4.0
 python-gnupg==0.3.6
 python-keyczar==0.71c
 python-ldap==2.3.13
@@ -53,7 +53,7 @@ wsgiref==0.1.2
 dbaas_cloudstack==0.8.6
 dbaas_credentials==1.1.10
 dbaas_nfsaas==0.6.13
-dbaas_zabbix==0.4.15
+dbaas_zabbix==0.4.16
 dbaas_dbmonitor==0.2.4
 dbaas_flipper==0.0.9
 django-filter==0.9.1
