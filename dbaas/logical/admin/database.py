@@ -29,8 +29,7 @@ from dbaas_credentials.models import CredentialType
 from dbaas import constants
 from account.models import Team
 from drivers import DatabaseAlreadyExists
-from notification.tasks import destroy_database, create_database, \
-    upgrade_database
+from notification.tasks import create_database, upgrade_database
 from notification.models import TaskHistory
 from physical.models import Plan, Host, DiskOffering
 from system.models import Configuration
@@ -503,28 +502,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             url = reverse('admin:logical_database_changelist')
             return HttpResponseRedirect(url)
 
-        if database.is_in_quarantine:
-            if database.plan.provider == database.plan.CLOUDSTACK:
-                LOG.debug(
-                    "call destroy_database - name=%s, team=%s, project=%s, user=%s" % (
-                        database.name, database.team, database.project, request.user))
-
-                task_history = TaskHistory()
-                task_history.task_name = "destroy_database"
-                task_history.task_status = task_history.STATUS_WAITING
-                task_history.arguments = "Database name: {}".format(
-                    database.name)
-                task_history.user = request.user
-                task_history.save()
-
-                destroy_database.delay(database=database,
-                                       task_history=task_history,
-                                       user=request.user
-                                       )
-            else:
-                database.delete()
-        else:
-            database.delete()
+        database.destroy(request.user)
 
     def clone_view(self, request, database_id):
         database = Database.objects.get(id=database_id)

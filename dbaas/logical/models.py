@@ -594,6 +594,34 @@ class Database(BaseModel):
             return False, error
         return True, None
 
+    def destroy(self, user):
+        if not self.is_in_quarantine:
+            self.delete()
+            return
+
+        if self.plan.provider != self.plan.CLOUDSTACK:
+            self.delete()
+            return
+
+        LOG.debug(
+            "call destroy_database - name={}, team={}, project={}, "
+            "user={}".format(self.name, self.team, self.project, user)
+        )
+
+        from notification.models import TaskHistory
+        from notification.tasks import destroy_database
+
+        task_history = TaskHistory()
+        task_history.task_name = "destroy_database"
+        task_history.task_status = task_history.STATUS_WAITING
+        task_history.arguments = "Database name: {}".format(self.name)
+        task_history.user = user
+        task_history.save()
+
+        destroy_database.delay(
+            database=self, task_history=task_history, user=user
+        )
+        return
 
 class Credential(BaseModel):
     USER_PATTERN = "u_%s"
