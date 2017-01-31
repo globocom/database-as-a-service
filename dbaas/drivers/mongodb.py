@@ -342,10 +342,9 @@ class MongoDB(BaseDriver):
 
     def switch_master(self):
         client = self.get_client(None)
-        client.admin.command('replSetFreeze', 10)
         try:
             client.admin.command('replSetStepDown', 10)
-        except pymongo.errors.PyMongoError, e:
+        except pymongo.errors.AutoReconnect, e:
             pass
 
     def get_database_agents(self):
