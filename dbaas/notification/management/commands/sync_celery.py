@@ -9,6 +9,15 @@ from util import full_stack
 from notification.models import TaskHistory
 
 
+class CeleryActivesNodeError(EnvironmentError):
+
+    def __init__(self, expected, current_actives):
+        msg = "I'm expecting {} celery hosts and found {}! {}".format(
+            expected, len(current_actives), current_actives
+        )
+        super(EnvironmentError, self).__init__(msg)
+
+
 class Command(BaseCommand):
     help = "Check if all Tasks with status running are in celery"
 
@@ -40,10 +49,18 @@ class Command(BaseCommand):
 
         try:
             tasks_with_problem = self.check_tasks(kwargs['celery_hosts'])
+        except CeleryActivesNodeError as celery_error:
+            self.task.update_status_for(
+                TaskHistory.STATUS_WARNING,
+                'Could not check celery tasks.\n{}{}'.format(
+                    full_stack(), celery_error
+                )
+            )
+            return
         except Exception as e:
             self.task.update_status_for(
                 TaskHistory.STATUS_ERROR,
-                'Could not check celery tasks.\n{}{}'.format(full_stack(), e)
+                'Could not execute task.\n{}{}'.format(full_stack(), e)
             )
             return
 
@@ -102,13 +119,12 @@ class Command(BaseCommand):
         self.task.add_detail('Collecting celery tasks...')
         actives = app.control.inspect().active()
 
-        activated_hosts = actives.keys()
+        activated_hosts = []
+        if actives:
+            activated_hosts = actives.keys()
+
         if len(activated_hosts) != expected_hosts:
-            raise EnvironmentError(
-                "I'm expecting {} celery hosts and found {}! {}".format(
-                    expected_hosts, len(activated_hosts), activated_hosts
-                )
-            )
+            raise CeleryActivesNodeError(expected_hosts, activated_hosts)
 
         active_tasks = []
         for host, tasks in actives.items():
