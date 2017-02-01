@@ -6,6 +6,7 @@ import logging
 
 from ..models import TaskHistory
 from dbaas import constants
+from account.models import Team
 
 LOG = logging.getLogger(__name__)
 
@@ -61,14 +62,15 @@ class TaskHistoryAdmin(admin.ModelAdmin):
         if request.user.has_perm(self.perm_add_database_infra):
             qs = super(TaskHistoryAdmin, self).queryset(request)
             return qs
-        else:
-            if request.GET.get('user'):
-                query_dict_copy = request.GET.copy()
-                del query_dict_copy['user']
-                request.GET = query_dict_copy
-            qs = super(TaskHistoryAdmin, self).queryset(request)
 
-        return qs.filter(user=request.user.username)
+        if request.GET.get('user'):
+            query_dict_copy = request.GET.copy()
+            del query_dict_copy['user']
+            request.GET = query_dict_copy
+
+        qs = super(TaskHistoryAdmin, self).queryset(request)
+        same_team_users = Team.users_at_same_team(request.user)
+        return qs.filter(user__in=[user.username for user in same_team_users])
 
     def changelist_view(self, request, extra_context=None):
         if request.user.has_perm(self.perm_add_database_infra):
