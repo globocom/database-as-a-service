@@ -14,7 +14,7 @@ LOG = logging.getLogger(__name__)
 class AccountTest(TestCase):
 
     def setUp(self):
-        self.new_user = factory.UserFactory()
+        self.new_user = factory.AccountUserFactory()
 
     def test_create_new_user(self):
         """

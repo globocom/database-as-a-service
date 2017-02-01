@@ -5,13 +5,13 @@ import factory
 from .. import models
 
 
-class UserFactory(factory.DjangoModelFactory):
+class AccountUserFactory(factory.DjangoModelFactory):
     FACTORY_FOR = models.AccountUser
 
     username = factory.Sequence(lambda n: 'user_{0}'.format(n))
     email = factory.Sequence(lambda n: 'user_{0}@email.test.com'.format(n))
 
-class UserForTeamsFactory(factory.DjangoModelFactory):
+class UserFactory(factory.DjangoModelFactory):
     FACTORY_FOR = User
 
     username = factory.Sequence(lambda n: 'user_{0}'.format(n))

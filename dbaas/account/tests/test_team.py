@@ -53,18 +53,17 @@ class TeamTest(TestCase):
         self.assertRaises(ValidationError, team.clean)
 
     def test_can_get_same_team_users(self):
-        self.new_team2 = factory.TeamFactory()
-        expected_users = [factory.UserForTeamsFactory() for _ in range(10)]
-        self.new_team.users.add(expected_users[0])
-        self.new_team2.users.add(expected_users[0])
-        for user in expected_users[1:6]:
+        new_team2 = factory.TeamFactory()
+        expected_users = [factory.UserFactory() for _ in range(10)]
+        new_team2.users.add(expected_users[0])
+        for user in expected_users[0:6]:
             self.new_team.users.add(user)
         for user in expected_users[4:]:
-            self.new_team2.users.add(user)
+            new_team2.users.add(user)
         self.new_team.save()
-        resulted_users = self.new_team.users_at_same_team(expected_users[0])
+        resulted_users = Team.users_at_same_team(expected_users[0])
         self.assertEqual(resulted_users, expected_users)
 
     def test_can_get_same_team_users_empty_user(self):
-        resulted_users = set(self.new_team.users_at_same_team())
+        resulted_users = set(Team.users_at_same_team(None))
         self.assertFalse(resulted_users)
