@@ -110,6 +110,21 @@ class Team(BaseModel):
 
         return list(all_users.difference(Set(users)))
 
+    @classmethod
+    def users_at_same_team(cls, current_user):
+        """get all users in the same team of a given user"""
+
+        if not current_user:
+            return []
+
+        users = []
+        teams = cls.objects.filter(users=current_user)
+        for team in teams:
+            for user in team.users.all():
+                if user not in users:
+                    users.append(user)
+        return users
+
     def databases_in_use_for(self, environment):
         #from physical.models import DatabaseInfra
         from logical.models import Database
