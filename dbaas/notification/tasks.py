@@ -348,7 +348,7 @@ def update_database_status(self):
         databases = Database.objects.all()
         msgs = []
         for database in databases:
-            if database.database_status.is_alive:
+            if database.database_status and database.database_status.is_alive:
                 database.status = Database.ALIVE
 
                 instances_status = database.databaseinfra.check_instances_status()
