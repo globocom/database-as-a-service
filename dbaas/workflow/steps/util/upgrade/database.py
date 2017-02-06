@@ -37,7 +37,11 @@ class DatabaseStep(BaseInstanceStep):
 
     def __is_instance_status(self, expected):
         for _ in range(CHECK_ATTEMPTS):
-            status = self.driver.check_status(instance=self.instance)
+            try:
+                status = self.driver.check_status(instance=self.instance)
+            except:
+                status = False
+
             if status == expected:
                 return True
             else:
