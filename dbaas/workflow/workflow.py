@@ -303,38 +303,52 @@ def execute(step, workflow_dict, is_rollback, task):
 
 
 def steps_for_instances(
-        steps, instances, task, step_counter_method=None, since_step=0
+        list_of_steps, instances, task, step_counter_method=None, since_step=0
 ):
-    steps_total = len(steps) * len(instances)
+    steps_total = 0
+    for steps in list_of_steps:
+        steps_total += len(steps)
+
+    steps_total = steps_total * len(instances)
     step_current = 0
 
     if since_step:
-        task.add_detail('Skipping until step {}'.format(since_step))
+        task.add_detail('Skipping until step {}\n'.format(since_step))
 
-    for instance in instances:
-        task.add_detail('Instance: {}'.format(instance))
-        for step in steps:
-            step_current += 1
+    for count, steps in enumerate(list_of_steps, start=1):
+        task.add_detail('Starting group of steps {} of {}'.format(
+            count, len(list_of_steps))
+        )
 
-            if step_counter_method:
-                step_counter_method(step_current)
+        for instance in instances:
+            task.add_detail('Instance: {}'.format(instance))
+            for step in steps:
+                step_current += 1
 
-            try:
-                step_class = import_by_path(step)
-                step_instance = step_class(instance)
+                if step_counter_method:
+                    step_counter_method(step_current)
 
-                task.add_step(step_current, steps_total, str(step_instance))
+                try:
+                    step_class = import_by_path(step)
+                    step_instance = step_class(instance)
 
-                if step_current < since_step:
-                    task.update_details("SKIPPED!", persist=True)
-                else:
-                    step_instance.do()
-                    task.update_details("SUCCESS!", persist=True)
+                    task.add_step(step_current, steps_total, str(step_instance))
 
-            except Exception as e:
-                task.update_details("FAILED!", persist=True)
-                task.add_detail(str(e))
-                task.add_detail(full_stack())
-                return False
+                    if step_current < since_step:
+                        task.update_details("SKIPPED!", persist=True)
+                    else:
+                        step_instance.do()
+                        task.update_details("SUCCESS!", persist=True)
+
+                except Exception as e:
+                    task.update_details("FAILED!", persist=True)
+                    task.add_detail(str(e))
+                    task.add_detail(full_stack())
+                    return False
+
+
+        task.add_detail('Ending group of steps: {} of {}\n'.format(
+            count, len(list_of_steps))
+        )
 
     return True

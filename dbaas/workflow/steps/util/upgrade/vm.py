@@ -86,3 +86,12 @@ class UpdateOSDescription(VmStep):
 
     def do(self):
         self.instance.hostname.update_os_description()
+
+
+class ChangeMaster(VmStep):
+
+    def __unicode__(self):
+        return "Changing master node..."
+
+    def do(self):
+        pass

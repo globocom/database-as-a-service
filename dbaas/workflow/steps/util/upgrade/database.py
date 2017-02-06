@@ -16,7 +16,6 @@ class DatabaseStep(BaseInstanceStep):
 
         self.infra = self.instance.databaseinfra
         self.driver = self.infra.get_driver()
-        self.future_plan = self.infra.plan.engine_equivalent_plan
 
     def do(self):
         raise NotImplementedError
@@ -102,16 +101,3 @@ class CheckIsDown(DatabaseStep):
     def do(self):
         if not self.is_down:
             raise EnvironmentError('Database is up, should be down')
-
-
-class UpdateInfra(DatabaseStep):
-
-    def __unicode__(self):
-        return "Updating Database Infra..."
-
-    def do(self):
-        self.infra.plan = self.future_plan
-        self.infra.engine = self.future_plan.engine
-
-        with transaction.atomic():
-            self.infra.save()

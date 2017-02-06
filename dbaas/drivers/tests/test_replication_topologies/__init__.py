@@ -61,25 +61,29 @@ class AbstractReplicationTopologySettingsTestCase(TestCase):
         )
 
     def _get_upgrade_settings(self):
-        return (
-            'workflow.steps.util.upgrade.zabbix.DestroyAlarms',
-            'workflow.steps.util.upgrade.db_monitor.DisableMonitoring',
-            'workflow.steps.util.upgrade.database.Stop',
-            'workflow.steps.util.upgrade.database.CheckIsDown',
-            'workflow.steps.util.upgrade.vm.Stop',
-            'workflow.steps.util.upgrade.vm.InstallNewTemplate',
-            'workflow.steps.util.upgrade.vm.Start',
-            'workflow.steps.util.upgrade.vm.WaitingBeReady',
-            'workflow.steps.util.upgrade.plan.Initialization',
-            'workflow.steps.util.upgrade.plan.Configure',
-            'workflow.steps.util.upgrade.pack.Configure',
-            'workflow.steps.util.upgrade.database.Start',
-            'workflow.steps.util.upgrade.database.CheckIsUp',
-            'workflow.steps.util.upgrade.vm.UpdateOSDescription',
-            'workflow.steps.util.upgrade.db_monitor.EnableMonitoring',
-            'workflow.steps.util.upgrade.zabbix.CreateAlarms',
-            'workflow.steps.util.upgrade.database.UpdateInfra',
-        )
+        return [
+            (
+                'workflow.steps.util.upgrade.vm.ChangeMaster',
+                'workflow.steps.util.upgrade.zabbix.DestroyAlarms',
+                'workflow.steps.util.upgrade.db_monitor.DisableMonitoring',
+                'workflow.steps.util.upgrade.database.Stop',
+                'workflow.steps.util.upgrade.database.CheckIsDown',
+                'workflow.steps.util.upgrade.vm.Stop',
+                'workflow.steps.util.upgrade.vm.InstallNewTemplate',
+                'workflow.steps.util.upgrade.vm.Start',
+                'workflow.steps.util.upgrade.vm.WaitingBeReady',
+                'workflow.steps.util.upgrade.plan.Initialization',
+                'workflow.steps.util.upgrade.plan.Configure',
+                'workflow.steps.util.upgrade.pack.Configure',
+                'workflow.steps.util.upgrade.database.Start',
+                'workflow.steps.util.upgrade.database.CheckIsUp',
+            ),
+            (
+                'workflow.steps.util.upgrade.vm.UpdateOSDescription',
+                'workflow.steps.util.upgrade.db_monitor.EnableMonitoring',
+                'workflow.steps.util.upgrade.zabbix.CreateAlarms',
+            )
+        ]
 
     @skip_unless_not_abstract
     def test_deploy_settings(self):
