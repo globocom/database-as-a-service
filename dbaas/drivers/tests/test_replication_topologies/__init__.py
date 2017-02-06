@@ -75,14 +75,22 @@ class AbstractReplicationTopologySettingsTestCase(TestCase):
                 'workflow.steps.util.upgrade.plan.Initialization',
                 'workflow.steps.util.upgrade.plan.Configure',
                 'workflow.steps.util.upgrade.pack.Configure',
+            ) + self._get_upgrade_steps_extra() + (
                 'workflow.steps.util.upgrade.database.Start',
                 'workflow.steps.util.upgrade.database.CheckIsUp',
             ),
+        ] + self._get_upgrade_steps_final()
+
+    def _get_upgrade_steps_extra(self):
+        return tuple()
+
+    def _get_upgrade_steps_final(self):
+        return [
             (
                 'workflow.steps.util.upgrade.vm.UpdateOSDescription',
                 'workflow.steps.util.upgrade.db_monitor.EnableMonitoring',
                 'workflow.steps.util.upgrade.zabbix.CreateAlarms',
-            )
+            ),
         ]
 
     @skip_unless_not_abstract
