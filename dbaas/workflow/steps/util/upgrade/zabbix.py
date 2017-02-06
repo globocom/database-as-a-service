@@ -12,11 +12,11 @@ class ZabbixStep(BaseInstanceStep):
 
         integration = CredentialType.objects.get(type=CredentialType.ZABBIX)
         environment = self.instance.databaseinfra.environment
-        credentials = Credential.get_credentials(environment, integration)
+        self.credentials = Credential.get_credentials(environment, integration)
 
         self.zabbix_provider = factory_for(
             databaseinfra=self.instance.databaseinfra,
-            credentials=credentials
+            credentials=self.credentials
         )
 
     def __del__(self):
@@ -55,8 +55,13 @@ class CreateAlarms(ZabbixStep):
 
     def do(self):
         DestroyAlarms(self.instance).do()
-
-        self.zabbix_provider.create_instance_basic_monitors(
+        engine_version = self.instance.databaseinfra.plan.engine_equivalent_plan.engine.version
+        zabbix_provider = factory_for(
+            databaseinfra=self.instance.databaseinfra,
+            credentials=self.credentials,
+            engine_version=engine_version
+        )
+        zabbix_provider.create_instance_basic_monitors(
             self.instance.hostname
         )
-        self.zabbix_provider.create_instance_monitors(self.instance)
+        zabbix_provider.create_instance_monitors(self.instance)
