@@ -29,8 +29,11 @@ class PlanStep(BaseInstanceStep):
             'ENGINE': self.new_plan.engine.engine_type.name,
             'UPGRADE': True,
         }
-
+        variables.update(self.get_variables_specifics())
         return variables
+
+    def get_variables_specifics(self):
+        return {}
 
     def do(self):
         raise NotImplementedError

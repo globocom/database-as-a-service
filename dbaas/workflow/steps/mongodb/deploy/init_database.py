@@ -27,6 +27,10 @@ class InitDatabaseMongoDB(BaseStep):
             mongodbkey = ''.join(random.choice(string.hexdigits)
                                  for i in range(50))
 
+            if workflow_dict['databaseinfra'].plan.is_ha:
+                workflow_dict['databaseinfra'].database_key = mongodbkey
+                workflow_dict['databaseinfra'].save()
+
             workflow_dict['replicasetname'] = 'ReplicaSet_' + \
                 workflow_dict['databaseinfra'].name
 

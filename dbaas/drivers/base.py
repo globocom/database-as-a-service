@@ -242,6 +242,10 @@ class BaseDriver(object):
         """ Returns database agents list"""
         raise NotImplementedError()
 
+    @property
+    def database_key(self):
+        return None
+
 
 class DatabaseStatus(object):
 

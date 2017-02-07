@@ -349,3 +349,9 @@ class MongoDB(BaseDriver):
 
     def get_database_agents(self):
         return []
+
+    @property
+    def database_key(self):
+        if self.databaseinfra.plan.is_ha:
+            from util import get_mongodb_key_file
+            return get_mongodb_key_file(self.databaseinfra)
