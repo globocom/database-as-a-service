@@ -56,6 +56,7 @@ class BaseTopology(object):
                 'workflow.steps.util.upgrade.vm.InstallNewTemplate',
                 'workflow.steps.util.upgrade.vm.Start',
                 'workflow.steps.util.upgrade.vm.WaitingBeReady',
+                'workflow.steps.util.upgrade.vm.UpdateOSDescription',
                 'workflow.steps.util.upgrade.plan.Initialization',
                 'workflow.steps.util.upgrade.plan.Configure',
                 'workflow.steps.util.upgrade.pack.Configure',
@@ -71,7 +72,6 @@ class BaseTopology(object):
     def get_upgrade_steps_final(self):
         return [
             (
-                'workflow.steps.util.upgrade.vm.UpdateOSDescription',
                 'workflow.steps.util.upgrade.db_monitor.EnableMonitoring',
                 'workflow.steps.util.upgrade.zabbix.CreateAlarms',
             ),
