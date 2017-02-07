@@ -66,7 +66,7 @@ class Stop(DatabaseStep):
 
     def do(self):
         return_code, output = self.stop_database()
-        if return_code != 0:
+        if return_code != 0 and not self.is_down:
             raise EnvironmentError(
                 'Could not stop database {}: {}'.format(return_code, output)
             )
@@ -79,7 +79,7 @@ class Start(DatabaseStep):
 
     def do(self):
         return_code, output = self.start_database()
-        if return_code != 0:
+        if return_code != 0 and not self.is_up:
             raise EnvironmentError(
                 'Could not start database {}: {}'.format(return_code, output)
             )
