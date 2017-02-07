@@ -27,12 +27,12 @@ class InitDatabaseMongoDB(BaseStep):
             mongodbkey = ''.join(random.choice(string.hexdigits)
                                  for i in range(50))
 
-            if workflow_dict['databaseinfra'].plan.is_ha:
-                workflow_dict['databaseinfra'].database_key = mongodbkey
-                workflow_dict['databaseinfra'].save()
+            infra = workflow_dict['databaseinfra']
+            if infra.plan.is_ha:
+                infra.database_key = mongodbkey
+                infra.save()
 
-            workflow_dict['replicasetname'] = 'ReplicaSet_' + \
-                workflow_dict['databaseinfra'].name
+            workflow_dict['replicasetname'] = infra.get_driver().replica_set_name
 
             mongodb_password = get_credentials_for(environment=workflow_dict['environment'],
                                                    credential_type=CredentialType.MONGODB).password
@@ -59,7 +59,7 @@ class InitDatabaseMongoDB(BaseStep):
                         'HOST': workflow_dict['hosts'][index].hostname.split('.')[0],
                         'DATABASENAME': workflow_dict['name'],
                         'ENGINE': 'mongodb',
-                        'IS_HA': workflow_dict['databaseinfra'].plan.is_ha
+                        'IS_HA': infra.plan.is_ha
                     }
                     databaserule = 'ARBITER'
                 else:
@@ -70,7 +70,7 @@ class InitDatabaseMongoDB(BaseStep):
                         'DATABASENAME': workflow_dict['name'],
                         'ENGINE': 'mongodb',
                         'DBPASSWORD': mongodb_password,
-                        'IS_HA': workflow_dict['databaseinfra'].plan.is_ha
+                        'IS_HA': infra.plan.is_ha
                     }
 
                     if index == 0:

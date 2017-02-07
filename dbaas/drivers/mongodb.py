@@ -355,3 +355,7 @@ class MongoDB(BaseDriver):
         if self.databaseinfra.plan.is_ha:
             from util import get_mongodb_key_file
             return get_mongodb_key_file(self.databaseinfra)
+
+    @property
+    def replica_set_name(self):
+        return 'ReplicaSet_{}'.format(self.databaseinfra.name)
