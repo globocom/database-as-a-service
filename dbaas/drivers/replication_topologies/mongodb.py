@@ -54,4 +54,20 @@ class MongoDBSingle(BaseMongoDB):
 
 
 class MongoDBReplicaset(BaseMongoDB):
-    pass
+
+    def get_upgrade_steps_extra(self):
+        return (
+            'workflow.steps.mongodb.upgrade.vm.ChangeBinaryTo32',
+        ) + super(MongoDBReplicaset, self).get_upgrade_steps_extra()
+
+    def get_upgrade_steps_final(self):
+        return [
+            (
+                'workflow.steps.util.upgrade.vm.ChangeMaster',
+                'workflow.steps.util.upgrade.database.Stop',
+                'workflow.steps.util.upgrade.database.CheckIsDown',
+                'workflow.steps.mongo.upgrade.vm.ChangeBinaryTo34',
+                'workflow.steps.util.upgrade.database.Start',
+                'workflow.steps.util.upgrade.database.CheckIsUp',
+            ),
+        ] + super(MongoDBReplicaset, self).get_upgrade_steps_final()

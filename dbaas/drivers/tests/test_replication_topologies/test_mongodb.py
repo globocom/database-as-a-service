@@ -64,3 +64,20 @@ class TestMongoDBReplicaset(AbstractBaseMondodbTestCase):
 
     def _get_replication_topology_driver(self):
         return MongoDBReplicaset()
+
+    def _get_upgrade_steps_extra(self):
+        return (
+            'workflow.steps.mongodb.upgrade.vm.ChangeBinaryTo32',
+        ) + super(TestMongoDBReplicaset, self)._get_upgrade_steps_extra()
+
+    def _get_upgrade_steps_final(self):
+        return [
+            (
+               'workflow.steps.util.upgrade.vm.ChangeMaster',
+               'workflow.steps.util.upgrade.database.Stop',
+               'workflow.steps.util.upgrade.database.CheckIsDown',
+               'workflow.steps.mongo.upgrade.vm.ChangeBinaryTo34',
+               'workflow.steps.util.upgrade.database.Start',
+               'workflow.steps.util.upgrade.database.CheckIsUp',
+           ),
+        ] + super(TestMongoDBReplicaset, self)._get_upgrade_steps_final()
