@@ -34,18 +34,25 @@ class DestroyAlarms(ZabbixStep):
     def __unicode__(self):
         return "Destroying Zabbix alarms..."
 
-    def do(self):
-        monitors = self.zabbix_provider.get_host_triggers(
-            self.instance.hostname.hostname
-        )
-        if monitors:
-            self.zabbix_provider.delete_instance_monitors(
-                self.instance.hostname.hostname
-            )
+    @property
+    def hosts_in_zabbix(self):
+        monitors = []
+        monitors.append(self.instance.hostname.hostname)
 
-        monitors = self.zabbix_provider.get_host_triggers(self.instance.dns)
-        if monitors:
-            self.zabbix_provider.delete_instance_monitors(self.instance.dns)
+        current_dns = self.instance.dns
+        monitors.append(current_dns)
+
+        for zabbix_extra in self.zabbix_provider.get_zabbix_databases_hosts():
+            if current_dns in zabbix_extra and zabbix_extra != current_dns:
+                monitors.append(zabbix_extra)
+        return monitors
+
+    def do(self):
+        for host in self.hosts_in_zabbix:
+            monitors = self.zabbix_provider.get_host_triggers(host)
+
+            if monitors:
+                self.zabbix_provider.delete_instance_monitors(host)
 
 
 class CreateAlarms(ZabbixStep):
