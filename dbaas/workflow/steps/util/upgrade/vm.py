@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from time import sleep
 from util import check_ssh
 from dbaas_cloudstack.models import HostAttr, PlanAttr
 from dbaas_cloudstack.provider import CloudStackProvider
@@ -7,12 +8,18 @@ from dbaas_credentials.models import CredentialType
 from workflow.steps.util.base import BaseInstanceStep
 
 
+CHANGE_MASTER_ATTEMPS = 4
+CHANGE_MASTER_SECONDS = 15
+
+
 class VmStep(BaseInstanceStep):
 
     def __init__(self, instance):
         super(VmStep, self).__init__(instance)
 
-        integration = CredentialType.objects.get(type=CredentialType.CLOUDSTACK)
+        integration = CredentialType.objects.get(
+            type=CredentialType.CLOUDSTACK
+        )
         environment = self.instance.databaseinfra.environment
         credentials = Credential.get_credentials(environment, integration)
 
@@ -23,6 +30,9 @@ class VmStep(BaseInstanceStep):
         new_plan = self.instance.databaseinfra.plan.engine_equivalent_plan
         cs_plan = PlanAttr.objects.get(plan=new_plan)
         self.bundle = cs_plan.bundle.first()
+
+        self.infra = self.instance.databaseinfra
+        self.driver = self.infra.get_driver()
 
     def do(self):
         raise NotImplementedError
@@ -51,6 +61,7 @@ class Start(VmStep):
         started = self.provider.start_virtual_machine(self.host_cs.vm_id)
         if not started:
             raise EnvironmentError("Could not start VM")
+
 
 class InstallNewTemplate(VmStep):
 
@@ -94,4 +105,19 @@ class ChangeMaster(VmStep):
         return "Changing master node..."
 
     def do(self):
-        pass
+        if not self.infra.plan.is_ha:
+            return
+
+        if self.driver.check_instance_is_master(instance=self.instance):
+            error = None
+
+            for _ in range(CHANGE_MASTER_ATTEMPS):
+                try:
+                    self.driver.check_replication_and_switch(self.instance)
+                except Exception as e:
+                    error = e
+                    sleep(CHANGE_MASTER_SECONDS)
+                else:
+                    return
+
+            raise error
