@@ -69,7 +69,7 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.util.upgrade.vm.ChangeMaster',
                 'workflow.steps.util.upgrade.database.Stop',
                 'workflow.steps.util.upgrade.database.CheckIsDown',
-                'workflow.steps.mongo.upgrade.vm.ChangeBinaryTo34',
+                'workflow.steps.mongodb.upgrade.vm.ChangeBinaryTo34',
                 'workflow.steps.util.upgrade.database.Start',
                 'workflow.steps.util.upgrade.database.CheckIsUp',
             ),
