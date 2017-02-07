@@ -43,22 +43,25 @@ class BaseMongoDB(BaseTopology):
 class MongoDBSingle(BaseMongoDB):
 
     def get_upgrade_steps_extra(self):
-        return (
+        return super(MongoDBSingle, self).get_upgrade_steps_extra() + (
             'workflow.steps.mongodb.upgrade.vm.ChangeBinaryTo32',
             'workflow.steps.util.upgrade.database.Start',
             'workflow.steps.util.upgrade.database.CheckIsUp',
             'workflow.steps.util.upgrade.database.Stop',
             'workflow.steps.util.upgrade.database.CheckIsDown',
             'workflow.steps.mongodb.upgrade.vm.ChangeBinaryTo34',
-        ) + super(MongoDBSingle, self).get_upgrade_steps_extra()
+        )
 
 
 class MongoDBReplicaset(BaseMongoDB):
 
     def get_upgrade_steps_extra(self):
         return (
+            'workflow.steps.mongodb.upgrade.plan.InitializationMongoHA',
+            'workflow.steps.mongodb.upgrade.plan.ConfigureMongoHA',
+            'workflow.steps.util.upgrade.pack.Configure',
             'workflow.steps.mongodb.upgrade.vm.ChangeBinaryTo32',
-        ) + super(MongoDBReplicaset, self).get_upgrade_steps_extra()
+        )
 
     def get_upgrade_steps_final(self):
         return [

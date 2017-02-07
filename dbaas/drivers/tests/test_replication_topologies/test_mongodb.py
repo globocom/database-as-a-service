@@ -50,14 +50,14 @@ class TestMongoDBSingle(AbstractBaseMondodbTestCase):
         return MongoDBSingle()
 
     def _get_upgrade_steps_extra(self):
-        return (
-                   'workflow.steps.mongodb.upgrade.vm.ChangeBinaryTo32',
-                   'workflow.steps.util.upgrade.database.Start',
-                   'workflow.steps.util.upgrade.database.CheckIsUp',
-                   'workflow.steps.util.upgrade.database.Stop',
-                   'workflow.steps.util.upgrade.database.CheckIsDown',
-                   'workflow.steps.mongodb.upgrade.vm.ChangeBinaryTo34',
-               ) + super(TestMongoDBSingle, self)._get_upgrade_steps_extra()
+        return super(TestMongoDBSingle, self)._get_upgrade_steps_extra() + (
+            'workflow.steps.mongodb.upgrade.vm.ChangeBinaryTo32',
+            'workflow.steps.util.upgrade.database.Start',
+            'workflow.steps.util.upgrade.database.CheckIsUp',
+            'workflow.steps.util.upgrade.database.Stop',
+            'workflow.steps.util.upgrade.database.CheckIsDown',
+            'workflow.steps.mongodb.upgrade.vm.ChangeBinaryTo34',
+        )
 
 
 class TestMongoDBReplicaset(AbstractBaseMondodbTestCase):
@@ -67,8 +67,11 @@ class TestMongoDBReplicaset(AbstractBaseMondodbTestCase):
 
     def _get_upgrade_steps_extra(self):
         return (
+            'workflow.steps.mongodb.upgrade.plan.InitializationMongoHA',
+            'workflow.steps.mongodb.upgrade.plan.ConfigureMongoHA',
+            'workflow.steps.util.upgrade.pack.Configure',
             'workflow.steps.mongodb.upgrade.vm.ChangeBinaryTo32',
-        ) + super(TestMongoDBReplicaset, self)._get_upgrade_steps_extra()
+        )
 
     def _get_upgrade_steps_final(self):
         return [

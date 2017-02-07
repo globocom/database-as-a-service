@@ -57,9 +57,6 @@ class BaseTopology(object):
                 'workflow.steps.util.upgrade.vm.Start',
                 'workflow.steps.util.upgrade.vm.WaitingBeReady',
                 'workflow.steps.util.upgrade.vm.UpdateOSDescription',
-                'workflow.steps.util.upgrade.plan.Initialization',
-                'workflow.steps.util.upgrade.plan.Configure',
-                'workflow.steps.util.upgrade.pack.Configure',
             ) + self.get_upgrade_steps_extra() + (
                 'workflow.steps.util.upgrade.database.Start',
                 'workflow.steps.util.upgrade.database.CheckIsUp',
@@ -67,7 +64,11 @@ class BaseTopology(object):
         ] + self.get_upgrade_steps_final()
 
     def get_upgrade_steps_extra(self):
-        return tuple()
+        return (
+            'workflow.steps.util.upgrade.plan.Initialization',
+            'workflow.steps.util.upgrade.plan.Configure',
+            'workflow.steps.util.upgrade.pack.Configure',
+        )
 
     def get_upgrade_steps_final(self):
         return [

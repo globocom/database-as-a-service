@@ -73,9 +73,6 @@ class AbstractReplicationTopologySettingsTestCase(TestCase):
                 'workflow.steps.util.upgrade.vm.Start',
                 'workflow.steps.util.upgrade.vm.WaitingBeReady',
                 'workflow.steps.util.upgrade.vm.UpdateOSDescription',
-                'workflow.steps.util.upgrade.plan.Initialization',
-                'workflow.steps.util.upgrade.plan.Configure',
-                'workflow.steps.util.upgrade.pack.Configure',
             ) + self._get_upgrade_steps_extra() + (
                 'workflow.steps.util.upgrade.database.Start',
                 'workflow.steps.util.upgrade.database.CheckIsUp',
@@ -83,7 +80,11 @@ class AbstractReplicationTopologySettingsTestCase(TestCase):
         ] + self._get_upgrade_steps_final()
 
     def _get_upgrade_steps_extra(self):
-        return tuple()
+        return (
+            'workflow.steps.util.upgrade.plan.Initialization',
+            'workflow.steps.util.upgrade.plan.Configure',
+            'workflow.steps.util.upgrade.pack.Configure',
+        )
 
     def _get_upgrade_steps_final(self):
         return [
