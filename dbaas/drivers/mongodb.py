@@ -111,11 +111,12 @@ class MongoDB(BaseDriver):
 
             client = pymongo.MongoClient(
                 connection_address, connectTimeoutMS=connection_timeout_in_miliseconds)
-            if self.databaseinfra.user and self.databaseinfra.password:
-                LOG.debug(
-                    'Authenticating databaseinfra %s', self.databaseinfra)
-                client.admin.authenticate(
-                    self.databaseinfra.user, self.databaseinfra.password)
+            if (not instance) or (instance and instance.instance_type != instance.MONGODB_ARBITER):
+                if self.databaseinfra.user and self.databaseinfra.password:
+                    LOG.debug('Authenticating databaseinfra %s',
+                              self.databaseinfra)
+                    client.admin.authenticate(self.databaseinfra.user,
+                                              self.databaseinfra.password)
             return client
         except TypeError:
             raise AuthenticationError(
