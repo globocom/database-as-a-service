@@ -303,11 +303,11 @@ def execute(step, workflow_dict, is_rollback, task):
 
 
 def steps_for_instances(
-        list_of_steps, instances, task, step_counter_method=None, since_step=0
+        list_of_groups_of_steps, instances, task, step_counter_method=None, since_step=0
 ):
     steps_total = 0
-    for steps in list_of_steps:
-        steps_total += len(steps)
+    for group_of_steps in list_of_groups_of_steps:
+        steps_total += len(group_of_steps.items()[0][1])
 
     steps_total = steps_total * len(instances)
     step_current = 0
@@ -315,11 +315,11 @@ def steps_for_instances(
     if since_step:
         task.add_detail('Skipping until step {}\n'.format(since_step))
 
-    for count, steps in enumerate(list_of_steps, start=1):
-        task.add_detail('Starting group of steps {} of {}'.format(
-            count, len(list_of_steps))
+    for count, group_of_steps in enumerate(list_of_groups_of_steps, start=1):
+        task.add_detail('Starting group of steps {} of {} - {}'.format(
+            count, len(list_of_groups_of_steps), group_of_steps.keys()[0])
         )
-
+        steps = group_of_steps.items()[0][1]
         for instance in instances:
             task.add_detail('Instance: {}'.format(instance))
             for step in steps:
@@ -346,9 +346,8 @@ def steps_for_instances(
                     task.add_detail(full_stack())
                     return False
 
-
         task.add_detail('Ending group of steps: {} of {}\n'.format(
-            count, len(list_of_steps))
+            count, len(list_of_groups_of_steps))
         )
 
     return True

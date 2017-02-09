@@ -44,9 +44,15 @@ class BaseTopology(object):
             'workflow.steps.util.restore_snapshot.clean_old_volumes.CleanOldVolumes',
         )
 
+    def get_upgrade_steps_description(self):
+        return 'Disabling monitoring and alarms and upgrading database'
+
+    def get_upgrade_steps_final_description(self):
+        return 'Enabling monitoring and alarms'
+
     def get_upgrade_steps(self):
-        return [
-            (
+        return [{
+            self.get_upgrade_steps_description(): (
                 'workflow.steps.util.upgrade.vm.ChangeMaster',
                 'workflow.steps.util.upgrade.zabbix.DestroyAlarms',
                 'workflow.steps.util.upgrade.db_monitor.DisableMonitoring',
@@ -61,7 +67,7 @@ class BaseTopology(object):
                 'workflow.steps.util.upgrade.database.Start',
                 'workflow.steps.util.upgrade.database.CheckIsUp',
             ),
-        ] + self.get_upgrade_steps_final()
+        }] + self.get_upgrade_steps_final()
 
     def get_upgrade_steps_extra(self):
         return (
@@ -71,9 +77,9 @@ class BaseTopology(object):
         )
 
     def get_upgrade_steps_final(self):
-        return [
-            (
+        return [{
+            self.get_upgrade_steps_final_description(): (
                 'workflow.steps.util.upgrade.db_monitor.EnableMonitoring',
                 'workflow.steps.util.upgrade.zabbix.CreateAlarms',
             ),
-        ]
+        }]

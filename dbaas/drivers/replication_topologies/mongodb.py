@@ -53,14 +53,17 @@ class MongoDBSingle(BaseMongoDB):
         )
 
     def get_upgrade_steps_final(self):
-        return [
-            (
+        return [{
+            'Setting feature compatibility version 3.4': (
                 'workflow.steps.mongodb.upgrade.database.SetFeatureCompatibilityVersion34',
             ),
-        ] + super(MongoDBSingle, self).get_upgrade_steps_final()
+        }] + super(MongoDBSingle, self).get_upgrade_steps_final()
 
 
 class MongoDBReplicaset(BaseMongoDB):
+
+    def get_upgrade_steps_description(self):
+        return 'Disable monitoring and alarms and upgrading to MongoDB 3.2'
 
     def get_upgrade_steps_extra(self):
         return (
@@ -71,8 +74,8 @@ class MongoDBReplicaset(BaseMongoDB):
         )
 
     def get_upgrade_steps_final(self):
-        return [
-            (
+        return [{
+            'Upgrading to MongoDB 3.4': (
                 'workflow.steps.util.upgrade.vm.ChangeMaster',
                 'workflow.steps.util.upgrade.database.Stop',
                 'workflow.steps.util.upgrade.database.CheckIsDown',
@@ -80,8 +83,8 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.util.upgrade.database.Start',
                 'workflow.steps.util.upgrade.database.CheckIsUp',
             ),
-        ] + [
-            (
+        }] + [{
+            'Setting feature compatibility version 3.4': (
                 'workflow.steps.mongodb.upgrade.database.SetFeatureCompatibilityVersion34',
             ),
-        ] + super(MongoDBReplicaset, self).get_upgrade_steps_final()
+        }] + super(MongoDBReplicaset, self).get_upgrade_steps_final()
