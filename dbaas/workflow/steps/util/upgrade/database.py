@@ -35,9 +35,6 @@ class DatabaseStep(BaseInstanceStep):
         return self._execute_init_script('stop')
 
     def __is_instance_status(self, expected):
-        if self.instance not in self.driver.get_database_instances():
-            return True
-
         for _ in range(CHECK_ATTEMPTS):
             try:
                 status = self.driver.check_status(instance=self.instance)
