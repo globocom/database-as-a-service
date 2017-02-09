@@ -13,7 +13,7 @@ class DatabaseInfraForm(forms.ModelForm):
         model = models.DatabaseInfra
 
     def __init__(self, *args, **kwargs):
-        if args:
+        if args and 'disk_offering' in args[0]:
             disk_offering = args[0]['disk_offering']
             plan_id = args[0]['plan']
             if not disk_offering and plan_id:
