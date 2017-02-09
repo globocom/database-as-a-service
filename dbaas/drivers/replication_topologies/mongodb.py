@@ -52,6 +52,13 @@ class MongoDBSingle(BaseMongoDB):
             'workflow.steps.mongodb.upgrade.vm.ChangeBinaryTo34',
         )
 
+    def get_upgrade_steps_final(self):
+        return [
+            (
+                'workflow.steps.mongodb.upgrade.database.SetFeatureCompatibilityVersion34',
+            ),
+        ] + super(MongoDBSingle, self).get_upgrade_steps_final()
+
 
 class MongoDBReplicaset(BaseMongoDB):
 
@@ -72,5 +79,9 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.mongodb.upgrade.vm.ChangeBinaryTo34',
                 'workflow.steps.util.upgrade.database.Start',
                 'workflow.steps.util.upgrade.database.CheckIsUp',
+            ),
+        ] + [
+            (
+                'workflow.steps.mongodb.upgrade.database.SetFeatureCompatibilityVersion34',
             ),
         ] + super(MongoDBReplicaset, self).get_upgrade_steps_final()
