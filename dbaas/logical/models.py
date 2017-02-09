@@ -240,10 +240,7 @@ class Database(BaseModel):
     def get_endpoint_dns_simple(self):
         return self.driver.get_connection_dns_simple(database=self)
 
-    def get_log_url(self):
-        if Configuration.get_by_name_as_int('laas_integration') != 1:
-            return ""
-
+    def __laas_log_url(self):
         if self.databaseinfra.plan.is_pre_provisioned:
             return ""
 
@@ -255,6 +252,36 @@ class Database(BaseModel):
             environment=self.environment, credential_type=CredentialType.LOGNIT
         )
         return credential.endpoint + get_group_name(self)
+
+    def __graylog_url(self):
+        from util import get_credentials_for
+        from dbaas_credentials.models import CredentialType
+
+        if self.databaseinfra.plan.is_pre_provisioned:
+            return ""
+
+        credential = get_credentials_for(
+            environment=self.environment,
+            credential_type=CredentialType.GRAYLOG
+        )
+        stream = credential.get_parameter_by_name(
+            'stream_{}'.format(self.plan.engine.engine_type.name)
+        )
+        search_field = credential.get_parameter_by_name('search_field')
+        if not stream or not search_field:
+            return ""
+
+        return "{}/streams/{}/search?q={}:{}".format(
+            credential.endpoint, stream, search_field, self.name
+        )
+
+    def get_log_url(self):
+        if Configuration.get_by_name_as_int('laas_integration') == 1:
+            return self.__laas_log_url()
+
+        if Configuration.get_by_name_as_int('graylog_integration') == 1:
+            return self.__graylog_url()
+
 
     def get_dex_url(self):
         if Configuration.get_by_name_as_int('dex_analyze') != 1:
