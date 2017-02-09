@@ -80,7 +80,7 @@ class TaskHistory(BaseModel):
 
     def add_step(self, step, total, description):
         current_time = str(time.strftime("%m/%d/%Y %H:%M:%S"))
-        message = '{} - Step {} of {} - {}'.format(
+        message = '-->{} - Step {} of {} - {}'.format(
             current_time, step, total, description
         )
         self.add_detail(message)
