@@ -417,7 +417,7 @@ def update_instances_status(self):
         for databaseinfra in infras:
             LOG.info("Retrieving all instances for {}".format(databaseinfra))
 
-            for instance in Instance.objects.filter(databaseinfra=databaseinfra, is_arbiter=False):
+            for instance in Instance.objects.filter(databaseinfra=databaseinfra):
                 if instance.check_status():
                     instance.status = Instance.ALIVE
                 else:
