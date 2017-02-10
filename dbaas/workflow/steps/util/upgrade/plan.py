@@ -31,6 +31,7 @@ class PlanStep(BaseInstanceStep):
             'HOST': self.host.hostname.split('.')[0],
             'ENGINE': self.new_plan.engine.engine_type.name,
             'UPGRADE': True,
+            'IS_HA': self.new_plan.is_ha
         }
 
         if self.host_nfs:
