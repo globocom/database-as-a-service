@@ -151,7 +151,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     def clone_html(self, database):
         html = []
 
-        can_be_cloned, _ = database.can_be_cloned()
+        can_be_cloned, _ = database.can_be_cloned(database_view_button=True)
         if not can_be_cloned:
             html.append("N/A")
         else:
