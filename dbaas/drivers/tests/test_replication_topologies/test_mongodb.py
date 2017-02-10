@@ -59,11 +59,21 @@ class TestMongoDBSingle(AbstractBaseMondodbTestCase):
             'workflow.steps.mongodb.upgrade.vm.ChangeBinaryTo34',
         )
 
+    def _get_upgrade_steps_final(self):
+        return [{
+            'Setting feature compatibility version 3.4': (
+                'workflow.steps.mongodb.upgrade.database.SetFeatureCompatibilityVersion34',
+            ),
+        }] + super(TestMongoDBSingle, self)._get_upgrade_steps_final()
+
 
 class TestMongoDBReplicaset(AbstractBaseMondodbTestCase):
 
     def _get_replication_topology_driver(self):
         return MongoDBReplicaset()
+
+    def _get_upgrade_steps_description(self):
+        return 'Disable monitoring and alarms and upgrading to MongoDB 3.2'
 
     def _get_upgrade_steps_extra(self):
         return (
@@ -74,13 +84,17 @@ class TestMongoDBReplicaset(AbstractBaseMondodbTestCase):
         )
 
     def _get_upgrade_steps_final(self):
-        return [
-            (
-               'workflow.steps.util.upgrade.vm.ChangeMaster',
-               'workflow.steps.util.upgrade.database.Stop',
-               'workflow.steps.util.upgrade.database.CheckIsDown',
-               'workflow.steps.mongodb.upgrade.vm.ChangeBinaryTo34',
-               'workflow.steps.util.upgrade.database.Start',
-               'workflow.steps.util.upgrade.database.CheckIsUp',
-           ),
-        ] + super(TestMongoDBReplicaset, self)._get_upgrade_steps_final()
+        return [{
+            'Upgrading to MongoDB 3.4': (
+                'workflow.steps.util.upgrade.vm.ChangeMaster',
+                'workflow.steps.util.upgrade.database.Stop',
+                'workflow.steps.util.upgrade.database.CheckIsDown',
+                'workflow.steps.mongodb.upgrade.vm.ChangeBinaryTo34',
+                'workflow.steps.util.upgrade.database.Start',
+                'workflow.steps.util.upgrade.database.CheckIsUp',
+            ),
+        }] + [{
+            'Setting feature compatibility version 3.4': (
+                'workflow.steps.mongodb.upgrade.database.SetFeatureCompatibilityVersion34',
+            ),
+        }] + super(TestMongoDBReplicaset, self)._get_upgrade_steps_final()

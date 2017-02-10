@@ -60,9 +60,15 @@ class AbstractReplicationTopologySettingsTestCase(TestCase):
             'workflow.steps.util.restore_snapshot.clean_old_volumes.CleanOldVolumes',
         )
 
+    def _get_upgrade_steps_description(self):
+        return 'Disabling monitoring and alarms and upgrading database'
+
+    def _get_upgrade_steps_final_description(self):
+        return 'Enabling monitoring and alarms'
+
     def _get_upgrade_settings(self):
-        return [
-            (
+        return [{
+            self._get_upgrade_steps_description(): (
                 'workflow.steps.util.upgrade.vm.ChangeMaster',
                 'workflow.steps.util.upgrade.zabbix.DestroyAlarms',
                 'workflow.steps.util.upgrade.db_monitor.DisableMonitoring',
@@ -77,7 +83,7 @@ class AbstractReplicationTopologySettingsTestCase(TestCase):
                 'workflow.steps.util.upgrade.database.Start',
                 'workflow.steps.util.upgrade.database.CheckIsUp',
             ),
-        ] + self._get_upgrade_steps_final()
+        }] + self._get_upgrade_steps_final()
 
     def _get_upgrade_steps_extra(self):
         return (
@@ -87,12 +93,12 @@ class AbstractReplicationTopologySettingsTestCase(TestCase):
         )
 
     def _get_upgrade_steps_final(self):
-        return [
-            (
+        return [{
+            self._get_upgrade_steps_final_description(): (
                 'workflow.steps.util.upgrade.db_monitor.EnableMonitoring',
                 'workflow.steps.util.upgrade.zabbix.CreateAlarms',
             ),
-        ]
+        }]
 
     @skip_unless_not_abstract
     def test_deploy_settings(self):
