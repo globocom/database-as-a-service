@@ -127,10 +127,10 @@ class Redis(BaseDriver):
             if (instance and instance.instance_type == Instance.REDIS) or (not self.databaseinfra.plan.is_ha and not instance):
                 connection_address, connection_port = self.__get_admin_single_connection(
                     instance)
-                client = redis.Redis(host=connection_address,
-                                     port=int(connection_port),
-                                     password=self.databaseinfra.password,
-                                     socket_connect_timeout=connection_timeout_in_seconds)
+                client = redis.StrictRedis(host=connection_address,
+                                           port=int(connection_port),
+                                           password=self.databaseinfra.password,
+                                           socket_timeout=connection_timeout_in_seconds)
 
             else:
                 sentinel = self.get_sentinel_client(instance)
