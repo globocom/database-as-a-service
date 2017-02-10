@@ -359,6 +359,10 @@ class DatabaseInfra(BaseModel):
         DiskOffering, related_name="databaseinfras",
         on_delete=models.PROTECT, null=True
     )
+    database_key = models.CharField(
+        verbose_name=_("Database Key"), max_length=255, blank=True, null=True,
+        help_text=_("Databases like MongoDB use a key file to replica set"),
+    )
 
     def __unicode__(self):
         return self.name
@@ -488,6 +492,10 @@ class DatabaseInfra(BaseModel):
                 if disk.nfsaas_used_size_kb > greater_disk:
                     greater_disk = disk.nfsaas_used_size_kb
         return greater_disk
+
+    def update_database_key(self):
+        self.database_key = self.get_driver().database_key
+        self.save()
 
 
 class Host(BaseModel):

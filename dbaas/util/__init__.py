@@ -194,22 +194,31 @@ def scp_get_file(server, username, password, localpath, remotepath):
     return scp_file(server, username, password, localpath, remotepath, 'GET')
 
 
-def get_host_os_description(host):
+def get_remote_file_content(file_path, host):
     from dbaas_cloudstack.models import HostAttr
 
     output = {}
     host_attr = HostAttr.objects.get(host=host)
-    script = 'cat /etc/redhat-release'
-    return_code = exec_remote_command(server=host.address,
-                                      username=host_attr.vm_user,
-                                      password=host_attr.vm_password,
-                                      command=script,
-                                      output=output)
+
+    script = 'cat {}'.format(file_path)
+    return_code = exec_remote_command(
+        server=host.address, username=host_attr.vm_user,
+        password=host_attr.vm_password, command=script, output=output
+    )
 
     if return_code != 0:
         raise Exception(str(output))
 
     return output['stdout'][0].strip()
+
+
+def get_host_os_description(host):
+    return get_remote_file_content('/etc/redhat-release', host)
+
+
+def get_mongodb_key_file(infra):
+    instance = infra.instances.first()
+    return get_remote_file_content('/data/mongodb.key', instance.hostname)
 
 
 def exec_remote_command(server, username, password, command, output={}):

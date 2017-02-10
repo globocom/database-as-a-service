@@ -998,7 +998,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     def upgrade_retry(self, request, database_id):
         database = Database.objects.get(id=database_id)
 
-        can_do_upgrade, error = database.can_do_upgrade()
+        can_do_upgrade, error = database.can_do_upgrade_retry()
         if can_do_upgrade:
             source_plan = database.databaseinfra.plan
             upgrades = database.upgrades.filter(source_plan=source_plan)

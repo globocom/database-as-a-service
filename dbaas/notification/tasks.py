@@ -417,7 +417,7 @@ def update_instances_status(self):
         for databaseinfra in infras:
             LOG.info("Retrieving all instances for {}".format(databaseinfra))
 
-            for instance in Instance.objects.filter(databaseinfra=databaseinfra, is_arbiter=False):
+            for instance in Instance.objects.filter(databaseinfra=databaseinfra):
                 if instance.check_status():
                     instance.status = Instance.ALIVE
                 else:
@@ -821,7 +821,8 @@ def upgrade_database(self, database, user, task, since_step=0):
     worker_name = get_worker_name()
     task = TaskHistory.register(self.request, user, task, worker_name)
 
-    source_plan = database.infra.plan
+    infra = database.infra
+    source_plan = infra.plan
     target_plan = source_plan.engine_equivalent_plan
 
     class_path = target_plan.replication_topology.class_path
@@ -834,12 +835,17 @@ def upgrade_database(self, database, user, task, since_step=0):
     database_upgrade.task = task
     database_upgrade.save()
 
+    instances = database.infra.instances.all()
     success = steps_for_instances(
-        steps, database.infra.instances.all(), task,
+        steps, instances, task,
         database_upgrade.update_step, since_step
     )
 
     if success:
+        infra.plan = target_plan
+        infra.engine = target_plan.engine
+        infra.save()
+
         database_upgrade.set_success()
         task.update_status_for(TaskHistory.STATUS_SUCCESS, 'Done')
     else:

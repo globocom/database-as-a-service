@@ -49,8 +49,52 @@ class TestMongoDBSingle(AbstractBaseMondodbTestCase):
     def _get_replication_topology_driver(self):
         return MongoDBSingle()
 
+    def _get_upgrade_steps_extra(self):
+        return super(TestMongoDBSingle, self)._get_upgrade_steps_extra() + (
+            'workflow.steps.mongodb.upgrade.vm.ChangeBinaryTo32',
+            'workflow.steps.util.upgrade.database.Start',
+            'workflow.steps.util.upgrade.database.CheckIsUp',
+            'workflow.steps.util.upgrade.database.Stop',
+            'workflow.steps.util.upgrade.database.CheckIsDown',
+            'workflow.steps.mongodb.upgrade.vm.ChangeBinaryTo34',
+        )
+
+    def _get_upgrade_steps_final(self):
+        return [{
+            'Setting feature compatibility version 3.4': (
+                'workflow.steps.mongodb.upgrade.database.SetFeatureCompatibilityVersion34',
+            ),
+        }] + super(TestMongoDBSingle, self)._get_upgrade_steps_final()
+
 
 class TestMongoDBReplicaset(AbstractBaseMondodbTestCase):
 
     def _get_replication_topology_driver(self):
         return MongoDBReplicaset()
+
+    def _get_upgrade_steps_description(self):
+        return 'Disable monitoring and alarms and upgrading to MongoDB 3.2'
+
+    def _get_upgrade_steps_extra(self):
+        return (
+            'workflow.steps.mongodb.upgrade.plan.InitializationMongoHA',
+            'workflow.steps.mongodb.upgrade.plan.ConfigureMongoHA',
+            'workflow.steps.util.upgrade.pack.Configure',
+            'workflow.steps.mongodb.upgrade.vm.ChangeBinaryTo32',
+        )
+
+    def _get_upgrade_steps_final(self):
+        return [{
+            'Upgrading to MongoDB 3.4': (
+                'workflow.steps.util.upgrade.vm.ChangeMaster',
+                'workflow.steps.util.upgrade.database.Stop',
+                'workflow.steps.util.upgrade.database.CheckIsDown',
+                'workflow.steps.mongodb.upgrade.vm.ChangeBinaryTo34',
+                'workflow.steps.util.upgrade.database.Start',
+                'workflow.steps.util.upgrade.database.CheckIsUp',
+            ),
+        }] + [{
+            'Setting feature compatibility version 3.4': (
+                'workflow.steps.mongodb.upgrade.database.SetFeatureCompatibilityVersion34',
+            ),
+        }] + super(TestMongoDBReplicaset, self)._get_upgrade_steps_final()

@@ -12,7 +12,11 @@ class PlanStep(BaseInstanceStep):
 
         self.host = self.instance.hostname
         self.host_cs = HostAttr.objects.get(host=self.host)
-        self.host_nfs = HostAttrNfsaas.objects.get(host=self.host)
+
+        try:
+            self.host_nfs = HostAttrNfsaas.objects.get(host=self.host)
+        except HostAttrNfsaas.DoesNotExist:
+            self.host_nfs = None
 
         self.database = self.instance.databaseinfra.databases.first()
 
@@ -22,7 +26,6 @@ class PlanStep(BaseInstanceStep):
     @property
     def script_variables(self):
         variables = {
-            'EXPORTPATH': self.host_nfs.nfsaas_path,
             'DATABASENAME': self.database.name,
             'DBPASSWORD': self.instance.databaseinfra.password,
             'HOST': self.host.hostname.split('.')[0],
@@ -30,7 +33,16 @@ class PlanStep(BaseInstanceStep):
             'UPGRADE': True,
         }
 
+        if self.host_nfs:
+            variables.update(
+                {'EXPORTPATH': self.host_nfs.nfsaas_path}
+            )
+
+        variables.update(self.get_variables_specifics())
         return variables
+
+    def get_variables_specifics(self):
+        return {}
 
     def do(self):
         raise NotImplementedError

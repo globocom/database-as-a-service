@@ -16,7 +16,6 @@ class DatabaseStep(BaseInstanceStep):
 
         self.infra = self.instance.databaseinfra
         self.driver = self.infra.get_driver()
-        self.future_plan = self.infra.plan.engine_equivalent_plan
 
     def do(self):
         raise NotImplementedError
@@ -37,12 +36,15 @@ class DatabaseStep(BaseInstanceStep):
 
     def __is_instance_status(self, expected):
         for _ in range(CHECK_ATTEMPTS):
-            status = self.driver.check_status(instance=self.instance)
+            try:
+                status = self.driver.check_status(instance=self.instance)
+            except:
+                status = False
+
             if status == expected:
                 return True
             else:
                 sleep(CHECK_SECONDS)
-
         return False
 
     @property
@@ -61,7 +63,7 @@ class Stop(DatabaseStep):
 
     def do(self):
         return_code, output = self.stop_database()
-        if return_code != 0:
+        if return_code != 0 and not self.is_down:
             raise EnvironmentError(
                 'Could not stop database {}: {}'.format(return_code, output)
             )
@@ -74,7 +76,7 @@ class Start(DatabaseStep):
 
     def do(self):
         return_code, output = self.start_database()
-        if return_code != 0:
+        if return_code != 0 and not self.is_up:
             raise EnvironmentError(
                 'Could not start database {}: {}'.format(return_code, output)
             )
@@ -98,16 +100,3 @@ class CheckIsDown(DatabaseStep):
     def do(self):
         if not self.is_down:
             raise EnvironmentError('Database is up, should be down')
-
-
-class UpdateInfra(DatabaseStep):
-
-    def __unicode__(self):
-        return "Updating Database Infra..."
-
-    def do(self):
-        self.infra.plan = self.future_plan
-        self.infra.engine = self.future_plan.engine
-
-        with transaction.atomic():
-            self.infra.save()

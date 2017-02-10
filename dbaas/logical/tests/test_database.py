@@ -265,6 +265,7 @@ class DatabaseTestCase(TestCase):
 
     def test_cannot_upgrade_dead(self):
         database = factory.DatabaseFactory()
+        database.databaseinfra.plan.engine_equivalent_plan = self.plan_upgrade
         database.status = database.DEAD
 
         can_do_upgrade, error = database.can_do_upgrade()

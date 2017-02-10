@@ -41,8 +41,50 @@ class BaseMongoDB(BaseTopology):
 
 
 class MongoDBSingle(BaseMongoDB):
-    pass
+
+    def get_upgrade_steps_extra(self):
+        return super(MongoDBSingle, self).get_upgrade_steps_extra() + (
+            'workflow.steps.mongodb.upgrade.vm.ChangeBinaryTo32',
+            'workflow.steps.util.upgrade.database.Start',
+            'workflow.steps.util.upgrade.database.CheckIsUp',
+            'workflow.steps.util.upgrade.database.Stop',
+            'workflow.steps.util.upgrade.database.CheckIsDown',
+            'workflow.steps.mongodb.upgrade.vm.ChangeBinaryTo34',
+        )
+
+    def get_upgrade_steps_final(self):
+        return [{
+            'Setting feature compatibility version 3.4': (
+                'workflow.steps.mongodb.upgrade.database.SetFeatureCompatibilityVersion34',
+            ),
+        }] + super(MongoDBSingle, self).get_upgrade_steps_final()
 
 
 class MongoDBReplicaset(BaseMongoDB):
-    pass
+
+    def get_upgrade_steps_description(self):
+        return 'Disable monitoring and alarms and upgrading to MongoDB 3.2'
+
+    def get_upgrade_steps_extra(self):
+        return (
+            'workflow.steps.mongodb.upgrade.plan.InitializationMongoHA',
+            'workflow.steps.mongodb.upgrade.plan.ConfigureMongoHA',
+            'workflow.steps.util.upgrade.pack.Configure',
+            'workflow.steps.mongodb.upgrade.vm.ChangeBinaryTo32',
+        )
+
+    def get_upgrade_steps_final(self):
+        return [{
+            'Upgrading to MongoDB 3.4': (
+                'workflow.steps.util.upgrade.vm.ChangeMaster',
+                'workflow.steps.util.upgrade.database.Stop',
+                'workflow.steps.util.upgrade.database.CheckIsDown',
+                'workflow.steps.mongodb.upgrade.vm.ChangeBinaryTo34',
+                'workflow.steps.util.upgrade.database.Start',
+                'workflow.steps.util.upgrade.database.CheckIsUp',
+            ),
+        }] + [{
+            'Setting feature compatibility version 3.4': (
+                'workflow.steps.mongodb.upgrade.database.SetFeatureCompatibilityVersion34',
+            ),
+        }] + super(MongoDBReplicaset, self).get_upgrade_steps_final()
