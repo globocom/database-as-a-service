@@ -346,6 +346,9 @@
         update_components: function() {
             this.filter_plans();
         },
+        update_engines: function(engines) {
+            this.filter_engines(engines);
+        },
         filter_plans: function() {
             var environment_id = $("#id_environment").val() || "none";
             var engine_id = $("#id_engine").val() || "none";
@@ -359,12 +362,65 @@
                     ($el).parent().hide('fast');
                 }
             });
+        },
+        filter_engines: function(all_engines) {
+            var environment_id = $("#id_environment").val() || "none";
+            if(environment_id !== "none"){
+                var engine_selector = document.getElementById("id_engine");
+                $.ajax({
+                    type: "GET",
+                    dataType: "json",
+                    url: "/physical/engines_by_env/" + environment_id + "/"
+                }).done(function (response) {
+                    if(response.engines.length !== 0){
+                        var engines = [];
+                        for (var i=0; i<response.engines.length; i++){
+                            engines.push(parseInt(response.engines[i]));
+                        }
+                        var options_list = [];
+                        for(var i=1; i<=Object.keys(all_engines).length; i++){
+                            var text = all_engines[i];
+                            if($.inArray(i, engines) !== -1){
+                                options_list.push([text,'<option value="' + i + '">' + text + '</option>']);
+                            }
+                        }
+                        options_list.sort(function(a,b){return a[0]>b[0];});
+
+                        var html_input = "";
+                        html_input += '<option value>---------</option>';
+                        for(var i=0; i< options_list.length; i++){ html_input += options_list[i][1]; }
+                        engine_selector.innerHTML = html_input;
+                    }
+                    else{
+                        engine_selector.innerHTML = '<option selected="selected">' +
+                                                    'This environment has no plans</option>';
+                    }
+                });
+                $(document.getElementsByClassName("field-engine")[0]).fadeIn("slow");
+            }
+            else{
+                $(document.getElementsByClassName("field-engine")[0]).fadeOut("slow");
+            }
         }
     };
 
     // Document READY
     $(function() {
         var database = new Database();
+        document.getElementsByClassName("field-engine")[0].style.display = "none";
+
+        //Saving all engines before changing it
+        engine_selector = document.getElementById("id_engine");
+        var engines = {};
+        for(var i=0; i< engine_selector.options.length; i++){
+            option = engine_selector.options[i];
+            if(option.value !== null)
+                engines[option.value] = option.text;
+        }
+
+        $("#id_environment").on("change", function() {
+            database.update_engines(engines);
+        });
 
         $("#id_environment, #id_engine").on("change", function() {
             database.update_components();
@@ -376,7 +432,7 @@
                 "type": "GET",
                 "url": "/account/team_contacts/" + team
             }).done(function (response) {
-                contacts = "";
+                var contacts = "";
                 if(response.contacts != null)
                     contacts = response.contacts;
 

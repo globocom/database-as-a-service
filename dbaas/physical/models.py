@@ -24,6 +24,9 @@ class Environment(BaseModel):
     def __unicode__(self):
         return '%s' % (self.name)
 
+    def active_plans(self):
+        return Plan.objects.filter(environments=self).filter(is_active=True)
+
 
 class EngineType(BaseModel):
 
