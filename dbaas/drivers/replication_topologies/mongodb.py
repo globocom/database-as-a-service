@@ -19,7 +19,6 @@ class BaseMongoDB(BaseTopology):
     def deploy_last_steps(self):
         return (
             'workflow.steps.util.deploy.build_database.BuildDatabase',
-            'workflow.steps.util.deploy.create_log.CreateLog',
             'workflow.steps.util.deploy.check_database_binds.CheckDatabaseBinds',
         )
 
