@@ -419,10 +419,12 @@
         }
 
         $("#id_environment").on("change", function() {
+            engine_selector.selectedIndex = 0;
+            database.update_components();
             database.update_engines(engines);
         });
 
-        $("#id_environment, #id_engine").on("change", function() {
+        $("#id_engine").on("change", function() {
             database.update_components();
         });
 
