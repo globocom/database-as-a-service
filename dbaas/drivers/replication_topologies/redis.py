@@ -39,6 +39,13 @@ class BaseRedis(BaseTopology):
              'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',)
         )
 
+    def get_upgrade_steps_extra(self):
+        return (
+            'workflow.steps.redis.upgrade.plan.InitializationRedis',
+            'workflow.steps.redis.upgrade.plan.ConfigureRedis',
+            'workflow.steps.redis.upgrade.pack.ConfigureRedis',
+        )
+
 
 class RedisSingle(BaseRedis):
     pass

@@ -45,6 +45,14 @@ class AbstractBaseRedisTestCase(AbstractReplicationTopologySettingsTestCase):
         )
 
 
+    def _get_upgrade_steps_extra(self):
+        return (
+            'workflow.steps.redis.upgrade.plan.InitializationRedis',
+            'workflow.steps.redis.upgrade.plan.ConfigureRedis',
+            'workflow.steps.redis.upgrade.pack.ConfigureRedis',
+        )
+
+
 class TestRedisSingle(AbstractBaseRedisTestCase):
 
     def _get_replication_topology_driver(self):
