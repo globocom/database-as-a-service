@@ -575,15 +575,19 @@ class Database(BaseModel):
         nfsaas_host.save()
         return nfsaas_host
 
-    def can_be_cloned(self):
+    def can_be_cloned(self, database_view_button=False):
         if not self.plan.has_persistence:
             return False, "Database does not have persistence cannot be cloned"
 
         if self.is_in_quarantine:
             return False, "Database in quarantine cannot be cloned"
 
-        if self.is_dead:
-            return False, "Database is not alive and cannot be cloned"
+        if database_view_button:
+            if self.status != self.ALIVE:
+                return False, "Database is not alive and cannot be cloned"
+        else:
+            if self.is_dead:
+                return False, "Database is not alive and cannot be cloned"
 
         return True, None
 
