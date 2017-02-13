@@ -12,7 +12,7 @@ from django_extensions.db.fields.encrypted import EncryptedCharField
 from django.utils.functional import cached_property
 from util import slugify, make_db_random_password
 from util.models import BaseModel
-from physical.models import DatabaseInfra, Environment, Plan
+from physical.models import DatabaseInfra, Environment
 from drivers import factory_for
 from system.models import Configuration
 from datetime import date, timedelta
@@ -281,7 +281,6 @@ class Database(BaseModel):
 
         if Configuration.get_by_name_as_int('graylog_integration') == 1:
             return self.__graylog_url()
-
 
     def get_dex_url(self):
         if Configuration.get_by_name_as_int('dex_analyze') != 1:
@@ -662,6 +661,7 @@ class Database(BaseModel):
             database=self, task_history=task_history, user=user
         )
         return
+
 
 class Credential(BaseModel):
     USER_PATTERN = "u_%s"
