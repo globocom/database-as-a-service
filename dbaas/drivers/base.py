@@ -208,8 +208,11 @@ class BaseDriver(object):
         instances = self.get_database_instances()
 
         for instance in instances:
-            if self.check_instance_is_master(instance):
-                return instance
+            try:
+                if self.check_instance_is_master(instance):
+                    return instance
+            except ConnectionError:
+                continue
 
         return None
 
