@@ -393,7 +393,7 @@
                     }
                     else{
                         engine_selector.innerHTML = '<option selected="selected">' +
-                                                    'This environment has no plans</option>';
+                                                    'This environment has no active plans</option>';
                     }
                 });
                 $(document.getElementsByClassName("field-engine")[0]).fadeIn("slow");

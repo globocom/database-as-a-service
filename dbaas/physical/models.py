@@ -25,7 +25,7 @@ class Environment(BaseModel):
         return '%s' % (self.name)
 
     def active_plans(self):
-        return Plan.objects.filter(environments=self).filter(is_active=True)
+        return self.plans.filter(is_active=True)
 
 
 class EngineType(BaseModel):
@@ -246,7 +246,7 @@ class Plan(BaseModel):
         verbose_name="Disk persistence", default=True,
         help_text="Check this option if the plan will save data in disk"
     )
-    environments = models.ManyToManyField(Environment)
+    environments = models.ManyToManyField(Environment, related_name='plans')
     provider = models.IntegerField(choices=PROVIDER_CHOICES, default=0)
     max_db_size = models.IntegerField(
         default=0, verbose_name=_("Max database size (MB)"),
