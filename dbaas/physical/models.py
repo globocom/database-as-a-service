@@ -601,6 +601,14 @@ class Instance(BaseModel):
         return self.instance_type in (self.MYSQL, self.MONGODB, self.REDIS)
 
     @property
+    def is_redis(self):
+        return self.instance_type == self.REDIS
+
+    @property
+    def is_sentinel(self):
+        return self.instance_type == self.REDIS_SENTINEL
+
+    @property
     def connection(self):
         return "%s:%s" % (self.address, self.port)
 
