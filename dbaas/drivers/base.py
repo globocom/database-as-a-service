@@ -171,7 +171,7 @@ class BaseDriver(object):
     def check_instance_is_master(self, instance):
         raise NotImplementedError()
 
-    def initialization_script_path(self,):
+    def initialization_script_path(self, host=None):
         raise NotImplementedError()
 
     def deprecated_files(self,):
