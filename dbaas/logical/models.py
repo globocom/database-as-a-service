@@ -12,7 +12,7 @@ from django_extensions.db.fields.encrypted import EncryptedCharField
 from django.utils.functional import cached_property
 from util import slugify, make_db_random_password
 from util.models import BaseModel
-from physical.models import DatabaseInfra, Environment, Plan
+from physical.models import DatabaseInfra, Environment
 from drivers import factory_for
 from system.models import Configuration
 from datetime import date, timedelta
@@ -240,19 +240,6 @@ class Database(BaseModel):
     def get_endpoint_dns_simple(self):
         return self.driver.get_connection_dns_simple(database=self)
 
-    def __laas_log_url(self):
-        if self.databaseinfra.plan.is_pre_provisioned:
-            return ""
-
-        from util import get_credentials_for
-        from util.laas import get_group_name
-        from dbaas_credentials.models import CredentialType
-
-        credential = get_credentials_for(
-            environment=self.environment, credential_type=CredentialType.LOGNIT
-        )
-        return credential.endpoint + get_group_name(self)
-
     def __graylog_url(self):
         from util import get_credentials_for
         from dbaas_credentials.models import CredentialType
@@ -276,12 +263,8 @@ class Database(BaseModel):
         )
 
     def get_log_url(self):
-        if Configuration.get_by_name_as_int('laas_integration') == 1:
-            return self.__laas_log_url()
-
         if Configuration.get_by_name_as_int('graylog_integration') == 1:
             return self.__graylog_url()
-
 
     def get_dex_url(self):
         if Configuration.get_by_name_as_int('dex_analyze') != 1:
@@ -662,6 +645,7 @@ class Database(BaseModel):
             database=self, task_history=task_history, user=user
         )
         return
+
 
 class Credential(BaseModel):
     USER_PATTERN = "u_%s"

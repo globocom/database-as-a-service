@@ -224,21 +224,6 @@ def user_post_save(sender, **kwargs):
     user_post_save_wrapper(kwargs)
 
 
-def user_m2m_changed(sender, **kwargs):
-    team = kwargs.get('instance')
-    action = kwargs.get('action')
-    if action == 'post_add':
-        if Configuration.get_by_name_as_int('laas_integration') == 1:
-            register_team_laas_task.delay(team)
-
-
-@app.task(bind=True)
-def register_team_laas_task(self, team):
-    from util.laas import register_team_laas
-    register_team_laas(team)
-
-m2m_changed.connect(user_m2m_changed, sender=Team.users.through)
-
 # def user_m2m_changed(sender, **kwargs):
 #     """
 #     Using m2m signal to sync user.groups relation in the db with the ones in the LDAP. The action post_clear
