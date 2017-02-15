@@ -52,7 +52,13 @@ class RedisSingle(BaseRedis):
 
 
 class RedisSentinel(BaseRedis):
-    pass
+
+    def get_upgrade_steps_final(self):
+        return [{
+            'Resetting Sentinel': (
+                'workflow.steps.redis.upgrade.sentinel.Reset',
+            ),
+        }] + super(RedisSentinel, self).get_upgrade_steps_final()
 
 
 class RedisNoPersistence(BaseRedis):
@@ -73,4 +79,10 @@ class RedisSingleNoPersistence(RedisNoPersistence):
 
 
 class RedisSentinelNoPersistence(RedisNoPersistence):
-    pass
+
+    def get_upgrade_steps_final(self):
+        return [{
+            'Resetting Sentinel': (
+                'workflow.steps.redis.upgrade.sentinel.Reset',
+            ),
+        }] + super(RedisSentinelNoPersistence, self).get_upgrade_steps_final()

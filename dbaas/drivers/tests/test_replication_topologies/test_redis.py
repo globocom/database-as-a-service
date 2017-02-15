@@ -64,6 +64,13 @@ class TestRedisSentinel(AbstractBaseRedisTestCase):
     def _get_replication_topology_driver(self):
         return RedisSentinel()
 
+    def _get_upgrade_steps_final(self):
+        return [{
+            'Resetting Sentinel': (
+                'workflow.steps.redis.upgrade.sentinel.Reset',
+            ),
+        }] + super(TestRedisSentinel, self)._get_upgrade_steps_final()
+
 
 class AbstractBaseRedisNoPersistenceTestCase(AbstractBaseRedisTestCase):
     def _get_resize_settings(self):
@@ -87,3 +94,10 @@ class TestRedisSentinelNoPersistence(AbstractBaseRedisNoPersistenceTestCase):
 
     def _get_replication_topology_driver(self):
         return RedisSentinelNoPersistence()
+
+    def _get_upgrade_steps_final(self):
+        return [{
+            'Resetting Sentinel': (
+                'workflow.steps.redis.upgrade.sentinel.Reset',
+            ),
+        }] + super(TestRedisSentinelNoPersistence, self)._get_upgrade_steps_final()
