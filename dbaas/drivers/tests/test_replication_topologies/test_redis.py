@@ -24,7 +24,6 @@ class AbstractBaseRedisTestCase(AbstractReplicationTopologySettingsTestCase):
     def _get_deploy_last_settings(self):
         return (
             'workflow.steps.util.deploy.build_database.BuildDatabase',
-            'workflow.steps.util.deploy.create_log.CreateLog',
             'workflow.steps.util.deploy.check_database_binds.CheckDatabaseBinds',
         )
 

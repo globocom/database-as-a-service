@@ -23,6 +23,7 @@ urlpatterns = patterns(
     url(r'^admin/', include('dbaas_services.analyzing.urls')),
     url(r'^notification/', include('notification.urls'), name="notification"),
     url(r'^ckeditor/', include('ckeditor.urls')),
+    url(r'^physical/', include('physical.urls')),
 )
 
 # django flatpages

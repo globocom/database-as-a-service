@@ -207,7 +207,6 @@ INSTALLED_APPS = (
     'dbaas_dnsapi',
     'backup',
     'dbaas_aclapi',
-    'dbaas_laas',
     'maintenance',
     'extra_dns',
     'dbaas_services.analyzing',

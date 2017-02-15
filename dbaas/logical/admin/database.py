@@ -82,8 +82,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     fieldsets_add = (
         (None, {
             'fields': (
-                'name', 'description', 'project', 'engine',
-                'environment', 'team', 'team_contact', 'subscribe_to_email_events', 'plan',
+                'name', 'description', 'project', 'environment', 'engine',
+                'team', 'team_contact', 'subscribe_to_email_events', 'plan',
                 'is_in_quarantine',
             )
         }
@@ -648,10 +648,6 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     def database_dex_analyze_view(self, request, database_id):
         import json
         import random
-        from dbaas_laas.provider import LaaSProvider
-        from util import get_credentials_for
-        from util.laas import get_group_name
-        from dbaas_credentials.models import CredentialType
         import os
         import string
         from datetime import datetime, timedelta
@@ -674,41 +670,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             url = reverse('admin:logical_database_changelist')
             return HttpResponseRedirect(url)
 
-        credential = get_credentials_for(environment=database.environment,
-                                         credential_type=CredentialType.LAAS)
-
-        db_name = database.name
-        environment = database.environment
-        endpoint = credential.endpoint
-        username = credential.user
-        password = credential.password
-        lognit_environment = credential.get_parameter_by_name(
-            'lognit_environment')
-
-        provider = LaaSProvider()
-
-        group_name = get_group_name(database)
-        today = (datetime.now()).strftime('%Y%m%d')
-        yesterday = (datetime.now() - timedelta(days=1)).strftime('%Y%m%d')
-        uri = "group:{} text:query date:[{} TO {}] time:[000000 TO 235959]".format(
-            group_name, yesterday, today)
-
         parsed_logs = ''
-        database_logs = provider.get_logs_for_group(
-            environment, lognit_environment, uri)
-        try:
-            database_logs = json.loads(database_logs)
-        except Exception as e:
-            pass
-        else:
-            for database_log in database_logs:
-                try:
-                    items = database_log['items']
-                except KeyError as e:
-                    pass
-                else:
-                    parsed_logs = "\n".join(
-                        (item['message'] for item in items))
 
         arq_path = Configuration.get_by_name(
             'database_clone_dir') + '/' + database.name + generate_random_string(20) + '.txt'
@@ -740,8 +702,6 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
         import ast
         final_mask = """<div>"""
-
-        print dexanalyzer['results']
 
         for result in dexanalyzer['results']:
 
