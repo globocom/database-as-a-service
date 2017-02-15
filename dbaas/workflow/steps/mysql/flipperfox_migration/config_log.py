@@ -85,10 +85,10 @@ class ConfigLog(BaseStep):
 
     def rsyslog_create_config(self, database):
         return \
-            ' echo "\$EscapeControlCharactersOnReceive off" >> /etc/rsyslog.d/globologging.conf &&' \
-            ' sed -i "\$a \$template db-log, \\\"<%PRI%>%TIMESTAMP% %HOSTNAME% %syslogtag%%msg%   tags: dbaas,{}\\\"" /etc/rsyslog.d/globologging.conf &&' \
-            ' sed -i "\$a*.*                    @logging.udp.globoi.com:5140; db-log" /etc/rsyslog.d/globologging.conf &&' \
+            ' echo "\$EscapeControlCharactersOnReceive off" >> /etc/rsyslog.d/dbaaslog.conf &&' \
+            ' sed -i "\$a \$template db-log, \\\"<%PRI%>%TIMESTAMP% %HOSTNAME% %syslogtag%%msg%   tags: INFRA,DBAAS,MYSQL,{}\\\"" /etc/rsyslog.d/dbaaslog.conf &&' \
+            ' sed -i "\$a*.*                    @logging.udp.globoi.com:5140; db-log" /etc/rsyslog.d/dbaaslog.conf &&' \
             ' /etc/init.d/rsyslog restart'.format(database.name)
 
     def rsyslog_remove_config(self):
-        return 'rm -f /etc/rsyslog.d/globologging.conf'
+        return 'rm -f /etc/rsyslog.d/dbaaslog.conf'
