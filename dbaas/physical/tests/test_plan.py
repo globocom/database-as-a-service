@@ -9,7 +9,9 @@ from .factory import PlanFactory, EngineFactory, EngineTypeFactory
 
 
 SEARCH_FIELDS = ["name"]
-LIST_FILTER = ("is_active", "engine", "environments", "is_ha")
+LIST_FILTER = (
+    "is_active", "engine", "environments", "is_ha", "has_persistence"
+)
 LIST_FIELDS = (
     "name", "engine", "environment", "is_active", "is_default",
     "provider", "is_ha"

@@ -73,6 +73,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     list_filter_basic = [
         "project", "databaseinfra__environment", "databaseinfra__engine",
         "databaseinfra__plan", "databaseinfra__engine__engine_type", "status",
+        "databaseinfra__plan__has_persistence"
     ]
     list_filter_advanced = list_filter_basic + \
         ["databaseinfra", "is_in_quarantine", "team"]

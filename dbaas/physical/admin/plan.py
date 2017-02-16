@@ -48,9 +48,13 @@ class PlanAdmin(services_admin.DjangoServicesAdmin):
     service_class = PlanService
     save_on_top = True
     search_fields = ["name"]
-    list_filter = ("is_active", "engine", "environments", "is_ha")
-    list_display = ("name", "engine", "environment",
-                    "is_active", "is_default", "provider", "is_ha")
+    list_filter = (
+        "is_active", "engine", "environments", "is_ha", "has_persistence"
+    )
+    list_display = (
+        "name", "engine", "environment", "is_active", "is_default",
+        "provider", "is_ha",
+    )
     filter_horizontal = ("environments",)
     inlines = [
         PlanAttributeInline,
