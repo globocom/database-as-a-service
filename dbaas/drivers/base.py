@@ -171,7 +171,7 @@ class BaseDriver(object):
     def check_instance_is_master(self, instance):
         raise NotImplementedError()
 
-    def initialization_script_path(self,):
+    def initialization_script_path(self, host=None):
         raise NotImplementedError()
 
     def deprecated_files(self,):
@@ -208,8 +208,11 @@ class BaseDriver(object):
         instances = self.get_database_instances()
 
         for instance in instances:
-            if self.check_instance_is_master(instance):
-                return instance
+            try:
+                if self.check_instance_is_master(instance):
+                    return instance
+            except ConnectionError:
+                continue
 
         return None
 
@@ -232,8 +235,12 @@ class BaseDriver(object):
         for attempt in range(0, attempts):
             if self.is_replication_ok(instance):
                 self.switch_master()
-                LOG.info("Switch master ok...")
+                LOG.info("Switch master returned ok...")
+
+                if not self.check_instance_is_master(instance):
+                    raise Exception("Could not change master")
                 return
+
             LOG.info("Waiting 10s to check replication...")
             sleep(10)
         raise Exception("Could not switch master because of replication's delay")

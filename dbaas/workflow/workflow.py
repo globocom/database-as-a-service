@@ -312,6 +312,11 @@ def steps_for_instances(
     steps_total = steps_total * len(instances)
     step_current = 0
 
+    task.add_detail('Instances: {}'.format(len(instances)))
+    for instance in instances:
+        task.add_detail('{}'.format(instance), level=2)
+    task.add_detail('')
+
     if since_step:
         task.add_detail('Skipping until step {}\n'.format(since_step))
 

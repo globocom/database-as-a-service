@@ -297,8 +297,18 @@ class Redis(BaseDriver):
                 raise ConnectionError(
                     'Error connection to databaseinfra %s: %s' % (self.databaseinfra, str(e)))
 
-    def initialization_script_path(self,):
-        return "/etc/init.d/redis"
+    def initialization_script_path(self, host=None):
+        if not host:
+            return '/etc/init.d/redis {option}'
+
+        script = ''
+        for instance in host.instances.all():
+            if instance.is_redis:
+                script += "/etc/init.d/redis {option}; "
+
+            if instance.is_sentinel:
+                script += "/etc/init.d/sentinel {option}; "
+        return script
 
     def deprecated_files(self,):
         return ["*.pid", ]

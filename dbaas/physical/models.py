@@ -534,6 +534,18 @@ class Host(BaseModel):
             self.os_description = os
             self.save()
 
+    def database_instance(self):
+        for instance in self.instances.all():
+            if instance.is_database:
+                return instance
+        return None
+
+    def non_database_instance(self):
+        for instance in self.instances.all():
+            if not instance.is_database:
+                return instance
+        return None
+
 
 class Instance(BaseModel):
 
@@ -573,7 +585,7 @@ class Instance(BaseModel):
         verbose_name=_("Is instance active"), default=True)
     is_arbiter = models.BooleanField(
         verbose_name=_("Is arbiter"), default=False)
-    hostname = models.ForeignKey(Host)
+    hostname = models.ForeignKey(Host, related_name="instances")
     status = models.IntegerField(choices=INFRA_STATUS, default=2)
     instance_type = models.IntegerField(choices=DATABASE_TYPE, default=0)
     future_instance = models.ForeignKey(
@@ -586,6 +598,18 @@ class Instance(BaseModel):
         permissions = (
             ("view_instance", "Can view instances"),
         )
+
+    @property
+    def is_database(self):
+        return self.instance_type in (self.MYSQL, self.MONGODB, self.REDIS)
+
+    @property
+    def is_redis(self):
+        return self.instance_type == self.REDIS
+
+    @property
+    def is_sentinel(self):
+        return self.instance_type == self.REDIS_SENTINEL
 
     @property
     def connection(self):
