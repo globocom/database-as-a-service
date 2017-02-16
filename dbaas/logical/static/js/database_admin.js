@@ -407,15 +407,21 @@
     // Document READY
     $(function() {
         var database = new Database();
-        document.getElementsByClassName("field-engine")[0].style.display = "none";
+        field_engine = document.getElementsByClassName("field-engine");
+        if(field_engine.length !== 0){
+            field_engine = field_engine[0];
+            field_engine.style.display = "none";
+        }
 
         //Saving all engines before changing it
         engine_selector = document.getElementById("id_engine");
-        var engines = {};
-        for(var i=0; i< engine_selector.options.length; i++){
-            option = engine_selector.options[i];
-            if(option.value !== null)
-                engines[option.value] = option.text;
+        if(engine_selector !== null){
+            var engines = {};
+            for(var i=0; i< engine_selector.options.length; i++){
+                option = engine_selector.options[i];
+                if(option.value !== null)
+                    engines[option.value] = option.text;
+            }
         }
 
         $("#id_environment").on("change", function() {
