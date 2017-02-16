@@ -408,10 +408,8 @@
     $(function() {
         var database = new Database();
         field_engine = document.getElementsByClassName("field-engine");
-        console.log(field_engine.length);
         if(field_engine.length !== 0){
             field_engine = field_engine[0];
-            console.log(field_engine);
             field_engine.style.display = "none";
         }
 
