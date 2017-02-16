@@ -44,3 +44,23 @@ class InstanceTestCase(TestCase):
     def test_cleanup_without_engine_raises_exception(self):
         self.new_instance.databaseinfra.engine_id = None
         self.assertRaises(ValidationError, self.new_instance.clean)
+
+    def test_is_redis(self):
+        instance = InstanceFactory()
+        instance.instance_type = Instance.REDIS
+        self.assertTrue(instance.is_redis)
+
+    def test_is_not_redis(self):
+        instance = InstanceFactory()
+        instance.instance_type = Instance.NONE
+        self.assertFalse(instance.is_redis)
+
+    def test_is_sentinel(self):
+        instance = InstanceFactory()
+        instance.instance_type = Instance.REDIS_SENTINEL
+        self.assertTrue(instance.is_sentinel)
+
+    def test_is_not_sentinel(self):
+        instance = InstanceFactory()
+        instance.instance_type = Instance.NONE
+        self.assertFalse(instance.is_sentinel)

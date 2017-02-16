@@ -13,6 +13,7 @@ class ZabbixStep(BaseInstanceStep):
         integration = CredentialType.objects.get(type=CredentialType.ZABBIX)
         environment = self.instance.databaseinfra.environment
         self.credentials = Credential.get_credentials(environment, integration)
+        self.instances = self.instance.hostname.instances.all()
 
         self.zabbix_provider = factory_for(
             databaseinfra=self.instance.databaseinfra,
@@ -39,12 +40,15 @@ class DestroyAlarms(ZabbixStep):
         monitors = []
         monitors.append(self.instance.hostname.hostname)
 
-        current_dns = self.instance.dns
-        monitors.append(current_dns)
+        for instance in self.instances:
+            current_dns = instance.dns
+            monitors.append(current_dns)
 
-        for zabbix_extra in self.zabbix_provider.get_zabbix_databases_hosts():
-            if current_dns in zabbix_extra and zabbix_extra != current_dns:
-                monitors.append(zabbix_extra)
+            zabbix_extras = self.zabbix_provider.get_zabbix_databases_hosts()
+            for zabbix_extra in zabbix_extras:
+                if current_dns in zabbix_extra and zabbix_extra != current_dns:
+                    monitors.append(zabbix_extra)
+
         return monitors
 
     def do(self):
@@ -71,4 +75,6 @@ class CreateAlarms(ZabbixStep):
         zabbix_provider.create_instance_basic_monitors(
             self.instance.hostname
         )
-        zabbix_provider.create_instance_monitors(self.instance)
+
+        for instance in self.instances:
+            zabbix_provider.create_instance_monitors(instance)

@@ -332,8 +332,8 @@ class MongoDB(BaseDriver):
 
         return False
 
-    def initialization_script_path(self,):
-        return "/etc/init.d/mongodb"
+    def initialization_script_path(self, host=None):
+        return "/etc/init.d/mongodb {option}"
 
     def deprecated_files(self,):
         return ['mongod.lock', 'mongod.running']

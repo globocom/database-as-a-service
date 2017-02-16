@@ -835,7 +835,16 @@ def upgrade_database(self, database, user, task, since_step=0):
     database_upgrade.task = task
     database_upgrade.save()
 
-    instances = database.infra.instances.all()
+    hosts = []
+    for instance in database.infra.instances.all():
+        if instance.hostname not in hosts:
+            hosts.append(instance.hostname)
+
+    instances = []
+    for host in hosts:
+        instances.append(host.instances.all()[0])
+    instances = instances
+
     success = steps_for_instances(
         steps, instances, task,
         database_upgrade.update_step, since_step

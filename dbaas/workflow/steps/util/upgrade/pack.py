@@ -23,9 +23,16 @@ class PackStep(BaseInstanceStep):
     def script_variables(self):
         variables = {
             'CONFIGFILE': True,
-            'IS_HA': self.instance.databaseinfra.plan.is_ha
-        },
+            'IS_HA': self.instance.databaseinfra.plan.is_ha,
+            'DBPASSWORD': self.instance.databaseinfra.password,
+            'HAS_PERSISTENCE': self.instance.databaseinfra.plan.has_persistence
+        }
+
+        variables.update(self.get_variables_specifics())
         return variables
+
+    def get_variables_specifics(self):
+        return {}
 
     def do(self):
         raise NotImplementedError

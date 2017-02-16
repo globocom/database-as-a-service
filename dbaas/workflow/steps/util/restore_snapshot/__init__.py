@@ -9,9 +9,10 @@ LOG = logging.getLogger(__name__)
 
 def use_database_initialization_script(databaseinfra, host, option):
     driver = databaseinfra.get_driver()
-    initialization_script = driver.initialization_script_path()
+    initialization_script = driver.initialization_script_path(host)
 
-    command = initialization_script + ' ' + option + ' > /dev/null'
+    command = initialization_script.format(option=option)
+    command += ' > /dev/null'
 
     cs_host_attr = CsHostAttr.objects.get(host=host)
 
