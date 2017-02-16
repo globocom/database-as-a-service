@@ -38,84 +38,68 @@ def _get_function(func_name):
 def get_hostmane(host_id):
     """Return HOST_NAME"""
     from physical.models import Host
-    host = Host.objects.get(id=host_id)
-    return host.hostname
+    try:
+        host = Host.objects.get(id=host_id)
+        return host.hostname
+    except Exception as e:
+        LOG.warn("Error on get_hostmane. Host id: {} - error: {}".format(host_id, e))
+        return None
 
 
 def get_hostaddress(host_id):
     """Return HOST_ADDRESS"""
     from physical.models import Host
-    host = Host.objects.get(id=host_id)
-    return host.address
+    try:
+        host = Host.objects.get(id=host_id)
+        return host.address
+    except Exception as e:
+        LOG.warn("Error on get_hostaddress. Host id: {} - error: {}".format(host_id, e))
+        return None
 
 
 def get_infra_name(host_id):
     """Return DATABASE_INFRA_NAME"""
     from physical.models import Host
-    host = Host.objects.filter(id=host_id,
-                               ).select_related('instance').select_related('databaseinfra')
-
     try:
-        host = host[0]
-    except IndexError as e:
-        LOG.warn("Host id does not exists: {}. {}".format(host_id, e))
+        host = Host.objects.get(id=host_id)
+        return host.instances.all()[0].databaseinfra.name
+    except Exception as e:
+        LOG.warn("Error on get_infra_name. Host id: {} - error: {}".format(host_id, e))
         return None
-
-    return host.instance_set.all()[0].databaseinfra.name
 
 
 def get_database_name(host_id):
     """Return DATABASE_NAME"""
     from physical.models import Host
-    host = Host.objects.filter(id=host_id,
-                               ).select_related('instance',
-                                                ).select_related('databaseinfra',
-                                                                 ).select_related('database',)
-
     try:
-        host = host[0]
-    except IndexError as e:
-        LOG.warn("Host id does not exists: {}. {}".format(host_id, e))
+        host = Host.objects.get(id=host_id)
+        database = host.instances.all()[0].databaseinfra.databases.all()[0]
+        return database.name
+    except Exception as e:
+        LOG.warn("Error on get_database_name. Host id: {} - error: {}".format(host_id, e))
         return None
-
-    try:
-        database = host.instance_set.all()[0].databaseinfra.databases.all()[0]
-    except IndexError as e:
-        LOG.warn(
-            "There is not a database on this host: {}. {}".format(host_id, e))
-        return None
-
-    return database.name
 
 
 def get_infra_user(host_id):
     """Return DATABASE_INFRA_USER"""
     from physical.models import Host
-    host = Host.objects.filter(id=host_id,
-                               ).select_related('instance').select_related('databaseinfra')
-
     try:
-        host = host[0]
-    except IndexError as e:
-        LOG.warn("Host id does not exists: {}. {}".format(host_id, e))
+        host = Host.objects.get(id=host_id)
+        return host.instances.all()[0].databaseinfra.user
+    except Exception as e:
+        LOG.warn("Error on get_infra_user. Host id: {} - error: {}".format(host_id, e))
         return None
-
-    return host.instance_set.all()[0].databaseinfra.user
 
 
 def get_infra_password(host_id):
     """Return DATABASE_INFRA_PASSWORD"""
     from physical.models import Host
-    host = Host.objects.filter(id=host_id,
-                               ).select_related('instance').select_related('databaseinfra')
-
     try:
-        host = host[0]
-    except IndexError as e:
-        LOG.warn("Host id does not exists: {}. {}".format(host_id, e))
+        host = Host.objects.get(id=host_id)
+        return host.instances.all()[0].databaseinfra.password
+    except Exception as e:
+        LOG.warn("Error on get_infra_password. Host id: {} - error: {}".format(host_id, e))
         return None
-
-    return host.instance_set.all()[0].databaseinfra.password
 
 
 def get_host_user(host_id):
@@ -163,49 +147,34 @@ def get_host_password(host_id):
 def get_engine_type_name(host_id):
     """Return ENGINE_TYPE"""
     from physical.models import Host
-    host = Host.objects.filter(id=host_id,
-                               ).select_related('instance',
-                                                ).select_related('databaseinfra',
-                                                                 )
-
     try:
-        host = host[0]
-    except IndexError as e:
-        LOG.warn("Host id does not exists: {}. {}".format(host_id, e))
+        host = Host.objects.get(id=host_id)
+        return host.instances.all()[0].databaseinfra.engine.name
+    except Exception as e:
+        LOG.warn("Error on get_engine_type_name. Host id: {} - error: {}".format(host_id, e))
         return None
-
-    return host.instance_set.all()[0].databaseinfra.engine.name
 
 
 def get_max_database_size(host_id):
     """Return MAX_DATABASE_SIZE"""
     from physical.models import Host
-    host = Host.objects.filter(id=host_id,
-                               ).select_related('instance',
-                                                ).select_related('databaseinfra',
-                                                                 ).select_related('plan')
-
     try:
-        host = host[0]
-    except IndexError as e:
-        LOG.warn("Host id does not exists: {}. {}".format(host_id, e))
+        host = Host.objects.get(id=host_id)
+        return host.instances.all()[0].databaseinfra.plan.max_db_size
+    except Exception as e:
+        LOG.warn("Error on get_max_database_size. Host id: {} - error: {}".format(host_id, e))
         return None
-
-    return host.instance_set.all()[0].databaseinfra.plan.max_db_size
 
 
 def get_offering_size(host_id):
     """Return OFFERING_SIZE"""
     from physical.models import Host
-    host = Host.objects.filter(id=host_id,).select_related('instance',).select_related(
-        'databaseinfra',).select_related('cs_dbinfra_offering').select_related('cs_offering')
     try:
-        host = host[0]
-    except IndexError as e:
-        LOG.warn("Host id does not exists: {}. {}".format(host_id, e))
+        host = Host.objects.get(id=host_id)
+        return host.instances.all()[0].databaseinfra.cs_dbinfra_offering.get().offering.memory_size_mb
+    except Exception as e:
+        LOG.warn("Error on get_offering_size. Host id: {} - error: {}".format(host_id, e))
         return None
-
-    return host.instance_set.all()[0].databaseinfra.cs_dbinfra_offering.get().offering.memory_size_mb
 
 
 def get_there_is_backup_log_config(host_id):
@@ -214,16 +183,12 @@ def get_there_is_backup_log_config(host_id):
     from physical.models import Host
     from backup.models import LogConfiguration
 
-    host = Host.objects.filter(id=host_id,
-                               ).select_related('instance').select_related('databaseinfra')
-
     try:
-        host = host[0]
-    except IndexError as e:
-        LOG.warn("Host id does not exists: {}. {}".format(host_id, e))
+        host = Host.objects.get(id=host_id)
+        databaseinfra = host.instances.all()[0].databaseinfra
+    except Exception as e:
+        LOG.warn("Error on get_there_is_backup_log_config. Host id: {} - error: {}".format(host_id, e))
         return None
-
-    databaseinfra = host.instance_set.all()[0].databaseinfra
 
     try:
         LogConfiguration.objects.get(environment=databaseinfra.environment,
@@ -231,7 +196,7 @@ def get_there_is_backup_log_config(host_id):
     except ObjectDoesNotExist:
         return None
 
-    for intance in host.instance_set.all():
+    for intance in host.instances.all():
         if intance.instance_type in (intance.MYSQL, intance.MONGODB, intance.REDIS):
             return True
 
@@ -244,16 +209,12 @@ def get_log_configuration_mount_point_path(host_id):
     from physical.models import Host
     from backup.models import LogConfiguration
 
-    host = Host.objects.filter(id=host_id,
-                               ).select_related('instance').select_related('databaseinfra')
-
     try:
-        host = host[0]
-    except IndexError as e:
-        LOG.warn("Host id does not exists: {}. {}".format(host_id, e))
+        host = Host.objects.get(id=host_id)
+        databaseinfra = host.instances.all()[0].databaseinfra
+    except Exception as e:
+        LOG.warn("Error on get_log_configuration_mount_point_path. Host id: {} - error: {}".format(host_id, e))
         return None
-
-    databaseinfra = host.instance_set.all()[0].databaseinfra
 
     try:
         log_configuration = LogConfiguration.objects.get(environment=databaseinfra.environment,
@@ -270,16 +231,12 @@ def get_log_configuration_backup_log_export_path(host_id):
     from physical.models import Host
     from backup.models import LogConfiguration
 
-    host = Host.objects.filter(id=host_id,
-                               ).select_related('instance').select_related('databaseinfra')
-
     try:
-        host = host[0]
-    except IndexError as e:
-        LOG.warn("Host id does not exists: {}. {}".format(host_id, e))
+        host = Host.objects.get(id=host_id)
+        databaseinfra = host.instances.all()[0].databaseinfra
+    except Exception as e:
+        LOG.warn("Error on get_log_configuration_backup_log_export_path. Host id: {} - error: {}".format(host_id, e))
         return None
-
-    databaseinfra = host.instance_set.all()[0].databaseinfra
 
     try:
         log_configuration = LogConfiguration.objects.get(environment=databaseinfra.environment,
@@ -296,16 +253,12 @@ def get_log_configuration_database_log_path(host_id):
     from physical.models import Host
     from backup.models import LogConfiguration
 
-    host = Host.objects.filter(id=host_id,
-                               ).select_related('instance').select_related('databaseinfra')
-
     try:
-        host = host[0]
-    except IndexError as e:
-        LOG.warn("Host id does not exists: {}. {}".format(host_id, e))
+        host = Host.objects.get(id=host_id)
+        databaseinfra = host.instances.all()[0].databaseinfra
+    except Exception as e:
+        LOG.warn("Error on get_log_configuration_database_log_path. Host id: {} - error: {}".format(host_id, e))
         return None
-
-    databaseinfra = host.instance_set.all()[0].databaseinfra
 
     try:
         log_configuration = LogConfiguration.objects.get(environment=databaseinfra.environment,
@@ -322,16 +275,12 @@ def get_log_configuration_retention_backup_log_days(host_id):
     from physical.models import Host
     from backup.models import LogConfiguration
 
-    host = Host.objects.filter(id=host_id,
-                               ).select_related('instance').select_related('databaseinfra')
-
     try:
-        host = host[0]
-    except IndexError as e:
-        LOG.warn("Host id does not exists: {}. {}".format(host_id, e))
+        host = Host.objects.get(id=host_id)
+        databaseinfra = host.instances.all()[0].databaseinfra
+    except Exception as e:
+        LOG.warn("Error on get_log_configuration_retention_backup_log_days. Host id: {} - error: {}".format(host_id, e))
         return None
-
-    databaseinfra = host.instance_set.all()[0].databaseinfra
 
     try:
         log_configuration = LogConfiguration.objects.get(environment=databaseinfra.environment,
@@ -348,16 +297,12 @@ def get_log_configuration_backup_log_script(host_id):
     from physical.models import Host
     from backup.models import LogConfiguration
 
-    host = Host.objects.filter(id=host_id,
-                               ).select_related('instance').select_related('databaseinfra')
-
     try:
-        host = host[0]
-    except IndexError as e:
-        LOG.warn("Host id does not exists: {}. {}".format(host_id, e))
+        host = Host.objects.get(id=host_id)
+        databaseinfra = host.instances.all()[0].databaseinfra
+    except Exception as e:
+        LOG.warn("Error on get_log_configuration_backup_log_script. Host id: {} - error: {}".format(host_id, e))
         return None
-
-    databaseinfra = host.instance_set.all()[0].databaseinfra
 
     try:
         log_configuration = LogConfiguration.objects.get(environment=databaseinfra.environment,
@@ -374,16 +319,12 @@ def get_log_configuration_config_backup_log_script(host_id):
     from physical.models import Host
     from backup.models import LogConfiguration
 
-    host = Host.objects.filter(id=host_id,
-                               ).select_related('instance').select_related('databaseinfra')
-
     try:
-        host = host[0]
-    except IndexError as e:
-        LOG.warn("Host id does not exists: {}. {}".format(host_id, e))
+        host = Host.objects.get(id=host_id)
+        databaseinfra = host.instances.all()[0].databaseinfra
+    except Exception as e:
+        LOG.warn("Error on get_log_configuration_config_backup_log_script. Host id: {} - error: {}".format(host_id, e))
         return None
-
-    databaseinfra = host.instance_set.all()[0].databaseinfra
 
     try:
         log_configuration = LogConfiguration.objects.get(environment=databaseinfra.environment,
@@ -400,16 +341,12 @@ def get_log_configuration_clean_backup_log_script(host_id):
     from physical.models import Host
     from backup.models import LogConfiguration
 
-    host = Host.objects.filter(id=host_id,
-                               ).select_related('instance').select_related('databaseinfra')
-
     try:
-        host = host[0]
-    except IndexError as e:
-        LOG.warn("Host id does not exists: {}. {}".format(host_id, e))
+        host = Host.objects.get(id=host_id)
+        databaseinfra = host.instances.all()[0].databaseinfra
+    except Exception as e:
+        LOG.warn("Error on get_log_configuration_clean_backup_log_script. Host id: {} - error: {}".format(host_id, e))
         return None
-
-    databaseinfra = host.instance_set.all()[0].databaseinfra
 
     try:
         log_configuration = LogConfiguration.objects.get(environment=databaseinfra.environment,
@@ -426,16 +363,12 @@ def get_log_configuration_cron_minute(host_id):
     from physical.models import Host
     from backup.models import LogConfiguration
 
-    host = Host.objects.filter(id=host_id,
-                               ).select_related('instance').select_related('databaseinfra')
-
     try:
-        host = host[0]
-    except IndexError as e:
-        LOG.warn("Host id does not exists: {}. {}".format(host_id, e))
+        host = Host.objects.get(id=host_id)
+        databaseinfra = host.instances.all()[0].databaseinfra
+    except Exception as e:
+        LOG.warn("Error on get_log_configuration_cron_minute. Host id: {} - error: {}".format(host_id, e))
         return None
-
-    databaseinfra = host.instance_set.all()[0].databaseinfra
 
     try:
         log_configuration = LogConfiguration.objects.get(environment=databaseinfra.environment,
@@ -452,16 +385,12 @@ def get_log_configuration_cron_hour(host_id):
     from physical.models import Host
     from backup.models import LogConfiguration
 
-    host = Host.objects.filter(id=host_id,
-                               ).select_related('instance').select_related('databaseinfra')
-
     try:
-        host = host[0]
-    except IndexError as e:
-        LOG.warn("Host id does not exists: {}. {}".format(host_id, e))
+        host = Host.objects.get(id=host_id)
+        databaseinfra = host.instances.all()[0].databaseinfra
+    except Exception as e:
+        LOG.warn("Error on get_log_configuration_cron_hour. Host id: {} - error: {}".format(host_id, e))
         return None
-
-    databaseinfra = host.instance_set.all()[0].databaseinfra
 
     try:
         log_configuration = LogConfiguration.objects.get(environment=databaseinfra.environment,
