@@ -235,8 +235,12 @@ class BaseDriver(object):
         for attempt in range(0, attempts):
             if self.is_replication_ok(instance):
                 self.switch_master()
-                LOG.info("Switch master ok...")
+                LOG.info("Switch master returned ok...")
+
+                if not self.check_instance_is_master(instance):
+                    raise Exception("Could not change master")
                 return
+
             LOG.info("Waiting 10s to check replication...")
             sleep(10)
         raise Exception("Could not switch master because of replication's delay")
