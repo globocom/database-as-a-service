@@ -19,7 +19,7 @@ class MakeExportSnapshot(BaseStep):
                 host = host_and_export['host']
                 export_id = host_and_export['old_export_id']
                 ret = make_host_backup(database=workflow_dict['database'],
-                                       instance=host.instance_set.all()[0],
+                                       instance=host.instances.all()[0],
                                        export_id=export_id)
                 if not ret:
                     msg = 'Could not make snapshot for export_id: {} on host {}'.format(

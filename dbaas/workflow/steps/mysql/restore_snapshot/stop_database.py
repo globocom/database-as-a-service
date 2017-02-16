@@ -60,7 +60,7 @@ class StopDatabase(BaseStep):
                 if return_code != 0:
                     LOG.warn(str(output))
 
-                instance = host.instance_set.all()[0]
+                instance = host.instances.all()[0]
                 start_slave(instance=instance)
 
             LOG.info('Wainting 30 seconds to setting write/read instances')
