@@ -5,15 +5,17 @@ from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
 from physical import models
 from .engine_type import EngineTypeSerializer
+from .plan import PlanSerializer
 
 
 class EngineSerializer(serializers.HyperlinkedModelSerializer):
 
     engine_type = EngineTypeSerializer(read_only=True)
+    plans = PlanSerializer(many=True, read_only=True)
 
     class Meta:
         model = models.Engine
-        fields = ('url', 'id', 'engine_type', 'version',)
+        fields = ('url', 'id', 'engine_type', 'version', 'plans')
 
 
 class EngineAPI(viewsets.ReadOnlyModelViewSet):
