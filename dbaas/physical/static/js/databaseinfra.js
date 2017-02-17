@@ -73,20 +73,13 @@ DatabaseInfra.prototype = {
         };
         
     },
-    update_plans: function() {            
-        var first_plan_id = $("#id_plan").val() || "0";
-        var first_environment_id = $("#id_environment").val() || "0";
-        //remove options from plan, except the first one
-        this.clean_plan_options();
+    update_plans: function() {
 
-        var engine_id = $("#id_engine").val() || "none";
-        if (engine_id != "none") {
-            
+        function pages_of_plan(url, current_plan, current_environment) {
             $.ajax({
                 "dataType": "json",
-                "url": "/api/plan/",
+                "url": url,
                 "type": "GET",
-                "data": { "engine_id": engine_id, },
             }).done(function(data) {
                 if (data.error) {
                     alert(data.error);
@@ -94,22 +87,34 @@ DatabaseInfra.prototype = {
                     var plan = $("#id_plan");
                     $.each(data.plan, function(index, item) {
                         plan.append($("<option></option>").attr("value", item.id).text(item.name));
-                        /* 
-                        discover if it is the selected value. This is necessary in cases where the form is submited
-                        but is returned with a validation error.
-                        */
-                        if (parseInt(item.id) == parseInt(first_plan_id)) {
-                            plan.val(first_plan_id);
-                            plan.trigger("change", [first_environment_id]);
+
+                        if (parseInt(item.id) == parseInt(current_plan)) {
+                            plan.val(current_plan);
+                            plan.trigger("change", [current_environment]);
                         };
                     });
-                    
+
+                    next_page = data._links.next
+                    if (next_page) {
+                        pages_of_plan(next_page, current_plan, current_environment)
+                    }
                 };
             }).fail(function() {
                 alert("invalid server response");
             });
         };
-        
+
+        var plan_id = $("#id_plan").val() || "0";
+        var environment_id = $("#id_environment").val() || "0";
+        var engine_id = $("#id_engine").val() || "none";
+        url = "/api/plan/?page=1&engine_id=" + engine_id;
+
+        this.clean_plan_options();
+
+        if (engine_id != "none") {
+            pages_of_plan(url, plan_id, environment_id)
+        }
+
     },
     hide_endpoint: function() {
         var engine_id = $("#id_engine").val() || "none";
