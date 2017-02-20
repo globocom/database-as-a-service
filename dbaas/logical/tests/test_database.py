@@ -5,6 +5,7 @@ import logging
 from django.test import TestCase
 from django.db import IntegrityError
 from drivers import base
+from maintenance.tests import factory as maintenance_factory
 from physical.tests import factory as physical_factory
 from physical.models import DatabaseInfra
 from logical.tests import factory
@@ -291,6 +292,26 @@ class DatabaseTestCase(TestCase):
         expected_url = UPGRADE_RETRY_URL.format(database.id)
         returned_url = database.get_upgrade_retry_url()
         self.assertEqual(returned_url, expected_url)
+
+    def test_last_successful_upgrade(self):
+        database = factory.DatabaseFactory()
+        self.assertIsNone(database.last_successful_upgrade)
+
+        upgrade = maintenance_factory.DatabaseUpgradeFactory()
+        upgrade.database = database
+
+        upgrade.save()
+        self.assertIsNone(database.last_successful_upgrade)
+
+        upgrade.set_success()
+        self.assertEqual(database.last_successful_upgrade, upgrade)
+
+    def test_last_successful_upgrade_with_error(self):
+        database = factory.DatabaseFactory()
+        upgrade = maintenance_factory.DatabaseUpgradeFactory()
+        upgrade.database = database
+        upgrade.set_error()
+        self.assertIsNone(database.last_successful_upgrade)
 
     '''
 
