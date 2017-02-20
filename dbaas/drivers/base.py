@@ -237,9 +237,16 @@ class BaseDriver(object):
                 self.switch_master()
                 LOG.info("Switch master returned ok...")
 
-                if not self.check_instance_is_master(instance):
-                    raise Exception("Could not change master")
-                return
+                check_is_master_attempts = attempts
+                while not self.check_instance_is_master(instance):
+                    if check_is_master_attempts == 0:
+                        break
+                    check_is_master_attempts -= 1
+                    sleep(10)
+                else:
+                    return
+
+                raise Exception("Could not change master")
 
             LOG.info("Waiting 10s to check replication...")
             sleep(10)
