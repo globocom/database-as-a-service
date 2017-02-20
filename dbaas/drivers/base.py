@@ -238,7 +238,7 @@ class BaseDriver(object):
                 LOG.info("Switch master returned ok...")
 
                 check_is_master_attempts = attempts
-                while not self.check_instance_is_master(instance):
+                while self.check_instance_is_master(instance):
                     if check_is_master_attempts == 0:
                         break
                     check_is_master_attempts -= 1
