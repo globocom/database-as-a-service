@@ -624,7 +624,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         ).first()
 
         hosts = []
-        for host in Host.objects.filter(instance__databaseinfra=database.infra).distinct():
+        for host in Host.objects.filter(instances__databaseinfra=database.infra).distinct():
             hosts.append(host.hostname.split('.')[0])
 
         credential = get_credentials_for(
