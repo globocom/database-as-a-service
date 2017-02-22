@@ -6,6 +6,7 @@ from dbaas_cloudstack.provider import CloudStackProvider
 from dbaas_credentials.credential import Credential
 from dbaas_credentials.models import CredentialType
 from workflow.steps.util.base import BaseInstanceStep
+from maintenance.models import DatabaseResize
 
 
 CHANGE_MASTER_ATTEMPS = 4
@@ -26,10 +27,6 @@ class VmStep(BaseInstanceStep):
         self.provider = CloudStackProvider(credentials=credentials)
         self.host = self.instance.hostname
         self.host_cs = HostAttr.objects.get(host=self.host)
-
-        new_plan = self.instance.databaseinfra.plan.engine_equivalent_plan
-        cs_plan = PlanAttr.objects.get(plan=new_plan)
-        self.bundle = cs_plan.bundle.first()
 
         self.infra = self.instance.databaseinfra
         self.driver = self.infra.get_driver()
@@ -65,6 +62,13 @@ class Start(VmStep):
 
 class InstallNewTemplate(VmStep):
 
+    def __init__(self, instance):
+        super(InstallNewTemplate, self).__init__(instance)
+
+        target_plan = self.instance.databaseinfra.plan.engine_equivalent_plan
+        cs_plan = PlanAttr.objects.get(plan=target_plan)
+        self.bundle = cs_plan.bundle.first()
+
     def __unicode__(self):
         return "Installing new template to VM..."
 
@@ -97,6 +101,27 @@ class UpdateOSDescription(VmStep):
 
     def do(self):
         self.instance.hostname.update_os_description()
+
+
+class ChangeVmOffering(VmStep):
+
+    def __init__(self, instance):
+        super(ChangeVmOffering, self).__init__(instance)
+
+        database = self.instance.databaseinfra.databases.last()
+        target_offer = DatabaseResize.current_to(database).target_offer
+        self.offering_id = target_offer.offering.serviceofferingid
+
+    def __unicode__(self):
+        return "Resizing VM..."
+
+    def do(self):
+        resized = self.provider.change_service_for_vm(
+            vm_id=self.host_cs.vm_id,
+            serviceofferingid=self.offering_id
+        )
+        if not resized:
+            raise Exception("Could not change offering")
 
 
 class ChangeMaster(VmStep):

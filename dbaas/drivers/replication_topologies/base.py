@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
 STOP_RESIZE_START = (
-    'workflow.steps.util.resize.stop_vm.StopVM',
-    'workflow.steps.util.resize.resize_vm.ResizeVM',
-    'workflow.steps.util.resize.start_vm.StartVM',
+    'workflow.steps.util.upgrade.vm.Stop',
+    'workflow.steps.util.upgrade.vm.ChangeVmOffering',
+    'workflow.steps.util.upgrade.vm.Start',
 )
 
 

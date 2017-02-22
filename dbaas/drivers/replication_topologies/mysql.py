@@ -41,14 +41,17 @@ class BaseMysql(BaseTopology):
         ) + self.monitoring_steps()
 
     def get_resize_steps(self):
-        return (
-            ('workflow.steps.util.resize.stop_database.StopDatabase',
-             'workflow.steps.mysql.resize.change_config.ChangeDatabaseConfigFile',
-             ) + STOP_RESIZE_START +
-            ('workflow.steps.util.resize.start_database.StartDatabase',
-             'workflow.steps.util.resize.start_agents.StartAgents',
-             'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',)
-        )
+        return [{'Resizing database': ((
+            'workflow.steps.util.upgrade.zabbix.DisableAlarms',
+            'workflow.steps.util.upgrade.vm.ChangeMaster',
+            'workflow.steps.util.upgrade.database.Stop',
+            'workflow.steps.util.upgrade.pack.Configure',
+        ) + STOP_RESIZE_START + (
+            'workflow.steps.util.upgrade.database.Start',
+            'workflow.steps.util.resize.start_agents.StartAgents',
+            'workflow.steps.util.upgrade.database.CheckIsUp',
+            'workflow.steps.util.upgrade.zabbix.EnableAlarms',
+        ))}]
 
     def switch_master(self, driver):
         raise NotImplementedError()

@@ -29,14 +29,17 @@ class BaseRedis(BaseTopology):
         ) + self.monitoring_steps()
 
     def get_resize_steps(self):
-        return (
-            ('workflow.steps.util.resize.stop_database.StopDatabase',
-             'workflow.steps.redis.resize.change_config.RedisWithPersistence',) +
-            STOP_RESIZE_START +
-            ('workflow.steps.util.resize.start_database.StartDatabase',
-             'workflow.steps.util.resize.start_agents.StartAgents',
-             'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',)
-        )
+        return [{'Resizing database': ((
+            'workflow.steps.util.upgrade.zabbix.DisableAlarms',
+            'workflow.steps.util.upgrade.vm.ChangeMaster',
+            'workflow.steps.util.upgrade.database.Stop',
+            'workflow.steps.util.upgrade.pack.RedisWithPersistenceConfigure',
+        ) + STOP_RESIZE_START + (
+            'workflow.steps.util.upgrade.database.Start',
+            'workflow.steps.util.resize.start_agents.StartAgents',
+            'workflow.steps.util.upgrade.database.CheckIsUp',
+            'workflow.steps.util.upgrade.zabbix.EnableAlarms',
+        ))}]
 
     def get_upgrade_steps_extra(self):
         return (
@@ -63,14 +66,17 @@ class RedisSentinel(BaseRedis):
 class RedisNoPersistence(BaseRedis):
 
     def get_resize_steps(self):
-        return (
-            ('workflow.steps.util.resize.stop_database.StopDatabase',
-             'workflow.steps.redis.resize.change_config.RedisWithoutPersistence',) +
-            STOP_RESIZE_START +
-            ('workflow.steps.util.resize.start_database.StartDatabase',
-             'workflow.steps.util.resize.start_agents.StartAgents',
-             'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',)
-        )
+        return [{'Resizing database': ((
+            'workflow.steps.util.upgrade.zabbix.DisableAlarms',
+            'workflow.steps.util.upgrade.vm.ChangeMaster',
+            'workflow.steps.util.upgrade.database.Stop',
+             'workflow.steps.util.upgrade.pack.RedisWithoutPersistenceConfigure',
+        ) + STOP_RESIZE_START + (
+            'workflow.steps.util.upgrade.database.Start',
+            'workflow.steps.util.resize.start_agents.StartAgents',
+            'workflow.steps.util.upgrade.database.CheckIsUp',
+            'workflow.steps.util.upgrade.zabbix.EnableAlarms',
+        ))}]
 
 
 class RedisSingleNoPersistence(RedisNoPersistence):

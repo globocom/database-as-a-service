@@ -12,10 +12,12 @@ from physical.models import Plan, DatabaseInfra, Instance
 from util import email_notifications, get_worker_name, full_stack
 from util.decorators import only_one
 from util.providers import make_infra, clone_infra, destroy_infra, \
-    get_database_upgrade_setting
+    get_database_upgrade_setting, get_resize_settings
 from simple_audit.models import AuditRequest
 from system.models import Configuration
 from .models import TaskHistory
+from workflow.workflow import steps_for_instances
+from maintenance.models import DatabaseUpgrade, DatabaseResize
 
 LOG = get_task_logger(__name__)
 
@@ -474,110 +476,6 @@ def purge_task_history(self):
         task_history.update_status_for(TaskHistory.STATUS_ERROR, details=e)
 
 
-@app.task(bind=True)
-def resize_database(self, database, cloudstackpack, task_history=None, user=None):
-    AuditRequest.new_request("resize_database", user, "localhost")
-
-    try:
-        worker_name = get_worker_name()
-        task_history = TaskHistory.register(request=self.request, task_history=task_history,
-                                            user=user, worker_name=worker_name)
-        from util.providers import resize_database_instances
-        from util import get_credentials_for
-        from dbaas_cloudstack.provider import CloudStackProvider
-        from dbaas_credentials.models import CredentialType
-
-        cs_credentials = get_credentials_for(environment=database.environment,
-                                             credential_type=CredentialType.CLOUDSTACK)
-        cs_provider = CloudStackProvider(credentials=cs_credentials)
-
-        databaseinfra = database.databaseinfra
-        driver = databaseinfra.get_driver()
-        instances = driver.get_slave_instances()
-        instances.append(driver.get_master_instance())
-        instances_to_resize = []
-        resized_instances = []
-
-        disable_zabbix_alarms(database)
-
-        for instance in instances:
-            host = instance.hostname
-            host_attr = host.cs_host_attributes.get()
-            offering_id = cs_provider.get_vm_offering_id(
-                vm_id=host_attr.vm_id,
-                project_id=cs_credentials.project
-            )
-
-            if offering_id == cloudstackpack.offering.serviceofferingid:
-                LOG.info("Instance offering: {}".format(offering_id))
-                resized_instances.append(instance)
-            else:
-                instances_to_resize.append(instance)
-
-        result = resize_database_instances(
-            database=database,
-            cloudstackpack=cloudstackpack,
-            instances=instances_to_resize,
-            task=task_history
-        )
-
-        if result['created']:
-            resized_instances += result['completed_instances']
-        else:
-            if 'exceptions' not in result:
-                error = "Something went wrong."
-            else:
-                error = "\n".join(
-                    ": ".join(err) for err in
-                    result['exceptions']['error_codes']
-                )
-                traceback = "\nException Traceback\n".join(
-                    result['exceptions']['traceback']
-                )
-
-                error = "{}\n{}\n{}".format(error, traceback, error)
-
-        if databaseinfra.plan.is_ha:
-            LOG.info("Waiting 60s to check continue...")
-            sleep(60)
-            instance = driver.get_slave_instances()[0]
-            driver.check_replication_and_switch(instance)
-
-        if len(instances) == len(resized_instances):
-            from dbaas_cloudstack.models import DatabaseInfraOffering
-            LOG.info('Updating offering DatabaseInfra.')
-
-            databaseinfraoffering = DatabaseInfraOffering.objects.get(
-                databaseinfra=databaseinfra)
-            databaseinfraoffering.offering = cloudstackpack.offering
-            databaseinfraoffering.save()
-
-            if databaseinfra.engine.engine_type.name == 'redis':
-                new_max_memory = databaseinfraoffering.offering.memory_size_mb
-                resize_factor = 0.5
-                if new_max_memory > 1024:
-                    resize_factor = 0.75
-
-                new_max_memory *= resize_factor
-                databaseinfra.per_database_size_mbytes = int(new_max_memory)
-                databaseinfra.save()
-
-            task_history.update_status_for(TaskHistory.STATUS_SUCCESS,
-                                           details='Resize successfully done.')
-            return
-
-        task_history.update_status_for(TaskHistory.STATUS_ERROR, details=error)
-        return
-
-    except Exception as e:
-        error = "Resize Database ERROR: {}".format(e)
-        LOG.error(error)
-        task_history.update_status_for(TaskHistory.STATUS_ERROR, details=error)
-
-    finally:
-        enable_zabbix_alarms(database)
-        AuditRequest.cleanup_request()
-
 
 def disable_zabbix_alarms(database):
     LOG.info("{} alarms will be disabled!".format(database))
@@ -815,9 +713,6 @@ def update_disk_used_size(self):
 
 @app.task(bind=True)
 def upgrade_database(self, database, user, task, since_step=0):
-    from workflow.workflow import steps_for_instances
-    from maintenance.models import DatabaseUpgrade
-
     worker_name = get_worker_name()
     task = TaskHistory.register(self.request, user, task, worker_name)
 
@@ -861,5 +756,49 @@ def upgrade_database(self, database, user, task, since_step=0):
         database_upgrade.set_error()
         task.update_status_for(
             TaskHistory.STATUS_ERROR,
-            'Could not do upgrade.\nUpgrade don\'t has rollback'
+            'Could not do upgrade.\nUpgrade doesn\'t have rollback'
         )
+
+
+@app.task(bind=True)
+def resize_database(self, database, user, task, cloudstackpack, since_step=0):
+    from util.providers import get_not_resized_instances_of, get_cloudstack_pack
+    from dbaas_cloudstack.models import DatabaseInfraOffering
+
+    worker_name = get_worker_name()
+    task = TaskHistory.register(self.request, user, task, worker_name)
+
+    infra = database.infra
+
+    database_resize = DatabaseResize(
+        database=database,
+        source_offer=get_cloudstack_pack(database),
+        target_offer=cloudstackpack,
+        task=task
+    )
+
+    class_path = infra.plan.replication_topology.class_path
+    steps = get_resize_settings(class_path)
+
+    instances_to_resize = get_not_resized_instances_of(database, cloudstackpack)
+    success = steps_for_instances(
+        steps, instances_to_resize, task,
+        database_resize.update_step, since_step
+    )
+
+    if success:
+        databaseinfraoffering = DatabaseInfraOffering.objects.get(
+            databaseinfra=infra)
+        databaseinfraoffering.offering = cloudstackpack.offering
+        databaseinfraoffering.save()
+
+        database_resize.set_success()
+        task.update_status_for(TaskHistory.STATUS_SUCCESS, 'Done.')
+    else:
+        database_resize.set_error()
+        task.update_status_for(
+            TaskHistory.STATUS_ERROR,
+            'Could not do resize.\nResize doesn\'t have rollback'
+        )
+
+

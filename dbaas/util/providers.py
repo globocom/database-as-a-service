@@ -133,31 +133,53 @@ def destroy_infra(databaseinfra, task=None):
         return False
 
 
-def resize_database_instances(database, cloudstackpack, instances, task=None):
-
+def get_cloudstack_pack(database):
     from dbaas_cloudstack.models import CloudStackPack
 
-
-    original_cloudstackpack = CloudStackPack.objects.get(
+    return CloudStackPack.objects.get(
         offering__serviceofferingid=database.offering_id,
         offering__region__environment=database.environment,
         engine_type__name=database.engine_type
     )
 
-    workflow_dict = build_dict(
-        database=database,
-        databaseinfra=database.databaseinfra,
-        cloudstackpack=cloudstackpack,
-        original_cloudstackpack=original_cloudstackpack,
-        environment=database.environment,
-        instances=instances,
-        steps=get_resize_settings(
-            database.databaseinfra.plan.replication_topology.class_path
-        )
-    )
 
-    start_workflow_ha(workflow_dict=workflow_dict, task=task)
-    return workflow_dict
+def get_not_resized_instances_of(database, cloudstackpack):
+    from dbaas_cloudstack.provider import CloudStackProvider
+    from physical.models import Instance
+
+    cs_credentials = get_credentials_for(
+        environment=database.environment,
+        credential_type=CredentialType.CLOUDSTACK
+    )
+    cs_provider = CloudStackProvider(credentials=cs_credentials)
+    all_instances = database.infra.instances.all()
+    engine_name = database.infra.engine.engine_type.name
+    not_resized_instances = []
+
+    if engine_name == "redis":
+        instances_to_test = all_instances.filter(instance_type=Instance.REDIS)
+    elif engine_name == "mongodb":
+        instances_to_test = all_instances.filter(instance_type=Instance.MONGODB)
+    else:
+        instances_to_test = all_instances
+
+    for instance in instances_to_test:
+        host = instance.hostname
+        host_attr = host.cs_host_attributes.get()
+
+        offering_id = cs_provider.get_vm_offering_id(
+            vm_id=host_attr.vm_id,
+            project_id=cs_credentials.project
+        )
+
+        if offering_id == cloudstackpack.offering.serviceofferingid:
+            LOG.info("Instance {} of database {} offering: {}".format(
+                instance.hostname, database.name, offering_id
+            ))
+        else:
+            not_resized_instances.append(instance)
+
+    return not_resized_instances
 
 
 def get_vm_qt(plan):

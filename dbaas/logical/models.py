@@ -394,7 +394,7 @@ class Database(BaseModel):
 
         resize_database.delay(
             database=database, cloudstackpack=cloudstackpack,
-            user=user, task_history=task_history
+            user=user, task=task_history
         )
 
     @classmethod
