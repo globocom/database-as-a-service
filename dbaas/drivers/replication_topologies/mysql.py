@@ -7,7 +7,7 @@ from util import exec_remote_command
 from dbaas_credentials.models import CredentialType
 from dbaas_foxha.provider import FoxHAProvider
 from dbaas_foxha.dbaas_api import DatabaseAsAServiceApi
-from base import BaseTopology, STOP_RESIZE_START
+from base import BaseTopology
 
 LOG = logging.getLogger(__name__)
 

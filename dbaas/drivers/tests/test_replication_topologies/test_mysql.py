@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from drivers.replication_topologies.base import STOP_RESIZE_START
+from drivers.replication_topologies.base import RESIZE_STEPS
 from drivers.replication_topologies.mysql import MySQLSingle
 from drivers.replication_topologies.mysql import MySQLFlipper
 from drivers.replication_topologies.mysql import MySQLFoxHA
@@ -36,18 +36,7 @@ class AbstractBaseMySQLTestCase(AbstractReplicationTopologySettingsTestCase):
         ) + self._get_monitoring_settings()
 
     def _get_resize_settings(self):
-        return [{'Resizing database': ((
-            'workflow.steps.util.zabbix.DisableAlarms',
-            'workflow.steps.util.vm.ChangeMaster',
-            'workflow.steps.util.database.Stop',
-            'workflow.steps.util.pack.ResizeConfigure',
-        ) + STOP_RESIZE_START + (
-            'workflow.steps.util.database.Start',
-            'workflow.steps.util.resize.start_agents.StartAgents',
-            'workflow.steps.util.database.CheckIsUp',
-            'workflow.steps.util.update_info.UpdateOffering',
-            'workflow.steps.util.zabbix.EnableAlarms',
-        ))}]
+        return [{'Resizing database': (RESIZE_STEPS)}]
 
 
 class TestMySQLSingle(AbstractBaseMySQLTestCase):

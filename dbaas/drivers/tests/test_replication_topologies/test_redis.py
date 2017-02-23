@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
-from drivers.replication_topologies.base import STOP_RESIZE_START
+from drivers.replication_topologies.base import RESIZE_STEPS
 from drivers.replication_topologies.redis import RedisSentinel, RedisSingle, \
-    RedisSingleNoPersistence, RedisSentinelNoPersistence
+    RedisSentinelNoPersistence
 from drivers.tests.test_replication_topologies import AbstractReplicationTopologySettingsTestCase
 
 
@@ -34,19 +34,10 @@ class AbstractBaseRedisTestCase(AbstractReplicationTopologySettingsTestCase):
         ) + self._get_monitoring_settings()
 
     def _get_resize_settings(self):
-        return [{'Resizing database': ((
-            'workflow.steps.util.zabbix.DisableAlarms',
-            'workflow.steps.util.vm.ChangeMaster',
-            'workflow.steps.util.database.Stop',
-            'workflow.steps.util.pack.RedisWithPersistenceConfigure',
-        ) + STOP_RESIZE_START + (
-            'workflow.steps.util.database.Start',
-            'workflow.steps.util.resize.start_agents.StartAgents',
-            'workflow.steps.util.database.CheckIsUp',
-            'workflow.steps.util.update_info.UpdateOffering',
-            'workflow.steps.util.update_info.UpdateMemory',
-            'workflow.steps.util.zabbix.EnableAlarms',
-        ))}]
+        return [{'Resizing database': (RESIZE_STEPS[0:11] +\
+            ('workflow.steps.util.update_info.UpdateMemory',) +\
+            (RESIZE_STEPS[11],)
+        )}]
 
 
     def _get_upgrade_steps_extra(self):
@@ -78,25 +69,10 @@ class TestRedisSentinel(AbstractBaseRedisTestCase):
 
 class AbstractBaseRedisNoPersistenceTestCase(AbstractBaseRedisTestCase):
     def _get_resize_settings(self):
-        return [{'Resizing database': ((
-            'workflow.steps.util.zabbix.DisableAlarms',
-            'workflow.steps.util.vm.ChangeMaster',
-            'workflow.steps.util.database.Stop',
-             'workflow.steps.util.pack.RedisWithoutPersistenceConfigure',
-        ) + STOP_RESIZE_START + (
-            'workflow.steps.util.database.Start',
-            'workflow.steps.util.resize.start_agents.StartAgents',
-            'workflow.steps.util.database.CheckIsUp',
-            'workflow.steps.util.update_info.UpdateOffering',
-            'workflow.steps.util.update_info.UpdateMemory',
-            'workflow.steps.util.zabbix.EnableAlarms',
-        ))}]
-
-
-class TestRedisSingleNoPersistence(AbstractBaseRedisNoPersistenceTestCase):
-
-    def _get_replication_topology_driver(self):
-        return RedisSingleNoPersistence()
+        return [{'Resizing database': (RESIZE_STEPS[0:11] +\
+            ('workflow.steps.util.update_info.UpdateMemory',) +\
+            (RESIZE_STEPS[11],)
+        )}]
 
 
 class TestRedisSentinelNoPersistence(AbstractBaseRedisNoPersistenceTestCase):
