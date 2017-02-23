@@ -30,9 +30,9 @@ class BaseRedis(BaseTopology):
 
     def get_resize_steps(self):
         return [{'Resizing database': (
-            RESIZE_STEPS[0:11] + (
+            RESIZE_STEPS[0:-1] + (
                 'workflow.steps.util.update_info.UpdateMemory',
-            ) + RESIZE_STEPS[11]
+            ) + (RESIZE_STEPS[-1],)
         )}]
 
     def get_upgrade_steps_extra(self):

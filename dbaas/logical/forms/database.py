@@ -125,15 +125,36 @@ class DatabaseForm(models.ModelForm):
 
     @classmethod
     def setup_offering_field(cls, form, db_instance):
-        widget = DatabaseOfferingWidget(
-            id='resizeDatabase',
-            url=db_instance.get_resize_url(),
-            label='Resize VM',
-            attrs={
-                'readonly': 'readonly',
-                'database': db_instance
-            }
-        )
+        from maintenance.models import DatabaseResize
+
+        db_resize = DatabaseResize.objects.filter(database=db_instance)
+
+        args = {'id': 'resizeDatabase',}
+        help_text = ""
+
+        url = db_instance.get_resize_url()
+        label = "Resize VM"
+
+        if db_resize:
+            db_resize = db_resize.latest("created_at")
+            if db_resize.is_status_error:
+                url = db_instance.get_resize_retry_url
+                label = "Retry VM resize"
+                args['class_text'] = "btn btn-warning"
+                help_text = '<br><a href="/admin/maintenance/databaseresize/' + str(db_resize.id) +\
+                            '/" target="_blank">' \
+                            'Last resize</a> has an <strong>error</strong>, please check the ' \
+                            '<a href="/admin/notification/taskhistory/' + str(db_resize.task.id) +\
+                            '/" target="_blank">task</a> and retry the database resize' \
+                            ' clicking on the button below.'
+
+
+        args['url'] = url
+        args['label'] = label
+        args['attrs'] = {'readonly': 'readonly', 'database': db_instance}
+        args['help_text'] = help_text
+
+        widget = DatabaseOfferingWidget(**args)
 
         form.declared_fields['offering'] = forms.CharField(
             widget=widget, required=False, initial=db_instance.offering

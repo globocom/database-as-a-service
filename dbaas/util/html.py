@@ -55,7 +55,7 @@ def render_progress_bar(current, total=100, message="%", bar_type="auto", stripe
 
 
 def show_info_popup(field, title, content, icon, css_class):
-    html = '{} <a href="javascript:void(0)" ' \
+    html = '{}<a href="javascript:void(0)" ' \
            'title="{}" ' \
            'data-content="{}" ' \
            'class="{}">' \

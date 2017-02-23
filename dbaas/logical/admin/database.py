@@ -65,7 +65,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         "environment__name", "databaseinfra__engine__engine_type__name"
     )
     list_display_basic = [
-        "name_html", "team_admin_page", "engine_html", "environment", "offering",
+        "name_html", "team_admin_page", "engine_html", "environment", "offering_html",
         "friendly_status", "clone_html", "get_capacity_html", "metrics_html",
         "created_dt_format"
     ]
@@ -236,6 +236,28 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         )
     engine_html.short_description = _("engine")
     engine_html.admin_order_field = "Engine"
+
+    def offering_html(self, database):
+        resizes = database.resizes.filter(database=database)
+        last_resize = resizes.latest("created_at")
+        if not(last_resize and last_resize.is_status_error):
+            return database.offering
+
+        resize_url = reverse('admin:maintenance_databaseresize_change', args=[last_resize.id])
+        task_url = reverse('admin:notification_taskhistory_change', args=[last_resize.task.id])
+        retry_url = database.get_resize_retry_url()
+        resize_content = \
+            "<a href='{}' target='_blank'>Last resize</a> has an <b>error</b>, " \
+            "please check the <a href='{}' target='_blank'>task</a> and " \
+            "<a href='{}'>retry</a> the database resize".format(
+                resize_url, task_url, retry_url
+            )
+        return show_info_popup(
+            database.offering, "Database Resize", resize_content,
+            icon="icon-warning-sign", css_class="show-resize"
+        )
+    offering_html.short_description = _("offering")
+    offering_html.admin_order_field = "Offering"
 
     def get_capacity_html(self, database):
         try:
