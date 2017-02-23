@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from base import BaseTopology, STOP_RESIZE_START
+from base import BaseTopology, RESIZE_STEPS
 
 
 class BaseRedis(BaseTopology):
@@ -29,17 +29,11 @@ class BaseRedis(BaseTopology):
         ) + self.monitoring_steps()
 
     def get_resize_steps(self):
-        return [{'Resizing database': ((
-            'workflow.steps.util.upgrade.zabbix.DisableAlarms',
-            'workflow.steps.util.upgrade.vm.ChangeMaster',
-            'workflow.steps.util.upgrade.database.Stop',
-            'workflow.steps.util.upgrade.pack.RedisWithPersistenceConfigure',
-        ) + STOP_RESIZE_START + (
-            'workflow.steps.util.upgrade.database.Start',
-            'workflow.steps.util.resize.start_agents.StartAgents',
-            'workflow.steps.util.upgrade.database.CheckIsUp',
-            'workflow.steps.util.upgrade.zabbix.EnableAlarms',
-        ))}]
+        return [{'Resizing database': (
+            RESIZE_STEPS[0:11] + (
+                'workflow.steps.util.update_info.UpdateMemory',
+            ) + RESIZE_STEPS[11]
+        )}]
 
     def get_upgrade_steps_extra(self):
         return (
@@ -64,22 +58,6 @@ class RedisSentinel(BaseRedis):
 
 
 class RedisNoPersistence(BaseRedis):
-
-    def get_resize_steps(self):
-        return [{'Resizing database': ((
-            'workflow.steps.util.upgrade.zabbix.DisableAlarms',
-            'workflow.steps.util.upgrade.vm.ChangeMaster',
-            'workflow.steps.util.upgrade.database.Stop',
-             'workflow.steps.util.upgrade.pack.RedisWithoutPersistenceConfigure',
-        ) + STOP_RESIZE_START + (
-            'workflow.steps.util.upgrade.database.Start',
-            'workflow.steps.util.resize.start_agents.StartAgents',
-            'workflow.steps.util.upgrade.database.CheckIsUp',
-            'workflow.steps.util.upgrade.zabbix.EnableAlarms',
-        ))}]
-
-
-class RedisSingleNoPersistence(RedisNoPersistence):
     pass
 
 

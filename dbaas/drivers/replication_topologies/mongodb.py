@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from base import BaseTopology, STOP_RESIZE_START
+from base import BaseTopology
 
 
 class BaseMongoDB(BaseTopology):
@@ -28,28 +28,16 @@ class BaseMongoDB(BaseTopology):
             'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',
         ) + self.monitoring_steps()
 
-    def get_resize_steps(self):
-        return [{'Resizing database': ((
-            'workflow.steps.util.upgrade.zabbix.DisableAlarms',
-            'workflow.steps.util.upgrade.vm.ChangeMaster',
-            'workflow.steps.util.upgrade.database.Stop',
-        ) + STOP_RESIZE_START + (
-            'workflow.steps.util.upgrade.database.Start',
-            'workflow.steps.util.resize.start_agents.StartAgents',
-            'workflow.steps.util.upgrade.database.CheckIsUp',
-            'workflow.steps.util.upgrade.zabbix.EnableAlarms',
-        ))}]
-
 
 class MongoDBSingle(BaseMongoDB):
 
     def get_upgrade_steps_extra(self):
         return super(MongoDBSingle, self).get_upgrade_steps_extra() + (
             'workflow.steps.mongodb.upgrade.vm.ChangeBinaryTo32',
-            'workflow.steps.util.upgrade.database.Start',
-            'workflow.steps.util.upgrade.database.CheckIsUp',
-            'workflow.steps.util.upgrade.database.Stop',
-            'workflow.steps.util.upgrade.database.CheckIsDown',
+            'workflow.steps.util.database.Start',
+            'workflow.steps.util.database.CheckIsUp',
+            'workflow.steps.util.database.Stop',
+            'workflow.steps.util.database.CheckIsDown',
             'workflow.steps.mongodb.upgrade.vm.ChangeBinaryTo34',
         )
 
@@ -70,19 +58,19 @@ class MongoDBReplicaset(BaseMongoDB):
         return (
             'workflow.steps.mongodb.upgrade.plan.InitializationMongoHA',
             'workflow.steps.mongodb.upgrade.plan.ConfigureMongoHA',
-            'workflow.steps.util.upgrade.pack.Configure',
+            'workflow.steps.util.pack.Configure',
             'workflow.steps.mongodb.upgrade.vm.ChangeBinaryTo32',
         )
 
     def get_upgrade_steps_final(self):
         return [{
             'Upgrading to MongoDB 3.4': (
-                'workflow.steps.util.upgrade.vm.ChangeMaster',
-                'workflow.steps.util.upgrade.database.Stop',
-                'workflow.steps.util.upgrade.database.CheckIsDown',
+                'workflow.steps.util.vm.ChangeMaster',
+                'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.CheckIsDown',
                 'workflow.steps.mongodb.upgrade.vm.ChangeBinaryTo34',
-                'workflow.steps.util.upgrade.database.Start',
-                'workflow.steps.util.upgrade.database.CheckIsUp',
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.CheckIsUp',
             ),
         }] + [{
             'Setting feature compatibility version 3.4': (

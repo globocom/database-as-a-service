@@ -761,18 +761,26 @@ def upgrade_database(self, database, user, task, since_step=0):
 
 
 @app.task(bind=True)
-def resize_database(self, database, user, task, cloudstackpack, since_step=0):
-    from util.providers import get_not_resized_instances_of, get_cloudstack_pack
-    from dbaas_cloudstack.models import DatabaseInfraOffering
+def resize_database(self, database, user, task, cloudstackpack, original_cloudstackpack=None, since_step=0):
+    from util.providers import get_cloudstack_pack
+
+    self.request.kwargs['database'] = database
+    self.request.kwargs['cloudstackpack'] = cloudstackpack.offering
 
     worker_name = get_worker_name()
-    task = TaskHistory.register(self.request, user, task, worker_name)
+    task = TaskHistory.register(
+        self.request, user, task,
+        worker_name,
+    )
 
     infra = database.infra
 
+    if not original_cloudstackpack:
+        original_cloudstackpack = get_cloudstack_pack(database)
+
     database_resize = DatabaseResize(
         database=database,
-        source_offer=get_cloudstack_pack(database),
+        source_offer=original_cloudstackpack,
         target_offer=cloudstackpack,
         task=task
     )
@@ -780,18 +788,13 @@ def resize_database(self, database, user, task, cloudstackpack, since_step=0):
     class_path = infra.plan.replication_topology.class_path
     steps = get_resize_settings(class_path)
 
-    instances_to_resize = get_not_resized_instances_of(database, cloudstackpack)
+    instances_to_resize = infra.functional_instances
     success = steps_for_instances(
         steps, instances_to_resize, task,
         database_resize.update_step, since_step
     )
 
     if success:
-        databaseinfraoffering = DatabaseInfraOffering.objects.get(
-            databaseinfra=infra)
-        databaseinfraoffering.offering = cloudstackpack.offering
-        databaseinfraoffering.save()
-
         database_resize.set_success()
         task.update_status_for(TaskHistory.STATUS_SUCCESS, 'Done.')
     else:

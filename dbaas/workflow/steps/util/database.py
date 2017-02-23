@@ -4,7 +4,7 @@ from django.db import transaction
 from workflow.steps.util.restore_snapshot import use_database_initialization_script
 from workflow.steps.util.base import BaseInstanceStep
 
-
+SCRIPT_EXECUTION = 60
 CHECK_SECONDS = 10
 CHECK_ATTEMPTS = 12
 
@@ -29,7 +29,11 @@ class DatabaseStep(BaseInstanceStep):
         )
 
     def start_database(self):
-        return self._execute_init_script('start')
+        result = self._execute_init_script('start')
+        if self.infra.plan.is_ha:
+            sleep(SCRIPT_EXECUTION)
+            self.driver.start_slave(instance=self.instance)
+        return result
 
     def stop_database(self):
         return self._execute_init_script('stop')

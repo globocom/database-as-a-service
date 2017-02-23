@@ -34,14 +34,19 @@ class AbstractBaseRedisTestCase(AbstractReplicationTopologySettingsTestCase):
         ) + self._get_monitoring_settings()
 
     def _get_resize_settings(self):
-        return (
-            ('workflow.steps.util.resize.stop_database.StopDatabase',
-             'workflow.steps.redis.resize.change_config.RedisWithPersistence',) +
-            STOP_RESIZE_START +
-            ('workflow.steps.util.resize.start_database.StartDatabase',
-             'workflow.steps.util.resize.start_agents.StartAgents',
-             'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',)
-        )
+        return [{'Resizing database': ((
+            'workflow.steps.util.zabbix.DisableAlarms',
+            'workflow.steps.util.vm.ChangeMaster',
+            'workflow.steps.util.database.Stop',
+            'workflow.steps.util.pack.RedisWithPersistenceConfigure',
+        ) + STOP_RESIZE_START + (
+            'workflow.steps.util.database.Start',
+            'workflow.steps.util.resize.start_agents.StartAgents',
+            'workflow.steps.util.database.CheckIsUp',
+            'workflow.steps.util.update_info.UpdateOffering',
+            'workflow.steps.util.update_info.UpdateMemory',
+            'workflow.steps.util.zabbix.EnableAlarms',
+        ))}]
 
 
     def _get_upgrade_steps_extra(self):
@@ -73,14 +78,19 @@ class TestRedisSentinel(AbstractBaseRedisTestCase):
 
 class AbstractBaseRedisNoPersistenceTestCase(AbstractBaseRedisTestCase):
     def _get_resize_settings(self):
-        return (
-            ('workflow.steps.util.resize.stop_database.StopDatabase',
-             'workflow.steps.redis.resize.change_config.RedisWithoutPersistence',) +
-            STOP_RESIZE_START +
-            ('workflow.steps.util.resize.start_database.StartDatabase',
-             'workflow.steps.util.resize.start_agents.StartAgents',
-             'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',)
-        )
+        return [{'Resizing database': ((
+            'workflow.steps.util.zabbix.DisableAlarms',
+            'workflow.steps.util.vm.ChangeMaster',
+            'workflow.steps.util.database.Stop',
+             'workflow.steps.util.pack.RedisWithoutPersistenceConfigure',
+        ) + STOP_RESIZE_START + (
+            'workflow.steps.util.database.Start',
+            'workflow.steps.util.resize.start_agents.StartAgents',
+            'workflow.steps.util.database.CheckIsUp',
+            'workflow.steps.util.update_info.UpdateOffering',
+            'workflow.steps.util.update_info.UpdateMemory',
+            'workflow.steps.util.zabbix.EnableAlarms',
+        ))}]
 
 
 class TestRedisSingleNoPersistence(AbstractBaseRedisNoPersistenceTestCase):

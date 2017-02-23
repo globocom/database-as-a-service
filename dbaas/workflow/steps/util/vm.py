@@ -22,9 +22,9 @@ class VmStep(BaseInstanceStep):
             type=CredentialType.CLOUDSTACK
         )
         environment = self.instance.databaseinfra.environment
-        credentials = Credential.get_credentials(environment, integration)
+        self.credentials = Credential.get_credentials(environment, integration)
 
-        self.provider = CloudStackProvider(credentials=credentials)
+        self.provider = CloudStackProvider(credentials=self.credentials)
         self.host = self.instance.hostname
         self.host_cs = HostAttr.objects.get(host=self.host)
 
@@ -103,23 +103,32 @@ class UpdateOSDescription(VmStep):
         self.instance.hostname.update_os_description()
 
 
-class ChangeVmOffering(VmStep):
+class ChangeOffering(VmStep):
 
     def __init__(self, instance):
-        super(ChangeVmOffering, self).__init__(instance)
+        super(ChangeOffering, self).__init__(instance)
 
         database = self.instance.databaseinfra.databases.last()
         target_offer = DatabaseResize.current_to(database).target_offer
-        self.offering_id = target_offer.offering.serviceofferingid
+        self.target_offering_id = target_offer.offering.serviceofferingid
 
     def __unicode__(self):
         return "Resizing VM..."
 
     def do(self):
-        resized = self.provider.change_service_for_vm(
+        cloudstack_offering_id = self.provider.get_vm_offering_id(
             vm_id=self.host_cs.vm_id,
-            serviceofferingid=self.offering_id
+            project_id=self.credentials.project
         )
+
+        if not cloudstack_offering_id == self.target_offering_id:
+            resized = self.provider.change_service_for_vm(
+                vm_id=self.host_cs.vm_id,
+                serviceofferingid=self.target_offering_id
+            )
+        else:
+            resized = True
+
         if not resized:
             raise Exception("Could not change offering")
 

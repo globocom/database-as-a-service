@@ -20,6 +20,8 @@ class PackStep(BaseInstanceStep):
         variables = {
             'CONFIGFILE': True,
             'IS_HA': self.instance.databaseinfra.plan.is_ha,
+            'HOSTADDRESS': self.instance.address,
+            'PORT': self.instance.port,
             'DBPASSWORD': self.instance.databaseinfra.password,
             'HAS_PERSISTENCE': self.instance.databaseinfra.plan.has_persistence
         }
@@ -75,31 +77,3 @@ class ResizeConfigure(Configure):
     def do(self):
         self.pack = DatabaseResize.objects.last().current_to(self.database).target_offer
         super(ResizeConfigure, self).do()
-
-
-class RedisConfigure(ResizeConfigure):
-
-    @property
-    def script_variables(self):
-        variables = {
-            'CONFIGFILE': True,
-            'HAS_PERSISTENCE': self.has_persistence,
-            'HOSTADDRESS': self.instance.address,
-            'PORT': self.instance.port,
-            'DBPASSWORD': self.instance.databaseinfra.password
-        }
-        return variables
-
-
-class RedisWithPersistenceConfigure(RedisConfigure):
-
-    @property
-    def has_persistence(self):
-        return True
-
-
-class RedisWithoutPersistenceConfigure(RedisConfigure):
-
-    @property
-    def has_persistence(self):
-        return False

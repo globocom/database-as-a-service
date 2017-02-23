@@ -29,7 +29,7 @@ from dbaas_credentials.models import CredentialType
 from dbaas import constants
 from account.models import Team
 from drivers import DatabaseAlreadyExists
-from notification.tasks import create_database, upgrade_database
+from notification.tasks import create_database, upgrade_database, resize_database
 from notification.models import TaskHistory
 from physical.models import Plan, Host, DiskOffering
 from system.models import Configuration
@@ -624,7 +624,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         ).first()
 
         hosts = []
-        for host in Host.objects.filter(instance__databaseinfra=database.infra).distinct():
+        for host in Host.objects.filter(instances__databaseinfra=database.infra).distinct():
             hosts.append(host.hostname.split('.')[0])
 
         credential = get_credentials_for(
@@ -761,6 +761,46 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         return render_to_response("logical/database/resize.html",
                                   locals(),
                                   context_instance=RequestContext(request))
+
+    def resize_retry(self, request, database_id):
+        from dbaas_cloudstack.models import DatabaseInfraOffering
+        database = Database.objects.get(id=database_id)
+
+        can_do_resize, error = database.can_do_resize_retry()
+        if can_do_resize:
+            offering = DatabaseInfraOffering.objects.get(
+                databaseinfra=database.databaseinfra
+            ).offering
+            last_resize = database.resizes.latest('created_at')
+
+            if not last_resize.is_status_error:
+                error = "Cannot do retry, last resize status is '{}'!".format(
+                    last_resize.get_status_display()
+                )
+            else:
+                current_step = last_resize.current_step
+
+        if error:
+            url = reverse('admin:logical_database_change', args=[database.id])
+            self.message_user(request, error, level=messages.ERROR)
+            return HttpResponseRedirect(url)
+
+        task_history = TaskHistory()
+        task_history.task_name = "resize_database_retry"
+        task_history.task_status = task_history.STATUS_WAITING
+        task_history.arguments = "Retrying resize database {}".format(database)
+        task_history.user = request.user
+        task_history.save()
+
+        resize_database.delay(
+            database=database, user=request.user, task=task_history,
+            cloudstackpack=last_resize.target_offer,
+            original_cloudstackpack=last_resize.source_offer,
+            since_step=current_step
+        )
+
+        url = reverse('admin:notification_taskhistory_changelist')
+        return HttpResponseRedirect(url)
 
     def database_disk_resize_view(self, request, database_id):
         try:
@@ -1071,6 +1111,12 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 r'^/?(?P<database_id>\d+)/upgrade_retry/$',
                 self.admin_site.admin_view(self.upgrade_retry),
                 name="upgrade_retry"
+            ),
+
+            url(
+                r'^/?(?P<database_id>\d+)/resize_retry/$',
+                self.admin_site.admin_view(self.resize_retry),
+                name="resize_retry"
             ),
         )
 

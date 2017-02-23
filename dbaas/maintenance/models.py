@@ -299,6 +299,7 @@ class DatabaseUpgrade(BaseModel):
         ).exclude(id=self.id)
         older_upgrades.update(can_do_retry=False)
 
+
 class DatabaseResize(BaseModel):
     WAITING = 0
     RUNNING = 1
@@ -378,7 +379,7 @@ class DatabaseResize(BaseModel):
         super(DatabaseResize, self).save(*args, **kwargs)
 
         older_resizes = DatabaseResize.objects.filter(
-            database=self.database, source_offer=self.source_offer
+            database=self.database
         ).exclude(id=self.id)
         older_resizes.update(can_do_retry=False)
 

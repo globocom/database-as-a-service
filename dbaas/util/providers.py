@@ -143,45 +143,6 @@ def get_cloudstack_pack(database):
     )
 
 
-def get_not_resized_instances_of(database, cloudstackpack):
-    from dbaas_cloudstack.provider import CloudStackProvider
-    from physical.models import Instance
-
-    cs_credentials = get_credentials_for(
-        environment=database.environment,
-        credential_type=CredentialType.CLOUDSTACK
-    )
-    cs_provider = CloudStackProvider(credentials=cs_credentials)
-    all_instances = database.infra.instances.all()
-    engine_name = database.infra.engine.engine_type.name
-    not_resized_instances = []
-
-    if engine_name == "redis":
-        instances_to_test = all_instances.filter(instance_type=Instance.REDIS)
-    elif engine_name == "mongodb":
-        instances_to_test = all_instances.filter(instance_type=Instance.MONGODB)
-    else:
-        instances_to_test = all_instances
-
-    for instance in instances_to_test:
-        host = instance.hostname
-        host_attr = host.cs_host_attributes.get()
-
-        offering_id = cs_provider.get_vm_offering_id(
-            vm_id=host_attr.vm_id,
-            project_id=cs_credentials.project
-        )
-
-        if offering_id == cloudstackpack.offering.serviceofferingid:
-            LOG.info("Instance {} of database {} offering: {}".format(
-                instance.hostname, database.name, offering_id
-            ))
-        else:
-            not_resized_instances.append(instance)
-
-    return not_resized_instances
-
-
 def get_vm_qt(plan):
     if plan.is_ha:
         if plan.engine_type.name == 'mongodb':

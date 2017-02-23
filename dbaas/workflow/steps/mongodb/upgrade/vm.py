@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 from util import build_context_script, exec_remote_command
-from workflow.steps.util.upgrade.vm import VmStep
+from workflow.steps.util.vm import VmStep
 from workflow.steps.util import test_bash_script_error
 from workflow.steps.mongodb.util import build_change_release_alias_script
 

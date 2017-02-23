@@ -36,14 +36,18 @@ class AbstractBaseMySQLTestCase(AbstractReplicationTopologySettingsTestCase):
         ) + self._get_monitoring_settings()
 
     def _get_resize_settings(self):
-        return (
-            ('workflow.steps.util.resize.stop_database.StopDatabase',
-             'workflow.steps.mysql.resize.change_config.ChangeDatabaseConfigFile',
-             ) + STOP_RESIZE_START +
-            ('workflow.steps.util.resize.start_database.StartDatabase',
-             'workflow.steps.util.resize.start_agents.StartAgents',
-             'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',)
-        )
+        return [{'Resizing database': ((
+            'workflow.steps.util.zabbix.DisableAlarms',
+            'workflow.steps.util.vm.ChangeMaster',
+            'workflow.steps.util.database.Stop',
+            'workflow.steps.util.pack.ResizeConfigure',
+        ) + STOP_RESIZE_START + (
+            'workflow.steps.util.database.Start',
+            'workflow.steps.util.resize.start_agents.StartAgents',
+            'workflow.steps.util.database.CheckIsUp',
+            'workflow.steps.util.update_info.UpdateOffering',
+            'workflow.steps.util.zabbix.EnableAlarms',
+        ))}]
 
 
 class TestMySQLSingle(AbstractBaseMySQLTestCase):

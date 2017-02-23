@@ -16,7 +16,7 @@ def render_menu():
             'environments': [],
         }
 
-        for environment in Environment.objects.filter(plan__in=Plan.objects.filter(engine__engine_type=engine_type)).distinct():
+        for environment in Environment.objects.filter(plans__in=Plan.objects.filter(engine__engine_type=engine_type)).distinct():
             data_environment = {
                 'id': environment.id,
                 'name': environment.name,
