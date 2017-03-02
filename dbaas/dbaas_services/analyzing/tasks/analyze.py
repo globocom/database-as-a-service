@@ -43,7 +43,7 @@ def analyze_databases(self, task_history=None):
                     result = analyze_service.run(engine=engine, database=database_name,
                                                  instances=instances, **params)
                     if result['status'] == 'success':
-                        task_history.update_details(persist=True, details="\nDatabase {} {} was analised.".format(database, execution_plan.plan_name))
+                        task_history.update_details(persist=True, details="\nDatabase {} {} was analysed.".format(database, execution_plan.plan_name))
                         if result['msg'] != instances:
                             continue
                         for instance in result['msg']:
@@ -52,7 +52,7 @@ def analyze_databases(self, task_history=None):
                                                              environment_name,
                                                              execution_plan)
                     else:
-                        raise Exception("Check your service logs..")
+                        task_history.update_details(persist=True, details="\nDatabase {} {} could not be analysed.".format(database, execution_plan.plan_name))
         task_history.update_status_for(TaskHistory.STATUS_SUCCESS,
                                        details='Analisys ok!')
     except Exception:
