@@ -35,40 +35,33 @@ def analyze_databases(self, task_history=None):
             databases = Database.objects.filter(is_in_quarantine=False)
             today = datetime.now()
             for database in databases:
-                try:
-                    database_name, engine, instances, environment_name, databaseinfra_name = setup_database_info(database)
-                    for execution_plan in ExecutionPlan.objects.all():
-                        if database_can_not_be_resized(database, execution_plan):
+                database_name, engine, instances, environment_name, databaseinfra_name = setup_database_info(database)
+                for execution_plan in ExecutionPlan.objects.all():
+                    if database_can_not_be_resized(database, execution_plan):
+                        continue
+                    params = execution_plan.setup_execution_params()
+                    result = analyze_service.run(engine=engine, database=database_name,
+                                                 instances=instances, **params)
+                    if result['status'] == 'success':
+                        task_history.update_details(persist=True, details="\nDatabase {} {} was analised.".format(database, execution_plan.plan_name))
+                        if result['msg'] != instances:
                             continue
-                        params = execution_plan.setup_execution_params()
-                        result = analyze_service.run(engine=engine, database=database_name,
-                                                     instances=instances, **params)
-                        if result['status'] == 'success':
-                            task_history.update_details(persist=True, details="\nDatabase {} {} was analysed.".format(database, execution_plan.plan_name))
-                            if result['msg'] != instances:
-                                continue
-                            for instance in result['msg']:
-                                try:
-                                    insert_analyze_repository_record(
-                                        today, database_name, instance, engine,
-                                        databaseinfra_name, environment_name,
-                                        execution_plan
-                                    )
-                                except:
-                                    task_history.update_details(persist=True, details="\nCould not save analysed {} {}.".format(instance, execution_plan.plan_name))
-                        else:
-                            task_history.update_details(persist=True, details="\nDatabase {} {} could not be analysed.".format(database, execution_plan.plan_name))
-                except Exception as e:
-                    task_history.update_details(persist=True, details="\nCould analysed {}\n  {}.".format(database, e))
+                        for instance in result['msg']:
+                            insert_analyze_repository_record(today, database_name, instance,
+                                                             engine, databaseinfra_name,
+                                                             environment_name,
+                                                             execution_plan)
+                    else:
+                        raise Exception("Check your service logs..")
         task_history.update_status_for(TaskHistory.STATUS_SUCCESS,
                                        details='Analisys ok!')
-    except Exception as e:
+    except Exception:
         try:
             task_history.update_details(persist=True,
                                         details="\nDatabase {} {} could not be analised.".format(database,
                                                                                                  execution_plan.plan_name))
             task_history.update_status_for(TaskHistory.STATUS_ERROR,
-                                           details='Analisys finished with errors!\nError: {}'.format(e))
+                                           details='Analisys finished with errors!\nError: {}'.format(result['msg']))
         except UnboundLocalError:
             task_history.update_details(persist=True, details="\nProccess crashed")
             task_history.update_status_for(TaskHistory.STATUS_ERROR, details='Analisys could not be started')
@@ -115,5 +108,10 @@ def setup_database_info(database):
     databaseinfra = database.databaseinfra
     driver = databaseinfra.get_driver()
     database_instances = driver.get_database_instances()
-    instances = [db_instance.dns.split('.')[0] for db_instance in database_instances]
+
+    instances = []
+    for db_instance in database_instances:
+        if db_instance.dns != db_instance.address:
+            instances.append(db_instance.dns.split('.')[0])
+
     return database.name, database.engine_type, instances, database.environment.name, database.databaseinfra
