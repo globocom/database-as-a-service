@@ -47,10 +47,14 @@ def analyze_databases(self, task_history=None):
                         if result['msg'] != instances:
                             continue
                         for instance in result['msg']:
-                            insert_analyze_repository_record(today, database_name, instance,
-                                                             engine, databaseinfra_name,
-                                                             environment_name,
-                                                             execution_plan)
+                            try:
+                                insert_analyze_repository_record(
+                                    today, database_name, instance, engine,
+                                    databaseinfra_name, environment_name,
+                                    execution_plan
+                                )
+                            except:
+                                task_history.update_details(persist=True, details="\nCould not save analysed {} {}.".format(instance, execution_plan.plan_name))
                     else:
                         task_history.update_details(persist=True, details="\nDatabase {} {} could not be analysed.".format(database, execution_plan.plan_name))
         task_history.update_status_for(TaskHistory.STATUS_SUCCESS,
