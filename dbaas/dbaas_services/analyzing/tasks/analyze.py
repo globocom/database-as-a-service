@@ -59,13 +59,13 @@ def analyze_databases(self, task_history=None):
                         task_history.update_details(persist=True, details="\nDatabase {} {} could not be analysed.".format(database, execution_plan.plan_name))
         task_history.update_status_for(TaskHistory.STATUS_SUCCESS,
                                        details='Analisys ok!')
-    except Exception:
+    except Exception as e:
         try:
             task_history.update_details(persist=True,
                                         details="\nDatabase {} {} could not be analised.".format(database,
                                                                                                  execution_plan.plan_name))
             task_history.update_status_for(TaskHistory.STATUS_ERROR,
-                                           details='Analisys finished with errors!\nError: {}'.format(result['msg']))
+                                           details='Analisys finished with errors!\nError: {}'.format(e))
         except UnboundLocalError:
             task_history.update_details(persist=True, details="\nProccess crashed")
             task_history.update_status_for(TaskHistory.STATUS_ERROR, details='Analisys could not be started')
