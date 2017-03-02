@@ -35,28 +35,31 @@ def analyze_databases(self, task_history=None):
             databases = Database.objects.filter(is_in_quarantine=False)
             today = datetime.now()
             for database in databases:
-                database_name, engine, instances, environment_name, databaseinfra_name = setup_database_info(database)
-                for execution_plan in ExecutionPlan.objects.all():
-                    if database_can_not_be_resized(database, execution_plan):
-                        continue
-                    params = execution_plan.setup_execution_params()
-                    result = analyze_service.run(engine=engine, database=database_name,
-                                                 instances=instances, **params)
-                    if result['status'] == 'success':
-                        task_history.update_details(persist=True, details="\nDatabase {} {} was analysed.".format(database, execution_plan.plan_name))
-                        if result['msg'] != instances:
+                try:
+                    database_name, engine, instances, environment_name, databaseinfra_name = setup_database_info(database)
+                    for execution_plan in ExecutionPlan.objects.all():
+                        if database_can_not_be_resized(database, execution_plan):
                             continue
-                        for instance in result['msg']:
-                            try:
-                                insert_analyze_repository_record(
-                                    today, database_name, instance, engine,
-                                    databaseinfra_name, environment_name,
-                                    execution_plan
-                                )
-                            except:
-                                task_history.update_details(persist=True, details="\nCould not save analysed {} {}.".format(instance, execution_plan.plan_name))
-                    else:
-                        task_history.update_details(persist=True, details="\nDatabase {} {} could not be analysed.".format(database, execution_plan.plan_name))
+                        params = execution_plan.setup_execution_params()
+                        result = analyze_service.run(engine=engine, database=database_name,
+                                                     instances=instances, **params)
+                        if result['status'] == 'success':
+                            task_history.update_details(persist=True, details="\nDatabase {} {} was analysed.".format(database, execution_plan.plan_name))
+                            if result['msg'] != instances:
+                                continue
+                            for instance in result['msg']:
+                                try:
+                                    insert_analyze_repository_record(
+                                        today, database_name, instance, engine,
+                                        databaseinfra_name, environment_name,
+                                        execution_plan
+                                    )
+                                except:
+                                    task_history.update_details(persist=True, details="\nCould not save analysed {} {}.".format(instance, execution_plan.plan_name))
+                        else:
+                            task_history.update_details(persist=True, details="\nDatabase {} {} could not be analysed.".format(database, execution_plan.plan_name))
+                except Exception as e:
+                    task_history.update_details(persist=True, details="\nCould analysed {}\n  {}.".format(database, e))
         task_history.update_status_for(TaskHistory.STATUS_SUCCESS,
                                        details='Analisys ok!')
     except Exception as e:
