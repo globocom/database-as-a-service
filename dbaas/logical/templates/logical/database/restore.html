@@ -24,6 +24,7 @@
 {% endblock %}
 
 {% block content %}
+
 <div id="content-main">
 
 
@@ -39,10 +40,90 @@
         <fieldset class="module">
         <h2>Restoring {{ database.name }}</h2>
             {{ form.as_p }}
-            <input class="btn" type="submit" value="Submit" onclick="return confirm('Are you sure?')"/>
+
+            {% if database.last_successful_upgrade %}
+                <div id="restore_with_upgrade_div">
+                    <h3>Warning!</h3>
+                    <h4 id="snapshot_date_msg"></h4>
+                    <label class="checkbox">
+                        <input id="restore_with_upgrade" type="checkbox"/>
+                        <label for="restore_with_upgrade">I want to restore it anyway</label>
+                    </label>
+                    <br>
+                </div>
+            {% endif %}
+            <input id="btn_submit" class="btn" type="submit" value="Submit" onclick="return validated();"/>
         </fieldset>
 
     </form>
 </div>
+
+{% if database.last_successful_upgrade %}
+<script src="{% static "assets/js/jquery.min.js" %}"></script>
+<script src="{% static "js/moment.min.js" %}"></script>
+<script>
+    jQuery('#restore_with_upgrade_div').hide();
+    jQuery('#btn_submit').show();
+
+    var upgrade_date = new Date("{{ database.last_successful_upgrade.finished_at.isoformat }}");
+    var snapshot_select = document.getElementById("id_target_snapshot");
+    var snapshot_date_msg = document.getElementById("snapshot_date_msg");
+
+    var checkbox_confirm = document.getElementById("restore_with_upgrade");
+    checkbox_confirm.checked = true;
+
+    function validated() {
+        if (!checkbox_confirm.checked) {
+            warning_msg = snapshot_date_msg.innerHTML
+            warning_msg = warning_msg.replace("<br>", "\n");
+            warning_msg = warning_msg.replace(/<[^>]*>/g, "")
+            alert(warning_msg + '\n\nPlease check the checkbox');
+            return false;
+        }
+        return confirm('Are you sure?');
+    }
+
+    function formatted_date_time(date) {
+        return moment(date).format('D/MM/YYYY') + ' at ' + moment(date).format('hh:mm:ss');
+    };
+
+    snapshot_select.onchange = function() {
+        jQuery('#restore_with_upgrade_div').hide()
+        checkbox_confirm.checked = true;
+        jQuery('#btn_submit').show();
+
+        var snapshot_id = snapshot_select.value;
+        if (snapshot_id) {
+            jQuery('#btn_submit').hide();
+
+            jQuery.ajax({
+                "dataType": "json", "url": "/api/snapshot/" + snapshot_id, "type": "GET",
+            }).done(function(data) {
+                if (data.error) {
+                    alert(data.error);
+                } else {
+                    snapshot_date = new Date(data.start_at);
+                    if (upgrade_date >= snapshot_date) {
+                        snapshot_date_msg.innerHTML = "This database version was upgraded from {{ database.last_successful_upgrade.source_plan.engine.version }} to {{ database.last_successful_upgrade.target_plan.engine.version }} on " + formatted_date_time(upgrade_date) + "<br>You are trying to restore a snapshot from " + formatted_date_time(snapshot_date) + " and it may be <i>incompatible</i>";
+                        jQuery('#restore_with_upgrade_div').show();
+                        checkbox_confirm.checked = false;
+                    }
+                }
+                jQuery('#btn_submit').show();
+            }).fail(function() {
+                alert("invalid server response");
+            });
+        }
+    };
+    snapshot_select.onchange();
+</script>
+{% else %}
+<script>
+    function validated() {
+        return confirm('Are you sure?');
+    }
+</script>
+{% endif %}
+
 {% endblock %}
 {% block submit_buttons_bottom %}{% endblock %}

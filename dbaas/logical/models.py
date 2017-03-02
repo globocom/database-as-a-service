@@ -646,6 +646,11 @@ class Database(BaseModel):
         )
         return
 
+    @property
+    def last_successful_upgrade(self):
+        from maintenance.models import DatabaseUpgrade
+        return self.upgrades.filter(status=DatabaseUpgrade.SUCCESS).last()
+
 
 class Credential(BaseModel):
     USER_PATTERN = "u_%s"
