@@ -43,8 +43,26 @@ class AbstractReplicationTopologySettingsTestCase(TestCase):
     def _get_clone_settings(self):
         raise NotImplementedError
 
+    def _get_resize_extra_steps(self):
+        return (
+            'workflow.steps.util.resize.agents.Start',
+            'workflow.steps.util.database.CheckIsUp',
+        )
+
     def _get_resize_settings(self):
-        raise NotImplementedError
+        return [{'Resizing database': (
+            'workflow.steps.util.zabbix.DisableAlarms',
+            'workflow.steps.util.vm.ChangeMaster',
+            'workflow.steps.util.database.Stop',
+            'workflow.steps.util.pack.ResizeConfigure',
+            'workflow.steps.util.vm.Stop',
+            'workflow.steps.util.vm.ChangeOffering',
+            'workflow.steps.util.vm.Start',
+            'workflow.steps.util.database.Start',
+        ) + self._get_resize_extra_steps() + (
+            'workflow.steps.util.update.Offering',
+            'workflow.steps.util.zabbix.EnableAlarms',
+        )}]
 
     def _get_restore_snapshot_settings(self):
         return (

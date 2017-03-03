@@ -386,20 +386,6 @@ class DatabaseInfra(BaseModel):
         return None
 
     @property
-    def functional_instances(self):
-        engine_name = self.engine.engine_type.name
-        all_instances = self.instances.all()
-
-        if engine_name == "redis":
-            instances = all_instances.filter(instance_type=Instance.REDIS)
-        elif engine_name == "mongodb":
-            instances = all_instances.filter(instance_type=Instance.MONGODB)
-        else:
-            instances = all_instances
-
-        return instances
-
-    @property
     def per_database_size_bytes(self):
         if self.disk_offering and self.engine.engine_type.name != 'redis':
             return self.disk_offering.available_size_bytes()

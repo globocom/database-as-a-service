@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from base import BaseTopology, RESIZE_STEPS
+from base import BaseTopology
 
 
 class BaseRedis(BaseTopology):
@@ -28,19 +28,18 @@ class BaseRedis(BaseTopology):
             'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',
         ) + self.monitoring_steps()
 
-    def get_resize_steps(self):
-        return [{'Resizing database': (
-            RESIZE_STEPS[0:-1] + (
-                'workflow.steps.util.update_info.UpdateMemory',
-            ) + (RESIZE_STEPS[-1],)
-        )}]
-
     def get_upgrade_steps_extra(self):
         return (
             'workflow.steps.redis.upgrade.plan.InitializationRedis',
             'workflow.steps.redis.upgrade.plan.ConfigureRedis',
             'workflow.steps.redis.upgrade.pack.ConfigureRedis',
         )
+
+    def get_resize_extra_steps(self):
+        return super(BaseRedis, self).get_resize_extra_steps() + (
+            'workflow.steps.util.update.Memory',
+        )
+
 
 
 class RedisSingle(BaseRedis):

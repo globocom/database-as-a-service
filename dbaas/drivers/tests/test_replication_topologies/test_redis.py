@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
-from drivers.replication_topologies.base import RESIZE_STEPS
 from drivers.replication_topologies.redis import RedisSentinel, RedisSingle, \
     RedisSentinelNoPersistence
 from drivers.tests.test_replication_topologies import AbstractReplicationTopologySettingsTestCase
@@ -33,12 +32,10 @@ class AbstractBaseRedisTestCase(AbstractReplicationTopologySettingsTestCase):
             'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',
         ) + self._get_monitoring_settings()
 
-    def _get_resize_settings(self):
-        return [{'Resizing database': (RESIZE_STEPS[0:11] +\
-            ('workflow.steps.util.update_info.UpdateMemory',) +\
-            (RESIZE_STEPS[11],)
-        )}]
-
+    def _get_resize_extra_steps(self):
+        return super(AbstractBaseRedisTestCase, self)._get_resize_extra_steps() + (
+            'workflow.steps.util.update.Memory',
+        )
 
     def _get_upgrade_steps_extra(self):
         return (
@@ -68,11 +65,7 @@ class TestRedisSentinel(AbstractBaseRedisTestCase):
 
 
 class AbstractBaseRedisNoPersistenceTestCase(AbstractBaseRedisTestCase):
-    def _get_resize_settings(self):
-        return [{'Resizing database': (RESIZE_STEPS[0:11] +\
-            ('workflow.steps.util.update_info.UpdateMemory',) +\
-            (RESIZE_STEPS[11],)
-        )}]
+    pass
 
 
 class TestRedisSentinelNoPersistence(AbstractBaseRedisNoPersistenceTestCase):

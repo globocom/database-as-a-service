@@ -1,21 +1,4 @@
 # -*- coding: utf-8 -*-
-
-RESIZE_STEPS = (
-    'workflow.steps.util.zabbix.DisableAlarms',
-    'workflow.steps.util.vm.ChangeMaster',
-    'workflow.steps.util.database.Stop',
-    'workflow.steps.util.pack.ResizeConfigure',
-    'workflow.steps.util.vm.Stop',
-    'workflow.steps.util.vm.ChangeOffering',
-    'workflow.steps.util.vm.Start',
-    'workflow.steps.util.database.Start',
-    'workflow.steps.util.resize.start_agents.StartAgents',
-    'workflow.steps.util.database.CheckIsUp',
-    'workflow.steps.util.update_info.UpdateOffering',
-    'workflow.steps.util.zabbix.EnableAlarms',
-)
-
-
 class BaseTopology(object):
 
     def deploy_first_steps(self):
@@ -36,8 +19,26 @@ class BaseTopology(object):
     def get_clone_steps(self):
         raise NotImplementedError()
 
+    def get_resize_extra_steps(self):
+        return (
+            'workflow.steps.util.resize.agents.Start',
+            'workflow.steps.util.database.CheckIsUp',
+        )
+
     def get_resize_steps(self):
-        return [{'Resizing database': (RESIZE_STEPS)}]
+        return [{'Resizing database': (
+            'workflow.steps.util.zabbix.DisableAlarms',
+            'workflow.steps.util.vm.ChangeMaster',
+            'workflow.steps.util.database.Stop',
+            'workflow.steps.util.pack.ResizeConfigure',
+            'workflow.steps.util.vm.Stop',
+            'workflow.steps.util.vm.ChangeOffering',
+            'workflow.steps.util.vm.Start',
+            'workflow.steps.util.database.Start',
+        ) + self.get_resize_extra_steps() + (
+            'workflow.steps.util.update.Offering',
+            'workflow.steps.util.zabbix.EnableAlarms',
+        )}]
 
     def get_restore_snapshot_steps(self):
         return (

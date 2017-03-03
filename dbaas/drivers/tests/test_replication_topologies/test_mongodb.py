@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from drivers.replication_topologies.base import RESIZE_STEPS
 from drivers.replication_topologies.mongodb import MongoDBReplicaset
 from drivers.replication_topologies.mongodb import MongoDBSingle
 from drivers.tests.test_replication_topologies import AbstractReplicationTopologySettingsTestCase
@@ -31,9 +30,6 @@ class AbstractBaseMondodbTestCase(AbstractReplicationTopologySettingsTestCase):
             'workflow.steps.util.clone.clone_database.CloneDatabase',
             'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',
         ) + self._get_monitoring_settings()
-
-    def _get_resize_settings(self):
-        return [{'Resizing database': (RESIZE_STEPS)}]
 
 
 class TestMongoDBSingle(AbstractBaseMondodbTestCase):

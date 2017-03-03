@@ -524,9 +524,7 @@ class Database(BaseModel):
         ).exclude(offering__serviceofferingid=database.offering_id)
         check_resize_options(database_id, offerings)
 
-        if not offerings:
-            return False
-        return True
+        return bool(offerings)
 
     @property
     def is_dead(self):

@@ -788,7 +788,7 @@ def resize_database(self, database, user, task, cloudstackpack, original_cloudst
     class_path = infra.plan.replication_topology.class_path
     steps = get_resize_settings(class_path)
 
-    instances_to_resize = infra.functional_instances
+    instances_to_resize = infra.get_driver().get_database_instances()
     success = steps_for_instances(
         steps, instances_to_resize, task,
         database_resize.update_step, since_step

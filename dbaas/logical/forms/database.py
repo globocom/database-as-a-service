@@ -138,7 +138,7 @@ class DatabaseForm(models.ModelForm):
         if db_resize:
             db_resize = db_resize.latest("created_at")
             if db_resize.is_status_error:
-                url = db_instance.get_resize_retry_url
+                url = db_instance.get_resize_retry_url()
                 label = "Retry VM resize"
                 args['class_text'] = "btn btn-warning"
                 help_text = '<br><a href="/admin/maintenance/databaseresize/' + str(db_resize.id) +\

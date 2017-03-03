@@ -8,10 +8,10 @@ from time import sleep
 LOG = logging.getLogger(__name__)
 
 
-class StartAgents(BaseInstanceStep):
+class Start(BaseInstanceStep):
 
     def __init__(self, instance):
-        super(StartAgents, self).__init__(instance)
+        super(Start, self).__init__(instance)
 
         self.infra = self.instance.databaseinfra
         self.driver = self.infra.get_driver()
