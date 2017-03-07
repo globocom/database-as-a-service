@@ -20,7 +20,7 @@ class InstanceTestCase(TestCase):
         self.new_instance = InstanceFactory(address="new_instance.localinstance",
                                             port=123,
                                             is_active=True,
-                                            is_arbiter=False,
+                                            instance_type=Instance.MONGODB,
                                             databaseinfra=self.databaseinfra)
 
     def test_create_instance(self):
@@ -28,7 +28,7 @@ class InstanceTestCase(TestCase):
         instance = Instance.objects.create(address="test.localinstance",
                                            port=123,
                                            is_active=True,
-                                           is_arbiter=False,
+                                           instance_type=Instance.MONGODB,
                                            hostname=self.hostname,
                                            databaseinfra=self.databaseinfra)
 
