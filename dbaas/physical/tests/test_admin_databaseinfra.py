@@ -73,7 +73,6 @@ class AdminCreateDatabaseInfraTestCase(TestCase):
             params["instances-%d-address" % i] = address,
             params["instances-%d-port" % i] = instance_port,
             params["instances-%d-is_active" % i] = True,
-            params["instances-%d-is_arbiter" % i] = False,
             params["instances-%d-instance_type" % i] = 2,
 
             if i == (NUM_INSTANCES - 1):

@@ -20,7 +20,7 @@ class InitVariables(BaseStep):
             master_instances_detail = []
             slave_instances_detail = []
             for instance in database.databaseinfra.instances.all():
-                if instance.is_arbiter:
+                if instance.instance_type == instance.MONGODB_ARBITER:
                     continue
                 if instance.databaseinfra.get_driver().check_instance_is_master(instance):
                     master_instances_detail.append({

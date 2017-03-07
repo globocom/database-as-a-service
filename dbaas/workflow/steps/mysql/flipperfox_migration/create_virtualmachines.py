@@ -103,7 +103,6 @@ class CreateVirtualMachine(BaseStep):
                 instance.port = source_instance.port
 
                 instance.is_active = source_instance.is_active
-                instance.is_arbiter = source_instance.is_arbiter
                 instance.instance_type = source_instance.instance_type
                 instance.hostname = host
 
