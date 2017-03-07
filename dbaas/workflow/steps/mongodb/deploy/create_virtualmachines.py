@@ -115,10 +115,8 @@ class CreateVirtualMachine(BaseStep):
 
                 instance.is_active = True
                 if index == 2:
-                    instance.is_arbiter = True
                     instance.instance_type = Instance.MONGODB_ARBITER
                 else:
-                    instance.is_arbiter = False
                     instance.instance_type = Instance.MONGODB
 
                 instance.hostname = host

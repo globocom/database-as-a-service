@@ -9,6 +9,7 @@ from . import DatabaseInfraStatus
 from . import DatabaseStatus
 from . import AuthenticationError
 from . import ConnectionError
+from physical.models import Instance
 from util import make_db_random_password
 from system.models import Configuration
 from dateutil import tz
@@ -53,21 +54,21 @@ class MongoDB(BaseDriver):
 
     def __concatenate_instances(self):
         return ",".join(["%s:%s" % (instance.address, instance.port)
-                         for instance in self.databaseinfra.instances.filter(is_arbiter=False, is_active=True).all()])
+                         for instance in self.databaseinfra.instances.filter(instance_type=Instance.MONGODB, is_active=True).all()])
 
     def __concatenate_instances_dns(self):
         return ",".join(
             ["%s:%s" % (instance.dns, instance.port)
-                for instance in self.databaseinfra.instances.filter(is_arbiter=False, is_active=True).all() if not instance.dns.startswith('10.')]
+                for instance in self.databaseinfra.instances.filter(instance_type=Instance.MONGODB, is_active=True).all() if not instance.dns.startswith('10.')]
         )
 
     def __concatenate_instances_dns_only(self):
         return ",".join(["%s" % (instance.dns)
-                         for instance in self.databaseinfra.instances.filter(is_arbiter=False, is_active=True).all() if not instance.dns.startswith('10.')])
+                         for instance in self.databaseinfra.instances.filter(instance_type=Instance.MONGODB, is_active=True).all() if not instance.dns.startswith('10.')])
 
     def get_dns_port(self):
         port = self.databaseinfra.instances.filter(
-            is_arbiter=False, is_active=True).all()[0].port
+            instance_type=Instance.MONGODB, is_active=True).all()[0].port
         dns = self.__concatenate_instances_dns_only()
         return dns, port
 
@@ -252,7 +253,7 @@ class MongoDB(BaseDriver):
         return CLONE_DATABASE_SCRIPT_NAME
 
     def check_instance_is_eligible_for_backup(self, instance):
-        if instance.is_arbiter:
+        if instance.instance_type == instance.MONGODB_ARBITER:
             return False
 
         if self.databaseinfra.instances.count() == 1:
@@ -271,7 +272,7 @@ class MongoDB(BaseDriver):
                     'Error connection to databaseinfra %s: %s' % (self.databaseinfra, e.message))
 
     def check_instance_is_master(self, instance):
-        if instance.is_arbiter:
+        if instance.instance_type == instance.MONGODB_ARBITER:
             return False
 
         if self.databaseinfra.instances.count() == 1:

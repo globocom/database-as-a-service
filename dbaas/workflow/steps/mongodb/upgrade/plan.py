@@ -6,7 +6,7 @@ class InitializationMongoHA(Initialization):
 
     def get_variables_specifics(self):
         database_rule = 'SECONDARY'
-        if self.instance.is_arbiter:
+        if self.instance.instance_type == self.instance.MONGODB_ARBITER:
             database_rule = 'ARBITER'
 
         return {

@@ -35,7 +35,7 @@ class DatabaseInfraOfferingInline(django_admin.TabularInline):
 class InstanceAdmin(django_admin.TabularInline):
     model = Instance
     fields = ('hostname', 'dns', 'address', 'port',
-              'is_active', 'is_arbiter', 'instance_type')
+              'is_active', 'instance_type')
     # max_num = 1
     # can_delete = False
     extra = 1
@@ -82,7 +82,7 @@ class DatabaseInfraAdmin(admin.DjangoServicesAdmin):
                 html_instances.append(
                     "<span style='color: #CCC'>%s</span>" % unicode(instance))
             else:
-                if instance.is_arbiter:
+                if instance.instance_type == instance.MONGODB_ARBITER:
                     html_instances.append("%s (arbiter)" % unicode(instance))
                 else:
                     html_instances.append(unicode(instance))

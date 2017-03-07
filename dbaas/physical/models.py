@@ -583,8 +583,6 @@ class Instance(BaseModel):
         DatabaseInfra, related_name="instances", on_delete=models.CASCADE)
     is_active = models.BooleanField(
         verbose_name=_("Is instance active"), default=True)
-    is_arbiter = models.BooleanField(
-        verbose_name=_("Is arbiter"), default=False)
     hostname = models.ForeignKey(Host, related_name="instances")
     status = models.IntegerField(choices=INFRA_STATUS, default=2)
     instance_type = models.IntegerField(choices=DATABASE_TYPE, default=0)
@@ -619,7 +617,7 @@ class Instance(BaseModel):
         return "%s:%s" % (self.dns, self.port)
 
     def clean(self, *args, **kwargs):
-        if self.is_arbiter or not self.is_active:
+        if self.instance_type == self.MONGODB_ARBITER or not self.is_active:
             # no connection check is needed
             return
 
