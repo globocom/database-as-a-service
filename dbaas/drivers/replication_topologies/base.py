@@ -1,12 +1,4 @@
 # -*- coding: utf-8 -*-
-
-STOP_RESIZE_START = (
-    'workflow.steps.util.resize.stop_vm.StopVM',
-    'workflow.steps.util.resize.resize_vm.ResizeVM',
-    'workflow.steps.util.resize.start_vm.StartVM',
-)
-
-
 class BaseTopology(object):
 
     def deploy_first_steps(self):
@@ -27,8 +19,26 @@ class BaseTopology(object):
     def get_clone_steps(self):
         raise NotImplementedError()
 
+    def get_resize_extra_steps(self):
+        return (
+            'workflow.steps.util.resize.agents.Start',
+            'workflow.steps.util.database.CheckIsUp',
+        )
+
     def get_resize_steps(self):
-        raise NotImplementedError()
+        return [{'Resizing database': (
+            'workflow.steps.util.zabbix.DisableAlarms',
+            'workflow.steps.util.vm.ChangeMaster',
+            'workflow.steps.util.database.Stop',
+            'workflow.steps.util.pack.ResizeConfigure',
+            'workflow.steps.util.vm.Stop',
+            'workflow.steps.util.vm.ChangeOffering',
+            'workflow.steps.util.vm.Start',
+            'workflow.steps.util.database.Start',
+        ) + self.get_resize_extra_steps() + (
+            'workflow.steps.util.update.Offering',
+            'workflow.steps.util.zabbix.EnableAlarms',
+        )}]
 
     def get_restore_snapshot_steps(self):
         return (
@@ -53,19 +63,19 @@ class BaseTopology(object):
     def get_upgrade_steps(self):
         return [{
             self.get_upgrade_steps_description(): (
-                'workflow.steps.util.upgrade.vm.ChangeMaster',
-                'workflow.steps.util.upgrade.zabbix.DestroyAlarms',
+                'workflow.steps.util.vm.ChangeMaster',
+                'workflow.steps.util.zabbix.DestroyAlarms',
                 'workflow.steps.util.upgrade.db_monitor.DisableMonitoring',
-                'workflow.steps.util.upgrade.database.Stop',
-                'workflow.steps.util.upgrade.database.CheckIsDown',
-                'workflow.steps.util.upgrade.vm.Stop',
-                'workflow.steps.util.upgrade.vm.InstallNewTemplate',
-                'workflow.steps.util.upgrade.vm.Start',
-                'workflow.steps.util.upgrade.vm.WaitingBeReady',
-                'workflow.steps.util.upgrade.vm.UpdateOSDescription',
+                'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.CheckIsDown',
+                'workflow.steps.util.vm.Stop',
+                'workflow.steps.util.vm.InstallNewTemplate',
+                'workflow.steps.util.vm.Start',
+                'workflow.steps.util.vm.WaitingBeReady',
+                'workflow.steps.util.vm.UpdateOSDescription',
             ) + self.get_upgrade_steps_extra() + (
-                'workflow.steps.util.upgrade.database.Start',
-                'workflow.steps.util.upgrade.database.CheckIsUp',
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.CheckIsUp',
             ),
         }] + self.get_upgrade_steps_final()
 
@@ -73,13 +83,13 @@ class BaseTopology(object):
         return (
             'workflow.steps.util.upgrade.plan.Initialization',
             'workflow.steps.util.upgrade.plan.Configure',
-            'workflow.steps.util.upgrade.pack.Configure',
+            'workflow.steps.util.pack.Configure',
         )
 
     def get_upgrade_steps_final(self):
         return [{
             self.get_upgrade_steps_final_description(): (
                 'workflow.steps.util.upgrade.db_monitor.EnableMonitoring',
-                'workflow.steps.util.upgrade.zabbix.CreateAlarms',
+                'workflow.steps.util.zabbix.CreateAlarms',
             ),
         }]

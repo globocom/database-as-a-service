@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from workflow.steps.util.upgrade.database import DatabaseStep
+from workflow.steps.util.database import DatabaseStep
 import logging
 
 LOG = logging.getLogger(__name__)

@@ -6,6 +6,7 @@ from dbaas_cloudstack.provider import CloudStackProvider
 from dbaas_credentials.credential import Credential
 from dbaas_credentials.models import CredentialType
 from workflow.steps.util.base import BaseInstanceStep
+from maintenance.models import DatabaseResize
 
 
 CHANGE_MASTER_ATTEMPS = 4
@@ -21,15 +22,11 @@ class VmStep(BaseInstanceStep):
             type=CredentialType.CLOUDSTACK
         )
         environment = self.instance.databaseinfra.environment
-        credentials = Credential.get_credentials(environment, integration)
+        self.credentials = Credential.get_credentials(environment, integration)
 
-        self.provider = CloudStackProvider(credentials=credentials)
+        self.provider = CloudStackProvider(credentials=self.credentials)
         self.host = self.instance.hostname
         self.host_cs = HostAttr.objects.get(host=self.host)
-
-        new_plan = self.instance.databaseinfra.plan.engine_equivalent_plan
-        cs_plan = PlanAttr.objects.get(plan=new_plan)
-        self.bundle = cs_plan.bundle.first()
 
         self.infra = self.instance.databaseinfra
         self.driver = self.infra.get_driver()
@@ -65,6 +62,13 @@ class Start(VmStep):
 
 class InstallNewTemplate(VmStep):
 
+    def __init__(self, instance):
+        super(InstallNewTemplate, self).__init__(instance)
+
+        target_plan = self.instance.databaseinfra.plan.engine_equivalent_plan
+        cs_plan = PlanAttr.objects.get(plan=target_plan)
+        self.bundle = cs_plan.bundle.first()
+
     def __unicode__(self):
         return "Installing new template to VM..."
 
@@ -97,6 +101,36 @@ class UpdateOSDescription(VmStep):
 
     def do(self):
         self.instance.hostname.update_os_description()
+
+
+class ChangeOffering(VmStep):
+
+    def __init__(self, instance):
+        super(ChangeOffering, self).__init__(instance)
+
+        database = self.instance.databaseinfra.databases.last()
+        target_offer = DatabaseResize.current_to(database).target_offer
+        self.target_offering_id = target_offer.offering.serviceofferingid
+
+    def __unicode__(self):
+        return "Resizing VM..."
+
+    def do(self):
+        cloudstack_offering_id = self.provider.get_vm_offering_id(
+            vm_id=self.host_cs.vm_id,
+            project_id=self.credentials.project
+        )
+
+        if not cloudstack_offering_id == self.target_offering_id:
+            resized = self.provider.change_service_for_vm(
+                vm_id=self.host_cs.vm_id,
+                serviceofferingid=self.target_offering_id
+            )
+        else:
+            resized = True
+
+        if not resized:
+            raise Exception("Could not change offering")
 
 
 class ChangeMaster(VmStep):
