@@ -3,9 +3,9 @@ from dbaas_cloudstack.models import DatabaseInfraOffering
 from workflow.steps.util.base import BaseInstanceStep
 
 
-class Info(BaseInstanceStep):
+class Update(BaseInstanceStep):
     def __init__(self, instance):
-        super(Info, self).__init__(instance)
+        super(Update, self).__init__(instance)
 
         self.infra = self.instance.databaseinfra
         self.database = self.infra.databases.last()
@@ -20,7 +20,7 @@ class Info(BaseInstanceStep):
         pass
 
 
-class Offering(Info):
+class Offering(Update):
     def __unicode__(self):
         return "Updating offering info..."
 
@@ -34,7 +34,7 @@ class Offering(Info):
         pass
 
 
-class Memory(Info):
+class Memory(Update):
     def __unicode__(self):
         return "Updating max_memory info..."
 
