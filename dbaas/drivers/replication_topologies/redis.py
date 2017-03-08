@@ -37,7 +37,7 @@ class BaseRedis(BaseTopology):
 
     def get_resize_extra_steps(self):
         return super(BaseRedis, self).get_resize_extra_steps() + (
-            'workflow.steps.util.update.Memory',
+            'workflow.steps.util.infra.Memory',
         )
 
 

@@ -28,8 +28,7 @@ class DatabaseStep(BaseInstanceStep):
         )
 
     def start_database(self):
-        result = self._execute_init_script('start')
-        return result
+        return self._execute_init_script('start')
 
     def stop_database(self):
         return self._execute_init_script('stop')
