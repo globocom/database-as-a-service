@@ -130,7 +130,7 @@ class TaskHistory(BaseModel):
         else:
             task_history.context = {"worker_name": worker_name}
 
-        arguments = factory_arguments_for_task(request)
+        arguments = factory_arguments_for_task(request.task, request.kwargs)
         task_history.arguments = ", ".join(arguments)
 
         if user:

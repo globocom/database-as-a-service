@@ -1,8 +1,8 @@
 class ArgumentsTo(object):
 
-    def __init__(self, request):
+    def __init__(self, args):
         self.KEY = ''
-        self.args = request.kwargs
+        self.args = args
 
     def build(self):
         raise NotImplementedError
@@ -10,8 +10,8 @@ class ArgumentsTo(object):
 
 class ArgumentsToCreateDatabase(ArgumentsTo):
 
-    def __init__(self, request):
-        super(ArgumentsToCreateDatabase, self).__init__(request)
+    def __init__(self, args):
+        super(ArgumentsToCreateDatabase, self).__init__(args)
         self.KEY = 'notification.tasks.create_database'
 
     def build(self):
@@ -19,14 +19,14 @@ class ArgumentsToCreateDatabase(ArgumentsTo):
             "Database: {}".format(self.args['name']),
             "Environment: {}".format(self.args['environment']),
             "Project: {}".format(self.args['project']),
-            "Plan: {}".format(self.args['Plan']),
+            "Plan: {}".format(self.args['plan']),
         ]
 
 
 class ArgumentsToResizeDatabase(ArgumentsTo):
 
-    def __init__(self, request):
-        super(ArgumentsToResizeDatabase, self).__init__(request)
+    def __init__(self, args):
+        super(ArgumentsToResizeDatabase, self).__init__(args)
         self.KEY = 'notification.tasks.resize_database'
 
     def build(self):
@@ -38,8 +38,8 @@ class ArgumentsToResizeDatabase(ArgumentsTo):
 
 class ArgumentsToDiskResize(ArgumentsTo):
 
-    def __init__(self, request):
-        super(ArgumentsToDiskResize, self).__init__(request)
+    def __init__(self, args):
+        super(ArgumentsToDiskResize, self).__init__(args)
         self.KEY = 'notification.tasks.database_disk_resize'
 
     def build(self):
@@ -51,8 +51,8 @@ class ArgumentsToDiskResize(ArgumentsTo):
 
 class ArgumentsToRestoreSnapshot(ArgumentsTo):
 
-    def __init__(self, request):
-        super(ArgumentsToRestoreSnapshot, self).__init__(request)
+    def __init__(self, args):
+        super(ArgumentsToRestoreSnapshot, self).__init__(args)
         self.KEY = 'backup.tasks.restore_snapshot'
 
     def build(self):
@@ -64,8 +64,8 @@ class ArgumentsToRestoreSnapshot(ArgumentsTo):
 
 class ArgumentsToDestroyDatabase(ArgumentsTo):
 
-    def __init__(self, request):
-        super(ArgumentsToDestroyDatabase, self).__init__(request)
+    def __init__(self, args):
+        super(ArgumentsToDestroyDatabase, self).__init__(args)
         self.KEY = 'notification.tasks.destroy_database'
 
     def build(self):
@@ -77,8 +77,8 @@ class ArgumentsToDestroyDatabase(ArgumentsTo):
 
 class ArgumentsToCloneDatabase(ArgumentsTo):
 
-    def __init__(self, request):
-        super(ArgumentsToCloneDatabase, self).__init__(request)
+    def __init__(self, args):
+        super(ArgumentsToCloneDatabase, self).__init__(args)
         self.KEY = 'notification.tasks.clone_database'
 
     def build(self):
@@ -86,14 +86,14 @@ class ArgumentsToCloneDatabase(ArgumentsTo):
             "Database: {}".format(self.args['origin_database'].name),
             "Clone: {}".format(self.args['clone_name']),
             "Environment: {}".format(self.args['environment']),
-            "Plan: {}".format(self.args['Plan']),
+            "Plan: {}".format(self.args['plan']),
         ]
 
 
 class ArgumentsToAnalyzeDatabases(ArgumentsTo):
 
-    def __init__(self, request):
-        super(ArgumentsToAnalyzeDatabases, self).__init__(request)
+    def __init__(self, args):
+        super(ArgumentsToAnalyzeDatabases, self).__init__(args)
         self.KEY = 'dbaas_services.analyzing.tasks.analyze.analyze_databases'
 
     def build(self):
@@ -104,8 +104,8 @@ class ArgumentsToAnalyzeDatabases(ArgumentsTo):
 
 class ArgumentsToUpgrade(ArgumentsTo):
 
-    def __init__(self, request):
-        super(ArgumentsToUpgrade, self).__init__(request)
+    def __init__(self, args):
+        super(ArgumentsToUpgrade, self).__init__(args)
         self.KEY = 'notification.tasks.upgrade_mongodb_24_to_30'
 
     def build(self):
@@ -116,8 +116,8 @@ class ArgumentsToUpgrade(ArgumentsTo):
 
 class ArgumentsToUnbindAddress(ArgumentsTo):
 
-    def __init__(self, request):
-        super(ArgumentsToUnbindAddress, self).__init__(request)
+    def __init__(self, args):
+        super(ArgumentsToUnbindAddress, self).__init__(args)
         self.KEY = 'dbaas_aclapi.tasks.unbind_address_on_database'
 
     def build(self):
@@ -129,8 +129,8 @@ class ArgumentsToUnbindAddress(ArgumentsTo):
 
 class ArgumentsToBindAddress(ArgumentsTo):
 
-    def __init__(self, request):
-        super(ArgumentsToBindAddress, self).__init__(request)
+    def __init__(self, args):
+        super(ArgumentsToBindAddress, self).__init__(args)
         self.KEY = 'dbaas_aclapi.tasks.bind_address_on_database'
 
     def build(self):
