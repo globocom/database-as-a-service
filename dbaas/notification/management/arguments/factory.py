@@ -16,7 +16,7 @@ class ArgumentsToCreateDatabase(ArgumentsTo):
 
     def build(self):
         return [
-            "Database: {}".format(self.args['name']),
+            "Database name: {}".format(self.args['name']),
             "Environment: {}".format(self.args['environment']),
             "Project: {}".format(self.args['project']),
             "Plan: {}".format(self.args['plan']),
@@ -31,7 +31,7 @@ class ArgumentsToResizeDatabase(ArgumentsTo):
 
     def build(self):
         return [
-            "Database: {}".format(self.args['database'].name),
+            "Database name: {}".format(self.args['database'].name),
             "New VM Offering: {}".format(self.args['cloudstackpack']),
         ]
 
@@ -44,7 +44,7 @@ class ArgumentsToDiskResize(ArgumentsTo):
 
     def build(self):
         return [
-            "Database: {}".format(self.args['database'].name),
+            "Database name: {}".format(self.args['database'].name),
             "New Disk Offering: {}".format(self.args['disk_offering']),
         ]
 
@@ -57,7 +57,7 @@ class ArgumentsToRestoreSnapshot(ArgumentsTo):
 
     def build(self):
         return [
-            "Database: {}".format(self.args['database'].name),
+            "Database name: {}".format(self.args['database'].name),
             "Description: Restoring to an older version.It will finish soon",
         ]
 
@@ -70,7 +70,7 @@ class ArgumentsToDestroyDatabase(ArgumentsTo):
 
     def build(self):
         return [
-            "Database: {}".format(self.args['database'].name),
+            "Database name: {}".format(self.args['database'].name),
             "User: {}".format(self.args['user']),
         ]
 
@@ -83,7 +83,7 @@ class ArgumentsToCloneDatabase(ArgumentsTo):
 
     def build(self):
         return [
-            "Database: {}".format(self.args['origin_database'].name),
+            "Database name: {}".format(self.args['origin_database'].name),
             "Clone: {}".format(self.args['clone_name']),
             "Environment: {}".format(self.args['environment']),
             "Plan: {}".format(self.args['plan']),
@@ -110,7 +110,7 @@ class ArgumentsToUpgrade(ArgumentsTo):
 
     def build(self):
         return [
-            "Database: {}".format(self.args['database'].name),
+            "Database name: {}".format(self.args['database'].name),
         ]
 
 
