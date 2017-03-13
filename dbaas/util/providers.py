@@ -133,31 +133,14 @@ def destroy_infra(databaseinfra, task=None):
         return False
 
 
-def resize_database_instances(database, cloudstackpack, instances, task=None):
-
+def get_cloudstack_pack(database):
     from dbaas_cloudstack.models import CloudStackPack
 
-
-    original_cloudstackpack = CloudStackPack.objects.get(
+    return CloudStackPack.objects.get(
         offering__serviceofferingid=database.offering_id,
         offering__region__environment=database.environment,
         engine_type__name=database.engine_type
     )
-
-    workflow_dict = build_dict(
-        database=database,
-        databaseinfra=database.databaseinfra,
-        cloudstackpack=cloudstackpack,
-        original_cloudstackpack=original_cloudstackpack,
-        environment=database.environment,
-        instances=instances,
-        steps=get_resize_settings(
-            database.databaseinfra.plan.replication_topology.class_path
-        )
-    )
-
-    start_workflow_ha(workflow_dict=workflow_dict, task=task)
-    return workflow_dict
 
 
 def get_vm_qt(plan):

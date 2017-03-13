@@ -135,7 +135,8 @@ class TaskHistory(BaseModel):
 
         elif request.task == 'notification.tasks.resize_database':
             task_history.arguments = "Database name: {0},\nNew Offering: {1}".format(
-                request.kwargs['database'].name, request.kwargs['cloudstackpack'])
+                request.kwargs['database'].name, request.kwargs['cloudstackpack']
+            )
 
         elif request.task == 'notification.tasks.database_disk_resize':
             task_history.arguments = \

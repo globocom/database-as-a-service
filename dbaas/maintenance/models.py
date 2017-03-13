@@ -6,6 +6,7 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from dateutil import tz
 from datetime import datetime
+from dbaas_cloudstack.models import CloudStackPack
 from logical.models import Database
 from physical.models import Host, Plan
 from notification.models import TaskHistory
@@ -297,6 +298,90 @@ class DatabaseUpgrade(BaseModel):
             database=self.database, source_plan=self.source_plan
         ).exclude(id=self.id)
         older_upgrades.update(can_do_retry=False)
+
+
+class DatabaseResize(BaseModel):
+    WAITING = 0
+    RUNNING = 1
+    ERROR = 2
+    SUCCESS = 3
+    UPGRADE_STATUS = (
+        (WAITING, 'Waiting'),
+        (RUNNING, 'Running'),
+        (ERROR, 'Error'),
+        (SUCCESS, 'Success'),
+    )
+
+    database = models.ForeignKey(
+        Database, verbose_name="Database",
+        null=False, unique=False, related_name="resizes"
+    )
+    source_offer = models.ForeignKey(
+        CloudStackPack, verbose_name="Source", null=False, unique=False,
+        related_name="database_resizes_source"
+    )
+    target_offer = models.ForeignKey(
+        CloudStackPack, verbose_name="Target", null=False, unique=False,
+        related_name="database_resizes_target"
+    )
+    current_step = models.PositiveSmallIntegerField(
+        verbose_name="Current Step", null=False, blank=False, default=0
+    )
+    task = models.ForeignKey(
+        TaskHistory, verbose_name="Task History",
+        null=False, unique=False, related_name="database_resizes"
+    )
+    status = models.IntegerField(
+        verbose_name="Status", choices=UPGRADE_STATUS, default=WAITING
+    )
+    started_at = models.DateTimeField(
+        verbose_name="Started at", null=True, blank=True
+    )
+    finished_at = models.DateTimeField(
+        verbose_name="Finished at", null=True, blank=True
+    )
+    can_do_retry = models.BooleanField(
+        verbose_name=_("Can Do Retry"), default=True
+    )
+
+    def __unicode__(self):
+        return "{} resize".format(self.database.name)
+
+    def update_step(self, step):
+        if not self.started_at:
+            self.started_at = datetime.now()
+
+        self.status = self.RUNNING
+        self.current_step = step
+        self.save()
+
+    def __resize_final_status(self, status):
+        self.finished_at = datetime.now()
+        self.status = status
+        self.save()
+
+    def set_success(self):
+        self.__resize_final_status(self.SUCCESS)
+
+    def set_error(self):
+        self.__resize_final_status(self.ERROR)
+
+    @property
+    def is_status_error(self):
+        return self.status == self.ERROR
+
+    @classmethod
+    def current_to(cls, database):
+        resizes = cls.objects.filter(database=database, status=cls.RUNNING)
+        return resizes.last()
+
+    def save(self, *args, **kwargs):
+        super(DatabaseResize, self).save(*args, **kwargs)
+
+        older_resizes = DatabaseResize.objects.filter(
+            database=self.database
+        ).exclude(id=self.id)
+        older_resizes.update(can_do_retry=False)
 
 
 simple_audit.register(Maintenance)

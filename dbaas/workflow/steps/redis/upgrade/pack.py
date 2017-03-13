@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from workflow.steps.util.upgrade.pack import Configure
+from workflow.steps.util.pack import Configure
 
 
 class ConfigureRedis(Configure):

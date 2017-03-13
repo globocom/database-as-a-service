@@ -394,7 +394,7 @@ class Database(BaseModel):
 
         resize_database.delay(
             database=database, cloudstackpack=cloudstackpack,
-            user=user, task_history=task_history
+            user=user, task=task_history
         )
 
     @classmethod
@@ -416,6 +416,9 @@ class Database(BaseModel):
 
     def get_resize_url(self):
         return "/admin/logical/database/{}/resize/".format(self.id)
+
+    def get_resize_retry_url(self):
+        return "/admin/logical/database/{}/resize_retry/".format(self.id)
 
     def get_disk_resize_url(self):
         return "/admin/logical/database/{}/disk_resize/".format(self.id)
@@ -511,6 +514,17 @@ class Database(BaseModel):
             return True
 
         return False
+
+    def has_cloudstack_offerings(self):
+        from dbaas_cloudstack.models import CloudStackPack
+
+        offerings = CloudStackPack.objects.filter(
+            offering__region__environment=database.environment,
+            engine_type__name=database.engine_type
+        ).exclude(offering__serviceofferingid=database.offering_id)
+        check_resize_options(database_id, offerings)
+
+        return bool(offerings)
 
     @property
     def is_dead(self):
@@ -612,6 +626,21 @@ class Database(BaseModel):
         if can_do_upgrade:
             if self.is_dead:
                 error = "Database is dead and cannot be upgraded."
+
+        if error:
+            return False, error
+        return True, None
+
+    def can_do_resize_retry(self):
+        error = None
+        if self.is_in_quarantine:
+            error = "Database in quarantine and cannot be resized."
+        elif self.is_beeing_used_elsewhere():
+            error = "Database cannot be resized because it is in use by another task."
+        elif self.has_flipperfox_migration_started():
+            error = "Database is being migrated and cannot be resized."
+        elif not self.has_cloudstack_offerings:
+            error = "There is no offerings for this database."
 
         if error:
             return False, error

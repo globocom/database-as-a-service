@@ -7,7 +7,7 @@ from util import exec_remote_command
 from dbaas_credentials.models import CredentialType
 from dbaas_foxha.provider import FoxHAProvider
 from dbaas_foxha.dbaas_api import DatabaseAsAServiceApi
-from base import BaseTopology, STOP_RESIZE_START
+from base import BaseTopology
 
 LOG = logging.getLogger(__name__)
 
@@ -39,16 +39,6 @@ class BaseMysql(BaseTopology):
             'workflow.steps.util.clone.clone_database.CloneDatabase',
             'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',
         ) + self.monitoring_steps()
-
-    def get_resize_steps(self):
-        return (
-            ('workflow.steps.util.resize.stop_database.StopDatabase',
-             'workflow.steps.mysql.resize.change_config.ChangeDatabaseConfigFile',
-             ) + STOP_RESIZE_START +
-            ('workflow.steps.util.resize.start_database.StartDatabase',
-             'workflow.steps.util.resize.start_agents.StartAgents',
-             'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',)
-        )
 
     def switch_master(self, driver):
         raise NotImplementedError()
@@ -221,6 +211,11 @@ class MySQLFoxHA(MySQLSingle):
             'workflow.steps.util.deploy.check_dns.CheckDns',
             'workflow.steps.util.deploy.start_monit.StartMonit',
         )
+
+    def get_resize_extra_steps(self):
+        return (
+            'workflow.steps.util.database.StartSlave',
+        ) + super(BaseMysql, self).get_resize_extra_steps()
 
     def deploy_last_steps(self):
         return (

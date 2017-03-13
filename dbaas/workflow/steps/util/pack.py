@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from util import build_context_script, exec_remote_command
 from dbaas_cloudstack.models import HostAttr, CloudStackPack
+from maintenance.models import DatabaseResize
 from workflow.steps.util.base import BaseInstanceStep
 
 
@@ -12,18 +13,15 @@ class PackStep(BaseInstanceStep):
         self.host = self.instance.hostname
         self.host_cs = HostAttr.objects.get(host=self.host)
 
-        database = self.instance.databaseinfra.databases.first()
-        self.pack = CloudStackPack.objects.get(
-            offering__serviceofferingid=database.offering_id,
-            offering__region__environment=database.environment,
-            engine_type__name=database.engine_type
-        )
+        self.database = self.instance.databaseinfra.databases.first()
 
     @property
     def script_variables(self):
         variables = {
             'CONFIGFILE': True,
             'IS_HA': self.instance.databaseinfra.plan.is_ha,
+            'HOSTADDRESS': self.instance.address,
+            'PORT': self.instance.port,
             'DBPASSWORD': self.instance.databaseinfra.password,
             'HAS_PERSISTENCE': self.instance.databaseinfra.plan.has_persistence
         }
@@ -42,6 +40,15 @@ class PackStep(BaseInstanceStep):
 
 
 class Configure(PackStep):
+
+    def __init__(self, instance):
+        super(Configure, self).__init__(instance)
+
+        self.pack = CloudStackPack.objects.get(
+            offering__serviceofferingid=self.database.offering_id,
+            offering__region__environment=self.database.environment,
+            engine_type__name=self.database.engine_type
+        )
 
     def __unicode__(self):
         return "Executing pack script..."
@@ -63,3 +70,10 @@ class Configure(PackStep):
                     return_code, output
                 )
             )
+
+
+class ResizeConfigure(Configure):
+
+    def do(self):
+        self.pack = DatabaseResize.objects.last().current_to(self.database).target_offer
+        super(ResizeConfigure, self).do()

@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
-from drivers.replication_topologies.base import STOP_RESIZE_START
 from drivers.replication_topologies.redis import RedisSentinel, RedisSingle, \
-    RedisSingleNoPersistence, RedisSentinelNoPersistence
+    RedisSentinelNoPersistence
 from drivers.tests.test_replication_topologies import AbstractReplicationTopologySettingsTestCase
 
 
@@ -33,16 +32,10 @@ class AbstractBaseRedisTestCase(AbstractReplicationTopologySettingsTestCase):
             'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',
         ) + self._get_monitoring_settings()
 
-    def _get_resize_settings(self):
-        return (
-            ('workflow.steps.util.resize.stop_database.StopDatabase',
-             'workflow.steps.redis.resize.change_config.RedisWithPersistence',) +
-            STOP_RESIZE_START +
-            ('workflow.steps.util.resize.start_database.StartDatabase',
-             'workflow.steps.util.resize.start_agents.StartAgents',
-             'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',)
+    def _get_resize_extra_steps(self):
+        return super(AbstractBaseRedisTestCase, self)._get_resize_extra_steps() + (
+            'workflow.steps.util.update.Memory',
         )
-
 
     def _get_upgrade_steps_extra(self):
         return (
@@ -72,21 +65,7 @@ class TestRedisSentinel(AbstractBaseRedisTestCase):
 
 
 class AbstractBaseRedisNoPersistenceTestCase(AbstractBaseRedisTestCase):
-    def _get_resize_settings(self):
-        return (
-            ('workflow.steps.util.resize.stop_database.StopDatabase',
-             'workflow.steps.redis.resize.change_config.RedisWithoutPersistence',) +
-            STOP_RESIZE_START +
-            ('workflow.steps.util.resize.start_database.StartDatabase',
-             'workflow.steps.util.resize.start_agents.StartAgents',
-             'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',)
-        )
-
-
-class TestRedisSingleNoPersistence(AbstractBaseRedisNoPersistenceTestCase):
-
-    def _get_replication_topology_driver(self):
-        return RedisSingleNoPersistence()
+    pass
 
 
 class TestRedisSentinelNoPersistence(AbstractBaseRedisNoPersistenceTestCase):

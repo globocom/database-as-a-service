@@ -497,7 +497,7 @@
         });
 
         var endpoint_popover_active = null;
-        $('.show-upgrade').popover({'trigger': 'manual', 'html': true})
+        $('.show-upgrade, .show-resize').popover({'trigger': 'manual', 'html': true})
         .on('click', function(e) {
             var $this = $(this);
             if (endpoint_popover_active && endpoint_popover_active.attr('data-content') != $this.attr('data-content')) {

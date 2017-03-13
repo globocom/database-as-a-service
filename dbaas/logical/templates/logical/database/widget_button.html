@@ -6,4 +6,8 @@
 </style>
 
 </br>
-<a id="{{ id }}" class="btn btn-primary" href="{{ url }}">{{ label }}</a >
+{% if class %}
+    <a id="{{ id }}" class="{{ class }}" href="{{ url }}">{{ label }}</a >
+{% else %}
+    <a id="{{ id }}" class="btn btn-primary" href="{{ url }}">{{ label }}</a >
+{% endif %}
