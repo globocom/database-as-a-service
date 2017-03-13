@@ -71,11 +71,7 @@ class ArgumentsToRestoreSnapshot(ArgumentsTo):
     def build(self):
         return [
             "Database name: {}".format(self.args['database'].name),
-<<<<<<< HEAD
             "Description: Restoring to an older version. It will finish soon.",
-=======
-            "Description: Restoring to an older version.It will finish soon",
->>>>>>> 16ac86c98c169513c100eb0716538ea9fb50318c
         ]
 
 
