@@ -194,6 +194,10 @@ def get_database_upgrade_setting(class_path):
     return get_replication_topology_instance(class_path).get_upgrade_steps()
 
 
+def get_add_database_instances_steps(class_path):
+    return get_replication_topology_instance(class_path).get_add_database_instances_steps()
+
+
 def get_engine_credentials(engine, environment):
     engine = engine.lower()
 

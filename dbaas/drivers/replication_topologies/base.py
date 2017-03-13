@@ -83,3 +83,10 @@ class BaseTopology(object):
                 'workflow.steps.util.upgrade.zabbix.CreateAlarms',
             ),
         }]
+
+    def get_add_database_instances_steps(self):
+        return [{
+            "Add instances": (
+                'workflow.steps.util.horizontal_elasticity.vm.CreateVirtualMachine',
+            ),
+        }]

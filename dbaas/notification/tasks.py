@@ -13,6 +13,7 @@ from util import email_notifications, get_worker_name, full_stack
 from util.decorators import only_one
 from util.providers import make_infra, clone_infra, destroy_infra, \
     get_database_upgrade_setting
+from util.providers import get_add_database_instances_steps
 from simple_audit.models import AuditRequest
 from system.models import Configuration
 from .models import TaskHistory
@@ -862,4 +863,34 @@ def upgrade_database(self, database, user, task, since_step=0):
         task.update_status_for(
             TaskHistory.STATUS_ERROR,
             'Could not do upgrade.\nUpgrade don\'t has rollback'
+        )
+
+
+@app.task(bind=True)
+def add_database_instances(self, database, user, task, number_of_instances=2):
+    from workflow.workflow import steps_for_instances
+
+    worker_name = get_worker_name()
+    task = TaskHistory.register(self.request, user, task, worker_name)
+
+    infra = database.infra
+    plan = infra.plan
+
+    class_path = plan.replication_topology.class_path
+    steps = get_add_database_instances_steps(class_path)
+
+    instances = []
+    for i in range(number_of_instances):
+        instances.append(Instance(databaseinfra=database.databaseinfra))
+
+    success = steps_for_instances(
+        steps, instances, task,
+    )
+
+    if success:
+        task.update_status_for(TaskHistory.STATUS_SUCCESS, 'Done')
+    else:
+        task.update_status_for(
+            TaskHistory.STATUS_ERROR,
+            'Error while adding instances for database'
         )
