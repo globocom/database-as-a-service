@@ -22,6 +22,9 @@ class BuildDatabaseInfra(BaseStep):
 
             databaseinfra = DatabaseInfra()
             databaseinfra.name = workflow_dict['names']['infra']
+            databaseinfra.name_prefix = workflow_dict['names']['name_prefix']
+            databaseinfra.name_stamp = workflow_dict['names']['name_stamp']
+            databaseinfra.last_vm_created = 0
 
             credentials = get_engine_credentials(engine=str(workflow_dict['plan'].engine_type),
                                                  environment=workflow_dict['environment'])

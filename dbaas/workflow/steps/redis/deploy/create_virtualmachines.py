@@ -110,6 +110,11 @@ class CreateVirtualMachine(BaseStep):
                 host_attr.save()
                 LOG.info("Host attrs custom attributes created!")
 
+                databaseinfra = workflow_dict['databaseinfra']
+                databaseinfra.last_vm_created += 1
+                databaseinfra.save()
+                workflow_dict['databaseinfra'] = databaseinfra
+
                 if index in (0, 1):
                     instance = Instance()
                     instance.address = host.address

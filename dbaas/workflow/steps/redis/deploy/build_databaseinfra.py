@@ -22,6 +22,9 @@ class BuildDatabaseInfra(BaseStep):
 
             databaseinfra = DatabaseInfra()
             databaseinfra.name = workflow_dict['names']['infra']
+            databaseinfra.name_prefix = workflow_dict['names']['name_prefix']
+            databaseinfra.name_stamp = workflow_dict['names']['name_stamp']
+            databaseinfra.last_vm_created = 0
             databaseinfra.user = ''
             databaseinfra.password = make_db_random_password()
             databaseinfra.engine = workflow_dict[

@@ -293,7 +293,12 @@ def gen_infra_names(name, qt):
     name = re.compile("[^\w']|_").sub("", name.lower())
     name = name[:10]
 
-    names = {"infra": name + stamp, "vms": []}
+    names = {
+        "infra": name + stamp,
+        "vms": [],
+        "name_prefix": name,
+        "name_stamp": stamp,
+    }
 
     for x in range(qt):
         names['vms'].append(name + "-0%i-" % (x + 1) + stamp)
