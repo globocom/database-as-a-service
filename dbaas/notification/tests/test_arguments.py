@@ -43,6 +43,7 @@ class ArgumentsTestCase(TestCase):
                                                       # has a "database" field.
         }
 
+        # Pattern:      Name of the argument: value of argument
         self.pattern = "[A-Z0-9][A-Za-z0-9_\- ]*[:][\s][A-Za-z0-9_\- ]+"
 
     def test_arguments_factory(self):

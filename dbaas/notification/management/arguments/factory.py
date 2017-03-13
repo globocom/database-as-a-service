@@ -36,6 +36,19 @@ class ArgumentsToResizeDatabase(ArgumentsTo):
         ]
 
 
+class ArgumentsToUpgradeDatabase(ArgumentsTo):
+
+    def __init__(self, args):
+        super(ArgumentsToUpgradeDatabase, self).__init__(args)
+        self.KEY = 'notification.tasks.upgrade_database'
+
+    def build(self):
+        return [
+            "Database name: {}".format(self.args['database'].name),
+            "Target plan: {}".format(self.args['target_plan']),
+        ]
+
+
 class ArgumentsToDiskResize(ArgumentsTo):
 
     def __init__(self, args):
@@ -58,7 +71,7 @@ class ArgumentsToRestoreSnapshot(ArgumentsTo):
     def build(self):
         return [
             "Database name: {}".format(self.args['database'].name),
-            "Description: Restoring to an older version.It will finish soon",
+            "Description: Restoring to an older version. It will finish soon.",
         ]
 
 

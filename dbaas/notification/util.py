@@ -23,7 +23,7 @@ def factory_arguments_for_task(task, args_dict):
                 return args_class.build()
 
     return ["{}: {}".format(
-        type(args_dict[arg]).__name__.capitalize(),
+        arg.capitalize().replace("_", " "),
         args_dict[arg]
     ) for arg in args_dict]
 
