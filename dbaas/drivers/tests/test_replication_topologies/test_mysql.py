@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from drivers.replication_topologies.base import STOP_RESIZE_START
 from drivers.replication_topologies.mysql import MySQLSingle
 from drivers.replication_topologies.mysql import MySQLFlipper
 from drivers.replication_topologies.mysql import MySQLFoxHA
@@ -34,16 +33,6 @@ class AbstractBaseMySQLTestCase(AbstractReplicationTopologySettingsTestCase):
             'workflow.steps.util.clone.clone_database.CloneDatabase',
             'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',
         ) + self._get_monitoring_settings()
-
-    def _get_resize_settings(self):
-        return (
-            ('workflow.steps.util.resize.stop_database.StopDatabase',
-             'workflow.steps.mysql.resize.change_config.ChangeDatabaseConfigFile',
-             ) + STOP_RESIZE_START +
-            ('workflow.steps.util.resize.start_database.StartDatabase',
-             'workflow.steps.util.resize.start_agents.StartAgents',
-             'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',)
-        )
 
 
 class TestMySQLSingle(AbstractBaseMySQLTestCase):
@@ -114,3 +103,8 @@ class TestMySQLFoxHA(AbstractBaseMySQLTestCase):
             'workflow.steps.util.deploy.build_database.BuildDatabase',
             'workflow.steps.util.deploy.check_database_binds.CheckDatabaseBinds',
         )
+
+    def _get_resize_extra_steps(self):
+        return (
+            'workflow.steps.util.database.StartSlave',
+        ) + super(TestMySQLFoxHA, self)._get_resize_extra_steps()

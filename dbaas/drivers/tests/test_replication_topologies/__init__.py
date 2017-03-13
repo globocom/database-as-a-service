@@ -43,8 +43,26 @@ class AbstractReplicationTopologySettingsTestCase(TestCase):
     def _get_clone_settings(self):
         raise NotImplementedError
 
+    def _get_resize_extra_steps(self):
+        return (
+            'workflow.steps.util.resize.agents.Start',
+            'workflow.steps.util.database.CheckIsUp',
+        )
+
     def _get_resize_settings(self):
-        raise NotImplementedError
+        return [{'Resizing database': (
+            'workflow.steps.util.zabbix.DisableAlarms',
+            'workflow.steps.util.vm.ChangeMaster',
+            'workflow.steps.util.database.Stop',
+            'workflow.steps.util.pack.ResizeConfigure',
+            'workflow.steps.util.vm.Stop',
+            'workflow.steps.util.vm.ChangeOffering',
+            'workflow.steps.util.vm.Start',
+            'workflow.steps.util.database.Start',
+        ) + self._get_resize_extra_steps() + (
+            'workflow.steps.util.update.Offering',
+            'workflow.steps.util.zabbix.EnableAlarms',
+        )}]
 
     def _get_restore_snapshot_settings(self):
         return (
@@ -69,19 +87,19 @@ class AbstractReplicationTopologySettingsTestCase(TestCase):
     def _get_upgrade_settings(self):
         return [{
             self._get_upgrade_steps_description(): (
-                'workflow.steps.util.upgrade.vm.ChangeMaster',
-                'workflow.steps.util.upgrade.zabbix.DestroyAlarms',
+                'workflow.steps.util.vm.ChangeMaster',
+                'workflow.steps.util.zabbix.DestroyAlarms',
                 'workflow.steps.util.upgrade.db_monitor.DisableMonitoring',
-                'workflow.steps.util.upgrade.database.Stop',
-                'workflow.steps.util.upgrade.database.CheckIsDown',
-                'workflow.steps.util.upgrade.vm.Stop',
-                'workflow.steps.util.upgrade.vm.InstallNewTemplate',
-                'workflow.steps.util.upgrade.vm.Start',
-                'workflow.steps.util.upgrade.vm.WaitingBeReady',
-                'workflow.steps.util.upgrade.vm.UpdateOSDescription',
+                'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.CheckIsDown',
+                'workflow.steps.util.vm.Stop',
+                'workflow.steps.util.vm.InstallNewTemplate',
+                'workflow.steps.util.vm.Start',
+                'workflow.steps.util.vm.WaitingBeReady',
+                'workflow.steps.util.vm.UpdateOSDescription',
             ) + self._get_upgrade_steps_extra() + (
-                'workflow.steps.util.upgrade.database.Start',
-                'workflow.steps.util.upgrade.database.CheckIsUp',
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.CheckIsUp',
             ),
         }] + self._get_upgrade_steps_final()
 
@@ -89,14 +107,14 @@ class AbstractReplicationTopologySettingsTestCase(TestCase):
         return (
             'workflow.steps.util.upgrade.plan.Initialization',
             'workflow.steps.util.upgrade.plan.Configure',
-            'workflow.steps.util.upgrade.pack.Configure',
+            'workflow.steps.util.pack.Configure',
         )
 
     def _get_upgrade_steps_final(self):
         return [{
             self._get_upgrade_steps_final_description(): (
                 'workflow.steps.util.upgrade.db_monitor.EnableMonitoring',
-                'workflow.steps.util.upgrade.zabbix.CreateAlarms',
+                'workflow.steps.util.zabbix.CreateAlarms',
             ),
         }]
 

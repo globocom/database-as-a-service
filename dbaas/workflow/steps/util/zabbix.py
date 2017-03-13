@@ -78,3 +78,21 @@ class CreateAlarms(ZabbixStep):
 
         for instance in self.instances:
             zabbix_provider.create_instance_monitors(instance)
+
+
+class DisableAlarms(ZabbixStep):
+
+    def __unicode__(self):
+        return "Disabling Zabbix alarms..."
+
+    def do(self):
+        self.zabbix_provider.disable_alarms()
+
+
+class EnableAlarms(ZabbixStep):
+
+    def __unicode__(self):
+        return "Enabling Zabbix alarms..."
+
+    def do(self):
+        self.zabbix_provider.enable_alarms()
