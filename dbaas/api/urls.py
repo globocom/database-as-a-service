@@ -59,6 +59,9 @@ router.register(r'team', TeamAPI)
 from .user import UserAPI
 router.register(r'user', UserAPI)
 
+from .snapshot import SnapshotAPI
+router.register(r'snapshot', SnapshotAPI)
+
 
 urlpatterns = router.urls
 

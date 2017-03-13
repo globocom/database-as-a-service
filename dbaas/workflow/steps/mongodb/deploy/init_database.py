@@ -54,7 +54,7 @@ class InitDatabaseMongoDB(BaseStep):
 
                 host.update_os_description()
 
-                if instance.is_arbiter:
+                if instance.instance_type == instance.MONGODB_ARBITER:
                     contextdict = {
                         'HOST': workflow_dict['hosts'][index].hostname.split('.')[0],
                         'DATABASENAME': workflow_dict['name'],

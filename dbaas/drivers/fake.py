@@ -2,6 +2,7 @@
 from __future__ import absolute_import, unicode_literals
 import logging
 from . import BaseDriver, DatabaseInfraStatus, DatabaseAlreadyExists, CredentialAlreadyExists, InvalidCredential
+from physical.models import Instance
 
 LOG = logging.getLogger(__name__)
 
@@ -34,7 +35,7 @@ class FakeDriver(BaseDriver):
         return DATABASES_INFRA[self.databaseinfra.name]
 
     def __concatenate_instances(self):
-        return ",".join(["%s:%s" % (instance.address, instance.port) for instance in self.databaseinfra.instances.filter(is_arbiter=False, is_active=True).all()])
+        return ",".join(["%s:%s" % (instance.address, instance.port) for instance in self.databaseinfra.instances.exclude(instance_type=Instance.MONGODB_ARBITER).filter(is_active=True).all()])
 
     def get_connection(self, database=None):
         return "fake://%s" % self.__concatenate_instances()

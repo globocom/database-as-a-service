@@ -92,11 +92,10 @@ class InstanceFactory(factory.DjangoModelFactory):
     address = '127.0.0.1'
     port = 27017
     is_active = True
-    is_arbiter = False
     databaseinfra = factory.SubFactory(DatabaseInfraFactory)
     hostname = factory.SubFactory(HostFactory)
     status = 1
-    instance_type = 1
+    instance_type = 2
 
 
 class NFSaaSHostAttr(factory.DjangoModelFactory):

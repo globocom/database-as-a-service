@@ -108,5 +108,10 @@ def setup_database_info(database):
     databaseinfra = database.databaseinfra
     driver = databaseinfra.get_driver()
     database_instances = driver.get_database_instances()
-    instances = [db_instance.dns.split('.')[0] for db_instance in database_instances]
+
+    instances = []
+    for db_instance in database_instances:
+        if db_instance.dns != db_instance.address:
+            instances.append(db_instance.dns.split('.')[0])
+
     return database.name, database.engine_type, instances, database.environment.name, database.databaseinfra
