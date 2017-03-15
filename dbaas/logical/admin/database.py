@@ -215,10 +215,16 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     engine_type.admin_order_field = 'name'
 
     def engine_html(self, database):
+        engine_info = str(database.engine)
+
+        topology = database.databaseinfra.plan.replication_topology
+        if topology.details:
+            engine_info += " - " + topology.details
+
         upgrades = database.upgrades.filter(source_plan=database.infra.plan)
         last_upgrade = upgrades.last()
         if not(last_upgrade and last_upgrade.is_status_error):
-            return database.engine
+            return engine_info
 
         upgrade_url = reverse('admin:maintenance_databaseupgrade_change', args=[last_upgrade.id])
         task_url = reverse('admin:notification_taskhistory_change', args=[last_upgrade.task.id])
@@ -230,7 +236,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 upgrade_url, task_url, retry_url
             )
         return show_info_popup(
-            database.engine, "Database Upgrade", upgrade_content,
+            engine_info, "Database Upgrade", upgrade_content,
             icon="icon-warning-sign", css_class="show-upgrade"
         )
     engine_html.short_description = _("engine")
