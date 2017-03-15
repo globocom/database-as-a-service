@@ -712,12 +712,13 @@ def update_disk_used_size(self):
 
 
 @app.task(bind=True)
-def upgrade_database(self, database, user, task, target_plan, since_step=0):
+def upgrade_database(self, database, user, task, since_step=0):
     worker_name = get_worker_name()
     task = TaskHistory.register(self.request, user, task, worker_name)
 
     infra = database.infra
     source_plan = infra.plan
+    target_plan = source_plan.engine_equivalent_plan
 
     class_path = target_plan.replication_topology.class_path
     steps = get_database_upgrade_setting(class_path)

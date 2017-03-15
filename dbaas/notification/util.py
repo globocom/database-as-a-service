@@ -18,14 +18,13 @@ def factory_arguments_for_task(task, args_dict):
     for arguments_class in dir(factory):
         args_class = getattr(factory, arguments_class)
         if callable(args_class):
-            args_class = args_class(args_dict)
             if args_class.KEY == task:
-                return args_class.build()
+                return args_class(args_dict).build()
 
     return ["{}: {}".format(
-        arg.capitalize().replace("_", " "),
-        args_dict[arg]
-    ) for arg in args_dict]
+        key.capitalize().replace("_", " "),
+        value
+    ) for key, value in args_dict.items()]
 
 
 def get_clone_args(origin_database, dest_database):

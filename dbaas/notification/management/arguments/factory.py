@@ -1,113 +1,107 @@
 class ArgumentsTo(object):
+    KEY = ''
 
     def __init__(self, args):
-        self.KEY = ''
         self.args = args
 
     def build(self):
         raise NotImplementedError
 
+    @property
+    def database(self):
+        return self.args['database']
+
+    def get_database_arg(self):
+        return "Database: {}".format(self.database.name)
+
+    def get_environment_arg(self):
+        return "Environment: {}".format(self.args['environment'])
+
+    def get_plan_arg(self):
+        return "Plan: {}".format(self.args['plan'])
+
 
 class ArgumentsToCreateDatabase(ArgumentsTo):
-
-    def __init__(self, args):
-        super(ArgumentsToCreateDatabase, self).__init__(args)
-        self.KEY = 'notification.tasks.create_database'
+    KEY = 'notification.tasks.create_database'
 
     def build(self):
         return [
-            "Database name: {}".format(self.args['name']),
-            "Environment: {}".format(self.args['environment']),
+            self.get_database_arg(),
+            self.get_environment_arg(),
             "Project: {}".format(self.args['project']),
-            "Plan: {}".format(self.args['plan']),
+            self.get_plan_arg(),
         ]
+
+    def get_database_arg(self):
+        return "Database name: {}".format(self.args['name'])
 
 
 class ArgumentsToResizeDatabase(ArgumentsTo):
-
-    def __init__(self, args):
-        super(ArgumentsToResizeDatabase, self).__init__(args)
-        self.KEY = 'notification.tasks.resize_database'
+    KEY = 'notification.tasks.resize_database'
 
     def build(self):
         return [
-            "Database name: {}".format(self.args['database'].name),
+            self.get_database_arg(),
             "New VM Offering: {}".format(self.args['cloudstackpack']),
         ]
 
 
 class ArgumentsToUpgradeDatabase(ArgumentsTo):
-
-    def __init__(self, args):
-        super(ArgumentsToUpgradeDatabase, self).__init__(args)
-        self.KEY = 'notification.tasks.upgrade_database'
+    KEY = 'notification.tasks.upgrade_database'
 
     def build(self):
         return [
-            "Database name: {}".format(self.args['database'].name),
-            "Target plan: {}".format(self.args['target_plan']),
+            self.get_database_arg(),
+            "Target plan: {}".format(
+                self.args['database'].databaseinfra.plan.engine_equivalent_plan
+            ),
         ]
 
 
 class ArgumentsToDiskResize(ArgumentsTo):
-
-    def __init__(self, args):
-        super(ArgumentsToDiskResize, self).__init__(args)
-        self.KEY = 'notification.tasks.database_disk_resize'
+    KEY = 'notification.tasks.database_disk_resize'
 
     def build(self):
         return [
-            "Database name: {}".format(self.args['database'].name),
+            self.get_database_arg(),
             "New Disk Offering: {}".format(self.args['disk_offering']),
         ]
 
 
 class ArgumentsToRestoreSnapshot(ArgumentsTo):
-
-    def __init__(self, args):
-        super(ArgumentsToRestoreSnapshot, self).__init__(args)
-        self.KEY = 'backup.tasks.restore_snapshot'
+    KEY = 'backup.tasks.restore_snapshot'
 
     def build(self):
         return [
-            "Database name: {}".format(self.args['database'].name),
+            self.get_database_arg(),
             "Description: Restoring to an older version. It will finish soon.",
         ]
 
 
 class ArgumentsToDestroyDatabase(ArgumentsTo):
-
-    def __init__(self, args):
-        super(ArgumentsToDestroyDatabase, self).__init__(args)
-        self.KEY = 'notification.tasks.destroy_database'
+    KEY = 'notification.tasks.destroy_database'
 
     def build(self):
         return [
-            "Database name: {}".format(self.args['database'].name),
+            self.get_database_arg(),
             "User: {}".format(self.args['user']),
         ]
 
 
 class ArgumentsToCloneDatabase(ArgumentsTo):
-
-    def __init__(self, args):
-        super(ArgumentsToCloneDatabase, self).__init__(args)
-        self.KEY = 'notification.tasks.clone_database'
+    KEY = 'notification.tasks.clone_database'
 
     def build(self):
         return [
-            "Database name: {}".format(self.args['origin_database'].name),
+            self.get_database_arg(),
             "Clone: {}".format(self.args['clone_name']),
-            "Environment: {}".format(self.args['environment']),
-            "Plan: {}".format(self.args['plan']),
+            self.get_environment_arg(),
+            self.get_plan_arg(),
         ]
 
 
 class ArgumentsToAnalyzeDatabases(ArgumentsTo):
-
-    def __init__(self, args):
-        super(ArgumentsToAnalyzeDatabases, self).__init__(args)
-        self.KEY = 'dbaas_services.analyzing.tasks.analyze.analyze_databases'
+    KEY = 'dbaas_services.analyzing.tasks.analyze.analyze_databases'
 
     def build(self):
         return [
@@ -115,39 +109,38 @@ class ArgumentsToAnalyzeDatabases(ArgumentsTo):
         ]
 
 
-class ArgumentsToUpgrade(ArgumentsTo):
-
-    def __init__(self, args):
-        super(ArgumentsToUpgrade, self).__init__(args)
-        self.KEY = 'notification.tasks.upgrade_mongodb_24_to_30'
+class ArgumentsToUpgradeMongo24To30(ArgumentsTo):
+    KEY = 'notification.tasks.upgrade_mongodb_24_to_30'
 
     def build(self):
         return [
-            "Database name: {}".format(self.args['database'].name),
+            self.get_database_arg(),
         ]
 
 
 class ArgumentsToUnbindAddress(ArgumentsTo):
-
-    def __init__(self, args):
-        super(ArgumentsToUnbindAddress, self).__init__(args)
-        self.KEY = 'dbaas_aclapi.tasks.unbind_address_on_database'
+    KEY = 'dbaas_aclapi.tasks.unbind_address_on_database'
 
     def build(self):
         return [
             "Removing Binds For: {}".format(self.args['database_bind']),
-            "From Database: {}".format(self.args['database_bind'].database),
+            self.get_database_arg(),
         ]
+
+    @property
+    def database(self):
+        return self.args['database_bind'].database
 
 
 class ArgumentsToBindAddress(ArgumentsTo):
-
-    def __init__(self, args):
-        super(ArgumentsToBindAddress, self).__init__(args)
-        self.KEY = 'dbaas_aclapi.tasks.bind_address_on_database'
+    KEY = 'dbaas_aclapi.tasks.bind_address_on_database'
 
     def build(self):
         return [
             "Creating Binds For: {}".format(self.args['database_bind']),
-            "From Database: {}".format(self.args['database_bind'].database),
+            self.get_database_arg(),
         ]
+
+    @property
+    def database(self):
+        return self.args['database_bind'].database

@@ -5,7 +5,7 @@ from ..util import factory_arguments_for_task
 from logical.tests.factory import DatabaseFactory
 from maintenance.tests.factory import CloudStackPackFactory
 from account.tests.factory import UserFactory
-from maintenance.tests.factory import DatabaseResizeFactory
+from .factory import DatabaseBindFactory
 
 
 class ArgumentsTestCase(TestCase):
@@ -38,9 +38,7 @@ class ArgumentsTestCase(TestCase):
             'user': UserFactory(),
             'origin_database': database,
             'clone_name': 'clone_{}'.format(database.name),
-            'database_bind': DatabaseResizeFactory(), # There is no DatabaseBindFactory,
-                                                      # so it's being used a factory which
-                                                      # has a "database" field.
+            'database_bind': DatabaseBindFactory(),
         }
 
         # Pattern:      Name of the argument: value of argument

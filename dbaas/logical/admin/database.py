@@ -988,13 +988,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         task_history.user = request.user
         task_history.save()
 
-        upgrade_database.delay(
-            database=database,
-            user=request.user,
-            task=task_history,
-            since_step=since_step,
-            target_plan=source_plan.engine_equivalent_plan
-        )
+        upgrade_database.delay(database, request.user, task_history, since_step)
 
         url = reverse('admin:notification_taskhistory_changelist')
         return HttpResponseRedirect(url)
@@ -1015,12 +1009,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         task_history.user = request.user
         task_history.save()
 
-        upgrade_database.delay(
-            database=database,
-            user=request.user,
-            task=task_history,
-            target_plan=database.databaseinfra.plan.engine_equivalent_plan
-        )
+        upgrade_database.delay(database, request.user, task_history)
 
         url = reverse('admin:notification_taskhistory_changelist')
         return HttpResponseRedirect(url)

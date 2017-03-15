@@ -495,7 +495,7 @@ def log_and_response(msg, http_status, e="Conditional Error."):
 
 def check_database_status(database_name, env):
     task = TaskHistory.objects.filter(
-        arguments__contains="Database name: {}, Environment: {}".format(
+        arguments__contains="Database: {}, Environment: {}".format(
             database_name, env
         ), task_status="RUNNING")
 

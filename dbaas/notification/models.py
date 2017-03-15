@@ -109,10 +109,12 @@ class TaskHistory(BaseModel):
     def register(cls, request=None, user=None, task_history=None, worker_name=None):
         from .util import factory_arguments_for_task
 
-        LOG.info("task id: %s | task name: %s | " % (
-            request.id,
-            request.task
-        ))
+        LOG.info(
+            "task id: {} | task name: {} | ".format(
+                request.id,
+                request.task
+            )
+        )
 
         if not task_history:
             task_history = TaskHistory()
