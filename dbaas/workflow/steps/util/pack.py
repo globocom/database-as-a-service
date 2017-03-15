@@ -74,6 +74,7 @@ class Configure(PackStep):
 
 class ResizeConfigure(Configure):
 
-    def do(self):
+    def __init__(self, instance):
+        super(ResizeConfigure, self).__init__(instance)
+
         self.pack = DatabaseResize.objects.last().current_to(self.database).target_offer
-        super(ResizeConfigure, self).do()

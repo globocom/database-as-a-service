@@ -31,7 +31,7 @@ class CloudStackPackFactory(factory.DjangoModelFactory):
     script = factory.Sequence(lambda n: '{0}'.format(n))
     offering = factory.SubFactory(CloudStackOfferingFactory)
     engine_type = factory.SubFactory(EngineTypeFactory)
-    name = factory.Sequence(lambda n: '{0}'.format(n))
+    name = factory.Sequence(lambda n: 'pack_{0}'.format(n))
 
 
 class DatabaseUpgradeFactory(factory.DjangoModelFactory):

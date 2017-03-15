@@ -107,9 +107,11 @@ class TaskHistory(BaseModel):
 
     @classmethod
     def register(cls, request=None, user=None, task_history=None, worker_name=None):
+        from .util import factory_arguments_for_task
 
-        LOG.info("task id: %s | task name: %s | " % (request.id,
-                                                     request.task))
+        LOG.info(
+            "task id: {} | task name: {} | ".format(request.id, request.task)
+        )
 
         if not task_history:
             task_history = TaskHistory()
@@ -127,59 +129,8 @@ class TaskHistory(BaseModel):
         else:
             task_history.context = {"worker_name": worker_name}
 
-        if request.task == 'notification.tasks.create_database':
-            task_history.arguments = "Database name: {0},\nEnvironment: {1},\
-            \nProject: {2},\nPlan: {3}".format(
-                request.kwargs['name'], request.kwargs['environment'],
-                request.kwargs['project'], request.kwargs['plan'])
-
-        elif request.task == 'notification.tasks.resize_database':
-            task_history.arguments = "Database name: {0},\nNew Offering: {1}".format(
-                request.kwargs['database'].name, request.kwargs['cloudstackpack']
-            )
-
-        elif request.task == 'notification.tasks.database_disk_resize':
-            task_history.arguments = \
-                "Database name: {0}," \
-                "\nNew Disk Offering: {1}".format(
-                    request.kwargs['database'].name,
-                    request.kwargs['disk_offering']
-                )
-
-        elif request.task == 'backup.tasks.restore_snapshot':
-            task_history.arguments = "Restoring to an older version the database: {0}, it will finish soon.".format(
-                request.kwargs['database'].name)
-
-        elif request.task == 'notification.tasks.destroy_database':
-            task_history.arguments = "Database name: {0},\nUser: {1}".format(
-                request.kwargs['database'].name, request.kwargs['user'])
-
-        elif request.task == 'notification.tasks.clone_database':
-            task_history.arguments = "Database name: {0},\nClone: {1},\nPlan: {2},\
-            \nEnvironment: {3}".format(
-                request.kwargs['origin_database'].name, str(
-                    request.kwargs['clone_name']),
-                str(request.kwargs['plan']), str(request.kwargs['environment']))
-
-        elif request.task == 'dbaas_services.analyzing.tasks.analyze.analyze_databases':
-            task_history.arguments = "Analizing all databases"
-
-        elif request.task == 'notification.tasks.upgrade_mongodb_24_to_30':
-            task_history.arguments = "Upgrading database {0}, to MongoDB 3.0".format(
-                request.kwargs['database'].name,)
-
-        elif request.task == 'dbaas_aclapi.tasks.unbind_address_on_database':
-            task_history.arguments = "Removing binds for {0} from {1}".format(
-                request.kwargs['database_bind'],
-                request.kwargs['database_bind'].database)
-
-        elif request.task == 'dbaas_aclapi.tasks.bind_address_on_database':
-            task_history.arguments = "Creating binds for {0} from {1}".format(
-                request.kwargs['database_bind'],
-                request.kwargs['database_bind'].database)
-
-        else:
-            task_history.arguments = request.args
+        arguments = factory_arguments_for_task(request.task, request.kwargs)
+        task_history.arguments = ", ".join(arguments)
 
         if user:
             task_history.user = str(user.username)
