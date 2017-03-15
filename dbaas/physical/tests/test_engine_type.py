@@ -8,7 +8,7 @@ from physical.models import EngineType
 
 SEARCH_FIELDS = ('name', )
 LIST_FILTER = ('is_in_memory', )
-LIST_FIELDS = ('name', 'is_in_memory')
+LIST_FIELDS = ('name', 'is_in_memory', 'created_at')
 SAVE_ON_TOP = True
 
 
