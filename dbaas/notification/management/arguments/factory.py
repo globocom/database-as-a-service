@@ -8,11 +8,11 @@ class ArgumentsTo(object):
         raise NotImplementedError
 
     @property
-    def database(self):
-        return self.args['database']
+    def database_name(self):
+        return self.args['database'].name
 
     def get_database_arg(self):
-        return "Database: {}".format(self.database.name)
+        return "Database: {}".format(self.database_name)
 
     def get_environment_arg(self):
         return "Environment: {}".format(self.args['environment'])
@@ -32,7 +32,8 @@ class ArgumentsToCreateDatabase(ArgumentsTo):
             self.get_plan_arg(),
         ]
 
-    def get_database_arg(self):
+    @property
+    def database_name(self):
         return "Database name: {}".format(self.args['name'])
 
 
@@ -128,8 +129,8 @@ class ArgumentsToUnbindAddress(ArgumentsTo):
         ]
 
     @property
-    def database(self):
-        return self.args['database_bind'].database
+    def database_name(self):
+        return self.args['database_bind'].database.name
 
 
 class ArgumentsToBindAddress(ArgumentsTo):
@@ -142,5 +143,5 @@ class ArgumentsToBindAddress(ArgumentsTo):
         ]
 
     @property
-    def database(self):
-        return self.args['database_bind'].database
+    def database_name(self):
+        return self.args['database_bind'].database.name

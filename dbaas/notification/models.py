@@ -110,10 +110,7 @@ class TaskHistory(BaseModel):
         from .util import factory_arguments_for_task
 
         LOG.info(
-            "task id: {} | task name: {} | ".format(
-                request.id,
-                request.task
-            )
+            "task id: {} | task name: {} | ".format(request.id, request.task)
         )
 
         if not task_history:

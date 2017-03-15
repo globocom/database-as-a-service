@@ -248,9 +248,7 @@ class BaseDriver(object):
             )
             LOG.info(
                 'Running {} - Return Code: {}. Output script: {}'.format(
-                    script,
-                    return_code,
-                    output
+                    script, return_code, output
                 )
             )
 

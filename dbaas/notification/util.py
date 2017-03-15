@@ -17,9 +17,8 @@ def factory_arguments_for_task(task, args_dict):
 
     for arguments_class in dir(factory):
         args_class = getattr(factory, arguments_class)
-        if callable(args_class):
-            if args_class.KEY == task:
-                return args_class(args_dict).build()
+        if callable(args_class) and args_class.KEY == task:
+            return args_class(args_dict).build()
 
     return ["{}: {}".format(
         key.capitalize().replace("_", " "),
