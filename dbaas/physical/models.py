@@ -114,6 +114,7 @@ class ReplicationTopology(BaseModel):
         verbose_name=_("Replication Class"), max_length=200,
         help_text="your.module.name.Class"
     )
+    details = models.CharField(max_length=200, null=True, blank=True)
 
 
 class DiskOffering(BaseModel):
