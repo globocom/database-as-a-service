@@ -43,6 +43,7 @@ class EngineType(BaseModel):
         permissions = (
             ("view_enginetype", "Can view engine types"),
         )
+        ordering = ('name', )
 
     def __unicode__(self):
         return "%s" % (self.name,)
@@ -84,6 +85,7 @@ class Engine(BaseModel):
         permissions = (
             ("view_engine", "Can view engines"),
         )
+        ordering = ('engine_type__name', 'version')
 
     @property
     def name(self):
