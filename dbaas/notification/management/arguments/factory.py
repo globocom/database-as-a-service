@@ -20,6 +20,15 @@ class ArgumentsTo(object):
     def get_plan_arg(self):
         return "Plan: {}".format(self.args['plan'])
 
+    def get_project_arg(self):
+        return "Project: {}".format(self.args['project'])
+
+    def get_user_arg(self):
+        return "User: {}".format(self.args['user'])
+
+    def get_clone_arg(self):
+        return "Clone: {}".format(self.args['clone_name'])
+
 
 class ArgumentsToCreateDatabase(ArgumentsTo):
     KEY = 'notification.tasks.create_database'
@@ -28,13 +37,9 @@ class ArgumentsToCreateDatabase(ArgumentsTo):
         return [
             self.get_database_arg(),
             self.get_environment_arg(),
-            "Project: {}".format(self.args['project']),
+            self.get_project_arg(),
             self.get_plan_arg(),
         ]
-
-    @property
-    def database_name(self):
-        return "Database name: {}".format(self.args['name'])
 
 
 class ArgumentsToResizeDatabase(ArgumentsTo):
@@ -85,7 +90,7 @@ class ArgumentsToDestroyDatabase(ArgumentsTo):
     def build(self):
         return [
             self.get_database_arg(),
-            "User: {}".format(self.args['user']),
+            self.get_user_arg(),
         ]
 
 
@@ -95,7 +100,7 @@ class ArgumentsToCloneDatabase(ArgumentsTo):
     def build(self):
         return [
             self.get_database_arg(),
-            "Clone: {}".format(self.args['clone_name']),
+            self.get_clone_arg(),
             self.get_environment_arg(),
             self.get_plan_arg(),
         ]
