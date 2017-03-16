@@ -302,6 +302,67 @@ def execute(step, workflow_dict, is_rollback, task):
         task.update_details(persist=True, details="DONE!")
 
 
+def steps_for_instances_with_rollback(group_of_steps, instances, task):
+
+    steps_for_instances_with_rollback.current_step = 0
+
+    def update_step(step):
+        steps_for_instances_with_rollback.current_step = step
+
+    ret = steps_for_instances(
+        list_of_groups_of_steps=group_of_steps,
+        instances=instances,
+        task=task,
+        step_counter_method=update_step
+    )
+
+    if ret:
+        return ret
+
+    if len(group_of_steps) > 1:
+        task.add_detail('Rollback is implemented only for one group of steps!')
+        return False
+
+    steps = group_of_steps[0].items()[0][1]
+    i = 0
+    for instance in instances:
+        instance_current_step = 0
+        for step in steps:
+            i += 1
+            instance_current_step += 1
+            if i == steps_for_instances_with_rollback.current_step:
+                break
+        if i == steps_for_instances_with_rollback.current_step:
+            break
+
+    task.add_detail('Starting undo for instance {}'.format(instance))
+
+    undo_step_current = len(steps)
+    for step in reversed(steps):
+
+        try:
+            step_class = import_by_path(step)
+            step_instance = step_class(instance)
+
+            task.add_step(undo_step_current, len(steps), 'Undo ' + str(step_instance))
+
+            if instance_current_step < undo_step_current:
+                task.update_details("SKIPPED!", persist=True)
+            else:
+                step_instance.undo()
+                task.update_details("SUCCESS!", persist=True)
+
+        except Exception as e:
+            task.update_details("FAILED!", persist=True)
+            task.add_detail(str(e))
+            task.add_detail(full_stack())
+
+        finally:
+            undo_step_current -= 1
+
+    return ret
+
+
 def steps_for_instances(
         list_of_groups_of_steps, instances, task, step_counter_method=None, since_step=0
 ):
