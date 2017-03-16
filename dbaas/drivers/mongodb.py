@@ -352,6 +352,12 @@ class MongoDB(BaseDriver):
     def get_database_agents(self):
         return []
 
+    def get_default_database_port(self):
+        return 27017
+
+    def get_default_instance_type(self):
+        return Instance.MONGODB
+
     @property
     def database_key(self):
         if self.databaseinfra.plan.is_ha:

@@ -256,6 +256,14 @@ class BaseDriver(object):
         """ Returns database agents list"""
         raise NotImplementedError()
 
+    def get_default_database_port(self):
+        """ Returns database default port"""
+        raise NotImplementedError()
+
+    def get_default_instance_type(self):
+        """ Returns default instance type"""
+        raise NotImplementedError()
+
     @property
     def database_key(self):
         return None
