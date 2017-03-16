@@ -41,6 +41,10 @@ class ArgumentsToCreateDatabase(ArgumentsTo):
             self.get_plan_arg(),
         ]
 
+    @property
+    def database_name(self):
+        return self.args['name']
+
 
 class ArgumentsToResizeDatabase(ArgumentsTo):
     KEY = 'notification.tasks.resize_database'
