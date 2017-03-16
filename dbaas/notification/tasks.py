@@ -762,33 +762,46 @@ def upgrade_database(self, database, user, task, since_step=0):
 
 
 @app.task(bind=True)
-def add_database_instances(self, database, user, task, number_of_instances=2):
-    from workflow.workflow import steps_for_instances
+def add_instances_to_database(self, database, user, task, number_of_instances=1):
+    from workflow.workflow import steps_for_instances_with_rollback
+    from util import get_vm_name
 
     worker_name = get_worker_name()
     task = TaskHistory.register(self.request, user, task, worker_name)
 
     infra = database.infra
     plan = infra.plan
+    driver = infra.get_driver()
 
     class_path = plan.replication_topology.class_path
     steps = get_add_database_instances_steps(class_path)
 
     instances = []
-    for i in range(number_of_instances):
-        instances.append(Instance(databaseinfra=database.databaseinfra))
+    last_vm_created = infra.last_vm_created
 
-    success = steps_for_instances(
+    for i in range(number_of_instances):
+        last_vm_created += 1
+        vm_name = get_vm_name(
+            prefix=infra.name_prefix,
+            sufix=infra.name_stamp,
+            vm_number=last_vm_created
+        )
+        new_instance = Instance(
+            databaseinfra=infra,
+            dns=vm_name,
+            port=driver.get_default_database_port()
+        )
+        new_instance.vm_name = vm_name
+        instances.append(new_instance)
+
+    success = steps_for_instances_with_rollback(
         steps, instances, task,
     )
 
     if success:
         task.update_status_for(TaskHistory.STATUS_SUCCESS, 'Done')
     else:
-        task.update_status_for(
-            TaskHistory.STATUS_ERROR,
-            'Error while adding instances for database'
-        )
+        task.update_status_for(TaskHistory.STATUS_ERROR, 'Done')
 
 
 def resize_database(self, database, user, task, cloudstackpack, original_cloudstackpack=None, since_step=0):
