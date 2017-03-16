@@ -994,7 +994,10 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         task_history.save()
 
         upgrade_database.delay(
-            database, request.user, task_history, since_step
+            database=database,
+            user=request.user,
+            task=task_history,
+            since_step=since_step
         )
 
         url = reverse('admin:notification_taskhistory_changelist')
@@ -1016,7 +1019,11 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         task_history.user = request.user
         task_history.save()
 
-        upgrade_database.delay(database, request.user, task_history)
+        upgrade_database.delay(
+            database=database,
+            user=request.user,
+            task=task_history
+        )
 
         url = reverse('admin:notification_taskhistory_changelist')
         return HttpResponseRedirect(url)
