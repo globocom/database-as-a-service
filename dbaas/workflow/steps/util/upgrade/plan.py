@@ -20,8 +20,9 @@ class PlanStep(BaseInstanceStep):
 
         self.database = self.instance.databaseinfra.databases.first()
 
-        self.new_plan = self.instance.databaseinfra.plan.engine_equivalent_plan
-        self.cs_plan = PlanAttr.objects.get(plan=self.new_plan)
+        self.plan = self.instance.databaseinfra.plan.engine_equivalent_plan
+        if self.plan:
+            self.cs_plan = PlanAttr.objects.get(plan=self.plan)
 
     @property
     def script_variables(self):
@@ -29,9 +30,9 @@ class PlanStep(BaseInstanceStep):
             'DATABASENAME': self.database.name,
             'DBPASSWORD': self.instance.databaseinfra.password,
             'HOST': self.host.hostname.split('.')[0],
-            'ENGINE': self.new_plan.engine.engine_type.name,
+            'ENGINE': self.plan.engine.engine_type.name,
             'UPGRADE': True,
-            'IS_HA': self.new_plan.is_ha
+            'IS_HA': self.plan.is_ha
         }
 
         if self.host_nfs:
@@ -98,3 +99,17 @@ class Configure(PlanStep):
                     return_code, output
                 )
             )
+
+
+class InitializationNewInstance(Initialization):
+    def __init__(self, instance):
+        super(InitializationNewInstance, self).__init__(instance)
+        self.plan = self.instance.databaseinfra.plan
+        self.cs_plan = PlanAttr.objects.get(plan=self.plan)
+
+
+class ConfigureNewInstance(Configure):
+    def __init__(self, instance):
+        super(ConfigureNewInstance, self).__init__(instance)
+        self.plan = self.instance.databaseinfra.plan
+        self.cs_plan = PlanAttr.objects.get(plan=self.plan)
