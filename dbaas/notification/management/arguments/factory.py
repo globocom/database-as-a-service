@@ -109,6 +109,10 @@ class ArgumentsToCloneDatabase(ArgumentsTo):
             self.get_plan_arg(),
         ]
 
+    @property
+    def database_name(self):
+        return self.args['origin_database'].name
+
 
 class ArgumentsToAnalyzeDatabases(ArgumentsTo):
     KEY = 'dbaas_services.analyzing.tasks.analyze.analyze_databases'
