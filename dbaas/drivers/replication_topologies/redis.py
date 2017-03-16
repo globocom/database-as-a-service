@@ -40,6 +40,11 @@ class BaseRedis(BaseTopology):
             'workflow.steps.util.update.Memory',
         )
 
+    def add_database_instances_first_steps(self):
+        return ()
+
+    def add_database_instances_last_steps(self):
+        return ()
 
 
 class RedisSingle(BaseRedis):

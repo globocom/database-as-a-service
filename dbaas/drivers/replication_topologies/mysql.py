@@ -259,3 +259,9 @@ class MySQLFoxHA(MySQLSingle):
     def get_database_agents(self):
         agents = ['httpd', '/etc/init.d/pt-heartbeat']
         return super(MySQLFoxHA, self).get_database_agents() + agents
+
+    def add_database_instances_first_steps(self):
+        return ()
+
+    def add_database_instances_last_steps(self):
+        return ()

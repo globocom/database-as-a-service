@@ -77,3 +77,9 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.mongodb.upgrade.database.SetFeatureCompatibilityVersion34',
             ),
         }] + super(MongoDBReplicaset, self).get_upgrade_steps_final()
+
+    def add_database_instances_first_steps(self):
+        return ()
+
+    def add_database_instances_last_steps(self):
+        return ()

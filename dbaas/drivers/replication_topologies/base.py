@@ -94,9 +94,25 @@ class BaseTopology(object):
             ),
         }]
 
+    def add_database_instances_first_steps(self):
+        raise NotImplementedError()
+
+    def add_database_instances_last_steps(self):
+        raise NotImplementedError()
+
     def get_add_database_instances_steps(self):
         return [{
-            "Add instances": (
+            "Add instances":
+            self.add_database_instances_first_steps() +
+            (
                 'workflow.steps.util.horizontal_elasticity.vm.CreateVirtualMachine',
-            ),
+                'workflow.steps.util.horizontal_elasticity.dns.CreateDNS',
+                'workflow.steps.util.vm.WaitingBeReady',
+                'workflow.steps.util.vm.UpdateOSDescription',
+                'workflow.steps.util.horizontal_elasticity.disk.CreateExport',
+                'workflow.steps.util.upgrade.plan.InitializationNewInstance',
+                'workflow.steps.util.upgrade.plan.ConfigureNewInstance',
+                'workflow.steps.util.pack.Configure',
+            ) +
+            self.add_database_instances_last_steps()
         }]
