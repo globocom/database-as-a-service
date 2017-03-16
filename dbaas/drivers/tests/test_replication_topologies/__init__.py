@@ -60,7 +60,7 @@ class AbstractReplicationTopologySettingsTestCase(TestCase):
             'workflow.steps.util.vm.Start',
             'workflow.steps.util.database.Start',
         ) + self._get_resize_extra_steps() + (
-            'workflow.steps.util.update.Offering',
+            'workflow.steps.util.infra.Offering',
             'workflow.steps.util.zabbix.EnableAlarms',
         )}]
 

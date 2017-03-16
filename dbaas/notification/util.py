@@ -12,6 +12,20 @@ from physical.models import Instance
 LOG = get_task_logger(__name__)
 
 
+def factory_arguments_for_task(task, args_dict):
+    from .management.arguments import factory
+
+    for arguments_class in dir(factory):
+        args_class = getattr(factory, arguments_class)
+        if callable(args_class) and args_class.KEY == task:
+            return args_class(args_dict).build()
+
+    return ["{}: {}".format(
+        key.capitalize().replace("_", " "),
+        value
+    ) for key, value in args_dict.items()]
+
+
 def get_clone_args(origin_database, dest_database):
 
     # origin

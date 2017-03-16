@@ -34,7 +34,7 @@ class AbstractBaseRedisTestCase(AbstractReplicationTopologySettingsTestCase):
 
     def _get_resize_extra_steps(self):
         return super(AbstractBaseRedisTestCase, self)._get_resize_extra_steps() + (
-            'workflow.steps.util.update.Memory',
+            'workflow.steps.util.infra.Memory',
         )
 
     def _get_upgrade_steps_extra(self):

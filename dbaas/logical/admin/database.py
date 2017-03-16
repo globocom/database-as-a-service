@@ -76,8 +76,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         "databaseinfra__plan", "databaseinfra__engine__engine_type", "status",
         "databaseinfra__plan__has_persistence"
     ]
-    list_filter_advanced = list_filter_basic + \
-        ["databaseinfra", "is_in_quarantine", "team"]
+    list_filter_advanced = list_filter_basic + ["is_in_quarantine", "team"]
     add_form_template = "logical/database/database_add_form.html"
     change_form_template = "logical/database/database_change_form.html"
     delete_button_name = "Delete"
@@ -217,10 +216,16 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     engine_type.admin_order_field = 'name'
 
     def engine_html(self, database):
+        engine_info = str(database.engine)
+
+        topology = database.databaseinfra.plan.replication_topology
+        if topology.details:
+            engine_info += " - " + topology.details
+
         upgrades = database.upgrades.filter(source_plan=database.infra.plan)
         last_upgrade = upgrades.last()
         if not(last_upgrade and last_upgrade.is_status_error):
-            return database.engine
+            return engine_info
 
         upgrade_url = reverse('admin:maintenance_databaseupgrade_change', args=[last_upgrade.id])
         task_url = reverse('admin:notification_taskhistory_change', args=[last_upgrade.task.id])
@@ -232,7 +237,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 upgrade_url, task_url, retry_url
             )
         return show_info_popup(
-            database.engine, "Database Upgrade", upgrade_content,
+            engine_info, "Database Upgrade", upgrade_content,
             icon="icon-warning-sign", css_class="show-upgrade"
         )
     engine_html.short_description = _("engine")
@@ -990,7 +995,10 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         task_history.save()
 
         upgrade_database.delay(
-            database, request.user, task_history, since_step
+            database=database,
+            user=request.user,
+            task=task_history,
+            since_step=since_step
         )
 
         url = reverse('admin:notification_taskhistory_changelist')
@@ -1012,7 +1020,11 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         task_history.user = request.user
         task_history.save()
 
-        upgrade_database.delay(database, request.user, task_history)
+        upgrade_database.delay(
+            database=database,
+            user=request.user,
+            task=task_history
+        )
 
         url = reverse('admin:notification_taskhistory_changelist')
         return HttpResponseRedirect(url)
