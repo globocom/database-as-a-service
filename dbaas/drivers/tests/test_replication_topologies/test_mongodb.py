@@ -65,8 +65,8 @@ class TestMongoDBReplicaset(AbstractBaseMondodbTestCase):
 
     def _get_upgrade_steps_extra(self):
         return (
-            'workflow.steps.mongodb.upgrade.plan.InitializationMongoHAForUpgrade',
-            'workflow.steps.mongodb.upgrade.plan.ConfigureMongoHAForUpgrade',
+            'workflow.steps.util.plan.InitializationMongoHAForUpgrade',
+            'workflow.steps.util.plan.ConfigureMongoHAForUpgrade',
             'workflow.steps.util.pack.Configure',
             'workflow.steps.mongodb.upgrade.vm.ChangeBinaryTo32',
         )

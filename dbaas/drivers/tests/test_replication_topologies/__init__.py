@@ -105,8 +105,8 @@ class AbstractReplicationTopologySettingsTestCase(TestCase):
 
     def _get_upgrade_steps_extra(self):
         return (
-            'workflow.steps.util.upgrade.plan.InitializationForUpgrade',
-            'workflow.steps.util.upgrade.plan.ConfigureForUpgrade',
+            'workflow.steps.util.plan.InitializationForUpgrade',
+            'workflow.steps.util.plan.ConfigureForUpgrade',
             'workflow.steps.util.pack.Configure',
         )
 
