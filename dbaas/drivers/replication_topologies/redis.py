@@ -30,8 +30,8 @@ class BaseRedis(BaseTopology):
 
     def get_upgrade_steps_extra(self):
         return (
-            'workflow.steps.redis.upgrade.plan.InitializationRedis',
-            'workflow.steps.redis.upgrade.plan.ConfigureRedis',
+            'workflow.steps.redis.upgrade.plan.InitializationRedisForUpgrade',
+            'workflow.steps.redis.upgrade.plan.ConfigureRedisForUpgrade',
             'workflow.steps.redis.upgrade.pack.ConfigureRedis',
         )
 

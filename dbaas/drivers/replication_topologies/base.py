@@ -81,8 +81,8 @@ class BaseTopology(object):
 
     def get_upgrade_steps_extra(self):
         return (
-            'workflow.steps.util.upgrade.plan.Initialization',
-            'workflow.steps.util.upgrade.plan.Configure',
+            'workflow.steps.util.upgrade.plan.InitializationForUpgrade',
+            'workflow.steps.util.upgrade.plan.ConfigureForUpgrade',
             'workflow.steps.util.pack.Configure',
         )
 
@@ -105,14 +105,6 @@ class BaseTopology(object):
             "Add instances":
             self.add_database_instances_first_steps() +
             (
-                'workflow.steps.util.horizontal_elasticity.vm.CreateVirtualMachine',
-                'workflow.steps.util.horizontal_elasticity.dns.CreateDNS',
-                'workflow.steps.util.vm.WaitingBeReady',
-                'workflow.steps.util.vm.UpdateOSDescription',
-                'workflow.steps.util.horizontal_elasticity.disk.CreateExport',
-                'workflow.steps.util.upgrade.plan.InitializationNewInstance',
-                'workflow.steps.util.upgrade.plan.ConfigureNewInstance',
-                'workflow.steps.util.pack.Configure',
             ) +
             self.add_database_instances_last_steps()
         }]

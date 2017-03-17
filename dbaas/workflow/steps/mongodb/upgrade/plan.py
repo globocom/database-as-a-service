@@ -1,23 +1,14 @@
 # -*- coding: utf-8 -*-
-from workflow.steps.util.upgrade.plan import Initialization, Configure
+from workflow.steps.mongodb.plan import InitializationMongoHA, ConfigureMongoHA
 
 
-class InitializationMongoHA(Initialization):
-
-    def get_variables_specifics(self):
-        database_rule = 'SECONDARY'
-        if self.instance.instance_type == self.instance.MONGODB_ARBITER:
-            database_rule = 'ARBITER'
-
-        return {
-            'DATABASERULE': database_rule
-        }
+class InitializationMongoHAForUpgrade(InitializationMongoHA):
+    def __init__(self, instance):
+        super(InitializationMongoHAForUpgrade, self).__init__(instance)
+        self.get_equivalent_plan()
 
 
-class ConfigureMongoHA(Configure):
-
-    def get_variables_specifics(self):
-        return {
-            'REPLICASETNAME': self.instance.databaseinfra.get_driver().replica_set_name,
-            'MONGODBKEY': self.instance.databaseinfra.database_key
-        }
+class ConfigureMongoHAForUpgrade(ConfigureMongoHA):
+    def __init__(self, instance):
+        super(ConfigureMongoHAForUpgrade, self).__init__(instance)
+        self.get_equivalent_plan()

@@ -56,8 +56,8 @@ class MongoDBReplicaset(BaseMongoDB):
 
     def get_upgrade_steps_extra(self):
         return (
-            'workflow.steps.mongodb.upgrade.plan.InitializationMongoHA',
-            'workflow.steps.mongodb.upgrade.plan.ConfigureMongoHA',
+            'workflow.steps.mongodb.upgrade.plan.InitializationMongoHAForUpgrade',
+            'workflow.steps.mongodb.upgrade.plan.ConfigureMongoHAForUpgrade',
             'workflow.steps.util.pack.Configure',
             'workflow.steps.mongodb.upgrade.vm.ChangeBinaryTo32',
         )
@@ -79,7 +79,25 @@ class MongoDBReplicaset(BaseMongoDB):
         }] + super(MongoDBReplicaset, self).get_upgrade_steps_final()
 
     def add_database_instances_first_steps(self):
-        return ()
+        return (
+        )
 
     def add_database_instances_last_steps(self):
         return ()
+
+    def get_add_database_instances_steps(self):
+        return [{
+            "Add instances":
+            self.add_database_instances_first_steps() +
+            (
+                'workflow.steps.util.horizontal_elasticity.vm.CreateVirtualMachine',
+                'workflow.steps.util.horizontal_elasticity.dns.CreateDNS',
+                'workflow.steps.util.vm.WaitingBeReady',
+                'workflow.steps.util.vm.UpdateOSDescription',
+                'workflow.steps.util.horizontal_elasticity.disk.CreateExport',
+                'workflow.steps.mongodb.plan.InitializationMongoHA',
+                'workflow.steps.mongodb.plan.ConfigureMongoHA',
+                #'workflow.steps.util.pack.Configure',
+            ) +
+            self.add_database_instances_last_steps()
+        }]
