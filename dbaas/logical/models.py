@@ -10,6 +10,7 @@ from django.db.models.signals import pre_save, post_save, pre_delete
 from django.dispatch import receiver
 from django_extensions.db.fields.encrypted import EncryptedCharField
 from django.utils.functional import cached_property
+from django.utils.html import format_html
 from util import slugify, make_db_random_password
 from util.models import BaseModel
 from physical.models import DatabaseInfra, Environment
@@ -679,6 +680,21 @@ class Database(BaseModel):
     def last_successful_upgrade(self):
         from maintenance.models import DatabaseUpgrade
         return self.upgrades.filter(status=DatabaseUpgrade.SUCCESS).last()
+
+    @property
+    def status_html(self):
+        html_default = '<span class="label label-{}">{}</span>'
+
+        if self.status == Database.ALIVE:
+            status = html_default.format("success", "Alive")
+        elif self.status == Database.DEAD:
+            status = html_default.format("important", "Dead")
+        elif self.status == Database.ALERT:
+            status = html_default.format("warning", "Alert")
+        else:
+            status = html_default.format("info", "Initializing")
+
+        return format_html(status)
 
 
 class Credential(BaseModel):

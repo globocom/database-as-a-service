@@ -37,6 +37,7 @@ from util import get_credentials_for
 from util.html import show_info_popup
 from logical.templatetags import capacity
 from logical.models import Database
+from logical.views import database_details, database_hosts
 from logical.forms import DatabaseForm, CloneDatabaseForm, ResizeDatabaseForm, \
     DiskResizeDatabaseForm, RestoreDatabaseForm
 from logical.validators import check_is_database_enabled, \
@@ -132,19 +133,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     plan.admin_order_field = 'name'
 
     def friendly_status(self, database):
-
-        html_default = '<span class="label label-{}">{}</span>'
-
-        if database.status == Database.ALIVE:
-            status = html_default.format("success", "Alive")
-        elif database.status == Database.DEAD:
-            status = html_default.format("important", "Dead")
-        elif database.status == Database.ALERT:
-            status = html_default.format("warning", "Alert")
-        else:
-            status = html_default.format("info", "Initializing")
-
-        return format_html(status)
+        return database.status_html
 
     friendly_status.short_description = "Status"
 
@@ -1081,7 +1070,6 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 self.admin_site.admin_view(self.upgrade_retry),
                 name="upgrade_retry"
             ),
-
             url(
                 r'^/?(?P<database_id>\d+)/resize_retry/$',
                 self.admin_site.admin_view(self.resize_retry),
