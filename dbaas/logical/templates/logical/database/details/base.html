@@ -1,0 +1,76 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <style type="text/css">
+    .readonly {
+        padding-top: 5px
+    }
+  </style>
+{% endblock %}
+
+{% block content_title %}
+  {% if title %}
+    <h1>Database: {{ title }}</h1>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+  <div>
+    {% block tabs %}
+      <ul class="nav nav-tabs">
+        <li role="presentation" {% if current_tab == 'details' %} class="active" {% endif %}><a href="{% url 'admin:logical_database_details' database.id %}">Details</a></li>
+        <li role="presentation" {% if current_tab == 'credentials' %} class="active" {% endif %}><a href="#">Credentials</a></li>
+        <li role="presentation" {% if current_tab == 'resize/upgrades' %} class="active" {% endif %}><a href="#">Resizes/Upgrade</a></li>
+        <li role="presentation" {% if current_tab == 'hosts' %} class="active" {% endif %}><a href="{% url 'admin:logical_database_hosts' database.id %}">Hosts</a></li>
+        <li role="presentation" {% if current_tab == 'backups' %} class="active" {% endif %}><a href="#">Backups</a></li>
+        <li role="presentation" {% if current_tab == 'extra' %} class="active" {% endif %}><a href="#">Extra</a></li
+      </ul>
+    {% endblock %}
+  </div>
+
+  <div class="content-main">
+    <form enctype="multipart/form-data" action="" method="post" id="database_form" class="form-horizontal well">
+      {% csrf_token %}
+      {% block tab %}
+      {% endblock %}
+      <div class="form-actions navbar navbar-fixed-bottom">
+        <div class="container">
+          <div class="pull-left delete-link-box">
+            <a href="{% url 'admin:logical_database_delete' database.id %}" class="btn btn-danger">Delete</a>
+          </div>
+          <div class="pull-right save-options-box">
+            <input type="submit" value="Save" name="_save" onclick=&quot;submitOrderForm();&quot; class="btn btn-primary"/>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+{% endblock %}
+
+{% block breadcrumbs %}
+  <ul class="breadcrumb">
+    <li>
+      <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+      <span class="divider">/</span>
+    </li>
+    <li>
+      <a href="/admin/logical/">{% trans 'Logical' %}</a>
+      <span class="divider">/</span>
+    </li>
+    <li>
+      <a href="/admin/logical/database/">{% trans 'Databases' %}</a>
+      <span class="divider">/</span>
+    </li>
+    <li class="active">{{ title }}</li>
+  </ul>
+{% endblock %}
+
+{% block js_footer_commons %}
+  {{ super.block }}
+  <script src="{% static "admin/js/jquery.js" %}">
+  <script type="text/javascript" src="{% static "admin/js/bootstrap.min.js" %}"></script>
+{% endblock %}

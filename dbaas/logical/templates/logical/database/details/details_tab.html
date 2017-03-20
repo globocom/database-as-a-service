@@ -1,0 +1,127 @@
+{% extends "logical/database/details/base.html" %}
+
+{% block tab %}
+<fieldset class="module aligned ">
+  <div class="control-group">
+    <div class="control-label"><label>Status:</label></div>
+    <div class="controls">{{ database.status_html }}</div>
+  </div>
+  <div class="control-group">
+    <div class="control-label"><label>Project:</label></div>
+    <div class="controls">
+      <select class="span8" id="id_project" name="project">
+        {% for project in projects %}
+          <option value="{{project.id}}"
+            {% if project == database.project %}selected="selected"{% endif %}>
+            {{project.name}}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+  <div class="control-group">
+    <div class="control-label"><label>Description:</label></div>
+    <div class="controls">
+      <textarea required class="vLargeTextField span8" cols="40" id="id_description" name="description" rows="10">{{ database.description }}</textarea>
+    </div>
+  </div>
+  <div class="control-group">
+    <div class="control-label"><label>Team:</label></div>
+    <div class="controls">
+      <select class="span8" id="id_team" name="team">
+        {% for team in teams %}
+          <option value="{{team.id}}"
+            {% if team == database.team %}selected="selected"{% endif %}>
+            {{team.name}}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+  <div class="field-team_contact">
+    <div class="control-group">
+      <div class="control-label"><label>Contacts:</label></div>
+      <div class="controls"><p class="readonly" id="id_contact"></p></div>
+    </div>
+  </div>
+  <div class="control-group">
+    <div class="controls">
+      <label class="checkbox">
+        <input {% if database.subscribe_to_email_events %} checked="checked" {% endif %} id="id_subscribe_to_email_events" name="subscribe_to_email_events" type="checkbox"/>
+        <span><label class="vCheckboxLabel" for="id_subscribe_to_email_events">Subscribe to email events</label></span>
+      </label>
+      <p class="help-block">Check this box if you'd like to receive information regarding this database by email.</p>
+    </div>
+  </div>
+  <div class="control-group">
+    <div class="controls">
+      <label class="checkbox">
+        <input {% if database.is_protected %} checked="checked" {% endif %} id="id_is_protected" name="is_protected" type="checkbox"/>
+        <span><label class="vCheckboxLabel" for="id_is_protected">Protected</label></span>
+      </label>
+      <p class="help-block">When marked, the database can not be deleted.</p>
+    </div>
+  </div>
+  <div class="control-group">
+    <div class="control-label"><label>Engine:</label></div>
+    <div class="controls"><p class="readonly">{{ engine }}</p></div>
+  </div>
+  <div class="control-group">
+    <div class="control-label"><label>Environment:</label></div>
+    <div class="controls"><p class="readonly">{{ database.environment }}</p></div>
+  </div>
+  <div class="control-group">
+    <div class="control-label"><label>Disk:</label></div>
+    <div class="controls"><p class="readonly">{{ database.plan.disk_offering }}</p></div>
+  </div>
+  <div class="control-group">
+    <div class="control-label"><label>Offering:</label></div>
+    <div class="controls"><p class="readonly">{{ database.offering }}</p></div>
+  </div>
+  <div class="control-group">
+    <div class="control-label"><label>Created At:</label></div>
+    <div class="controls"><p class="readonly">{{ database.created_at }}</p></div>
+  </div>
+  {% if database.is_in_quarantine %}
+    <div class="control-group">
+      <div class="control-label"><label>Quarantine since:</label></div>
+      <div class="controls"><p class="readonly">{{ database.quarantine_dt }}</p></div>
+    </div>
+  {% endif %}
+</fieldset>
+{% endblock %}
+
+{% block js_footer %}
+{{ block.super }}
+
+<script>
+  var team_select = document.getElementById("id_team");
+  var team_contact = document.getElementById("id_contact");
+
+  jQuery(document).ready(function($) {
+    $("#id_team").on("change", function() {
+      var team_id = team_select.value;
+
+      if (team_id) {
+        jQuery.ajax({
+          "dataType": "json", "url": "/account/team_contacts/" + team_id, "type": "GET",
+        }).done(function(response) {
+          if (response.error) {
+            alert(response.error);
+          } else {
+            var contacts = "";
+            if(response.contacts != null)
+              contacts = response.contacts;
+            team_contact.innerHTML = contacts
+          }
+        }).fail(function() {
+          alert("invalid server response");
+        });
+      }
+    });
+
+    $('#id_team').change();
+  })
+</script>
+
+{% endblock %}

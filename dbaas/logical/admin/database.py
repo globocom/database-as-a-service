@@ -1075,6 +1075,16 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 self.admin_site.admin_view(self.resize_retry),
                 name="resize_retry"
             ),
+            url(
+                r'^/?(?P<id>\d+)/new/$',
+                self.admin_site.admin_view(database_details),
+                name="logical_database_details"
+            ),
+            url(
+                r'^/?(?P<id>\d+)/hosts/$',
+                self.admin_site.admin_view(database_hosts),
+                name="logical_database_hosts"
+            ),
         )
 
         return my_urls + urls

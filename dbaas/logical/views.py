@@ -1,14 +1,19 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 import json
-from django.shortcuts import get_object_or_404
+from django.contrib import messages
+from django.core.exceptions import ValidationError, PermissionDenied
+from django.core.urlresolvers import reverse
+from django.shortcuts import get_object_or_404, render_to_response
 from django.views.generic.detail import BaseDetailView
 from django.views.decorators.csrf import csrf_exempt
-from django.core.exceptions import ValidationError, PermissionDenied
 from django.utils.decorators import method_decorator
-from django.http import HttpResponse
-from .models import Credential, Database
+from django.http import HttpResponse, HttpResponseRedirect
+from django.template import RequestContext
 from drivers.base import CredentialAlreadyExists
+from account.models import Team
+from .models import Credential, Database, Project
+from .forms.database import DatabaseDetailsForm
 
 
 class CredentialView(BaseDetailView):
@@ -61,3 +66,52 @@ class CredentialView(BaseDetailView):
 
         credential.delete()
         return self.as_json(credential)
+
+
+def database_details(request, id):
+    database = Database.objects.get(id=id)
+
+    engine = str(database.engine)
+    topology = database.databaseinfra.plan.replication_topology
+    engine = engine + " - " + topology.details if topology.details else engine
+
+    context = {
+        'database': database,
+        'engine': engine,
+        'projects': Project.objects.all(),
+        'teams': Team.objects.all(),
+        'title': database.name,
+        'current_tab': 'details',
+        'user': request.user,
+    }
+
+    if request.method == 'POST':
+        form = DatabaseDetailsForm(request.POST or None, instance=database)
+        if form.is_valid():
+            form.save()
+            messages.add_message(
+                request, messages.SUCCESS,
+                'The database "{}" was changed successfully'.format(database)
+            )
+            return HttpResponseRedirect(
+                reverse('admin:logical_database_changelist')
+            )
+
+    return render_to_response(
+        "logical/database/details/details_tab.html",
+        context, RequestContext(request)
+    )
+
+
+def database_hosts(request, id):
+    database = Database.objects.get(id=id)
+    context = {
+        'database': database,
+        'title': database.name,
+        'current_tab': 'hosts',
+        'user': request.user
+    }
+    return render_to_response(
+        "logical/database/details/hosts_tab.html",
+        context, RequestContext(request)
+    )
