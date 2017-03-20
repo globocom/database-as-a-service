@@ -13,7 +13,6 @@ from util import email_notifications, get_worker_name, full_stack
 from util.decorators import only_one
 from util.providers import make_infra, clone_infra, destroy_infra, \
     get_database_upgrade_setting, get_resize_settings
-from util.providers import get_add_database_instances_steps
 from simple_audit.models import AuditRequest
 from system.models import Configuration
 from .models import TaskHistory
@@ -764,9 +763,11 @@ def upgrade_database(self, database, user, task, since_step=0):
 @app.task(bind=True)
 def add_instances_to_database(self, database, user, task, number_of_instances=1):
     from workflow.workflow import steps_for_instances_with_rollback
+    from util.providers import get_add_database_instances_steps
     from util import get_vm_name
 
     worker_name = get_worker_name()
+    self.request.kwargs['database'] = database
     task = TaskHistory.register(self.request, user, task, worker_name)
 
     infra = database.infra
@@ -796,6 +797,39 @@ def add_instances_to_database(self, database, user, task, number_of_instances=1)
 
     success = steps_for_instances_with_rollback(
         steps, instances, task,
+    )
+
+    if success:
+        task.update_status_for(TaskHistory.STATUS_SUCCESS, 'Done')
+    else:
+        task.update_status_for(TaskHistory.STATUS_ERROR, 'Done')
+
+
+@app.task(bind=True)
+def remove_readonly_instance(self, instance, user, task):
+    from workflow.workflow import steps_for_instances
+    from util.providers import get_remove_readonly_instance_steps
+
+    infra = instance.databaseinfra
+    database = infra.databases.last()
+
+    self.request.kwargs['database'] = database
+    worker_name = get_worker_name()
+    task = TaskHistory.register(self.request, user, task, worker_name)
+
+    plan = infra.plan
+
+    class_path = plan.replication_topology.class_path
+    steps = get_remove_readonly_instance_steps(class_path)
+
+    instances = []
+    instances.append(instance)
+
+    success = steps_for_instances(
+        list_of_groups_of_steps=steps,
+        instances=instances,
+        task=task,
+        undo=True
     )
 
     if success:

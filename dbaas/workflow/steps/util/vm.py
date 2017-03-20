@@ -1,13 +1,16 @@
 # -*- coding: utf-8 -*-
+from django.core.exceptions import ObjectDoesNotExist
 from time import sleep
 from util import check_ssh
 from dbaas_cloudstack.models import HostAttr, PlanAttr
 from dbaas_cloudstack.provider import CloudStackProvider
-from dbaas_credentials.credential import Credential
 from dbaas_credentials.models import CredentialType
+from util import get_credentials_for
 from workflow.steps.util.base import BaseInstanceStep
 from maintenance.models import DatabaseResize
+import logging
 
+LOG = logging.getLogger(__name__)
 
 CHANGE_MASTER_ATTEMPS = 4
 CHANGE_MASTER_SECONDS = 15
@@ -18,18 +21,28 @@ class VmStep(BaseInstanceStep):
     def __init__(self, instance):
         super(VmStep, self).__init__(instance)
 
-        integration = CredentialType.objects.get(
-            type=CredentialType.CLOUDSTACK
-        )
-        environment = self.instance.databaseinfra.environment
-        self.credentials = Credential.get_credentials(environment, integration)
+        self.databaseinfra = self.instance.databaseinfra
+        self.environment = self.databaseinfra.environment
+        self.driver = self.databaseinfra.get_driver()
 
-        self.provider = CloudStackProvider(credentials=self.credentials)
-        self.host = self.instance.hostname
-        self.host_cs = HostAttr.objects.get(host=self.host)
+        self.cs_credentials = get_credentials_for(
+            environment=self.environment,
+            credential_type=CredentialType.CLOUDSTACK)
 
-        self.infra = self.instance.databaseinfra
-        self.driver = self.infra.get_driver()
+        self.cs_provider = CloudStackProvider(credentials=self.cs_credentials)
+
+        self.host = None
+        self.host_cs = None
+
+        try:
+            self.host = self.instance.hostname
+        except ObjectDoesNotExist:
+            LOG.info('Instance {} does not have hostname'.format(instance))
+        else:
+            try:
+                self.host_cs = HostAttr.objects.get(host=self.host)
+            except ObjectDoesNotExist:
+                LOG.info('Host {} does not have HostAttr'.format(self.host))
 
     def do(self):
         raise NotImplementedError
@@ -44,7 +57,7 @@ class Stop(VmStep):
         return "Stopping VM..."
 
     def do(self):
-        stopped = self.provider.stop_virtual_machine(self.host_cs.vm_id)
+        stopped = self.cs_provider.stop_virtual_machine(self.host_cs.vm_id)
         if not stopped:
             raise EnvironmentError("Could not stop VM")
 
@@ -55,7 +68,7 @@ class Start(VmStep):
         return "Starting VM..."
 
     def do(self):
-        started = self.provider.start_virtual_machine(self.host_cs.vm_id)
+        started = self.cs_provider.start_virtual_machine(self.host_cs.vm_id)
         if not started:
             raise EnvironmentError("Could not start VM")
 
@@ -73,7 +86,7 @@ class InstallNewTemplate(VmStep):
         return "Installing new template to VM..."
 
     def do(self):
-        reinstall = self.provider.reinstall_new_template(
+        reinstall = self.cs_provider.reinstall_new_template(
             self.host_cs.vm_id, self.bundle.templateid
         )
         if not reinstall:
@@ -116,13 +129,13 @@ class ChangeOffering(VmStep):
         return "Resizing VM..."
 
     def do(self):
-        cloudstack_offering_id = self.provider.get_vm_offering_id(
+        cloudstack_offering_id = self.cs_provider.get_vm_offering_id(
             vm_id=self.host_cs.vm_id,
-            project_id=self.credentials.project
+            project_id=self.cs_credentials.project
         )
 
         if not cloudstack_offering_id == self.target_offering_id:
-            resized = self.provider.change_service_for_vm(
+            resized = self.cs_provider.change_service_for_vm(
                 vm_id=self.host_cs.vm_id,
                 serviceofferingid=self.target_offering_id
             )
@@ -139,7 +152,7 @@ class ChangeMaster(VmStep):
         return "Changing master node..."
 
     def do(self):
-        if not self.infra.plan.is_ha:
+        if not self.databaseinfra.plan.is_ha:
             return
 
         if self.driver.check_instance_is_master(instance=self.instance):
@@ -155,3 +168,99 @@ class ChangeMaster(VmStep):
                     return
 
             raise error
+
+
+class CreateVirtualMachine(VmStep):
+
+    def __unicode__(self):
+        return "Creating virtualmachine..."
+
+    def create_host(self, address):
+        from physical.models import Host
+
+        host = Host()
+        host.address = address
+        host.hostname = host.address
+        host.save()
+        return host
+
+    def create_host_attr(self, host, vm_id):
+        from dbaas_cloudstack.models import HostAttr
+
+        vm_credentials = get_credentials_for(
+            environment=self.environment,
+            credential_type=CredentialType.VM)
+        host_attr = HostAttr()
+        host_attr.vm_id = vm_id
+        host_attr.host = host
+        host_attr.vm_user = vm_credentials.user
+        host_attr.vm_password = vm_credentials.password
+        host_attr.save()
+
+    def create_instance(self, host):
+        self.instance.hostname = host
+        self.instance.address = host.address
+        self.instance.port = self.driver.get_default_database_port()
+        self.instance.instance_type = self.driver.get_default_instance_type()
+        self.instance.save()
+
+    def update_databaseinfra_last_vm_created(self):
+        last_vm_created = self.databaseinfra.last_vm_created
+        last_vm_created += 1
+        self.databaseinfra.last_vm_created = last_vm_created
+        self.databaseinfra.save()
+
+    def deploy_vm(self):
+        offering = self.databaseinfra.cs_dbinfra_offering.get().offering
+        LOG.info("VM : {}".format(self.instance.vm_name))
+        plan = self.databaseinfra.plan
+        cs_plan = PlanAttr.objects.get(plan=plan)
+        bundle = cs_plan.bundle.first()
+
+        vm = self.cs_provider.deploy_virtual_machine(
+            offering=offering.serviceofferingid,
+            bundle=bundle,
+            project_id=self.cs_credentials.project,
+            vmname=self.instance.vm_name,
+            affinity_group_id=self.cs_credentials.get_parameter_by_name(
+                'affinity_group_id'),
+        )
+
+        if not vm:
+            raise Exception("CloudStack could not create the virtualmachine")
+
+        address = vm['virtualmachine'][0]['nic'][0]['ipaddress']
+        vm_id = vm['virtualmachine'][0]['id']
+
+        return address, vm_id
+
+    def do(self):
+        LOG.info('Creating virtualmachine {}'.format(self.instance))
+        address, vm_id = self.deploy_vm()
+
+        host = self.create_host(address=address)
+        self.create_host_attr(host=host, vm_id=vm_id)
+        self.create_instance(host=host)
+        self.update_databaseinfra_last_vm_created()
+
+    def undo(self):
+        from django.core.exceptions import ObjectDoesNotExist
+        from dbaas_cloudstack.models import HostAttr
+
+        LOG.info('Running undo of CreateVirtualMachine')
+
+        try:
+            host = self.instance.hostname
+        except ObjectDoesNotExist:
+            return
+
+        host_attr = HostAttr.objects.get(host=host)
+
+        self.cs_provider.destroy_virtual_machine(
+            project_id=self.cs_credentials.project,
+            environment=self.environment,
+            vm_id=host_attr.vm_id)
+
+        host_attr.delete()
+        self.instance.delete()
+        host.delete()

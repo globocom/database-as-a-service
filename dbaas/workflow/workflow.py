@@ -344,7 +344,7 @@ def steps_for_instances_with_rollback(group_of_steps, instances, task):
             step_class = import_by_path(step)
             step_instance = step_class(instance)
 
-            task.add_step(undo_step_current, len(steps), 'Undo ' + str(step_instance))
+            task.add_step(undo_step_current, len(steps), 'Rollback ' + str(step_instance))
 
             if instance_current_step < undo_step_current:
                 task.update_details("SKIPPED!", persist=True)
@@ -364,7 +364,8 @@ def steps_for_instances_with_rollback(group_of_steps, instances, task):
 
 
 def steps_for_instances(
-        list_of_groups_of_steps, instances, task, step_counter_method=None, since_step=0
+        list_of_groups_of_steps, instances, task, step_counter_method=None,
+        since_step=0, undo=False
 ):
     steps_total = 0
     for group_of_steps in list_of_groups_of_steps:
@@ -398,12 +399,19 @@ def steps_for_instances(
                     step_class = import_by_path(step)
                     step_instance = step_class(instance)
 
-                    task.add_step(step_current, steps_total, str(step_instance))
+                    if undo:
+                        str_step_instance = 'Rollback ' + str(step_instance)
+                    else:
+                        str_step_instance = str(step_instance)
+                    task.add_step(step_current, steps_total, str_step_instance)
 
                     if step_current < since_step:
                         task.update_details("SKIPPED!", persist=True)
                     else:
-                        step_instance.do()
+                        if undo:
+                            step_instance.undo()
+                        else:
+                            step_instance.do()
                         task.update_details("SUCCESS!", persist=True)
 
                 except Exception as e:

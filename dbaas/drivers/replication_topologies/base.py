@@ -94,17 +94,32 @@ class BaseTopology(object):
             ),
         }]
 
-    def add_database_instances_first_steps(self):
+    def get_add_database_instances_first_steps(self):
         raise NotImplementedError()
 
-    def add_database_instances_last_steps(self):
+    def get_add_database_instances_last_steps(self):
         raise NotImplementedError()
 
     def get_add_database_instances_steps(self):
         return [{
             "Add instances":
-            self.add_database_instances_first_steps() +
+            self.get_add_database_instances_first_steps() +
             (
             ) +
-            self.add_database_instances_last_steps()
+            self.get_add_database_instances_last_steps()
+        }]
+
+    def get_remove_readonly_instance_steps_first_steps(self):
+        raise NotImplementedError()
+
+    def get_remove_readonly_instance_steps_last_steps(self):
+        raise NotImplementedError()
+
+    def get_remove_readonly_instance_steps(self):
+        return [{
+            "Remove instance":
+            self.get_remove_readonly_instance_steps_first_steps() +
+            (
+            ) +
+            self.get_remove_readonly_instance_steps_last_steps()
         }]

@@ -78,19 +78,19 @@ class MongoDBReplicaset(BaseMongoDB):
             ),
         }] + super(MongoDBReplicaset, self).get_upgrade_steps_final()
 
-    def add_database_instances_first_steps(self):
+    def get_add_database_instances_first_steps(self):
         return (
         )
 
-    def add_database_instances_last_steps(self):
+    def get_add_database_instances_last_steps(self):
         return ()
 
     def get_add_database_instances_steps(self):
         return [{
             "Add instances":
-            self.add_database_instances_first_steps() +
+            self.get_add_database_instances_first_steps() +
             (
-                'workflow.steps.util.horizontal_elasticity.vm.CreateVirtualMachine',
+                'workflow.steps.util.vm.CreateVirtualMachine',
                 'workflow.steps.util.horizontal_elasticity.dns.CreateDNS',
                 'workflow.steps.util.vm.WaitingBeReady',
                 'workflow.steps.util.vm.UpdateOSDescription',
@@ -99,5 +99,28 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.util.plan.ConfigureMongoHA',
                 'workflow.steps.util.pack.Configure',
             ) +
-            self.add_database_instances_last_steps()
+            self.get_add_database_instances_last_steps()
+        }]
+
+    def get_remove_readonly_instance_steps_first_steps(self):
+        return ()
+
+    def get_remove_readonly_instance_steps_last_steps(self):
+        return ()
+
+    def get_remove_readonly_instance_steps(self):
+        return [{
+            "Add instances":
+            self.get_remove_readonly_instance_steps_first_steps() +
+            (
+                'workflow.steps.util.pack.Configure',
+                'workflow.steps.util.plan.ConfigureMongoHA',
+                'workflow.steps.util.plan.InitializationMongoHA',
+                'workflow.steps.util.horizontal_elasticity.disk.CreateExport',
+                'workflow.steps.util.vm.UpdateOSDescription',
+                'workflow.steps.util.vm.WaitingBeReady',
+                'workflow.steps.util.horizontal_elasticity.dns.CreateDNS',
+                'workflow.steps.util.vm.CreateVirtualMachine',
+            ) +
+            self.get_remove_readonly_instance_steps_last_steps()
         }]
