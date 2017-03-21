@@ -113,6 +113,15 @@ class Command(BaseCommand):
                 )
                 database_upgrade.set_error()
 
+            database_resize = task.database_resizes.first()
+            if database_resize:
+                self.task.add_detail(
+                    "Setting database resize {} status to ERROR".format(
+                        database_resize.id
+                    ), level=3
+                )
+                database_resize.set_error()
+
         return tasks_with_problem
 
     def get_celery_active_tasks(self, expected_hosts):
