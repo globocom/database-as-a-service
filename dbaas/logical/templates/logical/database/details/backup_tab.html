@@ -1,0 +1,30 @@
+{% extends "logical/database/details/base.html" %}
+{% load admin_static %}
+
+{% block tab %}
+<fieldset class="module aligned ">
+  <div class="control-group">
+    <div class="control-label"><label>Restore snapshot:</label></div>
+    <div class="controls">
+      <a href="{{ database.get_restore_url }}" class="btn btn-primary" title="Restore" data-content="Restore">
+        <i class="icon-inbox icon-white"></i>
+      </a>
+    </div>
+  </div>
+  <div class="control-group">
+    <div class="control-label"><label>Clone:</label></div>
+    <div class="controls">
+      <a href="{% url 'admin:database_clone' database.id %}" class="btn btn-primary" title="Clone" data-content="Clone">
+        <i class="icon-tags icon-white"></i>
+      </a>
+    </div>
+  </div>
+  <div class="control-group">
+    <div class="control-label"><label>Backup path:</label></div>
+    <div class="controls">
+      <input class="vTextField span8" id="id_backup_path" maxlength="300" name="backup_path" type="text" value="{{ database.backup_path }}"/>
+      <p class="help-block">Full path to backup file</p>
+    </div>
+  </div>
+</fieldset>
+{% endblock %}
