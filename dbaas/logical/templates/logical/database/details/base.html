@@ -38,7 +38,14 @@
       {% csrf_token %}
       {% block tab %}
       {% endblock %}
-      {% block database_buttons %}
+      {% block database_button_save %}
+      <div class="form-actions navbar navbar-fixed-bottom">
+        <div class="container">
+          <div class="pull-left save-options-box">
+            <input type="submit" value="Save" name="_save" onclick=&quot;submitOrderForm();&quot; class="btn btn-primary"/>
+          </div>
+        </div>
+      </div>
       {% endblock %}
     </form>
   </div>

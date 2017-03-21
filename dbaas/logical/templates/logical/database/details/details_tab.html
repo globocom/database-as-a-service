@@ -90,6 +90,16 @@
     <div class="control-label"><label>Disk:</label></div>
     <div class="controls"><p class="readonly">{{ database.plan.disk_offering }}</p></div>
   </div>
+  {% if database.engine.engine_type.is_in_memory %}
+    <div class="control-group">
+      <div class="control-label"><label>Persisted:</label></div>
+      <div class="controls">
+        <label class="checkbox">
+          <input disabled {% if database.plan.has_persistence %} checked="checked" {% endif %} type="checkbox"/>
+        </label>
+      </div>
+    </div>
+  {% endif %}
   <div class="control-group">
     <div class="control-label"><label>Offering:</label></div>
     <div class="controls"><p class="readonly">{{ database.offering }}</p></div>
@@ -105,16 +115,6 @@
     </div>
   {% endif %}
 </fieldset>
-{% endblock %}
-
-{% block database_buttons %}
-<div class="form-actions navbar navbar-fixed-bottom">
-  <div class="container">
-    <div class="pull-left save-options-box">
-      <input type="submit" value="Save" name="_save" onclick=&quot;submitOrderForm();&quot; class="btn btn-primary"/>
-    </div>
-  </div>
-</div>
 {% endblock %}
 
 {% block js_footer %}
