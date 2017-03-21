@@ -128,6 +128,11 @@ def database_resizes(request, id):
         'user': request.user,
     }
 
+    if request.method == 'POST':
+        disk_auto_resize = request.POST.get('disk_auto_resize', False)
+        database.disk_auto_resize = disk_auto_resize
+        database.save()
+
     context['last_resize'] = database.resizes.last()
     context['upgrade_mongo_24_to_30'] = \
         database.is_mongodb_24() and \
@@ -141,7 +146,8 @@ def database_resizes(request, id):
     context['is_dba'] = request.user.team_set.filter(role__name="role_dba")
 
     return render_to_response(
-        "logical/database/details/resizes_tab.html", context
+        "logical/database/details/resizes_tab.html",
+        context, RequestContext(request)
     )
 
 

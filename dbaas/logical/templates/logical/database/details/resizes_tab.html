@@ -35,6 +35,15 @@
       </p>
     </div>
   </div>
+  <div class="control-group">
+    <div class="controls">
+      <label class="checkbox">
+        <input {% if database.disk_auto_resize %} checked="checked" {% endif %} id="id_disk_auto_resize" name="disk_auto_resize" type="checkbox"/>
+        <span><label class="vCheckboxLabel" for="id_disk_auto_resize">Disk auto resize</label></span>
+      </label>
+      <p class="help-block">When marked, the disk will be resized automatically.</p>
+    </div>
+  </div>
   {% if upgrade_mongo_24_to_30 %}
     <div class="control-group">
       <div class="control-label"><label>Engine upgrade:</label></div>
