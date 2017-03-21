@@ -243,8 +243,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     engine_html.admin_order_field = "Engine"
 
     def offering_html(self, database):
-        resizes = database.resizes.filter(database=database)
-        last_resize = resizes.latest("created_at")
+        last_resize = database.resizes.last()
         if not(last_resize and last_resize.is_status_error):
             return database.offering
 
