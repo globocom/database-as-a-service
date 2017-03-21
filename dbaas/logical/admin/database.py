@@ -37,7 +37,8 @@ from util import get_credentials_for
 from util.html import show_info_popup
 from logical.templatetags import capacity
 from logical.models import Database
-from logical.views import database_details, database_hosts
+from logical.views import database_details, database_hosts, \
+    database_credentials
 from logical.forms import DatabaseForm, CloneDatabaseForm, ResizeDatabaseForm, \
     DiskResizeDatabaseForm, RestoreDatabaseForm
 from logical.validators import check_is_database_enabled, \
@@ -1079,6 +1080,11 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 r'^/?(?P<id>\d+)/new/$',
                 self.admin_site.admin_view(database_details),
                 name="logical_database_details"
+            ),
+            url(
+                r'^/?(?P<id>\d+)/credentials/$',
+                self.admin_site.admin_view(database_credentials),
+                name="logical_database_credentials"
             ),
             url(
                 r'^/?(?P<id>\d+)/hosts/$',

@@ -103,6 +103,20 @@ def database_details(request, id):
     )
 
 
+def database_credentials(request, id):
+    database = Database.objects.get(id=id)
+
+    context = {
+        'database': database,
+        'title': database.name,
+        'current_tab': 'credentials',
+        'user': request.user
+    }
+    return render_to_response(
+        "logical/database/details/credentials_tab.html", context
+    )
+
+
 def database_hosts(request, id):
     database = Database.objects.get(id=id)
     context = {

@@ -23,7 +23,7 @@
     {% block tabs %}
       <ul class="nav nav-tabs">
         <li role="presentation" {% if current_tab == 'details' %} class="active" {% endif %}><a href="{% url 'admin:logical_database_details' database.id %}">Details</a></li>
-        <li role="presentation" {% if current_tab == 'credentials' %} class="active" {% endif %}><a href="#">Credentials</a></li>
+        <li role="presentation" {% if current_tab == 'credentials' %} class="active" {% endif %}><a href="{% url 'admin:logical_database_credentials' database.id %}">Credentials</a></li>
         <li role="presentation" {% if current_tab == 'resize/upgrades' %} class="active" {% endif %}><a href="#">Resizes/Upgrade</a></li>
         <li role="presentation" {% if current_tab == 'hosts' %} class="active" {% endif %}><a href="{% url 'admin:logical_database_hosts' database.id %}">Hosts</a></li>
         <li role="presentation" {% if current_tab == 'backups' %} class="active" {% endif %}><a href="#">Backups</a></li>
@@ -37,16 +37,22 @@
       {% csrf_token %}
       {% block tab %}
       {% endblock %}
+      {% block database_buttons %}
       <div class="form-actions navbar navbar-fixed-bottom">
         <div class="container">
+          {% block database_buttons_delete %}
           <div class="pull-left delete-link-box">
             <a href="{% url 'admin:logical_database_delete' database.id %}" class="btn btn-danger">Delete</a>
           </div>
+          {% endblock %}
+          {% block database_buttons_save %}
           <div class="pull-right save-options-box">
             <input type="submit" value="Save" name="_save" onclick=&quot;submitOrderForm();&quot; class="btn btn-primary"/>
           </div>
+          {% endblock %}
         </div>
       </div>
+      {% endblock %}
     </form>
   </div>
 {% endblock %}
@@ -70,7 +76,7 @@
 {% endblock %}
 
 {% block js_footer_commons %}
-  {{ super.block }}
+  {{ block.super }}
   <script src="{% static "admin/js/jquery.js" %}">
   <script type="text/javascript" src="{% static "admin/js/bootstrap.min.js" %}"></script>
 {% endblock %}
