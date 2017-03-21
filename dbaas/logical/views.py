@@ -121,17 +121,17 @@ def database_credentials(request, id):
 def database_resizes(request, id):
     database = Database.objects.get(id=id)
 
+    if request.method == 'POST':
+        disk_auto_resize = request.POST.get('disk_auto_resize', False)
+        database.disk_auto_resize = disk_auto_resize
+        database.save()
+
     context = {
         'database': database,
         'title': database.name,
         'current_tab': 'resizes/upgrade',
         'user': request.user,
     }
-
-    if request.method == 'POST':
-        disk_auto_resize = request.POST.get('disk_auto_resize', False)
-        database.disk_auto_resize = disk_auto_resize
-        database.save()
 
     context['last_resize'] = database.resizes.last()
     context['upgrade_mongo_24_to_30'] = \
@@ -160,6 +160,25 @@ def database_hosts(request, id):
         'user': request.user
     }
     return render_to_response(
-        "logical/database/details/hosts_tab.html",
+        "logical/database/details/hosts_tab.html", context
+    )
+
+
+def database_backup(request, id):
+    database = Database.objects.get(id=id)
+
+    if request.method == 'POST':
+        if 'backup_path' in request.POST:
+            database.backup_path = request.POST['backup_path']
+        database.save()
+
+    context = {
+        'database': database,
+        'title': database.name,
+        'current_tab': 'backup',
+        'user': request.user
+    }
+    return render_to_response(
+        "logical/database/details/backup_tab.html",
         context, RequestContext(request)
     )
