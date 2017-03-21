@@ -10,6 +10,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.http import HttpResponse, HttpResponseRedirect
 from django.template import RequestContext
+from dbaas import constants
 from drivers.base import CredentialAlreadyExists
 from account.models import Team
 from .models import Credential, Database, Project
@@ -114,6 +115,33 @@ def database_credentials(request, id):
     }
     return render_to_response(
         "logical/database/details/credentials_tab.html", context
+    )
+
+
+def database_resizes(request, id):
+    database = Database.objects.get(id=id)
+
+    context = {
+        'database': database,
+        'title': database.name,
+        'current_tab': 'resizes/upgrade',
+        'user': request.user,
+    }
+
+    context['last_resize'] = database.resizes.last()
+    context['upgrade_mongo_24_to_30'] = \
+        database.is_mongodb_24() and \
+        request.user.has_perm(constants.PERM_UPGRADE_MONGO24_TO_30)
+    context['can_do_upgrade'] = \
+        bool(database.infra.plan.engine_equivalent_plan) and \
+        request.user.has_perm(constants.PERM_UPGRADE_DATABASE)
+    context['last_upgrade'] = database.upgrades.filter(
+        source_plan=database.infra.plan
+    ).last()
+    context['is_dba'] = request.user.team_set.filter(role__name="role_dba")
+
+    return render_to_response(
+        "logical/database/details/resizes_tab.html", context
     )
 
 

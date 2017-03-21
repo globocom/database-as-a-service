@@ -25,7 +25,7 @@
       <ul class="nav nav-tabs">
         <li role="presentation" {% if current_tab == 'details' %} class="active" {% endif %}><a href="{% url 'admin:logical_database_details' database.id %}">Details</a></li>
         <li role="presentation" {% if current_tab == 'credentials' %} class="active" {% endif %}><a href="{% url 'admin:logical_database_credentials' database.id %}">Credentials</a></li>
-        <li role="presentation" {% if current_tab == 'resize/upgrades' %} class="active" {% endif %}><a href="#">Resizes/Upgrade</a></li>
+        <li role="presentation" {% if current_tab == 'resizes/upgrade' %} class="active" {% endif %}><a href="{% url 'admin:logical_database_resizes' database.id %}">Resizes/Upgrade</a></li>
         <li role="presentation" {% if current_tab == 'hosts' %} class="active" {% endif %}><a href="{% url 'admin:logical_database_hosts' database.id %}">Hosts</a></li>
         <li role="presentation" {% if current_tab == 'backups' %} class="active" {% endif %}><a href="#">Backups</a></li>
         <li role="presentation" {% if current_tab == 'extra' %} class="active" {% endif %}><a href="#">Extra</a></li
