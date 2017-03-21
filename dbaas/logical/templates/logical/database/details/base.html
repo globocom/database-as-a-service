@@ -39,20 +39,6 @@
       {% block tab %}
       {% endblock %}
       {% block database_buttons %}
-      <div class="form-actions navbar navbar-fixed-bottom">
-        <div class="container">
-          {% block database_buttons_delete %}
-          <div class="pull-left delete-link-box">
-            <a href="{% url 'admin:logical_database_delete' database.id %}" class="btn btn-danger">Delete</a>
-          </div>
-          {% endblock %}
-          {% block database_buttons_save %}
-          <div class="pull-right save-options-box">
-            <input type="submit" value="Save" name="_save" onclick=&quot;submitOrderForm();&quot; class="btn btn-primary"/>
-          </div>
-          {% endblock %}
-        </div>
-      </div>
       {% endblock %}
     </form>
   </div>
