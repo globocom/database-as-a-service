@@ -14,10 +14,12 @@ from dbaas_credentials.models import CredentialType
 from dbaas import constants
 from drivers.base import CredentialAlreadyExists
 from account.models import Team
-from physical.models import Host
+from physical.models import Host, DiskOffering
 from util import get_credentials_for
-from .models import Credential, Database, Project
+from .errors import DisabledDatabase
 from .forms.database import DatabaseDetailsForm
+from .models import Credential, Database, Project
+from .validators import check_is_database_enabled
 
 
 class CredentialView(BaseDetailView):
@@ -125,9 +127,26 @@ def database_resizes(request, id):
     database = Database.objects.get(id=id)
 
     if request.method == 'POST':
-        disk_auto_resize = request.POST.get('disk_auto_resize', False)
-        database.disk_auto_resize = disk_auto_resize
-        database.save()
+        if 'disk_resize' in request.POST and request.POST.get('disk_offering'):
+            try:
+                check_is_database_enabled(id, 'disk resize')
+            except DisabledDatabase as err:
+                messages.add_message(request, messages.ERROR, err.message)
+            else:
+                Database.disk_resize(
+                    database=database,
+                    new_disk_offering=request.POST.get('disk_offering'),
+                    user=request.user
+                )
+
+                url = reverse('admin:notification_taskhistory_changelist')
+                return HttpResponseRedirect(
+                    "{}?user={}".format(url, request.user.username)
+                )
+        else:
+            disk_auto_resize = request.POST.get('disk_auto_resize', False)
+            database.disk_auto_resize = disk_auto_resize
+            database.save()
 
     context = {
         'database': database,
@@ -135,6 +154,8 @@ def database_resizes(request, id):
         'current_tab': 'resizes/upgrade',
         'user': request.user,
     }
+
+    context['disk_offerings'] = DiskOffering.objects.all()
 
     context['last_resize'] = database.resizes.last()
     context['upgrade_mongo_24_to_30'] = \
