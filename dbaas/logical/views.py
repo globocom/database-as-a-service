@@ -10,9 +10,12 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.http import HttpResponse, HttpResponseRedirect
 from django.template import RequestContext
+from dbaas_credentials.models import CredentialType
 from dbaas import constants
 from drivers.base import CredentialAlreadyExists
 from account.models import Team
+from physical.models import Host
+from util import get_credentials_for
 from .models import Credential, Database, Project
 from .forms.database import DatabaseDetailsForm
 
@@ -197,4 +200,45 @@ def database_dns(request, id):
     }
     return render_to_response(
         "logical/database/details/dns_tab.html", context
+    )
+
+
+def database_metrics(request, id):
+    database = Database.objects.get(id=id)
+
+    context = {
+        'database': database,
+        'title': database.name,
+        'current_tab': 'metrics',
+        'user': request.user,
+        'hosts': [],
+    }
+
+    context['hostname'] = request.GET.get(
+        'hostname',
+        database.infra.instances.first().hostname.hostname.split('.')[0]
+    )
+
+    for host in Host.objects.filter(instances__databaseinfra=database.infra).distinct():
+        context['hosts'].append(host.hostname.split('.')[0])
+
+    credential = get_credentials_for(
+        environment=database.databaseinfra.environment,
+        credential_type=CredentialType.GRAFANA
+    )
+    instance = database.infra.instances.filter(
+        hostname__hostname__contains=context['hostname']
+    ).first()
+
+    context['grafana_url'] = '{}/dashboard/{}?{}={}&{}={}&{}={}'.format(
+        credential.endpoint,
+        credential.project.format(database.engine_type),
+        credential.get_parameter_by_name('db_param'), instance.dns,
+        credential.get_parameter_by_name('os_param'), instance.hostname.hostname,
+        credential.get_parameter_by_name('env_param'),
+        credential.get_parameter_by_name('environment')
+    )
+
+    return render_to_response(
+        "logical/database/details/metrics_tab.html", context
     )

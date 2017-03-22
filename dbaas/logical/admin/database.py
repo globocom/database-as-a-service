@@ -38,7 +38,8 @@ from util.html import show_info_popup
 from logical.templatetags import capacity
 from logical.models import Database
 from logical.views import database_details, database_hosts, \
-    database_credentials, database_resizes, database_backup, database_dns
+    database_credentials, database_resizes, database_backup, database_dns, \
+    database_metrics
 from logical.forms import DatabaseForm, CloneDatabaseForm, ResizeDatabaseForm, \
     DiskResizeDatabaseForm, RestoreDatabaseForm
 from logical.validators import check_is_database_enabled, \
@@ -169,7 +170,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             html.append("N/A")
         else:
             html.append("<a class='btn btn-info' href='%s'><i class='icon-list-alt icon-white'></i></a>" % reverse(
-                'admin:database_metrics', args=(database.id,)))
+                'admin:logical_database_metrics', args=(database.id,)))
 
         return format_html("".join(html))
 
@@ -1026,10 +1027,6 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 self.admin_site.admin_view(self.clone_view),
                 name="database_clone"),
 
-            url(r'^/?(?P<database_id>\d+)/metrics/$',
-                self.admin_site.admin_view(self.metrics_view),
-                name="database_metrics"),
-
             url(r'^/?(?P<database_id>\d+)/resize/$',
                 self.admin_site.admin_view(self.database_resize_view),
                 name="database_resize"),
@@ -1105,6 +1102,9 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 self.admin_site.admin_view(database_dns),
                 name="logical_database_dns"
             ),
+            url(r'^/?(?P<id>\d+)/metrics/$',
+                self.admin_site.admin_view(database_metrics),
+                name="logical_database_metrics"),
         )
 
         return my_urls + urls
