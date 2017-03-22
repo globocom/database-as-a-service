@@ -61,6 +61,38 @@ def build_stop_database_script(clean_data=True):
     return script
 
 
+def build_create_data_dir_script():
+    return """
+        mkdir /data/data
+        die_if_error "Error creating data dir"
+
+        chown -R mongodb:mongodb /data/data
+        die_if_error "Error changing datadir permission"
+        """
+
+
+def build_add_read_only_replica_set_member_script():
+    return """
+        echo ""; echo $(date "+%Y-%m-%d %T") "- Adding new database members"
+        /usr/local/mongodb/bin/mongo --host {{CONNECT_ADMIN_URI}} <<EOF_DBAAS
+        rs.add( { "host": "{{HOSTADDRESS}}:{{PORT}}", "priority": 0, "votes": 0 } )
+        exit
+        \nEOF_DBAAS
+        die_if_error "Error adding new replica set members"
+    """
+
+
+def build_remove_read_only_replica_set_member_script():
+    return """
+        echo ""; echo $(date "+%Y-%m-%d %T") "- Adding new database members"
+        /usr/local/mongodb/bin/mongo --host {{CONNECT_ADMIN_URI}} <<EOF_DBAAS
+        rs.remove( "{{HOSTADDRESS}}:{{PORT}}")
+        exit
+        \nEOF_DBAAS
+        die_if_error "Error adding new replica set members"
+    """
+
+
 def build_add_replica_set_members_script():
     return """
         echo ""; echo $(date "+%Y-%m-%d %T") "- Adding new database members"

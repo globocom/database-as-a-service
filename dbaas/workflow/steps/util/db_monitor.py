@@ -32,3 +32,16 @@ class EnableMonitoring(DBMonitorStep):
 
     def do(self):
         self.provider.enabled_dbmonitor_monitoring_instance(self.instance)
+
+
+class CreateMonitoring(DBMonitorStep):
+
+    def __unicode__(self):
+        return "Creating DB Monitor..."
+
+    def do(self):
+        instance_number = self.instance.databaseinfra.last_vm_created
+        self.provider.create_dbmonitor_instance_monitoring(self.instance, instance_number)
+
+    def undo(self):
+        DisableMonitoring(self.instance).do()

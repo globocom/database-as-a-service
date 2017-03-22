@@ -84,6 +84,20 @@ class MongoDB(BaseDriver):
 
         return uri
 
+    def get_admin_connection(self,):
+        uri = "mongodb://{user}:{password}@{instances}/admin".format(
+            user=self.databaseinfra.user,
+            password=self.databaseinfra.password,
+            instances=self.__concatenate_instances()
+        )
+
+        if (len(self.databaseinfra.instances.all()) > 1):
+            repl_name = self.get_replica_name()
+            if repl_name:
+                uri = "%s?replicaSet=%s" % (uri, repl_name)
+
+        return uri
+
     def get_connection_dns(self, database=None):
         uri = "mongodb://<user>:<password>@%s" % self.__concatenate_instances_dns()
         if database:

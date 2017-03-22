@@ -98,6 +98,11 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.util.plan.InitializationMongoHA',
                 'workflow.steps.util.plan.ConfigureMongoHA',
                 'workflow.steps.util.pack.Configure',
+                'workflow.steps.mongodb.horizontal_elasticity.database.CreateDataDir',
+                'workflow.steps.util.database.Start',
+                'workflow.steps.mongodb.horizontal_elasticity.database.AddInstanceToReplicaSet',
+                'workflow.steps.util.zabbix.CreateAlarms',
+                'workflow.steps.util.db_monitor.CreateMonitoring',
             ) +
             self.get_add_database_instances_last_steps()
         }]
@@ -113,6 +118,11 @@ class MongoDBReplicaset(BaseMongoDB):
             "Add instances":
             self.get_remove_readonly_instance_steps_first_steps() +
             (
+                'workflow.steps.util.db_monitor.CreateMonitoring',
+                'workflow.steps.util.zabbix.CreateAlarms',
+                'workflow.steps.mongodb.horizontal_elasticity.database.AddInstanceToReplicaSet',
+                'workflow.steps.util.database.Start',
+                'workflow.steps.mongodb.horizontal_elasticity.database.CreateDataDir',
                 'workflow.steps.util.pack.Configure',
                 'workflow.steps.util.plan.ConfigureMongoHA',
                 'workflow.steps.util.plan.InitializationMongoHA',

@@ -5,6 +5,7 @@ from util import check_ssh
 from dbaas_cloudstack.models import HostAttr, PlanAttr
 from dbaas_cloudstack.provider import CloudStackProvider
 from dbaas_credentials.models import CredentialType
+from dbaas_cloudstack.models import LastUsedBundleDatabaseInfra
 from util import get_credentials_for
 from workflow.steps.util.base import BaseInstanceStep
 from maintenance.models import DatabaseResize
@@ -211,16 +212,16 @@ class CreateVirtualMachine(VmStep):
         self.databaseinfra.last_vm_created = last_vm_created
         self.databaseinfra.save()
 
+    def get_next_bundle(self):
+        raise NotImplementedError
+
     def deploy_vm(self):
         offering = self.databaseinfra.cs_dbinfra_offering.get().offering
         LOG.info("VM : {}".format(self.instance.vm_name))
-        plan = self.databaseinfra.plan
-        cs_plan = PlanAttr.objects.get(plan=plan)
-        bundle = cs_plan.bundle.first()
 
         vm = self.cs_provider.deploy_virtual_machine(
             offering=offering.serviceofferingid,
-            bundle=bundle,
+            bundle=self.get_next_bundle(),
             project_id=self.cs_credentials.project,
             vmname=self.instance.vm_name,
             affinity_group_id=self.cs_credentials.get_parameter_by_name(
@@ -275,3 +276,8 @@ class CreateVirtualMachineHorizontalElasticity(CreateVirtualMachine):
     @property
     def read_only_instance(self):
         return True
+
+    def get_next_bundle(self):
+        bundle = LastUsedBundleDatabaseInfra.get_next_infra_bundle(
+            databaseinfra=self.databaseinfra)
+        return bundle
