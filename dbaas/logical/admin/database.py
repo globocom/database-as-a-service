@@ -38,7 +38,7 @@ from util.html import show_info_popup
 from logical.templatetags import capacity
 from logical.models import Database
 from logical.views import database_details, database_hosts, \
-    database_credentials, database_resizes, database_backup
+    database_credentials, database_resizes, database_backup, database_dns
 from logical.forms import DatabaseForm, CloneDatabaseForm, ResizeDatabaseForm, \
     DiskResizeDatabaseForm, RestoreDatabaseForm
 from logical.validators import check_is_database_enabled, \
@@ -1099,6 +1099,11 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 r'^/?(?P<id>\d+)/backup/$',
                 self.admin_site.admin_view(database_backup),
                 name="logical_database_backup"
+            ),
+            url(
+                r'^/?(?P<id>\d+)/dns/$',
+                self.admin_site.admin_view(database_dns),
+                name="logical_database_dns"
             ),
         )
 

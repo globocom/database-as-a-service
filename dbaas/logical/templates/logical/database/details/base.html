@@ -28,7 +28,7 @@
         <li role="presentation" {% if current_tab == 'resizes/upgrade' %} class="active" {% endif %}><a href="{% url 'admin:logical_database_resizes' database.id %}">Resizes/Upgrade</a></li>
         <li role="presentation" {% if current_tab == 'hosts' %} class="active" {% endif %}><a href="{% url 'admin:logical_database_hosts' database.id %}">Hosts</a></li>
         <li role="presentation" {% if current_tab == 'backup' %} class="active" {% endif %}><a href="{% url 'admin:logical_database_backup' database.id %}">Backup</a></li>
-        <li role="presentation" {% if current_tab == 'extra' %} class="active" {% endif %}><a href="#">Extra</a></li
+        <li role="presentation" {% if current_tab == 'dns' %} class="active" {% endif %}><a href="{% url 'admin:logical_database_dns' database.id %}">DNS</a></li>
       </ul>
     {% endblock %}
   </div>

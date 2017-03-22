@@ -182,3 +182,19 @@ def database_backup(request, id):
         "logical/database/details/backup_tab.html",
         context, RequestContext(request)
     )
+
+
+def database_dns(request, id):
+    database = Database.objects.get(id=id)
+
+    context = {
+        'database': database,
+        'title': database.name,
+        'current_tab': 'dns',
+        'user': request.user,
+        'can_remove_extra_dns': request.user.has_perm('extra_dns.delete_extradns'),
+        'can_add_extra_dns': request.user.has_perm('extra_dns.add_extradns'),
+    }
+    return render_to_response(
+        "logical/database/details/dns_tab.html", context
+    )
