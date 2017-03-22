@@ -202,6 +202,7 @@ class CreateVirtualMachine(VmStep):
         self.instance.address = host.address
         self.instance.port = self.driver.get_default_database_port()
         self.instance.instance_type = self.driver.get_default_instance_type()
+        self.instance.read_only = self.read_only_instance
         self.instance.save()
 
     def update_databaseinfra_last_vm_created(self):
@@ -264,3 +265,13 @@ class CreateVirtualMachine(VmStep):
         host_attr.delete()
         self.instance.delete()
         host.delete()
+
+    @property
+    def read_only_instance(self):
+        return False
+
+
+class CreateVirtualMachineHorizontalElasticity(CreateVirtualMachine):
+    @property
+    def read_only_instance(self):
+        return True

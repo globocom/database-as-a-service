@@ -90,7 +90,7 @@ class MongoDBReplicaset(BaseMongoDB):
             "Add instances":
             self.get_add_database_instances_first_steps() +
             (
-                'workflow.steps.util.vm.CreateVirtualMachine',
+                'workflow.steps.util.vm.CreateVirtualMachineHorizontalElasticity',
                 'workflow.steps.util.horizontal_elasticity.dns.CreateDNS',
                 'workflow.steps.util.vm.WaitingBeReady',
                 'workflow.steps.util.vm.UpdateOSDescription',
@@ -120,7 +120,7 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.util.vm.UpdateOSDescription',
                 'workflow.steps.util.vm.WaitingBeReady',
                 'workflow.steps.util.horizontal_elasticity.dns.CreateDNS',
-                'workflow.steps.util.vm.CreateVirtualMachine',
+                'workflow.steps.util.vm.CreateVirtualMachineHorizontalElasticity',
             ) +
             self.get_remove_readonly_instance_steps_last_steps()
         }]

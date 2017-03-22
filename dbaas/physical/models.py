@@ -623,6 +623,8 @@ class Instance(BaseModel):
     instance_type = models.IntegerField(choices=DATABASE_TYPE, default=0)
     future_instance = models.ForeignKey(
         "Instance", null=True, blank=True, on_delete=models.SET_NULL)
+    read_only = models.BooleanField(
+        verbose_name=_("Is instance read only"), default=False)
 
     class Meta:
         unique_together = (
