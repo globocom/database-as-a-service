@@ -94,9 +94,13 @@
     <div class="control-group">
       <div class="control-label"><label>Persisted:</label></div>
       <div class="controls">
-        <label class="checkbox">
-          <input disabled {% if database.plan.has_persistence %} checked="checked" {% endif %} type="checkbox"/>
-        </label>
+        <p class="readonly">
+          {% if database.plan.has_persistence %}
+            Yes
+          {% else %}
+            No
+          {% endif %}
+        </p>
       </div>
     </div>
   {% endif %}
