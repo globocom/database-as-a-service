@@ -382,6 +382,24 @@ class Database(BaseModel):
         )
 
     @classmethod
+    def restore(cls, database, snapshot, user):
+        from notification.models import TaskHistory
+
+        task_history = TaskHistory()
+        task_history.task_name = "restore_snapshot"
+        task_history.task_status = task_history.STATUS_WAITING
+        task_history.arguments = "Restoring {} to an older version.".format(
+            database.name
+        )
+        task_history.user = user
+        task_history.save()
+
+        Database.recover_snapshot(
+            database=database, snapshot=snapshot, user=user,
+            task_history=task_history.id
+        )
+
+    @classmethod
     def resize(cls, database, cloudstackpack, user):
         from notification.tasks import resize_database
         from notification.models import TaskHistory
@@ -586,6 +604,24 @@ class Database(BaseModel):
         else:
             if self.is_dead:
                 return False, "Database is not alive and cannot be cloned"
+
+        return True, None
+
+    def can_be_restored(self):
+        if not self.restore_allowed():
+            return False, 'Restore is not allowed. Please, contact DBaaS team for more information'
+
+        if self.is_in_quarantine:
+            return False, "Database in quarantine cannot be restored"
+
+        if self.status != self.ALIVE or self.is_dead:
+            return False, "Database is not alive and cannot be restored"
+
+        if self.is_beeing_used_elsewhere():
+            return False, "Database is being used by another task, please check your tasks"
+
+        if self.has_flipperfox_migration_started():
+            return False, "Database cannot be restored because it is being migrated"
 
         return True, None
 

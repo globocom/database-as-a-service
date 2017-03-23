@@ -15,7 +15,7 @@ from dbaas_credentials.models import CredentialType
 from dbaas import constants
 from drivers.base import CredentialAlreadyExists
 from account.models import Team
-from physical.models import Host, DiskOffering
+from physical.models import Host, DiskOffering, Environment, Plan
 from util import get_credentials_for
 from .errors import DisabledDatabase
 from .forms.database import DatabaseDetailsForm
@@ -222,20 +222,93 @@ def database_hosts(request, id):
     )
 
 
+def _clone_database(request, database):
+    can_be_cloned, error = database.can_be_cloned()
+    if error:
+        messages.add_message(request, messages.ERROR, error)
+
+    if 'clone_name' not in request.POST:
+        messages.add_message(request, messages.ERROR, 'Destination is required')
+        can_be_cloned = False
+
+    if 'clone_env' not in request.POST:
+        messages.add_message(request, messages.ERROR, 'Environment is required')
+        can_be_cloned = False
+
+    if 'clone_plan' not in request.POST:
+        messages.add_message(request, messages.ERROR, 'Plan is required')
+        can_be_cloned = False
+
+    if not can_be_cloned:
+        return
+
+    name = request.POST['clone_name']
+    environment = Environment.objects.get(id=request.POST['clone_env'])
+    plan = Plan.objects.get(id=request.POST['clone_plan'])
+
+    Database.clone(
+        database=database, clone_name=name, plan=plan,
+        environment=environment, user=request.user
+    )
+    url = reverse('admin:notification_taskhistory_changelist')
+    return HttpResponseRedirect(
+        "{}?user={}".format(url, request.user.username)
+    )
+
+
+def _restore_database(request, database):
+    can_be_restored, error = database.can_be_restored()
+    if error:
+        messages.add_message(request, messages.ERROR, error)
+
+    if 'restore_snapshot' not in request.POST:
+        messages.add_message(request, messages.ERROR, 'Snapshot is required')
+        can_be_restored = False
+
+    if not can_be_restored:
+        return
+
+    snapshot = request.POST.get('restore_snapshot')
+    Database.restore(database=database, snapshot=snapshot, user=request.user)
+    url = reverse('admin:notification_taskhistory_changelist')
+    return HttpResponseRedirect(
+        "{}?user={}".format(url, request.user.username)
+    )
+
+
 def database_backup(request, id):
     database = Database.objects.get(id=id)
 
     if request.method == 'POST':
-        if 'backup_path' in request.POST:
+        if 'database_clone' in request.POST:
+            response = _clone_database(request, database)
+            if response:
+                return response
+        if 'database_restore' in request.POST:
+            response = _restore_database(request, database)
+            if response:
+                return response
+        elif 'backup_path' in request.POST:
             database.backup_path = request.POST['backup_path']
-        database.save()
+            database.save()
 
     context = {
         'database': database,
         'title': database.name,
         'current_tab': 'backup',
-        'user': request.user
+        'user': request.user,
+        'snapshots': []
     }
+
+    for instance in database.infra.instances.all():
+        for backup in instance.backup_instance.all():
+            context['snapshots'].append(backup)
+    context['snapshots'] = reversed(context['snapshots'])
+
+    context['environments'] = Environment.objects.all()
+    context['plans'] = Plan.objects.filter(
+        engine=database.engine, is_active=True,
+    )
     return render_to_response(
         "logical/database/details/backup_tab.html",
         context, RequestContext(request)
