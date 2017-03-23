@@ -13,14 +13,25 @@
 {% block tab %}
 <fieldset class="module aligned ">
   <div class="control-group">
-    <div class="control-label"><label>Offering:</label></div>
+    <div class="control-label"><label>VM Offering:</label></div>
     <div class="controls">
-        {{ database.offering }}
-        {%if last_resize and last_resize.is_status_error %}
-          <a class="resize_button btn btn-warning" href="{{ database.get_resize_retry_url }}" title="Go to disk resize page"><i class="icon-random icon-white"></i></a>
-          <p><a href="{% url 'admin:maintenance_databaseresize_change' last_resize.id %}" target='_blank'>Last resize</a> has an <b>error</b>, please check the <a href="{% url 'admin:notification_taskhistory_change' last_resize.task.id %}" target='_blank'>task</a> and retry the database resize clicking in button above</p>
+        {%if last_vm_resize and last_vm_resize.is_status_error %}
+          {{ database.offering }}
+          <a class="resize_button btn btn-warning" href="{{ database.get_resize_retry_url }}" title="Go to disk resize page">Retry Resize</a>
+          <p><a href="{% url 'admin:maintenance_databaseresize_change' last_vm_resize.id %}" target='_blank'>Last resize</a> has an <b>error</b>, please check the <a href="{% url 'admin:notification_taskhistory_change' last_vm_resize.task.id %}" target='_blank'>task</a> and retry the database resize clicking in button above</p>
         {% else %}
-          <a class="resize_button btn btn-primary" href="{{ database.get_resize_url }}" title="Go to VM resize page"><i class="icon-random icon-white"></i></a>
+          <select id="id_vm_offering" name="vm_offering">
+            {% for vm_offering in vm_offerings %}
+              {% if vm_offering.offering == current_vm_offering or vm_offering == current_vm_offering %}
+                <option value="{{current_vm_offering.serviceofferingid}}"selected="selected">
+              {% else %}
+                <option value="{{vm_offering.id}}">
+              {% endif %}
+                {{vm_offering}}
+              </option>
+            {% endfor %}
+          </select>
+          <input type="submit" value="Resize" name="vm_resize" id="vm_resize_btn" onclick="return confirm('Are you sure?')"/>
         {% endif %}
     </div>
   </div>
@@ -35,7 +46,7 @@
           </option>
         {% endfor %}
       </select>
-      <input type="submit" value="Resize" name="disk_resize" id="disk_resize_btn" onclick="resize_confirmation()"/>
+      <input type="submit" value="Resize" name="disk_resize" id="disk_resize_btn" onclick="return confirm('Are you sure?')"/>
     </div>
   </div>
   <div class="control-group">
@@ -82,29 +93,28 @@
 {{ block.super }}
 
 <script>
-    function resize_confirmation() {
-      return confirm('Are you sure?');
+  function status_resize(btn_id, current_value, selected_value) {
+    btn = document.getElementById(btn_id)
+    btn.disabled = current_value == selected_value
+    if (btn.disabled){
+      btn.className = 'resize_button btn';
+    } else {
+      btn.className = 'resize_button btn btn-primary';
     }
-
-  var current_disk = {{ database.infra.disk_offering.id }};
-  var disk_offering_select = document.getElementById("id_disk_offering");
+  }
 
   jQuery(document).ready(function($) {
     $("#id_disk_offering").on("change", function() {
-      var selected_disk = disk_offering_select.value
-      btn = document.getElementById("disk_resize_btn")
-
-      btn.disabled = selected_disk == current_disk
-      if (selected_disk == current_disk){
-        btn.className = 'resize_button btn';
-      } else {
-        btn.className = 'resize_button btn btn-primary';
-      }
+      status_resize("disk_resize_btn", {{ database.infra.disk_offering.id }}, $(this).val())
     });
+    $("#id_disk_offering").change()
 
-    $('#id_disk_offering').change();
+    $("#id_vm_offering").on("change", function() {
+      status_resize("vm_resize_btn", '{{ current_vm_offering.serviceofferingid }}', $(this).val())
+    });
+    $("#id_vm_offering").change()
+
   })
-</script>
 </script>
 
 {% endblock %}

@@ -10,6 +10,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.http import HttpResponse, HttpResponseRedirect
 from django.template import RequestContext
+from dbaas_cloudstack.models import CloudStackPack
 from dbaas_credentials.models import CredentialType
 from dbaas import constants
 from drivers.base import CredentialAlreadyExists
@@ -19,7 +20,7 @@ from util import get_credentials_for
 from .errors import DisabledDatabase
 from .forms.database import DatabaseDetailsForm
 from .models import Credential, Database, Project
-from .validators import check_is_database_enabled
+from .validators import check_is_database_enabled, check_is_database_dead
 
 
 class CredentialView(BaseDetailView):
@@ -143,6 +144,27 @@ def database_resizes(request, id):
                 return HttpResponseRedirect(
                     "{}?user={}".format(url, request.user.username)
                 )
+        elif 'vm_resize' in request.POST and request.POST.get('vm_offering'):
+            try:
+                check_is_database_dead(id, 'VM resize')
+                check_is_database_enabled(id, 'VM resize')
+            except DisabledDatabase as err:
+                messages.add_message(request, messages.ERROR, err.message)
+            else:
+                cloudstack_pack = CloudStackPack.objects.get(
+                    id=request.POST.get('vm_offering')
+                )
+                Database.resize(
+                    database=database,
+                    cloudstackpack=cloudstack_pack,
+                    user=request.user,
+                )
+
+                url = reverse('admin:notification_taskhistory_changelist')
+                return HttpResponseRedirect(
+                    "{}?user={}".format(url, request.user.username)
+                )
+
         else:
             disk_auto_resize = request.POST.get('disk_auto_resize', False)
             database.disk_auto_resize = disk_auto_resize
@@ -155,9 +177,20 @@ def database_resizes(request, id):
         'user': request.user,
     }
 
+    context['last_vm_resize'] = database.resizes.last()
+    context['vm_offerings'] = list(CloudStackPack.objects.filter(
+        offering__region__environment=database.environment,
+        engine_type__name=database.engine_type
+    ))
+    context['current_vm_offering'] = database.infra.cs_dbinfra_offering.get().offering
+    for offering in context['vm_offerings']:
+        if offering.offering == context['current_vm_offering']:
+            break
+    else:
+        context['vm_offerings'].append(context['current_vm_offering'])
+
     context['disk_offerings'] = DiskOffering.objects.all()
 
-    context['last_resize'] = database.resizes.last()
     context['upgrade_mongo_24_to_30'] = \
         database.is_mongodb_24() and \
         request.user.has_perm(constants.PERM_UPGRADE_MONGO24_TO_30)
@@ -183,6 +216,7 @@ def database_hosts(request, id):
         'current_tab': 'hosts',
         'user': request.user
     }
+
     return render_to_response(
         "logical/database/details/hosts_tab.html", context
     )
