@@ -358,3 +358,9 @@ class Redis(BaseDriver):
 
     def get_database_agents(self):
         return ['httpd']
+
+    def get_default_database_port(self):
+        return 6379
+
+    def get_default_instance_type(self):
+        return Instance.REDIS

@@ -30,6 +30,7 @@ from dbaas import constants
 from account.models import Team
 from drivers import DatabaseAlreadyExists
 from notification.tasks import create_database, upgrade_database, resize_database
+from notification.tasks import add_instances_to_database
 from notification.models import TaskHistory
 from physical.models import Plan, Host, DiskOffering
 from system.models import Configuration
@@ -1018,6 +1019,42 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         url = reverse('admin:notification_taskhistory_changelist')
         return HttpResponseRedirect(url)
 
+    def add_database_instances(self, request, database_id):
+        database = Database.objects.get(id=database_id)
+
+        #can_do_upgrade, error = database.can_do_upgrade()
+        #if not can_do_upgrade:
+        #    url = reverse('admin:logical_database_change', args=[database.id])
+        #    self.message_user(request, error, level=messages.ERROR)
+        #    return HttpResponseRedirect(url)
+
+        url = reverse('admin:notification_taskhistory_changelist')
+
+        tasks = TaskHistory.objects.filter(
+            arguments__contains=database.name,
+            task_status__in=[
+                'RUNNING', 'PENDING', 'WAITING'
+            ]
+        )
+
+        if tasks:
+            LOG.info('there is a task')
+            return HttpResponseRedirect(url)
+
+        LOG.info('it is ok')
+
+        task_history = TaskHistory()
+        task_history.task_name = "add_database_instances"
+        task_history.task_status = task_history.STATUS_WAITING
+        task_history.arguments = "Adding instances on database {}".format(database)
+        task_history.user = request.user
+        task_history.save()
+
+        add_instances_to_database.delay(database, request.user, task_history)
+
+        return HttpResponseRedirect(url)
+
+
     # Create your views here.
     def get_urls(self):
         urls = super(DatabaseAdmin, self).get_urls()
@@ -1060,6 +1097,12 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             url(
                 r'^/?(?P<database_id>\d+)/upgrade/$',
                 self.admin_site.admin_view(self.upgrade), name="upgrade"
+            ),
+
+            url(
+                r'^/?(?P<database_id>\d+)/add_database_instances/$',
+                self.admin_site.admin_view(self.add_database_instances),
+                name="add_database_instances"
             ),
 
             url(

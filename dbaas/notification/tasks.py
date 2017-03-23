@@ -761,6 +761,83 @@ def upgrade_database(self, database, user, task, since_step=0):
 
 
 @app.task(bind=True)
+def add_instances_to_database(self, database, user, task, number_of_instances=1):
+    from workflow.workflow import steps_for_instances_with_rollback
+    from util.providers import get_add_database_instances_steps
+    from util import get_vm_name
+
+    worker_name = get_worker_name()
+    self.request.kwargs['database'] = database
+    task = TaskHistory.register(self.request, user, task, worker_name)
+
+    infra = database.infra
+    plan = infra.plan
+    driver = infra.get_driver()
+
+    class_path = plan.replication_topology.class_path
+    steps = get_add_database_instances_steps(class_path)
+
+    instances = []
+    last_vm_created = infra.last_vm_created
+
+    for i in range(number_of_instances):
+        last_vm_created += 1
+        vm_name = get_vm_name(
+            prefix=infra.name_prefix,
+            sufix=infra.name_stamp,
+            vm_number=last_vm_created
+        )
+        new_instance = Instance(
+            databaseinfra=infra,
+            dns=vm_name,
+            port=driver.get_default_database_port()
+        )
+        new_instance.vm_name = vm_name
+        instances.append(new_instance)
+
+    success = steps_for_instances_with_rollback(
+        steps, instances, task,
+    )
+
+    if success:
+        task.update_status_for(TaskHistory.STATUS_SUCCESS, 'Done')
+    else:
+        task.update_status_for(TaskHistory.STATUS_ERROR, 'Done')
+
+
+@app.task(bind=True)
+def remove_readonly_instance(self, instance, user, task):
+    from workflow.workflow import steps_for_instances
+    from util.providers import get_remove_readonly_instance_steps
+
+    infra = instance.databaseinfra
+    database = infra.databases.last()
+
+    self.request.kwargs['database'] = database
+    worker_name = get_worker_name()
+    task = TaskHistory.register(self.request, user, task, worker_name)
+
+    plan = infra.plan
+
+    class_path = plan.replication_topology.class_path
+    steps = get_remove_readonly_instance_steps(class_path)
+
+    instances = []
+    instances.append(instance)
+
+    success = steps_for_instances(
+        list_of_groups_of_steps=steps,
+        instances=instances,
+        task=task,
+        undo=True
+    )
+
+    if success:
+        task.update_status_for(TaskHistory.STATUS_SUCCESS, 'Done')
+    else:
+        task.update_status_for(TaskHistory.STATUS_ERROR, 'Done')
+
+
 def resize_database(self, database, user, task, cloudstackpack, original_cloudstackpack=None, since_step=0):
     from util.providers import get_cloudstack_pack
 
@@ -803,5 +880,3 @@ def resize_database(self, database, user, task, cloudstackpack, original_cloudst
             TaskHistory.STATUS_ERROR,
             'Could not do resize.\nResize doesn\'t have rollback'
         )
-
-

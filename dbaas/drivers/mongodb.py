@@ -54,17 +54,17 @@ class MongoDB(BaseDriver):
 
     def __concatenate_instances(self):
         return ",".join(["%s:%s" % (instance.address, instance.port)
-                         for instance in self.databaseinfra.instances.filter(instance_type=Instance.MONGODB, is_active=True).all()])
+                         for instance in self.databaseinfra.instances.filter(instance_type=Instance.MONGODB, is_active=True, read_only=False).all()])
 
     def __concatenate_instances_dns(self):
         return ",".join(
             ["%s:%s" % (instance.dns, instance.port)
-                for instance in self.databaseinfra.instances.filter(instance_type=Instance.MONGODB, is_active=True).all() if not instance.dns.startswith('10.')]
+                for instance in self.databaseinfra.instances.filter(instance_type=Instance.MONGODB, is_active=True, read_only=False).all() if not instance.dns.startswith('10.')]
         )
 
     def __concatenate_instances_dns_only(self):
         return ",".join(["%s" % (instance.dns)
-                         for instance in self.databaseinfra.instances.filter(instance_type=Instance.MONGODB, is_active=True).all() if not instance.dns.startswith('10.')])
+                         for instance in self.databaseinfra.instances.filter(instance_type=Instance.MONGODB, is_active=True, read_only=False).all() if not instance.dns.startswith('10.')])
 
     def get_dns_port(self):
         port = self.databaseinfra.instances.filter(
@@ -76,6 +76,20 @@ class MongoDB(BaseDriver):
         uri = "mongodb://<user>:<password>@%s" % self.__concatenate_instances()
         if database:
             uri = "%s/%s" % (uri, database.name)
+
+        if (len(self.databaseinfra.instances.all()) > 1):
+            repl_name = self.get_replica_name()
+            if repl_name:
+                uri = "%s?replicaSet=%s" % (uri, repl_name)
+
+        return uri
+
+    def get_admin_connection(self,):
+        uri = "mongodb://{user}:{password}@{instances}/admin".format(
+            user=self.databaseinfra.user,
+            password=self.databaseinfra.password,
+            instances=self.__concatenate_instances()
+        )
 
         if (len(self.databaseinfra.instances.all()) > 1):
             repl_name = self.get_replica_name()
@@ -351,6 +365,12 @@ class MongoDB(BaseDriver):
 
     def get_database_agents(self):
         return []
+
+    def get_default_database_port(self):
+        return 27017
+
+    def get_default_instance_type(self):
+        return Instance.MONGODB
 
     @property
     def database_key(self):

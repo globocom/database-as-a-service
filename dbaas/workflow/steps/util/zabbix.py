@@ -64,13 +64,16 @@ class CreateAlarms(ZabbixStep):
     def __unicode__(self):
         return "Creating Zabbix alarms..."
 
+    @property
+    def engine_version(self):
+        return self.instance.databaseinfra.engine.version
+
     def do(self):
         DestroyAlarms(self.instance).do()
-        engine_version = self.instance.databaseinfra.plan.engine_equivalent_plan.engine.version
         zabbix_provider = factory_for(
             databaseinfra=self.instance.databaseinfra,
             credentials=self.credentials,
-            engine_version=engine_version
+            engine_version=self.engine_version
         )
         zabbix_provider.create_instance_basic_monitors(
             self.instance.hostname
@@ -78,6 +81,15 @@ class CreateAlarms(ZabbixStep):
 
         for instance in self.instances:
             zabbix_provider.create_instance_monitors(instance)
+
+    def undo(self):
+        DestroyAlarms(self.instance).do()
+
+
+class CreateAlarmsForUpgrade(CreateAlarms):
+    @property
+    def engine_version(self):
+        return self.instance.databaseinfra.plan.engine_equivalent_plan.engine.version
 
 
 class DisableAlarms(ZabbixStep):

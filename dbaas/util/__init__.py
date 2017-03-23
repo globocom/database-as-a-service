@@ -284,6 +284,10 @@ def check_ssh(server, username, password, retries=30, wait=30, interval=40):
             sleep(interval)
 
 
+def get_vm_name(prefix, sufix, vm_number):
+    return "{}-{:02d}-{}".format(prefix, vm_number, sufix)
+
+
 def gen_infra_names(name, qt):
     import time
     import re
@@ -293,10 +297,16 @@ def gen_infra_names(name, qt):
     name = re.compile("[^\w']|_").sub("", name.lower())
     name = name[:10]
 
-    names = {"infra": name + stamp, "vms": []}
+    names = {
+        "infra": name + stamp,
+        "vms": [],
+        "name_prefix": name,
+        "name_stamp": stamp,
+    }
 
     for x in range(qt):
-        names['vms'].append(name + "-0%i-" % (x + 1) + stamp)
+        vm_name = get_vm_name(name, stamp, x + 1)
+        names['vms'].append(vm_name)
 
     return names
 

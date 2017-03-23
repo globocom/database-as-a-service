@@ -370,6 +370,22 @@ class DatabaseInfra(BaseModel):
         verbose_name=_("Database Key"), max_length=255, blank=True, null=True,
         help_text=_("Databases like MongoDB use a key file to replica set"),
     )
+    name_prefix = models.CharField(
+        verbose_name=_("DatabaseInfra Name Prefix"),
+        max_length=10,
+        blank=True,
+        null=True,
+        help_text=_("The prefix used on databaseinfra name."))
+    name_stamp = models.CharField(
+        verbose_name=_("DatabaseInfra Name Stamp"),
+        max_length=20,
+        blank=True,
+        null=True,
+        help_text=_("The stamp used on databaseinfra name sufix."))
+    last_vm_created = models.IntegerField(
+        verbose_name=_("Last VM created"),
+        blank=True, null=True,
+        help_text=_("Number of the last VM created."))
 
     def __unicode__(self):
         return self.name
@@ -504,6 +520,22 @@ class DatabaseInfra(BaseModel):
         self.database_key = self.get_driver().database_key
         self.save()
 
+    def update_name_prefix_and_stamp(self):
+        instance = self.instances.all()[0]
+        hostname = instance.hostname.hostname
+        prefix = hostname.split('-')[0]
+        stamp = hostname.split('-')[2].split('.')[0]
+        self.name_prefix = prefix
+        self.name_stamp = stamp
+        self.save()
+
+    def update_last_vm_created(self):
+        hosts = []
+        for instance in self.instances.all():
+            hosts.append(instance.hostname.hostname)
+        self.last_vm_created = len(set(hosts))
+        self.save()
+
 
 class Host(BaseModel):
     hostname = models.CharField(
@@ -592,6 +624,8 @@ class Instance(BaseModel):
     instance_type = models.IntegerField(choices=DATABASE_TYPE, default=0)
     future_instance = models.ForeignKey(
         "Instance", null=True, blank=True, on_delete=models.SET_NULL)
+    read_only = models.BooleanField(
+        verbose_name=_("Is instance read only"), default=False)
 
     class Meta:
         unique_together = (

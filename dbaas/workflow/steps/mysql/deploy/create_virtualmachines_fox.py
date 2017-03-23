@@ -117,6 +117,11 @@ class CreateVirtualMachine(BaseStep):
 
                 workflow_dict['instances'].append(instance)
 
+                databaseinfra = workflow_dict['databaseinfra']
+                databaseinfra.last_vm_created += 1
+                databaseinfra.save()
+                workflow_dict['databaseinfra'] = databaseinfra
+
                 if workflow_dict['qt'] == 1:
 
                     LOG.info("Updating databaseinfra endpoint...")

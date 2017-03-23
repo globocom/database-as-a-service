@@ -56,8 +56,8 @@ class MongoDBReplicaset(BaseMongoDB):
 
     def get_upgrade_steps_extra(self):
         return (
-            'workflow.steps.mongodb.upgrade.plan.InitializationMongoHA',
-            'workflow.steps.mongodb.upgrade.plan.ConfigureMongoHA',
+            'workflow.steps.util.plan.InitializationMongoHAForUpgrade',
+            'workflow.steps.util.plan.ConfigureMongoHAForUpgrade',
             'workflow.steps.util.pack.Configure',
             'workflow.steps.mongodb.upgrade.vm.ChangeBinaryTo32',
         )
@@ -77,3 +77,60 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.mongodb.upgrade.database.SetFeatureCompatibilityVersion34',
             ),
         }] + super(MongoDBReplicaset, self).get_upgrade_steps_final()
+
+    def get_add_database_instances_first_steps(self):
+        return (
+        )
+
+    def get_add_database_instances_last_steps(self):
+        return ()
+
+    def get_add_database_instances_steps(self):
+        return [{
+            "Add instances":
+            self.get_add_database_instances_first_steps() +
+            (
+                'workflow.steps.util.vm.CreateVirtualMachineHorizontalElasticity',
+                'workflow.steps.util.horizontal_elasticity.dns.CreateDNS',
+                'workflow.steps.util.vm.WaitingBeReady',
+                'workflow.steps.util.vm.UpdateOSDescription',
+                'workflow.steps.util.horizontal_elasticity.disk.CreateExport',
+                'workflow.steps.util.plan.InitializationMongoHA',
+                'workflow.steps.util.plan.ConfigureMongoHA',
+                'workflow.steps.util.pack.Configure',
+                'workflow.steps.mongodb.horizontal_elasticity.database.CreateDataDir',
+                'workflow.steps.util.database.Start',
+                'workflow.steps.mongodb.horizontal_elasticity.database.AddInstanceToReplicaSet',
+                'workflow.steps.util.zabbix.CreateAlarms',
+                'workflow.steps.util.db_monitor.CreateMonitoring',
+            ) +
+            self.get_add_database_instances_last_steps()
+        }]
+
+    def get_remove_readonly_instance_steps_first_steps(self):
+        return ()
+
+    def get_remove_readonly_instance_steps_last_steps(self):
+        return ()
+
+    def get_remove_readonly_instance_steps(self):
+        return [{
+            "Add instances":
+            self.get_remove_readonly_instance_steps_first_steps() +
+            (
+                'workflow.steps.util.db_monitor.CreateMonitoring',
+                'workflow.steps.util.zabbix.CreateAlarms',
+                'workflow.steps.mongodb.horizontal_elasticity.database.AddInstanceToReplicaSet',
+                'workflow.steps.util.database.Start',
+                'workflow.steps.mongodb.horizontal_elasticity.database.CreateDataDir',
+                'workflow.steps.util.pack.Configure',
+                'workflow.steps.util.plan.ConfigureMongoHA',
+                'workflow.steps.util.plan.InitializationMongoHA',
+                'workflow.steps.util.horizontal_elasticity.disk.CreateExport',
+                'workflow.steps.util.vm.UpdateOSDescription',
+                'workflow.steps.util.vm.WaitingBeReady',
+                'workflow.steps.util.horizontal_elasticity.dns.CreateDNS',
+                'workflow.steps.util.vm.CreateVirtualMachineHorizontalElasticity',
+            ) +
+            self.get_remove_readonly_instance_steps_last_steps()
+        }]

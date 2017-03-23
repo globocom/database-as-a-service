@@ -115,6 +115,11 @@ class CreateVirtualMachine(BaseStep):
 
                 workflow_dict['target_instances'].append(instance)
 
+                databaseinfra = workflow_dict['databaseinfra']
+                databaseinfra.last_vm_created += 1
+                databaseinfra.save()
+                workflow_dict['databaseinfra'] = databaseinfra
+
             return True
         except Exception:
             traceback = full_stack()
