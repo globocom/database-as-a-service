@@ -30,6 +30,7 @@
         <li role="presentation" {% if current_tab == 'hosts' %} class="active" {% endif %}><a href="{% url 'admin:logical_database_hosts' database.id %}">Hosts</a></li>
         <li role="presentation" {% if current_tab == 'backup' %} class="active" {% endif %}><a href="{% url 'admin:logical_database_backup' database.id %}">Backup</a></li>
         <li role="presentation" {% if current_tab == 'dns' %} class="active" {% endif %}><a href="{% url 'admin:logical_database_dns' database.id %}">DNS</a></li>
+        <li role="presentation" {% if current_tab == 'destroy' %} class="active" {% endif %}><a href="{% url 'admin:logical_database_destroy' database.id %}">Destroy</a></li>
       </ul>
     {% endblock %}
   </div>

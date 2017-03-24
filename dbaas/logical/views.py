@@ -370,3 +370,53 @@ def database_metrics(request, id):
     return render_to_response(
         "logical/database/details/metrics_tab.html", context
     )
+
+
+def _destroy_databases(request, database):
+    can_be_deleted, error = database.can_be_deleted()
+    if error:
+        messages.add_message(request, messages.ERROR, error)
+
+    if 'database_name' not in request.POST:
+        messages.add_message(request, messages.ERROR, 'Database name is required')
+        can_be_deleted = False
+
+    if request.POST['database_name'] != database.name:
+        messages.add_message(request, messages.ERROR, 'Database name is not equal')
+        can_be_deleted = False
+
+    if not can_be_deleted:
+        return
+
+    in_quarantine = database.is_in_quarantine
+    database.destroy(request.user)
+    if not in_quarantine:
+        return
+
+    url = reverse('admin:notification_taskhistory_changelist')
+    return HttpResponseRedirect("{}?user={}".format(url, request.user.username))
+
+
+def database_destroy(request, id):
+    database = Database.objects.get(id=id)
+
+    if request.method == 'POST':
+        if 'database_destroy' in request.POST:
+            response = _destroy_databases(request, database)
+            if response:
+                return response
+        else:
+            is_in_quarantine = request.POST.get('is_in_quarantine', False)
+            database.is_in_quarantine = is_in_quarantine
+            database.save()
+
+    context = {
+        'database': database,
+        'title': database.name,
+        'current_tab': 'destroy',
+        'user': request.user,
+    }
+    return render_to_response(
+        "logical/database/details/destroy_tab.html",
+        context, RequestContext(request)
+    )
