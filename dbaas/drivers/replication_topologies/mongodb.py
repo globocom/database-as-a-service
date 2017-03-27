@@ -101,6 +101,8 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.mongodb.horizontal_elasticity.database.CreateDataDir',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.mongodb.horizontal_elasticity.database.AddInstanceToReplicaSet',
+                'workflow.steps.util.acl.ReplicateAcls2NewInstance',
+                'workflow.steps.util.acl.BindNewInstance',
                 'workflow.steps.util.zabbix.CreateAlarms',
                 'workflow.steps.util.db_monitor.CreateMonitoring',
             ) +
@@ -120,6 +122,8 @@ class MongoDBReplicaset(BaseMongoDB):
             (
                 'workflow.steps.util.db_monitor.CreateMonitoring',
                 'workflow.steps.util.zabbix.CreateAlarms',
+                'workflow.steps.util.acl.BindNewInstance',
+                'workflow.steps.util.acl.ReplicateAcls2NewInstance',
                 'workflow.steps.mongodb.horizontal_elasticity.database.AddInstanceToReplicaSet',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.mongodb.horizontal_elasticity.database.CreateDataDir',
