@@ -445,9 +445,6 @@ class Database(BaseModel):
     def get_lognit_url(self):
         return "/admin/logical/database/{}/lognit/".format(self.id)
 
-    def get_restore_url(self):
-        return "/admin/logical/database/{}/restore/".format(self.id)
-
     def get_mongodb_engine_version_upgrade_url(self):
         return "/admin/logical/database/{}/mongodb_engine_version_upgrade/".format(self.id)
 

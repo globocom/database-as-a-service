@@ -41,8 +41,7 @@ from logical.models import Database
 from logical.views import database_details, database_hosts, \
     database_credentials, database_resizes, database_backup, database_dns, \
     database_metrics, database_destroy, database_delete_host
-from logical.forms import DatabaseForm, ResizeDatabaseForm, \
-    DiskResizeDatabaseForm, RestoreDatabaseForm
+from logical.forms import DatabaseForm, ResizeDatabaseForm, DiskResizeDatabaseForm
 from logical.validators import check_is_database_enabled, \
     check_is_database_dead, check_resize_options, \
     check_database_has_persistence
@@ -751,74 +750,6 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                                   locals(),
                                   context_instance=RequestContext(request))
 
-    def restore_snapshot(self, request, database_id):
-        database = Database.objects.get(id=database_id)
-
-        url = reverse('admin:logical_database_change', args=[database.id])
-
-        if not database.restore_allowed():
-            self.message_user(
-                request,
-                "Restore is not allowed. Please, contact DBaaS team for more information",
-                level=messages.WARNING
-            )
-            return HttpResponseRedirect(url)
-
-        if database.is_in_quarantine:
-            self.message_user(request, "Database in quarantine and cannot be restored", level=messages.ERROR)
-            return HttpResponseRedirect(url)
-
-        if database.status != Database.ALIVE or not database.database_status.is_alive:
-            self.message_user(request, "Database is dead and cannot be restored", level=messages.ERROR)
-            return HttpResponseRedirect(url)
-
-        if database.is_beeing_used_elsewhere():
-            self.message_user(
-                request,
-                "Database is beeing used by another task, please check your tasks",
-                level=messages.ERROR
-            )
-            return HttpResponseRedirect(url)
-
-        if database.has_flipperfox_migration_started():
-            self.message_user(
-                request,
-                "Database {} cannot be restored because it is beeing migrated.".format(database.name),
-                level=messages.ERROR
-            )
-            url = reverse('admin:logical_database_changelist')
-            return HttpResponseRedirect(url)
-
-        form = None
-        if request.method == 'POST':
-            form = RestoreDatabaseForm(
-                request.POST, initial={"database_id": database_id},)
-            if form.is_valid():
-                target_snapshot = request.POST.get('target_snapshot')
-
-                task_history = TaskHistory()
-                task_history.task_name = "restore_snapshot"
-                task_history.task_status = task_history.STATUS_WAITING
-                task_history.arguments = "Restoring {} to an older version.".format(
-                    database.name)
-                task_history.user = request.user
-                task_history.save()
-
-                Database.recover_snapshot(database=database,
-                                          snapshot=target_snapshot,
-                                          user=request.user,
-                                          task_history=task_history.id)
-
-                url = reverse('admin:notification_taskhistory_changelist')
-
-                return HttpResponseRedirect(url + "?user=%s" % request.user.username)
-        else:
-            form = RestoreDatabaseForm(initial={"database_id": database_id, })
-
-        return render_to_response("logical/database/restore.html",
-                                  locals(),
-                                  context_instance=RequestContext(request))
-
     def database_log_view(self, request, database_id):
 
         database = Database.objects.get(id=database_id)
@@ -1036,10 +967,6 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             url(r'^/?(?P<database_id>\d+)/dex/$',
                 self.admin_site.admin_view(self.database_dex_analyze_view),
                 name="database_dex_analyze_view"),
-
-            url(r'^/?(?P<database_id>\d+)/restore/$',
-                self.admin_site.admin_view(self.restore_snapshot),
-                name="database_restore_snapshot"),
 
             url(r'^/?(?P<database_id>\d+)/initialize_flipperfox_migration/$',
                 self.admin_site.admin_view(self.initialize_flipperfox_migration),

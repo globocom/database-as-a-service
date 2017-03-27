@@ -243,42 +243,6 @@ class ResizeDatabaseForm(forms.Form):
         return cleaned_data
 
 
-class RestoreDatabaseForm(forms.Form):
-    database_id = forms.CharField(widget=forms.HiddenInput())
-
-    def __init__(self, *args, **kwargs):
-        super(RestoreDatabaseForm, self).__init__(*args, **kwargs)
-
-        if 'initial' in kwargs:
-            instance = Database.objects.get(
-                id=kwargs['initial']['database_id'])
-
-            if instance:
-                LOG.debug("instance database form found! %s" % instance)
-                if instance.plan.provider == instance.plan.CLOUDSTACK:
-                    LOG.debug("Cloudstack plan found!")
-                    self.define_target_snapshot_field(
-                        database_instance=instance)
-
-    def define_target_snapshot_field(self, database_instance):
-        instances = database_instance.databaseinfra.instances.all()
-        self.fields['target_snapshot'] = forms.ModelChoiceField(
-            queryset=Snapshot.objects.filter(instance__in=instances,
-                                             purge_at=None),
-            label=u'Recover to point',
-            required=True)
-
-    def clean(self):
-        cleaned_data = super(RestoreDatabaseForm, self).clean()
-
-        if 'target_snapshot' not in cleaned_data:
-            LOG.info('FOX001')
-            raise forms.ValidationError(
-                _("Please select one snapshot"))
-
-        return cleaned_data
-
-
 class LogDatabaseForm(forms.Form):
     database_id = forms.CharField(widget=forms.HiddenInput())
 
