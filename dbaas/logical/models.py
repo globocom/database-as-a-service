@@ -433,9 +433,6 @@ class Database(BaseModel):
     def get_metrics_url(self):
         return "/admin/logical/database/{}/metrics/".format(self.id)
 
-    def get_resize_url(self):
-        return "/admin/logical/database/{}/resize/".format(self.id)
-
     def get_resize_retry_url(self):
         return "/admin/logical/database/{}/resize_retry/".format(self.id)
 

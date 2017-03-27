@@ -38,43 +38,6 @@ class DatabaseForm(models.ModelForm):
                 del self.fields[field_name]
 
     @classmethod
-    def setup_offering_field(cls, form, db_instance):
-        from maintenance.models import DatabaseResize
-
-        db_resize = DatabaseResize.objects.filter(database=db_instance)
-
-        args = {'id': 'resizeDatabase',}
-        help_text = ""
-
-        url = db_instance.get_resize_url()
-        label = "Resize VM"
-
-        if db_resize:
-            db_resize = db_resize.latest("created_at")
-            if db_resize.is_status_error:
-                url = db_instance.get_resize_retry_url()
-                label = "Retry VM resize"
-                args['class_text'] = "btn btn-warning"
-                help_text = '<br><a href="/admin/maintenance/databaseresize/' + str(db_resize.id) +\
-                            '/" target="_blank">' \
-                            'Last resize</a> has an <strong>error</strong>, please check the ' \
-                            '<a href="/admin/notification/taskhistory/' + str(db_resize.task.id) +\
-                            '/" target="_blank">task</a> and retry the database resize' \
-                            ' clicking on the button below.'
-
-
-        args['url'] = url
-        args['label'] = label
-        args['attrs'] = {'readonly': 'readonly', 'database': db_instance}
-        args['help_text'] = help_text
-
-        widget = DatabaseOfferingWidget(**args)
-
-        form.declared_fields['offering'] = forms.CharField(
-            widget=widget, required=False, initial=db_instance.offering
-        )
-
-    @classmethod
     def setup_disk_offering_field(cls, form, db_instance):
         widget = DatabaseOfferingWidget(
             id='resizeDisk',
@@ -198,49 +161,6 @@ class DatabaseForm(models.ModelForm):
 
     def save_m2m(self, *args, **kwargs):
         pass
-
-
-class ResizeDatabaseForm(forms.Form):
-    database_id = forms.CharField(widget=forms.HiddenInput())
-    original_offering_id = forms.CharField(widget=forms.HiddenInput())
-
-    def __init__(self, *args, **kwargs):
-
-        super(ResizeDatabaseForm, self).__init__(*args, **kwargs)
-
-        if 'initial' in kwargs:
-            instance = Database.objects.get(
-                id=kwargs['initial']['database_id'])
-
-            if instance:
-                LOG.debug("instance database form found! %s" % instance)
-                if instance.plan.provider == instance.plan.CLOUDSTACK:
-                    LOG.debug("Cloudstack plan found!")
-                    self.define_target_offering_field(
-                        database_instance=instance, origin_offer=kwargs['initial']['original_offering_id'])
-
-    def define_target_offering_field(self, database_instance, origin_offer):
-        self.fields['target_offer'] = forms.ModelChoiceField(
-            queryset=CloudStackPack.objects.filter(
-                offering__region__environment=database_instance.environment,
-                engine_type__name=database_instance.engine_type
-            ).exclude(offering__serviceofferingid=origin_offer),
-            label=u'New Offering',
-            required=True)
-
-    def clean(self):
-        cleaned_data = super(ResizeDatabaseForm, self).clean()
-
-        if 'target_offer' in cleaned_data:
-
-            if cleaned_data['target_offer'].offering.serviceofferingid == cleaned_data['original_offering_id']:
-                raise forms.ValidationError(
-                    _("new offering must be different from the current"))
-
-            if self._errors:
-                return cleaned_data
-
-        return cleaned_data
 
 
 class LogDatabaseForm(forms.Form):
