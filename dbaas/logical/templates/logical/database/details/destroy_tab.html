@@ -12,18 +12,41 @@
     </div>
   </div>
   <div class="control-group">
-    <div class="control-label"><label>Database name:</label></div>
-    <div class="controls">
-      <input class="vTextField span8" id="id_database_name" maxlength="300" name="database_name" type="text"/>
-    </div>
-  </div>
-  <div class="control-group">
     <div class="control-label"></div>
     <div class="controls">
-      <input type="submit" value="Delete" name="database_destroy" id="id_destroy_btn" onclick="return confirm('Are you sure?')"/>
+      <button class="resize_button btn btn-danger" data-toggle="modal" data-target="#delete_modal">Delete Database</button>
     </div>
   </div>
 </fieldset>
+
+<!-- Modal -->
+<div class="modal fade" id="delete_modal" tabindex="-1" role="dialog" aria-labelledby="delete modal" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <h4 class="modal-title">Delete database {{ database.name }}</h4>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="modal-body">
+        <div role="form">
+          <div class="form-group">
+            <label for="id_database_name">Please type in the name of the database to confirm.</label>
+            <input class="vTextField" id="id_database_name" maxlength="300" name="database_name" type="text"/>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <input type="submit" value="Delete" name="database_destroy" id="id_destroy_btn" onclick="return confirm('Are you sure?')"/>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}
 
 
