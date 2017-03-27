@@ -343,6 +343,37 @@ def _clone_database(request, database):
     environment = Environment.objects.get(id=request.POST['clone_env'])
     plan = Plan.objects.get(id=request.POST['clone_plan'])
 
+    current = len(database.team.databases_in_use_for(environment))
+    if current >= database.team.database_alocation_limit:
+        messages.add_message(
+            request, messages.ERROR,
+            'The database allocation limit of %s has been exceeded for the '
+            'team: {} => {}'.format(
+                current, database.team.database_alocation_limit
+            )
+        )
+        return
+
+    if name in database.infra.get_driver().RESERVED_DATABASES_NAME:
+        messages.add_message(
+            request, messages.ERROR,
+            '{} is a reserved database name'.format(name)
+        )
+        return
+
+    if len(name) > 40:
+        messages.add_message(request, messages.ERROR, 'Database name too long')
+        return
+
+    if Database.objects.filter(name=name, environment=environment):
+        messages.add_message(
+            request, messages.ERROR,
+            'There is already a database called {} on {}'.format(
+                name, environment
+            )
+        )
+        return
+
     Database.clone(
         database=database, clone_name=name, plan=plan,
         environment=environment, user=request.user
