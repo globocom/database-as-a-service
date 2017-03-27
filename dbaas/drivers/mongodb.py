@@ -352,6 +352,16 @@ class MongoDB(BaseDriver):
 
         return seconds_delay
 
+    def get_max_replica_id(self, ):
+        with self.pymongo() as client:
+            replSetGetStatus = client.admin.command('replSetGetStatus')
+            max_id = 0
+            for member in replSetGetStatus['members']:
+                repl_id = member["_id"]
+                if repl_id > max_id:
+                    max_id = repl_id
+            return max_id
+
     def is_replication_ok(self, instance):
         if self.check_instance_is_master(instance=instance):
             return True
