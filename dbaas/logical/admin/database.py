@@ -41,7 +41,7 @@ from logical.models import Database
 from logical.views import database_details, database_hosts, \
     database_credentials, database_resizes, database_backup, database_dns, \
     database_metrics, database_destroy, database_delete_host
-from logical.forms import DatabaseForm, CloneDatabaseForm, ResizeDatabaseForm, \
+from logical.forms import DatabaseForm, ResizeDatabaseForm, \
     DiskResizeDatabaseForm, RestoreDatabaseForm
 from logical.validators import check_is_database_enabled, \
     check_is_database_dead, check_resize_options, \
@@ -148,7 +148,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             html.append("N/A")
         else:
             html.append("<a class='btn btn-info' href='%s'><i class='icon-file icon-white'></i></a>" % reverse(
-                'admin:database_clone', args=(database.id,)))
+                'admin:logical_database_backup', args=(database.id,)))
 
         return format_html("".join(html))
 
@@ -522,46 +522,6 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             return HttpResponseRedirect(url)
 
         database.destroy(request.user)
-
-    def clone_view(self, request, database_id):
-        database = Database.objects.get(id=database_id)
-
-        can_be_cloned, error = database.can_be_cloned()
-        if not can_be_cloned:
-            self.message_user(request, error, level=messages.ERROR)
-            url = reverse('admin:logical_database_changelist')
-            return HttpResponseRedirect(url)
-
-        if database.is_beeing_used_elsewhere():
-            self.message_user(
-                request, "Database cannot be cloned because it is in use by another task.", level=messages.ERROR)
-            url = reverse('admin:logical_database_changelist')
-            return HttpResponseRedirect(url)
-
-        form = None
-        if request.method == 'POST':  # If the form has been submitted...
-            # A form bound to the POST data
-            form = CloneDatabaseForm(request.POST)
-            if form.is_valid():  # All validation rules pass
-                # Process the data in form.cleaned_data
-                database_clone = form.cleaned_data['database_clone']
-                plan = form.cleaned_data['plan']
-                environment = form.cleaned_data['environment']
-
-                Database.clone(database=database, clone_name=database_clone,
-                               plan=plan, environment=environment,
-                               user=request.user
-                               )
-
-                url = reverse('admin:notification_taskhistory_changelist')
-                # Redirect after POST
-                return HttpResponseRedirect(url + "?user=%s" % request.user.username)
-        else:
-            form = CloneDatabaseForm(
-                initial={"origin_database_id": database_id})  # An unbound form
-        return render_to_response("logical/database/clone.html",
-                                  locals(),
-                                  context_instance=RequestContext(request))
 
     def metrics_view(self, request, database_id):
         database = Database.objects.get(id=database_id)
@@ -1060,10 +1020,6 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         urls = super(DatabaseAdmin, self).get_urls()
         my_urls = patterns(
             '',
-            url(r'^/?(?P<database_id>\d+)/clone/$',
-                self.admin_site.admin_view(self.clone_view),
-                name="database_clone"),
-
             url(r'^/?(?P<database_id>\d+)/resize/$',
                 self.admin_site.admin_view(self.database_resize_view),
                 name="database_resize"),
