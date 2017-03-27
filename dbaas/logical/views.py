@@ -208,17 +208,80 @@ def database_resizes(request, id):
     )
 
 
+def _add_read_only_instances(request, database):
+
+    if not database.plan.is_ha:
+        messages.add_message(request, messages.ERROR, 'Database is not HA')
+        return
+
+    if 'add_read_qtd' not in request.POST:
+        messages.add_message(request, messages.ERROR, 'Quantity is required')
+        return
+
+
+    from notification.tasks import add_instances_to_database
+    from notification.models import TaskHistory
+
+    task = TaskHistory()
+    task.task_name = "add_database_instances"
+    task.task_status = TaskHistory.STATUS_WAITING
+    task.arguments = "Adding instances on database {}".format(database)
+    task.user = request.user
+    task.save()
+
+    add_instances_to_database.delay(
+        database, request.user, task, int(request.POST['add_read_qtd'])
+    )
+    url = reverse('admin:notification_taskhistory_changelist')
+    return HttpResponseRedirect(
+        "{}?user={}".format(url, request.user.username)
+    )
+
+
 def database_hosts(request, id):
     database = Database.objects.get(id=id)
+
+    if request.method == 'POST':
+        if 'add_read_only' in request.POST:
+            response = _add_read_only_instances(request, database)
+            if response:
+                return response
+
     context = {
         'database': database,
         'title': database.name,
         'current_tab': 'hosts',
-        'user': request.user
+        'user': request.user,
+        'instances_secondary': [],
+        'instances_read_only': [],
+        'instances_no_database': [],
+        'instance_primary': None
     }
 
+    driver = database.infra.get_driver()
+    for instance in database.infra.instances.all():
+        if not instance.is_database:
+            context['instances_no_database'].append(instance)
+            continue
+
+        if not context['instance_primary']:
+            try:
+                driver.check_instance_is_master(instance=instance)
+            except:
+                pass
+            else:
+                context['instance_primary'] = instance
+                continue
+
+        if instance.read_only:
+            context['instances_read_only'].append(instance)
+            continue
+
+        context['instances_secondary'].append(instance)
+
     return render_to_response(
-        "logical/database/details/hosts_tab.html", context
+        "logical/database/details/hosts_tab.html", context,
+        RequestContext(request)
     )
 
 
