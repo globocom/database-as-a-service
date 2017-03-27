@@ -7,7 +7,7 @@ from ..service.engine import EngineService
 class EngineAdmin(admin.DjangoServicesAdmin):
     service_class = EngineService
     search_fields = ("engine_type__name",)
-    list_display = ("engine_type", "version", "created_at")
+    list_display = ("engine_type", "version", "created_at", "has_users")
     list_filter = ("engine_type",)
     save_on_top = True
     ordering = ('engine_type__name', )

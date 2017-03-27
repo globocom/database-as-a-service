@@ -54,29 +54,30 @@ class EngineType(BaseModel):
 
 
 class Engine(BaseModel):
-
-    engine_type = models.ForeignKey(EngineType, verbose_name=_(
-        "Engine types"), related_name="engines", on_delete=models.PROTECT)
+    engine_type = models.ForeignKey(
+        EngineType, verbose_name=_("Engine types"), related_name="engines",
+        on_delete=models.PROTECT
+    )
     version = models.CharField(
-        verbose_name=_("Engine version"), max_length=100,)
-    path = models.CharField(verbose_name=_("Engine path"),
-                            max_length=255,
-                            blank=True,
-                            null=True,
-                            help_text=_("Path to look for the engine's executable file."))
-    template_name = models.CharField(verbose_name=_("Template Name"),
-                                     max_length=200,
-                                     blank=True,
-                                     null=True,
-                                     help_text="Template name registered in your provision system")
-    user_data_script = models.TextField(verbose_name=_("User data script"),
-                                        blank=True,
-                                        null=True,
-                                        help_text="Script that will be sent as an user-data to provision the virtual machine")
-    engine_upgrade_option = models.ForeignKey("Engine", null=True, blank=True,
-                                              verbose_name=_("Engine version upgrade"),
-                                              on_delete=models.SET_NULL,
-                                              related_name='backwards_engine')
+        verbose_name=_("Engine version"), max_length=100,
+    )
+    path = models.CharField(
+        verbose_name=_("Engine path"), max_length=255, blank=True, null=True,
+        help_text=_("Path to look for the engine's executable file.")
+    )
+    template_name = models.CharField(
+        verbose_name=_("Template Name"), max_length=200, blank=True, null=True,
+        help_text="Template name registered in your provision system"
+    )
+    user_data_script = models.TextField(
+        verbose_name=_("User data script"), blank=True, null=True,
+        help_text="Script that will be sent as an user-data to provision the virtual machine"
+    )
+    engine_upgrade_option = models.ForeignKey(
+        "Engine", null=True, blank=True, related_name='backwards_engine',
+        verbose_name=_("Engine version upgrade"), on_delete=models.SET_NULL
+    )
+    has_users = models.BooleanField(default=True)
 
     class Meta:
         unique_together = (

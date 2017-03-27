@@ -4,14 +4,15 @@ import logging
 from django.utils.translation import ugettext_lazy as _
 from django.forms import models
 from django import forms
-from logical.widgets.database_offering_field import DatabaseOfferingWidget
+from account.models import Team
 from dbaas_cloudstack.models import CloudStackPack
 from drivers.factory import DriverFactory
 from backup.models import Snapshot
 from physical.models import Plan, Environment, Engine, DiskOffering
 from logical.forms.fields import AdvancedModelChoiceField
-from logical.models import Database
+from logical.models import Database, Project
 from logical.validators import database_name_evironment_constraint
+from logical.widgets.database_offering_field import DatabaseOfferingWidget
 
 LOG = logging.getLogger(__name__)
 
@@ -422,3 +423,20 @@ class DiskResizeDatabaseForm(forms.Form):
                 )
 
         return cleaned_data
+
+
+class DatabaseDetailsForm(forms.ModelForm):
+
+    class Meta:
+        model = Database
+        fields = [
+            'team', 'project', 'is_protected', 'subscribe_to_email_events',
+            'description'
+        ]
+
+    def __init__(self, *args, **kwargs):
+        super(DatabaseDetailsForm, self).__init__(*args, **kwargs)
+
+        self.fields['team'].required = True
+        self.fields['project'].required = True
+        self.fields['description'].required = True

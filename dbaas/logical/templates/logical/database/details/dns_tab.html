@@ -1,0 +1,61 @@
+{% extends "logical/database/details/base.html" %}
+{% load admin_static %}
+
+{% block tab %}
+<fieldset class="module aligned ">
+  <div class="panel-heading">
+    <h3 class="panel-title">Extra DNS</h3>
+  </div>
+
+  <div class="panel-body">
+    <table id="table-extradns" class="table table-striped" data-database-id="{{database.pk}}" >
+      <thead>
+        <tr>
+          <th>DNS</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% verbatim %}
+          <script id="extradns-template" type="text/template">
+            <tr class="extradns" data-extradns-pk="{{extradns.pk}}">
+              <td>{{extradns.dns}}</td>
+              {% endverbatim %}
+              {%if can_remove_extra_dns %}
+                <td>
+                  <a class="btn btn-danger btn-extradns-remove" href="#"><i class="icon-trash icon-white"></i></a>
+                </td>
+              {%endif%}
+              {% verbatim %}
+            </tr>
+          </script>
+        {% endverbatim %}
+      </tbody>
+      <tfoot>
+        <tr>
+          {%if can_add_extra_dns %}
+            <td colspan="3">
+              <div class="add-row"><a href="javascript:void(0)" id="add-extradns" ><i class="icon-plus-sign"></i> Add another extra dns</a></div>
+            </td>
+          {%endif%}
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+</fieldset>
+{% endblock %}
+
+{% block js_footer %}
+  {{ block.super }}
+  <script type="text/javascript" src="{% static 'js/mustache.js' %}"></script>
+  <script type="text/javascript" src="{% static 'js/extra_dns.js' %}"></script>
+  <script type="text/javascript" >
+    django.jQuery(function() {
+      {% for extradns in database.extra_dns.all %}
+        ExtraDnsManager.include({"extradns" : { "dns": "{{extradns.dns}}", "pk": "{{extradns.pk}}" } });
+      {% endfor %}
+    });
+  </script>
+{% endblock %}
+
+{% block database_button_save %}
+{% endblock %}

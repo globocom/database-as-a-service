@@ -1,0 +1,131 @@
+{% extends "logical/database/details/base.html" %}
+{% load admin_static %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <style type="text/css">
+    .resize_button {
+        margin-left: 20px
+    }
+  </style>
+{% endblock %}
+
+{% block tab %}
+<fieldset class="module aligned ">
+  <div class="control-group">
+    <div class="control-label"><label>VM Offering:</label></div>
+    <div class="controls">
+        {%if last_vm_resize and last_vm_resize.is_status_error %}
+          {{ database.offering }}
+          <a class="resize_button btn btn-warning" href="{{ database.get_resize_retry_url }}" title="Go to disk resize page">Retry Resize</a>
+          <p><a href="{% url 'admin:maintenance_databaseresize_change' last_vm_resize.id %}" target='_blank'>Last resize</a> has an <b>error</b>, please check the <a href="{% url 'admin:notification_taskhistory_change' last_vm_resize.task.id %}" target='_blank'>task</a> and retry the database resize clicking in button above</p>
+        {% else %}
+          <select id="id_vm_offering" name="vm_offering">
+            {% for vm_offering in vm_offerings %}
+              {% if vm_offering.offering == current_vm_offering or vm_offering == current_vm_offering %}
+                <option value="{{current_vm_offering.serviceofferingid}}"selected="selected">*
+              {% else %}
+                <option value="{{vm_offering.id}}">
+              {% endif %}
+                {{vm_offering}}
+              </option>
+            {% endfor %}
+          </select>
+          <input type="submit" value="Resize" name="vm_resize" id="vm_resize_btn" onclick="return confirm('Are you sure?')"/>
+        {% endif %}
+    </div>
+  </div>
+  <div class="control-group">
+    <div class="control-label"><label>Disk offering:</label></div>
+    <div class="controls">
+      <select id="id_disk_offering" name="disk_offering">
+        {% for disk_offering in disk_offerings %}
+          <option value="{{disk_offering.id}}"
+            {% if disk_offering == database.infra.disk_offering %}
+              selected="selected">*
+            {% else %}
+              >
+            {% endif %}
+            {{disk_offering}}
+          </option>
+        {% endfor %}
+      </select>
+      <input type="submit" value="Resize" name="disk_resize" id="disk_resize_btn" onclick="return confirm('Are you sure?')"/>
+    </div>
+  </div>
+  <div class="control-group">
+    <div class="controls">
+      <label class="checkbox">
+        <input {% if database.disk_auto_resize %} checked="checked" {% endif %} id="id_disk_auto_resize" name="disk_auto_resize" type="checkbox"/>
+        <span><label class="vCheckboxLabel" for="id_disk_auto_resize">Disk auto resize</label></span>
+      </label>
+      <p class="help-block">When marked, the disk will be resized automatically.</p>
+    </div>
+  </div>
+  {% if upgrade_mongo_24_to_30 %}
+    <div class="control-group">
+      <div class="control-label"><label>Engine upgrade:</label></div>
+      <div class="controls">
+        <a href="{{ database.get_mongodb_engine_version_upgrade_url }}" class="btn btn-primary" title="Start engine upgrade" onclick="return confirm('Are you sure?')">Migrate MongoDB 2.4 to 3.0</a>
+      </div>
+    </div>
+  {% elif can_do_upgrade %}
+    <div class="control-group">
+      <div class="control-label"><label>Engine upgrade:</label></div>
+      <div class="controls">
+        {% if last_upgrade and last_upgrade.is_status_error %}
+          <a href="{{ database.get_upgrade_retry_url }}" class="btn btn-warning" title="Retry upgrade" onclick="return confirm('Are you sure?')">Retry migrate {{ database.infra.engine_name }} {{ database.infra.plan.engine.version}} to {{ database.infra.plan.engine_equivalent_plan.engine.version }}</a>
+          <p><a href="{% url 'admin:maintenance_databaseupgrade_change' last_upgrade.id %}" target='_blank'>Last upgrade</a> has an <b>error</b>, please check the <a href="{% url 'admin:notification_taskhistory_change' last_upgrade.task.id %}" target='_blank'>task</a> and retry the database upgrade clicking in button above</p>
+        {% else %}
+          <a href="{{ database.get_upgrade_url }}" class="btn btn-primary" title="Start upgrade" onclick="return confirm('Are you sure?')">Migrate {{ database.infra.engine_name }} {{database.infra.plan.engine.version }} to {{ database.infra.plan.engine_equivalent_plan.engine.version }}</a>
+        {% endif %}
+      </div>
+    </div>
+  {% endif %}
+  {% if is_dba and database.is_mysql_flipper %}
+    <div class="control-group">
+      <div class="control-label"><label>Topology upgrade:</label></div>
+      <div class="controls">
+        <a href="{{ database.get_flipperfox_migration_url }}" class="btn btn-primary" title="Start migration">Initialize Flipper to FoxHA Migration</a>
+      </div>
+    </div>
+  {% endif %}
+
+  <div class="control-group">
+    <div class="control-label"><label>Help:</label></div>
+    <div class="controls">
+      <p class="readonly help-block">Offering with "*" is the current offering</p>
+    </div>
+  </div>
+</fieldset>
+{% endblock %}
+
+{% block js_footer %}
+{{ block.super }}
+
+<script>
+  function status_resize(btn_id, current_value, selected_value) {
+    btn = document.getElementById(btn_id)
+    btn.disabled = current_value == selected_value
+    if (btn.disabled){
+      btn.className = 'resize_button btn';
+    } else {
+      btn.className = 'resize_button btn btn-primary';
+    }
+  }
+
+  jQuery(document).ready(function($) {
+    $("#id_disk_offering").on("change", function() {
+      status_resize("disk_resize_btn", {{ database.infra.disk_offering.id }}, $(this).val())
+    });
+    $("#id_disk_offering").change()
+
+    $("#id_vm_offering").on("change", function() {
+      status_resize("vm_resize_btn", '{{ current_vm_offering.serviceofferingid }}', $(this).val())
+    });
+    $("#id_vm_offering").change()
+
+  })
+</script>
+
+{% endblock %}

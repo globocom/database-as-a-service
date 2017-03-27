@@ -1,0 +1,75 @@
+{% extends "logical/database/details/base.html" %}
+
+
+{% block tab %}
+<fieldset class="module aligned ">
+  <div class="control-group">
+    <div class="control-label"><label>Quarantine:</label></div>
+    <div class="controls">
+      <label class="checkbox">
+        <input {% if database.is_in_quarantine %} checked="checked" {% endif %} id="id_is_in_quarantine" name="is_in_quarantine" type="checkbox"/>
+      </label>
+    </div>
+  </div>
+  <div class="control-group">
+    <div class="control-label"></div>
+    <div class="controls">
+      <button class="resize_button btn btn-danger" data-toggle="modal" data-target="#delete_modal">Delete Database</button>
+    </div>
+  </div>
+</fieldset>
+
+<!-- Modal -->
+<div class="modal fade" id="delete_modal" tabindex="-1" role="dialog" aria-labelledby="delete modal" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <h4 class="modal-title">Delete database {{ database.name }}</h4>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="modal-body">
+        <div role="form">
+          <div class="form-group">
+            <label for="id_database_name">Please type in the name of the database to confirm.</label>
+            <input class="vTextField" id="id_database_name" maxlength="300" name="database_name" type="text"/>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <input type="submit" value="Delete" name="database_destroy" id="id_destroy_btn" onclick="return confirm('Are you sure?')"/>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+
+{% block js_footer %}
+{{ block.super }}
+
+<script>
+  function status_btn(btn_id, current_value, selected_value) {
+  }
+
+  jQuery(document).ready(function($) {
+    $("#id_database_name").keyup(function() {
+      btn = document.getElementById('id_destroy_btn')
+      btn.disabled = '{{ database.name }}' != $(this).val();
+      if (btn.disabled){
+        btn.className = 'resize_button btn';
+      } else {
+        btn.className = 'resize_button btn btn-danger';
+      }
+    });
+    $("#id_database_name").keyup()
+
+  })
+</script>
+
+{% endblock %}
