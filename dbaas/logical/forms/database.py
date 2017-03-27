@@ -136,7 +136,7 @@ class DatabaseForm(models.ModelForm):
         label = "Resize VM"
 
         if db_resize:
-            db_resize = db_resize.latest("created_at")
+            db_resize = db_resize.last()
             if db_resize.is_status_error:
                 url = db_instance.get_resize_retry_url()
                 label = "Retry VM resize"
