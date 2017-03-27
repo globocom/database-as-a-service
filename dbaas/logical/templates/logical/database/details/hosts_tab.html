@@ -36,7 +36,7 @@
           <div class="control-label">{{ instance.get_instance_type_display }}:</div>
           <div class="controls">
             {{ instance }}
-            <a class="action_button btn btn-danger" href="{{ instance.id }}/delete/"><i class="icon-trash icon-white"></i></a>
+            <a class="action_button btn btn-danger" href="{{ instance.id }}/delete/" onclick="return confirm('Are you sure?')"><i class="icon-trash icon-white"></i></a>
 
           </div>
         {% endfor %}

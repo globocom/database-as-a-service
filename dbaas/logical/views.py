@@ -17,6 +17,9 @@ from drivers.base import CredentialAlreadyExists
 from account.models import Team
 from physical.models import Host, DiskOffering, Environment, Plan
 from util import get_credentials_for
+from notification.models import TaskHistory
+from notification.tasks import add_instances_to_database, \
+    remove_readonly_instance
 from .errors import DisabledDatabase
 from .forms.database import DatabaseDetailsForm
 from .models import Credential, Database, Project
@@ -218,10 +221,6 @@ def _add_read_only_instances(request, database):
         messages.add_message(request, messages.ERROR, 'Quantity is required')
         return
 
-
-    from notification.tasks import add_instances_to_database
-    from notification.models import TaskHistory
-
     task = TaskHistory()
     task.task_name = "add_database_instances"
     task.task_status = TaskHistory.STATUS_WAITING
@@ -282,6 +281,35 @@ def database_hosts(request, id):
     return render_to_response(
         "logical/database/details/hosts_tab.html", context,
         RequestContext(request)
+    )
+
+
+def database_delete_host(request, database_id, instance_id):
+    database = Database.objects.get(id=database_id)
+    instance = database.infra.instances.get(id=instance_id)
+
+    if database.is_beeing_used_elsewhere():
+        messages.add_message(
+            request, messages.ERROR,
+            'Host cannot be deleted because database is in use by another task.'
+        )
+        return HttpResponseRedirect(
+            reverse('admin:logical_database_hosts', kwargs={'id': database.id})
+        )
+
+    task = TaskHistory()
+    task.task_name = "remove_database_instance"
+    task.task_status = TaskHistory.STATUS_WAITING
+    task.arguments = "Removing instance {} on database {}".format(
+        instance, database
+    )
+    task.user = request.user
+    task.save()
+
+    remove_readonly_instance.delay(instance, request.user, task)
+    url = reverse('admin:notification_taskhistory_changelist')
+    return HttpResponseRedirect(
+        "{}?user={}".format(url, request.user.username)
     )
 
 

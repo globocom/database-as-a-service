@@ -40,7 +40,7 @@ from logical.templatetags import capacity
 from logical.models import Database
 from logical.views import database_details, database_hosts, \
     database_credentials, database_resizes, database_backup, database_dns, \
-    database_metrics, database_destroy
+    database_metrics, database_destroy, database_delete_host
 from logical.forms import DatabaseForm, CloneDatabaseForm, ResizeDatabaseForm, \
     DiskResizeDatabaseForm, RestoreDatabaseForm
 from logical.validators import check_is_database_enabled, \
@@ -1131,6 +1131,11 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 name="logical_database_hosts"
             ),
             url(
+                r'^/?(?P<database_id>\d+)/hosts/(?P<instance_id>\d+)/delete/$',
+                self.admin_site.admin_view(database_delete_host),
+                name="logical_database_host_delete"
+            ),
+            url(
                 r'^/?(?P<id>\d+)/resizes/$',
                 self.admin_site.admin_view(database_resizes),
                 name="logical_database_resizes"
@@ -1145,12 +1150,16 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 self.admin_site.admin_view(database_dns),
                 name="logical_database_dns"
             ),
-            url(r'^/?(?P<id>\d+)/metrics/$',
+            url(
+                r'^/?(?P<id>\d+)/metrics/$',
                 self.admin_site.admin_view(database_metrics),
-                name="logical_database_metrics"),
-            url(r'^/?(?P<id>\d+)/destroy/$',
+                name="logical_database_metrics"
+            ),
+            url(
+                r'^/?(?P<id>\d+)/destroy/$',
                 self.admin_site.admin_view(database_destroy),
-                name="logical_database_destroy"),
+                name="logical_database_destroy"
+            ),
         )
 
         return my_urls + urls
