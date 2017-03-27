@@ -1116,7 +1116,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 name="resize_retry"
             ),
             url(
-                r'^/?(?P<id>\d+)/new/$',
+                r'^/?(?P<id>\d+)/$',
                 self.admin_site.admin_view(database_details),
                 name="logical_database_details"
             ),
