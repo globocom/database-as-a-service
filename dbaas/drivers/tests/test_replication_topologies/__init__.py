@@ -114,7 +114,7 @@ class AbstractReplicationTopologySettingsTestCase(TestCase):
         return [{
             self._get_upgrade_steps_final_description(): (
                 'workflow.steps.util.db_monitor.EnableMonitoring',
-                'workflow.steps.util.zabbix.CreateAlarms',
+                'workflow.steps.util.zabbix.CreateAlarmsForUpgrade',
             ),
         }]
 
