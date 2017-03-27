@@ -1,7 +1,9 @@
 {% extends "admin/base_site.html" %}
 {% load i18n admin_static %}
 
-{% block title %}{{ title }}{% endblock %}
+{% block title %}
+  {{ database.name }}
+{% endblock %}
 
 {% block extrastyle %}
   {{ block.super }}
@@ -14,9 +16,7 @@
 {% endblock %}
 
 {% block content_title %}
-  {% if title %}
-    <h1>Database: {{ title }}</h1>
-  {% endif %}
+  <h1>Database: {{ database.name }}</h1>
 {% endblock %}
 
 {% block content %}
@@ -67,7 +67,7 @@
       <a href="/admin/logical/database/">{% trans 'Databases' %}</a>
       <span class="divider">/</span>
     </li>
-    <li class="active">{{ title }}</li>
+    <li class="active">{{ database.name }}</li>
   </ul>
 {% endblock %}
 
