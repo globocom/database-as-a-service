@@ -482,7 +482,9 @@ def _destroy_databases(request, database):
     in_quarantine = database.is_in_quarantine
     database.destroy(request.user)
     if not in_quarantine:
-        return
+        return HttpResponseRedirect(
+            reverse('admin:logical_database_changelist')
+        )
 
     return HttpResponseRedirect(user_tasks(request.user))
 
