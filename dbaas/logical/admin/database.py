@@ -76,7 +76,6 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     ]
     list_filter_advanced = list_filter_basic + ["is_in_quarantine", "team"]
     add_form_template = "logical/database/database_add_form.html"
-    change_form_template = "logical/database/database_change_form.html"
     delete_button_name = "Delete"
     fieldsets_add = (
         (None, {
@@ -88,25 +87,6 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         }
         ),
     )
-
-    fieldsets_change_basic = (
-        (None, {
-            'fields': [
-                'name', 'description', 'project', 'team', 'team_contact',
-                'subscribe_to_email_events', 'is_protected', 'disk_auto_resize',
-            ]
-        }),
-    )
-
-    readonly_fields = ('team_contact',)
-
-    fieldsets_change_advanced = (
-        (None, {
-            'fields': fieldsets_change_basic[0][1]['fields'] + ["backup_path", "is_in_quarantine"]
-        }
-        ),
-    )
-    # actions = ['delete_mode']
 
     def quarantine_dt_format(self, database):
         return database.quarantine_dt or ""
@@ -268,27 +248,6 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 kwargs["queryset"] = Team.objects.filter(users=request.user)
         return super(DatabaseAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
-    def get_fieldsets(self, request, obj=None):
-        if obj:  # In edit mode
-            if request.user.has_perm(self.perm_manage_quarantine_database):
-                self.fieldsets_change = self.fieldsets_change_advanced
-            else:
-                self.fieldsets_change = self.fieldsets_change_basic
-
-        return self.fieldsets_change if obj else self.fieldsets_add
-
-    def get_readonly_fields(self, request, obj=None):
-        """
-        if in edit mode, name is readonly.
-        """
-        if obj:  # In edit mode
-            # only sysadmin can change team accountable for a database
-            if request.user.has_perm(self.perm_add_database_infra):
-                return ('name', 'databaseinfra', ) + self.readonly_fields
-            else:
-                return ('name', 'databaseinfra', 'team',) + self.readonly_fields
-        return self.readonly_fields
-
     def queryset(self, request):
         qs = super(DatabaseAdmin, self).queryset(request)
         if request.user.has_perm(self.perm_add_database_infra):
@@ -427,53 +386,6 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
             request.method = 'GET'
             return super(DatabaseAdmin, self).add_view(request, form_url, extra_context=extra_context)
-
-    def change_view(self, request, object_id, form_url='', extra_context=None):
-        database = Database.objects.get(id=object_id)
-        self.form = DatabaseForm
-        extra_context = extra_context or {}
-
-        extra_context['has_perm_upgrade_mongo'] = False
-        extra_context['can_upgrade'] = False
-
-        if database.is_mongodb_24():
-            extra_context['has_perm_upgrade_mongo'] = request.user.has_perm(constants.PERM_UPGRADE_MONGO24_TO_30)
-        else:
-            has_permission = request.user.has_perm(
-                constants.PERM_UPGRADE_DATABASE
-            )
-            has_equivalent_plan = bool(
-                database.infra.plan.engine_equivalent_plan
-            )
-            extra_context['can_upgrade'] = has_equivalent_plan and has_permission
-
-        upgrades = database.upgrades.filter(source_plan=database.infra.plan)
-        last_upgrade = upgrades.last()
-        extra_context['last_upgrade'] = last_upgrade
-        extra_context['retry_upgrade'] = False
-        if last_upgrade:
-            extra_context['retry_upgrade'] = last_upgrade.is_status_error
-
-        if database.is_in_quarantine:
-            extra_context['delete_button_name'] = self.delete_button_name
-        else:
-            extra_context['delete_button_name'] = "Delete"
-
-        if request.user.team_set.filter(role__name="role_dba"):
-            extra_context['is_dba'] = True
-        else:
-            extra_context['is_dba'] = False
-
-        if request.method == 'POST':
-            form = DatabaseForm(request.POST)
-            if not form.is_valid():
-                return super(DatabaseAdmin, self).change_view(
-                    request, object_id, form_url, extra_context=extra_context
-                )
-
-        return super(DatabaseAdmin, self).change_view(
-            request, object_id, form_url, extra_context=extra_context
-        )
 
     def delete_view(self, request, object_id, extra_context=None):
         database = Database.objects.get(id=object_id)
