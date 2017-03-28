@@ -481,13 +481,16 @@ class Database(BaseModel):
         from notification.models import TaskHistory
 
         name = self.name + ','
-        tasks = TaskHistory.objects.filter(
+        tasks_contains = TaskHistory.objects.filter(
             arguments__contains=name,
-            task_status__in=[
-                'RUNNING', 'PENDING', 'WAITING'
-            ]
+            task_status__in=['RUNNING', 'PENDING', 'WAITING']
+        )
+        tasks_ends_with_name = TaskHistory.objects.filter(
+            arguments__endswith=self.name,
+            task_status__in=['RUNNING', 'PENDING', 'WAITING']
         )
 
+        tasks = list(tasks_ends_with_name) + list(tasks_contains)
         if len(tasks) == 1 and task_id:
             if tasks[0].task_id == task_id:
                 return False
