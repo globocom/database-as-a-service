@@ -8,11 +8,10 @@ from account.models import Team
 from dbaas_cloudstack.models import CloudStackPack
 from drivers.factory import DriverFactory
 from backup.models import Snapshot
-from physical.models import Plan, Environment, Engine, DiskOffering
+from physical.models import Plan, Environment, Engine
 from logical.forms.fields import AdvancedModelChoiceField
 from logical.models import Database, Project
 from logical.validators import database_name_evironment_constraint
-from logical.widgets.database_offering_field import DatabaseOfferingWidget
 
 LOG = logging.getLogger(__name__)
 
@@ -36,23 +35,6 @@ class DatabaseForm(models.ModelForm):
         for field_name in fields_to_remove:
             if field_name in self.fields:
                 del self.fields[field_name]
-
-    @classmethod
-    def setup_disk_offering_field(cls, form, db_instance):
-        widget = DatabaseOfferingWidget(
-            id='resizeDisk',
-            url=db_instance.get_disk_resize_url(),
-            label='Resize Disk',
-            attrs={
-                'readonly': 'readonly',
-                'database': db_instance
-            }
-        )
-
-        form.declared_fields['disk_offering'] = forms.CharField(
-            widget=widget, required=False,
-            initial=db_instance.databaseinfra.disk_offering
-        )
 
     def __init__(self, *args, **kwargs):
 
@@ -175,51 +157,6 @@ class LogDatabaseForm(forms.Form):
 
             if instance:
                 LOG.debug("instance database form found! %s" % instance)
-
-
-class DiskResizeDatabaseForm(forms.Form):
-
-    def __init__(self, database, data=None):
-        super(DiskResizeDatabaseForm, self).__init__(data=data)
-
-        self.database = database
-        self.disk_offering = database.databaseinfra.disk_offering
-
-        disk_used_size_kb = self.database.databaseinfra.disk_used_size_in_kb
-        if not disk_used_size_kb:
-            disk_used_size_kb = self.database.used_size_in_kb
-
-        self.fields['target_offer'] = forms.ModelChoiceField(
-            queryset=DiskOffering.objects.filter(
-                available_size_kb__gt=disk_used_size_kb
-            ).exclude(
-                id=database.databaseinfra.disk_offering.id
-            ),
-            label=u'New Disk',
-            required=True
-        )
-
-    def clean(self):
-        cleaned_data = super(DiskResizeDatabaseForm, self).clean()
-
-        if 'target_offer' in cleaned_data:
-            if cleaned_data['target_offer'] == self.disk_offering:
-                raise forms.ValidationError(
-                    _("New offering must be different from the current")
-                )
-
-            current_database_size = round(self.database.used_size_in_gb, 2)
-            new_disk_size = round(
-                cleaned_data['target_offer'].available_size_gb(), 2
-            )
-            if current_database_size >= new_disk_size:
-                raise forms.ValidationError(
-                    _("Your database has {} GB, please choose "
-                      "a bigger disk".format(current_database_size)
-                      )
-                )
-
-        return cleaned_data
 
 
 class DatabaseDetailsForm(forms.ModelForm):

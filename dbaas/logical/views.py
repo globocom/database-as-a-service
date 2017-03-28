@@ -165,21 +165,43 @@ def database_metrics(request, context, database):
     )
 
 
+def _disk_resize(request, database):
+    try:
+        check_is_database_enabled(database.id, 'disk resize')
+    except DisabledDatabase as err:
+        messages.add_message(request, messages.ERROR, err.message)
+        return
+
+    disk_offering = DiskOffering.objects.get(
+        id=request.POST.get('disk_offering')
+    )
+
+    current_used = round(database.used_size_in_gb, 2)
+    offering_size = round(disk_offering.available_size_gb(), 2)
+    if current_used >= offering_size:
+        messages.add_message(
+            request, messages.ERROR,
+            'Your database has {} GB, please choose a bigger disk'.format(
+                current_used
+            )
+        )
+        return
+
+    Database.disk_resize(
+        database=database,
+        new_disk_offering=disk_offering.id,
+        user=request.user
+    )
+    return HttpResponseRedirect(user_tasks(request.user))
+
+
 @database_view('resizes/upgrade')
 def database_resizes(request, context, database):
     if request.method == 'POST':
         if 'disk_resize' in request.POST and request.POST.get('disk_offering'):
-            try:
-                check_is_database_enabled(database.id, 'disk resize')
-            except DisabledDatabase as err:
-                messages.add_message(request, messages.ERROR, err.message)
-            else:
-                Database.disk_resize(
-                    database=database,
-                    new_disk_offering=request.POST.get('disk_offering'),
-                    user=request.user
-                )
-                return HttpResponseRedirect(user_tasks(request.user))
+            response = _disk_resize(request, database)
+            if response:
+                return response
         elif 'vm_resize' in request.POST and request.POST.get('vm_offering'):
             try:
                 check_is_database_dead(database.id, 'VM resize')
@@ -214,7 +236,12 @@ def database_resizes(request, context, database):
     else:
         context['vm_offerings'].append(context['current_vm_offering'])
 
-    context['disk_offerings'] = DiskOffering.objects.all()
+    disk_used_size_kb = database.infra.disk_used_size_in_kb
+    if not disk_used_size_kb:
+        disk_used_size_kb = database.used_size_in_kb
+    context['disk_offerings'] = DiskOffering.objects.filter(
+        available_size_kb__gt=disk_used_size_kb
+    )
 
     context['upgrade_mongo_24_to_30'] = \
         database.is_mongodb_24() and \

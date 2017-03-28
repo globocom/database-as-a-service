@@ -32,7 +32,7 @@ from drivers import DatabaseAlreadyExists
 from notification.tasks import create_database, upgrade_database, resize_database
 from notification.tasks import add_instances_to_database
 from notification.models import TaskHistory
-from physical.models import Plan, Host, DiskOffering
+from physical.models import Plan, Host
 from system.models import Configuration
 from util import get_credentials_for
 from util.html import show_info_popup
@@ -41,11 +41,7 @@ from logical.models import Database
 from logical.views import database_details, database_hosts, \
     database_credentials, database_resizes, database_backup, database_dns, \
     database_metrics, database_destroy, database_delete_host
-from logical.forms import DatabaseForm, DiskResizeDatabaseForm
-from logical.validators import check_is_database_enabled, \
-    check_is_database_dead, check_resize_options, \
-    check_database_has_persistence
-from logical.errors import DisabledDatabase, NoResizeOption
+from logical.forms import DatabaseForm
 from logical.service.database import DatabaseService
 
 LOG = logging.getLogger(__name__)
@@ -327,15 +323,6 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         # if exclude is an empty list we pass None to be consistent with the
         # default on modelform_factory
         exclude = exclude or None
-
-        if obj:
-            if 'disk_offering' in self.fieldsets_change[0][1]['fields']:
-                self.fieldsets_change[0][1]['fields'].remove('disk_offering')
-
-            self.fieldsets_change[0][1]['fields'].append('disk_offering')
-            DatabaseForm.setup_disk_offering_field(
-                form=self.form, db_instance=obj
-            )
 
         defaults = {
             "form": self.form,
@@ -673,38 +660,6 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         url = reverse('admin:notification_taskhistory_changelist')
         return HttpResponseRedirect(url)
 
-    def database_disk_resize_view(self, request, database_id):
-        try:
-            database = check_is_database_enabled(database_id, 'disk resize')
-            offerings = DiskOffering.objects.all().exclude(
-                id=database.databaseinfra.disk_offering.id
-            )
-            check_resize_options(database_id, offerings)
-        except (DisabledDatabase, NoResizeOption) as err:
-            self.message_user(request, err.message, messages.ERROR)
-            return HttpResponseRedirect(err.url)
-
-        form = None
-        if request.method == 'POST':
-            form = DiskResizeDatabaseForm(database=database, data=request.POST)
-            if form.is_valid():
-                Database.disk_resize(
-                    database=database,
-                    new_disk_offering=request.POST.get('target_offer'),
-                    user=request.user
-                )
-
-                url = reverse('admin:notification_taskhistory_changelist')
-                return HttpResponseRedirect(
-                    "{}?user={}".format(url, request.user.username)
-                )
-        else:
-            form = DiskResizeDatabaseForm(database=database)
-
-        return render_to_response("logical/database/disk_resize.html",
-                                  locals(),
-                                  context_instance=RequestContext(request))
-
     def database_log_view(self, request, database_id):
 
         database = Database.objects.get(id=database_id)
@@ -906,11 +861,6 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         urls = super(DatabaseAdmin, self).get_urls()
         my_urls = patterns(
             '',
-
-            url(r'^/?(?P<database_id>\d+)/disk_resize/$',
-                self.admin_site.admin_view(
-                    self.database_disk_resize_view),
-                name="database_disk_resize"),
 
             url(r'^/?(?P<database_id>\d+)/lognit/$',
                 self.admin_site.admin_view(self.database_log_view),
