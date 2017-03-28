@@ -25,16 +25,13 @@ from django.contrib.admin.util import get_deleted_objects, model_ngettext
 from django.contrib.admin import helpers
 from django.template.response import TemplateResponse
 from django.core.exceptions import FieldError
-from dbaas_credentials.models import CredentialType
 from dbaas import constants
 from account.models import Team
 from drivers import DatabaseAlreadyExists
 from notification.tasks import create_database, upgrade_database, resize_database
 from notification.tasks import add_instances_to_database
 from notification.models import TaskHistory
-from physical.models import Plan, Host
 from system.models import Configuration
-from util import get_credentials_for
 from util.html import show_info_popup
 from logical.templatetags import capacity
 from logical.models import Database
@@ -413,46 +410,6 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             return HttpResponseRedirect(url)
 
         database.destroy(request.user)
-
-    def metrics_view(self, request, database_id):
-        database = Database.objects.get(id=database_id)
-
-        if 'hostname' in request.GET:
-            hostname = request.GET.get('hostname')
-        else:
-            instance = database.infra.instances.all()[0]
-            hostname = instance.hostname.hostname.split('.')[0]
-
-        return self.database_host_metrics_view(request, database, hostname)
-
-    def database_host_metrics_view(self, request, database, hostname):
-        title = "{} Metrics".format(database.name)
-        instance = database.infra.instances.filter(
-            hostname__hostname__contains=hostname
-        ).first()
-
-        hosts = []
-        for host in Host.objects.filter(instances__databaseinfra=database.infra).distinct():
-            hosts.append(host.hostname.split('.')[0])
-
-        credential = get_credentials_for(
-            environment=database.databaseinfra.environment,
-            credential_type=CredentialType.GRAFANA
-        )
-        grafana_url = '{}/dashboard/{}?{}={}&{}={}&{}={}'.format(
-            credential.endpoint,
-            credential.project.format(database.engine_type),
-            credential.get_parameter_by_name('db_param'), instance.dns,
-            credential.get_parameter_by_name('os_param'), instance.hostname.hostname,
-            credential.get_parameter_by_name('env_param'),
-            credential.get_parameter_by_name('environment')
-        )
-
-        return render_to_response(
-            "logical/database/metrics/grafana.html",
-            locals(),
-            context_instance=RequestContext(request)
-        )
 
     def database_dex_analyze_view(self, request, database_id):
         import json
