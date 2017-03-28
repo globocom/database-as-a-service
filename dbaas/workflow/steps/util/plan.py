@@ -118,7 +118,7 @@ class ConfigureMongoHA(Configure):
 
     def get_variables_specifics(self):
         return {
-            'REPLICASETNAME': self.instance.databaseinfra.get_driver().replica_set_name,
+            'REPLICASETNAME': self.instance.databaseinfra.get_driver().get_replica_name(),
             'MONGODBKEY': self.instance.databaseinfra.database_key
         }
 
