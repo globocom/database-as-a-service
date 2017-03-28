@@ -1,6 +1,5 @@
 {% extends "logical/database/details/base.html" %}
 
-
 {% block tab %}
 <fieldset class="module aligned ">
   <div class="control-group">
@@ -35,13 +34,18 @@
       <div class="modal-body">
         <div role="form">
           <div class="form-group">
-            <label for="id_database_name">Please type in the name of the database to confirm.</label>
+            <label for="id_database_name">
+              <u><b>{{ database.name }}</b></u> and all of its database will be permanently deleted!
+              <br><br>
+              Please type <u><b>{{ database.name }}</b></u> to confirm:
+            </label>
             <input class="vTextField" id="id_database_name" maxlength="300" name="database_name" type="text"/>
           </div>
         </div>
       </div>
 
       <div class="modal-footer">
+        <button type="button" class="btn btn-default"data-dismiss="modal">Cancel</button>
         <input type="submit" value="Delete" name="database_destroy" id="id_destroy_btn" onclick="return confirm('Are you sure?')"/>
       </div>
     </div>
