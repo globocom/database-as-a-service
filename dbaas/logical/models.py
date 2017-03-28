@@ -433,20 +433,11 @@ class Database(BaseModel):
     def get_metrics_url(self):
         return "/admin/logical/database/{}/metrics/".format(self.id)
 
-    def get_resize_url(self):
-        return "/admin/logical/database/{}/resize/".format(self.id)
-
     def get_resize_retry_url(self):
         return "/admin/logical/database/{}/resize_retry/".format(self.id)
 
     def get_disk_resize_url(self):
         return "/admin/logical/database/{}/disk_resize/".format(self.id)
-
-    def get_lognit_url(self):
-        return "/admin/logical/database/{}/lognit/".format(self.id)
-
-    def get_restore_url(self):
-        return "/admin/logical/database/{}/restore/".format(self.id)
 
     def get_mongodb_engine_version_upgrade_url(self):
         return "/admin/logical/database/{}/mongodb_engine_version_upgrade/".format(self.id)
@@ -490,13 +481,16 @@ class Database(BaseModel):
         from notification.models import TaskHistory
 
         name = self.name + ','
-        tasks = TaskHistory.objects.filter(
+        tasks_contains = TaskHistory.objects.filter(
             arguments__contains=name,
-            task_status__in=[
-                'RUNNING', 'PENDING', 'WAITING'
-            ]
+            task_status__in=['RUNNING', 'PENDING', 'WAITING']
+        )
+        tasks_ends_with_name = TaskHistory.objects.filter(
+            arguments__endswith=self.name,
+            task_status__in=['RUNNING', 'PENDING', 'WAITING']
         )
 
+        tasks = list(tasks_ends_with_name) + list(tasks_contains)
         if len(tasks) == 1 and task_id:
             if tasks[0].task_id == task_id:
                 return False

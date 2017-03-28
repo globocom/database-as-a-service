@@ -77,24 +77,28 @@ class CredentialView(BaseDetailView):
         credential.delete()
         return self.as_json(credential)
 
+def database_view(tab):
+    def database_decorator(func):
+        def func_wrapper(request, id):
+            database = Database.objects.get(id=id)
+            context = {
+                'database': database,
+                'current_tab': tab,
+                'user': request.user
+            }
+            return func(request, context, database)
+        return func_wrapper
+    return database_decorator
 
-def database_details(request, id):
-    database = Database.objects.get(id=id)
 
-    engine = str(database.engine)
-    topology = database.databaseinfra.plan.replication_topology
-    engine = engine + " - " + topology.details if topology.details else engine
+def user_tasks(user):
+    url = reverse('admin:notification_taskhistory_changelist')
+    filter = "user={}".format(user.username)
+    return '{}?{}'.format(url, filter)
 
-    context = {
-        'database': database,
-        'engine': engine,
-        'projects': Project.objects.all(),
-        'teams': Team.objects.all(),
-        'title': database.name,
-        'current_tab': 'details',
-        'user': request.user,
-    }
 
+@database_view('details')
+def database_details(request, context, database):
     if request.method == 'POST':
         form = DatabaseDetailsForm(request.POST or None, instance=database)
         if form.is_valid():
@@ -107,50 +111,101 @@ def database_details(request, id):
                 reverse('admin:logical_database_changelist')
             )
 
+    engine = str(database.engine)
+    topology = database.databaseinfra.plan.replication_topology
+    engine = engine + " - " + topology.details if topology.details else engine
+
+    context['engine'] = engine
+    context['projects'] = Project.objects.all()
+    context['teams'] = Team.objects.all()
+
     return render_to_response(
         "logical/database/details/details_tab.html",
         context, RequestContext(request)
     )
 
 
-def database_credentials(request, id):
-    database = Database.objects.get(id=id)
-
-    context = {
-        'database': database,
-        'title': database.name,
-        'current_tab': 'credentials',
-        'user': request.user
-    }
+@database_view('credentials')
+def database_credentials(request, context, database=None):
     return render_to_response(
         "logical/database/details/credentials_tab.html", context
     )
 
 
-def database_resizes(request, id):
-    database = Database.objects.get(id=id)
+@database_view('metrics')
+def database_metrics(request, context, database):
+    context['hostname'] = request.GET.get(
+        'hostname',
+        database.infra.instances.first().hostname.hostname.split('.')[0]
+    )
 
+    context['hosts'] = []
+    for host in Host.objects.filter(instances__databaseinfra=database.infra).distinct():
+        context['hosts'].append(host.hostname.split('.')[0])
+
+    credential = get_credentials_for(
+        environment=database.databaseinfra.environment,
+        credential_type=CredentialType.GRAFANA
+    )
+    instance = database.infra.instances.filter(
+        hostname__hostname__contains=context['hostname']
+    ).first()
+
+    context['grafana_url'] = '{}/dashboard/{}?{}={}&{}={}&{}={}'.format(
+        credential.endpoint,
+        credential.project.format(database.engine_type),
+        credential.get_parameter_by_name('db_param'), instance.dns,
+        credential.get_parameter_by_name('os_param'), instance.hostname.hostname,
+        credential.get_parameter_by_name('env_param'),
+        credential.get_parameter_by_name('environment')
+    )
+
+    return render_to_response(
+        "logical/database/details/metrics_tab.html", context
+    )
+
+
+def _disk_resize(request, database):
+    try:
+        check_is_database_enabled(database.id, 'disk resize')
+    except DisabledDatabase as err:
+        messages.add_message(request, messages.ERROR, err.message)
+        return
+
+    disk_offering = DiskOffering.objects.get(
+        id=request.POST.get('disk_offering')
+    )
+
+    current_used = round(database.used_size_in_gb, 2)
+    offering_size = round(disk_offering.available_size_gb(), 2)
+    if current_used >= offering_size:
+        messages.add_message(
+            request, messages.ERROR,
+            'Your database has {} GB, please choose a bigger disk'.format(
+                current_used
+            )
+        )
+        return
+
+    Database.disk_resize(
+        database=database,
+        new_disk_offering=disk_offering.id,
+        user=request.user
+    )
+    return HttpResponseRedirect(user_tasks(request.user))
+
+
+@database_view('resizes/upgrade')
+def database_resizes(request, context, database):
     if request.method == 'POST':
         if 'disk_resize' in request.POST and request.POST.get('disk_offering'):
-            try:
-                check_is_database_enabled(id, 'disk resize')
-            except DisabledDatabase as err:
-                messages.add_message(request, messages.ERROR, err.message)
-            else:
-                Database.disk_resize(
-                    database=database,
-                    new_disk_offering=request.POST.get('disk_offering'),
-                    user=request.user
-                )
-
-                url = reverse('admin:notification_taskhistory_changelist')
-                return HttpResponseRedirect(
-                    "{}?user={}".format(url, request.user.username)
-                )
+            response = _disk_resize(request, database)
+            if response:
+                return response
         elif 'vm_resize' in request.POST and request.POST.get('vm_offering'):
             try:
-                check_is_database_dead(id, 'VM resize')
-                check_is_database_enabled(id, 'VM resize')
+                check_is_database_dead(database.id, 'VM resize')
+                check_is_database_enabled(database.id, 'VM resize')
             except DisabledDatabase as err:
                 messages.add_message(request, messages.ERROR, err.message)
             else:
@@ -162,23 +217,12 @@ def database_resizes(request, id):
                     cloudstackpack=cloudstack_pack,
                     user=request.user,
                 )
-
-                url = reverse('admin:notification_taskhistory_changelist')
-                return HttpResponseRedirect(
-                    "{}?user={}".format(url, request.user.username)
-                )
+                return HttpResponseRedirect(user_tasks(request.user))
 
         else:
             disk_auto_resize = request.POST.get('disk_auto_resize', False)
             database.disk_auto_resize = disk_auto_resize
             database.save()
-
-    context = {
-        'database': database,
-        'title': database.name,
-        'current_tab': 'resizes/upgrade',
-        'user': request.user,
-    }
 
     context['last_vm_resize'] = database.resizes.last()
     context['vm_offerings'] = list(CloudStackPack.objects.filter(
@@ -192,7 +236,12 @@ def database_resizes(request, id):
     else:
         context['vm_offerings'].append(context['current_vm_offering'])
 
-    context['disk_offerings'] = DiskOffering.objects.all()
+    disk_used_size_kb = database.infra.disk_used_size_in_kb
+    if not disk_used_size_kb:
+        disk_used_size_kb = database.used_size_in_kb
+    context['disk_offerings'] = DiskOffering.objects.filter(
+        available_size_kb__gt=disk_used_size_kb
+    )
 
     context['upgrade_mongo_24_to_30'] = \
         database.is_mongodb_24() and \
@@ -212,7 +261,6 @@ def database_resizes(request, id):
 
 
 def _add_read_only_instances(request, database):
-
     if not database.plan.is_ha:
         messages.add_message(request, messages.ERROR, 'Database is not HA')
         return
@@ -231,31 +279,21 @@ def _add_read_only_instances(request, database):
     add_instances_to_database.delay(
         database, request.user, task, int(request.POST['add_read_qtd'])
     )
-    url = reverse('admin:notification_taskhistory_changelist')
-    return HttpResponseRedirect(
-        "{}?user={}".format(url, request.user.username)
-    )
+    return HttpResponseRedirect(user_tasks(request.user))
 
 
-def database_hosts(request, id):
-    database = Database.objects.get(id=id)
-
+@database_view('hosts')
+def database_hosts(request, context, database):
     if request.method == 'POST':
         if 'add_read_only' in request.POST:
             response = _add_read_only_instances(request, database)
             if response:
                 return response
 
-    context = {
-        'database': database,
-        'title': database.name,
-        'current_tab': 'hosts',
-        'user': request.user,
-        'instances_secondary': [],
-        'instances_read_only': [],
-        'instances_no_database': [],
-        'instance_primary': None
-    }
+    context['instances_secondary'] = []
+    context['instances_read_only'] = []
+    context['instances_no_database'] = []
+    context['instance_primary'] = None
 
     driver = database.infra.get_driver()
     for instance in database.infra.instances.all():
@@ -307,69 +345,86 @@ def database_delete_host(request, database_id, instance_id):
     task.save()
 
     remove_readonly_instance.delay(instance, request.user, task)
-    url = reverse('admin:notification_taskhistory_changelist')
-    return HttpResponseRedirect(
-        "{}?user={}".format(url, request.user.username)
-    )
+    return HttpResponseRedirect(user_tasks(request.user))
 
 
 def _clone_database(request, database):
     can_be_cloned, error = database.can_be_cloned()
     if error:
         messages.add_message(request, messages.ERROR, error)
+        return
 
     if 'clone_name' not in request.POST:
         messages.add_message(request, messages.ERROR, 'Destination is required')
-        can_be_cloned = False
+        return
 
     if 'clone_env' not in request.POST:
         messages.add_message(request, messages.ERROR, 'Environment is required')
-        can_be_cloned = False
+        return
 
     if 'clone_plan' not in request.POST:
         messages.add_message(request, messages.ERROR, 'Plan is required')
-        can_be_cloned = False
-
-    if not can_be_cloned:
         return
 
     name = request.POST['clone_name']
     environment = Environment.objects.get(id=request.POST['clone_env'])
     plan = Plan.objects.get(id=request.POST['clone_plan'])
 
+    current = len(database.team.databases_in_use_for(environment))
+    if current >= database.team.database_alocation_limit:
+        messages.add_message(
+            request, messages.ERROR,
+            'The database allocation limit of %s has been exceeded for the '
+            'team: {} => {}'.format(
+                current, database.team.database_alocation_limit
+            )
+        )
+        return
+
+    if name in database.infra.get_driver().RESERVED_DATABASES_NAME:
+        messages.add_message(
+            request, messages.ERROR,
+            '{} is a reserved database name'.format(name)
+        )
+        return
+
+    if len(name) > 40:
+        messages.add_message(request, messages.ERROR, 'Database name too long')
+        return
+
+    if Database.objects.filter(name=name, environment=environment):
+        messages.add_message(
+            request, messages.ERROR,
+            'There is already a database called {} on {}'.format(
+                name, environment
+            )
+        )
+        return
+
     Database.clone(
         database=database, clone_name=name, plan=plan,
         environment=environment, user=request.user
     )
-    url = reverse('admin:notification_taskhistory_changelist')
-    return HttpResponseRedirect(
-        "{}?user={}".format(url, request.user.username)
-    )
+    return HttpResponseRedirect(user_tasks(request.user))
 
 
 def _restore_database(request, database):
     can_be_restored, error = database.can_be_restored()
     if error:
         messages.add_message(request, messages.ERROR, error)
+        return
 
     if 'restore_snapshot' not in request.POST:
         messages.add_message(request, messages.ERROR, 'Snapshot is required')
-        can_be_restored = False
-
-    if not can_be_restored:
         return
 
     snapshot = request.POST.get('restore_snapshot')
     Database.restore(database=database, snapshot=snapshot, user=request.user)
-    url = reverse('admin:notification_taskhistory_changelist')
-    return HttpResponseRedirect(
-        "{}?user={}".format(url, request.user.username)
-    )
+    return HttpResponseRedirect(user_tasks(request.user))
 
 
-def database_backup(request, id):
-    database = Database.objects.get(id=id)
-
+@database_view('backup')
+def database_backup(request, context, database):
     if request.method == 'POST':
         if 'database_clone' in request.POST:
             response = _clone_database(request, database)
@@ -383,14 +438,7 @@ def database_backup(request, id):
             database.backup_path = request.POST['backup_path']
             database.save()
 
-    context = {
-        'database': database,
-        'title': database.name,
-        'current_tab': 'backup',
-        'user': request.user,
-        'snapshots': []
-    }
-
+    context['snapshots'] = []
     for instance in database.infra.instances.all():
         for backup in instance.backup_instance.all():
             context['snapshots'].append(backup)
@@ -400,66 +448,20 @@ def database_backup(request, id):
     context['plans'] = Plan.objects.filter(
         engine=database.engine, is_active=True,
     )
+
     return render_to_response(
         "logical/database/details/backup_tab.html",
         context, RequestContext(request)
     )
 
 
-def database_dns(request, id):
-    database = Database.objects.get(id=id)
+@database_view('dns')
+def database_dns(request, context, database):
+    context['can_remove_extra_dns'] = request.user.has_perm('extra_dns.delete_extradns')
+    context['can_add_extra_dns'] = request.user.has_perm('extra_dns.add_extradns')
 
-    context = {
-        'database': database,
-        'title': database.name,
-        'current_tab': 'dns',
-        'user': request.user,
-        'can_remove_extra_dns': request.user.has_perm('extra_dns.delete_extradns'),
-        'can_add_extra_dns': request.user.has_perm('extra_dns.add_extradns'),
-    }
     return render_to_response(
         "logical/database/details/dns_tab.html", context
-    )
-
-
-def database_metrics(request, id):
-    database = Database.objects.get(id=id)
-
-    context = {
-        'database': database,
-        'title': database.name,
-        'current_tab': 'metrics',
-        'user': request.user,
-        'hosts': [],
-    }
-
-    context['hostname'] = request.GET.get(
-        'hostname',
-        database.infra.instances.first().hostname.hostname.split('.')[0]
-    )
-
-    for host in Host.objects.filter(instances__databaseinfra=database.infra).distinct():
-        context['hosts'].append(host.hostname.split('.')[0])
-
-    credential = get_credentials_for(
-        environment=database.databaseinfra.environment,
-        credential_type=CredentialType.GRAFANA
-    )
-    instance = database.infra.instances.filter(
-        hostname__hostname__contains=context['hostname']
-    ).first()
-
-    context['grafana_url'] = '{}/dashboard/{}?{}={}&{}={}&{}={}'.format(
-        credential.endpoint,
-        credential.project.format(database.engine_type),
-        credential.get_parameter_by_name('db_param'), instance.dns,
-        credential.get_parameter_by_name('os_param'), instance.hostname.hostname,
-        credential.get_parameter_by_name('env_param'),
-        credential.get_parameter_by_name('environment')
-    )
-
-    return render_to_response(
-        "logical/database/details/metrics_tab.html", context
     )
 
 
@@ -467,30 +469,28 @@ def _destroy_databases(request, database):
     can_be_deleted, error = database.can_be_deleted()
     if error:
         messages.add_message(request, messages.ERROR, error)
+        return
 
     if 'database_name' not in request.POST:
         messages.add_message(request, messages.ERROR, 'Database name is required')
-        can_be_deleted = False
+        return
 
     if request.POST['database_name'] != database.name:
         messages.add_message(request, messages.ERROR, 'Database name is not equal')
-        can_be_deleted = False
-
-    if not can_be_deleted:
         return
 
     in_quarantine = database.is_in_quarantine
     database.destroy(request.user)
     if not in_quarantine:
-        return
+        return HttpResponseRedirect(
+            reverse('admin:logical_database_changelist')
+        )
 
-    url = reverse('admin:notification_taskhistory_changelist')
-    return HttpResponseRedirect("{}?user={}".format(url, request.user.username))
+    return HttpResponseRedirect(user_tasks(request.user))
 
 
-def database_destroy(request, id):
-    database = Database.objects.get(id=id)
-
+@database_view('destroy')
+def database_destroy(request, context, database):
     if request.method == 'POST':
         if 'database_destroy' in request.POST:
             response = _destroy_databases(request, database)
@@ -501,12 +501,6 @@ def database_destroy(request, id):
             database.is_in_quarantine = is_in_quarantine
             database.save()
 
-    context = {
-        'database': database,
-        'title': database.name,
-        'current_tab': 'destroy',
-        'user': request.user,
-    }
     return render_to_response(
         "logical/database/details/destroy_tab.html",
         context, RequestContext(request)
