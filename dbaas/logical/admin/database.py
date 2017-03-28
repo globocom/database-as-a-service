@@ -529,15 +529,6 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         url = reverse('admin:notification_taskhistory_changelist')
         return HttpResponseRedirect(url)
 
-    def database_log_view(self, request, database_id):
-
-        database = Database.objects.get(id=database_id)
-        instance = database.infra.instances.all()[0]
-
-        return render_to_response("logical/database/lognit.html",
-                                  locals(),
-                                  context_instance=RequestContext(request))
-
     def initialize_flipperfox_migration(self, request, database_id):
         from flipperfox_migration.models import DatabaseFlipperFoxMigration
 
@@ -730,10 +721,6 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         urls = super(DatabaseAdmin, self).get_urls()
         my_urls = patterns(
             '',
-
-            url(r'^/?(?P<database_id>\d+)/lognit/$',
-                self.admin_site.admin_view(self.database_log_view),
-                name="database_resize"),
 
             url(r'^/?(?P<database_id>\d+)/dex/$',
                 self.admin_site.admin_view(self.database_dex_analyze_view),
