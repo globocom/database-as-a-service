@@ -7,6 +7,7 @@ from dbaas_credentials.models import CredentialType
 from dbaas_cloudstack.models import PlanAttr
 from dbaas_cloudstack.models import HostAttr
 from dbaas_cloudstack.models import LastUsedBundle
+from dbaas_cloudstack.models import LastUsedBundleDatabaseInfra
 from physical.models import Host
 from physical.models import Instance
 from workflow.steps.util.base import BaseStep
@@ -37,7 +38,7 @@ class CreateVirtualMachine(BaseStep):
 
             cs_plan_attrs = PlanAttr.objects.get(
                 plan=workflow_dict['target_plan'])
-            bundles = list(cs_plan_attrs.bundle.all())
+            bundles = list(cs_plan_attrs.bundle.filter(is_active=True))
 
             workflow_dict['target_hosts'] = []
             workflow_dict['target_instances'] = []
@@ -94,6 +95,7 @@ class CreateVirtualMachine(BaseStep):
                 host_attr.vm_user = vm_credentials.user
                 host_attr.vm_password = vm_credentials.password
                 host_attr.host = host
+                host_attr.bundle = bundle
                 host_attr.save()
                 LOG.info("Host attrs custom attributes created!")
 
@@ -119,6 +121,9 @@ class CreateVirtualMachine(BaseStep):
                 databaseinfra.last_vm_created += 1
                 databaseinfra.save()
                 workflow_dict['databaseinfra'] = databaseinfra
+
+                LastUsedBundleDatabaseInfra.set_last_infra_bundle(
+                    databaseinfra=databaseinfra, bundle=host_attr.bundle)
 
             return True
         except Exception:
