@@ -696,6 +696,14 @@ class Instance(BaseModel):
         except Exception, e:
             return False
 
+    @property
+    def is_current_write(self):
+        try:
+            driver = self.databaseinfra.get_driver()
+            return driver.check_instance_is_master(instance=self)
+        except:
+            return False
+
 
 ##########################################################################
 # SIGNALS
