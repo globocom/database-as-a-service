@@ -185,7 +185,7 @@ class CreateVirtualMachine(VmStep):
         host.save()
         return host
 
-    def create_host_attr(self, host, vm_id):
+    def create_host_attr(self, host, vm_id, bundle):
         from dbaas_cloudstack.models import HostAttr
 
         vm_credentials = get_credentials_for(
@@ -196,6 +196,7 @@ class CreateVirtualMachine(VmStep):
         host_attr.host = host
         host_attr.vm_user = vm_credentials.user
         host_attr.vm_password = vm_credentials.password
+        host_attr.bundle = bundle
         host_attr.save()
 
     def create_instance(self, host):
@@ -215,13 +216,13 @@ class CreateVirtualMachine(VmStep):
     def get_next_bundle(self):
         raise NotImplementedError
 
-    def deploy_vm(self):
+    def deploy_vm(self, bundle):
         offering = self.databaseinfra.cs_dbinfra_offering.get().offering
         LOG.info("VM : {}".format(self.instance.vm_name))
 
         vm = self.cs_provider.deploy_virtual_machine(
             offering=offering.serviceofferingid,
-            bundle=self.get_next_bundle(),
+            bundle=bundle,
             project_id=self.cs_credentials.project,
             vmname=self.instance.vm_name,
             affinity_group_id=self.cs_credentials.get_parameter_by_name(
@@ -238,10 +239,11 @@ class CreateVirtualMachine(VmStep):
 
     def do(self):
         LOG.info('Creating virtualmachine {}'.format(self.instance))
-        address, vm_id = self.deploy_vm()
+        bundle = self.get_next_bundle()
+        address, vm_id = self.deploy_vm(bundle=bundle)
 
         host = self.create_host(address=address)
-        self.create_host_attr(host=host, vm_id=vm_id)
+        self.create_host_attr(host=host, vm_id=vm_id, bundle=bundle)
         self.create_instance(host=host)
         self.update_databaseinfra_last_vm_created()
 

@@ -7,6 +7,7 @@ from dbaas_credentials.models import CredentialType
 from dbaas_cloudstack.models import PlanAttr
 from dbaas_cloudstack.models import HostAttr
 from dbaas_cloudstack.models import LastUsedBundle
+from dbaas_cloudstack.models import LastUsedBundleDatabaseInfra
 from dbaas_cloudstack.models import DatabaseInfraOffering
 from django.core.exceptions import ObjectDoesNotExist
 from physical.models import Host
@@ -43,7 +44,7 @@ class CreateVirtualMachine(BaseStep):
             workflow_dict['instances'] = []
             workflow_dict['databaseinfraattr'] = []
             workflow_dict['vms_id'] = []
-            bundles = list(cs_plan_attrs.bundle.all())
+            bundles = list(cs_plan_attrs.bundle.filter(is_active=True))
 
             for index, vm_name in enumerate(workflow_dict['names']['vms']):
 
@@ -55,7 +56,7 @@ class CreateVirtualMachine(BaseStep):
                             plan=workflow_dict['plan'], bundles=bundles)
                     else:
                         bundle = LastUsedBundle.get_next_bundle(
-                            bundle=bundle, bundles=bundles)
+                            current_bundle=bundle, bundles=bundles)
 
                 if index == 2:
                     offering = cs_plan_attrs.get_weaker_offering()
@@ -107,6 +108,7 @@ class CreateVirtualMachine(BaseStep):
                 host_attr.vm_user = vm_credentials.user
                 host_attr.vm_password = vm_credentials.password
                 host_attr.host = host
+                host_attr.bundle = bundle
                 host_attr.save()
                 LOG.info("Host attrs custom attributes created!")
 
@@ -114,6 +116,9 @@ class CreateVirtualMachine(BaseStep):
                 databaseinfra.last_vm_created += 1
                 databaseinfra.save()
                 workflow_dict['databaseinfra'] = databaseinfra
+
+                LastUsedBundleDatabaseInfra.set_last_infra_bundle(
+                    databaseinfra=databaseinfra, bundle=host_attr.bundle)
 
                 if index in (0, 1):
                     instance = Instance()

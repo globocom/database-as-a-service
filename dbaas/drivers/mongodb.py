@@ -85,16 +85,30 @@ class MongoDB(BaseDriver):
         return uri
 
     def get_admin_connection(self,):
-        uri = "mongodb://{user}:{password}@{instances}/admin".format(
-            user=self.databaseinfra.user,
-            password=self.databaseinfra.password,
-            instances=self.__concatenate_instances()
-        )
+        if self.databaseinfra.engine.version >= '3.4.0':
+            uri = "mongodb://{user}:{password}@{instances}/admin".format(
+                user=self.databaseinfra.user,
+                password=self.databaseinfra.password,
+                instances=self.__concatenate_instances()
+            )
 
-        if (len(self.databaseinfra.instances.all()) > 1):
-            repl_name = self.get_replica_name()
-            if repl_name:
-                uri = "%s?replicaSet=%s" % (uri, repl_name)
+            if (len(self.databaseinfra.instances.all()) > 1):
+                repl_name = self.get_replica_name()
+                if repl_name:
+                    uri = "%s?replicaSet=%s" % (uri, repl_name)
+        else:
+            uri = "{instances}".format(instances=self.__concatenate_instances())
+
+            if (len(self.databaseinfra.instances.all()) > 1):
+                repl_name = self.get_replica_name()
+                if repl_name:
+                    uri = "{repl_name}/{uri}".format(
+                        repl_name=repl_name, uri=uri)
+            uri = " {uri} admin -u{user} -p{password}".format(
+                uri=uri,
+                user=self.databaseinfra.user,
+                password=self.databaseinfra.password
+            )
 
         return uri
 
@@ -337,6 +351,16 @@ class MongoDB(BaseDriver):
             return 100000
 
         return seconds_delay
+
+    def get_max_replica_id(self, ):
+        with self.pymongo() as client:
+            replSetGetStatus = client.admin.command('replSetGetStatus')
+            max_id = 0
+            for member in replSetGetStatus['members']:
+                repl_id = member["_id"]
+                if repl_id > max_id:
+                    max_id = repl_id
+            return max_id
 
     def is_replication_ok(self, instance):
         if self.check_instance_is_master(instance=instance):
