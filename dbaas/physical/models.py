@@ -116,6 +116,9 @@ class ReplicationTopology(BaseModel):
         help_text="your.module.name.Class"
     )
     details = models.CharField(max_length=200, null=True, blank=True)
+    has_horizontal_scalability = models.BooleanField(
+        verbose_name="Horizontal Scalability", default=False
+    )
 
 
 class DiskOffering(BaseModel):
