@@ -59,6 +59,7 @@
         },
         filter_engines: function(all_engines) {
             var environment_id = $("#id_environment").val() || "none";
+            var current_engine = $("#id_engine").val() || "none";
             if(environment_id !== "none"){
                 var engine_selector = document.getElementById("id_engine");
                 $.ajax({
@@ -75,7 +76,11 @@
                         for(var i=1; i<=Object.keys(all_engines).length; i++){
                             var text = all_engines[i];
                             if($.inArray(i, engines) !== -1){
-                                options_list.push([text,'<option value="' + i + '">' + text + '</option>']);
+                                if (i == current_engine) {
+                                    options_list.push([text,'<option selected="selected" value="' + i + '">' + text + '</option>']);
+                                } else {
+                                    options_list.push([text,'<option value="' + i + '">' + text + '</option>']);
+                                }
                             }
                         }
                         options_list.sort(function(a,b){return a[0]>b[0];});
@@ -119,14 +124,15 @@
         }
 
         $("#id_environment").on("change", function() {
-            engine_selector.selectedIndex = 0;
-            database.update_components();
             database.update_engines(engines);
+            database.update_components();
         });
+        $("#id_environment").change();
 
         $("#id_engine").on("change", function() {
             database.update_components();
         });
+        $("#id_engine").change();
 
         $("#id_team").on("change", function() {
             var team = document.getElementById('id_team').value;

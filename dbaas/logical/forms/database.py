@@ -17,36 +17,24 @@ LOG = logging.getLogger(__name__)
 
 
 class DatabaseForm(models.ModelForm):
-    plan = AdvancedModelChoiceField(queryset=Plan.objects.filter(is_active='True'),
-                                    required=False, widget=forms.RadioSelect,
-                                    empty_label=None)
-    engine = forms.ModelChoiceField(queryset=Engine.objects)
     environment = forms.ModelChoiceField(queryset=Environment.objects)
+    engine = forms.ModelChoiceField(queryset=Engine.objects)
+    plan = AdvancedModelChoiceField(
+        queryset=Plan.objects.filter(is_active='True'),
+        required=False, widget=forms.RadioSelect,
+        empty_label=None
+    )
 
     class Meta:
         model = Database
-        fields = (
-            'name', 'description', 'subscribe_to_email_events',
-            'project', 'team', 'is_in_quarantine',
-        )
-
-    def remove_fields_not_in_models(self):
-        fields_to_remove = ["plan", "engine", "environment"]
-        for field_name in fields_to_remove:
-            if field_name in self.fields:
-                del self.fields[field_name]
+        fields = [
+            'name', 'description', 'project', 'environment', 'engine', 'team',
+            'subscribe_to_email_events', 'is_in_quarantine', 'plan'
+        ]
 
     def __init__(self, *args, **kwargs):
-
         super(DatabaseForm, self).__init__(*args, **kwargs)
-        instance = kwargs.get('instance')
-        if instance:
-            LOG.debug("instance database form found! %s" % instance)
-            # remove fields not in models
-            self.remove_fields_not_in_models()
-
-        else:
-            self.fields['is_in_quarantine'].widget = forms.HiddenInput()
+        self.fields['is_in_quarantine'].widget = forms.HiddenInput()
 
     def _validate_description(self, cleaned_data):
         if 'description' in cleaned_data:
@@ -95,14 +83,6 @@ class DatabaseForm(models.ModelForm):
     def clean(self):
         cleaned_data = super(DatabaseForm, self).clean()
 
-        # if there is an instance, that means that we are in a edit page and therefore
-        # it should return the default cleaned_data
-        if self.instance and self.instance.id:
-            self._validate_project(cleaned_data)
-            self._validate_description(cleaned_data)
-            self._validate_team(cleaned_data)
-            return cleaned_data
-
         if not self.is_valid():
             raise forms.ValidationError(self.errors)
 
@@ -140,9 +120,6 @@ class DatabaseForm(models.ModelForm):
             return cleaned_data
 
         return cleaned_data
-
-    def save_m2m(self, *args, **kwargs):
-        pass
 
 
 class LogDatabaseForm(forms.Form):
