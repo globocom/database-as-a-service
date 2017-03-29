@@ -261,8 +261,11 @@ def database_resizes(request, context, database):
 
 
 def _add_read_only_instances(request, database):
-    if not database.plan.is_ha:
-        messages.add_message(request, messages.ERROR, 'Database is not HA')
+    if not database.plan.replication_topology.has_horizontal_scalability:
+        messages.add_message(
+            request, messages.ERROR,
+            'Database topology do not have horizontal scalability'
+        )
         return
 
     if 'add_read_qtd' not in request.POST:

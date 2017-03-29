@@ -26,7 +26,7 @@
       {% endfor %}
     </div>
   </div>
-  {% if database.plan.is_ha %}
+  {% if database.plan.replication_topology.has_horizontal_scalability %}
     <div class="panel-heading">
       <h3 class="panel-title">Read-Only</h3>
     </div>
