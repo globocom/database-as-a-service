@@ -838,6 +838,7 @@ def remove_readonly_instance(self, instance, user, task):
         task.update_status_for(TaskHistory.STATUS_ERROR, 'Done')
 
 
+@app.task(bind=True)
 def resize_database(self, database, user, task, cloudstackpack, original_cloudstackpack=None, since_step=0):
     from util.providers import get_cloudstack_pack
 
