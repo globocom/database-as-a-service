@@ -326,11 +326,22 @@ def database_delete_host(request, database_id, instance_id):
     database = Database.objects.get(id=database_id)
     instance = database.infra.instances.get(id=instance_id)
 
+    can_delete = True
+    if not instance.read_only:
+        messages.add_message(
+            request, messages.ERROR,
+            'Host is not read only, cannot be removed.'
+        )
+        can_delete = False
+
     if database.is_beeing_used_elsewhere():
         messages.add_message(
             request, messages.ERROR,
             'Host cannot be deleted because database is in use by another task.'
         )
+        can_delete = False
+
+    if not can_delete:
         return HttpResponseRedirect(
             reverse('admin:logical_database_hosts', kwargs={'id': database.id})
         )
