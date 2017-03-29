@@ -56,7 +56,7 @@ class CreateVirtualMachine(BaseStep):
                             plan=workflow_dict['plan'], bundles=bundles)
                     else:
                         bundle = LastUsedBundle.get_next_bundle(
-                            bundle=bundle, bundles=bundles)
+                            current_bundle=bundle, bundles=bundles)
 
                 if index == 2:
                     offering = cs_plan_attrs.get_weaker_offering()

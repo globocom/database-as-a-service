@@ -60,11 +60,11 @@ class CreateVirtualMachine(BaseStep):
                             plan=workflow_dict['target_plan'], bundles=bundles)
                     else:
                         bundle = LastUsedBundle.get_next_bundle(
-                            bundle=bundle, bundles=bundles)
+                            current_bundle=bundle, bundles=bundles)
 
                     if bundle.networkid == source_network_id:
                         bundle = LastUsedBundle.get_next_bundle(
-                            bundle=bundle, bundles=bundles)
+                            current_bundle=bundle, bundles=bundles)
 
                 LOG.debug(
                     "Deploying new vm on cs with bundle %s and offering %s" % (bundle, offering))

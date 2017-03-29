@@ -57,7 +57,7 @@ class CreateVirtualMachine(BaseStep):
                             plan=workflow_dict['plan'], bundles=bundles)
                     else:
                         bundle = LastUsedBundle.get_next_bundle(
-                            bundle=bundle, bundles=bundles)
+                            current_bundle=bundle, bundles=bundles)
 
                 try:
                     DatabaseInfraOffering.objects.get(
