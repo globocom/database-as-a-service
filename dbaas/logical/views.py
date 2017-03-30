@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 import json
+from collections import OrderedDict
 from django.contrib import messages
 from django.core.exceptions import ValidationError, PermissionDenied
 from django.core.urlresolvers import reverse
@@ -293,31 +294,43 @@ def database_hosts(request, context, database):
             if response:
                 return response
 
-    context['instances_secondary'] = []
-    context['instances_read_only'] = []
-    context['instances_no_database'] = []
-    context['instance_primary'] = None
-
-    driver = database.infra.get_driver()
+    hosts = OrderedDict()
     for instance in database.infra.instances.all():
-        if not instance.is_database:
-            context['instances_no_database'].append(instance)
-            continue
+        if instance.hostname not in hosts:
+            hosts[instance.hostname] = []
+        hosts[instance.hostname].append(instance)
 
-        if not context['instance_primary']:
-            try:
-                driver.check_instance_is_master(instance=instance)
-            except:
-                pass
+    context['instances_core'] = []
+    context['instances_read_only'] = []
+    current_write_found = False
+    for host, instances in hosts.items():
+        attributes = []
+        is_read_only = False
+        status = ''
+        for instance in instances:
+            is_read_only = instance.read_only
+            status = instance.status_html()
+
+            if not instance.is_database:
+                attributes.append(instance.get_instance_type_display())
+            elif not current_write_found and instance.is_current_write:
+                attributes.append(database.engine.write_node_description)
+                current_write_found = True
             else:
-                context['instance_primary'] = instance
-                continue
+                attributes.append(database.engine.read_node_description)
 
-        if instance.read_only:
-            context['instances_read_only'].append(instance)
-            continue
+        full_description = host.hostname
+        if len(hosts) > 1:
+            full_description += ' - ' + '/'.join(attributes)
 
-        context['instances_secondary'].append(instance)
+        host_data = {
+            'id': host.id, 'status': status, 'description': full_description
+        }
+
+        if is_read_only:
+            context['instances_read_only'].append(host_data)
+        else:
+            context['instances_core'].append(host_data)
 
     return render_to_response(
         "logical/database/details/hosts_tab.html", context,
@@ -325,9 +338,9 @@ def database_hosts(request, context, database):
     )
 
 
-def database_delete_host(request, database_id, instance_id):
+def database_delete_host(request, database_id, host_id):
     database = Database.objects.get(id=database_id)
-    instance = database.infra.instances.get(id=instance_id)
+    instance = database.infra.instances.get(hostname_id=host_id)
 
     can_delete = True
     if not instance.read_only:

@@ -14,15 +14,13 @@
 {% block tab %}
 <fieldset class="module aligned ">
   <div class="panel-heading">
-    <h3 class="panel-title">Read-Write</h3>
+    <h3 class="panel-title">Core hosts</h3>
   </div>
   <div class="panel-body">
     <div class="control-group">
-      <div class="control-label">Primary:</div>
-      <div class="controls"><p class="readonly">{{ instance_primary }}</p></div>
-      {% for instance in instances_secondary %}
-        <div class="control-label">Secondary:</div>
-        <div class="controls"><p class="readonly">{{ instance }}</p></div>
+      {% for host in instances_core %}
+          <div class="control-label"><label>{{ host.status }}</label></div>
+        <div class="controls"><p class="readonly">{{ host.description }}</p></div>
       {% endfor %}
     </div>
   </div>
@@ -32,12 +30,13 @@
     </div>
     {% if instances_read_only %}
       <div class="panel-body">
-        {% for instance in instances_read_only %}
-          <div class="control-label">{{ instance.get_instance_type_display }}:</div>
+        {% for host in instances_read_only %}
+          <div class="control-label"><label>{{ host.status }}</label></div>
           <div class="controls">
-            {{ instance }}
-            <a class="action_button btn btn-danger" href="{{ instance.id }}/delete/" onclick="return confirm('Are you sure?')"><i class="icon-trash icon-white"></i></a>
-
+            <p>
+              {{ host.description }}
+              <a class="action_button btn btn-danger" href="{{ host.id }}/delete/" onclick="return confirm('Are you sure?')"><i class="icon-trash icon-white"></i></a>
+            </p>
           </div>
         {% endfor %}
       </div>
