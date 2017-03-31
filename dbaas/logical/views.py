@@ -240,9 +240,11 @@ def database_resizes(request, context, database):
     disk_used_size_kb = database.infra.disk_used_size_in_kb
     if not disk_used_size_kb:
         disk_used_size_kb = database.used_size_in_kb
-    context['disk_offerings'] = DiskOffering.objects.filter(
-        available_size_kb__gt=disk_used_size_kb
+    context['disk_offerings'] = list(
+        DiskOffering.objects.filter(available_size_kb__gt=disk_used_size_kb)
     )
+    if database.infra.disk_offering not in context['disk_offerings']:
+        context['disk_offerings'].insert(0, database.infra.disk_offering)
 
     context['upgrade_mongo_24_to_30'] = \
         database.is_mongodb_24() and \
