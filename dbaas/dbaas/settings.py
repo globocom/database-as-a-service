@@ -505,14 +505,6 @@ USER_ROLES = (
 )
 
 # CloudStack IaaS Integration credentials
-CLOUD_STACK_ENABLED = os.getenv('CLOUD_STACK_ENABLED', '0')
-if CLOUD_STACK_ENABLED == "1":
-    CLOUD_STACK_ENABLED = True
-else:
-    CLOUD_STACK_ENABLED = False
+CLOUD_STACK_ENABLED = os.getenv('CLOUD_STACK_ENABLED', '0') == '1'
 
-NFSAAS_ENABLED = os.getenv('CLOUD_STACK_ENABLED', '0')
-if NFSAAS_ENABLED == "1":
-    NFSAAS_ENABLED = True
-else:
-    NFSAAS_ENABLED = False
+NFSAAS_ENABLED = os.getenv('CLOUD_STACK_ENABLED', '0') == '1'

@@ -19,9 +19,9 @@ from .snapshot import SnapshotAPI
 
 
 router = DefaultRouter()
-# physical
 urlpatterns = []
 
+# physical
 router.register(r'environment', EnvironmentAPI)
 router.register(r'plan', PlanAPI)
 router.register(r'engine', EngineAPI)
