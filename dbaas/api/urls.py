@@ -2,7 +2,7 @@
 #from django.conf.urls import patterns, url, include
 from rest_framework.routers import DefaultRouter
 from django.http import HttpResponseRedirect
-from django.conf.urls import patterns, url
+from django.conf.urls import patterns, url, include
 
 
 # class MyRouter(DefaultRouter):
@@ -12,8 +12,9 @@ from django.conf.urls import patterns, url
 # HttpResponseRedirect('https://github.com/globocom/database-as-a-service/wiki/Introduction-to-the-API')
 
 router = DefaultRouter()
-
 # physical
+urlpatterns = []
+
 
 from .environment import EnvironmentAPI
 router.register(r'environment', EnvironmentAPI)
@@ -52,6 +53,9 @@ if settings.CLOUD_STACK_ENABLED:
     router.register(r'integration_credential',
                     IntegrationCredentialAPI, base_name="integration_credential")
 
+    from dbaas_cloudstack.api import urls as cloudstack_api_urls
+    urlpatterns += patterns('', url(r'^', include(cloudstack_api_urls)))
+
 # account
 from .team import TeamAPI
 router.register(r'team', TeamAPI)
@@ -62,8 +66,8 @@ router.register(r'user', UserAPI)
 from .snapshot import SnapshotAPI
 router.register(r'snapshot', SnapshotAPI)
 
+urlpatterns += router.urls
 
-urlpatterns = router.urls
 
 #from .task import TaskDetail
 #urlpatterns += patterns( url('^task/(?P<task_id>.+)/$', TaskDetail.as_view()), )
