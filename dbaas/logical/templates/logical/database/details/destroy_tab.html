@@ -1,19 +1,44 @@
 {% extends "logical/database/details/base.html" %}
 
+
+{% block extrastyle %}
+  {{ block.super }}
+  <style type="text/css">
+    .action_button {
+        margin-left: 20px
+    }
+  </style>
+{% endblock %}
+
+
 {% block tab %}
 <fieldset class="module aligned ">
+  {% if database.is_in_quarantine %}
+    <div class="control-group">
+      <div class="control-label"><label>Quarantine since:</label></div>
+      <div class="controls">
+        <p class="readonly">
+          {{ database.quarantine_dt }}
+          {% if is_dba %}
+            <input class="action_button btn btn-primary" type="submit" value="Undo quarantine" name="undo_quarantine" id="id_undo_quarantine" onclick="return confirm('Are you sure?')"/>
+          {% endif %}
+        </p>
+      </div>
+    </div>
+  {% endif %}
   <div class="control-group">
-    <div class="control-label"><label>Quarantine:</label></div>
+    <div class="control-label"></div>
     <div class="controls">
-      <label class="checkbox">
-        <input {% if database.is_in_quarantine %} checked="checked" {% endif %} id="id_is_in_quarantine" name="is_in_quarantine" type="checkbox"/>
-      </label>
     </div>
   </div>
   <div class="control-group">
     <div class="control-label"></div>
     <div class="controls">
-      <button class="resize_button btn btn-danger" data-toggle="modal" data-target="#delete_modal">Delete Database</button>
+      {% if not database.is_in_quarantine and is_dba %}
+      <button class="btn btn-danger" data-toggle="modal" data-target="#delete_modal">Put in quarantine</button>
+      {% else %}
+      <button class="btn btn-danger" data-toggle="modal" data-target="#delete_modal">Delete Database</button>
+      {% endif %}
     </div>
   </div>
 </fieldset>
@@ -54,13 +79,14 @@
 {% endblock %}
 
 
+{% block database_button_save %}
+{% endblock %}
+
+
 {% block js_footer %}
 {{ block.super }}
 
 <script>
-  function status_btn(btn_id, current_value, selected_value) {
-  }
-
   jQuery(document).ready(function($) {
     $("#id_database_name").keyup(function() {
       btn = document.getElementById('id_destroy_btn')
