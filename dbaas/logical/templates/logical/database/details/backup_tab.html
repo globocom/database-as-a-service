@@ -83,7 +83,6 @@
       </div>
     </div>
   </div>
-
   <div class="panel-heading">
     <h3 class="panel-title">Config</h3>
   </div>
@@ -91,12 +90,23 @@
     <div class="control-group">
       <div class="control-label"><label>Backup path:</label></div>
       <div class="controls">
-        <input class="vTextField span8" id="id_backup_path" maxlength="300" name="backup_path" type="text" {% if database.backup_path %} value="{{ database.backup_path }}" {% endif %}/>
-        <p class="help-block">Full path to backup file</p>
+        {% if is_dba %}
+          <input class="vTextField span8" id="id_backup_path" maxlength="300" name="backup_path" type="text" {% if database.backup_path %} value="{{ database.backup_path }}" {% endif %}/>
+          <p class="help-block">Full path to backup file. e.g: Staging path</p>
+        {% else %}
+          <p class="readonly">{{ database.backup_path }}</p>
+        {% endif %}
       </div>
     </div>
   </div>
 </fieldset>
+{% endblock %}
+
+
+{% block database_button_save %}
+{% if is_dba %}
+{{ block.super }}
+{% endif %}
 {% endblock %}
 
 {% block js_footer %}
