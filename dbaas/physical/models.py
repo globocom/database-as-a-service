@@ -7,6 +7,7 @@ from django.dispatch import receiver
 from django.core.exceptions import ValidationError
 from django.core.cache import cache
 from django.db import models, transaction
+from django.utils.html import format_html
 from django.utils.translation import ugettext_lazy as _
 from django_extensions.db.fields.encrypted import EncryptedCharField
 from util.models import BaseModel
@@ -78,6 +79,14 @@ class Engine(BaseModel):
         verbose_name=_("Engine version upgrade"), on_delete=models.SET_NULL
     )
     has_users = models.BooleanField(default=True)
+    write_node_description = models.CharField(
+        verbose_name=_("Write name"), blank=True, null=True, default='',
+        help_text="Ex: Master or Primary", max_length=100,
+    )
+    read_node_description = models.CharField(
+        verbose_name=_("Read name"), blank=True, null=True, default='',
+        help_text="Ex: Slave or Secondary", max_length=100,
+    )
 
     class Meta:
         unique_together = (
@@ -116,6 +125,9 @@ class ReplicationTopology(BaseModel):
         help_text="your.module.name.Class"
     )
     details = models.CharField(max_length=200, null=True, blank=True)
+    has_horizontal_scalability = models.BooleanField(
+        verbose_name="Horizontal Scalability", default=False
+    )
 
 
 class DiskOffering(BaseModel):
@@ -692,6 +704,28 @@ class Instance(BaseModel):
             return status
         except Exception, e:
             return False
+
+    @property
+    def is_current_write(self):
+        try:
+            driver = self.databaseinfra.get_driver()
+            return driver.check_instance_is_master(instance=self)
+        except:
+            return False
+
+    def status_html(self):
+        html_default = '<span class="label label-{}">{}</span>'
+
+        if self.status == self.DEAD:
+            status = html_default.format("important", "Dead")
+        elif self.status == self.ALIVE:
+            status = html_default.format("success", "Alive")
+        elif self.status == self.INITIALIZING:
+            status = html_default.format("warning", "Initializing")
+        else:
+            status = html_default.format("info", "N/A")
+
+        return format_html(status)
 
 
 ##########################################################################

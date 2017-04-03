@@ -772,7 +772,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 name="logical_database_hosts"
             ),
             url(
-                r'^/?(?P<database_id>\d+)/hosts/(?P<instance_id>\d+)/delete/$',
+                r'^/?(?P<database_id>\d+)/hosts/(?P<host_id>\d+)/delete/$',
                 self.admin_site.admin_view(database_delete_host),
                 name="logical_database_host_delete"
             ),

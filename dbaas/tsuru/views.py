@@ -481,10 +481,7 @@ def get_plans_dict(hard_plans):
 
 
 def get_url_env(request):
-    env = request._request.path.split('/')[1]
-    if env == 'prod':
-        env = 'prod-cm'
-    return env
+    return request._request.path.split('/')[1]
 
 
 def log_and_response(msg, http_status, e="Conditional Error."):
