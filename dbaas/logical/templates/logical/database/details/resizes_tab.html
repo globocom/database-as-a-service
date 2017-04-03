@@ -31,7 +31,7 @@
               </option>
             {% endfor %}
           </select>
-          <input type="submit" value="Resize" name="vm_resize" id="vm_resize_btn" onclick="return confirm('Are you sure?')"/>
+          <button data-toggle="modal" id="vm_resize_btn" data-target="#resize_vm">Resize</button>
         {% endif %}
     </div>
   </div>
@@ -98,7 +98,52 @@
     </div>
   </div>
 </fieldset>
+
+<!-- Modal -->
+<div class="modal fade" id="resize_vm" tabindex="-1" role="dialog" aria-labelledby="resize vm" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <h4 class="modal-title">Resize VM</h4>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="modal-body">
+        <div role="form">
+          <div class="form-group">
+            <label>
+              {% if database.infra.engine.is_redis %}
+                After resizing a Redis instance, you may need to resize your disk offering, please check it.
+                <br><br>
+              {% endif %}
+
+              {% if database.infra.plan.is_ha %}
+                The resize process will switch hosts, and it may cause connections errors during the process.
+              {% else %}
+                The resize process will stop the database and, consequently, it will be unavailable until the the end of the process.
+              {% endif %}
+
+              <br><br>
+              Please type <u><b>yes</b></u> to confirm:
+            </label>
+            <input class="vTextField" id="id_resize_vm_yes" maxlength="300" name="resize_vm_yes" type="text"/>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+        <input type="submit" value="Resize" name="vm_resize" id="id_resize_vm_btn_modal" onclick="return confirm('Are you sure?')"/>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}
+
 
 {% block js_footer %}
 {{ block.super }}
@@ -124,6 +169,17 @@
       status_resize("vm_resize_btn", '{{ current_vm_offering.serviceofferingid }}', $(this).val())
     });
     $("#id_vm_offering").change()
+
+    $("#id_resize_vm_yes").on("change", function() {
+      btn = document.getElementById("id_resize_vm_btn_modal");
+      btn.disabled = $(this).val() != "yes";
+      if (btn.disabled) {
+        btn.className = 'btn';
+      } else {
+        btn.className = 'btn btn-primary';
+      }
+    });
+    $("#id_resize_vm_yes").change()
 
   })
 </script>
