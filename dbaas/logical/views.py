@@ -284,7 +284,10 @@ def _add_read_only_instances(request, database):
     task.save()
 
     add_instances_to_database.delay(
-        database, request.user, task, int(request.POST['add_read_qtd'])
+        database=database,
+        user=request.user,
+        task=task,
+        number_of_instances=int(request.POST['add_read_qtd'])
     )
     return HttpResponseRedirect(user_tasks(request.user))
 

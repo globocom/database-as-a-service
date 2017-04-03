@@ -158,3 +158,23 @@ class ArgumentsToBindAddress(ArgumentsTo):
     @property
     def database_name(self):
         return self.args['database_bind'].database.name
+
+
+class ArgumentsToAddInstancesToDatabase(ArgumentsTo):
+    KEY = 'notification.tasks.add_instances_to_database'
+
+    def build(self):
+        return [
+            "Add new instances on {}".format(self.get_database_arg()),
+            "Number of instances: {}".format(self.args['number_of_instances'])
+        ]
+
+
+class ArgumentsToRemoveReadOnlyInstance(ArgumentsTo):
+    KEY = 'notification.tasks.remove_readonly_instance'
+
+    def build(self):
+        return [
+            "Removing read only instance from {}".format(self.get_database_arg()),
+            "Instance: {}".format(self.args['instance'])
+        ]
