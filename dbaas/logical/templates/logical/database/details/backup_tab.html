@@ -21,22 +21,10 @@
           </select>
         </div>
       </div>
-      {% if database.last_successful_upgrade %}
-        <div class="control-group" id="restore_with_upgrade_div">
-          <div class="control-label"></div>
-          <div class="controls">
-            <p id="snapshot_date_msg"></p>
-            <label class="checkbox">
-              <input id="restore_with_upgrade" type="checkbox"/>
-              <label for="restore_with_upgrade">I want to restore it anyway</label>
-            </label>
-          </div>
-        </div>
-      {% endif %}
       <div class="control-group">
         <div class="control-label"></div>
         <div class="controls">
-          <input type="submit" value="Restore" name="database_restore" id="id_restore_btn" onclick="return validated();"/>
+          <button data-toggle="modal" id="id_restore_btn" data-target="#restore_snapshot">Restore</button>
         </div>
       </div>
     </div>
@@ -100,6 +88,47 @@
     </div>
   </div>
 </fieldset>
+
+<!-- Modal -->
+<div class="modal fade" id="restore_snapshot" tabindex="-1" role="dialog" aria-labelledby="restore snapshot" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <h4 class="modal-title">Restore snapshot</h4>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="modal-body">
+        <div role="form">
+          <div class="form-group">
+            <label for="id_restore_yes">
+              <u><b>All</b></u> data from current database will be erased!
+            </label>
+            {% if database.last_successful_upgrade %}
+            <div id="restore_with_upgrade_div">
+              <label id="snapshot_date_msg"></label>
+            </div>
+            {% endif %}
+            <label for="id_restore_yes">
+              <br>
+              Please type <u><b>yes</b></u> to confirm:
+            </label>
+            <input class="vTextField" id="id_restore_yes" maxlength="300" name="restore_yes" type="text"/>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default"data-dismiss="modal">Cancel</button>
+        <input type="submit" value="Restore" name="database_restore" id="id_restore_btn_modal" onclick="return validated();"/>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}
 
 
@@ -181,6 +210,17 @@
     });
     $("#id_restore_snapshot").change()
 
+    $("#id_restore_yes").on("change", function() {
+      btn = document.getElementById("id_restore_btn_modal");
+      btn.disabled = $(this).val() != "yes";
+      if (btn.disabled) {
+        btn.className = 'btn';
+      } else {
+        btn.className = 'btn btn-primary';
+      }
+    });
+    $("#id_restore_yes").change()
+
   })
 </script>
 
@@ -189,23 +229,12 @@
 <script src="{% static "js/moment.min.js" %}"></script>
 <script>
   jQuery('#restore_with_upgrade_div').hide();
-  jQuery('#database_restore').show();
 
   var upgrade_date = new Date("{{ database.last_successful_upgrade.finished_at.isoformat }}");
   var snapshot_select = document.getElementById("id_restore_snapshot");
   var snapshot_date_msg = document.getElementById("snapshot_date_msg");
 
-  var checkbox_confirm = document.getElementById("restore_with_upgrade");
-  checkbox_confirm.checked = true;
-
   function validated() {
-    if (!checkbox_confirm.checked) {
-      warning_msg = snapshot_date_msg.innerHTML
-      warning_msg = warning_msg.replace("<br>", "\n");
-      warning_msg = warning_msg.replace(/<[^>]*>/g, "")
-      alert(warning_msg + '\n\nPlease check the checkbox');
-      return false;
-    }
     return confirm('Are you sure?');
   }
 
@@ -215,7 +244,6 @@
 
   snapshot_select.onchange = function() {
     jQuery('#restore_with_upgrade_div').hide()
-    checkbox_confirm.checked = true;
 
     var snapshot_id = snapshot_select.value;
     if (snapshot_id) {
@@ -229,7 +257,6 @@
           if (upgrade_date >= snapshot_date) {
             snapshot_date_msg.innerHTML = "This database version was upgraded from {{ database.last_successful_upgrade.source_plan.engine.version }} to {{ database.last_successful_upgrade.target_plan.engine.version }} on " + formatted_date_time(upgrade_date) + "<br>You are trying to restore a snapshot from " + formatted_date_time(snapshot_date) + " and it may be <i>incompatible</i>";
             jQuery('#restore_with_upgrade_div').show();
-            checkbox_confirm.checked = false;
           }
         }
       }).fail(function() {
