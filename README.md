@@ -51,7 +51,7 @@ Create the tables structure (see the next item)
 ## DB
 
 DBaaS uses south to maintain the migrations up-to-date. However, you can
-just run syncdb to create the table structures. There is a shortcut to help you with that, including 
+just run syncdb to create the table structures. There is a shortcut to help you with that, including
 some minimum operational data on DB.
 
     make reset_data
@@ -62,14 +62,14 @@ Before running the test, makes sure that you have mongod running and a user admi
 
     db = db.getSiblingDB('admin')
 
-    db.addUser( { user: "admin",
+    db.createUser( { user: "admin",
                   pwd: "123456",
                   roles: [ "userAdminAnyDatabase", "clusterAdmin", "readWriteAnyDatabase", "dbAdminAnyDatabase" ] } )
 
 Then install all the required packages
 
     make pip
-    
+
 Run it!
 
     make test
@@ -83,7 +83,7 @@ In your browser open the URL: http://localhost:8000/admin/
 ### Running celery
 
 To run celery locally use the following command
-    
+
     cd {APP DIR}
     make run_celery
 
