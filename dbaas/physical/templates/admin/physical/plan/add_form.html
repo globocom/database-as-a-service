@@ -16,6 +16,7 @@
 {% block footer %}
     {% setting 'CLOUD_STACK_ENABLED' as cloudstack_enable %}
     <script>
+        // TODO: put this javascript on a file and remove global vars
         {% if cloudstack_enable %}
             var BUNDLES_API_URL = "{% url 'bundles_by_engine' '' %}"
         {% endif %}
