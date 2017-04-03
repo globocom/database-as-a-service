@@ -85,8 +85,10 @@ def database_view(tab):
             context = {
                 'database': database,
                 'current_tab': tab,
-                'user': request.user
+                'user': request.user,
+                'is_dba': request.user.team_set.filter(role__name="role_dba")
             }
+
             return func(request, context, database)
         return func_wrapper
     return database_decorator
@@ -240,9 +242,11 @@ def database_resizes(request, context, database):
     disk_used_size_kb = database.infra.disk_used_size_in_kb
     if not disk_used_size_kb:
         disk_used_size_kb = database.used_size_in_kb
-    context['disk_offerings'] = DiskOffering.objects.filter(
-        available_size_kb__gt=disk_used_size_kb
+    context['disk_offerings'] = list(
+        DiskOffering.objects.filter(available_size_kb__gt=disk_used_size_kb)
     )
+    if database.infra.disk_offering not in context['disk_offerings']:
+        context['disk_offerings'].insert(0, database.infra.disk_offering)
 
     context['upgrade_mongo_24_to_30'] = \
         database.is_mongodb_24() and \
@@ -253,7 +257,6 @@ def database_resizes(request, context, database):
     context['last_upgrade'] = database.upgrades.filter(
         source_plan=database.infra.plan
     ).last()
-    context['is_dba'] = request.user.team_set.filter(role__name="role_dba")
 
     return render_to_response(
         "logical/database/details/resizes_tab.html",
@@ -523,9 +526,8 @@ def database_destroy(request, context, database):
             response = _destroy_databases(request, database)
             if response:
                 return response
-        else:
-            is_in_quarantine = request.POST.get('is_in_quarantine', False)
-            database.is_in_quarantine = is_in_quarantine
+        if 'undo_quarantine' in request.POST and database.is_in_quarantine:
+            database.is_in_quarantine = False
             database.save()
 
     return render_to_response(

@@ -14,7 +14,9 @@ class PlanStep(BaseInstanceStep):
         self.host_cs = HostAttr.objects.get(host=self.host)
 
         try:
-            self.host_nfs = HostAttrNfsaas.objects.get(host=self.host)
+            self.host_nfs = HostAttrNfsaas.objects.get(
+                host=self.host, is_active=True
+            )
         except HostAttrNfsaas.DoesNotExist:
             self.host_nfs = None
 

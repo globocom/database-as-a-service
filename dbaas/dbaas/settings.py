@@ -415,7 +415,7 @@ else:
 
 LOGGING = {
     'version': 1,
-    'disable_existing_loggers': True,
+    'disable_existing_loggers': False,
     'formatters': {
         'simple': {
             'format': '%(asctime)-23s %(levelname)-7s %(name)s \t %(message)s'
