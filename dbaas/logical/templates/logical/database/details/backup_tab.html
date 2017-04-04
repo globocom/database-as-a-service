@@ -124,7 +124,7 @@
 
       <div class="modal-footer">
         <button type="button" class="btn btn-default"data-dismiss="modal">Cancel</button>
-        <input type="submit" value="Restore" name="database_restore" id="id_restore_btn_modal" onclick="return validated();"/>
+        <input type="submit" value="Restore" name="database_restore" id="id_restore_btn_modal"/>
       </div>
     </div>
   </div>
@@ -234,10 +234,6 @@
   var snapshot_select = document.getElementById("id_restore_snapshot");
   var snapshot_date_msg = document.getElementById("snapshot_date_msg");
 
-  function validated() {
-    return confirm('Are you sure?');
-  }
-
   function formatted_date_time(date) {
     return moment(date).format('D/MM/YYYY') + ' at ' + moment(date).format('hh:mm:ss');
   };
@@ -255,7 +251,7 @@
         } else {
           snapshot_date = new Date(data.start_at);
           if (upgrade_date >= snapshot_date) {
-            snapshot_date_msg.innerHTML = "This database version was upgraded from {{ database.last_successful_upgrade.source_plan.engine.version }} to {{ database.last_successful_upgrade.target_plan.engine.version }} on " + formatted_date_time(upgrade_date) + "<br>You are trying to restore a snapshot from " + formatted_date_time(snapshot_date) + " and it may be <i>incompatible</i>";
+            snapshot_date_msg.innerHTML = "This database version was upgraded from {{ database.last_successful_upgrade.source_plan.engine.version }} to {{ database.last_successful_upgrade.target_plan.engine.version }} on " + formatted_date_time(upgrade_date) + "<br>You are trying to restore a snapshot from " + formatted_date_time(snapshot_date) + " and it may be <u><b>incompatible</b></u>";
             jQuery('#restore_with_upgrade_div').show();
           }
         }
@@ -265,12 +261,6 @@
     }
   };
   snapshot_select.onchange();
-</script>
-{% else %}
-<script>
-  function validated() {
-    return confirm('Are you sure?');
-  }
 </script>
 {% endif %}
 
