@@ -1,15 +1,25 @@
 {% extends "admin/change_form.html" %}
-{% load i18n admin_static admin_modify %}
+{% load i18n admin_static admin_modify settings_tags %}
 
 
 {% block extrahead %}
     {{ block.super }}
     <script type="text/javascript" src="{% static 'js/plan_admin.js' %}"></script>
+    <style>
+        #id_cs_plan_attributes-0-bundle .hidden {
+            display: hidden;
+        }
+    </style>
 {% endblock %}
 
 
 {% block footer %}
+    {% setting 'CLOUD_STACK_ENABLED' as cloudstack_enable %}
     <script>
+        // TODO: put this javascript on a file and remove global vars
+        {% if cloudstack_enable %}
+            var BUNDLES_API_URL = "{% url 'bundles_by_engine' '' %}"
+        {% endif %}
         function is_engine_in_memory(current) {
             engines = {}
 
@@ -37,9 +47,50 @@
             return engines[engine_select];
         }
 
+        function doAjax(url, callback) {
+            var xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status == 200) {
+                    callback(this.responseText);
+                } else {
+                    return '[]'
+                }
+            };
+            xhttp.open("GET", url, true);
+            xhttp.send();
+        }
+
         document.getElementById('id_engine').onchange = function() {
             engine_select = document.getElementById('id_engine')
             current_engine = engine_select.options[engine_select.selectedIndex].text;
+            current_engine_id = engine_select.options[engine_select.selectedIndex].value;
+
+            {% if cloudstack_enable %}
+                if (current_engine_id) {
+                    doAjax(BUNDLES_API_URL + current_engine_id, function(bundlesJson) {
+                        var bundles = JSON.parse(bundlesJson),
+                            bundle,
+                            opt,
+                            bundleIdsFromApi = [],
+                            bundleSelect = document.getElementById('id_cs_plan_attributes-0-bundle'),
+                            bundleOptions = bundleSelect.options,
+                            bundleOption;
+
+                        for (bundlePos in bundles) {
+                            bundle = bundles[bundlePos];
+                            bundleIdsFromApi.push(bundle.id);
+                        }
+                        for (var i=0; i<bundleOptions.length; i++) {
+                            bundleOption = bundleOptions[i];
+                            if ( bundleIdsFromApi.indexOf(parseInt(bundleOption.value, 10)) === -1 && !(bundleOption.selected) ) {
+                                bundleOption.setAttribute("class", "hidden");
+                            } else {
+                                bundleOption.removeAttribute("class");
+                            }
+                        }
+                    });
+                }
+            {% endif %}
 
             var topology_select = document.getElementById('id_replication_topology');
             value = topology_select.value;
@@ -52,6 +103,8 @@
             topology_select.appendChild(opt);
 
             topologies = get_current_topologies(current_engine);
+            // TODO: Refactor this for, he access many time the DOM.
+            //  Change to document fragment
             for (topology in topologies) {
                 if ('id' in topologies[topology]) {
                     var opt = document.createElement('option');

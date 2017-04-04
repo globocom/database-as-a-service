@@ -95,31 +95,46 @@ class BaseTopology(object):
         }]
 
     def get_add_database_instances_first_steps(self):
-        raise NotImplementedError()
+        return (
+            'workflow.steps.util.vm.CreateVirtualMachineHorizontalElasticity',
+            'workflow.steps.util.horizontal_elasticity.dns.CreateDNS',
+            'workflow.steps.util.vm.WaitingBeReady',
+            'workflow.steps.util.vm.UpdateOSDescription',
+            'workflow.steps.util.horizontal_elasticity.disk.CreateExport',
+        )
 
     def get_add_database_instances_last_steps(self):
-        raise NotImplementedError()
+        return (
+            'workflow.steps.util.acl.ReplicateAcls2NewInstance',
+            'workflow.steps.util.acl.BindNewInstance',
+            'workflow.steps.util.zabbix.CreateAlarms',
+            'workflow.steps.util.db_monitor.CreateMonitoring',
+        )
+
+    def get_add_database_instances_middle_steps(self):
+        #raise NotImplementedError()
+        return ()
+
+    def get_add_database_instances_steps_description(self):
+        return "Add instances"
+
+    def get_remove_readonly_instance_steps_description(self):
+        return "Remove instance"
 
     def get_add_database_instances_steps(self):
         return [{
-            "Add instances":
+            self.get_add_database_instances_steps_description():
             self.get_add_database_instances_first_steps() +
-            (
-            ) +
+            self.get_add_database_instances_middle_steps() +
             self.get_add_database_instances_last_steps()
         }]
 
-    def get_remove_readonly_instance_steps_first_steps(self):
-        raise NotImplementedError()
-
-    def get_remove_readonly_instance_steps_last_steps(self):
-        raise NotImplementedError()
-
     def get_remove_readonly_instance_steps(self):
         return [{
-            "Remove instance":
-            self.get_remove_readonly_instance_steps_first_steps() +
-            (
-            ) +
-            self.get_remove_readonly_instance_steps_last_steps()
+            self.get_remove_readonly_instance_steps_description():
+            list(reversed(
+                self.get_add_database_instances_first_steps() +
+                self.get_add_database_instances_middle_steps() +
+                self.get_add_database_instances_last_steps()
+            ))
         }]

@@ -767,7 +767,6 @@ def add_instances_to_database(self, database, user, task, number_of_instances=1)
     from util import get_vm_name
 
     worker_name = get_worker_name()
-    self.request.kwargs['database'] = database
     task = TaskHistory.register(self.request, user, task, worker_name)
 
     infra = database.infra
@@ -814,6 +813,7 @@ def remove_readonly_instance(self, instance, user, task):
     database = infra.databases.last()
 
     self.request.kwargs['database'] = database
+    self.request.kwargs['instance'] = instance
     worker_name = get_worker_name()
     task = TaskHistory.register(self.request, user, task, worker_name)
 

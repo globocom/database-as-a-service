@@ -86,3 +86,13 @@ class TestMongoDBReplicaset(AbstractBaseMondodbTestCase):
                 'workflow.steps.mongodb.upgrade.database.SetFeatureCompatibilityVersion34',
             ),
         }] + super(TestMongoDBReplicaset, self)._get_upgrade_steps_final()
+
+    def _get_add_database_instances_middle_settings(self):
+        return (
+            'workflow.steps.util.plan.InitializationMongoHA',
+            'workflow.steps.util.plan.ConfigureMongoHA',
+            'workflow.steps.util.pack.Configure',
+            'workflow.steps.mongodb.horizontal_elasticity.database.CreateDataDir',
+            'workflow.steps.util.database.Start',
+            'workflow.steps.mongodb.horizontal_elasticity.database.AddInstanceToReplicaSet',
+        )
