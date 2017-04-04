@@ -103,6 +103,8 @@
             topology_select.appendChild(opt);
 
             topologies = get_current_topologies(current_engine);
+            // TODO: Refactor this for, he access many time the DOM.
+            //  Change to document fragment
             for (topology in topologies) {
                 if ('id' in topologies[topology]) {
                     var opt = document.createElement('option');
