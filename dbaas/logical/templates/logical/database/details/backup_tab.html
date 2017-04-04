@@ -1,6 +1,15 @@
 {% extends "logical/database/details/base.html" %}
 {% load admin_static %}
 
+{% block extrastyle %}
+  {{ block.super }}
+  <style type="text/css">
+    .bold_red {
+      color: red;
+    }
+  </style>
+{% endblock %}
+
 {% block tab %}
 <fieldset class="module aligned ">
   {% if snapshots %}
@@ -105,14 +114,15 @@
       <div class="modal-body">
         <div role="form">
           <div class="form-group">
-            <label for="id_restore_yes">
-              <u><b>All</b></u> data from current database will be erased!
-            </label>
             {% if database.last_successful_upgrade %}
             <div id="restore_with_upgrade_div">
               <label id="snapshot_date_msg"></label>
+              <br>
             </div>
             {% endif %}
+            <label for="id_restore_yes">
+              <b class="bold_red">All</b> data from current database will be erased!
+            </label>
             <label for="id_restore_yes">
               <br>
               Please type <u><b>yes</b></u> to confirm:
@@ -251,7 +261,7 @@
         } else {
           snapshot_date = new Date(data.start_at);
           if (upgrade_date >= snapshot_date) {
-            snapshot_date_msg.innerHTML = "This database version was upgraded from {{ database.last_successful_upgrade.source_plan.engine.version }} to {{ database.last_successful_upgrade.target_plan.engine.version }} on " + formatted_date_time(upgrade_date) + "<br>You are trying to restore a snapshot from " + formatted_date_time(snapshot_date) + " and it may be <u><b>incompatible</b></u>";
+            snapshot_date_msg.innerHTML = "ATTENTION: This database version was upgraded from {{ database.last_successful_upgrade.source_plan.engine.version }} to {{ database.last_successful_upgrade.target_plan.engine.version }} on " + formatted_date_time(upgrade_date) + " and you are trying to restore a snapshot from " + formatted_date_time(snapshot_date) + ", it may be <b class='bold_red'>incompatible</b>";
             jQuery('#restore_with_upgrade_div').show();
           }
         }
