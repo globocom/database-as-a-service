@@ -80,7 +80,7 @@
       <div class="controls">
         {% if is_dba %}
           <input class="vTextField span8" id="id_backup_path" maxlength="300" name="backup_path" type="text" {% if database.backup_path %} value="{{ database.backup_path }}" {% endif %}/>
-          <p class="help-block">Full path to backup file. e.g: Staging path</p>
+          <p class="help-block">Full path to backup file. (e.g: Staging path)</p>
         {% else %}
           <p class="readonly">{{ database.backup_path }}</p>
         {% endif %}
