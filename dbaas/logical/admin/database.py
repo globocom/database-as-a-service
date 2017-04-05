@@ -18,12 +18,6 @@ from django.conf.urls import patterns, url
 from django.contrib import messages
 from django.utils.html import format_html, escape
 from django.forms.models import modelform_factory
-from django.db import router
-from django.utils.encoding import force_text
-from django.core.exceptions import PermissionDenied
-from django.contrib.admin.util import get_deleted_objects, model_ngettext
-from django.contrib.admin import helpers
-from django.template.response import TemplateResponse
 from django.core.exceptions import FieldError
 from dbaas import constants
 from account.models import Team
@@ -61,8 +55,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         "environment__name", "databaseinfra__engine__engine_type__name"
     )
     list_display_basic = [
-        "name_html", "team_admin_page", "engine_html", "environment", "offering_html",
-        "friendly_status", "clone_html", "get_capacity_html", "metrics_html",
+        "name_html", "team_admin_page", "engine_html", "environment",
+        "offering_html", "friendly_status", "get_capacity_html",
         "created_dt_format"
     ]
     list_display_advanced = list_display_basic + ["quarantine_dt_format"]
@@ -84,6 +78,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         }
         ),
     )
+    actions = None
 
     def quarantine_dt_format(self, database):
         return database.quarantine_dt or ""
@@ -112,20 +107,6 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
     friendly_status.short_description = "Status"
 
-    def clone_html(self, database):
-        html = []
-
-        can_be_cloned, _ = database.can_be_cloned(database_view_button=True)
-        if not can_be_cloned:
-            html.append("N/A")
-        else:
-            html.append("<a class='btn btn-info' href='%s'><i class='icon-file icon-white'></i></a>" % reverse(
-                'admin:logical_database_backup', args=(database.id,)))
-
-        return format_html("".join(html))
-
-    clone_html.short_description = "Clone"
-
     def team_admin_page(self, database):
         team_name = database.team.name
         if self.list_filter == self.list_filter_advanced:
@@ -136,18 +117,6 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         return team_name
 
     team_admin_page.short_description = "Team"
-
-    def metrics_html(self, database):
-        html = []
-        if database.databaseinfra.plan.is_pre_provisioned:
-            html.append("N/A")
-        else:
-            html.append("<a class='btn btn-info' href='%s'><i class='icon-list-alt icon-white'></i></a>" % reverse(
-                'admin:logical_database_metrics', args=(database.id,)))
-
-        return format_html("".join(html))
-
-    metrics_html.short_description = "Metrics"
 
     def description_html(self, database):
 
@@ -804,85 +773,3 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         )
 
         return my_urls + urls
-
-    def delete_selected(self, request, queryset):
-        opts = self.model._meta
-        app_label = opts.app_label
-
-        # Check that the user has delete permission for the actual model
-        if not self.has_delete_permission(request):
-            raise PermissionDenied
-
-        using = router.db_for_write(self.model)
-
-        # Populate deletable_objects, a data structure of all related objects that
-        # will also be deleted.
-        deletable_objects, perms_needed, protected = get_deleted_objects(
-            queryset, opts, request.user, self.admin_site, using)
-
-        # The user has already confirmed the deletion.
-        # Do the deletion and return a None to display the change list view
-        # again.
-        if request.POST.get('post'):
-            if perms_needed:
-                raise PermissionDenied
-
-            quarantine = any(
-                result['is_in_quarantine'] is True for result in queryset.values('is_in_quarantine')
-            )
-
-            successful = 0
-            for obj in queryset:
-                obj_display = force_text(obj)
-                self.log_deletion(request, obj, obj_display)
-
-                # remove the object
-                remove = self.delete_model(request, obj)
-                if not isinstance(remove, HttpResponseRedirect):
-                    successful += 1
-
-            if successful:
-                self.message_user(
-                    request, "Successfully deleted {} of {} {}.".format(
-                        successful, len(queryset),
-                        model_ngettext(self.opts, len(queryset))
-                    )
-                )
-
-            # Return None to display the change list page again.
-            if quarantine:
-                url = reverse('admin:notification_taskhistory_changelist')
-                return HttpResponseRedirect(url + "?user=%s" % request.user.username)
-
-            return None
-
-        if len(queryset) == 1:
-            objects_name = force_text(opts.verbose_name)
-        else:
-            objects_name = force_text(opts.verbose_name_plural)
-
-        if perms_needed or protected:
-            title = _("Cannot delete %(name)s") % {"name": objects_name}
-        else:
-            title = _("Are you sure?")
-
-        context = {
-            "title": title,
-            "objects_name": objects_name,
-            "deletable_objects": [deletable_objects],
-            'queryset': queryset,
-            "perms_lacking": perms_needed,
-            "protected": protected,
-            "opts": opts,
-            "app_label": app_label,
-            'action_checkbox_name': helpers.ACTION_CHECKBOX_NAME,
-        }
-
-        # Display the confirmation page
-
-        return TemplateResponse(request, self.delete_selected_confirmation_template or [
-            "admin/%s/%s/delete_selected_confirmation.html" % (
-                app_label, opts.object_name.lower()),
-            "admin/%s/delete_selected_confirmation.html" % app_label,
-            "admin/delete_selected_confirmation.html"
-        ], context, current_app=self.admin_site.name)

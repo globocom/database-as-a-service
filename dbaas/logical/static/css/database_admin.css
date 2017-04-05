@@ -30,26 +30,21 @@
     width: 15%;
 }*/
 
-/* plan */
-#result_list td:nth-child(5) {
-    width: 8%;
-}
-
-/* Status */
+/* status */
 #result_list td:nth-child(6) {
-    width: 10%;
-}
-
-#result_list td:nth-child(7) {
-    width: 7%;
-}
-
-#result_list td:nth-child(8) {
     width: 5%;
 }
 
-#result_list td:nth-child(9) {
+#result_list td:nth-child(7) {
     width: 15%;
+}
+
+#result_list td:nth-child(8) {
+    width: 10%;
+}
+
+#result_list td:nth-child(9) {
+    width: 10%;
 }
 
 .change-list.database .popover {
