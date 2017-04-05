@@ -473,7 +473,7 @@ def database_backup(request, context, database):
 
     context['snapshots'] = []
     for instance in database.infra.instances.all():
-        for backup in instance.backup_instance.all():
+        for backup in instance.backup_instance.filter(purge_at=None):
             context['snapshots'].append(backup)
     context['snapshots'] = reversed(context['snapshots'])
 
