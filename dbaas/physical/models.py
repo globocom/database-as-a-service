@@ -7,6 +7,7 @@ from django.dispatch import receiver
 from django.core.exceptions import ValidationError
 from django.core.cache import cache
 from django.db import models, transaction
+from django.utils.html import format_html
 from django.utils.translation import ugettext_lazy as _
 from django_extensions.db.fields.encrypted import EncryptedCharField
 from util.models import BaseModel
@@ -54,29 +55,38 @@ class EngineType(BaseModel):
 
 
 class Engine(BaseModel):
-
-    engine_type = models.ForeignKey(EngineType, verbose_name=_(
-        "Engine types"), related_name="engines", on_delete=models.PROTECT)
+    engine_type = models.ForeignKey(
+        EngineType, verbose_name=_("Engine types"), related_name="engines",
+        on_delete=models.PROTECT
+    )
     version = models.CharField(
-        verbose_name=_("Engine version"), max_length=100,)
-    path = models.CharField(verbose_name=_("Engine path"),
-                            max_length=255,
-                            blank=True,
-                            null=True,
-                            help_text=_("Path to look for the engine's executable file."))
-    template_name = models.CharField(verbose_name=_("Template Name"),
-                                     max_length=200,
-                                     blank=True,
-                                     null=True,
-                                     help_text="Template name registered in your provision system")
-    user_data_script = models.TextField(verbose_name=_("User data script"),
-                                        blank=True,
-                                        null=True,
-                                        help_text="Script that will be sent as an user-data to provision the virtual machine")
-    engine_upgrade_option = models.ForeignKey("Engine", null=True, blank=True,
-                                              verbose_name=_("Engine version upgrade"),
-                                              on_delete=models.SET_NULL,
-                                              related_name='backwards_engine')
+        verbose_name=_("Engine version"), max_length=100,
+    )
+    path = models.CharField(
+        verbose_name=_("Engine path"), max_length=255, blank=True, null=True,
+        help_text=_("Path to look for the engine's executable file.")
+    )
+    template_name = models.CharField(
+        verbose_name=_("Template Name"), max_length=200, blank=True, null=True,
+        help_text="Template name registered in your provision system"
+    )
+    user_data_script = models.TextField(
+        verbose_name=_("User data script"), blank=True, null=True,
+        help_text="Script that will be sent as an user-data to provision the virtual machine"
+    )
+    engine_upgrade_option = models.ForeignKey(
+        "Engine", null=True, blank=True, related_name='backwards_engine',
+        verbose_name=_("Engine version upgrade"), on_delete=models.SET_NULL
+    )
+    has_users = models.BooleanField(default=True)
+    write_node_description = models.CharField(
+        verbose_name=_("Write name"), blank=True, null=True, default='',
+        help_text="Ex: Master or Primary", max_length=100,
+    )
+    read_node_description = models.CharField(
+        verbose_name=_("Read name"), blank=True, null=True, default='',
+        help_text="Ex: Slave or Secondary", max_length=100,
+    )
 
     class Meta:
         unique_together = (
@@ -115,6 +125,9 @@ class ReplicationTopology(BaseModel):
         help_text="your.module.name.Class"
     )
     details = models.CharField(max_length=200, null=True, blank=True)
+    has_horizontal_scalability = models.BooleanField(
+        verbose_name="Horizontal Scalability", default=False
+    )
 
 
 class DiskOffering(BaseModel):
@@ -369,6 +382,22 @@ class DatabaseInfra(BaseModel):
         verbose_name=_("Database Key"), max_length=255, blank=True, null=True,
         help_text=_("Databases like MongoDB use a key file to replica set"),
     )
+    name_prefix = models.CharField(
+        verbose_name=_("DatabaseInfra Name Prefix"),
+        max_length=10,
+        blank=True,
+        null=True,
+        help_text=_("The prefix used on databaseinfra name."))
+    name_stamp = models.CharField(
+        verbose_name=_("DatabaseInfra Name Stamp"),
+        max_length=20,
+        blank=True,
+        null=True,
+        help_text=_("The stamp used on databaseinfra name sufix."))
+    last_vm_created = models.IntegerField(
+        verbose_name=_("Last VM created"),
+        blank=True, null=True,
+        help_text=_("Number of the last VM created."))
 
     def __unicode__(self):
         return self.name
@@ -503,6 +532,22 @@ class DatabaseInfra(BaseModel):
         self.database_key = self.get_driver().database_key
         self.save()
 
+    def update_name_prefix_and_stamp(self):
+        instance = self.instances.all()[0]
+        hostname = instance.hostname.hostname
+        prefix = hostname.split('-')[0]
+        stamp = hostname.split('-')[2].split('.')[0]
+        self.name_prefix = prefix
+        self.name_stamp = stamp
+        self.save()
+
+    def update_last_vm_created(self):
+        hosts = []
+        for instance in self.instances.all():
+            hosts.append(instance.hostname.hostname)
+        self.last_vm_created = len(set(hosts))
+        self.save()
+
 
 class Host(BaseModel):
     hostname = models.CharField(
@@ -591,6 +636,8 @@ class Instance(BaseModel):
     instance_type = models.IntegerField(choices=DATABASE_TYPE, default=0)
     future_instance = models.ForeignKey(
         "Instance", null=True, blank=True, on_delete=models.SET_NULL)
+    read_only = models.BooleanField(
+        verbose_name=_("Is instance read only"), default=False)
 
     class Meta:
         unique_together = (
@@ -657,6 +704,28 @@ class Instance(BaseModel):
             return status
         except Exception, e:
             return False
+
+    @property
+    def is_current_write(self):
+        try:
+            driver = self.databaseinfra.get_driver()
+            return driver.check_instance_is_master(instance=self)
+        except:
+            return False
+
+    def status_html(self):
+        html_default = '<span class="label label-{}">{}</span>'
+
+        if self.status == self.DEAD:
+            status = html_default.format("important", "Dead")
+        elif self.status == self.ALIVE:
+            status = html_default.format("success", "Alive")
+        elif self.status == self.INITIALIZING:
+            status = html_default.format("warning", "Initializing")
+        else:
+            status = html_default.format("info", "N/A")
+
+        return format_html(status)
 
 
 ##########################################################################

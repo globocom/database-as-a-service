@@ -234,7 +234,9 @@ def make_databases_backup(self):
                 task_history.update_details(persist=True, details=waiting_msg)
                 time.sleep(300)
 
-        instances = Instance.objects.filter(databaseinfra=databaseinfra)
+        instances = Instance.objects.filter(
+            databaseinfra=databaseinfra, read_only=False
+        )
         for instance in instances:
             try:
                 if not instance.databaseinfra.get_driver().check_instance_is_eligible_for_backup(instance):

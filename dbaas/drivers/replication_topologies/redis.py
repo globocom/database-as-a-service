@@ -30,8 +30,8 @@ class BaseRedis(BaseTopology):
 
     def get_upgrade_steps_extra(self):
         return (
-            'workflow.steps.redis.upgrade.plan.InitializationRedis',
-            'workflow.steps.redis.upgrade.plan.ConfigureRedis',
+            'workflow.steps.util.plan.InitializationRedisForUpgrade',
+            'workflow.steps.util.plan.ConfigureRedisForUpgrade',
             'workflow.steps.redis.upgrade.pack.ConfigureRedis',
         )
 
@@ -40,6 +40,11 @@ class BaseRedis(BaseTopology):
             'workflow.steps.util.infra.Memory',
         )
 
+    def add_database_instances_first_steps(self):
+        return ()
+
+    def add_database_instances_last_steps(self):
+        return ()
 
 
 class RedisSingle(BaseRedis):

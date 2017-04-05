@@ -7,6 +7,7 @@ from dbaas_credentials.models import CredentialType
 from dbaas_cloudstack.models import PlanAttr
 from dbaas_cloudstack.models import HostAttr
 from dbaas_cloudstack.models import LastUsedBundle
+from dbaas_cloudstack.models import LastUsedBundleDatabaseInfra
 from dbaas_cloudstack.models import DatabaseInfraOffering
 from django.core.exceptions import ObjectDoesNotExist
 from physical.models import Host
@@ -43,7 +44,7 @@ class CreateVirtualMachine(BaseStep):
             workflow_dict['instances'] = []
             workflow_dict['databaseinfraattr'] = []
             workflow_dict['vms_id'] = []
-            bundles = list(cs_plan_attrs.bundle.all())
+            bundles = list(cs_plan_attrs.bundle.filter(is_active=True))
 
             if len(bundles) == 1:
                 bundle = bundles[0]
@@ -99,6 +100,7 @@ class CreateVirtualMachine(BaseStep):
                 host_attr.vm_user = vm_credentials.user
                 host_attr.vm_password = vm_credentials.password
                 host_attr.host = host
+                host_attr.bundle = bundle
                 host_attr.save()
                 LOG.info("Host attrs custom attributes created!")
 
@@ -112,6 +114,14 @@ class CreateVirtualMachine(BaseStep):
                 LOG.info("Instance created!")
 
                 workflow_dict['instances'].append(instance)
+
+                databaseinfra = workflow_dict['databaseinfra']
+                databaseinfra.last_vm_created += 1
+                databaseinfra.save()
+                workflow_dict['databaseinfra'] = databaseinfra
+
+                LastUsedBundleDatabaseInfra.set_last_infra_bundle(
+                    databaseinfra=databaseinfra, bundle=host_attr.bundle)
 
                 if workflow_dict['qt'] == 1:
 

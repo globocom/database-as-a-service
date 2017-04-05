@@ -13,3 +13,5 @@ test-report.xml
 dbaas/whoosh_index/*
 .env
 dump.rdb
+.cache/
+.ropeproject/

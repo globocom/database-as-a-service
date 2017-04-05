@@ -46,8 +46,6 @@
                                     <li class="label label-inverse">{{ infra.environment.name }}</li>
                                 {% elif infra.environment.name == 'prod' %}
                                     <li class="label label-primary">{{ infra.environment.name }}</li>
-                                {% elif infra.environment.name == 'prod-cm' %}
-                                    <li class="label label-primary">{{ infra.environment.name }}</li>
                                 {% endif %}
                             </td>
                             <td>{{ infra.plan.name }}</td>

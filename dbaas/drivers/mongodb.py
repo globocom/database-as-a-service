@@ -54,17 +54,17 @@ class MongoDB(BaseDriver):
 
     def __concatenate_instances(self):
         return ",".join(["%s:%s" % (instance.address, instance.port)
-                         for instance in self.databaseinfra.instances.filter(instance_type=Instance.MONGODB, is_active=True).all()])
+                         for instance in self.databaseinfra.instances.filter(instance_type=Instance.MONGODB, is_active=True, read_only=False).all()])
 
     def __concatenate_instances_dns(self):
         return ",".join(
             ["%s:%s" % (instance.dns, instance.port)
-                for instance in self.databaseinfra.instances.filter(instance_type=Instance.MONGODB, is_active=True).all() if not instance.dns.startswith('10.')]
+                for instance in self.databaseinfra.instances.filter(instance_type=Instance.MONGODB, is_active=True, read_only=False).all() if not instance.dns.startswith('10.')]
         )
 
     def __concatenate_instances_dns_only(self):
         return ",".join(["%s" % (instance.dns)
-                         for instance in self.databaseinfra.instances.filter(instance_type=Instance.MONGODB, is_active=True).all() if not instance.dns.startswith('10.')])
+                         for instance in self.databaseinfra.instances.filter(instance_type=Instance.MONGODB, is_active=True, read_only=False).all() if not instance.dns.startswith('10.')])
 
     def get_dns_port(self):
         port = self.databaseinfra.instances.filter(
@@ -81,6 +81,34 @@ class MongoDB(BaseDriver):
             repl_name = self.get_replica_name()
             if repl_name:
                 uri = "%s?replicaSet=%s" % (uri, repl_name)
+
+        return uri
+
+    def get_admin_connection(self,):
+        if self.databaseinfra.engine.version >= '3.4.0':
+            uri = "mongodb://{user}:{password}@{instances}/admin".format(
+                user=self.databaseinfra.user,
+                password=self.databaseinfra.password,
+                instances=self.__concatenate_instances()
+            )
+
+            if (len(self.databaseinfra.instances.all()) > 1):
+                repl_name = self.get_replica_name()
+                if repl_name:
+                    uri = "%s?replicaSet=%s" % (uri, repl_name)
+        else:
+            uri = "{instances}".format(instances=self.__concatenate_instances())
+
+            if (len(self.databaseinfra.instances.all()) > 1):
+                repl_name = self.get_replica_name()
+                if repl_name:
+                    uri = "{repl_name}/{uri}".format(
+                        repl_name=repl_name, uri=uri)
+            uri = " {uri} admin -u{user} -p{password}".format(
+                uri=uri,
+                user=self.databaseinfra.user,
+                password=self.databaseinfra.password
+            )
 
         return uri
 
@@ -324,6 +352,16 @@ class MongoDB(BaseDriver):
 
         return seconds_delay
 
+    def get_max_replica_id(self, ):
+        with self.pymongo() as client:
+            replSetGetStatus = client.admin.command('replSetGetStatus')
+            max_id = 0
+            for member in replSetGetStatus['members']:
+                repl_id = member["_id"]
+                if repl_id > max_id:
+                    max_id = repl_id
+            return max_id
+
     def is_replication_ok(self, instance):
         if self.check_instance_is_master(instance=instance):
             return True
@@ -351,6 +389,12 @@ class MongoDB(BaseDriver):
 
     def get_database_agents(self):
         return []
+
+    def get_default_database_port(self):
+        return 27017
+
+    def get_default_instance_type(self):
+        return Instance.MONGODB
 
     @property
     def database_key(self):

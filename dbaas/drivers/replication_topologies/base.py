@@ -65,7 +65,7 @@ class BaseTopology(object):
             self.get_upgrade_steps_description(): (
                 'workflow.steps.util.vm.ChangeMaster',
                 'workflow.steps.util.zabbix.DestroyAlarms',
-                'workflow.steps.util.upgrade.db_monitor.DisableMonitoring',
+                'workflow.steps.util.db_monitor.DisableMonitoring',
                 'workflow.steps.util.database.Stop',
                 'workflow.steps.util.database.CheckIsDown',
                 'workflow.steps.util.vm.Stop',
@@ -81,15 +81,60 @@ class BaseTopology(object):
 
     def get_upgrade_steps_extra(self):
         return (
-            'workflow.steps.util.upgrade.plan.Initialization',
-            'workflow.steps.util.upgrade.plan.Configure',
+            'workflow.steps.util.plan.InitializationForUpgrade',
+            'workflow.steps.util.plan.ConfigureForUpgrade',
             'workflow.steps.util.pack.Configure',
         )
 
     def get_upgrade_steps_final(self):
         return [{
             self.get_upgrade_steps_final_description(): (
-                'workflow.steps.util.upgrade.db_monitor.EnableMonitoring',
-                'workflow.steps.util.zabbix.CreateAlarms',
+                'workflow.steps.util.db_monitor.EnableMonitoring',
+                'workflow.steps.util.zabbix.CreateAlarmsForUpgrade',
             ),
+        }]
+
+    def get_add_database_instances_first_steps(self):
+        return (
+            'workflow.steps.util.vm.CreateVirtualMachineHorizontalElasticity',
+            'workflow.steps.util.horizontal_elasticity.dns.CreateDNS',
+            'workflow.steps.util.vm.WaitingBeReady',
+            'workflow.steps.util.vm.UpdateOSDescription',
+            'workflow.steps.util.horizontal_elasticity.disk.CreateExport',
+        )
+
+    def get_add_database_instances_last_steps(self):
+        return (
+            'workflow.steps.util.acl.ReplicateAcls2NewInstance',
+            'workflow.steps.util.acl.BindNewInstance',
+            'workflow.steps.util.zabbix.CreateAlarms',
+            'workflow.steps.util.db_monitor.CreateMonitoring',
+        )
+
+    def get_add_database_instances_middle_steps(self):
+        #raise NotImplementedError()
+        return ()
+
+    def get_add_database_instances_steps_description(self):
+        return "Add instances"
+
+    def get_remove_readonly_instance_steps_description(self):
+        return "Remove instance"
+
+    def get_add_database_instances_steps(self):
+        return [{
+            self.get_add_database_instances_steps_description():
+            self.get_add_database_instances_first_steps() +
+            self.get_add_database_instances_middle_steps() +
+            self.get_add_database_instances_last_steps()
+        }]
+
+    def get_remove_readonly_instance_steps(self):
+        return [{
+            self.get_remove_readonly_instance_steps_description():
+            list(reversed(
+                self.get_add_database_instances_first_steps() +
+                self.get_add_database_instances_middle_steps() +
+                self.get_add_database_instances_last_steps()
+            ))
         }]
