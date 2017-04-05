@@ -21,6 +21,7 @@ from util import get_credentials_for
 from notification.models import TaskHistory
 from notification.tasks import add_instances_to_database, \
     remove_readonly_instance
+from system.models import Configuration
 from .errors import DisabledDatabase
 from .forms.database import DatabaseDetailsForm
 from .models import Credential, Database, Project
@@ -276,6 +277,19 @@ def _add_read_only_instances(request, database):
         messages.add_message(request, messages.ERROR, 'Quantity is required')
         return
 
+    max_read_hosts = Configuration.get_by_name_as_int('max_read_hosts', 5)
+    qtd_new_hosts = int(request.POST['add_read_qtd'])
+    current_read_nodes = len(database.infra.instances.filter(read_only=True))
+    total_read_hosts = qtd_new_hosts + current_read_nodes
+    if total_read_hosts > max_read_hosts:
+        messages.add_message(
+            request, messages.ERROR,
+            'Current limit of read only hosts is {} and you are trying to setup {}'.format(
+                max_read_hosts, total_read_hosts
+            )
+        )
+        return
+
     task = TaskHistory()
     task.task_name = "add_database_instances"
     task.task_status = TaskHistory.STATUS_WAITING
@@ -287,7 +301,7 @@ def _add_read_only_instances(request, database):
         database=database,
         user=request.user,
         task=task,
-        number_of_instances=int(request.POST['add_read_qtd'])
+        number_of_instances=qtd_new_hosts
     )
     return HttpResponseRedirect(user_tasks(request.user))
 
@@ -337,6 +351,10 @@ def database_hosts(request, context, database):
             context['instances_read_only'].append(host_data)
         else:
             context['instances_core'].append(host_data)
+
+    max_read_hosts = Configuration.get_by_name_as_int('max_read_hosts', 5)
+    enable_host = max_read_hosts - len(context['instances_read_only'])
+    context['enable_host'] = range(1, enable_host+1)
 
     return render_to_response(
         "logical/database/details/hosts_tab.html", context,

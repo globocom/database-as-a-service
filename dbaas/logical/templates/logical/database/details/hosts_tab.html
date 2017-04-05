@@ -54,20 +54,20 @@
       </div>
     {% endif %}
 
-    <div class="control-group">
-      <div class="control-label">New instances:</div>
-      <div class="controls">
-        <select class="span1" id="id_add_read_qtd" name="add_read_qtd">
-          <option></option>
-          <option value="1">1</option>
-          <option value="2">2</option>
-          <option value="3">3</option>
-          <option value="4">4</option>
-          <option value="5">5</option>
-        </select>
-        <input type="submit" value="Add" name="add_read_only" id="add_read_only_btn" onclick="return confirm('Are you sure?')"/>
-      </div>
-     </div>
+    {% if enable_host %}
+      <div class="control-group">
+        <div class="control-label">New instances:</div>
+        <div class="controls">
+          <select class="span1" id="id_add_read_qtd" name="add_read_qtd">
+            <option></option>
+            {% for add in enable_host %}
+              <option value="{{ add }}">{{ add }}</option>
+            {% endfor %}
+          </select>
+          <input type="submit" value="Add" name="add_read_only" id="add_read_only_btn" onclick="return confirm('Are you sure?')"/>
+        </div>
+       </div>
+    {% endif %}
   {% endif %}
 
   {% if instances_no_database %}
