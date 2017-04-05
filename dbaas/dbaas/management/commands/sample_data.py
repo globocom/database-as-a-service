@@ -15,7 +15,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         # engine was created by initial_data.yml
         my_engine = Engine.objects.get(
-            version='2.4.5', engine_type__name='mongodb')
+            version='2.4.10', engine_type__name='mongodb')
 
         my_host = factory.HostFactory(hostname='localhost')
         my_env = factory.EnvironmentFactory(name='laboratory')

@@ -1,0 +1,87 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_static %}
+
+{% block title %}
+  {{ database.name }}
+{% endblock %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <link rel="stylesheet" type="text/css" href="{% static 'css/database_admin.css' %}" />
+  <style type="text/css">
+    .readonly {
+        padding-top: 5px
+    }
+
+    .title_tag {
+      vertical-align: middle;
+    }
+  </style>
+{% endblock %}
+
+{% block content_title %}
+  <h1>
+    Database: {{ database.name }}
+    {% if database.is_in_quarantine %}
+      <span class="label label-warning title_tag">In quarantine</span>
+    {% endif %}
+  </h1>
+{% endblock %}
+
+{% block content %}
+  <div>
+    {% block tabs %}
+      <ul class="nav nav-tabs">
+        <li role="presentation" {% if current_tab == 'details' %} class="active" {% endif %}><a href="{% url 'admin:logical_database_details' database.id %}">Details</a></li>
+        <li role="presentation" {% if current_tab == 'credentials' %} class="active" {% endif %}><a href="{% url 'admin:logical_database_credentials' database.id %}">Credentials</a></li>
+        <li role="presentation" {% if current_tab == 'metrics' %} class="active" {% endif %}><a href="{% url 'admin:logical_database_metrics' database.id %}">Metrics</a></li>
+        <li role="presentation" {% if current_tab == 'resizes/upgrade' %} class="active" {% endif %}><a href="{% url 'admin:logical_database_resizes' database.id %}">Resizes/Upgrade</a></li>
+        <li role="presentation" {% if current_tab == 'hosts' %} class="active" {% endif %}><a href="{% url 'admin:logical_database_hosts' database.id %}">Hosts</a></li>
+        <li role="presentation" {% if current_tab == 'backup' %} class="active" {% endif %}><a href="{% url 'admin:logical_database_backup' database.id %}">Backup</a></li>
+        <li role="presentation" {% if current_tab == 'dns' %} class="active" {% endif %}><a href="{% url 'admin:logical_database_dns' database.id %}">DNS</a></li>
+        <li role="presentation" {% if current_tab == 'destroy' %} class="active" {% endif %}><a href="{% url 'admin:logical_database_destroy' database.id %}">Destroy</a></li>
+      </ul>
+    {% endblock %}
+  </div>
+
+  <div class="content-main">
+    <form enctype="multipart/form-data" action="" method="post" id="database_form" class="form-horizontal well">
+      {% csrf_token %}
+      {% block tab %}
+      {% endblock %}
+      {% block database_button_save %}
+      <div class="form-actions navbar navbar-fixed-bottom">
+        <div class="container">
+          <div class="pull-left save-options-box">
+            <input type="submit" value="Save" name="_save" onclick=&quot;submitOrderForm();&quot; class="btn btn-primary"/>
+          </div>
+        </div>
+      </div>
+      {% endblock %}
+    </form>
+  </div>
+{% endblock %}
+
+{% block breadcrumbs %}
+  <ul class="breadcrumb">
+    <li>
+      <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+      <span class="divider">/</span>
+    </li>
+    <li>
+      <a href="/admin/logical/">{% trans 'Logical' %}</a>
+      <span class="divider">/</span>
+    </li>
+    <li>
+      <a href="/admin/logical/database/">{% trans 'Databases' %}</a>
+      <span class="divider">/</span>
+    </li>
+    <li class="active">{{ database.name }}</li>
+  </ul>
+{% endblock %}
+
+{% block js_footer_commons %}
+  {{ block.super }}
+  <script src="{% static "admin/js/jquery.js" %}">
+  <script type="text/javascript" src="{% static "admin/js/bootstrap.min.js" %}"></script>
+{% endblock %}

@@ -17,6 +17,7 @@ from . import DatabaseDoesNotExist
 from . import CredentialAlreadyExists
 from util import make_db_random_password
 from system.models import Configuration
+from physical.models import Instance
 from util import exec_remote_command
 from util import build_context_script
 
@@ -326,3 +327,9 @@ class MySQL(BaseDriver):
 
     def get_database_agents(self):
         return self.replication_topology_driver.get_database_agents()
+
+    def get_default_database_port(self):
+        return 3306
+
+    def get_default_instance_type(self):
+        return Instance.MySQL

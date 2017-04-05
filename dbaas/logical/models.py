@@ -10,6 +10,7 @@ from django.db.models.signals import pre_save, post_save, pre_delete
 from django.dispatch import receiver
 from django_extensions.db.fields.encrypted import EncryptedCharField
 from django.utils.functional import cached_property
+from django.utils.html import format_html
 from util import slugify, make_db_random_password
 from util.models import BaseModel
 from physical.models import DatabaseInfra, Environment
@@ -381,6 +382,24 @@ class Database(BaseModel):
         )
 
     @classmethod
+    def restore(cls, database, snapshot, user):
+        from notification.models import TaskHistory
+
+        task_history = TaskHistory()
+        task_history.task_name = "restore_snapshot"
+        task_history.task_status = task_history.STATUS_WAITING
+        task_history.arguments = "Restoring {} to an older version.".format(
+            database.name
+        )
+        task_history.user = user
+        task_history.save()
+
+        Database.recover_snapshot(
+            database=database, snapshot=snapshot, user=user,
+            task_history=task_history.id
+        )
+
+    @classmethod
     def resize(cls, database, cloudstackpack, user):
         from notification.tasks import resize_database
         from notification.models import TaskHistory
@@ -414,20 +433,11 @@ class Database(BaseModel):
     def get_metrics_url(self):
         return "/admin/logical/database/{}/metrics/".format(self.id)
 
-    def get_resize_url(self):
-        return "/admin/logical/database/{}/resize/".format(self.id)
-
     def get_resize_retry_url(self):
         return "/admin/logical/database/{}/resize_retry/".format(self.id)
 
     def get_disk_resize_url(self):
         return "/admin/logical/database/{}/disk_resize/".format(self.id)
-
-    def get_lognit_url(self):
-        return "/admin/logical/database/{}/lognit/".format(self.id)
-
-    def get_restore_url(self):
-        return "/admin/logical/database/{}/restore/".format(self.id)
 
     def get_mongodb_engine_version_upgrade_url(self):
         return "/admin/logical/database/{}/mongodb_engine_version_upgrade/".format(self.id)
@@ -591,6 +601,24 @@ class Database(BaseModel):
 
         return True, None
 
+    def can_be_restored(self):
+        if not self.restore_allowed():
+            return False, 'Restore is not allowed. Please, contact DBaaS team for more information'
+
+        if self.is_in_quarantine:
+            return False, "Database in quarantine cannot be restored"
+
+        if self.status != self.ALIVE or self.is_dead:
+            return False, "Database is not alive and cannot be restored"
+
+        if self.is_beeing_used_elsewhere():
+            return False, "Database is being used by another task, please check your tasks"
+
+        if self.has_flipperfox_migration_started():
+            return False, "Database cannot be restored because it is being migrated"
+
+        return True, None
+
     def can_be_deleted(self):
         error = None
         if self.is_protected and not self.is_in_quarantine:
@@ -682,6 +710,21 @@ class Database(BaseModel):
     def last_successful_upgrade(self):
         from maintenance.models import DatabaseUpgrade
         return self.upgrades.filter(status=DatabaseUpgrade.SUCCESS).last()
+
+    @property
+    def status_html(self):
+        html_default = '<span class="label label-{}">{}</span>'
+
+        if self.status == Database.ALIVE:
+            status = html_default.format("success", "Alive")
+        elif self.status == Database.DEAD:
+            status = html_default.format("important", "Dead")
+        elif self.status == Database.ALERT:
+            status = html_default.format("warning", "Alert")
+        else:
+            status = html_default.format("info", "Initializing")
+
+        return format_html(status)
 
 
 class Credential(BaseModel):

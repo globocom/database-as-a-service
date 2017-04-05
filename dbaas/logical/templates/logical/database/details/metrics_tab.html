@@ -1,0 +1,29 @@
+{% extends "logical/database/details/base.html" %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <style>
+    .grafana_frame {
+      display: block;
+      background: #000;
+      border: none;
+      width: 100%;
+      height: 1000px;
+    }
+  </style>
+{% endblock %}
+
+{% block tab %}
+  <ul class="nav nav-pills" id="navFinished" >
+    <li><p class="navbar-text"><b>HOSTS:&nbsp;&nbsp;</b></p></li>
+    {% for host in hosts %}
+      <li {% ifequal hostname host %} class="active" {% endifequal %}>
+        <a href="?hostname={{host}}">{{host}}</a>
+      </li>
+    {% endfor %}
+  </ul>
+  <iframe id="grafana" class='grafana_frame' src="{{ grafana_url }}"></iframe>
+{% endblock %}
+
+{% block database_button_save %}
+{% endblock %}

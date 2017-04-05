@@ -1,0 +1,109 @@
+{% extends "logical/database/details/base.html" %}
+
+
+{% block extrastyle %}
+  {{ block.super }}
+  <style type="text/css">
+    .action_button {
+        margin-left: 20px
+    }
+
+    .bold_red {
+      color: red;
+    }
+  </style>
+{% endblock %}
+
+
+{% block tab %}
+<fieldset class="module aligned ">
+  {% if database.is_in_quarantine %}
+    <div class="control-group">
+      <div class="control-label"><label>Quarantine since:</label></div>
+      <div class="controls">
+        <p class="readonly">
+          {{ database.quarantine_dt }}
+          {% if is_dba %}
+            <input class="action_button btn btn-primary" type="submit" value="Undo quarantine" name="undo_quarantine" id="id_undo_quarantine" onclick="return confirm('Are you sure?')"/>
+          {% endif %}
+        </p>
+      </div>
+    </div>
+  {% endif %}
+  <div class="control-group">
+    <div class="control-label"></div>
+    <div class="controls">
+    </div>
+  </div>
+  <div class="control-group">
+    <div class="control-label"></div>
+    <div class="controls">
+      {% if not database.is_in_quarantine and is_dba %}
+      <button class="btn btn-danger" data-toggle="modal" data-target="#delete_modal">Put in quarantine</button>
+      {% else %}
+      <button class="btn btn-danger" data-toggle="modal" data-target="#delete_modal">Delete Database</button>
+      {% endif %}
+    </div>
+  </div>
+</fieldset>
+
+<!-- Modal -->
+<div class="modal fade" id="delete_modal" tabindex="-1" role="dialog" aria-labelledby="delete modal" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <h4 class="modal-title">Delete database {{ database.name }}</h4>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="modal-body">
+        <div role="form">
+          <div class="form-group">
+            <label for="id_database_name">
+              <u><b>{{ database.name }}</b></u> and all of its database will be <b class="bold_red">permanently deleted!</b>
+              <br><br>
+              Please type <u><b>{{ database.name }}</b></u> to confirm:
+            </label>
+            <input class="vTextField" id="id_database_name" maxlength="300" name="database_name" type="text"/>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default"data-dismiss="modal">Cancel</button>
+        <input type="submit" value="Delete" name="database_destroy" id="id_destroy_btn"/>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+
+{% block database_button_save %}
+{% endblock %}
+
+
+{% block js_footer %}
+{{ block.super }}
+
+<script>
+  jQuery(document).ready(function($) {
+    $("#id_database_name").keyup(function() {
+      btn = document.getElementById('id_destroy_btn')
+      btn.disabled = '{{ database.name }}' != $(this).val();
+      if (btn.disabled){
+        btn.className = 'resize_button btn';
+      } else {
+        btn.className = 'resize_button btn btn-danger';
+      }
+    });
+    $("#id_database_name").keyup()
+
+  })
+</script>
+
+{% endblock %}

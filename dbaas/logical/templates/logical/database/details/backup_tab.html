@@ -1,0 +1,277 @@
+{% extends "logical/database/details/base.html" %}
+{% load admin_static %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <style type="text/css">
+    .bold_red {
+      color: red;
+    }
+  </style>
+{% endblock %}
+
+{% block tab %}
+<fieldset class="module aligned ">
+  {% if snapshots %}
+    <div class="panel-heading">
+      <h3 class="panel-title">Restore</h3>
+    </div>
+    <div class="panel-body">
+      <div class="control-group">
+        <div class="control-label">
+          <label>Snapshot:</label>
+        </div>
+        <div class="controls">
+          <select class="span8" id="id_restore_snapshot" name="restore_snapshot">
+            <option></option>
+            {% for snapshot in snapshots %}
+              <option value="{{ snapshot.id }}">{{ snapshot }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <div class="control-group">
+        <div class="control-label"></div>
+        <div class="controls">
+          <button data-toggle="modal" id="id_restore_btn" data-target="#restore_snapshot">Restore</button>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <div class="panel-heading">
+    <h3 class="panel-title">Clone</h3>
+  </div>
+  <div class="panel-body">
+    <div class="control-group">
+      <div class="control-label">
+        <label>Destination database:</label>
+      </div>
+      <div class="controls">
+        <input id="id_clone_name" maxlength="64" name="clone_name" type="text"/>
+      </div>
+    </div>
+    <div class="control-group">
+      <div class="control-label">
+        <label>Environment:</label>
+      </div>
+      <div class="controls">
+        <select id="id_clone_env" name="clone_env">
+          <option></option>
+          {% for environment in environments %}
+            <option value="{{ environment.id }}">{{ environment }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="control-group">
+      <div class="control-label">
+        <label>Plan:</label>
+      </div>
+      <div class="controls">
+        <select id="id_clone_plan" name="clone_plan">
+        </select>
+      </div>
+    </div>
+    <div class="control-group">
+      <div class="control-label"></div>
+      <div class="controls">
+        <input type="submit" value="Clone" name="database_clone" id="id_clone_btn" onclick="return confirm('Are you sure?')"/>
+      </div>
+    </div>
+  </div>
+  <div class="panel-heading">
+    <h3 class="panel-title">Config</h3>
+  </div>
+  <div class="panel-body">
+    <div class="control-group">
+      <div class="control-label"><label>Backup path:</label></div>
+      <div class="controls">
+        {% if is_dba %}
+          <input class="vTextField span8" id="id_backup_path" maxlength="300" name="backup_path" type="text" {% if database.backup_path %} value="{{ database.backup_path }}" {% endif %}/>
+          <p class="help-block">Full path to backup file. (e.g: Staging path)</p>
+        {% else %}
+          <p class="readonly">{{ database.backup_path }}</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</fieldset>
+
+<!-- Modal -->
+<div class="modal fade" id="restore_snapshot" tabindex="-1" role="dialog" aria-labelledby="restore snapshot" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <h4 class="modal-title">Restore snapshot</h4>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="modal-body">
+        <div role="form">
+          <div class="form-group">
+            {% if database.last_successful_upgrade %}
+            <div id="restore_with_upgrade_div">
+              <label id="snapshot_date_msg"></label>
+              <br>
+            </div>
+            {% endif %}
+            <label for="id_restore_yes">
+              <b class="bold_red">All</b> data from current database will be erased!
+            </label>
+            <label for="id_restore_yes">
+              <br>
+              Please type <u><b>yes</b></u> to confirm:
+            </label>
+            <input class="vTextField" id="id_restore_yes" maxlength="300" name="restore_yes" type="text"/>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default"data-dismiss="modal">Cancel</button>
+        <input type="submit" value="Restore" name="database_restore" id="id_restore_btn_modal"/>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+
+{% block database_button_save %}
+{% if is_dba %}
+{{ block.super }}
+{% endif %}
+{% endblock %}
+
+{% block js_footer %}
+{{ block.super }}
+
+<script>
+  plans = {
+    {% for environment in environments %}
+      '{{ environment.id }}': {
+        {% for plan in plans %}
+          {% if environment in plan.environments.all %}
+            '{{ plan.id }}': '{{ plan }}',
+          {% endif %}
+        {% endfor %}
+      },
+    {% endfor %}
+  };
+
+  function clone_plan_update(environment) {
+    select_plan = document.getElementById("id_clone_plan");
+    selected = select_plan.value;
+
+    select_plan.options.length = 0;
+    if (environment != "") {
+      for (var plan in plans[environment]){
+        var option = document.createElement('option');
+        option.value = plan
+        option.innerHTML = plans[environment][plan];
+        if (selected == plan) {
+          option.selected="selected";
+        }
+        select_plan.appendChild(option);
+      }
+    }
+  }
+
+  function clone_btn_status() {
+    btn = document.getElementById("id_clone_btn");
+    name = $("#id_clone_name").val();
+    env = $("#id_clone_env").val();
+    plan = $("#id_clone_plan").val();
+    if (name == "" || env == "" || plan == "") {
+      btn.disabled = true;
+      btn.className = 'btn';
+    } else {
+      btn.disabled = false;
+      btn.className = 'btn btn-primary';
+    }
+  }
+
+  jQuery(document).ready(function($) {
+    $("#id_clone_name").keyup(function() {
+      clone_btn_status();
+    });
+    $("#id_clone_plan").on("change", function() {
+      clone_btn_status();
+    });
+    $("#id_clone_env").on("change", function() {
+      clone_plan_update($(this).val());
+      clone_btn_status();
+    });
+    $("#id_clone_name").keyup()
+
+    $("#id_restore_snapshot").on("change", function() {
+      btn = document.getElementById("id_restore_btn");
+      btn.disabled = $(this).val() == "";
+      if (btn.disabled) {
+        btn.className = 'btn';
+      } else {
+        btn.className = 'btn btn-primary';
+      }
+    });
+    $("#id_restore_snapshot").change()
+
+    $("#id_restore_yes").on("change", function() {
+      btn = document.getElementById("id_restore_btn_modal");
+      btn.disabled = $(this).val() != "yes";
+      if (btn.disabled) {
+        btn.className = 'btn';
+      } else {
+        btn.className = 'btn btn-primary';
+      }
+    });
+    $("#id_restore_yes").change()
+
+  })
+</script>
+
+{% if database.last_successful_upgrade %}
+<script src="{% static "assets/js/jquery.min.js" %}"></script>
+<script src="{% static "js/moment.min.js" %}"></script>
+<script>
+  jQuery('#restore_with_upgrade_div').hide();
+
+  var upgrade_date = new Date("{{ database.last_successful_upgrade.finished_at.isoformat }}");
+  var snapshot_select = document.getElementById("id_restore_snapshot");
+  var snapshot_date_msg = document.getElementById("snapshot_date_msg");
+
+  function formatted_date_time(date) {
+    return moment(date).format('D/MM/YYYY') + ' at ' + moment(date).format('hh:mm:ss');
+  };
+
+  snapshot_select.onchange = function() {
+    jQuery('#restore_with_upgrade_div').hide()
+
+    var snapshot_id = snapshot_select.value;
+    if (snapshot_id) {
+      jQuery.ajax({
+        "dataType": "json", "url": "/api/snapshot/" + snapshot_id, "type": "GET",
+      }).done(function(data) {
+        if (data.error) {
+          alert(data.error);
+        } else {
+          snapshot_date = new Date(data.start_at);
+          if (upgrade_date >= snapshot_date) {
+            snapshot_date_msg.innerHTML = "ATTENTION: This database version was upgraded from {{ database.last_successful_upgrade.source_plan.engine.version }} to {{ database.last_successful_upgrade.target_plan.engine.version }} on " + formatted_date_time(upgrade_date) + " and you are trying to restore a snapshot from " + formatted_date_time(snapshot_date) + ", it may be <b class='bold_red'>incompatible</b>";
+            jQuery('#restore_with_upgrade_div').show();
+          }
+        }
+      }).fail(function() {
+          alert("invalid server response");
+      });
+    }
+  };
+  snapshot_select.onchange();
+</script>
+{% endif %}
+
+{% endblock %}

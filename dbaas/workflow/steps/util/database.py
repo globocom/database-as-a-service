@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 from time import sleep
-from django.db import transaction
+from dbaas_cloudstack.models import HostAttr
 from workflow.steps.util.restore_snapshot import use_database_initialization_script
+from util import build_context_script, exec_remote_command
 from workflow.steps.util.base import BaseInstanceStep
 
 CHECK_SECONDS = 10
@@ -15,6 +16,8 @@ class DatabaseStep(BaseInstanceStep):
 
         self.infra = self.instance.databaseinfra
         self.driver = self.infra.get_driver()
+        self.host = self.instance.hostname
+        self.host_cs = HostAttr.objects.get(host=self.host)
 
     def do(self):
         raise NotImplementedError
@@ -54,6 +57,24 @@ class DatabaseStep(BaseInstanceStep):
     def is_down(self):
         return self.__is_instance_status(False)
 
+    def _execute_script(self, script_variables, script):
+        final_script = build_context_script(
+            script_variables, script
+        )
+
+        output = {}
+        return_code = exec_remote_command(
+            self.host.address, self.host_cs.vm_user, self.host_cs.vm_password,
+            final_script, output
+        )
+
+        if return_code != 0:
+            raise EnvironmentError(
+                'Could not execute replica script {}: {}'.format(
+                    return_code, output
+                )
+            )
+
 
 class Stop(DatabaseStep):
 
@@ -78,6 +99,13 @@ class Start(DatabaseStep):
         if return_code != 0 and not self.is_up:
             raise EnvironmentError(
                 'Could not start database {}: {}'.format(return_code, output)
+            )
+
+    def undo(self):
+        return_code, output = self.stop_database()
+        if return_code != 0 and not self.is_down:
+            raise EnvironmentError(
+                'Could not stop database {}: {}'.format(return_code, output)
             )
 
 
