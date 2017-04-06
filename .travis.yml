@@ -14,5 +14,8 @@ services:
     - mongodb
     - redis-server
 
+before_script:
+    - mongo admin --eval 'db.createUser( { user: "admin", pwd: "123456", roles: [ "userAdminAnyDatabase", "clusterAdmin", "readWriteAnyDatabase", "dbAdminAnyDatabase" ] } );'
+
 script:
     - make test
