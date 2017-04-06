@@ -12,6 +12,7 @@ install:
 services:
     - mysql
     - mongodb
+    - redis-server
 
 script:
     - make test
