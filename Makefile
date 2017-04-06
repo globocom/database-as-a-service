@@ -62,7 +62,7 @@ run_migrate: # run all migrations
 	@cd dbaas && python manage.py syncdb --migrate --noinput --no-initial-data
 
 create_admin_mongo_user:
-	@mongo admin --eval 'db.createUser({user: "admin", pwd: "123456", roles: ["userAdminAnyDatabase", "clusterAdmin", "readWriteAnyDatabase", "dbAdminAnyDatabase"]});'
+	@mongo admin --eval 'db.addUser({user: "admin", pwd: "123456", roles: ["userAdminAnyDatabase", "clusterAdmin", "readWriteAnyDatabase", "dbAdminAnyDatabase"]});'
 
 test: # run tests
 	# @echo "create database IF NOT EXISTS dbaas;" | mysql -u root
