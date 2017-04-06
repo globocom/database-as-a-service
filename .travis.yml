@@ -3,8 +3,15 @@ language: python
 python:
     - "2.7"
 
+before_install:
+  - mysql -e 'CREATE DATABASE dbaas;'
+
 install:
     - pip install -r requirements_test.txt
+
+services:
+    - mysql
+    - mongodb
 
 script:
     - make test
