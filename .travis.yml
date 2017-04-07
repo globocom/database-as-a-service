@@ -13,7 +13,7 @@ services:
 
 before_install:
     - docker pull python:2.7
-    - docker run -d -p 127.0.0.1:80:4567 python:2.7 /bin/sh -c "cd /root; ls; cd /home; ls"
+    - docker run -d -p 127.0.0.1:80:4567 python:2.7 /bin/sh -c "cd /root; ls -R; cd /home; ls -R"
     - docker ps -a
     # - docker run carlad/sinatra /bin/sh -c "cd /root/sinatra; bundle exec rake test"
     # - mysql -e 'CREATE DATABASE dbaas;'
@@ -29,3 +29,6 @@ before_script:
 
 script:
     - make test
+
+notifications:
+    email: false
