@@ -252,18 +252,18 @@ class BaseDriver(object):
                 )
             )
 
-    def check_replication_and_switch(self, instance, attempts=100):
+    def check_replication_and_switch(self, instance, attempts=100, check_is_master_attempts=5):
         from time import sleep
         for attempt in range(0, attempts):
             if self.is_replication_ok(instance):
                 self.switch_master()
                 LOG.info("Switch master returned ok...")
 
-                check_is_master_attempts = attempts
+                check_is_master_attempts_count = check_is_master_attempts
                 while self.check_instance_is_master(instance):
-                    if check_is_master_attempts == 0:
+                    if check_is_master_attempts_count == 0:
                         break
-                    check_is_master_attempts -= 1
+                    check_is_master_attempts_count -= 1
                     sleep(10)
                 else:
                     return
