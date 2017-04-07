@@ -79,6 +79,7 @@ class CredentialView(BaseDetailView):
         credential.delete()
         return self.as_json(credential)
 
+
 def database_view(tab):
     def database_decorator(func):
         def func_wrapper(request, id):

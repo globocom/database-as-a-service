@@ -9,13 +9,16 @@ LOG = logging.getLogger(__name__)
 
 
 def start_workflow(workflow_dict, task=None):
-    if 'database' in workflow_dict:
-        db = workflow_dict['database']
-    elif 'instances' in workflow_dict:
-        db = workflow_dict['instances'][0].databaseinfra.databases.first()
-    elif 'databaseinfra' in workflow_dict:
-        db = workflow_dict['databaseinfra'].databases.first()
-    else:
+    try:
+        if 'database' in workflow_dict:
+            db = workflow_dict['database']
+        elif 'instances' in workflow_dict:
+            db = workflow_dict['instances'][0].databaseinfra.databases.first()
+        elif 'databaseinfra' in workflow_dict:
+            db = workflow_dict['databaseinfra'].databases.first()
+        else:
+            db = None
+    except Exception:
         db = None
 
     if db:
@@ -94,13 +97,16 @@ def start_workflow(workflow_dict, task=None):
 def stop_workflow(workflow_dict, task=None):
     LOG.info("Running undo...")
 
-    if 'database' in workflow_dict:
-        db = workflow_dict['database']
-    elif 'instances' in workflow_dict:
-        db = workflow_dict['instances'][0].databaseinfra.databases.first()
-    elif 'databaseinfra' in workflow_dict:
-        db = workflow_dict['databaseinfra'].databases.first()
-    else:
+    try:
+        if 'database' in workflow_dict:
+            db = workflow_dict['database']
+        elif 'instances' in workflow_dict:
+            db = workflow_dict['instances'][0].databaseinfra.databases.first()
+        elif 'databaseinfra' in workflow_dict:
+            db = workflow_dict['databaseinfra'].databases.first()
+        else:
+            db = None
+    except Exception:
         db = None
 
     if db and 'task_pinned' not in workflow_dict:

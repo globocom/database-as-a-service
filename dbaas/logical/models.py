@@ -552,8 +552,10 @@ class Database(BaseModel):
         return bool(offerings)
 
     def has_disk_offerings(self):
+        from physical.models import DiskOffering
+
         offerings = DiskOffering.objects.all().exclude(
-            id=database.databaseinfra.disk_offering.id
+            id=self.databaseinfra.disk_offering.id
         )
         return bool(offerings)
 
@@ -657,7 +659,7 @@ class Database(BaseModel):
             return False, error.format(self.name)
         return True, None
 
-    def can_do_upgrade_retry(self, operation):
+    def can_do_upgrade_retry(self):
         error = None
         if self.is_mongodb_24():
             error = "MongoDB 2.4 cannot be upgraded by this task."
