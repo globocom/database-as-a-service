@@ -61,10 +61,13 @@ reset_data: db_reset # drop and create database and insert sample data
 run_migrate: # run all migrations
 	@cd dbaas && python manage.py syncdb --migrate --noinput --no-initial-data
 
+create_admin_mongo_user:
+	@mongo admin --eval 'db.addUser({user: "admin", pwd: "123456", roles: ["userAdminAnyDatabase", "clusterAdmin", "readWriteAnyDatabase", "dbAdminAnyDatabase"]});'
 
 test: # run tests
+	# @echo "create database IF NOT EXISTS dbaas;" | mysql -u root
 	@mysqladmin -uroot -p$(DBAAS_DATABASE_PASSWORD) -f drop test_dbaas -h$(DBAAS_DATABASE_HOST); true
-	@cd dbaas && python manage.py test --traceback $(filter-out $@,$(MAKECMDGOALS))
+	@cd dbaas && python manage.py test --settings=dbaas.settings_test --traceback $(filter-out $@,$(MAKECMDGOALS))
 
 
 run: # run local server
