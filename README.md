@@ -1,4 +1,4 @@
-![build status](https://travis-ci.org/globocom/database-as-a-service.svg?branch=master)](http://travis-ci.org/globocom/database-as-a-service)
+[![build status](https://travis-ci.org/globocom/database-as-a-service.svg?branch=master)](http://travis-ci.org/globocom/database-as-a-service)
 
 Database as a Service (DBaaS)
 ===================================
