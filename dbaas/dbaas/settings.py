@@ -297,7 +297,7 @@ CACHES = {
 
 TEST_DISCOVER_ROOT = os.path.abspath(os.path.join(__file__, '../..'))
 TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
-NOSE_ARGS = ['--verbosity=2', '--no-byte-compile', '-d', '-s']
+NOSE_ARGS = ['--verbosity=2', '--no-byte-compile', '--debug-log=error_test.log']
 if CI:
     NOSE_ARGS += ['--with-coverage', '--cover-package=application',
                   '--with-xunit', '--xunit-file=test-report.xml', '--cover-xml', '--cover-xml-file=coverage.xml']
