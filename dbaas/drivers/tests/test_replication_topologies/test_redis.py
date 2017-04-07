@@ -41,7 +41,7 @@ class AbstractBaseRedisTestCase(AbstractReplicationTopologySettingsTestCase):
         return (
             'workflow.steps.util.plan.InitializationRedisForUpgrade',
             'workflow.steps.util.plan.ConfigureRedisForUpgrade',
-            'workflow.steps.redis.upgrade.pack.ConfigureRedis',
+            'workflow.steps.util.pack.ConfigureRedis',
         )
 
 
@@ -63,19 +63,19 @@ class TestRedisSentinel(AbstractBaseRedisTestCase):
             ),
         }] + super(TestRedisSentinel, self)._get_upgrade_steps_final()
 
+    def _get_add_database_instances_middle_settings(self):
+        return (
+            'workflow.steps.util.plan.InitializationRedis',
+            'workflow.steps.util.plan.ConfigureRedis',
+            'workflow.steps.util.pack.ConfigureRedis',
+            'workflow.steps.util.database.Start',
+            'workflow.steps.redis.horizontal_elasticity.database.AddInstanceToRedisCluster',
+        )
+
 
 class AbstractBaseRedisNoPersistenceTestCase(AbstractBaseRedisTestCase):
     pass
 
 
-class TestRedisSentinelNoPersistence(AbstractBaseRedisNoPersistenceTestCase):
-
-    def _get_replication_topology_driver(self):
-        return RedisSentinelNoPersistence()
-
-    def _get_upgrade_steps_final(self):
-        return [{
-            'Resetting Sentinel': (
-                'workflow.steps.redis.upgrade.sentinel.Reset',
-            ),
-        }] + super(TestRedisSentinelNoPersistence, self)._get_upgrade_steps_final()
+class TestRedisSentinelNoPersistence(TestRedisSentinel):
+    pass
