@@ -1,8 +1,7 @@
+![build status](https://travis-ci.org/globocom/database-as-a-service.svg?branch=master)](http://travis-ci.org/globocom/database-as-a-service)
+
 Database as a Service (DBaaS)
 ===================================
-
-image:: https://travis-ci.org/globocom/database-as-a-service.svg?branch=master
-   :target: http://travis-ci.org/globocom/database-as-a-service
 
 Introduction
 ============
