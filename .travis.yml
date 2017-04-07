@@ -1,21 +1,28 @@
+sudo: required
+
 language: python
 
 python:
     - "2.7"
 
+services:
+    - docker
+    - mysql
+    - mongodb
+    - redis-server
+
 before_install:
-    - mysql -e 'CREATE DATABASE dbaas;'
+    - docker pull python:2.7
+    - docker run -d -p 127.0.0.1:80:4567 python:2.7 /bin/sh -c "cd /root; ls; cd /home; ls"
+    - docker ps -a
+    # - docker run carlad/sinatra /bin/sh -c "cd /root/sinatra; bundle exec rake test"
+    # - mysql -e 'CREATE DATABASE dbaas;'
 
 install:
     - pip install -r requirements_test.txt
 
 cache:
     - pip
-
-services:
-    - mysql
-    - mongodb
-    - redis-server
 
 before_script:
     - make create_admin_mongo_user
