@@ -9,6 +9,9 @@ before_install:
 install:
     - pip install -r requirements_test.txt
 
+cache:
+    - pip
+
 services:
     - mysql
     - mongodb
