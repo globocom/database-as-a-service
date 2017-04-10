@@ -73,7 +73,6 @@ class PlanAttrInlineFormset(forms.models.BaseInlineFormSet):
 
         if len(bundles_actives) < min_number_of_bundle:
             raise forms.ValidationError(
-                "Please select at least {} actives bundles to HA plan. You chosen {}".format(
-                    min_number_of_bundle, len(bundles_actives)
-                )
+                "Please select at least {} active bundles to HA plan. You "
+                "chosen {}".format(min_number_of_bundle, len(bundles_actives))
             )
