@@ -16,10 +16,14 @@ LOG = logging.getLogger(__name__)
 class AbstractTestDriverMysql(TestCase):
 
     def setUp(self):
+        self.db_host = settings.DB_HOST
+        self.db_port = settings.DB_PORT or 3306
         self.databaseinfra = factory_physical.DatabaseInfraFactory(
-            user="root", password=settings.DB_PASSWORD, endpoint="127.0.0.1:3306")
+            user="root", password=settings.DB_PASSWORD,
+            endpoint="{}:{}".format(self.db_host, self.db_port))
         self.instance = factory_physical.InstanceFactory(
-            databaseinfra=self.databaseinfra, port=3306)
+            databaseinfra=self.databaseinfra, address=self.db_host,
+            port=self.db_port)
         self.driver = MySQL(databaseinfra=self.databaseinfra)
         self._mysql_client = None
 
@@ -53,7 +57,7 @@ class MySQLEngineTestCase(AbstractTestDriverMysql):
 
     def test_connection_string(self):
         self.assertEqual(
-            "mysql://<user>:<password>@127.0.0.1:3306", self.driver.get_connection())
+            "mysql://<user>:<password>@{}:{}".format(self.db_host, self.db_port), self.driver.get_connection())
 
     def test_get_user(self):
         self.assertEqual(self.databaseinfra.user, self.driver.get_user())
@@ -68,7 +72,7 @@ class MySQLEngineTestCase(AbstractTestDriverMysql):
     def test_connection_with_database(self):
         self.database = factory_logical.DatabaseFactory(
             name="my_db_url_name", databaseinfra=self.databaseinfra)
-        self.assertEqual("mysql://<user>:<password>@127.0.0.1:3306/my_db_url_name",
+        self.assertEqual("mysql://<user>:<password>@{}:{}/my_db_url_name".format(self.db_host, self.db_port),
                          self.driver.get_connection(database=self.database))
 
 
