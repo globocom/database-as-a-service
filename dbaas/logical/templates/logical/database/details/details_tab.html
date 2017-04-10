@@ -18,6 +18,7 @@
     <div class="control-label"><label>Project:</label></div>
     <div class="controls">
       <select class="span8" id="id_project" name="project">
+        <option></option>
         {% for project in projects %}
           <option value="{{project.id}}"
             {% if project == database.project %}selected="selected"{% endif %}>
