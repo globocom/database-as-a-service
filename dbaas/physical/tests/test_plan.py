@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
+from unittest import skipIf
 from django.test import TestCase
 from django.contrib import admin
 from physical.admin.plan import PlanAdmin
-from physical.forms.plan_admin import PlanForm
 from physical.models import Plan
+from system.models import Configuration
 from .factory import PlanFactory, EngineFactory, EngineTypeFactory
 
 
@@ -18,11 +19,26 @@ LIST_FIELDS = (
 )
 SAVE_ON_TOP = True
 
+def _have_cloud_stack():
+    try:
+        import dbaas_cloudstack
+        return True
+    except:
+        return False
+
 
 class PlanTestCase(TestCase):
 
     def setUp(self):
         self.admin = PlanAdmin(Plan, admin.sites.AdminSite())
+        self.ha_min_number_of_bundles = Configuration(
+            name='ha_min_number_of_bundles', value=-1
+        )
+        self.ha_min_number_of_bundles.save()
+
+    def tearDown(self):
+        if self.ha_min_number_of_bundles.id:
+            self.ha_min_number_of_bundles.delete()
 
     def test_there_can_be_only_one_default_plan(self):
         """
@@ -89,3 +105,75 @@ class PlanTestCase(TestCase):
         self.assertFalse(engines[engine_disk])
         self.assertIn(engine_memory, engines)
         self.assertTrue(engines[engine_memory])
+
+    def test_is_pre_provisioned(self):
+        plan = PlanFactory()
+
+        plan.provider = Plan.PREPROVISIONED
+        self.assertTrue(plan.is_pre_provisioned)
+
+        plan.provider = Plan.CLOUDSTACK
+        self.assertFalse(plan.is_pre_provisioned)
+
+    def test_is_cloudstack(self):
+        plan = PlanFactory()
+
+        plan.provider = Plan.CLOUDSTACK
+        self.assertTrue(plan.is_cloudstack)
+
+        plan.provider = Plan.PREPROVISIONED
+        self.assertFalse(plan.is_cloudstack)
+
+    def test_min_bundles_not_ha(self):
+        plan = PlanFactory()
+        plan.is_ha = False
+
+        plan.provider = Plan.PREPROVISIONED
+        self.assertTrue(plan.validate_min_environment_bundles())
+
+        plan.provider = Plan.CLOUDSTACK
+        self.assertTrue(plan.validate_min_environment_bundles())
+
+    @skipIf(not _have_cloud_stack(), "Cloudstack is not installed")
+    def test_min_bundles_not_cloudstack(self):
+        plan = PlanFactory()
+        plan.provider = Plan.PREPROVISIONED
+
+        plan.is_ha = True
+        self.assertTrue(plan.validate_min_environment_bundles())
+
+        plan.is_ha = False
+        self.assertTrue(plan.validate_min_environment_bundles())
+
+    @skipIf(not _have_cloud_stack(), "Cloudstack is not installed")
+    def test_min_bundles(self):
+        from dbaas_cloudstack.models import PlanAttr, CloudStackBundle
+
+        plan = PlanFactory()
+        plan.provider = Plan.CLOUDSTACK
+        plan.is_ha = True
+
+        bundle_01 = CloudStackBundle()
+        bundle_01.name = "fake_bundle_01"
+        bundle_01.save()
+
+        bundle_02 = CloudStackBundle()
+        bundle_02.name = "fake_bundle_02"
+        bundle_02.save()
+
+        plan_cloudstack = PlanAttr()
+        plan_cloudstack.plan = plan
+        plan_cloudstack.save()
+        plan_cloudstack.bundle.add(bundle_01)
+        plan_cloudstack.bundle.add(bundle_02)
+        plan_cloudstack.save()
+
+        self.ha_min_number_of_bundles.value = 1
+        self.ha_min_number_of_bundles.save()
+        self.assertTrue(plan.validate_min_environment_bundles())
+
+        self.ha_min_number_of_bundles.value = 3
+        self.ha_min_number_of_bundles.save()
+        self.assertRaises(
+            EnvironmentError, plan.validate_min_environment_bundles
+        )
