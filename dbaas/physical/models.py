@@ -316,16 +316,16 @@ class Plan(BaseModel):
         if self.is_ha and self.is_cloudstack:
             bundles_actives = self.cs_plan_attributes.first().bundle.filter(
                 is_active=True
-            )
+            ).count()
             min_number_of_bundle = Configuration.get_by_name_as_int(
                 'ha_min_number_of_bundles', 3
             )
 
-            if len(bundles_actives) < min_number_of_bundle:
+            if bundles_actives < min_number_of_bundle:
                 raise EnvironmentError(
                     'Plan {} should has at least {} active bundles, currently '
                     'have {}. Please contact admin.'.format(
-                        self.name, min_number_of_bundle, len(bundles_actives)
+                        self.name, min_number_of_bundle, bundles_actives
                     )
                 )
         return True

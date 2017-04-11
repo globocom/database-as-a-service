@@ -66,13 +66,13 @@ class PlanAttrInlineFormset(forms.models.BaseInlineFormSet):
         if not bundles:
             raise forms.ValidationError("Please select the bundle's")
 
-        bundles_actives = bundles.filter(is_active=True)
+        bundles_actives = bundles.filter(is_active=True).count()
         min_number_of_bundle = Configuration.get_by_name_as_int(
             'ha_min_number_of_bundles', 3
         )
 
-        if len(bundles_actives) < min_number_of_bundle:
+        if bundles_actives < min_number_of_bundle:
             raise forms.ValidationError(
                 "Please select at least {} active bundles to HA plan. You "
-                "chosen {}".format(min_number_of_bundle, len(bundles_actives))
+                "chosen {}".format(min_number_of_bundle, bundles_actives)
             )
