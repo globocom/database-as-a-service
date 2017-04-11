@@ -12,13 +12,13 @@ from physical import models
 
 class PlanAttributeInline(admin.TabularInline):
     model = PlanAttribute
-    formset = forms.PlanAttributeInlineFormset
 
 
 class PlanAttrInline(admin.StackedInline):
     model = PlanAttr
     max_num = 1
     template = 'admin/physical/shared/inline_form.html'
+    formset = forms.PlanAttrInlineFormset
 
     def has_delete_permission(self, request, obj=None):
         return False

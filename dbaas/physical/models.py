@@ -297,6 +297,10 @@ class Plan(BaseModel):
     def is_pre_provisioned(self):
         return self.provider == Plan.PREPROVISIONED
 
+    @property
+    def is_cloudstack(self):
+        return self.provider == Plan.CLOUDSTACK
+
     def __unicode__(self):
         return "%s" % (self.name)
 
@@ -307,6 +311,24 @@ class Plan(BaseModel):
         permissions = (
             ("view_plan", "Can view plans"),
         )
+
+    def validate_min_environment_bundles(self):
+        if self.is_ha and self.is_cloudstack:
+            bundles_actives = self.cs_plan_attributes.first().bundle.filter(
+                is_active=True
+            ).count()
+            min_number_of_bundle = Configuration.get_by_name_as_int(
+                'ha_min_number_of_bundles', 3
+            )
+
+            if bundles_actives < min_number_of_bundle:
+                raise EnvironmentError(
+                    'Plan {} should has at least {} active bundles, currently '
+                    'have {}. Please contact admin.'.format(
+                        self.name, min_number_of_bundle, bundles_actives
+                    )
+                )
+        return True
 
 
 class PlanAttribute(BaseModel):
