@@ -11,21 +11,19 @@ services:
     - mongodb
     - redis-server
 
+services:
+  - docker
+
+env:
+  DOCKER_COMPOSE_VERSION: 1.11.2
+
 before_install:
-    - docker pull python:2.7
-    - docker run -d -p 127.0.0.1:80:4567 python:2.7 /bin/sh -c "cd /root; ls -R; cd /home; ls -R"
-    - docker ps -a
-    # - docker run carlad/sinatra /bin/sh -c "cd /root/sinatra; bundle exec rake test"
-    # - mysql -e 'CREATE DATABASE dbaas;'
-
-install:
-    - pip install -r requirements_test.txt
-
-cache:
-    - pip
-
-before_script:
-    - make create_admin_mongo_user
+  - make docker_build
+  - sudo rm /usr/local/bin/docker-compose
+  - curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
+  - chmod +x docker-compose
+  - sudo mv docker-compose /usr/local/bin
+  - docker-compose run test
 
 script:
     - make test
