@@ -65,6 +65,23 @@ test: # run tests
 	@python add_user_admin_on_mongo.py
 	@cd dbaas && python manage.py test --settings=dbaas.settings_test --traceback $(filter-out $@,$(MAKECMDGOALS))
 
+docker_build:
+	docker build -t dbaas_test .
+
+test_with_docker:
+	docker-compose run test
+
+docker_mysql_55:
+	docker-compose run --service-ports mysqldb55
+
+docker_mysql_56:
+	docker-compose run --service-ports mysqldb56
+
+docker_mysql_57:
+	docker-compose run --service-ports mysqldb57
+
+kill_mysql:
+	@ps aux | grep mysqldb | grep -v 'grep mysqldb' | awk '{print $$2}' | xargs kill
 
 run: # run local server
 	@cd dbaas && python manage.py runserver 0.0.0.0:8000 $(filter-out $@,$(MAKECMDGOALS))
