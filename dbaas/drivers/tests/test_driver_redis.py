@@ -3,6 +3,7 @@ from __future__ import absolute_import, unicode_literals
 import mock
 import logging
 from django.test import TestCase
+from django.conf import settings
 from drivers import DriverFactory
 from physical.tests import factory as factory_physical
 from logical.tests import factory as factory_logical
@@ -15,10 +16,13 @@ LOG = logging.getLogger(__name__)
 class AbstractTestDriverRedis(TestCase):
 
     def setUp(self):
+        redis_host = settings.REDIS_HOST
+        redis_port = settings.REDIS_PORT
+        self.endpoint = "{}:{}".format(redis_host, redis_port)
         self.databaseinfra = factory_physical.DatabaseInfraFactory(
-            password="OPlpplpooi", endpoint="127.0.0.1:6379")
+            password="OPlpplpooi", endpoint=self.endpoint)
         self.instance = factory_physical.InstanceFactory(
-            databaseinfra=self.databaseinfra, port=6379, instance_type=4)
+            databaseinfra=self.databaseinfra, port=redis_port, instance_type=4, address=redis_host)
         self.driver = Redis(databaseinfra=self.databaseinfra)
         self._redis_client = None
 
@@ -50,7 +54,7 @@ class RedisEngineTestCase(AbstractTestDriverRedis):
 
     def test_connection_string(self):
         self.assertEqual(
-            "redis://:<password>@127.0.0.1:6379/0", self.driver.get_connection())
+            "redis://:<password>@{}/0".format(self.endpoint), self.driver.get_connection())
 
     def test_get_password(self):
         self.assertEqual(
@@ -62,7 +66,7 @@ class RedisEngineTestCase(AbstractTestDriverRedis):
     def test_connection_with_database(self):
         self.database = factory_logical.DatabaseFactory(
             name="my_db_url_name", databaseinfra=self.databaseinfra)
-        self.assertEqual("redis://:<password>@127.0.0.1:6379/0",
+        self.assertEqual("redis://:<password>@{}/0".format(self.endpoint),
                          self.driver.get_connection(database=self.database))
 
 
@@ -73,7 +77,7 @@ class ManageDatabaseRedisTestCase(AbstractTestDriverRedis):
     def setUp(self):
         super(ManageDatabaseRedisTestCase, self).setUp()
         self.database = factory_logical.DatabaseFactory(
-            databaseinfra=self.databaseinfra)
+            databaseinfra=self.databaseinfra, address=settings.REDIS_HOST)
         # ensure database is dropped
         # get fake driver
         driver = self.databaseinfra.get_driver()
