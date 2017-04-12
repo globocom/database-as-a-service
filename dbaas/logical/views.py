@@ -268,8 +268,8 @@ def database_resizes(request, context, database):
 
 def _add_read_only_instances(request, database):
     try:
-        check_is_database_dead(database.id, 'VM resize')
-        check_is_database_enabled(database.id, 'VM resize')
+        check_is_database_dead(database.id, 'Add read-only instances')
+        check_is_database_enabled(database.id, 'Add read-only instances')
     except DisabledDatabase as err:
         messages.add_message(request, messages.ERROR, err.message)
         return
