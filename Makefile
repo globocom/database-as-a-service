@@ -62,8 +62,6 @@ run_migrate: # run all migrations
 	@cd dbaas && python manage.py syncdb --migrate --noinput --no-initial-data
 
 test: # run tests
-	# @echo "create database IF NOT EXISTS dbaas;" | mysql -u root
-	@mysqladmin -uroot -p$(DBAAS_DATABASE_PASSWORD) -f drop test_dbaas -h$(DBAAS_DATABASE_HOST); true
 	@cd dbaas && python manage.py test --settings=dbaas.settings_test --traceback $(filter-out $@,$(MAKECMDGOALS))
 
 
