@@ -43,6 +43,8 @@ class CreateVirtualMachine(BaseStep):
             workflow_dict['hosts'] = []
             workflow_dict['instances'] = []
             workflow_dict['vms_id'] = []
+
+            workflow_dict['plan'].validate_min_environment_bundles()
             bundles = list(cs_plan_attrs.bundle.filter(is_active=True))
 
             for index, vm_name in enumerate(workflow_dict['names']['vms']):

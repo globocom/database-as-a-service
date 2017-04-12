@@ -37,11 +37,14 @@ class CreateVirtualMachine(BaseStep):
             offering = workflow_dict['offering']
 
             cs_plan_attrs = PlanAttr.objects.get(
-                plan=workflow_dict['target_plan'])
-            bundles = list(cs_plan_attrs.bundle.filter(is_active=True))
+                plan=workflow_dict['target_plan']
+            )
 
             workflow_dict['target_hosts'] = []
             workflow_dict['target_instances'] = []
+
+            workflow_dict['target_plan'].validate_min_environment_bundles()
+            bundles = list(cs_plan_attrs.bundle.filter(is_active=True))
 
             for index, source_instance in enumerate(workflow_dict['source_instances']):
 

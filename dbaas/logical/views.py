@@ -79,6 +79,7 @@ class CredentialView(BaseDetailView):
         credential.delete()
         return self.as_json(credential)
 
+
 def database_view(tab):
     def database_decorator(func):
         def func_wrapper(request, id):
@@ -266,6 +267,13 @@ def database_resizes(request, context, database):
 
 
 def _add_read_only_instances(request, database):
+    try:
+        check_is_database_dead(database.id, 'Add read-only instances')
+        check_is_database_enabled(database.id, 'Add read-only instances')
+    except DisabledDatabase as err:
+        messages.add_message(request, messages.ERROR, err.message)
+        return
+
     if not database.plan.replication_topology.has_horizontal_scalability:
         messages.add_message(
             request, messages.ERROR,
@@ -374,7 +382,7 @@ def database_delete_host(request, database_id, host_id):
         )
         can_delete = False
 
-    if database.is_beeing_used_elsewhere():
+    if database.is_being_used_elsewhere():
         messages.add_message(
             request, messages.ERROR,
             'Host cannot be deleted because database is in use by another task.'

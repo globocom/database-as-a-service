@@ -44,6 +44,8 @@ class CreateVirtualMachine(BaseStep):
             workflow_dict['instances'] = []
             workflow_dict['databaseinfraattr'] = []
             workflow_dict['vms_id'] = []
+
+            workflow_dict['plan'].validate_min_environment_bundles()
             bundles = list(cs_plan_attrs.bundle.filter(is_active=True))
 
             if len(bundles) == 1:

@@ -399,7 +399,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             url = reverse('admin:logical_database_changelist')
             return HttpResponseRedirect(url)
 
-        if database.is_beeing_used_elsewhere():
+        if database.is_being_used_elsewhere():
             self.message_user(
                 request, "Database cannot be analyzed because it is in use by another task.", level=messages.ERROR)
             url = reverse('admin:logical_database_changelist')
@@ -459,15 +459,12 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         return render_to_response("logical/database/dex_analyze.html", locals(), context_instance=RequestContext(request))
 
     def resize_retry(self, request, database_id):
-        from dbaas_cloudstack.models import DatabaseInfraOffering
         database = Database.objects.get(id=database_id)
 
         can_do_resize, error = database.can_do_resize_retry()
+
         if can_do_resize:
-            offering = DatabaseInfraOffering.objects.get(
-                databaseinfra=database.databaseinfra
-            ).offering
-            last_resize = database.resizes.latest('created_at')
+            last_resize = database.resizes.last()
 
             if not last_resize.is_status_error:
                 error = "Cannot do retry, last resize status is '{}'!".format(
@@ -545,6 +542,15 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
         if database.status != Database.ALIVE or not database.database_status.is_alive:
             self.message_user(request, "Database is dead and cannot be upgraded!", level=messages.ERROR)
+            return HttpResponseRedirect(url)
+
+        if database.is_being_used_elsewhere():
+            self.message_user(
+                request,
+                "Database is being used by another task, "
+                "please check your tasks",
+                level=messages.ERROR
+            )
             return HttpResponseRedirect(url)
 
         if database.has_flipperfox_migration_started():

@@ -3,8 +3,9 @@ from __future__ import absolute_import, unicode_literals
 import logging
 from django.utils.translation import ugettext_lazy as _
 from django import forms
-from .. import models
 from ckeditor.widgets import CKEditorWidget
+from system.models import Configuration
+from .. import models
 
 log = logging.getLogger(__name__)
 
@@ -49,19 +50,29 @@ class PlanForm(forms.ModelForm):
         return cleaned_data
 
 
-class PlanAttributeInlineFormset(forms.models.BaseInlineFormSet):
+class PlanAttrInlineFormset(forms.models.BaseInlineFormSet):
 
     def clean(self):
-        # get forms that actually have valid data
-        count = 0
-        for form in self.forms:
-            try:
-                if form.cleaned_data:
-                    count += 1
-            except AttributeError:
-                # annoyingly, if a subform is invalid Django explicity raises
-                # an AttributeError for cleaned_data
-                pass
-        # if count < 1:
-        #     log.warning(u"%s" % _("You must have at least one plan attribute"))
-        #     raise forms.ValidationError(_("You must have at least one plan attribute"))
+        if self.instance.is_pre_provisioned:
+            return
+
+        if not self.instance.is_ha:
+            return
+
+        if not self.is_valid():
+            return
+
+        bundles = self.cleaned_data[0].get('bundle')
+        if not bundles:
+            raise forms.ValidationError("Please select the bundle's")
+
+        bundles_actives = bundles.filter(is_active=True).count()
+        min_number_of_bundle = Configuration.get_by_name_as_int(
+            'ha_min_number_of_bundles', 3
+        )
+
+        if bundles_actives < min_number_of_bundle:
+            raise forms.ValidationError(
+                "Please select at least {} active bundles to HA plan. You "
+                "chosen {}".format(min_number_of_bundle, bundles_actives)
+            )
