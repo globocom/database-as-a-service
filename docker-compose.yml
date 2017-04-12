@@ -1,7 +1,17 @@
 version: '2'
 
 services:
-    mysqldb:
+    mysqldb55:
+        image: mysql:5.5
+        environment:
+            - MYSQL_ROOT_PASSWORD=123
+            - MYSQL_USER=rute
+            - MYSQL_PASSWORD=123
+            - MYSQL_DATABASE=dbaas
+        ports:
+            - "3306:3306"
+
+    mysqldb56:
         image: mysql:5.6
         environment:
             - MYSQL_ROOT_PASSWORD=123
@@ -11,7 +21,7 @@ services:
         ports:
             - "3306:3306"
 
-    mysqldb5_7:
+    mysqldb57:
         image: mysql:5.7
         environment:
             - MYSQL_ROOT_PASSWORD=123
@@ -27,16 +37,16 @@ services:
     redisdb:
         image: redis:3.2
 
-    tests:
+    test:
         image: dbaas_test
         volumes:
             - .:/code
         depends_on:
-            - mysqldb
+            - mysqldb56
             - mongodb
             - redisdb
         links:
-            - mysqldb
+            - mysqldb56
             - mongodb
             - redisdb
 
