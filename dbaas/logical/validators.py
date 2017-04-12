@@ -31,7 +31,7 @@ def check_is_database_enabled(database_id, operation):
     if database.is_in_quarantine:
         raise DatabaseInQuarantineError(operation, url)
 
-    if database.is_beeing_used_elsewhere():
+    if database.is_being_used_elsewhere():
         raise BusyDatabaseError(url)
 
     if database.has_flipperfox_migration_started():
@@ -61,7 +61,6 @@ def check_database_has_persistence(database, operation):
         raise DatabaseWithoutPersistence(
             database, operation, _get_database_error_url(database.id)
         )
-
 
 def _get_database_error_url(database_id):
     return reverse('admin:logical_database_change', args=[database_id])

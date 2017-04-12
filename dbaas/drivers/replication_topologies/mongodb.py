@@ -56,10 +56,10 @@ class MongoDBReplicaset(BaseMongoDB):
 
     def get_upgrade_steps_extra(self):
         return (
+            'workflow.steps.mongodb.upgrade.vm.ChangeBinaryTo32',
             'workflow.steps.util.plan.InitializationMongoHAForUpgrade',
             'workflow.steps.util.plan.ConfigureMongoHAForUpgrade',
             'workflow.steps.util.pack.Configure',
-            'workflow.steps.mongodb.upgrade.vm.ChangeBinaryTo32',
         )
 
     def get_upgrade_steps_final(self):

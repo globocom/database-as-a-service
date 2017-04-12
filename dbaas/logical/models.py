@@ -3,7 +3,7 @@ from __future__ import absolute_import, unicode_literals
 import simple_audit
 import logging
 import datetime
-from django.db import models
+from django.db import models, transaction
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 from django.db.models.signals import pre_save, post_save, pre_delete
@@ -21,6 +21,7 @@ from account.models import Team
 from drivers.base import ConnectionError, DatabaseStatus
 from django.core.exceptions import ObjectDoesNotExist
 from logical.validators import database_name_evironment_constraint
+from notification.models import TaskHistory
 
 LOG = logging.getLogger(__name__)
 KB_FACTOR = 1.0 / 1024.0
@@ -118,6 +119,17 @@ class Database(BaseModel):
             "When marked, the database can not be deleted."
         )
     )
+    current_task = models.ForeignKey(
+        TaskHistory,
+        verbose_name=_("Current Task"),
+        related_name="database",
+        null=True,
+        blank=True,
+        help_text=_(
+            "Task currently running."
+            "If not null, database is locked for other operations."
+        )
+    )
 
     def team_contact(self):
         if self.team:
@@ -161,6 +173,27 @@ class Database(BaseModel):
     @property
     def plan(self):
         return self.databaseinfra and self.databaseinfra.plan
+
+    @transaction.atomic
+    def pin_task(self, task):
+        db = Database.objects.select_for_update().get(id=self.id)
+        if db.current_task:
+            return False
+        else:
+            self.current_task = task
+            self.save()
+            return True
+
+    @transaction.atomic
+    def update_task(self, task):
+        # Changes current task even if it already has another task
+        Database.objects.select_for_update().get(id=self.id)
+        self.current_task = task
+        self.save()
+
+    def unpin_task(self):
+        self.current_task = None
+        self.save()
 
     def delete(self, *args, **kwargs):
         if self.is_in_quarantine:
@@ -477,28 +510,8 @@ class Database(BaseModel):
 
     offering_id = property(get_cloudstack_service_offering_id)
 
-    def is_beeing_used_elsewhere(self, task_id=None):
-        from notification.models import TaskHistory
-
-        name = self.name + ','
-        tasks_contains = TaskHistory.objects.filter(
-            arguments__contains=name,
-            task_status__in=['RUNNING', 'PENDING', 'WAITING']
-        )
-        tasks_ends_with_name = TaskHistory.objects.filter(
-            arguments__endswith=self.name,
-            task_status__in=['RUNNING', 'PENDING', 'WAITING']
-        )
-
-        tasks = list(tasks_ends_with_name) + list(tasks_contains)
-        if len(tasks) == 1 and task_id:
-            if tasks[0].task_id == task_id:
-                return False
-
-        if tasks:
-            return True
-
-        return False
+    def is_being_used_elsewhere(self):
+        return self.current_task
 
     def has_flipperfox_migration_started(self,):
         from flipperfox_migration.models import DatabaseFlipperFoxMigrationDetail
@@ -532,11 +545,18 @@ class Database(BaseModel):
         from dbaas_cloudstack.models import CloudStackPack
 
         offerings = CloudStackPack.objects.filter(
-            offering__region__environment=database.environment,
-            engine_type__name=database.engine_type
-        ).exclude(offering__serviceofferingid=database.offering_id)
-        check_resize_options(database_id, offerings)
+            offering__region__environment=self.environment,
+            engine_type__name=self.engine_type
+        ).exclude(offering__serviceofferingid=self.offering_id)
 
+        return bool(offerings)
+
+    def has_disk_offerings(self):
+        from physical.models import DiskOffering
+
+        offerings = DiskOffering.objects.exclude(
+            id=self.databaseinfra.disk_offering.id
+        )
         return bool(offerings)
 
     @property
@@ -589,6 +609,9 @@ class Database(BaseModel):
         if not self.plan.has_persistence:
             return False, "Database does not have persistence cannot be cloned"
 
+        if self.is_being_used_elsewhere():
+            return False, "Database is being used by another task"
+
         if self.is_in_quarantine:
             return False, "Database in quarantine cannot be cloned"
 
@@ -611,7 +634,7 @@ class Database(BaseModel):
         if self.status != self.ALIVE or self.is_dead:
             return False, "Database is not alive and cannot be restored"
 
-        if self.is_beeing_used_elsewhere():
+        if self.is_being_used_elsewhere():
             return False, "Database is being used by another task, please check your tasks"
 
         if self.has_flipperfox_migration_started():
@@ -625,10 +648,12 @@ class Database(BaseModel):
             error = "Database {} is protected and cannot be deleted"
         elif self.is_dead:
             error = "Database {} is not alive and cannot be deleted"
-        elif self.is_beeing_used_elsewhere():
-            error = "Database {} cannot be deleted because it is in use by another task."
+        elif self.is_being_used_elsewhere():
+            error = "Database {} cannot be deleted because" \
+                    " it is in use by another task."
         elif self.has_flipperfox_migration_started():
-            error = "Database {} cannot be deleted because it is beeing migrated."
+            error = "Database {} cannot be deleted because" \
+                    " it is being migrated."
 
         if error:
             return False, error.format(self.name)
@@ -640,8 +665,9 @@ class Database(BaseModel):
             error = "MongoDB 2.4 cannot be upgraded by this task."
         elif self.is_in_quarantine:
             error = "Database in quarantine and cannot be upgraded."
-        elif self.is_beeing_used_elsewhere():
-            error = "Database cannot be deleted because it is in use by another task."
+        elif self.is_being_used_elsewhere():
+            error = "Database cannot be upgraded because" \
+                    " it is in use by another task."
         elif self.has_flipperfox_migration_started():
             error = "Database is being migrated and cannot be upgraded."
         elif not self.infra.plan.engine_equivalent_plan:
@@ -666,12 +692,48 @@ class Database(BaseModel):
         error = None
         if self.is_in_quarantine:
             error = "Database in quarantine and cannot be resized."
-        elif self.is_beeing_used_elsewhere():
-            error = "Database cannot be resized because it is in use by another task."
         elif self.has_flipperfox_migration_started():
             error = "Database is being migrated and cannot be resized."
         elif not self.has_cloudstack_offerings:
             error = "There is no offerings for this database."
+        elif self.is_being_used_elsewhere():
+            task_name = self.current_task.task_name
+            if not task_name == "notification.tasks.resize_database":
+                error = "Database cannot be resized because" \
+                        " it is in use by another task."
+        if error:
+            return False, error
+        return True, None
+
+    def can_do_resize(self):
+        error = None
+        if self.is_in_quarantine:
+            error = "Database in quarantine and cannot be resized."
+        elif self.has_flipperfox_migration_started():
+            error = "Database is being migrated and cannot be resized."
+        elif not self.has_cloudstack_offerings:
+            error = "There is no offerings for this database."
+        elif self.is_dead:
+            error = "Database is dead and cannot be resized."
+        elif self.is_being_used_elsewhere():
+            error = "Database cannot be resized because" \
+                    " it is in use by another task."
+
+        if error:
+            return False, error
+        return True, None
+
+    def can_do_disk_resize(self):
+        error = None
+        if self.is_in_quarantine:
+            error = "Database in quarantine and cannot be resized."
+        elif self.is_being_used_elsewhere():
+            error = "Database cannot be resized because" \
+                    " it is in use by another task."
+        elif self.has_flipperfox_migration_started():
+            error = "Database is being migrated and cannot be resized."
+        elif not self.has_disk_offerings:
+            error = "There is no other disk offering for this database."
 
         if error:
             return False, error

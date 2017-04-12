@@ -9,6 +9,7 @@ from maintenance.tests import factory as maintenance_factory
 from physical.tests import factory as physical_factory
 from physical.models import DatabaseInfra
 from logical.tests import factory
+from notification.tests.factory import TaskHistoryFactory
 from logical.models import Database
 
 
@@ -312,3 +313,12 @@ class DatabaseTestCase(TestCase):
         upgrade.database = database
         upgrade.set_error()
         self.assertIsNone(database.last_successful_upgrade)
+
+    def test_current_task_lock(self):
+        database = factory.DatabaseFactory()
+        task1 = TaskHistoryFactory()
+        task2 = TaskHistoryFactory()
+        database.pin_task(task1)
+        self.assertFalse(database.pin_task(task2))
+        database.unpin_task()
+        self.assertTrue(database.pin_task(task2))
