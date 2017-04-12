@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
-import mock
 import logging
 from django.test import TestCase
 from django.conf import settings
