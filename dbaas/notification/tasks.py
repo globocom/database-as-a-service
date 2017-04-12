@@ -555,8 +555,8 @@ def upgrade_mongodb_24_to_30(self, database, user, task_history=None):
         msg = "Database is not alive!"
         stop_now = True
 
-    if database.is_beeing_used_elsewhere(task_id=self.request.id):
-        msg = "Database is in use by another task!"
+    if database.is_being_used_elsewhere():
+        msg = "Database is being used by another task!"
         stop_now = True
 
     if not source_engine.version.startswith('2.4.'):
@@ -626,6 +626,13 @@ def database_disk_resize(self, database, disk_offering, task_history, user):
 
     AuditRequest.new_request("database_disk_resize", user, "localhost")
 
+    if not database.pin_task(task_history):
+        task_history.update_details("FAILED!", persist=True)
+        task_history.add_detail(
+            "Database {} is not allocated for this task.".format(db.name)
+        )
+        return False
+
     databaseinfra = database.databaseinfra
     old_disk_offering = database.databaseinfra.disk_offering
     resized = []
@@ -669,6 +676,8 @@ def database_disk_resize(self, database, disk_offering, task_history, user):
             status=TaskHistory.STATUS_SUCCESS,
             details='\nDisk resize successfully done.'
         )
+
+        database.unpin_task()
         return True
 
     except Exception as e:

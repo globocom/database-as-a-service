@@ -48,7 +48,7 @@ def purge_quarantine(self,):
 
         task_history.update_status_for(
             TaskHistory.STATUS_SUCCESS,
-            details='Databases destroyed successfully'
+            details='Listed databases were destroyed successfully.'
         )
         return
 
