@@ -320,6 +320,9 @@ def database_hosts(request, context, database):
             hosts[instance.hostname] = []
         hosts[instance.hostname].append(instance)
 
+    context['core_attribute'] = database.engine.write_node_description
+    context['read_only_attribute'] = database.engine.read_node_description
+
     context['instances_core'] = []
     context['instances_read_only'] = []
     current_write_found = False
@@ -332,12 +335,13 @@ def database_hosts(request, context, database):
             status = instance.status_html()
 
             if not instance.is_database:
-                attributes.append(instance.get_instance_type_display())
+                context['non_database_attribute'] = instance.get_instance_type_display()
+                attributes.append(context['non_database_attribute'])
             elif not current_write_found and instance.is_current_write:
-                attributes.append(database.engine.write_node_description)
+                attributes.append(context['core_attribute'])
                 current_write_found = True
             else:
-                attributes.append(database.engine.read_node_description)
+                attributes.append(context['read_only_attribute'])
 
         full_description = host.hostname
         if len(hosts) > 1:
@@ -352,8 +356,8 @@ def database_hosts(request, context, database):
         else:
             context['instances_core'].append(host_data)
 
-    max_read_hosts = Configuration.get_by_name_as_int('max_read_hosts', 5)
-    enable_host = max_read_hosts - len(context['instances_read_only'])
+    context['max_read_hosts'] = Configuration.get_by_name_as_int('max_read_hosts', 5)
+    enable_host = context['max_read_hosts'] - len(context['instances_read_only'])
     context['enable_host'] = range(1, enable_host+1)
 
     return render_to_response(
