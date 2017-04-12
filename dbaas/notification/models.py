@@ -6,7 +6,6 @@ from datetime import datetime
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from django.utils import simplejson
-#from logical.models import Database
 
 from util.models import BaseModel
 
