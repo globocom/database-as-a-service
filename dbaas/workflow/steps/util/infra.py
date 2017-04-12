@@ -25,9 +25,8 @@ class Offering(Update):
         return "Updating offering info..."
 
     def do(self):
-        self.infra_offering.offering = self.database.resizes.latest(
-            'created_at'
-        ).target_offer.offering
+        last_resize = self.database.resizes.last()
+        self.infra_offering.offering = last_resize.target_offer.offering
         self.infra_offering.save()
 
     def undo(self):
