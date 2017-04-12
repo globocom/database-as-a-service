@@ -34,6 +34,11 @@ DBaaS requires the following:
 * and all packages in requirements.txt file (there is a shortcut to install them)
 
 
+Setup docker and docker-compose(optional)
+=========================================
+
+* Install [Docker](https://docs.docker.com/engine/installation/)
+
 Setup your local environment
 ============================
 
@@ -59,23 +64,13 @@ some minimum operational data on DB.
 
     make reset_data
 
-## Running all tests
+## Running all tests on local enviroment
 
-Before running the test, makes sure that you have mongod running and a user admin created with password 123456.
+    make pip && make test
 
-    db = db.getSiblingDB('admin')
+## Running all test with docker( To run this the and docker-compose must be avaliable)
 
-    db.createUser( { user: "admin",
-                  pwd: "123456",
-                  roles: [ "userAdminAnyDatabase", "clusterAdmin", "readWriteAnyDatabase", "dbAdminAnyDatabase" ] } )
-
-Then install all the required packages
-
-    make pip
-
-Run it!
-
-    make test
+    make docker_build && make test_with_docker
 
 ## Running the project
 
