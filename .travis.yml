@@ -7,12 +7,6 @@ python:
 
 services:
     - docker
-    - mysql
-    - mongodb
-    - redis-server
-
-services:
-  - docker
 
 env:
   DOCKER_COMPOSE_VERSION: 1.11.2
