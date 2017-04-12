@@ -32,8 +32,8 @@ class BaseMongoDB(BaseTopology):
 class MongoDBSingle(BaseMongoDB):
 
     def get_upgrade_steps_extra(self):
-        return super(MongoDBSingle, self).get_upgrade_steps_extra() + (
-            'workflow.steps.mongodb.upgrade.vm.ChangeBinaryTo32',
+        return ('workflow.steps.mongodb.upgrade.vm.ChangeBinaryTo32',) + \
+            super(MongoDBSingle, self).get_upgrade_steps_extra() + (
             'workflow.steps.util.database.Start',
             'workflow.steps.util.database.CheckIsUp',
             'workflow.steps.util.database.Stop',
