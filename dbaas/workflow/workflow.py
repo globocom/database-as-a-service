@@ -232,6 +232,13 @@ def steps_for_instances_with_rollback(group_of_steps, instances, task):
         finally:
             undo_step_current -= 1
 
+    databases = set()
+    for instance in instances:
+        databases.add(instance.databaseinfra.databases.first())
+
+    for db in databases:
+        db.unpin_task()
+
     return ret
 
 

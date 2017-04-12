@@ -554,7 +554,7 @@ class Database(BaseModel):
     def has_disk_offerings(self):
         from physical.models import DiskOffering
 
-        offerings = DiskOffering.objects.all().exclude(
+        offerings = DiskOffering.objects.exclude(
             id=self.databaseinfra.disk_offering.id
         )
         return bool(offerings)
