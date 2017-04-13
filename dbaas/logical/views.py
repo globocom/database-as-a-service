@@ -9,7 +9,7 @@ from django.shortcuts import get_object_or_404, render_to_response
 from django.views.generic.detail import BaseDetailView
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.template import RequestContext
 from dbaas_cloudstack.models import CloudStackPack
 from dbaas_credentials.models import CredentialType
@@ -83,12 +83,34 @@ class CredentialView(BaseDetailView):
 def database_view(tab):
     def database_decorator(func):
         def func_wrapper(request, id):
+            is_dba = request.user.team_set.filter(role__name="role_dba")
+
             database = Database.objects.get(id=id)
+            if not is_dba:
+                can_access = True
+                if database.team not in request.user.team_set.all():
+                    messages.add_message(
+                        request, messages.ERROR,
+                        'This database belong to {} team, you are not member of this team'.format(database.team)
+                    )
+                    can_access = False
+                elif database.is_in_quarantine:
+                    messages.add_message(
+                        request, messages.ERROR,
+                        'This database is in quarantine, please contact your DBA'
+                    )
+                    can_access = False
+
+                if not can_access:
+                    return HttpResponseRedirect(
+                        reverse('admin:logical_database_changelist')
+                    )
+
             context = {
                 'database': database,
                 'current_tab': tab,
                 'user': request.user,
-                'is_dba': request.user.team_set.filter(role__name="role_dba")
+                'is_dba': is_dba
             }
 
             return func(request, context, database)
