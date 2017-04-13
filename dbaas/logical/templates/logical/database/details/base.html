@@ -15,7 +15,7 @@
 
     .title_tag {
       vertical-align: middle;
-      margin-right: 5px;
+      margin-left: 5px;
       background-color: #f89406 !important;
     }
 
@@ -40,11 +40,11 @@
 {% block content_title %}
   <h1>
     Database: {{ database.name }}
-    <div id="running_label"></div>
-    <a target="_blank" id="task_running"></a>
     {% if database.is_in_quarantine %}
-      <span id="is_in_quarantine"></span>
+      <span class="label label-warning title_tag">In quarantine</span>
     {% endif %}
+    <a target="_blank" id="task_running"></a>
+    <div id="running_label"></div>
   </h1>
 {% endblock %}
 
@@ -112,12 +112,6 @@
     label = document.getElementById("task_running");
     label.className = "label label-warning title_tag";
 
-    {% if database.is_in_quarantine %}
-      label = document.getElementById("is_in_quarantine");
-      label.className = "label label-warning title_tag";
-      label.innerHTML = "In quarantine";
-    {% endif %}
-
     function database_current_task() {
       $.get("/notification/database_tasks/{{ database.id }}/", function(data, status){
         if ("id" in data) {
@@ -134,7 +128,7 @@
       });
     }
     database_current_task();
-    setInterval(database_current_task, 1000);
+    setInterval(database_current_task, 10000);
 
   </script>
 {% endblock %}
