@@ -47,6 +47,6 @@ services:
 
         environment:
             - REDIS_HOST=redisdb
-            - DBAAS_DATABASE_HOST=mysqldb
+            - DBAAS_DATABASE_HOST=mysqldb56
             - DBAAS_DATABASE_PASSWORD=123
             - TESTS_MONGODB_HOST=mongodb
