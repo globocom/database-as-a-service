@@ -72,13 +72,13 @@ test_with_docker:
 	docker-compose run test
 
 docker_mysql_55:
-	docker-compose run --service-ports mysqldb55
+	docker-compose run --publish="3306:3306" mysqldb55
 
 docker_mysql_56:
-	docker-compose run --service-ports mysqldb56
+	docker-compose run --publish="3306:3306" mysqldb56
 
 docker_mysql_57:
-	docker-compose run --service-ports mysqldb57
+	docker-compose run --publish="3306:3306" mysqldb57
 
 kill_mysql:
 	@ps aux | grep mysqldb | grep -v 'grep mysqldb' | awk '{print $$2}' | xargs kill
