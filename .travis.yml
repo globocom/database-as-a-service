@@ -21,6 +21,7 @@ before_install:
   - docker-compose pull mysqldb56 redisdb mongodb
   - docker images
   - docker ps
+  - sudo /etc/init.d/mysql stop
 
 script:
   - docker-compose run test
