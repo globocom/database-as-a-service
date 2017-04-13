@@ -10,11 +10,29 @@
   <link rel="stylesheet" type="text/css" href="{% static 'css/database_admin.css' %}" />
   <style type="text/css">
     .readonly {
-        padding-top: 5px
+      padding-top: 5px
     }
 
     .title_tag {
       vertical-align: middle;
+      margin-right: 5px;
+      background-color: #f89406 !important;
+    }
+
+    .loader {
+      border: 3px solid #d3c3d3; /* Light grey */
+      border-top: 3px solid #3498db; /* Blue */
+      border-radius: 50%;
+      width: 15px;
+      height: 15px;
+      animation: spin 0.8s linear infinite;
+      display: inline-block;
+      vertical-align: middle;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
   </style>
 {% endblock %}
@@ -22,8 +40,10 @@
 {% block content_title %}
   <h1>
     Database: {{ database.name }}
+    <div id="running_label"></div>
+    <a target="_blank" id="task_running"></a>
     {% if database.is_in_quarantine %}
-      <span class="label label-warning title_tag">In quarantine</span>
+      <span id="is_in_quarantine"></span>
     {% endif %}
   </h1>
 {% endblock %}
@@ -84,4 +104,37 @@
   {{ block.super }}
   <script src="{% static "admin/js/jquery.js" %}">
   <script type="text/javascript" src="{% static "admin/js/bootstrap.min.js" %}"></script>
+
+  <script type="text/javascript">
+    spin = document.getElementById("running_label");
+
+    jQuery('#task_running').hide();
+    label = document.getElementById("task_running");
+    label.className = "label label-warning title_tag";
+
+    {% if database.is_in_quarantine %}
+      label = document.getElementById("is_in_quarantine");
+      label.className = "label label-warning title_tag";
+      label.innerHTML = "In quarantine";
+    {% endif %}
+
+    function database_current_task() {
+      $.get("/notification/database_tasks/{{ database.id }}/", function(data, status){
+        if ("id" in data) {
+          label = document.getElementById("task_running");
+          label.innerHTML = data["status"] + ": " + data["name"] + " (" + data["step"] + ")";
+          label.href = "/admin/notification/taskhistory/" + data["id"];
+          jQuery('#task_running').show();
+          spin.className = "loader";
+          jQuery('#running_label').show();
+         } else {
+          jQuery('#task_running').hide();
+          jQuery('#running_label').hide();
+         }
+      });
+    }
+    database_current_task();
+    setInterval(database_current_task, 1000);
+
+  </script>
 {% endblock %}
