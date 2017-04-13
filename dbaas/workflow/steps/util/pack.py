@@ -23,7 +23,8 @@ class PackStep(BaseInstanceStep):
             'HOSTADDRESS': self.instance.address,
             'PORT': self.instance.port,
             'DBPASSWORD': self.instance.databaseinfra.password,
-            'HAS_PERSISTENCE': self.instance.databaseinfra.plan.has_persistence
+            'HAS_PERSISTENCE': self.instance.databaseinfra.plan.has_persistence,
+            'IS_READ_ONLY': self.instance.read_only
         }
 
         variables.update(self.get_variables_specifics())
@@ -78,3 +79,19 @@ class ResizeConfigure(Configure):
         super(ResizeConfigure, self).__init__(instance)
 
         self.pack = DatabaseResize.objects.last().current_to(self.database).target_offer
+
+
+class ConfigureRedis(Configure):
+
+    def get_variables_specifics(self):
+        redis = self.host.database_instance()
+        redis_address = ''
+        redis_port = ''
+        if redis:
+            redis_address = redis.address
+            redis_port = redis.port
+
+        return {
+            'HOSTADDRESS': redis_address,
+            'PORT': redis_port,
+        }
