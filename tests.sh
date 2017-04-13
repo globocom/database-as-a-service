@@ -7,4 +7,4 @@ echo "create database IF NOT EXISTS dbaas;" | mysql -h mysqldb56 -u root -p123
 python add_user_admin_on_mongo.py
 
 # Run tests
-make test_with_docker
+make test
