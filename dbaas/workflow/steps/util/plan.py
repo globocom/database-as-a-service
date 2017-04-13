@@ -3,6 +3,9 @@ from util import build_context_script, exec_remote_command
 from dbaas_cloudstack.models import HostAttr, PlanAttr
 from dbaas_nfsaas.models import HostAttr as HostAttrNfsaas
 from workflow.steps.util.base import BaseInstanceStep
+import logging
+
+LOG = logging.getLogger(__name__)
 
 
 class PlanStep(BaseInstanceStep):
@@ -37,7 +40,8 @@ class PlanStep(BaseInstanceStep):
             'HOST': self.host.hostname.split('.')[0],
             'ENGINE': self.plan.engine.engine_type.name,
             'UPGRADE': True,
-            'IS_HA': self.plan.is_ha
+            'IS_HA': self.plan.is_ha,
+            'IS_READ_ONLY': self.instance.read_only
         }
 
         if self.host_nfs:

@@ -17,13 +17,13 @@ class Reset(BaseInstanceStep):
 
     def do(self):
         sleep(10)
-
-        reset_sentinel(
-            self.host,
-            self.sentinel_instance.address,
-            self.sentinel_instance.port,
-            self.sentinel_instance.databaseinfra.name
-        )
+        if self.sentinel_instance:
+            reset_sentinel(
+                self.host,
+                self.sentinel_instance.address,
+                self.sentinel_instance.port,
+                self.sentinel_instance.databaseinfra.name
+            )
 
     def undo(self):
         pass
