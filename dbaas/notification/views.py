@@ -18,3 +18,25 @@ def waiting_tasks_api(self):
         task.id: task.task_name for task in tasks
     })
     return HttpResponse(response_json, content_type="application/json")
+
+
+def database_tasks(self, database_id):
+    task = TaskHistory.objects.filter(database__id=database_id).first()
+
+    response = {}
+    if task:
+        name = task.task_name.split('.')[-1]
+        name = name.replace("_", " ")
+
+        step = task.details.split('\n')[-1]
+        if "Step" in step:
+            step = "Step " + step.split("Step",1)[1]
+
+        response = {
+            'id': task.id,
+            'name': name.capitalize(),
+            'status': task.task_status.capitalize(),
+            'step': step
+        }
+
+    return HttpResponse(dumps(response), content_type="application/json")
