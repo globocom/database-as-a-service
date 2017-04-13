@@ -20,7 +20,6 @@ before_install:
   - docker-compose --version
   - docker-compose pull mysqldb56 redisdb mongodb
   - docker images
-  - docker-compose up
   - docker ps
 
 script:
