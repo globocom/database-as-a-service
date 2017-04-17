@@ -548,7 +548,6 @@ def _clone_database(request, database):
         database=database, clone_name=name, plan=plan,
         environment=environment, user=request.user
     )
-    return HttpResponseRedirect(user_tasks(request.user))
 
 
 def _restore_database(request, database):
@@ -569,9 +568,7 @@ def _restore_database(request, database):
 def database_backup(request, context, database):
     if request.method == 'POST':
         if 'database_clone' in request.POST:
-            response = _clone_database(request, database)
-            if response:
-                return response
+            _clone_database(request, database)
         if 'database_restore' in request.POST:
             _restore_database(request, database)
         elif 'backup_path' in request.POST:
