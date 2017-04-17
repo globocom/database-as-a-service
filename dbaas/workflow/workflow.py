@@ -4,32 +4,40 @@ import time
 from util import full_stack
 from django.utils.module_loading import import_by_path
 from exceptions.error_codes import DBAAS_0001
+from logical.models import Database
+from physical.models import DatabaseInfra, Instance
+
 
 LOG = logging.getLogger(__name__)
 
 
-def start_workflow(workflow_dict, task=None):
-    try:
-        if 'database' in workflow_dict:
-            db = workflow_dict['database']
-        elif 'instances' in workflow_dict:
-            db = workflow_dict['instances'][0].databaseinfra.databases.first()
-        elif 'databaseinfra' in workflow_dict:
-            db = workflow_dict['databaseinfra'].databases.first()
-        else:
-            db = None
-    except Exception:
-        db = None
+def _get_database_in_params(params):
+    for param in params.values():
+        if isinstance(param, Database):
+            return param
+        elif isinstance(param, DatabaseInfra):
+            return param.databases.first()
+        elif isinstance(param, list):
+            for item in param:
+                if isinstance(item, Instance):
+                    return item.databaseinfra.databases.first()
 
-    if db:
-        if not db.pin_task(task):
+
+def start_workflow(workflow_dict, task=None):
+    database = _get_database_in_params(workflow_dict)
+
+    LOG.debug(workflow_dict)
+    if database:
+        LOG.debug("Database encontrada!!!!")
+        if not database.pin_task(task):
             task.update_details("FAILED!", persist=True)
             task.add_detail(
-                "Database {} is not allocated for this task.".format(db.name)
+                "Database {} is not allocated for this task.".format(
+                    database.name
+                )
             )
             return False
         workflow_dict['task_pinned'] = True
-
 
     try:
         if 'steps' not in workflow_dict:
@@ -71,8 +79,8 @@ def start_workflow(workflow_dict, task=None):
 
         workflow_dict['created'] = True
 
-        if db:
-            db.unpin_task()
+        if database:
+            database.unpin_task()
         return True
 
     except Exception:
@@ -96,24 +104,14 @@ def start_workflow(workflow_dict, task=None):
 
 def stop_workflow(workflow_dict, task=None):
     LOG.info("Running undo...")
-
-    try:
-        if 'database' in workflow_dict:
-            db = workflow_dict['database']
-        elif 'instances' in workflow_dict:
-            db = workflow_dict['instances'][0].databaseinfra.databases.first()
-        elif 'databaseinfra' in workflow_dict:
-            db = workflow_dict['databaseinfra'].databases.first()
-        else:
-            db = None
-    except Exception:
-        db = None
-
-    if db and 'task_pinned' not in workflow_dict:
-        if not db.pin_task(task):
+    database = _get_database_in_params(workflow_dict)
+    if database and 'task_pinned' not in workflow_dict:
+        if not database.pin_task(task):
             task.update_details("FAILED!", persist=True)
             task.add_detail(
-                "Database {} is not allocated for this task.".format(db.name)
+                "Database {} is not allocated for this task.".format(
+                    database.name
+                )
             )
             return False
 
@@ -156,8 +154,8 @@ def stop_workflow(workflow_dict, task=None):
             if task:
                 task.update_details(persist=True, details="DONE!")
 
-        if db:
-            db.unpin_task()
+        if database:
+            database.unpin_task()
         return True
     except Exception as e:
         LOG.info("Exception: {}".format(e))
@@ -236,8 +234,8 @@ def steps_for_instances_with_rollback(group_of_steps, instances, task):
     for instance in instances:
         databases.add(instance.databaseinfra.databases.first())
 
-    for db in databases:
-        db.unpin_task()
+    for database in databases:
+        database.unpin_task()
 
     return ret
 
@@ -250,16 +248,18 @@ def steps_for_instances(
     for instance in instances:
         databases.add(instance.databaseinfra.databases.first())
 
-    for db in databases:
+    for database in databases:
         if since_step == 0:
-            if not db.pin_task(task):
+            if not database.pin_task(task):
                 task.update_details("FAILED!", persist=True)
                 task.add_detail(
-                    "Database {} is not allocated for this task.".format(db.name)
+                    "Database {} is not allocated for this task.".format(
+                        database.name
+                    )
                 )
                 return False
         else:
-            db.update_task(task)
+            database.update_task(task)
 
     steps_total = 0
     for group_of_steps in list_of_groups_of_steps:
@@ -318,7 +318,7 @@ def steps_for_instances(
             count, len(list_of_groups_of_steps))
         )
 
-    for db in databases:
-        db.unpin_task()
+    for database in databases:
+        database.unpin_task()
 
     return True
