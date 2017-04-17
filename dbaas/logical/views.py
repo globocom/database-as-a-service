@@ -20,7 +20,7 @@ from physical.models import Host, DiskOffering, Environment, Plan
 from util import get_credentials_for
 from notification.models import TaskHistory
 from notification.tasks import add_instances_to_database, \
-    remove_readonly_instance, upgrade_database
+    remove_readonly_instance, upgrade_database, resize_database
 from system.models import Configuration
 from .errors import DisabledDatabase
 from .forms.database import DatabaseDetailsForm
@@ -236,6 +236,41 @@ def _vm_resize(request, database):
             cloudstackpack=cloudstack_pack,
             user=request.user,
         )
+
+
+@database_view("")
+def database_resize_retry(request, context, database):
+    can_do_resize, error = database.can_do_resize_retry()
+    if can_do_resize:
+        last_resize = database.resizes.last()
+
+        if not last_resize.is_status_error:
+            error = "Cannot do retry, last resize status is '{}'!".format(
+                last_resize.get_status_display()
+            )
+        else:
+            current_step = last_resize.current_step
+
+    if error:
+        messages.add_message(request, messages.ERROR, error)
+    else:
+        task_history = TaskHistory()
+        task_history.task_name = "resize_database_retry"
+        task_history.task_status = task_history.STATUS_WAITING
+        task_history.arguments = "Retrying resize database {}".format(database)
+        task_history.user = request.user
+        task_history.save()
+
+        resize_database.delay(
+            database=database, user=request.user, task=task_history,
+            cloudstackpack=last_resize.target_offer,
+            original_cloudstackpack=last_resize.source_offer,
+            since_step=current_step
+        )
+
+    return HttpResponseRedirect(
+        reverse('admin:logical_database_resizes', kwargs={'id': database.id})
+    )
 
 
 @database_view("")

@@ -22,7 +22,7 @@ from django.core.exceptions import FieldError
 from dbaas import constants
 from account.models import Team
 from drivers import DatabaseAlreadyExists
-from notification.tasks import create_database, upgrade_database, resize_database
+from notification.tasks import create_database
 from notification.tasks import add_instances_to_database
 from notification.models import TaskHistory
 from system.models import Configuration
@@ -32,7 +32,7 @@ from logical.models import Database
 from logical.views import database_details, database_hosts, \
     database_credentials, database_resizes, database_backup, database_dns, \
     database_metrics, database_destroy, database_delete_host, \
-    database_upgrade, database_upgrade_retry
+    database_upgrade, database_upgrade_retry, database_resize_retry
 from logical.forms import DatabaseForm
 from logical.service.database import DatabaseService
 
@@ -459,43 +459,6 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
         return render_to_response("logical/database/dex_analyze.html", locals(), context_instance=RequestContext(request))
 
-    def resize_retry(self, request, database_id):
-        database = Database.objects.get(id=database_id)
-
-        can_do_resize, error = database.can_do_resize_retry()
-
-        if can_do_resize:
-            last_resize = database.resizes.last()
-
-            if not last_resize.is_status_error:
-                error = "Cannot do retry, last resize status is '{}'!".format(
-                    last_resize.get_status_display()
-                )
-            else:
-                current_step = last_resize.current_step
-
-        if error:
-            url = reverse('admin:logical_database_change', args=[database.id])
-            self.message_user(request, error, level=messages.ERROR)
-            return HttpResponseRedirect(url)
-
-        task_history = TaskHistory()
-        task_history.task_name = "resize_database_retry"
-        task_history.task_status = task_history.STATUS_WAITING
-        task_history.arguments = "Retrying resize database {}".format(database)
-        task_history.user = request.user
-        task_history.save()
-
-        resize_database.delay(
-            database=database, user=request.user, task=task_history,
-            cloudstackpack=last_resize.target_offer,
-            original_cloudstackpack=last_resize.source_offer,
-            since_step=current_step
-        )
-
-        url = reverse('admin:notification_taskhistory_changelist')
-        return HttpResponseRedirect(url)
-
     def initialize_flipperfox_migration(self, request, database_id):
         from flipperfox_migration.models import DatabaseFlipperFoxMigration
 
@@ -663,8 +626,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 name="upgrade_retry"
             ),
             url(
-                r'^/?(?P<database_id>\d+)/resize_retry/$',
-                self.admin_site.admin_view(self.resize_retry),
+                r'^/?(?P<id>\d+)/resize_retry/$',
+                self.admin_site.admin_view(database_resize_retry),
                 name="resize_retry"
             ),
             url(
