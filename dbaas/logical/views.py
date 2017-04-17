@@ -219,33 +219,32 @@ def _disk_resize(request, database):
         new_disk_offering=disk_offering.id,
         user=request.user
     )
-    return HttpResponseRedirect(user_tasks(request.user))
+
+
+def _vm_resize(request, database):
+    try:
+        check_is_database_dead(database.id, 'VM resize')
+        check_is_database_enabled(database.id, 'VM resize')
+    except DisabledDatabase as err:
+        messages.add_message(request, messages.ERROR, err.message)
+    else:
+        cloudstack_pack = CloudStackPack.objects.get(
+            id=request.POST.get('vm_offering')
+        )
+        Database.resize(
+            database=database,
+            cloudstackpack=cloudstack_pack,
+            user=request.user,
+        )
 
 
 @database_view('resizes/upgrade')
 def database_resizes(request, context, database):
     if request.method == 'POST':
         if 'disk_resize' in request.POST and request.POST.get('disk_offering'):
-            response = _disk_resize(request, database)
-            if response:
-                return response
+            _disk_resize(request, database)
         elif 'vm_resize' in request.POST and request.POST.get('vm_offering'):
-            try:
-                check_is_database_dead(database.id, 'VM resize')
-                check_is_database_enabled(database.id, 'VM resize')
-            except DisabledDatabase as err:
-                messages.add_message(request, messages.ERROR, err.message)
-            else:
-                cloudstack_pack = CloudStackPack.objects.get(
-                    id=request.POST.get('vm_offering')
-                )
-                Database.resize(
-                    database=database,
-                    cloudstackpack=cloudstack_pack,
-                    user=request.user,
-                )
-                return HttpResponseRedirect(user_tasks(request.user))
-
+            _vm_resize(request, database)
         else:
             disk_auto_resize = request.POST.get('disk_auto_resize', False)
             database.disk_auto_resize = disk_auto_resize
@@ -333,16 +332,13 @@ def _add_read_only_instances(request, database):
         task=task,
         number_of_instances=qtd_new_hosts
     )
-    return HttpResponseRedirect(user_tasks(request.user))
 
 
 @database_view('hosts')
 def database_hosts(request, context, database):
     if request.method == 'POST':
         if 'add_read_only' in request.POST:
-            response = _add_read_only_instances(request, database)
-            if response:
-                return response
+            _add_read_only_instances(request, database)
 
     hosts = OrderedDict()
     for instance in database.infra.instances.all():
@@ -415,22 +411,20 @@ def database_delete_host(request, database_id, host_id):
         )
         can_delete = False
 
-    if not can_delete:
-        return HttpResponseRedirect(
-            reverse('admin:logical_database_hosts', kwargs={'id': database.id})
+    if can_delete:
+        task = TaskHistory()
+        task.task_name = "remove_database_instance"
+        task.task_status = TaskHistory.STATUS_WAITING
+        task.arguments = "Removing instance {} on database {}".format(
+            instance, database
         )
+        task.user = request.user
+        task.save()
+        remove_readonly_instance.delay(instance, request.user, task)
 
-    task = TaskHistory()
-    task.task_name = "remove_database_instance"
-    task.task_status = TaskHistory.STATUS_WAITING
-    task.arguments = "Removing instance {} on database {}".format(
-        instance, database
+    return HttpResponseRedirect(
+        reverse('admin:logical_database_hosts', kwargs={'id': database.id})
     )
-    task.user = request.user
-    task.save()
-
-    remove_readonly_instance.delay(instance, request.user, task)
-    return HttpResponseRedirect(user_tasks(request.user))
 
 
 def _clone_database(request, database):
@@ -505,7 +499,6 @@ def _restore_database(request, database):
 
     snapshot = request.POST.get('restore_snapshot')
     Database.restore(database=database, snapshot=snapshot, user=request.user)
-    return HttpResponseRedirect(user_tasks(request.user))
 
 
 @database_view('backup')
@@ -516,9 +509,7 @@ def database_backup(request, context, database):
             if response:
                 return response
         if 'database_restore' in request.POST:
-            response = _restore_database(request, database)
-            if response:
-                return response
+            _restore_database(request, database)
         elif 'backup_path' in request.POST:
             database.backup_path = request.POST['backup_path']
             database.save()
@@ -571,7 +562,12 @@ def _destroy_databases(request, database):
             reverse('admin:logical_database_changelist')
         )
 
-    return HttpResponseRedirect(user_tasks(request.user))
+    return HttpResponseRedirect(
+        '{}?user={}'.format(
+            reverse('admin:notification_taskhistory_changelist'),
+            request.user.username
+        )
+    )
 
 
 @database_view('destroy')
