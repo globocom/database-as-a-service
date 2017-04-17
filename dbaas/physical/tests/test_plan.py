@@ -5,8 +5,8 @@ from django.test import TestCase
 from django.contrib import admin
 from physical.admin.plan import PlanAdmin
 from physical.models import Plan
-from system.models import Configuration
-from .factory import PlanFactory, EngineFactory, EngineTypeFactory
+from .factory import PlanFactory, EngineFactory, EngineTypeFactory, \
+    EnvironmentFactory
 
 
 SEARCH_FIELDS = ["name"]
@@ -105,14 +105,9 @@ class PlanModelTestCase(TestCase):
 
     def setUp(self):
         self.plan = PlanFactory()
-        self.ha_min_number_of_bundles = Configuration(
-            name='ha_min_number_of_bundles', value=-1
-        )
-        self.ha_min_number_of_bundles.save()
-
-    def tearDown(self):
-        if self.ha_min_number_of_bundles.id:
-            self.ha_min_number_of_bundles.delete()
+        self.environment = EnvironmentFactory()
+        self.plan.environments.add(self.environment)
+        self.plan.environments.add(EnvironmentFactory())
 
     def test_is_pre_provisioned(self):
         self.plan.provider = Plan.PREPROVISIONED
@@ -132,20 +127,28 @@ class PlanModelTestCase(TestCase):
         self.plan.is_ha = False
 
         self.plan.provider = Plan.PREPROVISIONED
-        self.assertTrue(self.plan.validate_min_environment_bundles())
+        self.assertTrue(self.plan.validate_min_environment_bundles(
+            self.environment
+        ))
 
         self.plan.provider = Plan.CLOUDSTACK
-        self.assertTrue(self.plan.validate_min_environment_bundles())
+        self.assertTrue(self.plan.validate_min_environment_bundles(
+            self.environment
+        ))
 
     @skipIf(not _have_cloud_stack(), "Cloudstack is not installed")
     def test_min_bundles_not_cloudstack(self):
         self.plan.provider = Plan.PREPROVISIONED
 
         self.plan.is_ha = True
-        self.assertTrue(self.plan.validate_min_environment_bundles())
+        self.assertTrue(self.plan.validate_min_environment_bundles(
+            self.environment
+        ))
 
         self.plan.is_ha = False
-        self.assertTrue(self.plan.validate_min_environment_bundles())
+        self.assertTrue(self.plan.validate_min_environment_bundles(
+            self.environment
+        ))
 
     @skipIf(not _have_cloud_stack(), "Cloudstack is not installed")
     def test_min_bundles(self):
@@ -169,12 +172,15 @@ class PlanModelTestCase(TestCase):
         plan_cloudstack.bundle.add(bundle_02)
         plan_cloudstack.save()
 
-        self.ha_min_number_of_bundles.value = 1
-        self.ha_min_number_of_bundles.save()
-        self.assertTrue(self.plan.validate_min_environment_bundles())
+        self.environment.min_of_zones = 1
+        self.environment.save()
+        self.assertTrue(self.plan.validate_min_environment_bundles(
+            self.environment
+        ))
 
-        self.ha_min_number_of_bundles.value = 3
-        self.ha_min_number_of_bundles.save()
+        self.environment.min_of_zones = 3
+        self.environment.save()
         self.assertRaises(
-            EnvironmentError, self.plan.validate_min_environment_bundles
+            EnvironmentError, self.plan.validate_min_environment_bundles,
+            self.environment
         )

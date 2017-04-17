@@ -21,6 +21,7 @@ LOG = logging.getLogger(__name__)
 class Environment(BaseModel):
     name = models.CharField(
         verbose_name=_("Environment"), max_length=100, unique=True)
+    min_of_zones = models.PositiveIntegerField(default=1)
 
     def __unicode__(self):
         return '%s' % (self.name)
@@ -312,20 +313,19 @@ class Plan(BaseModel):
             ("view_plan", "Can view plans"),
         )
 
-    def validate_min_environment_bundles(self):
+    def validate_min_environment_bundles(self, environment):
         if self.is_ha and self.is_cloudstack:
             bundles_actives = self.cs_plan_attributes.first().bundle.filter(
                 is_active=True
             ).count()
-            min_number_of_bundle = Configuration.get_by_name_as_int(
-                'ha_min_number_of_bundles', 3
-            )
 
-            if bundles_actives < min_number_of_bundle:
+            if bundles_actives < environment.min_of_zones:
                 raise EnvironmentError(
-                    'Plan {} should has at least {} active bundles, currently '
-                    'have {}. Please contact admin.'.format(
-                        self.name, min_number_of_bundle, bundles_actives
+                    'Plan {} should has at least {} active bundles to {} '
+                    'environment, currently have {}. Please contact '
+                    'admin.'.format(
+                        self.name, environment.min_of_zones,
+                        environment.name, bundles_actives
                     )
                 )
         return True

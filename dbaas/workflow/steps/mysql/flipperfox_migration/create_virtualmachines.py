@@ -43,7 +43,9 @@ class CreateVirtualMachine(BaseStep):
             workflow_dict['target_hosts'] = []
             workflow_dict['target_instances'] = []
 
-            workflow_dict['target_plan'].validate_min_environment_bundles()
+            workflow_dict['target_plan'].validate_min_environment_bundles(
+                workflow_dict['environment']
+            )
             bundles = list(cs_plan_attrs.bundle.filter(is_active=True))
 
             for index, source_instance in enumerate(workflow_dict['source_instances']):
