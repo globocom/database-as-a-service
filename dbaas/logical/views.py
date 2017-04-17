@@ -9,7 +9,7 @@ from django.shortcuts import get_object_or_404, render_to_response
 from django.views.generic.detail import BaseDetailView
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
-from django.http import HttpResponse, HttpResponseRedirect, Http404
+from django.http import HttpResponse, HttpResponseRedirect
 from django.template import RequestContext
 from dbaas_cloudstack.models import CloudStackPack
 from dbaas_credentials.models import CredentialType
@@ -20,7 +20,7 @@ from physical.models import Host, DiskOffering, Environment, Plan
 from util import get_credentials_for
 from notification.models import TaskHistory
 from notification.tasks import add_instances_to_database, \
-    remove_readonly_instance
+    remove_readonly_instance, upgrade_database
 from system.models import Configuration
 from .errors import DisabledDatabase
 from .forms.database import DatabaseDetailsForm
@@ -236,6 +236,70 @@ def _vm_resize(request, database):
             cloudstackpack=cloudstack_pack,
             user=request.user,
         )
+
+
+@database_view("")
+def database_upgrade(request, context, database):
+    can_do_upgrade, error = database.can_do_upgrade()
+    if not can_do_upgrade:
+        messages.add_message(request, messages.ERROR, error)
+    else:
+        task_history = TaskHistory()
+        task_history.task_name = "upgrade_database"
+        task_history.task_status = task_history.STATUS_WAITING
+        task_history.arguments = "Upgrading database {}".format(database)
+        task_history.user = request.user
+        task_history.save()
+
+        upgrade_database.delay(
+            database=database,
+            user=request.user,
+            task=task_history
+        )
+
+    return HttpResponseRedirect(
+        reverse('admin:logical_database_resizes', kwargs={'id': database.id})
+    )
+
+
+@database_view("")
+def database_upgrade_retry(request, context, database):
+    can_do_upgrade, error = database.can_do_upgrade_retry()
+    if can_do_upgrade:
+        source_plan = database.databaseinfra.plan
+        upgrades = database.upgrades.filter(source_plan=source_plan)
+        last_upgrade = upgrades.last()
+        if not last_upgrade:
+            error = "Database does not have upgrades from {} {}!".format(
+                source_plan.engine.engine_type, source_plan.engine.version
+            )
+        elif not last_upgrade.is_status_error:
+            error = "Cannot do retry, last upgrade status is '{}'!".format(
+                last_upgrade.get_status_display()
+            )
+        else:
+            since_step = last_upgrade.current_step
+
+    if error:
+        messages.add_message(request, messages.ERROR, error)
+    else:
+        task_history = TaskHistory()
+        task_history.task_name = "upgrade_database_retry"
+        task_history.task_status = task_history.STATUS_WAITING
+        task_history.arguments = "Retrying upgrade database {}".format(database)
+        task_history.user = request.user
+        task_history.save()
+
+        upgrade_database.delay(
+            database=database,
+            user=request.user,
+            task=task_history,
+            since_step=since_step
+        )
+
+    return HttpResponseRedirect(
+        reverse('admin:logical_database_resizes', kwargs={'id': database.id})
+    )
 
 
 @database_view('resizes/upgrade')

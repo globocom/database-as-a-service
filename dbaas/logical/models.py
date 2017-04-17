@@ -690,6 +690,9 @@ class Database(BaseModel):
         if can_do_upgrade:
             if self.is_dead:
                 error = "Database is dead and cannot be upgraded."
+            elif self.is_being_used_elsewhere():
+                error = "Database cannot be upgraded because " \
+                        "it is in use by another task."
 
         if error:
             return False, error
