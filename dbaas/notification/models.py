@@ -155,3 +155,7 @@ class TaskHistory(BaseModel):
     @property
     def is_running(self):
         return self.task_status == self.STATUS_RUNNING
+
+    @property
+    def is_status_error(self):
+        return self.task_status == self.STATUS_ERROR

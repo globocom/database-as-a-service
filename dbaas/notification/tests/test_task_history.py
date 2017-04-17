@@ -69,3 +69,11 @@ class TaskHistoryTestCase(TestCase):
     def test_is_not_running(self):
         self.task.task_status = TaskHistory.STATUS_SUCCESS
         self.assertFalse(self.task.is_running)
+
+    def test_is_error(self):
+        self.task.task_status = TaskHistory.STATUS_ERROR
+        self.assertTrue(self.task.is_status_error)
+
+    def test_is_not_error(self):
+        self.task.task_status = TaskHistory.STATUS_SUCCESS
+        self.assertFalse(self.task.is_status_error)

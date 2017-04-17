@@ -510,8 +510,15 @@ class Database(BaseModel):
 
     offering_id = property(get_cloudstack_service_offering_id)
 
-    def is_being_used_elsewhere(self):
-        return self.current_task
+    def is_being_used_elsewhere(self, skip_task_name=None):
+        if not self.current_task:
+            return False
+
+        if self.current_task.task_name == skip_task_name:
+            if self.current_task.is_status_error:
+                return False
+
+        return True
 
     def has_flipperfox_migration_started(self,):
         from flipperfox_migration.models import DatabaseFlipperFoxMigrationDetail
@@ -665,9 +672,9 @@ class Database(BaseModel):
             error = "MongoDB 2.4 cannot be upgraded by this task."
         elif self.is_in_quarantine:
             error = "Database in quarantine and cannot be upgraded."
-        elif self.is_being_used_elsewhere():
-            error = "Database cannot be upgraded because" \
-                    " it is in use by another task."
+        elif self.is_being_used_elsewhere('notification.tasks.upgrade_database'):
+            error = "Database cannot be upgraded because " \
+                    "it is in use by another task."
         elif self.has_flipperfox_migration_started():
             error = "Database is being migrated and cannot be upgraded."
         elif not self.infra.plan.engine_equivalent_plan:
@@ -696,11 +703,9 @@ class Database(BaseModel):
             error = "Database is being migrated and cannot be resized."
         elif not self.has_cloudstack_offerings:
             error = "There is no offerings for this database."
-        elif self.is_being_used_elsewhere():
-            task_name = self.current_task.task_name
-            if not task_name == "notification.tasks.resize_database":
-                error = "Database cannot be resized because" \
-                        " it is in use by another task."
+        elif self.is_being_used_elsewhere('notification.tasks.resize_database'):
+            error = "Database cannot be resized because" \
+                    " it is in use by another task."
         if error:
             return False, error
         return True, None
