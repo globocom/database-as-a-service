@@ -15,12 +15,16 @@ def _get_database_in_params(params):
     for param in params.values():
         if isinstance(param, Database):
             return param
-        elif isinstance(param, DatabaseInfra):
-            return param.databases.first()
-        elif isinstance(param, list):
+
+    for param in params.values():
+        if isinstance(param, list):
             for item in param:
                 if isinstance(item, Instance):
                     return item.databaseinfra.databases.first()
+
+    for param in params.values():
+        if isinstance(param, DatabaseInfra):
+            return param.databases.first()
 
 
 def start_workflow(workflow_dict, task=None):
