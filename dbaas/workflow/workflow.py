@@ -26,9 +26,7 @@ def _get_database_in_params(params):
 def start_workflow(workflow_dict, task=None):
     database = _get_database_in_params(workflow_dict)
 
-    LOG.debug(workflow_dict)
     if database:
-        LOG.debug("Database encontrada!!!!")
         if not database.pin_task(task):
             task.update_details("FAILED!", persist=True)
             task.add_detail(
