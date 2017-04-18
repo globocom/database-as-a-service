@@ -62,7 +62,6 @@ run_migrate: # run all migrations
 	@cd dbaas && python manage.py syncdb --migrate --noinput --no-initial-data
 
 test: # run tests
-	@python add_user_admin_on_mongo.py
 	@cd dbaas && python manage.py test --settings=dbaas.settings_test --traceback $(filter-out $@,$(MAKECMDGOALS))
 
 docker_build:
