@@ -61,14 +61,27 @@ reset_data: db_reset # drop and create database and insert sample data
 run_migrate: # run all migrations
 	@cd dbaas && python manage.py syncdb --migrate --noinput --no-initial-data
 
-create_admin_mongo_user:
-	@mongo admin --eval 'db.addUser({user: "admin", pwd: "123456", roles: ["userAdminAnyDatabase", "clusterAdmin", "readWriteAnyDatabase", "dbAdminAnyDatabase"]});'
-
 test: # run tests
-	# @echo "create database IF NOT EXISTS dbaas;" | mysql -u root
-	@mysqladmin -uroot -p$(DBAAS_DATABASE_PASSWORD) -f drop test_dbaas -h$(DBAAS_DATABASE_HOST); true
+	@python add_user_admin_on_mongo.py
 	@cd dbaas && python manage.py test --settings=dbaas.settings_test --traceback $(filter-out $@,$(MAKECMDGOALS))
 
+docker_build:
+	docker build -t dbaas_test .
+
+test_with_docker:
+	docker-compose run test
+
+docker_mysql_55:
+	docker-compose run --publish="3306:3306" mysqldb55
+
+docker_mysql_56:
+	docker-compose run --publish="3306:3306" mysqldb56
+
+docker_mysql_57:
+	docker-compose run --publish="3306:3306" mysqldb57
+
+kill_mysql:
+	@ps aux | grep mysqldb | grep -v 'grep mysqldb' | awk '{print $$2}' | xargs kill
 
 run: # run local server
 	@cd dbaas && python manage.py runserver 0.0.0.0:8000 $(filter-out $@,$(MAKECMDGOALS))

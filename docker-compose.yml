@@ -1,0 +1,58 @@
+version: '2.1'
+
+services:
+
+    mysqldb55:
+        image: mysql:5.5
+        environment:
+            - MYSQL_ROOT_PASSWORD=123
+            - MYSQL_USER=rute
+            - MYSQL_PASSWORD=123
+            - MYSQL_DATABASE=dbaas
+        ports:
+            - "3306:3306"
+
+    mysqldb56:
+        image: mysql:5.6
+        environment:
+            - MYSQL_ROOT_PASSWORD=123
+            - MYSQL_USER=rute
+            - MYSQL_PASSWORD=123
+            - MYSQL_DATABASE=dbaas
+        ports:
+            - "3306:3306"
+
+    mysqldb57:
+        image: mysql:5.7
+        environment:
+            - MYSQL_ROOT_PASSWORD=123
+            - MYSQL_USER=rute
+            - MYSQL_PASSWORD=123
+            - MYSQL_DATABASE=dbaas
+        ports:
+            - "3306:3306"
+
+    mongodb:
+        image: mongo:3.4
+
+    redisdb:
+        image: redis:3.2
+
+    test:
+        image: dbaas_test
+        volumes:
+            - .:/code
+        depends_on:
+            - mysqldb56
+            - mongodb
+            - redisdb
+        links:
+            - mysqldb56
+            - mongodb
+            - redisdb
+
+        environment:
+            - REDIS_HOST=redisdb
+            - DBAAS_DATABASE_HOST=mysqldb56
+            - DBAAS_DATABASE_PASSWORD=123
+            - TESTS_MONGODB_HOST=mongodb
