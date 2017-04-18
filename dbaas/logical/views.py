@@ -79,6 +79,7 @@ class CredentialView(BaseDetailView):
         credential.delete()
         return self.as_json(credential)
 
+
 def database_view(tab):
     def database_decorator(func):
         def func_wrapper(request, id):
@@ -266,6 +267,13 @@ def database_resizes(request, context, database):
 
 
 def _add_read_only_instances(request, database):
+    try:
+        check_is_database_dead(database.id, 'Add read-only instances')
+        check_is_database_enabled(database.id, 'Add read-only instances')
+    except DisabledDatabase as err:
+        messages.add_message(request, messages.ERROR, err.message)
+        return
+
     if not database.plan.replication_topology.has_horizontal_scalability:
         messages.add_message(
             request, messages.ERROR,
@@ -320,6 +328,9 @@ def database_hosts(request, context, database):
             hosts[instance.hostname] = []
         hosts[instance.hostname].append(instance)
 
+    context['core_attribute'] = database.engine.write_node_description
+    context['read_only_attribute'] = database.engine.read_node_description
+
     context['instances_core'] = []
     context['instances_read_only'] = []
     current_write_found = False
@@ -332,12 +343,13 @@ def database_hosts(request, context, database):
             status = instance.status_html()
 
             if not instance.is_database:
-                attributes.append(instance.get_instance_type_display())
+                context['non_database_attribute'] = instance.get_instance_type_display()
+                attributes.append(context['non_database_attribute'])
             elif not current_write_found and instance.is_current_write:
-                attributes.append(database.engine.write_node_description)
+                attributes.append(context['core_attribute'])
                 current_write_found = True
             else:
-                attributes.append(database.engine.read_node_description)
+                attributes.append(context['read_only_attribute'])
 
         full_description = host.hostname
         if len(hosts) > 1:
@@ -352,8 +364,8 @@ def database_hosts(request, context, database):
         else:
             context['instances_core'].append(host_data)
 
-    max_read_hosts = Configuration.get_by_name_as_int('max_read_hosts', 5)
-    enable_host = max_read_hosts - len(context['instances_read_only'])
+    context['max_read_hosts'] = Configuration.get_by_name_as_int('max_read_hosts', 5)
+    enable_host = context['max_read_hosts'] - len(context['instances_read_only'])
     context['enable_host'] = range(1, enable_host+1)
 
     return render_to_response(
@@ -374,7 +386,7 @@ def database_delete_host(request, database_id, host_id):
         )
         can_delete = False
 
-    if database.is_beeing_used_elsewhere():
+    if database.is_being_used_elsewhere():
         messages.add_message(
             request, messages.ERROR,
             'Host cannot be deleted because database is in use by another task.'

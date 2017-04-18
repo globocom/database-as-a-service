@@ -6,7 +6,6 @@ from datetime import datetime
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from django.utils import simplejson
-from logical.models import Database
 
 from util.models import BaseModel
 
@@ -29,22 +28,28 @@ class TaskHistory(BaseModel):
                STATUS_ERROR, STATUS_WARNING, STATUS_WAITING]
 
     task_id = models.CharField(
-        _('Task ID'), max_length=200, null=True, blank=True, editable=False)
+        _('Task ID'), max_length=200, null=True, blank=True, editable=False
+    )
     task_name = models.CharField(
-        _('Task Name'), max_length=200, null=True, blank=True)
+        _('Task Name'), max_length=200, null=True, blank=True
+    )
     user = models.CharField(max_length=255, null=True, blank=True)
     ended_at = models.DateTimeField(
-        verbose_name=_("Ended at"), null=True, blank=True, editable=False)
+        verbose_name=_("Ended at"), null=True, blank=True, editable=False
+    )
     task_status = models.CharField(
         _('Task Status'), max_length=100, default=STATUS_PENDING, db_index=True
     )
     context = models.TextField(null=True, blank=True)
     details = models.TextField(
-        verbose_name=_("Details"), null=True, blank=True)
+        verbose_name=_("Details"), null=True, blank=True
+    )
     arguments = models.TextField(
-        verbose_name=_("Arguments"), null=True, blank=True)
-    db_id = models.ForeignKey(
-        Database, related_name="database", null=True, blank=True, on_delete=models.SET_NULL)
+        verbose_name=_("Arguments"), null=True, blank=True
+    )
+    db_id = models.IntegerField(
+        verbose_name=_("Database"), null=True, blank=True
+    )
 
     def __unicode__(self):
         return u"%s" % self.task_id
@@ -98,7 +103,7 @@ class TaskHistory(BaseModel):
             self.save()
 
     def update_dbid(self, db):
-        self.db_id = db
+        self.db_id = db.id
         self.save()
 
     def update_ended_at(self):

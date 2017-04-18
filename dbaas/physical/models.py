@@ -21,6 +21,7 @@ LOG = logging.getLogger(__name__)
 class Environment(BaseModel):
     name = models.CharField(
         verbose_name=_("Environment"), max_length=100, unique=True)
+    min_of_zones = models.PositiveIntegerField(default=1)
 
     def __unicode__(self):
         return '%s' % (self.name)
@@ -297,6 +298,10 @@ class Plan(BaseModel):
     def is_pre_provisioned(self):
         return self.provider == Plan.PREPROVISIONED
 
+    @property
+    def is_cloudstack(self):
+        return self.provider == Plan.CLOUDSTACK
+
     def __unicode__(self):
         return "%s" % (self.name)
 
@@ -307,6 +312,23 @@ class Plan(BaseModel):
         permissions = (
             ("view_plan", "Can view plans"),
         )
+
+    def validate_min_environment_bundles(self, environment):
+        if self.is_ha and self.is_cloudstack:
+            bundles_actives = self.cs_plan_attributes.first().bundle.filter(
+                is_active=True
+            ).count()
+
+            if bundles_actives < environment.min_of_zones:
+                raise EnvironmentError(
+                    'Plan {} should has at least {} active bundles to {} '
+                    'environment, currently have {}. Please contact '
+                    'admin.'.format(
+                        self.name, environment.min_of_zones,
+                        environment.name, bundles_actives
+                    )
+                )
+        return True
 
 
 class PlanAttribute(BaseModel):
