@@ -21,7 +21,7 @@ def waiting_tasks_api(self):
 
 
 def database_tasks(self, database_id):
-    task = TaskHistory.objects.filter(database__id=database_id).first()
+    task = TaskHistory.objects.filter(lock__database__id=database_id).first()
 
     response = {}
     if task:
@@ -30,7 +30,7 @@ def database_tasks(self, database_id):
 
         step = task.details.split('\n')[-1]
         if "Step" in step:
-            step = "Step " + step.split("Step",1)[1]
+            step = step.split(" - ", 1)[1]
 
         response = {
             'id': task.id,
