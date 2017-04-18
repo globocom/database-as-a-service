@@ -119,17 +119,6 @@ class Database(BaseModel):
             "When marked, the database can not be deleted."
         )
     )
-    current_task = models.ForeignKey(
-        TaskHistory,
-        verbose_name=_("Current Task"),
-        related_name="database",
-        null=True,
-        blank=True,
-        help_text=_(
-            "Task currently running."
-            "If not null, database is locked for other operations."
-        )
-    )
 
     def team_contact(self):
         if self.team:
@@ -509,7 +498,7 @@ class Database(BaseModel):
             return False
 
         if self.current_lock.task.task_name == skip_task_name:
-            if self.current_lock.current_task.task.is_status_error:
+            if self.current_lock.task.is_status_error:
                 return False
 
         return True
