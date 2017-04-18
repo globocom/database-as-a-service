@@ -165,10 +165,27 @@ class Database(BaseModel):
 
     def pin_task(self, task):
         try:
-            DatabaseLock(database=self, task=task).save()
+            with transaction.atomic():
+                DatabaseLock(database=self, task=task).save()
         except Error:
             return False
         else:
+            return True
+
+    def update_task(self, task):
+        lock = self.lock.first()
+        if not lock:
+            return self.pin_task(task)
+
+        with transaction.atomic():
+            lock = DatabaseLock.objects.select_for_update().filter(
+                database=self
+            ).first()
+            if lock.task.task_name != task.task_name or not lock.task.is_status_error:
+                return False
+
+            lock.task = task
+            lock.save()
             return True
 
     def unpin_task(self):

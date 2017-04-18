@@ -10,6 +10,7 @@ from physical.tests import factory as physical_factory
 from physical.models import DatabaseInfra
 from logical.tests import factory
 from notification.tests.factory import TaskHistoryFactory
+from notification.models import TaskHistory
 from logical.models import Database
 
 
@@ -322,3 +323,24 @@ class DatabaseTestCase(TestCase):
         self.assertFalse(database.pin_task(task2))
         database.unpin_task()
         self.assertTrue(database.pin_task(task2))
+
+    def test_lock_retry(self):
+        database = factory.DatabaseFactory()
+        task1 = TaskHistoryFactory()
+        task2 = TaskHistoryFactory()
+        task3 = TaskHistoryFactory()
+
+        task1.task_status = TaskHistory.STATUS_ERROR
+        task1.save()
+
+        task2.task_name = task1.task_name
+        task2.save()
+
+        database.pin_task(task1)
+
+        self.assertFalse(database.update_task(task3))
+        self.assertTrue(database.update_task(task2))
+        self.assertFalse(database.update_task(task2))
+
+        database.unpin_task()
+        self.assertTrue(database.pin_task(task3))
