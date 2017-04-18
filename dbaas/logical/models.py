@@ -3,7 +3,7 @@ from __future__ import absolute_import, unicode_literals
 import simple_audit
 import logging
 import datetime
-from django.db import models, transaction
+from django.db import models, transaction, Error
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 from django.db.models.signals import pre_save, post_save, pre_delete
@@ -174,26 +174,20 @@ class Database(BaseModel):
     def plan(self):
         return self.databaseinfra and self.databaseinfra.plan
 
-    @transaction.atomic
     def pin_task(self, task):
-        db = Database.objects.select_for_update().get(id=self.id)
-        if db.current_task:
+        try:
+            DatabaseLock(database=self, task=task).save()
+        except Error:
             return False
         else:
-            self.current_task = task
-            self.save()
             return True
 
-    @transaction.atomic
-    def update_task(self, task):
-        # Changes current task even if it already has another task
-        Database.objects.select_for_update().get(id=self.id)
-        self.current_task = task
-        self.save()
-
     def unpin_task(self):
-        self.current_task = None
-        self.save()
+        DatabaseLock.objects.filter(database=self).delete()
+
+    @cached_property
+    def current_lock(self):
+        return self.lock.first()
 
     def delete(self, *args, **kwargs):
         if self.is_in_quarantine:
@@ -511,11 +505,11 @@ class Database(BaseModel):
     offering_id = property(get_cloudstack_service_offering_id)
 
     def is_being_used_elsewhere(self, skip_task_name=None):
-        if not self.current_task:
+        if not self.current_lock:
             return False
 
-        if self.current_task.task_name == skip_task_name:
-            if self.current_task.is_status_error:
+        if self.current_lock.task.task_name == skip_task_name:
+            if self.current_lock.current_task.task.is_status_error:
                 return False
 
         return True
@@ -795,6 +789,15 @@ class Database(BaseModel):
             status = html_default.format("info", "Initializing")
 
         return format_html(status)
+
+
+class DatabaseLock(BaseModel):
+    database = models.ForeignKey(
+        Database, related_name="lock", unique=True
+    )
+    task = models.ForeignKey(
+        TaskHistory, related_name="lock"
+    )
 
 
 class Credential(BaseModel):
