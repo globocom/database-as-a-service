@@ -1,10 +1,10 @@
 import os
-from django.conf import settings
 
 
 REDIS_PORT = os.getenv('DBAAS_NOTIFICATION_BROKER_PORT', '6379')
+REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
 BROKER_URL = os.getenv(
-    'DBAAS_NOTIFICATION_BROKER_URL', 'redis://{}:{}/0'.format(settings.REDIS_HOST, REDIS_PORT))
+    'DBAAS_NOTIFICATION_BROKER_URL', 'redis://{}:{}/0'.format(REDIS_HOST, REDIS_PORT))
 CELERYD_TASK_TIME_LIMIT = 10800
 CELERY_TRACK_STARTED = True
 CELERY_IGNORE_RESULT = False
