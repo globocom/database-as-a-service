@@ -20,7 +20,7 @@ from physical.models import Host, DiskOffering, Environment, Plan
 from util import get_credentials_for
 from notification.models import TaskHistory
 from notification.tasks import add_instances_to_database, \
-    remove_readonly_instance
+    remove_readonly_instance, upgrade_database, resize_database
 from system.models import Configuration
 from .errors import DisabledDatabase
 from .forms.database import DatabaseDetailsForm
@@ -83,12 +83,34 @@ class CredentialView(BaseDetailView):
 def database_view(tab):
     def database_decorator(func):
         def func_wrapper(request, id):
+            is_dba = request.user.team_set.filter(role__name="role_dba")
+
             database = Database.objects.get(id=id)
+            if not is_dba:
+                can_access = True
+                if database.team not in request.user.team_set.all():
+                    messages.add_message(
+                        request, messages.ERROR,
+                        'This database belong to {} team, you are not member of this team'.format(database.team)
+                    )
+                    can_access = False
+                elif database.is_in_quarantine:
+                    messages.add_message(
+                        request, messages.ERROR,
+                        'This database is in quarantine, please contact your DBA'
+                    )
+                    can_access = False
+
+                if not can_access:
+                    return HttpResponseRedirect(
+                        reverse('admin:logical_database_changelist')
+                    )
+
             context = {
                 'database': database,
                 'current_tab': tab,
                 'user': request.user,
-                'is_dba': request.user.team_set.filter(role__name="role_dba")
+                'is_dba': is_dba
             }
 
             return func(request, context, database)
@@ -197,33 +219,131 @@ def _disk_resize(request, database):
         new_disk_offering=disk_offering.id,
         user=request.user
     )
-    return HttpResponseRedirect(user_tasks(request.user))
+
+
+def _vm_resize(request, database):
+    try:
+        check_is_database_dead(database.id, 'VM resize')
+        check_is_database_enabled(database.id, 'VM resize')
+    except DisabledDatabase as err:
+        messages.add_message(request, messages.ERROR, err.message)
+    else:
+        cloudstack_pack = CloudStackPack.objects.get(
+            id=request.POST.get('vm_offering')
+        )
+        Database.resize(
+            database=database,
+            cloudstackpack=cloudstack_pack,
+            user=request.user,
+        )
+
+
+@database_view("")
+def database_resize_retry(request, context, database):
+    can_do_resize, error = database.can_do_resize_retry()
+    if can_do_resize:
+        last_resize = database.resizes.last()
+
+        if not last_resize.is_status_error:
+            error = "Cannot do retry, last resize status is '{}'!".format(
+                last_resize.get_status_display()
+            )
+        else:
+            current_step = last_resize.current_step
+
+    if error:
+        messages.add_message(request, messages.ERROR, error)
+    else:
+        task_history = TaskHistory()
+        task_history.task_name = "resize_database_retry"
+        task_history.task_status = task_history.STATUS_WAITING
+        task_history.arguments = "Retrying resize database {}".format(database)
+        task_history.user = request.user
+        task_history.save()
+
+        resize_database.delay(
+            database=database, user=request.user, task=task_history,
+            cloudstackpack=last_resize.target_offer,
+            original_cloudstackpack=last_resize.source_offer,
+            since_step=current_step
+        )
+
+    return HttpResponseRedirect(
+        reverse('admin:logical_database_resizes', kwargs={'id': database.id})
+    )
+
+
+@database_view("")
+def database_upgrade(request, context, database):
+    can_do_upgrade, error = database.can_do_upgrade()
+    if not can_do_upgrade:
+        messages.add_message(request, messages.ERROR, error)
+    else:
+        task_history = TaskHistory()
+        task_history.task_name = "upgrade_database"
+        task_history.task_status = task_history.STATUS_WAITING
+        task_history.arguments = "Upgrading database {}".format(database)
+        task_history.user = request.user
+        task_history.save()
+
+        upgrade_database.delay(
+            database=database,
+            user=request.user,
+            task=task_history
+        )
+
+    return HttpResponseRedirect(
+        reverse('admin:logical_database_resizes', kwargs={'id': database.id})
+    )
+
+
+@database_view("")
+def database_upgrade_retry(request, context, database):
+    can_do_upgrade, error = database.can_do_upgrade_retry()
+    if can_do_upgrade:
+        source_plan = database.databaseinfra.plan
+        upgrades = database.upgrades.filter(source_plan=source_plan)
+        last_upgrade = upgrades.last()
+        if not last_upgrade:
+            error = "Database does not have upgrades from {} {}!".format(
+                source_plan.engine.engine_type, source_plan.engine.version
+            )
+        elif not last_upgrade.is_status_error:
+            error = "Cannot do retry, last upgrade status is '{}'!".format(
+                last_upgrade.get_status_display()
+            )
+        else:
+            since_step = last_upgrade.current_step
+
+    if error:
+        messages.add_message(request, messages.ERROR, error)
+    else:
+        task_history = TaskHistory()
+        task_history.task_name = "upgrade_database_retry"
+        task_history.task_status = task_history.STATUS_WAITING
+        task_history.arguments = "Retrying upgrade database {}".format(database)
+        task_history.user = request.user
+        task_history.save()
+
+        upgrade_database.delay(
+            database=database,
+            user=request.user,
+            task=task_history,
+            since_step=since_step
+        )
+
+    return HttpResponseRedirect(
+        reverse('admin:logical_database_resizes', kwargs={'id': database.id})
+    )
 
 
 @database_view('resizes/upgrade')
 def database_resizes(request, context, database):
     if request.method == 'POST':
         if 'disk_resize' in request.POST and request.POST.get('disk_offering'):
-            response = _disk_resize(request, database)
-            if response:
-                return response
+            _disk_resize(request, database)
         elif 'vm_resize' in request.POST and request.POST.get('vm_offering'):
-            try:
-                check_is_database_dead(database.id, 'VM resize')
-                check_is_database_enabled(database.id, 'VM resize')
-            except DisabledDatabase as err:
-                messages.add_message(request, messages.ERROR, err.message)
-            else:
-                cloudstack_pack = CloudStackPack.objects.get(
-                    id=request.POST.get('vm_offering')
-                )
-                Database.resize(
-                    database=database,
-                    cloudstackpack=cloudstack_pack,
-                    user=request.user,
-                )
-                return HttpResponseRedirect(user_tasks(request.user))
-
+            _vm_resize(request, database)
         else:
             disk_auto_resize = request.POST.get('disk_auto_resize', False)
             database.disk_auto_resize = disk_auto_resize
@@ -311,16 +431,13 @@ def _add_read_only_instances(request, database):
         task=task,
         number_of_instances=qtd_new_hosts
     )
-    return HttpResponseRedirect(user_tasks(request.user))
 
 
 @database_view('hosts')
 def database_hosts(request, context, database):
     if request.method == 'POST':
         if 'add_read_only' in request.POST:
-            response = _add_read_only_instances(request, database)
-            if response:
-                return response
+            _add_read_only_instances(request, database)
 
     hosts = OrderedDict()
     for instance in database.infra.instances.all():
@@ -393,22 +510,20 @@ def database_delete_host(request, database_id, host_id):
         )
         can_delete = False
 
-    if not can_delete:
-        return HttpResponseRedirect(
-            reverse('admin:logical_database_hosts', kwargs={'id': database.id})
+    if can_delete:
+        task = TaskHistory()
+        task.task_name = "remove_database_instance"
+        task.task_status = TaskHistory.STATUS_WAITING
+        task.arguments = "Removing instance {} on database {}".format(
+            instance, database
         )
+        task.user = request.user
+        task.save()
+        remove_readonly_instance.delay(instance, request.user, task)
 
-    task = TaskHistory()
-    task.task_name = "remove_database_instance"
-    task.task_status = TaskHistory.STATUS_WAITING
-    task.arguments = "Removing instance {} on database {}".format(
-        instance, database
+    return HttpResponseRedirect(
+        reverse('admin:logical_database_hosts', kwargs={'id': database.id})
     )
-    task.user = request.user
-    task.save()
-
-    remove_readonly_instance.delay(instance, request.user, task)
-    return HttpResponseRedirect(user_tasks(request.user))
 
 
 def _clone_database(request, database):
@@ -468,7 +583,6 @@ def _clone_database(request, database):
         database=database, clone_name=name, plan=plan,
         environment=environment, user=request.user
     )
-    return HttpResponseRedirect(user_tasks(request.user))
 
 
 def _restore_database(request, database):
@@ -483,20 +597,15 @@ def _restore_database(request, database):
 
     snapshot = request.POST.get('restore_snapshot')
     Database.restore(database=database, snapshot=snapshot, user=request.user)
-    return HttpResponseRedirect(user_tasks(request.user))
 
 
 @database_view('backup')
 def database_backup(request, context, database):
     if request.method == 'POST':
         if 'database_clone' in request.POST:
-            response = _clone_database(request, database)
-            if response:
-                return response
+            _clone_database(request, database)
         if 'database_restore' in request.POST:
-            response = _restore_database(request, database)
-            if response:
-                return response
+            _restore_database(request, database)
         elif 'backup_path' in request.POST:
             database.backup_path = request.POST['backup_path']
             database.save()
@@ -549,7 +658,12 @@ def _destroy_databases(request, database):
             reverse('admin:logical_database_changelist')
         )
 
-    return HttpResponseRedirect(user_tasks(request.user))
+    return HttpResponseRedirect(
+        '{}?user={}'.format(
+            reverse('admin:notification_taskhistory_changelist'),
+            request.user.username
+        )
+    )
 
 
 @database_view('destroy')

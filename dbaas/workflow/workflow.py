@@ -4,32 +4,64 @@ import time
 from util import full_stack
 from django.utils.module_loading import import_by_path
 from exceptions.error_codes import DBAAS_0001
+from logical.models import Database
+from physical.models import DatabaseInfra, Instance
 
 LOG = logging.getLogger(__name__)
 
 
-def start_workflow(workflow_dict, task=None):
-    try:
-        if 'database' in workflow_dict:
-            db = workflow_dict['database']
-        elif 'instances' in workflow_dict:
-            db = workflow_dict['instances'][0].databaseinfra.databases.first()
-        elif 'databaseinfra' in workflow_dict:
-            db = workflow_dict['databaseinfra'].databases.first()
-        else:
-            db = None
-    except Exception:
-        db = None
+def _get_databases(params):
+    databases = set()
+    for param in params.values():
+        if isinstance(param, Database):
+            databases.add(param)
 
-    if db:
-        if not db.pin_task(task):
-            task.update_details("FAILED!", persist=True)
-            task.add_detail(
-                "Database {} is not allocated for this task.".format(db.name)
-            )
+        if isinstance(param, list):
+            for item in param:
+                if isinstance(item, Instance):
+                    database = item.databaseinfra.databases.first()
+                    if database:
+                        databases.add(database)
+
+        if isinstance(param, DatabaseInfra):
+            database = param.databases.first()
+            if database:
+                databases.add(database)
+
+    return databases
+
+
+def _lock_databases(params, task):
+    if not task:
+        return True
+
+    databases = _get_databases(params)
+    databases_pinned = []
+    for database in databases:
+        if not database.pin_task(task):
+            task.error_in_lock(database)
+            for database in databases_pinned:
+                database.unpin_task()
             return False
-        workflow_dict['task_pinned'] = True
+        databases_pinned.append(database)
 
+    return True
+
+
+def _unlock_databases(params, task):
+    if not task:
+        return
+
+    databases = _get_databases(params)
+    for database in databases:
+        database.unpin_task()
+
+
+def start_workflow(workflow_dict, task=None):
+    if not _lock_databases(workflow_dict, task):
+        return False
+
+    workflow_dict['database_pinned'] = True
 
     try:
         if 'steps' not in workflow_dict:
@@ -71,12 +103,10 @@ def start_workflow(workflow_dict, task=None):
 
         workflow_dict['created'] = True
 
-        if db:
-            db.unpin_task()
+        _unlock_databases(workflow_dict, task)
         return True
 
     except Exception:
-
         if not workflow_dict['exceptions']['error_codes'] or not workflow_dict['exceptions']['traceback']:
             traceback = full_stack()
             workflow_dict['exceptions']['error_codes'].append(DBAAS_0001)
@@ -90,31 +120,12 @@ def start_workflow(workflow_dict, task=None):
         workflow_dict['steps'] = workflow_dict[
             'steps'][:workflow_dict['step_counter']]
         stop_workflow(workflow_dict, task)
-
         return False
 
 
 def stop_workflow(workflow_dict, task=None):
-    LOG.info("Running undo...")
-
-    try:
-        if 'database' in workflow_dict:
-            db = workflow_dict['database']
-        elif 'instances' in workflow_dict:
-            db = workflow_dict['instances'][0].databaseinfra.databases.first()
-        elif 'databaseinfra' in workflow_dict:
-            db = workflow_dict['databaseinfra'].databases.first()
-        else:
-            db = None
-    except Exception:
-        db = None
-
-    if db and 'task_pinned' not in workflow_dict:
-        if not db.pin_task(task):
-            task.update_details("FAILED!", persist=True)
-            task.add_detail(
-                "Database {} is not allocated for this task.".format(db.name)
-            )
+    if 'database_pinned' not in workflow_dict:
+        if not _lock_databases(workflow_dict, task):
             return False
 
     if 'steps' not in workflow_dict:
@@ -132,7 +143,6 @@ def stop_workflow(workflow_dict, task=None):
     workflow_dict['created'] = False
 
     try:
-
         for step in workflow_dict['steps'][::-1]:
 
             my_class = import_by_path(step)
@@ -156,8 +166,7 @@ def stop_workflow(workflow_dict, task=None):
             if task:
                 task.update_details(persist=True, details="DONE!")
 
-        if db:
-            db.unpin_task()
+        _unlock_databases(workflow_dict, task)
         return True
     except Exception as e:
         LOG.info("Exception: {}".format(e))
@@ -236,8 +245,8 @@ def steps_for_instances_with_rollback(group_of_steps, instances, task):
     for instance in instances:
         databases.add(instance.databaseinfra.databases.first())
 
-    for db in databases:
-        db.unpin_task()
+    for database in databases:
+        database.unpin_task()
 
     return ret
 
@@ -250,16 +259,16 @@ def steps_for_instances(
     for instance in instances:
         databases.add(instance.databaseinfra.databases.first())
 
-    for db in databases:
-        if since_step == 0:
-            if not db.pin_task(task):
-                task.update_details("FAILED!", persist=True)
-                task.add_detail(
-                    "Database {} is not allocated for this task.".format(db.name)
-                )
-                return False
-        else:
-            db.update_task(task)
+    for database in databases:
+        databases_locked = []
+        if not database.update_task(task):
+            task.error_in_lock(database)
+
+            if since_step == 0:
+                for database in databases_locked:
+                    database.unpin_task()
+            return False
+        databases_locked.append(database)
 
     steps_total = 0
     for group_of_steps in list_of_groups_of_steps:
@@ -318,7 +327,7 @@ def steps_for_instances(
             count, len(list_of_groups_of_steps))
         )
 
-    for db in databases:
-        db.unpin_task()
+    for database in databases:
+        database.unpin_task()
 
     return True

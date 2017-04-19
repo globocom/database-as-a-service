@@ -3,7 +3,7 @@ from __future__ import absolute_import, unicode_literals
 import simple_audit
 import logging
 import datetime
-from django.db import models, transaction
+from django.db import models, transaction, Error
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 from django.db.models.signals import pre_save, post_save, pre_delete
@@ -119,17 +119,6 @@ class Database(BaseModel):
             "When marked, the database can not be deleted."
         )
     )
-    current_task = models.ForeignKey(
-        TaskHistory,
-        verbose_name=_("Current Task"),
-        related_name="database",
-        null=True,
-        blank=True,
-        help_text=_(
-            "Task currently running."
-            "If not null, database is locked for other operations."
-        )
-    )
 
     def team_contact(self):
         if self.team:
@@ -174,26 +163,37 @@ class Database(BaseModel):
     def plan(self):
         return self.databaseinfra and self.databaseinfra.plan
 
-    @transaction.atomic
     def pin_task(self, task):
-        db = Database.objects.select_for_update().get(id=self.id)
-        if db.current_task:
+        try:
+            with transaction.atomic():
+                DatabaseLock(database=self, task=task).save()
+        except Error:
             return False
         else:
-            self.current_task = task
-            self.save()
             return True
 
-    @transaction.atomic
     def update_task(self, task):
-        # Changes current task even if it already has another task
-        Database.objects.select_for_update().get(id=self.id)
-        self.current_task = task
-        self.save()
+        lock = self.lock.first()
+        if not lock:
+            return self.pin_task(task)
+
+        with transaction.atomic():
+            lock = DatabaseLock.objects.select_for_update().filter(
+                database=self
+            ).first()
+            if lock.task.task_name != task.task_name or not lock.task.is_status_error:
+                return False
+
+            lock.task = task
+            lock.save()
+            return True
 
     def unpin_task(self):
-        self.current_task = None
-        self.save()
+        DatabaseLock.objects.filter(database=self).delete()
+
+    @cached_property
+    def current_lock(self):
+        return self.lock.first()
 
     def delete(self, *args, **kwargs):
         if self.is_in_quarantine:
@@ -510,8 +510,15 @@ class Database(BaseModel):
 
     offering_id = property(get_cloudstack_service_offering_id)
 
-    def is_being_used_elsewhere(self):
-        return self.current_task
+    def is_being_used_elsewhere(self, skip_task_name=None):
+        if not self.current_lock:
+            return False
+
+        if self.current_lock.task.task_name == skip_task_name:
+            if self.current_lock.task.is_status_error:
+                return False
+
+        return True
 
     def has_flipperfox_migration_started(self,):
         from flipperfox_migration.models import DatabaseFlipperFoxMigrationDetail
@@ -665,9 +672,9 @@ class Database(BaseModel):
             error = "MongoDB 2.4 cannot be upgraded by this task."
         elif self.is_in_quarantine:
             error = "Database in quarantine and cannot be upgraded."
-        elif self.is_being_used_elsewhere():
-            error = "Database cannot be upgraded because" \
-                    " it is in use by another task."
+        elif self.is_being_used_elsewhere('notification.tasks.upgrade_database'):
+            error = "Database cannot be upgraded because " \
+                    "it is in use by another task."
         elif self.has_flipperfox_migration_started():
             error = "Database is being migrated and cannot be upgraded."
         elif not self.infra.plan.engine_equivalent_plan:
@@ -683,6 +690,9 @@ class Database(BaseModel):
         if can_do_upgrade:
             if self.is_dead:
                 error = "Database is dead and cannot be upgraded."
+            elif self.is_being_used_elsewhere():
+                error = "Database cannot be upgraded because " \
+                        "it is in use by another task."
 
         if error:
             return False, error
@@ -696,11 +706,9 @@ class Database(BaseModel):
             error = "Database is being migrated and cannot be resized."
         elif not self.has_cloudstack_offerings:
             error = "There is no offerings for this database."
-        elif self.is_being_used_elsewhere():
-            task_name = self.current_task.task_name
-            if not task_name == "notification.tasks.resize_database":
-                error = "Database cannot be resized because" \
-                        " it is in use by another task."
+        elif self.is_being_used_elsewhere('notification.tasks.resize_database'):
+            error = "Database cannot be resized because" \
+                    " it is in use by another task."
         if error:
             return False, error
         return True, None
@@ -787,6 +795,15 @@ class Database(BaseModel):
             status = html_default.format("info", "Initializing")
 
         return format_html(status)
+
+
+class DatabaseLock(BaseModel):
+    database = models.ForeignKey(
+        Database, related_name="lock", unique=True
+    )
+    task = models.ForeignKey(
+        TaskHistory, related_name="lock"
+    )
 
 
 class Credential(BaseModel):

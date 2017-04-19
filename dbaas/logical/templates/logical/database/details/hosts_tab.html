@@ -18,7 +18,7 @@
     <h3 class="panel-title">
       Core hosts
       {% if database.plan.replication_topology.has_horizontal_scalability %}
-      <a href="javascript:void(0)" data-content="This are the main database hosts. They can be
+      <a href="javascript:void(0)" data-content="These are the main database hosts. They can be
       {% if non_database_attribute %}
         {{ core_attribute|lower }}, {{ read_only_attribute|lower }} or {{ non_database_attribute|lower }} only.
       {% else %}
@@ -48,7 +48,7 @@
     <div class="panel-heading">
       <h3 class="panel-title">
         Read-Only hosts
-        <a href="javascript:void(0)" data-content="This are extra hosts created for the database. They are always {{ read_only_attribute|lower }} and can not be elected as {{ core_attribute|lower }}. They are used to scale the readings, since the application can read from these {{ read_only_attribute|lower }} instead of reading from the {{ core_attribute|lower }}. Each database can add up to {{ max_read_hosts }} read only hosts." class="show-info" data-original-title="Info"><span class="icon-info-sign"></span></a>
+        <a href="javascript:void(0)" data-content="These are extra hosts created for the database. They are always {{ read_only_attribute|lower }} and can not be elected as {{ core_attribute|lower }}. They are used to scale the readings, since the application can read from these {{ read_only_attribute|lower }} instead of reading from the {{ core_attribute|lower }}. Each database can add up to {{ max_read_hosts }} read only hosts." class="show-info" data-original-title="Info"><span class="icon-info-sign"></span></a>
       </h3>
     </div>
     {% if instances_read_only %}
