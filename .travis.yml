@@ -1,24 +1,30 @@
+sudo: required
+
 language: python
 
 python:
     - "2.7"
 
-before_install:
-    - mysql -e 'CREATE DATABASE dbaas;'
-
-install:
-    - pip install -r requirements_test.txt
-
-cache:
-    - pip
-
 services:
-    - mysql
-    - mongodb
-    - redis-server
+    - docker
 
-before_script:
-    - make create_admin_mongo_user
+env:
+  DOCKER_COMPOSE_VERSION: 1.11.2
+
+before_install:
+  - make docker_build
+  - sudo rm /usr/local/bin/docker-compose
+  - curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
+  - chmod +x docker-compose
+  - sudo mv docker-compose /usr/local/bin
+  - docker-compose --version
+  - docker-compose pull mysqldb56 redisdb mongodb
+  - docker images
+  - docker ps
+  - sudo /etc/init.d/mysql stop
 
 script:
-    - make test
+  - docker-compose run test
+
+notifications:
+    email: false
