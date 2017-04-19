@@ -159,3 +159,11 @@ class TaskHistory(BaseModel):
     @property
     def is_status_error(self):
         return self.task_status == self.STATUS_ERROR
+
+    def error_in_lock(self, database):
+        self.add_detail("FAILED!")
+        self.add_detail("Database {} is not allocated for this task.".format(
+            database.name
+        ))
+        self.task_status = self.STATUS_ERROR
+        self.save()

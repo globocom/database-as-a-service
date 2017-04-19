@@ -627,10 +627,7 @@ def database_disk_resize(self, database, disk_offering, task_history, user):
     AuditRequest.new_request("database_disk_resize", user, "localhost")
 
     if not database.pin_task(task_history):
-        task_history.update_details("FAILED!", persist=True)
-        task_history.add_detail(
-            "Database {} is not allocated for this task.".format(db.name)
-        )
+        task_history.error_in_lock(database)
         return False
 
     databaseinfra = database.databaseinfra

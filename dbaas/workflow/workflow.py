@@ -39,12 +39,7 @@ def _lock_databases(params, task):
     databases_pinned = []
     for database in databases:
         if not database.pin_task(task):
-            task.update_details("FAILED!", persist=True)
-            task.add_detail(
-                "Database {} is not allocated for this task.".format(
-                    database.name
-                )
-            )
+            task.error_in_lock(database)
             for database in databases_pinned:
                 database.unpin_task()
             return False
@@ -267,12 +262,7 @@ def steps_for_instances(
     for database in databases:
         databases_locked = []
         if not database.update_task(task):
-            task.update_details("FAILED!", persist=True)
-            task.add_detail(
-                "Database {} is not allocated for this task.".format(
-                    database.name
-                )
-            )
+            task.error_in_lock(database)
 
             if since_step == 0:
                 for database in databases_locked:
