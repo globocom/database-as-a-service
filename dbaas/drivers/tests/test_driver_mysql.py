@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
-import mock
 import logging
 from django.test import TestCase
 from drivers import DriverFactory
@@ -16,10 +15,15 @@ LOG = logging.getLogger(__name__)
 class AbstractTestDriverMysql(TestCase):
 
     def setUp(self):
+        mysql_host = settings.DB_HOST
+        mysql_port = settings.DB_PORT or 3306
+        self.mysql_endpoint = '{}:{}'.format(mysql_host, mysql_port)
         self.databaseinfra = factory_physical.DatabaseInfraFactory(
-            user="root", password=settings.DB_PASSWORD, endpoint="127.0.0.1:3306")
+            user="root", password=settings.DB_PASSWORD,
+            endpoint=self.mysql_endpoint)
         self.instance = factory_physical.InstanceFactory(
-            databaseinfra=self.databaseinfra, port=3306)
+            databaseinfra=self.databaseinfra, address=mysql_host,
+            port=mysql_port)
         self.driver = MySQL(databaseinfra=self.databaseinfra)
         self._mysql_client = None
 
@@ -53,7 +57,7 @@ class MySQLEngineTestCase(AbstractTestDriverMysql):
 
     def test_connection_string(self):
         self.assertEqual(
-            "mysql://<user>:<password>@127.0.0.1:3306", self.driver.get_connection())
+            "mysql://<user>:<password>@{}".format(self.mysql_endpoint), self.driver.get_connection())
 
     def test_get_user(self):
         self.assertEqual(self.databaseinfra.user, self.driver.get_user())
@@ -68,7 +72,7 @@ class MySQLEngineTestCase(AbstractTestDriverMysql):
     def test_connection_with_database(self):
         self.database = factory_logical.DatabaseFactory(
             name="my_db_url_name", databaseinfra=self.databaseinfra)
-        self.assertEqual("mysql://<user>:<password>@127.0.0.1:3306/my_db_url_name",
+        self.assertEqual("mysql://<user>:<password>@{}/my_db_url_name".format(self.mysql_endpoint),
                          self.driver.get_connection(database=self.database))
 
 

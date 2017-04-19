@@ -4,6 +4,9 @@ from dbaas_cloudstack.models import HostAttr
 from workflow.steps.util.restore_snapshot import use_database_initialization_script
 from util import build_context_script, exec_remote_command
 from workflow.steps.util.base import BaseInstanceStep
+import logging
+
+LOG = logging.getLogger(__name__)
 
 CHECK_SECONDS = 10
 CHECK_ATTEMPTS = 12
@@ -40,7 +43,8 @@ class DatabaseStep(BaseInstanceStep):
         for _ in range(CHECK_ATTEMPTS):
             try:
                 status = self.driver.check_status(instance=self.instance)
-            except:
+            except Exception as e:
+                LOG.debug('{} is down - {}'.format(self.instance, e))
                 status = False
 
             if status == expected:
