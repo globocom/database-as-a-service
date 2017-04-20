@@ -149,5 +149,5 @@ class DatabaseDetailsForm(forms.ModelForm):
         super(DatabaseDetailsForm, self).__init__(*args, **kwargs)
 
         self.fields['team'].required = True
-        self.fields['project'].required = True
+        # self.fields['project'].required = True
         self.fields['description'].required = True
