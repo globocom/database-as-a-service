@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
-from django.utils.translation import ugettext_lazy as _
+import logging
+from django.conf.urls import url
 from django.contrib import admin
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, Http404
 from django.core.urlresolvers import reverse
 from backup.tasks import make_databases_backup
 from system.models import Configuration
-import logging
-
 
 LOG = logging.getLogger(__name__)
 
@@ -34,25 +33,32 @@ class SnapshotAdmin(admin.ModelAdmin):
         from .views.main import ChangeList
         return ChangeList
 
-    def backup_databases(request, id):
+    def backup_databases(self, request):
+        if not self.is_backup_available:
+            raise Http404
+
         make_databases_backup.delay()
-        return HttpResponseRedirect(reverse('admin:notification_taskhistory_changelist'))
+        return HttpResponseRedirect(
+            reverse('admin:notification_taskhistory_changelist')
+        )
 
     def get_urls(self):
-        from django.conf.urls import url
         urls = super(SnapshotAdmin, self).get_urls()
+
         my_urls = [
-            (url(r'backup_databases/$', self.admin_site.admin_view(self.backup_databases)))]
+            url(r'backup_databases/$', self.admin_site.admin_view(self.backup_databases))
+        ]
+
         return my_urls + urls
 
     def changelist_view(self, request, extra_context=None):
         extra_context = extra_context or {}
+        extra_context['backup_available'] = self.is_backup_available
+        return super(SnapshotAdmin, self).changelist_view(
+            request, extra_context=extra_context
+        )
 
-        backup_avaliable = Configuration.get_by_name_as_int(
-            'backup_avaliable')
-
-        extra_context['backup_avaliable'] = False
-        if backup_avaliable:
-            extra_context['backup_avaliable'] = True
-
-        return super(SnapshotAdmin, self).changelist_view(request, extra_context=extra_context)
+    @property
+    def is_backup_available(self):
+        backup_available = Configuration.get_by_name_as_int('backup_available')
+        return backup_available == 1
