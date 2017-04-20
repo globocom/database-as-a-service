@@ -127,7 +127,7 @@
               <br>
               Please type <u><b>yes</b></u> to confirm:
             </label>
-            <input class="vTextField" id="id_restore_yes" maxlength="300" name="restore_yes" type="text"/>
+            <input autocomplete="off" class="vTextField" id="id_restore_yes" maxlength="300" name="restore_yes" type="text"/>
           </div>
         </div>
       </div>
@@ -220,7 +220,7 @@
     });
     $("#id_restore_snapshot").change()
 
-    $("#id_restore_yes").on("change", function() {
+    $("#id_restore_yes").keyup(function() {
       btn = document.getElementById("id_restore_btn_modal");
       btn.disabled = $(this).val() != "yes";
       if (btn.disabled) {
@@ -229,7 +229,7 @@
         btn.className = 'btn btn-primary';
       }
     });
-    $("#id_restore_yes").change()
+    $("#id_restore_yes").keyup()
 
   })
 </script>

@@ -134,7 +134,7 @@
               <br><br>
               Please type <u><b>yes</b></u> to confirm:
             </label>
-            <input class="vTextField" id="id_resize_vm_yes" maxlength="300" name="resize_vm_yes" type="text"/>
+            <input autocomplete="off" class="vTextField" id="id_resize_vm_yes" maxlength="300" name="resize_vm_yes" type="text"/>
           </div>
         </div>
       </div>
@@ -174,7 +174,7 @@
     });
     $("#id_vm_offering").change()
 
-    $("#id_resize_vm_yes").on("change", function() {
+    $("#id_resize_vm_yes").keyup(function() {
       btn = document.getElementById("id_resize_vm_btn_modal");
       btn.disabled = $(this).val() != "yes";
       if (btn.disabled) {
@@ -183,7 +183,7 @@
         btn.className = 'btn btn-primary';
       }
     });
-    $("#id_resize_vm_yes").change()
+    $("#id_resize_vm_yes").keyup()
 
   })
 </script>
