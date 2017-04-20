@@ -14,8 +14,9 @@ from django.template import RequestContext
 from dbaas_cloudstack.models import CloudStackPack
 from dbaas_credentials.models import CredentialType
 from dbaas import constants
-from drivers.base import CredentialAlreadyExists
 from account.models import Team
+from backup.tasks import make_database_backup
+from drivers.base import CredentialAlreadyExists
 from physical.models import Host, DiskOffering, Environment, Plan
 from util import get_credentials_for
 from notification.models import TaskHistory
@@ -597,6 +598,34 @@ def _restore_database(request, database):
 
     snapshot = request.POST.get('restore_snapshot')
     Database.restore(database=database, snapshot=snapshot, user=request.user)
+
+
+@database_view("")
+def database_make_backup(request, context, database):
+    error = None
+    try:
+        check_is_database_dead(database.id, 'Backup')
+        check_is_database_enabled(database.id, 'Backup')
+    except DisabledDatabase as err:
+        error = err.message
+
+    if not context['is_dba']:
+        error = "Only DBA's can do database backup"
+
+    if error:
+        messages.add_message(request, messages.ERROR, error)
+    else:
+        task_history = TaskHistory()
+        task_history.task_name = "make_database_backup"
+        task_history.task_status = TaskHistory.STATUS_WAITING
+        task_history.arguments = "Making backup of {}".format(database)
+        task_history.save()
+
+        make_database_backup.delay(database=database, task=task_history)
+
+    return HttpResponseRedirect(
+        reverse('admin:logical_database_backup', kwargs={'id': database.id})
+    )
 
 
 @database_view('backup')
