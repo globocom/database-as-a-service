@@ -15,7 +15,7 @@ from dbaas_cloudstack.models import CloudStackPack
 from dbaas_credentials.models import CredentialType
 from dbaas import constants
 from account.models import Team
-from backup.tasks import make_database_backup
+from backup.tasks import make_database_backup, remove_database_backup
 from drivers.base import CredentialAlreadyExists
 from physical.models import Host, DiskOffering, Environment, Plan
 from util import get_credentials_for
@@ -600,6 +600,45 @@ def _restore_database(request, database):
     Database.restore(database=database, snapshot=snapshot, user=request.user)
 
 
+def _delete_snapshot(request, database):
+    if 'restore_snapshot' not in request.POST:
+        messages.add_message(request, messages.ERROR, 'Snapshot is required')
+        return
+
+    snapshot_id = request.POST.get('restore_snapshot')
+    for instance in database.infra.instances.all():
+        snapshot = instance.backup_instance.filter(id=snapshot_id).first()
+        if snapshot:
+            break
+    else:
+        messages.add_message(
+            request, messages.ERROR, 'The snapshot {} is not from {}'.format(
+                snapshot_id, database
+            )
+        )
+        return
+
+    if snapshot.purge_at:
+        messages.add_message(
+            request, messages.ERROR,
+            'This snapshot, was deleted at {}'.format(snapshot.purge_at)
+        )
+        return
+    elif snapshot.is_automatic:
+        messages.add_message(
+            request, messages.ERROR,
+            'This is an automatic snapshot, it could not be deleted'
+        )
+        return
+
+    task_history = TaskHistory()
+    task_history.task_name = "remove_database_backup"
+    task_history.task_status = TaskHistory.STATUS_WAITING
+    task_history.arguments = "Removing backup of {}".format(database)
+    task_history.save()
+    remove_database_backup.delay(task=task_history, snapshot=snapshot)
+
+
 @database_view("")
 def database_make_backup(request, context, database):
     error = None
@@ -633,8 +672,10 @@ def database_backup(request, context, database):
     if request.method == 'POST':
         if 'database_clone' in request.POST:
             _clone_database(request, database)
-        if 'database_restore' in request.POST:
+        elif 'database_restore' in request.POST:
             _restore_database(request, database)
+        elif 'snapshot_delete' in request.POST:
+            _delete_snapshot(request, database)
         elif 'backup_path' in request.POST:
             database.backup_path = request.POST['backup_path']
             database.save()
@@ -643,7 +684,7 @@ def database_backup(request, context, database):
     for instance in database.infra.instances.all():
         for backup in instance.backup_instance.filter(purge_at=None):
             context['snapshots'].append(backup)
-    context['snapshots'] = reversed(context['snapshots'])
+    context['snapshots'] = context['snapshots']
 
     context['environments'] = Environment.objects.all()
     context['plans'] = Plan.objects.filter(

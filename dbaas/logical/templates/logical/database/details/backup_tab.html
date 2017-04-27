@@ -24,7 +24,7 @@
         <div class="controls">
           <select class="span8" id="id_restore_snapshot" name="restore_snapshot">
             <option></option>
-            {% for snapshot in snapshots %}
+            {% for snapshot in snapshots reversed %}
               <option value="{{ snapshot.id }}">{{ snapshot }}</option>
             {% endfor %}
           </select>
@@ -36,6 +36,7 @@
           <button data-toggle="modal" id="id_restore_btn" data-target="#restore_snapshot">Restore</button>
           {% if is_dba %}
             <a href="{% url 'admin:logical_database_make_backup' database.id %}" class="btn btn-primary" title="Make backup now" onclick="return confirm('Are you sure?')">Backup database now</a>
+            <button class='btn' data-toggle="modal" id="delete_snapshot_btn" data-target="#delete_snapshot">Delete selected</button>
           {% endif %}
         </div>
       </div>
@@ -142,6 +143,43 @@
     </div>
   </div>
 </div>
+
+{% if is_dba %}
+  <div class="modal fade" id="delete_snapshot" tabindex="-1" role="dialog" aria-labelledby="delete snapshot" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <!-- Modal Header -->
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <h4 class="modal-title">Delete snapshot</h4>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="modal-body">
+          <div role="form">
+            <div class="form-group">
+              <label for="id_restore_yes">
+                Selected snapshot will be <b class="bold_red">erased</b>!
+              </label>
+              <label for="id_restore_yes">
+                <br>
+                Please type <u><b>yes</b></u> to confirm:
+              </label>
+              <input autocomplete="off" class="vTextField" id="id_delete_yes" maxlength="300" name="delete_yes" type="text"/>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default"data-dismiss="modal">Cancel</button>
+          <input type="submit" value="Delete" name="snapshot_delete" id="snapshot_delete_btn"/>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endif %}
 {% endblock %}
 
 
@@ -155,6 +193,8 @@
 {{ block.super }}
 
 <script>
+  {% if is_dba %}
+  {% endif %}
   plans = {
     {% for environment in environments %}
       '{{ environment.id }}': {
@@ -220,6 +260,23 @@
       } else {
         btn.className = 'btn btn-primary';
       }
+
+      {% if is_dba %}
+        btn_delete = document.getElementById("delete_snapshot_btn")
+        if ([
+          {% for snapshot in snapshots %}
+            {% if not snapshot.is_automatic %}
+              '{{ snapshot.id }}',
+            {% endif %}
+          {% endfor %}
+        ].includes($(this).val())) {
+          btn_delete.disabled = false;
+          btn_delete.className = 'btn btn-danger';
+        } else {
+          btn_delete.disabled = true;
+          btn_delete.className = 'btn';
+        }
+      {% endif %}
     });
     $("#id_restore_snapshot").change()
 
@@ -234,6 +291,18 @@
     });
     $("#id_restore_yes").keyup()
 
+    {% if is_dba %}
+      $("#id_delete_yes").keyup(function() {
+        btn = document.getElementById("snapshot_delete_btn");
+        btn.disabled = $(this).val() != "yes";
+        if (btn.disabled) {
+          btn.className = 'btn';
+        } else {
+          btn.className = 'btn btn-danger';
+        }
+      });
+      $("#id_delete_yes").keyup()
+    {% endif %}
   })
 </script>
 

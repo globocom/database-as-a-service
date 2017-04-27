@@ -504,7 +504,7 @@ def make_database_backup(self, database, task):
         task.set_status_error('Backup was unsuccessful', database)
         return False
 
-    snapshot.automatic = False
+    snapshot.is_automatic = False
     snapshot.save()
 
     if snapshot.was_successful:
@@ -512,3 +512,22 @@ def make_database_backup(self, database, task):
     elif snapshot.has_warning:
         task.set_status_warning('Backup was warning', database)
     return True
+
+
+@app.task(bind=True)
+def remove_database_backup(self, task, snapshot):
+    worker_name = get_worker_name()
+    task_history = TaskHistory.register(
+        request=self.request, worker_name=worker_name, task_history=task
+    )
+
+    task_history.add_detail('Removing {}'.format(snapshot))
+    try:
+        remove_snapshot_backup(snapshot)
+    except Exception as e:
+        task_history.add_detail('Error: {}'.format(e))
+        task.set_status_error('Could not delete backup')
+        return False
+    else:
+        task.set_status_success('Backup deleted with success')
+        return True
