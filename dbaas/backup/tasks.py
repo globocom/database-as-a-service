@@ -504,6 +504,9 @@ def make_database_backup(self, database, task):
         task.set_status_error('Backup was unsuccessful', database)
         return False
 
+    snapshot.automatic = False
+    snapshot.save()
+
     if snapshot.was_successful:
         task.set_status_success('Backup was successful', database)
     elif snapshot.has_warning:
