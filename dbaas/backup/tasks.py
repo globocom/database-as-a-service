@@ -447,37 +447,19 @@ def _get_backup_instance(database, task):
     return
 
 
-def _ensure_snapshot_limit(instance, task):
+def _check_snapshot_limit(instance, task):
     task.add_detail('\nChecking older backups...')
 
     backup_limit = Configuration.get_by_name_as_int('backup_retention_days')
-    snapshots = Snapshot.objects.filter(
+    snapshots_count = Snapshot.objects.filter(
         purge_at__isnull=True, instance=instance, snapshopt_id__isnull=False
-    ).order_by('start_at')
-    snapshots_count = snapshots.count()
+    ).order_by('start_at').count()
     task.add_detail(
         'Current snapshot limit {}, used {}'.format(
             backup_limit, snapshots_count
         ),
         level=1
     )
-
-    if snapshots_count == 0 or backup_limit > snapshots_count:
-        return True
-
-    snapshot = snapshots.first()
-    if snapshot.start_at.date() == date.today():
-        task.add_detail('The older backup date is today', level=2)
-        return False
-
-    task.add_detail('Removing older backup {}...'.format(snapshot), level=1)
-    try:
-        remove_snapshot_backup(snapshot)
-    except Exception as e:
-        task.add_detail('\nError: {}'.format(e))
-        return False
-    else:
-        return True
 
 
 def _create_database_backup(instance, task):
@@ -515,9 +497,7 @@ def make_database_backup(self, database, task):
         task.set_status_error('Could not find eligible instance', database)
         return False
 
-    if not _ensure_snapshot_limit(instance, task):
-        task.set_status_error('Cannot delete older backup', database)
-        return False
+    _check_snapshot_limit(instance, task)
 
     snapshot = _create_database_backup(instance, task)
     if not snapshot:
