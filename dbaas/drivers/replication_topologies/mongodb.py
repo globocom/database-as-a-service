@@ -25,7 +25,6 @@ class BaseMongoDB(BaseTopology):
     def get_clone_steps(self):
         return self.deploy_first_steps() + self.deploy_last_steps() + (
             'workflow.steps.util.clone.clone_database.CloneDatabase',
-            'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',
         ) + self.monitoring_steps()
 
 
