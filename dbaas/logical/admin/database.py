@@ -32,7 +32,8 @@ from logical.models import Database
 from logical.views import database_details, database_hosts, \
     database_credentials, database_resizes, database_backup, database_dns, \
     database_metrics, database_destroy, database_delete_host, \
-    database_upgrade, database_upgrade_retry, database_resize_retry
+    database_upgrade, database_upgrade_retry, database_resize_retry, \
+    database_make_backup
 from logical.forms import DatabaseForm
 from logical.service.database import DatabaseService
 
@@ -630,6 +631,12 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 self.admin_site.admin_view(database_resize_retry),
                 name="resize_retry"
             ),
+            url(
+                r'^/?(?P<id>\d+)/make_backup/$',
+                self.admin_site.admin_view(database_make_backup),
+                name="logical_database_make_backup"
+            ),
+
             url(
                 r'^/?(?P<id>\d+)/$',
                 self.admin_site.admin_view(database_details),

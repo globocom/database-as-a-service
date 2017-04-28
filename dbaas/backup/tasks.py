@@ -7,6 +7,7 @@ from logical.models import Database
 from models import Snapshot
 from notification.models import TaskHistory
 from system.models import Configuration
+from drivers.base import ConnectionError
 import datetime
 import time
 from datetime import date, timedelta
@@ -423,3 +424,110 @@ def purge_unused_exports():
                 delete_export(environment, export.nfsaas_path_host)
 
                 export.delete()
+
+
+def _get_backup_instance(database, task):
+    task.add_detail('Searching for backup eligible instance...')
+
+    driver = database.infra.get_driver()
+    instances = database.infra.instances.filter(read_only=False)
+    for instance in instances:
+        try:
+            task.add_detail('Instance: {}'.format(instance), level=1)
+            if driver.check_instance_is_eligible_for_backup(instance):
+                task.add_detail('Is Eligible', level=2)
+                return instance
+
+            task.add_detail('Not eligible', level=2)
+        except ConnectionError:
+            task.add_detail('Connection error', level=2)
+            continue
+
+    task.add_detail('No instance eligible for backup', level=1)
+    return
+
+
+def _check_snapshot_limit(instance, task):
+    task.add_detail('\nChecking older backups...')
+
+    backup_limit = Configuration.get_by_name_as_int('backup_retention_days')
+    snapshots_count = Snapshot.objects.filter(
+        purge_at__isnull=True, instance=instance, snapshopt_id__isnull=False
+    ).order_by('start_at').count()
+    task.add_detail(
+        'Current snapshot limit {}, used {}'.format(
+            backup_limit, snapshots_count
+        ),
+        level=1
+    )
+
+
+def _create_database_backup(instance, task):
+    task.add_detail('\nStarting backup for {}...'.format(instance))
+    error = {}
+    try:
+        snapshot = make_instance_snapshot_backup(
+            instance=instance, error=error
+        )
+    except Exception as e:
+        task.add_detail('\nError: {}'.format(e))
+        return False
+    else:
+        if 'errormsg' in error:
+            task.add_detail('\nError: {}'.format(error['errormsg']))
+            return False
+        return snapshot
+
+
+@app.task(bind=True)
+def make_database_backup(self, database, task):
+    worker_name = get_worker_name()
+    task_history = TaskHistory.register(
+        request=self.request, worker_name=worker_name, task_history=task
+    )
+
+    if not database.pin_task(task):
+        task.error_in_lock(database)
+        return False
+
+    task_history.add_detail('Starting database {} backup'.format(database))
+
+    instance = _get_backup_instance(database, task)
+    if not instance:
+        task.set_status_error('Could not find eligible instance', database)
+        return False
+
+    _check_snapshot_limit(instance, task)
+
+    snapshot = _create_database_backup(instance, task)
+    if not snapshot:
+        task.set_status_error('Backup was unsuccessful', database)
+        return False
+
+    snapshot.is_automatic = False
+    snapshot.save()
+
+    if snapshot.was_successful:
+        task.set_status_success('Backup was successful', database)
+    elif snapshot.has_warning:
+        task.set_status_warning('Backup was warning', database)
+    return True
+
+
+@app.task(bind=True)
+def remove_database_backup(self, task, snapshot):
+    worker_name = get_worker_name()
+    task_history = TaskHistory.register(
+        request=self.request, worker_name=worker_name, task_history=task
+    )
+
+    task_history.add_detail('Removing {}'.format(snapshot))
+    try:
+        remove_snapshot_backup(snapshot)
+    except Exception as e:
+        task_history.add_detail('Error: {}'.format(e))
+        task.set_status_error('Could not delete backup')
+        return False
+    else:
+        task.set_status_success('Backup deleted with success')
+        return True
