@@ -198,8 +198,6 @@
 {{ block.super }}
 
 <script>
-  {% if is_dba %}
-  {% endif %}
   plans = {
     {% for environment in environments %}
       '{{ environment.id }}': {
