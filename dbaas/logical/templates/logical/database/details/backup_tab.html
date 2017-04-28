@@ -25,7 +25,12 @@
           <select class="span8" id="id_restore_snapshot" name="restore_snapshot">
             <option></option>
             {% for snapshot in snapshots reversed %}
-              <option value="{{ snapshot.id }}">{{ snapshot }}</option>
+              <option value="{{ snapshot.id }}">
+                {{ snapshot }}
+                {% if is_dba and not snapshot.is_automatic %}
+                  (executed by user)
+                {% endif %}
+              </option>
             {% endfor %}
           </select>
         </div>
