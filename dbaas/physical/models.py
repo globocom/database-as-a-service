@@ -50,10 +50,6 @@ class EngineType(BaseModel):
     def __unicode__(self):
         return "%s" % (self.name,)
 
-    @property
-    def default_plan(self):
-        return Plan.objects.get(is_default=True, engine_type=self)
-
 
 class Engine(BaseModel):
     engine_type = models.ForeignKey(
@@ -241,14 +237,6 @@ class Plan(BaseModel):
     description = models.TextField(null=True, blank=True)
     is_active = models.BooleanField(
         verbose_name=_("Is plan active"), default=True
-    )
-    is_default = models.BooleanField(
-        verbose_name=_("Is plan default"),
-        default=False,
-        help_text=_(
-            "Check this option if this the default plan. "
-            "There can be only one..."
-        )
     )
     is_ha = models.BooleanField(verbose_name=_("Is plan HA"), default=False)
     engine = models.ForeignKey(
@@ -786,49 +774,6 @@ def databaseinfra_post_save(sender, **kwargs):
     LOG.debug("databaseinfra post-save triggered")
     LOG.debug("databaseinfra %s endpoint: %s" %
               (databaseinfra, databaseinfra.endpoint))
-
-
-@receiver(pre_save, sender=DatabaseInfra)
-def databaseinfra_pre_save(sender, **kwargs):
-    """
-    databaseinfra pre save
-    """
-    databaseinfra = kwargs.get('instance')
-    LOG.debug("databaseinfra pre-save triggered")
-    if not databaseinfra.plan:
-        databaseinfra.plan = databaseinfra.engine.engine_type.default_plan
-        LOG.warning("No plan specified, using default plan (%s) for engine %s" % (
-            databaseinfra, databaseinfra.engine))
-        databaseinfra.disk_offering = databaseinfra.plan.disk_offering
-
-
-@receiver(pre_save, sender=Plan)
-def plan_pre_save(sender, **kwargs):
-    """
-    plan pre save
-    databaseinfra is a plan object and not an implementation from DatabaseInfra's model
-    """
-
-    plan = kwargs.get('instance')
-    LOG.debug("plan pre-save triggered")
-    if plan.is_default:
-        LOG.debug(
-            "looking for other plans marked as default (they will be marked as false) with engine type %s" % plan.engine_type)
-        if plan.id:
-            plans = Plan.objects.filter(
-                is_default=True, engine=plan.engine).exclude(id=plan.id)
-        else:
-            plans = Plan.objects.filter(
-                is_default=True, engine=plan.engine)
-        if plans:
-            with transaction.commit_on_success():
-                for plan in plans:
-                    LOG.info(
-                        "marking plan %s(%s) attr is_default to False" % (plan, plan.engine_type))
-                    plan.is_default = False
-                    plan.save(update_fields=['is_default'])
-        else:
-            LOG.debug("No plan found")
 
 
 simple_audit.register(

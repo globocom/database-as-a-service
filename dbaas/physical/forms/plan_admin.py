@@ -34,19 +34,6 @@ class PlanForm(forms.ModelForm):
             log.warning(u"%s" % msg)
             raise forms.ValidationError(msg)
 
-        is_default = cleaned_data.get("is_default")
-        if not is_default:
-            if self.instance.id:
-                plans = models.Plan.objects.filter(
-                    is_default=True, engine=engine).exclude(id=self.instance.id)
-            else:
-                plans = models.Plan.objects.filter(
-                    is_default=True, engine=engine)
-            if not plans:
-                msg = _("At least one plan must be default")
-                log.warning(u"%s" % msg)
-                raise forms.ValidationError(msg)
-
         return cleaned_data
 
 
