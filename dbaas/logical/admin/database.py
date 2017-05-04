@@ -27,7 +27,6 @@ from notification.tasks import add_instances_to_database
 from notification.models import TaskHistory
 from system.models import Configuration
 from util.html import show_info_popup
-from logical.templatetags import capacity
 from logical.models import Database
 from logical.views import database_details, database_hosts, \
     database_credentials, database_resizes, database_backup, database_dns, \
@@ -57,8 +56,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     )
     list_display_basic = [
         "name_html", "team_admin_page", "engine_html", "environment",
-        "offering_html", "friendly_status", "get_capacity_html",
-        "created_dt_format"
+        "offering_html", "friendly_status", "created_dt_format"
     ]
     list_display_advanced = list_display_basic + ["quarantine_dt_format"]
     list_filter_basic = [
@@ -196,14 +194,6 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         )
     offering_html.short_description = _("offering")
     offering_html.admin_order_field = "Offering"
-
-    def get_capacity_html(self, database):
-        try:
-            return capacity.render_capacity_html(database)
-        except:
-            return None
-
-    get_capacity_html.short_description = "Capacity"
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         """
