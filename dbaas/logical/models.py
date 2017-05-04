@@ -191,9 +191,11 @@ class Database(BaseModel):
     def unpin_task(self):
         DatabaseLock.objects.filter(database=self).delete()
 
-    @cached_property
-    def current_lock(self):
-        return self.lock.first()
+    @property
+    def current_locked_task(self):
+        lock = self.lock.first()
+        if lock:
+            return lock.task
 
     def delete(self, *args, **kwargs):
         if self.is_in_quarantine:
@@ -511,11 +513,11 @@ class Database(BaseModel):
     offering_id = property(get_cloudstack_service_offering_id)
 
     def is_being_used_elsewhere(self, skip_task_name=None):
-        if not self.current_lock:
+        if not self.current_locked_task:
             return False
 
-        if self.current_lock.task.task_name == skip_task_name:
-            if self.current_lock.task.is_status_error:
+        if self.current_locked_task.task_name == skip_task_name:
+            if self.current_locked_task.is_status_error:
                 return False
 
         return True

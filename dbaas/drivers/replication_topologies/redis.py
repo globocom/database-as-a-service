@@ -25,7 +25,6 @@ class BaseRedis(BaseTopology):
     def get_clone_steps(self):
         return self.deploy_first_steps() + self.deploy_last_steps() + (
             'workflow.steps.redis.clone.clone_database.CloneDatabase',
-            'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',
         ) + self.monitoring_steps()
 
     def get_upgrade_steps_extra(self):

@@ -56,6 +56,9 @@ class BackupInfo(BaseModel):
         'physical.Environment', related_name="backup_environment", unique=False, null=True, blank=True, on_delete=models.SET_NULL)
     error = models.CharField(
         verbose_name=_("Error"), max_length=400, null=True, blank=True)
+    is_automatic = models.BooleanField(
+        default=True, help_text='Backup required by DBaaS routine'
+    )
 
     def __unicode__(self):
         return u"%s from %s started at %s" % (self.type, self.database_name, self.start_at)

@@ -167,3 +167,17 @@ class TaskHistory(BaseModel):
         ))
         self.task_status = self.STATUS_ERROR
         self.save()
+
+    def set_status_error(self, details=None, database_unpin=None):
+        self._set_status(TaskHistory.STATUS_ERROR, details, database_unpin)
+
+    def set_status_warning(self, details=None, database_unpin=None):
+        self._set_status(TaskHistory.STATUS_WARNING, details, database_unpin)
+
+    def set_status_success(self, details=None, database_unpin=None):
+        self._set_status(TaskHistory.STATUS_SUCCESS, details, database_unpin)
+
+    def _set_status(self, status, details, database_unpin):
+        self.update_status_for(status, details)
+        if database_unpin:
+            database_unpin.unpin_task()

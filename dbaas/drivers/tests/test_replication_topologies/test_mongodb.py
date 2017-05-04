@@ -28,7 +28,6 @@ class AbstractBaseMondodbTestCase(AbstractReplicationTopologySettingsTestCase):
     def _get_clone_settings(self):
         return self._get_deploy_first_settings() + self._get_deploy_last_settings() + (
             'workflow.steps.util.clone.clone_database.CloneDatabase',
-            'workflow.steps.util.resize.check_database_status.CheckDatabaseStatus',
         ) + self._get_monitoring_settings()
 
 
