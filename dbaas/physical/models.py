@@ -550,6 +550,14 @@ class DatabaseInfra(BaseModel):
                     greater_disk = disk.nfsaas_used_size_kb
         return greater_disk
 
+    @property
+    def disk_used_size_in_gb(self):
+        disk_used_size_in_kb = self.disk_used_size_in_kb
+        if disk_used_size_in_kb:
+            return round(disk_used_size_in_kb * (1.0 / 1024.0 / 1024.0), 2)
+
+        return disk_used_size_in_kb
+
     def update_database_key(self):
         self.database_key = self.get_driver().database_key
         self.save()

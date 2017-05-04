@@ -5,7 +5,8 @@ from django.test import TestCase
 from django.contrib.admin.sites import AdminSite
 from logical.tests import factory as factory_logical
 from ..admin.databaseinfra import DatabaseInfraAdmin
-from ..models import DatabaseInfra, Plan
+from ..models import DatabaseInfra, Plan, Instance, Host
+from dbaas_nfsaas.models import HostAttr
 from . import factory
 from drivers.fake import FakeDriver
 from django.core.cache import cache
@@ -14,6 +15,68 @@ import logging
 LOG = logging.getLogger(__name__)
 EDITING_CLOUDSTACK_READ_ONLY_FIELDS = ('disk_offering', )
 EDITING_PRE_PROVISIONED_READ_ONLY_FIELDS = tuple()
+
+
+class PropertiesTestCase(TestCase):
+
+    KB2GB_FACTOR = (1.0 * 1024 * 1024)
+
+    @classmethod
+    def setUpClass(cls):
+        cls.databaseinfra = factory.DatabaseInfraFactory(
+            name="__test__ mysqlinfra",
+            user="root", password='Fake')
+        cls.hostname = factory.HostFactory()
+        cls.instance = factory.InstanceFactory(
+            address="new_instance.localinstance",
+            port=123, is_active=True,
+            databaseinfra=cls.databaseinfra,
+            hostname=cls.hostname
+        )
+        cls.nfaas_host_attr = factory.NFSaaSHostAttr(
+            host=cls.hostname
+        )
+
+    @classmethod
+    def tearDownClass(cls):
+        HostAttr.objects.all().delete()
+        Instance.objects.all().delete()
+        Host.objects.all().delete()
+        DatabaseInfra.objects.all().delete()
+        Plan.objects.all().delete()
+
+    def test_disk_used_size_in_gb_convert(self):
+        '''
+            Test property: disk_used_size_in_gb
+            case: If this property convert to gb from kb
+        '''
+
+        self.nfaas_host_attr.nfsaas_used_size_kb = 2.5 * self.KB2GB_FACTOR  # 5GB
+        self.nfaas_host_attr.save()
+
+        self.assertEqual(self.databaseinfra.disk_used_size_in_gb, 2.5)
+
+    def test_disk_used_size_in_gb_when_nfsaas_is_null(self):
+        '''
+            Test property: disk_used_size_in_gb
+            case: When nfsaas_used_size_kb is NULL the property must return None
+        '''
+
+        self.nfaas_host_attr.nfsaas_used_size_kb = None
+        self.nfaas_host_attr.save()
+
+        self.assertEqual(self.databaseinfra.disk_used_size_in_gb, None)
+
+    def test_disk_used_size_in_gb_when_nfsaas_is_0(self):
+        '''
+            Test property: disk_used_size_in_gb
+            case: When nfsaas_used_size_kb is 0 the property must return 0
+        '''
+
+        self.nfaas_host_attr.nfsaas_used_size_kb = 0
+        self.nfaas_host_attr.save()
+
+        self.assertEqual(self.databaseinfra.disk_used_size_in_gb, 0)
 
 
 class DatabaseInfraTestCase(TestCase):
