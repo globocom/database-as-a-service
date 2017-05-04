@@ -131,7 +131,7 @@ class PlanModelTestCase(TestCase):
 
     @skipIf(not _have_cloud_stack(), "Cloudstack is not installed")
     def test_min_bundles(self):
-        from dbaas_cloudstack.models import PlanAttr, CloudStackBundle
+        from dbaas_cloudstack.models import PlanAttr, CloudStackBundle, BundleGroup
 
         self.plan.provider = Plan.CLOUDSTACK
         self.plan.is_ha = True
@@ -144,11 +144,15 @@ class PlanModelTestCase(TestCase):
         bundle_02.name = "fake_bundle_02"
         bundle_02.save()
 
+        bundle_group = BundleGroup()
+        bundle_group.name = "Fake123"
+        bundle_group.save()
+        bundle_group.bundles.add(bundle_01)
+        bundle_group.bundles.add(bundle_02)
+
         plan_cloudstack = PlanAttr()
         plan_cloudstack.plan = self.plan
-        plan_cloudstack.save()
-        plan_cloudstack.bundle.add(bundle_01)
-        plan_cloudstack.bundle.add(bundle_02)
+        plan_cloudstack.bundle_group = bundle_group
         plan_cloudstack.save()
 
         self.environment.min_of_zones = 1

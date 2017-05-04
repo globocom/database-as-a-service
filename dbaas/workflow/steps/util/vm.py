@@ -81,7 +81,7 @@ class InstallNewTemplate(VmStep):
 
         target_plan = self.instance.databaseinfra.plan.engine_equivalent_plan
         cs_plan = PlanAttr.objects.get(plan=target_plan)
-        self.bundle = cs_plan.bundle.first()
+        self.bundle = cs_plan.bundles.first()
 
     def __unicode__(self):
         return "Installing new template to VM..."

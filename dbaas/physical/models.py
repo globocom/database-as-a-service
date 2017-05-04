@@ -301,12 +301,15 @@ class Plan(BaseModel):
             ("view_plan", "Can view plans"),
         )
 
+    @property
+    def cloudstack_attr(self):
+        if not self.is_cloudstack:
+            return None
+        return self.cs_plan_attributes.first()
+
     def validate_min_environment_bundles(self, environment):
         if self.is_ha and self.is_cloudstack:
-            bundles_actives = self.cs_plan_attributes.first().bundle.filter(
-                is_active=True
-            ).count()
-
+            bundles_actives = self.cloudstack_attr.bundles_actives.count()
             if bundles_actives < environment.min_of_zones:
                 raise EnvironmentError(
                     'Plan {} should has at least {} active bundles to {} '
