@@ -1,5 +1,5 @@
 # -*- coding:utf-8 -*-
-from util.html import render_progress_bar, render_detailed_progress_bar
+from util.html import render_progress_bar
 from decimal import Decimal, getcontext, ROUND_HALF_EVEN
 from django import template
 from django.utils.safestring import mark_safe
