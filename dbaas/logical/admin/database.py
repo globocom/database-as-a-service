@@ -372,11 +372,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         database.destroy(request.user)
 
     def database_dex_analyze_view(self, request, database_id):
-        import json
-        import random
         import os
         import string
-        from datetime import datetime, timedelta
 
         def generate_random_string(length, stringset=string.ascii_letters + string.digits):
             return ''.join([stringset[i % len(stringset)]
@@ -478,7 +475,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             flipperfox_migration.save()
             self.message_user(request, "Migration for {} started!".format(
                 database.name), level=messages.SUCCESS)
-        except IntegrityError, e:
+        except IntegrityError:
             self.message_user(request, "Database {} is already migrating!".format(
                 database.name), level=messages.ERROR)
 
@@ -543,15 +540,14 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
         return HttpResponseRedirect(url)
 
-
     def add_database_instances(self, request, database_id):
         database = Database.objects.get(id=database_id)
 
-        #can_do_upgrade, error = database.can_do_upgrade()
-        #if not can_do_upgrade:
-        #    url = reverse('admin:logical_database_change', args=[database.id])
-        #    self.message_user(request, error, level=messages.ERROR)
-        #    return HttpResponseRedirect(url)
+        # can_do_upgrade, error = database.can_do_upgrade()
+        # if not can_do_upgrade:
+        #     url = reverse('admin:logical_database_change', args=[database.id])
+        #     self.message_user(request, error, level=messages.ERROR)
+        #     return HttpResponseRedirect(url)
 
         url = reverse('admin:notification_taskhistory_changelist')
 
@@ -578,7 +574,6 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         add_instances_to_database.delay(database, request.user, task_history)
 
         return HttpResponseRedirect(url)
-
 
     # Create your views here.
     def get_urls(self):
