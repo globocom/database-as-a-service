@@ -3,10 +3,11 @@ from util.html import render_progress_bar, render_detailed_progress_bar
 from decimal import Decimal, getcontext, ROUND_HALF_EVEN
 from django import template
 from django.utils.safestring import mark_safe
+from django.utils.functional import cached_property
 import logging
 
 getcontext().rounding = ROUND_HALF_EVEN
-ONE = Decimal(10) ** -1
+TWO = Decimal(10) ** -2
 register = template.Library()
 
 LOG = logging.getLogger(__name__)
@@ -25,52 +26,19 @@ def render_capacity_html(database):
         return "Unknown"
 
 
-@register.simple_tag
-def xxrender_detailed_capacity_html(database):
-    def render(nfsaas_size_in_gb,
-               nfsaas_used_size_in_gb,
-               used_size_in_gb,
-               used_other_in_gb,
-               free_space_in_gb,
-               other_percent,
-               database_percent):
-
-        return render_detailed_progress_bar(
-            used_size_in_gb,
-            used_other_in_gb,
-            free_space_in_gb,
-            other_percent=other_percent,
-            database_percent=database_percent,
-        )
-
-    databaseinfra = database.databaseinfra
-    host_attr = databaseinfra.instances.first().hostname.nfsaas_host_attributes.first()
-    nfsaas_size_in_gb = (host_attr.nfsaas_size_kb or 0.0) * (1.0 / 1024.0 / 1024.0)
-    nfsaas_used_size_in_gb = databaseinfra.disk_used_size_in_gb
-    if nfsaas_used_size_in_gb is None:
-        free_space_in_gb = nfsaas_size_in_gb - database.used_size_in_gb
-        used_other_in_gb = None
-        other_percent = 0
-    else:
-        used_other_in_gb = nfsaas_used_size_in_gb - database.used_size_in_gb
-        free_space_in_gb = nfsaas_size_in_gb - nfsaas_used_size_in_gb
-        other_percent = float(used_other_in_gb * 100) / nfsaas_size_in_gb
-    database_percent = float(database.used_size_in_gb * 100) / nfsaas_size_in_gb
-    params = dict(
-        nfsaas_size_in_gb=nfsaas_size_in_gb,
-        nfsaas_used_size_in_gb=nfsaas_used_size_in_gb,
-        used_size_in_gb=database.used_size_in_gb,
-        used_other_in_gb=used_other_in_gb,
-        free_space_in_gb=free_space_in_gb,
-        other_percent=other_percent,
-        database_percent=database_percent,
-    )
-
-    return '{}'.format(render(**params))
-
-
 @register.tag
 def render_detailed_capacity_html(parser, token):
+    '''
+    Usage: {% render_detailed_progress_bar database_obj type %}
+    params:
+        - database_obj: Logical Database object
+        - type: type of bar. can be: disk or memory
+
+    Ex. For physical disk bar:
+        {% render_detailed_progress_bar database disk %}
+    Ex. For physical momery bar:
+        {% render_detailed_progress_bar database memory %}
+    '''
 
     try:
         split_contents = token.split_contents()
@@ -85,36 +53,6 @@ def render_detailed_capacity_html(parser, token):
 
 
 class DetailedProgressBarNode(template.Node):
-    '''
-    Static class receive an array with contains dicts.
-    Witch index that array means a part of the bar.
-    This dicts must have the keys:
-        - name: used to name the css class on template;
-        - label: will be appers on label;
-        - percentage: percentage of the part;
-        - used_space: space used;
-        - space_metric: Bytes, KB, MB, GB;
-        - color: color of bar part;
-
-    Ex. if i wanna make a bar with 2 part ill pass:
-        DetailedProgressBar([{
-            'name': 'database',
-            'label': 'Database',
-            'percentage': 10,
-            'used_space': 1.0,
-            'space_metric': 'GB',
-            'color': '#409fdf'},
-            {'name': 'free',
-             'label': 'Free',
-             'percentage': 90.0,
-             'used_space': 9.0,
-             'space_metric': 'GB',
-             'color': '#949398'
-             ''}])
-
-        And that class will return the rendered html.
-    '''
-
     COLORS = {
         'blue': '#409fdf',
         'grey': '#949398',
@@ -131,14 +69,15 @@ class DetailedProgressBarNode(template.Node):
         self.disk_parts = []
         self.memory_parts = []
         self.database = database
-        self.databaseinfra = self.database.databaseinfra
+        self.databaseinfra = database.databaseinfra
         self.instance = self.databaseinfra.instances.first()
-        self.is_memory = self.database.engine.engine_type.is_in_memory
+        self.is_in_memory = database.engine.engine_type.is_in_memory
+        self.is_persisted = database.plan.has_persistence
 
     @staticmethod
     def normalize_number(n):
         n = Decimal(round(n, 2))
-        return n.quantize(ONE)
+        return n.quantize(TWO)
 
     def render(self, context):
         obj = context.get(self.obj_name)
@@ -147,6 +86,8 @@ class DetailedProgressBarNode(template.Node):
             return ''
 
         if self.bar_type == 'disk':
+            if (self.is_in_memory and not self.is_persisted) or self.used_disk_in_gb is None:
+                return ''
             html = self.render_disk_bar()
         else:
             html = self.render_memory_bar()
@@ -159,69 +100,123 @@ class DetailedProgressBarNode(template.Node):
     def _make_memory_part(self, **kw):
         self.memory_parts.append(kw)
 
-    def render_disk_bar(self):
-        self.host_attr = self.instance.hostname.nfsaas_host_attributes.first()
-        nfsaas_size_in_gb = (self.host_attr.nfsaas_size_kb or 0.0) * (1.0 / 1024.0 / 1024.0)
-        nfsaas_used_size_in_gb = self.databaseinfra.disk_used_size_in_gb
-        if nfsaas_used_size_in_gb is None:
-            free_space_in_gb = nfsaas_size_in_gb - self.database.used_size_in_gb
-            used_other_in_gb = None
+    @cached_property
+    def total_disk_in_gb(self):
+        host_attr = self.instance.hostname.nfsaas_host_attributes.first()
+        total_disk_in_gb = (host_attr.nfsaas_size_kb or 0.0) * (1.0 / 1024.0 / 1024.0)
+        return self.normalize_number(total_disk_in_gb)
+
+    @cached_property
+    def used_disk_in_gb(self):
+        used_disk_in_gb = self.databaseinfra.disk_used_size_in_gb
+        return self.normalize_number(used_disk_in_gb) if used_disk_in_gb is not None else None
+
+    @cached_property
+    def used_database_in_gb(self):
+        if self.is_in_memory and not self.is_persisted:
+            # TODO: Verificar se retorna 0 ou não mostra a barra
+            return self.used_disk_in_gb or 0
+        return self.normalize_number(self.database.used_size_in_gb)
+
+    @cached_property
+    def used_other_in_gb(self):
+        if self.used_disk_in_gb is None:
+            return None
+        else:
+            used_other_in_gb = self.used_disk_in_gb - self.used_database_in_gb
+            return self.normalize_number(used_other_in_gb)
+
+    @cached_property
+    def free_disk_in_gb(self):
+        if self.used_disk_in_gb is None:
+            free_disk_in_gb = self.total_disk_in_gb - self.used_database_in_gb
+        else:
+            free_disk_in_gb = self.total_disk_in_gb - self.used_disk_in_gb
+
+        return self.normalize_number(free_disk_in_gb)
+
+    @cached_property
+    def database_percent(self):
+        database_percent = self.used_database_in_gb * 100 / self.total_disk_in_gb
+
+        return self.normalize_number(database_percent)
+
+    @cached_property
+    def other_percent(self):
+        if self.used_disk_in_gb is None or self.is_in_memory:
             other_percent = 0
         else:
-            used_other_in_gb = nfsaas_used_size_in_gb - self.database.used_size_in_gb
-            free_space_in_gb = nfsaas_size_in_gb - nfsaas_used_size_in_gb
-            other_percent = float(used_other_in_gb * 100) / nfsaas_size_in_gb
-        database_percent = float(self.database.used_size_in_gb * 100) / nfsaas_size_in_gb
+            other_percent = self.used_other_in_gb * 100 / self.total_disk_in_gb
+
+        return self.normalize_number(other_percent)
+
+    @cached_property
+    def free_percent(self):
+        free_percent = 100 - (self.database_percent + self.other_percent)
+
+        return self.normalize_number(free_percent)
+
+    def render_disk_bar(self):
         self._make_disk_part(**{
             'name': 'database',
-            'label': 'Database',
-            'percentage': self.normalize_number(database_percent or 0),
-            'used_space': self.normalize_number(self.database.used_size_in_gb),
+            'label': 'Used' if self.is_in_memory else 'Database',
+            'percentage': self.database_percent,
+            'used_space': self.used_database_in_gb,
             'color': self.COLORS['blue']
         })
-        if used_other_in_gb is not None:
+        if self.used_other_in_gb is not None and not self.is_in_memory:
             self._make_disk_part(**{
                 'name': 'other',
                 'label': 'Others',
-                'percentage': self.normalize_number(other_percent or 0),
-                'used_space': self.normalize_number(used_other_in_gb),
+                'percentage': self.other_percent,
+                'used_space': self.used_other_in_gb,
                 'color': self.COLORS['grey']
             })
-            self._make_disk_part(**{
-                'name': 'free',
-                'label': 'Free',
-                'percentage': self.normalize_number(100 - (database_percent + other_percent)),
-                'used_space': self.normalize_number(free_space_in_gb),
-                'color': self.COLORS['green']
-            })
-        else:
-            self._make_disk_part(**{
-                'name': 'free',
-                'label': 'Free',
-                'percentage': self.normalize_number(100 - (database_percent + other_percent)),
-                'used_space': self.normalize_number(free_space_in_gb),
-                'color': self.COLORS['grey']
-            })
+        self._make_disk_part(**{
+            'name': 'free',
+            'label': 'Free',
+            'percentage': self.free_percent,
+            'used_space': self.free_disk_in_gb,
+            'color': self.COLORS['green']
+        })
         return self.render_template(self.disk_parts, 'disk')
 
+    @cached_property
+    def total_db_memory_in_gb(self):
+        return self.normalize_number(self.database.total_size_in_gb)
+
+    @cached_property
+    def used_db_memory_in_gb(self):
+        return self.normalize_number(self.database.used_size_in_gb)
+
+    @cached_property
+    def used_db_memory_percent(self):
+        used_memory_percent = (self.used_db_memory_in_gb * 100) / self.total_db_memory_in_gb
+
+        return self.normalize_number(used_memory_percent)
+
+    @cached_property
+    def free_db_memory_percent(self):
+        return self.normalize_number(100 - self.used_db_memory_percent)
+
+    @cached_property
+    def free_db_memory_size_in_gb(self):
+        return self.total_db_memory_in_gb - self.used_db_memory_in_gb
+
     def render_memory_bar(self):
-        total_size_in_gb = self.database.total_size_in_gb
-        used_size_in_gb = self.database.used_size_in_gb
-        used_percent = float(used_size_in_gb * 100) / total_size_in_gb
-        free_size_in_gb = total_size_in_gb - used_size_in_gb
         self._make_memory_part(**{
             'name': 'database',
-            'label': 'Database',
-            'percentage': self.normalize_number(used_percent or 0),
-            'used_space': self.normalize_number(used_size_in_gb),
+            'label': 'Used',
+            'percentage': self.used_db_memory_percent,
+            'used_space': self.used_db_memory_in_gb,
             'color': self.COLORS['blue']
         })
         self._make_memory_part(**{
             'name': 'free',
             'label': 'Free',
-            'percentage': self.normalize_number(100 - (used_percent)),
-            'used_space': self.normalize_number(free_size_in_gb),
-            'color': self.COLORS['grey']
+            'percentage': self.free_db_memory_percent,
+            'used_space': self.free_db_memory_size_in_gb,
+            'color': self.COLORS['green']
         })
 
         return self.render_template(self.memory_parts, 'memory')

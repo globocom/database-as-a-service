@@ -1,0 +1,18 @@
+<div class="{{ bar_type }}-progress-bar">
+    <div class="progress">
+        <div class="bar" style="width: 100%;">
+            {% for bar in bars %}
+                <div class="bar {{ bar.name }}-bar" style="width: {{ bar.percentage }}%;background-color: {{ bar.color }};" data-content="{{ bar.label }}: {{ bar.used_space }} GB ({{ bar.percentage }}%)" data-container="body"></div>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="bar-label-container">
+            {% for bar in bars %}
+                <div class="bar-label">
+                    <span class="bar-label-color" style="background-color: {{ bar.color }}"></span>
+                    <span class="bar-label-text"> {{ bar.label }}: </span>
+                    <span class="bar-label-detail"> {{ bar.used_space }} GB ({{ bar.percentage }}%) </span>
+                </div>
+            {% endfor %}
+    </div>
+</div>
