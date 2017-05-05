@@ -87,7 +87,12 @@ class DetailedProgressBarNode(template.Node):
         self._init_vars(obj)
 
         if self.bar_type == 'disk':
-            if (self.is_in_memory and not self.is_persisted) or self.used_disk_in_gb is None:
+            is_in_memory_and_not_persisted = (self.is_in_memory and
+                                              not self.is_persisted)
+            not_in_memory_and_used_disk_none = (self.used_disk_in_gb is None and
+                                                not self.is_in_memory)
+
+            if is_in_memory_and_not_persisted or not_in_memory_and_used_disk_none:
                 return ''
             html = self.render_disk_bar()
         else:

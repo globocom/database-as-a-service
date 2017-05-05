@@ -184,7 +184,10 @@ class DiskCapacityTestCase(CapacityBaseTestCase):
         self.assertIn('0.00%', free_bar.attrib.get('style', ''))
 
     def test_nfsaas_used_is_null(self):
-        self._change_fields(used_disk_size=None, used_database_size=0)
+        self._change_fields(
+            is_in_memory=False,
+            used_disk_size=None,
+            used_database_size=0)
         rendered_progress_bar = self._render_templatetag('disk')
 
         self.assertEqual('', rendered_progress_bar)
@@ -200,6 +203,29 @@ class DiskCapacityTestCase(CapacityBaseTestCase):
         rendered_progress_bar = self._render_templatetag('disk')
 
         self.assertEqual('', rendered_progress_bar)
+
+    def test_in_memory_and_used_disk_none(self):
+        '''
+        The Bar must appear when the db is in memory and the used disk is None
+        '''
+        self._change_fields(
+                is_in_memory=True,
+                used_disk_size=None,
+                used_database_size=1.9876
+        )
+
+        rendered_progress_bar = self._render_templatetag('disk')
+
+        self.assertNotEqual(rendered_progress_bar, '', 'Not bar html found, expected be found')
+
+        root = lhtml.fromstring(rendered_progress_bar)
+        labels = root.cssselect('.bar-label-container .bar-label')
+        database_bar = root.cssselect('.bar.database-bar')[0]
+        free_bar = root.cssselect('.bar.free-bar')[0]
+
+        self.assertEqual(len(labels), 2)
+        self.assertIn('19.90%', database_bar.attrib.get('style', ''))
+        self.assertIn('80.10%', free_bar.attrib.get('style', ''))
 
 
 class MemoryCapacityTestCase(CapacityBaseTestCase):
