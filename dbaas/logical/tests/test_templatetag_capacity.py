@@ -147,6 +147,14 @@ class DiskCapacityTestCase(CapacityBaseTestCase):
         self.database.used_size_in_bytes = used_database_size * self.BYTE2GB_FACTOR  # 2.5GB
         self.database.save()
 
+    def test_no_bar_when_obj_not_found_on_context(self):
+        html = '{% load capacity %}'
+        html += '{% render_detailed_capacity_html database disk %}'
+        progress_bar = Template(html)
+        rendered_progress_bar = progress_bar.render(Context({}))
+
+        self.assertEqual('', rendered_progress_bar)
+
     def test_percent(self):
         self._change_fields()
         rendered_progress_bar = self._render_templatetag('disk')
@@ -195,6 +203,14 @@ class DiskCapacityTestCase(CapacityBaseTestCase):
 
 
 class MemoryCapacityTestCase(CapacityBaseTestCase):
+
+    def test_no_bar_when_obj_not_found_on_context(self):
+        html = '{% load capacity %}'
+        html += '{% render_detailed_capacity_html database memory %}'
+        progress_bar = Template(html)
+        rendered_progress_bar = progress_bar.render(Context({}))
+
+        self.assertEqual('', rendered_progress_bar)
 
     def test_percent(self):
 

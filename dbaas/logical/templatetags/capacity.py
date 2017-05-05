@@ -82,9 +82,9 @@ class DetailedProgressBarNode(template.Node):
 
     def render(self, context):
         obj = context.get(self.obj_name)
-        self._init_vars(obj)
         if obj is None:
             return ''
+        self._init_vars(obj)
 
         if self.bar_type == 'disk':
             if (self.is_in_memory and not self.is_persisted) or self.used_disk_in_gb is None:
