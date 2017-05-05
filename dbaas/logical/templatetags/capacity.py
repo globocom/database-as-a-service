@@ -5,6 +5,7 @@ from django import template
 from django.utils.safestring import mark_safe
 from django.utils.functional import cached_property
 import logging
+from logical.models import MB_FACTOR
 
 getcontext().rounding = ROUND_HALF_EVEN
 TWO = Decimal(10) ** -2
@@ -102,8 +103,8 @@ class DetailedProgressBarNode(template.Node):
 
     @cached_property
     def total_disk_in_gb(self):
-        host_attr = self.instance.hostname.nfsaas_host_attributes.first()
-        total_disk_in_gb = (host_attr.nfsaas_size_kb or 0.0) * (1.0 / 1024.0 / 1024.0)
+        host_attr = self.instance.hostname.nfsaas_host_attributes.filter(is_active=True).first()
+        total_disk_in_gb = (host_attr.nfsaas_size_kb or 0.0) * MB_FACTOR
         return self.normalize_number(total_disk_in_gb)
 
     @cached_property
@@ -114,7 +115,6 @@ class DetailedProgressBarNode(template.Node):
     @cached_property
     def used_database_in_gb(self):
         if self.is_in_memory and not self.is_persisted:
-            # TODO: Verificar se retorna 0 ou não mostra a barra
             return self.used_disk_in_gb or 0
         return self.normalize_number(self.database.used_size_in_gb)
 
@@ -137,7 +137,7 @@ class DetailedProgressBarNode(template.Node):
 
     @cached_property
     def database_percent(self):
-        database_percent = self.used_database_in_gb * 100 / self.total_disk_in_gb
+        database_percent = (self.used_database_in_gb * 100) / self.total_disk_in_gb
 
         return self.normalize_number(database_percent)
 
@@ -146,7 +146,7 @@ class DetailedProgressBarNode(template.Node):
         if self.used_disk_in_gb is None or self.is_in_memory:
             other_percent = 0
         else:
-            other_percent = self.used_other_in_gb * 100 / self.total_disk_in_gb
+            other_percent = (self.used_other_in_gb * 100) / self.total_disk_in_gb
 
         return self.normalize_number(other_percent)
 
