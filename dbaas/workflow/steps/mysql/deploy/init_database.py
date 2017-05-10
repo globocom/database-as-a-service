@@ -5,6 +5,7 @@ from dbaas_nfsaas.models import HostAttr
 from dbaas_cloudstack.models import PlanAttr
 from dbaas_cloudstack.models import HostAttr as CsHostAttr
 from itertools import permutations
+from physical.configurations import configuration_factory
 from util import check_ssh
 from util import get_credentials_for
 from util import exec_remote_command
@@ -23,6 +24,11 @@ class InitDatabase(BaseStep):
 
     def do(self, workflow_dict):
         try:
+            cloud_stack = workflow_dict['plan'].cs_plan_attributes.first()
+            offering = cloud_stack.get_stronger_offering()
+            configuration = configuration_factory(
+                'mysql', offering.memory_size_mb
+            )
 
             for index, hosts in enumerate(permutations(workflow_dict['hosts'])):
 
@@ -65,7 +71,9 @@ class InitDatabase(BaseStep):
                         'HOST02': workflow_dict['hosts'][1],
                         'INSTANCE01': workflow_dict['instances'][0],
                         'INSTANCE02': workflow_dict['instances'][1],
-                        'SECOND_SCRIPT_FILE': '/opt/dbaas/scripts/dbaas_second_script.sh'
+                        'SECOND_SCRIPT_FILE': '/opt/dbaas/scripts/dbaas_second_script.sh',
+                        'ENVIRONMENT': workflow_dict['databaseinfra'].environment,
+                        'configuration': configuration,
                     })
 
                 scripts = (planattr.initialization_script,

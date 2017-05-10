@@ -41,3 +41,7 @@ class ConfigurationRedis(ConfigurationBase):
             value = self.memory_size_in_mb * 0.75 # 3/4
 
         return self.value_in_mb(value)
+
+
+class ConfigurationMySQL(ConfigurationBase):
+    __ENGINE__ = 'mysql'
