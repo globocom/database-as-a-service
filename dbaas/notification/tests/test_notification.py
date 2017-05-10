@@ -29,6 +29,7 @@ class NotificationTestCase(TestCase):
         self.database_big.save()
 
         self.infra_big = self.database_big.databaseinfra
+        self.infra_big.disk_offering = None
         self.infra_big.per_database_size_mbytes = 10
         self.infra_big.save()
 
@@ -38,6 +39,7 @@ class NotificationTestCase(TestCase):
         self.database_small.save()
 
         self.infra_small = self.database_small.databaseinfra
+        self.infra_small.disk_offering = None
         self.infra_small.per_database_size_mbytes = 10
         self.infra_small.save()
 

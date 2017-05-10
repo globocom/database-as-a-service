@@ -1,6 +1,44 @@
 {% extends "logical/database/details/base.html" %}
+{% load capacity admin_static %}
 
 {% block tab %}
+<style>
+    .controls.controls-300 {
+        width: 300px;
+    }
+    .progress {
+        margin-bottom: 10px;
+    }
+    .progress-bar.bar {
+        float: right;
+    }
+     .bar.database-bar {
+        background-image: none;
+    }
+     .bar.other-bar {
+        background-image: none;
+    }
+     .bar.free-bar {
+        background-image: none;
+    }
+    .bar-label-container, .bar-label-container {
+        font-size: 16px;
+    }
+    .bar-label-container .bar-label {
+        line-height: 25px;
+    }
+    .bar-label-container .bar-label .bar-label-color, .bar-label-container .bar-label .bar-label-text {
+        display: inline-block;
+    }
+    .bar-label-container .bar-label .bar-label-color {
+        width: 10px;
+        height: 10px;
+    }
+    .bar-label-container .bar-label .bar-label-text {
+        width: 70px;
+    }
+</style>
+
 <fieldset class="module aligned ">
   <div class="control-group">
     <div class="control-label"><label>Status:</label></div>
@@ -82,8 +120,14 @@
   <div class="control-group">
     <div class="control-label"><label>Disk:</label></div>
     <div class="controls"><p class="readonly">{{ database.infra.disk_offering }}</p></div>
+    <div class="controls controls-300">{% render_detailed_capacity_html database disk %}</div>
   </div>
   {% if database.engine.engine_type.is_in_memory %}
+    <div class="control-group">
+      <div class="control-label"><label>Memory database:</label></div>
+        <div class="controls"><p class="readonly">Total ({{ database.total_size_in_gb }} GB)</p></div>
+      <div class="controls controls-300">{% render_detailed_capacity_html database memory %}</div>
+    </div>
     <div class="control-group">
       <div class="control-label"><label>Persisted:</label></div>
       <div class="controls">
@@ -116,12 +160,17 @@
 
 {% block js_footer %}
 {{ block.super }}
-
+<script src="{% static "assets/js/bootstrap.min.js" %}"></script>
 <script>
   var team_select = document.getElementById("id_team");
   var team_contact = document.getElementById("id_contact");
 
   jQuery(document).ready(function($) {
+    $(".bar .database-bar, .bar .other-bar, .bar .free-bar").popover({
+        'trigger': 'hover',
+        'placement': 'top'
+    });
+
     $("#id_team").on("change", function() {
       var team_id = team_select.value;
 

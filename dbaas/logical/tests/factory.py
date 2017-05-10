@@ -23,6 +23,7 @@ class DatabaseFactory(factory.DjangoModelFactory):
     project = factory.SubFactory(ProjectFactory)
     team = factory.SubFactory(TeamFactory)
     description = factory.Sequence(lambda n: 'desc{0}'.format(n))
+    used_size_in_bytes = 200 * 1024
 
     @factory.lazy_attribute
     def environment(self):

@@ -21,7 +21,9 @@ UNICODE_FORMAT = '{} ({} GB)'
 class DiskOfferingTestCase(TestCase):
 
     def create_basic_disks(self):
-        DiskOffering.objects.all().delete()
+        for disk_offering in DiskOffering.objects.all():
+            disk_offering.plans.all().delete()
+            disk_offering.delete()
         cache.clear()
 
         self.bigger = DiskOfferingFactory()

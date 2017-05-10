@@ -72,6 +72,8 @@ class DatabaseInfraFactory(factory.DjangoModelFactory):
     endpoint = '127.0.0.1:1111'
     engine = factory.SubFactory(EngineFactory)
     capacity = 2
+    per_database_size_mbytes = 5 * 1024 * 1024
+    disk_offering = factory.SubFactory(DiskOfferingFactory)
 
     @factory.lazy_attribute
     def environment(self):
