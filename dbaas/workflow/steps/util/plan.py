@@ -3,6 +3,7 @@ from util import build_context_script, exec_remote_command
 from dbaas_cloudstack.models import HostAttr, PlanAttr
 from dbaas_nfsaas.models import HostAttr as HostAttrNfsaas
 from workflow.steps.util.base import BaseInstanceStep
+from physical.configurations import configuration_factory
 import logging
 
 LOG = logging.getLogger(__name__)
@@ -23,25 +24,30 @@ class PlanStep(BaseInstanceStep):
         except HostAttrNfsaas.DoesNotExist:
             self.host_nfs = None
 
-        self.database = self.instance.databaseinfra.databases.first()
+        self.infra = self.instance.databaseinfra
+        self.database = self.infra.databases.first()
+        self.engine = self.infra.engine
+        self.disk_offering = self.infra.disk_offering
 
-        self.plan = self.instance.databaseinfra.plan
+        self.plan = self.infra.plan
         self.cs_plan = PlanAttr.objects.get(plan=self.plan)
 
     def get_equivalent_plan(self):
-        self.plan = self.instance.databaseinfra.plan.engine_equivalent_plan
+        self.plan = self.infra.plan.engine_equivalent_plan
         self.cs_plan = PlanAttr.objects.get(plan=self.plan)
 
     @property
     def script_variables(self):
         variables = {
             'DATABASENAME': self.database.name,
-            'DBPASSWORD': self.instance.databaseinfra.password,
+            'DBPASSWORD': self.infra.password,
             'HOST': self.host.hostname.split('.')[0],
             'ENGINE': self.plan.engine.engine_type.name,
             'UPGRADE': True,
             'IS_HA': self.plan.is_ha,
-            'IS_READ_ONLY': self.instance.read_only
+            'IS_READ_ONLY': self.instance.read_only,
+            'DISK_SIZE_IN_GB': self.disk_offering.size_gb(),
+            'ENVIRONMENT': self.infra.environment
         }
 
         if self.host_nfs:
@@ -49,8 +55,25 @@ class PlanStep(BaseInstanceStep):
                 {'EXPORTPATH': self.host_nfs.nfsaas_path}
             )
 
+        variables['configuration'] = self.get_configuration()
         variables.update(self.get_variables_specifics())
         return variables
+
+    def get_configuration(self):
+        current_resize = self.database.resizes.last()
+        if not current_resize and current_resize.is_running:
+            offering = current_resize.target_offer.offering
+        else:
+            offering = self.cs_plan.get_stronger_offering()
+
+        try:
+            configuration = configuration_factory(
+                self.engine.name, offering.memory_size_mb
+            )
+        except NotImplementedError:
+            return None
+        else:
+            return configuration
 
     def get_variables_specifics(self):
         return {}
@@ -124,8 +147,8 @@ class ConfigureMongoHA(Configure):
 
     def get_variables_specifics(self):
         return {
-            'REPLICASETNAME': self.instance.databaseinfra.get_driver().get_replica_name(),
-            'MONGODBKEY': self.instance.databaseinfra.database_key
+            'REPLICASETNAME': self.infra.get_driver().get_replica_name(),
+            'MONGODBKEY': self.infra.database_key
         }
 
 
@@ -181,12 +204,12 @@ class InitializationRedis(Initialization):
 class ConfigureRedis(Configure):
 
     def get_variables_specifics(self):
-        master = self.instance.databaseinfra.get_driver().get_master_instance()
+        master = self.infra.get_driver().get_master_instance()
 
         variables = {
             'SENTINELMASTER': master.address,
             'SENTINELMASTERPORT': master.port,
-            'MASTERNAME': self.instance.databaseinfra.name,
+            'MASTERNAME': self.infra.name,
         }
         variables.update(redis_instance_parameter(self.host))
         variables.update(sentinel_instance_parameter(self.host))
