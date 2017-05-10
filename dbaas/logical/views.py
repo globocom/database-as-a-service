@@ -179,11 +179,13 @@ def database_metrics(request, context, database):
         hostname__hostname__contains=context['hostname']
     ).first()
 
-    context['grafana_url'] = '{}/dashboard/{}?{}={}&{}={}&{}={}'.format(
+    context['grafana_url'] = '{}/dashboard/{}?{}={}&{}={}&{}={}&{}={}'.format(
         credential.endpoint,
         credential.project.format(database.engine_type),
         credential.get_parameter_by_name('db_param'), instance.dns,
         credential.get_parameter_by_name('os_param'), instance.hostname.hostname,
+        credential.get_parameter_by_name('disk_param'),
+        credential.get_parameter_by_name('disk_dir'),
         credential.get_parameter_by_name('env_param'),
         credential.get_parameter_by_name('environment')
     )
