@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
 import logging
-from dbaas_credentials.models import CredentialType
 from dbaas_nfsaas.models import HostAttr
 from dbaas_cloudstack.models import PlanAttr
 from dbaas_cloudstack.models import HostAttr as CsHostAttr
 from util import check_ssh
 from util import exec_remote_command
-from util import get_credentials_for
 from util import build_context_script
 from physical.models import Instance
+from physical.configurations import configuration_factory
 from workflow.steps.util.base import BaseStep
 from workflow.exceptions.error_codes import DBAAS_0016
 from util import full_stack
@@ -23,6 +22,11 @@ class InitDatabaseRedis(BaseStep):
 
     def do(self, workflow_dict):
         try:
+            cloud_stack = workflow_dict['plan'].cs_plan_attributes.first()
+            offering = cloud_stack.get_stronger_offering()
+            configuration = configuration_factory(
+                'redis', offering.memory_size_mb
+            )
 
             for index, host in enumerate(workflow_dict['hosts']):
 
@@ -83,6 +87,9 @@ class InitDatabaseRedis(BaseStep):
                     'SENTINELPORT': instance_sentinel_port,
                     'MASTERNAME': workflow_dict['databaseinfra'].name,
                     'ONLY_SENTINEL': only_sentinel,
+                    'HAS_PERSISTENCE': workflow_dict['plan'].has_persistence,
+                    'ENVIRONMENT': workflow_dict['databaseinfra'].environment,
+                    'configuration': configuration
                 }
                 LOG.info(contextdict)
 
