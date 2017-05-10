@@ -51,6 +51,12 @@ class DatabaseResizeTestCase(TestCase):
         self.database_resize.set_error()
         self.assertTrue(self.database_resize.is_status_error)
 
+    def test_is_status_running(self):
+        self.assertFalse(self.database_resize.is_running)
+
+        self.database_resize.update_step(1)
+        self.assertTrue(self.database_resize.is_running)
+
     def test_can_do_retry(self):
         self.assertTrue(self.database_resize.can_do_retry)
 

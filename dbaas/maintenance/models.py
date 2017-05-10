@@ -370,6 +370,10 @@ class DatabaseResize(BaseModel):
     def is_status_error(self):
         return self.status == self.ERROR
 
+    @property
+    def is_running(self):
+        return self.status == self.RUNNING
+
     @classmethod
     def current_to(cls, database):
         resizes = cls.objects.filter(database=database, status=cls.RUNNING)
