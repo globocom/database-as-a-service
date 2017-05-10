@@ -37,6 +37,8 @@ class InitDatabaseMongoDB(BaseStep):
             mongodb_password = get_credentials_for(environment=workflow_dict['environment'],
                                                    credential_type=CredentialType.MONGODB).password
 
+            disk_offering = workflow_dict['plan'].disk_offering
+
             for index, instance in enumerate(workflow_dict['instances']):
                 host = instance.hostname
 
@@ -89,6 +91,8 @@ class InitDatabaseMongoDB(BaseStep):
                         'MONGODBKEY': mongodbkey,
                         'DATABASERULE': databaserule,
                         'HOST': workflow_dict['hosts'][index].hostname.split('.')[0],
+                        'ENVIRONMENT': workflow_dict['databaseinfra'].environment,
+                        'DISK_SIZE_IN_GB': disk_offering.size_gb(),
                     })
                 else:
                     contextdict.update({'DATABASERULE': databaserule})
