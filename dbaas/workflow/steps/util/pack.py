@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-from util import build_context_script, exec_remote_command
+from util import build_context_script, exec_remote_command, get_credentials_for
 from dbaas_cloudstack.models import HostAttr, CloudStackPack, PlanAttr
+from dbaas_credentials.models import CredentialType
 from maintenance.models import DatabaseResize
 from physical.configurations import configuration_factory
 from workflow.steps.util.base import BaseInstanceStep
@@ -43,8 +44,17 @@ class PackStep(BaseInstanceStep):
         }
 
         variables['configuration'] = self.get_configuration()
+        variables['GRAYLOG_ENDPOINT'] = self.get_graylog_config()
+
         variables.update(self.get_variables_specifics())
         return variables
+
+    def get_graylog_config(self):
+        credential = get_credentials_for(
+            environment=self.environment,
+            credential_type=CredentialType.GRAYLOG
+        )
+        return credential.get_parameter_by_name('endpoint_log')
 
     def get_configuration(self):
         try:

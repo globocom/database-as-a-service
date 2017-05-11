@@ -30,6 +30,14 @@ class InitDatabase(BaseStep):
                 'mysql', offering.memory_size_mb
             )
 
+            graylog_credential = get_credentials_for(
+                environment=workflow_dict['databaseinfra'].environment,
+                credential_type=CredentialType.GRAYLOG
+            )
+            graylog_endpoint = graylog_credential.get_parameter_by_name(
+                'endpoint_log'
+            )
+
             for index, hosts in enumerate(permutations(workflow_dict['hosts'])):
 
                 LOG.info("Getting vm credentials...")
@@ -74,6 +82,7 @@ class InitDatabase(BaseStep):
                         'SECOND_SCRIPT_FILE': '/opt/dbaas/scripts/dbaas_second_script.sh',
                         'ENVIRONMENT': workflow_dict['databaseinfra'].environment,
                         'configuration': configuration,
+                        'GRAYLOG_ENDPOINT': graylog_endpoint
                     })
 
                 scripts = (planattr.initialization_script,

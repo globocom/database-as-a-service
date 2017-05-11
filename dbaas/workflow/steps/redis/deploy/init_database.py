@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 import logging
-from dbaas_nfsaas.models import HostAttr
 from dbaas_cloudstack.models import PlanAttr
 from dbaas_cloudstack.models import HostAttr as CsHostAttr
-from util import check_ssh
-from util import exec_remote_command
-from util import build_context_script
+from dbaas_credentials.models import CredentialType
+from dbaas_nfsaas.models import HostAttr
+from util import check_ssh, get_credentials_for, exec_remote_command, \
+    build_context_script
 from physical.models import Instance
 from physical.configurations import configuration_factory
 from workflow.steps.util.base import BaseStep
@@ -26,6 +26,14 @@ class InitDatabaseRedis(BaseStep):
             offering = cloud_stack.get_stronger_offering()
             configuration = configuration_factory(
                 'redis', offering.memory_size_mb
+            )
+
+            graylog_credential = get_credentials_for(
+                environment=workflow_dict['databaseinfra'].environment,
+                credential_type=CredentialType.GRAYLOG
+            )
+            graylog_endpoint = graylog_credential.get_parameter_by_name(
+                'endpoint_log'
             )
 
             for index, host in enumerate(workflow_dict['hosts']):
@@ -89,7 +97,8 @@ class InitDatabaseRedis(BaseStep):
                     'ONLY_SENTINEL': only_sentinel,
                     'HAS_PERSISTENCE': workflow_dict['plan'].has_persistence,
                     'ENVIRONMENT': workflow_dict['databaseinfra'].environment,
-                    'configuration': configuration
+                    'configuration': configuration,
+                    'GRAYLOG_ENDPOINT': graylog_endpoint,
                 }
                 LOG.info(contextdict)
 

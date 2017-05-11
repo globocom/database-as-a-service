@@ -39,6 +39,14 @@ class InitDatabaseMongoDB(BaseStep):
 
             disk_offering = workflow_dict['plan'].disk_offering
 
+            graylog_credential = get_credentials_for(
+                environment=workflow_dict['databaseinfra'].environment,
+                credential_type=CredentialType.GRAYLOG
+            )
+            graylog_endpoint = graylog_credential.get_parameter_by_name(
+                'endpoint_log'
+            )
+
             for index, instance in enumerate(workflow_dict['instances']):
                 host = instance.hostname
 
@@ -93,6 +101,7 @@ class InitDatabaseMongoDB(BaseStep):
                         'HOST': workflow_dict['hosts'][index].hostname.split('.')[0],
                         'ENVIRONMENT': workflow_dict['databaseinfra'].environment,
                         'DISK_SIZE_IN_GB': disk_offering.size_gb(),
+                        'GRAYLOG_ENDPOINT': graylog_endpoint
                     })
                 else:
                     contextdict.update({'DATABASERULE': databaserule})
