@@ -95,7 +95,7 @@ class ConfigurationMySQL(ConfigurationBase):
     @property
     def max_binlog_size(self):
         value = 52428800 if self.memory_size_in_mb <= 2048 else 524288000
-        return self.value_in_m(value)
+        return value
 
     @property
     def key_buffer_size(self):
