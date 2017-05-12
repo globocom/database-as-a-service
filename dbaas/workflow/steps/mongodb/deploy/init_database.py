@@ -99,12 +99,15 @@ class InitDatabaseMongoDB(BaseStep):
                         'MONGODBKEY': mongodbkey,
                         'DATABASERULE': databaserule,
                         'HOST': workflow_dict['hosts'][index].hostname.split('.')[0],
-                        'ENVIRONMENT': workflow_dict['databaseinfra'].environment,
-                        'DISK_SIZE_IN_GB': disk_offering.size_gb(),
-                        'GRAYLOG_ENDPOINT': graylog_endpoint
                     })
                 else:
                     contextdict.update({'DATABASERULE': databaserule})
+
+                contextdict.update({
+                    'ENVIRONMENT': workflow_dict['databaseinfra'].environment,
+                    'DISK_SIZE_IN_GB': disk_offering.size_gb(),
+                    'GRAYLOG_ENDPOINT': graylog_endpoint
+                })
 
                 planattr = PlanAttr.objects.get(plan=workflow_dict['plan'])
 

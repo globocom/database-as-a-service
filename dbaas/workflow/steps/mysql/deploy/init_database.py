@@ -64,6 +64,9 @@ class InitDatabase(BaseStep):
                                                       credential_type=CredentialType.MYSQL).password,
                     'HOST': workflow_dict['hosts'][index].hostname.split('.')[0],
                     'ENGINE': 'mysql',
+                    'configuration': configuration,
+                    'ENVIRONMENT': workflow_dict['databaseinfra'].environment,
+                    'GRAYLOG_ENDPOINT': graylog_endpoint
                 }
 
                 if len(workflow_dict['hosts']) > 1:
@@ -80,9 +83,6 @@ class InitDatabase(BaseStep):
                         'INSTANCE01': workflow_dict['instances'][0],
                         'INSTANCE02': workflow_dict['instances'][1],
                         'SECOND_SCRIPT_FILE': '/opt/dbaas/scripts/dbaas_second_script.sh',
-                        'ENVIRONMENT': workflow_dict['databaseinfra'].environment,
-                        'configuration': configuration,
-                        'GRAYLOG_ENDPOINT': graylog_endpoint
                     })
 
                 scripts = (planattr.initialization_script,
