@@ -68,7 +68,7 @@ class PlanStep(BaseInstanceStep):
 
     def get_configuration(self):
         current_resize = self.database.resizes.last()
-        if not current_resize and current_resize.is_running:
+        if current_resize and current_resize.is_running:
             offering = current_resize.target_offer.offering
         else:
             offering = self.cs_plan.get_stronger_offering()
