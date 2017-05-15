@@ -213,7 +213,6 @@ INSTALLED_APPS = (
     'dbaas_networkapi',
     'dbaas_foreman',
     'dbaas_foxha',
-    'flipperfox_migration',
 )
 
 

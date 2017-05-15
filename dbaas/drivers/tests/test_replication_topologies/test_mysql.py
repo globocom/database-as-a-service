@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from drivers.replication_topologies.mysql import MySQLSingle
-from drivers.replication_topologies.mysql import MySQLFlipper
 from drivers.replication_topologies.mysql import MySQLFoxHA
 from drivers.tests.test_replication_topologies import AbstractReplicationTopologySettingsTestCase
 
@@ -14,7 +13,6 @@ class AbstractBaseMySQLTestCase(AbstractReplicationTopologySettingsTestCase):
             'workflow.steps.mysql.deploy.create_secondary_ip.CreateSecondaryIp',
             'workflow.steps.mysql.deploy.create_dns.CreateDns',
             'workflow.steps.util.deploy.create_nfs.CreateNfs',
-            'workflow.steps.mysql.deploy.create_flipper.CreateFlipper',
             'workflow.steps.mysql.deploy.init_database.InitDatabase',
             'workflow.steps.util.deploy.config_backup_log.ConfigBackupLog',
             'workflow.steps.util.deploy.check_database_connection.CheckDatabaseConnection',
@@ -38,26 +36,6 @@ class TestMySQLSingle(AbstractBaseMySQLTestCase):
 
     def _get_replication_topology_driver(self):
         return MySQLSingle()
-
-
-class TestMySQLFlipper(AbstractBaseMySQLTestCase):
-
-    def _get_replication_topology_driver(self):
-        return MySQLFlipper()
-
-    def _get_restore_snapshot_settings(self):
-        return (
-            'workflow.steps.mysql.restore_snapshot.restore_snapshot.RestoreSnapshot',
-            'workflow.steps.util.restore_snapshot.grant_nfs_access.GrantNFSAccess',
-            'workflow.steps.mysql.restore_snapshot.stop_database.StopDatabase',
-            'workflow.steps.mysql.restore_snapshot.umount_data_volume.UmountDataVolume',
-            'workflow.steps.util.restore_snapshot.update_fstab.UpdateFstab',
-            'workflow.steps.util.restore_snapshot.mount_data_volume.MountDataVolume',
-            'workflow.steps.mysql.restore_snapshot.start_database_and_replication.StartDatabaseAndReplication',
-            'workflow.steps.util.restore_snapshot.make_export_snapshot.MakeExportSnapshot',
-            'workflow.steps.util.restore_snapshot.update_dbaas_metadata.UpdateDbaaSMetadata',
-            'workflow.steps.util.restore_snapshot.clean_old_volumes.CleanOldVolumes',
-        )
 
 
 class TestMySQLFoxHA(AbstractBaseMySQLTestCase):
