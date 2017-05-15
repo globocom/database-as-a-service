@@ -28,6 +28,7 @@ class PlanStep(BaseInstanceStep):
         self.infra = self.instance.databaseinfra
         self.database = self.infra.databases.first()
         self.engine = self.infra.engine
+        self.environment = self.infra.environment
         self.disk_offering = self.infra.disk_offering
 
         self.plan = self.infra.plan
@@ -48,7 +49,7 @@ class PlanStep(BaseInstanceStep):
             'IS_HA': self.plan.is_ha,
             'IS_READ_ONLY': self.instance.read_only,
             'DISK_SIZE_IN_GB': self.disk_offering.size_gb(),
-            'ENVIRONMENT': self.infra.environment
+            'ENVIRONMENT': self.environment
         }
 
         variables['configuration'] = self.get_configuration()
