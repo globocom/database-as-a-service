@@ -19,13 +19,14 @@ class PackStep(BaseInstanceStep):
         self.database = self.infra.databases.first()
         self.disk_offering = self.infra.disk_offering
         self.engine = self.infra.engine
+        self.environment = self.infra.environment
 
         self.plan = self.infra.plan
         self.cs_plan = PlanAttr.objects.get(plan=self.plan)
 
         self.pack = CloudStackPack.objects.get(
             offering__serviceofferingid=self.database.offering_id,
-            offering__region__environment=self.database.environment,
+            offering__region__environment=self.environment,
             engine_type__name=self.database.engine_type
         )
 
@@ -40,7 +41,7 @@ class PackStep(BaseInstanceStep):
             'HAS_PERSISTENCE': self.infra.plan.has_persistence,
             'IS_READ_ONLY': self.instance.read_only,
             'DISK_SIZE_IN_GB': self.disk_offering.size_gb(),
-            'ENVIRONMENT': self.infra.environment
+            'ENVIRONMENT': self.environment
         }
 
         variables['configuration'] = self.get_configuration()
