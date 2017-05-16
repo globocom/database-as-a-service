@@ -2,7 +2,6 @@
 import logging
 from dbaas_credentials.models import CredentialType
 from dbaas_nfsaas.models import HostAttr
-from dbaas_cloudstack.models import PlanAttr
 from dbaas_cloudstack.models import HostAttr as CsHostAttr
 from itertools import permutations
 from physical.configurations import configuration_factory
@@ -38,26 +37,31 @@ class InitDatabaseFoxHA(BaseStep):
                 'endpoint_log'
             )
 
+            replica_credential = get_credentials_for(
+                environment=workflow_dict['databaseinfra'].environment,
+                credential_type=CredentialType.MYSQL_REPLICA
+            )
+
+            plan = workflow_dict['plan']
+
             for index, hosts in enumerate(permutations(workflow_dict['hosts'])):
 
                 LOG.info("Getting vm credentials...")
                 host_csattr = CsHostAttr.objects.get(host=hosts[0])
 
                 LOG.info("Cheking host ssh...")
-                host_ready = check_ssh(server=hosts[0].address,
-                                       username=host_csattr.vm_user,
-                                       password=host_csattr.vm_password,
-                                       retries=60,
-                                       wait=30,
-                                       interval=10)
+                host_ready = check_ssh(
+                    server=hosts[0].address,
+                    username=host_csattr.vm_user,
+                    password=host_csattr.vm_password,
+                    retries=60, wait=30, interval=10
+                )
 
                 if not host_ready:
                     LOG.warn("Host %s is not ready..." % hosts[0])
                     return False
 
                 host_nfsattr = HostAttr.objects.get(host=hosts[0])
-
-                planattr = PlanAttr.objects.get(plan=workflow_dict['plan'])
 
                 contextdict = {
                     'EXPORTPATH': host_nfsattr.nfsaas_path,
@@ -79,11 +83,15 @@ class InitDatabaseFoxHA(BaseStep):
                     contextdict.update({
                         'SERVERID': index + 1,
                         'IPMASTER': hosts[1].address,
+                        'REPLICA_USER': replica_credential.user,
+                        'REPLICA_PASSWORD': replica_credential.password,
                     })
 
-                scripts = (planattr.initialization_script,
-                           planattr.configuration_script,
-                           planattr.start_database_script)
+                scripts = (
+                    plan.script.initialization_template,
+                    plan.script.configuration_template,
+                    plan.script.start_database_template
+                )
 
                 host = hosts[0]
                 host.update_os_description()
@@ -91,10 +99,12 @@ class InitDatabaseFoxHA(BaseStep):
                     LOG.info("Executing script on %s" % host)
 
                     script = build_context_script(contextdict, script)
-                    return_code = exec_remote_command(server=host.address,
-                                                      username=host_csattr.vm_user,
-                                                      password=host_csattr.vm_password,
-                                                      command=script)
+                    return_code = exec_remote_command(
+                        server=host.address,
+                        username=host_csattr.vm_user,
+                        password=host_csattr.vm_password,
+                        command=script
+                    )
 
                     if return_code != 0:
                         return False
@@ -102,7 +112,7 @@ class InitDatabaseFoxHA(BaseStep):
             if len(workflow_dict['hosts']) > 1:
 
                 for hosts in permutations(workflow_dict['hosts']):
-                    script = planattr.start_replication_script
+                    script = plan.script.start_replication_template
                     host = hosts[0]
                     contextdict.update({'IPMASTER': hosts[1].address})
                     script = build_context_script(contextdict, script)
@@ -110,10 +120,12 @@ class InitDatabaseFoxHA(BaseStep):
                     host_csattr = CsHostAttr.objects.get(host=host)
 
                     LOG.info("Executing script on %s" % host)
-                    return_code = exec_remote_command(server=host.address,
-                                                      username=host_csattr.vm_user,
-                                                      password=host_csattr.vm_password,
-                                                      command=script)
+                    return_code = exec_remote_command(
+                        server=host.address,
+                        username=host_csattr.vm_user,
+                        password=host_csattr.vm_password,
+                        command=script
+                    )
 
                     if return_code != 0:
                         return False
@@ -135,10 +147,12 @@ class InitDatabaseFoxHA(BaseStep):
                 LOG.info("Removing database files on host %s" % host)
                 host_csattr = CsHostAttr.objects.get(host=host)
 
-                exec_remote_command(server=host.address,
-                                    username=host_csattr.vm_user,
-                                    password=host_csattr.vm_password,
-                                    command="/opt/dbaas/scripts/dbaas_deletedatabasefiles.sh")
+                exec_remote_command(
+                    server=host.address,
+                    username=host_csattr.vm_user,
+                    password=host_csattr.vm_password,
+                    command="/opt/dbaas/scripts/dbaas_deletedatabasefiles.sh"
+                )
 
             return True
 
