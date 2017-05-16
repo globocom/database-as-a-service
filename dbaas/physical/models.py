@@ -106,6 +106,17 @@ class Engine(BaseModel):
         return self.name == 'redis'
 
 
+class Script(BaseModel):
+
+    name = models.CharField(max_length=100)
+    initialization = models.CharField(max_length=300, help_text="File path")
+    configuration = models.CharField(max_length=300, help_text="File path")
+    start_database = models.CharField(max_length=300, help_text="File path")
+    start_replication = models.CharField(
+        max_length=300, help_text="File path", null=True, blank=True
+    )
+
+
 class ReplicationTopology(BaseModel):
 
     class Meta:
@@ -124,6 +135,9 @@ class ReplicationTopology(BaseModel):
     details = models.CharField(max_length=200, null=True, blank=True)
     has_horizontal_scalability = models.BooleanField(
         verbose_name="Horizontal Scalability", default=False
+    )
+    script = models.ForeignKey(
+        Script, related_name='replication_topologies', null=True, blank=True
     )
 
 
