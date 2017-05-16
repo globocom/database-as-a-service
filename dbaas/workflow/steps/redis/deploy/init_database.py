@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import logging
-from dbaas_cloudstack.models import PlanAttr
 from dbaas_cloudstack.models import HostAttr as CsHostAttr
 from dbaas_credentials.models import CredentialType
 from dbaas_nfsaas.models import HostAttr
@@ -36,6 +35,8 @@ class InitDatabaseRedis(BaseStep):
                 'endpoint_log'
             )
 
+            plan = workflow_dict['plan']
+
             for index, host in enumerate(workflow_dict['hosts']):
 
                 LOG.info("Getting vm credentials...")
@@ -52,10 +53,12 @@ class InitDatabaseRedis(BaseStep):
 
                 host.update_os_description()
 
-                instances_redis = Instance.objects.filter(hostname=host,
-                                                          instance_type=Instance.REDIS)
-                instances_sentinel = Instance.objects.filter(hostname=host,
-                                                             instance_type=Instance.REDIS_SENTINEL)
+                instances_redis = Instance.objects.filter(
+                    hostname=host, instance_type=Instance.REDIS
+                )
+                instances_sentinel = Instance.objects.filter(
+                    hostname=host, instance_type=Instance.REDIS_SENTINEL
+                )
 
                 if instances_redis:
                     host_nfsattr = HostAttr.objects.get(host=host)
@@ -102,20 +105,23 @@ class InitDatabaseRedis(BaseStep):
                 }
                 LOG.info(contextdict)
 
-                planattr = PlanAttr.objects.get(plan=workflow_dict['plan'])
-                scripts = (planattr.initialization_script,
-                           planattr.configuration_script,
-                           planattr.start_database_script,
-                           planattr.start_replication_script)
+                scripts = (
+                    plan.script.initialization_template,
+                    plan.script.configuration_template,
+                    plan.script.start_database_template,
+                    plan.script.start_replication_template
+                )
 
                 for script in scripts:
                     LOG.info("Executing script on %s" % host)
 
                     script = build_context_script(contextdict, script)
-                    return_code = exec_remote_command(server=host.address,
-                                                      username=host_csattr.vm_user,
-                                                      password=host_csattr.vm_password,
-                                                      command=script)
+                    return_code = exec_remote_command(
+                        server=host.address,
+                        username=host_csattr.vm_user,
+                        password=host_csattr.vm_password,
+                        command=script
+                    )
 
                     if return_code != 0:
                         return False
@@ -142,10 +148,12 @@ class InitDatabaseRedis(BaseStep):
                 LOG.info("Removing database files on host %s" % host)
                 host_csattr = CsHostAttr.objects.get(host=host)
 
-                exec_remote_command(server=host.address,
-                                    username=host_csattr.vm_user,
-                                    password=host_csattr.vm_password,
-                                    command="/opt/dbaas/scripts/dbaas_deletedatabasefiles.sh")
+                exec_remote_command(
+                    server=host.address,
+                    username=host_csattr.vm_user,
+                    password=host_csattr.vm_password,
+                    command="/opt/dbaas/scripts/dbaas_deletedatabasefiles.sh"
+                )
 
             return True
 
