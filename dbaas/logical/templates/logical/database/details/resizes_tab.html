@@ -86,14 +86,6 @@
       </div>
     </div>
   {% endif %}
-  {% if is_dba and database.is_mysql_flipper %}
-    <div class="control-group">
-      <div class="control-label"><label>Topology upgrade:</label></div>
-      <div class="controls">
-        <a href="{{ database.get_flipperfox_migration_url }}" class="btn btn-primary" title="Start migration">Initialize Flipper to FoxHA Migration</a>
-      </div>
-    </div>
-  {% endif %}
 
   <div class="control-group">
     <div class="control-label"><label>Help:</label></div>

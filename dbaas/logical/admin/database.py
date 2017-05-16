@@ -447,41 +447,6 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
         return render_to_response("logical/database/dex_analyze.html", locals(), context_instance=RequestContext(request))
 
-    def initialize_flipperfox_migration(self, request, database_id):
-        from flipperfox_migration.models import DatabaseFlipperFoxMigration
-
-        database = Database.objects.get(id=database_id)
-        url = reverse(
-            'admin:flipperfox_migration_databaseflipperfoxmigration_changelist')
-
-        flipperfox_migration = DatabaseFlipperFoxMigration(database=database,
-                                                           current_step=0,)
-
-        if database.is_in_quarantine:
-            self.message_user(
-                request, "Database in quarantine and cannot be migrated", level=messages.ERROR)
-            return HttpResponseRedirect(url)
-
-        if database.status != Database.ALIVE or not database.database_status.is_alive:
-            self.message_user(
-                request, "Database is dead  and cannot be migrated", level=messages.ERROR)
-            return HttpResponseRedirect(url)
-
-        if database.has_flipperfox_migration_started():
-            self.message_user(
-                request, "Database {} is already migrating".format(database.name), level=messages.ERROR)
-            return HttpResponseRedirect(url)
-
-        try:
-            flipperfox_migration.save()
-            self.message_user(request, "Migration for {} started!".format(
-                database.name), level=messages.SUCCESS)
-        except IntegrityError:
-            self.message_user(request, "Database {} is already migrating!".format(
-                database.name), level=messages.ERROR)
-
-        return HttpResponseRedirect(url)
-
     def mongodb_engine_version_upgrade(self, request, database_id):
         from notification.tasks import upgrade_mongodb_24_to_30
 
@@ -501,14 +466,6 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 request,
                 "Database is being used by another task, "
                 "please check your tasks",
-                level=messages.ERROR
-            )
-            return HttpResponseRedirect(url)
-
-        if database.has_flipperfox_migration_started():
-            self.message_user(
-                request,
-                "Database {} is being migrated and cannot be upgraded!".format(database.name),
                 level=messages.ERROR
             )
             return HttpResponseRedirect(url)
@@ -585,10 +542,6 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             url(r'^/?(?P<database_id>\d+)/dex/$',
                 self.admin_site.admin_view(self.database_dex_analyze_view),
                 name="database_dex_analyze_view"),
-
-            url(r'^/?(?P<database_id>\d+)/initialize_flipperfox_migration/$',
-                self.admin_site.admin_view(self.initialize_flipperfox_migration),
-                name="database_initialize_flipperfox_migration"),
 
             url(r'^/?(?P<database_id>\d+)/mongodb_engine_version_upgrade/$',
                 self.admin_site.admin_view(

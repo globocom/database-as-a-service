@@ -37,11 +37,6 @@ class PlanTestCase(TestCase):
         self.foxha_topology.engine.add(self.mysql_5_7)
         self.foxha_topology.save()
 
-        self.flipper_topology = ReplicationTopology(name='Flipper')
-        self.flipper_topology.save()
-        self.flipper_topology.engine.add(self.mysql_5_6)
-        self.flipper_topology.save()
-
         self.cluster_topology = ReplicationTopology(name='Cluster')
         self.cluster_topology.save()
         self.cluster_topology.engine.add(self.redis_3_3)
@@ -56,9 +51,8 @@ class PlanTestCase(TestCase):
         topologies = context['replication_topologies_engines']
 
         mysql_5_6 = topologies[str(self.mysql_5_6)]
-        self.assertEqual(2, len(mysql_5_6))
+        self.assertEqual(1, len(mysql_5_6))
         self.assertIn(self.foxha_topology, mysql_5_6)
-        self.assertIn(self.flipper_topology, mysql_5_6)
 
         mysql_5_7 = topologies[str(self.mysql_5_7)]
         self.assertEqual(1, len(mysql_5_7))

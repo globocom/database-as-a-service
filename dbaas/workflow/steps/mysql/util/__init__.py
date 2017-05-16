@@ -139,34 +139,6 @@ def change_master_to(instance, master_host, bin_log_file, bin_log_position):
     client.query('start slave')
 
 
-def build_flipper_script():
-    return """
-        echo ""; echo $(date "+%Y-%m-%d %T") "- Setting /etc/hosts file"
-        echo "\n{{VIP_FLIPPER}}      flipper-metadata\n{{IPWRITE}}         heartbeat\n" >> /etc/hosts
-
-        echo ""; echo $(date "+%Y-%m-%d %T") "- Adding hosts to flipper known_hosts file"
-        ssh-keyscan -t rsa {{HOST01.address}} >> /home/flipper/.ssh/known_hosts
-        ssh-keyscan -t rsa {{HOST02.address}} >> /home/flipper/.ssh/known_hosts
-        chown flipper:flipper /home/flipper/.ssh/known_hosts
-    """
-
-
-def build_set_flipper_ips_script():
-    return """
-        echo ""; echo $(date "+%Y-%m-%d %T") "- Setting flipper IPs"
-        sudo -u flipper /usr/bin/flipper {{MASTERPAIRNAME}} set write {{HOST01.address}}
-        sudo -u flipper /usr/bin/flipper {{MASTERPAIRNAME}} set read {{HOST02.address}}
-    """
-
-
-def build_turn_flipper_ip_down_script():
-    return """
-        echo ""; echo $(date "+%Y-%m-%d %T") "- Setting flipper IPs"
-        sudo -u flipper /usr/bin/flipper {{MASTERPAIRNAME}} ipdown read
-        sudo -u flipper /usr/bin/flipper {{MASTERPAIRNAME}} ipdown write
-    """
-
-
 def build_mk_heartbeat_daemon_script(option='start'):
     return """
         echo ""; echo $(date "+%Y-%m-%d %T") "- Starting mk-heartbeat-daemon"
