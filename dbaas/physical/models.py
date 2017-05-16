@@ -123,7 +123,6 @@ class Script(BaseModel):
             physical_path = os.path.dirname(os.path.abspath(__file__))
             path = '{}/scripts/{}'.format(physical_path, file_name)
 
-        print path
         with open(path) as f:
             return f.read()
 
