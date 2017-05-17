@@ -198,13 +198,14 @@ class ReplicationTopology(BaseModel):
     has_horizontal_scalability = models.BooleanField(
         verbose_name="Horizontal Scalability", default=False
     )
+    script = models.ForeignKey(
+        Script, related_name='replication_topologies', null=True, blank=True
+    )
     parameter = models.ManyToManyField(
         Parameter,
         verbose_name=_("Parameter"),
         related_name='replication_topologies',
-    )
-    script = models.ForeignKey(
-        Script, related_name='replication_topologies', null=True, blank=True
+        blank=True
     )
 
 
