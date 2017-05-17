@@ -9,6 +9,7 @@ from .host import HostAdmin
 from .environment import EnvironmentAdmin
 from .replication_topology import ReplicationTopologyAdmin
 from .disk_offering import DiskOfferingAdmin
+from .parameter import ParameterAdmin
 
 admin.site.register(models.DatabaseInfra, DatabaseInfraAdmin)
 admin.site.register(models.Engine, EngineAdmin)
@@ -18,3 +19,4 @@ admin.site.register(models.Host, HostAdmin)
 admin.site.register(models.Environment, EnvironmentAdmin)
 admin.site.register(models.ReplicationTopology, ReplicationTopologyAdmin)
 admin.site.register(models.DiskOffering, DiskOfferingAdmin)
+admin.site.register(models.Parameter, ParameterAdmin)
