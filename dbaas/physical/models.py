@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
+import os
 import logging
 import simple_audit
 from django.db.models.signals import pre_save, post_save, pre_delete
@@ -142,6 +143,42 @@ class Parameter(BaseModel):
         return '{}: {}'.format(self.engine_type, self.name)
 
 
+class Script(BaseModel):
+
+    name = models.CharField(max_length=100)
+    initialization = models.CharField(max_length=300, help_text="File path")
+    configuration = models.CharField(max_length=300, help_text="File path")
+    start_database = models.CharField(max_length=300, help_text="File path")
+    start_replication = models.CharField(
+        max_length=300, help_text="File path", null=True, blank=True
+    )
+
+    def _get_content(self, file_name):
+        path = file_name
+        if not os.path.exists(path):
+            physical_path = os.path.dirname(os.path.abspath(__file__))
+            path = '{}/scripts/{}'.format(physical_path, file_name)
+
+        with open(path) as f:
+            return f.read()
+
+    @property
+    def initialization_template(self):
+        return self._get_content(self.initialization)
+
+    @property
+    def configuration_template(self):
+        return self._get_content(self.configuration)
+
+    @property
+    def start_database_template(self):
+        return self._get_content(self.start_database)
+
+    @property
+    def start_replication_template(self):
+        return self._get_content(self.start_replication)
+
+
 class ReplicationTopology(BaseModel):
 
     class Meta:
@@ -165,6 +202,9 @@ class ReplicationTopology(BaseModel):
         Parameter,
         verbose_name=_("Parameter"),
         related_name='replication_topologies',
+    )
+    script = models.ForeignKey(
+        Script, related_name='replication_topologies', null=True, blank=True
     )
 
 
@@ -355,6 +395,10 @@ class Plan(BaseModel):
                     )
                 )
         return True
+
+    @property
+    def script(self):
+        return self.replication_topology.script
 
 
 class PlanAttribute(BaseModel):

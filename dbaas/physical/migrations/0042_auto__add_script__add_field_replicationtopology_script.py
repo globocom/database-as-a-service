@@ -8,19 +8,31 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Adding M2M table for field parameter on 'ReplicationTopology'
-        m2m_table_name = db.shorten_name(u'physical_replicationtopology_parameter')
-        db.create_table(m2m_table_name, (
-            ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True)),
-            ('replicationtopology', models.ForeignKey(orm[u'physical.replicationtopology'], null=False)),
-            ('parameter', models.ForeignKey(orm[u'physical.parameter'], null=False))
+        # Adding model 'Script'
+        db.create_table(u'physical_script', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('created_at', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
+            ('updated_at', self.gf('django.db.models.fields.DateTimeField')(auto_now=True, blank=True)),
+            ('name', self.gf('django.db.models.fields.CharField')(max_length=100)),
+            ('initialization', self.gf('django.db.models.fields.CharField')(max_length=300)),
+            ('configuration', self.gf('django.db.models.fields.CharField')(max_length=300)),
+            ('start_database', self.gf('django.db.models.fields.CharField')(max_length=300)),
+            ('start_replication', self.gf('django.db.models.fields.CharField')(max_length=300, null=True, blank=True)),
         ))
-        db.create_unique(m2m_table_name, ['replicationtopology_id', 'parameter_id'])
+        db.send_create_signal(u'physical', ['Script'])
+
+        # Adding field 'ReplicationTopology.script'
+        db.add_column(u'physical_replicationtopology', 'script',
+                      self.gf('django.db.models.fields.related.ForeignKey')(blank=True, related_name=u'replication_topologies', null=True, to=orm['physical.Script']),
+                      keep_default=False)
 
 
     def backwards(self, orm):
-        # Removing M2M table for field parameter on 'ReplicationTopology'
-        db.delete_table(db.shorten_name(u'physical_replicationtopology_parameter'))
+        # Deleting model 'Script'
+        db.delete_table(u'physical_script')
+
+        # Deleting field 'ReplicationTopology.script'
+        db.delete_column(u'physical_replicationtopology', 'script_id')
 
 
     models = {
@@ -112,16 +124,6 @@ class Migration(SchemaMigration):
             'status': ('django.db.models.fields.IntegerField', [], {'default': '2'}),
             'updated_at': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'})
         },
-        u'physical.parameter': {
-            'Meta': {'ordering': "(u'engine_type__name', u'name')", 'unique_together': "((u'name', u'engine_type'),)", 'object_name': 'Parameter'},
-            'class_path': ('django.db.models.fields.CharField', [], {'max_length': '200', 'null': 'True', 'blank': 'True'}),
-            'created_at': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
-            'dynamic': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
-            'engine_type': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "u'enginetype'", 'on_delete': 'models.PROTECT', 'to': u"orm['physical.EngineType']"}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'name': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
-            'updated_at': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'})
-        },
         u'physical.plan': {
             'Meta': {'object_name': 'Plan'},
             'created_at': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
@@ -158,7 +160,18 @@ class Migration(SchemaMigration):
             'has_horizontal_scalability': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'name': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
-            'parameter': ('django.db.models.fields.related.ManyToManyField', [], {'related_name': "u'replication_topologies'", 'symmetrical': 'False', 'to': u"orm['physical.Parameter']"}),
+            'script': ('django.db.models.fields.related.ForeignKey', [], {'blank': 'True', 'related_name': "u'replication_topologies'", 'null': 'True', 'to': u"orm['physical.Script']"}),
+            'updated_at': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'})
+        },
+        u'physical.script': {
+            'Meta': {'object_name': 'Script'},
+            'configuration': ('django.db.models.fields.CharField', [], {'max_length': '300'}),
+            'created_at': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'initialization': ('django.db.models.fields.CharField', [], {'max_length': '300'}),
+            'name': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
+            'start_database': ('django.db.models.fields.CharField', [], {'max_length': '300'}),
+            'start_replication': ('django.db.models.fields.CharField', [], {'max_length': '300', 'null': 'True', 'blank': 'True'}),
             'updated_at': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'})
         }
     }

@@ -84,7 +84,7 @@ class Configure(PackStep):
 
     def do(self):
         script = build_context_script(
-            self.script_variables, self.pack.script
+            self.script_variables, self.pack.script_template
         )
 
         output = {}
