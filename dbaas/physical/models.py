@@ -106,6 +106,42 @@ class Engine(BaseModel):
         return self.name == 'redis'
 
 
+class Parameter(BaseModel):
+    engine_type = models.ForeignKey(
+        EngineType,
+        verbose_name=_("Engine type"),
+        related_name="enginetype",
+        on_delete=models.PROTECT
+    )
+    name = models.CharField(
+        verbose_name=_("Parameter Name"),
+        max_length=200
+    )
+    dynamic = models.BooleanField(
+        verbose_name=_("Dynamic"),
+        help_text="Check this option if the parameter is dynamic. That is, \
+        it can be changed without restart the database.",
+        default=True
+    )
+    class_path = models.CharField(
+        verbose_name=_("Class path"), max_length=200,
+        help_text="Class path that implemts the change in the parameter",
+        blank=True, null=True
+    )
+
+    class Meta:
+        unique_together = (
+            ('name', 'engine_type', )
+        )
+        permissions = (
+            ("view_parameter", "Can view parameter"),
+        )
+        ordering = ('engine_type__name', 'name')
+
+    def __unicode__(self):
+        return '{}: {}'.format(self.engine_type, self.name)
+
+
 class ReplicationTopology(BaseModel):
 
     class Meta:
@@ -124,6 +160,11 @@ class ReplicationTopology(BaseModel):
     details = models.CharField(max_length=200, null=True, blank=True)
     has_horizontal_scalability = models.BooleanField(
         verbose_name="Horizontal Scalability", default=False
+    )
+    parameter = models.ManyToManyField(
+        Parameter,
+        verbose_name=_("Parameter"),
+        related_name='replication_topologies',
     )
 
 
@@ -741,6 +782,7 @@ class Instance(BaseModel):
             status = html_default.format("info", "N/A")
 
         return format_html(status)
+
 
 
 ##########################################################################
