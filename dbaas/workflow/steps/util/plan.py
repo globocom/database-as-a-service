@@ -115,7 +115,7 @@ class Initialization(PlanStep):
         return "Executing plan initial script..."
 
     def do(self):
-        self.run_script(self.cs_plan.initialization_script)
+        self.run_script(self.plan.script.initialization_template)
 
 
 class Configure(PlanStep):
@@ -124,7 +124,7 @@ class Configure(PlanStep):
         return "Executing plan configure script..."
 
     def do(self):
-        self.run_script(self.cs_plan.configuration_script)
+        self.run_script(self.plan.script.configuration_template)
 
 
 class InitializationForUpgrade(Initialization):
