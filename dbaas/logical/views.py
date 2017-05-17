@@ -160,6 +160,13 @@ def database_credentials(request, context, database=None):
     )
 
 
+@database_view('parameters')
+def database_parameters(request, context, database=None):
+    return render_to_response(
+        "logical/database/details/parameters_tab.html", context
+    )
+
+
 @database_view('metrics')
 def database_metrics(request, context, database):
     context['hostname'] = request.GET.get(
