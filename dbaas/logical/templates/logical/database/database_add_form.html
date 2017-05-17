@@ -31,11 +31,7 @@
                                 <h2 class="">{{plan_name}}</h2>
                                 <p>
                                 {% comment %}
-                                {% if plan.is_default %}
-                                    <span class="label label-success">Recommended</span>
-                                {% else %}
                                     <span>&nbsp;</span>
-                                {% endif %}
                                 {% endcomment %}
                                 </p>
                                 <p class="description">{{plan.description|safe|escape|default:""}}</p>

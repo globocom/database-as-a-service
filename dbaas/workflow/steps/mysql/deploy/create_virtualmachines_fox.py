@@ -48,7 +48,7 @@ class CreateVirtualMachine(BaseStep):
             workflow_dict['plan'].validate_min_environment_bundles(
                 workflow_dict['environment']
             )
-            bundles = list(cs_plan_attrs.bundle.filter(is_active=True))
+            bundles = list(cs_plan_attrs.bundles_actives)
 
             for index, vm_name in enumerate(workflow_dict['names']['vms']):
                 offering = cs_plan_attrs.get_stronger_offering()

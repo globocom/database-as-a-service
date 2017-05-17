@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
-from util import build_context_script, exec_remote_command
-from dbaas_cloudstack.models import HostAttr, CloudStackPack
+from util import build_context_script, exec_remote_command, get_credentials_for
+from dbaas_cloudstack.models import HostAttr, CloudStackPack, PlanAttr
+from dbaas_credentials.models import CredentialType
 from maintenance.models import DatabaseResize
+from physical.configurations import configuration_factory
 from workflow.steps.util.base import BaseInstanceStep
 
 
@@ -13,22 +15,57 @@ class PackStep(BaseInstanceStep):
         self.host = self.instance.hostname
         self.host_cs = HostAttr.objects.get(host=self.host)
 
-        self.database = self.instance.databaseinfra.databases.first()
+        self.infra = self.instance.databaseinfra
+        self.database = self.infra.databases.first()
+        self.disk_offering = self.infra.disk_offering
+        self.engine = self.infra.engine
+        self.environment = self.infra.environment
+
+        self.plan = self.infra.plan
+        self.cs_plan = PlanAttr.objects.get(plan=self.plan)
+
+        self.pack = CloudStackPack.objects.get(
+            offering__serviceofferingid=self.database.offering_id,
+            offering__region__environment=self.environment,
+            engine_type__name=self.database.engine_type
+        )
 
     @property
     def script_variables(self):
         variables = {
             'CONFIGFILE': True,
-            'IS_HA': self.instance.databaseinfra.plan.is_ha,
+            'IS_HA': self.infra.plan.is_ha,
             'HOSTADDRESS': self.instance.address,
             'PORT': self.instance.port,
-            'DBPASSWORD': self.instance.databaseinfra.password,
-            'HAS_PERSISTENCE': self.instance.databaseinfra.plan.has_persistence,
-            'IS_READ_ONLY': self.instance.read_only
+            'DBPASSWORD': self.infra.password,
+            'HAS_PERSISTENCE': self.infra.plan.has_persistence,
+            'IS_READ_ONLY': self.instance.read_only,
+            'DISK_SIZE_IN_GB': self.disk_offering.size_gb(),
+            'ENVIRONMENT': self.environment
         }
+
+        variables['configuration'] = self.get_configuration()
+        variables['GRAYLOG_ENDPOINT'] = self.get_graylog_config()
 
         variables.update(self.get_variables_specifics())
         return variables
+
+    def get_graylog_config(self):
+        credential = get_credentials_for(
+            environment=self.environment,
+            credential_type=CredentialType.GRAYLOG
+        )
+        return credential.get_parameter_by_name('endpoint_log')
+
+    def get_configuration(self):
+        try:
+            configuration = configuration_factory(
+                self.engine.name, self.pack.offering.memory_size_mb
+            )
+        except NotImplementedError:
+            return None
+        else:
+            return configuration
 
     def get_variables_specifics(self):
         return {}
@@ -42,21 +79,12 @@ class PackStep(BaseInstanceStep):
 
 class Configure(PackStep):
 
-    def __init__(self, instance):
-        super(Configure, self).__init__(instance)
-
-        self.pack = CloudStackPack.objects.get(
-            offering__serviceofferingid=self.database.offering_id,
-            offering__region__environment=self.database.environment,
-            engine_type__name=self.database.engine_type
-        )
-
     def __unicode__(self):
         return "Executing pack script..."
 
     def do(self):
         script = build_context_script(
-            self.script_variables, self.pack.script
+            self.script_variables, self.pack.script_template
         )
 
         output = {}
@@ -77,7 +105,6 @@ class ResizeConfigure(Configure):
 
     def __init__(self, instance):
         super(ResizeConfigure, self).__init__(instance)
-
         self.pack = DatabaseResize.objects.last().current_to(self.database).target_offer
 
 

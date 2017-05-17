@@ -11,8 +11,10 @@ class PlanSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = models.Plan
-        fields = ('url', 'id', 'name', 'description', 'is_active',
-                  'is_default', 'engine', 'environments',)
+        fields = (
+            'url', 'id', 'name', 'description', 'is_active', 'engine',
+            'environments',
+        )
 
 
 class PlanAPI(viewsets.ReadOnlyModelViewSet):

@@ -1,14 +1,12 @@
 # -*- coding: utf-8 -*-
 import logging
+from dbaas_cloudstack.models import HostAttr as CsHostAttr
 from dbaas_credentials.models import CredentialType
 from dbaas_nfsaas.models import HostAttr
-from dbaas_cloudstack.models import PlanAttr
-from dbaas_cloudstack.models import HostAttr as CsHostAttr
-from util import check_ssh
-from util import exec_remote_command
-from util import get_credentials_for
-from util import build_context_script
+from util import check_ssh, get_credentials_for, exec_remote_command, \
+    build_context_script
 from physical.models import Instance
+from physical.configurations import configuration_factory
 from workflow.steps.util.base import BaseStep
 from workflow.exceptions.error_codes import DBAAS_0016
 from util import full_stack
@@ -23,6 +21,21 @@ class InitDatabaseRedis(BaseStep):
 
     def do(self, workflow_dict):
         try:
+            cloud_stack = workflow_dict['plan'].cs_plan_attributes.first()
+            offering = cloud_stack.get_stronger_offering()
+            configuration = configuration_factory(
+                'redis', offering.memory_size_mb
+            )
+
+            graylog_credential = get_credentials_for(
+                environment=workflow_dict['databaseinfra'].environment,
+                credential_type=CredentialType.GRAYLOG
+            )
+            graylog_endpoint = graylog_credential.get_parameter_by_name(
+                'endpoint_log'
+            )
+
+            plan = workflow_dict['plan']
 
             for index, host in enumerate(workflow_dict['hosts']):
 
@@ -40,10 +53,12 @@ class InitDatabaseRedis(BaseStep):
 
                 host.update_os_description()
 
-                instances_redis = Instance.objects.filter(hostname=host,
-                                                          instance_type=Instance.REDIS)
-                instances_sentinel = Instance.objects.filter(hostname=host,
-                                                             instance_type=Instance.REDIS_SENTINEL)
+                instances_redis = Instance.objects.filter(
+                    hostname=host, instance_type=Instance.REDIS
+                )
+                instances_sentinel = Instance.objects.filter(
+                    hostname=host, instance_type=Instance.REDIS_SENTINEL
+                )
 
                 if instances_redis:
                     host_nfsattr = HostAttr.objects.get(host=host)
@@ -83,23 +98,30 @@ class InitDatabaseRedis(BaseStep):
                     'SENTINELPORT': instance_sentinel_port,
                     'MASTERNAME': workflow_dict['databaseinfra'].name,
                     'ONLY_SENTINEL': only_sentinel,
+                    'HAS_PERSISTENCE': workflow_dict['plan'].has_persistence,
+                    'ENVIRONMENT': workflow_dict['databaseinfra'].environment,
+                    'configuration': configuration,
+                    'GRAYLOG_ENDPOINT': graylog_endpoint,
                 }
                 LOG.info(contextdict)
 
-                planattr = PlanAttr.objects.get(plan=workflow_dict['plan'])
-                scripts = (planattr.initialization_script,
-                           planattr.configuration_script,
-                           planattr.start_database_script,
-                           planattr.start_replication_script)
+                scripts = (
+                    plan.script.initialization_template,
+                    plan.script.configuration_template,
+                    plan.script.start_database_template,
+                    plan.script.start_replication_template
+                )
 
                 for script in scripts:
                     LOG.info("Executing script on %s" % host)
 
                     script = build_context_script(contextdict, script)
-                    return_code = exec_remote_command(server=host.address,
-                                                      username=host_csattr.vm_user,
-                                                      password=host_csattr.vm_password,
-                                                      command=script)
+                    return_code = exec_remote_command(
+                        server=host.address,
+                        username=host_csattr.vm_user,
+                        password=host_csattr.vm_password,
+                        command=script
+                    )
 
                     if return_code != 0:
                         return False
@@ -126,10 +148,12 @@ class InitDatabaseRedis(BaseStep):
                 LOG.info("Removing database files on host %s" % host)
                 host_csattr = CsHostAttr.objects.get(host=host)
 
-                exec_remote_command(server=host.address,
-                                    username=host_csattr.vm_user,
-                                    password=host_csattr.vm_password,
-                                    command="/opt/dbaas/scripts/dbaas_deletedatabasefiles.sh")
+                exec_remote_command(
+                    server=host.address,
+                    username=host_csattr.vm_user,
+                    password=host_csattr.vm_password,
+                    command="/opt/dbaas/scripts/dbaas_deletedatabasefiles.sh"
+                )
 
             return True
 

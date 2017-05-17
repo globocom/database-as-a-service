@@ -489,16 +489,6 @@ class Database(BaseModel):
             return True
         return False
 
-    def get_flipperfox_migration_url(self):
-        return "/admin/logical/database/{}/initialize_flipperfox_migration/".format(self.id)
-
-    def is_mysql_flipper(self):
-        if self.engine.name == 'mysql' and \
-           self.engine.version == '5.6.15' and \
-           self.databaseinfra.plan.is_ha:
-            return True
-        return False
-
     def get_cloudstack_service_offering_id(self):
         LOG.info("Get offering")
         try:
@@ -521,28 +511,6 @@ class Database(BaseModel):
                 return False
 
         return True
-
-    def has_flipperfox_migration_started(self,):
-        from flipperfox_migration.models import DatabaseFlipperFoxMigrationDetail
-        try:
-            migration = self.flipperfoxmigration.get()
-        except ObjectDoesNotExist:
-            return False
-
-        if migration.is_migration_finished():
-            return False
-
-        if migration.current_step > 0:
-            return True
-
-        status_to_check = [DatabaseFlipperFoxMigrationDetail.WAITING,
-                           DatabaseFlipperFoxMigrationDetail.RUNNING]
-
-        details = migration.details.filter(status__in=status_to_check)
-        if details:
-            return True
-
-        return False
 
     def restore_allowed(self):
         if Configuration.get_by_name_as_int('restore_allowed') == 1:
@@ -646,9 +614,6 @@ class Database(BaseModel):
         if self.is_being_used_elsewhere():
             return False, "Database is being used by another task, please check your tasks"
 
-        if self.has_flipperfox_migration_started():
-            return False, "Database cannot be restored because it is being migrated"
-
         return True, None
 
     def can_be_deleted(self):
@@ -660,9 +625,6 @@ class Database(BaseModel):
         elif self.is_being_used_elsewhere():
             error = "Database {} cannot be deleted because" \
                     " it is in use by another task."
-        elif self.has_flipperfox_migration_started():
-            error = "Database {} cannot be deleted because" \
-                    " it is being migrated."
 
         if error:
             return False, error.format(self.name)
@@ -677,8 +639,6 @@ class Database(BaseModel):
         elif self.is_being_used_elsewhere('notification.tasks.upgrade_database'):
             error = "Database cannot be upgraded because " \
                     "it is in use by another task."
-        elif self.has_flipperfox_migration_started():
-            error = "Database is being migrated and cannot be upgraded."
         elif not self.infra.plan.engine_equivalent_plan:
             error = "Source plan do not has equivalent plan to upgrade."
 
@@ -704,8 +664,6 @@ class Database(BaseModel):
         error = None
         if self.is_in_quarantine:
             error = "Database in quarantine and cannot be resized."
-        elif self.has_flipperfox_migration_started():
-            error = "Database is being migrated and cannot be resized."
         elif not self.has_cloudstack_offerings:
             error = "There is no offerings for this database."
         elif self.is_being_used_elsewhere('notification.tasks.resize_database'):
@@ -719,8 +677,6 @@ class Database(BaseModel):
         error = None
         if self.is_in_quarantine:
             error = "Database in quarantine and cannot be resized."
-        elif self.has_flipperfox_migration_started():
-            error = "Database is being migrated and cannot be resized."
         elif not self.has_cloudstack_offerings:
             error = "There is no offerings for this database."
         elif self.is_dead:
@@ -740,8 +696,6 @@ class Database(BaseModel):
         elif self.is_being_used_elsewhere():
             error = "Database cannot be resized because" \
                     " it is in use by another task."
-        elif self.has_flipperfox_migration_started():
-            error = "Database is being migrated and cannot be resized."
         elif not self.has_disk_offerings:
             error = "There is no other disk offering for this database."
 

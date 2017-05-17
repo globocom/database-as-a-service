@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
-from dbaas_cloudstack.models import HostAttr
 from util import get_credentials_for
-from util import build_context_script
-from util import exec_remote_command
 from dbaas_credentials.models import CredentialType
 from dbaas_foxha.provider import FoxHAProvider
 from dbaas_foxha.dbaas_api import DatabaseAsAServiceApi
@@ -20,7 +17,6 @@ class BaseMysql(BaseTopology):
             'workflow.steps.mysql.deploy.create_secondary_ip.CreateSecondaryIp',
             'workflow.steps.mysql.deploy.create_dns.CreateDns',
             'workflow.steps.util.deploy.create_nfs.CreateNfs',
-            'workflow.steps.mysql.deploy.create_flipper.CreateFlipper',
             'workflow.steps.mysql.deploy.init_database.InitDatabase',
             'workflow.steps.util.deploy.config_backup_log.ConfigBackupLog',
             'workflow.steps.util.deploy.check_database_connection.CheckDatabaseConnection',
@@ -68,113 +64,6 @@ class MySQLSingle(BaseMysql):
 
     def set_read_ip(self, driver, instance):
         raise True
-
-
-class MySQLFlipper(BaseMysql):
-
-    def get_restore_snapshot_steps(self):
-        return (
-            'workflow.steps.mysql.restore_snapshot.restore_snapshot.RestoreSnapshot',
-            'workflow.steps.util.restore_snapshot.grant_nfs_access.GrantNFSAccess',
-            'workflow.steps.mysql.restore_snapshot.stop_database.StopDatabase',
-            'workflow.steps.mysql.restore_snapshot.umount_data_volume.UmountDataVolume',
-            'workflow.steps.util.restore_snapshot.update_fstab.UpdateFstab',
-            'workflow.steps.util.restore_snapshot.mount_data_volume.MountDataVolume',
-            'workflow.steps.mysql.restore_snapshot.start_database_and_replication.StartDatabaseAndReplication',
-            'workflow.steps.util.restore_snapshot.make_export_snapshot.MakeExportSnapshot',
-            'workflow.steps.util.restore_snapshot.update_dbaas_metadata.UpdateDbaaSMetadata',
-            'workflow.steps.util.restore_snapshot.clean_old_volumes.CleanOldVolumes',
-        )
-
-    def switch_master(self, driver):
-        master = driver.get_master_instance()
-        slave = driver.get_slave_instances()[0]
-        host = master.hostname
-
-        host_attr = HostAttr.objects.get(host=host)
-
-        script = """
-        sudo -u flipper /usr/bin/flipper {{MASTERPAIRNAME}} set write {{HOST01.address}}
-        sudo -u flipper /usr/bin/flipper {{MASTERPAIRNAME}} set read {{HOST02.address}}
-        """
-
-        context_dict = {
-            'MASTERPAIRNAME': driver.databaseinfra.name,
-            'HOST01': slave.hostname,
-            'HOST02': master.hostname,
-        }
-        script = build_context_script(context_dict, script)
-        output = {}
-
-        return_code = exec_remote_command(
-            server=host.address, username=host_attr.vm_user,
-            password=host_attr.vm_password, command=script, output=output
-        )
-
-        LOG.info(output)
-        if return_code != 0:
-            raise Exception(str(output))
-
-    def set_master(self, driver, instance):
-        command = """
-            echo ""; echo $(date "+%Y-%m-%d %T") "- Setting flipper IPs"
-            sudo -u flipper /usr/bin/flipper {infra_name} ipdown write
-            sudo -u flipper /usr/bin/flipper {infra_name} set write {master_host}
-        """
-
-        command = command.format(infra_name=driver.databaseinfra.name,
-                                 master_host=instance.address)
-
-        cs_host_attr = HostAttr.objects.get(host=instance.hostname)
-
-        output = {}
-        return_code = exec_remote_command(server=instance.address,
-                                          username=cs_host_attr.vm_user,
-                                          password=cs_host_attr.vm_password,
-                                          command=command,
-                                          output=output)
-
-        if return_code != 0:
-            raise Exception("Could not Change WriteIP: {}".format(output))
-
-        return True
-
-    def set_read_ip(self, driver, instance):
-        command = """
-            echo ""; echo $(date "+%Y-%m-%d %T") "- Setting flipper IPs"
-            sudo -u flipper /usr/bin/flipper {infra_name} ipdown read
-            sudo -u flipper /usr/bin/flipper {infra_name} set read {slave_host}
-        """
-
-        command = command.format(infra_name=driver.databaseinfra.name,
-                                 slave_host=instance.address)
-
-        cs_host_attr = HostAttr.objects.get(host=instance.hostname)
-
-        output = {}
-        return_code = exec_remote_command(server=instance.address,
-                                          username=cs_host_attr.vm_user,
-                                          password=cs_host_attr.vm_password,
-                                          command=command,
-                                          output=output)
-
-        if return_code != 0:
-            raise Exception("Could not Change ReadIP: {}".format(output))
-
-        return True
-
-    def check_instance_is_master(self, driver, instance):
-        results = driver.query(
-            query_string="show variables like 'read_only'", instance=instance
-        )
-        if results[0]["Value"] == "ON":
-            return False
-        else:
-            return True
-
-    def get_database_agents(self):
-        agents = ['httpd', 'mk-heartbeat-daemon']
-        return super(MySQLFlipper, self).get_database_agents() + agents
 
 
 class MySQLFoxHA(MySQLSingle):

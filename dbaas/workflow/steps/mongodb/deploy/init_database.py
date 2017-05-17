@@ -4,7 +4,6 @@ import string
 import random
 from dbaas_credentials.models import CredentialType
 from dbaas_nfsaas.models import HostAttr
-from dbaas_cloudstack.models import PlanAttr
 from dbaas_cloudstack.models import HostAttr as CsHostAttr
 from util import full_stack
 from util import check_ssh
@@ -24,8 +23,9 @@ class InitDatabaseMongoDB(BaseStep):
 
     def do(self, workflow_dict):
         try:
-            mongodbkey = ''.join(random.choice(string.hexdigits)
-                                 for i in range(50))
+            mongodbkey = ''.join(
+                random.choice(string.hexdigits) for i in range(50)
+            )
 
             infra = workflow_dict['databaseinfra']
             if infra.plan.is_ha:
@@ -34,8 +34,21 @@ class InitDatabaseMongoDB(BaseStep):
 
             workflow_dict['replicasetname'] = infra.get_driver().replica_set_name
 
-            mongodb_password = get_credentials_for(environment=workflow_dict['environment'],
-                                                   credential_type=CredentialType.MONGODB).password
+            mongodb_password = get_credentials_for(
+                environment=workflow_dict['environment'],
+                credential_type=CredentialType.MONGODB
+            ).password
+
+            disk_offering = workflow_dict['plan'].disk_offering
+
+            graylog_credential = get_credentials_for(
+                environment=workflow_dict['databaseinfra'].environment,
+                credential_type=CredentialType.GRAYLOG
+            )
+            graylog_endpoint = graylog_credential.get_parameter_by_name(
+                'endpoint_log'
+            )
+            plan = workflow_dict['plan']
 
             for index, instance in enumerate(workflow_dict['instances']):
                 host = instance.hostname
@@ -45,8 +58,9 @@ class InitDatabaseMongoDB(BaseStep):
 
                 LOG.info("Cheking host ssh...")
                 host_ready = check_ssh(
-                    server=host.address, username=host_csattr.vm_user, password=host_csattr.vm_password, wait=5,
-                    interval=10)
+                    server=host.address, username=host_csattr.vm_user,
+                    password=host_csattr.vm_password, wait=5, interval=10
+                )
 
                 if not host_ready:
                     LOG.warn("Host %s is not ready..." % host)
@@ -93,40 +107,53 @@ class InitDatabaseMongoDB(BaseStep):
                 else:
                     contextdict.update({'DATABASERULE': databaserule})
 
-                planattr = PlanAttr.objects.get(plan=workflow_dict['plan'])
+                contextdict.update({
+                    'ENVIRONMENT': workflow_dict['databaseinfra'].environment,
+                    'DISK_SIZE_IN_GB': disk_offering.size_gb(),
+                    'GRAYLOG_ENDPOINT': graylog_endpoint
+                })
 
-                scripts = (planattr.initialization_script,
-                           planattr.configuration_script,
-                           planattr.start_database_script)
+                scripts = (
+                    plan.script.initialization_template,
+                    plan.script.configuration_template,
+                    plan.script.start_database_template
+                )
 
                 for script in scripts:
                     LOG.info("Executing script on %s" % host)
 
                     script = build_context_script(contextdict, script)
-                    return_code = exec_remote_command(server=host.address,
-                                                      username=host_csattr.vm_user,
-                                                      password=host_csattr.vm_password,
-                                                      command=script)
+                    return_code = exec_remote_command(
+                        server=host.address,
+                        username=host_csattr.vm_user,
+                        password=host_csattr.vm_password,
+                        command=script
+                    )
 
                     if return_code != 0:
                         return False
 
             if len(workflow_dict['hosts']) > 1:
-                scripts_to_run = planattr.start_replication_script
+                scripts_to_run = plan.script.start_replication_template
 
-                contextdict.update({'DBPASSWORD': mongodb_password,
-                                    'DATABASERULE': 'PRIMARY'})
+                contextdict.update({
+                    'DBPASSWORD': mongodb_password,
+                    'DATABASERULE': 'PRIMARY'
+                })
 
-                scripts_to_run = build_context_script(contextdict,
-                                                      scripts_to_run)
+                scripts_to_run = build_context_script(
+                    contextdict, scripts_to_run
+                )
 
                 host = workflow_dict['hosts'][0]
                 host_csattr = CsHostAttr.objects.get(host=host)
 
-                return_code = exec_remote_command(server=host.address,
-                                                  username=host_csattr.vm_user,
-                                                  password=host_csattr.vm_password,
-                                                  command=scripts_to_run)
+                return_code = exec_remote_command(
+                    server=host.address,
+                    username=host_csattr.vm_user,
+                    password=host_csattr.vm_password,
+                    command=scripts_to_run
+                )
 
                 if return_code != 0:
                     return False
@@ -148,10 +175,12 @@ class InitDatabaseMongoDB(BaseStep):
                 LOG.info("Removing database files on host %s" % host)
                 host_csattr = CsHostAttr.objects.get(host=host)
 
-                exec_remote_command(server=host.address,
-                                    username=host_csattr.vm_user,
-                                    password=host_csattr.vm_password,
-                                    command="/opt/dbaas/scripts/dbaas_deletedatabasefiles.sh")
+                exec_remote_command(
+                    server=host.address,
+                    username=host_csattr.vm_user,
+                    password=host_csattr.vm_password,
+                    command="/opt/dbaas/scripts/dbaas_deletedatabasefiles.sh"
+                )
 
             return True
 

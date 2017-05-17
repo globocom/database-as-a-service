@@ -45,7 +45,6 @@ class PlanFactory(factory.DjangoModelFactory):
 
     name = factory.Sequence(lambda n: 'plan-{0}'.format(n))
     is_active = True
-    is_default = True
     engine = factory.SubFactory(EngineFactory)
     provider = 0
     disk_offering = DiskOfferingFactory()

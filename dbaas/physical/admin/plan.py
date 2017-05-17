@@ -52,8 +52,7 @@ class PlanAdmin(services_admin.DjangoServicesAdmin):
         "is_active", "engine", "environments", "is_ha", "has_persistence"
     )
     list_display = (
-        "name", "engine", "environment", "is_active", "is_default",
-        "provider", "is_ha",
+        "name", "engine", "environment", "is_active", "provider", "is_ha",
     )
     filter_horizontal = ("environments",)
     inlines = [

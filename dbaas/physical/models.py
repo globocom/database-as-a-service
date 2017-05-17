@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
+import os
 import logging
 import simple_audit
 from django.db.models.signals import pre_save, post_save, pre_delete
@@ -49,10 +50,6 @@ class EngineType(BaseModel):
 
     def __unicode__(self):
         return "%s" % (self.name,)
-
-    @property
-    def default_plan(self):
-        return Plan.objects.get(is_default=True, engine_type=self)
 
 
 class Engine(BaseModel):
@@ -110,6 +107,42 @@ class Engine(BaseModel):
         return self.name == 'redis'
 
 
+class Script(BaseModel):
+
+    name = models.CharField(max_length=100)
+    initialization = models.CharField(max_length=300, help_text="File path")
+    configuration = models.CharField(max_length=300, help_text="File path")
+    start_database = models.CharField(max_length=300, help_text="File path")
+    start_replication = models.CharField(
+        max_length=300, help_text="File path", null=True, blank=True
+    )
+
+    def _get_content(self, file_name):
+        path = file_name
+        if not os.path.exists(path):
+            physical_path = os.path.dirname(os.path.abspath(__file__))
+            path = '{}/scripts/{}'.format(physical_path, file_name)
+
+        with open(path) as f:
+            return f.read()
+
+    @property
+    def initialization_template(self):
+        return self._get_content(self.initialization)
+
+    @property
+    def configuration_template(self):
+        return self._get_content(self.configuration)
+
+    @property
+    def start_database_template(self):
+        return self._get_content(self.start_database)
+
+    @property
+    def start_replication_template(self):
+        return self._get_content(self.start_replication)
+
+
 class ReplicationTopology(BaseModel):
 
     class Meta:
@@ -128,6 +161,9 @@ class ReplicationTopology(BaseModel):
     details = models.CharField(max_length=200, null=True, blank=True)
     has_horizontal_scalability = models.BooleanField(
         verbose_name="Horizontal Scalability", default=False
+    )
+    script = models.ForeignKey(
+        Script, related_name='replication_topologies', null=True, blank=True
     )
 
 
@@ -242,14 +278,6 @@ class Plan(BaseModel):
     is_active = models.BooleanField(
         verbose_name=_("Is plan active"), default=True
     )
-    is_default = models.BooleanField(
-        verbose_name=_("Is plan default"),
-        default=False,
-        help_text=_(
-            "Check this option if this the default plan. "
-            "There can be only one..."
-        )
-    )
     is_ha = models.BooleanField(verbose_name=_("Is plan HA"), default=False)
     engine = models.ForeignKey(
         Engine, verbose_name=_("Engine"),
@@ -274,12 +302,6 @@ class Plan(BaseModel):
         verbose_name=_("Engine version upgrade plan"),
         on_delete=models.SET_NULL,
         related_name='backwards_plan'
-    )
-    flipperfox_equivalent_plan = models.ForeignKey(
-        "Plan", null=True, blank=True,
-        verbose_name=_("Flipper Fox Migration plan"),
-        on_delete=models.SET_NULL,
-        related_name='flipperfox_migration_plan'
     )
     disk_offering = models.ForeignKey(
         DiskOffering, related_name="plans",
@@ -313,12 +335,15 @@ class Plan(BaseModel):
             ("view_plan", "Can view plans"),
         )
 
+    @property
+    def cloudstack_attr(self):
+        if not self.is_cloudstack:
+            return None
+        return self.cs_plan_attributes.first()
+
     def validate_min_environment_bundles(self, environment):
         if self.is_ha and self.is_cloudstack:
-            bundles_actives = self.cs_plan_attributes.first().bundle.filter(
-                is_active=True
-            ).count()
-
+            bundles_actives = self.cloudstack_attr.bundles_actives.count()
             if bundles_actives < environment.min_of_zones:
                 raise EnvironmentError(
                     'Plan {} should has at least {} active bundles to {} '
@@ -329,6 +354,10 @@ class Plan(BaseModel):
                     )
                 )
         return True
+
+    @property
+    def script(self):
+        return self.replication_topology.script
 
 
 class PlanAttribute(BaseModel):
@@ -794,49 +823,6 @@ def databaseinfra_post_save(sender, **kwargs):
     LOG.debug("databaseinfra post-save triggered")
     LOG.debug("databaseinfra %s endpoint: %s" %
               (databaseinfra, databaseinfra.endpoint))
-
-
-@receiver(pre_save, sender=DatabaseInfra)
-def databaseinfra_pre_save(sender, **kwargs):
-    """
-    databaseinfra pre save
-    """
-    databaseinfra = kwargs.get('instance')
-    LOG.debug("databaseinfra pre-save triggered")
-    if not databaseinfra.plan:
-        databaseinfra.plan = databaseinfra.engine.engine_type.default_plan
-        LOG.warning("No plan specified, using default plan (%s) for engine %s" % (
-            databaseinfra, databaseinfra.engine))
-        databaseinfra.disk_offering = databaseinfra.plan.disk_offering
-
-
-@receiver(pre_save, sender=Plan)
-def plan_pre_save(sender, **kwargs):
-    """
-    plan pre save
-    databaseinfra is a plan object and not an implementation from DatabaseInfra's model
-    """
-
-    plan = kwargs.get('instance')
-    LOG.debug("plan pre-save triggered")
-    if plan.is_default:
-        LOG.debug(
-            "looking for other plans marked as default (they will be marked as false) with engine type %s" % plan.engine_type)
-        if plan.id:
-            plans = Plan.objects.filter(
-                is_default=True, engine=plan.engine).exclude(id=plan.id)
-        else:
-            plans = Plan.objects.filter(
-                is_default=True, engine=plan.engine)
-        if plans:
-            with transaction.commit_on_success():
-                for plan in plans:
-                    LOG.info(
-                        "marking plan %s(%s) attr is_default to False" % (plan, plan.engine_type))
-                    plan.is_default = False
-                    plan.save(update_fields=['is_default'])
-        else:
-            LOG.debug("No plan found")
 
 
 simple_audit.register(
