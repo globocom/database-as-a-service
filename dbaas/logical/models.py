@@ -503,6 +503,13 @@ class Database(BaseModel):
     offering_id = property(get_cloudstack_service_offering_id)
 
     def is_being_used_elsewhere(self, skip_task_name=None):
+        tasks = TaskHistory.objects.filter(
+            task_status=TaskHistory.STATUS_WAITING,
+            object_id=self.id,
+            object_class=self._meta.object_name)
+
+        if tasks:
+            return True
         if not self.current_locked_task:
             return False
 
