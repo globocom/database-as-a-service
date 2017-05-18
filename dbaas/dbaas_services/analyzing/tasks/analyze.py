@@ -12,7 +12,7 @@ from notification.models import TaskHistory
 from dbaas_services.analyzing.models import ExecutionPlan
 from dbaas_services.analyzing.models import AnalyzeRepository
 from dbaas_services.analyzing.integration import AnalyzeService
-from dbaas_services.analyzing.actions import database_can_not_be_resized
+from dbaas_services.analyzing.actions import database_can_be_resized
 
 LOG = logging.getLogger(__name__)
 
@@ -37,7 +37,7 @@ def analyze_databases(self, task_history=None):
             for database in databases:
                 database_name, engine, instances, environment_name, databaseinfra_name = setup_database_info(database)
                 for execution_plan in ExecutionPlan.objects.all():
-                    if database_can_not_be_resized(database, execution_plan):
+                    if not database_can_be_resized(database, execution_plan):
                         continue
                     params = execution_plan.setup_execution_params()
                     result = analyze_service.run(engine=engine, database=database_name,
