@@ -34,7 +34,9 @@ class TaskHistoryObjectTestCase(TestCase):
 class TaskHistoryTestCase(TestCase):
 
     def setUp(self):
-        self.task = TaskHistoryFactory()
+        self.task = TaskHistoryFactory(
+            task_status=TaskHistory.STATUS_WARNING
+        )
 
     def test_can_add_message_detail(self):
         self.assertIsNone(self.task.details)
