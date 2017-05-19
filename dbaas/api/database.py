@@ -100,7 +100,7 @@ class DatabaseAPI(viewsets.ModelViewSet):
 
             task_history = TaskHistory()
             task_history.task_name = "create_database"
-            task_history.task_status = task_history.STATUS_PENDING
+            task_history.task_status = task_history.STATUS_WAITING
             task_history.arguments = "Database name: {}".format(data['name'])
             task_history.save()
 

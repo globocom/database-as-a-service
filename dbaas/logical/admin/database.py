@@ -514,7 +514,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         tasks = TaskHistory.objects.filter(
             arguments__contains=database.name,
             task_status__in=[
-                'RUNNING', 'PENDING', 'WAITING'
+                'RUNNING', 'WAITING'
             ]
         )
 
