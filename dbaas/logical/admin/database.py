@@ -491,6 +491,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         task_history.task_status = task_history.STATUS_WAITING
         task_history.arguments = "Upgrading MongoDB 2.4 to 3.0"
         task_history.user = request.user
+        task_history.object_id = database.id
+        task_history.object_class = database._meta.object_name
         task_history.save()
 
         upgrade_mongodb_24_to_30.delay(database=database, user=request.user, task_history=task_history)

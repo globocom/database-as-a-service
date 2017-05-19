@@ -262,6 +262,8 @@ def database_resize_retry(request, context, database):
         task_history.task_status = task_history.STATUS_WAITING
         task_history.arguments = "Retrying resize database {}".format(database)
         task_history.user = request.user
+        task_history.object_id = database.id
+        task_history.object_class = database._meta.object_name
         task_history.save()
 
         resize_database.delay(
@@ -287,6 +289,8 @@ def database_upgrade(request, context, database):
         task_history.task_status = task_history.STATUS_WAITING
         task_history.arguments = "Upgrading database {}".format(database)
         task_history.user = request.user
+        task_history.object_id = database.id
+        task_history.object_class = database._meta.object_name
         task_history.save()
 
         upgrade_database.delay(
@@ -326,6 +330,8 @@ def database_upgrade_retry(request, context, database):
         task_history.task_status = task_history.STATUS_WAITING
         task_history.arguments = "Retrying upgrade database {}".format(database)
         task_history.user = request.user
+        task_history.object_id = database.id
+        task_history.object_class = database._meta.object_name
         task_history.save()
 
         upgrade_database.delay(
@@ -426,6 +432,8 @@ def _add_read_only_instances(request, database):
     task.task_status = TaskHistory.STATUS_WAITING
     task.arguments = "Adding instances on database {}".format(database)
     task.user = request.user
+    task.object_id = database.id
+    task.object_class = database._meta.object_name
     task.save()
 
     add_instances_to_database.delay(
@@ -521,6 +529,8 @@ def database_delete_host(request, database_id, host_id):
             instance, database
         )
         task.user = request.user
+        task.object_id = database.id
+        task.object_class = database._meta.object_name
         task.save()
         remove_readonly_instance.delay(instance, request.user, task)
 
@@ -660,6 +670,8 @@ def database_make_backup(request, context, database):
         task_history.task_name = "make_database_backup"
         task_history.task_status = TaskHistory.STATUS_WAITING
         task_history.arguments = "Making backup of {}".format(database)
+        task_history.object_id = database.id
+        task_history.object_class = database._meta.object_name
         task_history.save()
 
         make_database_backup.delay(database=database, task=task_history)

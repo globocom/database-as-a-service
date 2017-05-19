@@ -409,6 +409,8 @@ class Database(BaseModel):
         task_history.task_status = task_history.STATUS_WAITING
         task_history.arguments = "Database name: {}".format(database.name)
         task_history.user = user
+        task_history.object_id = database.id
+        task_history.object_class = database._meta.object_name
         task_history.save()
 
         clone_database.delay(
@@ -427,6 +429,8 @@ class Database(BaseModel):
             database.name
         )
         task_history.user = user
+        task_history.object_id = database.id
+        task_history.object_class = database._meta.object_name
         task_history.save()
 
         Database.recover_snapshot(
@@ -444,6 +448,8 @@ class Database(BaseModel):
         task_history.task_status = task_history.STATUS_WAITING
         task_history.arguments = "Database name: {}".format(database.name)
         task_history.user = user
+        task_history.object_id = database.id
+        task_history.object_class = database._meta.object_name
         task_history.save()
 
         resize_database.delay(
@@ -564,6 +570,8 @@ class Database(BaseModel):
         task_history.task_status = task_history.STATUS_WAITING
         task_history.arguments = "Database name: {}".format(database.name)
         task_history.user = user
+        task_history.object_id = database.id
+        task_history.object_class = database._meta.object_name
         task_history.save()
 
         disk_offering = DiskOffering.objects.get(id=new_disk_offering)
@@ -732,6 +740,8 @@ class Database(BaseModel):
         task_history.task_status = task_history.STATUS_WAITING
         task_history.arguments = "Database name: {}".format(self.name)
         task_history.user = user
+        task_history.object_id = self.id
+        task_history.object_class = self._meta.object_name
         task_history.save()
 
         destroy_database.delay(
