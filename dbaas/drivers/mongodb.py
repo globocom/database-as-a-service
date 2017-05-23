@@ -406,7 +406,7 @@ class MongoDB(BaseDriver):
     def replica_set_name(self):
         return 'ReplicaSet_{}'.format(self.databaseinfra.name)
 
-    def get_parameters(self):
+    def get_configuration(self):
         instance = self.databaseinfra.instances.filter(
             status=Instance.ALIVE, is_active=True,
             instance_type=Instance.MONGODB
