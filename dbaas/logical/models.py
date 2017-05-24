@@ -537,6 +537,13 @@ class Database(BaseModel):
         return bool(offerings)
 
     @property
+    def can_modify_parameters(self):
+        if self.plan.replication_topology.parameter.all():
+            return True
+        else:
+            return False
+
+    @property
     def is_dead(self):
         if self.status != Database.ALIVE:
             return True
