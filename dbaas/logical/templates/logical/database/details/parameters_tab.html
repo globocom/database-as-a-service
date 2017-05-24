@@ -9,13 +9,33 @@
 
   <div class="panel-body">
 
+    <table id="table-parameters" class="table table-striped" data-database-id="{{database.pk}}" >
+      <thead>
+        <tr>
+          <th>Parameter</th>
+          <th>DBaaS default value</th>
+          <th>Current value</th>
+          <th>New value</th>
+        </tr>
+      <tbody>
+
+        {% for parameter in database_parameters %}
+          <tr>
+            <td>{{parameter.name}}</td>
+            <td>{{parameter.dbaas_default_value}}</td>
+            <td>{{parameter.current_valeu}}</td>
+            <td>
+              <input type="text" placeholder="type new value" maxlength="200" name="new_value_{{parameter.id}}" value="{{parameter.new_value}}">
+            </td>
+          </tr>
+        {% endfor %}
+
+      </tbody>
+
+      </thead>
+
+
   </div>
 </fieldset>
-{% endblock %}
 
-{% block js_footer %}
-  {{ block.super }}
-{% endblock %}
-
-{% block database_button_save %}
 {% endblock %}
