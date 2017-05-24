@@ -649,6 +649,25 @@ class DatabaseInfra(BaseModel):
         self.last_vm_created = len(set(hosts))
         self.save()
 
+    def get_dbaas_parameter_default_value(self, parameter_name):
+        from physical.configurations import configuration_factory
+        configuration = configuration_factory(
+            self.engine.name,
+            self.cs_dbinfra_offering.get().offering.memory_size_mb
+        )
+        return getattr(configuration, parameter_name)
+
+    def get_parameter_current_value(self, parameter):
+        try:
+            dbinfraparameter = DatabaseInfraParameter.objects.get(
+                databaseinfra=self,
+                parameter=parameter
+            )
+        except DatabaseInfraParameter.DoesNotExist:
+            return self.get_dbaas_parameter_default_value(parameter.name)
+        else:
+            return dbinfraparameter.value
+
 
 class Host(BaseModel):
     hostname = models.CharField(
@@ -829,10 +848,41 @@ class Instance(BaseModel):
         return format_html(status)
 
 
+class DatabaseInfraParameter(BaseModel):
+    databaseinfra = models.ForeignKey(DatabaseInfra)
+    parameter = models.ForeignKey(Parameter)
+    value = models.CharField(max_length=200)
+
+    class Meta:
+        unique_together = (
+            ('databaseinfra', 'parameter', )
+        )
+
+    def __unicode__(self):
+        return "{}_{}:{}".format(self.databaseinfra.name,
+                                 self.parameter.name, self.value)
+
+    @classmethod
+    def update_parameter_value(cls, databaseinfra_id, parameter_id, value):
+        obj, created = cls.objects.get_or_create(
+            databaseinfra_id=databaseinfra_id,
+            parameter_id=parameter_id,
+            defaults={'value': value},
+        )
+        if created:
+            return True
+
+        if obj.value == value:
+            return False
+
+        obj.value = value
+        obj.save()
+        return True
 
 ##########################################################################
 # SIGNALS
 ##########################################################################
+
 
 @receiver(pre_delete, sender=Instance)
 def instance_pre_delete(sender, **kwargs):
