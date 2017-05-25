@@ -32,6 +32,7 @@ class DatabaseSerializer(serializers.HyperlinkedModelSerializer):
     credentials = CredentialSerializer(many=True, read_only=True)
     status = serializers.Field(source='status')
     used_size_in_bytes = serializers.Field(source='used_size_in_bytes')
+    engine = serializers.CharField(source='infra.engine')
 
     class Meta:
         model = models.Database
@@ -40,7 +41,7 @@ class DatabaseSerializer(serializers.HyperlinkedModelSerializer):
             'project', 'team', 'quarantine_dt', 'total_size_in_bytes',
             'credentials', 'description', 'status',
             'used_size_in_bytes', 'subscribe_to_email_events',
-            'created_at',
+            'created_at', 'engine'
         )
         read_only = ('credentials', 'status', 'used_size_in_bytes')
 
