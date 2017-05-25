@@ -45,6 +45,18 @@ class ConfigurationRedis(ConfigurationBase):
 
         return self.value_in_mb(value)
 
+    @property
+    def loglevel(self):
+        return "warning"
+
+    @property
+    def save(self):
+        return "7200 1 3600 10 1800 10000"
+
+    @property
+    def maxmemory(self):
+        return self.max_memory
+
 
 class ConfigurationMySQL(ConfigurationBase):
     __ENGINE__ = 'mysql'

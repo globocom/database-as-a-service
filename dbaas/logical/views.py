@@ -160,10 +160,52 @@ def database_credentials(request, context, database=None):
     )
 
 
+def update_parameters(request_post, database):
+    changed_parameters = []
+    for key in request_post.keys():
+        if key.startswith("new_value_"):
+            parameter_new_value = request_post.get(key)
+            parameter_id = key.split("new_value_")[1]
+            if parameter_new_value:
+                from physical.models import DatabaseInfraParameter
+                changed = DatabaseInfraParameter.update_parameter_value(
+                    databaseinfra_id=database.databaseinfra_id,
+                    parameter_id=parameter_id,
+                    value=parameter_new_value
+                )
+                if changed:
+                    changed_parameters.append(parameter_id)
+    print changed_parameters
+
+
 @database_view('parameters')
-def database_parameters(request, context, database=None):
+def database_parameters(request, context, database):
+    if request.method == 'POST':
+        changed_parameters = update_parameters(request.POST, database)
+
+    database_parameters = []
+    databaseinfra = database.databaseinfra
+    for topology_parameter in database.plan.replication_topology.parameter.all():
+        defaul_value = databaseinfra.get_dbaas_parameter_default_value(
+            parameter_name=topology_parameter.name
+        )
+        current_valeu = databaseinfra.get_parameter_current_value(
+            parameter=topology_parameter
+        )
+        database_parameter = {
+            "id": topology_parameter.id,
+            "name": topology_parameter.name,
+            "dbaas_default_value": defaul_value,
+            "current_valeu": current_valeu,
+            "new_value": "",
+        }
+        database_parameters.append(database_parameter)
+
+    context['database_parameters'] = database_parameters
+
     return render_to_response(
-        "logical/database/details/parameters_tab.html", context
+        "logical/database/details/parameters_tab.html",
+        context, RequestContext(request)
     )
 
 
