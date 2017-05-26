@@ -911,7 +911,19 @@ class DatabaseInfraParameter(BaseModel):
                 )
 
     @staticmethod
+    def is_boolean(value):
+        if isinstance(value, bool):
+            return True
+
+        if not isinstance(value, str):
+            return False
+        return value.upper() in ['TRUE', 'FALSE']
+
+    @staticmethod
     def get_value_with_type(new_value, default_value):
+        if DatabaseInfraParameter.is_boolean(new_value):
+            return new_value
+
         try:
             new_value = int(new_value)
         except ValueError:
