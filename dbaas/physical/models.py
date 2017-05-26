@@ -879,6 +879,67 @@ class DatabaseInfraParameter(BaseModel):
         obj.save()
         return True
 
+    @classmethod
+    def load_database_configs(cls, infra):
+        database = infra.databases.first()
+        parameters = database.plan.replication_topology.parameter.all()
+        physical_parameters = infra.get_driver().get_configuration()
+
+        for parameter in parameters:
+            if not parameter.name in physical_parameters:
+                LOG.warning(
+                    'Parameter {} not found in physical configuration'.format(
+                        parameter.name
+                    )
+                )
+                continue
+
+            physical_value = physical_parameters[parameter.name]
+            default_value = infra.get_dbaas_parameter_default_value(
+                parameter_name=parameter.name
+            )
+
+            physical_value = DatabaseInfraParameter.get_value_with_type(
+                physical_value, default_value
+            )
+            if physical_value != default_value:
+                LOG.info('Updating parameter {} value {} to {}'.format(
+                    parameter, default_value, physical_value
+                ))
+                DatabaseInfraParameter.update_parameter_value(
+                    infra.id, parameter.id, physical_value
+                )
+
+    @staticmethod
+    def get_value_with_type(new_value, default_value):
+        try:
+            new_value = int(new_value)
+        except ValueError:
+            return new_value
+
+        if new_value == default_value:
+            return new_value
+
+        extension = ''.join([i for i in default_value if not i.isdigit()])
+        value = int(''.join([i for i in default_value if i.isdigit()]))
+        if 'M' in extension:
+            value = value * 1024 * 1024
+        elif 'G' in extension:
+            value = value * 1024 * 1024 * 1024
+
+        if new_value == value:
+            return default_value
+
+        new_extension = ''
+        extensions = ['K', 'M', 'G']
+        while new_value/1024 > 1:
+            new_value = new_value/1024
+            new_extension = extensions.pop(0)
+
+        if 'B' in extension:
+            new_extension = new_extension + 'B'
+        return '{}{}'.format(new_value, new_extension)
+
 ##########################################################################
 # SIGNALS
 ##########################################################################
