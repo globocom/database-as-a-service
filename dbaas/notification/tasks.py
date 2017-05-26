@@ -887,3 +887,48 @@ def resize_database(self, database, user, task, cloudstackpack, original_cloudst
             TaskHistory.STATUS_ERROR,
             'Could not do resize.\nResize doesn\'t have rollback'
         )
+
+
+class TaskRegister(object):
+    TASK_CLASS = TaskHistory
+
+    @classmethod
+    def create_task(cls, params):
+        database = params.pop('database', None)
+
+        task = cls.TASK_CLASS()
+
+        if database:
+            task.object_id = database.id
+            task.object_class = database._meta.object_name
+
+        for k, v in params.iteritems():
+            setattr(task, k, v)
+
+        task.save()
+
+        return task
+
+    @classmethod
+    def register_task(cls, task, params):
+        # TODO: tratar quando n achar
+        params.update({'task_history': task})
+        getattr(cls, task.task_name, None)(**params)
+
+    def __new__(cls, task_params=None, delay_params=None):
+        task = cls.create_task(task_params)
+        cls.register_task(task, params=delay_params)
+
+        return task
+
+    # ============  BEGIN TASKS   ==========
+
+    @classmethod
+    def database_disk_resize(cls, **kw):
+        database_disk_resize.delay(**kw)
+
+    @classmethod
+    def destroy_database(cls, **kw):
+        destroy_database.delay(**kw)
+
+    # ============  END TASKS   ============

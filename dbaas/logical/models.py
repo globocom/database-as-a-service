@@ -560,7 +560,7 @@ class Database(BaseModel):
         return False
 
     @classmethod
-    def disk_resize(cls, database, new_disk_offering, user):
+    def disk_resizeOLD(cls, database, new_disk_offering, user):
         from notification.tasks import database_disk_resize
         from notification.models import TaskHistory
         from physical.models import DiskOffering
@@ -580,6 +580,27 @@ class Database(BaseModel):
             database=database, disk_offering=disk_offering,
             user=user, task_history=task_history
         )
+
+    @classmethod
+    def disk_resize(cls, database, new_disk_offering, user):
+        from physical.models import DiskOffering
+        from notification.tasks import TaskRegister
+
+        task_params = {
+            'task_name': 'database_disk_resize',
+            'arguments': 'Database name: {}'.format(database.name),
+            'user': user,
+            'database': database
+        }
+
+        disk_offering = DiskOffering.objects.get(id=new_disk_offering)
+        delay_params = {
+            "database": database,
+            "disk_offering": disk_offering,
+            "user": user
+        }
+
+        TaskRegister(task_params, delay_params)
 
     def update_host_disk_used_size(self, host_address, used_size_kb, total_size_kb=None):
         instance = self.databaseinfra.instances.filter(address=host_address).first()
@@ -732,21 +753,35 @@ class Database(BaseModel):
             "user={}".format(self.name, self.team, self.project, user)
         )
 
-        from notification.models import TaskHistory
-        from notification.tasks import destroy_database
+        # from notification.models import TaskHistory
+        from notification.tasks import TaskRegister
 
-        task_history = TaskHistory()
-        task_history.task_name = "destroy_database"
-        task_history.task_status = task_history.STATUS_WAITING
-        task_history.arguments = "Database name: {}".format(self.name)
-        task_history.user = user
-        task_history.object_id = self.id
-        task_history.object_class = self._meta.object_name
-        task_history.save()
+#        task_history = TaskHistory()
+#        task_history.task_name = "destroy_database"
+#        task_history.task_status = task_history.STATUS_WAITING
+#        task_history.arguments = "Database name: {}".format(self.name)
+#        task_history.user = user
+#        task_history.object_id = self.id
+#        task_history.object_class = self._meta.object_name
+#        task_history.save()
+#
+#        destroy_database.delay(
+#            database=self, task_history=task_history, user=user
+#        )
 
-        destroy_database.delay(
-            database=self, task_history=task_history, user=user
-        )
+        task_params = {
+            'task_name': 'destroy_database',
+            'arguments': 'Database name: {}'.format(self.name),
+            'user': user,
+            'database': self
+        }
+
+        delay_params = {
+            'database': self, 'user': user
+        }
+
+        TaskRegister(task_params, delay_params)
+
         return
 
     @property
