@@ -156,3 +156,17 @@ class ConfigurationMySQL(ConfigurationBase):
     def innodb_log_buffer_size(self):
         value = 64 if self.memory_size_in_mb == 8192 else 32
         return self.value_format(value)
+
+
+class ConfigurationMongoDB(ConfigurationBase):
+    __ENGINE__ = 'mongodb'
+
+    @property
+    def systemLog_quiet(self):
+        return False
+
+    def __getattr__(self, item):
+        if '.' in item:
+            item = item.replace('.', '_')
+
+        return self.__getattribute__(item)
