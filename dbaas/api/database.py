@@ -32,7 +32,7 @@ class DatabaseSerializer(serializers.HyperlinkedModelSerializer):
     credentials = CredentialSerializer(many=True, read_only=True)
     status = serializers.Field(source='status')
     used_size_in_bytes = serializers.Field(source='used_size_in_bytes')
-    engine = serializers.CharField(source='infra.engine')
+    engine = serializers.CharField(source='infra.engine', read_only=True)
 
     class Meta:
         model = models.Database
