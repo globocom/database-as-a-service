@@ -920,6 +920,28 @@ class DatabaseInfraParameter(BaseModel):
         return value.upper() in ['TRUE', 'FALSE']
 
     @staticmethod
+    def formatted_value(base_value, new_value):
+        extension = ''.join([i for i in base_value if not i.isdigit()])
+        value = int(''.join([i for i in base_value if i.isdigit()]))
+        if 'M' in extension:
+            value = value * 1024 * 1024
+        elif 'G' in extension:
+            value = value * 1024 * 1024 * 1024
+
+        if new_value == value:
+            return base_value
+
+        new_extension = ''
+        extensions = ['K', 'M', 'G']
+        while new_value/1024 > 1:
+            new_value = new_value/1024
+            new_extension = extensions.pop(0)
+
+        if 'B' in extension:
+            new_extension = new_extension + 'B'
+        return '{}{}'.format(new_value, new_extension)
+
+    @staticmethod
     def get_value_with_type(new_value, default_value):
         if DatabaseInfraParameter.is_boolean(new_value):
             return new_value
@@ -932,25 +954,12 @@ class DatabaseInfraParameter(BaseModel):
         if new_value == default_value:
             return new_value
 
-        extension = ''.join([i for i in default_value if not i.isdigit()])
-        value = int(''.join([i for i in default_value if i.isdigit()]))
-        if 'M' in extension:
-            value = value * 1024 * 1024
-        elif 'G' in extension:
-            value = value * 1024 * 1024 * 1024
+        if isinstance(default_value, str):
+            return DatabaseInfraParameter.formatted_value(
+                default_value, new_value
+            )
 
-        if new_value == value:
-            return default_value
-
-        new_extension = ''
-        extensions = ['K', 'M', 'G']
-        while new_value/1024 > 1:
-            new_value = new_value/1024
-            new_extension = extensions.pop(0)
-
-        if 'B' in extension:
-            new_extension = new_extension + 'B'
-        return '{}{}'.format(new_value, new_extension)
+        return new_value
 
 ##########################################################################
 # SIGNALS
