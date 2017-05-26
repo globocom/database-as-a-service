@@ -419,4 +419,20 @@ class MongoDB(BaseDriver):
             )
 
         with self.pymongo(instance) as client:
-            return client.admin.command('getCmdLineOpts')
+            configuration = client.admin.command('getCmdLineOpts')
+        return self._parse_configuration(configuration['parsed'])
+
+    def _parse_configuration(self, configuration, key_base=''):
+        parsed = {}
+        for key, value in configuration.items():
+            if isinstance(value, dict):
+                parsed.update(self._parse_configuration(value, key))
+                continue
+            parsed[key] = value
+
+        unified = {}
+        for key, value in parsed.items():
+            if key_base:
+                key = '{}.{}'.format(key_base, key)
+            unified[key] = value
+        return unified
