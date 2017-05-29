@@ -15,7 +15,7 @@ LOG = logging.getLogger(__name__)
 SEARCH_FIELDS = ('name', )
 LIST_FIELDS = ('name', 'size_gb')
 SAVE_ON_TOP = True
-UNICODE_FORMAT = '{} ({} GB)'
+UNICODE_FORMAT = '{}'
 
 
 class DiskOfferingTestCase(TestCase):
@@ -135,15 +135,8 @@ class DiskOfferingTestCase(TestCase):
         self.assertIsNone(disk_factory.converter_gb_to_kb(0))
 
     def test_unicode(self):
-        disk_factory = DiskOfferingFactory()
-        expected_unicode = UNICODE_FORMAT.format(
-        )
-        self.assertEqual(expected_unicode, str(disk_factory))
-
         disk_offering = DiskOffering()
-        expected_unicode = UNICODE_FORMAT.format(
-            disk_offering.name, disk_offering.size_gb()
-        )
+        expected_unicode = UNICODE_FORMAT.format(disk_offering.name)
         self.assertEqual(expected_unicode, str(disk_offering))
 
     def test_disk_offering_is_in_admin(self):
