@@ -256,7 +256,7 @@ def _disk_resize(request, database):
     )
 
     current_used = round(database.used_size_in_gb, 2)
-    offering_size = round(disk_offering.available_size_gb(), 2)
+    offering_size = round(disk_offering.size_gb(), 2)
     if current_used >= offering_size:
         messages.add_message(
             request, messages.ERROR,
@@ -417,7 +417,7 @@ def database_resizes(request, context, database):
     if not disk_used_size_kb:
         disk_used_size_kb = database.used_size_in_kb
     context['disk_offerings'] = list(
-        DiskOffering.objects.filter(available_size_kb__gt=disk_used_size_kb)
+        DiskOffering.objects.filter(size_kb__gt=disk_used_size_kb)
     )
     if database.infra.disk_offering not in context['disk_offerings']:
         context['disk_offerings'].insert(0, database.infra.disk_offering)
