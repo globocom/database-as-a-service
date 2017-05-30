@@ -643,7 +643,7 @@ class DatabaseInfra(BaseModel):
             self,
             self.cs_dbinfra_offering.get().offering.memory_size_mb
         )
-        return getattr(configuration, parameter_name)
+        return getattr(configuration, parameter_name).default
 
     def get_parameter_value_or_default(self, parameter):
         try:
@@ -656,11 +656,11 @@ class DatabaseInfra(BaseModel):
         else:
             return dbinfraparameter.value
 
-    def get_parameter_value_by_parameter_name(self, parametername):
+    def get_parameter_value_by_parameter_name(self, parameter_name):
         try:
             dbinfraparameter = DatabaseInfraParameter.objects.get(
                 databaseinfra=self,
-                parameter__name=parametername
+                parameter__name=parameter_name
             )
         except DatabaseInfraParameter.DoesNotExist:
             return None
