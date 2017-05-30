@@ -59,7 +59,7 @@ timeout 0
 # verbose (many rarely useful info, but not a mess like the debug level)
 # notice (moderately verbose, what you want in production probably)
 # warning (only very important / critical messages are logged)
-loglevel {{ configuration.loglevel }}
+loglevel {{ configuration.loglevel.value }}
 
 # Specify the log file name. Also 'stdout' can be used to force
 # Redis to log on the standard output. Note that if you use standard
@@ -298,7 +298,7 @@ maxclients 10000
 # limit for maxmemory so that there is some free RAM on the system for slave
 # output buffers (but this is not needed if the policy is 'noeviction').
 #
-maxmemory {{ configuration.maxmemory }}
+maxmemory {{ configuration.maxmemory.value }}
 
 # MAXMEMORY POLICY: how Redis will select what to remove when maxmemory
 # is reached? You can select among five behavior:
