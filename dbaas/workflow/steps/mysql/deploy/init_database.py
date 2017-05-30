@@ -26,7 +26,7 @@ class InitDatabase(BaseStep):
             cloud_stack = workflow_dict['plan'].cs_plan_attributes.first()
             offering = cloud_stack.get_stronger_offering()
             configuration = configuration_factory(
-                'mysql', offering.memory_size_mb
+                workflow_dict['databaseinfra'], offering.memory_size_mb
             )
 
             graylog_credential = get_credentials_for(
