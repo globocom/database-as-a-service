@@ -199,7 +199,7 @@ def database_parameters(request, context, database):
         defaul_value = databaseinfra.get_dbaas_parameter_default_value(
             parameter_name=topology_parameter.name
         )
-        current_valeu = databaseinfra.get_parameter_current_value(
+        current_valeu = databaseinfra.get_parameter_value_or_default(
             parameter=topology_parameter
         )
         database_parameter = {
