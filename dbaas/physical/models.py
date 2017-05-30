@@ -640,12 +640,12 @@ class DatabaseInfra(BaseModel):
     def get_dbaas_parameter_default_value(self, parameter_name):
         from physical.configurations import configuration_factory
         configuration = configuration_factory(
-            self.engine.name,
+            self,
             self.cs_dbinfra_offering.get().offering.memory_size_mb
         )
         return getattr(configuration, parameter_name)
 
-    def get_parameter_current_value(self, parameter):
+    def get_parameter_value_or_default(self, parameter):
         try:
             dbinfraparameter = DatabaseInfraParameter.objects.get(
                 databaseinfra=self,
@@ -653,6 +653,17 @@ class DatabaseInfra(BaseModel):
             )
         except DatabaseInfraParameter.DoesNotExist:
             return self.get_dbaas_parameter_default_value(parameter.name)
+        else:
+            return dbinfraparameter.value
+
+    def get_parameter_value_by_parameter_name(self, parametername):
+        try:
+            dbinfraparameter = DatabaseInfraParameter.objects.get(
+                databaseinfra=self,
+                parameter__name=parametername
+            )
+        except DatabaseInfraParameter.DoesNotExist:
+            return None
         else:
             return dbinfraparameter.value
 
