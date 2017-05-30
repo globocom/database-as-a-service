@@ -342,3 +342,7 @@ class MySQL(BaseDriver):
             configurations[result['Variable_name']] = result['Value']
 
         return configurations
+
+    def set_configuration(self, instance, name, value):
+        client = self.get_client(instance)
+        client.query("set global {} = {}".format(name, value))

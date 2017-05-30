@@ -297,6 +297,9 @@ class BaseDriver(object):
     def get_configuration(self):
         raise NotImplementedError
 
+    def set_configuration(self, instance, name, value):
+        raise NotImplementedError
+
 
 class DatabaseStatus(object):
 

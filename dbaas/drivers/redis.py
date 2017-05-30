@@ -378,3 +378,7 @@ class Redis(BaseDriver):
 
         with self.redis(instance) as client:
             return client.config_get()
+
+    def set_configuration(self, instance, name, value):
+        with self.redis(instance) as client:
+            client.config_set(name, value)
