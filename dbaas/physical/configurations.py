@@ -3,11 +3,11 @@ import sys
 import inspect
 
 
-def configuration_factory(engine, memory_size):
+def configuration_factory(databaseinfra, memory_size):
     for name, obj in inspect.getmembers(sys.modules[__name__]):
         if inspect.isclass(obj) and '__ENGINE__' in obj.__dict__:
-            if obj.__ENGINE__ == engine:
-                return obj(memory_size)
+            if obj.__ENGINE__ == databaseinfra.engine.name:
+                return obj(databaseinfra, memory_size)
     raise NotImplementedError
 
 
@@ -17,7 +17,8 @@ class ConfigurationBase(object):
     MB_FORMATTER = 'MB'
     GB_FORMATTER = 'GB'
 
-    def __init__(self, memory_size_mega):
+    def __init__(self, databaseinfra, memory_size_mega):
+        self.databaseinfra = databaseinfra
         self._memory_size = memory_size_mega
 
     @property
@@ -55,6 +56,11 @@ class ConfigurationRedis(ConfigurationBase):
 
     @property
     def loglevel(self):
+        infraparametervalue = self.databaseinfra.get_parameter_value_by_parameter_name(
+            parametername='loglevel'
+        )
+        if infraparametervalue:
+            return infraparametervalue
         return "warning"
 
     @property
