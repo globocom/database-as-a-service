@@ -46,7 +46,7 @@ class ConfigurationRedis(ConfigurationBase):
     __ENGINE__ = 'redis'
 
     @property
-    def max_memory(self):
+    def maxmemory(self):
         if self.memory_size_in_gb <= 1: #1G
             value = self.memory_size_in_mb / 2
         else:
@@ -66,10 +66,6 @@ class ConfigurationRedis(ConfigurationBase):
     @property
     def save(self):
         return "7200 1 3600 10 1800 10000"
-
-    @property
-    def maxmemory(self):
-        return self.max_memory
 
 
 class ConfigurationMySQL(ConfigurationBase):

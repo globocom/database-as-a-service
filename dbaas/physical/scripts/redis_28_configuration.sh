@@ -378,7 +378,7 @@ maxclients 10000
 # limit for maxmemory so that there is some free RAM on the system for slave
 # output buffers (but this is not needed if the policy is 'noeviction').
 #
-maxmemory {{ configuration.max_memory }}
+maxmemory {{ configuration.maxmemory }}
 
 # MAXMEMORY POLICY: how Redis will select what to remove when maxmemory
 # is reached? You can select among five behavior:
