@@ -13,12 +13,12 @@ LIST_FILTER = [
 ]
 LIST_DISPLAY = (
     "database", "database_team", "source_offer", "target_offer",
-    "current_step", "friendly_status", "resize_action", "link_task",
+    "current_step", "friendly_status", "maintenance_action", "link_task",
     "started_at", "finished_at"
 )
 READONLY_FIELDS = (
     "database", "source_offer", "target_offer", "link_task", "started_at",
-    "finished_at", "current_step", "status", "resize_action"
+    "finished_at", "current_step", "status", "maintenance_action"
 )
 EXCLUDE = ("task", "can_do_retry")
 ORDERING = ["-started_at"]
@@ -101,35 +101,35 @@ class DatabaseResizeTestCase(TestCase):
         admin_task = self.admin.link_task(self.database_resize)
         self.assertIn(str(self.database_resize.task.id), admin_task)
 
-    def test_resize_action(self):
+    def test_maintenance_action(self):
         self.database_resize.status = DatabaseResize.ERROR
         url = self.database_resize.database.get_resize_retry_url()
 
-        button = self.admin.resize_action(self.database_resize)
+        button = self.admin.maintenance_action(self.database_resize)
         self.assertIn(url, button)
 
-    def test_resize_action_without_error_and_cannot_do_retry(self):
+    def test_maintenance_action_without_error_and_cannot_do_retry(self):
         self.database_resize.status = DatabaseResize.SUCCESS
         self.database_resize.can_do_retry = False
-        button = self.admin.resize_action(self.database_resize)
+        button = self.admin.maintenance_action(self.database_resize)
         self.assertEqual(NO_ACTION, button)
 
-    def test_resize_action_with_error_and_cannot_do_retry(self):
+    def test_maintenance_action_with_error_and_cannot_do_retry(self):
         self.database_resize.status = DatabaseResize.ERROR
         self.database_resize.can_do_retry = False
-        button = self.admin.resize_action(self.database_resize)
+        button = self.admin.maintenance_action(self.database_resize)
         self.assertEqual(NO_ACTION, button)
 
-    def test_resize_action_without_error_and_can_do_retry(self):
+    def test_maintenance_action_without_error_and_can_do_retry(self):
         self.database_resize.status = DatabaseResize.SUCCESS
         self.database_resize.can_do_retry = True
-        button = self.admin.resize_action(self.database_resize)
+        button = self.admin.maintenance_action(self.database_resize)
         self.assertEqual(NO_ACTION, button)
 
-    def test_resize_action_with_error_and_can_do_retry(self):
+    def test_maintenance_action_with_error_and_can_do_retry(self):
         self.database_resize.status = DatabaseResize.ERROR
         self.database_resize.can_do_retry = True
 
         url = self.database_resize.database.get_resize_retry_url()
-        button = self.admin.resize_action(self.database_resize)
+        button = self.admin.maintenance_action(self.database_resize)
         self.assertIn(url, button)

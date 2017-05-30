@@ -36,7 +36,6 @@ class ConfigurationBase(object):
 
     def value_format(self, value):
         value_in_gb = value * self.MB_TO_GB_FACTOR
-
         if isinstance(value_in_gb, int) and value_in_gb >= 1:
             return self.value_in_gb(value_in_gb)
         return self.value_in_mb(value)

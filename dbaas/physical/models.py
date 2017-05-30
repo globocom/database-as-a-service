@@ -214,9 +214,6 @@ class DiskOffering(BaseModel):
     name = models.CharField(
         verbose_name=_("Offering"), max_length=255, unique=True)
     size_kb = models.PositiveIntegerField(verbose_name=_("Size KB"))
-    available_size_kb = models.PositiveIntegerField(
-        verbose_name=_("Available Size KB")
-    )
 
     def size_gb(self):
         if self.size_kb:
@@ -226,15 +223,6 @@ class DiskOffering(BaseModel):
     def size_bytes(self):
         return self.converter_kb_to_bytes(self.size_kb)
     size_bytes.short_description = "Size Bytes"
-
-    def available_size_gb(self):
-        if self.available_size_kb:
-            return round(self.converter_kb_to_gb(self.available_size_kb), 2)
-    available_size_gb.short_description = "Available Size GB"
-
-    def available_size_bytes(self):
-        return self.converter_kb_to_bytes(self.available_size_kb)
-    size_bytes.short_description = "Available Size Bytes"
 
     @classmethod
     def converter_kb_to_gb(cls, value):
@@ -252,7 +240,7 @@ class DiskOffering(BaseModel):
             return (value * 1024) * 1024
 
     def __unicode__(self):
-        return '{} ({} GB)'.format(self.name, self.available_size_gb())
+        return '{}'.format(self.name)
 
     @classmethod
     def first_greater_than(cls, base_size, exclude_id=None):
@@ -513,7 +501,7 @@ class DatabaseInfra(BaseModel):
     @property
     def per_database_size_bytes(self):
         if self.disk_offering and self.engine.engine_type.name != 'redis':
-            return self.disk_offering.available_size_bytes()
+            return self.disk_offering.size_bytes()
 
         if not self.per_database_size_mbytes:
             return 0
@@ -849,9 +837,21 @@ class Instance(BaseModel):
 
 
 class DatabaseInfraParameter(BaseModel):
+
+    APPLIED_ON_DATABASE = 1
+    CHANGED_AND_NOT_APPLIED_ON_DATABASE = 2
+    RESET_DBAAS_DEFAULT = 3
+
+    PARAMETER_STATUS = (
+        (APPLIED_ON_DATABASE, 'Applied on database'),
+        (CHANGED_AND_NOT_APPLIED_ON_DATABASE, 'Changed and not applied on database'),
+        (RESET_DBAAS_DEFAULT, 'Initializing')
+    )
+
     databaseinfra = models.ForeignKey(DatabaseInfra)
     parameter = models.ForeignKey(Parameter)
     value = models.CharField(max_length=200)
+    status = models.IntegerField(choices=PARAMETER_STATUS, default=1)
 
     class Meta:
         unique_together = (
@@ -863,11 +863,12 @@ class DatabaseInfraParameter(BaseModel):
                                  self.parameter.name, self.value)
 
     @classmethod
-    def update_parameter_value(cls, databaseinfra_id, parameter_id, value):
+    def update_parameter_value(cls, databaseinfra_id, parameter_id,
+                               value, status):
         obj, created = cls.objects.get_or_create(
             databaseinfra_id=databaseinfra_id,
             parameter_id=parameter_id,
-            defaults={'value': value},
+            defaults={'value': value, 'status': status},
         )
         if created:
             return True
@@ -876,6 +877,7 @@ class DatabaseInfraParameter(BaseModel):
             return False
 
         obj.value = value
+        obj.status = status
         obj.save()
         return True
 

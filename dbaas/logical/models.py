@@ -483,6 +483,9 @@ class Database(BaseModel):
     def get_upgrade_retry_url(self):
         return "/admin/logical/database/{}/upgrade_retry/".format(self.id)
 
+    def get_change_parameters_retry_url(self):
+        return "/admin/logical/database/{}/change_parameters_retry/".format(self.id)
+
     def is_mongodb_24(self):
         engine = self.engine
         if engine.name == 'mongodb' and engine.version.startswith('2.4'):
@@ -690,6 +693,31 @@ class Database(BaseModel):
             error = "Database is dead and cannot be resized."
         elif self.is_being_used_elsewhere():
             error = "Database cannot be resized because" \
+                    " it is in use by another task."
+
+        if error:
+            return False, error
+        return True, None
+
+    def can_do_change_parameters_retry(self):
+        error = None
+        if self.is_in_quarantine:
+            error = "Database in quarantine and cannot have the parameters changed."
+        elif self.is_being_used_elsewhere('notification.tasks.change_parameters'):
+            error = "Database cannot have the parameters changed because" \
+                    " it is in use by another task."
+        if error:
+            return False, error
+        return True, None
+
+    def can_do_change_parameters(self):
+        error = None
+        if self.is_in_quarantine:
+            error = "Database in quarantine and cannot have the parameters changed."
+        elif self.is_dead:
+            error = "Database is dead and cannot be resized."
+        elif self.is_being_used_elsewhere():
+            error = "Database cannot have the parameters changed because" \
                     " it is in use by another task."
 
         if error:

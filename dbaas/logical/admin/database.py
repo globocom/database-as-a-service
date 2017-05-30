@@ -32,7 +32,8 @@ from logical.views import database_details, database_hosts, \
     database_credentials, database_resizes, database_backup, database_dns, \
     database_metrics, database_destroy, database_delete_host, \
     database_upgrade, database_upgrade_retry, database_resize_retry, \
-    database_make_backup, database_parameters
+    database_make_backup, database_parameters, \
+    database_change_parameters, database_change_parameters_retry
 from logical.forms import DatabaseForm
 from logical.service.database import DatabaseService
 
@@ -625,7 +626,16 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 self.admin_site.admin_view(database_parameters),
                 name="logical_database_parameters"
             ),
-
+            url(
+                r'^/?(?P<id>\d+)/change_parameters/$',
+                self.admin_site.admin_view(database_change_parameters),
+                name="change_parameters"
+            ),
+            url(
+                r'^/?(?P<id>\d+)/change_parameters_retry/$',
+                self.admin_site.admin_view(database_change_parameters_retry),
+                name="change_parameters_retry"
+            ),
         )
 
         return my_urls + urls
