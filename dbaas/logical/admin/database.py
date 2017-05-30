@@ -636,7 +636,6 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 self.admin_site.admin_view(database_change_parameters_retry),
                 name="change_parameters_retry"
             ),
-
         )
 
         return my_urls + urls
