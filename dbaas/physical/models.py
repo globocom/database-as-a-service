@@ -849,9 +849,21 @@ class Instance(BaseModel):
 
 
 class DatabaseInfraParameter(BaseModel):
+
+    APPLIED_ON_DATABASE = 1
+    CHANGED_AND_NOT_APPLIED_ON_DATABASE = 2
+    RESET_DBAAS_DEFAULT = 3
+
+    PARAMETER_STATUS = (
+        (APPLIED_ON_DATABASE, 'Applied on database'),
+        (CHANGED_AND_NOT_APPLIED_ON_DATABASE, 'Changed and not applied on database'),
+        (RESET_DBAAS_DEFAULT, 'Initializing')
+    )
+
     databaseinfra = models.ForeignKey(DatabaseInfra)
     parameter = models.ForeignKey(Parameter)
     value = models.CharField(max_length=200)
+    status = models.IntegerField(choices=PARAMETER_STATUS, default=1)
 
     class Meta:
         unique_together = (
@@ -863,11 +875,12 @@ class DatabaseInfraParameter(BaseModel):
                                  self.parameter.name, self.value)
 
     @classmethod
-    def update_parameter_value(cls, databaseinfra_id, parameter_id, value):
+    def update_parameter_value(cls, databaseinfra_id, parameter_id,
+                               value, status):
         obj, created = cls.objects.get_or_create(
             databaseinfra_id=databaseinfra_id,
             parameter_id=parameter_id,
-            defaults={'value': value},
+            defaults={'value': value, 'status': status},
         )
         if created:
             return True
@@ -876,6 +889,7 @@ class DatabaseInfraParameter(BaseModel):
             return False
 
         obj.value = value
+        obj.status = status
         obj.save()
         return True
 
