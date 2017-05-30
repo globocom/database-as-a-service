@@ -12,7 +12,7 @@
 
 {% block tab %}
 <fieldset class="module aligned ">
-  {% if snapshots %}
+  {% if snapshots or is_dba %}
     <div class="panel-heading">
       <h3 class="panel-title">Restore/Backup</h3>
     </div>

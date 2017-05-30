@@ -40,7 +40,7 @@ class CapacityBaseTestCase(TestCase):
             engine_type=cls.engine_type
         )
         cls.disk_offering = factory_physical.DiskOfferingFactory(
-            size_kb=1000000
+            size_kb=524288
         )
         cls.plan = factory_physical.PlanFactory(
             disk_offering=cls.disk_offering,

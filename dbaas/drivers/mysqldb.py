@@ -333,3 +333,12 @@ class MySQL(BaseDriver):
 
     def get_default_instance_type(self):
         return Instance.MySQL
+
+    def get_configuration(self):
+        configurations = {}
+
+        results = self.__query("SHOW VARIABLES")
+        for result in results:
+            configurations[result['Variable_name']] = result['Value']
+
+        return configurations

@@ -405,3 +405,34 @@ class MongoDB(BaseDriver):
     @property
     def replica_set_name(self):
         return 'ReplicaSet_{}'.format(self.databaseinfra.name)
+
+    def get_configuration(self):
+        instance = self.databaseinfra.instances.filter(
+            status=Instance.ALIVE, is_active=True,
+            instance_type=Instance.MONGODB
+        ).first()
+
+        if not instance:
+            raise EnvironmentError(
+                'Cannot get configuration to {}. No MongoDB instance with status '
+                'alive and active found'.format(self.databaseinfra)
+            )
+
+        with self.pymongo(instance) as client:
+            configuration = client.admin.command('getCmdLineOpts')
+        return self._parse_configuration(configuration['parsed'])
+
+    def _parse_configuration(self, configuration, key_base=''):
+        parsed = {}
+        for key, value in configuration.items():
+            if isinstance(value, dict):
+                parsed.update(self._parse_configuration(value, key))
+                continue
+            parsed[key] = value
+
+        unified = {}
+        for key, value in parsed.items():
+            if key_base:
+                key = '{}.{}'.format(key_base, key)
+            unified[key] = value
+        return unified

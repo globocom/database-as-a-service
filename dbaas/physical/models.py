@@ -214,9 +214,6 @@ class DiskOffering(BaseModel):
     name = models.CharField(
         verbose_name=_("Offering"), max_length=255, unique=True)
     size_kb = models.PositiveIntegerField(verbose_name=_("Size KB"))
-    available_size_kb = models.PositiveIntegerField(
-        verbose_name=_("Available Size KB")
-    )
 
     def size_gb(self):
         if self.size_kb:
@@ -226,15 +223,6 @@ class DiskOffering(BaseModel):
     def size_bytes(self):
         return self.converter_kb_to_bytes(self.size_kb)
     size_bytes.short_description = "Size Bytes"
-
-    def available_size_gb(self):
-        if self.available_size_kb:
-            return round(self.converter_kb_to_gb(self.available_size_kb), 2)
-    available_size_gb.short_description = "Available Size GB"
-
-    def available_size_bytes(self):
-        return self.converter_kb_to_bytes(self.available_size_kb)
-    size_bytes.short_description = "Available Size Bytes"
 
     @classmethod
     def converter_kb_to_gb(cls, value):
@@ -252,7 +240,7 @@ class DiskOffering(BaseModel):
             return (value * 1024) * 1024
 
     def __unicode__(self):
-        return '{} ({} GB)'.format(self.name, self.available_size_gb())
+        return '{}'.format(self.name)
 
     @classmethod
     def first_greater_than(cls, base_size, exclude_id=None):
@@ -513,7 +501,7 @@ class DatabaseInfra(BaseModel):
     @property
     def per_database_size_bytes(self):
         if self.disk_offering and self.engine.engine_type.name != 'redis':
-            return self.disk_offering.available_size_bytes()
+            return self.disk_offering.size_bytes()
 
         if not self.per_database_size_mbytes:
             return 0
@@ -892,6 +880,88 @@ class DatabaseInfraParameter(BaseModel):
         obj.status = status
         obj.save()
         return True
+
+    @classmethod
+    def load_database_configs(cls, infra):
+        database = infra.databases.first()
+        parameters = database.plan.replication_topology.parameter.all()
+        physical_parameters = infra.get_driver().get_configuration()
+
+        for parameter in parameters:
+            if not parameter.name in physical_parameters:
+                LOG.warning(
+                    'Parameter {} not found in physical configuration'.format(
+                        parameter.name
+                    )
+                )
+                continue
+
+            physical_value = physical_parameters[parameter.name]
+            default_value = infra.get_dbaas_parameter_default_value(
+                parameter_name=parameter.name
+            )
+
+            physical_value = DatabaseInfraParameter.get_value_with_type(
+                physical_value, default_value
+            )
+            if physical_value != default_value:
+                LOG.info('Updating parameter {} value {} to {}'.format(
+                    parameter, default_value, physical_value
+                ))
+                DatabaseInfraParameter.update_parameter_value(
+                    infra.id, parameter.id, physical_value
+                )
+
+    @staticmethod
+    def is_boolean(value):
+        if isinstance(value, bool):
+            return True
+
+        if not isinstance(value, str):
+            return False
+        return value.upper() in ['TRUE', 'FALSE']
+
+    @staticmethod
+    def formatted_value(base_value, new_value):
+        extension = ''.join([i for i in base_value if not i.isdigit()])
+        value = int(''.join([i for i in base_value if i.isdigit()]))
+        if 'M' in extension:
+            value = value * 1024 * 1024
+        elif 'G' in extension:
+            value = value * 1024 * 1024 * 1024
+
+        if new_value == value:
+            return base_value
+
+        new_extension = ''
+        extensions = ['K', 'M', 'G']
+        while new_value/1024 > 1:
+            new_value = new_value/1024
+            new_extension = extensions.pop(0)
+
+        if 'B' in extension:
+            new_extension = new_extension + 'B'
+        return '{}{}'.format(new_value, new_extension)
+
+    @staticmethod
+    def get_value_with_type(new_value, default_value):
+        if DatabaseInfraParameter.is_boolean(new_value):
+            return new_value
+
+        try:
+            new_value = int(new_value)
+        except ValueError:
+            return new_value
+
+        if new_value == default_value:
+            return new_value
+
+        if isinstance(default_value, str):
+            return DatabaseInfraParameter.formatted_value(
+                default_value, new_value
+            )
+
+        return new_value
 
 ##########################################################################
 # SIGNALS
