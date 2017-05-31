@@ -776,7 +776,22 @@ def change_parameters_database(self, database, user, task, since_step=0):
     infra = database.infra
     plan = infra.plan
     class_path = plan.replication_topology.class_path
-    steps = get_database_change_parameter_setting(class_path)
+
+    from physical.models import DatabaseInfraParameter
+    status_filter = [
+        DatabaseInfraParameter.CHANGED_AND_NOT_APPLIED_ON_DATABASE,
+        DatabaseInfraParameter.RESET_DBAAS_DEFAULT
+    ]
+    changed_parameters = DatabaseInfraParameter.objects.filter(
+        databaseinfra=infra,
+        status__in=status_filter
+    )
+    all_dinamic = True
+    for changed_parameter in changed_parameters:
+        if changed_parameter.parameter.dynamic is False:
+            all_dinamic = False
+            break
+    steps = get_database_change_parameter_setting(class_path, all_dinamic)
 
     database_change_parameter = DatabaseChangeParameter()
     database_change_parameter.database = database

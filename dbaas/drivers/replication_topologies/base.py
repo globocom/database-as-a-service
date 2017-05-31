@@ -140,12 +140,9 @@ class BaseTopology(object):
         }]
 
     def get_change_parameter_steps_description(self):
-        return 'Disabling monitoring and alarms and change database parameters'
+        return 'Changing database parameters'
 
-    def get_change_parameter_steps_final_description(self):
-        return 'Enabling monitoring and alarms'
-
-    def get_change_parameter_steps(self):
+    def get_change_static_parameter_steps(self):
         return [{
             self.get_change_parameter_steps_description(): (
                 'workflow.steps.util.vm.ChangeMaster',
@@ -156,23 +153,16 @@ class BaseTopology(object):
                 'workflow.steps.util.pack.Configure',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
-            ) + self.get_change_parameter_steps_extra() + (
-                #'workflow.steps.util.database.Start',
-                #'workflow.steps.util.database.CheckIsUp',
-            ),
-        }] + self.get_change_parameter_steps_final()
-
-    def get_change_parameter_steps_extra(self):
-        return (
-            #'workflow.steps.util.plan.InitializationForchange_parameter',
-            #'workflow.steps.util.plan.ConfigureForchange_parameter',
-            #'workflow.steps.util.pack.Configure',
-        )
-
-    def get_change_parameter_steps_final(self):
-        return [{
-            self.get_change_parameter_steps_final_description(): (
+                'workflow.steps.util.database.ChangeParameters',
                 'workflow.steps.util.db_monitor.EnableMonitoring',
                 'workflow.steps.util.zabbix.EnableAlarms',
-            ),
+            )
+        }]
+
+    def get_change_dinamic_parameter_steps(self):
+        return [{
+            self.get_change_parameter_steps_description(): (
+                'workflow.steps.util.pack.Configure',
+                'workflow.steps.util.database.ChangeParameters',
+            )
         }]
