@@ -141,3 +141,43 @@ class CheckIsDown(DatabaseStep):
     def do(self):
         if not self.is_down:
             raise EnvironmentError('Database is up, should be down')
+
+
+class DatabaseChangedParameters(DatabaseStep):
+
+    def __init__(self, instance):
+        super(DatabaseChangedParameters, self).__init__(instance)
+        self.changed_parameters = self.get_changed_parameters()
+
+    def get_changed_parameters(self):
+        from physical.models import DatabaseInfraParameter
+        status_filter = [
+            DatabaseInfraParameter.CHANGED_AND_NOT_APPLIED_ON_DATABASE,
+            DatabaseInfraParameter.RESET_DBAAS_DEFAULT
+        ]
+        changed_parameters = DatabaseInfraParameter.objects.filter(
+            databaseinfra=self.infra,
+            status__in=status_filter
+        )
+        return changed_parameters
+
+    def is_all_changed_parameters_dinamic(self):
+        for changed_parameter in self.changed_parameters:
+            if changed_parameter.parameter.dynamic is False:
+                return False
+        return True
+
+
+class ChangeParameters(DatabaseChangedParameters):
+
+    def __unicode__(self):
+        return "Changing database parameters..."
+
+    def do(self):
+        if self.is_all_changed_parameters_dinamic():
+            for changed_parameter in self.changed_parameters:
+                self.driver.set_configuration(
+                    instance=self.instance,
+                    name=changed_parameter.parameter.name,
+                    value=changed_parameter.value
+                )
