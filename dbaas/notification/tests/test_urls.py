@@ -44,7 +44,9 @@ class UrlTest(TestCase):
         task_waiting = TaskHistoryFactory()
         task_waiting.task_status = TaskHistory.STATUS_WAITING
         task_waiting.save()
-        task_pending = TaskHistoryFactory()
+        task_warning = TaskHistoryFactory(
+            task_status=TaskHistory.STATUS_WARNING
+        )
 
         url = reverse(waiting_tasks_api)
         response = self.client.get(url)
@@ -52,4 +54,4 @@ class UrlTest(TestCase):
 
         self.assertIn(str(task_waiting.id), tasks)
         self.assertEqual(tasks[str(task_waiting.id)], task_waiting.task_name)
-        self.assertNotIn(str(task_pending.id), tasks)
+        self.assertNotIn(str(task_warning.id), tasks)

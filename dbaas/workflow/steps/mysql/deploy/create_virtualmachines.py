@@ -73,7 +73,7 @@ class CreateVirtualMachine(BaseStep):
                 LOG.debug(
                     "Deploying new vm on cs with bundle %s and offering %s" % (bundle, offering))
 
-                vm = cs_provider.deploy_virtual_machine(
+                error, vm = cs_provider.deploy_virtual_machine(
                     offering=offering.serviceofferingid,
                     bundle=bundle,
                     project_id=cs_credentials.project,
@@ -82,9 +82,8 @@ class CreateVirtualMachine(BaseStep):
                         'affinity_group_id'),
                 )
 
-                if not vm:
-                    raise Exception(
-                        "CloudStack could not create the virtualmachine")
+                if error:
+                    raise Exception(error)
 
                 LOG.debug("New virtualmachine: %s" % vm)
 

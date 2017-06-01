@@ -9,7 +9,7 @@ from logical.models import Database
 from physical.models import Plan, Environment
 from account.models import AccountUser, Team
 from notification.models import TaskHistory
-from notification.tasks import create_database
+from notification.tasks import TaskRegister
 from dbaas_aclapi.tasks import bind_address_on_database
 from dbaas_aclapi.tasks import unbind_address_on_database
 from dbaas_aclapi.models import DatabaseBind
@@ -436,15 +436,20 @@ class ServiceAdd(APIView):
                 msg=msg, http_status=status.HTTP_400_BAD_REQUEST
             )
 
-        task_history = TaskHistory()
-        task_history.task_name = "create_database"
-        task_history.arguments = "Database name: {}".format(name)
-        task_history.save()
-
-        create_database.delay(
+#        task_history = TaskHistory()
+#        task_history.task_name = "create_database"
+#        task_history.arguments = "Database name: {}".format(name)
+#        task_history.save()
+#
+#        create_database.delay(
+#            name=name, plan=dbaas_plan, environment=dbaas_environment,
+#            team=dbaas_team, project=None, description=description,
+#            task_history=task_history, user=dbaas_user, is_protected=True
+#        )
+        TaskRegister.database_create(
             name=name, plan=dbaas_plan, environment=dbaas_environment,
             team=dbaas_team, project=None, description=description,
-            task_history=task_history, user=dbaas_user, is_protected=True
+            user=dbaas_user, is_protected=True
         )
 
         return Response(status=status.HTTP_201_CREATED)
