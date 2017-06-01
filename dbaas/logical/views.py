@@ -20,8 +20,11 @@ from drivers.base import CredentialAlreadyExists
 from physical.models import Host, DiskOffering, Environment, Plan
 from util import get_credentials_for
 from notification.models import TaskHistory
-from notification.tasks import add_instances_to_database, \
-    remove_readonly_instance, upgrade_database, resize_database
+from notification.tasks import add_instances_to_database
+from notification.tasks import remove_readonly_instance
+from notification.tasks import upgrade_database
+from notification.tasks import resize_database
+from notification.tasks import change_parameters_database
 from system.models import Configuration
 from .errors import DisabledDatabase
 from .forms.database import DatabaseDetailsForm
@@ -160,6 +163,122 @@ def database_credentials(request, context, database=None):
     )
 
 
+def _update_database_parameters(request_post, database):
+    changed_parameters = []
+    for key in request_post.keys():
+        if key.startswith("new_value_"):
+            parameter_new_value = request_post.get(key)
+            parameter_id = key.split("new_value_")[1]
+            if parameter_new_value:
+                from physical.models import DatabaseInfraParameter
+                changed = DatabaseInfraParameter.update_parameter_value(
+                    databaseinfra_id=database.databaseinfra_id,
+                    parameter_id=parameter_id,
+                    value=parameter_new_value,
+                    status=DatabaseInfraParameter.CHANGED_AND_NOT_APPLIED_ON_DATABASE
+                )
+                if changed:
+                    changed_parameters.append(parameter_id)
+    return changed_parameters
+
+
+@database_view('parameters')
+def database_parameters(request, context, database):
+    if request.method == 'POST':
+        changed_parameters = _update_database_parameters(request.POST, database)
+        if changed_parameters:
+            #return database_change_parameters(request, context, database)
+            return HttpResponseRedirect(
+                reverse('admin:change_parameters',
+                        kwargs={'id': database.id})
+            )
+
+    database_parameters = []
+    databaseinfra = database.databaseinfra
+    for topology_parameter in database.plan.replication_topology.parameter.all():
+        defaul_value = databaseinfra.get_dbaas_parameter_default_value(
+            parameter_name=topology_parameter.name
+        )
+        current_valeu = databaseinfra.get_parameter_value_or_default(
+            parameter=topology_parameter
+        )
+        database_parameter = {
+            "id": topology_parameter.id,
+            "name": topology_parameter.name,
+            "dbaas_default_value": defaul_value,
+            "current_valeu": current_valeu,
+            "new_value": "",
+        }
+        database_parameters.append(database_parameter)
+
+    context['database_parameters'] = database_parameters
+
+    return render_to_response(
+        "logical/database/details/parameters_tab.html",
+        context, RequestContext(request)
+    )
+
+
+@database_view("")
+def database_change_parameters(request, context, database):
+    can_do_change_parameters, error = database.can_do_change_parameters()
+    if not can_do_change_parameters:
+        messages.add_message(request, messages.ERROR, error)
+    else:
+        task_history = TaskHistory()
+        task_history.task_name = "change_parameters"
+        task_history.task_status = task_history.STATUS_WAITING
+        task_history.arguments = "Changing parameters of database {}".format(database)
+        task_history.user = request.user
+        task_history.save()
+
+        change_parameters_database.delay(
+            database=database,
+            user=request.user,
+            task=task_history
+        )
+
+    return HttpResponseRedirect(
+        reverse('admin:logical_database_parameters', kwargs={'id': database.id})
+    )
+
+
+@database_view("")
+def database_change_parameters_retry(request, context, database):
+    can_do_change_parameters, error = database.can_do_change_parameters_retry()
+
+    if can_do_change_parameters:
+        last_change_parameters = database.change_parameters.last()
+
+        if not last_change_parameters.is_status_error:
+            error = "Cannot do retry, last change parameters status is '{}'!".format(
+                last_change_parameters.get_status_display()
+            )
+        else:
+            current_step = last_change_parameters.current_step
+
+    if error:
+        messages.add_message(request, messages.ERROR, error)
+    else:
+        task_history = TaskHistory()
+        task_history.task_name = "change_parameters_retry"
+        task_history.task_status = task_history.STATUS_WAITING
+        task_history.arguments = "Retrying changing parameters of database {}".format(database)
+        task_history.user = request.user
+        task_history.save()
+
+        change_parameters_database.delay(
+            database=database,
+            user=request.user,
+            task=task_history,
+            since_step=since_step
+        )
+
+    return HttpResponseRedirect(
+        reverse('admin:logical_database_parameters', kwargs={'id': database.id})
+    )
+
+
 @database_view('metrics')
 def database_metrics(request, context, database):
     context['hostname'] = request.GET.get(
@@ -207,7 +326,7 @@ def _disk_resize(request, database):
     )
 
     current_used = round(database.used_size_in_gb, 2)
-    offering_size = round(disk_offering.available_size_gb(), 2)
+    offering_size = round(disk_offering.size_gb(), 2)
     if current_used >= offering_size:
         messages.add_message(
             request, messages.ERROR,
@@ -368,7 +487,7 @@ def database_resizes(request, context, database):
     if not disk_used_size_kb:
         disk_used_size_kb = database.used_size_in_kb
     context['disk_offerings'] = list(
-        DiskOffering.objects.filter(available_size_kb__gt=disk_used_size_kb)
+        DiskOffering.objects.filter(size_kb__gt=disk_used_size_kb)
     )
     if database.infra.disk_offering not in context['disk_offerings']:
         context['disk_offerings'].insert(0, database.infra.disk_offering)

@@ -107,6 +107,42 @@ class Engine(BaseModel):
         return self.name == 'redis'
 
 
+class Parameter(BaseModel):
+    engine_type = models.ForeignKey(
+        EngineType,
+        verbose_name=_("Engine type"),
+        related_name="enginetype",
+        on_delete=models.PROTECT
+    )
+    name = models.CharField(
+        verbose_name=_("Parameter Name"),
+        max_length=200
+    )
+    dynamic = models.BooleanField(
+        verbose_name=_("Dynamic"),
+        help_text="Check this option if the parameter is dynamic. That is, \
+        it can be changed without restart the database.",
+        default=True
+    )
+    class_path = models.CharField(
+        verbose_name=_("Class path"), max_length=200,
+        help_text="Class path that implemts the change in the parameter",
+        blank=True, null=True
+    )
+
+    class Meta:
+        unique_together = (
+            ('name', 'engine_type', )
+        )
+        permissions = (
+            ("view_parameter", "Can view parameter"),
+        )
+        ordering = ('engine_type__name', 'name')
+
+    def __unicode__(self):
+        return '{}: {}'.format(self.engine_type, self.name)
+
+
 class Script(BaseModel):
 
     name = models.CharField(max_length=100)
@@ -165,6 +201,12 @@ class ReplicationTopology(BaseModel):
     script = models.ForeignKey(
         Script, related_name='replication_topologies', null=True, blank=True
     )
+    parameter = models.ManyToManyField(
+        Parameter,
+        verbose_name=_("Parameter"),
+        related_name='replication_topologies',
+        blank=True
+    )
 
 
 class DiskOffering(BaseModel):
@@ -172,9 +214,6 @@ class DiskOffering(BaseModel):
     name = models.CharField(
         verbose_name=_("Offering"), max_length=255, unique=True)
     size_kb = models.PositiveIntegerField(verbose_name=_("Size KB"))
-    available_size_kb = models.PositiveIntegerField(
-        verbose_name=_("Available Size KB")
-    )
 
     def size_gb(self):
         if self.size_kb:
@@ -184,15 +223,6 @@ class DiskOffering(BaseModel):
     def size_bytes(self):
         return self.converter_kb_to_bytes(self.size_kb)
     size_bytes.short_description = "Size Bytes"
-
-    def available_size_gb(self):
-        if self.available_size_kb:
-            return round(self.converter_kb_to_gb(self.available_size_kb), 2)
-    available_size_gb.short_description = "Available Size GB"
-
-    def available_size_bytes(self):
-        return self.converter_kb_to_bytes(self.available_size_kb)
-    size_bytes.short_description = "Available Size Bytes"
 
     @classmethod
     def converter_kb_to_gb(cls, value):
@@ -210,7 +240,7 @@ class DiskOffering(BaseModel):
             return (value * 1024) * 1024
 
     def __unicode__(self):
-        return '{} ({} GB)'.format(self.name, self.available_size_gb())
+        return '{}'.format(self.name)
 
     @classmethod
     def first_greater_than(cls, base_size, exclude_id=None):
@@ -471,7 +501,7 @@ class DatabaseInfra(BaseModel):
     @property
     def per_database_size_bytes(self):
         if self.disk_offering and self.engine.engine_type.name != 'redis':
-            return self.disk_offering.available_size_bytes()
+            return self.disk_offering.size_bytes()
 
         if not self.per_database_size_mbytes:
             return 0
@@ -606,6 +636,36 @@ class DatabaseInfra(BaseModel):
             hosts.append(instance.hostname.hostname)
         self.last_vm_created = len(set(hosts))
         self.save()
+
+    def get_dbaas_parameter_default_value(self, parameter_name):
+        from physical.configurations import configuration_factory
+        configuration = configuration_factory(
+            self,
+            self.cs_dbinfra_offering.get().offering.memory_size_mb
+        )
+        return getattr(configuration, parameter_name).default
+
+    def get_parameter_value_or_default(self, parameter):
+        try:
+            dbinfraparameter = DatabaseInfraParameter.objects.get(
+                databaseinfra=self,
+                parameter=parameter
+            )
+        except DatabaseInfraParameter.DoesNotExist:
+            return self.get_dbaas_parameter_default_value(parameter.name)
+        else:
+            return dbinfraparameter.value
+
+    def get_parameter_value_by_parameter_name(self, parameter_name):
+        try:
+            dbinfraparameter = DatabaseInfraParameter.objects.get(
+                databaseinfra=self,
+                parameter__name=parameter_name
+            )
+        except DatabaseInfraParameter.DoesNotExist:
+            return None
+        else:
+            return dbinfraparameter.value
 
 
 class Host(BaseModel):
@@ -787,9 +847,137 @@ class Instance(BaseModel):
         return format_html(status)
 
 
+class DatabaseInfraParameter(BaseModel):
+
+    APPLIED_ON_DATABASE = 1
+    CHANGED_AND_NOT_APPLIED_ON_DATABASE = 2
+    RESET_DBAAS_DEFAULT = 3
+
+    PARAMETER_STATUS = (
+        (APPLIED_ON_DATABASE, 'Applied on database'),
+        (CHANGED_AND_NOT_APPLIED_ON_DATABASE, 'Changed and not applied on database'),
+        (RESET_DBAAS_DEFAULT, 'Initializing')
+    )
+
+    databaseinfra = models.ForeignKey(DatabaseInfra)
+    parameter = models.ForeignKey(Parameter)
+    value = models.CharField(max_length=200)
+    status = models.IntegerField(choices=PARAMETER_STATUS, default=1)
+
+    class Meta:
+        unique_together = (
+            ('databaseinfra', 'parameter', )
+        )
+
+    def __unicode__(self):
+        return "{}_{}:{}".format(self.databaseinfra.name,
+                                 self.parameter.name, self.value)
+
+    @classmethod
+    def update_parameter_value(cls, databaseinfra_id, parameter_id,
+                               value, status):
+        obj, created = cls.objects.get_or_create(
+            databaseinfra_id=databaseinfra_id,
+            parameter_id=parameter_id,
+            defaults={'value': value, 'status': status},
+        )
+        if created:
+            return True
+
+        if obj.value == value:
+            return False
+
+        obj.value = value
+        obj.status = status
+        obj.save()
+        return True
+
+    @classmethod
+    def load_database_configs(cls, infra):
+        database = infra.databases.first()
+        parameters = database.plan.replication_topology.parameter.all()
+        physical_parameters = infra.get_driver().get_configuration()
+
+        for parameter in parameters:
+            if not parameter.name in physical_parameters:
+                LOG.warning(
+                    'Parameter {} not found in physical configuration'.format(
+                        parameter.name
+                    )
+                )
+                continue
+
+            physical_value = physical_parameters[parameter.name]
+            default_value = infra.get_dbaas_parameter_default_value(
+                parameter_name=parameter.name
+            )
+
+            physical_value = DatabaseInfraParameter.get_value_with_type(
+                physical_value, default_value
+            )
+            if physical_value != default_value:
+                LOG.info('Updating parameter {} value {} to {}'.format(
+                    parameter, default_value, physical_value
+                ))
+                DatabaseInfraParameter.update_parameter_value(
+                    infra.id, parameter.id, physical_value
+                )
+
+    @staticmethod
+    def is_boolean(value):
+        if isinstance(value, bool):
+            return True
+
+        if not isinstance(value, str):
+            return False
+        return value.upper() in ['TRUE', 'FALSE']
+
+    @staticmethod
+    def formatted_value(base_value, new_value):
+        extension = ''.join([i for i in base_value if not i.isdigit()])
+        value = int(''.join([i for i in base_value if i.isdigit()]))
+        if 'M' in extension:
+            value = value * 1024 * 1024
+        elif 'G' in extension:
+            value = value * 1024 * 1024 * 1024
+
+        if new_value == value:
+            return base_value
+
+        new_extension = ''
+        extensions = ['K', 'M', 'G']
+        while new_value/1024 > 1:
+            new_value = new_value/1024
+            new_extension = extensions.pop(0)
+
+        if 'B' in extension:
+            new_extension = new_extension + 'B'
+        return '{}{}'.format(new_value, new_extension)
+
+    @staticmethod
+    def get_value_with_type(new_value, default_value):
+        if DatabaseInfraParameter.is_boolean(new_value):
+            return new_value
+
+        try:
+            new_value = int(new_value)
+        except ValueError:
+            return new_value
+
+        if new_value == default_value:
+            return new_value
+
+        if isinstance(default_value, str):
+            return DatabaseInfraParameter.formatted_value(
+                default_value, new_value
+            )
+
+        return new_value
+
 ##########################################################################
 # SIGNALS
 ##########################################################################
+
 
 @receiver(pre_delete, sender=Instance)
 def instance_pre_delete(sender, **kwargs):

@@ -138,3 +138,31 @@ class BaseTopology(object):
                 self.get_add_database_instances_last_steps()
             ))
         }]
+
+    def get_change_parameter_steps_description(self):
+        return 'Changing database parameters'
+
+    def get_change_static_parameter_steps(self):
+        return [{
+            self.get_change_parameter_steps_description(): (
+                'workflow.steps.util.vm.ChangeMaster',
+                'workflow.steps.util.zabbix.DisableAlarms',
+                'workflow.steps.util.db_monitor.DisableMonitoring',
+                'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.CheckIsDown',
+                'workflow.steps.util.pack.Configure',
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.database.ChangeParameters',
+                'workflow.steps.util.db_monitor.EnableMonitoring',
+                'workflow.steps.util.zabbix.EnableAlarms',
+            )
+        }]
+
+    def get_change_dinamic_parameter_steps(self):
+        return [{
+            self.get_change_parameter_steps_description(): (
+                'workflow.steps.util.pack.Configure',
+                'workflow.steps.util.database.ChangeParameters',
+            )
+        }]
