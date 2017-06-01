@@ -177,6 +177,8 @@ def update_disk(database, address, total_size, used_size, task):
 
 
 def disk_auto_resize(database, current_size, usage_percentage):
+    from notification.tasks import TaskRegister
+
     disk = DiskOffering.first_greater_than(current_size + 1024)
 
     if disk > DiskOffering.last_offering_available_for_auto_resize():
@@ -185,15 +187,24 @@ def disk_auto_resize(database, current_size, usage_percentage):
     if database.is_being_used_elsewhere():
         raise BusyDatabaseError("")
 
-    task = TaskHistory()
-    task.task_name = "database_disk_auto_resize"
-    task.task_status = task.STATUS_WAITING
-    task.arguments = "Database name: {}".format(database.name)
-    task.save()
-
     user = AccountUser.objects.get(username='admin')
-    database_disk_resize.delay(
-        database=database, disk_offering=disk, user=user, task_history=task
+
+#    task = TaskHistory()
+#    task.task_name = "database_disk_auto_resize"
+#    task.task_status = task.STATUS_WAITING
+#    task.arguments = "Database name: {}".format(database.name)
+#    task.save()
+#
+#    database_disk_resize.delay(
+#        database=database, disk_offering=disk, user=user, task_history=task
+#    )
+
+    task = TaskRegister.database_disk_resize(
+        database=database,
+        user=user,
+        disk_offering=disk,
+        task_name='database_disk_auto_resize',
+        register_user=False
     )
 
     email_notifications.disk_resize_notification(

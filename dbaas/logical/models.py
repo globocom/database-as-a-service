@@ -401,75 +401,90 @@ class Database(BaseModel):
 
     @classmethod
     def clone(cls, database, clone_name, plan, environment, user):
-        from notification.tasks import clone_database
-        from notification.models import TaskHistory
+        from notification.tasks import TaskRegister
+#       from notification.models import TaskHistory
 
-        task_history = TaskHistory()
-        task_history.task_name = "clone_database"
-        task_history.task_status = task_history.STATUS_WAITING
-        task_history.arguments = "Database name: {}".format(database.name)
-        task_history.user = user
-        task_history.object_id = database.id
-        task_history.object_class = database._meta.object_name
-        task_history.save()
+#        task_history = TaskHistory()
+#        task_history.task_name = "clone_database"
+#        task_history.task_status = task_history.STATUS_WAITING
+#        task_history.arguments = "Database name: {}".format(database.name)
+#        task_history.user = user
+#        task_history.object_id = database.id
+#        task_history.object_class = database._meta.object_name
+#        task_history.save()
+#
+#        clone_database.delay(
+#            origin_database=database, clone_name=clone_name, plan=plan,
+#            environment=environment, user=user, task_history=task_history
+#        )
 
-        clone_database.delay(
+        TaskRegister.database_clone(
             origin_database=database, clone_name=clone_name, plan=plan,
-            environment=environment, user=user, task_history=task_history
+            environment=environment, user=user
         )
 
     @classmethod
     def restore(cls, database, snapshot, user):
-        from notification.models import TaskHistory
+        from notification.tasks import TaskRegister
+#        from notification.models import TaskHistory
+#
+#        task_history = TaskHistory()
+#        task_history.task_name = "restore_snapshot"
+#        task_history.task_status = task_history.STATUS_WAITING
+#        task_history.arguments = "Restoring {} to an older version.".format(
+#            database.name
+#        )
+#        task_history.user = user
+#        task_history.object_id = database.id
+#        task_history.object_class = database._meta.object_name
+#        task_history.save()
 
-        task_history = TaskHistory()
-        task_history.task_name = "restore_snapshot"
-        task_history.task_status = task_history.STATUS_WAITING
-        task_history.arguments = "Restoring {} to an older version.".format(
-            database.name
-        )
-        task_history.user = user
-        task_history.object_id = database.id
-        task_history.object_class = database._meta.object_name
-        task_history.save()
+#        Database.recover_snapshot(
+#            database=database, snapshot=snapshot, user=user,
+#            task_history=task_history.id
+#        )
 
-        Database.recover_snapshot(
-            database=database, snapshot=snapshot, user=user,
-            task_history=task_history.id
-        )
-
-    @classmethod
-    def resize(cls, database, cloudstackpack, user):
-        from notification.tasks import resize_database
-        from notification.models import TaskHistory
-
-        task_history = TaskHistory()
-        task_history.task_name = "resize_database"
-        task_history.task_status = task_history.STATUS_WAITING
-        task_history.arguments = "Database name: {}".format(database.name)
-        task_history.user = user
-        task_history.object_id = database.id
-        task_history.object_class = database._meta.object_name
-        task_history.save()
-
-        resize_database.delay(
-            database=database, cloudstackpack=cloudstackpack,
-            user=user, task=task_history
-        )
-
-    @classmethod
-    def recover_snapshot(cls, database, snapshot, user, task_history):
-        from backup.tasks import restore_snapshot
         LOG.info(
             "Changing database volume with params: database {} snapshot: {}, user: {}".format(
                 database, snapshot, user
             )
         )
-
-        restore_snapshot.delay(
-            database=database, snapshot=snapshot, user=user,
-            task_history=task_history
+        TaskRegister.restore_snapshot(
+            database=database, snapshot=snapshot, user=user
         )
+
+    @classmethod
+    def resize(cls, database, cloudstackpack, user):
+        from notification.tasks import TaskRegister
+#        from notification.models import TaskHistory
+
+#        task_history = TaskHistory()
+#        task_history.task_name = "resize_database"
+#        task_history.task_status = task_history.STATUS_WAITING
+#        task_history.arguments = "Database name: {}".format(database.name)
+#        task_history.user = user
+#        task_history.object_id = database.id
+#        task_history.object_class = database._meta.object_name
+#        task_history.save()
+#
+#        resize_database.delay(
+#            database=database, cloudstackpack=cloudstackpack,
+#            user=user, task=task_history
+#        )
+
+        TaskRegister.database_rezise(
+            database=database, user=user,
+            cloudstack_pack=cloudstackpack
+        )
+
+#    @classmethod
+#    def recover_snapshot(cls, database, snapshot, user, task_history):
+#        from backup.tasks import restore_snapshot
+#
+#        restore_snapshot.delay(
+#            database=database, snapshot=snapshot, user=user,
+#            task_history=task_history
+#        )
 
     def get_metrics_url(self):
         return "/admin/logical/database/{}/metrics/".format(self.id)
@@ -559,48 +574,45 @@ class Database(BaseModel):
 
         return False
 
-    @classmethod
-    def disk_resizeOLD(cls, database, new_disk_offering, user):
-        from notification.tasks import database_disk_resize
-        from notification.models import TaskHistory
-        from physical.models import DiskOffering
-
-        task_history = TaskHistory()
-        task_history.task_name = "database_disk_resize"
-        task_history.task_status = task_history.STATUS_WAITING
-        task_history.arguments = "Database name: {}".format(database.name)
-        task_history.user = user
-        task_history.object_id = database.id
-        task_history.object_class = database._meta.object_name
-        task_history.save()
-
-        disk_offering = DiskOffering.objects.get(id=new_disk_offering)
-
-        database_disk_resize.delay(
-            database=database, disk_offering=disk_offering,
-            user=user, task_history=task_history
-        )
-
-    @classmethod
     def disk_resize(cls, database, new_disk_offering, user):
         from physical.models import DiskOffering
         from notification.tasks import TaskRegister
 
-        task_params = {
-            'task_name': 'database_disk_resize',
-            'arguments': 'Database name: {}'.format(database.name),
-            'user': user,
-            'database': database
-        }
+#        from notification.tasks import database_disk_resize
+#        from notification.models import TaskHistory
+#        from physical.models import DiskOffering
 
+#        task_history = TaskHistory()
+#        task_history.task_name = "database_disk_resize"
+#        task_history.task_status = task_history.STATUS_WAITING
+#        task_history.arguments = "Database name: {}".format(database.name)
+#        task_history.user = user
+#        task_history.object_id = database.id
+#        task_history.object_class = database._meta.object_name
+#        task_history.save()
+#
+#        disk_offering = DiskOffering.objects.get(id=new_disk_offering)
+#
+#        database_disk_resize.delay(
+#            database=database, disk_offering=disk_offering,
+#            user=user, task_history=task_history
+#        )
+#        task_params = {
+#            'task_name': 'database_disk_resize',
+#            'arguments': 'Database name: {}'.format(database.name),
+#            'user': user,
+#            'database': database
+#        }
+#
         disk_offering = DiskOffering.objects.get(id=new_disk_offering)
-        delay_params = {
-            "database": database,
-            "disk_offering": disk_offering,
-            "user": user
-        }
-
-        TaskRegister(task_params, delay_params)
+#        delay_params = {
+#            "database": database,
+#            "disk_offering": disk_offering,
+#            "user": user
+#        }
+#
+#        TaskRegister(task_params, delay_params)
+        TaskRegister.database_disk_resize(database=database, user=user, disk_offering=disk_offering)
 
     def update_host_disk_used_size(self, host_address, used_size_kb, total_size_kb=None):
         instance = self.databaseinfra.instances.filter(address=host_address).first()
@@ -769,19 +781,20 @@ class Database(BaseModel):
 #            database=self, task_history=task_history, user=user
 #        )
 
-        task_params = {
-            'task_name': 'destroy_database',
-            'arguments': 'Database name: {}'.format(self.name),
-            'user': user,
-            'database': self
-        }
+#        task_params = {
+#            'task_name': 'destroy_database',
+#            'arguments': 'Database name: {}'.format(self.name),
+#            'user': user,
+#            'database': self
+#        }
+#
+#        delay_params = {
+#            'database': self, 'user': user
+#        }
 
-        delay_params = {
-            'database': self, 'user': user
-        }
+        # TaskRegister(task_params, delay_params)
 
-        TaskRegister(task_params, delay_params)
-
+        TaskRegister.database_destroy(database=self, user=user)
         return
 
     @property

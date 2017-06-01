@@ -7,8 +7,7 @@ from physical.models import Plan, Environment
 from account.models import Team
 from .credential import CredentialSerializer
 from django.contrib.sites.models import Site
-from notification.tasks import create_database
-from notification.models import TaskHistory
+from notification.tasks import TaskRegister
 import logging
 
 LOG = logging.getLogger(__name__)
@@ -99,20 +98,28 @@ class DatabaseAPI(viewsets.ModelViewSet):
             self.pre_save(serializer.object)
             data = serializer.restore_fields(request.DATA, request.FILES)
 
-            task_history = TaskHistory()
-            task_history.task_name = "create_database"
-            task_history.task_status = task_history.STATUS_WAITING
-            task_history.arguments = "Database name: {}".format(data['name'])
-            task_history.save()
+#            task_history = TaskHistory()
+#            task_history.task_name = "create_database"
+#            task_history.task_status = task_history.STATUS_WAITING
+#            task_history.arguments = "Database name: {}".format(data['name'])
+#            task_history.save()
+#
+#            result = create_database.delay(
+#                name=data['name'], plan=data['plan'],
+#                environment=data['environment'], team=data['team'],
+#                project=data['project'], description=data['description'],
+#                subscribe_to_email_events=data['subscribe_to_email_events'],
+#                task_history=task_history, user=request.user
+#            )
 
-            result = create_database.delay(
+            result = TaskRegister.database_create(
                 name=data['name'], plan=data['plan'],
                 environment=data['environment'], team=data['team'],
                 project=data['project'], description=data['description'],
                 subscribe_to_email_events=data['subscribe_to_email_events'],
-                task_history=task_history, user=request.user
+                user=request.user,
+                register_user=False
             )
-
             headers = self.get_success_headers(data)
             task_url = Site.objects.get_current().domain + \
                 '/api/task?task_id=%s' % str(result.id)

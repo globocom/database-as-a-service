@@ -339,7 +339,7 @@ def restore_snapshot(self, database, snapshot, user, task_history):
         LOG.info("Restoring snapshot")
         worker_name = get_worker_name()
 
-        task_history = models.TaskHistory.objects.get(id=task_history)
+        # task_history = models.TaskHistory.objects.get(id=task_history)
         task_history = TaskHistory.register(request=self.request, task_history=task_history,
                                             user=user, worker_name=worker_name)
 
