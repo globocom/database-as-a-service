@@ -220,7 +220,7 @@ class CreateVirtualMachine(VmStep):
         offering = self.databaseinfra.cs_dbinfra_offering.get().offering
         LOG.info("VM : {}".format(self.instance.vm_name))
 
-        vm = self.cs_provider.deploy_virtual_machine(
+        error, vm = self.cs_provider.deploy_virtual_machine(
             offering=offering.serviceofferingid,
             bundle=bundle,
             project_id=self.cs_credentials.project,
@@ -229,8 +229,8 @@ class CreateVirtualMachine(VmStep):
                 'affinity_group_id'),
         )
 
-        if not vm:
-            raise Exception("CloudStack could not create the virtualmachine")
+        if error:
+            raise Exception(error)
 
         address = vm['virtualmachine'][0]['nic'][0]['ipaddress']
         vm_id = vm['virtualmachine'][0]['id']
