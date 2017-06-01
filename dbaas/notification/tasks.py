@@ -704,6 +704,7 @@ def database_disk_resize(self, database, disk_offering, task_history, user):
             )
 
         task_history.update_status_for(TaskHistory.STATUS_ERROR, details=error)
+        database.unpin_task()
     finally:
         AuditRequest.cleanup_request()
 
@@ -928,11 +929,273 @@ class TaskRegister(object):
     # ============  BEGIN TASKS   ==========
 
     @classmethod
-    def database_disk_resize(cls, **kw):
-        database_disk_resize.delay(**kw)
+    def database_disk_resize(cls,
+                             database,
+                             user,
+                             disk_offering,
+                             task_name=None,
+                             register_user=True,
+                             **kw):
+
+        task_params = {
+            'task_name': 'database_disk_resize' if task_name is None else task_name,
+            'arguments': 'Database name: {}'.format(database.name),
+            'database': database
+        }
+
+        task_params.update(**{'user': user} if register_user else {})
+
+        task = cls.create_task(task_params)
+        database_disk_resize.delay(
+            database=database,
+            user=user,
+            disk_offering=disk_offering,
+            task_history=task
+        )
+
+        return task
 
     @classmethod
-    def destroy_database(cls, **kw):
-        destroy_database.delay(**kw)
+    def database_destroy(cls, database, user, **kw):
+        task_params = {
+            'task_name': 'destroy_database',
+            'arguments': 'Database name: {}'.format(database.name),
+            'user': user,
+            'database': database
+        }
+
+        task = cls.create_task(task_params)
+        destroy_database.delay(database=database, user=user, task_history=task)
+
+    @classmethod
+    def database_rezise(cls, database, user, cloudstack_pack, **kw):
+        task_params = {
+            'task_name': 'rezise_database',
+            'arguments': 'Database name: {}'.format(database.name),
+            'user': user,
+            'database': database
+        }
+
+        task = cls.create_task(task_params)
+        resize_database.delay(
+            database=database,
+            user=user,
+            task=task,
+            cloudstackpack=cloudstack_pack
+        )
+
+    @classmethod
+    def database_resize_retry(cls,
+                              database,
+                              user,
+                              cloudstack_pack,
+                              original_cloudstackpack,
+                              since_step,
+                              **kw):
+        task_params = {
+            'task_name': 'resize_database_retry',
+            'arguments': "Retrying resize database {}".format(database),
+            'user': user,
+            'database': database
+        }
+
+        task = cls.create_task(task_params)
+        resize_database.delay(
+            database=database,
+            user=user,
+            task=task,
+            cloudstackpack=cloudstack_pack,
+            original_cloudstackpack=original_cloudstackpack,
+            since_step=since_step
+        )
+
+    @classmethod
+    def database_add_instances(cls, database, user, number_of_instances):
+        task_params = {
+            'task_name': 'add_database_instances',
+            'arguments': "Adding instances on database {}".format(database),
+            'user': user,
+            'database': database
+        }
+
+        task = cls.create_task(task_params)
+
+        add_instances_to_database.delay(
+            database=database,
+            user=user,
+            task=task,
+            number_of_instances=number_of_instances
+        )
+
+    @classmethod
+    def database_remove_instance(cls, database, user, instance):
+        task_params = {
+            'task_name': "remove_database_instance",
+            'arguments': "Removing instance {} on database {}".format(
+                instance, database),
+            'user': user,
+            'database': database
+        }
+
+        task = cls.create_task(task_params)
+
+        remove_readonly_instance.delay(
+            instance=instance,
+            user=user,
+            task=task,
+        )
+
+    @classmethod
+    def databases_analyze(cls):
+        from dbaas_services.analyzing.tasks import analyze_databases
+
+        task_params = {
+            'task_name': 'analyze_databases',
+            'arguments': "Waiting to start",
+        }
+        task = cls.create_task(task_params)
+        analyze_databases.delay(task_history=task)
+
+    @classmethod
+    def database_clone(cls, origin_database, user, clone_name,
+                       plan, environment):
+
+        task_params = {
+            'task_name': 'clone_database',
+            'arguments': 'Database name: {}'.format(origin_database.name),
+            'user': user,
+            'database': origin_database
+        }
+        task = cls.create_task(task_params)
+
+        clone_database.delay(
+            origin_database=origin_database, user=user, clone_name=clone_name,
+            plan=plan, environment=environment, task_history=task
+        )
+
+    @classmethod
+    def database_create(cls, user, name, plan, environment, team, project,
+                        description, subscribe_to_email_events,
+                        register_user=True, is_protected=False):
+
+        task_params = {
+            'task_name': "create_database",
+            'arguments': "Database name: {}".format(name),
+        }
+
+        task_params.update(**{'user': user} if register_user else {})
+
+        task = cls.create_task(task_params)
+
+        result = create_database.delay(
+            name=name,
+            plan=plan,
+            environment=environment,
+            team=team,
+            project=project,
+            description=description,
+            subscribe_to_email_events=subscribe_to_email_events,
+            task_history=task, user=user, is_protected=is_protected
+        )
+
+        return result
+
+    @classmethod
+    def database_backup(cls, database):
+        from backup.tasks import make_database_backup
+
+        task_params = {
+            'task_name': "make_database_backup",
+            'arguments': "Making backup of {}".format(database),
+            'database': database
+        }
+
+        task = cls.create_task(task_params)
+
+        make_database_backup.delay(
+            database=database,
+            task=task
+        )
+
+    @classmethod
+    def database_remove_backup(cls, database, snapshot):
+        from backup.tasks import remove_database_backup
+
+        task_params = {
+            'task_name': "remove_database_backup",
+            'arguments': "Remove backup of {}".format(database),
+        }
+
+        task = cls.create_task(task_params)
+
+        remove_database_backup.delay(
+            snapshot=snapshot,
+            task=task
+        )
+
+    @classmethod
+    def restore_snapshot(cls, database, user, snapshot):
+        from backup.tasks import restore_snapshot
+
+        task_params = {
+            'task_name': "restore_snapshot",
+            'arguments': "Restoring {} to an older version.".format(
+                          database.name),
+            'database': database,
+            'user': user
+        }
+
+        task = cls.create_task(task_params)
+
+        restore_snapshot.delay(
+            database=database,
+            task_history=task,
+            snapshot=snapshot,
+            user=user
+        )
+
+    @classmethod
+    def database_upgrade(cls, database, user, since_step=None):
+
+        task_params = {
+            'task_name': 'upgrade_database',
+            'arguments': 'Upgrading database {}'.format(database),
+            'database': database,
+            'user': user
+        }
+
+        if since_step:
+            task_params['task_name'] = 'upgrade_database_retry'
+            task_params['arguments'] = 'Retrying upgrade database {}'.format(database)
+
+        task = cls.create_task(task_params)
+
+        delay_params = {
+            'database': database,
+            'task': task,
+            'user': user
+        }
+
+        delay_params.update(**{'since_step': since_step} if since_step else {})
+
+        upgrade_database.delay(**delay_params)
+
+    @classmethod
+    def upgrade_mongodb_24_to_30(cls, database, user):
+
+        task_params = {
+            'task_name': "upgrade_mongodb_24_to_30",
+            'arguments': "Upgrading MongoDB 2.4 to 3.0",
+            'database': database,
+            'user': user
+        }
+
+        task = cls.create_task(task_params)
+
+        upgrade_mongodb_24_to_30.delay(
+            database=database,
+            task_history=task,
+            user=user
+        )
 
     # ============  END TASKS   ============
