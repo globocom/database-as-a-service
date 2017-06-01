@@ -1133,7 +1133,7 @@ class TaskRegister(object):
 
     @classmethod
     def database_create(cls, user, name, plan, environment, team, project,
-                        description, subscribe_to_email_events,
+                        description, subscribe_to_email_events=True,
                         register_user=True, is_protected=False):
 
         task_params = {
