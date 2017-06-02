@@ -574,6 +574,7 @@ class Database(BaseModel):
 
         return False
 
+    @classmethod
     def disk_resize(cls, database, new_disk_offering, user):
         from physical.models import DiskOffering
         from notification.tasks import TaskRegister
