@@ -472,7 +472,7 @@ class Database(BaseModel):
 #            user=user, task=task_history
 #        )
 
-        TaskRegister.database_rezise(
+        TaskRegister.database_resize(
             database=database, user=user,
             cloudstack_pack=cloudstackpack
         )

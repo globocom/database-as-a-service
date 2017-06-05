@@ -914,18 +914,6 @@ class TaskRegister(object):
 
         return task
 
-    @classmethod
-    def register_task(cls, task, params):
-        # TODO: tratar quando n achar
-        params.update({'task_history': task})
-        getattr(cls, task.task_name, None)(**params)
-
-    def __new__(cls, task_params=None, delay_params=None):
-        task = cls.create_task(task_params)
-        cls.register_task(task, params=delay_params)
-
-        return task
-
     # ============  BEGIN TASKS   ==========
 
     @classmethod
@@ -944,7 +932,6 @@ class TaskRegister(object):
         }
 
         task_params.update(**{'user': user} if register_user else {})
-
         task = cls.create_task(task_params)
         database_disk_resize.delay(
             database=database,
@@ -968,9 +955,9 @@ class TaskRegister(object):
         destroy_database.delay(database=database, user=user, task_history=task)
 
     @classmethod
-    def database_rezise(cls, database, user, cloudstack_pack, **kw):
+    def database_resize(cls, database, user, cloudstack_pack, **kw):
         task_params = {
-            'task_name': 'rezise_database',
+            'task_name': 'resize_database',
             'arguments': 'Database name: {}'.format(database.name),
             'user': user,
             'database': database
