@@ -34,12 +34,12 @@ class CreateTaskTestCase(TestCase):
 
         fake_database = MagicMock()
         fake_database.id = 999
-        fake_database._meta.object_name = 'Database'
+        fake_database._meta.db_table = 'logical_database'
         self.task_params.update({'database': fake_database})
         resp = TaskRegister.create_task(self.task_params)
 
         self.assertEqual(resp.object_id, 999)
-        self.assertEqual(resp.object_class, 'Database')
+        self.assertEqual(resp.object_class, 'logical_database')
 
 
 @patch.object(TaskRegister, 'create_task')

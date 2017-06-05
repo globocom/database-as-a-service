@@ -905,7 +905,7 @@ class TaskRegister(object):
 
         if database:
             task.object_id = database.id
-            task.object_class = database._meta.object_name
+            task.object_class = database._meta.db_table
 
         for k, v in params.iteritems():
             setattr(task, k, v)
