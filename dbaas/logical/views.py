@@ -184,34 +184,108 @@ def _update_database_parameters(request_post, database):
 
 @database_view('parameters')
 def database_parameters(request, context, database):
+    from physical.models import DatabaseInfraParameter
+
+    PROTECTED = 1
+    EDITABLE = 2
+    TASK_RUNNING = 3
+    TASK_ERROR = 4
+    TASK_SUCCESS = 5
+
+    form_status = PROTECTED
+
     if request.method == 'POST':
-        changed_parameters = _update_database_parameters(request.POST, database)
-        if changed_parameters:
-            #return database_change_parameters(request, context, database)
-            return HttpResponseRedirect(
-                reverse('admin:change_parameters',
-                        kwargs={'id': database.id})
-            )
+        if 'edit_parameters' in request.POST:
+            form_status = EDITABLE
+        elif 'calcel_edit_parameters' in request.POST:
+            form_status = PROTECTED
+        elif 'retry_update_parameters' in request.POST:
+            form_status = TASK_ERROR
+            can_do_change_parameters_retry, error = database.can_do_change_parameters_retry()
+            if not can_do_change_parameters_retry:
+                messages.add_message(request, messages.ERROR, error)
+            else:
+                changed_parameters = _update_database_parameters(request.POST, database)
+                return HttpResponseRedirect(
+                    reverse('admin:change_parameters_retry',
+                            kwargs={'id': database.id})
+                )
+        elif 'save_parameters' in request.POST:
+            form_status = EDITABLE
+            can_do_change_parameters, error = database.can_do_change_parameters()
+            if not can_do_change_parameters:
+                messages.add_message(request, messages.ERROR, error)
+            else:
+                changed_parameters = _update_database_parameters(request.POST, database)
+                if changed_parameters:
+                    return HttpResponseRedirect(
+                        reverse('admin:change_parameters',
+                                kwargs={'id': database.id})
+                    )
 
     database_parameters = []
     databaseinfra = database.databaseinfra
-    for topology_parameter in database.plan.replication_topology.parameter.all():
+    static_parameter = False
+    custom_parameter = False
+
+    parameters_changed = DatabaseInfraParameter.objects.filter(
+        databaseinfra=database.databaseinfra,
+        status=DatabaseInfraParameter.CHANGED_AND_NOT_APPLIED_ON_DATABASE
+    )
+    if parameters_changed:
+        form_status = TASK_RUNNING
+
+    last_change_parameters = database.change_parameters.last()
+    if last_change_parameters.is_running:
+        form_status = TASK_RUNNING
+    elif last_change_parameters.is_status_error:
+        form_status = TASK_ERROR
+
+    if parameters_changed:
+        parameters_id = []
+        for parameter_changed in parameters_changed:
+            parameters_id.append(parameter_changed.parameter.id)
+        topologies_parameter = database.plan.replication_topology.parameter.filter(id__in=parameters_id)
+    else:
+        topologies_parameter = database.plan.replication_topology.parameter.all()
+
+    for topology_parameter in topologies_parameter:
         defaul_value = databaseinfra.get_dbaas_parameter_default_value(
             parameter_name=topology_parameter.name
         )
-        current_valeu = databaseinfra.get_parameter_value_or_default(
+        current_valeu = databaseinfra.get_parameter_value(
             parameter=topology_parameter
         )
+        if current_valeu:
+            databaseinfra_custom_parameter = True
+            form_current_valeu = current_valeu
+            custom_parameter = True
+        else:
+            databaseinfra_custom_parameter = False
+            form_current_valeu = defaul_value
+        if not topology_parameter.dynamic:
+            static_parameter = True
         database_parameter = {
             "id": topology_parameter.id,
             "name": topology_parameter.name,
+            "dynamic": topology_parameter.dynamic,
             "dbaas_default_value": defaul_value,
-            "current_valeu": current_valeu,
+            "current_valeu": form_current_valeu,
             "new_value": "",
+            "custom_parameter": databaseinfra_custom_parameter,
         }
         database_parameters.append(database_parameter)
 
     context['database_parameters'] = database_parameters
+    context['static_parameter'] = static_parameter
+    context['custom_parameter'] = custom_parameter
+    context['PROTECTED'] = PROTECTED
+    context['EDITABLE'] = EDITABLE
+    context['TASK_RUNNING'] = TASK_RUNNING
+    context['TASK_ERROR'] = TASK_ERROR
+    context['TASK_SUCCESS'] = TASK_SUCCESS
+    context['form_status'] = form_status
+    context['last_change_parameters'] = last_change_parameters
 
     return render_to_response(
         "logical/database/details/parameters_tab.html",
@@ -245,9 +319,11 @@ def database_change_parameters(request, context, database):
 
 @database_view("")
 def database_change_parameters_retry(request, context, database):
+    #print "database_change_parameters_retry", request.method, request.POST
     can_do_change_parameters, error = database.can_do_change_parameters_retry()
-
     if can_do_change_parameters:
+        changed_parameters = _update_database_parameters(request.POST, database)
+
         last_change_parameters = database.change_parameters.last()
 
         if not last_change_parameters.is_status_error:
@@ -255,7 +331,7 @@ def database_change_parameters_retry(request, context, database):
                 last_change_parameters.get_status_display()
             )
         else:
-            current_step = last_change_parameters.current_step
+            since_step = last_change_parameters.current_step
 
     if error:
         messages.add_message(request, messages.ERROR, error)
