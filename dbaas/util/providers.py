@@ -185,6 +185,14 @@ def get_database_change_parameter_setting(class_path, all_dinamic):
         return replication_topology.get_change_static_parameter_steps()
 
 
+def get_database_change_parameter_retry_steps_count(class_path, all_dinamic):
+    replication_topology = get_replication_topology_instance(class_path)
+    if all_dinamic:
+        return replication_topology.get_change_dinamic_parameter_retry_steps_count()
+    else:
+        return replication_topology.get_change_static_parameter_retry_steps_count()
+
+
 def get_add_database_instances_steps(class_path):
     return get_replication_topology_instance(class_path).get_add_database_instances_steps()
 
