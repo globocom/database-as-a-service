@@ -703,7 +703,7 @@ class Database(BaseModel):
         error = None
         if self.is_in_quarantine:
             error = "Database in quarantine and cannot have the parameters changed."
-        elif self.is_being_used_elsewhere('notification.tasks.change_parameters'):
+        elif self.is_being_used_elsewhere('notification.tasks.change_parameters_database'):
             error = "Database cannot have the parameters changed because" \
                     " it is in use by another task."
         if error:
