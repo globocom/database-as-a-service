@@ -159,7 +159,7 @@ syslog-facility local0
 # Set the number of databases. The default database is DB 0, you can select
 # a different one on a per-connection basis using SELECT <dbid> where
 # dbid is a number between 0 and 'databases'-1
-databases 1
+databases {{ configuration.databases.value }}
 
 ################################ SNAPSHOTTING  #################################
 #
