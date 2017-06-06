@@ -530,7 +530,7 @@ class Database(BaseModel):
         tasks = TaskHistory.objects.filter(
             task_status=TaskHistory.STATUS_WAITING,
             object_id=self.id,
-            object_class=self._meta.object_name)
+            object_class=self._meta.db_table)
 
         if tasks:
             return True
