@@ -520,6 +520,16 @@ def handle_zabbix_alarms(database):
 @app.task(bind=True)
 def upgrade_mongodb_24_to_30(self, database, user, task_history=None):
 
+    def upgrade_create_zabbix_alarms():
+        try:
+            create_zabbix_alarms(database)
+        except Exception as e:
+            message = "Could not create Zabbix alarms: {}".format(e)
+            task_history.update_status_for(
+                TaskHistory.STATUS_ERROR, details=message
+            )
+            LOG.error(message)
+
     from workflow.settings import MONGODB_UPGRADE_24_TO_30_SINGLE
     from workflow.settings import MONGODB_UPGRADE_24_TO_30_HA
     from util import build_dict
@@ -602,6 +612,7 @@ def upgrade_mongodb_24_to_30(self, database, user, task_history=None):
             error = "{}\n{}\n{}".format(error, traceback, error)
             task_history.update_status_for(TaskHistory.STATUS_ERROR, details=error)
             LOG.info("MongoDB Upgrade finished with errors")
+            upgrade_create_zabbix_alarms()
             return
 
         task_history.update_status_for(
@@ -612,14 +623,7 @@ def upgrade_mongodb_24_to_30(self, database, user, task_history=None):
         task_history.update_status_for(TaskHistory.STATUS_ERROR, details=e)
         LOG.warning("MongoDB Upgrade finished with errors")
 
-    try:
-        create_zabbix_alarms(database)
-    except Exception as e:
-        message = "Could not create Zabbix alarms: {}".format(e)
-        task_history.update_status_for(
-            TaskHistory.STATUS_ERROR, details=message
-        )
-        LOG.error(message)
+    upgrade_create_zabbix_alarms()
 
 
 @app.task(bind=True)
