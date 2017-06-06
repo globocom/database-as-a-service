@@ -13,7 +13,8 @@ from util import email_notifications, get_worker_name, full_stack
 from util.decorators import only_one
 from util.providers import make_infra, clone_infra, destroy_infra, \
     get_database_upgrade_setting, get_resize_settings, \
-    get_database_change_parameter_setting
+    get_database_change_parameter_setting, \
+    get_database_change_parameter_retry_steps_count
 from simple_audit.models import AuditRequest
 from system.models import Configuration
 from .models import TaskHistory
@@ -792,6 +793,12 @@ def change_parameters_database(self, database, user, task, since_step=0):
             all_dinamic = False
             break
     steps = get_database_change_parameter_setting(class_path, all_dinamic)
+
+    if since_step > 0:
+        steps_dec = get_database_change_parameter_retry_steps_count(
+            class_path, all_dinamic)
+        LOG.info('since_step: {}, steps_dec: {}'.format(since_step, steps_dec))
+        since_step = since_step - steps_dec
 
     database_change_parameter = DatabaseChangeParameter()
     database_change_parameter.database = database
