@@ -3,12 +3,40 @@ from __future__ import absolute_import
 from django.test import TestCase
 from notification.models import TaskHistory
 from notification.tests.factory import TaskHistoryFactory
+from logical.tests.factory import DatabaseFactory
+from logical.models import Database
+
+
+class TaskHistoryObjectTestCase(TestCase):
+    @classmethod
+    def setUpClass(self):
+        self.database = DatabaseFactory()
+        self.task = TaskHistoryFactory(
+            object_class=self.database._meta.object_name,
+            object_id=self.database.id,
+            task_status=TaskHistory.STATUS_WAITING
+        )
+
+    @classmethod
+    def tearDownClass(self):
+        Database.objects.all().delete()
+        TaskHistory.objects.all().delete()
+
+    def test_return_true_when_have_task_history_registered(self):
+
+        self.assertTrue(self.database.is_being_used_elsewhere())
+
+    def test_return_false_when_have_task_history_registered_in_another_database(self):
+        other_database = DatabaseFactory()
+        self.assertFalse(other_database.is_being_used_elsewhere())
 
 
 class TaskHistoryTestCase(TestCase):
 
     def setUp(self):
-        self.task = TaskHistoryFactory()
+        self.task = TaskHistoryFactory(
+            task_status=TaskHistory.STATUS_WARNING
+        )
 
     def test_can_add_message_detail(self):
         self.assertIsNone(self.task.details)

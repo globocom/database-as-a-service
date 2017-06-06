@@ -36,7 +36,7 @@ class DatabaseAPITestCase(DbaaSAPITestCase, BasicTestsMixin):
     def model_create(self):
         return factory.DatabaseFactory(databaseinfra=self.datainfra)
 
-    @patch('api.database.create_database.delay')
+    @patch('notification.tasks.create_database.delay')
     def test_post_create_new(self, mock_delay):
         url = self.url_list()
         test_obj = self.model_new()

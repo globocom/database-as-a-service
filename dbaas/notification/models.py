@@ -17,14 +17,13 @@ class TaskHistory(BaseModel):
     class Meta:
         verbose_name_plural = "Task histories"
 
-    STATUS_PENDING = 'PENDING'
     STATUS_RUNNING = 'RUNNING'
     STATUS_SUCCESS = 'SUCCESS'
     STATUS_ERROR = 'ERROR'
     STATUS_WARNING = 'WARNING'
     STATUS_WAITING = 'WAITING'
 
-    _STATUS = [STATUS_PENDING, STATUS_RUNNING, STATUS_SUCCESS,
+    _STATUS = [STATUS_RUNNING, STATUS_SUCCESS,
                STATUS_ERROR, STATUS_WARNING, STATUS_WAITING]
 
     task_id = models.CharField(
@@ -38,7 +37,7 @@ class TaskHistory(BaseModel):
         verbose_name=_("Ended at"), null=True, blank=True, editable=False
     )
     task_status = models.CharField(
-        _('Task Status'), max_length=100, default=STATUS_PENDING, db_index=True
+        _('Task Status'), max_length=100, default=STATUS_WAITING, db_index=True
     )
     context = models.TextField(null=True, blank=True)
     details = models.TextField(
@@ -50,6 +49,8 @@ class TaskHistory(BaseModel):
     db_id = models.IntegerField(
         verbose_name=_("Database"), null=True, blank=True
     )
+    object_id = models.IntegerField(null=True, blank=True)
+    object_class = models.CharField(max_length=255, null=True, blank=True)
 
     def __unicode__(self):
         return u"%s" % self.task_id

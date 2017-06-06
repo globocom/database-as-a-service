@@ -23,7 +23,7 @@ class TaskHistoryAdmin(admin.ModelAdmin):
     list_filter_advanced = list_filter_basic + ["task_name", "user", ]
     readonly_fields = ('created_at', 'ended_at', 'task_name', 'task_id', 'task_status', 'user', 'context', 'arguments',
                        'friendly_details_read', "db_id")
-    exclude = ('details',)
+    exclude = ('details', "object_id", "object_class")
 
     def friendly_task_name(self, task_history):
         if task_history.task_name:
