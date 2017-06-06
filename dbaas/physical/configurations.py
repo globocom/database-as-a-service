@@ -35,6 +35,10 @@ class ConfigurationBase(object):
     def memory_size_in_gb(self):
         return round(self._memory_size * self.MB_TO_GB_FACTOR, 2)
 
+    @property
+    def memory_size_in_bytes(self):
+        return self._memory_size * 1024 * 1024
+
     def value_in_mb(self, value):
         return "{}{}".format(int(value), self.MB_FORMATTER)
 
@@ -62,12 +66,12 @@ class ConfigurationRedis(ConfigurationBase):
     @property
     def maxmemory(self):
         parameter_name = inspect.stack()[0][3]
-        if self.memory_size_in_gb <= 1: #1G
-            value = self.memory_size_in_mb / 2
+        if self.memory_size_in_gb <= 1:
+            value = self.memory_size_in_bytes / 2
         else:
-            value = self.memory_size_in_mb * 0.75 # 3/4
+            value = self.memory_size_in_bytes * 0.75
 
-        default = self.value_format(value)
+        default = value
         return self.get_parameter(parameter_name, default)
 
     @property
@@ -80,6 +84,12 @@ class ConfigurationRedis(ConfigurationBase):
     def save(self):
         parameter_name = inspect.stack()[0][3]
         default = "7200 1 3600 10 1800 10000"
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def databases(self):
+        parameter_name = inspect.stack()[0][3]
+        default = "1"
         return self.get_parameter(parameter_name, default)
 
 
