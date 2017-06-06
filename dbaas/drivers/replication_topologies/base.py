@@ -142,6 +142,16 @@ class BaseTopology(object):
     def get_change_parameter_steps_description(self):
         return 'Changing database parameters'
 
+    def get_change_parameter_steps_final_description(self):
+        return 'Setting parameter status'
+
+    def get_change_parameter_steps_final(self):
+        return [{
+            self.get_change_parameter_steps_final_description(): (
+                'workflow.steps.util.database.SetParameterStatus',
+            ),
+        }]
+
     def get_change_static_parameter_steps(self):
         return [{
             self.get_change_parameter_steps_description(): (
@@ -153,16 +163,21 @@ class BaseTopology(object):
                 'workflow.steps.util.pack.Configure',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
-                'workflow.steps.util.database.ChangeParameters',
                 'workflow.steps.util.db_monitor.EnableMonitoring',
                 'workflow.steps.util.zabbix.EnableAlarms',
             )
-        }]
+        }] + self.get_change_parameter_steps_final()
 
     def get_change_dinamic_parameter_steps(self):
         return [{
             self.get_change_parameter_steps_description(): (
                 'workflow.steps.util.pack.Configure',
-                'workflow.steps.util.database.ChangeParameters',
+                'workflow.steps.util.database.ChangeDynamicParameters',
             )
-        }]
+        }] + self.get_change_parameter_steps_final()
+
+    def get_change_dinamic_parameter_retry_steps_count(self):
+        return 1
+
+    def get_change_static_parameter_retry_steps_count(self):
+        return 2
