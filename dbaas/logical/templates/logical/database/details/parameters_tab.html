@@ -1,0 +1,76 @@
+{% extends "logical/database/details/base.html" %}
+{% load admin_static %}
+
+{% block tab %}
+<fieldset class="module aligned ">
+  <div class="panel-heading">
+    <h3 class="panel-title">Custom Parameters</h3>
+  </div>
+
+  <div class="panel-body">
+
+    <table id="table-parameters" class="table table-striped" data-database-id="{{database.pk}}" >
+      <thead>
+        <tr>
+          <th>Parameter</th>
+          <th>DBaaS default value</th>
+          <th>Current value</th>
+          {% if form_status  == EDITABLE or form_status == TASK_ERROR %}
+            <th>New value</th>
+          {% endif %}
+        </tr>
+      <tbody>
+        {% for parameter in database_parameters %}
+          <tr>
+            <td>
+              {{parameter.name}}
+              {%if not parameter.dynamic %}
+                *
+              {% endif %}
+            </td>
+            <td>{{parameter.dbaas_default_value}}</td>
+            <td>
+              {{parameter.current_valeu}}
+              {%if parameter.custom_parameter %}
+                **
+              {% endif %}
+            </td>
+            {% if form_status  == EDITABLE or form_status == TASK_ERROR %}
+              <td>
+                <input type="text" placeholder="type new value" maxlength="200" name="new_value_{{parameter.id}}" value="{{parameter.new_value}}">
+              </td>
+            {% endif %}
+          </tr>
+        {% endfor %}
+      </tbody>
+      </thead>
+    </table>
+    {%if static_parameter %}
+      <p>* Static parameter, it will be necessary restart the database if changed.</p>
+    {% endif %}
+    {%if custom_parameter %}
+      <p>** This parameter has been customized for this database.</p>
+    {% endif %}
+
+  </div>
+</fieldset>
+
+{% endblock %}
+
+{% block database_button_save %}
+
+  {% if form_status  == PROTECTED or form_status == TASK_SUCCESS %}
+    <input type="submit" value="Edit" name="edit_parameters" id="id_edit_parameters_btn" class="btn btn-primary"/>
+  {% elif  form_status  == EDITABLE %}
+    <input type="submit" value="Save" name="save_parameters" onclick=&quot;submitOrderForm();&quot; class="btn btn-primary"/>
+    <input type="submit" value="Cancel" name="calcel_edit_parameters" id="id_calcel_edit_parameters_btn" class="btn btn-primary"/>
+  {% elif  form_status  == TASK_ERROR %}
+    <input type="submit" value="Retry Change Parameters" name="retry_update_parameters" onclick=&quot;submitOrderForm();&quot; class="btn btn-warning"/>
+    <p><a href="{% url 'admin:maintenance_databasechangeparameter_change' last_change_parameters.id %}" target='_blank'>Last change parameters</a> has an <b>error</b>, please check the <a href="{% url 'admin:notification_taskhistory_change' last_change_parameters.task.id %}" target='_blank'>task</a> and retry the database change parameters clicking in button above</p>
+  {% endif %}
+
+{% endblock %}
+
+{% block js_footer %}
+{{ block.super }}
+{% endblock %}

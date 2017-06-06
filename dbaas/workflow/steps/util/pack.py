@@ -60,7 +60,7 @@ class PackStep(BaseInstanceStep):
     def get_configuration(self):
         try:
             configuration = configuration_factory(
-                self.engine.name, self.pack.offering.memory_size_mb
+                self.infra, self.pack.offering.memory_size_mb
             )
         except NotImplementedError:
             return None

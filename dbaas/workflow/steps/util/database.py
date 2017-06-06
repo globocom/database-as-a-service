@@ -141,3 +141,63 @@ class CheckIsDown(DatabaseStep):
     def do(self):
         if not self.is_down:
             raise EnvironmentError('Database is up, should be down')
+
+
+class DatabaseChangedParameters(DatabaseStep):
+
+    def __init__(self, instance):
+        super(DatabaseChangedParameters, self).__init__(instance)
+        self.changed_parameters = self.get_changed_parameters()
+        self.reseted_parameters = self.get_reseted_parameters()
+
+    def get_changed_parameters(self):
+        from physical.models import DatabaseInfraParameter
+        changed_parameters = DatabaseInfraParameter.objects.filter(
+            databaseinfra=self.infra,
+            status=DatabaseInfraParameter.CHANGED_AND_NOT_APPLIED_ON_DATABASE,
+        )
+        return changed_parameters
+
+    def get_reseted_parameters(self):
+        from physical.models import DatabaseInfraParameter
+        reseted_parameters = DatabaseInfraParameter.objects.filter(
+            databaseinfra=self.infra,
+            status=DatabaseInfraParameter.RESET_DBAAS_DEFAULT,
+        )
+        return reseted_parameters
+
+
+class ChangeDynamicParameters(DatabaseChangedParameters):
+
+    def __unicode__(self):
+        return "Changing dynamic database parameters..."
+
+    def do(self):
+        for changed_parameter in self.changed_parameters:
+            self.driver.set_configuration(
+                instance=self.instance,
+                name=changed_parameter.parameter.name,
+                value=changed_parameter.value
+            )
+        for reseted_parameter in self.reseted_parameters:
+            default_dbaas_value = self.infra.get_dbaas_parameter_default_value(
+                parameter_name=reseted_parameter.parameter.name
+            )
+            self.driver.set_configuration(
+                instance=self.instance,
+                name=reseted_parameter.parameter.name,
+                value=default_dbaas_value
+            )
+
+
+class SetParameterStatus(DatabaseChangedParameters):
+
+    def __unicode__(self):
+        return "Setting database parameter status on databaseinfra..."
+
+    def do(self):
+        for changed_parameter in self.changed_parameters:
+            changed_parameter.status = changed_parameter.APPLIED_ON_DATABASE
+            changed_parameter.save()
+        for reseted_parameters in self.reseted_parameters:
+            reseted_parameters.delete()

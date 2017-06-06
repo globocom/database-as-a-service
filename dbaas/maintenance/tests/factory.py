@@ -49,3 +49,10 @@ class DatabaseResizeFactory(factory.DjangoModelFactory):
     source_offer = factory.SubFactory(CloudStackPackFactory)
     target_offer = factory.SubFactory(CloudStackPackFactory)
     task = factory.SubFactory(TaskHistoryFactory)
+
+
+class DatabaseChangeParameterFactory(factory.DjangoModelFactory):
+    FACTORY_FOR = models.DatabaseChangeParameter
+
+    database = factory.SubFactory(DatabaseFactory)
+    task = factory.SubFactory(TaskHistoryFactory)

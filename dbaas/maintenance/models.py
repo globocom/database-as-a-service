@@ -221,39 +221,23 @@ class MaintenanceParameters(BaseModel):
         )
 
 
-class DatabaseUpgrade(BaseModel):
+class DatabaseMaintenanceTask(BaseModel):
     WAITING = 0
     RUNNING = 1
     ERROR = 2
     SUCCESS = 3
-    UPGRADE_STATUS = (
+    STATUS = (
         (WAITING, 'Waiting'),
         (RUNNING, 'Running'),
         (ERROR, 'Error'),
         (SUCCESS, 'Success'),
     )
 
-    database = models.ForeignKey(
-        Database, verbose_name="Database",
-        null=False, unique=False, related_name="upgrades"
-    )
-    source_plan = models.ForeignKey(
-        Plan, verbose_name="Source", null=False, unique=False,
-        related_name="database_upgrades_source"
-    )
-    target_plan = models.ForeignKey(
-        Plan, verbose_name="Target", null=False, unique=False,
-        related_name="database_upgrades_target"
-    )
     current_step = models.PositiveSmallIntegerField(
         verbose_name="Current Step", null=False, blank=False, default=0
     )
-    task = models.ForeignKey(
-        TaskHistory, verbose_name="Task History",
-        null=False, unique=False, related_name="database_upgrades"
-    )
     status = models.IntegerField(
-        verbose_name="Status", choices=UPGRADE_STATUS, default=WAITING
+        verbose_name="Status", choices=STATUS, default=WAITING
     )
     started_at = models.DateTimeField(
         verbose_name="Started at", null=True, blank=True
@@ -264,9 +248,6 @@ class DatabaseUpgrade(BaseModel):
     can_do_retry = models.BooleanField(
         verbose_name=_("Can Do Retry"), default=True
     )
-
-    def __unicode__(self):
-        return "{} upgrade".format(self.database.name)
 
     def update_step(self, step):
         if not self.started_at:
@@ -291,30 +272,56 @@ class DatabaseUpgrade(BaseModel):
     def is_status_error(self):
         return self.status == self.ERROR
 
+    @property
+    def is_status_success(self):
+        return self.status == self.SUCCESS
+
+    @property
+    def is_running(self):
+        return self.status == self.RUNNING
+
+    class Meta:
+        abstract = True
+
+
+class DatabaseUpgrade(DatabaseMaintenanceTask):
+    database = models.ForeignKey(
+        Database, verbose_name="Database",
+        null=False, unique=False, related_name="upgrades"
+    )
+    task = models.ForeignKey(
+        TaskHistory, verbose_name="Task History",
+        null=False, unique=False, related_name="database_upgrades"
+    )
+    source_plan = models.ForeignKey(
+        Plan, verbose_name="Source", null=False, unique=False,
+        related_name="database_upgrades_source"
+    )
+    target_plan = models.ForeignKey(
+        Plan, verbose_name="Target", null=False, unique=False,
+        related_name="database_upgrades_target"
+    )
+
     def save(self, *args, **kwargs):
         super(DatabaseUpgrade, self).save(*args, **kwargs)
 
-        older_upgrades = DatabaseUpgrade.objects.filter(
+        older_maintenances = DatabaseUpgrade.objects.filter(
             database=self.database, source_plan=self.source_plan
         ).exclude(id=self.id)
-        older_upgrades.update(can_do_retry=False)
+        older_maintenances.update(can_do_retry=False)
+
+    def __unicode__(self):
+        return "{} upgrade".format(self.database.name)
 
 
-class DatabaseResize(BaseModel):
-    WAITING = 0
-    RUNNING = 1
-    ERROR = 2
-    SUCCESS = 3
-    UPGRADE_STATUS = (
-        (WAITING, 'Waiting'),
-        (RUNNING, 'Running'),
-        (ERROR, 'Error'),
-        (SUCCESS, 'Success'),
-    )
-
+class DatabaseResize(DatabaseMaintenanceTask):
     database = models.ForeignKey(
         Database, verbose_name="Database",
         null=False, unique=False, related_name="resizes"
+    )
+    task = models.ForeignKey(
+        TaskHistory, verbose_name="Task History",
+        null=False, unique=False, related_name="database_resizes"
     )
     source_offer = models.ForeignKey(
         CloudStackPack, verbose_name="Source", null=False, unique=False,
@@ -324,74 +331,52 @@ class DatabaseResize(BaseModel):
         CloudStackPack, verbose_name="Target", null=False, unique=False,
         related_name="database_resizes_target"
     )
-    current_step = models.PositiveSmallIntegerField(
-        verbose_name="Current Step", null=False, blank=False, default=0
-    )
-    task = models.ForeignKey(
-        TaskHistory, verbose_name="Task History",
-        null=False, unique=False, related_name="database_resizes"
-    )
-    status = models.IntegerField(
-        verbose_name="Status", choices=UPGRADE_STATUS, default=WAITING
-    )
-    started_at = models.DateTimeField(
-        verbose_name="Started at", null=True, blank=True
-    )
-    finished_at = models.DateTimeField(
-        verbose_name="Finished at", null=True, blank=True
-    )
-    can_do_retry = models.BooleanField(
-        verbose_name=_("Can Do Retry"), default=True
-    )
+
+    def save(self, *args, **kwargs):
+        super(DatabaseResize, self).save(*args, **kwargs)
+
+        older_maintenances = DatabaseResize.objects.filter(
+            database=self.database
+        ).exclude(id=self.id)
+        older_maintenances.update(can_do_retry=False)
 
     def __unicode__(self):
         return "{} resize".format(self.database.name)
-
-    def update_step(self, step):
-        if not self.started_at:
-            self.started_at = datetime.now()
-
-        self.status = self.RUNNING
-        self.current_step = step
-        self.save()
-
-    def __resize_final_status(self, status):
-        self.finished_at = datetime.now()
-        self.status = status
-        self.save()
-
-    def set_success(self):
-        self.__resize_final_status(self.SUCCESS)
-
-    def set_error(self):
-        self.__resize_final_status(self.ERROR)
-
-    @property
-    def is_status_error(self):
-        return self.status == self.ERROR
-
-    @property
-    def is_running(self):
-        return self.status == self.RUNNING
 
     @classmethod
     def current_to(cls, database):
         resizes = cls.objects.filter(database=database, status=cls.RUNNING)
         return resizes.last()
 
-    def save(self, *args, **kwargs):
-        super(DatabaseResize, self).save(*args, **kwargs)
 
-        older_resizes = DatabaseResize.objects.filter(
+class DatabaseChangeParameter(DatabaseMaintenanceTask):
+    database = models.ForeignKey(
+        Database, verbose_name="Database",
+        null=False, unique=False, related_name="change_parameters"
+    )
+    task = models.ForeignKey(
+        TaskHistory, verbose_name="Task History",
+        null=False, unique=False, related_name="database_change_parameters"
+    )
+
+    def save(self, *args, **kwargs):
+        super(DatabaseChangeParameter, self).save(*args, **kwargs)
+
+        older_maintenances = DatabaseChangeParameter.objects.filter(
             database=self.database
         ).exclude(id=self.id)
-        older_resizes.update(can_do_retry=False)
+        older_maintenances.update(can_do_retry=False)
+
+    def __unicode__(self):
+        return "{} change parameters".format(self.database.name)
 
 
 simple_audit.register(Maintenance)
 simple_audit.register(HostMaintenance)
 simple_audit.register(MaintenanceParameters)
 simple_audit.register(DatabaseUpgrade)
+simple_audit.register(DatabaseResize)
+simple_audit.register(DatabaseChangeParameter)
 
 
 #########

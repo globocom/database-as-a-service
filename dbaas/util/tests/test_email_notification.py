@@ -33,7 +33,6 @@ class DiskResizeTestCase(TestCase):
 
         self.greater_disk = DiskOfferingFactory()
         self.greater_disk.size_kb *= 2
-        self.greater_disk.available_size_kb *= 2
         self.greater_disk.save()
 
         self.disk = DiskOfferingFactory()

@@ -12,12 +12,15 @@ from physical.models import Plan, DatabaseInfra, Instance
 from util import email_notifications, get_worker_name, full_stack
 from util.decorators import only_one
 from util.providers import make_infra, clone_infra, destroy_infra, \
-    get_database_upgrade_setting, get_resize_settings
+    get_database_upgrade_setting, get_resize_settings, \
+    get_database_change_parameter_setting, \
+    get_database_change_parameter_retry_steps_count
 from simple_audit.models import AuditRequest
 from system.models import Configuration
 from .models import TaskHistory
 from workflow.workflow import steps_for_instances
 from maintenance.models import DatabaseUpgrade, DatabaseResize
+from maintenance.models import DatabaseChangeParameter
 
 LOG = get_task_logger(__name__)
 
@@ -767,6 +770,68 @@ def upgrade_database(self, database, user, task, since_step=0):
         task.update_status_for(
             TaskHistory.STATUS_ERROR,
             'Could not do upgrade.\nUpgrade doesn\'t have rollback'
+        )
+
+
+@app.task(bind=True)
+def change_parameters_database(self, database, user, task, since_step=0):
+    worker_name = get_worker_name()
+    task = TaskHistory.register(self.request, user, task, worker_name)
+
+    infra = database.infra
+    plan = infra.plan
+    class_path = plan.replication_topology.class_path
+
+    from physical.models import DatabaseInfraParameter
+    status_filter = [
+        DatabaseInfraParameter.CHANGED_AND_NOT_APPLIED_ON_DATABASE,
+        DatabaseInfraParameter.RESET_DBAAS_DEFAULT
+    ]
+    changed_parameters = DatabaseInfraParameter.objects.filter(
+        databaseinfra=infra,
+        status__in=status_filter
+    )
+    all_dinamic = True
+    for changed_parameter in changed_parameters:
+        if changed_parameter.parameter.dynamic is False:
+            all_dinamic = False
+            break
+    steps = get_database_change_parameter_setting(class_path, all_dinamic)
+
+    if since_step > 0:
+        steps_dec = get_database_change_parameter_retry_steps_count(
+            class_path, all_dinamic)
+        LOG.info('since_step: {}, steps_dec: {}'.format(since_step, steps_dec))
+        since_step = since_step - steps_dec
+
+    database_change_parameter = DatabaseChangeParameter()
+    database_change_parameter.database = database
+    database_change_parameter.task = task
+    database_change_parameter.save()
+
+    hosts = []
+    for instance in database.infra.instances.all():
+        if instance.hostname not in hosts:
+            hosts.append(instance.hostname)
+
+    instances = []
+    for host in hosts:
+        instances.append(host.instances.all()[0])
+    instances = instances
+
+    success = steps_for_instances(
+        steps, instances, task,
+        database_change_parameter.update_step, since_step
+    )
+
+    if success:
+        database_change_parameter.set_success()
+        task.update_status_for(TaskHistory.STATUS_SUCCESS, 'Done')
+    else:
+        database_change_parameter.set_error()
+        task.update_status_for(
+            TaskHistory.STATUS_ERROR,
+            'Could not do change the database parameters.\nChange parameters doesn\'t have rollback'
         )
 
 

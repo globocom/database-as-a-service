@@ -364,3 +364,21 @@ class Redis(BaseDriver):
 
     def get_default_instance_type(self):
         return Instance.REDIS
+
+    def get_configuration(self):
+        instance = self.databaseinfra.instances.filter(
+            status=Instance.ALIVE, instance_type=Instance.REDIS, is_active=True
+        ).first()
+
+        if not instance:
+            raise EnvironmentError(
+                'Cannot get configuration to {}. No Redis instance with status '
+                'alive and active found'.format(self.databaseinfra)
+            )
+
+        with self.redis(instance) as client:
+            return client.config_get()
+
+    def set_configuration(self, instance, name, value):
+        with self.redis(instance) as client:
+            client.config_set(name, value)

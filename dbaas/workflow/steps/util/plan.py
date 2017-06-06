@@ -76,7 +76,7 @@ class PlanStep(BaseInstanceStep):
 
         try:
             configuration = configuration_factory(
-                self.engine.name, offering.memory_size_mb
+                self.infra, offering.memory_size_mb
             )
         except NotImplementedError:
             return None

@@ -294,6 +294,12 @@ class BaseDriver(object):
     def replica_set_name(self):
         return None
 
+    def get_configuration(self):
+        raise NotImplementedError
+
+    def set_configuration(self, instance, name, value):
+        raise NotImplementedError
+
 
 class DatabaseStatus(object):
 

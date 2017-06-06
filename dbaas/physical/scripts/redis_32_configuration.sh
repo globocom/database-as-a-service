@@ -90,7 +90,7 @@ die_if_error "Error setting init file"
 createconfigdbfile()
 {
     echo ""; echo $(date "+%Y-%m-%d %T") "- Creating the database config file"
-    
+
 (cat <<EOF_DBAAS_CONFIGDBFILE
 # Redis configuration file example
 
@@ -139,7 +139,7 @@ timeout 0
 # verbose (many rarely useful info, but not a mess like the debug level)
 # notice (moderately verbose, what you want in production probably)
 # warning (only very important / critical messages are logged)
-loglevel warning
+loglevel {{ configuration.loglevel.value }}
 
 # Specify the log file name. Also 'stdout' can be used to force
 # Redis to log on the standard output. Note that if you use standard
@@ -159,7 +159,7 @@ syslog-facility local0
 # Set the number of databases. The default database is DB 0, you can select
 # a different one on a per-connection basis using SELECT <dbid> where
 # dbid is a number between 0 and 'databases'-1
-databases 1
+databases {{ configuration.databases.value }}
 
 ################################ SNAPSHOTTING  #################################
 #
@@ -226,9 +226,9 @@ dbfilename dump.rdb
 #
 # The DB will be written inside this directory, with the filename specified
 # above using the 'dbfilename' configuration directive.
-# 
+#
 # Also the Append Only File will be created inside this directory.
-# 
+#
 # Note that you must specify a directory here, not a file name.
 dir /data/data
 
@@ -319,7 +319,7 @@ slave-priority 100
 #
 # This should stay commented out for backward compatibility and because most
 # people do not need auth (e.g. they run their own servers).
-# 
+#
 # Warning: since Redis is pretty fast an outside user can try up to
 # 150k passwords per second against a good box. This means that you should
 # use a very strong password otherwise it will be very easy to break.
@@ -378,18 +378,18 @@ maxclients 10000
 # limit for maxmemory so that there is some free RAM on the system for slave
 # output buffers (but this is not needed if the policy is 'noeviction').
 #
-maxmemory {{ configuration.max_memory }}
+maxmemory {{ configuration.maxmemory.value }}
 
 # MAXMEMORY POLICY: how Redis will select what to remove when maxmemory
 # is reached? You can select among five behavior:
-# 
+#
 # volatile-lru -> remove the key with an expire set using an LRU algorithm
 # allkeys-lru -> remove any key accordingly to the LRU algorithm
 # volatile-random -> remove a random key with an expire set
 # allkeys-random -> remove a random key, any key
 # volatile-ttl -> remove the key with the nearest expire time (minor TTL)
 # noeviction -> don't expire at all, just return an error on write operations
-# 
+#
 # Note: with all the kind of policies, Redis will return an error on write
 #       operations, when there are not suitable keys for eviction.
 #
@@ -445,7 +445,7 @@ appendonly no
 appendfilename redis.aof
 
 # The fsync() call tells the Operating System to actually write data on disk
-# instead to wait for more data in the output buffer. Some OS will really flush 
+# instead to wait for more data in the output buffer. Some OS will really flush
 # data on disk, some other OS will just try to do it ASAP.
 #
 # Redis supports three different modes:
@@ -486,7 +486,7 @@ appendfsync everysec
 # the same as "appendfsync none", that in practical terms means that it is
 # possible to lost up to 30 seconds of log in the worst scenario (with the
 # default Linux settings).
-# 
+#
 # If you have latency problems turn this to "yes". Otherwise leave it as
 # "no" that is the safest pick from the point of view of durability.
 no-appendfsync-on-rewrite no
@@ -494,7 +494,7 @@ no-appendfsync-on-rewrite no
 # Automatic rewrite of the append only file.
 # Redis is able to automatically rewrite the log file implicitly calling
 # BGREWRITEAOF when the AOF log size will growth by the specified percentage.
-# 
+#
 # This is how it works: Redis remembers the size of the AOF file after the
 # latest rewrite (or if no rewrite happened since the restart, the size of
 # the AOF at startup is used).
@@ -537,7 +537,7 @@ lua-time-limit 5000
 # but just the time needed to actually execute the command (this is the only
 # stage of command execution where the thread is blocked and can not serve
 # other requests in the meantime).
-# 
+#
 # You can configure the slow log with two parameters: one tells Redis
 # what is the execution time, in microseconds, to exceed in order for the
 # command to get logged, and the other parameter is the length of the
@@ -587,7 +587,7 @@ zset-max-ziplist-value 64
 # that is rehashing, the more rehashing "steps" are performed, so if the
 # server is idle the rehashing is never complete and some more memory is used
 # by the hash table.
-# 
+#
 # The default is to use this millisecond 10 times every second in order to
 # active rehashing the main dictionaries, freeing memory when possible.
 #
@@ -814,7 +814,7 @@ register_init_sentinel_service()
 createconfigsentinelfile()
 {
     echo ""; echo $(date "+%Y-%m-%d %T") "- Creating the database config file"
-    
+
 (cat <<EOF_DBAAS_CONFIGSENTINELFILE
 # Example sentinel.conf
 
@@ -955,7 +955,7 @@ sentinel failover-timeout {{MASTERNAME}} 60000
 # NOTIFICATION SCRIPT
 #
 # sentinel notification-script <master-name> <script-path>
-# 
+#
 # Call the specified notification script for any sentinel event that is
 # generated in the WARNING level (for instance -sdown, -odown, and so forth).
 # This script should notify the system administrator via email, SMS, or any
@@ -979,14 +979,14 @@ sentinel failover-timeout {{MASTERNAME}} 60000
 # When the master changed because of a failover a script can be called in
 # order to perform application-specific tasks to notify the clients that the
 # configuration has changed and the master is at a different address.
-# 
+#
 # The following arguments are passed to the script:
 #
 # <master-name> <role> <state> <from-ip> <from-port> <to-ip> <to-port>
 #
 # <state> is currently always "failover"
 # <role> is either "leader" or "observer"
-# 
+#
 # The arguments from-ip, from-port, to-ip, to-port are used to communicate
 # the old address of the master and the new address of the elected slave
 # (now a master).
@@ -1048,13 +1048,13 @@ configure_graylog
     createinitdbfile
     createconfigdbfile
     register_init_redis_service
-    
+
     {% if IS_HA  %}
-    
+
         createinitsentinelfile
         createconfigsentinelfile
         register_init_sentinel_service
-    
+
     {% endif %}
 
 {% endif %}
