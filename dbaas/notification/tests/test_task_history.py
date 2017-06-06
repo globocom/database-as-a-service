@@ -12,7 +12,7 @@ class TaskHistoryObjectTestCase(TestCase):
     def setUpClass(self):
         self.database = DatabaseFactory()
         self.task = TaskHistoryFactory(
-            object_class=self.database._meta.object_name,
+            object_class=self.database._meta.db_table,
             object_id=self.database.id,
             task_status=TaskHistory.STATUS_WAITING
         )
