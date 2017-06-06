@@ -645,14 +645,14 @@ class DatabaseInfra(BaseModel):
         )
         return getattr(configuration, parameter_name).default
 
-    def get_parameter_value_or_default(self, parameter):
+    def get_parameter_value(self, parameter):
         try:
             dbinfraparameter = DatabaseInfraParameter.objects.get(
                 databaseinfra=self,
                 parameter=parameter
             )
         except DatabaseInfraParameter.DoesNotExist:
-            return self.get_dbaas_parameter_default_value(parameter.name)
+            return None
         else:
             return dbinfraparameter.value
 
