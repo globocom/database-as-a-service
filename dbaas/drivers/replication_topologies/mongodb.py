@@ -51,7 +51,7 @@ class MongoDBSingle(BaseMongoDB):
 class MongoDBReplicaset(BaseMongoDB):
 
     def get_upgrade_steps_description(self):
-        return 'Disable monitoring and alarms and upgrading to MongoDB 3.2'
+        return 'Upgrading to MongoDB 3.2'
 
     def get_upgrade_steps_extra(self):
         return (
