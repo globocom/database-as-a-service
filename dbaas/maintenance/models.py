@@ -273,6 +273,10 @@ class DatabaseMaintenanceTask(BaseModel):
         return self.status == self.ERROR
 
     @property
+    def is_status_success(self):
+        return self.status == self.SUCCESS
+
+    @property
     def is_running(self):
         return self.status == self.RUNNING
 
