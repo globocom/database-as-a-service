@@ -362,8 +362,13 @@ def restore_snapshot(self, database, snapshot, user, task_history):
 
         not_primary_instances = databaseinfra.instances.exclude(hostname=host).exclude(instance_type__in=[Instance.MONGODB_ARBITER,
                                                                                                           Instance.REDIS_SENTINEL])
-        not_primary_hosts = [
-            instance.hostname for instance in not_primary_instances]
+
+        not_primary_hosts = []
+        for arbiter in databaseinfra.instances.filter(instance_type=Instance.MONGODB_ARBITER):
+            not_primary_hosts.append(arbiter.hostname)
+
+        for instance in not_primary_instances:
+            not_primary_hosts.append(instance.hostname)
 
         workflow_dict = build_dict(databaseinfra=databaseinfra,
                                    database=database,
