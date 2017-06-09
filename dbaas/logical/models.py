@@ -4,13 +4,14 @@ import simple_audit
 import logging
 import datetime
 from django.db import models, transaction, Error
-from django.core.exceptions import ValidationError
-from django.utils.translation import ugettext_lazy as _
 from django.db.models.signals import pre_save, post_save, pre_delete
+from django.contrib.auth.models import User
 from django.dispatch import receiver
-from django_extensions.db.fields.encrypted import EncryptedCharField
+from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.utils.functional import cached_property
 from django.utils.html import format_html
+from django.utils.translation import ugettext_lazy as _
+from django_extensions.db.fields.encrypted import EncryptedCharField
 from util import slugify, make_db_random_password
 from util.models import BaseModel
 from physical.models import DatabaseInfra, Environment
@@ -19,7 +20,6 @@ from system.models import Configuration
 from datetime import date, timedelta
 from account.models import Team
 from drivers.base import ConnectionError, DatabaseStatus
-from django.core.exceptions import ObjectDoesNotExist
 from logical.validators import database_name_evironment_constraint
 from notification.models import TaskHistory
 
@@ -104,20 +104,21 @@ class Database(BaseModel):
     subscribe_to_email_events = models.BooleanField(
         verbose_name=_("Subscribe to email events"), default=True,
         help_text=_(
-            "Check this box if you'd like to receive information regarding this database by email."
+            "Check this box if you'd like to receive information "
+            "regarding this database by email."
         )
     )
     disk_auto_resize = models.BooleanField(
         verbose_name=_("Disk auto resize"), default=True,
-        help_text=_(
-            "When marked, the disk will be resized automatically."
-        )
+        help_text=_("When marked, the disk will be resized automatically.")
     )
     is_protected = models.BooleanField(
         verbose_name=_("Protected"), default=False,
-        help_text=_(
-            "When marked, the database can not be deleted."
-        )
+        help_text=_("When marked, the database can not be deleted.")
+    )
+    quarantine_user = models.ForeignKey(
+        User, related_name='databases_quarantine',
+        null=True, blank=True, editable=False
     )
 
     def team_contact(self):
@@ -213,6 +214,7 @@ class Database(BaseModel):
             LOG.warning("Putting database {} in quarantine".format(self.name))
             self.is_in_quarantine = True
             self.is_protected = False
+
             self.save()
             if self.credentials.exists():
                 for credential in self.credentials.all():
