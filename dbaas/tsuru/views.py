@@ -2,6 +2,7 @@
 import re
 import logging
 from slugify import slugify
+from dbaas.middleware import UserMiddleware
 from util import get_credentials_for
 from util.decorators import REDIS_CLIENT
 from util import simple_health_check
@@ -460,6 +461,7 @@ class ServiceRemove(APIView):
     model = Database
 
     def delete(self, request, database_name, format=None):
+        UserMiddleware.set_current_user(request.user)
         env = get_url_env(request)
         try:
             database = get_database(database_name, env)

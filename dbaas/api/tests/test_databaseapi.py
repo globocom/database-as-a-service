@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 import logging
+from datetime import datetime
 from django.core.urlresolvers import reverse
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import status
@@ -75,10 +76,12 @@ class DatabaseAPITestCase(DbaaSAPITestCase, BasicTestsMixin):
         response = self.client.delete(url)
 
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-
         self.assertRaises(
             ObjectDoesNotExist,
-            Database.objects.filter(
-                is_in_quarantine=False, pk=obj.pk
-            ).get
+            Database.objects.filter(is_in_quarantine=False, pk=obj.pk).get
         )
+
+        obj = self.model.objects.get(id=obj.pk)
+        self.assertTrue(obj.is_in_quarantine)
+        self.assertEqual(obj.quarantine_dt, datetime.now().date())
+        self.assertEqual(obj.quarantine_user.username, self.USERNAME)

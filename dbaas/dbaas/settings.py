@@ -153,6 +153,7 @@ MIDDLEWARE_CLASSES = (
     'simple_audit.middleware.TrackingRequestOnThreadLocalMiddleware',
     'django.contrib.flatpages.middleware.FlatpageFallbackMiddleware',
     'dbaas.middleware.AutoLogout',
+    'dbaas.middleware.UserMiddleware',
 )
 
 ROOT_URLCONF = 'dbaas.urls'

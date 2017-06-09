@@ -954,8 +954,13 @@ def database_pre_save(sender, **kwargs):
     if database.is_in_quarantine:
         if database.quarantine_dt is None:
             database.quarantine_dt = datetime.datetime.now().date()
+
+        if not database.quarantine_user:
+            from dbaas.middleware import UserMiddleware
+            database.quarantine_user = UserMiddleware.current_user()
     else:
         database.quarantine_dt = None
+        database.quarantine_user = None
 
     if database.id:
         saved_object = Database.objects.get(id=database.id)

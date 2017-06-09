@@ -2,6 +2,7 @@
 from __future__ import absolute_import, unicode_literals
 from rest_framework import viewsets, serializers, status
 from rest_framework.response import Response
+from dbaas.middleware import UserMiddleware
 from logical import models
 from physical.models import Plan, Environment
 from account.models import Team
@@ -133,6 +134,7 @@ class DatabaseAPI(viewsets.ModelViewSet):
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
+        UserMiddleware.set_current_user(request.user)
 
         if instance.is_in_quarantine or instance.is_protected:
             return Response(status=status.HTTP_401_UNAUTHORIZED)
