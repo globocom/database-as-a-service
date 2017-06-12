@@ -437,16 +437,6 @@ class ServiceAdd(APIView):
                 msg=msg, http_status=status.HTTP_400_BAD_REQUEST
             )
 
-#        task_history = TaskHistory()
-#        task_history.task_name = "create_database"
-#        task_history.arguments = "Database name: {}".format(name)
-#        task_history.save()
-#
-#        create_database.delay(
-#            name=name, plan=dbaas_plan, environment=dbaas_environment,
-#            team=dbaas_team, project=None, description=description,
-#            task_history=task_history, user=dbaas_user, is_protected=True
-#        )
         TaskRegister.database_create(
             name=name, plan=dbaas_plan, environment=dbaas_environment,
             team=dbaas_team, project=None, description=description,

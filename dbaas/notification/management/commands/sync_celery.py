@@ -30,7 +30,7 @@ class Command(BaseCommand):
             type="int",
         ),
     )
-    
+
     def __init__(self):
         super(Command, self).__init__()
 
