@@ -13,7 +13,6 @@ from logical.errors import BusyDatabaseError
 from logical.models import Database
 from system.models import Configuration
 from .models import TaskHistory
-from .tasks import database_disk_resize
 from util import email_notifications, exec_remote_command
 
 
@@ -188,16 +187,6 @@ def disk_auto_resize(database, current_size, usage_percentage):
         raise BusyDatabaseError("")
 
     user = AccountUser.objects.get(username='admin')
-
-#    task = TaskHistory()
-#    task.task_name = "database_disk_auto_resize"
-#    task.task_status = task.STATUS_WAITING
-#    task.arguments = "Database name: {}".format(database.name)
-#    task.save()
-#
-#    database_disk_resize.delay(
-#        database=database, disk_offering=disk, user=user, task_history=task
-#    )
 
     task = TaskRegister.database_disk_resize(
         database=database,
