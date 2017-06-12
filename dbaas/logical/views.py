@@ -15,14 +15,11 @@ from dbaas_cloudstack.models import CloudStackPack
 from dbaas_credentials.models import CredentialType
 from dbaas import constants
 from account.models import Team
-from backup.tasks import make_database_backup, remove_database_backup
 from drivers.base import CredentialAlreadyExists
 from physical.models import Host, DiskOffering, Environment, Plan
 from util import get_credentials_for
 from notification.models import TaskHistory
-from notification.tasks import add_instances_to_database, \
-    remove_readonly_instance, upgrade_database, resize_database, TaskRegister, \
-    change_parameters_database
+from notification.tasks import TaskRegister, change_parameters_database
 from system.models import Configuration
 from .errors import DisabledDatabase
 from .forms.database import DatabaseDetailsForm
@@ -317,7 +314,7 @@ def database_change_parameters(request, context, database):
 
 @database_view("")
 def database_change_parameters_retry(request, context, database):
-    #print "database_change_parameters_retry", request.method, request.POST
+    # print "database_change_parameters_retry", request.method, request.POST
     can_do_change_parameters, error = database.can_do_change_parameters_retry()
     if can_do_change_parameters:
         changed_parameters = _update_database_parameters(request.POST, database)
@@ -450,21 +447,6 @@ def database_resize_retry(request, context, database):
     if error:
         messages.add_message(request, messages.ERROR, error)
     else:
-#        task_history = TaskHistory()
-#        task_history.task_name = "resize_database_retry"
-#        task_history.task_status = task_history.STATUS_WAITING
-#        task_history.arguments = "Retrying resize database {}".format(database)
-#        task_history.user = request.user
-#        task_history.object_id = database.id
-#        task_history.object_class = database._meta.object_name
-#        task_history.save()
-#
-#        resize_database.delay(
-#            database=database, user=request.user, task=task_history,
-#            cloudstackpack=last_resize.target_offer,
-#            original_cloudstackpack=last_resize.source_offer,
-#            since_step=current_step
-#        )
 
         TaskRegister.database_resize_retry(
             database=database,
@@ -484,20 +466,6 @@ def database_upgrade(request, context, database):
     if not can_do_upgrade:
         messages.add_message(request, messages.ERROR, error)
     else:
-#        task_history = TaskHistory()
-#        task_history.task_name = "upgrade_database"
-#        task_history.task_status = task_history.STATUS_WAITING
-#        task_history.arguments = "Upgrading database {}".format(database)
-#        task_history.user = request.user
-#        task_history.object_id = database.id
-#        task_history.object_class = database._meta.object_name
-#        task_history.save()
-#
-#        upgrade_database.delay(
-#            database=database,
-#            user=request.user,
-#            task=task_history
-#        )
 
         TaskRegister.database_upgrade(
             database=database,
@@ -529,21 +497,6 @@ def database_upgrade_retry(request, context, database):
     if error:
         messages.add_message(request, messages.ERROR, error)
     else:
-#        task_history = TaskHistory()
-#        task_history.task_name = "upgrade_database_retry"
-#        task_history.task_status = task_history.STATUS_WAITING
-#        task_history.arguments = "Retrying upgrade database {}".format(database)
-#        task_history.user = request.user
-#        task_history.object_id = database.id
-#        task_history.object_class = database._meta.object_name
-#        task_history.save()
-#
-#        upgrade_database.delay(
-#            database=database,
-#            user=request.user,
-#            task=task_history,
-#            since_step=since_step
-#        )
 
         TaskRegister.database_upgrade(
             database=database,
@@ -636,22 +589,6 @@ def _add_read_only_instances(request, database):
         )
         return
 
-#    task = TaskHistory()
-#    task.task_name = "add_database_instances"
-#    task.task_status = TaskHistory.STATUS_WAITING
-#    task.arguments = "Adding instances on database {}".format(database)
-#    task.user = request.user
-#    task.object_id = database.id
-#    task.object_class = database._meta.object_name
-#    task.save()
-#
-#    add_instances_to_database.delay(
-#        database=database,
-#        user=request.user,
-#        task=task,
-#        number_of_instances=qtd_new_hosts
-#    )
-
     TaskRegister.database_add_instances(
         database=database,
         user=request.user,
@@ -737,17 +674,6 @@ def database_delete_host(request, database_id, host_id):
         can_delete = False
 
     if can_delete:
-#        task = TaskHistory()
-#        task.task_name = "remove_database_instance"
-#        task.task_status = TaskHistory.STATUS_WAITING
-#        task.arguments = "Removing instance {} on database {}".format(
-#            instance, database
-#        )
-#        task.user = request.user
-#        task.object_id = database.id
-#        task.object_class = database._meta.object_name
-#        task.save()
-#        remove_readonly_instance.delay(instance, request.user, task)
         TaskRegister.database_remove_instance(database=database, instance=instance, user=request.user)
 
     return HttpResponseRedirect(
@@ -859,12 +785,6 @@ def _delete_snapshot(request, database):
         )
         return
 
-#    task_history = TaskHistory()
-#    task_history.task_name = "remove_database_backup"
-#    task_history.task_status = TaskHistory.STATUS_WAITING
-#    task_history.arguments = "Removing backup of {}".format(database)
-#    task_history.save()
-#    remove_database_backup.delay(task=task_history, snapshot=snapshot)
     TaskRegister.database_remove_backup(database=database, snapshot=snapshot)
 
 
@@ -883,15 +803,6 @@ def database_make_backup(request, context, database):
     if error:
         messages.add_message(request, messages.ERROR, error)
     else:
-#        task_history = TaskHistory()
-#        task_history.task_name = "make_database_backup"
-#        task_history.task_status = TaskHistory.STATUS_WAITING
-#        task_history.arguments = "Making backup of {}".format(database)
-#        task_history.object_id = database.id
-#        task_history.object_class = database._meta.object_name
-#        task_history.save()
-#
-#        make_database_backup.delay(database=database, task=task_history)
 
         TaskRegister.database_backup(database=database)
 

@@ -2,6 +2,7 @@
 import re
 import logging
 from slugify import slugify
+from dbaas.middleware import UserMiddleware
 from util import get_credentials_for
 from util.decorators import REDIS_CLIENT
 from util import simple_health_check
@@ -436,16 +437,6 @@ class ServiceAdd(APIView):
                 msg=msg, http_status=status.HTTP_400_BAD_REQUEST
             )
 
-#        task_history = TaskHistory()
-#        task_history.task_name = "create_database"
-#        task_history.arguments = "Database name: {}".format(name)
-#        task_history.save()
-#
-#        create_database.delay(
-#            name=name, plan=dbaas_plan, environment=dbaas_environment,
-#            team=dbaas_team, project=None, description=description,
-#            task_history=task_history, user=dbaas_user, is_protected=True
-#        )
         TaskRegister.database_create(
             name=name, plan=dbaas_plan, environment=dbaas_environment,
             team=dbaas_team, project=None, description=description,
@@ -460,6 +451,7 @@ class ServiceRemove(APIView):
     model = Database
 
     def delete(self, request, database_name, format=None):
+        UserMiddleware.set_current_user(request.user)
         env = get_url_env(request)
         try:
             database = get_database(database_name, env)

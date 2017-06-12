@@ -22,7 +22,6 @@ from dbaas import constants
 from account.models import Team
 from drivers import DatabaseAlreadyExists
 from notification.tasks import TaskRegister
-from notification.models import TaskHistory
 from system.models import Configuration
 from util.html import show_info_popup
 from logical.models import Database
@@ -309,25 +308,6 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 )
                 LOG.debug(database_creation_message)
 
-#                task_history = TaskHistory()
-#                task_history.task_name = "create_database"
-#                task_history.task_status = task_history.STATUS_WAITING
-#                task_history.arguments = "Database name: {}".format(
-#                    form.cleaned_data['name'])
-#                task_history.user = request.user
-#                task_history.save()
-#
-#                create_database.delay(
-#                    name=form.cleaned_data['name'],
-#                    plan=form.cleaned_data['plan'],
-#                    environment=form.cleaned_data['environment'],
-#                    team=form.cleaned_data['team'],
-#                    project=form.cleaned_data['project'],
-#                    description=form.cleaned_data['description'],
-#                    subscribe_to_email_events=form.cleaned_data['subscribe_to_email_events'],
-#                    task_history=task_history,
-#                    user=request.user
-#                )
                 TaskRegister.database_create(
                     name=form.cleaned_data['name'],
                     plan=form.cleaned_data['plan'],
@@ -456,7 +436,6 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         return render_to_response("logical/database/dex_analyze.html", locals(), context_instance=RequestContext(request))
 
     def mongodb_engine_version_upgrade(self, request, database_id):
-        from notification.tasks import upgrade_mongodb_24_to_30
 
         url = reverse('admin:logical_database_change', args=[database_id])
 
@@ -494,16 +473,6 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             )
             return HttpResponseRedirect(url)
 
-#        task_history = TaskHistory()
-#        task_history.task_name = "upgrade_mongodb_24_to_30"
-#        task_history.task_status = task_history.STATUS_WAITING
-#        task_history.arguments = "Upgrading MongoDB 2.4 to 3.0"
-#        task_history.user = request.user
-#        task_history.object_id = database.id
-#        task_history.object_class = database._meta.object_name
-#        task_history.save()
-#
-#        upgrade_mongodb_24_to_30.delay(database=database, user=request.user, task_history=task_history)
         TaskRegister.upgrade_mongodb_24_to_30(
             database=database, user=request.user
         )

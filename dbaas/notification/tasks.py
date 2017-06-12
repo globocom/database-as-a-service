@@ -123,7 +123,15 @@ def destroy_database(self, database, task_history=None, user=None):
         LOG.info("id: %s | task: %s | kwargs: %s | args: %s" % (
             self.request.id, self.request.task, self.request.kwargs, str(self.request.args)))
 
-        task_history.update_details(persist=True, details="Loading Process...")
+        task_history.add_detail('Quarantine:')
+        task_history.add_detail(
+            'Since: {}'.format(database.quarantine_dt), level=2
+        )
+        task_history.add_detail(
+            'Requested by: {}'.format(database.quarantine_user), level=2
+        )
+        task_history.add_detail('')
+        task_history.add_detail('Loading Process...')
 
         databaseinfra = database.databaseinfra
 
