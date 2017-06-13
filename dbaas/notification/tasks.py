@@ -784,13 +784,8 @@ def change_parameters_database(self, database, user, task, since_step=0):
     class_path = plan.replication_topology.class_path
 
     from physical.models import DatabaseInfraParameter
-    status_filter = [
-        DatabaseInfraParameter.CHANGED_AND_NOT_APPLIED_ON_DATABASE,
-        DatabaseInfraParameter.RESET_DBAAS_DEFAULT
-    ]
-    changed_parameters = DatabaseInfraParameter.objects.filter(
+    changed_parameters = DatabaseInfraParameter.get_databaseinfra_changed_parameters(
         databaseinfra=infra,
-        status__in=status_filter
     )
     all_dinamic = True
     for changed_parameter in changed_parameters:
@@ -798,6 +793,17 @@ def change_parameters_database(self, database, user, task, since_step=0):
             all_dinamic = False
             break
     steps = get_database_change_parameter_setting(class_path, all_dinamic)
+
+    task.add_detail("Changed parameters:", level=0)
+    for changed_parameter in changed_parameters:
+        msg = "{}: old value: [{}], new value: [{}]".format(
+            changed_parameter.parameter.name,
+            changed_parameter.current_value,
+            changed_parameter.value
+
+        )
+        task.add_detail(msg, level=1)
+    task.add_detail("", level=0)
 
     if since_step > 0:
         steps_dec = get_database_change_parameter_retry_steps_count(

@@ -14,32 +14,53 @@
         <tr>
           <th>Parameter</th>
           <th>DBaaS default value</th>
-          <th>Current value</th>
+          <th>Custom value</th>
           {% if form_status  == EDITABLE or form_status == TASK_ERROR %}
-            <th>New value</th>
+            <th>New custom value</th>
           {% endif %}
         </tr>
       <tbody>
-        {% for parameter in database_parameters %}
+        {% for parameter in form_database_parameters %}
           <tr>
             <td>
               {{parameter.name}}
-              {%if not parameter.dynamic %}
+              {% if not parameter.dynamic %}
                 *
               {% endif %}
             </td>
             <td>{{parameter.dbaas_default_value}}</td>
             <td>
-              {{parameter.current_valeu}}
-              {%if parameter.custom_parameter %}
-                **
-              {% endif %}
+             {{parameter.current_value}}
+             {% if not parameter.applied_on_database %}
+              (it was not applied on database yet)
+             {% endif %}
             </td>
             {% if form_status  == EDITABLE or form_status == TASK_ERROR %}
               <td>
-                <input type="text" placeholder="type new value" maxlength="200" name="new_value_{{parameter.id}}" value="{{parameter.new_value}}">
+                <input type="text" placeholder="type new value"
+                 maxlength="200" id="new_value_{{parameter.id}}"
+                 name="new_value_{{parameter.id}}" value="{{parameter.new_value}}"
+                 {% if not parameter.editable_parameter %} disabled {% endif %}
+                >
               </td>
+              <td>
+                <a href="#" class="btn btn-primary" title="Reset to DBaaS default value"
+                 onclick=
+                 {% if not parameter.editable_parameter %}
+                 "return false;"
+                 {% else %}
+                 "reset_default({{parameter.id}});"
+                 {% endif %}
+                 id="reset_button_{{parameter.id}}"
+                 {% if not parameter.editable_parameter %} disabled {% endif %}
+                >Reset</a>
+              </td>
+              <td><input type="hidden" name="reset_default_value_{{parameter.id}}" id="reset_default_value_{{parameter.id}}" value="{{parameter.reset_default_value}}"></td>
+              <td><input type="hidden" name="dynamic_{{parameter.id}}" id="dynamic_{{parameter.id}}" value="{{parameter.dynamic}}"></td>
+
             {% endif %}
+
+
           </tr>
         {% endfor %}
       </tbody>
@@ -48,12 +69,48 @@
     {%if static_parameter %}
       <p>* Static parameter, it will be necessary restart the database if changed.</p>
     {% endif %}
-    {%if custom_parameter %}
-      <p>** This parameter has been customized for this database.</p>
-    {% endif %}
 
   </div>
 </fieldset>
+
+<!-- Modal -->
+<div class="modal fade" id="change_parameter_modal" tabindex="-1" role="dialog" aria-labelledby="change parameter" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <h4 class="modal-title">Change Parameter</h4>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="modal-body">
+        <div role="form">
+          <div class="form-group">
+            <label>
+              {% if database.infra.plan.is_ha %}
+                Change parameter process will switch hosts, and <b class="bold_red">it may cause connections errors</b> during the process.
+              {% else %}
+                Change parameter process <b class="bold_red">will stop the database</b> and, consequently, it will be <b class="bold_red">unavailable</b> until the the end of the process.
+              {% endif %}
+
+              <br><br>
+              Please type <u><b>yes</b></u> to confirm:
+            </label>
+            <input autocomplete="off" class="vTextField" id="id_change_parameter_yes" maxlength="300" name="change_parameter_yes" type="text"/>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+        <input type="submit" value="Apply" name="change_parameter_btn_modal" id="id_change_parameter_btn_modal"/>
+      </div>
+    </div>
+  </div>
+</div>
 
 {% endblock %}
 
@@ -62,10 +119,19 @@
   {% if form_status  == PROTECTED or form_status == TASK_SUCCESS %}
     <input type="submit" value="Edit" name="edit_parameters" id="id_edit_parameters_btn" class="btn btn-primary"/>
   {% elif  form_status  == EDITABLE %}
-    <input type="submit" value="Save" name="save_parameters" onclick=&quot;submitOrderForm();&quot; class="btn btn-primary"/>
-    <input type="submit" value="Cancel" name="calcel_edit_parameters" id="id_calcel_edit_parameters_btn" class="btn btn-primary"/>
+    <input type="submit" value="Save" name="save_parameters"
+      onclick="return confirm_msg();" class="btn btn-primary"
+      id="save_parameters"
+    />
+    <input type="submit" value="Cancel" name="calcel_edit_parameters"
+      id="id_calcel_edit_parameters_btn" class="btn btn-primary"
+    />
+
   {% elif  form_status  == TASK_ERROR %}
-    <input type="submit" value="Retry Change Parameters" name="retry_update_parameters" onclick=&quot;submitOrderForm();&quot; class="btn btn-warning"/>
+    <input type="submit" value="Retry Change Parameters"
+      name="retry_update_parameters" onclick="return confirm('Are you sure?');"
+      class="btn btn-warning"
+    />
     <p><a href="{% url 'admin:maintenance_databasechangeparameter_change' last_change_parameters.id %}" target='_blank'>Last change parameters</a> has an <b>error</b>, please check the <a href="{% url 'admin:notification_taskhistory_change' last_change_parameters.task.id %}" target='_blank'>task</a> and retry the database change parameters clicking in button above</p>
   {% endif %}
 
@@ -73,4 +139,87 @@
 
 {% block js_footer %}
 {{ block.super }}
+
+<script type="text/javascript">
+  function reset_default(id)
+  {
+
+    var reset_default_value= document.getElementById("reset_default_value_"+id);
+    reset_default_value.value = "True";
+
+    var new_value = document.getElementById("new_value_"+id);
+    new_value.disabled = true;
+    new_value.value = "";
+  }
+
+
+  function confirm_msg()
+  {
+    there_is_static = check_static_parameter_changed();
+    if (there_is_static)
+    {
+      var bnt = document.getElementById("save_parameters");
+      bnt.setAttribute("data-toggle", "modal");
+      bnt.setAttribute("data-target", "#change_parameter_modal");
+    }
+    else
+    {
+      var bnt = document.getElementById("save_parameters");
+      bnt.setAttribute("data-toggle", "");
+      bnt.setAttribute("data-target", "");
+      return confirm('Are you sure?');
+    }
+  }
+
+  jQuery(document).ready(function($) {
+
+    $("#id_change_parameter_yes").keyup(function() {
+      btn = document.getElementById("id_change_parameter_btn_modal");
+      btn.disabled = $(this).val() != "yes";
+      if (btn.disabled) {
+        btn.className = 'btn';
+      } else {
+        btn.className = 'btn btn-primary';
+      }
+    });
+    $("#id_change_parameter_yes").keyup();
+
+  })
+
+function check_static_parameter_changed()
+{
+  var inputs = document.getElementsByTagName("input");
+  var new_value;
+  for (x = 0 ; x < inputs.length ; x++){
+    myname = inputs[x].getAttribute("name");
+
+    if(myname.indexOf("new_value_")==0){
+      new_value = document.getElementById(myname);
+      if (new_value.value != "") {
+        id = myname.split("new_value_")[1];
+        dynamic = document.getElementById("dynamic_"+id);
+        if (dynamic.value == "False") {
+          return true;
+        }
+      }
+    }
+
+    if(myname.indexOf("reset_default_value_")==0){
+      new_value = document.getElementById(myname);
+      if (new_value.value != "") {
+        id = myname.split("reset_default_value_")[1];
+        dynamic = document.getElementById("dynamic_"+id);
+        if (dynamic.value == "False") {
+          return true;
+        }
+      }
+    }
+
+  }
+  return false;
+}
+
+
+</script>
+
 {% endblock %}
