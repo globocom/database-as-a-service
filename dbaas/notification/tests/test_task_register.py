@@ -247,3 +247,56 @@ class DatabaseCreateCallTestCase(TestCase, TaskCallBaseTestCase):
         'user', 'name', 'plan', 'environment', 'team', 'project', 'description',
         'subscribe_to_email_events', 'task_history', 'is_protected'
     ]
+
+
+class DatabaseCreateCallWithUserTestCase(TestCase, TaskCallBaseTestCase):
+
+    method_to_call = 'database_create'
+    delay_to_mock = 'notification.tasks.create_database.delay'
+    call_params = {
+        'user': 'user',
+        'name': 'name',
+        'plan': 'plan',
+        'environment': 'environment',
+        'team': 'team',
+        'project': 'project',
+        'description': 'description',
+        'subscribe_to_email_events': 'subscribe_to_email_events',
+        'register_user': True
+    }
+    create_fields_to_validate = ['task_name', 'arguments', 'user']
+    delay_fields_to_validate = [
+        'user', 'name', 'plan', 'environment', 'team', 'project', 'description',
+        'subscribe_to_email_events', 'task_history', 'is_protected'
+    ]
+
+
+class DatabaseBackupCallTestCase(TestCase, TaskCallBaseTestCase):
+
+    method_to_call = 'database_backup'
+    delay_to_mock = 'backup.tasks.make_database_backup.delay'
+    call_params = {'database': MagicMock()}
+    create_fields_to_validate = ['task_name', 'arguments', 'database']
+    delay_fields_to_validate = ['database', 'task']
+
+
+class DatabaseRemoveBackupCallTestCase(TestCase, TaskCallBaseTestCase):
+
+    method_to_call = 'database_remove_backup'
+    delay_to_mock = 'backup.tasks.remove_database_backup.delay'
+    call_params = {'database': MagicMock(), 'snapshot': 'snapshot'}
+    create_fields_to_validate = ['task_name', 'arguments']
+    delay_fields_to_validate = ['snapshot', 'task']
+
+
+class RestoreSnapshotCallTestCase(TestCase, TaskCallBaseTestCase):
+
+    method_to_call = 'restore_snapshot'
+    delay_to_mock = 'backup.tasks.restore_snapshot.delay'
+    call_params = {
+        'database': MagicMock(),
+        'user': 'user',
+        'snapshot': 'snapshot'
+    }
+    create_fields_to_validate = ['task_name', 'arguments', 'database', 'user']
+    delay_fields_to_validate = ['database', 'task_history', 'snapshot', 'user']

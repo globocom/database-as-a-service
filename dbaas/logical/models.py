@@ -4,13 +4,14 @@ import simple_audit
 import logging
 import datetime
 from django.db import models, transaction, Error
-from django.core.exceptions import ValidationError
-from django.utils.translation import ugettext_lazy as _
 from django.db.models.signals import pre_save, post_save, pre_delete
+from django.contrib.auth.models import User
 from django.dispatch import receiver
-from django_extensions.db.fields.encrypted import EncryptedCharField
+from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.utils.functional import cached_property
 from django.utils.html import format_html
+from django.utils.translation import ugettext_lazy as _
+from django_extensions.db.fields.encrypted import EncryptedCharField
 from util import slugify, make_db_random_password
 from util.models import BaseModel
 from physical.models import DatabaseInfra, Environment
@@ -19,7 +20,6 @@ from system.models import Configuration
 from datetime import date, timedelta
 from account.models import Team
 from drivers.base import ConnectionError, DatabaseStatus
-from django.core.exceptions import ObjectDoesNotExist
 from logical.validators import database_name_evironment_constraint
 from notification.models import TaskHistory
 
@@ -104,20 +104,21 @@ class Database(BaseModel):
     subscribe_to_email_events = models.BooleanField(
         verbose_name=_("Subscribe to email events"), default=True,
         help_text=_(
-            "Check this box if you'd like to receive information regarding this database by email."
+            "Check this box if you'd like to receive information "
+            "regarding this database by email."
         )
     )
     disk_auto_resize = models.BooleanField(
         verbose_name=_("Disk auto resize"), default=True,
-        help_text=_(
-            "When marked, the disk will be resized automatically."
-        )
+        help_text=_("When marked, the disk will be resized automatically.")
     )
     is_protected = models.BooleanField(
         verbose_name=_("Protected"), default=False,
-        help_text=_(
-            "When marked, the database can not be deleted."
-        )
+        help_text=_("When marked, the database can not be deleted.")
+    )
+    quarantine_user = models.ForeignKey(
+        User, related_name='databases_quarantine',
+        null=True, blank=True, editable=False
     )
 
     def team_contact(self):
@@ -213,6 +214,7 @@ class Database(BaseModel):
             LOG.warning("Putting database {} in quarantine".format(self.name))
             self.is_in_quarantine = True
             self.is_protected = False
+
             self.save()
             if self.credentials.exists():
                 for credential in self.credentials.all():
@@ -402,21 +404,6 @@ class Database(BaseModel):
     @classmethod
     def clone(cls, database, clone_name, plan, environment, user):
         from notification.tasks import TaskRegister
-#       from notification.models import TaskHistory
-
-#        task_history = TaskHistory()
-#        task_history.task_name = "clone_database"
-#        task_history.task_status = task_history.STATUS_WAITING
-#        task_history.arguments = "Database name: {}".format(database.name)
-#        task_history.user = user
-#        task_history.object_id = database.id
-#        task_history.object_class = database._meta.object_name
-#        task_history.save()
-#
-#        clone_database.delay(
-#            origin_database=database, clone_name=clone_name, plan=plan,
-#            environment=environment, user=user, task_history=task_history
-#        )
 
         TaskRegister.database_clone(
             origin_database=database, clone_name=clone_name, plan=plan,
@@ -426,23 +413,6 @@ class Database(BaseModel):
     @classmethod
     def restore(cls, database, snapshot, user):
         from notification.tasks import TaskRegister
-#        from notification.models import TaskHistory
-#
-#        task_history = TaskHistory()
-#        task_history.task_name = "restore_snapshot"
-#        task_history.task_status = task_history.STATUS_WAITING
-#        task_history.arguments = "Restoring {} to an older version.".format(
-#            database.name
-#        )
-#        task_history.user = user
-#        task_history.object_id = database.id
-#        task_history.object_class = database._meta.object_name
-#        task_history.save()
-
-#        Database.recover_snapshot(
-#            database=database, snapshot=snapshot, user=user,
-#            task_history=task_history.id
-#        )
 
         LOG.info(
             "Changing database volume with params: database {} snapshot: {}, user: {}".format(
@@ -456,21 +426,6 @@ class Database(BaseModel):
     @classmethod
     def resize(cls, database, cloudstackpack, user):
         from notification.tasks import TaskRegister
-#        from notification.models import TaskHistory
-
-#        task_history = TaskHistory()
-#        task_history.task_name = "resize_database"
-#        task_history.task_status = task_history.STATUS_WAITING
-#        task_history.arguments = "Database name: {}".format(database.name)
-#        task_history.user = user
-#        task_history.object_id = database.id
-#        task_history.object_class = database._meta.object_name
-#        task_history.save()
-#
-#        resize_database.delay(
-#            database=database, cloudstackpack=cloudstackpack,
-#            user=user, task=task_history
-#        )
 
         TaskRegister.database_resize(
             database=database, user=user,
@@ -589,40 +544,8 @@ class Database(BaseModel):
         from physical.models import DiskOffering
         from notification.tasks import TaskRegister
 
-#        from notification.tasks import database_disk_resize
-#        from notification.models import TaskHistory
-#        from physical.models import DiskOffering
-
-#        task_history = TaskHistory()
-#        task_history.task_name = "database_disk_resize"
-#        task_history.task_status = task_history.STATUS_WAITING
-#        task_history.arguments = "Database name: {}".format(database.name)
-#        task_history.user = user
-#        task_history.object_id = database.id
-#        task_history.object_class = database._meta.object_name
-#        task_history.save()
-#
-#        disk_offering = DiskOffering.objects.get(id=new_disk_offering)
-#
-#        database_disk_resize.delay(
-#            database=database, disk_offering=disk_offering,
-#            user=user, task_history=task_history
-#        )
-#        task_params = {
-#            'task_name': 'database_disk_resize',
-#            'arguments': 'Database name: {}'.format(database.name),
-#            'user': user,
-#            'database': database
-#        }
-#
         disk_offering = DiskOffering.objects.get(id=new_disk_offering)
-#        delay_params = {
-#            "database": database,
-#            "disk_offering": disk_offering,
-#            "user": user
-#        }
-#
-#        TaskRegister(task_params, delay_params)
+
         TaskRegister.database_disk_resize(database=database, user=user, disk_offering=disk_offering)
 
     def update_host_disk_used_size(self, host_address, used_size_kb, total_size_kb=None):
@@ -801,34 +724,7 @@ class Database(BaseModel):
             "user={}".format(self.name, self.team, self.project, user)
         )
 
-        # from notification.models import TaskHistory
         from notification.tasks import TaskRegister
-
-#        task_history = TaskHistory()
-#        task_history.task_name = "destroy_database"
-#        task_history.task_status = task_history.STATUS_WAITING
-#        task_history.arguments = "Database name: {}".format(self.name)
-#        task_history.user = user
-#        task_history.object_id = self.id
-#        task_history.object_class = self._meta.object_name
-#        task_history.save()
-#
-#        destroy_database.delay(
-#            database=self, task_history=task_history, user=user
-#        )
-
-#        task_params = {
-#            'task_name': 'destroy_database',
-#            'arguments': 'Database name: {}'.format(self.name),
-#            'user': user,
-#            'database': self
-#        }
-#
-#        delay_params = {
-#            'database': self, 'user': user
-#        }
-
-        # TaskRegister(task_params, delay_params)
 
         TaskRegister.database_destroy(database=self, user=user)
         return
@@ -952,8 +848,13 @@ def database_pre_save(sender, **kwargs):
     if database.is_in_quarantine:
         if database.quarantine_dt is None:
             database.quarantine_dt = datetime.datetime.now().date()
+
+        if not database.quarantine_user:
+            from dbaas.middleware import UserMiddleware
+            database.quarantine_user = UserMiddleware.current_user()
     else:
         database.quarantine_dt = None
+        database.quarantine_user = None
 
     if database.id:
         saved_object = Database.objects.get(id=database.id)

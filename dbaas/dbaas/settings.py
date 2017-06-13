@@ -153,6 +153,7 @@ MIDDLEWARE_CLASSES = (
     'simple_audit.middleware.TrackingRequestOnThreadLocalMiddleware',
     'django.contrib.flatpages.middleware.FlatpageFallbackMiddleware',
     'dbaas.middleware.AutoLogout',
+    'dbaas.middleware.UserMiddleware',
 )
 
 ROOT_URLCONF = 'dbaas.urls'
@@ -312,9 +313,6 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
 ]
 
-# enable m2m fields audit
-DJANGO_SIMPLE_AUDIT_ACTIVATED = True
-DJANGO_SIMPLE_AUDIT_M2M_FIELDS = True
 
 ##################################
 # LDAP_AUTHENTICATION
@@ -507,3 +505,9 @@ USER_ROLES = (
 CLOUD_STACK_ENABLED = os.getenv('CLOUD_STACK_ENABLED', '0') == '1'
 
 NFSAAS_ENABLED = os.getenv('CLOUD_STACK_ENABLED', '0') == '1'
+
+
+# Simple Audit configuration
+DJANGO_SIMPLE_AUDIT_ACTIVATED = True
+DJANGO_SIMPLE_AUDIT_M2M_FIELDS = True
+DJANGO_SIMPLE_AUDIT_AUTHENTICATOR = lambda: __import__('rest_framework.authentication', fromlist=['BasicAuthentication']).BasicAuthentication()

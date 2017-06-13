@@ -154,6 +154,10 @@
       <div class="control-label"><label>Quarantine since:</label></div>
       <div class="controls"><p class="readonly">{{ database.quarantine_dt }}</p></div>
     </div>
+    <div class="control-group">
+      <div class="control-label"><label>Quarantine requested by:</label></div>
+      <div class="controls"><p class="readonly">{{ database.quarantine_user }}</p></div>
+    </div>
   {% endif %}
 </fieldset>
 {% endblock %}
