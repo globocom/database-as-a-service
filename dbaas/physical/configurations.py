@@ -201,13 +201,13 @@ class ConfigurationMySQL(ConfigurationBase):
     @property
     def default_storage_engine(self):
         parameter_name = inspect.stack()[0][3]
-        default = 'innodb'
+        default = 'InnoDB'
         return self.get_parameter(parameter_name, default)
 
     @property
     def default_tmp_storage_engine(self):
         parameter_name = inspect.stack()[0][3]
-        default = 'innodb'
+        default = 'InnoDB'
         return self.get_parameter(parameter_name, default)
 
     @property
