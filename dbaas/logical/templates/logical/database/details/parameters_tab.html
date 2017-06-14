@@ -28,7 +28,10 @@
                 *
               {% endif %}
             </td>
-            <td>{{parameter.dbaas_default_value}}</td>
+            <td>
+              {{parameter.dbaas_default_value}}
+              <input type="hidden" name="dbaas_default_value_{{parameter.id}}" id="dbaas_default_value_{{parameter.id}}" value="{{parameter.dbaas_default_value}}">
+            </td>
             <td>
              {{parameter.current_value}}
              {% if not parameter.applied_on_database %}
@@ -44,18 +47,22 @@
                 >
               </td>
               <td>
-                <a href="#" class="btn btn-primary" title="Reset to DBaaS default value"
-                 onclick=
-                 {% if not parameter.editable_parameter %}
-                 "return false;"
-                 {% else %}
-                 "reset_default({{parameter.id}});"
-                 {% endif %}
-                 id="reset_button_{{parameter.id}}"
-                 {% if not parameter.editable_parameter %} disabled {% endif %}
-                >Reset</a>
+
+                <label class="checkbox">
+                  <input id="checkbox_reset_{{parameter.id}}" name="checkbox_reset_{{parameter.id}}"
+                    type="checkbox"
+                     onclick=
+                     {% if not parameter.editable_parameter %}
+                     "return false;"
+                     {% else %}
+                     "reset_default(this, {{parameter.id}});"
+                     {% endif %}
+                     {% if not parameter.editable_parameter %} disabled {% endif %}
+                  />
+                  <span><label class="vCheckboxLabel" for="checkbox_reset_{{parameter.id}}">Reset to DBaaS default value</label></span>
+                </label>
+
               </td>
-              <td><input type="hidden" name="reset_default_value_{{parameter.id}}" id="reset_default_value_{{parameter.id}}" value="{{parameter.reset_default_value}}"></td>
               <td><input type="hidden" name="dynamic_{{parameter.id}}" id="dynamic_{{parameter.id}}" value="{{parameter.dynamic}}"></td>
 
             {% endif %}
@@ -141,15 +148,22 @@
 {{ block.super }}
 
 <script type="text/javascript">
-  function reset_default(id)
+
+  function reset_default(checkbox_control, id)
   {
-
-    var reset_default_value= document.getElementById("reset_default_value_"+id);
-    reset_default_value.value = "True";
-
-    var new_value = document.getElementById("new_value_"+id);
-    new_value.disabled = true;
-    new_value.value = "";
+    if (checkbox_control.checked)
+    {
+      var dbaas_default_value = document.getElementById("dbaas_default_value_"+id);
+      var new_value = document.getElementById("new_value_"+id);
+      new_value.disabled = true;
+      new_value.value = dbaas_default_value.value;
+    }
+    else
+    {
+      var new_value = document.getElementById("new_value_"+id);
+      new_value.disabled = false;
+      new_value.value = "";
+    }
   }
 
 

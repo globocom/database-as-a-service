@@ -176,10 +176,10 @@ def _update_database_parameters(request_post, database):
                 if changed:
                     changed_parameters.append(parameter_id)
 
-        if key.startswith("reset_default_value_"):
+        if key.startswith("checkbox_reset_"):
             reset_default_value = request_post.get(key)
-            if reset_default_value == "True":
-                parameter_id = key.split("reset_default_value_")[1]
+            if reset_default_value == "on":
+                parameter_id = key.split("checkbox_reset_")[1]
                 parameter = Parameter.objects.get(id=parameter_id)
                 changed = DatabaseInfraParameter.set_reset_default(
                     databaseinfra=database.databaseinfra,
