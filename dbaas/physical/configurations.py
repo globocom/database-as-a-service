@@ -75,21 +75,168 @@ class ConfigurationRedis(ConfigurationBase):
         return self.get_parameter(parameter_name, default)
 
     @property
+    def appendonly(self):
+        parameter_name = inspect.stack()[0][3]
+        if self.databaseinfra.plan.has_persistence:
+            default = 'yes'
+        else:
+            default = 'no'
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def save(self):
+        parameter_name = inspect.stack()[0][3]
+        if self.databaseinfra.plan.has_persistence:
+            default = '7200 1 3600 10 1800 10000'
+        else:
+            default = ""
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def maxmemory_policy(self):
+        parameter_name = inspect.stack()[0][3]
+        if self.databaseinfra.plan.has_persistence:
+            default = 'volatile-lru'
+        else:
+            default = 'allkeys-lru'
+        return self.get_parameter(parameter_name, default)
+
+    @property
     def loglevel(self):
         parameter_name = inspect.stack()[0][3]
         default = 'warning'
         return self.get_parameter(parameter_name, default)
 
     @property
-    def save(self):
-        parameter_name = inspect.stack()[0][3]
-        default = '7200 1 3600 10 1800 10000'
-        return self.get_parameter(parameter_name, default)
-
-    @property
     def databases(self):
         parameter_name = inspect.stack()[0][3]
         default = '1'
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def timeout(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 0
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def rdbcompression(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 'yes'
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def rdbchecksum(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 'yes'
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def slave_serve_stale_data(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 'yes'
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def slave_read_only(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 'yes'
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def maxclients(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 10000
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def appendfsync(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 'everysec'
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def no_appendfsync_on_rewrite(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 'no'
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def auto_aof_rewrite_percentage(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 100
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def auto_aof_rewrite_min_size(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 1073741824
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def lua_time_limit(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 5000
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def slowlog_log_slower_than(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 10000
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def slowlog_max_len(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 1024
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def hash_max_ziplist_entries(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 512
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def hash_max_ziplist_value(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 64
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def list_max_ziplist_entries(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 512
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def list_max_ziplist_value(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 64
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def set_max_intset_entries(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 512
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def zset_max_ziplist_entries(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 128
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def zset_max_ziplist_value(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 64
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def activerehashing(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 'yes'
         return self.get_parameter(parameter_name, default)
 
 

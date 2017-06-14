@@ -639,6 +639,7 @@ class DatabaseInfra(BaseModel):
 
     def get_dbaas_parameter_default_value(self, parameter_name):
         from physical.configurations import configuration_factory
+        parameter_name = parameter_name.replace('-', '_')
         configuration = configuration_factory(
             self,
             self.cs_dbinfra_offering.get().offering.memory_size_mb
