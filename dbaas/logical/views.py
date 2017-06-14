@@ -246,11 +246,13 @@ def database_parameters(request, context, database):
         form_status = TASK_RUNNING
 
     last_change_parameters = database.change_parameters.last()
+    last_change_parameters_error = False
     if last_change_parameters:
         if last_change_parameters.is_running:
             form_status = TASK_RUNNING
         elif last_change_parameters.is_status_error:
             form_status = TASK_ERROR
+            last_change_parameters_error = True
 
     topology_parameters = database.plan.replication_topology.parameter.all()
     for topology_parameter in topology_parameters:
@@ -274,6 +276,18 @@ def database_parameters(request, context, database):
             current_value = infra_parameter.value
             applied_on_database = infra_parameter.applied_on_database
             reset_default_value = infra_parameter.reset_default_value
+
+        if last_change_parameters_error:
+            try:
+                infra_parameter = DatabaseInfraParameter.objects.get(
+                    databaseinfra=databaseinfra,
+                    parameter=topology_parameter,
+                    applied_on_database=False
+                )
+            except DatabaseInfraParameter.DoesNotExist:
+                editable_parameter = False
+            else:
+                editable_parameter = True
 
         database_parameter = {
             "id": topology_parameter.id,
