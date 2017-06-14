@@ -206,7 +206,7 @@ function check_static_parameter_changed()
 
     if(myname.indexOf("reset_default_value_")==0){
       new_value = document.getElementById(myname);
-      if (new_value.value != "") {
+      if (new_value.value != "False") {
         id = myname.split("reset_default_value_")[1];
         dynamic = document.getElementById("dynamic_"+id);
         if (dynamic.value == "False") {
