@@ -818,6 +818,8 @@ def change_parameters_database(self, database, user, task, since_step=0):
             class_path, all_dinamic)
         LOG.info('since_step: {}, steps_dec: {}'.format(since_step, steps_dec))
         since_step = since_step - steps_dec
+        if since_step < 0:
+            since_step = 0
 
     database_change_parameter = DatabaseChangeParameter()
     database_change_parameter.database = database
@@ -1263,5 +1265,30 @@ class TaskRegister(object):
             task_history=task,
             user=user
         )
+
+    @classmethod
+    def database_change_parameters(cls, database, user, since_step=None):
+        task_params = {
+            'task_name': 'change_parameters',
+            'arguments': 'Changing parameters of database {}'.format(database),
+            'database': database,
+            'user': user
+        }
+
+        if since_step:
+            task_params['task_name'] = 'upgrade_database_retry'
+            task_params['arguments'] = 'Retrying changing parameters of database {}'.format(database)
+
+        task = cls.create_task(task_params)
+
+        delay_params = {
+            'database': database,
+            'task': task,
+            'user': user
+        }
+
+        delay_params.update(**{'since_step': since_step} if since_step else {})
+
+        change_parameters_database.delay(**delay_params)
 
     # ============  END TASKS   ============

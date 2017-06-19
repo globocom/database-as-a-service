@@ -325,17 +325,9 @@ def database_change_parameters(request, context, database):
     if not can_do_change_parameters:
         messages.add_message(request, messages.ERROR, error)
     else:
-        task_history = TaskHistory()
-        task_history.task_name = "change_parameters"
-        task_history.task_status = task_history.STATUS_WAITING
-        task_history.arguments = "Changing parameters of database {}".format(database)
-        task_history.user = request.user
-        task_history.save()
-
-        change_parameters_database.delay(
+        TaskRegister.database_change_parameters(
             database=database,
-            user=request.user,
-            task=task_history
+            user=request.user
         )
 
     return HttpResponseRedirect(
@@ -362,17 +354,9 @@ def database_change_parameters_retry(request, context, database):
     if error:
         messages.add_message(request, messages.ERROR, error)
     else:
-        task_history = TaskHistory()
-        task_history.task_name = "change_parameters_retry"
-        task_history.task_status = task_history.STATUS_WAITING
-        task_history.arguments = "Retrying changing parameters of database {}".format(database)
-        task_history.user = request.user
-        task_history.save()
-
-        change_parameters_database.delay(
+        TaskRegister.database_change_parameters(
             database=database,
             user=request.user,
-            task=task_history,
             since_step=since_step
         )
 
