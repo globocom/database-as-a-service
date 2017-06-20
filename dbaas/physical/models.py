@@ -930,8 +930,7 @@ class DatabaseInfraParameter(BaseModel):
 
     @classmethod
     def load_database_configs(cls, infra):
-        database = infra.databases.first()
-        parameters = database.plan.replication_topology.parameter.all()
+        parameters = infra.plan.replication_topology.parameter.all()
         physical_parameters = infra.get_driver().get_configuration()
 
         for parameter in parameters:
@@ -955,7 +954,7 @@ class DatabaseInfraParameter(BaseModel):
                 LOG.info('Updating parameter {} value {} to {}'.format(
                     parameter, default_value, physical_value
                 ))
-                obj, created = cls.objects.update_or_create(
+                obj, created = cls.objects.get_or_create(
                     databaseinfra=infra,
                     parameter=parameter,
                     defaults={
@@ -965,6 +964,12 @@ class DatabaseInfraParameter(BaseModel):
                         'reset_default_value': False
                     },
                 )
+                if not created:
+                    obj.value = physical_value
+                    obj.current_value = physical_value
+                    obj.applied_on_database = True
+                    obj.reset_default_value = False
+                    obj.save()
 
     @staticmethod
     def is_boolean(value):
