@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 import logging
-from workflow.steps.util.base import BaseInstanceStep
-from workflow.steps.util.nfsaas_utils import create_disk
-from workflow.steps.util.nfsaas_utils import delete_disk
+from base import BaseInstanceStep
+from nfsaas_utils import create_disk
+from nfsaas_utils import delete_disk
 
 LOG = logging.getLogger(__name__)
 
@@ -30,6 +30,31 @@ class CreateExport(Disk):
 
     def do(self):
         LOG.info('Creating export for {}'.format(self.instance))
+        create_disk(
+            environment=self.environment,
+            host=self.host,
+            size_kb=self.databaseinfra.disk_offering.size_kb
+        )
+
+    def undo(self):
+        LOG.info('Running undo of CreateExport')
+        delete_disk(
+            environment=self.environment,
+            host=self.host
+        )
+
+
+class MountNewerExport(Disk):
+
+    def __unicode__(self):
+        return "Mounting Export..."
+
+    def __init__(self, instance):
+        super(MountNewerExport, self).__init__(instance)
+        newer_disk = self.hostname.disk
+
+    def do(self):
+        'mount -t nfs -o bg,intr {{EXPORT_PATH}} /data2'
         create_disk(
             environment=self.environment,
             host=self.host,

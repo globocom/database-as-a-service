@@ -106,7 +106,7 @@ class BaseTopology(object):
             'workflow.steps.util.horizontal_elasticity.dns.CreateDNS',
             'workflow.steps.util.vm.WaitingBeReady',
             'workflow.steps.util.vm.UpdateOSDescription',
-            'workflow.steps.util.horizontal_elasticity.disk.CreateExport',
+            'workflow.steps.util.disk.CreateExport',
         )
 
     def get_add_database_instances_last_steps(self):

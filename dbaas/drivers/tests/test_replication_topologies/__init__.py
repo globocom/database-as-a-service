@@ -136,7 +136,7 @@ class AbstractReplicationTopologySettingsTestCase(TestCase):
             'workflow.steps.util.horizontal_elasticity.dns.CreateDNS',
             'workflow.steps.util.vm.WaitingBeReady',
             'workflow.steps.util.vm.UpdateOSDescription',
-            'workflow.steps.util.horizontal_elasticity.disk.CreateExport',
+            'workflow.steps.util.disk.CreateExport',
         )
 
     def _get_add_database_instances_middle_settings(self):
