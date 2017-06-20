@@ -11,6 +11,16 @@ def configuration_factory(databaseinfra, memory_size):
     raise NotImplementedError
 
 
+def confiration_exists(engine_name, parameter_name):
+    for name, obj in inspect.getmembers(sys.modules[__name__]):
+        if inspect.isclass(obj) and '__ENGINE__' in obj.__dict__:
+            if obj.__ENGINE__ == engine_name:
+                parameter_name = parameter_name.replace('-', '_')
+                if parameter_name in obj.__dict__:
+                    return True
+    return False
+
+
 class ParameterObject(object):
     def __init__(self, value, default):
         self.value = value
@@ -81,15 +91,6 @@ class ConfigurationRedis(ConfigurationBase):
             default = 'yes'
         else:
             default = 'no'
-        return self.get_parameter(parameter_name, default)
-
-    @property
-    def save(self):
-        parameter_name = inspect.stack()[0][3]
-        if self.databaseinfra.plan.has_persistence:
-            default = '7200 1 3600 10 1800 10000'
-        else:
-            default = ""
         return self.get_parameter(parameter_name, default)
 
     @property
@@ -336,7 +337,7 @@ class ConfigurationMySQL(ConfigurationBase):
     @property
     def binlog_format(self):
         parameter_name = inspect.stack()[0][3]
-        default = 'row'
+        default = 'ROW'
         return self.get_parameter(parameter_name, default)
 
     @property
@@ -390,7 +391,7 @@ class ConfigurationMySQL(ConfigurationBase):
     @property
     def query_cache_type(self):
         parameter_name = inspect.stack()[0][3]
-        default = 1
+        default = 'ON'
         return self.get_parameter(parameter_name, default)
 
     @property
@@ -408,7 +409,7 @@ class ConfigurationMySQL(ConfigurationBase):
     @property
     def long_query_time(self):
         parameter_name = inspect.stack()[0][3]
-        default = 1
+        default = '1.000000'
         return self.get_parameter(parameter_name, default)
 
     @property
