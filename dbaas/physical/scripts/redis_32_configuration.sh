@@ -183,7 +183,11 @@ databases {{ configuration.databases.value }}
 #
 #   save ""
 
-save {{ configuration.save.value }}
+{% if HAS_PERSISTENCE %}
+save 7200 1
+save 3600 10
+save 1800 10000
+{% endif %}
 
 # By default Redis will stop accepting writes if RDB snapshots are enabled
 # (at least one save point) and the latest background save failed.
