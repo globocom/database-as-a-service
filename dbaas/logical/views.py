@@ -203,7 +203,6 @@ def database_parameters(request, context, database):
 
     form_status = PROTECTED
 
-    #print '\n', request.POST, '\n'
     if request.method == 'POST':
         if 'edit_parameters' in request.POST:
             form_status = EDITABLE
