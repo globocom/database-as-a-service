@@ -19,12 +19,6 @@ class Disk(BaseInstanceStep):
         self.environment = self.databaseinfra.environment
         self.host = self.instance.hostname
 
-    def do(self):
-        raise NotImplementedError
-
-    def undo(self):
-        pass
-
 
 class CreateExport(Disk):
 
@@ -47,133 +41,117 @@ class CreateExport(Disk):
         )
 
 
-class MountNewerExport(Disk):
-
-    def __unicode__(self):
-        return "Mounting Export..."
+class NewerDisk(Disk):
 
     def __init__(self, instance):
-        super(MountNewerExport, self).__init__(instance)
+        super(NewerDisk, self).__init__(instance)
         self.newer_export = self.host.nfsaas_host_attributes.last()
 
+
+class DiskCommand(Disk):
+
+    @property
+    def scripts(self):
+        raise NotImplementedError
+
     def do(self):
-        script = 'mkdir -p {} && mount -t nfs -o bg,intr {} {}'.format(
-            self.NEW_DIRECTORY, self.newer_export.nfsaas_path, self.NEW_DIRECTORY
+        for message, script in self.scripts.items():
+            output = {}
+            return_code = exec_remote_command_host(self.host, script, output)
+            if return_code != 0:
+                raise EnvironmentError(
+                    '{} - {}: {}'.format(message, return_code, output)
+                )
+
+
+class DiskMountCommand(DiskCommand):
+
+    def __unicode__(self):
+        return "Mounting Export {}...".format(self.path_mount)
+
+    @property
+    def path_mount(self):
+        raise NotImplementedError
+
+    @property
+    def export_remote_path(self):
+        raise NotImplementedError
+
+    @property
+    def scripts(self):
+        message = 'Could not mount {}'.format(self.path_mount)
+        script = 'mkdir -p {0} && mount -t nfs -o bg,intr {1} {0}'.format(
+            self.path_mount, self.export_remote_path
         )
-
-        output = {}
-        return_code = exec_remote_command_host(self.host, script, output)
-        if return_code != 0:
-            raise EnvironmentError(
-                'Could not mount {} - {}: {}'.format(
-                    self.NEW_DIRECTORY, return_code, output
-                )
-            )
-
-    def undo(self):
-        script = 'umount {}'.format(self.NEW_DIRECTORY)
-
-        output = {}
-        return_code = exec_remote_command_host(self.host, script, output)
-        if return_code != 0:
-            raise EnvironmentError(
-                'Could not umount {} - {}: {}'.format(
-                    self.NEW_DIRECTORY, return_code, output
-                )
-            )
+        return {message: script}
 
 
-class CopyDataBetweenExports(Disk):
+class MountNewerExport(NewerDisk, DiskMountCommand):
+
+    @property
+    def path_mount(self):
+        return self.NEW_DIRECTORY
+
+    @property
+    def export_remote_path(self):
+        return self.newer_export.nfsaas_path
+
+
+class CopyDataBetweenExports(DiskCommand):
 
     def __unicode__(self):
         return "Coping data {} -> {}...".format(
             self.OLD_DIRECTORY, self.NEW_DIRECTORY
         )
 
-    def do(self):
-        script = "rsync -ar --exclude='{}/.snapshot' {}/* {}".format(
-            self.OLD_DIRECTORY, self.OLD_DIRECTORY, self.NEW_DIRECTORY
+    @property
+    def scripts(self):
+        message = 'Could not copy data {} -> {}'.format(
+            self.OLD_DIRECTORY, self.NEW_DIRECTORY)
+        script = "rsync -ar --exclude='{0}/.snapshot' {0}/* {1}".format(
+            self.OLD_DIRECTORY, self.NEW_DIRECTORY
         )
-
-        output = {}
-        return_code = exec_remote_command_host(self.host, script, output)
-        if return_code != 0:
-            raise EnvironmentError(
-                'Could not copy data {} -> {} | {}: {}'.format(
-                    self.OLD_DIRECTORY, self.NEW_DIRECTORY, return_code, output
-                )
-            )
+        return {message: script}
 
 
-class UnmountOldestExport(Disk):
+class DiskUmountCommand(DiskCommand):
 
     def __unicode__(self):
-        return "Unmounting {}...".format(self.OLD_DIRECTORY)
+        return "Unmounting {}...".format(self.mount_path)
 
-    def do(self):
-        script = 'umount {}'.format(self.OLD_DIRECTORY)
+    @property
+    def mount_path(self):
+        raise NotImplementedError
 
-        output = {}
-        return_code = exec_remote_command_host(self.host, script, output)
-        if return_code != 0:
-            raise EnvironmentError(
-                'Could not unmount {} -> {}: {}'.format(
-                    self.OLD_DIRECTORY, return_code, output
-                )
-            )
+    @property
+    def scripts(self):
+        message = 'Could not unmount {}'.format(self.mount_path)
+        script = 'umount {}'.format(self.mount_path)
+        return {message: script}
 
 
-class UnmountNewerExport(Disk):
+class UnmountOldestExport(DiskUmountCommand):
 
-    def __unicode__(self):
-        return "Unmounting {}...".format(self.NEW_DIRECTORY)
+    @property
+    def mount_path(self):
+        return self.OLD_DIRECTORY
 
-    def do(self):
-        script = 'umount {}'.format(self.NEW_DIRECTORY)
 
-        output = {}
-        return_code = exec_remote_command_host(self.host, script, output)
-        if return_code != 0:
-            raise EnvironmentError(
-                'Could not unmount {} -> {}: {}'.format(
-                    self.NEW_DIRECTORY, return_code, output
-                )
-            )
+class UnmountNewerExport(DiskUmountCommand):
+
+    @property
+    def mount_path(self):
+        return self.NEW_DIRECTORY
 
 
 class MountingNewerExport(MountNewerExport):
 
-    def __unicode__(self):
-        return "Mouting new disk {}...".format(self.NEW_DIRECTORY)
-
-    def do(self):
-        script = 'mount -t nfs -o bg,intr {} {}'.format(
-            self.newer_export.nfsaas_path, self.OLD_DIRECTORY
-        )
-
-        output = {}
-        return_code = exec_remote_command_host(self.host, script, output)
-        if return_code != 0:
-            raise EnvironmentError(
-                'Could not mount {} - {}: {}'.format(
-                    self.OLD_DIRECTORY, return_code, output
-                )
-            )
-
-    def undo(self):
-        script = 'umount {}'.format(self.OLD_DIRECTORY)
-
-        output = {}
-        return_code = exec_remote_command_host(self.host, script, output)
-        if return_code != 0:
-            raise EnvironmentError(
-                'Could not umount {} - {}: {}'.format(
-                    self.OLD_DIRECTORY, return_code, output
-                )
-            )
+    @property
+    def path_mount(self):
+        return self.OLD_DIRECTORY
 
 
-class DisableOldestExport(MountingNewerExport):
+class DisableOldestExport(NewerDisk):
 
     def __unicode__(self):
         return "Disabling oldest export..."
@@ -185,45 +163,30 @@ class DisableOldestExport(MountingNewerExport):
             export.is_active = False
             export.save()
 
-    def undo(self):
-        for export in self.host.nfsaas_host_attributes.all():
-            if len(export.snapshots) <= 0:
-                continue
 
-            export.is_active = True
-            export.save()
-
-
-class ConfigureFstab(MountingNewerExport):
+class ConfigureFstab(NewerDisk, DiskCommand):
 
     def __unicode__(self):
         return "Configuring fstab..."
 
-    def do(self):
-        script = 'sed \'{}/d\' "/etc/fstab"'.format(self.OLD_DIRECTORY)
-        output = {}
-        return_code = exec_remote_command_host(self.host, script, output)
-        if return_code != 0:
-            raise EnvironmentError(
-                'Could remove {} from fstab - {}: {}'.format(
-                    self.OLD_DIRECTORY, return_code, output
-                )
+    @property
+    def scripts(self):
+        remove_msg = 'Could remove {} from fstab'.format(self.OLD_DIRECTORY)
+        remove_script = 'sed \'{}/d\' "/etc/fstab"'.format(self.OLD_DIRECTORY)
+
+        add_msg = 'Could configure {} in fstab'.format(self.OLD_DIRECTORY)
+        add_script = \
+            'echo "{} {} nfs defaults,bg,intr,nolock 0 0" >> /etc/fstab'.format(
+                self.OLD_DIRECTORY, self.newer_export.nfsaas_path,
             )
 
-        script = 'echo "{} {} nfs defaults,bg,intr,nolock 0 0" >> /etc/fstab'.format(
-            self.OLD_DIRECTORY, self.newer_export.nfsaas_path,
-        )
-        output = {}
-        return_code = exec_remote_command_host(self.host, script, output)
-        if return_code != 0:
-            raise EnvironmentError(
-                'Could configure {} in fstab - {}: {}'.format(
-                    self.OLD_DIRECTORY, return_code, output
-                )
-            )
+        return {
+            remove_msg: remove_script,
+            add_msg: add_script
+        }
 
 
-class FilePermissions(MountingNewerExport):
+class FilePermissions(NewerDisk, DiskCommand):
 
     def __unicode__(self):
         return "Changing filer permission..."
@@ -233,16 +196,13 @@ class FilePermissions(MountingNewerExport):
         self.user = self.databaseinfra.engine_name
         self.group = self.databaseinfra.engine_name
 
-    def do(self):
+    @property
+    def scripts(self):
         script = '''
             chown {1}:{2} {0} &&
             chmod g+r {0} &&
             chmod g+x {0}
         '''.format(self.OLD_DIRECTORY, self.user, self.group)
-        output = {}
-
-        return_code = exec_remote_command_host(self.host, script, output)
-        if return_code != 0:
-            raise EnvironmentError(
-                'Could set permissions - {}: {}'.format(return_code, output)
-            )
+        return {
+            'Could set permissions': script
+        }
