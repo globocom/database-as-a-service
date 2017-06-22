@@ -16,7 +16,17 @@ class BaseStep(object):
         raise NotImplementedError
 
 
-class BaseInstanceStep(BaseStep):
+@python_2_unicode_compatible
+class BaseInstanceStep(object):
+
+    def __str__(self):
+        return "I am a step"
 
     def __init__(self, instance):
         self.instance = instance
+
+    def do(self):
+        raise NotImplementedError
+
+    def undo(self):
+        raise NotImplementedError
