@@ -159,21 +159,35 @@ def database_credentials(request, context, database=None):
 
 
 def _update_database_parameters(request_post, database):
+    from physical.models import DatabaseInfraParameter
+    from physical.models import Parameter
     changed_parameters = []
     for key in request_post.keys():
         if key.startswith("new_value_"):
             parameter_new_value = request_post.get(key)
-            parameter_id = key.split("new_value_")[1]
             if parameter_new_value:
-                from physical.models import DatabaseInfraParameter
+                parameter_id = key.split("new_value_")[1]
+                parameter = Parameter.objects.get(id=parameter_id)
                 changed = DatabaseInfraParameter.update_parameter_value(
-                    databaseinfra_id=database.databaseinfra_id,
-                    parameter_id=parameter_id,
+                    databaseinfra=database.databaseinfra,
+                    parameter=parameter,
                     value=parameter_new_value,
-                    status=DatabaseInfraParameter.CHANGED_AND_NOT_APPLIED_ON_DATABASE
                 )
                 if changed:
                     changed_parameters.append(parameter_id)
+
+        if key.startswith("checkbox_reset_"):
+            reset_default_value = request_post.get(key)
+            if reset_default_value == "on":
+                parameter_id = key.split("checkbox_reset_")[1]
+                parameter = Parameter.objects.get(id=parameter_id)
+                changed = DatabaseInfraParameter.set_reset_default(
+                    databaseinfra=database.databaseinfra,
+                    parameter=parameter,
+                )
+                if changed:
+                    changed_parameters.append(parameter_id)
+
     return changed_parameters
 
 
@@ -205,7 +219,7 @@ def database_parameters(request, context, database):
                     reverse('admin:change_parameters_retry',
                             kwargs={'id': database.id})
                 )
-        elif 'save_parameters' in request.POST:
+        else:
             form_status = EDITABLE
             can_do_change_parameters, error = database.can_do_change_parameters()
             if not can_do_change_parameters:
@@ -218,60 +232,76 @@ def database_parameters(request, context, database):
                                 kwargs={'id': database.id})
                     )
 
-    database_parameters = []
+    form_database_parameters = []
     databaseinfra = database.databaseinfra
     static_parameter = False
     custom_parameter = False
 
     parameters_changed = DatabaseInfraParameter.objects.filter(
         databaseinfra=database.databaseinfra,
-        status=DatabaseInfraParameter.CHANGED_AND_NOT_APPLIED_ON_DATABASE
+        applied_on_database=False
     )
     if parameters_changed:
         form_status = TASK_RUNNING
 
     last_change_parameters = database.change_parameters.last()
-    if last_change_parameters.is_running:
-        form_status = TASK_RUNNING
-    elif last_change_parameters.is_status_error:
-        form_status = TASK_ERROR
+    last_change_parameters_error = False
+    if last_change_parameters:
+        if last_change_parameters.is_running:
+            form_status = TASK_RUNNING
+        elif last_change_parameters.is_status_error:
+            form_status = TASK_ERROR
+            last_change_parameters_error = True
 
-    if parameters_changed:
-        parameters_id = []
-        for parameter_changed in parameters_changed:
-            parameters_id.append(parameter_changed.parameter.id)
-        topologies_parameter = database.plan.replication_topology.parameter.filter(id__in=parameters_id)
-    else:
-        topologies_parameter = database.plan.replication_topology.parameter.all()
-
-    for topology_parameter in topologies_parameter:
+    topology_parameters = database.plan.replication_topology.parameter.all()
+    for topology_parameter in topology_parameters:
+        editable_parameter = True
         defaul_value = databaseinfra.get_dbaas_parameter_default_value(
             parameter_name=topology_parameter.name
         )
-        current_valeu = databaseinfra.get_parameter_value(
-            parameter=topology_parameter
-        )
-        if current_valeu:
-            databaseinfra_custom_parameter = True
-            form_current_valeu = current_valeu
-            custom_parameter = True
-        else:
-            databaseinfra_custom_parameter = False
-            form_current_valeu = defaul_value
         if not topology_parameter.dynamic:
             static_parameter = True
+
+        try:
+            infra_parameter = DatabaseInfraParameter.objects.get(
+                databaseinfra=databaseinfra,
+                parameter=topology_parameter
+            )
+        except DatabaseInfraParameter.DoesNotExist:
+            current_value = '-'
+            applied_on_database = True
+            reset_default_value = False
+        else:
+            current_value = infra_parameter.value
+            applied_on_database = infra_parameter.applied_on_database
+            reset_default_value = infra_parameter.reset_default_value
+
+        if last_change_parameters_error:
+            try:
+                infra_parameter = DatabaseInfraParameter.objects.get(
+                    databaseinfra=databaseinfra,
+                    parameter=topology_parameter,
+                    applied_on_database=False
+                )
+            except DatabaseInfraParameter.DoesNotExist:
+                editable_parameter = False
+            else:
+                editable_parameter = True
+
         database_parameter = {
             "id": topology_parameter.id,
             "name": topology_parameter.name,
             "dynamic": topology_parameter.dynamic,
             "dbaas_default_value": defaul_value,
-            "current_valeu": form_current_valeu,
+            "current_value": current_value,
             "new_value": "",
-            "custom_parameter": databaseinfra_custom_parameter,
+            "applied_on_database": applied_on_database,
+            "reset_default_value": reset_default_value,
+            "editable_parameter": editable_parameter,
         }
-        database_parameters.append(database_parameter)
+        form_database_parameters.append(database_parameter)
 
-    context['database_parameters'] = database_parameters
+    context['form_database_parameters'] = form_database_parameters
     context['static_parameter'] = static_parameter
     context['custom_parameter'] = custom_parameter
     context['PROTECTED'] = PROTECTED
@@ -294,17 +324,9 @@ def database_change_parameters(request, context, database):
     if not can_do_change_parameters:
         messages.add_message(request, messages.ERROR, error)
     else:
-        task_history = TaskHistory()
-        task_history.task_name = "change_parameters"
-        task_history.task_status = task_history.STATUS_WAITING
-        task_history.arguments = "Changing parameters of database {}".format(database)
-        task_history.user = request.user
-        task_history.save()
-
-        change_parameters_database.delay(
+        TaskRegister.database_change_parameters(
             database=database,
-            user=request.user,
-            task=task_history
+            user=request.user
         )
 
     return HttpResponseRedirect(
@@ -331,17 +353,9 @@ def database_change_parameters_retry(request, context, database):
     if error:
         messages.add_message(request, messages.ERROR, error)
     else:
-        task_history = TaskHistory()
-        task_history.task_name = "change_parameters_retry"
-        task_history.task_status = task_history.STATUS_WAITING
-        task_history.arguments = "Retrying changing parameters of database {}".format(database)
-        task_history.user = request.user
-        task_history.save()
-
-        change_parameters_database.delay(
+        TaskRegister.database_change_parameters(
             database=database,
             user=request.user,
-            task=task_history,
             since_step=since_step
         )
 
@@ -785,7 +799,9 @@ def _delete_snapshot(request, database):
         )
         return
 
-    TaskRegister.database_remove_backup(database=database, snapshot=snapshot)
+    TaskRegister.database_remove_backup(
+        database=database, snapshot=snapshot, user=request.user.username
+    )
 
 
 @database_view("")
@@ -803,8 +819,9 @@ def database_make_backup(request, context, database):
     if error:
         messages.add_message(request, messages.ERROR, error)
     else:
-
-        TaskRegister.database_backup(database=database)
+        TaskRegister.database_backup(
+            database=database, user=request.user.username
+        )
 
     return HttpResponseRedirect(
         reverse('admin:logical_database_backup', kwargs={'id': database.id})

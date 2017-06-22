@@ -639,6 +639,7 @@ class DatabaseInfra(BaseModel):
 
     def get_dbaas_parameter_default_value(self, parameter_name):
         from physical.configurations import configuration_factory
+        parameter_name = parameter_name.replace('-', '_')
         configuration = configuration_factory(
             self,
             self.cs_dbinfra_offering.get().offering.memory_size_mb
@@ -849,20 +850,12 @@ class Instance(BaseModel):
 
 class DatabaseInfraParameter(BaseModel):
 
-    APPLIED_ON_DATABASE = 1
-    CHANGED_AND_NOT_APPLIED_ON_DATABASE = 2
-    RESET_DBAAS_DEFAULT = 3
-
-    PARAMETER_STATUS = (
-        (APPLIED_ON_DATABASE, 'Applied on database'),
-        (CHANGED_AND_NOT_APPLIED_ON_DATABASE, 'Changed and not applied on database'),
-        (RESET_DBAAS_DEFAULT, 'Initializing')
-    )
-
     databaseinfra = models.ForeignKey(DatabaseInfra)
     parameter = models.ForeignKey(Parameter)
     value = models.CharField(max_length=200)
-    status = models.IntegerField(choices=PARAMETER_STATUS, default=1)
+    current_value = models.CharField(max_length=200)
+    applied_on_database = models.BooleanField(default=False)
+    reset_default_value = models.BooleanField(default=False)
 
     class Meta:
         unique_together = (
@@ -874,12 +867,16 @@ class DatabaseInfraParameter(BaseModel):
                                  self.parameter.name, self.value)
 
     @classmethod
-    def update_parameter_value(cls, databaseinfra_id, parameter_id,
-                               value, status):
+    def update_parameter_value(cls, databaseinfra, parameter, value):
         obj, created = cls.objects.get_or_create(
-            databaseinfra_id=databaseinfra_id,
-            parameter_id=parameter_id,
-            defaults={'value': value, 'status': status},
+            databaseinfra=databaseinfra,
+            parameter=parameter,
+            defaults={
+                'value': value,
+                'current_value': databaseinfra.get_dbaas_parameter_default_value(
+                    parameter_name=parameter.name
+                )
+            },
         )
         if created:
             return True
@@ -888,18 +885,56 @@ class DatabaseInfraParameter(BaseModel):
             return False
 
         obj.value = value
-        obj.status = status
+        obj.applied_on_database = False
         obj.save()
         return True
 
     @classmethod
+    def set_reset_default(cls, databaseinfra, parameter):
+        try:
+            obj = cls.objects.get(databaseinfra=databaseinfra,
+                                  parameter=parameter)
+        except cls.DoesNotExist:
+            return False
+        else:
+            obj.reset_default_value = True
+            obj.applied_on_database = False
+            obj.value = databaseinfra.get_dbaas_parameter_default_value(
+                parameter_name=parameter.name
+            )
+            obj.save()
+            return True
+
+    @classmethod
+    def get_databaseinfra_reseted_parameters(cls, databaseinfra):
+        return cls.objects.filter(
+            databaseinfra=databaseinfra,
+            applied_on_database=False,
+            reset_default_value=True,
+        )
+
+    @classmethod
+    def get_databaseinfra_changed_parameters(cls, databaseinfra):
+        return cls.objects.filter(
+            databaseinfra=databaseinfra,
+            applied_on_database=False,
+        )
+
+    @classmethod
+    def get_databaseinfra_changed_not_reseted_parameters(cls, databaseinfra):
+        return cls.objects.filter(
+            databaseinfra=databaseinfra,
+            applied_on_database=False,
+            reset_default_value=False,
+        )
+
+    @classmethod
     def load_database_configs(cls, infra):
-        database = infra.databases.first()
-        parameters = database.plan.replication_topology.parameter.all()
+        parameters = infra.plan.replication_topology.parameter.all()
         physical_parameters = infra.get_driver().get_configuration()
 
         for parameter in parameters:
-            if not parameter.name in physical_parameters:
+            if parameter.name not in physical_parameters:
                 LOG.warning(
                     'Parameter {} not found in physical configuration'.format(
                         parameter.name
@@ -919,9 +954,22 @@ class DatabaseInfraParameter(BaseModel):
                 LOG.info('Updating parameter {} value {} to {}'.format(
                     parameter, default_value, physical_value
                 ))
-                DatabaseInfraParameter.update_parameter_value(
-                    infra.id, parameter.id, physical_value
+                obj, created = cls.objects.get_or_create(
+                    databaseinfra=infra,
+                    parameter=parameter,
+                    defaults={
+                        'value': physical_value,
+                        'current_value': physical_value,
+                        'applied_on_database': True,
+                        'reset_default_value': False
+                    },
                 )
+                if not created:
+                    obj.value = physical_value
+                    obj.current_value = physical_value
+                    obj.applied_on_database = True
+                    obj.reset_default_value = False
+                    obj.save()
 
     @staticmethod
     def is_boolean(value):

@@ -792,13 +792,8 @@ def change_parameters_database(self, database, user, task, since_step=0):
     class_path = plan.replication_topology.class_path
 
     from physical.models import DatabaseInfraParameter
-    status_filter = [
-        DatabaseInfraParameter.CHANGED_AND_NOT_APPLIED_ON_DATABASE,
-        DatabaseInfraParameter.RESET_DBAAS_DEFAULT
-    ]
-    changed_parameters = DatabaseInfraParameter.objects.filter(
+    changed_parameters = DatabaseInfraParameter.get_databaseinfra_changed_parameters(
         databaseinfra=infra,
-        status__in=status_filter
     )
     all_dinamic = True
     for changed_parameter in changed_parameters:
@@ -807,11 +802,24 @@ def change_parameters_database(self, database, user, task, since_step=0):
             break
     steps = get_database_change_parameter_setting(class_path, all_dinamic)
 
+    task.add_detail("Changed parameters:", level=0)
+    for changed_parameter in changed_parameters:
+        msg = "{}: old value: [{}], new value: [{}]".format(
+            changed_parameter.parameter.name,
+            changed_parameter.current_value,
+            changed_parameter.value
+
+        )
+        task.add_detail(msg, level=1)
+    task.add_detail("", level=0)
+
     if since_step > 0:
         steps_dec = get_database_change_parameter_retry_steps_count(
             class_path, all_dinamic)
         LOG.info('since_step: {}, steps_dec: {}'.format(since_step, steps_dec))
         since_step = since_step - steps_dec
+        if since_step < 0:
+            since_step = 0
 
     database_change_parameter = DatabaseChangeParameter()
     database_change_parameter.database = database
@@ -1161,13 +1169,14 @@ class TaskRegister(object):
         return result
 
     @classmethod
-    def database_backup(cls, database):
+    def database_backup(cls, database, user):
         from backup.tasks import make_database_backup
 
         task_params = {
             'task_name': "make_database_backup",
             'arguments': "Making backup of {}".format(database),
-            'database': database
+            'database': database,
+            'user': user,
         }
 
         task = cls.create_task(task_params)
@@ -1178,12 +1187,13 @@ class TaskRegister(object):
         )
 
     @classmethod
-    def database_remove_backup(cls, database, snapshot):
+    def database_remove_backup(cls, database, snapshot, user):
         from backup.tasks import remove_database_backup
 
         task_params = {
             'task_name': "remove_database_backup",
             'arguments': "Remove backup of {}".format(database),
+            'user': user,
         }
 
         task = cls.create_task(task_params)
@@ -1257,5 +1267,30 @@ class TaskRegister(object):
             task_history=task,
             user=user
         )
+
+    @classmethod
+    def database_change_parameters(cls, database, user, since_step=None):
+        task_params = {
+            'task_name': 'change_parameters',
+            'arguments': 'Changing parameters of database {}'.format(database),
+            'database': database,
+            'user': user
+        }
+
+        if since_step:
+            task_params['task_name'] = 'upgrade_database_retry'
+            task_params['arguments'] = 'Retrying changing parameters of database {}'.format(database)
+
+        task = cls.create_task(task_params)
+
+        delay_params = {
+            'database': database,
+            'task': task,
+            'user': user
+        }
+
+        delay_params.update(**{'since_step': since_step} if since_step else {})
+
+        change_parameters_database.delay(**delay_params)
 
     # ============  END TASKS   ============
