@@ -51,7 +51,7 @@ bind {{HOSTADDRESS}}
 # unixsocketperm 755
 
 # Close the connection after a client is idle for N seconds (0 to disable)
-timeout 0
+timeout {{ configuration.timeout.value }}
 
 # Set server verbosity to 'debug'
 # it can be one of:
@@ -128,7 +128,7 @@ stop-writes-on-bgsave-error yes
 # For default that's set to 'yes' as it's almost always a win.
 # If you want to save some CPU in the saving child set it to 'no' but
 # the dataset will likely be bigger if you have compressible values or keys.
-rdbcompression yes
+rdbcompression {{ configuration.rdbcompression.value }}
 
 # Since verison 5 of RDB a CRC64 checksum is placed at the end of the file.
 # This makes the format more resistant to corruption but there is a performance
@@ -137,7 +137,7 @@ rdbcompression yes
 #
 # RDB files created with checksum disabled have a checksum of zero that will
 # tell the loading code to skip the check.
-rdbchecksum yes
+rdbchecksum {{ configuration.rdbchecksum.value }}
 
 # The filename where to dump the DB
 dbfilename dump.rdb
@@ -179,7 +179,7 @@ masterauth "{{DBPASSWORD}}"
 #    an error "SYNC with master in progress" to all the kind of commands
 #    but to INFO and SLAVEOF.
 #
-slave-serve-stale-data yes
+slave-serve-stale-data {{ configuration.slave_serve_stale_data.value }}
 
 # You can configure a slave instance to accept writes or not. Writing against
 # a slave instance may be useful to store some ephemeral data (because data
@@ -195,7 +195,7 @@ slave-serve-stale-data yes
 # such as CONFIG, DEBUG, and so forth. To a limited extend you can improve
 # security of read only slaves using 'rename-command' to shadow all the
 # administrative / dangerous commands.
-slave-read-only yes
+slave-read-only {{ configuration.slave_read_only.value }}
 
 # Slaves send PINGs to server in a predefined interval. It's possible to change
 # this interval with the repl_ping_slave_period option. The default value is 10
@@ -273,7 +273,7 @@ requirepass "{{DBPASSWORD}}"
 # Once the limit is reached Redis will close all the new connections sending
 # an error 'max number of clients reached'.
 #
-maxclients 10000
+maxclients {{ configuration.maxclients.value }}
 
 # Don't use more memory than the specified amount of bytes.
 # When the memory limit is reached Redis will try to remove keys
@@ -321,11 +321,7 @@ maxmemory {{ configuration.maxmemory.value }}
 #
 # The default is:
 #
-{% if HAS_PERSISTENCE %}
-maxmemory-policy volatile-lru
-{% else %}
-maxmemory-policy allkeys-lru
-{% endif %}
+maxmemory-policy {{ configuration.maxmemory_policy.value }}
 
 # LRU and minimal TTL algorithms are not precise algorithms but approximated
 # algorithms (in order to save memory), so you can select as well the sample
@@ -355,11 +351,7 @@ maxmemory-policy allkeys-lru
 #
 # Please check http://redis.io/topics/persistence for more information.
 
-{% if HAS_PERSISTENCE %}
-appendonly yes
-{% else %}
-appendonly no
-{% endif %}
+appendonly {{ configuration.appendonly.value }}
 
 # The name of the append only file (default: "appendonly.aof")
 appendfilename redis.aof
@@ -387,9 +379,7 @@ appendfilename redis.aof
 #
 # If unsure, use "everysec".
 
-# appendfsync always
-appendfsync everysec
-# appendfsync no
+appendfsync {{ configuration.appendfsync.value }}
 
 # When the AOF fsync policy is set to always or everysec, and a background
 # saving process (a background save or AOF log background rewriting) is
@@ -409,7 +399,7 @@ appendfsync everysec
 #
 # If you have latency problems turn this to "yes". Otherwise leave it as
 # "no" that is the safest pick from the point of view of durability.
-no-appendfsync-on-rewrite no
+no-appendfsync-on-rewrite {{ configuration.no_appendfsync_on_rewrite.value }}
 
 # Automatic rewrite of the append only file.
 # Redis is able to automatically rewrite the log file implicitly calling
@@ -428,8 +418,8 @@ no-appendfsync-on-rewrite no
 # Specify a percentage of zero in order to disable the automatic AOF
 # rewrite feature.
 
-auto-aof-rewrite-percentage 100
-auto-aof-rewrite-min-size 1GB
+auto-aof-rewrite-percentage {{ configuration.auto_aof_rewrite_percentage.value }}
+auto-aof-rewrite-min-size {{ configuration.auto_aof_rewrite_min_size.value }}
 
 ################################ LUA SCRIPTING  ###############################
 
@@ -447,7 +437,7 @@ auto-aof-rewrite-min-size 1GB
 # termination of the script.
 #
 # Set it to 0 or a negative value for unlimited execution without warnings.
-lua-time-limit 5000
+lua-time-limit {{ configuration.lua_time_limit.value }}
 
 ################################## SLOW LOG ###################################
 
@@ -467,38 +457,38 @@ lua-time-limit 5000
 # The following time is expressed in microseconds, so 1000000 is equivalent
 # to one second. Note that a negative number disables the slow log, while
 # a value of zero forces the logging of every command.
-slowlog-log-slower-than 10000
+slowlog-log-slower-than {{ configuration.slowlog_log_slower_than.value }}
 
 # There is no limit to this length. Just be aware that it will consume memory.
 # You can reclaim memory used by the slow log with SLOWLOG RESET.
-slowlog-max-len 1024
+slowlog-max-len {{ configuration.slowlog_max_len.value }}
 
 ############################### ADVANCED CONFIG ###############################
 
 # Hashes are encoded using a memory efficient data structure when they have a
 # small number of entries, and the biggest entry does not exceed a given
 # threshold. These thresholds can be configured using the following directives.
-hash-max-ziplist-entries 512
-hash-max-ziplist-value 64
+hash-max-ziplist-entries {{ configuration.hash_max_ziplist_entries.value }}
+hash-max-ziplist-value {{ configuration.hash_max_ziplist_value.value }}
 
 # Similarly to hashes, small lists are also encoded in a special way in order
 # to save a lot of space. The special representation is only used when
 # you are under the following limits:
-list-max-ziplist-entries 512
-list-max-ziplist-value 64
+list-max-ziplist-entries {{ configuration.list_max_ziplist_entries.value }}
+list-max-ziplist-value {{ configuration.list_max_ziplist_value.value }}
 
 # Sets have a special encoding in just one case: when a set is composed
 # of just strings that happens to be integers in radix 10 in the range
 # of 64 bit signed integers.
 # The following configuration setting sets the limit in the size of the
 # set in order to use this special memory saving encoding.
-set-max-intset-entries 512
+set-max-intset-entries {{ configuration.set_max_intset_entries.value }}
 
 # Similarly to hashes and lists, sorted sets are also specially encoded in
 # order to save a lot of space. This encoding is only used when the length and
 # elements of a sorted set are below the following limits:
-zset-max-ziplist-entries 128
-zset-max-ziplist-value 64
+zset-max-ziplist-entries {{ configuration.zset_max_ziplist_entries.value }}
+zset-max-ziplist-value {{ configuration.zset_max_ziplist_value.value }}
 
 # Active rehashing uses 1 millisecond every 100 milliseconds of CPU time in
 # order to help rehashing the main Redis hash table (the one mapping top-level
@@ -518,7 +508,7 @@ zset-max-ziplist-value 64
 #
 # use "activerehashing yes" if you don't have such hard requirements but
 # want to free memory asap when possible.
-activerehashing yes
+activerehashing {{ configuration.activerehashing.value }}
 
 # The client output buffer limits can be used to force disconnection of clients
 # that are not reading data from the server fast enough for some reason (a

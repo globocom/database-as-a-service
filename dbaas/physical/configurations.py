@@ -11,10 +11,20 @@ def configuration_factory(databaseinfra, memory_size):
     raise NotImplementedError
 
 
+def confiration_exists(engine_name, parameter_name):
+    for name, obj in inspect.getmembers(sys.modules[__name__]):
+        if inspect.isclass(obj) and '__ENGINE__' in obj.__dict__:
+            if obj.__ENGINE__ == engine_name:
+                parameter_name = parameter_name.replace('-', '_')
+                if parameter_name in obj.__dict__:
+                    return True
+    return False
+
+
 class ParameterObject(object):
     def __init__(self, value, default):
         self.value = value
-        self.default = default
+        self.default = str(default)
 
 
 class ConfigurationBase(object):
@@ -75,139 +85,436 @@ class ConfigurationRedis(ConfigurationBase):
         return self.get_parameter(parameter_name, default)
 
     @property
-    def loglevel(self):
+    def appendonly(self):
         parameter_name = inspect.stack()[0][3]
-        default = "warning"
+        if self.databaseinfra.plan.has_persistence:
+            default = 'yes'
+        else:
+            default = 'no'
         return self.get_parameter(parameter_name, default)
 
     @property
-    def save(self):
+    def maxmemory_policy(self):
         parameter_name = inspect.stack()[0][3]
-        default = "7200 1 3600 10 1800 10000"
+        if self.databaseinfra.plan.has_persistence:
+            default = 'volatile-lru'
+        else:
+            default = 'allkeys-lru'
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def loglevel(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 'warning'
         return self.get_parameter(parameter_name, default)
 
     @property
     def databases(self):
         parameter_name = inspect.stack()[0][3]
-        default = "1"
+        default = '1'
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def timeout(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 0
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def rdbcompression(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 'yes'
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def rdbchecksum(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 'yes'
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def slave_serve_stale_data(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 'yes'
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def slave_read_only(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 'yes'
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def maxclients(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 10000
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def appendfsync(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 'everysec'
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def no_appendfsync_on_rewrite(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 'no'
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def auto_aof_rewrite_percentage(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 100
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def auto_aof_rewrite_min_size(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 1073741824
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def lua_time_limit(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 5000
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def slowlog_log_slower_than(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 10000
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def slowlog_max_len(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 1024
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def hash_max_ziplist_entries(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 512
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def hash_max_ziplist_value(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 64
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def list_max_ziplist_entries(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 512
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def list_max_ziplist_value(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 64
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def set_max_intset_entries(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 512
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def zset_max_ziplist_entries(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 128
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def zset_max_ziplist_value(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 64
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def activerehashing(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 'yes'
         return self.get_parameter(parameter_name, default)
 
 
 class ConfigurationMySQL(ConfigurationBase):
     __ENGINE__ = 'mysql'
-    MB_FORMATTER = 'M'
-    GB_FORMATTER = 'G'
-
-    def compare_values(self, compares, values):
-        for index, compare in enumerate(compares):
-            if self.memory_size_in_mb <= compare:
-                return values[index]
-        return values[-1]
-
-    def find_values(self, values):
-        if len(values) == 5:
-            return self.rule_of_fives(values)
-        if len(values) == 6:
-            return self.rule_of_six(values)
-
-    def rule_of_fives(self, values):
-        return self.compare_values([1024, 8192, 16384, 32768], values)
-
-    def rule_of_six(self, values):
-        return self.compare_values([512, 1024, 8192, 16384, 32768], values)
 
     @property
     def query_cache_size(self):
         parameter_name = inspect.stack()[0][3]
-        value = self.find_values([32, 64, 512, 1024, 2048])
-        default = self.value_format(value)
+        default = 0
         return self.get_parameter(parameter_name, default)
 
     @property
     def max_allowed_packet(self):
         parameter_name = inspect.stack()[0][3]
-        value = self.find_values([16, 32, 64, 512, 1024, 2048])
-        default = self.value_format(value)
+        default = 4194304
         return self.get_parameter(parameter_name, default)
 
     @property
     def sort_buffer_size(self):
         parameter_name = inspect.stack()[0][3]
-        value = self.find_values([2, 5, 10, 80, 160, 320])
-        default = self.value_format(value)
+        default = int(self.memory_size_in_bytes / 204.8)
         return self.get_parameter(parameter_name, default)
 
     @property
     def tmp_table_size(self):
         parameter_name = inspect.stack()[0][3]
-        value = self.find_values([16, 32, 64, 256, 512, 1024])
-        default = self.value_format(value)
+        default = int(self.memory_size_in_bytes / 64)
         return self.get_parameter(parameter_name, default)
 
     @property
     def max_heap_table_size(self):
         parameter_name = inspect.stack()[0][3]
-        value = self.find_values([32, 64, 128, 512, 1024, 2048])
-        default = self.value_format(value)
+        default = 16777216
         return self.get_parameter(parameter_name, default)
 
     @property
     def max_binlog_size(self):
         parameter_name = inspect.stack()[0][3]
-        value = 52428800 if self.memory_size_in_mb <= 2048 else 524288000
-        default = value
+        if self.memory_size_in_mb < 2048:
+            default = 52428800
+        elif self.memory_size_in_mb < 8192:
+            default = 104857600
+        elif self.memory_size_in_mb < 32768:
+            default = 262144000
+        else:
+            default = 524288000
         return self.get_parameter(parameter_name, default)
 
     @property
     def key_buffer_size(self):
         parameter_name = inspect.stack()[0][3]
-        value = self.find_values([16, 32, 64, 512, 1024, 2048])
-        default = self.value_format(value)
+        default = 8388608
         return self.get_parameter(parameter_name, default)
 
     @property
     def myisam_sort_buffer_size(self):
         parameter_name = inspect.stack()[0][3]
-        value = self.find_values([32, 64, 128, 1024, 2048, 4096])
-        default = self.value_format(value)
+        default = 8388608
         return self.get_parameter(parameter_name, default)
 
     @property
     def read_buffer_size(self):
         parameter_name = inspect.stack()[0][3]
-        value = self.find_values([1, 2, 4, 32, 64, 128])
-        default = self.value_format(value)
+        default = 131072
         return self.get_parameter(parameter_name, default)
 
     @property
     def read_rnd_buffer_size(self):
         parameter_name = inspect.stack()[0][3]
-        value = self.find_values([4, 8, 16, 128, 256, 512])
-        default = self.value_format(value)
+        default = 262144
         return self.get_parameter(parameter_name, default)
 
     @property
     def innodb_buffer_pool_size(self):
         parameter_name = inspect.stack()[0][3]
-        value = self.compare_values(
-            [512, 1024, 4096, 16384, 32768],
-            [128, 256, 512, 4096, 8192, 16384]
-        )
-        default = self.value_format(value)
+        if self.memory_size_in_mb < 1024:
+            default = self.memory_size_in_bytes / 4
+        elif self.memory_size_in_mb < 8192:
+            default = self.memory_size_in_bytes / 2
+        else:
+            default = (self.memory_size_in_bytes * 3) / 4
         return self.get_parameter(parameter_name, default)
 
     @property
     def innodb_log_file_size(self):
         parameter_name = inspect.stack()[0][3]
-        value = 256 if self.memory_size_in_mb == 8192 else 64
-        default = self.value_format(value)
+        default = 50331648
         return self.get_parameter(parameter_name, default)
 
     @property
     def innodb_log_buffer_size(self):
         parameter_name = inspect.stack()[0][3]
-        value = 64 if self.memory_size_in_mb == 8192 else 32
-        default = self.value_format(value)
+        default = 8388608
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def binlog_format(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 'ROW'
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def transaction_isolation(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 'READ-COMMITTED'
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def default_storage_engine(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 'InnoDB'
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def default_tmp_storage_engine(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 'InnoDB'
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def character_set_server(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 'utf8'
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def max_connections(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 1000
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def max_connect_errors(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 999999
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def thread_cache_size(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 32
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def table_open_cache(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 4096
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def query_cache_type(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 'ON'
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def sync_binlog(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 1
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def expire_logs_days(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 3
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def long_query_time(self):
+        parameter_name = inspect.stack()[0][3]
+        default = '1.000000'
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def slow_query_log(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 'ON'
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def innodb_autoextend_increment(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 8
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def innodb_file_per_table(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 'ON'
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def innodb_lock_wait_timeout(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 50
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def innodb_flush_log_at_trx_commit(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 1
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def innodb_thread_concurrency(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 16
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def innodb_max_dirty_pages_pct(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 90
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def innodb_max_purge_lag(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 0
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def explicit_defaults_for_timestamp(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 'ON'
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def performance_schema(self):
+        parameter_name = inspect.stack()[0][3]
+        if self.memory_size_in_mb < 8192:
+            default = 'OFF'
+        else:
+            default = 'ON'
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def thread_stack(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 196608
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def thread_concurrency(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 16
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def log_slave_updates(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 'ON'
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def innodb_log_files_in_group(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 3
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def innodb_flush_method(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 'O_DIRECT'
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def skip_external_locking(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 'ON'
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def skip_name_resolve(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 'ON'
         return self.get_parameter(parameter_name, default)
 
 
