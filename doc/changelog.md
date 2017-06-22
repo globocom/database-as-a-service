@@ -446,7 +446,6 @@
 * role based authorization
 * ldap authentication
 * basic api
-* a minimum EC2 api integration
 
 [Closed issues on 0.0.20]: https://github.com/globocom/database-as-a-service/issues?q=milestone%3ASprint4.Q3.2014
 
