@@ -15,8 +15,10 @@
           <th>Parameter</th>
           <th>DBaaS default value</th>
           <th>Custom value</th>
-          {% if form_status  == EDITABLE or form_status == TASK_ERROR %}
-            <th>New custom value</th>
+          {% if is_dba %}
+            {% if form_status  == EDITABLE or form_status == TASK_ERROR %}
+              <th>New custom value</th>
+            {% endif %}
           {% endif %}
         </tr>
       <tbody>
@@ -38,33 +40,34 @@
               (it was not applied on database yet)
              {% endif %}
             </td>
-            {% if form_status  == EDITABLE or form_status == TASK_ERROR %}
-              <td>
-                <input type="text" placeholder="type new value"
-                 maxlength="200" id="new_value_{{parameter.id}}"
-                 name="new_value_{{parameter.id}}" value="{{parameter.new_value}}"
-                 {% if not parameter.editable_parameter %} disabled {% endif %}
-                >
-              </td>
-              <td>
+            {% if is_dba %}
+              {% if form_status  == EDITABLE or form_status == TASK_ERROR %}
+                <td>
+                  <input type="text" placeholder="type new value"
+                   maxlength="200" id="new_value_{{parameter.id}}"
+                   name="new_value_{{parameter.id}}" value="{{parameter.new_value}}"
+                   {% if not parameter.editable_parameter %} disabled {% endif %}
+                  >
+                </td>
+                <td>
 
-                <label class="checkbox">
-                  <input id="checkbox_reset_{{parameter.id}}" name="checkbox_reset_{{parameter.id}}"
-                    type="checkbox"
-                     onclick=
-                     {% if not parameter.editable_parameter %}
-                     "return false;"
-                     {% else %}
-                     "reset_default(this, {{parameter.id}});"
-                     {% endif %}
-                     {% if not parameter.editable_parameter %} disabled {% endif %}
-                  />
-                  <span><label class="vCheckboxLabel" for="checkbox_reset_{{parameter.id}}">Reset to DBaaS default value</label></span>
-                </label>
+                  <label class="checkbox">
+                    <input id="checkbox_reset_{{parameter.id}}" name="checkbox_reset_{{parameter.id}}"
+                      type="checkbox"
+                       onclick=
+                       {% if not parameter.editable_parameter %}
+                       "return false;"
+                       {% else %}
+                       "reset_default(this, {{parameter.id}});"
+                       {% endif %}
+                       {% if not parameter.editable_parameter %} disabled {% endif %}
+                    />
+                    <span><label class="vCheckboxLabel" for="checkbox_reset_{{parameter.id}}">Reset to DBaaS default value</label></span>
+                  </label>
 
-              </td>
-              <td><input type="hidden" name="dynamic_{{parameter.id}}" id="dynamic_{{parameter.id}}" value="{{parameter.dynamic}}"></td>
-
+                </td>
+                <td><input type="hidden" name="dynamic_{{parameter.id}}" id="dynamic_{{parameter.id}}" value="{{parameter.dynamic}}"></td>
+              {% endif %}
             {% endif %}
 
 
@@ -122,26 +125,27 @@
 {% endblock %}
 
 {% block database_button_save %}
+  {% if is_dba %}
 
-  {% if form_status  == PROTECTED or form_status == TASK_SUCCESS %}
-    <input type="submit" value="Edit" name="edit_parameters" id="id_edit_parameters_btn" class="btn btn-primary"/>
-  {% elif  form_status  == EDITABLE %}
-    <input type="submit" value="Save" name="save_parameters"
-      onclick="return confirm_msg();" class="btn btn-primary"
-      id="save_parameters"
-    />
-    <input type="submit" value="Cancel" name="calcel_edit_parameters"
-      id="id_calcel_edit_parameters_btn" class="btn btn-primary"
-    />
+    {% if form_status  == PROTECTED or form_status == TASK_SUCCESS %}
+      <input type="submit" value="Edit" name="edit_parameters" id="id_edit_parameters_btn" class="btn btn-primary"/>
+    {% elif  form_status  == EDITABLE %}
+      <input type="submit" value="Save" name="save_parameters"
+        onclick="return confirm_msg();" class="btn btn-primary"
+        id="save_parameters"
+      />
+      <input type="submit" value="Cancel" name="calcel_edit_parameters"
+        id="id_calcel_edit_parameters_btn" class="btn btn-primary"
+      />
 
-  {% elif  form_status  == TASK_ERROR %}
-    <input type="submit" value="Retry Change Parameters"
-      name="retry_update_parameters" onclick="return confirm('Are you sure?');"
-      class="btn btn-warning"
-    />
-    <p><a href="{% url 'admin:maintenance_databasechangeparameter_change' last_change_parameters.id %}" target='_blank'>Last change parameters</a> has an <b>error</b>, please check the <a href="{% url 'admin:notification_taskhistory_change' last_change_parameters.task.id %}" target='_blank'>task</a> and retry the database change parameters clicking in button above</p>
+    {% elif  form_status  == TASK_ERROR %}
+      <input type="submit" value="Retry Change Parameters"
+        name="retry_update_parameters" onclick="return confirm('Are you sure?');"
+        class="btn btn-warning"
+      />
+      <p><a href="{% url 'admin:maintenance_databasechangeparameter_change' last_change_parameters.id %}" target='_blank'>Last change parameters</a> has an <b>error</b>, please check the <a href="{% url 'admin:notification_taskhistory_change' last_change_parameters.task.id %}" target='_blank'>task</a> and retry the database change parameters clicking in button above</p>
+    {% endif %}
   {% endif %}
-
 {% endblock %}
 
 {% block js_footer %}
