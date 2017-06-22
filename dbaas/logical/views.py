@@ -799,7 +799,9 @@ def _delete_snapshot(request, database):
         )
         return
 
-    TaskRegister.database_remove_backup(database=database, snapshot=snapshot)
+    TaskRegister.database_remove_backup(
+        database=database, snapshot=snapshot, user=request.user.username
+    )
 
 
 @database_view("")
@@ -817,8 +819,9 @@ def database_make_backup(request, context, database):
     if error:
         messages.add_message(request, messages.ERROR, error)
     else:
-
-        TaskRegister.database_backup(database=database)
+        TaskRegister.database_backup(
+            database=database, user=request.user.username
+        )
 
     return HttpResponseRedirect(
         reverse('admin:logical_database_backup', kwargs={'id': database.id})

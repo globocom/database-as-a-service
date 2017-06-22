@@ -1169,13 +1169,14 @@ class TaskRegister(object):
         return result
 
     @classmethod
-    def database_backup(cls, database):
+    def database_backup(cls, database, user):
         from backup.tasks import make_database_backup
 
         task_params = {
             'task_name': "make_database_backup",
             'arguments': "Making backup of {}".format(database),
-            'database': database
+            'database': database,
+            'user': user,
         }
 
         task = cls.create_task(task_params)
@@ -1186,12 +1187,13 @@ class TaskRegister(object):
         )
 
     @classmethod
-    def database_remove_backup(cls, database, snapshot):
+    def database_remove_backup(cls, database, snapshot, user):
         from backup.tasks import remove_database_backup
 
         task_params = {
             'task_name': "remove_database_backup",
             'arguments': "Remove backup of {}".format(database),
+            'user': user,
         }
 
         task = cls.create_task(task_params)

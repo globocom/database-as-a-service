@@ -275,7 +275,7 @@ class DatabaseBackupCallTestCase(TestCase, TaskCallBaseTestCase):
 
     method_to_call = 'database_backup'
     delay_to_mock = 'backup.tasks.make_database_backup.delay'
-    call_params = {'database': MagicMock()}
+    call_params = {'database': MagicMock(), 'user': 'fake.user_name'}
     create_fields_to_validate = ['task_name', 'arguments', 'database']
     delay_fields_to_validate = ['database', 'task']
 
@@ -284,7 +284,10 @@ class DatabaseRemoveBackupCallTestCase(TestCase, TaskCallBaseTestCase):
 
     method_to_call = 'database_remove_backup'
     delay_to_mock = 'backup.tasks.remove_database_backup.delay'
-    call_params = {'database': MagicMock(), 'snapshot': 'snapshot'}
+    call_params = {
+        'database': MagicMock(),
+        'snapshot': 'snapshot', 'user': 'fake.user_name'
+    }
     create_fields_to_validate = ['task_name', 'arguments']
     delay_fields_to_validate = ['snapshot', 'task']
 
