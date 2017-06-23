@@ -90,6 +90,7 @@ class MySQLFoxHA(MySQLSingle):
             'workflow.steps.mysql.deploy.create_dns_foxha.CreateDnsFoxHA',
             'workflow.steps.util.deploy.create_nfs.CreateNfs',
             'workflow.steps.mysql.deploy.init_database_foxha.InitDatabaseFoxHA',
+            'workflow.steps.mysql.deploy.check_pupet.CheckVMName',
             'workflow.steps.mysql.deploy.check_pupet.CheckPuppetIsRunning',
             'workflow.steps.mysql.deploy.config_vms_foreman.ConfigVMsForeman',
             'workflow.steps.mysql.deploy.run_pupet_setup.RunPuppetSetup',
