@@ -539,5 +539,3 @@ class ConfigurationMongoDB(ConfigurationBase):
         parameter_name = inspect.stack()[0][3]
         default = 512
         return self.get_parameter(parameter_name, default)
-
-

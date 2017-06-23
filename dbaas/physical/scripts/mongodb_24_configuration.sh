@@ -66,7 +66,7 @@ replSet={{REPLICASETNAME}}
 keyFile=/data/mongodb.key
 
 # Custom size for replication operation log in MB.
-oplogSize = 512
+oplogSize = {{ configuration.oplogSize.value }}
 {% else %}
 ########################################
 ## Security
