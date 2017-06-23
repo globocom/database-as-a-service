@@ -249,6 +249,19 @@ def exec_remote_command(server, username, password, command, output={}):
         return None
 
 
+def exec_remote_command_host(host, command, output={}):
+    from dbaas_cloudstack.models import HostAttr
+    host_attr = HostAttr.objects.get(host=host)
+
+    return exec_remote_command(
+        server=host.address,
+        username=host_attr.vm_user,
+        password=host_attr.vm_password,
+        command=command,
+        output=output
+    )
+
+
 def check_ssh(server, username, password, retries=30, wait=30, interval=40):
     username = username
     password = password
