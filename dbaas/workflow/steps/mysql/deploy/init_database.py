@@ -98,15 +98,20 @@ class InitDatabase(BaseStep):
                     LOG.info("Executing script on %s" % host)
 
                     script = build_context_script(contextdict, script)
+                    output = {}
                     return_code = exec_remote_command(
                         server=host.address,
                         username=host_csattr.vm_user,
                         password=host_csattr.vm_password,
-                        command=script
+                        command=script,
+                        output=output
                     )
 
                     if return_code != 0:
-                        return False
+                        error_msg = "Error executing script. Stdout: {} - " \
+                                    "stderr: {}".format(output['stdout'],
+                                                        output['stderr'])
+                        raise Exception(error_msg)
 
             if len(workflow_dict['hosts']) > 1:
 
@@ -119,15 +124,20 @@ class InitDatabase(BaseStep):
                     host_csattr = CsHostAttr.objects.get(host=host)
 
                     LOG.info("Executing script on %s" % host)
+                    output = {}
                     return_code = exec_remote_command(
                         server=host.address,
                         username=host_csattr.vm_user,
                         password=host_csattr.vm_password,
-                        command=script
+                        command=script,
+                        output=output
                     )
 
                     if return_code != 0:
-                        return False
+                        error_msg = "Error executing script. Stdout: {} - " \
+                                    "stderr: {}".format(output['stdout'],
+                                                        output['stderr'])
+                        raise Exception(error_msg)
 
             return True
         except Exception:

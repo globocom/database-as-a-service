@@ -116,15 +116,20 @@ class InitDatabaseRedis(BaseStep):
                     LOG.info("Executing script on %s" % host)
 
                     script = build_context_script(contextdict, script)
+                    output = {}
                     return_code = exec_remote_command(
                         server=host.address,
                         username=host_csattr.vm_user,
                         password=host_csattr.vm_password,
-                        command=script
+                        command=script,
+                        output=output
                     )
 
                     if return_code != 0:
-                        return False
+                        error_msg = "Error executing script. Stdout: {} - " \
+                                    "stderr: {}".format(output['stdout'],
+                                                        output['stderr'])
+                        raise Exception(error_msg)
 
                 if index > 0 and instances_redis:
                     client = instances_redis[
