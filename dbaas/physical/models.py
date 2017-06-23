@@ -947,9 +947,6 @@ class DatabaseInfraParameter(BaseModel):
                 parameter_name=parameter.name
             )
 
-            physical_value = DatabaseInfraParameter.get_value_with_type(
-                physical_value, default_value
-            )
             if physical_value != default_value:
                 LOG.info('Updating parameter {} value {} to {}'.format(
                     parameter, default_value, physical_value
@@ -971,56 +968,6 @@ class DatabaseInfraParameter(BaseModel):
                     obj.reset_default_value = False
                     obj.save()
 
-    @staticmethod
-    def is_boolean(value):
-        if isinstance(value, bool):
-            return True
-
-        if not isinstance(value, str):
-            return False
-        return value.upper() in ['TRUE', 'FALSE']
-
-    @staticmethod
-    def formatted_value(base_value, new_value):
-        extension = ''.join([i for i in base_value if not i.isdigit()])
-        value = int(''.join([i for i in base_value if i.isdigit()]))
-        if 'M' in extension:
-            value = value * 1024 * 1024
-        elif 'G' in extension:
-            value = value * 1024 * 1024 * 1024
-
-        if new_value == value:
-            return base_value
-
-        new_extension = ''
-        extensions = ['K', 'M', 'G']
-        while new_value/1024 > 1:
-            new_value = new_value/1024
-            new_extension = extensions.pop(0)
-
-        if 'B' in extension:
-            new_extension = new_extension + 'B'
-        return '{}{}'.format(new_value, new_extension)
-
-    @staticmethod
-    def get_value_with_type(new_value, default_value):
-        if DatabaseInfraParameter.is_boolean(new_value):
-            return new_value
-
-        try:
-            new_value = int(new_value)
-        except ValueError:
-            return new_value
-
-        if new_value == default_value:
-            return new_value
-
-        if isinstance(default_value, str):
-            return DatabaseInfraParameter.formatted_value(
-                default_value, new_value
-            )
-
-        return new_value
 
 ##########################################################################
 # SIGNALS
