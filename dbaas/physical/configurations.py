@@ -81,7 +81,7 @@ class ConfigurationRedis(ConfigurationBase):
         else:
             value = self.memory_size_in_bytes * 0.75
 
-        default = value
+        default = int(value)
         return self.get_parameter(parameter_name, default)
 
     @property
@@ -105,7 +105,7 @@ class ConfigurationRedis(ConfigurationBase):
     @property
     def loglevel(self):
         parameter_name = inspect.stack()[0][3]
-        default = 'warning'
+        default = 'notice'
         return self.get_parameter(parameter_name, default)
 
     @property
@@ -320,6 +320,7 @@ class ConfigurationMySQL(ConfigurationBase):
             default = self.memory_size_in_bytes / 2
         else:
             default = (self.memory_size_in_bytes * 3) / 4
+        default = int(default)
         return self.get_parameter(parameter_name, default)
 
     @property
@@ -532,3 +533,11 @@ class ConfigurationMongoDB(ConfigurationBase):
             item = item.replace('.', '_')
 
         return self.__getattribute__(item)
+
+    @property
+    def oplogSize(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 512
+        return self.get_parameter(parameter_name, default)
+
+
