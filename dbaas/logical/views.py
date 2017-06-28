@@ -19,7 +19,7 @@ from drivers.base import CredentialAlreadyExists
 from physical.models import Host, DiskOffering, Environment, Plan
 from util import get_credentials_for
 from notification.models import TaskHistory
-from notification.tasks import TaskRegister, change_parameters_database
+from notification.tasks import TaskRegister
 from system.models import Configuration
 from .errors import DisabledDatabase
 from .forms.database import DatabaseDetailsForm
