@@ -86,3 +86,20 @@ class MongoDBReplicaset(BaseMongoDB):
             'workflow.steps.util.database.Start',
             'workflow.steps.mongodb.horizontal_elasticity.database.AddInstanceToReplicaSet',
         )
+
+    def get_resize_oplog_steps(self):
+        return [{
+            'Resize oplog': (
+                'workflow.steps.util.vm.ChangeMaster',
+                'workflow.steps.util.database.Stop',
+                'workflow.steps.util.plan.ConfigureMongoForResizeLog',
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.CheckIsUpForResizeLog',
+                'workflow.steps.util.database.ResizeOpLogSize',
+                'workflow.steps.util.database.Stop',
+                'workflow.steps.util.plan.ConfigureMongoHA',
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.CheckIsUp',
+
+            )
+        }] + self.get_change_parameter_steps_final()
