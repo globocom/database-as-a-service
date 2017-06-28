@@ -40,6 +40,9 @@ smallfiles = true
 smallfiles = false
 {% endif %}
 
+{% if PORT %}
+port = {{PORT}}
+{% endif %}
 
 ########################################
 ## Log Options
