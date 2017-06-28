@@ -791,16 +791,27 @@ def change_parameters_database(self, database, user, task, since_step=0):
     plan = infra.plan
     class_path = plan.replication_topology.class_path
 
+    LOG.info("OK")
+
     from physical.models import DatabaseInfraParameter
     changed_parameters = DatabaseInfraParameter.get_databaseinfra_changed_parameters(
         databaseinfra=infra,
     )
     all_dinamic = True
+    custom_procedure = None
     for changed_parameter in changed_parameters:
         if changed_parameter.parameter.dynamic is False:
             all_dinamic = False
             break
-    steps = get_database_change_parameter_setting(class_path, all_dinamic)
+    for changed_parameter in changed_parameters:
+        if changed_parameter.parameter.class_path:
+            custom_procedure = changed_parameter.parameter.class_path
+            break
+
+    steps = get_database_change_parameter_setting(
+        class_path, all_dinamic, custom_procedure)
+
+    LOG.info(steps)
 
     task.add_detail("Changed parameters:", level=0)
     for changed_parameter in changed_parameters:
@@ -815,7 +826,7 @@ def change_parameters_database(self, database, user, task, since_step=0):
 
     if since_step > 0:
         steps_dec = get_database_change_parameter_retry_steps_count(
-            class_path, all_dinamic)
+            class_path, all_dinamic, custom_procedure)
         LOG.info('since_step: {}, steps_dec: {}'.format(since_step, steps_dec))
         since_step = since_step - steps_dec
         if since_step < 0:
@@ -826,18 +837,10 @@ def change_parameters_database(self, database, user, task, since_step=0):
     database_change_parameter.task = task
     database_change_parameter.save()
 
-    hosts = []
-    for instance in database.infra.instances.all():
-        if instance.hostname not in hosts:
-            hosts.append(instance.hostname)
-
-    instances = []
-    for host in hosts:
-        instances.append(host.instances.all()[0])
-    instances = instances
+    instances_to_change_parameters = infra.get_driver().get_database_instances()
 
     success = steps_for_instances(
-        steps, instances, task,
+        steps, instances_to_change_parameters, task,
         database_change_parameter.update_step, since_step
     )
 
