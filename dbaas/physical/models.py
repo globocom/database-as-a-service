@@ -951,7 +951,7 @@ class DatabaseInfraParameter(BaseModel):
                 )
                 continue
 
-            physical_value = physical_parameters[parameter_know_name]
+            physical_value = str(physical_parameters[parameter_know_name])
             default_value = infra.get_dbaas_parameter_default_value(
                 parameter_name=parameter.name
             )
