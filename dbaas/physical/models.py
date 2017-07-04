@@ -129,6 +129,11 @@ class Parameter(BaseModel):
         help_text="Custom method with steps for changing this parameter.",
         blank=True, null=True
     )
+    config_name = models.CharField(
+        verbose_name=_("Parameter Config Name"),
+        max_length=200, blank=True, null=True,
+        help_text="Name of the parameter while reading database configuration.",
+    )
 
     class Meta:
         unique_together = (
@@ -934,7 +939,11 @@ class DatabaseInfraParameter(BaseModel):
         physical_parameters = infra.get_driver().get_configuration()
 
         for parameter in parameters:
-            if parameter.name not in physical_parameters:
+            if parameter.config_name:
+                parameter_know_name = parameter.config_name
+            else:
+                parameter_know_name = parameter.name
+            if parameter_know_name not in physical_parameters:
                 LOG.warning(
                     'Parameter {} not found in physical configuration'.format(
                         parameter.name
@@ -942,7 +951,7 @@ class DatabaseInfraParameter(BaseModel):
                 )
                 continue
 
-            physical_value = physical_parameters[parameter.name]
+            physical_value = physical_parameters[parameter_know_name]
             default_value = infra.get_dbaas_parameter_default_value(
                 parameter_name=parameter.name
             )

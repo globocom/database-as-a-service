@@ -10,5 +10,6 @@ class ParameterAdmin(admin.DjangoServicesAdmin):
     service_class = ParameterService
     search_fields = ("name",)
     list_filter = ("engine_type", "dynamic", )
-    list_display = ("name", "engine_type", "dynamic", "custom_method")
+    list_display = ("name", "engine_type", "dynamic",
+                    "custom_method", "config_name")
     save_on_top = True
