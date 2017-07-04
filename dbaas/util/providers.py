@@ -181,7 +181,7 @@ def get_database_change_parameter_setting(class_path, all_dinamic, custom_proced
     replication_topology = get_replication_topology_instance(class_path)
     if custom_procedure:
         custom_proc_method = getattr(replication_topology, custom_procedure)
-        return custom_proc_method()
+        return custom_proc_method()[0]
     elif all_dinamic:
         return replication_topology.get_change_dinamic_parameter_steps()
     else:
@@ -192,7 +192,8 @@ def get_database_change_parameter_retry_steps_count(class_path, all_dinamic, cus
     replication_topology = get_replication_topology_instance(class_path)
 
     if custom_procedure:
-        return 0
+        custom_proc_method = getattr(replication_topology, custom_procedure)
+        return custom_proc_method()[1]
     elif all_dinamic:
         return replication_topology.get_change_dinamic_parameter_retry_steps_count()
     else:

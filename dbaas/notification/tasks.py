@@ -804,8 +804,8 @@ def change_parameters_database(self, database, user, task, since_step=0):
             all_dinamic = False
             break
     for changed_parameter in changed_parameters:
-        if changed_parameter.parameter.class_path:
-            custom_procedure = changed_parameter.parameter.class_path
+        if changed_parameter.parameter.custom_method:
+            custom_procedure = changed_parameter.parameter.custom_method
             break
 
     steps = get_database_change_parameter_setting(
