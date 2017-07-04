@@ -135,11 +135,37 @@ class CheckIsUp(DatabaseStep):
             raise EnvironmentError('Database is down, should be up')
 
 
+class CheckIfSwitchMaster(DatabaseStep):
+    def __unicode__(self):
+        return "Checking if master was switched..."
+
+    def do(self):
+        for _ in range(CHECK_ATTEMPTS):
+            master = self.driver.get_master_instance()
+            if master and master != self.instance:
+                return
+            sleep(CHECK_SECONDS)
+
+        if master:
+            raise EnvironmentError('The instance is still master.')
+        else:
+            raise EnvironmentError('There is no master for this infra.')
+
+
 class CheckIsUpForResizeLog(CheckIsUp):
     def do(self):
         self.instance.old_port = self.instance.port
         self.instance.port = 27018
-        super(CheckIsUpForResizeLog, self).do
+        super(CheckIsUpForResizeLog, self).do()
+        self.instance.port = self.instance.old_port
+
+
+class StartForResizeLog(Start):
+    def do(self):
+        self.instance.old_port = self.instance.port
+        self.instance.port = 27018
+        LOG.info('Will start database')
+        super(StartForResizeLog, self).do()
         self.instance.port = self.instance.old_port
 
 
@@ -230,3 +256,24 @@ class ResizeOpLogSize(DatabaseStep):
         if return_code != 0:
             raise Exception(str(output))
         self.instance.port = self.instance.old_port
+
+
+class ValidateOplogSizeValue(DatabaseStep):
+
+    def __unicode__(self):
+        return "Validating oplog Size value..."
+
+    def do(self):
+        from physical.models import DatabaseInfraParameter
+        oplog = DatabaseInfraParameter.objects.get(
+            databaseinfra=self.infra,
+            parameter__name='oplogSize')
+        oplogsize = oplog.value
+        error = 'BadValue oplogSize {}. Must be integer and greater than 0.'.format(oplogsize)
+        try:
+            oplogsize = int(oplogsize)
+        except ValueError:
+            raise EnvironmentError(error)
+
+        if oplogsize <= 0:
+            raise EnvironmentError(error)
