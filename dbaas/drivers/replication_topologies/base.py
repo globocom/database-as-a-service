@@ -118,7 +118,6 @@ class BaseTopology(object):
         )
 
     def get_add_database_instances_middle_steps(self):
-        #raise NotImplementedError()
         return ()
 
     def get_add_database_instances_steps_description(self):
@@ -187,3 +186,9 @@ class BaseTopology(object):
 
     def get_change_static_parameter_retry_steps_count(self):
         return 2
+
+    def get_resize_oplog_steps(self):
+        return ()
+
+    def get_resize_oplog_steps_and_retry_steps_back(self):
+        return self.get_resize_oplog_steps(), 0

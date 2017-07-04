@@ -140,7 +140,6 @@ class AbstractReplicationTopologySettingsTestCase(TestCase):
         )
 
     def _get_add_database_instances_middle_settings(self):
-        #raise NotImplementedError()
         return ()
 
     def _get_add_database_instances_last_settings(self):
@@ -206,6 +205,9 @@ class AbstractReplicationTopologySettingsTestCase(TestCase):
             )
         }] + self._get_change_parameter_steps_final()
 
+    def _get_resize_oplog_steps(self):
+        return ()
+
     @skip_unless_not_abstract
     def test_deploy_settings(self):
         self.assertEqual(
@@ -267,4 +269,11 @@ class AbstractReplicationTopologySettingsTestCase(TestCase):
         self.assertEqual(
             self._get_change_dinamic_parameter_steps(),
             self.replication_topology.get_change_dinamic_parameter_steps()
+        )
+
+    @skip_unless_not_abstract
+    def test_resize_oplog_settings(self):
+        self.assertEqual(
+            self._get_resize_oplog_steps(),
+            self.replication_topology.get_resize_oplog_steps()
         )
