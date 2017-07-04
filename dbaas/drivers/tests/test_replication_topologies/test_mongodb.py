@@ -40,12 +40,12 @@ class TestMongoDBSingle(AbstractBaseMondodbTestCase):
         return \
             ('workflow.steps.mongodb.upgrade.vm.ChangeBinaryTo32',) + \
             super(TestMongoDBSingle, self)._get_upgrade_steps_extra() + (
-            'workflow.steps.util.database.Start',
-            'workflow.steps.util.database.CheckIsUp',
-            'workflow.steps.util.database.Stop',
-            'workflow.steps.util.database.CheckIsDown',
-            'workflow.steps.mongodb.upgrade.vm.ChangeBinaryTo34',
-        )
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.CheckIsDown',
+                'workflow.steps.mongodb.upgrade.vm.ChangeBinaryTo34',
+            )
 
     def _get_upgrade_steps_final(self):
         return [{
