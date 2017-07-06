@@ -157,6 +157,9 @@ class BaseTopology(object):
             ),
         }]
 
+    def get_change_parameter_config_steps(self):
+        return ('workflow.steps.util.pack.Configure', )
+
     def get_change_static_parameter_steps(self):
         return [{
             self.get_change_parameter_steps_description(): (
@@ -165,7 +168,7 @@ class BaseTopology(object):
                 'workflow.steps.util.db_monitor.DisableMonitoring',
                 'workflow.steps.util.database.Stop',
                 'workflow.steps.util.database.CheckIsDown',
-                'workflow.steps.util.pack.Configure',
+            ) + self.get_change_parameter_config_steps() + (
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
                 'workflow.steps.util.db_monitor.EnableMonitoring',
@@ -175,8 +178,8 @@ class BaseTopology(object):
 
     def get_change_dinamic_parameter_steps(self):
         return [{
-            self.get_change_parameter_steps_description(): (
-                'workflow.steps.util.pack.Configure',
+            self.get_change_parameter_steps_description(): self.get_change_parameter_config_steps() +
+            (
                 'workflow.steps.util.database.ChangeDynamicParameters',
             )
         }] + self.get_change_parameter_steps_final()

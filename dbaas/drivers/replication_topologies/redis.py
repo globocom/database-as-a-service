@@ -45,6 +45,9 @@ class BaseRedis(BaseTopology):
     def add_database_instances_last_steps(self):
         return ()
 
+    def get_change_parameter_config_steps(self):
+        return ('workflow.steps.util.pack.ConfigureRedis',)
+
 
 class RedisSingle(BaseRedis):
     pass
