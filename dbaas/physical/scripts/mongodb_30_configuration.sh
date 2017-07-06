@@ -48,9 +48,8 @@ port = {{PORT}}
 ## Log Options
 ########################################
 
-# Send the log to syslog
-syslog = true
-quiet = false
+syslog = True
+quiet = {{ configuration.quiet.value }}
 
 ########################################
 ## Administration & Monitoring
