@@ -40,12 +40,12 @@ class TestMongoDBSingle(AbstractBaseMondodbTestCase):
         return \
             ('workflow.steps.mongodb.upgrade.vm.ChangeBinaryTo32',) + \
             super(TestMongoDBSingle, self)._get_upgrade_steps_extra() + (
-            'workflow.steps.util.database.Start',
-            'workflow.steps.util.database.CheckIsUp',
-            'workflow.steps.util.database.Stop',
-            'workflow.steps.util.database.CheckIsDown',
-            'workflow.steps.mongodb.upgrade.vm.ChangeBinaryTo34',
-        )
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.CheckIsDown',
+                'workflow.steps.mongodb.upgrade.vm.ChangeBinaryTo34',
+            )
 
     def _get_upgrade_steps_final(self):
         return [{
@@ -53,6 +53,9 @@ class TestMongoDBSingle(AbstractBaseMondodbTestCase):
                 'workflow.steps.mongodb.upgrade.database.SetFeatureCompatibilityVersion34',
             ),
         }] + super(TestMongoDBSingle, self)._get_upgrade_steps_final()
+
+    def _get_change_parameter_config_steps(self):
+        return ('workflow.steps.util.plan.Configure', )
 
 
 class TestMongoDBReplicaset(AbstractBaseMondodbTestCase):
@@ -96,3 +99,25 @@ class TestMongoDBReplicaset(AbstractBaseMondodbTestCase):
             'workflow.steps.util.database.Start',
             'workflow.steps.mongodb.horizontal_elasticity.database.AddInstanceToReplicaSet',
         )
+
+    def _get_resize_oplog_steps(self):
+        return [{
+            'Resize oplog': (
+                'workflow.steps.util.database.ValidateOplogSizeValue',
+                'workflow.steps.util.vm.ChangeMaster',
+                'workflow.steps.util.database.CheckIfSwitchMaster',
+                'workflow.steps.util.database.Stop',
+                'workflow.steps.util.plan.ConfigureMongoForResizeLog',
+                'workflow.steps.util.database.StartForResizeLog',
+                'workflow.steps.util.database.CheckIsUpForResizeLog',
+                'workflow.steps.util.database.ResizeOpLogSize',
+                'workflow.steps.util.database.Stop',
+                'workflow.steps.util.plan.ConfigureMongoHA',
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.CheckIsUp',
+
+            )
+        }] + self._get_change_parameter_steps_final()
+
+    def _get_change_parameter_config_steps(self):
+        return ('workflow.steps.util.plan.ConfigureMongoHA', )

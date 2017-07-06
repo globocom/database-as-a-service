@@ -140,7 +140,6 @@ class AbstractReplicationTopologySettingsTestCase(TestCase):
         )
 
     def _get_add_database_instances_middle_settings(self):
-        #raise NotImplementedError()
         return ()
 
     def _get_add_database_instances_last_settings(self):
@@ -182,6 +181,9 @@ class AbstractReplicationTopologySettingsTestCase(TestCase):
             ),
         }]
 
+    def _get_change_parameter_config_steps(self):
+        return ('workflow.steps.util.pack.Configure', )
+
     def _get_change_static_parameter_steps(self):
         return [{
             self._get_change_parameter_steps_description(): (
@@ -190,7 +192,7 @@ class AbstractReplicationTopologySettingsTestCase(TestCase):
                 'workflow.steps.util.db_monitor.DisableMonitoring',
                 'workflow.steps.util.database.Stop',
                 'workflow.steps.util.database.CheckIsDown',
-                'workflow.steps.util.pack.Configure',
+            ) + self._get_change_parameter_config_steps() + (
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
                 'workflow.steps.util.db_monitor.EnableMonitoring',
@@ -200,11 +202,13 @@ class AbstractReplicationTopologySettingsTestCase(TestCase):
 
     def _get_change_dinamic_parameter_steps(self):
         return [{
-            self._get_change_parameter_steps_description(): (
-                'workflow.steps.util.pack.Configure',
+            self._get_change_parameter_steps_description(): self._get_change_parameter_config_steps() + (
                 'workflow.steps.util.database.ChangeDynamicParameters',
             )
         }] + self._get_change_parameter_steps_final()
+
+    def _get_resize_oplog_steps(self):
+        return ()
 
     @skip_unless_not_abstract
     def test_deploy_settings(self):
@@ -267,4 +271,11 @@ class AbstractReplicationTopologySettingsTestCase(TestCase):
         self.assertEqual(
             self._get_change_dinamic_parameter_steps(),
             self.replication_topology.get_change_dinamic_parameter_steps()
+        )
+
+    @skip_unless_not_abstract
+    def test_resize_oplog_settings(self):
+        self.assertEqual(
+            self._get_resize_oplog_steps(),
+            self.replication_topology.get_resize_oplog_steps()
         )

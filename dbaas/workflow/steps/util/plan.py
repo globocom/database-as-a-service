@@ -160,6 +160,15 @@ class ConfigureMongoHA(Configure):
         }
 
 
+class ConfigureMongoForResizeLog(Configure):
+
+    def get_variables_specifics(self):
+        return {
+            'IS_HA': False,
+            'PORT': 27018
+        }
+
+
 class InitializationMongoHAForUpgrade(InitializationMongoHA):
     def __init__(self, instance):
         super(InitializationMongoHAForUpgrade, self).__init__(instance)

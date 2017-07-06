@@ -40,14 +40,16 @@ smallfiles = true
 smallfiles = false
 {% endif %}
 
+{% if PORT %}
+port = {{PORT}}
+{% endif %}
 
 ########################################
 ## Log Options
 ########################################
 
-# Send the log to syslog
-syslog = true
-quiet = false
+syslog = True
+quiet = {{ configuration.quiet.value }}
 
 ########################################
 ## Administration & Monitoring
@@ -69,7 +71,7 @@ replSet={{REPLICASETNAME}}
 keyFile=/data/mongodb.key
 
 # Custom size for replication operation log in MB.
-oplogSize = 512
+oplogSize = {{ configuration.oplogSize.value }}
 {% else %}
 ########################################
 ## Security
@@ -101,7 +103,7 @@ createmongodbkeyfile()
 EOF_DBAAS
 ) >  /data/mongodb.key
     die_if_error "Error setting mongodb key file"
-    
+
     chown mongodb:mongodb /data/mongodb.key
     die_if_error "Error changing mongodb key file owner"
     chmod 600 /data/mongodb.key

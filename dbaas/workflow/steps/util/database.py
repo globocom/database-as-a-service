@@ -3,6 +3,8 @@ from time import sleep
 from dbaas_cloudstack.models import HostAttr
 from workflow.steps.util.restore_snapshot import use_database_initialization_script
 from util import build_context_script, exec_remote_command
+from util import exec_remote_command_host
+from workflow.steps.mongodb.util import build_change_oplogsize_script
 from workflow.steps.util.base import BaseInstanceStep
 import logging
 
@@ -133,6 +135,40 @@ class CheckIsUp(DatabaseStep):
             raise EnvironmentError('Database is down, should be up')
 
 
+class CheckIfSwitchMaster(DatabaseStep):
+    def __unicode__(self):
+        return "Checking if master was switched..."
+
+    def do(self):
+        for _ in range(CHECK_ATTEMPTS):
+            master = self.driver.get_master_instance()
+            if master and master != self.instance:
+                return
+            sleep(CHECK_SECONDS)
+
+        if master:
+            raise EnvironmentError('The instance is still master.')
+        else:
+            raise EnvironmentError('There is no master for this infra.')
+
+
+class CheckIsUpForResizeLog(CheckIsUp):
+    def do(self):
+        self.instance.old_port = self.instance.port
+        self.instance.port = 27018
+        super(CheckIsUpForResizeLog, self).do()
+        self.instance.port = self.instance.old_port
+
+
+class StartForResizeLog(Start):
+    def do(self):
+        self.instance.old_port = self.instance.port
+        self.instance.port = 27018
+        LOG.info('Will start database')
+        super(StartForResizeLog, self).do()
+        self.instance.port = self.instance.old_port
+
+
 class CheckIsDown(DatabaseStep):
 
     def __unicode__(self):
@@ -197,3 +233,47 @@ class SetParameterStatus(DatabaseStep):
             changed_parameter.applied_on_database = True
             changed_parameter.current_value = changed_parameter.value
             changed_parameter.save()
+
+
+class ResizeOpLogSize(DatabaseStep):
+
+    def __unicode__(self):
+        return "Changing oplog Size..."
+
+    def do(self):
+        from physical.models import DatabaseInfraParameter
+        self.instance.old_port = self.instance.port
+        self.instance.port = 27018
+        oplogsize = DatabaseInfraParameter.objects.get(
+            databaseinfra=self.infra,
+            parameter__name='oplogSize')
+        script = build_change_oplogsize_script(
+            instance=self.instance, oplogsize=oplogsize.value)
+        output = {}
+        return_code = exec_remote_command_host(
+            self.host, script, output
+        )
+        if return_code != 0:
+            raise Exception(str(output))
+        self.instance.port = self.instance.old_port
+
+
+class ValidateOplogSizeValue(DatabaseStep):
+
+    def __unicode__(self):
+        return "Validating oplog Size value..."
+
+    def do(self):
+        from physical.models import DatabaseInfraParameter
+        oplog = DatabaseInfraParameter.objects.get(
+            databaseinfra=self.infra,
+            parameter__name='oplogSize')
+        oplogsize = oplog.value
+        error = 'BadValue oplogSize {}. Must be integer and greater than 0.'.format(oplogsize)
+        try:
+            oplogsize = int(oplogsize)
+        except ValueError:
+            raise EnvironmentError(error)
+
+        if oplogsize <= 0:
+            raise EnvironmentError(error)
