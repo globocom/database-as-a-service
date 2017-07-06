@@ -23,7 +23,7 @@ def confiration_exists(engine_name, parameter_name):
 
 class ParameterObject(object):
     def __init__(self, value, default):
-        self.value = value
+        self.value = str(value)
         self.default = str(default)
 
 
@@ -538,4 +538,16 @@ class ConfigurationMongoDB(ConfigurationBase):
     def oplogSize(self):
         parameter_name = inspect.stack()[0][3]
         default = 512
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def quiet(self):
+        parameter_name = inspect.stack()[0][3]
+        default = False
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def logLevel(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 0
         return self.get_parameter(parameter_name, default)
