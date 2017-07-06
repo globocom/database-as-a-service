@@ -54,6 +54,9 @@ class TestMongoDBSingle(AbstractBaseMondodbTestCase):
             ),
         }] + super(TestMongoDBSingle, self)._get_upgrade_steps_final()
 
+    def _get_change_parameter_config_steps(self):
+        return ('workflow.steps.util.plan.Configure', )
+
 
 class TestMongoDBReplicaset(AbstractBaseMondodbTestCase):
 
@@ -115,3 +118,6 @@ class TestMongoDBReplicaset(AbstractBaseMondodbTestCase):
 
             )
         }] + self._get_change_parameter_steps_final()
+
+    def _get_change_parameter_config_steps(self):
+        return ('workflow.steps.util.plan.ConfigureMongoHA', )

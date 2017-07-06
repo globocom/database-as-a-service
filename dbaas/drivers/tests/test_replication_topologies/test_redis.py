@@ -43,6 +43,9 @@ class AbstractBaseRedisTestCase(AbstractReplicationTopologySettingsTestCase):
             'workflow.steps.util.pack.ConfigureRedis',
         )
 
+    def _get_change_parameter_config_steps(self):
+        return ('workflow.steps.util.pack.ConfigureRedis',)
+
 
 class TestRedisSingle(AbstractBaseRedisTestCase):
 
