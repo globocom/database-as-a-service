@@ -104,6 +104,8 @@ class TestMongoDBReplicaset(AbstractBaseMondodbTestCase):
         return [{
             'Resize oplog': (
                 'workflow.steps.util.database.ValidateOplogSizeValue',
+                'workflow.steps.util.zabbix.DisableAlarms',
+                'workflow.steps.util.db_monitor.DisableMonitoring',
                 'workflow.steps.util.vm.ChangeMaster',
                 'workflow.steps.util.database.CheckIfSwitchMaster',
                 'workflow.steps.util.database.Stop',
@@ -115,6 +117,8 @@ class TestMongoDBReplicaset(AbstractBaseMondodbTestCase):
                 'workflow.steps.util.plan.ConfigureMongoHA',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.db_monitor.EnableMonitoring',
+                'workflow.steps.util.zabbix.EnableAlarms',
 
             )
         }] + self._get_change_parameter_steps_final()
