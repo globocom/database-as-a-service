@@ -187,9 +187,9 @@ class AbstractReplicationTopologySettingsTestCase(TestCase):
     def _get_change_static_parameter_steps(self):
         return [{
             self._get_change_parameter_steps_description(): (
-                'workflow.steps.util.vm.ChangeMaster',
                 'workflow.steps.util.zabbix.DisableAlarms',
                 'workflow.steps.util.db_monitor.DisableMonitoring',
+                'workflow.steps.util.vm.ChangeMaster',
                 'workflow.steps.util.database.Stop',
                 'workflow.steps.util.database.CheckIsDown',
             ) + self._get_change_parameter_config_steps() + (

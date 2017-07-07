@@ -163,9 +163,9 @@ class BaseTopology(object):
     def get_change_static_parameter_steps(self):
         return [{
             self.get_change_parameter_steps_description(): (
-                'workflow.steps.util.vm.ChangeMaster',
                 'workflow.steps.util.zabbix.DisableAlarms',
                 'workflow.steps.util.db_monitor.DisableMonitoring',
+                'workflow.steps.util.vm.ChangeMaster',
                 'workflow.steps.util.database.Stop',
                 'workflow.steps.util.database.CheckIsDown',
             ) + self.get_change_parameter_config_steps() + (
