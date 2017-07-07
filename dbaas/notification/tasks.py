@@ -791,8 +791,6 @@ def change_parameters_database(self, database, user, task, since_step=0):
     plan = infra.plan
     class_path = plan.replication_topology.class_path
 
-    LOG.info("OK")
-
     from physical.models import DatabaseInfraParameter
     changed_parameters = DatabaseInfraParameter.get_databaseinfra_changed_parameters(
         databaseinfra=infra,
@@ -1281,7 +1279,7 @@ class TaskRegister(object):
         }
 
         if since_step:
-            task_params['task_name'] = 'upgrade_database_retry'
+            task_params['task_name'] = 'change_parameters_retry'
             task_params['arguments'] = 'Retrying changing parameters of database {}'.format(database)
 
         task = cls.create_task(task_params)
