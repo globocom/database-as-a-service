@@ -366,6 +366,11 @@ class ServiceAdd(APIView):
             return log_and_response(
                 msg=msg, e=e, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+        except MultipleObjectsReturned as e:
+            msg = "There are multiple user for {} email.".format(user)
+            return log_and_response(
+                msg=msg, e=e, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
         try:
             dbaas_team = Team.objects.get(name=team)
