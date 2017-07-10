@@ -1,9 +1,7 @@
 from random import randint
-from django.test import TestCase
 from mock import patch
-from physical.tests.factory import PlanFactory, DatabaseInfraFactory, InstanceFactory
 from workflow.steps.util.dns import ChangeTTL, ChangeTTLTo5Minutes, ChangeTTLTo3Hours
-
+from . import TestBaseStep
 
 
 class FakeDNSProvider(object):
@@ -14,16 +12,11 @@ class FakeDNSProvider(object):
     def update_database_dns_ttl(cls, infra, seconds):
         cls.dns_ttl[infra] = seconds
 
-class DNSStepTests(TestCase):
+class DNSStepTests(TestBaseStep):
 
     def setUp(self):
+        super(DNSStepTests, self).setUp()
         FakeDNSProvider.dns_ttl = {}
-        plan = PlanFactory()
-        environment = plan.environments.first()
-        self.infra = DatabaseInfraFactory(plan=plan, environment=environment)
-        self.instance = InstanceFactory(
-            address="127.0.0.1", port=27017, databaseinfra=self.infra
-        )
 
     @patch(
         'dbaas_dnsapi.provider.DNSAPIProvider.update_database_dns_ttl',
