@@ -341,6 +341,9 @@ class Plan(BaseModel):
         DiskOffering, related_name="plans",
         on_delete=models.PROTECT, null=True, blank=True
     )
+    migrate_plan = models.ForeignKey(
+        "Plan", related_name='migrate_to', null=True, blank=True
+    )
 
     @property
     def engine_type(self):
