@@ -5,7 +5,7 @@ from util import check_ssh
 from dbaas_cloudstack.models import HostAttr, PlanAttr
 from dbaas_cloudstack.provider import CloudStackProvider
 from dbaas_credentials.models import CredentialType
-from dbaas_cloudstack.models import LastUsedBundleDatabaseInfra
+from dbaas_cloudstack.models import LastUsedBundleDatabaseInfra, LastUsedBundle
 from util import get_credentials_for
 from workflow.steps.util.base import BaseInstanceStep
 from maintenance.models import DatabaseResize
@@ -19,11 +19,14 @@ CHANGE_MASTER_SECONDS = 15
 
 class VmStep(BaseInstanceStep):
 
+    @property
+    def environment(self):
+        return self.databaseinfra.environment
+
     def __init__(self, instance):
         super(VmStep, self).__init__(instance)
 
         self.databaseinfra = self.instance.databaseinfra
-        self.environment = self.databaseinfra.environment
         self.driver = self.databaseinfra.get_driver()
 
         self.cs_credentials = get_credentials_for(
@@ -216,17 +219,21 @@ class CreateVirtualMachine(VmStep):
     def get_next_bundle(self):
         raise NotImplementedError
 
+    @property
+    def cs_offering(self):
+        return self.databaseinfra.cs_dbinfra_offering.get().offering
+
     def deploy_vm(self, bundle):
-        offering = self.databaseinfra.cs_dbinfra_offering.get().offering
         LOG.info("VM : {}".format(self.instance.vm_name))
 
         error, vm = self.cs_provider.deploy_virtual_machine(
-            offering=offering.serviceofferingid,
+            offering=self.offering.serviceofferingid,
             bundle=bundle,
             project_id=self.cs_credentials.project,
             vmname=self.instance.vm_name,
             affinity_group_id=self.cs_credentials.get_parameter_by_name(
-                'affinity_group_id'),
+                'affinity_group_id'
+            ),
         )
 
         if error:
@@ -283,3 +290,36 @@ class CreateVirtualMachineHorizontalElasticity(CreateVirtualMachine):
         bundle = LastUsedBundleDatabaseInfra.get_next_infra_bundle(
             databaseinfra=self.databaseinfra)
         return bundle
+
+
+class MigrationCreateNewVM(CreateVirtualMachine):
+
+    @property
+    def environment(self):
+        environment = super(MigrationCreateNewVM, self).environment
+        return environment.migrate_environment
+
+    @property
+    def cs_offering(self):
+        base_offering = self.databaseinfra.cs_dbinfra_offering.get().offering
+        return base_offering.equivalent_offering
+
+    def get_next_bundle(self):
+        migrate_plan = self.databaseinfra.plan.migrate_plan
+        bundles = PlanAttr.objects.get(plan=migrate_plan).bundles_actives
+        return LastUsedBundle.get_next_infra_bundle(migrate_plan, bundles)
+
+    def do(self):
+        if self.host.future_host:
+            LOG.warning("Host {} already have a future host configured".format(
+                self.host
+            ))
+            return
+
+        bundle = self.get_next_bundle()
+        address, vm_id = self.deploy_vm(bundle=bundle)
+        host = self.create_host(address=address)
+        self.create_host_attr(host=host, vm_id=vm_id, bundle=bundle)
+
+        self.host.future_host = host
+        self.host.save()
