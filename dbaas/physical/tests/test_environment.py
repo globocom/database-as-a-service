@@ -35,3 +35,19 @@ class EnvironmentTestCase(TestCase):
         expected_result = set([plan1, plan3])
         result = set(self.env.active_plans())
         self.assertEqual(expected_result, result)
+
+    def test_migrate_to(self):
+        env = EnvironmentFactory()
+        env_dest_1 = EnvironmentFactory()
+        env_dest_2 = EnvironmentFactory()
+
+        env_dest_1.migrate_environment = env
+        env_dest_1.save()
+
+        env_dest_2.migrate_environment = env
+        env_dest_2.save()
+
+        migrate_to = env.migrate_to.all()
+        self.assertEqual(len(migrate_to), 2)
+        self.assertIn(env_dest_1, migrate_to)
+        self.assertIn(env_dest_2, migrate_to)

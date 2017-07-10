@@ -24,6 +24,10 @@ class Environment(BaseModel):
         verbose_name=_("Environment"), max_length=100, unique=True)
     min_of_zones = models.PositiveIntegerField(default=1)
 
+    migrate_environment = models.ForeignKey(
+        'Environment', related_name='migrate_to', blank=True, null=True
+    )
+
     def __unicode__(self):
         return '%s' % (self.name)
 
