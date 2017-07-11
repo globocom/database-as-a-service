@@ -14,7 +14,7 @@ class DiskStepTests(TestBaseStep):
         migration = CreateExport(self.instance)
         self.assertEqual(migration.environment, self.environment)
 
-    def test_hos(self):
+    def test_host(self):
         migration = CreateExport(self.instance)
         self.assertEqual(migration.host, self.host)
 

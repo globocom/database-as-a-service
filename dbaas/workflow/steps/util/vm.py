@@ -23,6 +23,24 @@ class VmStep(BaseInstanceStep):
     def environment(self):
         return self.databaseinfra.environment
 
+    @property
+    def host(self):
+        try:
+            return self.instance.hostname
+        except ObjectDoesNotExist:
+            LOG.info('Instance {} does not have hostname'.format(self.instance))
+            return None
+
+    @property
+    def host_cs(self):
+        if not self.host:
+            return
+
+        try:
+            return HostAttr.objects.get(host=self.host)
+        except ObjectDoesNotExist:
+            LOG.info('Host {} does not have HostAttr'.format(self.host))
+
     def __init__(self, instance):
         super(VmStep, self).__init__(instance)
 
@@ -31,22 +49,11 @@ class VmStep(BaseInstanceStep):
 
         self.cs_credentials = get_credentials_for(
             environment=self.environment,
-            credential_type=CredentialType.CLOUDSTACK)
+            credential_type=CredentialType.CLOUDSTACK
+        )
 
         self.cs_provider = CloudStackProvider(credentials=self.cs_credentials)
 
-        self.host = None
-        self.host_cs = None
-
-        try:
-            self.host = self.instance.hostname
-        except ObjectDoesNotExist:
-            LOG.info('Instance {} does not have hostname'.format(instance))
-        else:
-            try:
-                self.host_cs = HostAttr.objects.get(host=self.host)
-            except ObjectDoesNotExist:
-                LOG.info('Host {} does not have HostAttr'.format(self.host))
 
     def do(self):
         raise NotImplementedError
@@ -109,6 +116,19 @@ class WaitingBeReady(VmStep):
         )
         if not host_ready:
             raise EnvironmentError('VM is not ready')
+
+
+class MigrationWaitingBeReady(WaitingBeReady):
+
+    @property
+    def environment(self):
+        environment = super(MigrationWaitingBeReady, self).environment
+        return environment.migrate_environment
+
+    @property
+    def host(self):
+        host = super(MigrationWaitingBeReady, self).host
+        return host.future_host
 
 
 class UpdateOSDescription(VmStep):
@@ -282,6 +302,7 @@ class CreateVirtualMachine(VmStep):
 
 
 class CreateVirtualMachineHorizontalElasticity(CreateVirtualMachine):
+
     @property
     def read_only_instance(self):
         return True
