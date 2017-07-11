@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
-from django.core.exceptions import ObjectDoesNotExist
+import logging
 from time import sleep
-from util import check_ssh
+from django.core.exceptions import ObjectDoesNotExist
 from dbaas_cloudstack.models import HostAttr, PlanAttr
 from dbaas_cloudstack.provider import CloudStackProvider
 from dbaas_credentials.models import CredentialType
 from dbaas_cloudstack.models import LastUsedBundleDatabaseInfra, LastUsedBundle
-from util import get_credentials_for
-from workflow.steps.util.base import BaseInstanceStep, BaseInstanceStepMigration
 from maintenance.models import DatabaseResize
-import logging
+from util import check_ssh, get_credentials_for
+from workflow.steps.util.base import BaseInstanceStep, \
+    BaseInstanceStepMigration
 
 LOG = logging.getLogger(__name__)
 
@@ -40,7 +40,6 @@ class VmStep(BaseInstanceStep):
         )
 
         self.cs_provider = CloudStackProvider(credentials=self.cs_credentials)
-
 
     def do(self):
         raise NotImplementedError

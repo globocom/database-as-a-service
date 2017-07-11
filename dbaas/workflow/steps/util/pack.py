@@ -102,7 +102,8 @@ class ResizeConfigure(Configure):
 
     def __init__(self, instance):
         super(ResizeConfigure, self).__init__(instance)
-        self.pack = DatabaseResize.objects.last().current_to(self.database).target_offer
+        resize = DatabaseResize.objects.last()
+        self.pack = resize.current_to(self.database).target_offer
 
 
 class ConfigureRedis(Configure):

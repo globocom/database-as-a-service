@@ -41,7 +41,9 @@ class CreateMonitoring(DBMonitorStep):
 
     def do(self):
         instance_number = self.instance.databaseinfra.last_vm_created
-        self.provider.create_dbmonitor_instance_monitoring(self.instance, instance_number)
+        self.provider.create_dbmonitor_instance_monitoring(
+            self.instance, instance_number
+        )
 
     def undo(self):
         DisableMonitoring(self.instance).do()
