@@ -89,8 +89,7 @@ class CreateAlarms(ZabbixStep):
 class CreateAlarmsForUpgrade(CreateAlarms):
     @property
     def engine_version(self):
-        plan = self.instance.databaseinfra.plan.engine_equivalent_plan
-        return plan.engine.version
+        return self.plan.engine_equivalent_plan.engine.version
 
 
 class DisableAlarms(ZabbixStep):

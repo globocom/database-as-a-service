@@ -13,14 +13,7 @@ class PackStep(BaseInstanceStep):
         super(PackStep, self).__init__(instance)
 
         self.host_cs = HostAttr.objects.get(host=self.host)
-
-        self.database = self.infra.databases.first()
-        self.disk_offering = self.infra.disk_offering
-        self.engine = self.infra.engine
-
-        self.plan = self.infra.plan
         self.cs_plan = PlanAttr.objects.get(plan=self.plan)
-
         self.pack = CloudStackPack.objects.get(
             offering__serviceofferingid=self.database.offering_id,
             offering__region__environment=self.environment,

@@ -75,7 +75,7 @@ class InstallNewTemplate(VmStep):
     def __init__(self, instance):
         super(InstallNewTemplate, self).__init__(instance)
 
-        target_plan = self.instance.databaseinfra.plan.engine_equivalent_plan
+        target_plan = self.plan.engine_equivalent_plan
         cs_plan = PlanAttr.objects.get(plan=target_plan)
         self.bundle = cs_plan.bundles.first()
 
@@ -303,7 +303,7 @@ class MigrationCreateNewVM(CreateVirtualMachine):
         return base_offering.equivalent_offering
 
     def get_next_bundle(self):
-        migrate_plan = self.infra.plan.migrate_plan
+        migrate_plan = self.plan.migrate_plan
         bundles = PlanAttr.objects.get(plan=migrate_plan).bundles_actives
         return LastUsedBundle.get_next_infra_bundle(migrate_plan, bundles)
 

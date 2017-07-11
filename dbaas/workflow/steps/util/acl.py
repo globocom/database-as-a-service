@@ -17,7 +17,6 @@ class ACLStep(BaseInstanceStep):
 
     def __init__(self, instance):
         super(ACLStep, self).__init__(instance)
-        self.database = self.infra.databases.first()
 
         acl_credential = get_credentials_for(
             environment=self.environment,

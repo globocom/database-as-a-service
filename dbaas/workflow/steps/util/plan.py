@@ -24,15 +24,14 @@ class PlanStep(BaseInstanceStep):
         except HostAttrNfsaas.DoesNotExist:
             self.host_nfs = None
 
-        self.database = self.infra.databases.first()
-        self.engine = self.infra.engine
-        self.disk_offering = self.infra.disk_offering
-
-        self.plan = self.infra.plan
         self.cs_plan = PlanAttr.objects.get(plan=self.plan)
 
+    @property
+    def plan(self):
+        plan = super(PlanStep, self).plan
+        return plan.engine_equivalent_plan
+
     def get_equivalent_plan(self):
-        self.plan = self.infra.plan.engine_equivalent_plan
         self.cs_plan = PlanAttr.objects.get(plan=self.plan)
 
     @property

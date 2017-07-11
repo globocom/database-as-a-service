@@ -34,6 +34,22 @@ class BaseInstanceStep(object):
         return self.instance.databaseinfra
 
     @property
+    def database(self):
+        return self.infra.databases.first()
+
+    @property
+    def plan(self):
+        return self.infra.plan
+
+    @property
+    def engine(self):
+        return self.infra.engine
+
+    @property
+    def disk_offering(self):
+        return self.infra.disk_offering
+
+    @property
     def host(self):
         try:
             return self.instance.hostname
