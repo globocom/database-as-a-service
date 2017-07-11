@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
 from util import exec_remote_command_host
-from base import BaseInstanceStep
+from base import BaseInstanceStep, BaseInstanceStepMigration
 from nfsaas_utils import create_disk, delete_disk, create_access
 
 LOG = logging.getLogger(__name__)
@@ -10,14 +10,6 @@ LOG = logging.getLogger(__name__)
 class Disk(BaseInstanceStep):
     OLD_DIRECTORY = '/data'
     NEW_DIRECTORY = '/new_data'
-
-    @property
-    def environment(self):
-        return self.databaseinfra.environment
-
-    @property
-    def host(self):
-        return self.instance.hostname
 
     def __init__(self, instance):
         super(Disk, self).__init__(instance)
@@ -212,17 +204,8 @@ class FilePermissions(NewerDisk, DiskCommand):
         }
 
 
-class MigrationCreateExport(CreateExport):
-
-    @property
-    def environment(self):
-        environment = super(MigrationCreateExport, self).environment
-        return environment.migrate_environment
-
-    @property
-    def host(self):
-        host = super(MigrationCreateExport, self).host
-        return host.future_host
+class MigrationCreateExport(CreateExport, BaseInstanceStepMigration):
+    pass
 
 
 class AddDiskPermissionsOldest(Disk):

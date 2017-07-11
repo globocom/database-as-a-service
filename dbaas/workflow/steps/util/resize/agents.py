@@ -16,7 +16,6 @@ class Start(BaseInstanceStep):
 
         self.infra = self.instance.databaseinfra
         self.driver = self.infra.get_driver()
-        self.host = self.instance.hostname
 
     def __unicode__(self):
         return "Starting database agents..."

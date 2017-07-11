@@ -15,7 +15,6 @@ class PlanStep(BaseInstanceStep):
     def __init__(self, instance):
         super(PlanStep, self).__init__(instance)
 
-        self.host = self.instance.hostname
         self.host_cs = HostAttr.objects.get(host=self.host)
 
         try:
@@ -28,7 +27,6 @@ class PlanStep(BaseInstanceStep):
         self.infra = self.instance.databaseinfra
         self.database = self.infra.databases.first()
         self.engine = self.infra.engine
-        self.environment = self.infra.environment
         self.disk_offering = self.infra.disk_offering
 
         self.plan = self.infra.plan

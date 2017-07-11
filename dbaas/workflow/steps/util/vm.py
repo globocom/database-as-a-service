@@ -7,7 +7,7 @@ from dbaas_cloudstack.provider import CloudStackProvider
 from dbaas_credentials.models import CredentialType
 from dbaas_cloudstack.models import LastUsedBundleDatabaseInfra, LastUsedBundle
 from util import get_credentials_for
-from workflow.steps.util.base import BaseInstanceStep
+from workflow.steps.util.base import BaseInstanceStep, BaseInstanceStepMigration
 from maintenance.models import DatabaseResize
 import logging
 
@@ -18,18 +18,6 @@ CHANGE_MASTER_SECONDS = 15
 
 
 class VmStep(BaseInstanceStep):
-
-    @property
-    def environment(self):
-        return self.databaseinfra.environment
-
-    @property
-    def host(self):
-        try:
-            return self.instance.hostname
-        except ObjectDoesNotExist:
-            LOG.info('Instance {} does not have hostname'.format(self.instance))
-            return None
 
     @property
     def host_cs(self):
@@ -118,17 +106,8 @@ class WaitingBeReady(VmStep):
             raise EnvironmentError('VM is not ready')
 
 
-class MigrationWaitingBeReady(WaitingBeReady):
-
-    @property
-    def environment(self):
-        environment = super(MigrationWaitingBeReady, self).environment
-        return environment.migrate_environment
-
-    @property
-    def host(self):
-        host = super(MigrationWaitingBeReady, self).host
-        return host.future_host
+class MigrationWaitingBeReady(WaitingBeReady, BaseInstanceStepMigration):
+    pass
 
 
 class UpdateOSDescription(VmStep):

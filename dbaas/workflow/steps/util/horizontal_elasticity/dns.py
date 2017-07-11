@@ -15,7 +15,6 @@ class DNSStep(BaseInstanceStep):
         super(DNSStep, self).__init__(instance)
 
         self.databaseinfra = self.instance.databaseinfra
-        self.environment = self.databaseinfra.environment
 
     def do(self):
         raise NotImplementedError

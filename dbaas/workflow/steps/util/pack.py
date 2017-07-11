@@ -12,14 +12,12 @@ class PackStep(BaseInstanceStep):
     def __init__(self, instance):
         super(PackStep, self).__init__(instance)
 
-        self.host = self.instance.hostname
         self.host_cs = HostAttr.objects.get(host=self.host)
 
         self.infra = self.instance.databaseinfra
         self.database = self.infra.databases.first()
         self.disk_offering = self.infra.disk_offering
         self.engine = self.infra.engine
-        self.environment = self.infra.environment
 
         self.plan = self.infra.plan
         self.cs_plan = PlanAttr.objects.get(plan=self.plan)
