@@ -30,6 +30,10 @@ class BaseInstanceStep(object):
         self.instance = instance
 
     @property
+    def infra(self):
+        return self.instance.databaseinfra
+
+    @property
     def host(self):
         try:
             return self.instance.hostname

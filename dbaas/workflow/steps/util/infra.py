@@ -7,7 +7,6 @@ class Update(BaseInstanceStep):
     def __init__(self, instance):
         super(Update, self).__init__(instance)
 
-        self.infra = self.instance.databaseinfra
         self.database = self.infra.databases.last()
         self.infra_offering = DatabaseInfraOffering.objects.get(
             databaseinfra=self.infra

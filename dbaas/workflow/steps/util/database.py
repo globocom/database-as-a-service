@@ -18,7 +18,6 @@ class DatabaseStep(BaseInstanceStep):
     def __init__(self, instance):
         super(DatabaseStep, self).__init__(instance)
 
-        self.infra = self.instance.databaseinfra
         self.driver = self.infra.get_driver()
         self.host_cs = HostAttr.objects.get(host=self.host)
 

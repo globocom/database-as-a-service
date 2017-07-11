@@ -6,7 +6,6 @@ class DNSStep(BaseInstanceStep):
 
     def __init__(self, instance):
         super(DNSStep, self).__init__(instance)
-        self.databaseinfra = self.instance.databaseinfra
         self.provider = DNSAPIProvider
 
     def do(self):
@@ -31,7 +30,7 @@ class ChangeTTL(DNSStep):
 
     def do(self):
         self.provider.update_database_dns_ttl(
-            self.databaseinfra, self.seconds
+            self.infra, self.seconds
         )
 
 

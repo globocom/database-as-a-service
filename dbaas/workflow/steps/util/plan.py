@@ -24,7 +24,6 @@ class PlanStep(BaseInstanceStep):
         except HostAttrNfsaas.DoesNotExist:
             self.host_nfs = None
 
-        self.infra = self.instance.databaseinfra
         self.database = self.infra.databases.first()
         self.engine = self.infra.engine
         self.disk_offering = self.infra.disk_offering

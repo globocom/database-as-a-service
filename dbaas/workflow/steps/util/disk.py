@@ -11,10 +11,6 @@ class Disk(BaseInstanceStep):
     OLD_DIRECTORY = '/data'
     NEW_DIRECTORY = '/new_data'
 
-    def __init__(self, instance):
-        super(Disk, self).__init__(instance)
-        self.databaseinfra = self.instance.databaseinfra
-
 
 class CreateExport(Disk):
 
@@ -26,7 +22,7 @@ class CreateExport(Disk):
         create_disk(
             environment=self.environment,
             host=self.host,
-            size_kb=self.databaseinfra.disk_offering.size_kb
+            size_kb=self.infra.disk_offering.size_kb
         )
 
     def undo(self):
@@ -189,8 +185,8 @@ class FilePermissions(NewerDisk, DiskCommand):
 
     def __init__(self, instance):
         super(FilePermissions, self).__init__(instance)
-        self.user = self.databaseinfra.engine_name
-        self.group = self.databaseinfra.engine_name
+        self.user = self.infra.engine_name
+        self.group = self.infra.engine_name
 
     @property
     def scripts(self):

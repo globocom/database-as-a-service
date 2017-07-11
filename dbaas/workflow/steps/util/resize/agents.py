@@ -14,7 +14,6 @@ class Start(BaseInstanceStep):
     def __init__(self, instance):
         super(Start, self).__init__(instance)
 
-        self.infra = self.instance.databaseinfra
         self.driver = self.infra.get_driver()
 
     def __unicode__(self):

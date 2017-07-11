@@ -32,8 +32,7 @@ class VmStep(BaseInstanceStep):
     def __init__(self, instance):
         super(VmStep, self).__init__(instance)
 
-        self.databaseinfra = self.instance.databaseinfra
-        self.driver = self.databaseinfra.get_driver()
+        self.driver = self.infra.get_driver()
 
         self.cs_credentials = get_credentials_for(
             environment=self.environment,
@@ -155,7 +154,7 @@ class ChangeMaster(VmStep):
         return "Changing master node..."
 
     def do(self):
-        if not self.databaseinfra.plan.is_ha:
+        if not self.infra.plan.is_ha:
             return
 
         if self.driver.check_instance_is_master(instance=self.instance):
@@ -210,17 +209,17 @@ class CreateVirtualMachine(VmStep):
         self.instance.save()
 
     def update_databaseinfra_last_vm_created(self):
-        last_vm_created = self.databaseinfra.last_vm_created
+        last_vm_created = self.infra.last_vm_created
         last_vm_created += 1
-        self.databaseinfra.last_vm_created = last_vm_created
-        self.databaseinfra.save()
+        self.infra.last_vm_created = last_vm_created
+        self.infra.save()
 
     def get_next_bundle(self):
         raise NotImplementedError
 
     @property
     def cs_offering(self):
-        return self.databaseinfra.cs_dbinfra_offering.get().offering
+        return self.infra.cs_dbinfra_offering.get().offering
 
     def deploy_vm(self, bundle):
         LOG.info("VM : {}".format(self.instance.vm_name))
@@ -288,7 +287,7 @@ class CreateVirtualMachineHorizontalElasticity(CreateVirtualMachine):
 
     def get_next_bundle(self):
         bundle = LastUsedBundleDatabaseInfra.get_next_infra_bundle(
-            databaseinfra=self.databaseinfra)
+            databaseinfra=self.infra)
         return bundle
 
 
@@ -301,11 +300,11 @@ class MigrationCreateNewVM(CreateVirtualMachine):
 
     @property
     def cs_offering(self):
-        base_offering = self.databaseinfra.cs_dbinfra_offering.get().offering
+        base_offering = self.infra.cs_dbinfra_offering.get().offering
         return base_offering.equivalent_offering
 
     def get_next_bundle(self):
-        migrate_plan = self.databaseinfra.plan.migrate_plan
+        migrate_plan = self.infra.plan.migrate_plan
         bundles = PlanAttr.objects.get(plan=migrate_plan).bundles_actives
         return LastUsedBundle.get_next_infra_bundle(migrate_plan, bundles)
 

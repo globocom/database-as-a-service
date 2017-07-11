@@ -14,7 +14,6 @@ class PackStep(BaseInstanceStep):
 
         self.host_cs = HostAttr.objects.get(host=self.host)
 
-        self.infra = self.instance.databaseinfra
         self.database = self.infra.databases.first()
         self.disk_offering = self.infra.disk_offering
         self.engine = self.infra.engine

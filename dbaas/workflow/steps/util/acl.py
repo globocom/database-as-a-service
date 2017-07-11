@@ -17,8 +17,7 @@ class ACLStep(BaseInstanceStep):
 
     def __init__(self, instance):
         super(ACLStep, self).__init__(instance)
-        self.databaseinfra = self.instance.databaseinfra
-        self.database = self.databaseinfra.databases.first()
+        self.database = self.infra.databases.first()
 
         acl_credential = get_credentials_for(
             environment=self.environment,
@@ -42,7 +41,7 @@ class ReplicateAcls2NewInstance(ACLStep):
         return "Replicating acls ..."
 
     def do(self):
-        source_instance = self.databaseinfra.instances.filter(
+        source_instance = self.infra.instances.filter(
             is_active=True,
             read_only=False
         ).first()
@@ -75,7 +74,7 @@ class BindNewInstance(ACLStep):
                 database_bind.bind_status = ERROR
                 database_bind.save()
                 DatabaseInfraInstanceBind.objects.filter(
-                    databaseinfra=self.databaseinfra,
+                    databaseinfra=self.infra,
                     bind_address=database_bind.bind_address,
                     instance__in=self.instance_address_list
                 ).update(bind_status=ERROR)
@@ -83,7 +82,7 @@ class BindNewInstance(ACLStep):
     def undo(self):
         for database_bind in self.database.acl_binds.all():
             infra_instances_binds = DatabaseInfraInstanceBind.objects.filter(
-                databaseinfra=self.databaseinfra,
+                databaseinfra=self.infra,
                 bind_address=database_bind.bind_address,
                 instance__in=self.instance_address_list,
             )
