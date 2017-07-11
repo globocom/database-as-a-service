@@ -2,8 +2,7 @@
 import logging
 from util import exec_remote_command_host
 from base import BaseInstanceStep
-from nfsaas_utils import create_disk
-from nfsaas_utils import delete_disk
+from nfsaas_utils import create_disk, delete_disk, create_access
 
 LOG = logging.getLogger(__name__)
 
@@ -224,3 +223,20 @@ class MigrationCreateExport(CreateExport):
     def host(self):
         host = super(MigrationCreateExport, self).host
         return host.future_host
+
+
+class AddDiskPermissionsOldest(Disk):
+
+    def __unicode__(self):
+        return "Adding oldest disk permission..."
+
+    def get_disk_path(self):
+        future_host = self.host.future_host
+        disk = future_host.nfsaas_host_attributes.get(is_active=True)
+        return disk.nfsaas_path_host
+
+    def do(self):
+        create_access(
+            self.environment.migrate_environment,
+            self.get_disk_path(), self.host.address
+        )
