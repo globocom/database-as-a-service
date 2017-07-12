@@ -27,14 +27,6 @@ class PlanStep(BaseInstanceStep):
         self.cs_plan = PlanAttr.objects.get(plan=self.plan)
 
     @property
-    def plan(self):
-        plan = super(PlanStep, self).plan
-        return plan.engine_equivalent_plan
-
-    def get_equivalent_plan(self):
-        self.cs_plan = PlanAttr.objects.get(plan=self.plan)
-
-    @property
     def script_variables(self):
         variables = {
             'DATABASENAME': self.database.name,
@@ -105,6 +97,14 @@ class PlanStep(BaseInstanceStep):
             )
 
 
+class PlanStepUpgrade(PlanStep):
+
+    @property
+    def plan(self):
+        plan = super(PlanStepUpgrade, self).plan
+        return plan.engine_equivalent_plan
+
+
 class Initialization(PlanStep):
 
     def __unicode__(self):
@@ -123,16 +123,12 @@ class Configure(PlanStep):
         self.run_script(self.plan.script.configuration_template)
 
 
-class InitializationForUpgrade(Initialization):
-    def __init__(self, instance):
-        super(InitializationForUpgrade, self).__init__(instance)
-        self.get_equivalent_plan()
+class InitializationForUpgrade(Initialization, PlanStepUpgrade):
+    pass
 
 
-class ConfigureForUpgrade(Configure):
-    def __init__(self, instance):
-        super(ConfigureForUpgrade, self).__init__(instance)
-        self.get_equivalent_plan()
+class ConfigureForUpgrade(Configure, PlanStepUpgrade):
+    pass
 
 
 class InitializationMongoHA(Initialization):
@@ -156,16 +152,12 @@ class ConfigureMongoHA(Configure):
         }
 
 
-class InitializationMongoHAForUpgrade(InitializationMongoHA):
-    def __init__(self, instance):
-        super(InitializationMongoHAForUpgrade, self).__init__(instance)
-        self.get_equivalent_plan()
+class InitializationMongoHAForUpgrade(InitializationMongoHA, PlanStepUpgrade):
+    pass
 
 
-class ConfigureMongoHAForUpgrade(ConfigureMongoHA):
-    def __init__(self, instance):
-        super(ConfigureMongoHAForUpgrade, self).__init__(instance)
-        self.get_equivalent_plan()
+class ConfigureMongoHAForUpgrade(ConfigureMongoHA, PlanStepUpgrade):
+    pass
 
 
 def redis_instance_parameter(host):
@@ -221,13 +213,9 @@ class ConfigureRedis(Configure):
         return variables
 
 
-class InitializationRedisForUpgrade(InitializationRedis):
-    def __init__(self, instance):
-        super(InitializationRedisForUpgrade, self).__init__(instance)
-        self.get_equivalent_plan()
+class InitializationRedisForUpgrade(InitializationRedis, PlanStepUpgrade):
+    pass
 
 
-class ConfigureRedisForUpgrade(ConfigureRedis):
-    def __init__(self, instance):
-        super(ConfigureRedisForUpgrade, self).__init__(instance)
-        self.get_equivalent_plan()
+class ConfigureRedisForUpgrade(ConfigureRedis, PlanStepUpgrade):
+    pass

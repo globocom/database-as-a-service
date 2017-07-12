@@ -82,3 +82,8 @@ class BaseInstanceStepMigration(BaseInstanceStep):
     def environment(self):
         environment = super(BaseInstanceStepMigration, self).environment
         return environment.migrate_environment
+
+    @property
+    def plan(self):
+        plan = super(BaseInstanceStepMigration, self).plan
+        return plan.migrate_plan
