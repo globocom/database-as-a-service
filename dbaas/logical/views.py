@@ -336,7 +336,6 @@ def database_change_parameters(request, context, database):
 
 @database_view("")
 def database_change_parameters_retry(request, context, database):
-    # print "database_change_parameters_retry", request.method, request.POST
     can_do_change_parameters, error = database.can_do_change_parameters_retry()
     if can_do_change_parameters:
         changed_parameters = _update_database_parameters(request.POST, database)
@@ -632,6 +631,7 @@ def database_hosts(request, context, database):
         attributes = []
         is_read_only = False
         status = ''
+        switch_database = False
         for instance in instances:
             is_read_only = instance.read_only
             status = instance.status_html()
@@ -642,6 +642,8 @@ def database_hosts(request, context, database):
             elif not current_write_found and instance.is_current_write:
                 attributes.append(context['core_attribute'])
                 current_write_found = True
+                if database.databaseinfra.plan.is_ha:
+                    switch_database = True
             else:
                 attributes.append(context['read_only_attribute'])
 
@@ -650,7 +652,8 @@ def database_hosts(request, context, database):
             full_description += ' - ' + '/'.join(attributes)
 
         host_data = {
-            'id': host.id, 'status': status, 'description': full_description
+            'id': host.id, 'status': status, 'description': full_description,
+            'switch_database': switch_database,
         }
 
         if is_read_only:
@@ -911,4 +914,30 @@ def database_destroy(request, context, database):
     return render_to_response(
         "logical/database/details/destroy_tab.html",
         context, RequestContext(request)
+    )
+
+
+def database_switch_write(request, database_id, host_id):
+    database = Database.objects.get(id=database_id)
+    instances = database.infra.instances.filter(hostname_id=host_id)
+    for instance in instances:
+        if instance.is_database:
+            break
+
+    can_switch = True
+
+    if database.is_being_used_elsewhere():
+        messages.add_message(
+            request, messages.ERROR,
+            'Can not switch write database because it is in use by another task.'
+        )
+        can_switch = False
+
+    if can_switch:
+        TaskRegister.database_switch_write(
+            database=database, user=request.user, instance=instance
+        )
+
+    return HttpResponseRedirect(
+        reverse('admin:logical_database_hosts', kwargs={'id': database.id})
     )
