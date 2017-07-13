@@ -1,6 +1,6 @@
 import logging
 from dbaas_credentials.models import CredentialType
-from dbaas_nfsaas.models import HostAttr
+from dbaas_nfsaas.models import HostAttr, Group
 from dbaas_nfsaas.dbaas_api import DatabaseAsAServiceApi
 from dbaas_nfsaas.faas_provider import Provider
 from dbaas_nfsaas.util import delete_all_disk_files
@@ -16,7 +16,7 @@ def get_faas_provider(environment):
         credential_type=CredentialType.FAAS
     )
     dbaas_api = DatabaseAsAServiceApi(credentials=faas_credentials)
-    return Provider(dbaas_api, HostAttr)
+    return Provider(dbaas_api, HostAttr, Group)
 
 
 def create_disk(environment, host, size_kb):
