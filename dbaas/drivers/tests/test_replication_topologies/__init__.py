@@ -210,6 +210,18 @@ class AbstractReplicationTopologySettingsTestCase(TestCase):
     def _get_resize_oplog_steps(self):
         return ()
 
+    def _get_switch_write_instance_steps_description(self):
+        return "Switch write database instance"
+
+    def _get_switch_write_instance_steps(self):
+        return [{
+            self._get_switch_write_instance_steps_description():
+            (
+                'workflow.steps.util.vm.ChangeMaster',
+                'workflow.steps.util.database.CheckIfSwitchMaster',
+            )
+        }]
+
     @skip_unless_not_abstract
     def test_deploy_settings(self):
         self.assertEqual(
@@ -278,4 +290,11 @@ class AbstractReplicationTopologySettingsTestCase(TestCase):
         self.assertEqual(
             self._get_resize_oplog_steps(),
             self.replication_topology.get_resize_oplog_steps()
+        )
+
+    @skip_unless_not_abstract
+    def test_switch_write_instance_settings(self):
+        self.assertEqual(
+            self._get_switch_write_instance_steps(),
+            self.replication_topology.get_switch_write_instance_steps()
         )
