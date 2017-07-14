@@ -156,6 +156,15 @@ class InitializationMongoHAForUpgrade(InitializationMongoHA, PlanStepUpgrade):
     pass
 
 
+class ConfigureMongoForResizeLog(Configure):
+
+    def get_variables_specifics(self):
+        return {
+            'IS_HA': False,
+            'PORT': 27018
+        }
+
+
 class ConfigureMongoHAForUpgrade(ConfigureMongoHA, PlanStepUpgrade):
     pass
 

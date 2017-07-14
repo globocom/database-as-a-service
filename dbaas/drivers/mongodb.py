@@ -407,32 +407,37 @@ class MongoDB(BaseDriver):
         return 'ReplicaSet_{}'.format(self.databaseinfra.name)
 
     def get_configuration(self):
-        instance = self.databaseinfra.instances.filter(
-            status=Instance.ALIVE, is_active=True,
-            instance_type=Instance.MONGODB
-        ).first()
+        with self.pymongo() as client:
+            configuration = client.admin.command({'getParameter': '*'})
+            if self.databaseinfra.plan.is_ha:
+                configuration.update({'oplogSize': self.get_oplogsize()})
+            return configuration
 
-        if not instance:
-            raise EnvironmentError(
-                'Cannot get configuration to {}. No MongoDB instance with status '
-                'alive and active found'.format(self.databaseinfra)
-            )
+    def get_oplogsize(self):
+        if self.databaseinfra.plan.is_ha:
+            with self.pymongo() as client:
+                firstc = client["local"]["oplog.rs"].find().sort("$natural", pymongo.ASCENDING).limit(1)[0]
+                lastc = client["local"]["oplog.rs"].find().sort("$natural", pymongo.DESCENDING).limit(1)[0]
+                oplog_stats = client["local"].command("collStats", "oplog.rs")
+                if 'maxSize' in oplog_stats:
+                    logSize = oplog_stats['maxSize']
+                else:
+                    oplogc = client["local"]["system.namespaces"].find_one({'name': "local.oplog.rs"})
+                    logSize = oplogc["options"]["size"]
+                return logSize / 1024 / 1024
 
-        with self.pymongo(instance) as client:
-            configuration = client.admin.command('getCmdLineOpts')
-        return self._parse_configuration(configuration['parsed'])
+    def set_configuration(self, instance, name, value):
+        client = self.get_client(instance)
 
-    def _parse_configuration(self, configuration, key_base=''):
-        parsed = {}
-        for key, value in configuration.items():
-            if isinstance(value, dict):
-                parsed.update(self._parse_configuration(value, key))
-                continue
-            parsed[key] = value
+        if name == 'quiet':
+            if value.lower() == 'true':
+                value = True
+            else:
+                value = False
+            client.admin.command('setParameter', 1, quiet=value)
 
-        unified = {}
-        for key, value in parsed.items():
-            if key_base:
-                key = '{}.{}'.format(key_base, key)
-            unified[key] = value
-        return unified
+        elif name == 'logLevel':
+            client.admin.command('setParameter', 1, logLevel=value)
+
+        else:
+            raise Exception("Could not set configuration for {}. It's nnknown.".format(name))

@@ -5,6 +5,7 @@ import random
 from dbaas_credentials.models import CredentialType
 from dbaas_nfsaas.models import HostAttr
 from dbaas_cloudstack.models import HostAttr as CsHostAttr
+from physical.configurations import configuration_factory
 from util import full_stack
 from util import check_ssh
 from util import get_credentials_for
@@ -23,6 +24,12 @@ class InitDatabaseMongoDB(BaseStep):
 
     def do(self, workflow_dict):
         try:
+            cloud_stack = workflow_dict['plan'].cs_plan_attributes.first()
+            offering = cloud_stack.get_stronger_offering()
+            configuration = configuration_factory(
+                workflow_dict['databaseinfra'], offering.memory_size_mb
+            )
+
             mongodbkey = ''.join(
                 random.choice(string.hexdigits) for i in range(50)
             )
@@ -73,7 +80,8 @@ class InitDatabaseMongoDB(BaseStep):
                         'HOST': workflow_dict['hosts'][index].hostname.split('.')[0],
                         'DATABASENAME': workflow_dict['name'],
                         'ENGINE': 'mongodb',
-                        'IS_HA': infra.plan.is_ha
+                        'IS_HA': infra.plan.is_ha,
+                        'configuration': configuration,
                     }
                     databaserule = 'ARBITER'
                 else:
@@ -84,7 +92,8 @@ class InitDatabaseMongoDB(BaseStep):
                         'DATABASENAME': workflow_dict['name'],
                         'ENGINE': 'mongodb',
                         'DBPASSWORD': mongodb_password,
-                        'IS_HA': infra.plan.is_ha
+                        'IS_HA': infra.plan.is_ha,
+                        'configuration': configuration,
                     }
 
                     if index == 0:
@@ -123,15 +132,20 @@ class InitDatabaseMongoDB(BaseStep):
                     LOG.info("Executing script on %s" % host)
 
                     script = build_context_script(contextdict, script)
+                    output = {}
                     return_code = exec_remote_command(
                         server=host.address,
                         username=host_csattr.vm_user,
                         password=host_csattr.vm_password,
-                        command=script
+                        command=script,
+                        output=output
                     )
 
                     if return_code != 0:
-                        return False
+                        error_msg = "Error executing script. Stdout: {} - " \
+                                    "stderr: {}".format(output['stdout'],
+                                                        output['stderr'])
+                        raise Exception(error_msg)
 
             if len(workflow_dict['hosts']) > 1:
                 scripts_to_run = plan.script.start_replication_template
@@ -148,15 +162,20 @@ class InitDatabaseMongoDB(BaseStep):
                 host = workflow_dict['hosts'][0]
                 host_csattr = CsHostAttr.objects.get(host=host)
 
+                output = {}
                 return_code = exec_remote_command(
                     server=host.address,
                     username=host_csattr.vm_user,
                     password=host_csattr.vm_password,
-                    command=scripts_to_run
+                    command=scripts_to_run,
+                    output=output
                 )
 
                 if return_code != 0:
-                    return False
+                    error_msg = "Error executing script. Stdout: {} - " \
+                                "stderr: {}".format(output['stdout'],
+                                                    output['stderr'])
+                    raise Exception(error_msg)
 
             return True
         except Exception:

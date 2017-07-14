@@ -128,9 +128,9 @@ class Parameter(BaseModel):
         it can be changed without restart the database.",
         default=True
     )
-    class_path = models.CharField(
-        verbose_name=_("Class path"), max_length=200,
-        help_text="Class path that implemts the change in the parameter",
+    custom_method = models.CharField(
+        verbose_name=_("Custom Method"), max_length=200,
+        help_text="Custom method with steps for changing this parameter.",
         blank=True, null=True
     )
 
@@ -949,7 +949,7 @@ class DatabaseInfraParameter(BaseModel):
                 )
                 continue
 
-            physical_value = physical_parameters[parameter.name]
+            physical_value = str(physical_parameters[parameter.name])
             default_value = infra.get_dbaas_parameter_default_value(
                 parameter_name=parameter.name
             )

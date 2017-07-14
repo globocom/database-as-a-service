@@ -177,17 +177,24 @@ def get_database_upgrade_setting(class_path):
     return get_replication_topology_instance(class_path).get_upgrade_steps()
 
 
-def get_database_change_parameter_setting(class_path, all_dinamic):
+def get_database_change_parameter_setting(class_path, all_dinamic, custom_procedure):
     replication_topology = get_replication_topology_instance(class_path)
-    if all_dinamic:
+    if custom_procedure:
+        custom_proc_method = getattr(replication_topology, custom_procedure)
+        return custom_proc_method()[0]
+    elif all_dinamic:
         return replication_topology.get_change_dinamic_parameter_steps()
     else:
         return replication_topology.get_change_static_parameter_steps()
 
 
-def get_database_change_parameter_retry_steps_count(class_path, all_dinamic):
+def get_database_change_parameter_retry_steps_count(class_path, all_dinamic, custom_procedure):
     replication_topology = get_replication_topology_instance(class_path)
-    if all_dinamic:
+
+    if custom_procedure:
+        custom_proc_method = getattr(replication_topology, custom_procedure)
+        return custom_proc_method()[1]
+    elif all_dinamic:
         return replication_topology.get_change_dinamic_parameter_retry_steps_count()
     else:
         return replication_topology.get_change_static_parameter_retry_steps_count()

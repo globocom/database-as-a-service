@@ -24,6 +24,13 @@ def build_mongodb_connect_string(instances, databaseinfra):
     return connect_string
 
 
+def build_mongodb_instance_connect_string(instance):
+    databaseinfra = instance.databaseinfra
+    return "{}:{}/admin -u{} -p{}".format(
+        instance.address, instance.port,
+        databaseinfra.user, databaseinfra.password)
+
+
 def build_permission_script():
 
     return """
@@ -376,3 +383,20 @@ def build_change_mongodb_conf_file_script():
         line=$((line + 1))
         sed -i ${line}'i\httpinterface = true' /data/mongodb.conf
     """
+
+
+def build_change_oplogsize_script(instance, oplogsize):
+    connect_string = build_mongodb_instance_connect_string(instance)
+    return """
+        /usr/local/mongodb/bin/mongo %(connect_string)s <<EOF_DBAAS
+        use local
+        db = db.getSiblingDB('local')
+        db.temp.drop()
+        db.temp.save( db.oplog.rs.find( { }, { ts: 1, h: 1 } ).sort( {\$natural : -1} ).limit(1).next() )
+        db.oplog.rs.drop()
+        db.runCommand( { create: "oplog.rs", capped: true, size: ( %(oplogsize)s * 1024 * 1024) } )
+        db.oplog.rs.save( db.temp.findOne() )
+        db.oplog.rs.find()
+        exit
+        \nEOF_DBAAS
+    """ % {'connect_string': connect_string, 'oplogsize': oplogsize}
