@@ -441,3 +441,6 @@ class MongoDB(BaseDriver):
 
         else:
             raise Exception("Could not set configuration for {}. It's nnknown.".format(name))
+
+    def get_database_process_name(self):
+        return "mongod"

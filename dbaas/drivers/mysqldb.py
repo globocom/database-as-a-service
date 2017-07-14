@@ -346,3 +346,6 @@ class MySQL(BaseDriver):
     def set_configuration(self, instance, name, value):
         client = self.get_client(instance)
         client.query("set global {} = {}".format(name, value))
+
+    def get_database_process_name(self):
+        return "mysqld"
