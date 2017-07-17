@@ -50,5 +50,5 @@ class DiskStepTestsMigration(TestBaseStep):
 
         create_access.assert_called()
         create_access.assert_called_once_with(
-            self.environment_migrate, self.future_host.hostname, self.host.address
+            self.environment, self.future_host.hostname, self.host.future_host
         )
