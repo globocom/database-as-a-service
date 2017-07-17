@@ -42,3 +42,29 @@ class ChangeTTLTo5Minutes(ChangeTTL):
 class ChangeTTLTo3Hours(ChangeTTL):
 
     minutes = 180
+
+
+class ChangeEndpoint(DNSStep):
+
+    def __unicode__(self):
+        return "Changing DNS endpoint..."
+
+    def do(self):
+        old_instance = self.instance.future_instance
+        DNSAPIProvider.update_database_dns_content(
+            self.infra, old_instance.dns,
+            old_instance.address, self.instance.address
+        )
+
+        self.instance.dns = old_instance.dns
+        self.instance.save()
+
+        old_instance.dns = old_instance.address
+        old_instance.save()
+
+        self.host.hostname = self.instance.dns
+        self.host.save()
+
+        old_host = self.host.future_host
+        old_host.hostname = old_instance.address
+        old_host.save()
