@@ -136,6 +136,12 @@ class UnmountNewerExport(DiskUmountCommand):
         return self.NEW_DIRECTORY
 
 
+class UnmountNewerExportMigration(
+    UnmountNewerExport, BaseInstanceStepMigration
+):
+    pass
+
+
 class MountingNewerExport(MountNewerExport):
 
     @property
@@ -199,6 +205,10 @@ class FilePermissions(NewerDisk, DiskCommand):
         }
 
 
+class FilePermissionsMigration(FilePermissions, BaseInstanceStepMigration):
+    pass
+
+
 class MigrationCreateExport(CreateExport, BaseInstanceStepMigration):
     pass
 
@@ -209,12 +219,51 @@ class AddDiskPermissionsOldest(Disk):
         return "Adding oldest disk permission..."
 
     def get_disk_path(self):
-        future_host = self.host.future_host
-        disk = future_host.nfsaas_host_attributes.get(is_active=True)
+        disk = self.host.nfsaas_host_attributes.get(is_active=True)
         return disk.nfsaas_path_host
 
     def do(self):
         create_access(
-            self.environment.migrate_environment,
-            self.get_disk_path(), self.host.address
+            self.environment, self.get_disk_path(), self.host.future_host
         )
+
+
+class MountOldestExportMigration(DiskMountCommand, BaseInstanceStepMigration):
+
+    @property
+    def path_mount(self):
+        return self.NEW_DIRECTORY
+
+    @property
+    def export_remote_path(self):
+        base_host = BaseInstanceStep(self.instance).host
+        return base_host.nfsaas_host_attributes.get(is_active=True).nfsaas_path
+
+
+class CopyDataBetweenExportsMigration(CopyDataBetweenExports):
+    NEW_DIRECTORY = '{}/data'.format(CopyDataBetweenExports.OLD_DIRECTORY)
+    OLD_DIRECTORY = '{}/data'.format(CopyDataBetweenExports.NEW_DIRECTORY)
+
+    @property
+    def host(self):
+        host = super(CopyDataBetweenExportsMigration, self).host
+        return host.future_host
+
+
+class DisableOldestExportMigration(DisableOldestExport):
+
+    def do(self):
+        for export in self.host.future_host.nfsaas_host_attributes.all():
+            export.is_active = False
+            export.save()
+
+
+class DiskUpdateHost(Disk):
+
+    def __unicode__(self):
+        return "Moving oldest disks to new host..."
+
+    def do(self):
+        for export in self.host.future_host.nfsaas_host_attributes.all():
+            export.host = self.host
+            export.save()
