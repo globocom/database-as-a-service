@@ -31,7 +31,7 @@ class DatabaseStep(BaseInstanceStep):
 
     def _execute_init_script(self, command):
         return use_database_initialization_script(
-            self.infra, self.instance.hostname, command
+            self.infra, self.host, command
         )
 
     def start_database(self):

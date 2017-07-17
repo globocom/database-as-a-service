@@ -13,7 +13,7 @@ class ZabbixStep(BaseInstanceStep):
         integration = CredentialType.objects.get(type=CredentialType.ZABBIX)
         environment = self.instance.databaseinfra.environment
         self.credentials = Credential.get_credentials(environment, integration)
-        self.instances = self.instance.hostname.instances.all()
+        self.instances = self.host.instances.all()
 
         self.zabbix_provider = factory_for(
             databaseinfra=self.instance.databaseinfra,
@@ -76,7 +76,7 @@ class CreateAlarms(ZabbixStep):
             engine_version=self.engine_version
         )
         zabbix_provider.create_instance_basic_monitors(
-            self.instance.hostname
+            self.host
         )
 
         for instance in self.instances:
