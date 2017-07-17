@@ -3,7 +3,8 @@ from util import build_context_script, exec_remote_command, get_credentials_for
 from dbaas_cloudstack.models import HostAttr, PlanAttr
 from dbaas_credentials.models import CredentialType
 from dbaas_nfsaas.models import HostAttr as HostAttrNfsaas
-from workflow.steps.util.base import BaseInstanceStep
+from workflow.steps.util.base import BaseInstanceStep, \
+    BaseInstanceStepMigration
 from physical.configurations import configuration_factory
 import logging
 
@@ -206,20 +207,33 @@ class InitializationRedis(Initialization):
         return redis_instance_parameter(self.host)
 
 
+class InitializationRedisMigration(InitializationRedis, BaseInstanceStepMigration):
+    pass
+
+
 class ConfigureRedis(Configure):
 
-    def get_variables_specifics(self):
-        master = self.infra.get_driver().get_master_instance()
+    @property
+    def master(self):
+        return self.infra.get_driver().get_master_instance()
 
+    def get_variables_specifics(self):
         variables = {
-            'SENTINELMASTER': master.address,
-            'SENTINELMASTERPORT': master.port,
+            'SENTINELMASTER': self.master.address,
+            'SENTINELMASTERPORT': self.master.port,
             'MASTERNAME': self.infra.name,
         }
         variables.update(redis_instance_parameter(self.host))
         variables.update(sentinel_instance_parameter(self.host))
 
         return variables
+
+
+class ConfigureRedisMigration(ConfigureRedis, BaseInstanceStepMigration):
+
+    @property
+    def master(self):
+        return self.instance.future_instance
 
 
 class InitializationRedisForUpgrade(InitializationRedis, PlanStepUpgrade):
