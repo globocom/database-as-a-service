@@ -37,17 +37,28 @@ class ACLStep(BaseInstanceStep):
 class ReplicateAcls2NewInstance(ACLStep):
 
     def __unicode__(self):
-        return "Replicating acls ..."
+        return "Replicating ACLs..."
+
+    @property
+    def source_instance(self):
+        return self.infra.instances.filter(
+            is_active=True, read_only=False
+        ).first()
+
 
     def do(self):
-        source_instance = self.infra.instances.filter(
-            is_active=True,
-            read_only=False
-        ).first()
         replicate_acl_for(
             database=self.database,
-            old_ip=source_instance.address,
-            new_ip=self.instance.address)
+            old_ip=self.source_instance.address,
+            new_ip=self.instance.address
+        )
+
+
+class ReplicateAclsMigration(ReplicateAcls2NewInstance):
+
+    @property
+    def source_instance(self):
+        return self.instance.future_instance
 
 
 class BindNewInstance(ACLStep):
