@@ -114,7 +114,7 @@ class UpdateOSDescription(VmStep):
         return "Updating instance OS description..."
 
     def do(self):
-        self.instance.hostname.update_os_description()
+        self.host.update_os_description()
 
 
 class ChangeOffering(VmStep):
@@ -217,17 +217,21 @@ class CreateVirtualMachine(VmStep):
         raise NotImplementedError
 
     @property
+    def vm_name(self):
+        return self.instance.vm_name
+
+    @property
     def cs_offering(self):
         return self.infra.cs_dbinfra_offering.get().offering
 
     def deploy_vm(self, bundle):
-        LOG.info("VM : {}".format(self.instance.vm_name))
+        LOG.info("VM : {}".format(self.vm_name))
 
         error, vm = self.cs_provider.deploy_virtual_machine(
-            offering=self.offering.serviceofferingid,
+            offering=self.cs_offering.serviceofferingid,
             bundle=bundle,
             project_id=self.cs_credentials.project,
-            vmname=self.instance.vm_name,
+            vmname=self.vm_name,
             affinity_group_id=self.cs_credentials.get_parameter_by_name(
                 'affinity_group_id'
             ),
@@ -298,6 +302,10 @@ class MigrationCreateNewVM(CreateVirtualMachine):
         return environment.migrate_environment
 
     @property
+    def vm_name(self):
+        return self.host.hostname.split('.')[0]
+
+    @property
     def cs_offering(self):
         base_offering = self.infra.cs_dbinfra_offering.get().offering
         return base_offering.equivalent_offering
@@ -321,3 +329,52 @@ class MigrationCreateNewVM(CreateVirtualMachine):
 
         self.host.future_host = host
         self.host.save()
+
+    def undo(self):
+        raise NotImplementedError
+
+
+class ChangeInstanceHost(VmStep):
+
+    def __unicode__(self):
+        return "Remove old infra instance..."
+
+    def do(self):
+        host = self.host
+        future_host = host.future_host
+        future_host.future_host = host
+        future_host.save()
+
+        future_instance = self.instance.future_instance
+        future_instance.address = 'None'
+        future_instance.future_instance = self.instance
+        future_instance.save()
+
+        self.instance.address = future_host.address
+        self.instance.hostname = future_host
+        self.instance.save()
+
+        future_instance.address = host.address
+        future_instance.hostname = host
+        future_instance.save()
+
+
+class RemoveHost(VmStep):
+
+    def __unicode__(self):
+        return "Destroying virtual machine..."
+
+    def do(self):
+        from dbaas_cloudstack.models import HostAttr
+
+        host = self.host.future_host
+        host_attr = HostAttr.objects.get(host=host)
+
+        self.cs_provider.destroy_virtual_machine(
+            project_id=self.cs_credentials.project,
+            environment=self.environment,
+            vm_id=host_attr.vm_id
+        )
+
+        host_attr.delete()
+        host.delete()
