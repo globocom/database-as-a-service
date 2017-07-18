@@ -11,6 +11,10 @@ class Disk(BaseInstanceStep):
     OLD_DIRECTORY = '/data'
     NEW_DIRECTORY = '/new_data'
 
+    @property
+    def host_has_mount(self):
+        return bool(self.instance.hostname.nfsaas_host_attributes.first())
+
 
 class CreateExport(Disk):
 
@@ -18,6 +22,9 @@ class CreateExport(Disk):
         return "Creating Export..."
 
     def do(self):
+        if not self.host_has_mount:
+            return
+
         LOG.info('Creating export for {}'.format(self.instance))
         create_disk(
             environment=self.environment,
@@ -47,6 +54,9 @@ class DiskCommand(Disk):
         raise NotImplementedError
 
     def do(self):
+        if not self.host_has_mount:
+            return
+
         for message, script in self.scripts.items():
             output = {}
             return_code = exec_remote_command_host(self.host, script, output)
@@ -223,6 +233,9 @@ class AddDiskPermissionsOldest(Disk):
         return disk.nfsaas_path_host
 
     def do(self):
+        if not self.host_has_mount:
+            return
+
         create_access(
             self.environment, self.get_disk_path(), self.host.future_host
         )
