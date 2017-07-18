@@ -46,4 +46,3 @@ class UserMiddleware(object):
 
     def process_exception(self, request, exception):
         self._requests.pop(current_thread().ident, None)
-        raise exception
