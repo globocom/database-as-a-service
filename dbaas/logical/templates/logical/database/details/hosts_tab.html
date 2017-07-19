@@ -39,6 +39,7 @@
               {% if host.switch_database %}
                   <a class="action_button btn btn-warning" href="{{ host.id }}/switch/"
                     data-toggle="tooltip" data-placement="top" title="Switch {{ database.engine.write_node_description }}"
+                    onclick="return confirm('Are you sure?')"
                   ><i class="icon-refresh"></i></a>
               {% endif %}
             {% else %}
