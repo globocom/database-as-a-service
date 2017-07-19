@@ -36,6 +36,11 @@
           <p class="readonly">
             {% if is_dba %}
               <a target="_blank" href="{% url 'admin:physical_host_change' host.id %}">{{ host.description }}</a>
+              {% if host.switch_database %}
+                  <a class="action_button btn btn-warning" href="{{ host.id }}/switch/"
+                    data-toggle="tooltip" data-placement="top" title="Switch {{ database.engine.write_node_description }}"
+                  ><i class="icon-refresh"></i></a>
+              {% endif %}
             {% else %}
               {{ host.description }}
             {% endif %}

@@ -382,3 +382,6 @@ class Redis(BaseDriver):
     def set_configuration(self, instance, name, value):
         with self.redis(instance) as client:
             client.config_set(name, value)
+
+    def get_database_process_name(self):
+        return "redis-server"

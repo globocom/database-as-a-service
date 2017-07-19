@@ -976,6 +976,39 @@ def resize_database(self, database, user, task, cloudstackpack, original_cloudst
         )
 
 
+@app.task(bind=True)
+def switch_write_database(self, database, instance, user, task):
+    from workflow.workflow import steps_for_instances
+    from util.providers import get_switch_write_instance_steps
+
+    self.request.kwargs['database'] = database
+    self.request.kwargs['instance'] = instance
+    infra = instance.databaseinfra
+
+    worker_name = get_worker_name()
+    task = TaskHistory.register(self.request, user, task, worker_name)
+
+    plan = infra.plan
+
+    class_path = plan.replication_topology.class_path
+    steps = get_switch_write_instance_steps(class_path)
+
+    instances = []
+    instances.append(instance)
+
+    success = steps_for_instances(
+        list_of_groups_of_steps=steps,
+        instances=instances,
+        task=task
+    )
+
+    if success:
+        task.update_status_for(TaskHistory.STATUS_SUCCESS, 'Done')
+    else:
+        task.update_status_for(TaskHistory.STATUS_ERROR, 'Done')
+        database.unpin_task()
+
+
 class TaskRegister(object):
     TASK_CLASS = TaskHistory
 
@@ -1293,5 +1326,25 @@ class TaskRegister(object):
         delay_params.update(**{'since_step': since_step} if since_step else {})
 
         change_parameters_database.delay(**delay_params)
+
+    @classmethod
+    def database_switch_write(cls, database, user, instance):
+        task_params = {
+            'task_name': "switch_write_database",
+            'arguments': "Switching write instance {} on database {}".format(
+                instance, database),
+            'user': user,
+            'database': database
+        }
+
+        task = cls.create_task(task_params)
+
+        switch_write_database.delay(
+            database=database,
+            instance=instance,
+            user=user,
+            task=task,
+        )
+
 
     # ============  END TASKS   ============

@@ -300,6 +300,10 @@ class BaseDriver(object):
     def set_configuration(self, instance, name, value):
         raise NotImplementedError
 
+    def get_database_process_name(self):
+        """ Returns OS database process name"""
+        raise NotImplementedError
+
 
 class DatabaseStatus(object):
 
