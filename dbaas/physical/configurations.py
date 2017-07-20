@@ -543,7 +543,7 @@ class ConfigurationMongoDB(ConfigurationBase):
     @property
     def quiet(self):
         parameter_name = inspect.stack()[0][3]
-        default = False
+        default = 'false'
         return self.get_parameter(parameter_name, default)
 
     @property
