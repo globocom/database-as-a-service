@@ -430,14 +430,17 @@ class MongoDB(BaseDriver):
         client = self.get_client(instance)
 
         if name == 'quiet':
-            if value.lower() == 'true':
-                value = True
+            if value == 'true':
+                update_value = True
+            elif value == 'false':
+                update_value = False
             else:
-                value = False
-            client.admin.command('setParameter', 1, quiet=value)
+                error = 'BadValue quiet: {}. Must be true or false.'.format(value)
+                raise Exception(error)
+            client.admin.command('setParameter', 1, quiet=update_value)
 
         elif name == 'logLevel':
-            client.admin.command('setParameter', 1, logLevel=value)
+            client.admin.command('setParameter', 1, logLevel=int(value))
 
         else:
             raise Exception("Could not set configuration for {}. It's nnknown.".format(name))
