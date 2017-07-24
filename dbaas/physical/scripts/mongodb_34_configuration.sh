@@ -16,74 +16,85 @@ createconfigdbfile()
 (cat <<EOF_DBAAS
 # mongodb.conf
 
+########################################
+## Storage configuration
+########################################
+storage:
+
+    # Location of the database files
+    dbPath: /data/data/
+
+    # Alternative directory structure, in which files for each database are kept in a unique directory
+    directoryPerDB: true
+
+    # Storage Engine
+    engine: wiredTiger
+
+    # small files
+    mmapv1:
+    {% if DISK_SIZE_IN_GB < 5.0 %}
+        smallFiles: true
+    {% else %}
+        smallFiles: false
+    {% endif %}
+
+    # disable journal
+    journal:
+    {% if DATABASERULE == "ARBITER" %}
+        enabled: false
+    {% else %}
+        enabled: true
+    {% endif %}
 
 ########################################
-## Basic database configuration
+## Process Management configuration
 ########################################
+processManagement:
+    # Fork the server process and run in background
+    fork: true
 
-# Location of the database files
-dbpath=/data/data/
-
-# Storage Engine
-storageEngine= wiredTiger
-
-# Alternative directory structure, in which files for each database are kept in a unique directory
-directoryperdb=true
-
-# Fork the server process and run in background
-fork = true
-
-# small files
-{% if DISK_SIZE_IN_GB < 5.0 %}
-smallfiles = true
-{% else %}
-smallfiles = false
-{% endif %}
-
-{% if PORT %}
-port = {{PORT}}
-{% endif %}
 
 ########################################
 ## Log Options
 ########################################
-
-syslog = True
-quiet = {{ configuration.quiet.value }}
+systemLog:
+    destination: syslog
+    quiet: {{ configuration.quiet.value }}
+    verbosity: {{ configuration.logLevel.value }}
 
 ########################################
-## Administration & Monitoring
+## Net Options
 ########################################
+net:
+    http:
+        # Allow extended operations at the Http Interface
+        enabled: true
+        RESTInterfaceEnabled: true
+{% if PORT %}
+    port: {{ PORT }}
+{% endif %}
 
-# Allow extended operations at the Http Interface
-rest = true
-httpinterface = true
-
-{% if IS_HA  %}
-########################################
-## Replica Sets
-########################################
-
-# Use replica sets with the specified logical set name
-replSet={{REPLICASETNAME}}
-
-# File used to authenticate in replica set environment
-keyFile=/data/mongodb.key
-
-# Custom size for replication operation log in MB.
-oplogSize = {{ configuration.oplogSize.value }}
-{% else %}
 ########################################
 ## Security
 ########################################
-
-# Turn on/off security.  Off is currently the default
-auth = true
+security:
+{% if IS_HA  %}
+    # File used to authenticate in replica set environment
+    keyFile: /data/mongodb.key
+{% else %}
+    authorization: enabled
 {% endif %}
 
-{% if DATABASERULE == "ARBITER" %}
-# disable journal
-nojournal=yes
+{% if IS_HA  %}
+########################################
+## Replica Set
+########################################
+replication:
+    # Use replica sets with the specified logical set name
+    replSetName: {{ REPLICASETNAME }}
+
+    # Custom size for replication operation log in MB.
+    oplogSizeMB: {{ configuration.oplogSize.value }}
 {% endif %}
 
 EOF_DBAAS
