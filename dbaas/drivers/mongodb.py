@@ -436,14 +436,14 @@ class MongoDB(BaseDriver):
                 update_value = False
             else:
                 error = 'BadValue quiet: {}. Must be true or false.'.format(value)
-                raise Exception(error)
+                raise ValueError(error)
             client.admin.command('setParameter', 1, quiet=update_value)
 
         elif name == 'logLevel':
             client.admin.command('setParameter', 1, logLevel=int(value))
 
         else:
-            raise Exception("Could not set configuration for {}. It's nnknown.".format(name))
+            raise Exception("Could not set configuration for {}. It's unknown.".format(name))
 
     def get_database_process_name(self):
         return "mongod"
