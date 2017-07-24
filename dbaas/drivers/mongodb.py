@@ -411,6 +411,8 @@ class MongoDB(BaseDriver):
             configuration = client.admin.command({'getParameter': '*'})
             if self.databaseinfra.plan.is_ha:
                 configuration.update({'oplogSize': self.get_oplogsize()})
+            if 'quiet' in configuration:
+                configuration['quiet'] = str(configuration['quiet']).lower()
             return configuration
 
     def get_oplogsize(self):
