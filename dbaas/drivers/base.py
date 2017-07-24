@@ -304,6 +304,15 @@ class BaseDriver(object):
         """ Returns OS database process name"""
         raise NotImplementedError
 
+    def initialization_parameters(self, instance):
+        return {}
+
+    def configuration_parameters(self, instance):
+        return {}
+
+    def configuration_parameters_for_log_resize(self, instance):
+        return {}
+
 
 class DatabaseStatus(object):
 
