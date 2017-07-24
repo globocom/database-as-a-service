@@ -22,9 +22,6 @@ class CreateExport(Disk):
         return "Creating Export..."
 
     def do(self):
-        if not self.host_has_mount:
-            return
-
         LOG.info('Creating export for {}'.format(self.instance))
         create_disk(
             environment=self.environment,
@@ -220,7 +217,10 @@ class FilePermissionsMigration(FilePermissions, BaseInstanceStepMigration):
 
 
 class MigrationCreateExport(CreateExport, BaseInstanceStepMigration):
-    pass
+
+    def do(self):
+        if not self.host_has_mount:
+            super(MigrationCreateExport, self).do()
 
 
 class AddDiskPermissionsOldest(Disk):
