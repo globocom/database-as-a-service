@@ -173,9 +173,35 @@ class CheckIsDown(DatabaseStep):
     def __unicode__(self):
         return "Checking database is down..."
 
+    def __is_os_process_running(self):
+        script = "ps -ef | grep {} | grep -v grep | wc -l".format(
+            self.process_name
+        )
+
+        for _ in range(CHECK_ATTEMPTS):
+            output = {}
+            return_code = exec_remote_command_host(
+                self.host, script, output
+            )
+            if return_code != 0:
+                raise Exception(str(output))
+            processes = int(output['stdout'][0])
+            if processes == 0:
+                return False
+            LOG.info("{} is runnig".format(self.process_name))
+            sleep(CHECK_SECONDS)
+
+        return True
+
     def do(self):
         if not self.is_down:
             raise EnvironmentError('Database is up, should be down')
+
+        self.process_name = self.driver.get_database_process_name()
+        if self.__is_os_process_running():
+            raise EnvironmentError(
+                '{} is running on server'.format(self.process_name)
+            )
 
 
 class DatabaseChangedParameters(DatabaseStep):
