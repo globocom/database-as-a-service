@@ -3,8 +3,7 @@ from util import build_context_script, exec_remote_command, get_credentials_for
 from dbaas_cloudstack.models import HostAttr, PlanAttr
 from dbaas_credentials.models import CredentialType
 from dbaas_nfsaas.models import HostAttr as HostAttrNfsaas
-from workflow.steps.util.base import BaseInstanceStep, \
-    BaseInstanceStepMigration
+from base import BaseInstanceStep, BaseInstanceStepMigration
 from physical.configurations import configuration_factory
 import logging
 
@@ -111,6 +110,10 @@ class Initialization(PlanStep):
     def __unicode__(self):
         return "Executing plan initial script..."
 
+    def get_variables_specifics(self):
+        driver = self.infra.get_driver()
+        return driver.initialization_parameters(self.instance)
+
     def do(self):
         self.run_script(self.plan.script.initialization_template)
 
@@ -119,6 +122,10 @@ class Configure(PlanStep):
 
     def __unicode__(self):
         return "Executing plan configure script..."
+
+    def get_variables_specifics(self):
+        driver = self.infra.get_driver()
+        return driver.configuration_parameters(self.instance)
 
     def do(self):
         self.run_script(self.plan.script.configuration_template)
@@ -132,113 +139,16 @@ class ConfigureForUpgrade(Configure, PlanStepUpgrade):
     pass
 
 
-class InitializationMongoHA(Initialization):
+class ConfigureForResizeLog(Configure):
 
     def get_variables_specifics(self):
-        database_rule = 'SECONDARY'
-        if self.instance.instance_type == self.instance.MONGODB_ARBITER:
-            database_rule = 'ARBITER'
-
-        return {
-            'DATABASERULE': database_rule
-        }
+        driver = self.infra.get_driver()
+        return driver.configuration_parameters_for_log_resize(self.instance)
 
 
-class ConfigureMongoHA(Configure):
-
-    def get_variables_specifics(self):
-        return {
-            'REPLICASETNAME': self.infra.get_driver().get_replica_name(),
-            'MONGODBKEY': self.infra.database_key
-        }
-
-
-class InitializationMongoHAForUpgrade(InitializationMongoHA, PlanStepUpgrade):
+class InitializationMigration(Initialization, BaseInstanceStepMigration):
     pass
 
 
-class ConfigureMongoForResizeLog(Configure):
-
-    def get_variables_specifics(self):
-        return {
-            'IS_HA': False,
-            'PORT': 27018
-        }
-
-
-class ConfigureMongoHAForUpgrade(ConfigureMongoHA, PlanStepUpgrade):
-    pass
-
-
-def redis_instance_parameter(host):
-    redis = host.database_instance()
-    redis_address = ''
-    redis_port = ''
-    only_sentinel = True
-    if redis:
-        redis_address = redis.address
-        redis_port = redis.port
-        only_sentinel = False
-
-    return {
-        'HOSTADDRESS': redis_address,
-        'PORT': redis_port,
-        'ONLY_SENTINEL': only_sentinel,
-    }
-
-
-def sentinel_instance_parameter(host):
-    sentinel = host.non_database_instance()
-    sentinel_address = ''
-    sentinel_port = ''
-    if sentinel:
-        sentinel_address = sentinel.address
-        sentinel_port = sentinel.port
-
-    return {
-        'SENTINELADDRESS': sentinel_address,
-        'SENTINELPORT': sentinel_port,
-    }
-
-
-class InitializationRedis(Initialization):
-
-    def get_variables_specifics(self):
-        return redis_instance_parameter(self.host)
-
-
-class InitializationRedisMigration(InitializationRedis, BaseInstanceStepMigration):
-    pass
-
-
-class ConfigureRedis(Configure):
-
-    @property
-    def master(self):
-        return self.infra.get_driver().get_master_instance()
-
-    def get_variables_specifics(self):
-        variables = {
-            'SENTINELMASTER': self.master.address,
-            'SENTINELMASTERPORT': self.master.port,
-            'MASTERNAME': self.infra.name,
-        }
-        variables.update(redis_instance_parameter(self.host))
-        variables.update(sentinel_instance_parameter(self.host))
-
-        return variables
-
-
-class ConfigureRedisMigration(ConfigureRedis, BaseInstanceStepMigration):
-
-    @property
-    def master(self):
-        return self.instance.future_instance
-
-
-class InitializationRedisForUpgrade(InitializationRedis, PlanStepUpgrade):
-    pass
-
-
-class ConfigureRedisForUpgrade(ConfigureRedis, PlanStepUpgrade):
+class ConfigureMigration(Configure, BaseInstanceStepMigration):
     pass
