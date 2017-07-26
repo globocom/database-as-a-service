@@ -182,7 +182,7 @@ class ConfigureFstab(NewerDisk, DiskCommand):
         add_msg = 'Could configure {} in fstab'.format(self.OLD_DIRECTORY)
         add_script = \
             'echo "{} {} nfs defaults,bg,intr,nolock 0 0" >> /etc/fstab'.\
-            format(self.OLD_DIRECTORY, self.newer_export.nfsaas_path)
+            format(self.newer_export.nfsaas_path, self.OLD_DIRECTORY)
 
         return {
             remove_msg: remove_script,
