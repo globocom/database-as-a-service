@@ -122,7 +122,12 @@
               {% else %}
                 The resize process <b class="bold_red">will stop the database</b> and, consequently, it will be <b class="bold_red">unavailable</b> until the the end of the process.
               {% endif %}
-
+              {% if database.infra.has_custom_parameter %}
+                <br><br>
+                <b class="bold_red">
+                  This database has manually edited parameters. It is advisable to revise them before performing the resize.
+                </b>
+              {% endif %}
               <br><br>
               Please type <u><b>yes</b></u> to confirm:
             </label>
