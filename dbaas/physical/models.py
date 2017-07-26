@@ -513,6 +513,10 @@ class DatabaseInfra(BaseModel):
         return self.databases.count()
 
     @property
+    def has_custom_parameter(self):
+        return DatabaseInfraParameter.objects.filter(databaseinfra=self).exists()
+
+    @property
     def available(self):
         """ How many databases still supports this datainfra.
         Returns
