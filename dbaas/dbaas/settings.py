@@ -300,6 +300,7 @@ CACHES = {
              os.getenv('DBAAS_NOTIFICATION_BROKER_PORT', '6379')),
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "PASSWORD": os.getenv('REDIS_PASSWORD')
         }
     }
 }
