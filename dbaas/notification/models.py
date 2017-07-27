@@ -213,4 +213,4 @@ def save_task(sender, instance, **kwargs):
                 params['is_new'] = old_value['is_new']
 
         conn.hmset(key, params)
-        conn.expire(key, 30)
+        conn.expire(key, 1200)
