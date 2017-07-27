@@ -358,7 +358,7 @@ var update_notification = function(data) {
 
 }
 // do_ajax({method: "GET", url: "/notification/{{ user.username }}/user_tasks/"}, update_notification);
-setInterval(do_ajax, 6000, {method: "GET", url: "/notification/{{ user.username }}/user_tasks/"}, update_notification);
+setInterval(do_ajax, 10000, {method: "GET", url: "/notification/{{ user.username }}/user_tasks/"}, update_notification);
 
 
 $("#dropdown-menu-notification").on("click", function () {
