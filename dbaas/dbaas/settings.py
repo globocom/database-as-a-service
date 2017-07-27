@@ -295,12 +295,12 @@ CACHES = {
     },
     "notification": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://{}:{}/1".format(
+        "LOCATION": "redis://{}{}:{}/1".format(
+             REDIS_PASSWORD + '@' if REDIS_PASSWORD else '',
              os.getenv('REDIS_HOST', 'localhost'),
              os.getenv('DBAAS_NOTIFICATION_BROKER_PORT', '6379')),
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
-            "PASSWORD": os.getenv('REDIS_PASSWORD')
         }
     }
 }
