@@ -52,7 +52,8 @@ def get_notifications(username):
         </li>
         <li class="divider"></li>'''
 
-    tasks = UserTasks.get_notifications(username)
+    # tasks = UserTasks.get_notifications(username)
+    tasks = []
     lis_html = ''
     notification_count = 0
     for task in tasks:
