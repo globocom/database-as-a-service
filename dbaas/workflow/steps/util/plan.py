@@ -147,8 +147,14 @@ class ConfigureForResizeLog(Configure):
 
 
 class InitializationMigration(Initialization, BaseInstanceStepMigration):
-    pass
+
+    def get_variables_specifics(self):
+        driver = self.infra.get_driver()
+        return driver.initialization_parameters(self.instance.future_instance)
 
 
 class ConfigureMigration(Configure, BaseInstanceStepMigration):
-    pass
+
+    def get_variables_specifics(self):
+        driver = self.infra.get_driver()
+        return driver.initialization_parameters(self.instance.future_instance)
