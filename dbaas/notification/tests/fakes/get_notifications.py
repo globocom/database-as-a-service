@@ -5,7 +5,7 @@ THREE_TASKS_THREE_NEWS = [
         u'task_name': u'notification.fake.task_1',
         u'task_status': 'SUCCESS',
         u'user': 'admin',
-        u'arguments': 'Database: fake_database_name, New Disk Offering: Micro',
+        u'arguments': 'Database: fake_database_name_1, New Disk Offering: Micro',
         u'updated_at': 1501177162,
         u'is_new': 1
     },

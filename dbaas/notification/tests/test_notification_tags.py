@@ -47,6 +47,36 @@ class NotificationCountTestCase(TestCase):
     def test_css_class(self, mock_get):
         notification = self._render_notification()
 
-        self.assertTrue(notification.cssselect('.notify-label .label-important'))
-        self.assertTrue(notification.cssselect('.notify-label .label-warning'))
-        self.assertTrue(notification.cssselect('.notify-label .label-success'))
+        important_label = notification.cssselect('.notify-label .label-important')
+        self.assertTrue(important_label)
+        self.assertEqual(important_label[0].text_content().strip(), 'ERROR')
+
+        warning_label = notification.cssselect('.notify-label .label-warning')
+        self.assertTrue(warning_label)
+        self.assertEqual(warning_label[0].text_content().strip(), 'RUNNING')
+
+        success_label = notification.cssselect('.notify-label .label-success')
+        self.assertTrue(success_label)
+        self.assertEqual(success_label[0].text_content().strip(), 'SUCCESS')
+
+    @patch('notification.templatetags.notification_tags.UserTasks.get_notifications',
+           return_value=THREE_TASKS_THREE_NEWS)
+    def test_parsed_task_name(self, mock_get):
+        notification = self._render_notification()
+
+        desc_els = notification.cssselect('.notify-task')
+
+        self.assertEqual(desc_els[0].text_content().strip(), 'task name: task_1')
+        self.assertEqual(desc_els[1].text_content().strip(), 'task name: task_2')
+        self.assertEqual(desc_els[2].text_content().strip(), 'task name: task_3')
+
+    @patch('notification.templatetags.notification_tags.UserTasks.get_notifications',
+           return_value=THREE_TASKS_THREE_NEWS)
+    def test_parsed_database_name(self, mock_get):
+        notification = self._render_notification()
+
+        database_els = notification.cssselect('.notify-database')
+
+        self.assertEqual(database_els[0].text_content().strip(), 'database: fake_database_name_1')
+        self.assertEqual(database_els[1].text_content().strip(), 'database: fake_database_name_2')
+        self.assertEqual(database_els[2].text_content().strip(), 'database: fake_database_name_3')
