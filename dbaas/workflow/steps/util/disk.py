@@ -200,13 +200,40 @@ class FilePermissions(NewerDisk, DiskCommand):
         self.user = self.infra.engine_name
         self.group = self.infra.engine_name
 
+    def get_extra_folders_permissions(self):
+        if self.user == "mysql":
+            return '''mkdir {0}/repl &&
+                cp -r {1}/repl {0}/repl &&
+                chown mysql:mysql {0}/repl &&
+                chmod g+r {0}/repl &&
+                chmod g+x {0}/repl &&
+
+                mkdir {0}/logs &&
+                cp -r {1}/logs {0}/logs &&
+                chown mysql:mysql {0}/logs &&
+                chmod g+r {0}/logs &&
+                chmod g+x {0}/logs &&
+
+                mkdir {0}/tmp &&
+                cp -r {1}/tmp {0}/tmp &&
+                chown mysql:mysql {0}/tmp &&
+                chmod g+r {0}/tmp &&
+                chmod g+x {0}/tmp'''.format(
+                self.OLD_DIRECTORY, self.NEW_DIRECTORY
+            )
+
     @property
     def scripts(self):
         script = '''
             chown {1}:{2} {0} &&
+            chown {1}:{2} {0}/data/ &&
             chmod g+r {0} &&
-            chmod g+x {0}
-        '''.format(self.OLD_DIRECTORY, self.user, self.group)
+            chmod g+x {0} '''.format(self.OLD_DIRECTORY, self.user, self.group)
+
+        extra = self.get_extra_folders_permissions()
+        if extra:
+            script = '''{} && {}'''.format(script, extra)
+
         return {
             'Could set permissions': script
         }
@@ -217,10 +244,7 @@ class FilePermissionsMigration(FilePermissions, BaseInstanceStepMigration):
 
 
 class MigrationCreateExport(CreateExport, BaseInstanceStepMigration):
-
-    def do(self):
-        if not self.host_has_mount:
-            super(MigrationCreateExport, self).do()
+    pass
 
 
 class AddDiskPermissionsOldest(Disk):
