@@ -62,9 +62,9 @@ class ChangeEndpoint(DNSStep):
         old_instance.dns = old_instance.address
         old_instance.save()
 
-        self.host.hostname = self.instance.dns
-        self.host.save()
-
         old_host = self.host.future_host
-        old_host.hostname = old_instance.address
+        self.host.hostname = old_host.hostname
+        old_host.hostname = old_host.address
+
         old_host.save()
+        self.host.save()
