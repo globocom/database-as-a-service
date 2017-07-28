@@ -390,12 +390,13 @@ class Redis(BaseDriver):
         return self.parameters_redis(instance.hostname)
 
     def configuration_parameters(self, instance):
+        variables = {}
         master = self.get_master_instance()
-        variables = {
-            'SENTINELMASTER': master.address,
-            'SENTINELMASTERPORT': master.port,
-            'MASTERNAME': instance.databaseinfra.name,
-        }
+        if master:
+            variables['SENTINELMASTER'] = master.address
+            variables['SENTINELMASTERPORT'] = master.port
+            variables['MASTERNAME'] = instance.databaseinfra.name
+
         variables.update(self.parameters_redis(instance.hostname))
         variables.update(self.parameters_sentinel(instance.hostname))
 
