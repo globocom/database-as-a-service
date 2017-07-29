@@ -78,6 +78,7 @@ class UserTasks(View, JSONResponseMixin):
     def get_notifications(username):
         conn = get_redis_connection('notification')
         keys = conn.keys("task_users:{}:*".format(username))
+        # TODO: can be better
         tasks = map(conn.hgetall, keys) if keys else []
         return sorted(tasks, key=lambda d: d['updated_at'], reverse=True)
 

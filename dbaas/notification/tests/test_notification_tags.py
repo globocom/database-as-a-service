@@ -6,7 +6,7 @@ from .fakes.get_notifications import (THREE_TASKS_TWO_NEWS, THREE_TASKS_ZERO_NEW
                                       THREE_TASKS_THREE_NEWS)
 
 
-class NotificationCountTestCase(TestCase):
+class NotificationTagTestCase(TestCase):
     def setUp(self):
         html = '{% load notification_tags %}'
         html += '{% get_notifications user %}'
