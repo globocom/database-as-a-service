@@ -23,8 +23,10 @@ def analyze_databases(self, task_history=None):
     endpoint, healh_check_route, healh_check_string = get_analyzing_credentials()
     user = User.objects.get(username='admin')
     worker_name = get_worker_name()
-    task_history = TaskHistory.register(task_history=task_history, request=self.request, user=user,
-                                        worker_name=worker_name)
+    task_history = TaskHistory.register(
+        task_history=task_history, request=self.request, user=user,
+        worker_name=worker_name
+    )
     task_history.update_details(persist=True, details="Loading Process...")
     AuditRequest.new_request("analyze_databases", user, "localhost")
 
@@ -39,32 +41,57 @@ def analyze_databases(self, task_history=None):
                 for execution_plan in ExecutionPlan.objects.all():
                     if not database_can_be_resized(database, execution_plan):
                         continue
+
                     params = execution_plan.setup_execution_params()
-                    result = analyze_service.run(engine=engine, database=database_name,
-                                                 instances=instances, **params)
-                    if result['status'] == 'success':
-                        task_history.update_details(persist=True, details="\nDatabase {} {} was analised.".format(database, execution_plan.plan_name))
-                        if result['msg'] != instances:
-                            continue
-                        for instance in result['msg']:
-                            insert_analyze_repository_record(today, database_name, instance,
-                                                             engine, databaseinfra_name,
-                                                             environment_name,
-                                                             execution_plan)
-                    else:
-                        raise Exception("Check your service logs..")
-        task_history.update_status_for(TaskHistory.STATUS_SUCCESS,
-                                       details='Analisys ok!')
+                    result = {
+                        'msg': 'Could not analyse {}'.format(database_name)
+                    }
+
+                    try:
+                        result = analyze_service.run(
+                            engine=engine, database=database_name,
+                            instances=instances, **params
+                        )
+                        if result['status'] == 'success':
+                            task_history.update_details(
+                                persist=True,
+                                details="\nDatabase {} {} was analysed.".format(
+                                    database, execution_plan.plan_name
+                                )
+                            )
+
+                            if result['msg'] != instances:
+                                continue
+
+                            for instance in result['msg']:
+                                insert_analyze_repository_record(
+                                    today, database_name, instance, engine,
+                                    databaseinfra_name, environment_name,
+                                    execution_plan
+                                )
+                        else:
+                            raise Exception("Check your service logs..")
+                    except Exception:
+                        task_history.update_details(
+                            persist=True,
+                            details="\nDatabase {} {} could not be analysed.".format(
+                                database, execution_plan.plan_name
+                            )
+                        )
+                        task_history.update_status_for(
+                            TaskHistory.STATUS_ERROR,
+                            details='Analysis finished with errors!'
+                                    '\nError: {}'.format(result['msg'])
+                        )
+
+        task_history.update_status_for(
+            TaskHistory.STATUS_SUCCESS, details='Analysis ok!'
+        )
     except Exception:
-        try:
-            task_history.update_details(persist=True,
-                                        details="\nDatabase {} {} could not be analised.".format(database,
-                                                                                                 execution_plan.plan_name))
-            task_history.update_status_for(TaskHistory.STATUS_ERROR,
-                                           details='Analisys finished with errors!\nError: {}'.format(result['msg']))
-        except UnboundLocalError:
-            task_history.update_details(persist=True, details="\nProccess crashed")
-            task_history.update_status_for(TaskHistory.STATUS_ERROR, details='Analisys could not be started')
+        task_history.update_details(persist=True, details="\nProcess crashed")
+        task_history.update_status_for(
+            TaskHistory.STATUS_ERROR, details='Analysis could not be started'
+        )
     finally:
         AuditRequest.cleanup_request()
 
