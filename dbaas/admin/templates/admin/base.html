@@ -13,77 +13,7 @@
 {% endblock css_commons %}
 <link rel="stylesheet" type="text/css" href="{% static "admin/css/bootstrap.min.css" %}" />
 <link rel="stylesheet" type="text/css" href="{% static "admin/css/bootstrap-responsive.min.css" %}" />
-<style>
-    .notify-img {
-        float: left;
-        display: inline-block;
-        width: 45px;
-        height: 45px;
-        margin: 0px 0px 8px 0px;
-    }
-    .notify-info2 {
-        display: inline-block;
-    }
-    .dropdown-menu .notify-info {
-        height: 80px;
-        display: flex;
-        align-items: center;
-    }
-    .notify-label {
-        flex: 1;
-    }
-    .notify-body {
-        flex: 10;
-        padding-left: 10px;
-    }
-    .notify-body .notify-meta {
-        font-size: 12px;
-        color: #CCC;
-    }
-    .notify-new {
-        display: inline-block;
-        height: 10px;
-        width: 10px;
-        margin-left: 10px;
-    }
-    .notify-new .icon-eye-open {
-        display: none;
-    }
-    .icon-eye-open.visible {
-        display: block;
-    }
-    #dropdown-menu-notification .dropdown-menu {
-        height: 221px;
-        overflow-y: auto;
-    }
-    .notify-description {
-        font-weight: bold;
-    }
-    #dropdown-menu-notification .dropdown-toggle {
-        color: #999;
-        -webkit-transition-delay: -1s;
-  -moz-transition-delay: -1s;
-  -o-transition-delay: -1s;
-  transition-delay: -1s;
-    }
-    .uni {
-        -webkit-transition-duration: 3s;
-  -moz-transition-duration: 3s;
-  -o-transition-duration: 3s;
-  transition-duration: 3s;
-  -webkit-transition-property: color;
-  -moz-transition-property: color;
-  -o-transition-property: color;
-  transition-property: color;
-    }
-    #dropdown-menu-notification .dropdown-toggle.active {
-        color: #FFF;
-    }
-    #dropdown-menu-notification .dropdown-toggle:hover {
-        color: #FFF;
-        text-decoration: none;
-    }
-</style>
+<link rel="stylesheet" type="text/css" href="{% static "admin/css/notification.css" %}" />
 
 {% block extrastyle %}{% endblock %}
 
