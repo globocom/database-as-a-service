@@ -7,7 +7,8 @@ THREE_TASKS_THREE_NEWS = [
         u'user': 'admin',
         u'arguments': 'Database: fake_database_name_1, New Disk Offering: Micro',
         u'updated_at': 1501177162,
-        u'is_new': 1
+        u'is_new': 1,
+        u'read': 0,
     },
     {
         u'task_id': 2,
@@ -16,7 +17,8 @@ THREE_TASKS_THREE_NEWS = [
         u'user': 'admin',
         u'arguments': 'Database: fake_database_name_2, New Disk Offering: Micro',
         u'updated_at': 1501177162,
-        u'is_new': 1
+        u'is_new': 1,
+        u'read': 0,
     },
     {
         u'task_id': 3,
@@ -25,7 +27,8 @@ THREE_TASKS_THREE_NEWS = [
         u'user': 'admin',
         u'arguments': 'Database: fake_database_name_3, New Disk Offering: Micro',
         u'updated_at': 1501177162,
-        u'is_new': 1
+        u'is_new': 1,
+        u'read': 0,
     }
 ]
 
