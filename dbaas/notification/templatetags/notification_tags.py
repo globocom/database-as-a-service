@@ -33,15 +33,15 @@ def get_notifications(username):
     notification_menu_tmpl = '''
         <a class="dropdown-toggle uni" id="dLabel" role="button" data-toggle="dropdown" data-target="#" href="#">
             <i class="icon-bell icon-white"></i>
-            Notifications <span class="badge badge-important notification-cnt">{}</span>
+            Notifications <span class="badge badge-{} notification-cnt">{}</span>
         </a>
         <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel" >
             {}
         </ul>
     '''
     li_tmpl = '''
-        <li data-task-id="{task_id}" data-task-status="{task_status}" data-is-new="{is_new}">
-            <a href="{url}?id={task_id}" class="notify-info">
+        <li class="{li_class}" data-task-id="{task_id}" data-task-status="{task_status}" data-is-new="{is_new}">
+            <a href="{url}?id={task_id}" class="notify-info" id="teste">
                 <span class="notify-label"><span class="label label-{task_status_css_class}">{task_status}</span></span>
                 <span class="notify-body">
                     <div class="notify-task"><span class="notify-description">task name:</span> {parsed_task_name}</div>
@@ -49,14 +49,15 @@ def get_notifications(username):
                 </span>
                 <span class="notify-new"><i class="icon-eye-open"></i></span>
             </a>
-        </li>
-        <li class="divider"></li>'''
+        </li>'''
+        # <li class="divider"></li>'''
 
     tasks = UserTasks.get_notifications(username)
     lis_html = ''
     notification_count = 0
     for task in tasks:
         task.update({
+            'li_class': '' if int(task.get('read')) else 'new',
             'task_status_css_class': get_css_class(task.get('task_status')),
             'parsed_task_name': task['task_name'].split('.')[-1],
             'parsed_arguments': parse_arguments(task['arguments']),
@@ -65,5 +66,10 @@ def get_notifications(username):
         lis_html += li_tmpl.format(**task)
         if int(task['is_new']):
             notification_count += 1
-
-    return mark_safe(notification_menu_tmpl.format(notification_count, lis_html))
+    if not tasks:
+        lis_html = '<li class="no-notification">No tasks found.</li>'
+    return mark_safe(notification_menu_tmpl.format(
+        'info' if notification_count else 'default',
+        notification_count,
+        lis_html)
+    )

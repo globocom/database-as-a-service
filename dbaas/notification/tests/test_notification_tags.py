@@ -1,3 +1,4 @@
+import copy
 from mock import patch
 from lxml import html as lhtml
 from unittest import TestCase
@@ -14,6 +15,15 @@ class NotificationTagTestCase(TestCase):
 
     def _render_notification(self):
         return lhtml.fromstring(self.notification.render(Context({'user': 'admin'})))
+
+    @patch('notification.templatetags.notification_tags.UserTasks.get_notifications',
+           return_value=[])
+    def test_no_notification(self, mock_get):
+        notification = self._render_notification()
+        no_notification_el = notification.cssselect('.no-notification')
+
+        self.assertTrue(no_notification_el)
+        self.assertEqual(no_notification_el[0].text_content().strip(), 'No tasks found.')
 
     @patch('notification.templatetags.notification_tags.UserTasks.get_notifications',
            return_value=THREE_TASKS_ZERO_NEWS)
@@ -80,3 +90,14 @@ class NotificationTagTestCase(TestCase):
         self.assertEqual(database_els[0].text_content().strip(), 'database: fake_database_name_1')
         self.assertEqual(database_els[1].text_content().strip(), 'database: fake_database_name_2')
         self.assertEqual(database_els[2].text_content().strip(), 'database: fake_database_name_3')
+
+    @patch('notification.templatetags.notification_tags.UserTasks.get_notifications')
+    def test_add_class_new_when_not_read(self, mock_get):
+        resp = copy.deepcopy(THREE_TASKS_TWO_NEWS)
+        resp[0]['read'] = 1
+        mock_get.return_value = resp
+        notification = self._render_notification()
+
+        not_read_els = notification.cssselect('li.new')
+
+        self.assertTrue(not_read_els)
