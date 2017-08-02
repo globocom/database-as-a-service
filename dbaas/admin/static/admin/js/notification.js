@@ -170,7 +170,6 @@ Base.DbaasNotification = {};
                   <div class="notify-task"><span class="notify-description">task name:</span> {{ parseTaskName }}</div>
                   <div class="notify-database"><b>database:</b> {{ parseArguments }}</div>
                 </span>
-                <span class="notify-new"><i class="icon-eye-open {{ #isNew }}visible{{ /isNew }}"></i></span>
               </a>
             </li>
         {{ /resp }}
