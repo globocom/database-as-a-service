@@ -47,6 +47,7 @@ Base.DbaasNotification = {};
         url : self.url,
         type: 'POST',
         async: false,
+        cache: false,
         data: JSON.stringify({ids: tasks})
       });
     }
