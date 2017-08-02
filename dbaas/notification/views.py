@@ -76,11 +76,13 @@ class UserTasks(View, JSONResponseMixin):
 
     @staticmethod
     def get_notifications(username):
-        conn = get_redis_connection('notification')
-        keys = conn.keys("task_users:{}:*".format(username))
-        # TODO: can be better
-        tasks = map(conn.hgetall, keys) if keys else []
-        return sorted(tasks, key=lambda d: d['updated_at'], reverse=True)
+        if username:
+            conn = get_redis_connection('notification')
+            keys = conn.keys("task_users:{}:*".format(username))
+            # TODO: can be better
+            tasks = map(conn.hgetall, keys) if keys else []
+            return sorted(tasks, key=lambda d: d['updated_at'], reverse=True)
+        return []
 
     def get(self, *args, **kw):
         username = kw.get('username')
@@ -93,8 +95,15 @@ class UserTasks(View, JSONResponseMixin):
         payload = json.loads(self.request.body)
         for task in payload.get('ids', []):
             key = "task_users:{}:{}".format(username, task['id'])
-            task_status = conn.hget(key, 'task_status')
-            if task_status == task['status']:
-                conn.hset(key, 'is_new', 0)
+            # TODO: Do all logic use fields
+            fields = task.get('fields')
+            if fields:
+                for field in fields:
+                    field_key = field.keys()[0]
+                    conn.hset(key, field_key, field[field_key])
+            else:
+                task_status = conn.hget(key, 'task_status')
+                if task_status == task['status']:
+                    conn.hset(key, 'is_new', 0)
 
         return self.render_to_response('ok')
