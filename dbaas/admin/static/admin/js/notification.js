@@ -51,6 +51,8 @@ Base.DbaasNotification = {};
         data: JSON.stringify({ids: tasks})
       });
     }
+
+    // TODO: remove that method and use $.ajax
     function do_ajax(conf, callback) {
 
       var xmlhttp = new XMLHttpRequest();
@@ -163,7 +165,7 @@ Base.DbaasNotification = {};
       }
 
       var template = `
-      {{ #resp }}
+        {{ #resp }}
           <li class="{{ notReadClass }}" data-task-id="{{ task_id }}" data-task-status="{{ task_status }}" data-is-new="{{ is_new }}">
               <a href="{{ taskUrl }}?id={{ task_id }}" class="notify-info">
                 <span class="notify-label"><span class="label label-{{ statusCssClass }}">{{ task_status }}</span></span>
@@ -173,10 +175,10 @@ Base.DbaasNotification = {};
                 </span>
               </a>
             </li>
-        {{ /resp }}
-        {{ ^resp }}
-          <li class="no-notification">No tasks found.</li>
-        {{ /resp }}
+          {{ /resp }}
+          {{ ^resp }}
+            <li class="no-notification">No tasks found.</li>
+          {{ /resp }}
       `;
       var html = Mustache.render(template, view);
 
@@ -194,6 +196,15 @@ Base.DbaasNotification = {};
       }
   }
 
-  $.extend(Base.DbaasNotification, {init: init, do_ajax: do_ajax, update_notification: update_notification, resetNotification: resetNotification, resetNotificationCnt: resetNotificationCnt});
+  $.extend(
+    Base.DbaasNotification,
+    {
+      init: init,
+      do_ajax: do_ajax,
+      update_notification: update_notification,
+      resetNotification: resetNotification,
+      resetNotificationCnt: resetNotificationCnt
+    }
+  );
 
 })(window, document, django.jQuery);
