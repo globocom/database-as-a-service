@@ -1,6 +1,6 @@
 {% load admin_static admin_urls bootstrap_template_tags %}
 {% load ganalytics %}
-{% load flatpages %}
+{% load flatpages notification_tags %}
 {% get_flatpages as flatpages %}
 
 <!DOCTYPE html>
@@ -13,6 +13,77 @@
 {% endblock css_commons %}
 <link rel="stylesheet" type="text/css" href="{% static "admin/css/bootstrap.min.css" %}" />
 <link rel="stylesheet" type="text/css" href="{% static "admin/css/bootstrap-responsive.min.css" %}" />
+<style>
+    .notify-img {
+        float: left;
+        display: inline-block;
+        width: 45px;
+        height: 45px;
+        margin: 0px 0px 8px 0px;
+    }
+    .notify-info2 {
+        display: inline-block;
+    }
+    .dropdown-menu .notify-info {
+        height: 80px;
+        display: flex;
+        align-items: center;
+    }
+    .notify-label {
+        flex: 1;
+    }
+    .notify-body {
+        flex: 10;
+        padding-left: 10px;
+    }
+    .notify-body .notify-meta {
+        font-size: 12px;
+        color: #CCC;
+    }
+    .notify-new {
+        display: inline-block;
+        height: 10px;
+        width: 10px;
+        margin-left: 10px;
+    }
+    .notify-new .icon-eye-open {
+        display: none;
+    }
+    .icon-eye-open.visible {
+        display: block;
+    }
+    #dropdown-menu-notification .dropdown-menu {
+        height: 221px;
+        overflow-y: auto;
+    }
+    .notify-description {
+        font-weight: bold;
+    }
+    #dropdown-menu-notification .dropdown-toggle {
+        color: #999;
+        -webkit-transition-delay: -1s;
+  -moz-transition-delay: -1s;
+  -o-transition-delay: -1s;
+  transition-delay: -1s;
+    }
+    .uni {
+        -webkit-transition-duration: 3s;
+  -moz-transition-duration: 3s;
+  -o-transition-duration: 3s;
+  transition-duration: 3s;
+  -webkit-transition-property: color;
+  -moz-transition-property: color;
+  -o-transition-property: color;
+  transition-property: color;
+    }
+    #dropdown-menu-notification .dropdown-toggle.active {
+        color: #FFF;
+    }
+    #dropdown-menu-notification .dropdown-toggle:hover {
+        color: #FFF;
+        text-decoration: none;
+    }
+</style>
 
 {% block extrastyle %}{% endblock %}
 
@@ -77,11 +148,14 @@
                             </div>
                         </div>
                     {% endif %}
-                    <p class="welcome-message pull-right hidden-phone">
+                    <!-- <p class="welcome-message pull-right hidden-phone">
                         <i class="icon-user icon-white"></i>
                         {% trans 'Welcome,' %}
                         <strong>{% filter force_escape %}{% firstof user.get_short_name user.get_username %}{% endfilter %}</strong>.
-                    </p>
+                    </p> -->
+                    <div class="dropdown pull-right welcome-message" id="dropdown-menu-notification">
+                        {% get_notifications user.username %}
+                    </div>
                 </div>
             </div>
         {% endif %}
@@ -153,7 +227,145 @@
     <script type="text/javascript" src="{% static "admin/js/bootstrap.min.js" %}"></script>
     <script type="text/javascript" src="{% static "admin/js/commons.js" %}"></script>
 {% endblock js_footer_commons %}
+<script type="text/javascript" src="{% static 'admin/js/mustache2.js' %}"></script>
+<script type="text/javascript" src="{% static 'admin/js/jquery-3.2.1.min.js' %}"></script>
+<script type="text/javascript">
+var template = `
+        <% #resp %>
+        <li data-task-id="<% task_id %>" data-task-status="<% task_status %>" data-is-new="<% is_new %>">
+                <a href="{% url 'admin:notification_taskhistory_changelist' %}?id=<% task_id %>" class="notify-info">
+                    <span class="notify-label"><span class="label label-<% statusCssClass %>"><% task_status %></span></span>
+                    <span class="notify-body">
+                        <div class="notify-task"><span class="notify-description">task name:</span> <% parseTaskName %></div>
+                        <div class="notify-database"><b>database:</b> <% parseArguments %></div>
+                    </span>
+                    <span class="notify-new"><i class="icon-eye-open <% #isNew %>visible<% /isNew %>"></i></span>
+                </a>
+            </li>
+            <li class="divider"></li>
+        <% /resp %>
+`;
 
+Mustache.tags = ["<%", "%>"];
+
+function do_ajax(conf, callback) {
+    var xmlhttp = new XMLHttpRequest();
+
+    xmlhttp.onreadystatechange = function() {
+        if (xmlhttp.readyState == XMLHttpRequest.DONE ) {
+           if (xmlhttp.status == 200) {
+               if (callback) callback(xmlhttp.responseText);
+
+           }
+           else if (xmlhttp.status == 400) {
+              console.log('There was an error 400');
+           }
+           else {
+               console.log('something else other than 200 was returned');
+           }
+        }
+    };
+
+    xmlhttp.open(conf.method, conf.url, true);
+    xmlhttp.send(conf.payload);
+}
+
+var resetNotificationCnt = function() {
+    var $notificationContainer = $("#dropdown-menu-notification");
+    $notificationContainer.find(".notification-cnt").text("0");
+    // $notificationContainer.find(".notify-clear").hide();
+};
+
+var resetNotification = function(el) {
+    el = el || $("#dropdown-menu-notification");
+    var lis = $(el).find("ul li[data-task-id]").toArray(),
+        ids = [],
+        li,
+        liData;
+
+    for (var pos in lis) {
+        li = lis[pos];
+        liData = $(li).data();
+        if (liData.isNew) ids.push({id: liData.taskId, status: liData.taskStatus});
+    }
+
+    if (ids.length) {
+        do_ajax({method: "POST",
+                 url: "/notification/{{ user.username }}/user_tasks/",
+                 payload: JSON.stringify({ids: ids})},
+                resetNotificationCnt
+        );
+    }
+};
+
+var mouseLeaveNotification = function() {
+    $("#dropdown-menu-notification .dropdown-toggle").eq(0).removeClass('active');
+}
+
+var update_notification = function(data) {
+   var json = JSON.parse(data);
+
+   var view = {
+        resp: json,
+        isNew: function() {
+            return parseInt(this.is_new) ? 1 : undefined;
+        },
+        notificationQuantity: function() {
+            var obj,
+                cont = 0;
+            for (var pos in this.resp) {
+                obj = this.resp[pos];
+                if (parseInt(obj.is_new)) cont++;
+            }
+
+            return cont;
+        },
+        parseArguments: function() {
+            var regex = /database( name)?: ([\w-_]+),/i;
+            var parsedArguments = this.arguments.match(regex);
+                if (parsedArguments) {
+                    return parsedArguments[2];
+                }
+            return "not found";
+        },
+        parseTaskName: function() {
+            var splitedTaskName = this.task_name.split(".");
+            return splitedTaskName[splitedTaskName.length - 1];
+        },
+        statusCssClass: function() {
+            // Pegar isso da view ou de outro lugar
+            var taskStatus = this.task_status;
+            if (taskStatus === "RUNNING") return "warning";
+            if (taskStatus === "WAITING") return "inverse";
+            if (taskStatus === "ERROR") return "important";
+            if (taskStatus) return taskStatus.toLowerCase();
+        }
+   }
+
+   var html = Mustache.render(template, view);
+
+   $("#dropdown-menu-notification .dropdown-menu").html(html);
+   var notificationQuantity = view.notificationQuantity(),
+       $notificationCount = $("#dropdown-menu-notification .notification-cnt");
+   if ($("#dropdown-menu-notification.open").length === 0 && notificationQuantity != parseInt($notificationCount.text())) {
+        $notificationCount.text(view.notificationQuantity());
+        $("#dropdown-menu-notification .dropdown-toggle").eq(0).addClass('active');
+        setTimeout(mouseLeaveNotification, 400, 'active');
+   }
+//   else {
+//        resetNotification();
+//   }
+
+}
+// do_ajax({method: "GET", url: "/notification/{{ user.username }}/user_tasks/"}, update_notification);
+setInterval(do_ajax, 10000, {method: "GET", url: "/notification/{{ user.username }}/user_tasks/"}, update_notification);
+
+
+$("#dropdown-menu-notification").on("click", function () {
+    resetNotification(this);
+});
+
+</script>
 {% block js_footer %}{% endblock js_footer %}
 <!-- JAVASCRIPTS -->
 {% if not request.is_ajax %}
