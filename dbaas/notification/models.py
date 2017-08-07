@@ -5,7 +5,10 @@ import time
 from datetime import datetime
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
-from django.utils import simplejson
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+import json
+from django_redis import get_redis_connection
 
 from util.models import BaseModel
 
@@ -58,7 +61,7 @@ class TaskHistory(BaseModel):
     def load_context_data(self):
         if self.context == '':
             self.context = '{}'
-        self.context_data = simplejson.loads(self.context)
+        self.context_data = json.loads(self.context)
         return self.context_data
 
     def update_details(self, details, persist=False):
@@ -182,3 +185,32 @@ class TaskHistory(BaseModel):
         self.update_status_for(status, details)
         if database_unpin:
             database_unpin.unpin_task()
+
+
+###########
+# SIGNALS #
+###########
+
+
+@receiver(post_save, sender=TaskHistory)
+def save_task(sender, instance, **kwargs):
+    user = instance.user
+    if user:
+        conn = get_redis_connection("notification")
+        username = user if isinstance(user, basestring) else user.username
+        key = "task_users:{}:{}".format(username, instance.id)
+        params = {
+            'task_id': instance.id,
+            'task_name': instance.task_name.split('.')[-1],
+            'task_status': instance.task_status,
+            'user': username, 'arguments': instance.arguments,
+            'updated_at': int(time.mktime(instance.updated_at.timetuple())),
+            'is_new': 1
+        }
+
+        old_value = conn.hgetall(key)
+        if old_value and params.get('task_status') == old_value.get('task_status'):
+                params['is_new'] = old_value['is_new']
+
+        conn.hmset(key, params)
+        conn.expire(key, 1200)
