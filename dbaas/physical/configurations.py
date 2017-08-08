@@ -551,3 +551,14 @@ class ConfigurationMongoDB(ConfigurationBase):
         parameter_name = inspect.stack()[0][3]
         default = 0
         return self.get_parameter(parameter_name, default)
+
+    @property
+    def wiredTiger_engineConfig_cacheSizeGB(self):
+        parameter_name = inspect.stack()[0][3]
+        if self.memory_size_in_mb < 2564:
+            cache_mb = 256
+        else:
+            cache_mb =  (self.memory_size_in_mb / 2) - 1024
+        default = round(cache_mb / 1024.0, 2)
+        return self.get_parameter(parameter_name, default)
+
