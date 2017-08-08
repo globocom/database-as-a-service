@@ -69,7 +69,7 @@ class ChangeEndpoint(DNSStep):
         old_host.save()
         self.host.save()
 
-        if old_host.address in self.infra.endpoint:
+        if self.infra.endpoint and old_host.address in self.infra.endpoint:
             self.infra.endpoint = self.infra.endpoint.replace(
                 old_host.address, self.host.address
             )
