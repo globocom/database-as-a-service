@@ -313,6 +313,9 @@ class BaseDriver(object):
     def configuration_parameters_for_log_resize(self, instance):
         return {}
 
+    def configuration_parameters_migration(self, instance):
+        return self.configuration_parameters(instance)
+
 
 class DatabaseStatus(object):
 
