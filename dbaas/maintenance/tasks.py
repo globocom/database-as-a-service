@@ -135,11 +135,15 @@ def region_migration_start(self, infra, instances, since_step=None):
             'workflow.steps.util.database.Stop',
             'workflow.steps.util.database.CheckIsDown',
         )}] + [{
-        'Creating new infra': (
+        'Creating new virtual machine': (
             'workflow.steps.util.vm.MigrationCreateNewVM',
+        )}] + [{
+        'Creating new infra': (
             'workflow.steps.util.vm.MigrationWaitingBeReady',
             'workflow.steps.util.infra.MigrationCreateInstance',
             'workflow.steps.util.disk.MigrationCreateExport',
+        )}] + [{
+        'Configuring new infra': (
             'workflow.steps.util.plan.InitializationMigration',
             'workflow.steps.util.plan.ConfigureMigration',
         )}] + [{
