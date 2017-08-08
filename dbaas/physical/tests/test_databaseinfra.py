@@ -223,3 +223,26 @@ class DatabaseInfraTestCase(TestCase):
             EDITING_CLOUDSTACK_READ_ONLY_FIELDS, admin_read_only
         )
         self.assertEqual(tuple(), admin_read_only)
+
+    def test_hosts(self):
+        plan = factory.PlanFactory()
+        environment = plan.environments.all()[0]
+        datainfra = factory.DatabaseInfraFactory(
+            plan=plan, environment=environment, capacity=1
+        )
+        instance = factory.InstanceFactory(
+            address="127.0.0.1", port=27017, databaseinfra=datainfra
+        )
+        host_1 = instance.hostname
+        instance = factory.InstanceFactory(
+            address="127.0.0.2", port=27017, databaseinfra=datainfra
+        )
+        host_2 = instance.hostname
+        factory.InstanceFactory(
+            address="127.0.0.3", port=27017, databaseinfra=datainfra,
+            hostname=host_2
+        )
+
+        self.assertIn(host_1, datainfra.hosts)
+        self.assertIn(host_2, datainfra.hosts)
+        self.assertEqual(len(datainfra.hosts), 2)

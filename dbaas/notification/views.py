@@ -1,7 +1,33 @@
 # -*- coding: utf-8 -*-
+import json
 from json import dumps
 from django.http import HttpResponse
+from django.views.generic import View
+from django.views.decorators.csrf import csrf_exempt
 from models import TaskHistory
+from django_redis import get_redis_connection
+
+
+class JSONResponseMixin(object):
+    '''
+    A mixin that can be used to render a JSON response
+    '''
+    response_class = HttpResponse
+
+    def render_to_response(self, context, **response_kwargs):
+        '''
+        Returns a JSON response, transforming 'context' to make the payload
+        '''
+        response_kwargs['content_type'] = 'application/json'
+        return self.response_class(
+            self.convert_context_to_json(context),
+            **response_kwargs
+        )
+
+    def convert_context_to_json(self, context):
+        'Convert the context dictionary into a JSON object'
+        # Note: You may garantee that all context are json serializable
+        return json.dumps(context)
 
 
 def running_tasks_api(self):
@@ -40,3 +66,34 @@ def database_tasks(self, database_id):
         }
 
     return HttpResponse(dumps(response), content_type="application/json")
+
+
+class UserTasks(View, JSONResponseMixin):
+
+    @csrf_exempt
+    def dispatch(self, request, *args, **kwargs):
+        return super(UserTasks, self).dispatch(request, *args, **kwargs)
+
+    @staticmethod
+    def get_notifications(username):
+        conn = get_redis_connection('notification')
+        keys = conn.keys("task_users:{}:*".format(username))
+        tasks = map(conn.hgetall, keys) if keys else []
+        return sorted(tasks, key=lambda d: d['updated_at'], reverse=True)
+
+    def get(self, *args, **kw):
+        username = kw.get('username')
+        context = self.get_notifications(username)
+        return self.render_to_response(context)
+
+    def post(self, *args, **kw):
+        username = kw.get('username')
+        conn = get_redis_connection('notification')
+        payload = json.loads(self.request.body)
+        for task in payload.get('ids', []):
+            key = "task_users:{}:{}".format(username, task['id'])
+            task_status = conn.hget(key, 'task_status')
+            if task_status == task['status']:
+                conn.hset(key, 'is_new', 0)
+
+        return self.render_to_response('ok')

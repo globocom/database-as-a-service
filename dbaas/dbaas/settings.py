@@ -292,6 +292,16 @@ CACHES = {
         'BACKEND': os.getenv('DBAAS_CACHE_BACKEND', 'django.core.cache.backends.locmem.LocMemCache'),
         'LOCATION': os.getenv('DBAAS_CACHE_LOCATION', 'unique'),
         'TIMEOUT': int(os.getenv('DBAAS_CACHE_TIMEOUT', '60')),
+    },
+    "notification": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://{}{}:{}/1".format(
+            ':' + REDIS_PASSWORD + '@' if REDIS_PASSWORD else '',
+            REDIS_HOST,
+            os.getenv('DBAAS_NOTIFICATION_BROKER_PORT', '6379')),
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
     }
 }
 
