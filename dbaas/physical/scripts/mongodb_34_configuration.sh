@@ -30,6 +30,10 @@ storage:
     # Storage Engine
     engine: wiredTiger
 
+    wiredTiger:
+        engineConfig:
+            cacheSizeGB: {{ configuration.wiredTiger_engineConfig_cacheSizeGB.value }}
+
     # small files
     mmapv1:
     {% if DISK_SIZE_IN_GB < 5.0 %}
