@@ -263,6 +263,3 @@ describe("DbaasNotification test case", function() {
     });
   });
 });
-
-
-
