@@ -672,6 +672,13 @@ class DatabaseInfra(BaseModel):
         else:
             return dbinfraparameter.value
 
+    @property
+    def hosts(self):
+        hosts = set()
+        for instance in self.instances.all():
+            hosts.add(instance.hostname)
+        return hosts
+
 
 class Host(BaseModel):
     hostname = models.CharField(
