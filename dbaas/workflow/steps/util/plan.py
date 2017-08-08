@@ -3,7 +3,7 @@ from util import build_context_script, exec_remote_command, get_credentials_for
 from dbaas_cloudstack.models import HostAttr, PlanAttr
 from dbaas_credentials.models import CredentialType
 from dbaas_nfsaas.models import HostAttr as HostAttrNfsaas
-from workflow.steps.util.base import BaseInstanceStep
+from base import BaseInstanceStep, BaseInstanceStepMigration
 from physical.configurations import configuration_factory
 import logging
 
@@ -15,7 +15,6 @@ class PlanStep(BaseInstanceStep):
     def __init__(self, instance):
         super(PlanStep, self).__init__(instance)
 
-        self.host = self.instance.hostname
         self.host_cs = HostAttr.objects.get(host=self.host)
 
         try:
@@ -25,17 +24,6 @@ class PlanStep(BaseInstanceStep):
         except HostAttrNfsaas.DoesNotExist:
             self.host_nfs = None
 
-        self.infra = self.instance.databaseinfra
-        self.database = self.infra.databases.first()
-        self.engine = self.infra.engine
-        self.environment = self.infra.environment
-        self.disk_offering = self.infra.disk_offering
-
-        self.plan = self.infra.plan
-        self.cs_plan = PlanAttr.objects.get(plan=self.plan)
-
-    def get_equivalent_plan(self):
-        self.plan = self.infra.plan.engine_equivalent_plan
         self.cs_plan = PlanAttr.objects.get(plan=self.plan)
 
     @property
@@ -109,10 +97,22 @@ class PlanStep(BaseInstanceStep):
             )
 
 
+class PlanStepUpgrade(PlanStep):
+
+    @property
+    def plan(self):
+        plan = super(PlanStepUpgrade, self).plan
+        return plan.engine_equivalent_plan
+
+
 class Initialization(PlanStep):
 
     def __unicode__(self):
         return "Executing plan initial script..."
+
+    def get_variables_specifics(self):
+        driver = self.infra.get_driver()
+        return driver.initialization_parameters(self.instance)
 
     def do(self):
         self.run_script(self.plan.script.initialization_template)
@@ -123,124 +123,38 @@ class Configure(PlanStep):
     def __unicode__(self):
         return "Executing plan configure script..."
 
+    def get_variables_specifics(self):
+        driver = self.infra.get_driver()
+        return driver.configuration_parameters(self.instance)
+
     def do(self):
         self.run_script(self.plan.script.configuration_template)
 
 
-class InitializationForUpgrade(Initialization):
-    def __init__(self, instance):
-        super(InitializationForUpgrade, self).__init__(instance)
-        self.get_equivalent_plan()
+class InitializationForUpgrade(Initialization, PlanStepUpgrade):
+    pass
 
 
-class ConfigureForUpgrade(Configure):
-    def __init__(self, instance):
-        super(ConfigureForUpgrade, self).__init__(instance)
-        self.get_equivalent_plan()
+class ConfigureForUpgrade(Configure, PlanStepUpgrade):
+    pass
 
 
-class InitializationMongoHA(Initialization):
+class ConfigureForResizeLog(Configure):
 
     def get_variables_specifics(self):
-        database_rule = 'SECONDARY'
-        if self.instance.instance_type == self.instance.MONGODB_ARBITER:
-            database_rule = 'ARBITER'
-
-        return {
-            'DATABASERULE': database_rule
-        }
+        driver = self.infra.get_driver()
+        return driver.configuration_parameters_for_log_resize(self.instance)
 
 
-class ConfigureMongoHA(Configure):
+class InitializationMigration(Initialization, BaseInstanceStepMigration):
 
     def get_variables_specifics(self):
-        return {
-            'REPLICASETNAME': self.infra.get_driver().get_replica_name(),
-            'MONGODBKEY': self.infra.database_key
-        }
+        driver = self.infra.get_driver()
+        return driver.initialization_parameters(self.instance.future_instance)
 
 
-class ConfigureMongoForResizeLog(Configure):
+class ConfigureMigration(Configure, BaseInstanceStepMigration):
 
     def get_variables_specifics(self):
-        return {
-            'IS_HA': False,
-            'PORT': 27018
-        }
-
-
-class InitializationMongoHAForUpgrade(InitializationMongoHA):
-    def __init__(self, instance):
-        super(InitializationMongoHAForUpgrade, self).__init__(instance)
-        self.get_equivalent_plan()
-
-
-class ConfigureMongoHAForUpgrade(ConfigureMongoHA):
-    def __init__(self, instance):
-        super(ConfigureMongoHAForUpgrade, self).__init__(instance)
-        self.get_equivalent_plan()
-
-
-def redis_instance_parameter(host):
-    redis = host.database_instance()
-    redis_address = ''
-    redis_port = ''
-    only_sentinel = True
-    if redis:
-        redis_address = redis.address
-        redis_port = redis.port
-        only_sentinel = False
-
-    return {
-        'HOSTADDRESS': redis_address,
-        'PORT': redis_port,
-        'ONLY_SENTINEL': only_sentinel,
-    }
-
-
-def sentinel_instance_parameter(host):
-    sentinel = host.non_database_instance()
-    sentinel_address = ''
-    sentinel_port = ''
-    if sentinel:
-        sentinel_address = sentinel.address
-        sentinel_port = sentinel.port
-
-    return {
-        'SENTINELADDRESS': sentinel_address,
-        'SENTINELPORT': sentinel_port,
-    }
-
-
-class InitializationRedis(Initialization):
-
-    def get_variables_specifics(self):
-        return redis_instance_parameter(self.host)
-
-
-class ConfigureRedis(Configure):
-
-    def get_variables_specifics(self):
-        master = self.infra.get_driver().get_master_instance()
-
-        variables = {
-            'SENTINELMASTER': master.address,
-            'SENTINELMASTERPORT': master.port,
-            'MASTERNAME': self.infra.name,
-        }
-        variables.update(redis_instance_parameter(self.host))
-        variables.update(sentinel_instance_parameter(self.host))
-
-        return variables
-
-
-class InitializationRedisForUpgrade(InitializationRedis):
-    def __init__(self, instance):
-        super(InitializationRedisForUpgrade, self).__init__(instance)
-        self.get_equivalent_plan()
-
-
-class ConfigureRedisForUpgrade(ConfigureRedis):
-    def __init__(self, instance):
-        super(ConfigureRedisForUpgrade, self).__init__(instance)
-        self.get_equivalent_plan()
+        driver = self.infra.get_driver()
+        return driver.initialization_parameters(self.instance.future_instance)

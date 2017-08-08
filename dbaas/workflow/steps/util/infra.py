@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
 from dbaas_cloudstack.models import DatabaseInfraOffering
-from workflow.steps.util.base import BaseInstanceStep
+from physical.models import Instance
+from base import BaseInstanceStep, BaseInstanceStepMigration
 
 
 class Update(BaseInstanceStep):
     def __init__(self, instance):
         super(Update, self).__init__(instance)
 
-        self.infra = self.instance.databaseinfra
-        self.database = self.infra.databases.last()
         self.infra_offering = DatabaseInfraOffering.objects.get(
             databaseinfra=self.infra
         )
@@ -49,3 +48,46 @@ class Memory(Update):
 
     def undo(self):
         pass
+
+
+class MigrationCreateInstance(BaseInstanceStepMigration):
+
+    def __unicode__(self):
+        return "Creating new infra instance..."
+
+    def do(self):
+        if self.instance.future_instance:
+            return
+
+        for instance in self.instance.hostname.instances.all():
+            new_instance = Instance.objects.get(id=instance.id)
+            new_instance.id = None
+            new_instance.address = self.host.address
+            new_instance.hostname = self.host
+            new_instance.save()
+
+            if self.instance == instance:
+                self.instance.future_instance = new_instance
+                self.instance.save()
+
+
+class UpdateMigrateEnvironment(BaseInstanceStepMigration):
+
+    def __unicode__(self):
+        return "Updating environment..."
+
+    def do(self):
+        if self.environment:
+            self.infra.environment = self.environment
+            self.infra.save()
+
+
+class UpdateMigratePlan(BaseInstanceStepMigration):
+
+    def __unicode__(self):
+        return "Updating plan..."
+
+    def do(self):
+        if self.plan:
+            self.infra.plan = self.plan
+            self.infra.save()

@@ -49,11 +49,11 @@ class PlanAttrInlineFormset(forms.models.BaseInlineFormSet):
         if not self.is_valid():
             return
 
-        bundles = self.cleaned_data[0].get('bundle')
+        bundles = self.cleaned_data[0].get('bundle_group')
         if not bundles:
             raise forms.ValidationError("Please select the bundle's")
 
-        bundles_actives = bundles.filter(is_active=True).count()
+        bundles_actives = bundles.bundles.filter(is_active=True).count()
 
         for environment in self.instance.environments.all():
             if bundles_actives < environment.min_of_zones:

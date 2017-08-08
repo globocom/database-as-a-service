@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
+import logging
+from django.core.exceptions import ObjectDoesNotExist
 from django.utils.encoding import python_2_unicode_compatible
+
+LOG = logging.getLogger(__name__)
 
 
 @python_2_unicode_compatible
@@ -25,8 +29,61 @@ class BaseInstanceStep(object):
     def __init__(self, instance):
         self.instance = instance
 
+    @property
+    def infra(self):
+        return self.instance.databaseinfra
+
+    @property
+    def database(self):
+        return self.infra.databases.first()
+
+    @property
+    def plan(self):
+        return self.infra.plan
+
+    @property
+    def engine(self):
+        return self.infra.engine
+
+    @property
+    def disk_offering(self):
+        return self.infra.disk_offering
+
+    @property
+    def host(self):
+        try:
+            return self.instance.hostname
+        except ObjectDoesNotExist:
+            LOG.info(
+                'Instance {} does not have hostname'.format(self.instance))
+            return
+
+    @property
+    def environment(self):
+        return self.instance.databaseinfra.environment
+
     def do(self):
         raise NotImplementedError
 
     def undo(self):
         raise NotImplementedError
+
+
+class BaseInstanceStepMigration(BaseInstanceStep):
+
+    @property
+    def host(self):
+        host = super(BaseInstanceStepMigration, self).host
+        if not host:
+            return
+        return host.future_host
+
+    @property
+    def environment(self):
+        environment = super(BaseInstanceStepMigration, self).environment
+        return environment.migrate_environment
+
+    @property
+    def plan(self):
+        plan = super(BaseInstanceStepMigration, self).plan
+        return plan.migrate_plan

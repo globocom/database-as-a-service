@@ -59,8 +59,8 @@ class MongoDBReplicaset(BaseMongoDB):
     def get_upgrade_steps_extra(self):
         return (
             'workflow.steps.mongodb.upgrade.vm.ChangeBinaryTo32',
-            'workflow.steps.util.plan.InitializationMongoHAForUpgrade',
-            'workflow.steps.util.plan.ConfigureMongoHAForUpgrade',
+            'workflow.steps.util.plan.InitializationForUpgrade',
+            'workflow.steps.util.plan.ConfigureForUpgrade',
             'workflow.steps.util.pack.Configure',
         )
 
@@ -82,8 +82,8 @@ class MongoDBReplicaset(BaseMongoDB):
 
     def get_add_database_instances_middle_steps(self):
         return (
-            'workflow.steps.util.plan.InitializationMongoHA',
-            'workflow.steps.util.plan.ConfigureMongoHA',
+            'workflow.steps.util.plan.Initialization',
+            'workflow.steps.util.plan.Configure',
             'workflow.steps.util.pack.Configure',
             'workflow.steps.mongodb.horizontal_elasticity.database.CreateDataDir',
             'workflow.steps.util.database.Start',
@@ -100,13 +100,13 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.util.database.CheckIfSwitchMaster',
                 'workflow.steps.util.database.Stop',
                 'workflow.steps.util.database.CheckIsDown',
-                'workflow.steps.util.plan.ConfigureMongoForResizeLog',
+                'workflow.steps.util.plan.ConfigureForResizeLog',
                 'workflow.steps.util.database.StartForResizeLog',
                 'workflow.steps.util.database.CheckIsUpForResizeLog',
                 'workflow.steps.util.database.ResizeOpLogSize',
                 'workflow.steps.util.database.Stop',
                 'workflow.steps.util.database.CheckIsDown',
-                'workflow.steps.util.plan.ConfigureMongoHA',
+                'workflow.steps.util.plan.Configure',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
                 'workflow.steps.util.db_monitor.EnableMonitoring',
@@ -118,4 +118,4 @@ class MongoDBReplicaset(BaseMongoDB):
         return self.get_resize_oplog_steps(), 0
 
     def get_change_parameter_config_steps(self):
-        return ('workflow.steps.util.plan.ConfigureMongoHA', )
+        return ('workflow.steps.util.plan.Configure', )

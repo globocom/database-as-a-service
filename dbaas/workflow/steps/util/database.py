@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 from time import sleep
 from dbaas_cloudstack.models import HostAttr
-from workflow.steps.util.restore_snapshot import use_database_initialization_script
+from workflow.steps.util.restore_snapshot import \
+    use_database_initialization_script
 from util import build_context_script, exec_remote_command
 from util import exec_remote_command_host
 from workflow.steps.mongodb.util import build_change_oplogsize_script
@@ -19,9 +20,7 @@ class DatabaseStep(BaseInstanceStep):
     def __init__(self, instance):
         super(DatabaseStep, self).__init__(instance)
 
-        self.infra = self.instance.databaseinfra
         self.driver = self.infra.get_driver()
-        self.host = self.instance.hostname
         self.host_cs = HostAttr.objects.get(host=self.host)
 
     def do(self):
@@ -32,7 +31,7 @@ class DatabaseStep(BaseInstanceStep):
 
     def _execute_init_script(self, command):
         return use_database_initialization_script(
-            self.infra, self.instance.hostname, command
+            self.infra, self.host, command
         )
 
     def start_database(self):
@@ -211,13 +210,11 @@ class DatabaseChangedParameters(DatabaseStep):
         super(DatabaseChangedParameters, self).__init__(instance)
         from physical.models import DatabaseInfraParameter
 
-        self.reseted_parameters = DatabaseInfraParameter.get_databaseinfra_reseted_parameters(
-            databaseinfra=self.finfra,
-        )
+        self.reseted_parameters = DatabaseInfraParameter\
+            .get_databaseinfra_reseted_parameters(databaseinfra=self.finfra)
 
-        self.changed_parameters = DatabaseInfraParameter.get_databaseinfra_changed_parameters(
-            databaseinfra=self.finfra,
-        )
+        self.changed_parameters = DatabaseInfraParameter\
+            .get_databaseinfra_changed_parameters(databaseinfra=self.finfra)
 
 
 class ChangeDynamicParameters(DatabaseStep):
@@ -227,9 +224,9 @@ class ChangeDynamicParameters(DatabaseStep):
 
     def do(self):
         from physical.models import DatabaseInfraParameter
-        changed_parameters = DatabaseInfraParameter.get_databaseinfra_changed_parameters(
-            self.infra
-        )
+
+        changed_parameters = DatabaseInfraParameter\
+            .get_databaseinfra_changed_parameters(self.infra)
         for changed_parameter in changed_parameters:
             self.driver.set_configuration(
                 instance=self.instance,
@@ -246,15 +243,13 @@ class SetParameterStatus(DatabaseStep):
     def do(self):
         from physical.models import DatabaseInfraParameter
 
-        reseted_parameters = DatabaseInfraParameter.get_databaseinfra_reseted_parameters(
-            self.infra
-        )
+        reseted_parameters = DatabaseInfraParameter\
+            .get_databaseinfra_reseted_parameters(self.infra)
         for reseted_parameter in reseted_parameters:
             reseted_parameter.delete()
 
-        changed_parameters = DatabaseInfraParameter.get_databaseinfra_changed_not_reseted_parameters(
-            self.infra
-        )
+        changed_parameters = DatabaseInfraParameter\
+            .get_databaseinfra_changed_not_reseted_parameters(self.infra)
         for changed_parameter in changed_parameters:
             changed_parameter.applied_on_database = True
             changed_parameter.current_value = changed_parameter.value

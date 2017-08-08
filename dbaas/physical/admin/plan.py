@@ -57,8 +57,8 @@ class PlanAdmin(services_admin.DjangoServicesAdmin):
     filter_horizontal = ("environments",)
     inlines = [
         PlanAttributeInline,
-        PlanAttrInline,
         PlanAttrDNSAPIInline,
+        PlanAttrInline,
     ]
 
     add_form_template = "admin/physical/plan/add_form.html"
@@ -75,7 +75,6 @@ class PlanAdmin(services_admin.DjangoServicesAdmin):
 
     def add_view(self, request, form_url='', extra_context=None):
         extra_context = self.add_extra_context(extra_context)
-
         return super(PlanAdmin, self).add_view(
             request=request, form_url=form_url, extra_context=extra_context
         )

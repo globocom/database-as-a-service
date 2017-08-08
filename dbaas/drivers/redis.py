@@ -385,3 +385,48 @@ class Redis(BaseDriver):
 
     def get_database_process_name(self):
         return "redis-server"
+
+    def initialization_parameters(self, instance):
+        return self.parameters_redis(instance.hostname)
+
+    def configuration_parameters(self, instance):
+        variables = {}
+        master = self.get_master_instance()
+        if master:
+            variables['SENTINELMASTER'] = master.address
+            variables['SENTINELMASTERPORT'] = master.port
+            variables['MASTERNAME'] = instance.databaseinfra.name
+
+        variables.update(self.parameters_redis(instance.hostname))
+        variables.update(self.parameters_sentinel(instance.hostname))
+
+        return variables
+
+    def parameters_redis(self, host):
+        redis = host.database_instance()
+        redis_address = ''
+        redis_port = ''
+        only_sentinel = True
+        if redis:
+            redis_address = redis.address
+            redis_port = redis.port
+            only_sentinel = False
+
+        return {
+            'HOSTADDRESS': redis_address,
+            'PORT': redis_port,
+            'ONLY_SENTINEL': only_sentinel,
+        }
+
+    def parameters_sentinel(self, host):
+        sentinel = host.non_database_instance()
+        sentinel_address = ''
+        sentinel_port = ''
+        if sentinel:
+            sentinel_address = sentinel.address
+            sentinel_port = sentinel.port
+
+        return {
+            'SENTINELADDRESS': sentinel_address,
+            'SENTINELPORT': sentinel_port,
+        }

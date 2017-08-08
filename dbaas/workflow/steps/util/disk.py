@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 import logging
 from util import exec_remote_command_host
-from base import BaseInstanceStep
-from nfsaas_utils import create_disk
-from nfsaas_utils import delete_disk
+from base import BaseInstanceStep, BaseInstanceStepMigration
+from nfsaas_utils import create_disk, delete_disk, create_access
 
 LOG = logging.getLogger(__name__)
 
@@ -12,12 +11,9 @@ class Disk(BaseInstanceStep):
     OLD_DIRECTORY = '/data'
     NEW_DIRECTORY = '/new_data'
 
-    def __init__(self, instance):
-        super(Disk, self).__init__(instance)
-
-        self.databaseinfra = self.instance.databaseinfra
-        self.environment = self.databaseinfra.environment
-        self.host = self.instance.hostname
+    @property
+    def host_has_mount(self):
+        return bool(self.instance.hostname.nfsaas_host_attributes.first())
 
 
 class CreateExport(Disk):
@@ -30,7 +26,7 @@ class CreateExport(Disk):
         create_disk(
             environment=self.environment,
             host=self.host,
-            size_kb=self.databaseinfra.disk_offering.size_kb
+            size_kb=self.infra.disk_offering.size_kb
         )
 
     def undo(self):
@@ -55,6 +51,9 @@ class DiskCommand(Disk):
         raise NotImplementedError
 
     def do(self):
+        if not self.host_has_mount:
+            return
+
         for message, script in self.scripts.items():
             output = {}
             return_code = exec_remote_command_host(self.host, script, output)
@@ -144,6 +143,12 @@ class UnmountNewerExport(DiskUmountCommand):
         return self.NEW_DIRECTORY
 
 
+class UnmountNewerExportMigration(
+    UnmountNewerExport, BaseInstanceStepMigration
+):
+    pass
+
+
 class MountingNewerExport(MountNewerExport):
 
     @property
@@ -176,9 +181,8 @@ class ConfigureFstab(NewerDisk, DiskCommand):
 
         add_msg = 'Could configure {} in fstab'.format(self.OLD_DIRECTORY)
         add_script = \
-            'echo "{} {} nfs defaults,bg,intr,nolock 0 0" >> /etc/fstab'.format(
-                self.OLD_DIRECTORY, self.newer_export.nfsaas_path,
-            )
+            'echo "{} {} nfs defaults,bg,intr,nolock 0 0" >> /etc/fstab'.\
+            format(self.newer_export.nfsaas_path, self.OLD_DIRECTORY)
 
         return {
             remove_msg: remove_script,
@@ -193,16 +197,110 @@ class FilePermissions(NewerDisk, DiskCommand):
 
     def __init__(self, instance):
         super(FilePermissions, self).__init__(instance)
-        self.user = self.databaseinfra.engine_name
-        self.group = self.databaseinfra.engine_name
+        self.user = self.infra.engine_name
+        self.group = self.infra.engine_name
+
+    def get_extra_folders_permissions(self):
+        if self.user == "mysql":
+            return '''mkdir {0}/repl &&
+                cp -r {1}/repl {0}/repl &&
+                chown mysql:mysql {0}/repl &&
+                chmod g+r {0}/repl &&
+                chmod g+x {0}/repl &&
+
+                mkdir {0}/logs &&
+                cp -r {1}/logs {0}/logs &&
+                chown mysql:mysql {0}/logs &&
+                chmod g+r {0}/logs &&
+                chmod g+x {0}/logs &&
+
+                mkdir {0}/tmp &&
+                cp -r {1}/tmp {0}/tmp &&
+                chown mysql:mysql {0}/tmp &&
+                chmod g+r {0}/tmp &&
+                chmod g+x {0}/tmp'''.format(
+                self.OLD_DIRECTORY, self.NEW_DIRECTORY
+            )
 
     @property
     def scripts(self):
         script = '''
             chown {1}:{2} {0} &&
+            chown {1}:{2} {0}/data/ &&
             chmod g+r {0} &&
-            chmod g+x {0}
-        '''.format(self.OLD_DIRECTORY, self.user, self.group)
+            chmod g+x {0} '''.format(self.OLD_DIRECTORY, self.user, self.group)
+
+        extra = self.get_extra_folders_permissions()
+        if extra:
+            script = '''{} && {}'''.format(script, extra)
+
         return {
             'Could set permissions': script
         }
+
+
+class FilePermissionsMigration(FilePermissions, BaseInstanceStepMigration):
+    pass
+
+
+class MigrationCreateExport(CreateExport, BaseInstanceStepMigration):
+    pass
+
+
+class AddDiskPermissionsOldest(Disk):
+
+    def __unicode__(self):
+        return "Adding oldest disk permission..."
+
+    def get_disk_path(self):
+        disk = self.host.nfsaas_host_attributes.get(is_active=True)
+        return disk.nfsaas_path_host
+
+    def do(self):
+        if not self.host_has_mount:
+            return
+
+        create_access(
+            self.environment, self.get_disk_path(), self.host.future_host
+        )
+
+
+class MountOldestExportMigration(DiskMountCommand, BaseInstanceStepMigration):
+
+    @property
+    def path_mount(self):
+        return self.NEW_DIRECTORY
+
+    @property
+    def export_remote_path(self):
+        base_host = BaseInstanceStep(self.instance).host
+        return base_host.nfsaas_host_attributes.get(is_active=True).nfsaas_path
+
+
+class CopyDataBetweenExportsMigration(CopyDataBetweenExports):
+    NEW_DIRECTORY = '{}/data'.format(CopyDataBetweenExports.OLD_DIRECTORY)
+    OLD_DIRECTORY = '{}/data'.format(CopyDataBetweenExports.NEW_DIRECTORY)
+
+    @property
+    def host(self):
+        host = super(CopyDataBetweenExportsMigration, self).host
+        return host.future_host
+
+
+class DisableOldestExportMigration(DisableOldestExport):
+
+    def do(self):
+        for export in self.host.future_host.nfsaas_host_attributes.all():
+            export.is_active = False
+            export.save()
+
+
+class DiskUpdateHost(Disk):
+
+    def __unicode__(self):
+        return "Moving oldest disks to new host..."
+
+    def do(self):
+        for export in self.host.future_host.nfsaas_host_attributes.all():
+            export.host = self.host
+            export.save()

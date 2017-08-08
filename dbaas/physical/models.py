@@ -24,6 +24,10 @@ class Environment(BaseModel):
         verbose_name=_("Environment"), max_length=100, unique=True)
     min_of_zones = models.PositiveIntegerField(default=1)
 
+    migrate_environment = models.ForeignKey(
+        'Environment', related_name='migrate_to', blank=True, null=True
+    )
+
     def __unicode__(self):
         return '%s' % (self.name)
 
@@ -336,6 +340,9 @@ class Plan(BaseModel):
     disk_offering = models.ForeignKey(
         DiskOffering, related_name="plans",
         on_delete=models.PROTECT, null=True, blank=True
+    )
+    migrate_plan = models.ForeignKey(
+        "Plan", related_name='migrate_to', null=True, blank=True
     )
 
     @property
