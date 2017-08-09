@@ -174,6 +174,9 @@ def region_migration_start(self, infra, instances, since_step=None):
         'Enabling monitoring and alarms': (
             'workflow.steps.util.db_monitor.EnableMonitoring',
             'workflow.steps.util.zabbix.CreateAlarms',
+        )}] + [{
+        'Restart replication': (
+            'workflow.steps.util.database.SetSlavesMigration',
         )
     }]
 
