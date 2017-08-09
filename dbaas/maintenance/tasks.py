@@ -130,23 +130,23 @@ def region_migration_start(self, infra, instances, since_step=None):
         'Disable monitoring and alarms': (
             'workflow.steps.util.zabbix.DestroyAlarms',
             'workflow.steps.util.db_monitor.DisableMonitoring',
-        )}] + [{
+        )}, {
         'Stopping infra': (
             'workflow.steps.util.database.Stop',
             'workflow.steps.util.database.CheckIsDown',
-        )}] + [{
+        )}, {
         'Creating new virtual machine': (
             'workflow.steps.util.vm.MigrationCreateNewVM',
-        )}] + [{
+        )}, {
         'Creating new infra': (
             'workflow.steps.util.vm.MigrationWaitingBeReady',
             'workflow.steps.util.infra.MigrationCreateInstance',
             'workflow.steps.util.disk.MigrationCreateExport',
-        )}] + [{
+        )}, {
         'Configuring new infra': (
             'workflow.steps.util.plan.InitializationMigration',
             'workflow.steps.util.plan.ConfigureMigration',
-        )}] + [{
+        )}, {
         'Preparing new environment': (
             'workflow.steps.util.disk.AddDiskPermissionsOldest',
             'workflow.steps.util.disk.MountOldestExportMigration',
@@ -157,24 +157,24 @@ def region_migration_start(self, infra, instances, since_step=None):
             'workflow.steps.util.vm.UpdateOSDescription',
             'workflow.steps.util.infra.UpdateMigrateEnvironment',
             'workflow.steps.util.infra.UpdateMigratePlan',
-        )}] + [{
+        )}, {
         'Starting new infra': (
             'workflow.steps.util.database.Start',
             'workflow.steps.util.database.CheckIsUp',
-        )}] + [{
+        )}, {
         'Enabling access': (
             'workflow.steps.util.dns.ChangeEndpoint',
             'workflow.steps.util.acl.ReplicateAclsMigration',
-        )}] + [{
+        )}, {
         'Destroying old infra': (
             'workflow.steps.util.disk.DisableOldestExportMigration',
             'workflow.steps.util.disk.DiskUpdateHost',
             'workflow.steps.util.vm.RemoveHost',
-        )}] + [{
+        )}, {
         'Enabling monitoring and alarms': (
             'workflow.steps.util.db_monitor.EnableMonitoring',
             'workflow.steps.util.zabbix.CreateAlarms',
-        )}] + [{
+        )}, {
         'Restart replication': (
             'workflow.steps.util.database.SetSlavesMigration',
         )

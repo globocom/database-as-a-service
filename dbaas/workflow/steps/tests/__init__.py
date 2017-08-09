@@ -14,3 +14,6 @@ class TestBaseStep(TestCase):
 
     def tearDown(self):
         self.instance.delete()
+        self.infra.delete()
+        self.environment.delete()
+        self.plan.delete()
