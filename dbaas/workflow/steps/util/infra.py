@@ -66,7 +66,10 @@ class MigrationCreateInstance(BaseInstanceStepMigration):
             new_instance.hostname = self.host
             new_instance.save()
 
-            if self.instance == instance:
+            instance.future_instance = new_instance
+            instance.save()
+
+            if self.instance.id == instance.id:
                 self.instance.future_instance = new_instance
                 self.instance.save()
 
