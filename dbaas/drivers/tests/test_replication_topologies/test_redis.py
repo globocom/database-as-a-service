@@ -59,6 +59,7 @@ class TestRedisSentinel(AbstractBaseRedisTestCase):
         return [{
             'Resetting Sentinel': (
                 'workflow.steps.redis.upgrade.sentinel.Reset',
+                'workflow.steps.util.database.SetSlave',
             ),
         }] + super(TestRedisSentinel, self)._get_upgrade_steps_final()
 

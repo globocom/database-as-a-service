@@ -300,10 +300,24 @@ class ValidateOplogSizeValue(DatabaseStep):
             raise EnvironmentError(error)
 
 
-class SetSlavesMigration(DatabaseStep):
+class SetSlave(DatabaseStep):
 
     def __unicode__(self):
         return "Setting slaves..."
+
+    def do(self):
+        if not self.instance.is_database:
+            return
+
+        master = self.infra.get_driver().get_master_instance()
+        if master == self.instance:
+            return
+
+        client = self.infra.get_driver().get_client(self.instance)
+        client.slaveof(master.address, master.port)
+
+
+class SetSlavesMigration(SetSlave):
 
     def do(self):
         if not self.instance.is_sentinel:
@@ -316,4 +330,4 @@ class SetSlavesMigration(DatabaseStep):
                 continue
 
             client = self.infra.get_driver().get_client(instance)
-            client.slaveof(master.hostname.address, master.port)
+            client.slaveof(master.address, master.port)
