@@ -341,22 +341,27 @@ class ChangeInstanceHost(VmStep):
 
     def do(self):
         host = self.host
-        future_host = host.future_host
-        future_host.future_host = host
-        future_host.save()
+        new_host = host.future_host
+        new_host.future_host = host
+        new_host.save()
 
-        future_instance = self.instance.future_instance
-        future_instance.address = 'None'
-        future_instance.future_instance = self.instance
-        future_instance.save()
+        for instance in host.instances.all():
+            future_instance = instance.future_instance
+            future_instance.address = 'None'
+            future_instance.future_instance = instance
+            future_instance.save()
 
-        self.instance.address = future_host.address
-        self.instance.hostname = future_host
-        self.instance.save()
+            instance.address = new_host.address
+            instance.hostname = new_host
+            instance.save()
 
-        future_instance.address = host.address
-        future_instance.hostname = host
-        future_instance.save()
+            if self.instance.id == instance.id:
+                self.instance.address = instance.address
+                self.instance.hostname = instance.hostname
+
+            future_instance.address = host.address
+            future_instance.hostname = host
+            future_instance.save()
 
 
 class RemoveHost(VmStep):

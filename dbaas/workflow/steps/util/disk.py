@@ -22,6 +22,9 @@ class CreateExport(Disk):
         return "Creating Export..."
 
     def do(self):
+        if not self.host.database_instance():
+            return
+
         LOG.info('Creating export for {}'.format(self.instance))
         create_disk(
             environment=self.environment,

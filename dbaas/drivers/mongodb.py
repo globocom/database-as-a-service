@@ -476,10 +476,12 @@ class MongoDB(BaseDriver):
         }
 
     def configuration_parameters(self, instance):
-        return {
-            'REPLICASETNAME': self.get_replica_name(),
-            'MONGODBKEY': instance.databaseinfra.database_key
-        }
+        config = {}
+        config.update(self.initialization_parameters(instance))
+        config['REPLICASETNAME'] = self.get_replica_name()
+        config['MONGODBKEY'] = instance.databaseinfra.database_key
+        return config
+
 
     def configuration_parameters_for_log_resize(self, instance):
         return {

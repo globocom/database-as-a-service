@@ -391,11 +391,10 @@ class Redis(BaseDriver):
 
     def configuration_parameters(self, instance):
         variables = {}
+
         master = self.get_master_instance()
         if master:
-            variables['SENTINELMASTER'] = master.address
-            variables['SENTINELMASTERPORT'] = master.port
-            variables['MASTERNAME'] = instance.databaseinfra.name
+            variables.update(self.master_parameters(instance, master))
 
         variables.update(self.parameters_redis(instance.hostname))
         variables.update(self.parameters_sentinel(instance.hostname))
@@ -418,6 +417,13 @@ class Redis(BaseDriver):
             'ONLY_SENTINEL': only_sentinel,
         }
 
+    def master_parameters(self, instance, master):
+        return {
+            'SENTINELMASTER': master.address,
+            'SENTINELMASTERPORT': master.port,
+            'MASTERNAME': instance.databaseinfra.name
+        }
+
     def parameters_sentinel(self, host):
         sentinel = host.non_database_instance()
         sentinel_address = ''
@@ -430,3 +436,10 @@ class Redis(BaseDriver):
             'SENTINELADDRESS': sentinel_address,
             'SENTINELPORT': sentinel_port,
         }
+
+    def configuration_parameters_migration(self, instance):
+        base_parameters = self.configuration_parameters(instance)
+        all_instances = self.databaseinfra.instances.all()
+        future_master = all_instances[len(all_instances)/2]
+        base_parameters.update(self.master_parameters(instance, future_master))
+        return base_parameters

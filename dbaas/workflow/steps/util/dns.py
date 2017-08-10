@@ -50,17 +50,20 @@ class ChangeEndpoint(DNSStep):
         return "Changing DNS endpoint..."
 
     def do(self):
-        old_instance = self.instance.future_instance
-        DNSAPIProvider.update_database_dns_content(
-            self.infra, old_instance.dns,
-            old_instance.address, self.instance.address
-        )
+        for instance in self.host.instances.all():
+            old_instance = instance.future_instance
+            DNSAPIProvider.update_database_dns_content(
+                self.infra, old_instance.dns,
+                old_instance.address, instance.address
+            )
 
-        self.instance.dns = old_instance.dns
-        self.instance.save()
+            instance.dns = old_instance.dns
+            old_instance.dns = old_instance.address
+            old_instance.save()
+            instance.save()
 
-        old_instance.dns = old_instance.address
-        old_instance.save()
+            if self.instance.id == instance.id:
+                self.instance.dns = instance.dns
 
         old_host = self.host.future_host
         self.host.hostname = old_host.hostname
@@ -69,7 +72,7 @@ class ChangeEndpoint(DNSStep):
         old_host.save()
         self.host.save()
 
-        if old_host.address in self.infra.endpoint:
+        if self.infra.endpoint and old_host.address in self.infra.endpoint:
             self.infra.endpoint = self.infra.endpoint.replace(
                 old_host.address, self.host.address
             )

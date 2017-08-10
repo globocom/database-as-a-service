@@ -74,9 +74,7 @@ class BaseInstanceStepMigration(BaseInstanceStep):
     @property
     def host(self):
         host = super(BaseInstanceStepMigration, self).host
-        if not host:
-            return
-        return host.future_host
+        return host.future_host if host else None
 
     @property
     def environment(self):

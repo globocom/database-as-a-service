@@ -157,4 +157,6 @@ class ConfigureMigration(Configure, BaseInstanceStepMigration):
 
     def get_variables_specifics(self):
         driver = self.infra.get_driver()
-        return driver.initialization_parameters(self.instance.future_instance)
+        return driver.configuration_parameters_migration(
+            self.instance.future_instance
+        )

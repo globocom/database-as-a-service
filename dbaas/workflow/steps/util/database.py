@@ -298,3 +298,22 @@ class ValidateOplogSizeValue(DatabaseStep):
 
         if oplogsize <= 0:
             raise EnvironmentError(error)
+
+
+class SetSlavesMigration(DatabaseStep):
+
+    def __unicode__(self):
+        return "Setting slaves..."
+
+    def do(self):
+        if not self.instance.is_sentinel:
+            return
+
+        instances = list(self.infra.instances.all())
+        master = instances.pop(0)
+        for instance in instances:
+            if not instance.is_database:
+                continue
+
+            client = self.infra.get_driver().get_client(instance)
+            client.slaveof(master.hostname.address, master.port)
