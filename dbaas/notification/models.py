@@ -205,12 +205,14 @@ def save_task(sender, instance, **kwargs):
             'task_status': instance.task_status,
             'user': username, 'arguments': instance.arguments,
             'updated_at': int(time.mktime(instance.updated_at.timetuple())),
-            'is_new': 1
+            'is_new': 1,
+            'read': 0
         }
 
         old_value = conn.hgetall(key)
         if old_value and params.get('task_status') == old_value.get('task_status'):
                 params['is_new'] = old_value['is_new']
+                params['read'] = old_value['read']
 
         conn.hmset(key, params)
         conn.expire(key, 1200)
