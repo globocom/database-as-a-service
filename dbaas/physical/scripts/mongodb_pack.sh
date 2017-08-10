@@ -14,9 +14,9 @@ createconfigdbfile()
     echo ""; echo $(date "+%Y-%m-%d %T") "- Creating the database config file"
 
 (cat <<EOF_DBAAS
-# mongodb.conf
-
 {% if ENGINE.version|slice:"0:3" == "3.4" %}
+# mongodb.conf 3.4
+
 ########################################
 ## Storage configuration
 ########################################
@@ -104,6 +104,8 @@ replication:
 {% endif %}
 
 {% if ENGINE.version|slice:"0:3" == "3.0" %}
+# mongodb.conf 3.0
+
 ########################################
 ## Storage configuration
 ########################################
@@ -187,6 +189,8 @@ replication:
 {% endif %}
 
 {% if ENGINE.version|slice:"0:3" == "2.4" %}
+# mongodb.conf 2.4
+
 ########################################
 ## Basic database configuration
 ########################################
