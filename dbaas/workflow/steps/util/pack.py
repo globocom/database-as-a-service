@@ -12,18 +12,8 @@ class PackStep(BaseInstanceStep):
     def __init__(self, instance):
         super(PackStep, self).__init__(instance)
 
-        self.host = self.instance.hostname
         self.host_cs = HostAttr.objects.get(host=self.host)
-
-        self.infra = self.instance.databaseinfra
-        self.database = self.infra.databases.first()
-        self.disk_offering = self.infra.disk_offering
-        self.engine = self.infra.engine
-        self.environment = self.infra.environment
-
-        self.plan = self.infra.plan
         self.cs_plan = PlanAttr.objects.get(plan=self.plan)
-
         self.pack = CloudStackPack.objects.get(
             offering__serviceofferingid=self.database.offering_id,
             offering__region__environment=self.environment,
@@ -82,6 +72,10 @@ class Configure(PackStep):
     def __unicode__(self):
         return "Executing pack script..."
 
+    def get_variables_specifics(self):
+        driver = self.infra.get_driver()
+        return driver.configuration_parameters(self.instance)
+
     def do(self):
         script = build_context_script(
             self.script_variables, self.pack.script_template
@@ -105,20 +99,5 @@ class ResizeConfigure(Configure):
 
     def __init__(self, instance):
         super(ResizeConfigure, self).__init__(instance)
-        self.pack = DatabaseResize.objects.last().current_to(self.database).target_offer
-
-
-class ConfigureRedis(Configure):
-
-    def get_variables_specifics(self):
-        redis = self.host.database_instance()
-        redis_address = ''
-        redis_port = ''
-        if redis:
-            redis_address = redis.address
-            redis_port = redis.port
-
-        return {
-            'HOSTADDRESS': redis_address,
-            'PORT': redis_port,
-        }
+        resize = self.database.resizes.last()
+        self.pack = resize.current_to(self.database).target_offer

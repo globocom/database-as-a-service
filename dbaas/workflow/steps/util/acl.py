@@ -17,9 +17,6 @@ class ACLStep(BaseInstanceStep):
 
     def __init__(self, instance):
         super(ACLStep, self).__init__(instance)
-        self.databaseinfra = self.instance.databaseinfra
-        self.environment = self.databaseinfra.environment
-        self.database = self.databaseinfra.databases.first()
 
         acl_credential = get_credentials_for(
             environment=self.environment,
@@ -40,17 +37,28 @@ class ACLStep(BaseInstanceStep):
 class ReplicateAcls2NewInstance(ACLStep):
 
     def __unicode__(self):
-        return "Replicating acls ..."
+        return "Replicating ACLs..."
+
+    @property
+    def source_instance(self):
+        return self.infra.instances.filter(
+            is_active=True, read_only=False
+        ).first()
+
 
     def do(self):
-        source_instance = self.databaseinfra.instances.filter(
-            is_active=True,
-            read_only=False
-        ).first()
         replicate_acl_for(
             database=self.database,
-            old_ip=source_instance.address,
-            new_ip=self.instance.address)
+            old_ip=self.source_instance.address,
+            new_ip=self.instance.address
+        )
+
+
+class ReplicateAclsMigration(ReplicateAcls2NewInstance):
+
+    @property
+    def source_instance(self):
+        return self.instance.future_instance
 
 
 class BindNewInstance(ACLStep):
@@ -76,7 +84,7 @@ class BindNewInstance(ACLStep):
                 database_bind.bind_status = ERROR
                 database_bind.save()
                 DatabaseInfraInstanceBind.objects.filter(
-                    databaseinfra=self.databaseinfra,
+                    databaseinfra=self.infra,
                     bind_address=database_bind.bind_address,
                     instance__in=self.instance_address_list
                 ).update(bind_status=ERROR)
@@ -84,7 +92,7 @@ class BindNewInstance(ACLStep):
     def undo(self):
         for database_bind in self.database.acl_binds.all():
             infra_instances_binds = DatabaseInfraInstanceBind.objects.filter(
-                databaseinfra=self.databaseinfra,
+                databaseinfra=self.infra,
                 bind_address=database_bind.bind_address,
                 instance__in=self.instance_address_list,
             )

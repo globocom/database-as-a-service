@@ -102,6 +102,22 @@ class PlanModelTestCase(TestCase):
         self.plan.provider = Plan.PREPROVISIONED
         self.assertFalse(self.plan.is_cloudstack)
 
+    def test_migrate_to(self):
+        plan = PlanFactory()
+        plan_dest_1 = PlanFactory()
+        plan_dest_2 = PlanFactory()
+
+        plan_dest_1.migrate_plan = plan
+        plan_dest_1.save()
+
+        plan_dest_2.migrate_plan = plan
+        plan_dest_2.save()
+
+        migrate_to = plan.migrate_to.all()
+        self.assertEqual(len(migrate_to), 2)
+        self.assertIn(plan_dest_1, migrate_to)
+        self.assertIn(plan_dest_2, migrate_to)
+
     def test_min_bundles_not_ha(self):
         self.plan.is_ha = False
 

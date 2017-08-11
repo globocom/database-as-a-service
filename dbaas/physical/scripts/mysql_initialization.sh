@@ -40,8 +40,6 @@ movedatabase()
 
 filepermission()
 {
-    chown -R mysql:mysql /data/*
-    die_if_error "Error changing datadir permission"
     chown mysql:mysql /data
     die_if_error "Error changing datadir permission"
     chmod g+r /data

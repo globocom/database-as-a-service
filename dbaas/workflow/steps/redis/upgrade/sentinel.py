@@ -12,7 +12,6 @@ class Reset(BaseInstanceStep):
     def __init__(self, instance):
         super(Reset, self).__init__(instance)
         self.driver = self.instance.databaseinfra.get_driver()
-        self.host = self.instance.hostname
         self.sentinel_instance = self.host.non_database_instance()
 
     def do(self):

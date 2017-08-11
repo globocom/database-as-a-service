@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
-from django.core.exceptions import ObjectDoesNotExist
+import logging
 from time import sleep
-from util import check_ssh
+from django.core.exceptions import ObjectDoesNotExist
 from dbaas_cloudstack.models import HostAttr, PlanAttr
 from dbaas_cloudstack.provider import CloudStackProvider
 from dbaas_credentials.models import CredentialType
-from dbaas_cloudstack.models import LastUsedBundleDatabaseInfra
-from util import get_credentials_for
-from workflow.steps.util.base import BaseInstanceStep
+from dbaas_cloudstack.models import LastUsedBundleDatabaseInfra, LastUsedBundle
 from maintenance.models import DatabaseResize
-import logging
+from util import check_ssh, get_credentials_for
+from workflow.steps.util.base import BaseInstanceStep, \
+    BaseInstanceStepMigration
 
 LOG = logging.getLogger(__name__)
 
@@ -19,31 +19,27 @@ CHANGE_MASTER_SECONDS = 15
 
 class VmStep(BaseInstanceStep):
 
+    @property
+    def host_cs(self):
+        if not self.host:
+            return
+
+        try:
+            return HostAttr.objects.get(host=self.host)
+        except ObjectDoesNotExist:
+            LOG.info('Host {} does not have HostAttr'.format(self.host))
+
     def __init__(self, instance):
         super(VmStep, self).__init__(instance)
 
-        self.databaseinfra = self.instance.databaseinfra
-        self.environment = self.databaseinfra.environment
-        self.driver = self.databaseinfra.get_driver()
+        self.driver = self.infra.get_driver()
 
         self.cs_credentials = get_credentials_for(
             environment=self.environment,
-            credential_type=CredentialType.CLOUDSTACK)
+            credential_type=CredentialType.CLOUDSTACK
+        )
 
         self.cs_provider = CloudStackProvider(credentials=self.cs_credentials)
-
-        self.host = None
-        self.host_cs = None
-
-        try:
-            self.host = self.instance.hostname
-        except ObjectDoesNotExist:
-            LOG.info('Instance {} does not have hostname'.format(instance))
-        else:
-            try:
-                self.host_cs = HostAttr.objects.get(host=self.host)
-            except ObjectDoesNotExist:
-                LOG.info('Host {} does not have HostAttr'.format(self.host))
 
     def do(self):
         raise NotImplementedError
@@ -79,7 +75,7 @@ class InstallNewTemplate(VmStep):
     def __init__(self, instance):
         super(InstallNewTemplate, self).__init__(instance)
 
-        target_plan = self.instance.databaseinfra.plan.engine_equivalent_plan
+        target_plan = self.plan.engine_equivalent_plan
         cs_plan = PlanAttr.objects.get(plan=target_plan)
         self.bundle = cs_plan.bundles.first()
 
@@ -108,13 +104,17 @@ class WaitingBeReady(VmStep):
             raise EnvironmentError('VM is not ready')
 
 
+class MigrationWaitingBeReady(WaitingBeReady, BaseInstanceStepMigration):
+    pass
+
+
 class UpdateOSDescription(VmStep):
 
     def __unicode__(self):
         return "Updating instance OS description..."
 
     def do(self):
-        self.instance.hostname.update_os_description()
+        self.host.update_os_description()
 
 
 class ChangeOffering(VmStep):
@@ -153,7 +153,7 @@ class ChangeMaster(VmStep):
         return "Changing master node..."
 
     def do(self):
-        if not self.databaseinfra.plan.is_ha:
+        if not self.infra.plan.is_ha:
             return
 
         if self.driver.check_instance_is_master(instance=self.instance):
@@ -208,25 +208,33 @@ class CreateVirtualMachine(VmStep):
         self.instance.save()
 
     def update_databaseinfra_last_vm_created(self):
-        last_vm_created = self.databaseinfra.last_vm_created
+        last_vm_created = self.infra.last_vm_created
         last_vm_created += 1
-        self.databaseinfra.last_vm_created = last_vm_created
-        self.databaseinfra.save()
+        self.infra.last_vm_created = last_vm_created
+        self.infra.save()
 
     def get_next_bundle(self):
         raise NotImplementedError
 
+    @property
+    def vm_name(self):
+        return self.instance.vm_name
+
+    @property
+    def cs_offering(self):
+        return self.infra.cs_dbinfra_offering.get().offering
+
     def deploy_vm(self, bundle):
-        offering = self.databaseinfra.cs_dbinfra_offering.get().offering
-        LOG.info("VM : {}".format(self.instance.vm_name))
+        LOG.info("VM : {}".format(self.vm_name))
 
         error, vm = self.cs_provider.deploy_virtual_machine(
-            offering=offering.serviceofferingid,
+            offering=self.cs_offering.serviceofferingid,
             bundle=bundle,
             project_id=self.cs_credentials.project,
-            vmname=self.instance.vm_name,
+            vmname=self.vm_name,
             affinity_group_id=self.cs_credentials.get_parameter_by_name(
-                'affinity_group_id'),
+                'affinity_group_id'
+            ),
         )
 
         if error:
@@ -275,11 +283,103 @@ class CreateVirtualMachine(VmStep):
 
 
 class CreateVirtualMachineHorizontalElasticity(CreateVirtualMachine):
+
     @property
     def read_only_instance(self):
         return True
 
     def get_next_bundle(self):
         bundle = LastUsedBundleDatabaseInfra.get_next_infra_bundle(
-            databaseinfra=self.databaseinfra)
+            databaseinfra=self.infra)
         return bundle
+
+
+class MigrationCreateNewVM(CreateVirtualMachine):
+
+    @property
+    def environment(self):
+        environment = super(MigrationCreateNewVM, self).environment
+        return environment.migrate_environment
+
+    @property
+    def vm_name(self):
+        return self.host.hostname.split('.')[0]
+
+    @property
+    def cs_offering(self):
+        base_offering = self.infra.cs_dbinfra_offering.get().offering
+        return base_offering.equivalent_offering
+
+    def get_next_bundle(self):
+        migrate_plan = self.plan.migrate_plan
+        bundles = PlanAttr.objects.get(plan=migrate_plan).bundles_actives
+        return LastUsedBundle.get_next_infra_bundle(migrate_plan, bundles)
+
+    def do(self):
+        if self.host.future_host:
+            LOG.warning("Host {} already have a future host configured".format(
+                self.host
+            ))
+            return
+
+        bundle = self.get_next_bundle()
+        address, vm_id = self.deploy_vm(bundle=bundle)
+        host = self.create_host(address=address)
+        self.create_host_attr(host=host, vm_id=vm_id, bundle=bundle)
+
+        self.host.future_host = host
+        self.host.save()
+
+    def undo(self):
+        raise NotImplementedError
+
+
+class ChangeInstanceHost(VmStep):
+
+    def __unicode__(self):
+        return "Remove old infra instance..."
+
+    def do(self):
+        host = self.host
+        new_host = host.future_host
+        new_host.future_host = host
+        new_host.save()
+
+        for instance in host.instances.all():
+            future_instance = instance.future_instance
+            future_instance.address = 'None'
+            future_instance.future_instance = instance
+            future_instance.save()
+
+            instance.address = new_host.address
+            instance.hostname = new_host
+            instance.save()
+
+            if self.instance.id == instance.id:
+                self.instance.address = instance.address
+                self.instance.hostname = instance.hostname
+
+            future_instance.address = host.address
+            future_instance.hostname = host
+            future_instance.save()
+
+
+class RemoveHost(VmStep):
+
+    def __unicode__(self):
+        return "Destroying virtual machine..."
+
+    def do(self):
+        from dbaas_cloudstack.models import HostAttr
+
+        host = self.host.future_host
+        host_attr = HostAttr.objects.get(host=host)
+
+        self.cs_provider.destroy_virtual_machine(
+            project_id=self.cs_credentials.project,
+            environment=self.environment,
+            vm_id=host_attr.vm_id
+        )
+
+        host_attr.delete()
+        host.delete()

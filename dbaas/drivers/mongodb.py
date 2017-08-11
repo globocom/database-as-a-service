@@ -449,3 +449,26 @@ class MongoDB(BaseDriver):
 
     def get_database_process_name(self):
         return "mongod"
+
+    def initialization_parameters(self, instance):
+        database_rule = 'SECONDARY'
+        if instance.instance_type == instance.MONGODB_ARBITER:
+            database_rule = 'ARBITER'
+
+        return {
+            'DATABASERULE': database_rule
+        }
+
+    def configuration_parameters(self, instance):
+        config = {}
+        config.update(self.initialization_parameters(instance))
+        config['REPLICASETNAME'] = self.get_replica_name()
+        config['MONGODBKEY'] = instance.databaseinfra.database_key
+        return config
+
+
+    def configuration_parameters_for_log_resize(self, instance):
+        return {
+            'IS_HA': False,
+            'PORT': 27018
+        }

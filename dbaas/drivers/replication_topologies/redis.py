@@ -29,9 +29,9 @@ class BaseRedis(BaseTopology):
 
     def get_upgrade_steps_extra(self):
         return (
-            'workflow.steps.util.plan.InitializationRedisForUpgrade',
-            'workflow.steps.util.plan.ConfigureRedisForUpgrade',
-            'workflow.steps.util.pack.ConfigureRedis',
+            'workflow.steps.util.plan.InitializationForUpgrade',
+            'workflow.steps.util.plan.ConfigureForUpgrade',
+            'workflow.steps.util.pack.Configure',
         )
 
     def get_resize_extra_steps(self):
@@ -45,9 +45,6 @@ class BaseRedis(BaseTopology):
     def add_database_instances_last_steps(self):
         return ()
 
-    def get_change_parameter_config_steps(self):
-        return ('workflow.steps.util.pack.ConfigureRedis',)
-
 
 class RedisSingle(BaseRedis):
     pass
@@ -59,14 +56,15 @@ class RedisSentinel(BaseRedis):
         return [{
             'Resetting Sentinel': (
                 'workflow.steps.redis.upgrade.sentinel.Reset',
+                'workflow.steps.util.database.SetSlave',
             ),
         }] + super(RedisSentinel, self).get_upgrade_steps_final()
 
     def get_add_database_instances_middle_steps(self):
         return (
-            'workflow.steps.util.plan.InitializationRedis',
-            'workflow.steps.util.plan.ConfigureRedis',
-            'workflow.steps.util.pack.ConfigureRedis',
+            'workflow.steps.util.plan.Initialization',
+            'workflow.steps.util.plan.Configure',
+            'workflow.steps.util.pack.Configure',
             'workflow.steps.util.database.Start',
             'workflow.steps.redis.horizontal_elasticity.database.AddInstanceToRedisCluster',
         )

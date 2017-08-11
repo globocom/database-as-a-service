@@ -385,3 +385,61 @@ class Redis(BaseDriver):
 
     def get_database_process_name(self):
         return "redis-server"
+
+    def initialization_parameters(self, instance):
+        return self.parameters_redis(instance.hostname)
+
+    def configuration_parameters(self, instance):
+        variables = {}
+
+        master = self.get_master_instance()
+        if master:
+            variables.update(self.master_parameters(instance, master))
+
+        variables.update(self.parameters_redis(instance.hostname))
+        variables.update(self.parameters_sentinel(instance.hostname))
+
+        return variables
+
+    def parameters_redis(self, host):
+        redis = host.database_instance()
+        redis_address = ''
+        redis_port = ''
+        only_sentinel = True
+        if redis:
+            redis_address = redis.address
+            redis_port = redis.port
+            only_sentinel = False
+
+        return {
+            'HOSTADDRESS': redis_address,
+            'PORT': redis_port,
+            'ONLY_SENTINEL': only_sentinel,
+        }
+
+    def master_parameters(self, instance, master):
+        return {
+            'SENTINELMASTER': master.address,
+            'SENTINELMASTERPORT': master.port,
+            'MASTERNAME': instance.databaseinfra.name
+        }
+
+    def parameters_sentinel(self, host):
+        sentinel = host.non_database_instance()
+        sentinel_address = ''
+        sentinel_port = ''
+        if sentinel:
+            sentinel_address = sentinel.address
+            sentinel_port = sentinel.port
+
+        return {
+            'SENTINELADDRESS': sentinel_address,
+            'SENTINELPORT': sentinel_port,
+        }
+
+    def configuration_parameters_migration(self, instance):
+        base_parameters = self.configuration_parameters(instance)
+        all_instances = self.databaseinfra.instances.all()
+        future_master = all_instances[len(all_instances)/2]
+        base_parameters.update(self.master_parameters(instance, future_master))
+        return base_parameters
