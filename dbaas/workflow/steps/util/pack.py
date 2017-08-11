@@ -2,7 +2,6 @@
 from util import build_context_script, exec_remote_command, get_credentials_for
 from dbaas_cloudstack.models import HostAttr, CloudStackPack, PlanAttr
 from dbaas_credentials.models import CredentialType
-from maintenance.models import DatabaseResize
 from physical.configurations import configuration_factory
 from workflow.steps.util.base import BaseInstanceStep
 
@@ -31,7 +30,8 @@ class PackStep(BaseInstanceStep):
             'HAS_PERSISTENCE': self.infra.plan.has_persistence,
             'IS_READ_ONLY': self.instance.read_only,
             'DISK_SIZE_IN_GB': self.disk_offering.size_gb(),
-            'ENVIRONMENT': self.environment
+            'ENVIRONMENT': self.environment,
+            'ENGINE_VERSION': self.engine.version,
         }
 
         variables['configuration'] = self.get_configuration()

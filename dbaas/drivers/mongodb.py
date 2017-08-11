@@ -413,13 +413,16 @@ class MongoDB(BaseDriver):
                 configuration.update({'oplogSize': self.get_oplogsize()})
             if 'quiet' in configuration:
                 configuration['quiet'] = str(configuration['quiet']).lower()
+            wiredTyger_cache = self.get_wiredTiger_engineConfig_cacheSizeGB()
+            if wiredTyger_cache:
+                configuration.update({'wiredTiger_engineConfig_cacheSizeGB': wiredTyger_cache})
             return configuration
 
     def get_oplogsize(self):
         if self.databaseinfra.plan.is_ha:
             with self.pymongo() as client:
-                firstc = client["local"]["oplog.rs"].find().sort("$natural", pymongo.ASCENDING).limit(1)[0]
-                lastc = client["local"]["oplog.rs"].find().sort("$natural", pymongo.DESCENDING).limit(1)[0]
+                #firstc = client["local"]["oplog.rs"].find().sort("$natural", pymongo.ASCENDING).limit(1)[0]
+                #lastc = client["local"]["oplog.rs"].find().sort("$natural", pymongo.DESCENDING).limit(1)[0]
                 oplog_stats = client["local"].command("collStats", "oplog.rs")
                 if 'maxSize' in oplog_stats:
                     logSize = oplog_stats['maxSize']
@@ -427,6 +430,15 @@ class MongoDB(BaseDriver):
                     oplogc = client["local"]["system.namespaces"].find_one({'name': "local.oplog.rs"})
                     logSize = oplogc["options"]["size"]
                 return logSize / 1024 / 1024
+
+    def get_wiredTiger_engineConfig_cacheSizeGB(self):
+        with self.pymongo() as client:
+            serverStatus = client.admin.command("serverStatus")
+            try:
+                max_cache_bytes = serverStatus['wiredTiger']['cache']["maximum bytes configured"]
+            except KeyError:
+                return None
+            return round(max_cache_bytes / 1024.0 / 1024.0 / 1024.0, 2)
 
     def set_configuration(self, instance, name, value):
         client = self.get_client(instance)
@@ -443,6 +455,10 @@ class MongoDB(BaseDriver):
 
         elif name == 'logLevel':
             client.admin.command('setParameter', 1, logLevel=int(value))
+
+        elif name == 'wiredTiger_engineConfig_cacheSizeGB':
+            cache = "cache_size={}".format(int(float(value) * 1024 * 1024 * 1024))
+            client.admin.command('setParameter', 1, wiredTigerEngineRuntimeConfig=cache)
 
         else:
             raise Exception("Could not set configuration for {}. It's unknown.".format(name))

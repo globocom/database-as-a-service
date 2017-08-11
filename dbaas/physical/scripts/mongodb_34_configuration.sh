@@ -14,7 +14,7 @@ createconfigdbfile()
     echo ""; echo $(date "+%Y-%m-%d %T") "- Creating the database config file"
 
 (cat <<EOF_DBAAS
-# mongodb.conf
+# mongodb.conf 3.4
 
 ########################################
 ## Storage configuration
@@ -29,6 +29,10 @@ storage:
 
     # Storage Engine
     engine: wiredTiger
+
+    wiredTiger:
+        engineConfig:
+            cacheSizeGB: {{ configuration.wiredTiger_engineConfig_cacheSizeGB.value }}
 
     # small files
     mmapv1:
