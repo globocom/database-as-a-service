@@ -558,7 +558,7 @@ class ConfigurationMongoDB(ConfigurationBase):
         if self.memory_size_in_mb < 2564:
             cache_mb = 256
         else:
-            cache_mb =  (self.memory_size_in_mb / 2) - 1024
+            cache_mb =  (self.memory_size_in_mb - 1024) / 2
         default = round(cache_mb / 1024.0, 2)
         return self.get_parameter(parameter_name, default)
 
