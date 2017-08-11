@@ -91,7 +91,14 @@ class Command(BaseCommand):
             )
 
             task = TaskHistory.objects.get(id=task.id)
-            if task.is_running and task.task_id in celery_tasks:
+            if not task.is_running:
+                self.task.add_detail(
+                    "OK: Tasks was finished with {}".format(task.task_status),
+                    level=2
+                )
+                continue
+
+            if task.task_id in celery_tasks:
                 self.task.add_detail("OK: Running in celery", level=2)
                 continue
 
