@@ -9,6 +9,8 @@ from util import build_context_script
 from util import get_dict_lines
 from django.core.exceptions import ObjectDoesNotExist
 from registered_functions.functools import _get_function
+from workflow.steps.util.dns import ChangeTTLTo5Minutes, ChangeTTLTo3Hours
+from workflow.workflow import steps_for_instances
 
 LOG = logging.getLogger(__name__)
 
@@ -110,3 +112,84 @@ def execute_scheduled_maintenance(self, maintenance_id):
                                    details='Maintenance executed succesfully')
 
     LOG.info("Maintenance: {} has FINISHED".format(maintenance,))
+
+
+def region_migration_prepare(infra):
+    instance = infra.instances.first()
+    ChangeTTLTo5Minutes(instance).do()
+
+
+def region_migration_finish(infra):
+    instance = infra.instances.first()
+    ChangeTTLTo3Hours(instance).do()
+
+
+@app.task(bind=True)
+def region_migration_start(self, infra, instances, since_step=None):
+    steps = [{
+        'Disable monitoring and alarms': (
+            'workflow.steps.util.zabbix.DestroyAlarms',
+            'workflow.steps.util.db_monitor.DisableMonitoring',
+        )}, {
+        'Stopping infra': (
+            'workflow.steps.util.database.Stop',
+            'workflow.steps.util.database.CheckIsDown',
+        )}, {
+        'Creating new virtual machine': (
+            'workflow.steps.util.vm.MigrationCreateNewVM',
+        )}, {
+        'Creating new infra': (
+            'workflow.steps.util.vm.MigrationWaitingBeReady',
+            'workflow.steps.util.infra.MigrationCreateInstance',
+            'workflow.steps.util.disk.MigrationCreateExport',
+        )}, {
+        'Configuring new infra': (
+            'workflow.steps.util.plan.InitializationMigration',
+            'workflow.steps.util.plan.ConfigureMigration',
+        )}, {
+        'Preparing new environment': (
+            'workflow.steps.util.disk.AddDiskPermissionsOldest',
+            'workflow.steps.util.disk.MountOldestExportMigration',
+            'workflow.steps.util.disk.CopyDataBetweenExportsMigration',
+            'workflow.steps.util.disk.FilePermissionsMigration',
+            'workflow.steps.util.disk.UnmountNewerExportMigration',
+            'workflow.steps.util.vm.ChangeInstanceHost',
+            'workflow.steps.util.vm.UpdateOSDescription',
+            'workflow.steps.util.infra.UpdateMigrateEnvironment',
+            'workflow.steps.util.infra.UpdateMigratePlan',
+        )}, {
+        'Starting new infra': (
+            'workflow.steps.util.database.Start',
+            'workflow.steps.util.database.CheckIsUp',
+        )}, {
+        'Enabling access': (
+            'workflow.steps.util.dns.ChangeEndpoint',
+            'workflow.steps.util.acl.ReplicateAclsMigration',
+        )}, {
+        'Destroying old infra': (
+            'workflow.steps.util.disk.DisableOldestExportMigration',
+            'workflow.steps.util.disk.DiskUpdateHost',
+            'workflow.steps.util.vm.RemoveHost',
+        )}, {
+        'Enabling monitoring and alarms': (
+            'workflow.steps.util.db_monitor.EnableMonitoring',
+            'workflow.steps.util.zabbix.CreateAlarms',
+        )}, {
+        'Restart replication': (
+            'workflow.steps.util.database.SetSlavesMigration',
+        )
+    }]
+
+    task = TaskHistory()
+    task.task_id = datetime.now().strftime("%Y%m%d%H%M%S")
+    task.task_name = "migrating_zone"
+    task.task_status = TaskHistory.STATUS_RUNNING
+    task.context = {'infra': infra, 'instances': instances}
+    task.arguments = {'infra': infra, 'instances': instances}
+    task.user = 'admin'
+    task.save()
+
+    if steps_for_instances(steps, instances, task, since_step=since_step):
+        task.set_status_success('Region migrated with success')
+    else:
+        task.set_status_error('Could not migrate region')
