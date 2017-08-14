@@ -3,9 +3,12 @@ from __future__ import absolute_import, unicode_literals
 from rest_framework import viewsets, serializers, permissions
 from rest_framework import filters
 from notification.models import TaskHistory
+from logical.models import Database
 
 
-class TaskSerializer(serializers.HyperlinkedModelSerializer):
+class TaskSerializer(serializers.ModelSerializer):
+    database = serializers.SerializerMethodField('get_database')
+
     class Meta:
         model = TaskHistory
         fields = (
@@ -18,11 +21,36 @@ class TaskSerializer(serializers.HyperlinkedModelSerializer):
             'updated_at',
             'user',
             'created_at',
-            'task_name'
+            'task_name',
+            'database'
         )
 
-    def get_id(self, obj):
-        return obj.task_id
+    def get_database(self, task):
+        if task.object_class == Database._meta.db_table:
+            try:
+                database = (
+                    Database.objects
+                    .select_related(
+                        'environment',
+                        'databaseinfra',
+                        'databaseinfra__engine',
+                        'databaseinfra__engine__enginetype'
+                    ).get(id=task.object_id)
+                )
+            except Database.DoesNotExist:
+                return None
+        else:
+            return None
+
+        engine = database.databaseinfra.engine
+        return {
+            'name': database.name,
+            'environment': database.environment.name,
+            'engine': '{} {}'.format(
+                engine.engine_type.name,
+                engine.version
+            )
+        }
 
 
 class TaskAPI(viewsets.ReadOnlyModelViewSet):
@@ -34,7 +62,6 @@ class TaskAPI(viewsets.ReadOnlyModelViewSet):
     model = TaskHistory
     serializer_class = TaskSerializer
     permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
-    # queryset = TaskHistory.objects.all().order_by('-
     filter_backends = (filters.OrderingFilter,)
     filter_fields = (
         'task_id',
@@ -42,7 +69,8 @@ class TaskAPI(viewsets.ReadOnlyModelViewSet):
         'object_class',
         'object_id',
         'updated_at',
-        'created_at'
+        'created_at',
+        'user'
     )
     ordering_fields = ('created_at', 'updated_at', 'id')
     ordering = ('-created_at',)
@@ -52,6 +80,6 @@ class TaskAPI(viewsets.ReadOnlyModelViewSet):
         params = self.request.GET.dict()
         filter_params = {}
         for k, v in params.iteritems():
-            if k.split('__')[0] in self.datetime_fields:
+            if k.split('__')[0] in self.filter_fields:
                 filter_params[k] = v
         return self.model.objects.filter(**filter_params)
