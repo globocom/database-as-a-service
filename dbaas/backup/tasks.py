@@ -17,7 +17,6 @@ from util import get_worker_name
 from util import build_dict
 from util.providers import get_restore_snapshot_settings
 from workflow.workflow import start_workflow
-from notification import models
 from notification import tasks
 from workflow.steps.util.nfsaas_utils import create_snapshot, delete_snapshot, \
     delete_export
@@ -406,32 +405,48 @@ def restore_snapshot(self, database, snapshot, user, task_history):
         tasks.enable_zabbix_alarms(database)
 
 
-def purge_unused_exports():
+@app.task(bind=True)
+def purge_unused_exports_task(self):
+    from notification.tasks import TaskRegister
+    task = TaskRegister.purge_unused_exports()
+
+    task = TaskHistory.register(
+        request=self.request, worker_name=get_worker_name(), task_history=task
+    )
+
+    task.add_detail('Getting all inactive exports without snapshots')
+    if purge_unused_exports(task):
+        task.set_status_error('Error')
+    else:
+        task.set_status_error('Done')
+
+
+def purge_unused_exports(task=None):
     from dbaas_nfsaas.models import HostAttr
-    databaseinfras = DatabaseInfra.objects.filter(
-        plan__provider=Plan.CLOUDSTACK).prefetch_related('instances')
-    for databaseinfra in databaseinfras:
-        instances = databaseinfra.get_driver().get_database_instances()
-        environment = databaseinfra.environment
 
-        for instance in instances:
-            exports = HostAttr.objects.filter(
-                host=instance.hostname, is_active=False
-            )
-            for export in exports:
-                snapshots = Snapshot.objects.filter(
-                    export_path=export.nfsaas_path, purge_at=None
-                )
-                if snapshots:
-                    continue
+    success = True
+    for export in HostAttr.objects.filter(is_active=False):
+        if export.snapshots():
+            continue
 
-                LOG.info(
-                    'Export {} will be removed'.format(export.nfsaas_export_id)
-                )
+        if task:
+            task.add_detail('Removing: {}'.format(export), level=2)
 
-                delete_export(environment, export.nfsaas_path_host)
+        environment = export.host.instances.first().databaseinfra.environment
 
-                export.delete()
+        try:
+            delete_export(environment, export.nfsaas_path_host)
+        except Exception as e:
+            success = False
+            LOG.info('Error removing {} - {}'.format(export, e))
+            if task:
+                task.add_detail('Error: {}'.format(e), level=4)
+        else:
+            if task:
+                task.add_detail('Success', level=4)
+            export.delete()
+
+    return success
 
 
 def _get_backup_instance(database, task):
