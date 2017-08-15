@@ -416,9 +416,9 @@ def purge_unused_exports_task(self):
 
     task.add_detail('Getting all inactive exports without snapshots')
     if purge_unused_exports(task):
-        task.set_status_error('Error')
+        task.set_status_success('Done')
     else:
-        task.set_status_error('Done')
+        task.set_status_error('Error')
 
 
 def purge_unused_exports(task=None):
