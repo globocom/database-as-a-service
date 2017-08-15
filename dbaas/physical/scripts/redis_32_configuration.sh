@@ -641,6 +641,9 @@ EOF_DBAAS_CONFIGDBFILE
 ) > /data/redis.conf
     die_if_error "Error setting redis.conf"
 
+    chown redis:redis /data/redis.conf
+    die_if_error "Error changing redis conf file owner"
+
 }
 
 create_config_http()
@@ -1011,8 +1014,8 @@ EOF_DBAAS_CONFIGSENTINELFILE
 ) > /data/sentinel.conf
     die_if_error "Error setting redis.conf"
 
-chown redis:redis /data/sentinel.conf
-die_if_error "Error changing sentinel conf permission"
+    chown redis:redis /data/sentinel.conf
+    die_if_error "Error changing sentinel conf permission"
 
 }
 

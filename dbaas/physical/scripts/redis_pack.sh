@@ -560,6 +560,10 @@ client-output-buffer-limit pubsub 32mb 8mb 60
 EOF_DBAAS_CONFIGDBFILE
 ) > /data/redis.conf
     die_if_error "Error setting redis.conf"
+
+    chown redis:redis /data/redis.conf
+    die_if_error "Error changing redis conf file owner"
+
 }
 
 {% if CONFIGFILE %}
