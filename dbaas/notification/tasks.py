@@ -1346,5 +1346,15 @@ class TaskRegister(object):
             task=task,
         )
 
+    @classmethod
+    def purge_unused_exports(cls, user='admin'):
+        task_params = {
+            'task_name': "purge_unused_exports",
+            'arguments': "Removing unused exports",
+            'user': user
+        }
+
+        return cls.create_task(task_params)
+
 
     # ============  END TASKS   ============
