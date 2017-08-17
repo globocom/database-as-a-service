@@ -406,6 +406,7 @@ def restore_snapshot(self, database, snapshot, user, task_history):
 
 
 @app.task(bind=True)
+@only_one(key="purge_unused_exports")
 def purge_unused_exports_task(self):
     from notification.tasks import TaskRegister
     task = TaskRegister.purge_unused_exports()
