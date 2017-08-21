@@ -474,6 +474,7 @@ def purge_task_history(self):
                 'notification.tasks.update_database_status',
                 'notification.tasks.update_instances_status',
                 'sync_celery_tasks',
+                'purge_unused_exports_task',
                 'system.tasks.set_celery_healthcheck_last_update'
             ],
             ended_at__lt=n_days_before,
@@ -1345,6 +1346,16 @@ class TaskRegister(object):
             user=user,
             task=task,
         )
+
+    @classmethod
+    def purge_unused_exports(cls, user='admin'):
+        task_params = {
+            'task_name': "purge_unused_exports",
+            'arguments': "Removing unused exports",
+            'user': user
+        }
+
+        return cls.create_task(task_params)
 
 
     # ============  END TASKS   ============

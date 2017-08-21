@@ -641,6 +641,9 @@ EOF_DBAAS_CONFIGDBFILE
 ) > /data/redis.conf
     die_if_error "Error setting redis.conf"
 
+    chown redis:redis /data/redis.conf
+    die_if_error "Error changing redis conf file owner"
+
 }
 
 create_config_http()
@@ -1011,16 +1014,23 @@ EOF_DBAAS_CONFIGSENTINELFILE
 ) > /data/sentinel.conf
     die_if_error "Error setting redis.conf"
 
-chown redis:redis /data/sentinel.conf
-die_if_error "Error changing sentinel conf permission"
+    chown redis:redis /data/sentinel.conf
+    die_if_error "Error changing sentinel conf permission"
 
 }
 
 configure_graylog()
 {
-    echo "\$EscapeControlCharactersOnReceive off" >> /etc/rsyslog.d/dbaaslog.conf
-    sed -i "\$a \$template db-log, \"<%PRI%>%TIMESTAMP% %HOSTNAME% %syslogtag%%msg%	tags: INFRA,DBAAS,REDIS,{{DATABASENAME}}\"" /etc/rsyslog.d/dbaaslog.conf
-    sed -i "\$a*.*                    @{{ GRAYLOG_ENDPOINT }}; db-log" /etc/rsyslog.d/dbaaslog.conf
+    if [ $(grep -c CentOS /etc/redhat-release) -ne 0 ]
+    then
+        sed -i "\$a \$EscapeControlCharactersOnReceive off" /etc/rsyslog.conf
+        sed -i "\$a \$template db-log, \"<%PRI%>%TIMESTAMP% %HOSTNAME% %syslogtag%%msg%	tags: INFRA,DBAAS,REDIS,{{DATABASENAME}}\"" /etc/rsyslog.conf
+        sed -i "\$a*.*                    @{{ GRAYLOG_ENDPOINT }}; db-log" /etc/rsyslog.conf
+    else
+        echo "\$EscapeControlCharactersOnReceive off" >> /etc/rsyslog.d/dbaaslog.conf
+        sed -i "\$a \$template db-log, \"<%PRI%>%TIMESTAMP% %HOSTNAME% %syslogtag%%msg%	tags: INFRA,DBAAS,REDIS,{{DATABASENAME}}\"" /etc/rsyslog.d/dbaaslog.conf
+        sed -i "\$a*.*                    @{{ GRAYLOG_ENDPOINT }}; db-log" /etc/rsyslog.d/dbaaslog.conf
+    fi
     /etc/init.d/rsyslog restart
 }
 
