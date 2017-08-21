@@ -1008,6 +1008,7 @@ daemonize yes
 # default. You can specify a custom pid file location here.
 pidfile /data/sentinel.pid
 
+protected-mode "no"
 
 EOF_DBAAS_CONFIGSENTINELFILE
 ) > /data/sentinel.conf
@@ -1020,9 +1021,16 @@ EOF_DBAAS_CONFIGSENTINELFILE
 
 configure_graylog()
 {
-    sed -i "\$a \$EscapeControlCharactersOnReceive off" /etc/rsyslog.conf
-    sed -i "\$a \$template db-log, \"<%PRI%>%TIMESTAMP% %HOSTNAME% %syslogtag%%msg%	tags: INFRA,DBAAS,REDIS,{{DATABASENAME}}\"" /etc/rsyslog.conf
-    sed -i "\$a*.*                    @{{ GRAYLOG_ENDPOINT }}; db-log" /etc/rsyslog.conf
+    if [ $(grep -c CentOS /etc/redhat-release) -ne 0 ]
+    then
+        sed -i "\$a \$EscapeControlCharactersOnReceive off" /etc/rsyslog.conf
+        sed -i "\$a \$template db-log, \"<%PRI%>%TIMESTAMP% %HOSTNAME% %syslogtag%%msg%	tags: INFRA,DBAAS,REDIS,{{DATABASENAME}}\"" /etc/rsyslog.conf
+        sed -i "\$a*.*                    @{{ GRAYLOG_ENDPOINT }}; db-log" /etc/rsyslog.conf
+    else
+        echo "\$EscapeControlCharactersOnReceive off" >> /etc/rsyslog.d/dbaaslog.conf
+        sed -i "\$a \$template db-log, \"<%PRI%>%TIMESTAMP% %HOSTNAME% %syslogtag%%msg%	tags: INFRA,DBAAS,REDIS,{{DATABASENAME}}\"" /etc/rsyslog.d/dbaaslog.conf
+        sed -i "\$a*.*                    @{{ GRAYLOG_ENDPOINT }}; db-log" /etc/rsyslog.d/dbaaslog.conf
+    fi
     /etc/init.d/rsyslog restart
 }
 
