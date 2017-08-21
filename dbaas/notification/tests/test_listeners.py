@@ -124,3 +124,14 @@ class SaveTaskTestCase(TestCase):
 
         args = mock_conn.hmset.call_args[0]
         self.assertEqual(args[1]['read'], 0)
+
+    def test_change_task_status(self, mock_conn):
+
+        mock_conn = mock_conn()
+        self.default_expected_params['task_status'] = 'WAITING'
+        mock_conn.hgetall.return_value = self.default_expected_params
+
+        self._simulate_signal()
+
+        args = mock_conn.hmset.call_args[0]
+        self.assertEqual(args[1]['task_status'], 'SUCCESS')
