@@ -45,12 +45,15 @@ class ReplicateAcls2NewInstance(ACLStep):
             is_active=True, read_only=False
         ).first()
 
+    @property
+    def destination_instance(self):
+        return self.instance
 
     def do(self):
         replicate_acl_for(
             database=self.database,
             old_ip=self.source_instance.address,
-            new_ip=self.instance.address
+            new_ip=self.destination_instance.address
         )
 
 
@@ -58,6 +61,10 @@ class ReplicateAclsMigration(ReplicateAcls2NewInstance):
 
     @property
     def source_instance(self):
+        return self.instance
+
+    @property
+    def destination_instance(self):
         return self.instance.future_instance
 
 
