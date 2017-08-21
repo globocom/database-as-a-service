@@ -8,6 +8,7 @@ from logical.models import Database
 
 class TaskSerializer(serializers.ModelSerializer):
     database = serializers.SerializerMethodField('get_database')
+    rollback = serializers.SerializerMethodField('had_rollback')
 
     class Meta:
         model = TaskHistory
@@ -22,8 +23,14 @@ class TaskSerializer(serializers.ModelSerializer):
             'user',
             'created_at',
             'task_name',
-            'database'
+            'database',
+            'rollback',
         )
+
+    def had_rollback(self, task):
+        # TODO: see if do details.lower() is expensive
+        return (task.task_name != 'notification.tasks.destroy_database' and
+                'rollback step' in task.details.lower())
 
     def get_database(self, task):
         if task.object_class == Database._meta.db_table:
