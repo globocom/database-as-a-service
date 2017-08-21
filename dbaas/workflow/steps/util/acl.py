@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from workflow.steps.util.base import BaseInstanceStep
+from base import BaseInstanceStep
 from dbaas_aclapi.tasks import replicate_acl_for
 from dbaas_aclapi.acl_base_client import AclClient
 from dbaas_aclapi import helpers
@@ -61,11 +61,11 @@ class ReplicateAclsMigration(ReplicateAcls2NewInstance):
 
     @property
     def source_instance(self):
-        return self.instance
+        return self.host.future_host
 
     @property
     def destination_instance(self):
-        return self.instance.future_instance
+        return self.host
 
 
 class BindNewInstance(ACLStep):
