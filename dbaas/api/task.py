@@ -3,7 +3,7 @@ from __future__ import absolute_import, unicode_literals
 from rest_framework import viewsets, serializers, permissions
 from rest_framework import filters
 from notification.models import TaskHistory
-from logical.models import Database
+from logical.models import Database, DatabaseHistory
 
 
 class TaskSerializer(serializers.ModelSerializer):
@@ -33,6 +33,24 @@ class TaskSerializer(serializers.ModelSerializer):
                 'rollback step' in task.details.lower())
 
     def get_database(self, task):
+        def make_dict_from_model(instance):
+            engine = instance.databaseinfra.engine
+            return {
+                'name': instance.name,
+                'environment': instance.environment.name,
+                'engine': '{} {}'.format(
+                    engine.engine_type.name,
+                    engine.version
+                )
+            }
+
+        def make_dict_from_history(instance):
+            return {
+                'name': instance.name,
+                'environment': instance.environment,
+                'engine': instance.engine
+            }
+
         if task.object_class == Database._meta.db_table:
             try:
                 database = (
@@ -45,19 +63,16 @@ class TaskSerializer(serializers.ModelSerializer):
                     ).get(id=task.object_id)
                 )
             except Database.DoesNotExist:
-                return None
-        else:
-            return None
+                try:
+                    database_history = DatabaseHistory.objects.get(database_id=task.object_id)
+                except DatabaseHistory.DoesNotExist:
+                    return None
+                else:
+                    return make_dict_from_history(database_history)
+            else:
+                return make_dict_from_model(database)
 
-        engine = database.databaseinfra.engine
-        return {
-            'name': database.name,
-            'environment': database.environment.name,
-            'engine': '{} {}'.format(
-                engine.engine_type.name,
-                engine.version
-            )
-        }
+        return None
 
 
 class TaskAPI(viewsets.ReadOnlyModelViewSet):
@@ -66,6 +81,20 @@ class TaskAPI(viewsets.ReadOnlyModelViewSet):
     Task API
     """
 
+    chg_tasks_names = [
+        'notification.tasks.destroy_database',
+        'notification.tasks.create_database',
+        'notification.tasks.destroy_database',
+        'notification.tasks.resize_database',
+        'notification.tasks.clone_database',
+        'notification.tasks.database_disk_resize',
+        'notification.tasks.add_instances_to_database',
+        'notification.tasks.remove_readonly_instance',
+        'database_disk_resize',
+        'backup.tasks.restore_snapshot',
+        'notification.tasks.upgrade_mongodb_24_to_30',
+        'notification.tasks.upgrade_database'
+    ]
     model = TaskHistory
     serializer_class = TaskSerializer
     permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
@@ -87,6 +116,8 @@ class TaskAPI(viewsets.ReadOnlyModelViewSet):
         params = self.request.GET.dict()
         filter_params = {}
         for k, v in params.iteritems():
-            if k.split('__')[0] in self.filter_fields:
+            if k == 'exclude_system_tasks':
+                filter_params['task_name__in'] = self.chg_tasks_names
+            elif k.split('__')[0] in self.filter_fields:
                 filter_params[k] = v
         return self.model.objects.filter(**filter_params)
