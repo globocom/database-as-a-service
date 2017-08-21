@@ -54,6 +54,43 @@ class DatabaseAliveManager(models.Manager):
         return Database.objects.filter(is_in_quarantine=False)
 
 
+class DatabaseHistory(models.Model):
+    database_id = models.IntegerField(db_index=True)
+    environment = models.CharField(
+        verbose_name=_("environment"), max_length=20
+    )
+    engine = models.CharField(
+        verbose_name=_("engine"), max_length=100
+    )
+    name = models.CharField(
+        verbose_name=_("name"), max_length=200
+    )
+    project = models.CharField(
+        verbose_name=_("project"), max_length=100
+    )
+    team = models.CharField(
+        verbose_name=_("team"), max_length=100
+    )
+    databaseinfra_name = models.CharField(
+        verbose_name=_("databaseinfra_name"), max_length=100
+    )
+    plan = models.CharField(
+        verbose_name=_("plan"), max_length=100
+    )
+    disk_size_kb = models.PositiveIntegerField(verbose_name=_("Size KB"))
+    has_persistence = models.BooleanField(
+        verbose_name="Disk persistence", default=True
+    )
+
+    created_at = models.DateTimeField(
+        verbose_name=_("created_at"))
+    deleted_at = models.DateTimeField(
+        verbose_name=_("deleted_at"), auto_now_add=True)
+    description = models.TextField(
+        verbose_name=_("Description"), null=True, blank=True
+    )
+
+
 class Database(BaseModel):
     DEAD = 0
     ALIVE = 1
@@ -208,6 +245,28 @@ class Database(BaseModel):
             for credential in self.credentials.all():
                 instance = factory_for(self.databaseinfra)
                 instance.remove_user(credential)
+
+            engine = self.databaseinfra.engine
+            databaseinfra = self.databaseinfra
+
+            DatabaseHistory.objects.create(
+                database_id=self.id,
+                name=self.name,
+                description=self.description,
+                engine='{} {}'.format(
+                    engine.engine_type.name,
+                    engine.version
+                ),
+                project=self.project.name,
+                team=self.team.name,
+                databaseinfra_name=databaseinfra.name,
+                plan=databaseinfra.plan.name,
+                disk_size_kb=databaseinfra.disk_offering.size_kb,
+                has_persistence=databaseinfra.plan.has_persistence,
+                environment=self.environment.name,
+                created_at=self.created_at
+            )
+
             super(Database, self).delete(*args, **kwargs)
 
         else:
