@@ -219,7 +219,7 @@ class DatabaseTestCase(TestCase):
         deleted_databases = DatabaseHistory.objects.filter(database_id=database_id)
         self.assertEqual(len(deleted_databases), 1)
         deleted_database = deleted_databases[0]
-        self.assertEqual(deleted_database.id, database_id)
+        self.assertEqual(deleted_database.database_id, database_id)
         self.assertEqual(deleted_database.name, 'test_fake_name')
         self.assertEqual(deleted_database.description, '__test__ fake desc')
         self.assertEqual(deleted_database.engine, '__test__ fake engine type v1.2.3')
