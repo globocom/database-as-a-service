@@ -372,6 +372,8 @@ def restore_snapshot(self, database, snapshot, user, task_history):
         for instance in not_primary_instances:
             not_primary_hosts.append(instance.hostname)
 
+        tasks.disable_zabbix_alarms(database)
+
         workflow_dict = build_dict(databaseinfra=databaseinfra,
                                    database=database,
                                    snapshot_id=snapshot_id,
