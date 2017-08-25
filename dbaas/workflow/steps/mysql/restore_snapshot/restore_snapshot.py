@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
 from util import full_stack
-from dbaas_nfsaas.models import HostAttr
+from dbaas_nfsaas.models import HostAttr, Group
 from workflow.steps.util.base import BaseStep
 from workflow.exceptions.error_codes import DBAAS_0021
 from workflow.steps.util.nfsaas_utils import restore_snapshot, \
@@ -61,6 +61,7 @@ class RestoreSnapshot(BaseStep):
                 new_disk.nfsaas_path_host = new_export_path_host
                 new_disk.is_active = False
                 new_disk.nfsaas_size_kb = old_disk.nfsaas_size_kb
+                new_disk.group = Group.objects.get(infra=databaseinfra)
                 new_disk.save()
 
             return True
