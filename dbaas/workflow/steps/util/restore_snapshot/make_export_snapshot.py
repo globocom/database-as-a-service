@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import logging
+from dbaas_cloudstack.models import HostAttr as CsHostAttr
 from util import full_stack
+from backup.tasks import mysql_binlog_save
 from workflow.steps.util.base import BaseStep
 from workflow.exceptions.error_codes import DBAAS_0021
 from workflow.steps.util.restore_snapshot import make_host_backup
@@ -47,3 +49,22 @@ class MakeExportSnapshot(BaseStep):
             workflow_dict['exceptions']['traceback'].append(traceback)
 
             return False
+
+
+class MySQLSaveBinlogPosition(BaseStep):
+
+    def __unicode__(self):
+        return "Saving bing log position..."
+
+    def do(self, workflow_dict):
+        for host_and_export in workflow_dict['hosts_and_exports']:
+            instance = host_and_export['host'].instances.first()
+            driver = workflow_dict['database'].infra.get_driver()
+            client = driver.get_client(instance)
+            host = CsHostAttr.objects.get(host=instance.hostname)
+            mysql_binlog_save(client, instance, host)
+
+        return True
+
+    def undo(self, workflow_dict):
+        return True
