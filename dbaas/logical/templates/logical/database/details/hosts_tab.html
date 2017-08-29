@@ -37,10 +37,9 @@
             {% if is_dba %}
               <a target="_blank" href="{% url 'admin:physical_host_change' host.id %}">{{ host.description }}</a>
               {% if host.switch_database %}
-                  <a class="action_button btn btn-warning" href="{{ host.id }}/switch/"
-                    data-toggle="tooltip" data-placement="top" title="Switch {{ database.engine.write_node_description }}"
-                    onclick="return confirm('Are you sure?')"
-                  ><i class="icon-refresh"></i></a>
+                  <a class="action_button btn btn-warning" data-toggle="modal" id="switch_host_btn" data-target="#switch_host_modal" data-host-id="{{host.id}}">
+                    <i class="icon-refresh"></i>
+                  </a>
               {% endif %}
             {% else %}
               {{ host.description }}
@@ -108,6 +107,38 @@
 {% endblock %}
 
 {% block database_button_save %}
+
+<!-- Modal -->
+<div class="modal fade" id="switch_host_modal" tabindex="-1" role="dialog" aria-labelledby="delete modal" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <h4 class="modal-title">Changing core host</h4>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="modal-body">
+        <div role="form">
+          <div class="form-group">
+            <label for="id_database_name">
+              Are you sure you want to switch the core host?
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">No</button>
+        <a class="action_button btn btn-primary" id="confirm_switch_host_button">Yes</a>
+      </div>
+    </div>
+  </div>
+</div>
+
 {% endblock %}
 
 {% block js_footer %}
@@ -115,7 +146,7 @@
 
 <script type="text/javascript" src="{% static 'js/hosts.js' %}"></script>
 <script>
-  jQuery(document).ready(function($) {
+  django.jQuery(document).ready(function($) {
     $("#id_add_read_qtd").on("change", function() {
       btn = document.getElementById("add_read_only_btn");
       btn.disabled = $(this).val() == "";
@@ -125,8 +156,13 @@
         btn.className = 'action_button btn btn-primary';
       }
     });
-    $("#id_add_read_qtd").change()
+    $("#id_add_read_qtd").change();
 
-  })
+    var $switchHost = $("#switch_host_btn");
+    $switchHost.popover({trigger: "hover", placement: "right", content: "Switch host"});
+
+    $("#confirm_switch_host_button").attr("href", $switchHost.attr("data-host-id")+"/switch/");
+
+  });
 </script>
 {% endblock %}
