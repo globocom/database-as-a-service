@@ -249,23 +249,26 @@ class Database(BaseModel):
             engine = self.databaseinfra.engine
             databaseinfra = self.databaseinfra
 
-            DatabaseHistory.objects.create(
-                database_id=self.id,
-                name=self.name,
-                description=self.description,
-                engine='{} {}'.format(
-                    engine.engine_type.name,
-                    engine.version
-                ),
-                project=self.project.name,
-                team=self.team.name,
-                databaseinfra_name=databaseinfra.name,
-                plan=databaseinfra.plan.name,
-                disk_size_kb=databaseinfra.disk_offering.size_kb,
-                has_persistence=databaseinfra.plan.has_persistence,
-                environment=self.environment.name,
-                created_at=self.created_at
-            )
+            try:
+                DatabaseHistory.objects.create(
+                    database_id=self.id,
+                    name=self.name,
+                    description=self.description,
+                    engine='{} {}'.format(
+                        engine.engine_type.name,
+                        engine.version
+                    ),
+                    project=self.project.name if self.project else '',
+                    team=self.team.name if self.team else '',
+                    databaseinfra_name=databaseinfra.name,
+                    plan=databaseinfra.plan.name,
+                    disk_size_kb=databaseinfra.disk_offering.size_kb,
+                    has_persistence=databaseinfra.plan.has_persistence,
+                    environment=self.environment.name,
+                    created_at=self.created_at
+                )
+            except Exception, err:
+                LOG.error('Erro ao criar o database history para "o database {}: {}'.format(self.id, err))
 
             super(Database, self).delete(*args, **kwargs)
 
