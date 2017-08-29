@@ -54,7 +54,7 @@
           </option>
         {% endfor %}
       </select>
-      <input type="submit" value="Resize" name="disk_resize" id="disk_resize_btn" onclick="return confirm('Are you sure?')"/>
+      <button data-toggle="modal" id="disk_resize_btn" data-target="#resize_disk">Resize</button>
     </div>
   </div>
   <div class="control-group">
@@ -139,6 +139,37 @@
       <div class="modal-footer">
         <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
         <input type="submit" value="Resize" name="vm_resize" id="id_resize_vm_btn_modal"/>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="resize_disk" tabindex="-1" role="dialog" aria-labelledby="delete modal" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <h4 class="modal-title">Resizing the disk</h4>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="modal-body">
+        <div role="form">
+          <div class="form-group">
+            <label for="id_database_name">
+              Are you sure you want to resize the disk?
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">No</button>
+        <button type="submit" value="Resize" name="disk_resize" class="btn btn-primary">Yes</button>
       </div>
     </div>
   </div>
