@@ -28,9 +28,14 @@ class TaskSerializer(serializers.ModelSerializer):
         )
 
     def had_rollback(self, task):
+        if not task.details:
+            return False
+
+        if task.task_name == 'notification.tasks.destroy_database':
+            return False
+
         # TODO: see if do details.lower() is expensive
-        return (task.task_name != 'notification.tasks.destroy_database' and
-                'rollback step' in task.details.lower())
+        return 'rollback step' in task.details.lower()
 
     def get_database(self, task):
         def make_dict_from_model(instance):
