@@ -122,69 +122,10 @@
   </div>
 </div>
 
-<!-- Modal -->
-<div class="modal fade" id="save_changes" tabindex="-1" role="dialog" aria-labelledby="delete modal" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <!-- Modal Header -->
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal">
-          <span aria-hidden="true">&times;</span>
-        </button>
-        <h4 class="modal-title">Saving changes</h4>
-      </div>
 
-      <!-- Modal Body -->
-      <div class="modal-body">
-        <div role="form">
-          <div class="form-group">
-            <label for="id_database_name">
-              Do you want to save the changes made to the parameters?
-            </label>
-          </div>
-        </div>
-      </div>
+{% include "logical/database/details/confirmation_modal.html" with modal_id="save_changes" confirmation_message="Do you want to save the changes made to the parameters?" box_title="Saving changes" button_type="submit" button_value="Apply" button_name="change_parameter_btn_modal" %}
 
-      <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal">No</button>
-        <button type="submit" value="Apply" name="change_parameter_btn_modal" class="btn btn-primary">Yes</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-
-
-<!-- Modal -->
-<div class="modal fade" id="retry_save_changes" tabindex="-1" role="dialog" aria-labelledby="delete modal" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <!-- Modal Header -->
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal">
-          <span aria-hidden="true">&times;</span>
-        </button>
-        <h4 class="modal-title">Saving changes</h4>
-      </div>
-
-      <!-- Modal Body -->
-      <div class="modal-body">
-        <div role="form">
-          <div class="form-group">
-            <label for="id_database_name">
-              Do you want to try saving the changes made to the parameters again?
-            </label>
-          </div>
-        </div>
-      </div>
-
-      <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal">No</button>
-        <button type="submit" value="Retry Change Parameters" name="retry_update_parameters" class="btn btn-primary">Yes</button>
-      </div>
-    </div>
-  </div>
-</div>
+{% include "logical/database/details/confirmation_modal.html" with modal_id="retry_save_changes" confirmation_message="Do you want to try saving the changes made to the parameters again?" box_title="Saving changes" button_type="submit" button_value="Retry Change Parameters" button_name="retry_update_parameters" %}
 
 
 {% endblock %}

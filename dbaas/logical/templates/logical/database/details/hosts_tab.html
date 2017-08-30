@@ -108,36 +108,8 @@
 
 {% block database_button_save %}
 
-<!-- Modal -->
-<div class="modal fade" id="switch_host_modal" tabindex="-1" role="dialog" aria-labelledby="delete modal" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <!-- Modal Header -->
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal">
-          <span aria-hidden="true">&times;</span>
-        </button>
-        <h4 class="modal-title">Changing core host</h4>
-      </div>
 
-      <!-- Modal Body -->
-      <div class="modal-body">
-        <div role="form">
-          <div class="form-group">
-            <label for="id_database_name">
-              Are you sure you want to switch the core host?
-            </label>
-          </div>
-        </div>
-      </div>
-
-      <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal">No</button>
-        <a class="action_button btn btn-primary" id="confirm_switch_host_button">Yes</a>
-      </div>
-    </div>
-  </div>
-</div>
+{% include "logical/database/details/confirmation_modal.html" with tag_type="a" modal_id="switch_host_modal" confirmation_message="Are you sure you want to switch the core host?" box_title="Changing core host" button_class="btn btn-primary btn-reset-password" id_optional="id=confirm_switch_host_button" %}
 
 {% endblock %}
 
