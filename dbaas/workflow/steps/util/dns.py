@@ -1,4 +1,6 @@
+from dbaas_dnsapi.models import HOST, INSTANCE
 from dbaas_dnsapi.provider import DNSAPIProvider
+from dbaas_dnsapi.utils import add_dns_record
 from base import BaseInstanceStep
 
 
@@ -77,3 +79,38 @@ class ChangeEndpoint(DNSStep):
                 old_host.address, self.host.address
             )
             self.infra.save()
+
+
+class CreateDNS(DNSStep):
+
+    def __unicode__(self):
+        return "Creating DNS..."
+
+    def do(self):
+        host = self.instance.hostname
+        host.hostname = add_dns_record(
+            databaseinfra=self.infra,
+            name=self.instance.vm_name,
+            ip=host.address,
+            type=HOST
+        )
+        host.save()
+
+        self.instance.dns = add_dns_record(
+            databaseinfra=self.infra,
+            name=self.instance.vm_name,
+            ip=self.instance.address,
+            type=INSTANCE
+        )
+        self.instance.save()
+
+        self.provider.create_database_dns_for_ip(
+            databaseinfra=self.infra,
+            ip=self.instance.address
+        )
+
+    def undo(self):
+        self.provider.remove_databases_dns_for_ip(
+            databaseinfra=self.infra,
+            ip=self.instance.address
+        )
