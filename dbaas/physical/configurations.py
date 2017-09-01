@@ -1,6 +1,7 @@
 # TODO: Move this rules to model or be smarter
 import sys
 import inspect
+from models import TopologyParameterCustomValue
 
 
 def configuration_factory(databaseinfra, memory_size):
@@ -68,6 +69,19 @@ class ConfigurationBase(object):
         if not value:
             value = default
         return ParameterObject(value, default)
+
+    def __getattribute__(self, item):
+        if item == 'databaseinfra':
+            return object.__getattribute__(self, item)
+
+        topology = self.databaseinfra.plan.replication_topology
+        try:
+            attribute = TopologyParameterCustomValue.objects.get(
+                topology=topology, parameter__name=item
+            )
+            return object.__getattribute__(self, attribute)
+        except TopologyParameterCustomValue.DoesNotExist:
+            return object.__getattribute__(self, item)
 
 
 class ConfigurationRedis(ConfigurationBase):
