@@ -11,7 +11,7 @@ def configuration_factory(databaseinfra, memory_size):
     raise NotImplementedError
 
 
-def confiration_exists(engine_name, parameter_name):
+def configuration_exists(engine_name, parameter_name):
     for name, obj in inspect.getmembers(sys.modules[__name__]):
         if inspect.isclass(obj) and '__ENGINE__' in obj.__dict__:
             if obj.__ENGINE__ == engine_name:
