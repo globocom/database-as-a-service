@@ -8,8 +8,7 @@ from dbaas_credentials.models import CredentialType
 from dbaas_cloudstack.models import LastUsedBundleDatabaseInfra, LastUsedBundle
 from maintenance.models import DatabaseResize
 from util import check_ssh, get_credentials_for
-from workflow.steps.util.base import BaseInstanceStep, \
-    BaseInstanceStepMigration
+from base import BaseInstanceStep, BaseInstanceStepMigration
 
 LOG = logging.getLogger(__name__)
 
@@ -190,7 +189,8 @@ class CreateVirtualMachine(VmStep):
 
         vm_credentials = get_credentials_for(
             environment=self.environment,
-            credential_type=CredentialType.VM)
+            credential_type=CredentialType.VM
+        )
         host_attr = HostAttr()
         host_attr.vm_id = vm_id
         host_attr.host = host
@@ -203,7 +203,10 @@ class CreateVirtualMachine(VmStep):
         self.instance.hostname = host
         self.instance.address = host.address
         self.instance.port = self.driver.get_default_database_port()
-        self.instance.instance_type = self.driver.get_default_instance_type()
+
+        if not self.instance.instance_type:
+            self.instance.instance_type = self.driver.get_default_instance_type()
+
         self.instance.read_only = self.read_only_instance
         self.instance.save()
 
@@ -214,7 +217,7 @@ class CreateVirtualMachine(VmStep):
         self.infra.save()
 
     def get_next_bundle(self):
-        raise NotImplementedError
+        return LastUsedBundleDatabaseInfra.get_next_infra_bundle(self.infra)
 
     @property
     def vm_name(self):
@@ -287,11 +290,6 @@ class CreateVirtualMachineHorizontalElasticity(CreateVirtualMachine):
     @property
     def read_only_instance(self):
         return True
-
-    def get_next_bundle(self):
-        bundle = LastUsedBundleDatabaseInfra.get_next_infra_bundle(
-            databaseinfra=self.infra)
-        return bundle
 
 
 class MigrationCreateNewVM(CreateVirtualMachine):
