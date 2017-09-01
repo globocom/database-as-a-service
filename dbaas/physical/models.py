@@ -987,6 +987,22 @@ class DatabaseInfraParameter(BaseModel):
                     obj.save()
 
 
+class TopologyParameterCustomValue(BaseModel):
+    topology = models.ForeignKey(
+        ReplicationTopology, related_name="param_custom_values"
+    )
+    parameter = models.ForeignKey(
+        Parameter, related_name="topology_custom_values"
+    )
+    attr_name = models.CharField(
+        verbose_name='Custom engine attribute',
+        max_length=200
+    )
+
+    class Meta():
+        unique_together = ('topology', 'parameter')
+
+
 ##########################################################################
 # SIGNALS
 ##########################################################################

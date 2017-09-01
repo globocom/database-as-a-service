@@ -280,6 +280,15 @@ class DatabaseMaintenanceTask(BaseModel):
     def is_running(self):
         return self.status == self.RUNNING
 
+    def save(self, *args, **kwargs):
+        super(DatabaseMaintenanceTask, self).save(*args, **kwargs)
+        older = self.__class__.objects.filter(
+            database=self.database
+        ).exclude(
+            id=self.id
+        )
+        older.update(can_do_retry=False)
+
     class Meta:
         abstract = True
 
@@ -301,14 +310,6 @@ class DatabaseUpgrade(DatabaseMaintenanceTask):
         Plan, verbose_name="Target", null=False, unique=False,
         related_name="database_upgrades_target"
     )
-
-    def save(self, *args, **kwargs):
-        super(DatabaseUpgrade, self).save(*args, **kwargs)
-
-        older_maintenances = DatabaseUpgrade.objects.filter(
-            database=self.database, source_plan=self.source_plan
-        ).exclude(id=self.id)
-        older_maintenances.update(can_do_retry=False)
 
     def __unicode__(self):
         return "{} upgrade".format(self.database.name)
@@ -332,14 +333,6 @@ class DatabaseResize(DatabaseMaintenanceTask):
         related_name="database_resizes_target"
     )
 
-    def save(self, *args, **kwargs):
-        super(DatabaseResize, self).save(*args, **kwargs)
-
-        older_maintenances = DatabaseResize.objects.filter(
-            database=self.database
-        ).exclude(id=self.id)
-        older_maintenances.update(can_do_retry=False)
-
     def __unicode__(self):
         return "{} resize".format(self.database.name)
 
@@ -358,14 +351,6 @@ class DatabaseChangeParameter(DatabaseMaintenanceTask):
         TaskHistory, verbose_name="Task History",
         null=False, unique=False, related_name="database_change_parameters"
     )
-
-    def save(self, *args, **kwargs):
-        super(DatabaseChangeParameter, self).save(*args, **kwargs)
-
-        older_maintenances = DatabaseChangeParameter.objects.filter(
-            database=self.database
-        ).exclude(id=self.id)
-        older_maintenances.update(can_do_retry=False)
 
     def __unicode__(self):
         return "{} change parameters".format(self.database.name)
