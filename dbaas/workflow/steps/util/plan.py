@@ -97,6 +97,16 @@ class PlanStep(BaseInstanceStep):
             )
 
 
+class PlanStepNewInfra(PlanStep):
+
+    @property
+    def database(self):
+        from logical.models import Database
+        database = Database()
+        database.name = self.infra.databases_create.last().name
+        return database
+
+
 class PlanStepUpgrade(PlanStep):
 
     @property
@@ -136,6 +146,14 @@ class InitializationForUpgrade(Initialization, PlanStepUpgrade):
 
 
 class ConfigureForUpgrade(Configure, PlanStepUpgrade):
+    pass
+
+
+class InitializationForNewInfra(Initialization, PlanStepNewInfra):
+    pass
+
+
+class ConfigureForNewInfra(Configure, PlanStepNewInfra):
     pass
 
 
