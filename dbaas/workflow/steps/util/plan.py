@@ -96,6 +96,8 @@ class PlanStep(BaseInstanceStep):
                 )
             )
 
+        return output
+
 
 class PlanStepNewInfra(PlanStep):
 
