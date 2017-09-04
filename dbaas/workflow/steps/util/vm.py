@@ -5,7 +5,8 @@ from django.core.exceptions import ObjectDoesNotExist
 from dbaas_cloudstack.models import HostAttr, PlanAttr
 from dbaas_cloudstack.provider import CloudStackProvider
 from dbaas_credentials.models import CredentialType
-from dbaas_cloudstack.models import LastUsedBundleDatabaseInfra, LastUsedBundle
+from dbaas_cloudstack.models import LastUsedBundleDatabaseInfra, \
+    LastUsedBundle, DatabaseInfraOffering
 from maintenance.models import DatabaseResize
 from util import check_ssh, get_credentials_for
 from base import BaseInstanceStep, BaseInstanceStepMigration
@@ -227,6 +228,15 @@ class CreateVirtualMachine(VmStep):
     def cs_offering(self):
         return self.infra.cs_dbinfra_offering.get().offering
 
+    def register_infra_offering(self):
+        try:
+            DatabaseInfraOffering.objects.get(databaseinfra=self.infra)
+        except DatabaseInfraOffering.DoesNotExist:
+            DatabaseInfraOffering(
+                offering=self.cs_offering,
+                databaseinfra=self.infra
+            ).save()
+
     def deploy_vm(self, bundle):
         LOG.info("VM : {}".format(self.vm_name))
 
@@ -257,6 +267,7 @@ class CreateVirtualMachine(VmStep):
         self.create_host_attr(host=host, vm_id=vm_id, bundle=bundle)
         self.create_instance(host=host)
         self.update_databaseinfra_last_vm_created()
+        self.register_infra_offering()
 
     def undo(self):
         from django.core.exceptions import ObjectDoesNotExist
@@ -284,6 +295,12 @@ class CreateVirtualMachine(VmStep):
     def read_only_instance(self):
         return False
 
+
+class CreateVirtualMachineNewInfra(CreateVirtualMachine):
+
+    @property
+    def cs_offering(self):
+        return PlanAttr.objects.get(plan=self.plan).get_stronger_offering()
 
 class CreateVirtualMachineHorizontalElasticity(CreateVirtualMachine):
 
