@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
+import logging
+from datetime import datetime
 from time import sleep
 from dbaas_cloudstack.models import HostAttr
-from workflow.steps.util.restore_snapshot import \
-    use_database_initialization_script
+from logical.models import Database
 from util import build_context_script, exec_remote_command
 from util import exec_remote_command_host
 from workflow.steps.mongodb.util import build_change_oplogsize_script
 from workflow.steps.util.base import BaseInstanceStep
-import logging
+from restore_snapshot import use_database_initialization_script
 
 LOG = logging.getLogger(__name__)
 
@@ -331,3 +332,51 @@ class SetSlavesMigration(SetSlave):
 
             client = self.infra.get_driver().get_client(instance)
             client.slaveof(master.address, master.port)
+
+
+class Create(DatabaseStep):
+
+    def __unicode__(self):
+        return "Creating database..."
+
+    @property
+    def creating(self):
+        return self.infra.databases_create.last()
+
+    def do(self):
+        creating = self.creating
+
+        if creating.database:
+            return
+
+        database = Database.provision(creating.name, self.infra)
+        database.team = creating.team
+        database.description = creating.description
+        database.subscribe_to_email_events = creating.subscribe_to_email_events
+        database.is_protected = creating.is_protected
+        database.description = creating.description
+
+        if creating.project:
+            database.project = creating.project
+
+        database.save()
+
+        creating.database = database
+        creating.save()
+
+    def undo(self):
+        creating = self.creating
+        if not creating.database:
+            return
+
+        database = self.database
+        if not database.is_in_quarantine:
+            LOG.info("Putting Database in quarentine...")
+            database.is_in_quarantine = True
+            database.quarantine_dt = datetime.now().date()
+            database.subscribe_to_email_events = False
+            database.is_protected = False
+            database.save()
+
+        database.delete()
+        LOG.info("Database destroyed....")
