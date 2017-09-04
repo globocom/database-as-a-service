@@ -77,9 +77,9 @@ class ConfigurationBase(object):
         topology = self.databaseinfra.plan.replication_topology
         try:
             attribute = TopologyParameterCustomValue.objects.get(
-                topology=topology, parameter__name=item
+                topology=topology, parameter__name=item.replace("_", "-")
             )
-            return object.__getattribute__(self, attribute)
+            return object.__getattribute__(self, attribute.attr_name)
         except TopologyParameterCustomValue.DoesNotExist:
             return object.__getattribute__(self, item)
 
