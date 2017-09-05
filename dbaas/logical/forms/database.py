@@ -104,8 +104,9 @@ class DatabaseForm(models.ModelForm):
                 raise forms.ValidationError(
                     _("Invalid plan for selected environment."))
 
-            if Database.objects.filter(name=database_name,
-                                       environment=environment):
+            if Database.objects.filter(
+                    name=database_name, environment__name__contains=environment
+            ):
                 self._errors["name"] = self.error_class(
                     [_("this name already exists in the selected environment")])
                 del cleaned_data["name"]
