@@ -11,24 +11,25 @@ class BaseClusterStep(PlanStep):
 
     @property
     def cluster_command(self):
-        return 'redis-trib'
+        return 'redis-trib.rb'
 
     @property
     def cluster_create_command(self):
-        return 'yes yes | {{ CLUSTER_COMMAND }} create --replicas {{ CLUSTER_REPLICAS }} {% for address in CLUSTER_ADDRESSES %} {{ address }} {% endfor %}'
+        return 'yes yes | {{ CLUSTER_COMMAND }} create --password {{ PASSWORD }} --replicas {{ CLUSTER_REPLICAS }} {% for address in CLUSTER_ADDRESSES %} {{ address }} {% endfor %}'
 
     @property
     def cluster_check_command(self):
-        return '{{ CLUSTER_COMMAND }} check {{ CLUSTER_ADDRESS }}'
+        return '{{ CLUSTER_COMMAND }} check --password {{ PASSWORD }} {{ CLUSTER_ADDRESS }}'
 
     @property
     def cluster_info_command(self):
-        return '{{ CLUSTER_COMMAND }} info {{ CLUSTER_ADDRESS }}'
+        return '{{ CLUSTER_COMMAND }} info --password {{ PASSWORD }} {{ CLUSTER_ADDRESS }}'
 
     @property
     def script_variables(self):
         variables = {
-            'CLUSTER_COMMAND': self.cluster_command
+            'CLUSTER_COMMAND': self.cluster_command,
+            'PASSWORD': self.infra.password
         }
 
         variables.update(self.get_variables_specifics())
@@ -71,18 +72,9 @@ class CheckClusterStatus(BaseClusterStep):
 
     def do(self):
         output = self.run_script(self.cluster_check_command)
-        if '[OK] All nodes agree about slots configuration.' not in output:
-            raise EnvironmentError(
-                'Configuration is not right - {}'.format(output)
-            )
 
-        if '[OK] All 16384 slots covered.' not in output:
-            raise EnvironmentError(
-                'Configuration is not right - {}'.format(output)
-            )
+        assert '[OK] All nodes agree about slots configuration.' in str(output['stdout'])
+        assert '[OK] All 16384 slots covered.' in str(output['stdout'])
 
         output = self.run_script(self.cluster_info_command)
-        if '[OK] 0 keys in {} masters.'.format(self.masters) not in output:
-            raise EnvironmentError(
-                'Configuration is not right - {}'.format(output)
-            )
+        assert '[OK] 0 keys in {} masters.'.format(self.masters) in str(output['stdout'])
