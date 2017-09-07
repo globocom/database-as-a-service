@@ -443,3 +443,7 @@ class Redis(BaseDriver):
         future_master = all_instances[len(all_instances)/2]
         base_parameters.update(self.master_parameters(instance, future_master))
         return base_parameters
+
+    @classmethod
+    def name(cls):
+        return ['redis_single', 'redis_sentinel']

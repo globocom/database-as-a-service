@@ -85,3 +85,7 @@ class FakeDriver(BaseDriver):
 
     def change_default_pwd(self, instance):
         LOG.info('Change default password')
+
+    @classmethod
+    def name(cls):
+        return ['fake']
