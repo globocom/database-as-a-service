@@ -47,6 +47,10 @@ class MongoDBSingle(BaseMongoDB):
             ),
         }] + super(MongoDBSingle, self).get_upgrade_steps_final()
 
+    @property
+    def driver_name(self):
+        return 'mongodb_single'
+
 
 class MongoDBReplicaset(BaseMongoDB):
 
@@ -113,3 +117,7 @@ class MongoDBReplicaset(BaseMongoDB):
 
     def get_resize_oplog_steps_and_retry_steps_back(self):
         return self.get_resize_oplog_steps(), 0
+
+    @property
+    def driver_name(self):
+        return 'mongodb_replica_set'
