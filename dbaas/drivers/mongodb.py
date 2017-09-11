@@ -488,3 +488,7 @@ class MongoDB(BaseDriver):
             'IS_HA': False,
             'PORT': 27018
         }
+
+    @classmethod
+    def name(cls):
+        return ['mongodb_single', 'mongodb_replica_set']
