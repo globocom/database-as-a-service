@@ -76,9 +76,6 @@
       </tbody>
       </thead>
     </table>
-    {%if static_parameter %}
-      <p>* Static parameter, it will be necessary restart the database if changed.</p>
-    {% endif %}
 
   </div>
 </fieldset>
@@ -133,24 +130,37 @@
 {% block database_button_save %}
   {% if is_dba %}
 
-    {% if form_status  == PROTECTED or form_status == TASK_SUCCESS %}
-      <input type="submit" value="Edit" name="edit_parameters" id="id_edit_parameters_btn" class="btn btn-primary"/>
-    {% elif  form_status  == EDITABLE %}
-      <input type="submit" value="Save" name="save_parameters"
-        onclick="return confirm_msg();" class="btn btn-primary"
-        id="save_parameters"
-      />
-      <input type="submit" value="Cancel" name="calcel_edit_parameters"
-        id="id_calcel_edit_parameters_btn" class="btn btn-primary"
-      />
+    <div class="form-actions navbar navbar-fixed-bottom">
+        <div class="container">
+          <div class="pull-left save-options-box">
 
-    {% elif  form_status  == TASK_ERROR %}
-      <input type="submit" value="Retry Change Parameters"
-        name="retry_update_parameters" data-toggle="modal" data-target="#retry_save_changes"
-        class="btn btn-warning"
-      />
-      <p><a href="{% url 'admin:maintenance_databasechangeparameter_change' last_change_parameters.id %}" target='_blank'>Last change parameters</a> has an <b>error</b>, please check the <a href="{% url 'admin:notification_taskhistory_change' last_change_parameters.task.id %}" target='_blank'>task</a> and retry the database change parameters clicking in button above</p>
-    {% endif %}
+
+            {%if static_parameter %}
+              <p>* Static parameter, it will be necessary restart the database if changed.</p>
+            {% endif %}
+
+            {% if form_status  == PROTECTED or form_status == TASK_SUCCESS %}
+            <input type="submit" value="Edit" name="edit_parameters" id="id_edit_parameters_btn" class="btn btn-primary"/>
+          {% elif  form_status  == EDITABLE %}
+            <input type="submit" value="Save" name="save_parameters"
+              onclick="return confirm_msg();" class="btn btn-primary"
+              id="save_parameters"
+            />
+            <input type="submit" value="Cancel" name="calcel_edit_parameters"
+              id="id_calcel_edit_parameters_btn" class="btn btn-primary"
+            />
+
+          {% elif  form_status  == TASK_ERROR %}
+            <input type="submit" value="Retry Change Parameters"
+              name="retry_update_parameters" data-toggle="modal" data-target="#retry_save_changes"
+              class="btn btn-warning"
+            />
+            <p><a href="{% url 'admin:maintenance_databasechangeparameter_change' last_change_parameters.id %}" target='_blank'>Last change parameters</a> has an <b>error</b>, please check the <a href="{% url 'admin:notification_taskhistory_change' last_change_parameters.task.id %}" target='_blank'>task</a> and retry the database change parameters clicking in button above</p>
+          {% endif %}
+
+        </div>
+      </div>
+    </div>
   {% endif %}
 {% endblock %}
 
