@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
-from django.utils.translation import ugettext_lazy as _
-import re
+import inspect
+from util import get_replication_topology_instance
 
 __all__ = ['DriverFactory']
 
@@ -18,29 +18,25 @@ class DriverFactory(object):
 
     @classmethod
     def get_driver_class(cls, driver_name):
-        driver_name = driver_name.lower()
-        # TODO: import Engines dynamically
-        if re.match(r'^mongo.*', driver_name):
-            from .mongodb import MongoDB
-            return MongoDB
-        elif re.match(r'^mysql.*', driver_name):
-            from .mysqldb import MySQL
-            return MySQL
-        elif re.match(r'^redis.*', driver_name):
-            from .redis import Redis
-            return Redis
-        elif re.match(r'^fake.*', driver_name):
-            from .fake import FakeDriver
-            return FakeDriver
+        from drivers import base, fake, mongodb, mysqldb, redis
 
-        raise NotImplementedError()
+        for module in [fake, mongodb, mysqldb, redis]:
+            for name, klass in inspect.getmembers(module):
+                if not inspect.isclass(klass):
+                    continue
+
+                if not issubclass(klass, base.BaseDriver):
+                    continue
+
+                if driver_name in klass.name():
+                    return klass
+
+        raise NotImplementedError('No driver for {}'.format(driver_name))
 
     @classmethod
     def factory(cls, databaseinfra):
+        class_path = databaseinfra.plan.replication_topology.class_path
+        driver_name = get_replication_topology_instance(class_path).driver_name
 
-        if not (databaseinfra and databaseinfra.engine and databaseinfra.engine.engine_type):
-            raise TypeError(_("DatabaseInfra is not defined"))
-
-        driver_name = databaseinfra.engine.engine_type.name
         driver_class = cls.get_driver_class(driver_name)
         return driver_class(databaseinfra=databaseinfra)

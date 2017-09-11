@@ -207,3 +207,14 @@ class BaseTopology(object):
                 'workflow.steps.util.database.CheckIfSwitchMaster',
             )
         }]
+
+    @property
+    def driver_name(self):
+        raise NotImplementedError
+
+
+class FakeTestTopology(BaseTopology):
+
+    @property
+    def driver_name(self):
+        return 'fake'
