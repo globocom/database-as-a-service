@@ -68,14 +68,14 @@
       <p class="help-block">When marked, the disk will be resized automatically.</p>
     </div>
   </div>
-  {% if upgrade_mongo_24_to_30 %}
+  {% if upgrade_mongo_24_to_30 and database.databaseinfra.plan.replication_topology.can_upgrade_db %}
     <div class="control-group">
       <div class="control-label"><label>Engine upgrade:</label></div>
       <div class="controls">
         <a href="{{ database.get_mongodb_engine_version_upgrade_url }}" class="btn btn-primary" title="Start engine upgrade" onclick="return confirm('Are you sure?')">Migrate MongoDB 2.4 to 3.0</a>
       </div>
     </div>
-  {% elif can_do_upgrade %}
+  {% elif can_do_upgrade and database.databaseinfra.plan.replication_topology.can_upgrade_db %}
     <div class="control-group">
       <div class="control-label"><label>Engine upgrade:</label></div>
       <div class="controls">
