@@ -2,7 +2,6 @@
 from __future__ import absolute_import, unicode_literals
 import inspect
 from util import get_replication_topology_instance
-from drivers import base, fake, mongodb, mysqldb, redis
 
 __all__ = ['DriverFactory']
 
@@ -19,6 +18,8 @@ class DriverFactory(object):
 
     @classmethod
     def get_driver_class(cls, driver_name):
+        from drivers import base, fake, mongodb, mysqldb, redis
+
         for module in [fake, mongodb, mysqldb, redis]:
             for name, klass in inspect.getmembers(module):
                 if not inspect.isclass(klass):
