@@ -40,7 +40,8 @@
         <div class="controls">
           <button data-toggle="modal" id="id_restore_btn" data-target="#restore_snapshot">Restore</button>
           {% if is_dba %}
-            <a href="{% url 'admin:logical_database_make_backup' database.id %}" class="btn btn-primary" title="Make backup now" onclick="return confirm('Are you sure?')">Backup database now</a>
+            <button data-toggle="modal" id="id_backup_btn" data-target="#backup_database_modal" class="btn btn-primary"
+            href-link="{% url 'admin:logical_database_make_backup' database.id %}" >Backup database now</button>
             <button class='btn' data-toggle="modal" id="delete_snapshot_btn" data-target="#delete_snapshot">Delete selected</button>
           {% endif %}
         </div>
@@ -85,7 +86,7 @@
     <div class="control-group">
       <div class="control-label"></div>
       <div class="controls">
-        <input type="submit" value="Clone" name="database_clone" id="id_clone_btn" onclick="return confirm('Are you sure?')"/>
+        <button value="Clone" name="database_clone" id="id_clone_btn" data-toggle="modal" data-target="#clone_database_modal">Clone</button>
       </div>
     </div>
   </div>
@@ -185,6 +186,13 @@
     </div>
   </div>
 {% endif %}
+
+
+{% include "logical/database/details/confirmation_modal.html" with tag_type="a" modal_id="backup_database_modal" confirmation_message="Are you sure you want to create a new snapshot?" box_title="Make backup now" button_class="btn btn-primary" id_optional="id=confirm_backup_button" %}
+
+
+{% include "logical/database/details/confirmation_modal.html" with modal_id="clone_database_modal" confirmation_message="Are you sure you want to clone this database?" box_title="Cloning databse" button_type="submit" button_value="Clone" button_name="database_clone" id_optional="id=confirm_clone_btn" %}
+
 {% endblock %}
 
 
@@ -243,6 +251,10 @@
   }
 
   jQuery(document).ready(function($) {
+
+    var $backup_button = $("#id_backup_btn");
+    $("#confirm_backup_button").attr("href", $backup_button.attr("href-link"));
+
     $("#id_clone_name").keyup(function() {
       clone_btn_status();
     });
