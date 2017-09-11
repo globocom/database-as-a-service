@@ -33,7 +33,7 @@
       {% for host in instances_core %}
         <div class="control-label"><label>{{ host.status }}</label></div>
         <div class="controls">
-          <p class="readonly">
+          <p class="readonly" id="host_name_n{{ forloop.counter }}">
             {% if is_dba %}
               <a target="_blank" href="{% url 'admin:physical_host_change' host.id %}">{{ host.description }}</a>
               {% if host.switch_database %}
