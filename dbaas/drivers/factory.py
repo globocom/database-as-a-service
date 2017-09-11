@@ -2,7 +2,7 @@
 from __future__ import absolute_import, unicode_literals
 import inspect
 from util import get_replication_topology_instance
-from . import base, fake, mongodb, mysqldb, redis
+from drivers import base, fake, mongodb, mysqldb, redis
 
 __all__ = ['DriverFactory']
 
