@@ -202,6 +202,21 @@ class ReplicationTopology(BaseModel):
     has_horizontal_scalability = models.BooleanField(
         verbose_name="Horizontal Scalability", default=False
     )
+    can_resize_vm = models.BooleanField(
+        verbose_name="Can Resize VM", default=True
+    )
+    can_clone_db = models.BooleanField(
+        verbose_name="Can Clone DB", default=True
+    )
+    can_switch_master = models.BooleanField(
+        verbose_name="Can Switch Master", default=True
+    )
+    can_upgrade_db = models.BooleanField(
+        verbose_name="Can Upgrade DB", default=True
+    )
+    can_change_parameters = models.BooleanField(
+        verbose_name="Can Change Parameters", default=True
+    )
     script = models.ForeignKey(
         Script, related_name='replication_topologies', null=True, blank=True
     )
