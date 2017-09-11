@@ -87,3 +87,52 @@ class ManageDatabaseRedisTestCase(AbstractTestDriverRedis):
         if not Database.objects.filter(databaseinfra_id=self.databaseinfra.id):
             self.database.delete()
         super(ManageDatabaseRedisTestCase, self).tearDown()
+
+
+class ExclusiveMethodsBase(AbstractTestDriverRedis):
+
+    @property
+    def get_connection_base(self):
+        return '{}://:<password>@{}/{}'
+
+
+class ExclusiveMethodsSingle(ExclusiveMethodsBase):
+
+    def setUp(self):
+        super(ExclusiveMethodsSingle, self).setUp()
+
+        klass = DriverFactory.get_driver_class("redis_single")
+        self.driver = klass(databaseinfra=self.databaseinfra)
+
+        self.instance = self.driver.databaseinfra.instances.first()
+
+    def test_get_connection(self):
+        host = '{}:{}'.format(self.instance.address, self.instance.port)
+
+        url = self.driver.get_connection(None)
+        expected = self.get_connection_base.format('redis', host, '0')
+
+        self.assertEqual(url, expected)
+
+
+class ExclusiveMethodsSentinel(ExclusiveMethodsBase):
+
+    def setUp(self):
+        super(ExclusiveMethodsSentinel, self).setUp()
+
+        klass = DriverFactory.get_driver_class("redis_sentinel")
+        self.driver = klass(databaseinfra=self.databaseinfra)
+
+    def test_get_connection(self):
+        host =  ",".join([
+            "{}:{}".format(instance.address, instance.port)
+            for instance in self.databaseinfra.instances.filter(
+                instance_type=self.instance.REDIS_SENTINEL, is_active=True
+        )])
+
+        url = self.driver.get_connection(None)
+        expected = self.get_connection_base.format(
+            'sentinel', host, 'service_name:{}'.format(self.databaseinfra.name)
+        )
+
+        self.assertEqual(url, expected)
