@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 class BaseTopology(object):
 
+    def deploy_quantity_of_instances(self):
+        raise NotImplementedError
+
     def deploy_first_steps(self):
         raise NotImplementedError()
 

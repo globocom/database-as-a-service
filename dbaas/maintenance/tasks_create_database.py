@@ -2,6 +2,7 @@ from datetime import datetime
 from notification.models import TaskHistory
 from physical.models import DatabaseInfra, Instance
 from util import slugify, gen_infra_names, make_db_random_password
+from util.providers import get_deploy_settings, get_deploy_instances_size
 from workflow.workflow import steps_for_instances
 from models import DatabaseCreate
 
@@ -35,8 +36,9 @@ def create_database(
     subscribe_to_email_events=True, is_protected=False, user=None,
     retry_from=None
 ):
-    # ToDo plan.replication_topology.initial_size
-    number_of_vms = 6
+    topology_path = plan.replication_topology.class_path
+
+    number_of_vms = get_deploy_instances_size(topology_path)
     name = slugify(name)
     base_name = gen_infra_names(name, number_of_vms)
 
@@ -85,41 +87,7 @@ def create_database(
     database_create.database = infra.databases.first()
     database_create.save()
 
-    steps = [{
-        'Creating virtual machine': (
-            'workflow.steps.util.vm.CreateVirtualMachineNewInfra',
-        )}, {
-        'Creating dns': (
-            'workflow.steps.util.dns.CreateDNS',
-        )}, {
-        'Creating disk': (
-            'workflow.steps.util.disk.CreateExport',
-        )}, {
-        'Waiting VMs': (
-            'workflow.steps.util.vm.WaitingBeReady',
-            'workflow.steps.util.vm.UpdateOSDescription'
-        )}, {
-        'Configuring database': (
-            'workflow.steps.util.plan.InitializationForNewInfra',
-            'workflow.steps.util.plan.ConfigureForNewInfra',
-            'workflow.steps.util.database.Start',
-            'workflow.steps.util.database.CheckIsUp',
-        )}, {
-        'Configuring Cluster': (
-            # ToDo Generic
-            'workflow.steps.redis.cluster.CreateCluster',
-            'workflow.steps.redis.cluster.CheckClusterStatus',
-        )}, {
-        'Check DNS': (
-            'workflow.steps.util.dns.CheckIsReady',
-        )}, {
-        'Creating Database': (
-            'workflow.steps.util.database.Create',
-        )}, {
-        'Creating monitoring and alarms': (
-            'workflow.steps.util.zabbix.CreateAlarms',
-        )
-    }]
+    steps = get_deploy_settings(topology_path)
 
     since_step = None
     if retry_from:
@@ -129,7 +97,12 @@ def create_database(
         steps, instances, task, database_create.update_step,
         since_step=since_step
     ):
+        database_create.set_success()
         task.set_status_success('Database created')
     else:
-        task.set_status_error('Could not create database')
+        database_create.set_error()
+        task.set_status_error(
+            'Could not create database\n'
+            'Please check error message and do retry'
+        )
 

@@ -161,6 +161,10 @@ def get_deploy_settings(class_path):
     return get_replication_topology_instance(class_path).get_deploy_steps()
 
 
+def get_deploy_instances_size(class_path):
+    return get_replication_topology_instance(class_path).deploy_quantity_of_instances()
+
+
 def get_clone_settings(class_path):
     return get_replication_topology_instance(class_path).get_clone_steps()
 
