@@ -3,6 +3,7 @@ from __future__ import absolute_import, unicode_literals
 import logging
 import redis
 from redis.sentinel import Sentinel
+from rediscluster import StrictRedisCluster
 from contextlib import contextmanager
 from . import BaseDriver
 from . import DatabaseInfraStatus
@@ -88,7 +89,7 @@ class Redis(BaseDriver):
 
     def get_dns_port(self):
         instance = self.databaseinfra.instances.first()
-        return instance.dns, instance.pport
+        return instance.dns, instance.port
 
     def __redis_client__(self, instance):
         LOG.debug('Connecting to redis single infra {}'.format(
@@ -339,16 +340,12 @@ class RedisSentinel(Redis):
         port = self.instances_filtered.first().port
         return dns, port
 
-
     def __redis_client__(self, instance):
         if instance and instance.instance_type == Instance.REDIS:
             return super(RedisSentinel, self).__redis_client__(instance)
 
-        LOG.debug('Connecting to redis databaseinfra {}'.format(
-            self.databaseinfra
-        ))
+        LOG.debug('Connecting to redis infra {}'.format(self.databaseinfra))
 
-        # redis uses timeout in seconds
         sentinel = self.get_sentinel_client(instance)
         client = sentinel.master_for(
             self.databaseinfra.name,
@@ -356,7 +353,7 @@ class RedisSentinel(Redis):
             password=self.databaseinfra.password
         )
 
-        LOG.debug('Successfully connected to redis databaseinfra {}'.format(
+        LOG.debug('Successfully connected to redis infra {}'.format(
             self.databaseinfra
         ))
 
@@ -516,3 +513,103 @@ class RedisSentinel(Redis):
     @classmethod
     def name(cls):
         return ['redis_sentinel']
+
+
+class RedisCluster(Redis):
+
+    @property
+    def uri_instance_type(self):
+        return 'cluster'
+
+    def get_dns_port(self):
+        dns = self.__concatenate_instances_dns_only()
+        port = self.instances_filtered.first().port
+        return dns, port
+
+    def __redis_client__(self, instance):
+        LOG.debug('Connecting to redis infra {}'.format(self.databaseinfra))
+
+        cluster = self.get_cluster_client(instance)
+
+        LOG.debug('Successfully connected to redis infra {}'.format(
+            self.databaseinfra
+        ))
+
+        return cluster
+
+    def get_cluster_client(self, instance):
+        if instance:
+            return redis.StrictRedis(
+                host=instance.address, port=instance.port,
+                password=self.databaseinfra.password,
+                socket_timeout=self.connection_timeout_in_seconds,
+            )
+
+        return StrictRedisCluster(
+            startup_nodes=[
+                {'host': instance.address, 'port': instance.port}
+                for instance in self.instances_filtered
+            ],
+            password=self.databaseinfra.password,
+            socket_timeout=self.connection_timeout_in_seconds,
+        )
+
+
+    def get_replication_info(self, instance):
+        if self.check_instance_is_master(instance=instance):
+            return 0
+
+        with self.redis(instance=instance) as client:
+            info = client.info()
+            return int(info['master_last_io_seconds_ago'])
+
+    def check_instance_is_eligible_for_backup(self, instance):
+        with self.redis(instance=instance) as client:
+            try:
+                info = client.info()
+            except Exception as e:
+                raise ConnectionError('Error connection to infra {}: {}'.format(
+                    self.databaseinfra, str(e)
+                ))
+            else:
+                return info['role'] == 'slave'
+
+    def check_instance_is_master(self, instance):
+        with self.redis(instance=instance) as client:
+            try:
+                info = client.info()
+            except Exception as e:
+                raise ConnectionError('Error connection to infra {}: {}'.format(
+                    self.databaseinfra, str(e)
+                ))
+            else:
+                return info['role'] == 'master'
+
+    def switch_master(self):
+        raise NotImplementedError
+
+    def get_master_instance(self):
+        masters = []
+        for instance in self.get_database_instances():
+            try:
+                if self.check_instance_is_master(instance):
+                    masters.append(instance)
+            except ConnectionError:
+                continue
+
+        return masters
+
+    def get_slave_instances(self, ):
+        instances = self.get_database_instances()
+        masters = self.get_master_instance()
+
+        try:
+            instances.remove(masters)
+        except ValueError:
+            raise Exception("Master could not be detected")
+
+        return instances
+
+    @classmethod
+    def name(cls):
+        return ['redis_cluster']

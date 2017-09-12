@@ -47,7 +47,6 @@ class BaseRedis(BaseTopology):
 
 
 class RedisSingle(BaseRedis):
-    pass
 
     @property
     def driver_name(self):
@@ -84,3 +83,9 @@ class RedisNoPersistence(RedisSingle):
 
 class RedisSentinelNoPersistence(RedisSentinel):
     pass
+
+class RedisCluster(BaseRedis):
+
+    @property
+    def driver_name(self):
+        return 'redis_cluster'
