@@ -626,7 +626,6 @@ def database_hosts(request, context, database):
 
     context['instances_core'] = []
     context['instances_read_only'] = []
-    current_write_found = False
     for host, instances in hosts.items():
         attributes = []
         is_read_only = False
@@ -639,9 +638,8 @@ def database_hosts(request, context, database):
             if not instance.is_database:
                 context['non_database_attribute'] = instance.get_instance_type_display()
                 attributes.append(context['non_database_attribute'])
-            elif not current_write_found and instance.is_current_write:
+            elif instance.is_current_write:
                 attributes.append(context['core_attribute'])
-                current_write_found = True
                 if database.databaseinfra.plan.is_ha:
                     switch_database = True
             else:
