@@ -34,7 +34,7 @@ class PlanStep(BaseInstanceStep):
             'HOST': self.host.hostname.split('.')[0],
             'ENGINE': self.plan.engine.engine_type.name,
             'UPGRADE': True,
-            'IS_HA': self.plan.is_ha,
+            'DRIVER_NAME': self.infra.get_driver().name,
             'IS_READ_ONLY': self.instance.read_only,
             'DISK_SIZE_IN_GB': self.disk_offering.size_gb(),
             'ENVIRONMENT': self.environment

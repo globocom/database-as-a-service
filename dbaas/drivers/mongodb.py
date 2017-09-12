@@ -474,7 +474,7 @@ class MongoDB(BaseDriver):
 
     def configuration_parameters_for_log_resize(self, instance):
         return {
-            'IS_HA': False,
+            'DRIVER_NAME': 'mongodb_single',
             'PORT': 27018
         }
 

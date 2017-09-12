@@ -1157,12 +1157,10 @@ configure_graylog
     createconfigdbfile
     register_init_redis_service
 
-    {% if IS_HA  %}
-
+    {% if 'redis_sentinel' in DRIVER_NAME %}
         createinitsentinelfile
         createconfigsentinelfile
         register_init_sentinel_service
-
     {% endif %}
 
 {% endif %}

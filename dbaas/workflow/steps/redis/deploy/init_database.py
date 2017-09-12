@@ -91,7 +91,7 @@ class InitDatabaseRedis(BaseStep):
                     'PORT': instance_redis_port,
                     'ENGINE': 'redis',
                     'HOST': host.hostname.split('.')[0],
-                    'IS_HA': workflow_dict['databaseinfra'].plan.is_ha,
+                    'DRIVER_NAME': workflow_dict['databaseinfra'].get_driver().name,
                     'SENTINELMASTER': master_host,
                     'SENTINELMASTERPORT': master_port,
                     'SENTINELADDRESS': instance_sentinel_address,

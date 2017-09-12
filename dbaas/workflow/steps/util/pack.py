@@ -23,7 +23,7 @@ class PackStep(BaseInstanceStep):
     def script_variables(self):
         variables = {
             'CONFIGFILE': True,
-            'IS_HA': self.infra.plan.is_ha,
+            'DRIVER_NAME': self.infra.get_driver().name,
             'HOSTADDRESS': self.instance.address,
             'PORT': self.instance.port,
             'DBPASSWORD': self.infra.password,
