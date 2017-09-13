@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 import datetime
-from time import sleep
 from celery.utils.log import get_task_logger
 from celery.exceptions import SoftTimeLimitExceeded
 from django.db.models import Sum, Count
@@ -14,7 +13,7 @@ from util.decorators import only_one
 from util.providers import make_infra, clone_infra, destroy_infra, \
     get_database_upgrade_setting, get_resize_settings, \
     get_database_change_parameter_setting, \
-    get_database_change_parameter_retry_steps_count
+    get_database_change_parameter_retry_steps_count, get_deploy_instances_size
 from simple_audit.models import AuditRequest
 from system.models import Configuration
 from .models import TaskHistory
@@ -109,6 +108,19 @@ def create_database(
 
     finally:
         AuditRequest.cleanup_request()
+
+
+def create_database_with_retry(
+    name, plan, environment, team, project, description,
+    subscribe_to_email_events, is_protected, user
+):
+    from maintenance.tasks import create_database
+    return create_database.delay(
+        name=name, plan=plan, environment=environment, team=team,
+        project=project, description=description,
+        subscribe_to_email_events=subscribe_to_email_events,
+        is_protected=is_protected, user=user
+    )
 
 
 @app.task(bind=True)
@@ -1180,6 +1192,21 @@ class TaskRegister(object):
     def database_create(cls, user, name, plan, environment, team, project,
                         description, subscribe_to_email_events=True,
                         register_user=True, is_protected=False):
+
+        try:
+            size = get_deploy_instances_size(
+                plan.replication_topology.class_path
+            )
+        except NotImplementedError:
+            pass
+        else:
+            if size:
+                return create_database_with_retry(
+                    name=name, plan=plan, environment=environment, team=team,
+                    project=project, description=description,
+                    subscribe_to_email_events=subscribe_to_email_events,
+                    is_protected=is_protected, user=user
+                )
 
         task_params = {
             'task_name': "create_database",
