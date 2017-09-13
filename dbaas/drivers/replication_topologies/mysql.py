@@ -65,6 +65,10 @@ class MySQLSingle(BaseMysql):
     def set_read_ip(self, driver, instance):
         raise True
 
+    @property
+    def driver_name(self):
+        return 'mysql_single'
+
 
 class MySQLFoxHA(MySQLSingle):
 
@@ -155,3 +159,7 @@ class MySQLFoxHA(MySQLSingle):
 
     def add_database_instances_last_steps(self):
         return ()
+
+    @property
+    def driver_name(self):
+        return 'mysql_foxha'

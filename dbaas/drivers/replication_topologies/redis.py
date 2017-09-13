@@ -49,6 +49,10 @@ class BaseRedis(BaseTopology):
 class RedisSingle(BaseRedis):
     pass
 
+    @property
+    def driver_name(self):
+        return 'redis_single'
+
 
 class RedisSentinel(BaseRedis):
 
@@ -69,8 +73,12 @@ class RedisSentinel(BaseRedis):
             'workflow.steps.redis.horizontal_elasticity.database.AddInstanceToRedisCluster',
         )
 
+    @property
+    def driver_name(self):
+        return 'redis_sentinel'
 
-class RedisNoPersistence(BaseRedis):
+
+class RedisNoPersistence(RedisSingle):
     pass
 
 

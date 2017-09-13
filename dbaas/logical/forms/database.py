@@ -4,10 +4,8 @@ import logging
 from django.utils.translation import ugettext_lazy as _
 from django.forms import models
 from django import forms
-from account.models import Team
-from dbaas_cloudstack.models import CloudStackPack
+from util import get_replication_topology_instance
 from drivers.factory import DriverFactory
-from backup.models import Snapshot
 from physical.models import Plan, Environment, Engine
 from logical.forms.fields import AdvancedModelChoiceField
 from logical.models import Database, Project
@@ -75,7 +73,11 @@ class DatabaseForm(models.ModelForm):
                 [_("Database name too long")])
 
         plan = cleaned_data['plan']
-        driver = DriverFactory.get_driver_class(plan.engines[0].name)
+
+        class_path = plan.replication_topology.class_path
+        driver_name = get_replication_topology_instance(class_path).driver_name
+        driver = DriverFactory.get_driver_class(driver_name)
+
         if cleaned_data['name'] in driver.RESERVED_DATABASES_NAME:
             raise forms.ValidationError(
                 _("%s is a reserved database name" % cleaned_data['name']))

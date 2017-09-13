@@ -43,7 +43,8 @@ class MongoDBEngineTestCase(AbstractTestDriverMongo):
     """
 
     def test_mongodb_app_installed(self):
-        self.assertTrue(DriverFactory.is_driver_available("mongodb"))
+        self.assertTrue(DriverFactory.is_driver_available("mongodb_single"))
+        self.assertTrue(DriverFactory.is_driver_available("mongodb_replica_set"))
 
     # test mongo methods
     def test_instantiate_mongodb_using_engine_factory(self):

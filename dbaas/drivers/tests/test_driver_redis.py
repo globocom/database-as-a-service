@@ -44,7 +44,8 @@ class RedisEngineTestCase(AbstractTestDriverRedis):
     """
 
     def test_redis_app_installed(self):
-        self.assertTrue(DriverFactory.is_driver_available("redis"))
+        self.assertTrue(DriverFactory.is_driver_available("redis_single"))
+        self.assertTrue(DriverFactory.is_driver_available("redis_sentinel"))
 
     # test redis methods
     def test_instantiate_redis_using_engine_factory(self):

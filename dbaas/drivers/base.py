@@ -316,6 +316,10 @@ class BaseDriver(object):
     def configuration_parameters_migration(self, instance):
         return self.configuration_parameters(instance)
 
+    @classmethod
+    def name(cls):
+        return []
+
 
 class DatabaseStatus(object):
 
