@@ -48,47 +48,49 @@
     </div>
   {% endif %}
 
-  <div class="panel-heading">
-    <h3 class="panel-title">Clone</h3>
-  </div>
-  <div class="panel-body">
-    <div class="control-group">
-      <div class="control-label">
-        <label>Destination database:</label>
+  {% if database.databaseinfra.plan.replication_topology.can_clone_db %}
+    <div class="panel-heading">
+      <h3 class="panel-title">Clone</h3>
+    </div>
+    <div class="panel-body">
+      <div class="control-group">
+        <div class="control-label">
+          <label>Destination database:</label>
+        </div>
+        <div class="controls">
+          <input id="id_clone_name" maxlength="64" name="clone_name" type="text"/>
+        </div>
       </div>
-      <div class="controls">
-        <input id="id_clone_name" maxlength="64" name="clone_name" type="text"/>
+      <div class="control-group">
+        <div class="control-label">
+          <label>Environment:</label>
+        </div>
+        <div class="controls">
+          <select id="id_clone_env" name="clone_env">
+            <option></option>
+            {% for environment in environments %}
+              <option value="{{ environment.id }}">{{ environment }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <div class="control-group">
+        <div class="control-label">
+          <label>Plan:</label>
+        </div>
+        <div class="controls">
+          <select id="id_clone_plan" name="clone_plan">
+          </select>
+        </div>
+      </div>
+      <div class="control-group">
+        <div class="control-label"></div>
+        <div class="controls">
+          <input type="submit" value="Clone" name="database_clone" id="id_clone_btn" onclick="return confirm('Are you sure?')"/>
+        </div>
       </div>
     </div>
-    <div class="control-group">
-      <div class="control-label">
-        <label>Environment:</label>
-      </div>
-      <div class="controls">
-        <select id="id_clone_env" name="clone_env">
-          <option></option>
-          {% for environment in environments %}
-            <option value="{{ environment.id }}">{{ environment }}</option>
-          {% endfor %}
-        </select>
-      </div>
-    </div>
-    <div class="control-group">
-      <div class="control-label">
-        <label>Plan:</label>
-      </div>
-      <div class="controls">
-        <select id="id_clone_plan" name="clone_plan">
-        </select>
-      </div>
-    </div>
-    <div class="control-group">
-      <div class="control-label"></div>
-      <div class="controls">
-        <input type="submit" value="Clone" name="database_clone" id="id_clone_btn" onclick="return confirm('Are you sure?')"/>
-      </div>
-    </div>
-  </div>
+  {% endif %}
   <div class="panel-heading">
     <h3 class="panel-title">Config</h3>
   </div>
