@@ -125,6 +125,9 @@ class RedisCluster(BaseRedis):
             )
         }]
 
+    def get_restore_snapshot_steps(self):
+        raise NotImplementedError
+
     @property
     def driver_name(self):
         return 'redis_cluster'
