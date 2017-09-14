@@ -842,12 +842,19 @@ def database_backup(request, context, database):
             database.backup_path = request.POST['backup_path']
             database.save()
 
+    groups = []
     context['snapshots'] = []
     for instance in database.infra.instances.all():
         for backup in instance.backup_instance.filter(purge_at=None):
-            context['snapshots'].append(backup)
-    context['snapshots'] = context['snapshots']
 
+            group = backup.group
+            if group and group in groups:
+                continue
+
+            groups.append(group)
+            context['snapshots'].append(backup)
+
+    context['snapshots'] = context['snapshots']
     context['environments'] = Environment.objects.all()
     context['plans'] = Plan.objects.filter(
         engine=database.engine, is_active=True,
