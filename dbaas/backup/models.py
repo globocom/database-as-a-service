@@ -11,6 +11,12 @@ import logging
 LOG = logging.getLogger(__name__)
 
 
+class BackupGroup(BaseModel):
+
+    def __unicode__(self):
+        return "Backup from {}".format(self.created_at)
+
+
 class BackupInfo(BaseModel):
 
     SNAPSHOPT = 1
@@ -58,6 +64,9 @@ class BackupInfo(BaseModel):
         verbose_name=_("Error"), max_length=400, null=True, blank=True)
     is_automatic = models.BooleanField(
         default=True, help_text='Backup required by DBaaS routine'
+    )
+    group = models.ForeignKey(
+        BackupGroup, related_name='backups', null=True, blank=True
     )
 
     def __unicode__(self):
