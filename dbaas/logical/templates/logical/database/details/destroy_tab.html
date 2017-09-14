@@ -24,7 +24,7 @@
         <p class="readonly">
           {{ database.quarantine_dt }}
           {% if is_dba %}
-            <input class="action_button btn btn-primary" type="submit" value="Undo quarantine" name="undo_quarantine" id="id_undo_quarantine" onclick="return confirm('Are you sure?')"/>
+            <a data-toggle="modal" data-target="#undo_quarantine_modal" class="btn btn-primary" id="id_undo_quarantine">Undo Quarantine</a>
           {% endif %}
         </p>
       </div>
@@ -86,6 +86,10 @@
     </div>
   </div>
 </div>
+
+
+{% include "logical/database/details/confirmation_modal.html" with modal_id="undo_quarantine_modal" confirmation_message="Are you sure you want to get the database out of quarantine?" box_title="Undo quarantine now" button_class="btn btn-primary" button_type="submit" button_value="Undo Quarantine" button_name="undo_quarantine" id_optional="id=confirm_undo_quarantine_button" %}
+
 {% endblock %}
 
 
