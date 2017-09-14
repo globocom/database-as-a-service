@@ -291,12 +291,19 @@ def make_databases_backup(self):
 
 
 def remove_snapshot_backup(snapshot):
-    LOG.info("Removing backup for %s" % (snapshot))
+    snapshots = snapshot.group.backups.all() if snapshot.group else [snapshot]
+    for snapshot in snapshots:
 
-    delete_snapshot(snapshot)
+        if snapshot.purge_at:
+            continue
 
-    snapshot.purge_at = datetime.datetime.now()
-    snapshot.save()
+        LOG.info("Removing backup for %s" % (snapshot))
+
+        delete_snapshot(snapshot)
+
+        snapshot.purge_at = datetime.datetime.now()
+        snapshot.save()
+
     return
 
 
@@ -471,8 +478,8 @@ def _get_backup_instance(database, task):
             if driver.check_instance_is_eligible_for_backup(instance):
                 task.add_detail('Is Eligible', level=2)
                 eligibles.append(instance)
-
-            task.add_detail('Not eligible', level=2)
+            else:
+                task.add_detail('Not eligible', level=2)
         except ConnectionError:
             task.add_detail('Connection error', level=2)
             continue
