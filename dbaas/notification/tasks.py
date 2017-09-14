@@ -111,13 +111,13 @@ def create_database(
 
 
 def create_database_with_retry(
-    name, plan, environment, team, project, description,
+    name, plan, environment, team, project, description, task,
     subscribe_to_email_events, is_protected, user
 ):
     from maintenance.tasks import create_database
     return create_database.delay(
         name=name, plan=plan, environment=environment, team=team,
-        project=project, description=description,
+        project=project, description=description, task=task,
         subscribe_to_email_events=subscribe_to_email_events,
         is_protected=is_protected, user=user
     )
@@ -1192,43 +1192,29 @@ class TaskRegister(object):
     def database_create(cls, user, name, plan, environment, team, project,
                         description, subscribe_to_email_events=True,
                         register_user=True, is_protected=False):
-
-        try:
-            size = get_deploy_instances_size(
-                plan.replication_topology.class_path
-            )
-        except NotImplementedError:
-            pass
-        else:
-            if size:
-                return create_database_with_retry(
-                    name=name, plan=plan, environment=environment, team=team,
-                    project=project, description=description,
-                    subscribe_to_email_events=subscribe_to_email_events,
-                    is_protected=is_protected, user=user
-                )
-
         task_params = {
             'task_name': "create_database",
             'arguments': "Database name: {}".format(name),
         }
-
         task_params.update(**{'user': user} if register_user else {})
-
         task = cls.create_task(task_params)
 
-        result = create_database.delay(
-            name=name,
-            plan=plan,
-            environment=environment,
-            team=team,
-            project=project,
-            description=description,
-            subscribe_to_email_events=subscribe_to_email_events,
-            task_history=task, user=user, is_protected=is_protected
-        )
-
-        return result
+        try:
+            get_deploy_instances_size(plan.replication_topology.class_path)
+        except NotImplementedError:
+            return create_database.delay(
+                name=name, plan=plan, environment=environment, team=team,
+                project=project, description=description,
+                subscribe_to_email_events=subscribe_to_email_events,
+                task_history=task, user=user, is_protected=is_protected
+            )
+        else:
+            return create_database_with_retry(
+                name=name, plan=plan, environment=environment, team=team,
+                project=project, description=description, task=task,
+                subscribe_to_email_events=subscribe_to_email_events,
+                is_protected=is_protected, user=user
+            )
 
     @classmethod
     def database_backup(cls, database, user):

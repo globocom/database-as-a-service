@@ -32,7 +32,7 @@ def get_or_create_infra(base_name, plan, environment, retry_from=None):
 
 
 def create_database(
-    name, plan, environment, team, project, description,
+    name, plan, environment, team, project, description, task,
     subscribe_to_email_events=True, is_protected=False, user=None,
     retry_from=None
 ):
@@ -43,15 +43,6 @@ def create_database(
     base_name = gen_infra_names(name, number_of_vms)
 
     infra = get_or_create_infra(base_name, plan, environment, retry_from)
-
-    task = TaskHistory()
-    task.task_id = datetime.now().strftime("%Y%m%d%H%M%S")
-    task.task_name = "create_database"
-    task.task_status = TaskHistory.STATUS_RUNNING
-    task.context = {'infra': infra}
-    task.arguments = {'infra': infra}
-    task.user = 'admin'
-    task.save()
 
     instances = []
     for i in range(number_of_vms):
@@ -66,9 +57,10 @@ def create_database(
             instance.dns = base_name['vms'][i]
             instance.vm_name = instance.dns
             instance.databaseinfra = infra
-            # ToDo ALL engines
-            instance.port = 6379
-            instance.instance_type = Instance.REDIS
+
+            driver = infra.get_driver()
+            instance.port = driver.get_default_database_port()
+            instance.instance_type = driver.get_default_instance_type()
 
         instances.append(instance)
 

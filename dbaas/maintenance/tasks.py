@@ -197,12 +197,12 @@ def region_migration_start(self, infra, instances, since_step=None):
 
 @app.task(bind=True)
 def create_database(
-    self, name, plan, environment, team, project, description,
+    self, name, plan, environment, team, project, description, task,
     subscribe_to_email_events=True, is_protected=False, user=None,
     retry_from=None
 ):
     from tasks_create_database import create_database
     create_database(
-        name, plan, environment, team, project, description,
+        name, plan, environment, team, project, description, task,
         subscribe_to_email_events, is_protected, user, retry_from
     )
