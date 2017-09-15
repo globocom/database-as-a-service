@@ -35,7 +35,7 @@ class DatabaseCreateAdmin(DatabaseMaintenanceTaskAdmin):
         if not maintenance_task.can_do_retry:
             return 'N/A'
 
-        url = "/admin/maintenance/databasecreate/{}/retry/".format(self.id)
+        url = "/admin/maintenance/databasecreate/{}/retry/".format(maintenance_task.id)
         html = "<a title='Retry' class='btn btn-info' href='{}'>Retry</a>".format(url)
         return format_html(html)
 
