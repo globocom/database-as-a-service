@@ -80,7 +80,7 @@ class InitDatabaseMongoDB(BaseStep):
                         'HOST': workflow_dict['hosts'][index].hostname.split('.')[0],
                         'DATABASENAME': workflow_dict['name'],
                         'ENGINE': 'mongodb',
-                        'DRIVER_NAME': infra.get_driver().name,
+                        'DRIVER_NAME': infra.get_driver().topology_name(),
                         'configuration': configuration,
                     }
                     databaserule = 'ARBITER'
@@ -92,7 +92,7 @@ class InitDatabaseMongoDB(BaseStep):
                         'DATABASENAME': workflow_dict['name'],
                         'ENGINE': 'mongodb',
                         'DBPASSWORD': mongodb_password,
-                        'DRIVER_NAME': infra.get_driver().name,
+                        'DRIVER_NAME': infra.get_driver().topology_name(),
                         'configuration': configuration,
                     }
 

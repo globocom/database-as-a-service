@@ -315,7 +315,7 @@ class Redis(BaseDriver):
         return self.configuration_parameters(instance)
 
     @classmethod
-    def name(cls):
+    def topology_name(cls):
         return ['redis_single']
 
 
@@ -511,7 +511,7 @@ class RedisSentinel(Redis):
         return base_parameters
 
     @classmethod
-    def name(cls):
+    def topology_name(cls):
         return ['redis_sentinel']
 
 
@@ -611,5 +611,5 @@ class RedisCluster(Redis):
         return instances
 
     @classmethod
-    def name(cls):
+    def topology_name(cls):
         return ['redis_cluster']

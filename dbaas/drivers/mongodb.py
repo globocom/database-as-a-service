@@ -479,7 +479,7 @@ class MongoDB(BaseDriver):
         }
 
     @classmethod
-    def name(cls):
+    def topology_name(cls):
         return ['mongodb_single']
 
 
@@ -511,5 +511,5 @@ class MongoDBReplicaSet(MongoDB):
         return logSize / 1024 / 1024
 
     @classmethod
-    def name(cls):
+    def topology_name(cls):
         return ['mongodb_replica_set']

@@ -317,7 +317,7 @@ class BaseDriver(object):
         return self.configuration_parameters(instance)
 
     @classmethod
-    def name(cls):
+    def topology_name(cls):
         return []
 
 

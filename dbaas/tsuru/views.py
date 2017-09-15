@@ -133,7 +133,7 @@ class ServiceAppBind(APIView):
                 "DBAAS_REDIS_ENDPOINT": endpoint
             }
 
-            if 'redis_sentinel' in database.infra.get_driver().name:
+            if 'redis_sentinel' in database.infra.get_driver().topology_name():
                 env_vars = {
                     "DBAAS_SENTINEL_PASSWORD": redis_password,
                     "DBAAS_SENTINEL_ENDPOINT": endpoint,

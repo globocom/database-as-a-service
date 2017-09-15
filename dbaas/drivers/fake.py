@@ -87,5 +87,5 @@ class FakeDriver(BaseDriver):
         LOG.info('Change default password')
 
     @classmethod
-    def name(cls):
+    def topology_name(cls):
         return ['fake']
