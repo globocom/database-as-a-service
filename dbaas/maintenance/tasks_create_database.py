@@ -46,23 +46,23 @@ def create_database(
     instances = []
     for i in range(number_of_vms):
         try:
-            intance_name = '{}-0{}-{}'.format(
+            instance_name = '{}-0{}-{}'.format(
                 base_name['name_prefix'], i+1, base_name['name_stamp']
             )
-            instance = infra.instances.filter(
-                Q(hostname__hostname__startswith=intance_name) |
-                Q(dns__startswith=intance_name)
+            instance = infra.instances.get(
+                Q(hostname__hostname__startswith=instance_name) |
+                Q(dns__startswith=instance_name)
             )
         except Instance.DoesNotExist:
             instance = Instance()
             instance.dns = base_name['vms'][i]
-            instance.vm_name = instance.dns
             instance.databaseinfra = infra
 
             driver = infra.get_driver()
             instance.port = driver.get_default_database_port()
             instance.instance_type = driver.get_default_instance_type()
 
+        instance.vm_name = instance.dns
         instances.append(instance)
 
     database_create = DatabaseCreate()
