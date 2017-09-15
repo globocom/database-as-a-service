@@ -136,7 +136,7 @@ Base.DbaasNotification = {};
           return cont;
         },
         parseArguments: function() {
-          var regex = /database( name)?: ([\w-_\ ]+),/i;
+          var regex = /database( name)?: ([\w-_\ ]+),?/i;
           var parsedArguments = this.arguments.match(regex);
               if (parsedArguments) {
                   return parsedArguments[2];

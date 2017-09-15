@@ -135,9 +135,8 @@ class InitDatabaseFoxHA(BaseStep):
                     )
 
                     if return_code != 0:
-                        error_msg = "Error executing script. Stdout: {} - " \
-                                    "stderr: {}".format(output['stdout'],
-                                                        output['stderr'])
+                        error_msg = "Error executing script. output: {}" .format(
+                            output)
                         raise Exception(error_msg)
 
             return True
