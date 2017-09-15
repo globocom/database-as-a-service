@@ -19,6 +19,9 @@ class BaseTopology(object):
     def get_deploy_steps(self):
         return self.deploy_first_steps() + self.monitoring_steps() + self.deploy_last_steps()
 
+    def get_destroy_steps(self):
+        return self.deploy_first_steps() + self.monitoring_steps() + self.deploy_last_steps()
+
     def get_clone_steps(self):
         raise NotImplementedError()
 

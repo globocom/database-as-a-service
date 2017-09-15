@@ -125,6 +125,9 @@ class RedisCluster(BaseRedis):
             )
         }]
 
+    def get_destroy_steps(self):
+        return super(RedisCluster, self).get_destroy_steps()
+
     def get_restore_snapshot_steps(self):
         raise NotImplementedError
 
