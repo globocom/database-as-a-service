@@ -201,6 +201,11 @@ def create_database(
     subscribe_to_email_events=True, is_protected=False, user=None,
     retry_from=None
 ):
+    task = TaskHistory.register(
+        request=self.request, task_history=task, user=user,
+        worker_name=get_worker_name()
+    )
+
     from tasks_create_database import create_database
     create_database(
         name, plan, environment, team, project, description, task,
