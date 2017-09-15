@@ -1,5 +1,4 @@
-from datetime import datetime
-from notification.models import TaskHistory
+from django.db.models import Q
 from physical.models import DatabaseInfra, Instance
 from util import slugify, gen_infra_names, make_db_random_password
 from util.providers import get_deploy_settings, get_deploy_instances_size
@@ -47,10 +46,12 @@ def create_database(
     instances = []
     for i in range(number_of_vms):
         try:
-            instance = infra.instances.get(
-                hostname__hostname__startswith='{}-0{}-{}'.format(
-                    base_name['name_prefix'], i+1, base_name['name_stamp']
-                )
+            intance_name = '{}-0{}-{}'.format(
+                base_name['name_prefix'], i+1, base_name['name_stamp']
+            )
+            instance = infra.instances.filter(
+                Q(hostname__hostname__startswith=intance_name) |
+                Q(dns__startswith=intance_name)
             )
         except Instance.DoesNotExist:
             instance = Instance()
