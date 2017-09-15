@@ -8,7 +8,7 @@ from django.shortcuts import get_object_or_404
 from django.utils.html import format_html
 from .database_maintenance_task import DatabaseMaintenanceTaskAdmin
 from ..models import DatabaseCreate
-from ..tasks import create_database
+from notification.tasks import TaskRegister
 
 
 class DatabaseCreateAdmin(DatabaseMaintenanceTaskAdmin):
@@ -79,7 +79,7 @@ class DatabaseCreateAdmin(DatabaseMaintenanceTaskAdmin):
                 )
             )
 
-        create_database.delay(
+        TaskRegister.database_create(
             name=retry_from.name,
             plan=retry_from.plan,
             environment=retry_from.environment,
@@ -88,7 +88,7 @@ class DatabaseCreateAdmin(DatabaseMaintenanceTaskAdmin):
             description=retry_from.description,
             subscribe_to_email_events=retry_from.subscribe_to_email_events,
             is_protected=retry_from.is_protected,
-            user=request.user.username,
+            user=request.user,
             retry_from=retry_from
         )
 
