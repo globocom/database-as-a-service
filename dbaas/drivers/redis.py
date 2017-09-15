@@ -46,39 +46,39 @@ class Redis(BaseDriver):
             default=REDIS_CONNECTION_DEFAULT_TIMEOUT
         )
 
-    def __concatenate_instances(self):
+    def concatenate_instances(self):
         return ",".join([
             "{}:{}".format(instance.address, instance.port)
             for instance in self.instances_filtered
         ])
 
-    def __concatenate_instances_dns(self):
+    def concatenate_instances_dns(self):
         return ",".join([
             "{}:{}".format(instance.dns, instance.port)
             for instance in self.instances_filtered
             if not instance.dns.startswith('10.')
         ])
 
-    def __concatenate_instances_dns_only(self):
+    def concatenate_instances_dns_only(self):
         return ",".join([
             str(instance.dns) for instance in self.instances_filtered
         ])
 
     def get_connection(self, database=None):
         return "{}://:<password>@{}/{}".format(
-            self.uri_instance_type, self.__concatenate_instances(),
+            self.uri_instance_type, self.concatenate_instances(),
             self.database_name
         )
 
     def get_connection_dns(self, database=None):
         return "{}://:<password>@{}/{}".format(
-            self.uri_instance_type, self.__concatenate_instances_dns(),
+            self.uri_instance_type, self.concatenate_instances_dns(),
             self.database_name
         )
 
     def get_connection_dns_simple(self, database=None):
         return "{}://{}".format(
-            self.uri_instance_type, self.__concatenate_instances_dns()
+            self.uri_instance_type, self.concatenate_instances_dns()
         )
 
     def __get_admin_single_connection(self, instance=None):
@@ -336,7 +336,7 @@ class RedisSentinel(Redis):
         return 'service_name:{}'.format(self.databaseinfra.name)
 
     def get_dns_port(self):
-        dns = self.__concatenate_instances_dns_only()
+        dns = self.concatenate_instances_dns_only()
         port = self.instances_filtered.first().port
         return dns, port
 
@@ -522,7 +522,7 @@ class RedisCluster(Redis):
         return 'cluster'
 
     def get_dns_port(self):
-        dns = self.__concatenate_instances_dns_only()
+        dns = self.concatenate_instances_dns_only()
         port = self.instances_filtered.first().port
         return dns, port
 

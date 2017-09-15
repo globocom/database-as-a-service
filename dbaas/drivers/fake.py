@@ -34,11 +34,11 @@ class FakeDriver(BaseDriver):
             DATABASES_INFRA[self.databaseinfra.name] = {}
         return DATABASES_INFRA[self.databaseinfra.name]
 
-    def __concatenate_instances(self):
+    def concatenate_instances(self):
         return ",".join(["%s:%s" % (instance.address, instance.port) for instance in self.databaseinfra.instances.exclude(instance_type=Instance.MONGODB_ARBITER).filter(is_active=True).all()])
 
     def get_connection(self, database=None):
-        return "fake://%s" % self.__concatenate_instances()
+        return "fake://%s" % self.concatenate_instances()
 
     def create_database(self, database):
         instance_data = self.__get_database_infra()
