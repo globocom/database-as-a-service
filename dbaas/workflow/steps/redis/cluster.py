@@ -7,11 +7,12 @@ class BaseClusterStep(PlanStep):
 
     @property
     def masters(self):
-        return 3
+        return len(self.infra.get_driver().get_master_instance())
 
     @property
     def cluster_command(self):
-        return 'redis-trib.rb'
+        # ToDo Waiting for PR merge: https://github.com/antirez/redis/pull/4288
+        return 'redis-trib-gcom.rb'
 
     @property
     def cluster_create_command(self):
