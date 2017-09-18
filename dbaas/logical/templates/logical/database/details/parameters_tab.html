@@ -119,11 +119,9 @@
   </div>
 </div>
 
-
 {% include "logical/database/details/confirmation_modal.html" with modal_id="save_changes" confirmation_message="Do you want to save the changes made to the parameters?" box_title="Saving changes" button_type="submit" button_value="Apply" button_name="change_parameter_btn_modal" %}
 
 {% include "logical/database/details/confirmation_modal.html" with modal_id="retry_save_changes" confirmation_message="Do you want to try saving the changes made to the parameters again?" box_title="Saving changes" button_type="submit" button_value="Retry Change Parameters" button_name="retry_update_parameters" %}
-
 
 {% endblock %}
 
@@ -152,7 +150,7 @@
 
           {% elif  form_status  == TASK_ERROR %}
             <input type="submit" value="Retry Change Parameters"
-              name="retry_update_parameters" data-toggle="modal" data-target="#retry_save_changes"
+              name="retry_button" data-toggle="modal" data-target="#retry_save_changes"
               class="btn btn-warning"
             />
             <p><a href="{% url 'admin:maintenance_databasechangeparameter_change' last_change_parameters.id %}" target='_blank'>Last change parameters</a> has an <b>error</b>, please check the <a href="{% url 'admin:notification_taskhistory_change' last_change_parameters.task.id %}" target='_blank'>task</a> and retry the database change parameters clicking in button above</p>
