@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
+from system.models import Configuration
 from workflow.steps.util.plan import PlanStep
-from workflow.steps.util.base import BaseInstanceStep
 
 
 class BaseClusterStep(PlanStep):
@@ -11,8 +11,7 @@ class BaseClusterStep(PlanStep):
 
     @property
     def cluster_command(self):
-        # ToDo Waiting for PR merge: https://github.com/antirez/redis/pull/4288
-        return 'redis-trib-gcom.rb'
+        return Configuration.get_by_name('redis_trib_path')
 
     @property
     def cluster_create_command(self):
