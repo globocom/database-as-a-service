@@ -398,9 +398,7 @@ class MongoDB(BaseDriver):
 
     @property
     def database_key(self):
-        if self.databaseinfra.plan.is_ha:
-            from util import get_mongodb_key_file
-            return get_mongodb_key_file(self.databaseinfra)
+        return None
 
     @property
     def replica_set_name(self):
@@ -409,27 +407,18 @@ class MongoDB(BaseDriver):
     def get_configuration(self):
         with self.pymongo() as client:
             configuration = client.admin.command({'getParameter': '*'})
-            if self.databaseinfra.plan.is_ha:
-                configuration.update({'oplogSize': self.get_oplogsize()})
+
             if 'quiet' in configuration:
                 configuration['quiet'] = str(configuration['quiet']).lower()
+
             wiredTyger_cache = self.get_wiredTiger_engineConfig_cacheSizeGB()
             if wiredTyger_cache:
                 configuration.update({'wiredTiger_engineConfig_cacheSizeGB': wiredTyger_cache})
+
             return configuration
 
     def get_oplogsize(self):
-        if self.databaseinfra.plan.is_ha:
-            with self.pymongo() as client:
-                #firstc = client["local"]["oplog.rs"].find().sort("$natural", pymongo.ASCENDING).limit(1)[0]
-                #lastc = client["local"]["oplog.rs"].find().sort("$natural", pymongo.DESCENDING).limit(1)[0]
-                oplog_stats = client["local"].command("collStats", "oplog.rs")
-                if 'maxSize' in oplog_stats:
-                    logSize = oplog_stats['maxSize']
-                else:
-                    oplogc = client["local"]["system.namespaces"].find_one({'name': "local.oplog.rs"})
-                    logSize = oplogc["options"]["size"]
-                return logSize / 1024 / 1024
+        return None
 
     def get_wiredTiger_engineConfig_cacheSizeGB(self):
         with self.pymongo() as client:
@@ -485,10 +474,42 @@ class MongoDB(BaseDriver):
 
     def configuration_parameters_for_log_resize(self, instance):
         return {
-            'IS_HA': False,
+            'DRIVER_NAME': 'mongodb_single',
             'PORT': 27018
         }
 
     @classmethod
-    def name(cls):
-        return ['mongodb_single', 'mongodb_replica_set']
+    def topology_name(cls):
+        return ['mongodb_single']
+
+
+class MongoDBReplicaSet(MongoDB):
+
+    @property
+    def database_key(self):
+        from util import get_mongodb_key_file
+        return get_mongodb_key_file(self.databaseinfra)
+
+    def get_configuration(self):
+        configuration = super(MongoDBReplicaSet, self).get_configuration()
+        configuration['oplogSize'] = self.get_oplogsize()
+        return configuration
+
+    def get_oplogsize(self):
+        with self.pymongo() as client:
+            # firstc = client["local"]["oplog.rs"].find().sort("$natural", pymongo.ASCENDING).limit(1)[0]
+            # lastc = client["local"]["oplog.rs"].find().sort("$natural", pymongo.DESCENDING).limit(1)[0]
+            oplog_stats = client["local"].command("collStats", "oplog.rs")
+            if 'maxSize' in oplog_stats:
+                logSize = oplog_stats['maxSize']
+            else:
+                oplogc = client["local"]["system.namespaces"].find_one({
+                    'name': "local.oplog.rs"
+                })
+                logSize = oplogc["options"]["size"]
+
+        return logSize / 1024 / 1024
+
+    @classmethod
+    def topology_name(cls):
+        return ['mongodb_replica_set']

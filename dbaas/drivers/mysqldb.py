@@ -351,5 +351,5 @@ class MySQL(BaseDriver):
         return "mysqld"
 
     @classmethod
-    def name(cls):
+    def topology_name(cls):
         return ['mysql_single', 'mysql_foxha']

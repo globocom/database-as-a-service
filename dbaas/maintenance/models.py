@@ -7,8 +7,9 @@ from django.utils.translation import ugettext_lazy as _
 from dateutil import tz
 from datetime import datetime
 from dbaas_cloudstack.models import CloudStackPack
-from logical.models import Database
-from physical.models import Host, Plan
+from account.models import Team
+from logical.models import Database, Project
+from physical.models import Host, Plan, Environment, DatabaseInfra
 from notification.models import TaskHistory
 from util.models import BaseModel
 from django.db.models.signals import post_save
@@ -280,10 +281,15 @@ class DatabaseMaintenanceTask(BaseModel):
     def is_running(self):
         return self.status == self.RUNNING
 
+    @property
+    def disable_retry_filter(self):
+        return {'database': self.database}
+
     def save(self, *args, **kwargs):
         super(DatabaseMaintenanceTask, self).save(*args, **kwargs)
+
         older = self.__class__.objects.filter(
-            database=self.database
+            **self.disable_retry_filter
         ).exclude(
             id=self.id
         )
@@ -354,6 +360,44 @@ class DatabaseChangeParameter(DatabaseMaintenanceTask):
 
     def __unicode__(self):
         return "{} change parameters".format(self.database.name)
+
+
+class DatabaseCreate(DatabaseMaintenanceTask):
+    task = models.ForeignKey(
+        TaskHistory, verbose_name="Task History",
+        null=False, unique=False, related_name="create_database"
+    )
+    database = models.ForeignKey(
+        Database, related_name='databases_create', null=True, blank=True,
+    )
+    infra = models.ForeignKey(DatabaseInfra, related_name='databases_create')
+    plan = models.ForeignKey(Plan, related_name='databases_create')
+    environment = models.ForeignKey(
+        Environment, related_name='databases_create'
+    )
+    team = models.ForeignKey(Team, related_name='databases_create')
+    project = models.ForeignKey(
+        Project, related_name='databases_create', null=True, blank=True
+    )
+    name = models.CharField(max_length=200)
+    description = models.TextField()
+    subscribe_to_email_events = models.BooleanField(default=True)
+    is_protected = models.BooleanField(default=False)
+    user = models.CharField(max_length=200)
+
+    def __unicode__(self):
+        return "Creating {}".format(self.name)
+
+    @property
+    def disable_retry_filter(self):
+        return {'infra': self.infra}
+
+    def update_step(self, step):
+        if self.id:
+            maintenance = self.__class__.objects.get(id=self.id)
+            self.database = maintenance.database
+
+        super(DatabaseCreate, self).update_step(step)
 
 
 simple_audit.register(Maintenance)

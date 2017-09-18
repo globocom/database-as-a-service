@@ -257,7 +257,9 @@ def steps_for_instances(
 ):
     databases = set()
     for instance in instances:
-        databases.add(instance.databaseinfra.databases.first())
+        database = instance.databaseinfra.databases.first()
+        if database:
+            databases.add(database)
 
     for database in databases:
         databases_locked = []

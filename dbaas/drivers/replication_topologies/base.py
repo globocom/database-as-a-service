@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 class BaseTopology(object):
 
+    def deploy_quantity_of_instances(self):
+        raise NotImplementedError
+
     def deploy_first_steps(self):
         raise NotImplementedError()
 
@@ -14,6 +17,9 @@ class BaseTopology(object):
         )
 
     def get_deploy_steps(self):
+        return self.deploy_first_steps() + self.monitoring_steps() + self.deploy_last_steps()
+
+    def get_destroy_steps(self):
         return self.deploy_first_steps() + self.monitoring_steps() + self.deploy_last_steps()
 
     def get_clone_steps(self):
@@ -103,7 +109,7 @@ class BaseTopology(object):
     def get_add_database_instances_first_steps(self):
         return (
             'workflow.steps.util.vm.CreateVirtualMachineHorizontalElasticity',
-            'workflow.steps.util.horizontal_elasticity.dns.CreateDNS',
+            'workflow.steps.util.dns.CreateDNS',
             'workflow.steps.util.vm.WaitingBeReady',
             'workflow.steps.util.vm.UpdateOSDescription',
             'workflow.steps.util.disk.CreateExport',

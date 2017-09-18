@@ -47,7 +47,6 @@ class BaseRedis(BaseTopology):
 
 
 class RedisSingle(BaseRedis):
-    pass
 
     @property
     def driver_name(self):
@@ -84,3 +83,54 @@ class RedisNoPersistence(RedisSingle):
 
 class RedisSentinelNoPersistence(RedisSentinel):
     pass
+
+class RedisCluster(BaseRedis):
+
+    def deploy_quantity_of_instances(self):
+        return 6
+
+    def get_deploy_steps(self):
+        return [{
+            'Creating virtual machine': (
+                'workflow.steps.util.vm.CreateVirtualMachineNewInfra',
+            )}, {
+            'Creating dns': (
+                'workflow.steps.util.dns.CreateDNS',
+            )}, {
+            'Creating disk': (
+                'workflow.steps.util.disk.CreateExport',
+            )}, {
+            'Waiting VMs': (
+                'workflow.steps.util.vm.WaitingBeReady',
+                'workflow.steps.util.vm.UpdateOSDescription'
+            )}, {
+            'Configuring database': (
+                'workflow.steps.util.plan.InitializationForNewInfra',
+                'workflow.steps.util.plan.ConfigureForNewInfra',
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.CheckIsUp',
+            )}, {
+            'Configuring Cluster': (
+                'workflow.steps.redis.cluster.CreateCluster',
+                'workflow.steps.redis.cluster.CheckClusterStatus',
+            )}, {
+            'Check DNS': (
+                'workflow.steps.util.dns.CheckIsReady',
+            )}, {
+            'Creating Database': (
+                'workflow.steps.util.database.Create',
+            )}, {
+            'Creating monitoring and alarms': (
+                'workflow.steps.util.zabbix.CreateAlarms',
+            )
+        }]
+
+    def get_destroy_steps(self):
+        return super(RedisCluster, self).get_destroy_steps()
+
+    def get_restore_snapshot_steps(self):
+        raise NotImplementedError
+
+    @property
+    def driver_name(self):
+        return 'redis_cluster'

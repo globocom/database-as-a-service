@@ -254,6 +254,14 @@ class ConfigurationRedis(ConfigurationBase):
         default = 'yes'
         return self.get_parameter(parameter_name, default)
 
+    @property
+    def cluster_enabled(self):
+        return 'no'
+
+    @property
+    def cluster_enabled_true(self):
+        return 'yes'
+
 
 class ConfigurationMySQL(ConfigurationBase):
     __ENGINE__ = 'mysql'

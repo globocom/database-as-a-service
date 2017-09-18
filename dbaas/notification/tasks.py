@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 import datetime
-from time import sleep
 from celery.utils.log import get_task_logger
 from celery.exceptions import SoftTimeLimitExceeded
 from django.db.models import Sum, Count
@@ -14,7 +13,7 @@ from util.decorators import only_one
 from util.providers import make_infra, clone_infra, destroy_infra, \
     get_database_upgrade_setting, get_resize_settings, \
     get_database_change_parameter_setting, \
-    get_database_change_parameter_retry_steps_count
+    get_database_change_parameter_retry_steps_count, get_deploy_instances_size
 from simple_audit.models import AuditRequest
 from system.models import Configuration
 from .models import TaskHistory
@@ -109,6 +108,19 @@ def create_database(
 
     finally:
         AuditRequest.cleanup_request()
+
+
+def create_database_with_retry(
+    name, plan, environment, team, project, description, task,
+    subscribe_to_email_events, is_protected, user, retry_from
+):
+    from maintenance.tasks import create_database
+    return create_database.delay(
+        name=name, plan=plan, environment=environment, team=team,
+        project=project, description=description, task=task,
+        subscribe_to_email_events=subscribe_to_email_events,
+        is_protected=is_protected, user=user, retry_from=retry_from
+    )
 
 
 @app.task(bind=True)
@@ -1179,29 +1191,30 @@ class TaskRegister(object):
     @classmethod
     def database_create(cls, user, name, plan, environment, team, project,
                         description, subscribe_to_email_events=True,
-                        register_user=True, is_protected=False):
-
+                        register_user=True, is_protected=False, retry_from=None):
         task_params = {
             'task_name': "create_database",
             'arguments': "Database name: {}".format(name),
         }
-
         task_params.update(**{'user': user} if register_user else {})
-
         task = cls.create_task(task_params)
 
-        result = create_database.delay(
-            name=name,
-            plan=plan,
-            environment=environment,
-            team=team,
-            project=project,
-            description=description,
-            subscribe_to_email_events=subscribe_to_email_events,
-            task_history=task, user=user, is_protected=is_protected
-        )
-
-        return result
+        try:
+            get_deploy_instances_size(plan.replication_topology.class_path)
+        except NotImplementedError:
+            return create_database.delay(
+                name=name, plan=plan, environment=environment, team=team,
+                project=project, description=description,
+                subscribe_to_email_events=subscribe_to_email_events,
+                task_history=task, user=user, is_protected=is_protected
+            )
+        else:
+            return create_database_with_retry(
+                name=name, plan=plan, environment=environment, team=team,
+                project=project, description=description, task=task,
+                subscribe_to_email_events=subscribe_to_email_events,
+                is_protected=is_protected, user=user, retry_from=retry_from
+            )
 
     @classmethod
     def database_backup(cls, database, user):

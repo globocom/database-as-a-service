@@ -28,7 +28,7 @@ class DriverFactory(object):
                 if not issubclass(klass, base.BaseDriver):
                     continue
 
-                if driver_name in klass.name():
+                if driver_name in klass.topology_name():
                     return klass
 
         raise NotImplementedError('No driver for {}'.format(driver_name))

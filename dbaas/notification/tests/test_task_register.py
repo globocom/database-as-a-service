@@ -1,6 +1,7 @@
 # coding:utf-8
 from mock import MagicMock, patch
 from unittest import TestCase
+from physical.tests import factory as physical_factory
 from notification.models import TaskHistory
 from notification.tasks import TaskRegister
 
@@ -235,7 +236,7 @@ class DatabaseCreateCallTestCase(TestCase, TaskCallBaseTestCase):
     call_params = {
         'user': 'user',
         'name': 'name',
-        'plan': 'plan',
+        'plan': physical_factory.PlanFactory(),
         'environment': 'environment',
         'team': 'team',
         'project': 'project',
@@ -256,7 +257,7 @@ class DatabaseCreateCallWithUserTestCase(TestCase, TaskCallBaseTestCase):
     call_params = {
         'user': 'user',
         'name': 'name',
-        'plan': 'plan',
+        'plan': physical_factory.PlanFactory(),
         'environment': 'environment',
         'team': 'team',
         'project': 'project',

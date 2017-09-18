@@ -27,7 +27,8 @@ startsentinel()
     startsentinel
 {% else %}
     startdatabase
-    {% if IS_HA  %}
+
+    {% if 'redis_sentinel' in DRIVER_NAME %}
         startsentinel
     {% endif %}
 {% endif %}

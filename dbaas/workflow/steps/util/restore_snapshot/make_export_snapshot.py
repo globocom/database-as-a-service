@@ -2,6 +2,7 @@
 import logging
 from dbaas_cloudstack.models import HostAttr as CsHostAttr
 from util import full_stack
+from backup.models import BackupGroup
 from backup.tasks import mysql_binlog_save
 from workflow.steps.util.base import BaseStep
 from workflow.exceptions.error_codes import DBAAS_0021
@@ -17,12 +18,19 @@ class MakeExportSnapshot(BaseStep):
 
     def do(self, workflow_dict):
         try:
+            group = BackupGroup()
+            group.save()
+
             for host_and_export in workflow_dict['hosts_and_exports']:
                 host = host_and_export['host']
                 export_id = host_and_export['old_export_id']
-                ret = make_host_backup(database=workflow_dict['database'],
-                                       instance=host.instances.all()[0],
-                                       export_id=export_id)
+
+                ret = make_host_backup(
+                    database=workflow_dict['database'],
+                    instance=host.instances.all()[0],
+                    export_id=export_id,
+                    group=group
+                )
                 if not ret:
                     msg = 'Could not make snapshot for export_id: {} on host {}'.format(
                         export_id, host)

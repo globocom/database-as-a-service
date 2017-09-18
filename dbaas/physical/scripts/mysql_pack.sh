@@ -92,7 +92,7 @@ innodb_max_purge_lag            = {{ configuration.innodb_max_purge_lag.value }}
 
 explicit_defaults_for_timestamp = {{ configuration.explicit_defaults_for_timestamp.value }}
 
-{% if IS_HA %}
+{% if 'mysql_foxha' in DRIVER_NAME %}
 # Dual Master
 read_only                       = 1
 #skip_slave_start                = 1

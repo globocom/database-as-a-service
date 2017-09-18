@@ -55,7 +55,7 @@ quiet = {{ configuration.quiet.value }}
 # Allow extended operations at the Http Interface
 rest = true
 
-{% if IS_HA  %}
+{% if 'mongodb_replica_set' in DRIVER_NAME %}
 ########################################
 ## Replica Sets
 ########################################

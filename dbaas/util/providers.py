@@ -116,7 +116,7 @@ def destroy_infra(databaseinfra, task=None):
     workflow_dict = build_dict(
         plan=databaseinfra.plan,
         environment=databaseinfra.environment,
-        steps=get_deploy_settings(
+        steps=get_destroy_settings(
             databaseinfra.plan.replication_topology.class_path
         ),
         qt=get_vm_qt(plan=databaseinfra.plan),
@@ -159,6 +159,14 @@ def get_vm_qt(plan):
 
 def get_deploy_settings(class_path):
     return get_replication_topology_instance(class_path).get_deploy_steps()
+
+
+def get_destroy_settings(class_path):
+    return get_replication_topology_instance(class_path).get_destroy_steps()
+
+
+def get_deploy_instances_size(class_path):
+    return get_replication_topology_instance(class_path).deploy_quantity_of_instances()
 
 
 def get_clone_settings(class_path):

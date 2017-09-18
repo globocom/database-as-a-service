@@ -82,14 +82,14 @@ net:
 ## Security
 ########################################
 security:
-{% if IS_HA  %}
+{% if 'mongodb_replica_set' in DRIVER_NAME %}
     # File used to authenticate in replica set environment
     keyFile: /data/mongodb.key
 {% else %}
     authorization: enabled
 {% endif %}
 
-{% if IS_HA  %}
+{% if 'mongodb_replica_set' in DRIVER_NAME %}
 ########################################
 ## Replica Set
 ########################################
