@@ -129,7 +129,7 @@ class Command(BaseCommand):
                 )
                 database_resize.set_error()
 
-            database_create = task.database_creates.first()
+            database_create = task.create_database.first()
             if database_create:
                 self.task.add_detail(
                     "Setting database create {} status to ERROR".format(
