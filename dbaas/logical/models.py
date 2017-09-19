@@ -232,13 +232,16 @@ class Database(BaseModel):
         for instance in self.infra.instances.all():
             try:
                 instance.update_status()
-            except Exception:
+            except Exception as e:
+                LOG.error(
+                    "Could not refresh status for {} - {}".format(instance, e)
+                )
                 continue
 
         try:
             self.update_status()
-        except Exception:
-            return
+        except Exception as e:
+            LOG.error("Could not refresh status for {} - {}".format(self, e))
 
     def update_status(self):
         self.status = Database.DEAD
