@@ -229,13 +229,16 @@ class Database(BaseModel):
     def finish_task(self):
         self.unpin_task()
 
+        for instance in self.infra.instances.all():
+            try:
+                instance.update_status()
+            except Exception:
+                continue
+
         try:
             self.update_status()
         except Exception:
-            pass
-
-    def unpin_task(self):
-        DatabaseLock.objects.filter(database=self).delete()
+            return
 
     def update_status(self):
         self.status = Database.DEAD
@@ -248,6 +251,9 @@ class Database(BaseModel):
                 self.status = Database.ALERT
 
         self.save(update_fields=['status'])
+
+    def unpin_task(self):
+        DatabaseLock.objects.filter(database=self).delete()
 
     @property
     def current_locked_task(self):

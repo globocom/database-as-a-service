@@ -443,12 +443,7 @@ def update_instances_status(self):
             LOG.info("Retrieving all instances for {}".format(databaseinfra))
 
             for instance in Instance.objects.filter(databaseinfra=databaseinfra):
-                if instance.check_status():
-                    instance.status = Instance.ALIVE
-                else:
-                    instance.status = Instance.DEAD
-
-                instance.save(update_fields=['status'])
+                instance.update_status()
 
                 msg = "\nUpdating instance status, instance: {}, status: {}".format(
                     instance, instance.status)
