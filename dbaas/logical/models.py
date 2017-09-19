@@ -226,8 +226,28 @@ class Database(BaseModel):
             lock.save()
             return True
 
+    def finish_task(self):
+        self.unpin_task()
+
+        try:
+            self.update_status()
+        except Exception:
+            pass
+
     def unpin_task(self):
         DatabaseLock.objects.filter(database=self).delete()
+
+    def update_status(self):
+        self.status = Database.DEAD
+
+        if self.database_status and self.database_status.is_alive:
+            self.status = Database.ALIVE
+
+            instances_status = self.databaseinfra.check_instances_status()
+            if instances_status == self.databaseinfra.ALERT:
+                self.status = Database.ALERT
+
+        self.save(update_fields=['status'])
 
     @property
     def current_locked_task(self):
