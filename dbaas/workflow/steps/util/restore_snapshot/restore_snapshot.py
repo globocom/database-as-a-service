@@ -52,7 +52,7 @@ class RestoreSnapshot(BaseStep):
 
             old_disk = HostAttr.objects.get(nfsaas_export_id=nfsaas_export_id)
             new_disk = HostAttr()
-            new_disk.host = old_disk.host
+            new_disk.host = host
             new_disk.nfsaas_export_id = new_export_id
             new_disk.nfsaas_path = new_export_path
             new_disk.nfsaas_path_host = new_export_path_host
