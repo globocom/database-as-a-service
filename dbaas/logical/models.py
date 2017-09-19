@@ -227,8 +227,6 @@ class Database(BaseModel):
             return True
 
     def finish_task(self):
-        self.unpin_task()
-
         for instance in self.infra.instances.all():
             try:
                 instance.update_status()
@@ -242,6 +240,8 @@ class Database(BaseModel):
             self.update_status()
         except Exception as e:
             LOG.error("Could not refresh status for {} - {}".format(self, e))
+
+        self.unpin_task()
 
     def update_status(self):
         self.status = Database.DEAD
