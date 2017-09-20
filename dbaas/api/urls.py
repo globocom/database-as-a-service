@@ -16,6 +16,7 @@ from .task import TaskAPI
 from .team import TeamAPI
 from .user import UserAPI
 from .snapshot import SnapshotAPI
+from .database_history import DatabaseHistoryAPI
 
 
 router = DefaultRouter()
@@ -33,6 +34,7 @@ router.register(r'database', DatabaseAPI)
 router.register(r'credential', CredentialAPI)
 router.register(r'extra_dns', ExtraDnsAPI)
 router.register(r'task', TaskAPI, base_name="task")
+router.register(r'database_history', DatabaseHistoryAPI)
 
 if settings.CLOUD_STACK_ENABLED:
     from .integration_type import CredentialTypeAPI

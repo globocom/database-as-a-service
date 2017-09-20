@@ -20,6 +20,8 @@ from workflow.workflow import start_workflow
 from notification import tasks
 from workflow.steps.util.nfsaas_utils import create_snapshot, delete_snapshot, \
     delete_export
+from .models import BackupGroup
+
 
 LOG = logging.getLogger(__name__)
 
@@ -94,7 +96,7 @@ def unlock_instance(driver, instance, client):
     LOG.debug('Instance {} is unlocked'.format(instance))
 
 
-def make_instance_snapshot_backup(instance, error):
+def make_instance_snapshot_backup(instance, error, group):
     LOG.info("Make instance backup for %s" % (instance))
 
     snapshot = Snapshot()
@@ -103,6 +105,7 @@ def make_instance_snapshot_backup(instance, error):
     snapshot.status = Snapshot.RUNNING
     snapshot.instance = instance
     snapshot.environment = instance.databaseinfra.environment
+    snapshot.group = group
 
     from dbaas_nfsaas.models import HostAttr as Nfsaas_HostAttr
     nfsaas_hostattr = Nfsaas_HostAttr.objects.get(
@@ -237,6 +240,10 @@ def make_databases_backup(self):
         instances = Instance.objects.filter(
             databaseinfra=databaseinfra, read_only=False
         )
+
+        group = BackupGroup()
+        group.save()
+
         for instance in instances:
             try:
                 if not instance.databaseinfra.get_driver().check_instance_is_eligible_for_backup(instance):
@@ -247,32 +254,32 @@ def make_databases_backup(self):
                 msg = "Backup for %s was unsuccessful. Error: %s" % (
                     str(instance), str(e))
                 LOG.error(msg)
-            else:
-                time_now = str(time.strftime("%m/%d/%Y %H:%M:%S"))
-                start_msg = "\n{} - Starting backup for {} ...".format(time_now, instance)
-                task_history.update_details(persist=True, details=start_msg)
-                try:
-                    snapshot = make_instance_snapshot_backup(
-                        instance=instance, error=error
-                    )
-                    if snapshot and snapshot.was_successful:
-                        msg = "Backup for %s was successful" % (str(instance))
-                        LOG.info(msg)
-                    elif snapshot and snapshot.has_warning:
-                        status = TaskHistory.STATUS_WARNING
-                        msg = "Backup for %s has warning" % (str(instance))
-                        LOG.info(msg)
-                    else:
-                        status = TaskHistory.STATUS_ERROR
-                        msg = "Backup for %s was unsuccessful. Error: %s" % (
-                            str(instance), error['errormsg'])
-                        LOG.error(msg)
+
+            time_now = str(time.strftime("%m/%d/%Y %H:%M:%S"))
+            start_msg = "\n{} - Starting backup for {} ...".format(time_now, instance)
+            task_history.update_details(persist=True, details=start_msg)
+            try:
+                snapshot = make_instance_snapshot_backup(
+                    instance=instance, error=error, group=group
+                )
+                if snapshot and snapshot.was_successful:
+                    msg = "Backup for %s was successful" % (str(instance))
                     LOG.info(msg)
-                except Exception as e:
+                elif snapshot and snapshot.has_warning:
+                    status = TaskHistory.STATUS_WARNING
+                    msg = "Backup for %s has warning" % (str(instance))
+                    LOG.info(msg)
+                else:
                     status = TaskHistory.STATUS_ERROR
                     msg = "Backup for %s was unsuccessful. Error: %s" % (
-                        str(instance), str(e))
+                        str(instance), error['errormsg'])
                     LOG.error(msg)
+                LOG.info(msg)
+            except Exception as e:
+                status = TaskHistory.STATUS_ERROR
+                msg = "Backup for %s was unsuccessful. Error: %s" % (
+                    str(instance), str(e))
+                LOG.error(msg)
 
             time_now = str(time.strftime("%m/%d/%Y %H:%M:%S"))
             msg = "\n{} - {}".format(time_now, msg)
@@ -284,12 +291,19 @@ def make_databases_backup(self):
 
 
 def remove_snapshot_backup(snapshot):
-    LOG.info("Removing backup for %s" % (snapshot))
+    snapshots = snapshot.group.backups.all() if snapshot.group else [snapshot]
+    for snapshot in snapshots:
 
-    delete_snapshot(snapshot)
+        if snapshot.purge_at:
+            continue
 
-    snapshot.purge_at = datetime.datetime.now()
-    snapshot.save()
+        LOG.info("Removing backup for %s" % (snapshot))
+
+        delete_snapshot(snapshot)
+
+        snapshot.purge_at = datetime.datetime.now()
+        snapshot.save()
+
     return
 
 
@@ -453,8 +467,9 @@ def purge_unused_exports(task=None):
 
 
 def _get_backup_instance(database, task):
-    task.add_detail('Searching for backup eligible instance...')
+    eligibles = []
 
+    task.add_detail('Searching for backup eligible instances...')
     driver = database.infra.get_driver()
     instances = database.infra.instances.filter(read_only=False)
     for instance in instances:
@@ -462,47 +477,52 @@ def _get_backup_instance(database, task):
             task.add_detail('Instance: {}'.format(instance), level=1)
             if driver.check_instance_is_eligible_for_backup(instance):
                 task.add_detail('Is Eligible', level=2)
-                return instance
-
-            task.add_detail('Not eligible', level=2)
+                eligibles.append(instance)
+            else:
+                task.add_detail('Not eligible', level=2)
         except ConnectionError:
             task.add_detail('Connection error', level=2)
             continue
 
-    task.add_detail('No instance eligible for backup', level=1)
-    return
+    if not eligibles:
+        task.add_detail('No instance eligible for backup', level=1)
+
+    return eligibles
 
 
-def _check_snapshot_limit(instance, task):
-    task.add_detail('\nChecking older backups...')
+def _check_snapshot_limit(instances, task):
+    for instance in instances:
+        task.add_detail('\nChecking older backups for {}...'.format(instance))
 
-    backup_limit = Configuration.get_by_name_as_int('backup_retention_days')
-    snapshots_count = Snapshot.objects.filter(
-        purge_at__isnull=True, instance=instance, snapshopt_id__isnull=False
-    ).order_by('start_at').count()
-    task.add_detail(
-        'Current snapshot limit {}, used {}'.format(
-            backup_limit, snapshots_count
-        ),
-        level=1
-    )
+        backup_limit = Configuration.get_by_name_as_int('backup_retention_days')
+        snapshots_count = Snapshot.objects.filter(
+            purge_at__isnull=True, instance=instance, snapshopt_id__isnull=False
+        ).order_by('start_at').count()
+        task.add_detail(
+            'Current snapshot limit {}, used {}'.format(
+                backup_limit, snapshots_count
+            ),
+            level=1
+        )
 
 
-def _create_database_backup(instance, task):
+def _create_database_backup(instance, task, group):
     task.add_detail('\nStarting backup for {}...'.format(instance))
+
     error = {}
     try:
         snapshot = make_instance_snapshot_backup(
-            instance=instance, error=error
+            instance=instance, error=error, group=group
         )
     except Exception as e:
         task.add_detail('\nError: {}'.format(e))
         return False
-    else:
-        if 'errormsg' in error:
-            task.add_detail('\nError: {}'.format(error['errormsg']))
-            return False
-        return snapshot
+
+    if 'errormsg' in error:
+        task.add_detail('\nError: {}'.format(error['errormsg']))
+        return False
+
+    return snapshot
 
 
 @app.task(bind=True)
@@ -518,25 +538,37 @@ def make_database_backup(self, database, task):
 
     task_history.add_detail('Starting database {} backup'.format(database))
 
-    instance = _get_backup_instance(database, task)
-    if not instance:
-        task.set_status_error('Could not find eligible instance', database)
+    instances = _get_backup_instance(database, task)
+    if not instances:
+        task.set_status_error('Could not find eligible instances', database)
         return False
 
-    _check_snapshot_limit(instance, task)
+    _check_snapshot_limit(instances, task)
 
-    snapshot = _create_database_backup(instance, task)
-    if not snapshot:
-        task.set_status_error('Backup was unsuccessful', database)
-        return False
+    group = BackupGroup()
+    group.save()
 
-    snapshot.is_automatic = False
-    snapshot.save()
+    has_warning = False
+    for instance in instances:
+        snapshot = _create_database_backup(instance, task, group)
 
-    if snapshot.was_successful:
-        task.set_status_success('Backup was successful', database)
-    elif snapshot.has_warning:
+        if not snapshot:
+            task.set_status_error(
+                'Backup was unsuccessful in {}'.format(instance), database
+            )
+            return False
+
+        snapshot.is_automatic = False
+        snapshot.save()
+
+        if not has_warning:
+            has_warning = snapshot.has_warning
+
+    if has_warning:
         task.set_status_warning('Backup was warning', database)
+    else:
+        task.set_status_success('Backup was successful', database)
+
     return True
 
 

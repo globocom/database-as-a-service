@@ -16,29 +16,31 @@
 
 {% block tab %}
 <fieldset class="module aligned ">
-  <div class="control-group">
-    <div class="control-label"><label>VM Offering:</label></div>
-    <div class="controls">
-        {%if last_vm_resize and last_vm_resize.is_status_error %}
-          {{ database.offering }}
-          <a class="resize_button btn btn-warning" href="{{ database.get_resize_retry_url }}" title="Go to disk resize page">Retry Resize</a>
-          <p><a href="{% url 'admin:maintenance_databaseresize_change' last_vm_resize.id %}" target='_blank'>Last resize</a> has an <b>error</b>, please check the <a href="{% url 'admin:notification_taskhistory_change' last_vm_resize.task.id %}" target='_blank'>task</a> and retry the database resize clicking in button above</p>
-        {% else %}
-          <select id="id_vm_offering" name="vm_offering">
-            {% for vm_offering in vm_offerings %}
-              {% if vm_offering.offering == current_vm_offering or vm_offering == current_vm_offering %}
-                <option value="{{current_vm_offering.serviceofferingid}}"selected="selected">*
-              {% else %}
-                <option value="{{vm_offering.id}}">
-              {% endif %}
-                {{vm_offering}}
-              </option>
-            {% endfor %}
-          </select>
-          <button data-toggle="modal" id="vm_resize_btn" data-target="#resize_vm">Resize</button>
-        {% endif %}
-    </div>
-  </div>
+  {% if database.databaseinfra.plan.replication_topology.can_resize_vm %}
+      <div class="control-group">
+        <div class="control-label"><label>VM Offering:</label></div>
+        <div class="controls">
+            {%if last_vm_resize and last_vm_resize.is_status_error %}
+              {{ database.offering }}
+              <a class="resize_button btn btn-warning" href="{{ database.get_resize_retry_url }}" title="Go to disk resize page">Retry Resize</a>
+              <p><a href="{% url 'admin:maintenance_databaseresize_change' last_vm_resize.id %}" target='_blank'>Last resize</a> has an <b>error</b>, please check the <a href="{% url 'admin:notification_taskhistory_change' last_vm_resize.task.id %}" target='_blank'>task</a> and retry the database resize clicking in button above</p>
+            {% else %}
+              <select id="id_vm_offering" name="vm_offering">
+                {% for vm_offering in vm_offerings %}
+                  {% if vm_offering.offering == current_vm_offering or vm_offering == current_vm_offering %}
+                    <option value="{{current_vm_offering.serviceofferingid}}"selected="selected">*
+                  {% else %}
+                    <option value="{{vm_offering.id}}">
+                  {% endif %}
+                    {{vm_offering}}
+                  </option>
+                {% endfor %}
+              </select>
+              <button data-toggle="modal" id="vm_resize_btn" data-target="#resize_vm">Resize</button>
+            {% endif %}
+        </div>
+      </div>
+  {% endif %}
   <div class="control-group">
     <div class="control-label"><label>Disk offering:</label></div>
     <div class="controls">
@@ -66,14 +68,14 @@
       <p class="help-block">When marked, the disk will be resized automatically.</p>
     </div>
   </div>
-  {% if upgrade_mongo_24_to_30 %}
+  {% if upgrade_mongo_24_to_30 and database.databaseinfra.plan.replication_topology.can_upgrade_db %}
     <div class="control-group">
       <div class="control-label"><label>Engine upgrade:</label></div>
       <div class="controls">
         <a href="{{ database.get_mongodb_engine_version_upgrade_url }}" class="btn btn-primary" title="Start engine upgrade" onclick="return confirm('Are you sure?')">Migrate MongoDB 2.4 to 3.0</a>
       </div>
     </div>
-  {% elif can_do_upgrade %}
+  {% elif can_do_upgrade and database.databaseinfra.plan.replication_topology.can_upgrade_db %}
     <div class="control-group">
       <div class="control-label"><label>Engine upgrade:</label></div>
       <div class="controls">

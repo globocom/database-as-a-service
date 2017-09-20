@@ -1,6 +1,7 @@
 # TODO: Move this rules to model or be smarter
 import sys
 import inspect
+from models import TopologyParameterCustomValue
 
 
 def configuration_factory(databaseinfra, memory_size):
@@ -11,7 +12,7 @@ def configuration_factory(databaseinfra, memory_size):
     raise NotImplementedError
 
 
-def confiration_exists(engine_name, parameter_name):
+def configuration_exists(engine_name, parameter_name):
     for name, obj in inspect.getmembers(sys.modules[__name__]):
         if inspect.isclass(obj) and '__ENGINE__' in obj.__dict__:
             if obj.__ENGINE__ == engine_name:
@@ -68,6 +69,19 @@ class ConfigurationBase(object):
         if not value:
             value = default
         return ParameterObject(value, default)
+
+    def __getattribute__(self, item):
+        if item == 'databaseinfra':
+            return object.__getattribute__(self, item)
+
+        topology = self.databaseinfra.plan.replication_topology
+        try:
+            attribute = TopologyParameterCustomValue.objects.get(
+                topology=topology, parameter__name=item.replace("_", "-")
+            )
+            return object.__getattribute__(self, attribute.attr_name)
+        except TopologyParameterCustomValue.DoesNotExist:
+            return object.__getattribute__(self, item)
 
 
 class ConfigurationRedis(ConfigurationBase):
@@ -239,6 +253,14 @@ class ConfigurationRedis(ConfigurationBase):
         parameter_name = inspect.stack()[0][3]
         default = 'yes'
         return self.get_parameter(parameter_name, default)
+
+    @property
+    def cluster_enabled(self):
+        return 'no'
+
+    @property
+    def cluster_enabled_true(self):
+        return 'yes'
 
 
 class ConfigurationMySQL(ConfigurationBase):

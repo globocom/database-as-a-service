@@ -41,7 +41,7 @@ def _lock_databases(params, task):
         if not database.pin_task(task):
             task.error_in_lock(database)
             for database in databases_pinned:
-                database.unpin_task()
+                database.finish_task()
             return False
         databases_pinned.append(database)
 
@@ -54,7 +54,7 @@ def _unlock_databases(params, task):
 
     databases = _get_databases(params)
     for database in databases:
-        database.unpin_task()
+        database.finish_task()
 
 
 def start_workflow(workflow_dict, task=None):
@@ -246,7 +246,7 @@ def steps_for_instances_with_rollback(group_of_steps, instances, task):
         databases.add(instance.databaseinfra.databases.first())
 
     for database in databases:
-        database.unpin_task()
+        database.finish_task()
 
     return ret
 
@@ -257,7 +257,9 @@ def steps_for_instances(
 ):
     databases = set()
     for instance in instances:
-        databases.add(instance.databaseinfra.databases.first())
+        database = instance.databaseinfra.databases.first()
+        if database:
+            databases.add(database)
 
     for database in databases:
         databases_locked = []
@@ -266,7 +268,7 @@ def steps_for_instances(
 
             if since_step == 0:
                 for database in databases_locked:
-                    database.unpin_task()
+                    database.finish_task()
             return False
         databases_locked.append(database)
 
@@ -328,6 +330,6 @@ def steps_for_instances(
         )
 
     for database in databases:
-        database.unpin_task()
+        database.finish_task()
 
     return True

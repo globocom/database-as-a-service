@@ -40,7 +40,7 @@ def update_fstab(host, source_export_path, target_export_path):
     return return_code, output
 
 
-def make_host_backup(database, instance, export_id):
+def make_host_backup(database, instance, export_id, group):
     from backup.models import Snapshot
     from dbaas_nfsaas.models import HostAttr as Disk
     import datetime
@@ -58,6 +58,7 @@ def make_host_backup(database, instance, export_id):
     snapshot.environment = databaseinfra.environment
     snapshot.export_path = disk.nfsaas_path
     snapshot.database_name = database.name
+    snapshot.group = group
 
     nfs_snapshot = create_snapshot(
         environment=databaseinfra.environment, host=instance.hostname

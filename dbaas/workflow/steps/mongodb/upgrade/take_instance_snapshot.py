@@ -3,6 +3,7 @@ import logging
 from util import full_stack
 from workflow.steps.util.base import BaseStep
 from workflow.exceptions.error_codes import DBAAS_0023
+from backup.models import BackupGroup
 from backup.tasks import make_instance_snapshot_backup
 
 
@@ -16,13 +17,15 @@ class TakeInstanceBackup(BaseStep):
 
     def do(self, workflow_dict):
         try:
+            group = BackupGroup()
+            group.save()
 
             for instance in workflow_dict['instances']:
-
                 error = {}
                 snapshot = make_instance_snapshot_backup(
-                    instance=instance, error=error
+                    instance=instance, error=error, group=group
                 )
+
                 if snapshot and snapshot.was_successful:
                     msg = "Backup for %s was successful" % (str(instance))
                     LOG.info(msg)

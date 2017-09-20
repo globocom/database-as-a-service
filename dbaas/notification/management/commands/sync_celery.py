@@ -129,6 +129,15 @@ class Command(BaseCommand):
                 )
                 database_resize.set_error()
 
+            database_create = task.create_database.first()
+            if database_create:
+                self.task.add_detail(
+                    "Setting database create {} status to ERROR".format(
+                        database_create.id
+                    ), level=3
+                )
+                database_create.set_error()
+
         return tasks_with_problem
 
     def get_celery_active_tasks(self, expected_hosts):

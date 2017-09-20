@@ -349,3 +349,7 @@ class MySQL(BaseDriver):
 
     def get_database_process_name(self):
         return "mysqld"
+
+    @classmethod
+    def topology_name(cls):
+        return ['mysql_single', 'mysql_foxha']

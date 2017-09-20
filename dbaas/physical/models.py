@@ -202,6 +202,21 @@ class ReplicationTopology(BaseModel):
     has_horizontal_scalability = models.BooleanField(
         verbose_name="Horizontal Scalability", default=False
     )
+    can_resize_vm = models.BooleanField(
+        verbose_name="Can Resize VM", default=True
+    )
+    can_clone_db = models.BooleanField(
+        verbose_name="Can Clone DB", default=True
+    )
+    can_switch_master = models.BooleanField(
+        verbose_name="Can Switch Master", default=True
+    )
+    can_upgrade_db = models.BooleanField(
+        verbose_name="Can Upgrade DB", default=True
+    )
+    can_change_parameters = models.BooleanField(
+        verbose_name="Can Change Parameters", default=True
+    )
     script = models.ForeignKey(
         Script, related_name='replication_topologies', null=True, blank=True
     )
@@ -865,6 +880,13 @@ class Instance(BaseModel):
 
         return format_html(status)
 
+    def update_status(self):
+        self.status = Instance.DEAD
+        if self.check_status():
+            self.status = Instance.ALIVE
+
+        self.save(update_fields=['status'])
+
 
 class DatabaseInfraParameter(BaseModel):
 
@@ -985,6 +1007,22 @@ class DatabaseInfraParameter(BaseModel):
                     obj.applied_on_database = True
                     obj.reset_default_value = False
                     obj.save()
+
+
+class TopologyParameterCustomValue(BaseModel):
+    topology = models.ForeignKey(
+        ReplicationTopology, related_name="param_custom_values"
+    )
+    parameter = models.ForeignKey(
+        Parameter, related_name="topology_custom_values"
+    )
+    attr_name = models.CharField(
+        verbose_name='Custom engine attribute',
+        max_length=200
+    )
+
+    class Meta():
+        unique_together = ('topology', 'parameter')
 
 
 ##########################################################################

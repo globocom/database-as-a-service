@@ -48,7 +48,8 @@ class MySQLEngineTestCase(AbstractTestDriverMysql):
     """
 
     def test_mysqldb_app_installed(self):
-        self.assertTrue(DriverFactory.is_driver_available("mysqldb"))
+        self.assertTrue(DriverFactory.is_driver_available("mysql_single"))
+        self.assertTrue(DriverFactory.is_driver_available("mysql_foxha"))
 
     # test mysql methods
     def test_instantiate_mysqldb_using_engine_factory(self):

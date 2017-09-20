@@ -22,7 +22,7 @@ class SnapshotAdmin(admin.ModelAdmin):
     readonly_fields = (
         "database_name", "instance", "start_at", "end_at", "purge_at", "type",
         "status", "snapshopt_id", "snapshot_name", "export_path", "size",
-        "environment", "error"
+        "environment", "error", "is_automatic", "group"
     )
     ordering = ["-start_at"]
 

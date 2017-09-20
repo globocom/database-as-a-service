@@ -193,3 +193,21 @@ def region_migration_start(self, infra, instances, since_step=None):
         task.set_status_success('Region migrated with success')
     else:
         task.set_status_error('Could not migrate region')
+
+
+@app.task(bind=True)
+def create_database(
+    self, name, plan, environment, team, project, description, task,
+    subscribe_to_email_events=True, is_protected=False, user=None,
+    retry_from=None
+):
+    task = TaskHistory.register(
+        request=self.request, task_history=task, user=user,
+        worker_name=get_worker_name()
+    )
+
+    from tasks_create_database import create_database
+    create_database(
+        name, plan, environment, team, project, description, task,
+        subscribe_to_email_events, is_protected, user, retry_from
+    )

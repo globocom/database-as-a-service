@@ -133,7 +133,7 @@ class ServiceAppBind(APIView):
                 "DBAAS_REDIS_ENDPOINT": endpoint
             }
 
-            if database.plan.is_ha:
+            if 'redis_sentinel' in database.infra.get_driver().topology_name():
                 env_vars = {
                     "DBAAS_SENTINEL_PASSWORD": redis_password,
                     "DBAAS_SENTINEL_ENDPOINT": endpoint,
@@ -342,7 +342,7 @@ class ServiceAdd(APIView):
             )
 
         try:
-            Database.objects.get(name=name, environment__name=env)
+            Database.objects.get(name=name, environment__name__contains=env)
             msg = "There is already a database called {} in {}.".format(
                 name, env
             )
@@ -561,7 +561,7 @@ def get_network_from_ip(ip, database_environment):
 def get_database(name, env):
     if env in models.Configuration.get_by_name_as_list('dev_envs'):
         database = Database.objects.filter(
-            name=name, environment__name=env
+            name=name, environment__name__contains=env
         ).exclude(is_in_quarantine=True)[0]
     else:
         prod_envs = models.Configuration.get_by_name_as_list('prod_envs')

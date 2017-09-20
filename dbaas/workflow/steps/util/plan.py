@@ -34,7 +34,7 @@ class PlanStep(BaseInstanceStep):
             'HOST': self.host.hostname.split('.')[0],
             'ENGINE': self.plan.engine.engine_type.name,
             'UPGRADE': True,
-            'IS_HA': self.plan.is_ha,
+            'DRIVER_NAME': self.infra.get_driver().topology_name(),
             'IS_READ_ONLY': self.instance.read_only,
             'DISK_SIZE_IN_GB': self.disk_offering.size_gb(),
             'ENVIRONMENT': self.environment
@@ -96,6 +96,18 @@ class PlanStep(BaseInstanceStep):
                 )
             )
 
+        return output
+
+
+class PlanStepNewInfra(PlanStep):
+
+    @property
+    def database(self):
+        from logical.models import Database
+        database = Database()
+        database.name = self.infra.databases_create.last().name
+        return database
+
 
 class PlanStepUpgrade(PlanStep):
 
@@ -136,6 +148,14 @@ class InitializationForUpgrade(Initialization, PlanStepUpgrade):
 
 
 class ConfigureForUpgrade(Configure, PlanStepUpgrade):
+    pass
+
+
+class InitializationForNewInfra(Initialization, PlanStepNewInfra):
+    pass
+
+
+class ConfigureForNewInfra(Configure, PlanStepNewInfra):
     pass
 
 

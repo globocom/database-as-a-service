@@ -11,7 +11,7 @@ from physical.models import DatabaseInfra
 from logical.tests import factory
 from notification.tests.factory import TaskHistoryFactory
 from notification.models import TaskHistory
-from logical.models import Database
+from logical.models import Database, DatabaseHistory
 
 
 LOG = logging.getLogger(__name__)
@@ -192,6 +192,44 @@ class DatabaseTestCase(TestCase):
         can_be_deleted, error = database.can_be_deleted()
         self.assertTrue(can_be_deleted)
         self.assertIsNone(error)
+
+    @mock.patch('logical.models.factory_for')
+    @mock.patch('logical.models.Database.automatic_create_first_credential')
+    def test_insert_on_database_history_when_delete(self, cred_mock, factory_mock):
+        database = factory.DatabaseFactory(
+            name='test_fake_name',
+            description='__test__ fake desc'
+        )
+        database_id = database.id
+        database.is_in_quarantine = True
+        database.is_protected = False
+        database.status = database.ALIVE
+        database.environment.name = '__test__ fake env'
+        database.project.name = '__test__ proj name'
+        database.team.name = '__test__ team name'
+        database.plan.name = '__test__ plan name'
+        database.databaseinfra.name = '__test__ infra name'
+        database.databaseinfra.engine.version = 'v1.2.3'
+        database.databaseinfra.plan.has_persistence = False
+        database.databaseinfra.engine.engine_type.name = '__test__ fake engine type'
+        database.databaseinfra.disk_offering.size_kb = 1234
+
+        database.delete()
+
+        deleted_databases = DatabaseHistory.objects.filter(database_id=database_id)
+        self.assertEqual(len(deleted_databases), 1)
+        deleted_database = deleted_databases[0]
+        self.assertEqual(deleted_database.database_id, database_id)
+        self.assertEqual(deleted_database.name, 'test_fake_name')
+        self.assertEqual(deleted_database.description, '__test__ fake desc')
+        self.assertEqual(deleted_database.engine, '__test__ fake engine type v1.2.3')
+        self.assertEqual(deleted_database.project, '__test__ proj name')
+        self.assertEqual(deleted_database.team, '__test__ team name')
+        self.assertEqual(deleted_database.databaseinfra_name, '__test__ infra name')
+        self.assertEqual(deleted_database.plan, '__test__ plan name')
+        self.assertEqual(deleted_database.disk_size_kb, 1234)
+        self.assertFalse(deleted_database.has_persistence)
+        self.assertEqual(deleted_database.environment, '__test__ fake env')
 
     def test_cannot_delete_protected(self):
         database = factory.DatabaseFactory()

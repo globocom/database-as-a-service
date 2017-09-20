@@ -36,7 +36,7 @@
           <p class="readonly" id="host_name_n{{ forloop.counter }}">
             {% if is_dba %}
               <a target="_blank" href="{% url 'admin:physical_host_change' host.id %}">{{ host.description }}</a>
-              {% if host.switch_database %}
+              {% if database.databaseinfra.plan.replication_topology.can_switch_master and host.switch_database %}
                   <a class="action_button btn btn-warning" data-toggle="modal" id="switch_host_btn" data-target="#switch_host_modal" data-host-id="{{host.id}}">
                     <i class="icon-refresh"></i>
                   </a>

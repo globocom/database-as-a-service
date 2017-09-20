@@ -39,6 +39,13 @@ class DiskOfferingFactory(factory.DjangoModelFactory):
     size_kb = 1048576 # 1gb
 
 
+class ReplicationTopologyFactory(factory.DjangoModelFactory):
+    FACTORY_FOR = models.ReplicationTopology
+
+    name = factory.Sequence(lambda n: 'disk-offering-{0}'.format(n))
+    class_path = 'drivers.replication_topologies.base.FakeTestTopology'
+
+
 class PlanFactory(factory.DjangoModelFactory):
     FACTORY_FOR = models.Plan
 
@@ -47,6 +54,7 @@ class PlanFactory(factory.DjangoModelFactory):
     engine = factory.SubFactory(EngineFactory)
     provider = 0
     disk_offering = DiskOfferingFactory()
+    replication_topology = ReplicationTopologyFactory()
 
     @factory.post_generation
     def environments(self, create, extracted, **kwargs):

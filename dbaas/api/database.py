@@ -19,6 +19,7 @@ class DatabaseSerializer(serializers.HyperlinkedModelSerializer):
         source='plan', view_name='plan-detail',
         queryset=Plan.objects.filter(is_active=True)
     )
+    replication_topology_id = serializers.Field(source='databaseinfra.plan.replication_topology.id')
     environment = serializers.HyperlinkedRelatedField(
         source='environment', view_name='environment-detail',
         queryset=Environment.objects
@@ -41,7 +42,7 @@ class DatabaseSerializer(serializers.HyperlinkedModelSerializer):
             'project', 'team', 'quarantine_dt', 'total_size_in_bytes',
             'credentials', 'description', 'status',
             'used_size_in_bytes', 'subscribe_to_email_events',
-            'created_at', 'engine'
+            'created_at', 'engine', 'replication_topology_id'
         )
         read_only = ('credentials', 'status', 'used_size_in_bytes')
 
