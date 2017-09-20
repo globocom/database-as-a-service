@@ -184,7 +184,7 @@ class TaskHistory(BaseModel):
     def _set_status(self, status, details, database_unpin):
         self.update_status_for(status, details)
         if database_unpin:
-            database_unpin.unpin_task()
+            database_unpin.finish_task()
 
 
 ###########
