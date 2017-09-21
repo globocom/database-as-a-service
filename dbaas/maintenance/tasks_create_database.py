@@ -1,6 +1,6 @@
 from django.db.models import Q
 from physical.models import DatabaseInfra, Instance
-from util import slugify, gen_infra_names, make_db_random_password
+from util import slugify, gen_infra_names, get_vm_name, make_db_random_password
 from util.providers import get_deploy_settings, get_deploy_instances_size
 from workflow.workflow import steps_for_instances
 from models import DatabaseCreate
@@ -37,25 +37,23 @@ def create_database(
 ):
     topology_path = plan.replication_topology.class_path
 
-    number_of_vms = get_deploy_instances_size(topology_path)
     name = slugify(name)
-    base_name = gen_infra_names(name, number_of_vms)
-
+    base_name = gen_infra_names(name, 0)
     infra = get_or_create_infra(base_name, plan, environment, retry_from)
 
     instances = []
+    number_of_vms = get_deploy_instances_size(topology_path)
     for i in range(number_of_vms):
+        instance_name = get_vm_name(infra.name_prefix, infra.name_stamp, i+1)
+
         try:
-            instance_name = '{}-0{}-{}'.format(
-                base_name['name_prefix'], i+1, base_name['name_stamp']
-            )
             instance = infra.instances.get(
                 Q(hostname__hostname__startswith=instance_name) |
                 Q(dns__startswith=instance_name)
             )
         except Instance.DoesNotExist:
             instance = Instance()
-            instance.dns = base_name['vms'][i]
+            instance.dns = instance_name
             instance.databaseinfra = infra
 
             driver = infra.get_driver()
