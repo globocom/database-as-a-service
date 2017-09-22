@@ -14,19 +14,18 @@ class PlanStep(BaseInstanceStep):
 
     def __init__(self, instance):
         super(PlanStep, self).__init__(instance)
-
-        try:
-            self.host_nfs = HostAttrNfsaas.objects.get(
-                host=self.host, is_active=True
-            )
-        except HostAttrNfsaas.DoesNotExist:
-            self.host_nfs = None
-
         self.cs_plan = PlanAttr.objects.get(plan=self.plan)
 
     @property
     def host_cs(self):
         return HostAttr.objects.get(host=self.host)
+
+    @property
+    def host_nfs(self):
+        try:
+            return HostAttrNfsaas.objects.get(host=self.host, is_active=True)
+        except HostAttrNfsaas.DoesNotExist:
+            return None
 
     @property
     def script_variables(self):
