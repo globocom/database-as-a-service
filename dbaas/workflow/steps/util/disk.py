@@ -110,7 +110,7 @@ class CopyDataBetweenExports(DiskCommand):
     def scripts(self):
         message = 'Could not copy data {} -> {}'.format(
             self.OLD_DIRECTORY, self.NEW_DIRECTORY)
-        script = "rsync -ar --exclude='{0}/.snapshot' {0}/* {1}".format(
+        script = "rsync -arm --exclude='{0}/.snapshot' {0}/* {1}".format(
             self.OLD_DIRECTORY, self.NEW_DIRECTORY
         )
         return {message: script}
