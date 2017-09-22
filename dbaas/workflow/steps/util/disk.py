@@ -44,7 +44,10 @@ class NewerDisk(Disk):
 
     def __init__(self, instance):
         super(NewerDisk, self).__init__(instance)
-        self.newer_export = self.host.nfsaas_host_attributes.last()
+
+    @property
+    def newer_export(self):
+        return self.host.nfsaas_host_attributes.last()
 
 
 class DiskCommand(Disk):
