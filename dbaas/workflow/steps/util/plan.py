@@ -181,3 +181,16 @@ class ConfigureMigration(Configure, BaseInstanceStepMigration):
         return driver.configuration_parameters_migration(
             self.instance.future_instance
         )
+
+
+class ConfigureRestore(Configure):
+
+    def __init__(self, instance, **kwargs):
+        super(ConfigureRestore, self).__init__(instance)
+        self.kwargs = kwargs
+
+    def get_variables_specifics(self):
+        base = super(ConfigureRestore, self).get_variables_specifics()
+        base.update(self.kwargs)
+        LOG.info(base)
+        return base

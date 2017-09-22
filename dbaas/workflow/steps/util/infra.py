@@ -84,6 +84,9 @@ class UpdateMigrateEnvironment(BaseInstanceStepMigration):
             self.infra.environment = self.environment
             self.infra.save()
 
+            self.database.environment = self.environment
+            self.database.save()
+
 
 class UpdateMigratePlan(BaseInstanceStepMigration):
 

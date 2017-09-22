@@ -226,6 +226,35 @@ class Database(BaseModel):
             lock.save()
             return True
 
+    def finish_task(self):
+        for instance in self.infra.instances.all():
+            try:
+                instance.update_status()
+            except Exception as e:
+                LOG.error(
+                    "Could not refresh status for {} - {}".format(instance, e)
+                )
+                continue
+
+        try:
+            self.update_status()
+        except Exception as e:
+            LOG.error("Could not refresh status for {} - {}".format(self, e))
+
+        self.unpin_task()
+
+    def update_status(self):
+        self.status = Database.DEAD
+
+        if self.database_status and self.database_status.is_alive:
+            self.status = Database.ALIVE
+
+            instances_status = self.databaseinfra.check_instances_status()
+            if instances_status == self.databaseinfra.ALERT:
+                self.status = Database.ALERT
+
+        self.save(update_fields=['status'])
+
     def unpin_task(self):
         DatabaseLock.objects.filter(database=self).delete()
 

@@ -41,6 +41,10 @@ class CreateCluster(BaseClusterStep):
     def __unicode__(self):
         return "Configuring Redis Cluster..."
 
+    @property
+    def masters(self):
+        return len(self.infra.get_driver().get_master_instance())/2
+
     def get_variables_specifics(self):
         instances = self.infra.instances.all()
         return {
@@ -72,9 +76,19 @@ class CheckClusterStatus(BaseClusterStep):
 
     def do(self):
         output = self.run_script(self.cluster_check_command)
-
-        assert '[OK] All nodes agree about slots configuration.' in str(output['stdout'])
-        assert '[OK] All 16384 slots covered.' in str(output['stdout'])
+        self.check_response(
+            '[OK] All nodes agree about slots configuration.', output['stdout']
+        )
+        self.check_response('[OK] All 16384 slots covered.', output['stdout'])
 
         output = self.run_script(self.cluster_info_command)
-        assert '[OK] 0 keys in {} masters.'.format(self.masters) in str(output['stdout'])
+        self.check_response(
+            '[OK] 0 keys in {} masters.'.format(self.masters), output['stdout']
+        )
+
+    def check_response(self, expected, response):
+        response = str(response)
+        if expected in response:
+            return True
+
+        raise AssertionError('"{}" not in {}'.format(expected, response))
