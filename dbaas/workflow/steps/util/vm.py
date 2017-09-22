@@ -31,15 +31,21 @@ class VmStep(BaseInstanceStep):
 
     def __init__(self, instance):
         super(VmStep, self).__init__(instance)
-
         self.driver = self.infra.get_driver()
+        self.credentials = None
+        self.provider = None
 
-        self.cs_credentials = get_credentials_for(
-            environment=self.environment,
-            credential_type=CredentialType.CLOUDSTACK
-        )
+    def cs_provider(self):
+        if not self.provider:
+            self.provider = CloudStackProvider(credentials=self.cs_credentials)
+        return self.provider
 
-        self.cs_provider = CloudStackProvider(credentials=self.cs_credentials)
+    def cs_credentials(self):
+        if not self.credentials:
+            self.credentials = get_credentials_for(
+                self.environment, CredentialType.CLOUDSTACK
+            )
+        return self.credentials
 
     def do(self):
         raise NotImplementedError
