@@ -11,9 +11,17 @@ class PackStep(BaseInstanceStep):
     def __init__(self, instance):
         super(PackStep, self).__init__(instance)
 
-        self.host_cs = HostAttr.objects.get(host=self.host)
-        self.cs_plan = PlanAttr.objects.get(plan=self.plan)
-        self.pack = CloudStackPack.objects.get(
+    @property
+    def host_cs(self):
+        return HostAttr.objects.get(host=self.host)
+
+    @property
+    def cs_plan(self):
+        return PlanAttr.objects.get(plan=self.plan)
+
+    @property
+    def pack(self):
+        return CloudStackPack.objects.get(
             offering__serviceofferingid=self.database.offering_id,
             offering__region__environment=self.environment,
             engine_type__name=self.database.engine_type

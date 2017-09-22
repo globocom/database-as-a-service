@@ -35,11 +35,13 @@ class VmStep(BaseInstanceStep):
         self.credentials = None
         self.provider = None
 
+    @property
     def cs_provider(self):
         if not self.provider:
             self.provider = CloudStackProvider(credentials=self.cs_credentials)
         return self.provider
 
+    @property
     def cs_credentials(self):
         if not self.credentials:
             self.credentials = get_credentials_for(

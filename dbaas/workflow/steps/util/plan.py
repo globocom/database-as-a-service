@@ -14,7 +14,10 @@ class PlanStep(BaseInstanceStep):
 
     def __init__(self, instance):
         super(PlanStep, self).__init__(instance)
-        self.cs_plan = PlanAttr.objects.get(plan=self.plan)
+
+    @property
+    def cs_plan(self):
+        return PlanAttr.objects.get(plan=self.plan)
 
     @property
     def host_cs(self):
