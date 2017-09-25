@@ -8,7 +8,7 @@ from dbaas_credentials.models import CredentialType
 from dbaas_cloudstack.models import LastUsedBundleDatabaseInfra, \
     LastUsedBundle, DatabaseInfraOffering
 from maintenance.models import DatabaseResize
-from physical.models import Environment
+from physical.models import Environment, DatabaseInfra
 from util import check_ssh, get_credentials_for
 from base import BaseInstanceStep, BaseInstanceStepMigration
 
@@ -416,7 +416,7 @@ class RemoveHostMigration(RemoveHost):
 
     @property
     def environment(self):
-        base_env = super(RemoveHostMigration, self).environment
-        if base_env.migrate_to:
-            return base_env
-        return Environment.objects.get(migrate_environment=base_env)
+        infra = DatabaseInfra.objects.get(id=self.infra.id)
+        if infra.environment.migrate_to:
+            return infra.environment
+        return Environment.objects.get(migrate_environment=infra.environment)
