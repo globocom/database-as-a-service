@@ -169,7 +169,7 @@ def region_migration_start(self, infra, instances, since_step=None):
         'Destroying old infra': (
             'workflow.steps.util.disk.DisableOldestExportMigration',
             'workflow.steps.util.disk.DiskUpdateHost',
-            'workflow.steps.util.vm.RemoveHostMigration',
+            'workflow.steps.util.vm.RemoveHost',
         )}, {
         'Enabling monitoring and alarms': (
             'workflow.steps.util.db_monitor.EnableMonitoring',
