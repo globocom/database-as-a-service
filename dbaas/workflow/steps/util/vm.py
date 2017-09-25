@@ -417,4 +417,6 @@ class RemoveHostMigration(RemoveHost):
     @property
     def environment(self):
         base_env = super(RemoveHostMigration, self).environment
+        if base_env.migrate_to:
+            return base_env
         return Environment.objects.get(migrate_to=base_env)
