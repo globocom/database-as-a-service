@@ -8,6 +8,7 @@ from dbaas_credentials.models import CredentialType
 from dbaas_cloudstack.models import LastUsedBundleDatabaseInfra, \
     LastUsedBundle, DatabaseInfraOffering
 from maintenance.models import DatabaseResize
+from physical.models import Environment
 from util import check_ssh, get_credentials_for
 from base import BaseInstanceStep, BaseInstanceStepMigration
 
@@ -398,11 +399,22 @@ class RemoveHost(VmStep):
         host = self.host.future_host
         host_attr = HostAttr.objects.get(host=host)
 
-        self.cs_provider.destroy_virtual_machine(
+        if not self.cs_provider.destroy_virtual_machine(
             project_id=self.cs_credentials.project,
             environment=self.environment,
             vm_id=host_attr.vm_id
-        )
+        ):
+            raise Exception("Could not remove Host - {} {} {}".format(
+                self.environment, host_attr.vm_id, self.cs_credentials.project
+            ))
 
         host_attr.delete()
         host.delete()
+
+
+class RemoveHostMigration(VmStep):
+
+    @property
+    def environment(self):
+        base_env = super(RemoveHostMigration, self).environment
+        return Environment.objects.get(migrate_to=base_env)
