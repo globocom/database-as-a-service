@@ -880,6 +880,13 @@ class Instance(BaseModel):
 
         return format_html(status)
 
+    def update_status(self):
+        self.status = Instance.DEAD
+        if self.check_status():
+            self.status = Instance.ALIVE
+
+        self.save(update_fields=['status'])
+
 
 class DatabaseInfraParameter(BaseModel):
 

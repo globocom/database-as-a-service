@@ -443,12 +443,7 @@ def update_instances_status(self):
             LOG.info("Retrieving all instances for {}".format(databaseinfra))
 
             for instance in Instance.objects.filter(databaseinfra=databaseinfra):
-                if instance.check_status():
-                    instance.status = Instance.ALIVE
-                else:
-                    instance.status = Instance.DEAD
-
-                instance.save(update_fields=['status'])
+                instance.update_status()
 
                 msg = "\nUpdating instance status, instance: {}, status: {}".format(
                     instance, instance.status)
@@ -702,7 +697,7 @@ def database_disk_resize(self, database, disk_offering, task_history, user):
             details='\nDisk resize successfully done.'
         )
 
-        database.unpin_task()
+        database.finish_task()
         return True
 
     except Exception as e:
@@ -728,7 +723,7 @@ def database_disk_resize(self, database, disk_offering, task_history, user):
             )
 
         task_history.update_status_for(TaskHistory.STATUS_ERROR, details=error)
-        database.unpin_task()
+        database.finish_task()
     finally:
         AuditRequest.cleanup_request()
 
@@ -1019,7 +1014,7 @@ def switch_write_database(self, database, instance, user, task):
         task.update_status_for(TaskHistory.STATUS_SUCCESS, 'Done')
     else:
         task.update_status_for(TaskHistory.STATUS_ERROR, 'Done')
-        database.unpin_task()
+        database.finish_task()
 
 
 class TaskRegister(object):
