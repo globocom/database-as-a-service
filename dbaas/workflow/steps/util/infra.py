@@ -80,11 +80,12 @@ class UpdateMigrateEnvironment(BaseInstanceStepMigration):
         return "Updating environment..."
 
     def do(self):
-        if self.environment:
-            self.infra.environment = self.environment
+        env = self.environment
+        if env:
+            self.infra.environment = env
             self.infra.save()
 
-            self.database.environment = self.environment
+            self.database.environment = env
             self.database.save()
 
 
