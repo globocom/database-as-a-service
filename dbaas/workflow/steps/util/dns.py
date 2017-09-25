@@ -74,6 +74,11 @@ class ChangeEndpoint(DNSStep):
                 self.instance.dns = instance.dns
 
         old_host = self.host.future_host
+        DNSAPIProvider.update_database_dns_content(
+            self.infra, old_host.hostname,
+            old_host.address, self.host.address
+        )
+
         self.host.hostname = old_host.hostname
         old_host.hostname = old_host.address
 
