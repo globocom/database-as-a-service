@@ -416,7 +416,7 @@ class RemoveHostMigration(RemoveHost):
 
     @property
     def environment(self):
-        infra = DatabaseInfra.objects.get(id=self.infra.id)
-        if infra.environment.migrate_to:
-            return infra.environment
-        return Environment.objects.get(migrate_environment=infra.environment)
+        base_env = super(RemoveHostMigration, self).environment
+        if not base_env.migrate_environment:
+            base_env = Environment.objects.get(migrate_environment=base_env)
+        return base_env
