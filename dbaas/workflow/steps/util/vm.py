@@ -412,7 +412,7 @@ class RemoveHost(VmStep):
         host.delete()
 
 
-class RemoveHostMigration(VmStep):
+class RemoveHostMigration(RemoveHost):
 
     @property
     def environment(self):
