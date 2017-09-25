@@ -181,7 +181,7 @@ def region_migration_start(self, infra, instances, since_step=None):
     }]
 
     task = TaskHistory()
-    task.task_id = datetime.now().strftime("%Y%m%d%H%M%S")
+    task.task_id = self.request.id
     task.task_name = "migrating_zone"
     task.task_status = TaskHistory.STATUS_RUNNING
     task.context = {'infra': infra, 'instances': instances}
