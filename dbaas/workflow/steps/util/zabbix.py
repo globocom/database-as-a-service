@@ -14,11 +14,16 @@ class ZabbixStep(BaseInstanceStep):
         environment = self.instance.databaseinfra.environment
         self.credentials = Credential.get_credentials(environment, integration)
         self.instances = self.host.instances.all()
+        self.provider = None
 
-        self.zabbix_provider = factory_for(
-            databaseinfra=self.instance.databaseinfra,
-            credentials=self.credentials
-        )
+    @property
+    def zabbix_provider(self):
+        if not self.provider:
+            self.provider = factory_for(
+                databaseinfra=self.instance.databaseinfra,
+                credentials=self.credentials
+            )
+        return self.provider
 
     def __del__(self):
         self.zabbix_provider.logout()
