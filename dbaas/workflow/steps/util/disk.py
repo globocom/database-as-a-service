@@ -288,6 +288,17 @@ class CopyDataBetweenExportsMigration(CopyDataBetweenExports):
     OLD_DIRECTORY = '{}/data'.format(CopyDataBetweenExports.NEW_DIRECTORY)
 
     @property
+    def host_has_mount(self):
+        host_has_mount = super(CopyDataBetweenExportsMigration, self).host_has_mount
+        if not host_has_mount:
+            return False
+
+        if not self.infra.plan.has_persistence:
+            return False
+
+        return True
+
+    @property
     def host(self):
         host = super(CopyDataBetweenExportsMigration, self).host
         return host.future_host
