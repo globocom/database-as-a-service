@@ -194,6 +194,10 @@ def region_migration_start(self, infra, instances, since_step=None):
     else:
         task.set_status_error('Could not migrate region')
 
+    database = infra.databases.first()
+    database.environment = infra.environment
+    database.save()
+
 
 @app.task(bind=True)
 def create_database(
