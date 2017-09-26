@@ -119,7 +119,7 @@ def make_instance_snapshot_backup(instance, error, group):
     snapshot.save()
 
     snapshot_final_status = Snapshot.SUCCESS
-
+    locked = None
     try:
         databaseinfra = instance.databaseinfra
         driver = databaseinfra.get_driver()
