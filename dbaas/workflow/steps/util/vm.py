@@ -331,8 +331,11 @@ class MigrationCreateNewVM(CreateVirtualMachine):
 
     @property
     def cs_offering(self):
-        base_offering = self.infra.cs_dbinfra_offering.get().offering
-        return base_offering.equivalent_offering
+        if not self.instance.is_database:
+            return PlanAttr.objects.get(plan=self.plan).get_weaker_offering()
+
+        base = super(MigrationCreateNewVM, self).cs_offering
+        return base.equivalent_offering
 
     def get_next_bundle(self):
         migrate_plan = self.plan.migrate_plan

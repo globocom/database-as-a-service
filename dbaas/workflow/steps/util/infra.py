@@ -23,13 +23,27 @@ class Offering(Update):
     def __unicode__(self):
         return "Updating offering info..."
 
-    def do(self):
+    @property
+    def target_offering(self):
         last_resize = self.database.resizes.last()
-        self.infra_offering.offering = last_resize.target_offer.offering
+        return last_resize.target_offer.offering
+
+    def do(self):
+        if not self.target_offering:
+            return
+
+        self.infra_offering.offering = self.target_offering
         self.infra_offering.save()
 
     def undo(self):
         pass
+
+
+class OfferingMigration(Offering):
+
+    @property
+    def target_offering(self):
+        return self.infra_offering.offering.equivalent_offering
 
 
 class Memory(Update):
