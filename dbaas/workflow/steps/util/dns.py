@@ -140,5 +140,5 @@ class CheckIsReady(DNSStep):
         if str(check_dns).lower() != 'true':
             return
 
-        for dns in DatabaseInfraDNSList.objects.filter(databaseinfra=self.infra):
+        for dns in DatabaseInfraDNSList.objects.filter(databaseinfra=self.infra.id):
             check_nslookup(dns.dns, self.credentials.project)
