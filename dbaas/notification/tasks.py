@@ -20,6 +20,7 @@ from .models import TaskHistory
 from workflow.workflow import steps_for_instances
 from maintenance.models import DatabaseUpgrade, DatabaseResize
 from maintenance.models import DatabaseChangeParameter
+from maintenance.tasks import restore_database
 
 LOG = get_task_logger(__name__)
 
@@ -1247,7 +1248,7 @@ class TaskRegister(object):
         )
 
     @classmethod
-    def restore_snapshot(cls, database, user, snapshot):
+    def restore_snapshot(cls, database, user, snapshot, retry_from=None):
         from backup.tasks import restore_snapshot
 
         task_params = {
@@ -1260,12 +1261,22 @@ class TaskRegister(object):
 
         task = cls.create_task(task_params)
 
-        restore_snapshot.delay(
-            database=database,
-            task_history=task,
-            snapshot=snapshot,
-            user=user
-        )
+        try:
+            get_deploy_instances_size(
+                database.plan.replication_topology.class_path
+            )
+        except NotImplementedError:
+            restore_snapshot.delay(
+                database=database,
+                task_history=task,
+                snapshot=snapshot,
+                user=user
+            )
+        else:
+            restore_database.delay(
+                database=database, task=task, snapshot=snapshot, user=user,
+                retry_from=retry_from
+            )
 
     @classmethod
     def database_upgrade(cls, database, user, since_step=None):
