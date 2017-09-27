@@ -143,7 +143,40 @@ class RedisCluster(BaseRedis):
         return super(RedisCluster, self).get_destroy_steps()
 
     def get_restore_snapshot_steps(self):
-        raise NotImplementedError
+        return [{
+            'Disable monitoring': (
+                'workflow.steps.util.zabbix.DisableAlarms',
+            )}, {
+            'Restoring': (
+                'workflow.steps.util.disk.RestoreSnapshot',
+            )}, {
+            'Stopping datbase': (
+                'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.CheckIsDown',
+                'workflow.steps.redis.cluster.SaveNodeConfig'
+            )}, {
+            'Configuring': (
+                'workflow.steps.util.disk.AddDiskPermissionsRestoredDisk',
+                'workflow.steps.util.disk.UnmountOldestExportRestore',
+                'workflow.steps.util.disk.MountNewerExportRestore',
+                'workflow.steps.util.disk.ConfigureFstabRestore',
+                'workflow.steps.util.disk.CleanData',
+                'workflow.steps.util.plan.InitializationRestore',
+                'workflow.steps.util.plan.ConfigureRestore',
+                'workflow.steps.redis.cluster.RestoreNodeConfig'
+            )}, {
+            'Starting database': (
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.CheckIsUp',
+            )}, {
+            'Old data': (
+                'workflow.steps.util.disk.BackupRestore',
+                'workflow.steps.util.disk.UpdateRestore',
+            )}, {
+            'Enabling monitoring': (
+                'workflow.steps.util.zabbix.EnableAlarms',
+            )
+        }]
 
     @property
     def driver_name(self):
