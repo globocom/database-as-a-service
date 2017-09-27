@@ -155,6 +155,7 @@ def region_migration_start(self, infra, instances, since_step=None):
             'workflow.steps.util.disk.UnmountNewerExportMigration',
             'workflow.steps.util.vm.ChangeInstanceHost',
             'workflow.steps.util.vm.UpdateOSDescription',
+            'workflow.steps.util.infra.OfferingMigration',
             'workflow.steps.util.infra.UpdateMigrateEnvironment',
             'workflow.steps.util.infra.UpdateMigratePlan',
         )}, {
