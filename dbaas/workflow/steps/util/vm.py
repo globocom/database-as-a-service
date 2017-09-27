@@ -332,7 +332,7 @@ class MigrationCreateNewVM(CreateVirtualMachine):
     @property
     def cs_offering(self):
         if not self.instance.is_database:
-            return PlanAttr.objects.get(plan=self.plan).get_weaker_offering()
+            return PlanAttr.objects.get(plan=self.plan.migrate_plan).get_weaker_offering()
 
         base = super(MigrationCreateNewVM, self).cs_offering
         return base.equivalent_offering
