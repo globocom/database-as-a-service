@@ -41,6 +41,7 @@ class MaintenanceAdmin(admin.DjangoServicesAdmin):
     list_display = ("description", "scheduled_for", "started_at", "finished_at",
                     "maximum_workers", "affected_hosts_html", "created_by",
                     "friendly_status")
+    list_filter = ["scheduled_for", "maximum_workers", "status"]
     fields = ("description", "scheduled_for", "started_at", "finished_at",
               "main_script", "rollback_script", "hostsid", "maximum_workers",
               "status", "celery_task_id", "affected_hosts", "created_by",
