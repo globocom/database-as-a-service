@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
 import logging
+from collections import OrderedDict
+from dbaas_nfsaas.models import HostAttr
 from util import exec_remote_command_host
 from base import BaseInstanceStep, BaseInstanceStepMigration
-from nfsaas_utils import create_disk, delete_disk, create_access
+from nfsaas_utils import create_disk, delete_disk, create_access, \
+    restore_snapshot, restore_wait_for_finished, delete_export
+from restore_snapshot import make_host_backup
 
 LOG = logging.getLogger(__name__)
 
@@ -12,8 +16,9 @@ class Disk(BaseInstanceStep):
     NEW_DIRECTORY = '/new_data'
 
     @property
-    def host_has_mount(self):
+    def is_valid(self):
         return bool(self.instance.hostname.nfsaas_host_attributes.first())
+
 
 
 class CreateExport(Disk):
@@ -57,7 +62,7 @@ class DiskCommand(Disk):
         raise NotImplementedError
 
     def do(self):
-        if not self.host_has_mount:
+        if not self.is_valid:
             return
 
         for message, script in self.scripts.items():
@@ -180,20 +185,32 @@ class ConfigureFstab(NewerDisk, DiskCommand):
     def __unicode__(self):
         return "Configuring fstab..."
 
+    def add_clone_script(self, scripts):
+        error = 'Could not copy fstab'.format(self.OLD_DIRECTORY)
+        script = 'cp /etc/fstab /etc/fstab.bkp'.format(self.OLD_DIRECTORY)
+        scripts[error] = script
+
+    def add_remove_script(self, scripts):
+        error = 'Could not remove {} from fstab'.format(self.OLD_DIRECTORY)
+        script = 'sed \'/\{}/d\' /etc/fstab.bkp > /etc/fstab'.format(
+            self.OLD_DIRECTORY
+        )
+        scripts[error] = script
+
+    def add_configure_script(self, scripts):
+        error = 'Could not configure {} in fstab'.format(self.OLD_DIRECTORY)
+        script = 'echo "{}   {} nfs defaults,bg,intr,nolock 0 0" >> /etc/fstab'.format(
+            self.newer_export.nfsaas_path, self.OLD_DIRECTORY
+        )
+        scripts[error] = script
+
     @property
     def scripts(self):
-        remove_msg = 'Could remove {} from fstab'.format(self.OLD_DIRECTORY)
-        remove_script = 'sed \'{}/d\' "/etc/fstab"'.format(self.OLD_DIRECTORY)
-
-        add_msg = 'Could configure {} in fstab'.format(self.OLD_DIRECTORY)
-        add_script = \
-            'echo "{} {} nfs defaults,bg,intr,nolock 0 0" >> /etc/fstab'.\
-            format(self.newer_export.nfsaas_path, self.OLD_DIRECTORY)
-
-        return {
-            remove_msg: remove_script,
-            add_msg: add_script
-        }
+        scripts = OrderedDict()
+        self.add_clone_script(scripts)
+        self.add_remove_script(scripts)
+        self.add_configure_script(scripts)
+        return scripts
 
 
 class FilePermissions(NewerDisk, DiskCommand):
@@ -252,23 +269,43 @@ class FilePermissionsMigration(FilePermissions, BaseInstanceStepMigration):
 class MigrationCreateExport(CreateExport, BaseInstanceStepMigration):
     pass
 
+class AddDiskPermissions(Disk):
 
-class AddDiskPermissionsOldest(Disk):
+    @property
+    def disk_time(self):
+        raise NotImplementedError
+
+    def disk_path(self):
+        raise NotImplementedError
+
+    @property
+    def to_host(self):
+        return self.host
 
     def __unicode__(self):
-        return "Adding oldest disk permission..."
-
-    def get_disk_path(self):
-        disk = self.host.nfsaas_host_attributes.get(is_active=True)
-        return disk.nfsaas_path_host
+        return "Adding permission to {} disk ...".format(self.disk_time)
 
     def do(self):
-        if not self.host_has_mount:
+        if not self.is_valid:
             return
 
         create_access(
-            self.environment, self.get_disk_path(), self.host.future_host
+            self.environment, self.disk_path(), self.to_host
         )
+
+class AddDiskPermissionsOldest(AddDiskPermissions):
+
+    @property
+    def disk_time(self):
+        return "Oldest"
+
+    def disk_path(self):
+        disk = self.host.nfsaas_host_attributes.get(is_active=True)
+        return disk.nfsaas_path_host
+
+    @property
+    def to_host(self):
+        return self.host.future_host
 
 
 class MountOldestExportMigration(DiskMountCommand, BaseInstanceStepMigration):
@@ -288,9 +325,9 @@ class CopyDataBetweenExportsMigration(CopyDataBetweenExports):
     OLD_DIRECTORY = '{}/data'.format(CopyDataBetweenExports.NEW_DIRECTORY)
 
     @property
-    def host_has_mount(self):
-        host_has_mount = super(CopyDataBetweenExportsMigration, self).host_has_mount
-        if not host_has_mount:
+    def is_valid(self):
+        is_valid = super(CopyDataBetweenExportsMigration, self).is_valid
+        if not is_valid:
             return False
 
         if not self.infra.plan.has_persistence:
@@ -321,3 +358,170 @@ class DiskUpdateHost(Disk):
         for export in self.host.future_host.nfsaas_host_attributes.all():
             export.host = self.host
             export.save()
+
+
+class RestoreSnapshot(Disk):
+
+    def __unicode__(self):
+        if not self.snapshot:
+            return "Skipping restoring (No snapshot for this instance)..."
+
+        return "Restoring {}...".format(self.snapshot)
+
+    def do(self):
+        snapshot = self.snapshot
+        if not snapshot:
+            return
+
+        disk = HostAttr.objects.get(nfsaas_path=snapshot.export_path)
+        restore_job = restore_snapshot(
+            self.environment, disk.nfsaas_export_id, snapshot.snapshopt_id
+        )
+        job_result = restore_wait_for_finished(
+            self.environment, restore_job['job']
+        )
+
+        if 'id' not in job_result:
+            raise EnvironmentError(
+                'Error while restoring snapshot - {}'.format(job_result)
+            )
+
+        disk = self.latest_disk
+        disk.nfsaas_export_id = job_result['id']
+        disk.nfsaas_path_host = job_result['path']
+        disk.nfsaas_path = job_result['full_path']
+        disk.is_active = False
+        disk.id = None
+        disk.host = self.restore.master_for(self.instance).hostname
+        disk.save()
+
+    def undo(self):
+        if not self.restore.is_master(self.instance):
+            return
+
+        delete_export(self.environment, self.latest_disk())
+
+
+class AddDiskPermissionsRestoredDisk(AddDiskPermissions):
+
+    @property
+    def disk_time(self):
+        return "restored"
+
+    @property
+    def is_valid(self):
+        return self.restore.is_master(self.instance)
+
+    def disk_path(self):
+        return self.latest_disk.nfsaas_path_host
+
+
+class UnmountOldestExportRestore(UnmountOldestExport):
+
+    @property
+    def is_valid(self):
+        return self.restore.is_master(self.instance)
+
+    def undo(self):
+        # ToDo
+        pass
+
+
+class MountNewerExportRestore(MountNewerExport):
+
+    @property
+    def path_mount(self):
+        return self.OLD_DIRECTORY
+
+    @property
+    def is_valid(self):
+        return self.restore.is_master(self.instance)
+
+    def undo(self):
+        # ToDo
+        pass
+
+
+class ConfigureFstabRestore(MountNewerExportRestore, ConfigureFstab):
+
+    def add_configure_script(self, scripts):
+        pass
+
+    def undo(self):
+        # ToDo
+        pass
+
+
+class CleanData(DiskCommand):
+
+    def __unicode__(self):
+        return "Removing data from slaves..."
+
+    @property
+    def is_valid(self):
+        return self.restore.is_slave(self.instance)
+
+    @property
+    def scripts(self):
+        message = 'Could not remove data from {}'.format(self.OLD_DIRECTORY)
+        script = 'rm -rf {}/data'.format(self.OLD_DIRECTORY)
+        return {message: script}
+
+
+class BackupRestore(Disk):
+
+    def __unicode__(self):
+        return "Doing backup of old data..."
+
+    @property
+    def is_valid(self):
+        return self.restore.is_master(self.instance)
+
+    @property
+    def disk(self):
+        return self.host.active_disk.nfsaas_export_id
+
+    @property
+    def group(self):
+        return self.restore.new_group
+
+    def do(self):
+        if not self.is_valid:
+            return
+
+        if not make_host_backup(self.database, self.instance, self.disk, self.group):
+            raise EnvironmentError(
+                "Could not do backup of current database data in {}".format(
+                    self.instance
+                )
+            )
+
+    def undo(self):
+        # ToDo
+        pass
+
+
+class UpdateRestore(Disk):
+
+    def __unicode__(self):
+        return "Updating meta data..."
+
+    @property
+    def is_valid(self):
+        return self.restore.is_master(self.instance)
+
+    def do(self):
+        if not self.is_valid:
+            return
+
+        old_disk = self.host.active_disk
+        old_disk.is_active = False
+        old_disk.save()
+
+        new_disk = self.host.nfsaas_host_attributes.last()
+        new_disk.is_active = True
+        new_disk.save()
+
+    def undo(self):
+        # ToDo
+        pass
