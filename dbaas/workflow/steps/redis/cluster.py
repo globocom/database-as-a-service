@@ -26,6 +26,10 @@ class BaseClusterStep(PlanStep):
         return '{{ CLUSTER_COMMAND }} info --password {{ PASSWORD }} {{ CLUSTER_ADDRESS }}'
 
     @property
+    def node_config_file(self):
+        return 'nodes.conf'
+
+    @property
     def script_variables(self):
         variables = {
             'CLUSTER_COMMAND': self.cluster_command,
@@ -92,3 +96,21 @@ class CheckClusterStatus(BaseClusterStep):
             return True
 
         raise AssertionError('"{}" not in {}'.format(expected, response))
+
+
+class SaveNodeConfig(BaseClusterStep):
+
+    def __unicode__(self):
+        return "Saving node config..."
+
+    def do(self):
+        self.run_script('cp /data/{} /tmp/'.format(self.node_config_file))
+
+
+class RestoreNodeConfig(BaseClusterStep):
+
+    def __unicode__(self):
+        return "Restoring node config..."
+
+    def do(self):
+        self.run_script('cp /tmp/{} /data/'.format(self.node_config_file))
