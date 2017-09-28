@@ -8,8 +8,9 @@ from dateutil import tz
 from datetime import datetime
 from dbaas_cloudstack.models import CloudStackPack
 from account.models import Team
+from backup.models import BackupGroup
 from logical.models import Database, Project
-from physical.models import Host, Plan, Environment, DatabaseInfra
+from physical.models import Host, Plan, Environment, DatabaseInfra, Instance
 from notification.models import TaskHistory
 from util.models import BaseModel
 from django.db.models.signals import post_save
@@ -398,6 +399,125 @@ class DatabaseCreate(DatabaseMaintenanceTask):
             self.database = maintenance.database
 
         super(DatabaseCreate, self).update_step(step)
+
+
+class DatabaseRestore(DatabaseMaintenanceTask):
+    database = models.ForeignKey(
+        Database, verbose_name="Database", related_name="database_restore"
+    )
+    task = models.ForeignKey(
+        TaskHistory, verbose_name="Task History",
+        related_name="database_restore"
+    )
+    group = models.ForeignKey(
+        BackupGroup, verbose_name="Snapshot Group",
+        related_name="database_restore"
+    )
+    new_group = models.ForeignKey(
+        BackupGroup, verbose_name="Snapshot Group generated",
+        null=True, blank=True, related_name="database_restore_new"
+    )
+
+    def __unicode__(self):
+        return "{} change restore to {}".format(self.database, self.group)
+
+    def load_instances(self, retry_from=None):
+        if retry_from:
+            self.__instance_retry(retry_from)
+        else:
+            self.__instances_groups()
+
+    def __instance_retry(self, retry_from):
+        for group in retry_from.restore_instances.all():
+            instance = DatabaseRestoreInstancePair()
+            instance.master = group.master
+            instance.slave = group.slave
+            instance.restore = self
+            instance.save()
+
+    def __instances_groups(self):
+        driver = self.database.infra.get_driver()
+        pairs = {}
+        for instance in self.database.infra.instances.all():
+            if driver.check_instance_is_master(instance):
+                master = instance
+                slave = None
+            else:
+                master = driver.get_master_for(instance)
+                slave = instance
+
+            if not master:
+                continue
+
+            if master not in pairs:
+                pairs[master] = []
+
+            if slave:
+                pairs[master].append(slave)
+
+        for master, slaves in pairs.items():
+            for slave in slaves:
+                instance = DatabaseRestoreInstancePair()
+                instance.master = master
+                instance.slave = slave
+                instance.restore = self
+                instance.save()
+
+    def instances_pairs(self):
+        return self.restore_instances.all().order_by('master')
+
+    @property
+    def instances(self):
+        instances = []
+        for pairs in self.instances_pairs():
+            if pairs.master not in instances:
+                instances.append(pairs.master)
+            instances.append(pairs.slave)
+
+        return instances
+
+    def master_for(self, instance):
+        for pair in self.instances_pairs():
+            if pair.master == instance or pair.slave == instance:
+                return pair.master
+
+        raise DatabaseRestoreInstancePair.DoesNotExist(
+            'No master for {}'.format(instance)
+        )
+
+    def is_master(self, instance):
+        for pair in self.instances_pairs():
+            if pair.master == instance:
+                return True
+
+        return False
+
+    def is_slave(self, instance):
+        for pair in self.instances_pairs():
+            if pair.slave == instance:
+                return True
+
+        return False
+
+
+class DatabaseRestoreInstancePair(BaseModel):
+
+    master = models.ForeignKey(
+        Instance, verbose_name="Master", related_name="restore_master"
+    )
+    slave = models.ForeignKey(
+        Instance, verbose_name="Slave", related_name="restore_slave"
+    )
+    restore = models.ForeignKey(
+        DatabaseRestore, verbose_name="Restore",
+        related_name="restore_instances"
+    )
+
+    def __unicode__(self):
+        return "{}: {} -> {}".format(self.restore, self.master, self.slave)
+
+    class Meta:
+        unique_together = (('master', 'slave', 'restore'), )
 
 
 simple_audit.register(Maintenance)

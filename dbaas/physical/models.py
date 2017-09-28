@@ -747,6 +747,10 @@ class Host(BaseModel):
                 return instance
         return None
 
+    @property
+    def active_disk(self):
+        return self.nfsaas_host_attributes.get(is_active=True)
+
 
 class Instance(BaseModel):
 

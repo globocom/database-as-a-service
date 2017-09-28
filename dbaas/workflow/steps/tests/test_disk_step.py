@@ -40,14 +40,14 @@ class DiskStepTestsMigration(TestBaseStep):
         migration = MigrationCreateExport(self.instance)
         self.assertEqual(migration.host, self.future_host)
 
-    @patch('workflow.steps.util.disk.AddDiskPermissionsOldest.host_has_mount')
-    @patch('workflow.steps.util.disk.AddDiskPermissionsOldest.get_disk_path')
+    @patch('workflow.steps.util.disk.AddDiskPermissionsOldest.is_valid')
+    @patch('workflow.steps.util.disk.AddDiskPermissionsOldest.disk_path')
     @patch('workflow.steps.util.disk.create_access')
     def test_add_permission_oldest(
-            self, create_access, get_disk_path, host_has_mount
+        self, create_access, disk_path, is_valid
     ):
-        get_disk_path.return_value = self.future_host.hostname
-        host_has_mount.return_value = True
+        disk_path.return_value = self.future_host.hostname
+        is_valid.return_value = True
 
         add_permission = AddDiskPermissionsOldest(self.instance)
         add_permission.do()
