@@ -216,11 +216,7 @@ def steps_for_instances(
     if not success:
         return False
 
-    steps_total = 0
-    for group_of_steps in list_of_groups_of_steps:
-        steps_total += len(group_of_steps.items()[0][1])
-
-    steps_total = steps_total * len(instances)
+    steps_total = total_of_steps(list_of_groups_of_steps, instances)
     step_current = 0
 
     task.add_detail('Instances: {}'.format(len(instances)))
@@ -358,3 +354,11 @@ def unlock_databases(databases):
 def unlock_databases_for(instances):
     databases = databases_for(instances)
     unlock_databases(databases)
+
+
+def total_of_steps(groups, instances):
+    total = 0
+    for group in groups:
+        total += len(group.values()[0])
+
+    return total * len(instances)
