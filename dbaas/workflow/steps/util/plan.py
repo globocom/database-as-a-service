@@ -15,16 +15,20 @@ class PlanStep(BaseInstanceStep):
     def __init__(self, instance):
         super(PlanStep, self).__init__(instance)
 
-        self.host_cs = HostAttr.objects.get(host=self.host)
+    @property
+    def cs_plan(self):
+        return PlanAttr.objects.get(plan=self.plan)
 
+    @property
+    def host_cs(self):
+        return HostAttr.objects.get(host=self.host)
+
+    @property
+    def host_nfs(self):
         try:
-            self.host_nfs = HostAttrNfsaas.objects.get(
-                host=self.host, is_active=True
-            )
+            return HostAttrNfsaas.objects.get(host=self.host, is_active=True)
         except HostAttrNfsaas.DoesNotExist:
-            self.host_nfs = None
-
-        self.cs_plan = PlanAttr.objects.get(plan=self.plan)
+            return None
 
     @property
     def script_variables(self):
@@ -55,16 +59,18 @@ class PlanStep(BaseInstanceStep):
         )
         return credential.get_parameter_by_name('endpoint_log')
 
-    def get_configuration(self):
+    @property
+    def offering(self):
         current_resize = self.database.resizes.last()
         if current_resize and current_resize.is_running:
-            offering = current_resize.target_offer.offering
-        else:
-            offering = self.cs_plan.get_stronger_offering()
+            return current_resize.target_offer.offering
 
+        return self.cs_plan.get_stronger_offering()
+
+    def get_configuration(self):
         try:
             configuration = configuration_factory(
-                self.infra, offering.memory_size_mb
+                self.infra, self.offering.memory_size_mb
             )
         except NotImplementedError:
             return None
@@ -172,6 +178,11 @@ class InitializationMigration(Initialization, BaseInstanceStepMigration):
         driver = self.infra.get_driver()
         return driver.initialization_parameters(self.instance.future_instance)
 
+    @property
+    def offering(self):
+        offering_base = self.infra.cs_dbinfra_offering.get().offering
+        return offering_base.equivalent_offering
+
 
 class ConfigureMigration(Configure, BaseInstanceStepMigration):
 
@@ -180,3 +191,21 @@ class ConfigureMigration(Configure, BaseInstanceStepMigration):
         return driver.configuration_parameters_migration(
             self.instance.future_instance
         )
+
+    @property
+    def offering(self):
+        offering_base = self.infra.cs_dbinfra_offering.get().offering
+        return offering_base.equivalent_offering
+
+
+class ConfigureRestore(Configure):
+
+    def __init__(self, instance, **kwargs):
+        super(ConfigureRestore, self).__init__(instance)
+        self.kwargs = kwargs
+
+    def get_variables_specifics(self):
+        base = super(ConfigureRestore, self).get_variables_specifics()
+        base.update(self.kwargs)
+        LOG.info(base)
+        return base

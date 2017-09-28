@@ -7,7 +7,7 @@ from notification.views import UserTasks
 
 
 register = template.Library()
-ARGUMENTS_REGEX = re.compile(r"database( name)?: ([\w\-_]+),", re.IGNORECASE)
+ARGUMENTS_REGEX = re.compile(r"database( name)?: ([\w\-_\ ]+),?", re.IGNORECASE)
 
 
 @register.simple_tag

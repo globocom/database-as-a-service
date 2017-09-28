@@ -172,7 +172,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             icon="icon-warning-sign", css_class="show-upgrade"
         )
     engine_html.short_description = _("engine")
-    engine_html.admin_order_field = "Engine"
+    engine_html.admin_order_field = "databaseinfra__engine"
 
     def offering_html(self, database):
         last_resize = database.resizes.last()
@@ -193,7 +193,6 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             icon="icon-warning-sign", css_class="show-resize"
         )
     offering_html.short_description = _("offering")
-    offering_html.admin_order_field = "Offering"
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         """

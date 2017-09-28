@@ -44,7 +44,10 @@ class NewerDisk(Disk):
 
     def __init__(self, instance):
         super(NewerDisk, self).__init__(instance)
-        self.newer_export = self.host.nfsaas_host_attributes.last()
+
+    @property
+    def newer_export(self):
+        return self.host.nfsaas_host_attributes.last()
 
 
 class DiskCommand(Disk):
@@ -110,7 +113,7 @@ class CopyDataBetweenExports(DiskCommand):
     def scripts(self):
         message = 'Could not copy data {} -> {}'.format(
             self.OLD_DIRECTORY, self.NEW_DIRECTORY)
-        script = "rsync -ar --exclude='{0}/.snapshot' {0}/* {1}".format(
+        script = "rsync -arm --exclude='{0}/.snapshot' {0}/* {1}".format(
             self.OLD_DIRECTORY, self.NEW_DIRECTORY
         )
         return {message: script}
@@ -283,6 +286,17 @@ class MountOldestExportMigration(DiskMountCommand, BaseInstanceStepMigration):
 class CopyDataBetweenExportsMigration(CopyDataBetweenExports):
     NEW_DIRECTORY = '{}/data'.format(CopyDataBetweenExports.OLD_DIRECTORY)
     OLD_DIRECTORY = '{}/data'.format(CopyDataBetweenExports.NEW_DIRECTORY)
+
+    @property
+    def host_has_mount(self):
+        host_has_mount = super(CopyDataBetweenExportsMigration, self).host_has_mount
+        if not host_has_mount:
+            return False
+
+        if not self.infra.plan.has_persistence:
+            return False
+
+        return True
 
     @property
     def host(self):

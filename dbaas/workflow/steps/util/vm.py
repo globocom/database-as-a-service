@@ -8,6 +8,7 @@ from dbaas_credentials.models import CredentialType
 from dbaas_cloudstack.models import LastUsedBundleDatabaseInfra, \
     LastUsedBundle, DatabaseInfraOffering
 from maintenance.models import DatabaseResize
+from physical.models import Environment, DatabaseInfra
 from util import check_ssh, get_credentials_for
 from base import BaseInstanceStep, BaseInstanceStepMigration
 
@@ -31,15 +32,23 @@ class VmStep(BaseInstanceStep):
 
     def __init__(self, instance):
         super(VmStep, self).__init__(instance)
-
         self.driver = self.infra.get_driver()
+        self.credentials = None
+        self.provider = None
 
-        self.cs_credentials = get_credentials_for(
-            environment=self.environment,
-            credential_type=CredentialType.CLOUDSTACK
-        )
+    @property
+    def cs_provider(self):
+        if not self.provider:
+            self.provider = CloudStackProvider(credentials=self.cs_credentials)
+        return self.provider
 
-        self.cs_provider = CloudStackProvider(credentials=self.cs_credentials)
+    @property
+    def cs_credentials(self):
+        if not self.credentials:
+            self.credentials = get_credentials_for(
+                self.environment, CredentialType.CLOUDSTACK
+            )
+        return self.credentials
 
     def do(self):
         raise NotImplementedError
@@ -322,8 +331,11 @@ class MigrationCreateNewVM(CreateVirtualMachine):
 
     @property
     def cs_offering(self):
-        base_offering = self.infra.cs_dbinfra_offering.get().offering
-        return base_offering.equivalent_offering
+        if not self.instance.is_database:
+            return PlanAttr.objects.get(plan=self.plan.migrate_plan).get_weaker_offering()
+
+        base = super(MigrationCreateNewVM, self).cs_offering
+        return base.equivalent_offering
 
     def get_next_bundle(self):
         migrate_plan = self.plan.migrate_plan
@@ -390,11 +402,24 @@ class RemoveHost(VmStep):
         host = self.host.future_host
         host_attr = HostAttr.objects.get(host=host)
 
-        self.cs_provider.destroy_virtual_machine(
+        if not self.cs_provider.destroy_virtual_machine(
             project_id=self.cs_credentials.project,
             environment=self.environment,
             vm_id=host_attr.vm_id
-        )
+        ):
+            raise Exception("Could not remove Host - {} {} {}".format(
+                self.environment, host_attr.vm_id, self.cs_credentials.project
+            ))
 
         host_attr.delete()
         host.delete()
+
+
+class RemoveHostMigration(RemoveHost):
+
+    @property
+    def environment(self):
+        base_env = super(RemoveHostMigration, self).environment
+        if not base_env.migrate_environment:
+            base_env = Environment.objects.get(migrate_environment=base_env)
+        return base_env

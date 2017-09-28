@@ -155,6 +155,7 @@ def region_migration_start(self, infra, instances, since_step=None):
             'workflow.steps.util.disk.UnmountNewerExportMigration',
             'workflow.steps.util.vm.ChangeInstanceHost',
             'workflow.steps.util.vm.UpdateOSDescription',
+            'workflow.steps.util.infra.OfferingMigration',
             'workflow.steps.util.infra.UpdateMigrateEnvironment',
             'workflow.steps.util.infra.UpdateMigratePlan',
         )}, {
@@ -169,7 +170,7 @@ def region_migration_start(self, infra, instances, since_step=None):
         'Destroying old infra': (
             'workflow.steps.util.disk.DisableOldestExportMigration',
             'workflow.steps.util.disk.DiskUpdateHost',
-            'workflow.steps.util.vm.RemoveHost',
+            'workflow.steps.util.vm.RemoveHostMigration',
         )}, {
         'Enabling monitoring and alarms': (
             'workflow.steps.util.db_monitor.EnableMonitoring',
@@ -181,7 +182,7 @@ def region_migration_start(self, infra, instances, since_step=None):
     }]
 
     task = TaskHistory()
-    task.task_id = datetime.now().strftime("%Y%m%d%H%M%S")
+    task.task_id = self.request.id
     task.task_name = "migrating_zone"
     task.task_status = TaskHistory.STATUS_RUNNING
     task.context = {'infra': infra, 'instances': instances}
@@ -193,6 +194,10 @@ def region_migration_start(self, infra, instances, since_step=None):
         task.set_status_success('Region migrated with success')
     else:
         task.set_status_error('Could not migrate region')
+
+    database = infra.databases.first()
+    database.environment = infra.environment
+    database.save()
 
 
 @app.task(bind=True)

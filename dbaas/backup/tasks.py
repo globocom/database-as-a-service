@@ -119,7 +119,7 @@ def make_instance_snapshot_backup(instance, error, group):
     snapshot.save()
 
     snapshot_final_status = Snapshot.SUCCESS
-
+    locked = None
     try:
         databaseinfra = instance.databaseinfra
         driver = databaseinfra.get_driver()
@@ -353,8 +353,10 @@ def restore_snapshot(self, database, snapshot, user, task_history):
         worker_name = get_worker_name()
 
         # task_history = models.TaskHistory.objects.get(id=task_history)
-        task_history = TaskHistory.register(request=self.request, task_history=task_history,
-                                            user=user, worker_name=worker_name)
+        task_history = TaskHistory.register(
+            request=self.request, task_history=task_history,
+            user=user, worker_name=worker_name
+        )
 
         databaseinfra = database.databaseinfra
 
@@ -362,7 +364,7 @@ def restore_snapshot(self, database, snapshot, user, task_history):
         snapshot_id = snapshot.snapshopt_id
 
         host_attr_snapshot = HostAttr.objects.get(nfsaas_path=snapshot.export_path)
-        host = host_attr_snapshot.host
+        host = database.infra.get_driver().get_master_instance().hostname
         host_attr = HostAttr.objects.get(host=host, is_active=True)
 
         export_id_snapshot = host_attr_snapshot.nfsaas_export_id

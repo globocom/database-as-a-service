@@ -76,6 +76,20 @@ class RedisSentinel(BaseRedis):
     def driver_name(self):
         return 'redis_sentinel'
 
+    def get_restore_snapshot_steps(self):
+        return (
+            'workflow.steps.util.restore_snapshot.restore_snapshot.RestoreSnapshot',
+            'workflow.steps.util.restore_snapshot.grant_nfs_access.GrantNFSAccess',
+            'workflow.steps.util.restore_snapshot.stop_database.StopDatabase',
+            'workflow.steps.util.restore_snapshot.umount_data_volume.UmountDataVolume',
+            'workflow.steps.util.restore_snapshot.update_fstab.UpdateFstab',
+            'workflow.steps.util.restore_snapshot.mount_data_volume.MountDataVolume',
+            'workflow.steps.redis.restore_snapshot.start_database.StartDatabase',
+            'workflow.steps.util.restore_snapshot.make_export_snapshot.MakeExportSnapshot',
+            'workflow.steps.util.restore_snapshot.update_dbaas_metadata.UpdateDbaaSMetadata',
+            'workflow.steps.util.restore_snapshot.clean_old_volumes.CleanOldVolumes',
+        )
+
 
 class RedisNoPersistence(RedisSingle):
     pass
