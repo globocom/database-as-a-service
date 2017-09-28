@@ -186,7 +186,6 @@ def stop_workflow(workflow_dict, task=None):
 def steps_for_instances_with_rollback(group_of_steps, instances, task):
 
     steps_for_instances_with_rollback.current_step = 0
-
     def update_step(step):
         steps_for_instances_with_rollback.current_step = step
 
@@ -266,20 +265,22 @@ def steps_for_instances(
                     step_class = import_by_path(step)
                     step_instance = step_class(instance)
 
+                    str_step_instance = str(step_instance)
                     if undo:
-                        str_step_instance = 'Rollback ' + str(step_instance)
-                    else:
-                        str_step_instance = str(step_instance)
+                        str_step_instance = 'Rollback ' + str_step_instance
+
                     task.add_step(step_current, steps_total, str_step_instance)
 
                     if step_current < since_step:
                         task.update_details("SKIPPED!", persist=True)
+                        continue
+
+                    if undo:
+                        step_instance.undo()
                     else:
-                        if undo:
-                            step_instance.undo()
-                        else:
-                            step_instance.do()
-                        task.update_details("SUCCESS!", persist=True)
+                        step_instance.do()
+
+                    task.update_details("SUCCESS!", persist=True)
 
                 except Exception as e:
                     task.update_details("FAILED!", persist=True)
@@ -322,8 +323,9 @@ def rollback_for_instances(group_of_steps, instances, task, from_step):
             step_class = import_by_path(step)
             step_instance = step_class(instance)
 
-            task.add_step(undo_step_current, len(steps),
-                          'Rollback ' + str(step_instance))
+            task.add_step(
+                undo_step_current, len(steps), 'Rollback ' + str(step_instance)
+            )
 
             if instance_current_step < undo_step_current:
                 task.update_details("SKIPPED!", persist=True)
