@@ -202,12 +202,7 @@ def steps_for_instances_with_rollback(group_of_steps, instances, task):
         steps_for_instances_with_rollback.current_step
     )
 
-    databases = set()
-    for instance in instances:
-        databases.add(instance.databaseinfra.databases.first())
-
-    for database in databases:
-        database.finish_task()
+    unlock_databases_for(instances)
 
     return False
 
@@ -216,22 +211,10 @@ def steps_for_instances(
         list_of_groups_of_steps, instances, task, step_counter_method=None,
         since_step=0, undo=False
 ):
-    databases = set()
-    for instance in instances:
-        database = instance.databaseinfra.databases.first()
-        if database:
-            databases.add(database)
-
-    for database in databases:
-        databases_locked = []
-        if not database.update_task(task):
-            task.error_in_lock(database)
-
-            if since_step == 0:
-                for database in databases_locked:
-                    database.finish_task()
-            return False
-        databases_locked.append(database)
+    is_retry = since_step > 0
+    success, locked_databases = lock_databases_for(instances, task, is_retry)
+    if not success:
+        return False
 
     steps_total = 0
     for group_of_steps in list_of_groups_of_steps:
@@ -292,8 +275,7 @@ def steps_for_instances(
             count, len(list_of_groups_of_steps))
         )
 
-    for database in databases:
-        database.finish_task()
+    unlock_databases(locked_databases)
 
     return True
 
@@ -340,3 +322,39 @@ def rollback_for_instances(group_of_steps, instances, task, from_step):
 
         finally:
             undo_step_current -= 1
+
+
+def databases_for(instances):
+    databases = set()
+    for instance in instances:
+        database = instance.databaseinfra.databases.first()
+        if database:
+            databases.add(database)
+    return databases
+
+
+def lock_databases_for(instances, task, is_retry):
+    databases = databases_for(instances)
+    for database in databases:
+        databases_locked = []
+
+        if not database.update_task(task):
+            task.error_in_lock(database)
+
+            if not is_retry:
+                unlock_databases(databases_locked)
+            return False, databases
+
+        databases_locked.append(database)
+
+    return databases, True
+
+
+def unlock_databases(databases):
+    for database in databases:
+        database.finish_task()
+
+
+def unlock_databases_for(instances):
+    databases = databases_for(instances)
+    unlock_databases(databases)
