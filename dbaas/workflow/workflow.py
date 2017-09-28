@@ -190,56 +190,18 @@ def steps_for_instances_with_rollback(group_of_steps, instances, task):
     def update_step(step):
         steps_for_instances_with_rollback.current_step = step
 
-    ret = steps_for_instances(
+    if steps_for_instances(
         list_of_groups_of_steps=group_of_steps,
         instances=instances,
         task=task,
         step_counter_method=update_step
+    ):
+        return True
+
+    rollback_for_instances(
+        group_of_steps, instances, task,
+        steps_for_instances_with_rollback.current_step
     )
-
-    if ret:
-        return ret
-
-    if len(group_of_steps) > 1:
-        task.add_detail('Rollback is implemented only for one group of steps!')
-        return False
-
-    steps = group_of_steps[0].items()[0][1]
-    i = 0
-    for instance in instances:
-        instance_current_step = 0
-        for step in steps:
-            i += 1
-            instance_current_step += 1
-            if i == steps_for_instances_with_rollback.current_step:
-                break
-        if i == steps_for_instances_with_rollback.current_step:
-            break
-
-    task.add_detail('Starting undo for instance {}'.format(instance))
-
-    undo_step_current = len(steps)
-    for step in reversed(steps):
-
-        try:
-            step_class = import_by_path(step)
-            step_instance = step_class(instance)
-
-            task.add_step(undo_step_current, len(steps), 'Rollback ' + str(step_instance))
-
-            if instance_current_step < undo_step_current:
-                task.update_details("SKIPPED!", persist=True)
-            else:
-                step_instance.undo()
-                task.update_details("SUCCESS!", persist=True)
-
-        except Exception as e:
-            task.update_details("FAILED!", persist=True)
-            task.add_detail(str(e))
-            task.add_detail(full_stack())
-
-        finally:
-            undo_step_current -= 1
 
     databases = set()
     for instance in instances:
@@ -248,7 +210,7 @@ def steps_for_instances_with_rollback(group_of_steps, instances, task):
     for database in databases:
         database.finish_task()
 
-    return ret
+    return False
 
 
 def steps_for_instances(
@@ -333,3 +295,46 @@ def steps_for_instances(
         database.finish_task()
 
     return True
+
+
+def rollback_for_instances(group_of_steps, instances, task, from_step):
+    if len(group_of_steps) > 1:
+        task.add_detail('Rollback is implemented only for one group of steps!')
+        return False
+
+    steps = group_of_steps[0].items()[0][1]
+    i = 0
+    for instance in instances:
+        instance_current_step = 0
+        for _ in steps:
+            i += 1
+            instance_current_step += 1
+            if i == from_step:
+                break
+        if i == from_step:
+            break
+
+    task.add_detail('Starting undo for instance {}'.format(instance))
+
+    undo_step_current = len(steps)
+    for step in reversed(steps):
+        try:
+            step_class = import_by_path(step)
+            step_instance = step_class(instance)
+
+            task.add_step(undo_step_current, len(steps),
+                          'Rollback ' + str(step_instance))
+
+            if instance_current_step < undo_step_current:
+                task.update_details("SKIPPED!", persist=True)
+            else:
+                step_instance.undo()
+                task.update_details("SUCCESS!", persist=True)
+
+        except Exception as e:
+            task.update_details("FAILED!", persist=True)
+            task.add_detail(str(e))
+            task.add_detail(full_stack())
+
+        finally:
+            undo_step_current -= 1
