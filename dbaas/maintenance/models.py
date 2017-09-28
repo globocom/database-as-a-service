@@ -481,7 +481,9 @@ class DatabaseRestore(DatabaseMaintenanceTask):
             if pair.master == instance or pair.slave == instance:
                 return pair.master
 
-        raise NotImplementedError('No master for {}'.format(instance))
+        raise DatabaseRestoreInstancePair.DoesNotExist(
+            'No master for {}'.format(instance)
+        )
 
     def is_master(self, instance):
         for pair in self.instances_pairs():
