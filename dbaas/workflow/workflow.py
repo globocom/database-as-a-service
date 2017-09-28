@@ -219,13 +219,7 @@ def steps_for_instances(
     steps_total = total_of_steps(list_of_groups_of_steps, instances)
     step_current = 0
 
-    task.add_detail('Instances: {}'.format(len(instances)))
-    for instance in instances:
-        task.add_detail('{}'.format(instance), level=2)
-    task.add_detail('')
-
-    if since_step:
-        task.add_detail('Skipping until step {}\n'.format(since_step))
+    step_header_for(task, instances, since_step)
 
     for count, group_of_steps in enumerate(list_of_groups_of_steps, start=1):
         task.add_detail('Starting group of steps {} of {} - {}'.format(
@@ -362,3 +356,13 @@ def total_of_steps(groups, instances):
         total += len(group.values()[0])
 
     return total * len(instances)
+
+
+def step_header_for(task, instances, since_step=None):
+    task.add_detail('Instances: {}'.format(len(instances)))
+    for instance in instances:
+        task.add_detail('{}'.format(instance), level=2)
+
+    task.add_detail('')
+    if since_step:
+        task.add_detail('Skipping until step {}\n'.format(since_step))
