@@ -373,3 +373,16 @@ def step_header_for(task, instances, since_step=None):
     task.add_detail('')
     if since_step:
         task.add_detail('Skipping until step {}\n'.format(since_step))
+
+
+def rollback_for_instances_full(
+        groups, instances, task, step_counter_method, from_step
+):
+    task.add_detail('\nSTARTING ROLLBACK\n'.format(from_step))
+
+    steps_total = total_of_steps(groups, instances)
+    since_step = steps_total - from_step
+
+    return steps_for_instances(
+        groups, instances, task, step_counter_method, since_step, True
+    )
