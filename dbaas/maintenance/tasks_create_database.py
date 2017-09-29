@@ -2,7 +2,7 @@ from django.db.models import Q
 from physical.models import DatabaseInfra, Instance
 from util import slugify, gen_infra_names, get_vm_name, make_db_random_password
 from util.providers import get_deploy_settings, get_deploy_instances_size
-from workflow.workflow import steps_for_instances
+from workflow.workflow import steps_for_instances, rollback_for_instances_full
 from models import DatabaseCreate
 
 
@@ -96,3 +96,15 @@ def create_database(
             'Could not create database\n'
             'Please check error message and do retry'
         )
+
+
+def rollback_create(maintenance):
+    topology_path = maintenance.plan.replication_topology.class_path
+    steps = get_deploy_settings(topology_path)
+
+    instances = maintenance.infra.instances.all()
+
+    return rollback_for_instances_full(
+        steps, instances, maintenance.task,
+        maintenance.get_current_step, maintenance.update_step,
+    )
