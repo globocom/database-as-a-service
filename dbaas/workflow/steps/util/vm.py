@@ -374,7 +374,7 @@ class ChangeInstanceHost(VmStep):
 
         for instance in host.instances.all():
             future_instance = instance.future_instance
-            future_instance.address = 'None'
+            future_instance.address = 'None-{}'.format(future_instance.id)
             future_instance.future_instance = instance
             future_instance.save()
 

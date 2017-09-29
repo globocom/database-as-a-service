@@ -33,14 +33,13 @@
       {% for host in instances_core %}
         <div class="control-label"><label>{{ host.status }}</label></div>
         <div class="controls">
-          <p class="readonly">
+          <p class="readonly" id="host_name_n{{ forloop.counter }}">
             {% if is_dba %}
               <a target="_blank" href="{% url 'admin:physical_host_change' host.id %}">{{ host.description }}</a>
               {% if database.databaseinfra.plan.replication_topology.can_switch_master and host.switch_database %}
-                  <a class="action_button btn btn-warning" href="{{ host.id }}/switch/"
-                    data-toggle="tooltip" data-placement="top" title="Switch {{ database.engine.write_node_description }}"
-                    onclick="return confirm('Are you sure?')"
-                  ><i class="icon-refresh"></i></a>
+                  <a class="action_button btn btn-warning" data-toggle="modal" id="switch_host_btn" data-target="#switch_host_modal" data-host-id="{{host.id}}">
+                    <i class="icon-refresh"></i>
+                  </a>
               {% endif %}
             {% else %}
               {{ host.description }}
@@ -108,6 +107,10 @@
 {% endblock %}
 
 {% block database_button_save %}
+
+
+{% include "logical/database/details/confirmation_modal.html" with tag_type="a" modal_id="switch_host_modal" confirmation_message="Are you sure you want to switch the core host?" box_title="Changing core host" button_class="btn btn-primary btn-reset-password" id_optional="id=confirm_switch_host_button" %}
+
 {% endblock %}
 
 {% block js_footer %}
@@ -115,7 +118,7 @@
 
 <script type="text/javascript" src="{% static 'js/hosts.js' %}"></script>
 <script>
-  jQuery(document).ready(function($) {
+  django.jQuery(document).ready(function($) {
     $("#id_add_read_qtd").on("change", function() {
       btn = document.getElementById("add_read_only_btn");
       btn.disabled = $(this).val() == "";
@@ -125,8 +128,13 @@
         btn.className = 'action_button btn btn-primary';
       }
     });
-    $("#id_add_read_qtd").change()
+    $("#id_add_read_qtd").change();
 
-  })
+    var $switchHost = $("#switch_host_btn");
+    $switchHost.popover({trigger: "hover", placement: "right", content: "Switch host"});
+
+    $("#confirm_switch_host_button").attr("href", $switchHost.attr("data-host-id")+"/switch/");
+
+  });
 </script>
 {% endblock %}

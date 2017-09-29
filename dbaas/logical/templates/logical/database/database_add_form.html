@@ -44,7 +44,9 @@
                             </div>
                             <div class="plan-chooser">
                                 <p class="text-center">
-                                    <span><button data-plan-id="{{plan_value}}" type="submit" class="btn btn-plan">Choose</button></span>
+
+                                    <span><button data-plan-id="{{plan_value}}" data-toggle="modal" data-target="#create_database_modal" class="btn" id="choose_plan_new_db">Choose</button></span>
+
                                 </p>
                             </div>
                         </div>
@@ -58,7 +60,26 @@
     {% endfor %}
     </fieldset>
 {% endfor %}
+<script>
+
+  django.jQuery(document).ready(function($) {
+
+
+    $("#choose_plan_new_db").live("click", function(event){ 
+        var plan_id = $(event.target).data().planId;
+        $("#id_create_database_btn_modal").attr("data-plan-id", plan_id);
+        $("#plan-type").val(plan_id);
+    });
+    $chooseButton = $("#choose_plan_new_db");
+    
+
+  });
+</script>
+
+{% include "logical/database/details/confirmation_modal.html" with modal_id="create_database_modal" confirmation_message="Are you sure you want to create a database with these settings?" box_title="Adding Database" button_type="submit" id_optional="id=id_create_database_btn_modal" %}
+
 {% endblock %}
 
 
 {% block submit_buttons_bottom %}{% endblock %}
+

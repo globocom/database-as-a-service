@@ -12,4 +12,5 @@
             e.preventDefault();
         });
             });
+
 })(django.jQuery);
