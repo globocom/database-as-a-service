@@ -251,6 +251,9 @@ class DatabaseMaintenanceTask(BaseModel):
         verbose_name=_("Can Do Retry"), default=True
     )
 
+    def get_current_step(self):
+        return self.current_step
+
     def update_step(self, step):
         if not self.started_at:
             self.started_at = datetime.now()
