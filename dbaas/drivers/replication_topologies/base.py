@@ -143,11 +143,9 @@ class BaseTopology(object):
     def get_remove_readonly_instance_steps(self):
         return [{
             self.get_remove_readonly_instance_steps_description():
-            list(reversed(
-                self.get_add_database_instances_first_steps() +
-                self.get_add_database_instances_middle_steps() +
-                self.get_add_database_instances_last_steps()
-            ))
+            self.get_add_database_instances_first_steps() +
+            self.get_add_database_instances_middle_steps() +
+            self.get_add_database_instances_last_steps()
         }]
 
     def get_change_parameter_steps_description(self):

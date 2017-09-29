@@ -221,11 +221,18 @@ def steps_for_instances(
 
     step_header_for(task, instances, since_step)
 
+    if undo:
+        list_of_groups_of_steps.reverse()
+
     for count, group_of_steps in enumerate(list_of_groups_of_steps, start=1):
         task.add_detail('Starting group of steps {} of {} - {}'.format(
             count, len(list_of_groups_of_steps), group_of_steps.keys()[0])
         )
-        steps = group_of_steps.items()[0][1]
+
+        steps = list(group_of_steps.items()[0][1])
+        if undo:
+            steps.reverse()
+
         for instance in instances:
             task.add_detail('Instance: {}'.format(instance))
             for step in steps:
