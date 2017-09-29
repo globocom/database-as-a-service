@@ -120,6 +120,9 @@ def rollback_create(maintenance, task, user=None):
     ):
         maintenance.set_rollback()
         task.set_status_success('Rollback executed with success')
+
+        infra = maintenance.infra
+        infra.delete()
     else:
         maintenance.set_error()
         task.set_status_error(
