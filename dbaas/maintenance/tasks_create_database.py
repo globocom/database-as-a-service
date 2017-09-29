@@ -30,21 +30,11 @@ def get_or_create_infra(base_name, plan, environment, retry_from=None):
     return infra
 
 
-def create_database(
-    name, plan, environment, team, project, description, task,
-    subscribe_to_email_events=True, is_protected=False, user=None,
-    retry_from=None
-):
-    topology_path = plan.replication_topology.class_path
-
-    name = slugify(name)
-    base_name = gen_infra_names(name, 0)
-    infra = get_or_create_infra(base_name, plan, environment, retry_from)
-
+def get_instances_for(infra, topology_path):
     instances = []
     number_of_vms = get_deploy_instances_size(topology_path)
     for i in range(number_of_vms):
-        instance_name = get_vm_name(infra.name_prefix, infra.name_stamp, i+1)
+        instance_name = get_vm_name(infra.name_prefix, infra.name_stamp, i + 1)
 
         try:
             instance = infra.instances.get(
@@ -63,6 +53,21 @@ def create_database(
         instance.vm_name = instance.dns
         instances.append(instance)
 
+    return instances
+
+
+def create_database(
+    name, plan, environment, team, project, description, task,
+    subscribe_to_email_events=True, is_protected=False, user=None,
+    retry_from=None
+):
+    topology_path = plan.replication_topology.class_path
+
+    name = slugify(name)
+    base_name = gen_infra_names(name, 0)
+    infra = get_or_create_infra(base_name, plan, environment, retry_from)
+    instances = get_instances_for(infra, topology_path)
+
     database_create = DatabaseCreate()
     database_create.task = task
     database_create.name = name
@@ -73,7 +78,7 @@ def create_database(
     database_create.description = description
     database_create.subscribe_to_email_events = subscribe_to_email_events
     database_create.is_protected = is_protected
-    database_create.user = user if user else 'admin'
+    database_create.user = user.username if user else task.user
     database_create.infra = infra
     database_create.database = infra.databases.first()
     database_create.save()
@@ -98,13 +103,26 @@ def create_database(
         )
 
 
-def rollback_create(maintenance):
+def rollback_create(maintenance, task, user=None):
     topology_path = maintenance.plan.replication_topology.class_path
     steps = get_deploy_settings(topology_path)
 
-    instances = maintenance.infra.instances.all()
+    instances = get_instances_for(maintenance.infra, topology_path)
 
-    return rollback_for_instances_full(
-        steps, instances, maintenance.task,
-        maintenance.get_current_step, maintenance.update_step,
-    )
+    maintenance.id = None
+    maintenance.user = user.username if user else task.user
+    maintenance.task = task
+    maintenance.save()
+
+    if rollback_for_instances_full(
+        steps, instances, task, maintenance.get_current_step,
+        maintenance.update_step,
+    ):
+        maintenance.set_rollback()
+        task.set_status_success('Rollback executed with success')
+    else:
+        maintenance.set_error()
+        task.set_status_error(
+            'Could not do rollback\n'
+            'Please check error message and do retry'
+        )

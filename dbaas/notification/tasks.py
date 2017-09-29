@@ -1213,6 +1213,21 @@ class TaskRegister(object):
             )
 
     @classmethod
+    def database_create_rollback(cls, rollback_from, user):
+        task_params = {
+            'task_name': "create_database",
+            'arguments': "Database name: {}".format(rollback_from.name),
+        }
+        if user:
+            task_params['user'] = user
+        task = cls.create_task(task_params)
+
+        from maintenance.tasks import rollback_create_database
+        return rollback_create_database.delay(
+            rollback_from=rollback_from, task=task, user=user
+        )
+
+    @classmethod
     def database_backup(cls, database, user):
         from backup.tasks import make_database_backup
 
