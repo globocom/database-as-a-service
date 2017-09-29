@@ -228,11 +228,13 @@ class DatabaseMaintenanceTask(BaseModel):
     RUNNING = 1
     ERROR = 2
     SUCCESS = 3
+    ROLLBACK = 4
     STATUS = (
         (WAITING, 'Waiting'),
         (RUNNING, 'Running'),
         (ERROR, 'Error'),
         (SUCCESS, 'Success'),
+        (ROLLBACK, 'Rollback'),
     )
 
     current_step = models.PositiveSmallIntegerField(
@@ -272,6 +274,10 @@ class DatabaseMaintenanceTask(BaseModel):
 
     def set_error(self):
         self.__update_final_status(self.ERROR)
+
+    def set_rollback(self):
+        self.can_do_retry = False
+        self.__update_final_status(self.ROLLBACK)
 
     @property
     def is_status_error(self):
