@@ -41,7 +41,9 @@ class DatabaseCreateAdmin(DatabaseMaintenanceTaskAdmin):
         url_rollback = "/admin/maintenance/databasecreate/{}/rollback/".format(maintenance_task.id)
         html_rollback = "<a title='Rollback' class='btn btn-danger' href='{}'>Rollback</a>".format(url_rollback)
 
-        return format_html(html_retry + '&nbsp&nbsp&nbsp' + html_rollback)
+        spaces = '&nbsp' * 3
+        html_content = '{}{}{}'.format(html_retry, spaces, html_rollback)
+        return format_html(html_content)
 
     def get_urls(self):
         base = super(DatabaseCreateAdmin, self).get_urls()
@@ -105,7 +107,7 @@ class DatabaseCreateAdmin(DatabaseMaintenanceTaskAdmin):
         create = DatabaseCreate.objects.get(id=create_id)
 
         success = True
-        if not create.is_status_error:
+        if success and not create.is_status_error:
             success = False
             messages.add_message(
                 request, messages.ERROR,
@@ -114,7 +116,7 @@ class DatabaseCreateAdmin(DatabaseMaintenanceTaskAdmin):
                 ),
             )
 
-        if not create.can_do_retry:
+        if success and not create.can_do_retry:
             success = False
             messages.add_message(
                 request, messages.ERROR,
