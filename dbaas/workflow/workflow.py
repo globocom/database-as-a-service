@@ -337,7 +337,7 @@ def lock_databases_for(instances, task, is_retry):
 
         databases_locked.append(database)
 
-    return databases, True
+    return True, databases
 
 
 def unlock_databases(databases):
