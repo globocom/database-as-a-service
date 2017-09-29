@@ -35,9 +35,13 @@ class DatabaseCreateAdmin(DatabaseMaintenanceTaskAdmin):
         if not maintenance_task.can_do_retry:
             return 'N/A'
 
-        url = "/admin/maintenance/databasecreate/{}/retry/".format(maintenance_task.id)
-        html = "<a title='Retry' class='btn btn-info' href='{}'>Retry</a>".format(url)
-        return format_html(html)
+        url_retry = "/admin/maintenance/databasecreate/{}/retry/".format(maintenance_task.id)
+        html_retry = "<a title='Retry' class='btn btn-info' href='{}'>Retry</a>".format(url_retry)
+
+        url_rollback = "/admin/maintenance/databasecreate/{}/rollback/".format(maintenance_task.id)
+        html_rollback = "<a title='Rollback' class='btn btn-danger' href='{}'>Rollback</a>".format(url_rollback)
+
+        return format_html(html_retry + '&nbsp&nbsp&nbsp' + html_rollback)
 
     def get_urls(self):
         base = super(DatabaseCreateAdmin, self).get_urls()
@@ -49,35 +53,20 @@ class DatabaseCreateAdmin(DatabaseMaintenanceTaskAdmin):
                 self.admin_site.admin_view(self.retry_view),
                 name="create_database_retry"
             ),
+            url(
+                r'^/?(?P<create_id>\d+)/rollback/$',
+                self.admin_site.admin_view(self.rollback_view),
+                name="create_database_rollback"
+            ),
         )
         return admin + base
 
     def retry_view(self, request, create_id):
         retry_from = get_object_or_404(DatabaseCreate, pk=create_id)
 
-        error = False
-        if not retry_from.is_status_error:
-            error = True
-            messages.add_message(
-                request, messages.ERROR,
-                "You can not do retry because create status is '{}'".format(
-                    retry_from.get_status_display()
-                ),
-            )
-
-        if not retry_from.can_do_retry:
-            error = True
-            messages.add_message(
-                request, messages.ERROR, "Create retry is disabled"
-            )
-
-        if error:
-            return HttpResponseRedirect(
-                reverse(
-                    'admin:maintenance_databasecreate_change',
-                    args=(create_id,)
-                )
-            )
+        success, redirect = self.check_status(request, create_id, 'retry')
+        if not success:
+            return redirect
 
         TaskRegister.database_create(
             name=retry_from.name,
@@ -95,3 +84,45 @@ class DatabaseCreateAdmin(DatabaseMaintenanceTaskAdmin):
         url = reverse('admin:notification_taskhistory_changelist')
         filter = "user={}".format(request.user.username)
         return HttpResponseRedirect('{}?{}'.format(url, filter))
+
+    def rollback_view(self, request, create_id):
+        rollback_from = get_object_or_404(DatabaseCreate, pk=create_id)
+
+        success, redirect = self.check_status(request, create_id, 'rollback')
+        if not success:
+            return redirect
+
+        TaskRegister.database_create_rollback(
+            rollback_from=rollback_from,
+            user=request.user,
+        )
+
+        url = reverse('admin:notification_taskhistory_changelist')
+        filter = "user={}".format(request.user.username)
+        return HttpResponseRedirect('{}?{}'.format(url, filter))
+
+    def check_status(self, request, create_id, operation):
+        create = DatabaseCreate.objects.get(id=create_id)
+
+        success = True
+        if not create.is_status_error:
+            success = False
+            messages.add_message(
+                request, messages.ERROR,
+                "You can not do {} because create status is '{}'".format(
+                    operation, create.get_status_display()
+                ),
+            )
+
+        if not create.can_do_retry:
+            success = False
+            messages.add_message(
+                request, messages.ERROR,
+                "Create {} is disabled".format(operation)
+            )
+
+        return success, HttpResponseRedirect(
+            reverse(
+                'admin:maintenance_databasecreate_change', args=(create_id,)
+            )
+        )
