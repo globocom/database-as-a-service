@@ -161,11 +161,9 @@ class AbstractReplicationTopologySettingsTestCase(TestCase):
     def _get_remove_readonly_instance_settings(self):
         return [{
             self._get_remove_readonly_instance_steps_description():
-            list(reversed(
                 self._get_add_database_instances_first_settings() +
                 self._get_add_database_instances_middle_settings() +
                 self._get_add_database_instances_last_settings()
-            ))
         }]
 
     def _get_change_parameter_steps_description(self):
