@@ -73,7 +73,7 @@ def create_database(
     database_create.description = description
     database_create.subscribe_to_email_events = subscribe_to_email_events
     database_create.is_protected = is_protected
-    database_create.user = 'admin'
+    database_create.user = user if user else 'admin'
     database_create.infra = infra
     database_create.database = infra.databases.first()
     database_create.save()
@@ -96,4 +96,3 @@ def create_database(
             'Could not create database\n'
             'Please check error message and do retry'
         )
-

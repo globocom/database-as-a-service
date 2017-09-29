@@ -98,6 +98,7 @@ class RedisNoPersistence(RedisSingle):
 class RedisSentinelNoPersistence(RedisSentinel):
     pass
 
+
 class RedisCluster(BaseRedis):
 
     def deploy_quantity_of_instances(self):
