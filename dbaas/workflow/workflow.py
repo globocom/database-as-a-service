@@ -376,13 +376,20 @@ def step_header_for(task, instances, since_step=None):
 
 
 def rollback_for_instances_full(
-        groups, instances, task, step_counter_method, from_step
+        groups, instances, task, step_current_method, step_counter_method
 ):
-    task.add_detail('\nSTARTING ROLLBACK\n'.format(from_step))
+    task.add_detail('\nSTARTING ROLLBACK\n')
 
+    current_step = step_current_method()
     steps_total = total_of_steps(groups, instances)
-    since_step = steps_total - from_step
+    since_step = steps_total - current_step
 
-    return steps_for_instances(
+    result = steps_for_instances(
         groups, instances, task, step_counter_method, since_step, True
     )
+
+    executed_steps = step_current_method()
+    missing_undo_steps = steps_total - executed_steps
+    step_counter_method(missing_undo_steps)
+
+    return result
