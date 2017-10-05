@@ -230,7 +230,10 @@ def make_databases_backup(self):
     )
 
     for env_name in env_names_order:
-        env = envs.filter(name=env_name)
+        try:
+            env = envs.get(name=env_name)
+        except Environment.DoesNotExist:
+            continue
         msg = 'Starting Backup for env {}'.format(env.name)
         task_history.update_details(persist=True, details=msg)
         databaseinfras_by_env = DatabaseInfra.filter(environment=env)
