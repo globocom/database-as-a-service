@@ -21,6 +21,7 @@ from notification import tasks
 from workflow.steps.util.nfsaas_utils import create_snapshot, delete_snapshot, \
     delete_export
 from .models import BackupGroup
+from physical.models import Environment
 
 
 LOG = logging.getLogger(__name__)
@@ -221,69 +222,78 @@ def make_databases_backup(self):
                                         worker_name=worker_name, user=None)
 
     status = TaskHistory.STATUS_SUCCESS
+    envs = Environment.objects.all()
+    # TODO: back here to do right
+    env_names_order = ['prod', 'qa2', 'dev-cta-nao-usar', 'dev']
     databaseinfras = DatabaseInfra.objects.filter(
         plan__provider=Plan.CLOUDSTACK, plan__has_persistence=True
     )
-    error = {}
-    backup_number = 0
-    backups_per_group = len(databaseinfras) / 12
-    for databaseinfra in databaseinfras:
-        if backups_per_group > 0:
-            if backup_number < backups_per_group:
-                backup_number += 1
-            else:
-                backup_number = 0
-                waiting_msg = "\nWaiting 5 minutes to start the next backup group"
-                task_history.update_details(persist=True, details=waiting_msg)
-                time.sleep(300)
 
-        instances = Instance.objects.filter(
-            databaseinfra=databaseinfra, read_only=False
-        )
-
-        group = BackupGroup()
-        group.save()
-
-        for instance in instances:
-            try:
-                if not instance.databaseinfra.get_driver().check_instance_is_eligible_for_backup(instance):
-                    LOG.info('Instance %s is not eligible for backup' % (str(instance)))
-                    continue
-            except Exception as e:
-                status = TaskHistory.STATUS_ERROR
-                msg = "Backup for %s was unsuccessful. Error: %s" % (
-                    str(instance), str(e))
-                LOG.error(msg)
-
-            time_now = str(time.strftime("%m/%d/%Y %H:%M:%S"))
-            start_msg = "\n{} - Starting backup for {} ...".format(time_now, instance)
-            task_history.update_details(persist=True, details=start_msg)
-            try:
-                snapshot = make_instance_snapshot_backup(
-                    instance=instance, error=error, group=group
-                )
-                if snapshot and snapshot.was_successful:
-                    msg = "Backup for %s was successful" % (str(instance))
-                    LOG.info(msg)
-                elif snapshot and snapshot.has_warning:
-                    status = TaskHistory.STATUS_WARNING
-                    msg = "Backup for %s has warning" % (str(instance))
-                    LOG.info(msg)
+    for env_name in env_names_order:
+        env = envs.filter(name=env_name)
+        msg = 'Starting Backup for env {}'.format(env.name)
+        task_history.update_details(persist=True, details=msg)
+        databaseinfras_by_env = DatabaseInfra.filter(environment=env)
+        error = {}
+        backup_number = 0
+        backups_per_group = len(databaseinfras) / 12
+        for databaseinfra in databaseinfras_by_env:
+            if backups_per_group > 0:
+                if backup_number < backups_per_group:
+                    backup_number += 1
                 else:
+                    backup_number = 0
+                    waiting_msg = "\nWaiting 5 minutes to start the next backup group"
+                    task_history.update_details(persist=True, details=waiting_msg)
+                    time.sleep(300)
+
+            instances = Instance.objects.filter(
+                databaseinfra=databaseinfra, read_only=False
+            )
+
+            group = BackupGroup()
+            group.save()
+
+            for instance in instances:
+                try:
+                    if not instance.databaseinfra.get_driver().check_instance_is_eligible_for_backup(instance):
+                        LOG.info('Instance %s is not eligible for backup' % (str(instance)))
+                        continue
+                except Exception as e:
                     status = TaskHistory.STATUS_ERROR
                     msg = "Backup for %s was unsuccessful. Error: %s" % (
-                        str(instance), error['errormsg'])
+                        str(instance), str(e))
                     LOG.error(msg)
-                LOG.info(msg)
-            except Exception as e:
-                status = TaskHistory.STATUS_ERROR
-                msg = "Backup for %s was unsuccessful. Error: %s" % (
-                    str(instance), str(e))
-                LOG.error(msg)
 
-            time_now = str(time.strftime("%m/%d/%Y %H:%M:%S"))
-            msg = "\n{} - {}".format(time_now, msg)
-            task_history.update_details(persist=True, details=msg)
+                time_now = str(time.strftime("%m/%d/%Y %H:%M:%S"))
+                start_msg = "\n{} - Starting backup for {} ...".format(time_now, instance)
+                task_history.update_details(persist=True, details=start_msg)
+                try:
+                    snapshot = make_instance_snapshot_backup(
+                        instance=instance, error=error, group=group
+                    )
+                    if snapshot and snapshot.was_successful:
+                        msg = "Backup for %s was successful" % (str(instance))
+                        LOG.info(msg)
+                    elif snapshot and snapshot.has_warning:
+                        status = TaskHistory.STATUS_WARNING
+                        msg = "Backup for %s has warning" % (str(instance))
+                        LOG.info(msg)
+                    else:
+                        status = TaskHistory.STATUS_ERROR
+                        msg = "Backup for %s was unsuccessful. Error: %s" % (
+                            str(instance), error['errormsg'])
+                        LOG.error(msg)
+                    LOG.info(msg)
+                except Exception as e:
+                    status = TaskHistory.STATUS_ERROR
+                    msg = "Backup for %s was unsuccessful. Error: %s" % (
+                        str(instance), str(e))
+                    LOG.error(msg)
+
+                time_now = str(time.strftime("%m/%d/%Y %H:%M:%S"))
+                msg = "\n{} - {}".format(time_now, msg)
+                task_history.update_details(persist=True, details=msg)
 
     task_history.update_status_for(status, details="\nBackup finished")
 
