@@ -364,7 +364,7 @@ def database_notification(self):
 
 
 @app.task(bind=True)
-@only_one(key="get_databases_status", timeout=180)
+@only_one(key="get_databases_status")
 def update_database_status(self):
     LOG.info("Retrieving all databases")
     try:
@@ -399,7 +399,7 @@ def update_database_status(self):
 
 
 @app.task(bind=True)
-@only_one(key="get_databases_used_size", timeout=180)
+@only_one(key="get_databases_used_size")
 def update_database_used_size(self):
     LOG.info("Retrieving all databases")
     try:
@@ -430,7 +430,7 @@ def update_database_used_size(self):
 
 
 @app.task(bind=True)
-@only_one(key="get_instances_status", timeout=180)
+@only_one(key="get_instances_status")
 def update_instances_status(self):
     LOG.info("Retrieving all databaseinfras")
     worker_name = get_worker_name()
