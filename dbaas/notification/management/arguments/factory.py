@@ -57,13 +57,25 @@ class ArgumentsToResizeDatabase(ArgumentsTo):
 
 
 class ArgumentsToUpgradeDatabase(ArgumentsTo):
-    KEY = 'notification.tasks.upgrade_database'
+    KEY = 'notification.tasks.reinstall_vm'
 
     def build(self):
         return [
             self.get_database_arg(),
             "Target plan: {}".format(
                 self.args['database'].databaseinfra.plan.engine_equivalent_plan
+            ),
+        ]
+
+
+class ArgumentsToReinstallVM(ArgumentsTo):
+    KEY = 'notification.tasks.upgrade_database'
+
+    def build(self):
+        return [
+            self.get_database_arg(),
+            "Instance: {}".format(
+                self.args['instance']
             ),
         ]
 
