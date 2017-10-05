@@ -185,6 +185,10 @@ def get_database_upgrade_setting(class_path):
     return get_replication_topology_instance(class_path).get_upgrade_steps()
 
 
+def get_reinstallvm_steps_setting(class_path):
+    return get_replication_topology_instance(class_path).get_reinstallvm_steps()
+
+
 def get_database_change_parameter_setting(class_path, all_dinamic, custom_procedure):
     replication_topology = get_replication_topology_instance(class_path)
     if custom_procedure:
