@@ -236,7 +236,7 @@ def make_databases_backup(self):
             continue
         msg = 'Starting Backup for env {}'.format(env.name)
         task_history.update_details(persist=True, details=msg)
-        databaseinfras_by_env = DatabaseInfra.filter(environment=env)
+        databaseinfras_by_env = databaseinfras.filter(environment=env)
         error = {}
         backup_number = 0
         backups_per_group = len(databaseinfras) / 12
