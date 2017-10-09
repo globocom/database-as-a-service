@@ -63,6 +63,15 @@ class RedisSentinel(BaseRedis):
             ),
         }] + super(RedisSentinel, self).get_upgrade_steps_final()
 
+    def get_reinstallvm_steps_final(self):
+        return [{
+            'Resetting Sentinel': (
+                'workflow.steps.redis.upgrade.sentinel.ResetAllSentinel',
+                'workflow.steps.util.database.SetSlave',
+            ),
+        }] + super(RedisSentinel, self).get_reinstallvm_steps_final()
+
+
     def get_add_database_instances_middle_steps(self):
         return (
             'workflow.steps.util.plan.Initialization',
