@@ -623,6 +623,7 @@ def database_hosts(request, context, database):
 
     context['core_attribute'] = database.engine.write_node_description
     context['read_only_attribute'] = database.engine.read_node_description
+    context['last_reinstall_vm'] = database.reinstall_vm.last()
 
     context['instances_core'] = []
     context['instances_read_only'] = []
@@ -941,6 +942,69 @@ def database_switch_write(request, database_id, host_id):
     if can_switch:
         TaskRegister.database_switch_write(
             database=database, user=request.user, instance=instance
+        )
+
+    return HttpResponseRedirect(
+        reverse('admin:logical_database_hosts', kwargs={'id': database.id})
+    )
+
+
+def database_reinstall_vm(request, database_id, host_id):
+    database = Database.objects.get(id=database_id)
+    instances = database.infra.instances.filter(hostname_id=host_id)
+    for instance in instances:
+        if instance.is_database:
+            break
+
+    can_reinstall_vm = True
+
+    if database.is_being_used_elsewhere():
+        messages.add_message(
+            request, messages.ERROR,
+            'Can not reinstall VM because database is in use by another task.'
+        )
+        can_reinstall_vm = False
+
+    if can_reinstall_vm:
+        TaskRegister.database_reinstall_vm(
+            instance=instance,
+            user=request.user,
+        )
+
+    return HttpResponseRedirect(
+        reverse('admin:logical_database_hosts', kwargs={'id': database.id})
+    )
+
+
+@database_view("")
+def database_reinstall_vm_retry(request, context, database):
+
+    last_reinstall_vm = database.reinstall_vm.last()
+    can_reinstall_vm = True
+
+    if not last_reinstall_vm:
+        messages.add_message(
+            request, messages.ERROR,
+            'Can not retry reinstall VM because there is not any reinstall task in progress.'
+        )
+        can_reinstall_vm = False
+
+    elif database.is_being_used_elsewhere('notification.tasks.reinstall_vm_database'):
+        messages.add_message(
+            request, messages.ERROR,
+            'Can not retry reinstall VM because database is in use by another task.'
+        )
+        can_reinstall_vm = False
+
+    else:
+        instance = last_reinstall_vm.instance
+        since_step = last_reinstall_vm.current_step
+
+    if can_reinstall_vm:
+        TaskRegister.database_reinstall_vm(
+            instance=instance,
+            user=request.user,
+            since_step=since_step,
         )
 
     return HttpResponseRedirect(
