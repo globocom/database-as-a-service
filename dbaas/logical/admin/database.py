@@ -31,7 +31,7 @@ from logical.views import database_details, database_hosts, \
     database_upgrade, database_upgrade_retry, database_resize_retry, \
     database_make_backup, database_parameters, \
     database_change_parameters, database_change_parameters_retry, \
-    database_switch_write
+    database_switch_write, database_reinstall_vm, database_reinstall_vm_retry
 from logical.forms import DatabaseForm
 from logical.service.database import DatabaseService
 
@@ -581,6 +581,18 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 self.admin_site.admin_view(database_switch_write),
                 name="logical_database_switch"
             ),
+            url(
+                r'^/?(?P<database_id>\d+)/hosts/(?P<host_id>\d+)/reinstallvm/$',
+                self.admin_site.admin_view(database_reinstall_vm),
+                name="logical_database_reinstallvm"
+            ),
+            url(
+                r'^/?(?P<id>\d+)/reinstallvm_retry/$',
+                self.admin_site.admin_view(database_reinstall_vm_retry),
+                name="logical_database_reinstallvm_retry"
+            ),
+
+
 
         )
 
