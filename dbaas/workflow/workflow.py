@@ -186,20 +186,98 @@ def stop_workflow(workflow_dict, task=None):
 def steps_for_instances_with_rollback(group_of_steps, instances, task):
 
     steps_for_instances_with_rollback.current_step = 0
-
     def update_step(step):
         steps_for_instances_with_rollback.current_step = step
 
-    ret = steps_for_instances(
+    if steps_for_instances(
         list_of_groups_of_steps=group_of_steps,
         instances=instances,
         task=task,
         step_counter_method=update_step
+    ):
+        return True
+
+    rollback_for_instances(
+        group_of_steps, instances, task,
+        steps_for_instances_with_rollback.current_step
     )
 
-    if ret:
-        return ret
+    unlock_databases_for(instances)
 
+    return False
+
+
+def steps_for_instances(
+        list_of_groups_of_steps, instances, task, step_counter_method=None,
+        since_step=0, undo=False
+):
+    is_retry = since_step > 0
+    success, locked_databases = lock_databases_for(instances, task, is_retry)
+    if not success:
+        return False
+
+    steps_total = total_of_steps(list_of_groups_of_steps, instances)
+    step_current = 0
+
+    step_header_for(task, instances, since_step)
+
+    if undo:
+        list_of_groups_of_steps.reverse()
+
+    for count, group_of_steps in enumerate(list_of_groups_of_steps, start=1):
+        task.add_detail('Starting group of steps {} of {} - {}'.format(
+            count, len(list_of_groups_of_steps), group_of_steps.keys()[0])
+        )
+
+        steps = list(group_of_steps.items()[0][1])
+        if undo:
+            steps.reverse()
+
+        for instance in instances:
+            task.add_detail('Instance: {}'.format(instance))
+            for step in steps:
+                step_current += 1
+
+                if step_counter_method:
+                    step_counter_method(step_current)
+
+                try:
+                    step_class = import_by_path(step)
+                    step_instance = step_class(instance)
+
+                    str_step_instance = str(step_instance)
+                    if undo:
+                        str_step_instance = 'Rollback ' + str_step_instance
+
+                    task.add_step(step_current, steps_total, str_step_instance)
+
+                    if step_current < since_step:
+                        task.update_details("SKIPPED!", persist=True)
+                        continue
+
+                    if undo:
+                        step_instance.undo()
+                    else:
+                        step_instance.do()
+
+                    task.update_details("SUCCESS!", persist=True)
+
+                except Exception as e:
+                    task.update_details("FAILED!", persist=True)
+                    task.add_detail(str(e))
+                    task.add_detail(full_stack())
+                    return False
+
+        task.add_detail('Ending group of steps: {} of {}\n'.format(
+            count, len(list_of_groups_of_steps))
+        )
+
+    unlock_databases(locked_databases)
+
+    return True
+
+
+def rollback_for_instances(group_of_steps, instances, task, from_step):
     if len(group_of_steps) > 1:
         task.add_detail('Rollback is implemented only for one group of steps!')
         return False
@@ -208,24 +286,25 @@ def steps_for_instances_with_rollback(group_of_steps, instances, task):
     i = 0
     for instance in instances:
         instance_current_step = 0
-        for step in steps:
+        for _ in steps:
             i += 1
             instance_current_step += 1
-            if i == steps_for_instances_with_rollback.current_step:
+            if i == from_step:
                 break
-        if i == steps_for_instances_with_rollback.current_step:
+        if i == from_step:
             break
 
     task.add_detail('Starting undo for instance {}'.format(instance))
 
     undo_step_current = len(steps)
     for step in reversed(steps):
-
         try:
             step_class = import_by_path(step)
             step_instance = step_class(instance)
 
-            task.add_step(undo_step_current, len(steps), 'Rollback ' + str(step_instance))
+            task.add_step(
+                undo_step_current, len(steps), 'Rollback ' + str(step_instance)
+            )
 
             if instance_current_step < undo_step_current:
                 task.update_details("SKIPPED!", persist=True)
@@ -241,95 +320,76 @@ def steps_for_instances_with_rollback(group_of_steps, instances, task):
         finally:
             undo_step_current -= 1
 
-    databases = set()
-    for instance in instances:
-        databases.add(instance.databaseinfra.databases.first())
 
-    for database in databases:
-        database.finish_task()
-
-    return ret
-
-
-def steps_for_instances(
-        list_of_groups_of_steps, instances, task, step_counter_method=None,
-        since_step=0, undo=False
-):
+def databases_for(instances):
     databases = set()
     for instance in instances:
         database = instance.databaseinfra.databases.first()
         if database:
             databases.add(database)
+    return databases
 
+
+def lock_databases_for(instances, task, is_retry):
+    databases = databases_for(instances)
     for database in databases:
         databases_locked = []
+
         if not database.update_task(task):
             task.error_in_lock(database)
 
-            if since_step == 0:
-                for database in databases_locked:
-                    database.finish_task()
-            return False
+            if not is_retry:
+                unlock_databases(databases_locked)
+            return False, databases
+
         databases_locked.append(database)
 
-    steps_total = 0
-    for group_of_steps in list_of_groups_of_steps:
-        steps_total += len(group_of_steps.items()[0][1])
+    return True, databases
 
-    steps_total = steps_total * len(instances)
-    step_current = 0
 
-    task.add_detail('Instances: {}'.format(len(instances)))
-    for instance in instances:
-        task.add_detail('{}'.format(instance), level=2)
-    task.add_detail('')
-
-    if since_step:
-        task.add_detail('Skipping until step {}\n'.format(since_step))
-
-    for count, group_of_steps in enumerate(list_of_groups_of_steps, start=1):
-        task.add_detail('Starting group of steps {} of {} - {}'.format(
-            count, len(list_of_groups_of_steps), group_of_steps.keys()[0])
-        )
-        steps = group_of_steps.items()[0][1]
-        for instance in instances:
-            task.add_detail('Instance: {}'.format(instance))
-            for step in steps:
-                step_current += 1
-
-                if step_counter_method:
-                    step_counter_method(step_current)
-
-                try:
-                    step_class = import_by_path(step)
-                    step_instance = step_class(instance)
-
-                    if undo:
-                        str_step_instance = 'Rollback ' + str(step_instance)
-                    else:
-                        str_step_instance = str(step_instance)
-                    task.add_step(step_current, steps_total, str_step_instance)
-
-                    if step_current < since_step:
-                        task.update_details("SKIPPED!", persist=True)
-                    else:
-                        if undo:
-                            step_instance.undo()
-                        else:
-                            step_instance.do()
-                        task.update_details("SUCCESS!", persist=True)
-
-                except Exception as e:
-                    task.update_details("FAILED!", persist=True)
-                    task.add_detail(str(e))
-                    task.add_detail(full_stack())
-                    return False
-
-        task.add_detail('Ending group of steps: {} of {}\n'.format(
-            count, len(list_of_groups_of_steps))
-        )
-
+def unlock_databases(databases):
     for database in databases:
         database.finish_task()
 
-    return True
+
+def unlock_databases_for(instances):
+    databases = databases_for(instances)
+    unlock_databases(databases)
+
+
+def total_of_steps(groups, instances):
+    total = 0
+    for group in groups:
+        total += len(group.values()[0])
+
+    return total * len(instances)
+
+
+def step_header_for(task, instances, since_step=None):
+    task.add_detail('Instances: {}'.format(len(instances)))
+    for instance in instances:
+        task.add_detail('{}'.format(instance), level=2)
+
+    task.add_detail('')
+    if since_step:
+        task.add_detail('Skipping until step {}\n'.format(since_step))
+
+
+def rollback_for_instances_full(
+        groups, instances, task, step_current_method, step_counter_method
+):
+    task.add_detail('\nSTARTING ROLLBACK\n')
+
+    current_step = step_current_method()
+    steps_total = total_of_steps(groups, instances)
+    since_step = steps_total - current_step
+
+    result = steps_for_instances(
+        groups, instances, task, step_counter_method, since_step, True
+    )
+
+    executed_steps = step_current_method()
+    missing_undo_steps = steps_total - executed_steps
+    step_counter_method(missing_undo_steps)
+
+    return result

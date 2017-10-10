@@ -32,6 +32,7 @@ class DatabaseMaintenanceTaskAdmin(admin.ModelAdmin):
         html_running = '<span class="label label-success">Running</span>'
         html_error = '<span class="label label-important">Error</span>'
         html_success = '<span class="label label-info">Success</span>'
+        html_rollback = '<span class="label label-info">Rollback</span>'
 
         html_status = ''
         if maintenance_task.status == DatabaseMaintenanceTask.WAITING:
@@ -42,6 +43,8 @@ class DatabaseMaintenanceTaskAdmin(admin.ModelAdmin):
             html_status = html_error
         elif maintenance_task.status == DatabaseMaintenanceTask.SUCCESS:
             html_status = html_success
+        elif maintenance_task.status == DatabaseMaintenanceTask.ROLLBACK:
+            html_status = html_rollback
 
         return format_html(html_status)
     friendly_status.short_description = "Status"

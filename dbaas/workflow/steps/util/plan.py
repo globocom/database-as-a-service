@@ -115,6 +115,18 @@ class PlanStepNewInfra(PlanStep):
         return database
 
 
+class PlanStepRestore(PlanStep):
+
+    @property
+    def host_nfs(self):
+        try:
+            return HostAttrNfsaas.objects.filter(
+                host=self.host, is_active=False
+            ).last()
+        except HostAttrNfsaas.DoesNotExist:
+            return None
+
+
 class PlanStepUpgrade(PlanStep):
 
     @property
@@ -162,6 +174,14 @@ class InitializationForNewInfra(Initialization, PlanStepNewInfra):
 
 
 class ConfigureForNewInfra(Configure, PlanStepNewInfra):
+    pass
+
+
+class InitializationRestore(Initialization, PlanStepRestore):
+    pass
+
+
+class ConfigureRestore(Configure, PlanStepRestore):
     pass
 
 

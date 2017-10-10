@@ -86,6 +86,13 @@ class TestRedisSentinel(AbstractBaseRedisTestCase):
             'workflow.steps.redis.horizontal_elasticity.database.AddInstanceToRedisCluster',
         )
 
+    def _get_reinstallvm_steps_final(self):
+        return [{
+            'Resetting Sentinel': (
+                'workflow.steps.redis.upgrade.sentinel.ResetAllSentinel',
+                'workflow.steps.util.database.SetSlave',
+            ),
+        }] + super(TestRedisSentinel, self)._get_reinstallvm_steps_final()
 
 class AbstractBaseRedisNoPersistenceTestCase(AbstractBaseRedisTestCase):
     pass

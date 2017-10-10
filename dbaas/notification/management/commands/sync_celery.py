@@ -138,6 +138,15 @@ class Command(BaseCommand):
                 )
                 database_create.set_error()
 
+            database_restore = task.database_restore.first()
+            if database_restore:
+                self.task.add_detail(
+                    "Setting database restore {} status to ERROR".format(
+                        database_restore.id
+                    ), level=3
+                )
+                database_restore.set_error()
+
         return tasks_with_problem
 
     def get_celery_active_tasks(self, expected_hosts):

@@ -156,20 +156,6 @@
             $("input", $(this)).attr("checked", "checked");
         });
 
-        $(".btn-plan").on("click", function(ev) {
-            $("#plan-type").val(this.dataset.planId);
-            $(".btn-plan").attr('disabled', true);
-            confirmation = confirm('Are you sure?');
-
-            if(confirmation== true){
-                $("#database_form").submit();
-            }else{
-                $(".btn-plan").attr('disabled', false);
-                return false;
-            }
-
-        });
-
         $("#adv_button").on("click", function(ev) {
             var $btn = $(this).button('loading')
             $btn.button('reset')

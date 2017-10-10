@@ -56,7 +56,7 @@
           </option>
         {% endfor %}
       </select>
-      <input type="submit" value="Resize" name="disk_resize" id="disk_resize_btn" onclick="return confirm('Are you sure?')"/>
+      <button data-toggle="modal" id="disk_resize_btn" data-target="#resize_disk">Resize</button>
     </div>
   </div>
   <div class="control-group">
@@ -145,6 +145,10 @@
     </div>
   </div>
 </div>
+
+{% include "logical/database/details/confirmation_modal.html" with modal_id="resize_disk" confirmation_message="Are you sure you want to resize the disk?" box_title="Resizing the disk" button_type="submit" button_value="Resize" button_name="disk_resize" id_optional="id=id_resize_disk_btn_modal" %}
+
+
 {% endblock %}
 
 
