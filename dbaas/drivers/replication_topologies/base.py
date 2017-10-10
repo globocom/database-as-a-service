@@ -212,10 +212,6 @@ class BaseTopology(object):
             )
         }]
 
-    @property
-    def driver_name(self):
-        raise NotImplementedError
-
     def get_reinstallvm_steps(self):
         return [{
             'Disable monitoring and alarms': (
@@ -246,6 +242,10 @@ class BaseTopology(object):
                 'workflow.steps.util.zabbix.EnableAlarms',
             ),
         }]
+
+    @property
+    def driver_name(self):
+        raise NotImplementedError
 
 
 class FakeTestTopology(BaseTopology):
