@@ -176,22 +176,38 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
     def offering_html(self, database):
         last_resize = database.resizes.last()
-        if not(last_resize and last_resize.is_status_error):
+        last_reinstallvm = database.reinstall_vm.last()
+        if last_resize and last_resize.is_status_error:
+            resize_url = reverse('admin:maintenance_databaseresize_change', args=[last_resize.id])
+            task_url = reverse('admin:notification_taskhistory_change', args=[last_resize.task.id])
+            retry_url = database.get_resize_retry_url()
+            resize_content = \
+                "<a href='{}' target='_blank'>Last resize</a> has an <b>error</b>, " \
+                "please check the <a href='{}' target='_blank'>task</a> and " \
+                "<a href='{}'>retry</a> the database resize".format(
+                    resize_url, task_url, retry_url
+                )
+            return show_info_popup(
+                database.offering, "Database Resize", resize_content,
+                icon="icon-warning-sign", css_class="show-resize"
+            )
+        elif last_reinstallvm and last_reinstallvm.is_status_error:
+            reinstallvm_url = reverse('admin:maintenance_databasereinstallvm_change', args=[last_reinstallvm.id])
+            task_url = reverse('admin:notification_taskhistory_change', args=[last_reinstallvm.task.id])
+            retry_url = database.get_reinstallvm_retry_url()
+            reinstallvm_content = \
+                "<a href='{}' target='_blank'>Last reinstall VM</a> has an <b>error</b>, " \
+                "please check the <a href='{}' target='_blank'>task</a> and " \
+                "<a href='{}'>retry</a> the database reinstall vm".format(
+                    reinstallvm_url, task_url, retry_url
+                )
+            return show_info_popup(
+                database.offering, "Database Reinstall VM", reinstallvm_content,
+                icon="icon-warning-sign", css_class="show-resize"
+            )
+        else:
             return database.offering
 
-        resize_url = reverse('admin:maintenance_databaseresize_change', args=[last_resize.id])
-        task_url = reverse('admin:notification_taskhistory_change', args=[last_resize.task.id])
-        retry_url = database.get_resize_retry_url()
-        resize_content = \
-            "<a href='{}' target='_blank'>Last resize</a> has an <b>error</b>, " \
-            "please check the <a href='{}' target='_blank'>task</a> and " \
-            "<a href='{}'>retry</a> the database resize".format(
-                resize_url, task_url, retry_url
-            )
-        return show_info_popup(
-            database.offering, "Database Resize", resize_content,
-            icon="icon-warning-sign", css_class="show-resize"
-        )
     offering_html.short_description = _("offering")
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
