@@ -17,5 +17,8 @@ class ReplicationTopologyAdmin(admin.ModelAdmin):
     save_on_top = True
     inlines = [ParamCustomValueInline]
 
+    change_form_template = "admin/physical/replicationtopology/change_form.html"
+    add_form_template = "admin/change_form.html"
+
     def versions(self, obj):
         return ", ".join([str(engine.version) for engine in obj.engine.all()])
