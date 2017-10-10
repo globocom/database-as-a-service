@@ -217,6 +217,9 @@ class ReplicationTopology(BaseModel):
     can_change_parameters = models.BooleanField(
         verbose_name="Can Change Parameters", default=True
     )
+    can_reinstall_vm = models.BooleanField(
+        verbose_name="Can Reinstall VM", default=True
+    )
     script = models.ForeignKey(
         Script, related_name='replication_topologies', null=True, blank=True
     )

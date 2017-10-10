@@ -184,6 +184,10 @@ class ChangeMaster(VmStep):
         if not self.infra.plan.is_ha:
             return
 
+        master = self.driver.get_master_instance()
+        if master != self.instance:
+            return
+
         if self.driver.check_instance_is_master(instance=self.instance):
             error = None
 
