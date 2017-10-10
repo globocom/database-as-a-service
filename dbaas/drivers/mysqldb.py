@@ -350,6 +350,18 @@ class MySQL(BaseDriver):
     def get_database_process_name(self):
         return "mysqld"
 
+    def initialization_parameters(self, instance):
+        return self.parameters_mysql(instance)
+
+    def configuration_parameters(self, instance):
+        return self.parameters_mysql(instance)
+
+    def parameters_mysql(self, instance):
+        return {
+            'SERVERID': int(instance.hostname.hostname.split('-')[1])
+        }
+
+
     @classmethod
     def topology_name(cls):
         return ['mysql_single', 'mysql_foxha']

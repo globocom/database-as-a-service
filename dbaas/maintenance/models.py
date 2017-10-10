@@ -331,6 +331,24 @@ class DatabaseUpgrade(DatabaseMaintenanceTask):
         return "{} upgrade".format(self.database.name)
 
 
+class DatabaseReinstallVM(DatabaseMaintenanceTask):
+    database = models.ForeignKey(
+        Database, verbose_name="Database",
+        null=False, unique=False, related_name="reinstall_vm"
+    )
+    instance = models.ForeignKey(
+        Instance, verbose_name="Instance", null=False, unique=False,
+        related_name="database_reinstall_vm"
+    )
+    task = models.ForeignKey(
+        TaskHistory, verbose_name="Task History",
+        null=False, unique=False, related_name="database_reinsgtall_vm"
+    )
+
+    def __unicode__(self):
+        return "{} change parameters".format(self.database.name)
+
+
 class DatabaseResize(DatabaseMaintenanceTask):
     database = models.ForeignKey(
         Database, verbose_name="Database",

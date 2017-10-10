@@ -99,6 +99,25 @@ class InstallNewTemplate(VmStep):
             raise EnvironmentError('Could not reinstall VM')
 
 
+class ReinstallTemplate(VmStep):
+
+    def __init__(self, instance):
+        super(ReinstallTemplate, self).__init__(instance)
+
+        cs_plan = PlanAttr.objects.get(plan=self.plan)
+        self.bundle = cs_plan.bundles.first()
+
+    def __unicode__(self):
+        return "Reinstalling template to VM..."
+
+    def do(self):
+        reinstall = self.cs_provider.reinstall_new_template(
+            self.host_cs.vm_id, self.bundle.templateid
+        )
+        if not reinstall:
+            raise EnvironmentError('Could not reinstall VM')
+
+
 class WaitingBeReady(VmStep):
 
     def __unicode__(self):
@@ -163,6 +182,10 @@ class ChangeMaster(VmStep):
 
     def do(self):
         if not self.infra.plan.is_ha:
+            return
+
+        master = self.driver.get_master_instance()
+        if master != self.instance:
             return
 
         if self.driver.check_instance_is_master(instance=self.instance):

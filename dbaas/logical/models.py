@@ -553,6 +553,9 @@ class Database(BaseModel):
     def get_change_parameters_retry_url(self):
         return "/admin/logical/database/{}/change_parameters_retry/".format(self.id)
 
+    def get_reinstallvm_retry_url(self):
+        return "/admin/logical/database/{}/reinstallvm_retry/".format(self.id)
+
     def is_mongodb_24(self):
         engine = self.engine
         if engine.name == 'mongodb' and engine.version.startswith('2.4'):
