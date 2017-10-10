@@ -13,6 +13,7 @@ from util.decorators import only_one
 from util.providers import make_infra, clone_infra, destroy_infra, \
     get_database_upgrade_setting, get_resize_settings, \
     get_database_change_parameter_setting, \
+    get_reinstallvm_steps_setting, \
     get_database_change_parameter_retry_steps_count, get_deploy_instances_size
 from simple_audit.models import AuditRequest
 from system.models import Configuration
@@ -20,6 +21,7 @@ from .models import TaskHistory
 from workflow.workflow import steps_for_instances
 from maintenance.models import DatabaseUpgrade, DatabaseResize
 from maintenance.models import DatabaseChangeParameter
+from maintenance.models import DatabaseReinstallVM
 from maintenance.tasks import restore_database
 
 LOG = get_task_logger(__name__)
@@ -364,7 +366,7 @@ def database_notification(self):
 
 
 @app.task(bind=True)
-@only_one(key="get_databases_status", timeout=180)
+@only_one(key="get_databases_status")
 def update_database_status(self):
     LOG.info("Retrieving all databases")
     try:
@@ -399,7 +401,7 @@ def update_database_status(self):
 
 
 @app.task(bind=True)
-@only_one(key="get_databases_used_size", timeout=180)
+@only_one(key="get_databases_used_size")
 def update_database_used_size(self):
     LOG.info("Retrieving all databases")
     try:
@@ -430,7 +432,7 @@ def update_database_used_size(self):
 
 
 @app.task(bind=True)
-@only_one(key="get_instances_status", timeout=180)
+@only_one(key="get_instances_status")
 def update_instances_status(self):
     LOG.info("Retrieving all databaseinfras")
     worker_name = get_worker_name()
@@ -788,6 +790,40 @@ def upgrade_database(self, database, user, task, since_step=0):
         task.update_status_for(
             TaskHistory.STATUS_ERROR,
             'Could not do upgrade.\nUpgrade doesn\'t have rollback'
+        )
+
+
+@app.task(bind=True)
+def reinstall_vm_database(self, database, instance, user, task, since_step=0):
+    worker_name = get_worker_name()
+    task = TaskHistory.register(self.request, user, task, worker_name)
+
+    infra = database.infra
+
+    class_path = infra.plan.replication_topology.class_path
+    steps = get_reinstallvm_steps_setting(class_path)
+
+    database_reinstallvm = DatabaseReinstallVM()
+    database_reinstallvm.database = database
+    database_reinstallvm.instance = instance
+    database_reinstallvm.task = task
+    database_reinstallvm.save()
+
+    instances = [instance,]
+
+    success = steps_for_instances(
+        steps, instances, task,
+        database_reinstallvm.update_step, since_step
+    )
+
+    if success:
+        database_reinstallvm.set_success()
+        task.update_status_for(TaskHistory.STATUS_SUCCESS, 'Done')
+    else:
+        database_reinstallvm.set_error()
+        task.update_status_for(
+            TaskHistory.STATUS_ERROR,
+            'Could not do reinstall vm.\nReinstall VM doesn\'t have rollback'
         )
 
 
@@ -1336,6 +1372,35 @@ class TaskRegister(object):
             task_history=task,
             user=user
         )
+
+    @classmethod
+    def database_reinstall_vm(cls, instance, user, since_step=None):
+
+        database = instance.databaseinfra.databases.first()
+        task_params = {
+            'task_name': 'reinstall_vm_database',
+            'arguments': 'Reinstall VM for database {} and instance {}'.format(database, instance),
+            'database': database,
+            'instance': instance,
+            'user': user
+        }
+
+        if since_step:
+            task_params['task_name'] = 'reinstall_vm_database_retry'
+            task_params['arguments'] = 'Retrying reinstall VM for database {} and instance {}'.format(database, instance)
+
+        task = cls.create_task(task_params)
+
+        delay_params = {
+            'database': database,
+            'instance': instance,
+            'task': task,
+            'user': user
+        }
+
+        delay_params.update(**{'since_step': since_step} if since_step else {})
+
+        reinstall_vm_database.delay(**delay_params)
 
     @classmethod
     def database_change_parameters(cls, database, user, since_step=None):

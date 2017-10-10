@@ -30,23 +30,48 @@
   </div>
   <div class="panel-body">
     <div class="control-group">
+      <table id="table-hosts" class="table table-striped">
+      <tbody>
       {% for host in instances_core %}
+        <tr><td>
         <div class="control-label"><label>{{ host.status }}</label></div>
         <div class="controls">
           <p class="readonly" id="host_name_n{{ forloop.counter }}">
             {% if is_dba %}
               <a target="_blank" href="{% url 'admin:physical_host_change' host.id %}">{{ host.description }}</a>
-              {% if database.databaseinfra.plan.replication_topology.can_switch_master and host.switch_database %}
-                  <a class="action_button btn btn-warning" data-toggle="modal" id="switch_host_btn" data-target="#switch_host_modal" data-host-id="{{host.id}}">
-                    <i class="icon-refresh"></i>
+              </td>
+              <td>{% if database.databaseinfra.plan.replication_topology.can_switch_master and host.switch_database %}
+                  <a class="action_button btn btn-warning" data-toggle="modal" id="switch_host_btn" data-target="#switch_host_modal" data-host-id="{{host.id}}" title="Switch {{ database.engine.write_node_description }}">
+                    Switch host
                   </a>
+              </td>
+              {% endif %}
+              {% if database.databaseinfra.plan.replication_topology.can_reinstall_vm %}
+                {% if last_reinstall_vm and last_reinstall_vm.is_status_error %}
+                  {% if host.id == last_reinstall_vm.instance.hostname.id %}
+                  <td>
+                      <a class="action_button btn btn-danger" href="{{ database.get_reinstallvm_retry_url }}" title="Go to reinstal VM page">Retry Reinstall VM</a>
+                      <p class="action_button"><a href="{% url 'admin:maintenance_databasereinstallvm_change' last_reinstall_vm.id %}" target='_blank'>Last reinstall vm</a> has an <b>error</b>, please check the <a href="{% url 'admin:notification_taskhistory_change' last_reinstall_vm.task.id %}" target='_blank'>task</a> and retry the reinstall vm clicking in button above</p>
+                  </td>
+                  {% endif %}
+                {% else %}
+                <td>
+                  <a class="action_button btn btn-danger reinstallvm" data-toggle="modal" id="reinstall_vm_btn"
+                    data-target="#reinstall_vm_modal" data-host-id="{{host.id}}" title="Reinstall VM"
+                  >Reinstall VM</i></a>
+                </td>
+                {% endif %}
               {% endif %}
             {% else %}
               {{ host.description }}
+              </td>
             {% endif %}
           </p>
         </div>
+        </tr>
       {% endfor %}
+      </tbody>
+      </table>
     </div>
   </div>
   {% if database.plan.replication_topology.has_horizontal_scalability %}
@@ -108,8 +133,8 @@
 
 {% block database_button_save %}
 
-
 {% include "admin/confirmation_modal.html" with tag_type="a" modal_id="switch_host_modal" confirmation_message="Are you sure you want to switch the core host?" box_title="Changing core host" button_class="btn btn-primary btn-reset-password" id_optional="id=confirm_switch_host_button" %}
+{% include "admin/confirmation_modal.html" with tag_type="a" modal_id="reinstall_vm_modal" confirmation_message="Are you sure you want to reinstall VM?" box_title="Reinstall VM" button_class="btn btn-primary btn-reset-password" id_optional="id=confirm_reinstall_vm_button" %}
 
 {% endblock %}
 
@@ -131,9 +156,13 @@
     $("#id_add_read_qtd").change();
 
     var $switchHost = $("#switch_host_btn");
-    $switchHost.popover({trigger: "hover", placement: "right", content: "Switch host"});
-
     $("#confirm_switch_host_button").attr("href", $switchHost.attr("data-host-id")+"/switch/");
+
+    $(".reinstallvm").on("click", function(event){
+      var $reinstallVM = $(event.target)
+      $("#confirm_reinstall_vm_button").attr("href", $reinstallVM.attr("data-host-id")+"/reinstallvm/");
+    })
+
 
   });
 </script>

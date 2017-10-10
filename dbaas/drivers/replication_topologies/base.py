@@ -212,6 +212,37 @@ class BaseTopology(object):
             )
         }]
 
+    def get_reinstallvm_steps(self):
+        return [{
+            'Disable monitoring and alarms': (
+                'workflow.steps.util.zabbix.DisableAlarms',
+                'workflow.steps.util.db_monitor.DisableMonitoring',
+            ),
+        }] + [{
+            'Reinstall VM': (
+                'workflow.steps.util.vm.ChangeMaster',
+                'workflow.steps.util.database.Stop',
+                'workflow.steps.util.vm.Stop',
+                'workflow.steps.util.vm.ReinstallTemplate',
+                'workflow.steps.util.vm.Start',
+                'workflow.steps.util.vm.WaitingBeReady',
+                'workflow.steps.util.vm.UpdateOSDescription',
+                'workflow.steps.util.plan.Initialization',
+                'workflow.steps.util.plan.Configure',
+                'workflow.steps.util.pack.Configure',
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.CheckIsUp',
+            ),
+        }] + self.get_reinstallvm_steps_final()
+
+    def get_reinstallvm_steps_final(self):
+        return [{
+            'Enabling monitoring and alarms': (
+                'workflow.steps.util.db_monitor.EnableMonitoring',
+                'workflow.steps.util.zabbix.EnableAlarms',
+            ),
+        }]
+
     @property
     def driver_name(self):
         raise NotImplementedError
