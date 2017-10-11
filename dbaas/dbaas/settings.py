@@ -141,7 +141,6 @@ TEMPLATE_LOADERS = (
     'django.template.loaders.app_directories.Loader',
     #     'django.template.loaders.eggs.Loader',
 )
-
 MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -319,6 +318,7 @@ if CI:
 # )
 
 AUTHENTICATION_BACKENDS = [
+    'allaccess.backends.AuthorizedServiceBackend',
     'account.backends.DbaasBackend',
     'django.contrib.auth.backends.ModelBackend',
 ]
@@ -400,7 +400,8 @@ REST_FRAMEWORK = {
     'TEST_REQUEST_DEFAULT_FORMAT': 'json',
 }
 
-LOGIN_URL = "/admin/"
+LOGIN_URL = "/accounts/login/backstage/"
+LOGIN_REDIRECT_URL = "/accounts/callback/backstage/"
 
 # sentry configuration
 RAVEN_CONFIG = {
@@ -513,3 +514,8 @@ NFSAAS_ENABLED = os.getenv('CLOUD_STACK_ENABLED', '0') == '1'
 DJANGO_SIMPLE_AUDIT_ACTIVATED = True
 DJANGO_SIMPLE_AUDIT_M2M_FIELDS = True
 DJANGO_SIMPLE_AUDIT_AUTHENTICATOR = lambda: __import__('rest_framework.authentication', fromlist=['BasicAuthentication']).BasicAuthentication()
+
+DBAAS_OAUTH2_LOGIN_ENABLE = bool(int(os.getenv('DBAAS_OAUTH2_LOGIN_ENABLE', 0)))
+
+if DBAAS_OAUTH2_LOGIN_ENABLE:
+    INSTALLED_APPS += ('allaccess', 'backstage_oauth2',)
