@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
+import admin
+import api.urls
+
 from django.conf.urls import patterns, include, url
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.conf import settings
 from django.views.generic.base import RedirectView
-import admin
-import api.urls
+
 
 admin.autodiscover()
 
@@ -25,6 +27,14 @@ urlpatterns = patterns(
     url(r'^ckeditor/', include('ckeditor.urls')),
     url(r'^physical/', include('physical.urls')),
 )
+
+if settings.DBAAS_OAUTH2_LOGIN_ENABLE:
+    from backstage_oauth2.views import BackstageOAuthRedirect
+    admin.site.login = BackstageOAuthRedirect.as_view(provider='backstage')
+    urlpatterns += patterns(
+        '',
+        url(r'^accounts/', include('backstage_oauth2.urls')),
+    )
 
 # django flatpages
 urlpatterns += patterns(
