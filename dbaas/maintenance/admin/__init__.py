@@ -7,6 +7,8 @@ from .database_upgrade import DatabaseUpgradeAdmin
 from .database_resize import DatabaseResizeAdmin
 from .database_change_parameter import DatabaseChangeParameterAdmin
 from .database_create import DatabaseCreateAdmin
+from .database_restore import DatabaseRestoreAdmin
+from .database_reinstall_vm import DatabaseReinstallVMAdmin
 
 admin.site.register(models.Maintenance, MaintenanceAdmin)
 admin.site.register(models.HostMaintenance, HostMaintenanceAdmin)
@@ -14,3 +16,5 @@ admin.site.register(models.DatabaseUpgrade, DatabaseUpgradeAdmin)
 admin.site.register(models.DatabaseResize, DatabaseResizeAdmin)
 admin.site.register(models.DatabaseChangeParameter, DatabaseChangeParameterAdmin)
 admin.site.register(models.DatabaseCreate, DatabaseCreateAdmin)
+admin.site.register(models.DatabaseRestore, DatabaseRestoreAdmin)
+admin.site.register(models.DatabaseReinstallVM, DatabaseReinstallVMAdmin)

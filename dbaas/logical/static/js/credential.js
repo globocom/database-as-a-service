@@ -49,17 +49,16 @@
         */
         Credential.prototype.reset_password = function(callback) {
             var credential = this;
-            if (confirm("Are you sure?")) {
-                $.ajax({
-                    "url": "/logical/credential/" + this.pk,
-                    "type": "PUT",
-                }).done(function(data) {
-                    $(".show-password", credential.$row).attr("data-content", data.credential.password);
-                    if (callback) {
-                        callback(credential);
-                    }
-                });
-            }
+            $.ajax({
+                "url": "/logical/credential/" + this.pk,
+                "type": "PUT",
+            }).done(function(data) {
+                $(".show-password", credential.$row).attr("data-content", data.credential.password);
+                if (callback) {
+                    callback(credential);
+                }
+            });
+        
         };
 
         /**
@@ -111,11 +110,14 @@
                 credential.show_password();
             });
 
-            $row.on("click.reset-password", ".btn-reset-password", function(e) {
-                credential.reset_password(function() {
+            $("#create_new_password").popover({trigger: "hover", placement: "right", content: "Generate new password"});
+
+            $("#reset_psw_modal .modal-footer").on("click.reset-password", ".btn-reset-password", function(e) {
+              credential.reset_password(function() {
+                    $("#reset_psw_modal").modal('toggle');
                     credential.show_password(true);
-                });
-                return false;
+              });
+              return false;
             });
 
             // Delete credential

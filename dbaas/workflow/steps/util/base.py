@@ -62,6 +62,23 @@ class BaseInstanceStep(object):
     def environment(self):
         return self.instance.databaseinfra.environment
 
+    @property
+    def restore(self):
+        restore = self.database.database_restore.last()
+        if restore.is_running:
+            return restore
+
+    @property
+    def snapshot(self):
+        try:
+            return self.restore.group.backups.get(instance=self.instance)
+        except ObjectDoesNotExist:
+            return
+
+    @property
+    def latest_disk(self):
+        return self.instance.hostname.nfsaas_host_attributes.last()
+
     def do(self):
         raise NotImplementedError
 

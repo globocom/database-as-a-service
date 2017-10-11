@@ -610,6 +610,25 @@ class RedisCluster(Redis):
 
         return instances
 
+    def get_master_for(self, instance):
+        with self.redis(instance=instance) as client:
+            try:
+                info = client.info()
+            except Exception as e:
+                raise ConnectionError('Error connection to infra {}: {}'.format(
+                    self.databaseinfra, str(e)
+                ))
+
+            if info['role'] != 'slave':
+                return
+
+            address = info['master_host']
+            port = info['master_port']
+
+            return self.databaseinfra.instances.filter(
+                hostname__address=address, port=port
+            ).first()
+
     @classmethod
     def topology_name(cls):
         return ['redis_cluster']

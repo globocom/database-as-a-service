@@ -216,3 +216,28 @@ def create_database(
         name, plan, environment, team, project, description, task,
         subscribe_to_email_events, is_protected, user, retry_from
     )
+
+
+@app.task(bind=True)
+def restore_database(self, database, task, snapshot, user, retry_from=None):
+    task = TaskHistory.register(
+        request=self.request, task_history=task, user=user,
+        worker_name=get_worker_name()
+    )
+
+    from backup.models import Snapshot
+    snapshot = Snapshot.objects.get(id=snapshot)
+
+    from tasks_restore_backup import restore_snapshot
+    restore_snapshot(database, snapshot.group, task, retry_from)
+
+
+@app.task(bind=True)
+def rollback_create_database(self, rollback_from, task, user):
+    task = TaskHistory.register(
+        request=self.request, task_history=task, user=user,
+        worker_name=get_worker_name()
+    )
+
+    from tasks_create_database import rollback_create
+    rollback_create(rollback_from, task, user)

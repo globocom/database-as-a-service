@@ -1,6 +1,7 @@
 # coding:utf-8
 from mock import MagicMock, patch
 from unittest import TestCase
+from logical.tests import factory as logical_factory
 from physical.tests import factory as physical_factory
 from notification.models import TaskHistory
 from notification.tasks import TaskRegister
@@ -294,6 +295,15 @@ class DatabaseRemoveBackupCallTestCase(TestCase, TaskCallBaseTestCase):
 
 
 class RestoreSnapshotCallTestCase(TestCase, TaskCallBaseTestCase):
+
+    def setUp(self):
+        super(RestoreSnapshotCallTestCase, self).setUp()
+        self.database = logical_factory.DatabaseFactory()
+        self.call_params['database'] = self.database
+
+    def tearDown(self):
+        if self.database:
+            self.database.delete()
 
     method_to_call = 'restore_snapshot'
     delay_to_mock = 'backup.tasks.restore_snapshot.delay'
