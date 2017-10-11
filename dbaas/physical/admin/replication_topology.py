@@ -14,6 +14,9 @@ class ReplicationTopologyAdmin(admin.ModelAdmin):
     list_filter = ("has_horizontal_scalability", "engine")
     search_fields = ("name",)
     list_display = ("name", "versions", "has_horizontal_scalability")
+
+    filter_horizontal = ("parameter",)
+
     save_on_top = True
     inlines = [ParamCustomValueInline]
 
