@@ -27,7 +27,6 @@
                             <th>Environment</th>
                             <th>Plan</th>
                             <th>Status</th>
-                            <th>Capacity</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -58,11 +57,6 @@
                                 {% else %}
                                      <li class="label label-alert">Alert</li>
                                 {% endif %}
-                            </td>
-                            <td>
-                                <div class="progress dashboard">
-                                    {% render_progress_bar infra.used infra.capacity %}
-                                </div>
                             </td>
                         </tr>
                     {% endfor %}
