@@ -518,4 +518,4 @@ DBAAS_OAUTH2_LOGIN_ENABLE = bool(int(os.getenv('DBAAS_OAUTH2_LOGIN_ENABLE', 0)))
 
 if DBAAS_OAUTH2_LOGIN_ENABLE:
     INSTALLED_APPS += ('allaccess', 'backstage_oauth2',)
-    AUTHENTICATION_BACKENDS.insert(0, 'allaccess.backends.AuthorizedServiceBackend')
+    AUTHENTICATION_BACKENDS.insert(1, 'allaccess.backends.AuthorizedServiceBackend')
