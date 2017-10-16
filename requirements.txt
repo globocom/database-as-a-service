@@ -68,3 +68,4 @@ requests==2.5.1
 python-dateutil==2.4.1
 django-redis==4.4.4
 backstage_oauth2==0.1.1
+django-all-access==0.5.1
