@@ -188,6 +188,11 @@
     });
     $("#id_resize_vm_yes").keyup()
 
+    $("#disk_resize_btn").click(function() {
+      var $new_disk_size = $("#id_disk_offering").find(":selected").text().trim()
+      $("#resize_disk .modal_message").text('Are you sure you want to resize your disk from <{{ database.databaseinfra.disk_offering.name  }}> to <' + $new_disk_size + '>?')
+    });
+
   })
 </script>
 
