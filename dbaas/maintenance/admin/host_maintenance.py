@@ -17,6 +17,7 @@ class HostMaintenanceAdmin(admin.ModelAdmin):
     search_fields = ("maintenance__description", "hostname", "status")
     list_display = (
         "maintenance", "hostname", "started_at", "finished_at", "friendly_status")
+    list_filter = ["status"]
     fields = ("maintenance", "hostname", "status", "started_at",
               "finished_at", "main_log", "rollback_log")
     readonly_fields = fields
