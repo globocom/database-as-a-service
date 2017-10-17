@@ -50,7 +50,7 @@ class DatabaseInfraAdmin(admin.DjangoServicesAdmin):
     )
     service_class = DatabaseInfraService
     list_display = (
-        "name", "user", "environment", "show_instances", "capacity_bar"
+        "name", "user", "environment", "show_instances"
     )
     list_filter = ("engine", "environment")
     save_on_top = True
@@ -69,11 +69,6 @@ class DatabaseInfraAdmin(admin.DjangoServicesAdmin):
             if obj.plan and not obj.plan.is_pre_provisioned:
                 return self.readonly_fields + ('disk_offering', )
         return self.readonly_fields
-
-    def capacity_bar(self, datainfra):
-        return render_progress_bar(datainfra.used, datainfra.capacity)
-    capacity_bar.short_description = "Capacity"
-    capacity_bar.admin_order_field = 'capacity'
 
     def show_instances(self, datainfra):
         html_instances = []

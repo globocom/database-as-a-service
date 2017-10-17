@@ -19,13 +19,24 @@
                 <input type="submit" value="{% trans 'Save and add another' %}" name="_addanother" {{ onclick_attrib }} class="btn"/>
             {% endif %}
 
-            {% if show_save and show_save_and_continue%}
-                <input type="submit" value="{% trans 'Save' %}" name="_save" {{ onclick_attrib }} class="btn"/>
+            {% if show_save and show_save_and_continue %}
+                {% if add_confirmation %} 
+                    <button data-toggle="modal" data-target="#save_submit_modal" class="btn">Save</button>
+                {% else %}
+                    <input type="submit" value="{% trans 'Save' %}" name="_save" {{ onclick_attrib }} class="btn"/>
+                {% endif %}
             {% endif %}
 
             {% if show_save and not show_save_and_continue %}
-                <input type="submit" value="{% trans 'Save' %}" name="_save" {{ onclick_attrib }} class="btn btn-primary"/>
+                {% if add_confirmation %} 
+                    <button data-toggle="modal" data-target="#save_submit_modal" class="btn btn-primary">Save</button>
+                {% else %}
+                    <input type="submit" value="{% trans 'Save' %}" name="_save" {{ onclick_attrib }} class="btn btn-primary"/>
+                {% endif %}
             {% endif %}
         </div>
     </div>
 </div>
+{% if add_confirmation %} 
+    {% include "admin/confirmation_modal.html" with modal_id="save_submit_modal" confirmation_message="Are you sure you want to save the changes made?" box_title="Save changes" button_class="btn btn-primary" button_type="submit" button_value="Save" button_name="_save" extra_attributes=onclick_attrib %}
+{% endif %}

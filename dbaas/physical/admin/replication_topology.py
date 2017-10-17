@@ -14,8 +14,14 @@ class ReplicationTopologyAdmin(admin.ModelAdmin):
     list_filter = ("has_horizontal_scalability", "engine")
     search_fields = ("name",)
     list_display = ("name", "versions", "has_horizontal_scalability")
+
+    filter_horizontal = ("parameter",)
+
     save_on_top = True
     inlines = [ParamCustomValueInline]
+
+    change_form_template = "admin/physical/replicationtopology/change_form.html"
+    add_form_template = "admin/change_form.html"
 
     def versions(self, obj):
         return ", ".join([str(engine.version) for engine in obj.engine.all()])
