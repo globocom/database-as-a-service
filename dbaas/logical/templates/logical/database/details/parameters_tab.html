@@ -119,9 +119,9 @@
   </div>
 </div>
 
-{% include "logical/database/details/confirmation_modal.html" with modal_id="save_changes" confirmation_message="Do you want to save the changes made to the parameters?" box_title="Saving changes" button_type="submit" button_value="Apply" button_name="change_parameter_btn_modal" %}
+{% include "admin/confirmation_modal.html" with modal_id="save_changes" confirmation_message="Do you want to save the changes made to the parameters?" box_title="Saving changes" button_type="submit" button_value="Apply" button_name="change_parameter_btn_modal" %}
 
-{% include "logical/database/details/confirmation_modal.html" with modal_id="retry_save_changes" confirmation_message="Do you want to try saving the changes made to the parameters again?" box_title="Saving changes" button_type="submit" button_value="Retry Change Parameters" button_name="retry_update_parameters" %}
+{% include "admin/confirmation_modal.html" with modal_id="retry_save_changes" confirmation_message="Do you want to try saving the changes made to the parameters again?" box_title="Saving changes" button_type="submit" button_value="Retry Change Parameters" button_name="retry_update_parameters" %}
 
 {% endblock %}
 

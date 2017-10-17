@@ -133,9 +133,8 @@
 
 {% block database_button_save %}
 
-
-{% include "logical/database/details/confirmation_modal.html" with tag_type="a" modal_id="switch_host_modal" confirmation_message="Are you sure you want to switch the core host?" box_title="Changing core host" button_class="btn btn-primary btn-reset-password" id_optional="id=confirm_switch_host_button" %}
-{% include "logical/database/details/confirmation_modal.html" with tag_type="a" modal_id="reinstall_vm_modal" confirmation_message="Are you sure you want to reinstall VM?" box_title="Reinstall VM" button_class="btn btn-primary btn-reset-password" id_optional="id=confirm_reinstall_vm_button" %}
+{% include "admin/confirmation_modal.html" with tag_type="a" modal_id="switch_host_modal" confirmation_message="Are you sure you want to switch the core host?" box_title="Changing core host" button_class="btn btn-primary btn-reset-password" id_optional="id=confirm_switch_host_button" %}
+{% include "admin/confirmation_modal.html" with tag_type="a" modal_id="reinstall_vm_modal" confirmation_message="Are you sure you want to reinstall VM?" box_title="Reinstall VM" button_class="btn btn-primary btn-reset-password" id_optional="id=confirm_reinstall_vm_button" %}
 
 {% endblock %}
 

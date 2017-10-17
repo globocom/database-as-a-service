@@ -361,7 +361,12 @@ class MySQL(BaseDriver):
             'SERVERID': int(instance.hostname.hostname.split('-')[1])
         }
 
-
     @classmethod
     def topology_name(cls):
-        return ['mysql_single', 'mysql_foxha']
+        return ['mysql_single']
+
+
+class MySQLFOXHA(MySQL):
+    @classmethod
+    def topology_name(cls):
+        return ['mysql_foxha']

@@ -4,7 +4,7 @@ register = template.Library()
 
 
 @register.inclusion_tag('admin/submit_line.html', takes_context=True)
-def submit_row_extended_save_continue(context):
+def submit_row_extended_save_continue(context, add_confirmation=False):
     """
     Displays the row of buttons for delete and save.
     """
@@ -26,8 +26,8 @@ def submit_row_extended_save_continue(context):
         'show_save_and_continue': not is_popup and context['has_change_permission'],
         'is_popup': is_popup,
         'show_save': True,
-        'delete_button_name': delete_button_name
-
+        'delete_button_name': delete_button_name,
+        'add_confirmation': add_confirmation
     }
     if context.get('original') is not None:
         ctx['original'] = context['original']
@@ -35,7 +35,7 @@ def submit_row_extended_save_continue(context):
 
 
 @register.inclusion_tag('admin/submit_line.html', takes_context=True)
-def submit_row_extended(context):
+def submit_row_extended(context, add_confirmation=False):
     """
     Displays the row of buttons for delete and save.
     """
@@ -52,7 +52,8 @@ def submit_row_extended(context):
                              and change and context.get('show_delete', True)),
         'is_popup': is_popup,
         'show_save': True,
-        'delete_button_name': delete_button_name
+        'delete_button_name': delete_button_name,
+        'add_confirmation': add_confirmation
 
     }
     if context.get('original') is not None:
