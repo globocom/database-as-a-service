@@ -25,7 +25,7 @@
           <select class="span8" id="id_restore_snapshot" name="restore_snapshot">
             <option></option>
             {% for snapshot in snapshots reversed %}
-              <option value="{{ snapshot.id }}">
+              <option value="{{ snapshot.id }}" data-start-at="{{ snapshot.start_at|date:'Y-m-d H:i' }}">
                 {{ snapshot }}
                 {% if is_dba and not snapshot.is_automatic %}
                   (executed by user)
@@ -134,6 +134,8 @@
             {% endif %}
             <label for="id_restore_yes">
               <b class="bold_red">All</b> data from current database will be erased!
+            </br>
+              <b class="bold_red">You will restore: </b><span class="modal_message"></span>
             </label>
             <label for="id_restore_yes">
               <br>
@@ -169,7 +171,7 @@
           <div role="form">
             <div class="form-group">
               <label for="id_restore_yes">
-                Selected snapshot will be <b class="bold_red">erased</b>!
+                <b class="modal_message"></b> will be <b class="bold_red">erased</b>!
               </label>
               <label for="id_restore_yes">
                 <br>
@@ -253,6 +255,22 @@
   }
 
   jQuery(document).ready(function($) {
+
+
+    function addSnapshotToModalMessage(modalId) {
+      var data = $("#id_restore_snapshot").find(":selected").data()
+      console.log(data)
+      var $selected_snapshot = data.startAt
+      $("#"+ modalId + " .modal_message").text('<'+$selected_snapshot+'>')
+    }
+
+    $("#delete_snapshot_btn").click(function(){
+      addSnapshotToModalMessage("delete_snapshot")
+    });
+
+    $("#id_restore_btn").click(function(){
+      addSnapshotToModalMessage("restore_snapshot")
+    });
 
     var $backup_button = $("#id_backup_btn");
     $("#confirm_backup_button").attr("href", $backup_button.attr("href-link"));
