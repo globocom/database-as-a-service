@@ -134,6 +134,33 @@ class Parameter(BaseModel):
         blank=True, null=True
     )
 
+    description = models.TextField(
+        verbose_name=_("Description"),
+        max_length=200,
+        blank=True, null=True
+    )
+
+    allowed_values = models.CharField(
+        verbose_name=_("Allowed Values"),
+        max_length=200,
+        blank=True, null=True
+    )
+
+    TYPE_CHOICES = (
+        ('', ''),
+        ('str', 'String'),
+        ('int', 'Integer'),
+        ('float', 'Float'),
+        ('bool', 'Boolean'),
+    )
+
+    parameter_type = models.CharField(
+        verbose_name=_("Type"),
+        max_length = 100,
+        choices = TYPE_CHOICES,
+        default='',
+    )
+
     class Meta:
         unique_together = (
             ('name', 'engine_type', )
