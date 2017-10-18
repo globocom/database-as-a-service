@@ -298,6 +298,9 @@ def database_parameters(request, context, database):
             "applied_on_database": applied_on_database,
             "reset_default_value": reset_default_value,
             "editable_parameter": editable_parameter,
+            "parameter_type": topology_parameter.parameter_type,
+            "allowed_values": topology_parameter.allowed_values,
+            "description": topology_parameter.description,
         }
         form_database_parameters.append(database_parameter)
 

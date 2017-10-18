@@ -1,5 +1,9 @@
 
 /* Box Plan */
+#table-parameters .parameter_description_cell {
+    width: 250px;
+}
+
 .plans {
     margin: auto;
 }

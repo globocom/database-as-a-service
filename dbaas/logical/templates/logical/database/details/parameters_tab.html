@@ -15,6 +15,9 @@
           <th>Parameter</th>
           <th>DBaaS default value</th>
           <th>Custom value</th>
+          <th>Type</th>
+          <th>Allowed values</th>
+          <th>Description</th>
           {% if is_dba %}
             {% if form_status  == EDITABLE or form_status == TASK_ERROR %}
               <th>New custom value</th>
@@ -36,6 +39,24 @@
             </td>
             <td>
              {{parameter.current_value}}
+             {% if not parameter.applied_on_database %}
+              (it was not applied on database yet)
+             {% endif %}
+            </td>
+            <td>
+             {{parameter.parameter_type}}
+             {% if not parameter.applied_on_database %}
+              (it was not applied on database yet)
+             {% endif %}
+            </td>
+            <td>
+             {{parameter.allowed_values}}
+             {% if not parameter.applied_on_database %}
+              (it was not applied on database yet)
+             {% endif %}
+            </td>
+            <td class="parameter_description_cell">
+             {{parameter.description}}
              {% if not parameter.applied_on_database %}
               (it was not applied on database yet)
              {% endif %}
