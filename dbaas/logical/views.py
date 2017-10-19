@@ -206,7 +206,7 @@ def database_parameters(request, context, database):
     if request.method == 'POST':
         if 'edit_parameters' in request.POST:
             form_status = EDITABLE
-        elif 'calcel_edit_parameters' in request.POST:
+        elif 'cancel_edit_parameters' in request.POST:
             form_status = PROTECTED
         elif 'retry_update_parameters' in request.POST:
             form_status = TASK_ERROR
