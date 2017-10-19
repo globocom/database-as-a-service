@@ -34,6 +34,7 @@ if settings.DBAAS_OAUTH2_LOGIN_ENABLE:
     urlpatterns += patterns(
         '',
         url(r'^accounts/', include('backstage_oauth2.urls')),
+        url(r'', include('glb_version.urls')),
     )
 
 # django flatpages
