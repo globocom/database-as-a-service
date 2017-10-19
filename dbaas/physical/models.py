@@ -122,17 +122,6 @@ class Parameter(BaseModel):
         verbose_name=_("Parameter Name"),
         max_length=200
     )
-    dynamic = models.BooleanField(
-        verbose_name=_("Dynamic"),
-        help_text="Check this option if the parameter is dynamic. That is, \
-        it can be changed without restart the database.",
-        default=True
-    )
-    custom_method = models.CharField(
-        verbose_name=_("Custom Method"), max_length=200,
-        help_text="Custom method with steps for changing this parameter.",
-        blank=True, null=True
-    )
 
     description = models.TextField(
         verbose_name=_("Description"),
@@ -148,10 +137,10 @@ class Parameter(BaseModel):
 
     TYPE_CHOICES = (
         ('', ''),
-        ('str', 'String'),
-        ('int', 'Integer'),
+        ('string', 'String'),
+        ('integer', 'Integer'),
         ('float', 'Float'),
-        ('bool', 'Boolean'),
+        ('boolean', 'Boolean'),
     )
 
     parameter_type = models.CharField(
@@ -159,6 +148,20 @@ class Parameter(BaseModel):
         max_length = 100,
         choices = TYPE_CHOICES,
         default='',
+    )
+
+    custom_method = models.CharField(
+        verbose_name=_("Custom Method"), max_length=200,
+        help_text="Custom method with steps for changing this parameter.",
+        blank=True, null=True
+    )
+
+
+    dynamic = models.BooleanField(
+        verbose_name=_("Dynamic"),
+        help_text="Check this option if the parameter is dynamic. That is, \
+        it can be changed without restart the database.",
+        default=True
     )
 
     class Meta:
