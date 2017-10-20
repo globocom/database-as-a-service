@@ -260,7 +260,7 @@ class Redis(BaseDriver):
     def data_dir(self, ):
         return '/data/'
 
-    def switch_master(self):
+    def switch_master(self, instance=None):
         pass
 
     def get_database_agents(self):
@@ -411,7 +411,7 @@ class RedisSentinel(Redis):
                     self.databaseinfra, str(e)
                 ))
 
-    def switch_master(self):
+    def switch_master(self, instance=None):
         sentinel_instance = self.instances_filtered.first()
         host = sentinel_instance.hostname
         host_attr = HostAttr.objects.get(host=host)
