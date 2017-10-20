@@ -141,7 +141,13 @@
 
 
 {% include "logical/database/details/confirmation_modal.html" with tag_type="a" modal_id="switch_host_modal" confirmation_message="Are you sure you want to switch the core host?" box_title="Changing core host" button_class="btn btn-primary btn-reset-password" id_optional="id=confirm_switch_host_button" %}
-{% include "logical/database/details/confirmation_modal.html" with tag_type="a" modal_id="reinstall_vm_modal" confirmation_message="Are you sure you want to reinstall VM?" box_title="Reinstall VM" button_class="btn btn-primary btn-reset-password" id_optional="id=confirm_reinstall_vm_button" %}
+
+
+{% if database.infra.plan.is_ha %}
+    {% include "logical/database/details/confirmation_modal.html" with tag_type="a" modal_id="reinstall_vm_modal" confirmation_message="The reinstall vm process will switch hosts, and <font color='red'><b>it may cause connections errors</b></font> during the process.<br>Please click <u><b>yes</b></u> to confirm." box_title="Reinstall VM" button_class="btn btn-primary btn-reset-password" id_optional="id=confirm_reinstall_vm_button" %}
+{% else %}
+    {% include "logical/database/details/confirmation_modal.html" with tag_type="a" modal_id="reinstall_vm_modal" confirmation_message="The reinstall vm process <font color='red'><b>will stop the database</b></font> and, consequently, it will be <font color='red'><b>unavailable</b></font> until the the end of the process.<br>Please click <u><b>yes</b></u> to confirm." box_title="Reinstall VM" button_class="btn btn-primary btn-reset-password" id_optional="id=confirm_reinstall_vm_button" %}
+{% endif %}
 
 {% endblock %}
 
