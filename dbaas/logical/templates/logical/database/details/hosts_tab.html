@@ -168,8 +168,11 @@
     });
     $("#id_add_read_qtd").change();
 
-    var $switchHost = $("#switch_host_btn");
-    $("#confirm_switch_host_button").attr("href", $switchHost.attr("data-host-id")+"/switch/");
+    $(".switch_host").on("click", function(event){
+      var $switchHost = $(event.target)
+      $("#confirm_switch_host_button").attr("href", $switchHost.attr("data-host-id")+"/switch/");
+    })
+
 
     $(".reinstallvm").on("click", function(event){
       var $reinstallVM = $(event.target)
