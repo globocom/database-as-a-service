@@ -51,6 +51,14 @@ class CreateCluster(BaseClusterStep):
 
     def get_variables_specifics(self):
         instances = self.infra.instances.all()
+        instances_even = []
+        instances_odd = []
+        for i in range(len(instances)):
+            if i % 2 == 0:
+                instances_even.append(instances[i])
+            else:
+                instances_odd.append(instances[i])
+        instances = instances_even + instances_odd
         return {
             'CLUSTER_REPLICAS': (len(instances)-self.masters)/self.masters,
             'CLUSTER_ADDRESSES': [
