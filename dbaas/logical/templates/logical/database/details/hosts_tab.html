@@ -8,6 +8,10 @@
     .action_button {
         margin-left: 20px
     }
+
+    .padding-host {
+        padding-left: 50px !important;
+    }
   </style>
 {% endblock %}
 
@@ -33,15 +37,17 @@
       <table id="table-hosts" class="table table-striped">
       <tbody>
       {% for host in instances_core %}
-        <tr><td>
-        <div class="control-label"><label>{{ host.status }}</label></div>
+        <tr>
+        <td {% if host.padding %} class="padding-host" {% endif %}>
+        <div class="control-label"><label>
+        {{ host.status }}</label></div>
         <div class="controls">
           <p class="readonly" id="host_name_n{{ forloop.counter }}">
             {% if is_dba %}
               <a target="_blank" href="{% url 'admin:physical_host_change' host.id %}">{{ host.description }}</a>
               </td>
               <td>{% if database.databaseinfra.plan.replication_topology.can_switch_master and host.switch_database %}
-                  <a class="action_button btn btn-warning" data-toggle="modal" id="switch_host_btn" data-target="#switch_host_modal" data-host-id="{{host.id}}" title="Switch {{ database.engine.write_node_description }}">
+                  <a class="action_button btn btn-warning switch_host" data-toggle="modal" id="switch_host_btn" data-target="#switch_host_modal" data-host-id="{{host.id}}" title="Switch {{ database.engine.write_node_description }}">
                     Switch host
                   </a>
               </td>
