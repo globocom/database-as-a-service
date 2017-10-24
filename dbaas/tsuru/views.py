@@ -291,6 +291,7 @@ class ServiceUnitBind(APIView):
 
                 database_bind.save()
         except (IndexError, ObjectDoesNotExist) as e:
+            database_bind = None
             msg = "DatabaseBind does not exist: {}"
             LOG.info(msg.format(e))
         except IpNaoExisteError as e:
@@ -306,7 +307,7 @@ class ServiceUnitBind(APIView):
             transaction.commit()
             transaction.set_autocommit(True)
 
-        if database_bind.binds_requested == 0:
+        if database_bind and database_bind.binds_requested == 0:
             unbind_address_on_database.delay(
                 database_bind=database_bind, user=request.user
             )
