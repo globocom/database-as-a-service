@@ -27,6 +27,7 @@ from rest_framework.renderers import JSONRenderer, JSONPRenderer
 from rest_framework.response import Response
 import requests
 from networkapiclient import Ip, Network
+from networkapiclient.exception import IpNaoExisteError
 from logical.validators import database_name_evironment_constraint
 from system import models
 
@@ -290,10 +291,11 @@ class ServiceUnitBind(APIView):
 
                 database_bind.save()
         except (IndexError, ObjectDoesNotExist) as e:
-            msg = "DatabaseBind does not exist"
-            return log_and_response(
-                msg=msg, e=e, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+            msg = "DatabaseBind does not exist: {}"
+            LOG.info(msg.format(e))
+        except IpNaoExisteError as e:
+            msg = "IpNaoExisteError: {}"
+            LOG.info(msg.format(e))
         except Exception as e:
             msg = "Bind for {} has not yet been created!".format(unit_network)
             return log_and_response(
