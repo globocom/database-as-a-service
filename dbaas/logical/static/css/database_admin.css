@@ -16,6 +16,13 @@
     width: 120px;
 }
 
+
+p.error_message {
+    display: none;
+    color: red;
+    margin: 0px;
+}
+
 .vcheckboxlabel{
     margin: 0;
     display: inline-block;
