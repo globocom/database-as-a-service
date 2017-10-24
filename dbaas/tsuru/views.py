@@ -260,7 +260,8 @@ class ServiceUnitBind(APIView):
             return response
         database = response
 
-        unit_network = check_acl_service_and_get_unit_network(database, data)
+        unit_network = check_acl_service_and_get_unit_network(
+            database, data, ignore_ip_error=True)
         if type(unit_network) == Response:
             return unit_network
 
@@ -575,7 +576,7 @@ def get_database(name, env):
     return database
 
 
-def check_acl_service_and_get_unit_network(database, data):
+def check_acl_service_and_get_unit_network(database, data, ignore_ip_error=False):
     acl_credential = get_credentials_for(
         environment=database.environment,
         credential_type=CredentialType.ACLAPI
@@ -615,8 +616,9 @@ def check_acl_service_and_get_unit_network(database, data):
         )
     except Exception as e:
         LOG.warn(e)
-        msg = "We are experiencing errors with the network api, please try again later"
-        return log_and_response(
-            msg=msg, e=e,
-            http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
+        msg = "We are experiencing errors with the network api, please try get network again later"
+        if not ignore_ip_error:
+            return log_and_response(
+                msg=msg, e=e,
+                http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
