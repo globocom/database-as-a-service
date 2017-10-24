@@ -202,13 +202,29 @@
     }
   }
 
-  $(".save_button").on('click',function(event){
-    validate_all($(this).attr('id'), event);
-  });
+  var Validator = {};
+  (function(){
 
-  $(".new_custom_value_input").blur( function(){
-      console.log("call blur")
-      var current_input = $(this);
+    var validate_all = function(button_id, event)
+    {
+      var inputs = document.getElementsByClassName("new_custom_value_input");
+      var new_value;
+      var values_are_valid = true;
+      for (var i = 0; i < inputs.length; i++){
+        if( !validateSingleInput( $(inputs[i]) ) )
+          values_are_valid = false;
+      }
+      if(values_are_valid){
+        set_modal(button_id)
+      }
+      else{
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    }
+
+    var validateSingleInput = function(input_element){
+      var current_input = input_element;
       var error_message = current_input.parents("tr").find(".error_message");
       error_message.hide();
       current_input.css('border', '1px solid #ccc');
@@ -218,62 +234,36 @@
       if(!validate_new_value(current_input.val(), current_type, current_allowed_values)){
         current_input.css('border', '1px solid #ff0000');
         error_message.show();
-        values_are_valid = false;
+        return false;
       }
-  });
 
-  function validate_all(button_id, event)
-  {
-    var inputs = document.getElementsByClassName("new_custom_value_input");
-    var new_value;
-    var values_are_valid = true;
-    for (var i = 0; i < inputs.length; i++){
-      var current_input = $(inputs[i]);
-      var error_message = current_input.parents("tr").find(".error_message");
-      error_message.hide();
-      current_input.css('border', '1px solid #ccc');
-
-      var current_type = current_input.parents("tr").find(".type_cell").html().trim();
-      var current_allowed_values = current_input.parents("tr").find(".allowed_values_meta").val().trim();
-      if(!validate_new_value(current_input.val(), current_type, current_allowed_values)){
-        current_input.css('border', '1px solid #ff0000');
-        error_message.show();
-        values_are_valid = false;
-      }
-    }
-    if(values_are_valid){
-      set_modal(button_id)
-    }
-    else{
-      event.preventDefault();
-      event.stopPropagation();
-    }
-  }
-
-  function validate_new_value(value, acceptable_type, allowed_values){
-    if(value==''){
       return true;
     }
-    if (acceptable_type=="string") {
-      if(validate_string(value, allowed_values))
-        return true;
-    }
-    if (acceptable_type=="integer") {
-      var numeric_val = +value;
-      if(numeric_val!=parseInt(numeric_val,10))
-        return false;
 
-      if(validate_number(value, allowed_values))
+    var validate_new_value = function(value, acceptable_type, allowed_values){
+      if(value==''){
         return true;
-    }
-    if (acceptable_type=="float") {
-      if(validate_number(value, allowed_values))
-        return true;
-    }
-    return false;
-  }
+      }
+      if (acceptable_type=="string") {
+        if(validate_string(value, allowed_values))
+          return true;
+      }
+      if (acceptable_type=="integer") {
+        var numeric_val = +value;
+        if(numeric_val!=parseInt(numeric_val,10))
+          return false;
 
-  function validate_number(value, allowed_values){
+        if(validate_number(value, allowed_values))
+          return true;
+      }
+      if (acceptable_type=="float") {
+        if(validate_number(value, allowed_values))
+          return true;
+      }
+      return false;
+    }
+
+  var validate_number = function(value, allowed_values){
     var numeric_val = +value;
 
     if(!numeric_val)
@@ -296,7 +286,7 @@
     return false;
   }
 
-  function test_number_range(value, range){
+  var test_number_range = function(value, range){
     var nums = range.split(/\s*[\s:]\s*/)
     var lower_limit = +nums[0]
     if(nums[1]!=""){
@@ -313,7 +303,7 @@
     return false;
   }
 
-  function validate_string(value, allowed_values){
+  var validate_string = function(value, allowed_values){
     if(allowed_values=="")
       return true;
 
@@ -324,7 +314,22 @@
       }
     }
     return false;
-  }  
+  }
+
+    $.extend(
+      Validator,
+      {validateAll: validate_all},
+      {validateSingleInput: validateSingleInput})
+
+  })();
+
+  $(".save_button").on('click',function(event){
+    Validator.validateAll($(this).attr('id'), event);
+  });
+
+  $(".new_custom_value_input").blur( function(){
+      Validator.validateSingleInput($(this));
+  });  
 
   function set_modal(button_id)
   {
