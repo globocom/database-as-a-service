@@ -132,7 +132,8 @@ class Parameter(BaseModel):
     allowed_values = models.CharField(
         verbose_name=_("Allowed Values"),
         max_length=200,
-        blank=True, null=True
+        blank=True, null=True,
+        default=''
     )
 
     TYPE_CHOICES = (

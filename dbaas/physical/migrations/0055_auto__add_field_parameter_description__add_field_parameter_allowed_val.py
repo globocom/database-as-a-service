@@ -10,12 +10,12 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         # Adding field 'Parameter.description'
         db.add_column(u'physical_parameter', 'description',
-                      self.gf('django.db.models.fields.TextField')(max_length=200, null=True, blank=True),
+                      self.gf('django.db.models.fields.TextField')(default=u'', max_length=200, null=True, blank=True),
                       keep_default=False)
 
         # Adding field 'Parameter.allowed_values'
         db.add_column(u'physical_parameter', 'allowed_values',
-                      self.gf('django.db.models.fields.CharField')(max_length=200, null=True, blank=True),
+                      self.gf('django.db.models.fields.CharField')(default=u'', max_length=200, null=True, blank=True),
                       keep_default=False)
 
         # Adding field 'Parameter.parameter_type'
@@ -138,10 +138,10 @@ class Migration(SchemaMigration):
         },
         u'physical.parameter': {
             'Meta': {'ordering': "(u'engine_type__name', u'name')", 'unique_together': "((u'name', u'engine_type'),)", 'object_name': 'Parameter'},
-            'allowed_values': ('django.db.models.fields.CharField', [], {'max_length': '200', 'null': 'True', 'blank': 'True'}),
+            'allowed_values': ('django.db.models.fields.CharField', [], {'default': "u''", 'max_length': '200', 'null': 'True', 'blank': 'True'}),
             'created_at': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
             'custom_method': ('django.db.models.fields.CharField', [], {'max_length': '200', 'null': 'True', 'blank': 'True'}),
-            'description': ('django.db.models.fields.TextField', [], {'max_length': '200', 'null': 'True', 'blank': 'True'}),
+            'description': ('django.db.models.fields.TextField', [], {'default': "u''", 'max_length': '200', 'null': 'True', 'blank': 'True'}),
             'dynamic': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'engine_type': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "u'enginetype'", 'on_delete': 'models.PROTECT', 'to': u"orm['physical.EngineType']"}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
