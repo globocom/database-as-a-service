@@ -50,6 +50,11 @@
                                 {{ error }}
                             </p>
                         {% endfor %}
+                    {% elif ldap_permission_error %}
+                        <p class="errornote alert alert-error fade in">
+                        <a href="#" data-dismiss="alert" class="close">×</a>
+                            Only superusers or admin group users can login with LDAP
+                        </p>
                     {% endif %}
                     <div class="control-group {% if form.username.errors %}error{% endif %}">
                         <input type="text" placeholder="{{ form.username.label }}" class="span4" name="{{ form.username.html_name }}" id="{{ form.username.html_name }}" class=" focused" value="{% firstof form.username.value "" %}">
@@ -62,7 +67,7 @@
                     <input class="btn btn-primary" type="submit" value="{% trans 'Log in' %}">
                 </fieldset>
             </form>
-           
+
             <!--{% if password_reset_url %}
                 <p class="forgotten-password">
                     <a href="{{ password_reset_url }}">
