@@ -50,6 +50,11 @@ if settings.DBAAS_OAUTH2_LOGIN_ENABLE:
     def ldap_validation(request, *args, **kw):
         user = request.user
 
+        if user.is_anonymous():
+            return django_login_view(
+                request,
+                **kw
+            )
         if (user.is_superuser or
              'admin' in user.team_set.values_list('name', flat=True)):
             return HttpResponseRedirect(
