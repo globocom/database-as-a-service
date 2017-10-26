@@ -137,6 +137,7 @@ class RedisCluster(BaseRedis):
             'Configuring Cluster': (
                 'workflow.steps.redis.cluster.CreateCluster',
                 'workflow.steps.redis.cluster.CheckClusterStatus',
+                'workflow.steps.redis.cluster.SetInstanceShardTag',
             )}, {
             'Check DNS': (
                 'workflow.steps.util.dns.CheckIsReady',
@@ -146,6 +147,7 @@ class RedisCluster(BaseRedis):
             )}, {
             'Creating monitoring and alarms': (
                 'workflow.steps.util.zabbix.CreateAlarms',
+                'workflow.steps.util.db_monitor.CreateInfraMonitoring',
             )
         }]
 
