@@ -301,6 +301,7 @@ def database_parameters(request, context, database):
             "parameter_type": topology_parameter.parameter_type,
             "allowed_values": topology_parameter.allowed_values,
             "description": topology_parameter.description,
+            "engine_type": database.engine.engine_type.name,
         }
         form_database_parameters.append(database_parameter)
 

@@ -47,11 +47,42 @@
               {% if form_status  == EDITABLE or form_status == TASK_ERROR %}
                 <td>
                   <p class="error_message">Invalid value.</p>
-                  <input type="text" class="new_custom_value_input" placeholder="type new value"
-                   maxlength="200" id="new_value_{{parameter.id}}"
-                   name="new_value_{{parameter.id}}" value="{{parameter.new_value}}"
-                   {% if not parameter.editable_parameter %} disabled {% endif %}
-                  >
+                  {% if parameter.parameter_type == "boolean" %}
+                    {% if parameter.engine_type == "mysql" %}
+                        <select class="new_custom_value_input" id="new_value_{{parameter.id}}"
+                         name="new_value_{{parameter.id}}" value="{{parameter.new_value}}"
+                         {% if not parameter.editable_parameter %} disabled {% endif %}>
+                            <option value="ON">ON</option>
+                            <option value="OFF">OFF</option>
+                            <option value="True">True</option>
+                            <option value="False">False</option>
+                            <option value="0">0</option>
+                            <option value="1">1</option>
+                        </select>
+                    {% endif %}
+                    {% if parameter.engine_type == "redis" %}
+                        <select class="new_custom_value_input" id="new_value_{{parameter.id}}"
+                         name="new_value_{{parameter.id}}" value="{{parameter.new_value}}"
+                         {% if not parameter.editable_parameter %} disabled {% endif %}>
+                            <option value="yes">yes</option>
+                            <option value="no">no</option>
+                        </select>
+                    {% endif %}
+                    {% if parameter.engine_type == "mongodb" %}
+                        <select class="new_custom_value_input" id="new_value_{{parameter.id}}"
+                         name="new_value_{{parameter.id}}" value="{{parameter.new_value}}"
+                         {% if not parameter.editable_parameter %} disabled {% endif %}>
+                            <option value="True">True</option>
+                            <option value="False">False</option>
+                        </select>
+                    {% endif %}
+                  {% else %}
+                    <input type="text" class="new_custom_value_input" placeholder="type new value"
+                     maxlength="200" id="new_value_{{parameter.id}}"
+                     name="new_value_{{parameter.id}}" value="{{parameter.new_value}}"
+                     {% if not parameter.editable_parameter %} disabled {% endif %}
+                    >
+                  {% endif %}
                   <label class="checkbox">
                     <input class="checkbox_action" id="checkbox_reset_{{parameter.id}}" name="checkbox_reset_{{parameter.id}}"
                       type="checkbox"
@@ -75,6 +106,7 @@
              {% if not parameter.applied_on_database %}
               (it was not applied on database yet)
              {% endif %}
+             <input name="parameter_type_hidden" type="hidden" class="type_meta" value="{{parameter.parameter_type}}">
             </td>
             <td class="allowed_values_cell">
              {{parameter.allowed_values}}
@@ -169,7 +201,7 @@
 
           {% elif  form_status  == TASK_ERROR %}
             <input type="submit" value="Retry Change Parameters"
-              name="retry_button" class="btn btn-warning save_button"
+              name="retry_button" id="id_retry_save_parameters" class="btn btn-warning save_button"
             />
             <p><a href="{% url 'admin:maintenance_databasechangeparameter_change' last_change_parameters.id %}" target='_blank'>Last change parameters</a> has an <b>error</b>, please check the <a href="{% url 'admin:notification_taskhistory_change' last_change_parameters.task.id %}" target='_blank'>task</a> and retry the database change parameters clicking in button above</p>
           {% endif %}
@@ -229,7 +261,7 @@
       error_message.hide();
       current_input.css('border', '1px solid #ccc');
 
-      var current_type = current_input.parents("tr").find(".type_cell").html().trim();
+      var current_type = current_input.parents("tr").find(".type_meta").val().trim();
       var current_allowed_values = current_input.parents("tr").find(".allowed_values_meta").val().trim();
       if(!validate_new_value(current_input.val(), current_type, current_allowed_values)){
         current_input.css('border', '1px solid #ff0000');
@@ -241,6 +273,7 @@
     }
 
     var validate_new_value = function(value, acceptable_type, allowed_values){
+      console.log(acceptable_type)
       if(value==''){
         return true;
       }
@@ -259,6 +292,9 @@
       if (acceptable_type=="float") {
         if(validate_number(value, allowed_values))
           return true;
+      }
+      if (acceptable_type=="boolean") {
+        return true;
       }
       return false;
     }
