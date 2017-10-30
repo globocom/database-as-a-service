@@ -62,7 +62,7 @@ class PlanAdmin(services_admin.DjangoServicesAdmin):
     ]
 
     add_form_template = "admin/physical/plan/add_form.html"
-    change_form_template = "admin/physical/plan/add_form.html"
+    change_form_template = "admin/physical/plan/change_form.html"
     actions = [action_activate_plans, action_deactivate_plans]
 
     def change_view(self, request, object_id, form_url='', extra_context=None):

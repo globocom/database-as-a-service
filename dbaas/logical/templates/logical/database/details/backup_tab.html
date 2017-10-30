@@ -192,10 +192,10 @@
 {% endif %}
 
 
-{% include "logical/database/details/confirmation_modal.html" with tag_type="a" modal_id="backup_database_modal" confirmation_message="Are you sure you want to create a new snapshot?" box_title="Make backup now" button_class="btn btn-primary" id_optional="id=confirm_backup_button" %}
+{% include "admin/confirmation_modal.html" with tag_type="a" modal_id="backup_database_modal" confirmation_message="Are you sure you want to create a new snapshot?" box_title="Make backup now" button_class="btn btn-primary" id_optional="id=confirm_backup_button" %}
 
 
-{% include "logical/database/details/confirmation_modal.html" with modal_id="clone_database_modal" confirmation_message="Are you sure you want to clone this database?" box_title="Cloning databse" button_type="submit" button_value="Clone" button_name="database_clone" id_optional="id=confirm_clone_btn" %}
+{% include "admin/confirmation_modal.html" with modal_id="clone_database_modal" confirmation_message="Are you sure you want to clone this database?" box_title="Cloning databse" button_type="submit" button_value="Clone" button_name="database_clone" id_optional="id=confirm_clone_btn" %}
 
 {% endblock %}
 

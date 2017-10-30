@@ -358,7 +358,7 @@ class MySQL(BaseDriver):
 
     def parameters_mysql(self, instance):
         return {
-            'SERVERID': int(instance.hostname.hostname.split('-')[1])
+            'SERVERID': int(instance.dns.split('-')[1])
         }
 
     @classmethod
