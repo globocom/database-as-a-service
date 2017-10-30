@@ -51,6 +51,14 @@ class CreateCluster(BaseClusterStep):
 
     def get_variables_specifics(self):
         instances = self.infra.instances.all()
+        instances_even = []
+        instances_odd = []
+        for i in range(len(instances)):
+            if i % 2 == 0:
+                instances_even.append(instances[i])
+            else:
+                instances_odd.append(instances[i])
+        instances = instances_even + instances_odd
         return {
             'CLUSTER_REPLICAS': (len(instances)-self.masters)/self.masters,
             'CLUSTER_ADDRESSES': [
@@ -114,3 +122,44 @@ class RestoreNodeConfig(BaseClusterStep):
 
     def do(self):
         self.run_script('cp /tmp/{} /data/'.format(self.node_config_file))
+
+
+class SetInstanceShardTag(BaseClusterStep):
+
+    def __unicode__(self):
+        return "Setting instance shard tag..."
+
+    def do(self):
+        if self.instance.id != self.infra.instances.first().id:
+            return
+
+        cluster_client = self.infra.get_driver().get_cluster_client(None)
+        cluster_nodes = cluster_client.cluster_nodes()
+        instances = self.infra.instances.all()
+        shard = 1
+
+        for cluster_node in cluster_nodes:
+            if cluster_node['link-state'] != 'connected':
+                msg = "The node {}:{} is not connected to the cluster.".format(
+                    cluster_node['host'], cluster_node['port']
+                )
+                raise AssertionError(msg)
+
+        for instance in instances:
+            for cluster_node in cluster_nodes:
+                if cluster_node['host'] == instance.address and cluster_node['port'] == instance.port:
+                    if cluster_node['master'] is None:
+                        cluster_node['shard'] = "{0:02d}".format(shard)
+                        shard += 1
+
+        for cluster_node in cluster_nodes:
+            if cluster_node['master']:
+                for cluster_node_master in cluster_nodes:
+                    if cluster_node_master['id'] == cluster_node['master']:
+                        cluster_node['shard'] = cluster_node_master['shard']
+
+        for instance in instances:
+            for cluster_node in cluster_nodes:
+                if cluster_node['host'] == instance.address and cluster_node['port'] == instance.port:
+                    instance.shard = cluster_node['shard']
+                    instance.save()
