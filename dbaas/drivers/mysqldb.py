@@ -318,7 +318,7 @@ class MySQL(BaseDriver):
     def data_dir(self, ):
         return '/data/data/'
 
-    def switch_master(self):
+    def switch_master(self, instance=None):
         return self.replication_topology_driver.switch_master(driver=self)
 
     def start_slave(self, instance):

@@ -41,7 +41,9 @@ class PlanStep(BaseInstanceStep):
             'DRIVER_NAME': self.infra.get_driver().topology_name(),
             'IS_READ_ONLY': self.instance.read_only,
             'DISK_SIZE_IN_GB': self.disk_offering.size_gb(),
-            'ENVIRONMENT': self.environment
+            'ENVIRONMENT': self.environment,
+            'HAS_PERSISTENCE': self.infra.plan.has_persistence,
+            'IS_READ_ONLY': self.instance.read_only,
         }
 
         variables['configuration'] = self.get_configuration()
