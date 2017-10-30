@@ -71,8 +71,8 @@
                          name="new_value_{{parameter.id}}" value="{{parameter.new_value}}"
                          {% if not parameter.editable_parameter %} disabled {% endif %}>
                             <option value=""></option>
-                            <option value="True">True</option>
-                            <option value="False">False</option>
+                            <option value="True">true</option>
+                            <option value="False">false</option>
                         </select>
                     {% endif %}
                   {% else %}
@@ -102,23 +102,14 @@
             {% endif %}
             <td class="type_cell">
              {{parameter.parameter_type}}
-             {% if not parameter.applied_on_database %}
-              (it was not applied on database yet)
-             {% endif %}
              <input name="parameter_type_hidden" type="hidden" class="type_meta" value="{{parameter.parameter_type}}">
             </td>
             <td class="allowed_values_cell">
              {{parameter.allowed_values}}
-             {% if not parameter.applied_on_database %}
-              (it was not applied on database yet)
-             {% endif %}
              <input name="allowed_values_hidden" type="hidden" class="allowed_values_meta" value="{{parameter.allowed_values}}">
             </td>
             <td class="parameter_description_cell">
              {{parameter.description}}
-             {% if not parameter.applied_on_database %}
-              (it was not applied on database yet)
-             {% endif %}
             </td>
 
 
