@@ -260,7 +260,7 @@ class Redis(BaseDriver):
     def data_dir(self, ):
         return '/data/'
 
-    def switch_master(self):
+    def switch_master(self, instance=None):
         pass
 
     def get_database_agents(self):
@@ -411,7 +411,7 @@ class RedisSentinel(Redis):
                     self.databaseinfra, str(e)
                 ))
 
-    def switch_master(self):
+    def switch_master(self, instance=None):
         sentinel_instance = self.instances_filtered.first()
         host = sentinel_instance.hostname
         host_attr = HostAttr.objects.get(host=host)
@@ -585,8 +585,50 @@ class RedisCluster(Redis):
             else:
                 return info['role'] == 'master'
 
-    def switch_master(self):
-        raise NotImplementedError
+    def switch_master(self, instance=None):
+        if instance is None:
+            raise Exception('Cannot switch master in a redis cluster without instance.')
+
+        slave_instance = self.get_slave_for(instance)
+        if not slave_instance:
+            raise Exception('There is no slave for {}'.format(instance))
+        host = slave_instance.hostname
+        host_attr = HostAttr.objects.get(host=host)
+
+        script = """
+        #!/bin/bash
+
+        die_if_error()
+        {
+            local err=$?
+            if [ "$err" != "0" ];
+            then
+                echo "$*"
+                exit $err
+            fi
+        }"""
+
+        script += """
+        /usr/local/redis/src/redis-cli -h {} -p {} -a {} -c<<EOF_DBAAS
+        CLUSTER FAILOVER
+        exit
+        \nEOF_DBAAS
+        die_if_error "Error executing cluster failover"
+        """.format(
+            slave_instance.address, slave_instance.port,
+            self.databaseinfra.password
+        )
+
+        script = build_context_script({}, script)
+        output = {}
+        return_code = exec_remote_command(
+            server=host.address, username=host_attr.vm_user,
+            password=host_attr.vm_password, command=script, output=output
+        )
+
+        LOG.info(output)
+        if return_code != 0:
+            raise Exception(str(output))
 
     def get_master_instance(self):
         masters = []
@@ -624,6 +666,25 @@ class RedisCluster(Redis):
 
             address = info['master_host']
             port = info['master_port']
+
+            return self.databaseinfra.instances.filter(
+                hostname__address=address, port=port
+            ).first()
+
+    def get_slave_for(self, instance):
+        with self.redis(instance=instance) as client:
+            try:
+                info = client.info()
+            except Exception as e:
+                raise ConnectionError('Error connection to infra {}: {}'.format(
+                    self.databaseinfra, str(e)
+                ))
+
+            if info['role'] != 'master':
+                return
+
+            address = info['slave0']['ip']
+            port = info['slave0']['port']
 
             return self.databaseinfra.instances.filter(
                 hostname__address=address, port=port

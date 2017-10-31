@@ -380,7 +380,7 @@ class MongoDB(BaseDriver):
     def data_dir(self, ):
         return '/data/data/'
 
-    def switch_master(self):
+    def switch_master(self, instance=None):
         client = self.get_client(None)
         try:
             client.admin.command('replSetStepDown', 10)

@@ -8,6 +8,10 @@
     .action_button {
         margin-left: 20px
     }
+
+    .padding-host {
+        padding-left: 50px !important;
+    }
   </style>
 {% endblock %}
 
@@ -33,15 +37,17 @@
       <table id="table-hosts" class="table table-striped">
       <tbody>
       {% for host in instances_core %}
-        <tr><td>
-        <div class="control-label"><label>{{ host.status }}</label></div>
+        <tr>
+        <td {% if host.padding %} class="padding-host" {% endif %}>
+        <div class="control-label"><label>
+        {{ host.status }}</label></div>
         <div class="controls">
           <p class="readonly" id="host_name_n{{ forloop.counter }}">
             {% if is_dba %}
               <a target="_blank" href="{% url 'admin:physical_host_change' host.id %}">{{ host.description }}</a>
               </td>
               <td>{% if database.databaseinfra.plan.replication_topology.can_switch_master and host.switch_database %}
-                  <a class="action_button btn btn-warning" data-toggle="modal" id="switch_host_btn" data-target="#switch_host_modal" data-host-id="{{host.id}}" title="Switch {{ database.engine.write_node_description }}">
+                  <a class="action_button btn btn-warning switch_host" data-toggle="modal" id="switch_host_btn" data-target="#switch_host_modal" data-host-id="{{host.id}}" title="Switch {{ database.engine.write_node_description }}">
                     Switch host
                   </a>
               </td>
@@ -57,7 +63,7 @@
                 {% else %}
                 <td>
                   <a class="action_button btn btn-danger reinstallvm" data-toggle="modal" id="reinstall_vm_btn"
-                    data-target="#reinstall_vm_modal" data-host-id="{{host.id}}" title="Reinstall VM"
+                    data-target="#reinstall_vm_modal" data-host-id="{{host.id}}" title="Reinstall VM template and reconfigure the instance database."
                   >Reinstall VM</i></a>
                 </td>
                 {% endif %}
@@ -134,7 +140,12 @@
 {% block database_button_save %}
 
 {% include "admin/confirmation_modal.html" with tag_type="a" modal_id="switch_host_modal" confirmation_message="Are you sure you want to switch the core host?" box_title="Changing core host" button_class="btn btn-primary btn-reset-password" id_optional="id=confirm_switch_host_button" %}
-{% include "admin/confirmation_modal.html" with tag_type="a" modal_id="reinstall_vm_modal" confirmation_message="Are you sure you want to reinstall VM?" box_title="Reinstall VM" button_class="btn btn-primary btn-reset-password" id_optional="id=confirm_reinstall_vm_button" %}
+
+{% if database.infra.plan.is_ha %}
+    {% include "admin/confirmation_modal.html" with tag_type="a" modal_id="reinstall_vm_modal" confirmation_message="The reinstall vm process will switch hosts, and <font color='red'><b>it may cause connections errors</b></font> during the process.<br>Please click <u><b>yes</b></u> to confirm." box_title="Reinstall VM" button_class="btn btn-primary btn-reset-password" id_optional="id=confirm_reinstall_vm_button" %}
+{% else %}
+    {% include "admin/confirmation_modal.html" with tag_type="a" modal_id="reinstall_vm_modal" confirmation_message="The reinstall vm process <font color='red'><b>will stop the database</b></font> and, consequently, it will be <font color='red'><b>unavailable</b></font> until the the end of the process.<br>Please click <u><b>yes</b></u> to confirm." box_title="Reinstall VM" button_class="btn btn-primary btn-reset-password" id_optional="id=confirm_reinstall_vm_button" %}
+{% endif %}
 
 {% endblock %}
 
@@ -155,8 +166,11 @@
     });
     $("#id_add_read_qtd").change();
 
-    var $switchHost = $("#switch_host_btn");
-    $("#confirm_switch_host_button").attr("href", $switchHost.attr("data-host-id")+"/switch/");
+    $(".switch_host").on("click", function(event){
+      var $switchHost = $(event.target)
+      $("#confirm_switch_host_button").attr("href", $switchHost.attr("data-host-id")+"/switch/");
+    })
+
 
     $(".reinstallvm").on("click", function(event){
       var $reinstallVM = $(event.target)

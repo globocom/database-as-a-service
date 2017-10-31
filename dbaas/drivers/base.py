@@ -189,7 +189,7 @@ class BaseDriver(object):
     def is_replication_ok(self, instance):
         raise NotImplementedError()
 
-    def switch_master(self, ):
+    def switch_master(self, instance=None):
         raise NotImplementedError()
 
     def get_database_instances(self, ):
@@ -256,7 +256,7 @@ class BaseDriver(object):
         from time import sleep
         for attempt in range(0, attempts):
             if self.is_replication_ok(instance):
-                self.switch_master()
+                self.switch_master(instance)
                 LOG.info("Switch master returned ok...")
 
                 check_is_master_attempts_count = check_is_master_attempts

@@ -27,6 +27,7 @@ from rest_framework.renderers import JSONRenderer, JSONPRenderer
 from rest_framework.response import Response
 import requests
 from networkapiclient import Ip, Network
+from networkapiclient.exception import IpNaoExisteError
 from logical.validators import database_name_evironment_constraint
 from system import models
 
@@ -259,7 +260,8 @@ class ServiceUnitBind(APIView):
             return response
         database = response
 
-        unit_network = check_acl_service_and_get_unit_network(database, data)
+        unit_network = check_acl_service_and_get_unit_network(
+            database, data, ignore_ip_error=True)
         if type(unit_network) == Response:
             return unit_network
 
@@ -290,10 +292,12 @@ class ServiceUnitBind(APIView):
 
                 database_bind.save()
         except (IndexError, ObjectDoesNotExist) as e:
-            msg = "DatabaseBind does not exist"
-            return log_and_response(
-                msg=msg, e=e, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+            database_bind = None
+            msg = "DatabaseBind does not exist: {}"
+            LOG.info(msg.format(e))
+        except IpNaoExisteError as e:
+            msg = "IpNaoExisteError: {}"
+            LOG.info(msg.format(e))
         except Exception as e:
             msg = "Bind for {} has not yet been created!".format(unit_network)
             return log_and_response(
@@ -304,7 +308,7 @@ class ServiceUnitBind(APIView):
             transaction.commit()
             transaction.set_autocommit(True)
 
-        if database_bind.binds_requested == 0:
+        if database_bind and database_bind.binds_requested == 0:
             unbind_address_on_database.delay(
                 database_bind=database_bind, user=request.user
             )
@@ -572,7 +576,7 @@ def get_database(name, env):
     return database
 
 
-def check_acl_service_and_get_unit_network(database, data):
+def check_acl_service_and_get_unit_network(database, data, ignore_ip_error=False):
     acl_credential = get_credentials_for(
         environment=database.environment,
         credential_type=CredentialType.ACLAPI
@@ -612,8 +616,9 @@ def check_acl_service_and_get_unit_network(database, data):
         )
     except Exception as e:
         LOG.warn(e)
-        msg = "We are experiencing errors with the network api, please try again later"
-        return log_and_response(
-            msg=msg, e=e,
-            http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
+        msg = "We are experiencing errors with the network api, please try get network again later"
+        if not ignore_ip_error:
+            return log_and_response(
+                msg=msg, e=e,
+                http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
