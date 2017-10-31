@@ -318,7 +318,7 @@ class MySQL(BaseDriver):
     def data_dir(self, ):
         return '/data/data/'
 
-    def switch_master(self):
+    def switch_master(self, instance=None):
         return self.replication_topology_driver.switch_master(driver=self)
 
     def start_slave(self, instance):
@@ -358,7 +358,7 @@ class MySQL(BaseDriver):
 
     def parameters_mysql(self, instance):
         return {
-            'SERVERID': int(instance.hostname.hostname.split('-')[1])
+            'SERVERID': int(instance.dns.split('-')[1])
         }
 
     @classmethod
