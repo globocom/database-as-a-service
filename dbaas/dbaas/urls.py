@@ -48,6 +48,7 @@ if settings.DBAAS_OAUTH2_LOGIN_ENABLE:
         return django_login_view(request, extra_context=extra_context, **kw)
 
     def ldap_validation(request, *args, **kw):
+        from account.models import Role
         user = request.user
 
         if user.is_anonymous():
@@ -55,8 +56,12 @@ if settings.DBAAS_OAUTH2_LOGIN_ENABLE:
                 request,
                 **kw
             )
+
+        role_dba = Role.objects.get(name='role_dba')
+
+        dba_groups = role_dba.team_set.values_list('id', flat=True)
         if (user.is_superuser or
-             'admin' in user.team_set.values_list('name', flat=True)):
+             user.team_set.filter(id__in=dba_groups)):
             return HttpResponseRedirect(
                 reverse('admin:index')
             )

@@ -53,7 +53,7 @@
                     {% elif ldap_permission_error %}
                         <p class="errornote alert alert-error fade in">
                         <a href="#" data-dismiss="alert" class="close">×</a>
-                            Only superusers or admin group users can login with LDAP
+                            Only superusers or DBA Role users can login with LDAP
                         </p>
                     {% endif %}
                     <div class="control-group {% if form.username.errors %}error{% endif %}">
