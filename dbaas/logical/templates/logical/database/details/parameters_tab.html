@@ -263,7 +263,6 @@
     }
 
     var validate_new_value = function(value, acceptable_type, allowed_values){
-      console.log(acceptable_type)
       if(value==''){
         return true;
       }
@@ -292,7 +291,7 @@
   var validate_number = function(value, allowed_values){
     var numeric_val = +value;
 
-    if(!numeric_val)
+    if(isNaN(numeric_val))
       return false;
 
     if(allowed_values == "")
@@ -300,7 +299,7 @@
 
     var allowed_set = allowed_values.split(/\s*[\s,]\s*/)
     for (var i in allowed_set) {
-      if( !(+allowed_set[i]) ){
+      if( isNaN(+allowed_set[i]) ){
         if(test_number_range(value, allowed_set[i]))
           return true;
       }
