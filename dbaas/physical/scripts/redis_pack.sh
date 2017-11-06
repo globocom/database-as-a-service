@@ -439,7 +439,7 @@ auto-aof-rewrite-min-size {{ configuration.auto_aof_rewrite_min_size.value }}
 # Set it to 0 or a negative value for unlimited execution without warnings.
 lua-time-limit {{ configuration.lua_time_limit.value }}
 
-{% if ENGINE_VERSION|slice:"0:3" == "3.2" %}
+{% if ENGINE_VERSION|slice:"0:3" != "2.8" %}
 ################################ REDIS CLUSTER  ###############################
 #
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
