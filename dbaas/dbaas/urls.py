@@ -34,49 +34,47 @@ if settings.DBAAS_OAUTH2_LOGIN_ENABLE:
     admin.site.login = BackstageOAuthRedirect.as_view(provider='backstage')
     from django.http import HttpResponseRedirect
     from django.core.urlresolvers import reverse
-    from django.contrib.auth import logout as auth_logout, REDIRECT_FIELD_NAME
+    from django.contrib.auth import logout as auth_logout
+    from django.views.generic import View
 
-    def ldap_login(request, *args, **kw):
-        if request.user.is_authenticated():
-            return HttpResponseRedirect(
-                reverse('admin:index')
-            )
+    class LDAPLogin(View):
 
-        extra_context = {
-            REDIRECT_FIELD_NAME: reverse('ldap_validation'),
-        }
-        return django_login_view(request, extra_context=extra_context, **kw)
+        @staticmethod
+        def can_login(user):
+            from account.models import Role
 
-    def ldap_validation(request, *args, **kw):
-        from account.models import Role
-        user = request.user
+            role_dba = Role.objects.get(name='role_dba')
 
-        if user.is_anonymous():
-            return django_login_view(
-                request,
-                **kw
-            )
+            dba_groups = role_dba.team_set.values_list('id', flat=True)
+            return (user.is_superuser or
+                    user.team_set.filter(id__in=dba_groups))
 
-        role_dba = Role.objects.get(name='role_dba')
+        def get(self, *args, **kw):
+            user = self.request.user
+            if user.is_authenticated():
+                if self.can_login(user):
+                    return HttpResponseRedirect(
+                        reverse('admin:index')
+                    )
+                else:
+                    auth_logout(self.request)
+                    return django_login_view(
+                        self.request,
+                        extra_context={
+                            'ldap_permission_error': 1,
+                            'ldap_error_msg': 'Only superusers or DBA Role users can login with LDAP'
+                        },
+                        **kw
+                    )
 
-        dba_groups = role_dba.team_set.values_list('id', flat=True)
-        if (user.is_superuser or
-             user.team_set.filter(id__in=dba_groups)):
-            return HttpResponseRedirect(
-                reverse('admin:index')
-            )
-        else:
-            auth_logout(request)
-            return django_login_view(
-                request,
-                extra_context={'ldap_permission_error': 1},
-                **kw
-            )
+            return django_login_view(self.request, **kw)
+
+        def post(self, *args, **kw):
+            return django_login_view(self.request, **kw)
 
     urlpatterns += patterns(
         '',
-        url(r'^accounts/login/ldap/$', ldap_login, name='ldap_login'),
-        url(r'^accounts/login/ldap/callback/$', ldap_validation, name='ldap_validation'),
+        url(r'^accounts/login/ldap/$', LDAPLogin.as_view(), name='ldap_login'),
         url(r'^accounts/', include('backstage_oauth2.urls')),
         url(r'', include('glb_version.urls')),
     )
