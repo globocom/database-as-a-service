@@ -158,6 +158,7 @@ class RedisCluster(BaseRedis):
         return [{
             'Disable monitoring': (
                 'workflow.steps.util.zabbix.DisableAlarms',
+                'workflow.steps.util.db_monitor.DisableMonitoring',
             )}, {
             'Restoring': (
                 'workflow.steps.util.disk.RestoreSnapshot',
@@ -186,6 +187,7 @@ class RedisCluster(BaseRedis):
                 'workflow.steps.util.disk.UpdateRestore',
             )}, {
             'Enabling monitoring': (
+                'workflow.steps.util.db_monitor.EnableMonitoring',
                 'workflow.steps.util.zabbix.EnableAlarms',
             )
         }]
