@@ -515,7 +515,8 @@ DJANGO_SIMPLE_AUDIT_M2M_FIELDS = True
 DJANGO_SIMPLE_AUDIT_AUTHENTICATOR = lambda: __import__('rest_framework.authentication', fromlist=['BasicAuthentication']).BasicAuthentication()
 
 DBAAS_OAUTH2_LOGIN_ENABLE = bool(int(os.getenv('DBAAS_OAUTH2_LOGIN_ENABLE', 0)))
+DBAAS_AUTH_API_URL = os.getenv('DBAAS_AUTH_API_URL')
 
 if DBAAS_OAUTH2_LOGIN_ENABLE:
     INSTALLED_APPS += ('allaccess', 'backstage_oauth2',)
-    AUTHENTICATION_BACKENDS.insert(2, 'allaccess.backends.AuthorizedServiceBackend')
+    AUTHENTICATION_BACKENDS.insert(1, 'allaccess.backends.AuthorizedServiceBackend')
