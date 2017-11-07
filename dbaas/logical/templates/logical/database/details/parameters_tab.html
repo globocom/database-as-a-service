@@ -89,7 +89,7 @@
                        {% if not parameter.editable_parameter %}
                        "return false;"
                        {% else %}
-                       "reset_default(this, {{parameter.id}});"
+                       "resetDefault(this, {{parameter.id}});"
                        {% endif %}
                        {% if not parameter.editable_parameter %} disabled {% endif %}
                     />
@@ -207,7 +207,7 @@
 
 <script type="text/javascript">
 
-  function reset_default(checkbox_control, id)
+  function resetDefault(checkbox_control, id)
   {
     if (checkbox_control.checked)
     {
@@ -227,7 +227,7 @@
   var Validator = {};
   (function(){
 
-    var validate_all = function(button_id, event)
+    var validateAll = function(button_id, event)
     {
       var inputs = document.getElementsByClassName("new_custom_value_input");
       var new_value;
@@ -237,7 +237,7 @@
           values_are_valid = false;
       }
       if(values_are_valid){
-        set_modal(button_id)
+        setModal(button_id)
       }
       else{
         event.preventDefault();
@@ -253,7 +253,7 @@
 
       var current_type = current_input.parents("tr").find(".type_meta").val().trim();
       var current_allowed_values = current_input.parents("tr").find(".allowed_values_meta").val().trim();
-      if(!validate_new_value(current_input.val(), current_type, current_allowed_values)){
+      if(!validateNewValue(current_input.val(), current_type, current_allowed_values)){
         current_input.css('border', '1px solid #ff0000');
         error_message.show();
         return false;
@@ -262,12 +262,12 @@
       return true;
     }
 
-    var validate_new_value = function(value, acceptable_type, allowed_values){
+    var validateNewValue = function(value, acceptable_type, allowed_values){
       if(value==''){
         return true;
       }
       if (acceptable_type=="string") {
-        if(validate_string(value, allowed_values))
+        if(validateString(value, allowed_values))
           return true;
       }
       if (acceptable_type=="integer") {
@@ -275,11 +275,11 @@
         if(numeric_val!=parseInt(numeric_val,10))
           return false;
 
-        if(validate_number(value, allowed_values))
+        if(validateNumber(value, allowed_values))
           return true;
       }
       if (acceptable_type=="float") {
-        if(validate_number(value, allowed_values))
+        if(validateNumber(value, allowed_values))
           return true;
       }
       if (acceptable_type=="boolean") {
@@ -288,7 +288,7 @@
       return false;
     }
 
-  var validate_number = function(value, allowed_values){
+  var validateNumber = function(value, allowed_values){
     var numeric_val = +value;
 
     if(isNaN(numeric_val))
@@ -300,7 +300,7 @@
     var allowed_set = allowed_values.split(/\s*[\s,]\s*/)
     for (var i in allowed_set) {
       if( isNaN(+allowed_set[i]) ){
-        if(test_number_range(value, allowed_set[i]))
+        if(testNumberRange(value, allowed_set[i]))
           return true;
       }
       else if (value == +allowed_set[i]) {
@@ -311,7 +311,7 @@
     return false;
   }
 
-  var test_number_range = function(value, range){
+  var testNumberRange = function(value, range){
     var nums = range.split(/\s*[\s:]\s*/)
     var lower_limit = +nums[0]
     if(nums[1]!=""){
@@ -328,7 +328,7 @@
     return false;
   }
 
-  var validate_string = function(value, allowed_values){
+  var validateString = function(value, allowed_values){
     if(allowed_values=="")
       return true;
 
@@ -343,7 +343,7 @@
 
     $.extend(
       Validator,
-      {validateAll: validate_all},
+      {validateAll: validateAll},
       {validateSingleInput: validateSingleInput})
 
   })();
@@ -356,7 +356,7 @@
       Validator.validateSingleInput($(this));
   });  
 
-  function set_modal(button_id)
+  function setModal(button_id)
   {
     var bnt = document.getElementById(button_id);
     bnt.setAttribute("data-toggle", "modal");
