@@ -205,6 +205,7 @@
 {% block js_footer %}
 {{ block.super }}
 
+<script src="{% static "js/parameters_validator.js" %}"></script>
 <script type="text/javascript">
 
   function resetDefault(checkbox_control, id)
@@ -223,133 +224,14 @@
       new_value.value = "";
     }
   }
-
-  var Validator = {};
-  (function(){
-
-    var validateAll = function(button_id, event)
-    {
-      var inputs = document.getElementsByClassName("new_custom_value_input");
-      var new_value;
-      var values_are_valid = true;
-      for (var i = 0; i < inputs.length; i++){
-        if( !validateSingleInput( $(inputs[i]) ) )
-          values_are_valid = false;
-      }
-      if(values_are_valid){
-        setModal(button_id)
-      }
-      else{
-        event.preventDefault();
-        event.stopPropagation();
-      }
-    }
-
-    var validateSingleInput = function(input_element){
-      var current_input = input_element;
-      var error_message = current_input.parents("tr").find(".error_message");
-      error_message.hide();
-      current_input.css('border', '1px solid #ccc');
-
-      var current_type = current_input.parents("tr").find(".type_meta").val().trim();
-      var current_allowed_values = current_input.parents("tr").find(".allowed_values_meta").val().trim();
-      if(!validateNewValue(current_input.val(), current_type, current_allowed_values)){
-        current_input.css('border', '1px solid #ff0000');
-        error_message.show();
-        return false;
-      }
-
-      return true;
-    }
-
-    var validateNewValue = function(value, acceptable_type, allowed_values){
-      if(value==''){
-        return true;
-      }
-      if (acceptable_type=="string") {
-        if(validateString(value, allowed_values))
-          return true;
-      }
-      if (acceptable_type=="integer") {
-        var numeric_val = +value;
-        if(numeric_val!=parseInt(numeric_val,10))
-          return false;
-
-        if(validateNumber(value, allowed_values))
-          return true;
-      }
-      if (acceptable_type=="float") {
-        if(validateNumber(value, allowed_values))
-          return true;
-      }
-      if (acceptable_type=="boolean") {
-        return true;
-      }
-      return false;
-    }
-
-  var validateNumber = function(value, allowed_values){
-    var numeric_val = +value;
-
-    if(isNaN(numeric_val))
-      return false;
-
-    if(allowed_values == "")
-      return true;
-
-    var allowed_set = allowed_values.split(/\s*[\s,]\s*/)
-    for (var i in allowed_set) {
-      if( isNaN(+allowed_set[i]) ){
-        if(testNumberRange(value, allowed_set[i]))
-          return true;
-      }
-      else if (value == +allowed_set[i]) {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  var testNumberRange = function(value, range){
-    var nums = range.split(/\s*[\s:]\s*/)
-    var lower_limit = +nums[0]
-    if(nums[1]!=""){
-      var upper_limit = +nums[1]
-      if(value >= lower_limit && value<=upper_limit){
-        return true;
-      }
-    }
-    else {
-      if(value>=lower_limit){
-        return true;
-      }
-    }
-    return false;
-  }
-
-  var validateString = function(value, allowed_values){
-    if(allowed_values=="")
-      return true;
-
-    var allowed_set = allowed_values.split(/\s*[\s,]\s*/)
-    for (var i in allowed_set) {
-      if (value == allowed_set[i]) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-    $.extend(
-      Validator,
-      {validateAll: validateAll},
-      {validateSingleInput: validateSingleInput})
-
-  })();
+  
+  // Keep append order on save_button
+  $(".save_button").on('click',function(event){
+    Validator.validateAll(event);
+  });
 
   $(".save_button").on('click',function(event){
-    Validator.validateAll($(this).attr('id'), event);
+    setModal($(this).attr('id'));
   });
 
   $(".new_custom_value_input").blur( function(){
@@ -361,8 +243,8 @@
     var bnt = document.getElementById(button_id);
     bnt.setAttribute("data-toggle", "modal");
 
-    there_is_static = check_static_parameter_changed();
-    if (there_is_static)
+    thereIsStatic = check_static_parameter_changed();
+    if (thereIsStatic)
     {
       bnt.setAttribute("data-target", "#change_parameter_modal");
     }
