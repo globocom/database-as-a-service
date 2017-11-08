@@ -62,7 +62,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     list_filter_basic = [
         "project", "databaseinfra__environment", "databaseinfra__engine",
         "databaseinfra__plan", "databaseinfra__engine__engine_type", "status",
-        "databaseinfra__plan__has_persistence"
+        "databaseinfra__plan__has_persistence", "databaseinfra__plan__replication_topology__name"
     ]
     list_filter_advanced = list_filter_basic + ["is_in_quarantine", "team"]
     add_form_template = "logical/database/database_add_form.html"
