@@ -1,3 +1,7 @@
+{% load admin_static %}
+
+
+
 <!-- Modal -->
 <div class="modal fade" id="{{ modal_id }}" tabindex="-1" role="dialog" aria-labelledby="delete modal" aria-hidden="true">
   <div class="modal-dialog">
@@ -24,7 +28,7 @@
       <div class="modal-footer">
         <button type="button" class="btn btn-default" data-dismiss="modal">No</button>
         <{{ tag_type|default:"button" }} type= "{{ button_type|default:"button" }}" 
-          class="{{ button_class|default:"btn btn-primary" }}" 
+          class="btn-accept-modal {{ button_class|default:"btn btn-primary" }}" 
           name="{{ button_name|default:"" }}"
           value="{{ button_value|default:"" }}"
           {{ dismiss_option|default:"" }}
@@ -34,3 +38,4 @@
     </div>
   </div>
 </div>
+
