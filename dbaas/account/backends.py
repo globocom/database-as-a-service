@@ -57,7 +57,7 @@ class DbaasBackend(ModelBackend):
                     email=ldap_user_data.get('mail')
                 )
             except UserModel.DoesNotExist:
-                return None
+                raise PermissionDenied()
             else:
                 return user
 
