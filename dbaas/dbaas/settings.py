@@ -520,3 +520,4 @@ DBAAS_AUTH_API_URL = os.getenv('DBAAS_AUTH_API_URL')
 if DBAAS_OAUTH2_LOGIN_ENABLE:
     INSTALLED_APPS += ('allaccess', 'backstage_oauth2',)
     AUTHENTICATION_BACKENDS.insert(1, 'allaccess.backends.AuthorizedServiceBackend')
+    AUTHENTICATION_BACKENDS.insert(2, 'django_auth_ldap.backend.LDAPBackend')
