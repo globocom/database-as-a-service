@@ -620,7 +620,30 @@ def database_hosts(request, context, database):
             _add_read_only_instances(request, database)
 
     hosts = OrderedDict()
-    for instance in database.infra.instances.all():
+    instances = database.infra.instances.all().order_by('shard', 'id')
+    if instances[0].shard:
+        instances_tmp = []
+        instances_slaves = []
+        last_shard = None
+        for instance in instances:
+            if instance.is_current_write:
+                instances_tmp.append(instance)
+                last_shard = instance.shard
+                if instances_slaves:
+                    instances_tmp += instances_slaves
+                    instances_slaves = []
+            else:
+                if last_shard == instance.shard:
+                    instances_tmp.append(instance)
+                else:
+                    instances_slaves.append(instance)
+        if instances_slaves:
+            instances_tmp += instances_slaves
+            instances_slaves = []
+
+        instances = instances_tmp
+
+    for instance in instances:
         if instance.hostname not in hosts:
             hosts[instance.hostname] = []
         hosts[instance.hostname].append(instance)
@@ -651,12 +674,18 @@ def database_hosts(request, context, database):
                 attributes.append(context['read_only_attribute'])
 
         full_description = host.hostname
+
+        padding = False
+        if not instance.is_current_write:
+            if instance.shard:
+                padding = True
+
         if len(hosts) > 1:
             full_description += ' - ' + '/'.join(attributes)
 
         host_data = {
             'id': host.id, 'status': status, 'description': full_description,
-            'switch_database': switch_database,
+            'switch_database': switch_database, 'padding': padding
         }
 
         if is_read_only:

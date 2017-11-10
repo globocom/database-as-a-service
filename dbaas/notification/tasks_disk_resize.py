@@ -31,9 +31,18 @@ def zabbix_collect_used_disk(task):
         task.add_detail(
             'Execution for environment: {}'.format(environment.name)
         )
-        credentials = Credential.get_credentials(
-            environment=environment, integration=integration
-        )
+        try:
+            credentials = Credential.get_credentials(
+                environment=environment, integration=integration
+            )
+        except IndexError:
+            task.update_status_for(
+                TaskHistory.STATUS_ERROR,
+                'There is no Zabbix credential for {} environment.'.format(
+                    environment
+                )
+            )
+            return
 
         for database in Database.objects.filter(environment=environment):
             database_resized = False

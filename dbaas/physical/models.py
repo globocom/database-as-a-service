@@ -829,6 +829,7 @@ class Instance(BaseModel):
         "Instance", null=True, blank=True, on_delete=models.SET_NULL)
     read_only = models.BooleanField(
         verbose_name=_("Is instance read only"), default=False)
+    shard = models.IntegerField(null=True, blank=True)
 
     class Meta:
         unique_together = (
