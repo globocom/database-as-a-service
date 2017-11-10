@@ -367,8 +367,8 @@ if LDAP_ENABLED:
         "email": "mail"
     }
 
-    AUTHENTICATION_BACKENDS = [
-        'django_auth_ldap.backend.LDAPBackend'] + AUTHENTICATION_BACKENDS
+#    AUTHENTICATION_BACKENDS = [
+#        'django_auth_ldap.backend.LDAPBackend'] + AUTHENTICATION_BACKENDS
 
 
 REST_FRAMEWORK = {
