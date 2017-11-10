@@ -34,32 +34,33 @@ class DbaasBackend(ModelBackend):
                         interface = ip
         return interface or local
 
-    def authenticate(self, username, password):
-        if not settings.DBAAS_OAUTH2_LOGIN_ENABLE:
-            return None
-        url = '{}/api/2.0/signin'.format(settings.DBAAS_AUTH_API_URL)
-        if '@' not in username:
-            username += '@corp.globo.com'
-        data = {
-            "mail": username,
-            "password": password,
-            "twofactor": "disable",
-            "src": self.get_ip(),
-            "info": "DBaaS"
-        }
-        resp = requests.post(url, data=json.dumps(data))
-        if resp.ok:
-            ldap_user_data = resp.json().get('data', {})
-            UserModel = get_user_model()
-            try:
-                user = UserModel.objects.get(
-                    username=ldap_user_data.get('username'),
-                    email=ldap_user_data.get('mail')
-                )
-            except UserModel.DoesNotExist:
-                return None
-            else:
-                return user
+#    def authenticate(self, username, password):
+#        import ipdb; ipdb.set_trace()
+#        if not settings.DBAAS_OAUTH2_LOGIN_ENABLE:
+#            return None
+#        url = '{}/api/2.0/signin'.format(settings.DBAAS_AUTH_API_URL)
+#        if '@' not in username:
+#            username += '@corp.globo.com'
+#        data = {
+#            "mail": username,
+#            "password": password,
+#            "twofactor": "disable",
+#            "src": self.get_ip(),
+#            "info": "DBaaS"
+#        }
+#        resp = requests.post(url, data=json.dumps(data))
+#        if resp.ok:
+#            ldap_user_data = resp.json().get('data', {})
+#            UserModel = get_user_model()
+#            try:
+#                user = UserModel.objects.get(
+#                    username=ldap_user_data.get('username'),
+#                    email=ldap_user_data.get('mail')
+#                )
+#            except UserModel.DoesNotExist:
+#                return None
+#            else:
+#                return user
 
     @staticmethod
     def can_login(user):
