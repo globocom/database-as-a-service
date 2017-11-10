@@ -31,7 +31,7 @@ class CreateVip(BaseStep):
                 host = instance.hostname
                 host_attr = HostAttr.objects.get(host=host)
                 equipments.append(Equipment(
-                                  name='VM-{}'.format(host_attr.vm_id),
+                                  name='{}-{}'.format(dbaas_api.vm_name, host_attr.vm_id),
                                   ip=host.address,
                                   port=instance.port))
 
