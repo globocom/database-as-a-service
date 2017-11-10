@@ -97,54 +97,7 @@
   </div>
 </fieldset>
 
-<!-- Modal -->
-<div class="modal fade" id="resize_vm" tabindex="-1" role="dialog" aria-labelledby="resize vm" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <!-- Modal Header -->
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal">
-          <span aria-hidden="true">&times;</span>
-        </button>
-        <h4 class="modal-title">Resize VM</h4>
-      </div>
-
-      <!-- Modal Body -->
-      <div class="modal-body">
-        <div role="form">
-          <div class="form-group">
-            <label>
-              {% if database.infra.engine.is_redis %}
-                After resizing a Redis instance, you may need to resize your <b class="bold_red">disk offering</b>, please check it.
-                <br><br>
-              {% endif %}
-
-              {% if database.infra.plan.is_ha %}
-                The resize process will switch hosts, and <b class="bold_red">it may cause connections errors</b> during the process.
-              {% else %}
-                The resize process <b class="bold_red">will stop the database</b> and, consequently, it will be <b class="bold_red">unavailable</b> until the the end of the process.
-              {% endif %}
-              {% if database.infra.has_custom_parameter %}
-                <br><br>
-                <b class="bold_red">
-                  This database has manually edited parameters. It is advisable to revise them before performing the resize.
-                </b>
-              {% endif %}
-              <br><br>
-              Please type <u><b>yes</b></u> to confirm:
-            </label>
-            <input autocomplete="off" class="vTextField" id="id_resize_vm_yes" maxlength="300" name="resize_vm_yes" type="text"/>
-          </div>
-        </div>
-      </div>
-
-      <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-        <input type="submit" value="Resize" name="vm_resize" id="id_resize_vm_btn_modal"/>
-      </div>
-    </div>
-  </div>
-</div>
+{% include "admin/confirmation_modal_input.html" with modal_id="resize_vm" title="Resize VM" body_text="logical/modal/vm_offering_body.html" input_name="resize_vm_yes" submit_button_value="Resize" submit_button_name="vm_resize" submit_button_id="id_resize_vm_btn_modal" %}
 
 {% include "admin/confirmation_modal.html" with modal_id="resize_disk" confirmation_message="Are you sure you want to resize the disk?" box_title="Resizing the disk" button_type="submit" button_value="Resize" button_name="disk_resize" id_optional="id=id_resize_disk_btn_modal" %}
 

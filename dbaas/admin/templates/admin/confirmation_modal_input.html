@@ -1,0 +1,29 @@
+<!-- Modal -->
+<div class="modal fade" id="{{ modal_id }}" tabindex="-1" role="dialog" aria-labelledby="delete modal" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <h4 class="modal-title">{{ title }}</h4>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="modal-body">
+        <div role="form">
+          <div class="form-group">
+            {% include body_text %}
+            <input autocomplete="off" class="vTextField" id="id_{{ input_name }}" maxlength="300" name="{{ input_name }}" type="text"/>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+        <input type="submit" value="{{ submit_button_value }}" name="{{ submit_button_name }}" id="{{ submit_button_id }}" class="btn-accept-modal"/>
+      </div>
+    </div>
+  </div>
+</div>
