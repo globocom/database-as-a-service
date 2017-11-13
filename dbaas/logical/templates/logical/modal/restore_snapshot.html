@@ -1,0 +1,15 @@
+{% if database.last_successful_upgrade %}
+            <div id="restore_with_upgrade_div">
+              <label id="snapshot_date_msg"></label>
+              <br>
+            </div>
+            {% endif %}
+            <label for="id_restore_yes">
+              <b class="bold_red">All</b> data from current database will be erased!
+            </br>
+              <b class="bold_red">You will restore: </b><span class="modal_message"></span>
+            </label>
+            <label for="id_restore_yes">
+              <br>
+              Please type <u><b>yes</b></u> to confirm:
+            </label>
