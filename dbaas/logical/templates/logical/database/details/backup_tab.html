@@ -110,87 +110,14 @@
   </div>
 </fieldset>
 
-<!-- Modal -->
-<div class="modal fade" id="restore_snapshot" tabindex="-1" role="dialog" aria-labelledby="restore snapshot" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <!-- Modal Header -->
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal">
-          <span aria-hidden="true">&times;</span>
-        </button>
-        <h4 class="modal-title">Restore snapshot</h4>
-      </div>
 
-      <!-- Modal Body -->
-      <div class="modal-body">
-        <div role="form">
-          <div class="form-group">
-            {% if database.last_successful_upgrade %}
-            <div id="restore_with_upgrade_div">
-              <label id="snapshot_date_msg"></label>
-              <br>
-            </div>
-            {% endif %}
-            <label for="id_restore_yes">
-              <b class="bold_red">All</b> data from current database will be erased!
-            </br>
-              <b class="bold_red">You will restore: </b><span class="modal_message"></span>
-            </label>
-            <label for="id_restore_yes">
-              <br>
-              Please type <u><b>yes</b></u> to confirm:
-            </label>
-            <input autocomplete="off" class="vTextField" id="id_restore_yes" maxlength="300" name="restore_yes" type="text"/>
-          </div>
-        </div>
-      </div>
-
-      <div class="modal-footer">
-        <button type="button" class="btn btn-default"data-dismiss="modal">Cancel</button>
-        <input type="submit" value="Restore" name="database_restore" id="id_restore_btn_modal"/>
-      </div>
-    </div>
-  </div>
-</div>
+{% include "admin/confirmation_modal_input.html" with modal_id="restore_snapshot" title="Restore snapshot" body_text="logical/modal/restore_snapshot.html" input_name="restore_yes" submit_button_value="Restore" submit_button_name="database_restore" submit_button_id="id_restore_btn_modal"   %}
 
 {% if is_dba %}
-  <div class="modal fade" id="delete_snapshot" tabindex="-1" role="dialog" aria-labelledby="delete snapshot" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <!-- Modal Header -->
-        <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal">
-            <span aria-hidden="true">&times;</span>
-          </button>
-          <h4 class="modal-title">Delete snapshot</h4>
-        </div>
 
-        <!-- Modal Body -->
-        <div class="modal-body">
-          <div role="form">
-            <div class="form-group">
-              <label for="id_restore_yes">
-                <b class="modal_message"></b> will be <b class="bold_red">erased</b>!
-              </label>
-              <label for="id_restore_yes">
-                <br>
-                Please type <u><b>yes</b></u> to confirm:
-              </label>
-              <input autocomplete="off" class="vTextField" id="id_delete_yes" maxlength="300" name="delete_yes" type="text"/>
-            </div>
-          </div>
-        </div>
+  {% include "admin/confirmation_modal_input.html" with modal_id="delete_snapshot" title="Delete snapshot" body_text="logical/modal/delete_snapshot.html" input_name="delete_yes" submit_button_value="Delete" submit_button_name="snapshot_delete" submit_button_id="snapshot_delete_btn" %}
 
-        <div class="modal-footer">
-          <button type="button" class="btn btn-default"data-dismiss="modal">Cancel</button>
-          <input type="submit" value="Delete" name="snapshot_delete" id="snapshot_delete_btn"/>
-        </div>
-      </div>
-    </div>
-  </div>
 {% endif %}
-
 
 {% include "admin/confirmation_modal.html" with tag_type="a" modal_id="backup_database_modal" confirmation_message="Are you sure you want to create a new snapshot?" box_title="Make backup now" button_class="btn btn-primary" id_optional="id=confirm_backup_button" %}
 
