@@ -1,4 +1,4 @@
-from django.conf.urls import *
+from django.conf.urls import patterns, url
 from forms.change_password_form import ChangePasswordForm
 from dbaas import settings
 

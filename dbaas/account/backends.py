@@ -1,16 +1,76 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
+import re
+import json
+import commands
+import requests
 import logging
 from django.conf import settings
 from django.contrib.auth.backends import ModelBackend
 from account.models import Team
 from logical.models import Database, Credential
+from django.contrib.auth import get_user_model
+from django.core.exceptions import PermissionDenied
+
 
 LOG = logging.getLogger(__name__)
 
 
 class DbaasBackend(ModelBackend):
     perm_manage_quarantine_database = "logical.can_manage_quarantine_databases"
+
+    @staticmethod
+    def get_ip():
+        local = '127.0.0.1'
+        interface = ''
+        status, interfaces = commands.getstatusoutput('/sbin/ifconfig -a')
+        if status == 0:
+            pattern = re.compile('inet [^0-9]*([0-9.]*).*')
+            for line in interfaces.split('\n'):
+                m = pattern.search(line)
+                if m:
+                    ip = m.group(1)
+                    if ip[0:4] != '127.' and not interface:
+                        interface = ip
+        return interface or local
+
+#    def authenticate(self, username, password):
+#        import ipdb; ipdb.set_trace()
+#        if not settings.DBAAS_OAUTH2_LOGIN_ENABLE:
+#            return None
+#        url = '{}/api/2.0/signin'.format(settings.DBAAS_AUTH_API_URL)
+#        if '@' not in username:
+#            username += '@corp.globo.com'
+#        data = {
+#            "mail": username,
+#            "password": password,
+#            "twofactor": "disable",
+#            "src": self.get_ip(),
+#            "info": "DBaaS"
+#        }
+#        resp = requests.post(url, data=json.dumps(data))
+#        if resp.ok:
+#            ldap_user_data = resp.json().get('data', {})
+#            UserModel = get_user_model()
+#            try:
+#                user = UserModel.objects.get(
+#                    username=ldap_user_data.get('username'),
+#                    email=ldap_user_data.get('mail')
+#                )
+#            except UserModel.DoesNotExist:
+#                return None
+#            else:
+#                return user
+
+    @staticmethod
+    def can_login(user):
+        from account.models import Role
+
+        role_dba = Role.objects.get(name='role_dba')
+
+        dba_groups = role_dba.team_set.values_list('id', flat=True)
+        return (user.is_superuser or
+                user.team_set.filter(id__in=dba_groups))
 
     def get_all_permissions(self, user_obj, obj=None):
         # LOG.debug("get_all_permissions for user: %s" % user_obj)
