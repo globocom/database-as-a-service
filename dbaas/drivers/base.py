@@ -230,14 +230,13 @@ class BaseDriver(object):
     def start_slave(self, instance):
         pass
 
-    def start_agents(self, host):
+    def agents_command(self, host, command):
         from dbaas_cloudstack.models import HostAttr
         from util import exec_remote_command
 
         host_attr = HostAttr.objects.get(host=host)
-
         for agent in self.get_database_agents():
-            script = '/etc/init.d/{} start'.format(agent)
+            script = '/etc/init.d/{} {}'.format(agent, command)
             output = {}
             return_code = exec_remote_command(
                 server=host.address,
@@ -251,6 +250,12 @@ class BaseDriver(object):
                     script, return_code, output
                 )
             )
+
+    def start_agents(self, host):
+        self.agents_command(host, "start")
+
+    def stop_agents(self, host):
+        self.agents_command(host, "stop")
 
     def check_replication_and_switch(self, instance, attempts=100, check_is_master_attempts=5):
         from time import sleep
