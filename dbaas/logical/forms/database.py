@@ -107,7 +107,7 @@ class DatabaseForm(models.ModelForm):
                     _("Invalid plan for selected environment."))
 
             if Database.objects.filter(
-                    name=database_name, environment__name__contains=environment
+                    name=database_name, environment__name=environment
             ):
                 self._errors["name"] = self.error_class(
                     [_("this name already exists in the selected environment")])
