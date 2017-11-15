@@ -230,6 +230,9 @@ class BaseDriver(object):
     def start_slave(self, instance):
         pass
 
+    def stop_slave(self, instance):
+        pass
+
     def agents_command(self, host, command):
         from dbaas_cloudstack.models import HostAttr
         from util import exec_remote_command
