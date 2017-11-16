@@ -79,6 +79,12 @@ class BaseInstanceStep(object):
     def latest_disk(self):
         return self.instance.hostname.nfsaas_host_attributes.last()
 
+    @property
+    def resize(self):
+        resize = self.database.resizes.last()
+        if resize.is_running:
+            return resize
+
     def do(self):
         raise NotImplementedError
 
