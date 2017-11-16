@@ -27,7 +27,8 @@ class BaseTopology(object):
 
     def get_resize_extra_steps(self):
         return (
-            'workflow.steps.util.resize.agents.Start',
+            'workflow.steps.util.database.StartSlave',
+            'workflow.steps.util.agents.Start',
             'workflow.steps.util.database.CheckIsUp',
         )
 
@@ -35,6 +36,8 @@ class BaseTopology(object):
         return [{'Resizing database': (
             'workflow.steps.util.zabbix.DisableAlarms',
             'workflow.steps.util.vm.ChangeMaster',
+            'workflow.steps.util.agents.Stop',
+            'workflow.steps.util.database.StopSlave',
             'workflow.steps.util.database.Stop',
             'workflow.steps.util.pack.ResizeConfigure',
             'workflow.steps.util.vm.Stop',
@@ -43,6 +46,7 @@ class BaseTopology(object):
             'workflow.steps.util.database.Start',
         ) + self.get_resize_extra_steps() + (
             'workflow.steps.util.infra.Offering',
+            'workflow.steps.util.vm.InstanceIsSlave',
             'workflow.steps.util.zabbix.EnableAlarms',
         )}]
 
