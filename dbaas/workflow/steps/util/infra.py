@@ -25,18 +25,24 @@ class Offering(Update):
 
     @property
     def target_offering(self):
-        last_resize = self.database.resizes.last()
-        return last_resize.target_offer.offering
+        return self.resize.target_offer.offering
 
-    def do(self):
-        if not self.target_offering:
+    @property
+    def source_offering(self):
+        return self.resize.source_offer.offering
+
+    def change_infra_offering(self, offering):
+        if not offering:
             return
 
-        self.infra_offering.offering = self.target_offering
+        self.infra_offering.offering = offering
         self.infra_offering.save()
 
+    def do(self):
+        self.change_infra_offering(self.target_offering)
+
     def undo(self):
-        pass
+        self.change_infra_offering(self.source_offering)
 
 
 class OfferingMigration(Offering):
@@ -47,11 +53,18 @@ class OfferingMigration(Offering):
 
 
 class Memory(Update):
+
     def __unicode__(self):
         return "Updating max_memory info..."
 
     def do(self):
-        new_max_memory = self.infra_offering.offering.memory_size_mb
+        self.set_max_memory_for(self.resize.target_offer)
+
+    def undo(self):
+        self.set_max_memory_for(self.resize.source_offer)
+
+    def set_max_memory_for(self, offering):
+        new_max_memory = offering.memory_size_mb
         resize_factor = 0.5
         if new_max_memory > 1024:
             resize_factor = 0.75
@@ -59,9 +72,6 @@ class Memory(Update):
         new_max_memory *= resize_factor
         self.infra.per_database_size_mbytes = int(new_max_memory)
         self.infra.save()
-
-    def undo(self):
-        pass
 
 
 class MigrationCreateInstance(BaseInstanceStepMigration):
