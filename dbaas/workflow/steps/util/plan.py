@@ -63,9 +63,8 @@ class PlanStep(BaseInstanceStep):
 
     @property
     def offering(self):
-        current_resize = self.database.resizes.last()
-        if current_resize and current_resize.is_running:
-            return current_resize.target_offer.offering
+        if self.resize:
+            return self.resize.target_offer.offering
 
         return self.cs_plan.get_stronger_offering()
 
