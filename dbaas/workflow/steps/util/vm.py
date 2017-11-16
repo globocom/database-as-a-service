@@ -67,6 +67,10 @@ class Stop(VmStep):
         if not stopped:
             raise EnvironmentError("Could not stop VM")
 
+    def undo(self):
+        Start(self.instance).do()
+        WaitingBeReady(self.instance).do()
+
 
 class Start(VmStep):
 
@@ -77,6 +81,9 @@ class Start(VmStep):
         started = self.cs_provider.start_virtual_machine(self.host_cs.vm_id)
         if not started:
             raise EnvironmentError("Could not start VM")
+
+    def undo(self):
+        Stop(self.instance).do()
 
 
 class InstallNewTemplate(VmStep):
@@ -150,8 +157,7 @@ class ChangeOffering(VmStep):
     def __init__(self, instance):
         super(ChangeOffering, self).__init__(instance)
 
-        database = self.instance.databaseinfra.databases.last()
-        target_offer = DatabaseResize.current_to(database).target_offer
+        target_offer = self.resize.target_offer
         self.target_offering_id = target_offer.offering.serviceofferingid
 
     def __unicode__(self):
@@ -163,16 +169,19 @@ class ChangeOffering(VmStep):
             project_id=self.cs_credentials.project
         )
 
-        if not cloudstack_offering_id == self.target_offering_id:
-            resized = self.cs_provider.change_service_for_vm(
-                vm_id=self.host_cs.vm_id,
-                serviceofferingid=self.target_offering_id
-            )
-        else:
-            resized = True
+        if cloudstack_offering_id == self.target_offering_id:
+            return
 
-        if not resized:
+        success = self.cs_provider.change_service_for_vm(
+            self.host_cs.vm_id, self.target_offering_id
+        )
+        if not success:
             raise Exception("Could not change offering")
+
+    def undo(self):
+        offer = self.resize.source_offer
+        self.target_offering_id = offer.offering.serviceofferingid
+        self.do()
 
 
 class ChangeMaster(VmStep):
@@ -185,28 +194,38 @@ class ChangeMaster(VmStep):
             return
 
         master = self.driver.get_master_instance()
+        if type(master) == list and self.instance not in master:
+            return
 
-        if type(master) == list:
-            if self.instance not in master:
+        if self.instance != master:
+            return
+
+        if not self.driver.check_instance_is_master(self.instance):
+            return
+
+        error = None
+        for _ in range(CHANGE_MASTER_ATTEMPS):
+            try:
+                self.driver.check_replication_and_switch(self.instance)
+            except Exception as e:
+                error = e
+                sleep(CHANGE_MASTER_SECONDS)
+            else:
                 return
-        else:
-            if self.instance != master:
-                return
 
-        if self.driver.check_instance_is_master(instance=self.instance):
-            error = None
+        raise error
 
-            for _ in range(CHANGE_MASTER_ATTEMPS):
-                try:
-                    self.driver.check_replication_and_switch(self.instance)
-                except Exception as e:
-                    error = e
-                    sleep(CHANGE_MASTER_SECONDS)
-                else:
-                    return
 
-            raise error
+class InstanceIsSlave(ChangeMaster):
 
+    def __unicode__(self):
+        return "Checking master..."
+
+    def do(self):
+        pass
+
+    def undo(self):
+        super(InstanceIsSlave, self).do()
 
 class CreateVirtualMachine(VmStep):
 
