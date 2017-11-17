@@ -58,10 +58,10 @@ class Memory(Update):
         return "Updating max_memory info..."
 
     def do(self):
-        self.set_max_memory_for(self.resize.target_offer)
+        self.set_max_memory_for(self.resize.target_offer.offering)
 
     def undo(self):
-        self.set_max_memory_for(self.resize.source_offer)
+        self.set_max_memory_for(self.resize.source_offer.offering)
 
     def set_max_memory_for(self, offering):
         new_max_memory = offering.memory_size_mb
