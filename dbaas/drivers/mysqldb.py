@@ -325,6 +325,10 @@ class MySQL(BaseDriver):
         client = self.get_client(instance)
         client.query("start slave")
 
+    def stop_slave(self, instance):
+        client = self.get_client(instance)
+        client.query("stop slave")
+
     def get_database_agents(self):
         return self.replication_topology_driver.get_database_agents()
 

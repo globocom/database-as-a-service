@@ -3,13 +3,18 @@ from util import build_context_script, exec_remote_command, get_credentials_for
 from dbaas_cloudstack.models import HostAttr, CloudStackPack, PlanAttr
 from dbaas_credentials.models import CredentialType
 from physical.configurations import configuration_factory
-from workflow.steps.util.base import BaseInstanceStep
+from base import BaseInstanceStep
 
 
 class PackStep(BaseInstanceStep):
 
     def __init__(self, instance):
         super(PackStep, self).__init__(instance)
+        self.pack = CloudStackPack.objects.get(
+            offering__serviceofferingid=self.database.offering_id,
+            offering__region__environment=self.environment,
+            engine_type__name=self.database.engine_type
+        )
 
     @property
     def host_cs(self):
@@ -18,14 +23,6 @@ class PackStep(BaseInstanceStep):
     @property
     def cs_plan(self):
         return PlanAttr.objects.get(plan=self.plan)
-
-    @property
-    def pack(self):
-        return CloudStackPack.objects.get(
-            offering__serviceofferingid=self.database.offering_id,
-            offering__region__environment=self.environment,
-            engine_type__name=self.database.engine_type
-        )
 
     @property
     def script_variables(self):
@@ -72,7 +69,7 @@ class PackStep(BaseInstanceStep):
         raise NotImplementedError
 
     def undo(self):
-        pass
+        self.do()
 
 
 class Configure(PackStep):
@@ -105,7 +102,10 @@ class Configure(PackStep):
 
 class ResizeConfigure(Configure):
 
-    @property
-    def pack(self):
-        resize = self.database.resizes.last()
-        return resize.current_to(self.database).target_offer
+    def do(self):
+        self.pack = self.resize.target_offer
+        super(ResizeConfigure, self).do()
+
+    def undo(self):
+        self.pack = self.resize.source_offer
+        super(ResizeConfigure, self).undo()

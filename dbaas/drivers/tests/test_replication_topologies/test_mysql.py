@@ -82,8 +82,3 @@ class TestMySQLFoxHA(AbstractBaseMySQLTestCase):
             'workflow.steps.util.deploy.build_database.BuildDatabase',
             'workflow.steps.util.deploy.check_database_binds.CheckDatabaseBinds',
         )
-
-    def _get_resize_extra_steps(self):
-        return (
-            'workflow.steps.util.database.StartSlave',
-        ) + super(TestMySQLFoxHA, self)._get_resize_extra_steps()
