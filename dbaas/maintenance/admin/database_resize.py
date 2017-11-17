@@ -19,10 +19,16 @@ class DatabaseResizeAdmin(DatabaseMaintenanceTaskAdmin):
         "finished_at", "current_step", "status", "maintenance_action"
     )
 
-    def maintenance_action(self, maintenance_task):
-        if not maintenance_task.is_status_error or not maintenance_task.can_do_retry:
+    def maintenance_action(self, maintenance):
+        if not maintenance.is_status_error or not maintenance.can_do_retry:
             return 'N/A'
 
-        url = maintenance_task.database.get_resize_retry_url()
-        html = "<a title='Retry' class='btn btn-info' href='{}'>Retry</a>".format(url)
-        return format_html(html)
+        url_retry = maintenance.database.get_resize_retry_url()
+        html_retry = "<a title='Retry' class='btn btn-warning' href='{}'>Retry</a>".format(url_retry)
+
+        url_rollback = maintenance.database.get_resize_rollback_url()
+        html_rollback = "<a title='Rollback' class='btn btn-danger' href='{}'>Rollback</a>".format(url_rollback)
+
+        spaces = '&nbsp' * 3
+        html_content = '{}{}{}'.format(html_rollback, spaces, html_retry)
+        return format_html(html_content)

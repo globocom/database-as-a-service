@@ -106,11 +106,6 @@ class MySQLFoxHA(MySQLSingle):
             'workflow.steps.util.deploy.start_monit.StartMonit',
         )
 
-    def get_resize_extra_steps(self):
-        return (
-            'workflow.steps.util.database.StartSlave',
-        ) + super(BaseMysql, self).get_resize_extra_steps()
-
     def deploy_last_steps(self):
         return (
             'workflow.steps.util.deploy.build_database.BuildDatabase',

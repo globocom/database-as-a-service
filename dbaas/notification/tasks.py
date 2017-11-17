@@ -18,7 +18,7 @@ from util.providers import make_infra, clone_infra, destroy_infra, \
 from simple_audit.models import AuditRequest
 from system.models import Configuration
 from .models import TaskHistory
-from workflow.workflow import steps_for_instances
+from workflow.workflow import steps_for_instances, rollback_for_instances_full
 from maintenance.models import DatabaseUpgrade, DatabaseResize
 from maintenance.models import DatabaseChangeParameter
 from maintenance.models import DatabaseReinstallVM
@@ -1022,6 +1022,44 @@ def resize_database(self, database, user, task, cloudstackpack, original_cloudst
 
 
 @app.task(bind=True)
+def resize_database_rollback(self, from_resize, user, task):
+    self.request.kwargs['database'] = from_resize.database
+    self.request.kwargs['target_offer'] = from_resize.target_offer.offering
+    task = TaskHistory.register(self.request, user, task, get_worker_name())
+
+    infra = from_resize.database.infra
+
+    class_path = infra.plan.replication_topology.class_path
+    steps = get_resize_settings(class_path)
+
+    instances = list(infra.get_driver().get_database_instances())
+    instances.reverse()
+
+    from_resize.id = None
+    from_resize.task = task
+    from_resize.current_step -= 1
+    from_resize.save()
+
+    success = rollback_for_instances_full(
+        steps, instances, task,
+        from_resize.get_current_step, from_resize.update_step
+    )
+
+    if success:
+        from_resize.set_rollback()
+        task.update_status_for(TaskHistory.STATUS_SUCCESS, 'Done.')
+    else:
+        from_resize.current_step += 1
+        from_resize.set_error()
+        task.update_status_for(
+            TaskHistory.STATUS_ERROR,
+            'Could not do rollback\n'
+            'Please check error message and do retry'
+        )
+
+
+
+@app.task(bind=True)
 def switch_write_database(self, database, instance, user, task):
     from workflow.workflow import steps_for_instances
     from util.providers import get_switch_write_instance_steps
@@ -1155,6 +1193,20 @@ class TaskRegister(object):
             original_cloudstackpack=original_cloudstackpack,
             since_step=since_step
         )
+
+    @classmethod
+    def database_resize_rollback(
+            cls, from_resize, user
+    ):
+        task_params = {
+            'task_name': 'resize_database_rollback',
+            'arguments': "Rollback resize database {}".format(from_resize.database),
+            'user': user,
+            'database': from_resize.database
+        }
+
+        task = cls.create_task(task_params)
+        resize_database_rollback.delay(from_resize, user, task)
 
     @classmethod
     def database_add_instances(cls, database, user, number_of_instances):
