@@ -45,6 +45,15 @@ class ReplicationTopologyFactory(factory.DjangoModelFactory):
     name = factory.Sequence(lambda n: 'disk-offering-{0}'.format(n))
     class_path = 'drivers.replication_topologies.base.FakeTestTopology'
 
+class ParameterFactory(factory.DjangoModelFactory):
+    FACTORY_FOR = models.Parameter
+
+    engine_type = factory.SubFactory(EngineTypeFactory)
+    name = factory.Sequence(lambda n: 'parameter-{0}'.format(n))
+    allowed_values = ''
+    parameter_type = ''
+
+
 
 class PlanFactory(factory.DjangoModelFactory):
     FACTORY_FOR = models.Plan
