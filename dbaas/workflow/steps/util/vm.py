@@ -227,6 +227,7 @@ class InstanceIsSlave(ChangeMaster):
     def undo(self):
         super(InstanceIsSlave, self).do()
 
+
 class CreateVirtualMachine(VmStep):
 
     def __unicode__(self):
