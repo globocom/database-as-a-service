@@ -24,7 +24,7 @@ from system.models import Configuration
 from .errors import DisabledDatabase
 from .forms.database import DatabaseDetailsForm
 from .models import Credential, Database, Project
-from .validators import check_is_database_enabled, check_is_database_dead
+from .validators import check_is_database_enabled, check_is_database_dead, ParameterValidator
 
 
 class CredentialView(BaseDetailView):
@@ -161,6 +161,9 @@ def database_credentials(request, context, database=None):
 def _update_database_parameters(request_post, database):
     from physical.models import DatabaseInfraParameter
     from physical.models import Parameter
+
+    error = False
+
     changed_parameters = []
     for key in request_post.keys():
         if key.startswith("new_value_"):
@@ -168,13 +171,17 @@ def _update_database_parameters(request_post, database):
             if parameter_new_value:
                 parameter_id = key.split("new_value_")[1]
                 parameter = Parameter.objects.get(id=parameter_id)
-                changed = DatabaseInfraParameter.update_parameter_value(
-                    databaseinfra=database.databaseinfra,
-                    parameter=parameter,
-                    value=parameter_new_value,
-                )
-                if changed:
-                    changed_parameters.append(parameter_id)
+                if ParameterValidator.validate_value(parameter_new_value, parameter):
+                    changed = DatabaseInfraParameter.update_parameter_value(
+                        databaseinfra=database.databaseinfra,
+                        parameter=parameter,
+                        value=parameter_new_value,
+                    )
+                    if changed:
+                        changed_parameters.append(parameter_id)
+                else:
+                    error = "Invalid Parameter Value for {}".format(parameter.name)
+                    return None, error
 
         if key.startswith("checkbox_reset_"):
             reset_default_value = request_post.get(key)
@@ -188,7 +195,7 @@ def _update_database_parameters(request_post, database):
                 if changed:
                     changed_parameters.append(parameter_id)
 
-    return changed_parameters
+    return changed_parameters, error
 
 
 @database_view('parameters')
@@ -214,7 +221,13 @@ def database_parameters(request, context, database):
             if not can_do_change_parameters_retry:
                 messages.add_message(request, messages.ERROR, error)
             else:
-                changed_parameters = _update_database_parameters(request.POST, database)
+                changed_parameters, error = _update_database_parameters(request.POST, database)
+                if error:
+                    messages.add_message(request, messages.ERROR, error)
+                    return HttpResponseRedirect(
+                        reverse('admin:change_parameters',
+                                kwargs={'id': database.id})
+                    )
                 return HttpResponseRedirect(
                     reverse('admin:change_parameters_retry',
                             kwargs={'id': database.id})
@@ -225,7 +238,13 @@ def database_parameters(request, context, database):
             if not can_do_change_parameters:
                 messages.add_message(request, messages.ERROR, error)
             else:
-                changed_parameters = _update_database_parameters(request.POST, database)
+                changed_parameters, error = _update_database_parameters(request.POST, database)
+                if error:
+                    messages.add_message(request, messages.ERROR, error)
+                    return HttpResponseRedirect(
+                        reverse('admin:change_parameters',
+                                kwargs={'id': database.id})
+                    )
                 if changed_parameters:
                     return HttpResponseRedirect(
                         reverse('admin:change_parameters',
@@ -342,7 +361,14 @@ def database_change_parameters(request, context, database):
 def database_change_parameters_retry(request, context, database):
     can_do_change_parameters, error = database.can_do_change_parameters_retry()
     if can_do_change_parameters:
-        changed_parameters = _update_database_parameters(request.POST, database)
+        changed_parameters, parameter_error = _update_database_parameters(request.POST, database)
+
+        if parameter_error:
+            messages.add_message(request, messages.ERROR, error)
+            return HttpResponseRedirect(
+                reverse('admin:change_parameters_retry',
+                        kwargs={'id': database.id})
+            )
 
         last_change_parameters = database.change_parameters.last()
 
