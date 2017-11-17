@@ -29,7 +29,7 @@ from logical.views import database_details, database_hosts, \
     database_credentials, database_resizes, database_backup, database_dns, \
     database_metrics, database_destroy, database_delete_host, \
     database_upgrade, database_upgrade_retry, database_resize_retry, \
-    database_make_backup, database_parameters, \
+    database_resize_rollback, database_make_backup, database_parameters, \
     database_change_parameters, database_change_parameters_retry, \
     database_switch_write, database_reinstall_vm, database_reinstall_vm_retry
 from logical.forms import DatabaseForm
@@ -525,6 +525,11 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 r'^/?(?P<id>\d+)/resize_retry/$',
                 self.admin_site.admin_view(database_resize_retry),
                 name="resize_retry"
+            ),
+            url(
+                r'^/?(?P<id>\d+)/resize_rollback/$',
+                self.admin_site.admin_view(database_resize_rollback),
+                name="resize_rollback"
             ),
             url(
                 r'^/?(?P<id>\d+)/make_backup/$',
