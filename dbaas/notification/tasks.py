@@ -1017,7 +1017,8 @@ def resize_database(self, database, user, task, cloudstackpack, original_cloudst
         database_resize.set_error()
         task.update_status_for(
             TaskHistory.STATUS_ERROR,
-            'Could not do resize.\nResize doesn\'t have rollback'
+            'Could not do resize.\n'
+            'Please check the task log and execute rollback or retry'
         )
 
 
