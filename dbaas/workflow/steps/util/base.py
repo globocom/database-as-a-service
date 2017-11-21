@@ -82,7 +82,8 @@ class BaseInstanceStep(object):
     @property
     def resize(self):
         resize = self.database.resizes.last()
-        if resize.is_running:
+
+        if resize and resize.is_running:
             return resize
 
     def do(self):
