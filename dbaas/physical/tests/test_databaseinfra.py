@@ -146,7 +146,7 @@ class DatabaseInfraTestCase(TestCase):
         environment = plan.environments.all()[0]
         datainfra = factory.DatabaseInfraFactory(
             plan=plan, environment=environment)
-        instance = factory.InstanceFactory(
+        factory.InstanceFactory(
             address="127.0.0.1", port=27017, databaseinfra=datainfra)
         self.assertEqual(datainfra, DatabaseInfra.best_for(
             plan=plan, environment=environment, name="test"))
@@ -156,11 +156,11 @@ class DatabaseInfraTestCase(TestCase):
         environment = plan.environments.all()[0]
         datainfra1 = factory.DatabaseInfraFactory(
             plan=plan, environment=environment, capacity=10)
-        instance1 = factory.InstanceFactory(
+        factory.InstanceFactory(
             address="127.0.0.1", port=27017, databaseinfra=datainfra1)
         datainfra2 = factory.DatabaseInfraFactory(
             plan=plan, environment=environment, capacity=10)
-        instance2 = factory.InstanceFactory(
+        factory.InstanceFactory(
             address="127.0.0.2", port=27017, databaseinfra=datainfra2)
         for i in range(10):
             should_choose = (datainfra1, datainfra2)[i % 2]
@@ -175,9 +175,9 @@ class DatabaseInfraTestCase(TestCase):
         environment = plan.environments.all()[0]
         datainfra1 = factory.DatabaseInfraFactory(
             plan=plan, environment=environment, capacity=10)
-        instance1 = factory.InstanceFactory(
+        factory.InstanceFactory(
             address="127.0.0.1", port=27017, databaseinfra=datainfra1, status=1)
-        instance2 = factory.InstanceFactory(
+        factory.InstanceFactory(
             address="127.0.0.2", port=27017, databaseinfra=datainfra1, status=1)
 
         self.assertEquals(
@@ -188,9 +188,9 @@ class DatabaseInfraTestCase(TestCase):
         environment = plan.environments.all()[0]
         datainfra1 = factory.DatabaseInfraFactory(
             plan=plan, environment=environment, capacity=10)
-        instance1 = factory.InstanceFactory(
+        factory.InstanceFactory(
             address="127.0.0.1", port=27017, databaseinfra=datainfra1, status=0)
-        instance2 = factory.InstanceFactory(
+        factory.InstanceFactory(
             address="127.0.0.2", port=27017, databaseinfra=datainfra1, status=0)
 
         self.assertEquals(
@@ -201,9 +201,9 @@ class DatabaseInfraTestCase(TestCase):
         environment = plan.environments.all()[0]
         datainfra1 = factory.DatabaseInfraFactory(
             plan=plan, environment=environment, capacity=10)
-        instance1 = factory.InstanceFactory(
+        factory.InstanceFactory(
             address="127.0.0.1", port=27017, databaseinfra=datainfra1, status=1)
-        instance2 = factory.InstanceFactory(
+        factory.InstanceFactory(
             address="127.0.0.2", port=27017, databaseinfra=datainfra1, status=0)
 
         self.assertEquals(
@@ -216,7 +216,7 @@ class DatabaseInfraTestCase(TestCase):
         environment = plan.environments.all()[0]
         datainfra = factory.DatabaseInfraFactory(
             plan=plan, environment=environment, capacity=NUMBER_OF_DATABASES_TO_TEST)
-        instance = factory.InstanceFactory(
+        factory.InstanceFactory(
             address="127.0.0.1", port=27017, databaseinfra=datainfra)
         for i in range(NUMBER_OF_DATABASES_TO_TEST):
             self.assertEqual(datainfra, DatabaseInfra.best_for(
