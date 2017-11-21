@@ -5,8 +5,10 @@ from django.test import TestCase
 from django.contrib.admin.sites import AdminSite
 from logical.tests import factory as factory_logical
 from ..admin.databaseinfra import DatabaseInfraAdmin
-from ..models import DatabaseInfra, Plan, Instance, Host
+from ..models import (DatabaseInfra, Plan, Instance, Host, Parameter,
+                      DatabaseInfraParameter)
 from dbaas_nfsaas.models import HostAttr
+from dbaas_cloudstack.models import DatabaseInfraOffering, CloudStackOffering
 from . import factory
 from drivers.fake import FakeDriver
 from django.core.cache import cache
@@ -37,6 +39,12 @@ class PropertiesTestCase(TestCase):
             host=cls.hostname
         )
 
+        cs_offering = factory.CloudStackOfferingFactory(memory_size_mb=9)
+        cls.infra_offering = factory.DatabaseInfraOfferingFactory(
+            databaseinfra=cls.databaseinfra,
+            offering=cs_offering
+        )
+
     @classmethod
     def tearDownClass(cls):
         HostAttr.objects.all().delete()
@@ -44,6 +52,10 @@ class PropertiesTestCase(TestCase):
         Host.objects.all().delete()
         DatabaseInfra.objects.all().delete()
         Plan.objects.all().delete()
+        CloudStackOffering.objects.all().delete()
+        DatabaseInfraOffering.objects.all().delete()
+        Parameter.objects.all().delete()
+        DatabaseInfraParameter.objects.all().delete()
 
     def test_disk_used_size_in_gb_convert(self):
         '''
@@ -77,6 +89,43 @@ class PropertiesTestCase(TestCase):
         self.nfaas_host_attr.save()
 
         self.assertEqual(self.databaseinfra.disk_used_size_in_gb, 0)
+
+    def test_size_for_redis_engine(self):
+        '''
+            Test property: per_database_size_bytes
+            case: When engine type is redis the value must be from parameter table
+        '''
+
+        self.databaseinfra.engine.engine_type.name = 'redis'
+        self.databaseinfra.engine.engine_type.save()
+        factory.DatabaseInfraParameterFactory(
+            value='110000', parameter__name='maxmemory',
+            databaseinfra=self.databaseinfra
+        )
+
+        self.assertEqual(self.databaseinfra.per_database_size_bytes, 110000)
+
+    def test_size_for_redis_engine_configuration(self):
+        '''
+            Test property: per_database_size_bytes
+            case: When engine type is redis the value must be from configuration
+                  when not found on parameter table
+        '''
+
+        self.databaseinfra.engine.engine_type.name = 'redis'
+        self.databaseinfra.engine.engine_type.save()
+        self.assertEqual(self.databaseinfra.per_database_size_bytes, 4718592)
+
+    def test_size_for_not_redis_engine(self):
+        '''
+            Test property: per_database_size_bytes
+            case: When engine type NOT is redis the value must be from disk_offering
+        '''
+
+        self.databaseinfra.engine.engine_type.name = 'mysql'
+        self.databaseinfra.engine.engine_type.save()
+        self.databaseinfra.disk_offering.size_kb = 10
+        self.assertEqual(self.databaseinfra.per_database_size_bytes, 10240)
 
 
 class DatabaseInfraTestCase(TestCase):

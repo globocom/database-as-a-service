@@ -528,9 +528,10 @@ class DatabaseInfra(BaseModel):
         if self.disk_offering and self.engine.engine_type.name != 'redis':
             return self.disk_offering.size_bytes()
 
-        if not self.per_database_size_mbytes:
-            return 0
-        return self.per_database_size_mbytes * 1024 * 1024
+        return int(
+            self.get_parameter_value_by_parameter_name('maxmemory') or
+            self.get_dbaas_parameter_default_value('maxmemory')
+        )
 
     @property
     def used(self):
