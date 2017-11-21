@@ -134,3 +134,18 @@ class NFSaaSHostAttr(factory.DjangoModelFactory):
     is_active = True
     nfsaas_size_kb = 1000
     nfsaas_used_size_kb = 10
+
+
+class ParameterFactory(factory.DjangoModelFactory):
+    FACTORY_FOR = models.Parameter
+
+    engine_type = factory.SubFactory(EngineTypeFactory)
+    name = 'fake_parameter'
+
+
+class DatabaseInfraParameterFactory(factory.DjangoModelFactory):
+    FACTORY_FOR = models.DatabaseInfraParameter
+
+    databaseinfra = factory.SubFactory(DatabaseInfraFactory)
+    parameter = factory.SubFactory(ParameterFactory)
+    value = ''
