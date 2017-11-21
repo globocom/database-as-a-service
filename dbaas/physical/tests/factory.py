@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 import factory
+# TODO: Remove this specific dbaas imports
 from dbaas_nfsaas.models import HostAttr
+from dbaas_cloudstack.models import DatabaseInfraOffering, CloudStackOffering
 from .. import models
 
 
@@ -92,6 +94,22 @@ class DatabaseInfraFactory(factory.DjangoModelFactory):
     @factory.lazy_attribute
     def plan(self):
         return PlanFactory(environments=[self.environment])
+
+
+class CloudStackOfferingFactory(factory.DjangoModelFactory):
+    FACTORY_FOR = CloudStackOffering
+
+    serviceofferingid = '999'
+    name = factory.Sequence(lambda n: 'CloudStackOffering-{0}'.format(n))
+    weaker = False
+    memory_size_mb = 998
+
+
+class DatabaseInfraOfferingFactory(factory.DjangoModelFactory):
+    FACTORY_FOR = DatabaseInfraOffering
+
+    databaseinfra = factory.SubFactory(DatabaseInfraFactory)
+    offering = factory.SubFactory(CloudStackOfferingFactory)
 
 
 class InstanceFactory(factory.DjangoModelFactory):
