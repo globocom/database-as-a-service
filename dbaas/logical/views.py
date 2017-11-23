@@ -79,41 +79,45 @@ class CredentialView(BaseDetailView):
         credential.delete()
         return self.as_json(credential)
 
+def check_permission(request, id, tab):
+    is_dba = request.user.team_set.filter(role__name="role_dba")
+
+    database = Database.objects.get(id=id)
+    if not is_dba:
+        can_access = True
+        if database.team not in request.user.team_set.all():
+            messages.add_message(
+                request, messages.ERROR,
+                'This database belong to {} team, you are not member of this team'.format(database.team)
+            )
+            can_access = False
+        elif database.is_in_quarantine:
+            messages.add_message(
+                request, messages.ERROR,
+                'This database is in quarantine, please contact your DBA'
+            )
+            can_access = False
+
+        if not can_access:
+            return HttpResponseRedirect(
+                reverse('admin:logical_database_changelist')
+            )
+
+    context = {
+        'database': database,
+        'current_tab': tab,
+        'user': request.user,
+        'is_dba': is_dba
+    }
+
+    return context
 
 def database_view(tab):
     def database_decorator(func):
         def func_wrapper(request, id):
-            is_dba = request.user.team_set.filter(role__name="role_dba")
+            context = check_permission(request, id, tab)
 
-            database = Database.objects.get(id=id)
-            if not is_dba:
-                can_access = True
-                if database.team not in request.user.team_set.all():
-                    messages.add_message(
-                        request, messages.ERROR,
-                        'This database belong to {} team, you are not member of this team'.format(database.team)
-                    )
-                    can_access = False
-                elif database.is_in_quarantine:
-                    messages.add_message(
-                        request, messages.ERROR,
-                        'This database is in quarantine, please contact your DBA'
-                    )
-                    can_access = False
-
-                if not can_access:
-                    return HttpResponseRedirect(
-                        reverse('admin:logical_database_changelist')
-                    )
-
-            context = {
-                'database': database,
-                'current_tab': tab,
-                'user': request.user,
-                'is_dba': is_dba
-            }
-
-            return func(request, context, database)
+            return func(request, context, context['database'])
         return func_wrapper
     return database_decorator
 
@@ -122,37 +126,9 @@ def database_view(tab):
 def database_view_class(tab):
     def database_decorator(func):
         def func_wrapper(self, request, id):
-            is_dba = request.user.team_set.filter(role__name="role_dba")
+            context = check_permission(request, id, tab)
 
-            database = Database.objects.get(id=id)
-            if not is_dba:
-                can_access = True
-                if database.team not in request.user.team_set.all():
-                    messages.add_message(
-                        request, messages.ERROR,
-                        'This database belong to {} team, you are not member of this team'.format(database.team)
-                    )
-                    can_access = False
-                elif database.is_in_quarantine:
-                    messages.add_message(
-                        request, messages.ERROR,
-                        'This database is in quarantine, please contact your DBA'
-                    )
-                    can_access = False
-
-                if not can_access:
-                    return HttpResponseRedirect(
-                        reverse('admin:logical_database_changelist')
-                    )
-
-            context = {
-                'database': database,
-                'current_tab': tab,
-                'user': request.user,
-                'is_dba': is_dba
-            }
-
-            return func(self, request, context, database)
+            return func(self, request, context, context['database'])
         return func_wrapper
     return database_decorator
 
@@ -364,6 +340,7 @@ class DatabaseParameters(TemplateView):
             can_do_change_parameters_retry, error = database.can_do_change_parameters_retry()
             if not can_do_change_parameters_retry:
                 messages.add_message(request, messages.ERROR, error)
+                return self.get(request)
             else:
                 changed_parameters, error = self.update_database_parameters(request.POST, database)
                 if error:
@@ -380,6 +357,7 @@ class DatabaseParameters(TemplateView):
             can_do_change_parameters, error = database.can_do_change_parameters()
             if not can_do_change_parameters:
                 messages.add_message(request, messages.ERROR, error)
+                return self.get(request)                
             else:
                 changed_parameters, error = self.update_database_parameters(request.POST, database)
                 if error:
