@@ -94,6 +94,9 @@ class Stop(DatabaseStep):
                 'Could not stop database {}: {}'.format(return_code, output)
             )
 
+    def undo(self):
+        Start(self.instance).do()
+
 
 class Start(DatabaseStep):
 
@@ -108,11 +111,7 @@ class Start(DatabaseStep):
             )
 
     def undo(self):
-        return_code, output = self.stop_database()
-        if return_code != 0 and not self.is_down:
-            raise EnvironmentError(
-                'Could not stop database {}: {}'.format(return_code, output)
-            )
+        Stop(self.instance).do()
 
 
 class StartSlave(DatabaseStep):
@@ -123,6 +122,22 @@ class StartSlave(DatabaseStep):
     def do(self):
         CheckIsUp(self.instance)
         self.driver.start_slave(instance=self.instance)
+
+    def undo(self):
+        StopSlave(self.instance).do()
+
+
+class StopSlave(DatabaseStep):
+
+    def __unicode__(self):
+        return "Stopping slave..."
+
+    def do(self):
+        CheckIsUp(self.instance)
+        self.driver.stop_slave(instance=self.instance)
+
+    def undo(self):
+        StartSlave(self.instance).do()
 
 
 class CheckIsUp(DatabaseStep):

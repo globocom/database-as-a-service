@@ -219,7 +219,12 @@ class Database(BaseModel):
             lock = DatabaseLock.objects.select_for_update().filter(
                 database=self
             ).first()
-            if lock.task.task_name != task.task_name or not lock.task.is_status_error:
+
+            task_name = task.task_name
+            if task_name.endswith('_rollback'):
+                task_name = task_name.rsplit('_rollback', 1)[0]
+
+            if lock.task.task_name != task_name or not lock.task.is_status_error:
                 return False
 
             lock.task = task
@@ -538,6 +543,9 @@ class Database(BaseModel):
     def get_resize_retry_url(self):
         return "/admin/logical/database/{}/resize_retry/".format(self.id)
 
+    def get_resize_rollback_url(self):
+        return "/admin/logical/database/{}/resize_rollback/".format(self.id)
+
     def get_disk_resize_url(self):
         return "/admin/logical/database/{}/disk_resize/".format(self.id)
 
@@ -575,7 +583,7 @@ class Database(BaseModel):
 
     offering_id = property(get_cloudstack_service_offering_id)
 
-    def is_being_used_elsewhere(self, skip_task_name=None):
+    def is_being_used_elsewhere(self, skip_tasks=None):
         tasks = TaskHistory.objects.filter(
             task_status=TaskHistory.STATUS_WAITING,
             object_id=self.id,
@@ -586,7 +594,8 @@ class Database(BaseModel):
         if not self.current_locked_task:
             return False
 
-        if self.current_locked_task.task_name == skip_task_name:
+        skip_tasks = skip_tasks or []
+        if self.current_locked_task.task_name in skip_tasks:
             if self.current_locked_task.is_status_error:
                 return False
 
@@ -712,7 +721,7 @@ class Database(BaseModel):
             error = "MongoDB 2.4 cannot be upgraded by this task."
         elif self.is_in_quarantine:
             error = "Database in quarantine and cannot be upgraded."
-        elif self.is_being_used_elsewhere('notification.tasks.upgrade_database'):
+        elif self.is_being_used_elsewhere(['notification.tasks.upgrade_database']):
             error = "Database cannot be upgraded because " \
                     "it is in use by another task."
         elif not self.infra.plan.engine_equivalent_plan:
@@ -742,7 +751,7 @@ class Database(BaseModel):
             error = "Database in quarantine and cannot be resized."
         elif not self.has_cloudstack_offerings:
             error = "There is no offerings for this database."
-        elif self.is_being_used_elsewhere('notification.tasks.resize_database'):
+        elif self.is_being_used_elsewhere(['notification.tasks.resize_database', 'notification.tasks.resize_database_rollback']):
             error = "Database cannot be resized because" \
                     " it is in use by another task."
         if error:
@@ -769,7 +778,7 @@ class Database(BaseModel):
         error = None
         if self.is_in_quarantine:
             error = "Database in quarantine and cannot have the parameters changed."
-        elif self.is_being_used_elsewhere('notification.tasks.change_parameters_database'):
+        elif self.is_being_used_elsewhere(['notification.tasks.change_parameters_database']):
             error = "Database cannot have the parameters changed because" \
                     " it is in use by another task."
         if error:
