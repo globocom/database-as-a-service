@@ -44,9 +44,15 @@ var Validator = {};
         if(numericVal!=parseInt(numericVal,10))
           return false;
 
+        if(value.indexOf('.') !== -1)
+          return false;
+
         return validateNumber(value, allowedValues)
       }
       if (acceptableType=="float") {
+        if(value.indexOf('.') == -1)
+          return false;
+
         return validateNumber(value, allowedValues)
       }
       if (acceptableType=="boolean") {
