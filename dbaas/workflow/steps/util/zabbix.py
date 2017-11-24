@@ -105,6 +105,9 @@ class DisableAlarms(ZabbixStep):
     def do(self):
         self.zabbix_provider.disable_alarms()
 
+    def undo(self):
+        self.zabbix_provider.enable_alarms()
+
 
 class EnableAlarms(ZabbixStep):
 
@@ -113,3 +116,6 @@ class EnableAlarms(ZabbixStep):
 
     def do(self):
         self.zabbix_provider.enable_alarms()
+
+    def undo(self):
+        self.zabbix_provider.disable_alarms()

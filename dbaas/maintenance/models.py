@@ -370,11 +370,6 @@ class DatabaseResize(DatabaseMaintenanceTask):
     def __unicode__(self):
         return "{} resize".format(self.database.name)
 
-    @classmethod
-    def current_to(cls, database):
-        resizes = cls.objects.filter(database=database, status=cls.RUNNING)
-        return resizes.last()
-
 
 class DatabaseChangeParameter(DatabaseMaintenanceTask):
     database = models.ForeignKey(
