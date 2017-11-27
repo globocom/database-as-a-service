@@ -345,9 +345,7 @@ class DatabaseParameters(TemplateView):
                 changed_parameters, error = self.update_database_parameters(request.POST, database)
                 if error:
                     messages.add_message(request, messages.ERROR, error)
-                    return HttpResponseRedirect(
-                        reverse('admin:logical_database_parameters', kwargs={'id': database.id})
-                    )
+                    return self.get(request)
                 return HttpResponseRedirect(
                     reverse('admin:change_parameters_retry',
                             kwargs={'id': database.id})
@@ -362,14 +360,14 @@ class DatabaseParameters(TemplateView):
                 changed_parameters, error = self.update_database_parameters(request.POST, database)
                 if error:
                     messages.add_message(request, messages.ERROR, error)
-                    return HttpResponseRedirect(
-                        reverse('admin:logical_database_parameters', kwargs={'id': database.id})
-                    )
+                    return self.get(request)
                 if changed_parameters:
                     return HttpResponseRedirect(
                         reverse('admin:change_parameters',
                                 kwargs={'id': database.id})
                     )
+                return self.get(request)
+
 
 
     @database_view_class('parameters')
