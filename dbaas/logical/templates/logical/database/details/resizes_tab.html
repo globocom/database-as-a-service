@@ -22,8 +22,9 @@
         <div class="controls">
             {%if last_vm_resize and last_vm_resize.is_status_error %}
               {{ database.offering }}
-              <a class="resize_button btn btn-warning" href="{{ database.get_resize_retry_url }}" title="Go to disk resize page">Retry Resize</a>
-              <p><a href="{% url 'admin:maintenance_databaseresize_change' last_vm_resize.id %}" target='_blank'>Last resize</a> has an <b>error</b>, please check the <a href="{% url 'admin:notification_taskhistory_change' last_vm_resize.task.id %}" target='_blank'>task</a> and retry the database resize clicking in button above</p>
+              <a class="resize_button btn btn-danger" href="{{ database.get_resize_rollback_url }}" title="Rollback for resize VM">Rollback</a>
+              <a class="resize_button btn btn-warning" href="{{ database.get_resize_retry_url }}" title="Go to disk resize page">Retry</a>
+              <p><a href="{% url 'admin:maintenance_databaseresize_change' last_vm_resize.id %}" target='_blank'>Last resize</a> has an <b>error</b>, please check the <a href="{% url 'admin:notification_taskhistory_change' last_vm_resize.task.id %}" target='_blank'>task</a> and do rollback or retry of resize by clicking in one of above buttons</p>
             {% else %}
               <select id="id_vm_offering" name="vm_offering">
                 {% for vm_offering in vm_offerings %}
