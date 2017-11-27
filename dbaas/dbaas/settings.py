@@ -284,12 +284,14 @@ SESSION_SERIALIZER = 'django.contrib.sessions.serializers.PickleSerializer'
 SESSION_COOKIE_AGE = 86400 * 30  # 30 Days
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # Expire session when browser is closed
 SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
+SESSION_CACHE_ALIAS = "default"
 AUTO_LOGOUT_DELAY = 720 # 12 hours
 
+DBAAS_CACHE_LOCATION = os.getenv('DBAAS_CACHE_LOCATION')
 CACHES = {
     'default': {
         'BACKEND': os.getenv('DBAAS_CACHE_BACKEND', 'django.core.cache.backends.locmem.LocMemCache'),
-        'LOCATION': os.getenv('DBAAS_CACHE_LOCATION', 'unique'),
+        'LOCATION': DBAAS_CACHE_LOCATION.split(';') if DBAAS_CACHE_LOCATION else 'unique',
         'TIMEOUT': int(os.getenv('DBAAS_CACHE_TIMEOUT', '60')),
     },
     "notification": {

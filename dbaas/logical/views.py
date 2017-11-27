@@ -512,29 +512,45 @@ def _vm_resize(request, database):
         )
 
 
+def get_last_valid_resize(request, database):
+    can_do_resize, error = database.can_do_resize_retry()
+    if not can_do_resize:
+        messages.add_message(request, messages.ERROR, error)
+        return None
+
+    last_resize = database.resizes.last()
+    if not last_resize.is_status_error:
+        error = "Cannot do retry, last resize status is '{}'!".format(
+            last_resize.get_status_display()
+        )
+        messages.add_message(request, messages.ERROR, error)
+        return None
+
+    return last_resize
+
+
 @database_view("")
 def database_resize_retry(request, context, database):
-    can_do_resize, error = database.can_do_resize_retry()
-    if can_do_resize:
-        last_resize = database.resizes.last()
-
-        if not last_resize.is_status_error:
-            error = "Cannot do retry, last resize status is '{}'!".format(
-                last_resize.get_status_display()
-            )
-        else:
-            current_step = last_resize.current_step
-
-    if error:
-        messages.add_message(request, messages.ERROR, error)
-    else:
-
+    last_resize = get_last_valid_resize(request, database)
+    if last_resize:
         TaskRegister.database_resize_retry(
             database=database,
             user=request.user,
             cloudstack_pack=last_resize.target_offer,
             original_cloudstackpack=last_resize.source_offer,
-            since_step=current_step)
+            since_step=last_resize.current_step
+        )
+
+    return HttpResponseRedirect(
+        reverse('admin:logical_database_resizes', kwargs={'id': database.id})
+    )
+
+
+@database_view("")
+def database_resize_rollback(request, context, database):
+    last_resize = get_last_valid_resize(request, database)
+    if last_resize:
+        TaskRegister.database_resize_rollback(last_resize, request.user)
 
     return HttpResponseRedirect(
         reverse('admin:logical_database_resizes', kwargs={'id': database.id})
@@ -1086,7 +1102,7 @@ def database_reinstall_vm_retry(request, context, database):
         )
         can_reinstall_vm = False
 
-    elif database.is_being_used_elsewhere('notification.tasks.reinstall_vm_database'):
+    elif database.is_being_used_elsewhere(['notification.tasks.reinstall_vm_database']):
         messages.add_message(
             request, messages.ERROR,
             'Can not retry reinstall VM because database is in use by another task.'
