@@ -1,44 +1,107 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
+from mock import MagicMock
 import logging
-from django.test import TestCase
 from drivers import DriverFactory
+from drivers.tests.base import BaseDriverTestCase
 from physical.tests import factory as factory_physical
 from logical.tests import factory as factory_logical
 from logical.models import Database
-from ..mysqldb import MySQL
+from ..mysqldb import MySQL, MySQLFOXHA
 from django.conf import settings
 
 LOG = logging.getLogger(__name__)
 
 
-class AbstractTestDriverMysql(TestCase):
+class AbstractTestDriverMysql(BaseDriverTestCase):
 
-    def setUp(self):
-        mysql_host = settings.DB_HOST
-        mysql_port = settings.DB_PORT or 3306
-        self.mysql_endpoint = '{}:{}'.format(mysql_host, mysql_port)
-        self.databaseinfra = factory_physical.DatabaseInfraFactory(
-            user="root", password=settings.DB_PASSWORD,
-            endpoint=self.mysql_endpoint)
-        self.instance = factory_physical.InstanceFactory(
-            databaseinfra=self.databaseinfra, address=mysql_host,
-            port=mysql_port)
-        self.driver = MySQL(databaseinfra=self.databaseinfra)
-        self._mysql_client = None
+    port = 3306
+    engine_name = 'mysql'
+    instance_type = 1
+    driver_class = MySQL
+    driver_client_lookup = '__mysql_client__'
 
-    def tearDown(self):
-        if not Database.objects.filter(databaseinfra_id=self.databaseinfra.id):
-            self.databaseinfra.delete()
-        if self._mysql_client:
-            self._mysql_client.close()
-        self.driver = self.databaseinfra = self._mysql_client = None
+#    def setUp(self):
+#        self.mysql_host = '127.0.0.1'
+#        self.mysql_port = settings.DB_PORT or 3306
+#        self.mysql_endpoint = '{}:{}'.format(self.mysql_host, self.mysql_port)
+#        self.databaseinfra = factory_physical.DatabaseInfraFactory(
+#            engine__engine_type__name='mysql', user="root",
+#            password=settings.DB_PASSWORD, endpoint=self.mysql_endpoint)
+#        self.instance = factory_physical.InstanceFactory(
+#            databaseinfra=self.databaseinfra, address=self.mysql_host,
+#            port=self.mysql_port, instance_type=1)
+#        self.driver = MySQL(databaseinfra=self.databaseinfra)
+#        self._mysql_client = None
+#
+#    def tearDown(self):
+#        if not Database.objects.filter(databaseinfra_id=self.databaseinfra.id):
+#            self.databaseinfra.delete()
+#        if self._mysql_client:
+#            self._mysql_client.close()
+#        self.driver = self.databaseinfra = self._mysql_client = None
 
     @property
     def mysql_client(self):
-        if self._mysql_client is None:
-            self._mysql_client = self.driver.__mysql_client__(self.instance)
-        return self._mysql_client
+        return self._driver_client
+
+
+class MySQLUsedAndTotalTestCase(AbstractTestDriverMysql):
+
+    """
+    Tests MySQL total and used
+    """
+
+    def setUp(self):
+        super(MySQLUsedAndTotalTestCase, self).setUp()
+        self.masters_quantity = 1
+        self.driver.check_instance_is_master = MagicMock(
+            side_effect=self._check_instance_is_master
+        )
+
+    def _check_instance_is_master(self, instance):
+
+        n = int(instance.address.split('.')[-1]) - 1
+
+        return n % 2 == 0
+
+    def _create_more_instances(self, qt=1, total_size_in_bytes=50):
+
+        def _create(n):
+            n += 2
+            return factory_physical.InstanceFactory(
+                databaseinfra=self.databaseinfra,
+                address='127.{0}.{0}.{0}'.format(n), port=self.port,
+                instance_type=self.instance_type, total_size_in_bytes=total_size_in_bytes
+            )
+
+        return map(_create, range(qt))
+
+    def test_masters_single_instance(self):
+        """
+            Test validates return total and used size when has single instance
+        """
+
+        self.instance.total_size_in_bytes = 105
+        self.instance.used_size_in_bytes = 55
+        self.instance.save()
+        self.assertEqual(self.driver.masters_total_size_in_bytes, 105)
+        self.assertEqual(self.driver.masters_used_size_in_bytes, 55)
+
+    def test_masters_foxha_instance(self):
+        """
+            Test validates return total and used size when has single instance
+        """
+        self.driver = MySQLFOXHA(databaseinfra=self.databaseinfra)
+        self.driver.check_instance_is_master = MagicMock(
+            side_effect=self._check_instance_is_master
+        )
+        self._create_more_instances()
+        self.instance.total_size_in_bytes = 35
+        self.instance.used_size_in_bytes = 10
+        self.instance.save()
+        self.assertEqual(self.driver.masters_total_size_in_bytes, 35)
+        self.assertEqual(self.driver.masters_used_size_in_bytes, 10)
 
 
 class MySQLEngineTestCase(AbstractTestDriverMysql):
@@ -46,6 +109,8 @@ class MySQLEngineTestCase(AbstractTestDriverMysql):
     """
     Tests MySQL Engine
     """
+    def setUp(self):
+        super(ManageDatabaseMySQLTestCase, self).setUp()
 
     def test_mysqldb_app_installed(self):
         self.assertTrue(DriverFactory.is_driver_available("mysql_single"))

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 import logging
+from collections import Iterable
 from django.utils.translation import ugettext_lazy as _
 from django_services.service.exceptions import InternalException
 
@@ -85,6 +86,13 @@ class BaseDriver(object):
         else:
             raise TypeError(_("DatabaseInfra is not defined"))
 
+    def _masters_size_in_bytes(self, field_lookup):
+        masters = self.get_master_instance()
+        masters = [masters] if not isinstance(masters, Iterable) else masters
+        return sum(map(
+            lambda m: getattr(m, field_lookup), masters
+        ))
+
     @property
     def replication_topology(self):
         return self.databaseinfra.plan.replication_topology
@@ -95,6 +103,20 @@ class BaseDriver(object):
         return util.get_replication_topology_instance(
             self.replication_topology.class_path
         )
+
+    @property
+    def masters_total_size_in_bytes(self):
+        """
+            Return total size of all masters instances on infra.
+        """
+        return self._masters_size_in_bytes('total_size_in_bytes')
+
+    @property
+    def masters_used_size_in_bytes(self):
+        """
+            Return used size of all masters instances on infra.
+        """
+        return self._masters_size_in_bytes('used_size_in_bytes')
 
     def test_connection(self, credential=None):
         """ Tests the connection to the database """

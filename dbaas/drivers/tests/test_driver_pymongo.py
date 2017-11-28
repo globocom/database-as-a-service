@@ -7,7 +7,7 @@ from drivers import DriverFactory
 from physical.tests import factory as factory_physical
 from logical.tests import factory as factory_logical
 from logical.models import Database
-from ..mongodb import MongoDB
+from ..mongodb import MongoDB, MongoDBReplicaSet
 
 
 class AbstractTestDriverMongo(TestCase):
@@ -16,9 +16,12 @@ class AbstractTestDriverMongo(TestCase):
         mongo_host = os.getenv('TESTS_MONGODB_HOST', '127.0.0.1')
         mongo_port = os.getenv('TESTS_MONGODB_PORT', '27017')
         self.mongo_endpoint = '{}:{}'.format(mongo_host, mongo_port)
-        self.databaseinfra = factory_physical.DatabaseInfraFactory()
+        self.databaseinfra = factory_physical.DatabaseInfraFactory(
+            engine__engine_type__name='mongodb'
+        )
         self.instance = factory_physical.InstanceFactory(
-            databaseinfra=self.databaseinfra, address=mongo_host)
+            databaseinfra=self.databaseinfra, address=mongo_host,
+            instance_type=2)
         self.driver = MongoDB(databaseinfra=self.databaseinfra)
         self._mongo_client = None
 
@@ -34,6 +37,64 @@ class AbstractTestDriverMongo(TestCase):
         if self._mongo_client is None:
             self._mongo_client = self.driver.__mongo_client__(self.instance)
         return self._mongo_client
+
+
+class MongoUsedAndTotalTestCase(AbstractTestDriverMongo):
+
+    """
+    Tests Mongo total and used
+    """
+
+    def setUp(self):
+        super(MongoUsedAndTotalTestCase, self).setUp()
+        self.masters_quantity = 1
+        self.driver.check_instance_is_master = mock.MagicMock(
+            side_effect=self._check_instance_is_master
+        )
+
+    def _check_instance_is_master(self, instance):
+
+        n = int(instance.address.split('.')[-1]) - 1
+
+        return n % 2 == 0
+
+    def _create_more_instances(self, qt=1, total_size_in_bytes=50):
+
+        def _create(n):
+            n += 2
+            return factory_physical.InstanceFactory(
+                databaseinfra=self.databaseinfra,
+                address='127.{0}.{0}.{0}'.format(n), instance_type=2,
+                total_size_in_bytes=total_size_in_bytes
+            )
+
+        return map(_create, range(qt))
+
+    def test_masters_single_instance(self):
+        """
+            Test validates return total and used size when has single instance
+        """
+
+        self.instance.total_size_in_bytes = 105
+        self.instance.used_size_in_bytes = 55
+        self.instance.save()
+        self.assertEqual(self.driver.masters_total_size_in_bytes, 105)
+        self.assertEqual(self.driver.masters_used_size_in_bytes, 55)
+
+    def test_masters_replicaset_instance(self):
+        """
+            Test validates return total and used size when has single instance
+        """
+        self.driver = MongoDBReplicaSet(databaseinfra=self.databaseinfra)
+        self.driver.check_instance_is_master = mock.MagicMock(
+            side_effect=self._check_instance_is_master
+        )
+        self._create_more_instances()
+        self.instance.total_size_in_bytes = 35
+        self.instance.used_size_in_bytes = 10
+        self.instance.save()
+        self.assertEqual(self.driver.masters_total_size_in_bytes, 35)
+        self.assertEqual(self.driver.masters_used_size_in_bytes, 10)
 
 
 class MongoDBEngineTestCase(AbstractTestDriverMongo):
