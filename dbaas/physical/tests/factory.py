@@ -55,8 +55,8 @@ class PlanFactory(factory.DjangoModelFactory):
     is_active = True
     engine = factory.SubFactory(EngineFactory)
     provider = 0
-    disk_offering = DiskOfferingFactory()
-    replication_topology = ReplicationTopologyFactory()
+    disk_offering = factory.SubFactory(DiskOfferingFactory)
+    replication_topology = factory.SubFactory(ReplicationTopologyFactory)
 
     @factory.post_generation
     def environments(self, create, extracted, **kwargs):
