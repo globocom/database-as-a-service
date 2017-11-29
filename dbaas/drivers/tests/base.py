@@ -1,4 +1,5 @@
 from unittest import TestCase
+from mock import MagicMock
 
 from django.conf import settings
 
@@ -62,3 +63,32 @@ class BaseMysqlDriverTestCase(BaseDriverTestCase):
     instance_type = 1
     driver_class = MySQL
     driver_client_lookup = '__mysql_client__'
+
+
+class BaseUsedAndTotalTestCase(BaseMysqlDriverTestCase):
+
+    def setUp(self):
+        super(BaseUsedAndTotalTestCase, self).setUp()
+        self.instance.address = '127.0.0.1'
+        self.instance.save()
+        self.driver.check_instance_is_master = MagicMock(
+            side_effect=self._check_instance_is_master
+        )
+
+    def _check_instance_is_master(self, instance):
+
+        n = int(instance.address.split('.')[-1]) - 1
+
+        return n % 2 == 0
+
+    def _create_more_instances(self, qt=1, total_size_in_bytes=50):
+
+        def _create(n):
+            n += 2
+            return factory_physical.InstanceFactory(
+                databaseinfra=self.databaseinfra,
+                address='127.{0}.{0}.{0}'.format(n), port=self.port,
+                instance_type=self.instance_type, total_size_in_bytes=total_size_in_bytes
+            )
+
+        return map(_create, range(qt))
