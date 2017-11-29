@@ -11,7 +11,7 @@ from ..mysqldb import MySQL, MySQLFOXHA
 LOG = logging.getLogger(__name__)
 
 
-class MySQLUsedAndTotalTestCase(BaseUsedAndTotalTestCase):
+class MySQLUsedAndTotalTestCase(BaseMysqlDriverTestCase, BaseUsedAndTotalTestCase):
 
     """
     Tests MySQL total and used
