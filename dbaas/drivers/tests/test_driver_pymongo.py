@@ -14,7 +14,7 @@ class AbstractTestDriverMongo(BaseDriverTestCase):
 
     host = os.getenv('TESTS_MONGODB_HOST', '127.0.0.1')
     port = os.getenv('TESTS_MONGODB_PORT', '27017')
-    engine_type = 'mongodb'
+    engine_name = 'mongodb'
     instance_type = 2
     driver_class = MongoDB
     driver_client_lookup = '__mongo_client__'
