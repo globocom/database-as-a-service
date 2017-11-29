@@ -3,8 +3,7 @@ from __future__ import absolute_import, unicode_literals
 from mock import MagicMock
 import logging
 from drivers import DriverFactory
-from drivers.tests.base import BaseMysqlDriverTestCase
-from physical.tests import factory as factory_physical
+from drivers.tests.base import BaseMysqlDriverTestCase, BaseUsedAndTotalTestCase
 from logical.tests import factory as factory_logical
 from logical.models import Database
 from ..mysqldb import MySQL, MySQLFOXHA
@@ -12,38 +11,11 @@ from ..mysqldb import MySQL, MySQLFOXHA
 LOG = logging.getLogger(__name__)
 
 
-class MySQLUsedAndTotalTestCase(BaseMysqlDriverTestCase):
+class MySQLUsedAndTotalTestCase(BaseUsedAndTotalTestCase):
 
     """
     Tests MySQL total and used
     """
-
-    def setUp(self):
-        super(MySQLUsedAndTotalTestCase, self).setUp()
-        self.masters_quantity = 1
-        self.instance.address = '127.0.0.1'
-        self.instance.save()
-        self.driver.check_instance_is_master = MagicMock(
-            side_effect=self._check_instance_is_master
-        )
-
-    def _check_instance_is_master(self, instance):
-
-        n = int(instance.address.split('.')[-1]) - 1
-
-        return n % 2 == 0
-
-    def _create_more_instances(self, qt=1, total_size_in_bytes=50):
-
-        def _create(n):
-            n += 2
-            return factory_physical.InstanceFactory(
-                databaseinfra=self.databaseinfra,
-                address='127.{0}.{0}.{0}'.format(n), port=self.port,
-                instance_type=self.instance_type, total_size_in_bytes=total_size_in_bytes
-            )
-
-        return map(_create, range(qt))
 
     def test_masters_single_instance(self):
         """
