@@ -122,6 +122,8 @@ class InstanceFactory(factory.DjangoModelFactory):
     hostname = factory.SubFactory(HostFactory)
     status = 1
     instance_type = 2
+    total_size_in_bytes = 100
+    used_size_in_bytes = 50
 
 
 class NFSaaSHostAttr(factory.DjangoModelFactory):

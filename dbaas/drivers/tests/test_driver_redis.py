@@ -4,82 +4,20 @@ import logging
 import mock
 from django.conf import settings
 from drivers import DriverFactory
-from physical.tests import factory as factory_physical
 from logical.tests import factory as factory_logical
 from logical.models import Database
 from ..redis import Redis, RedisSentinel, RedisCluster
-from drivers.tests.base import BaseDriverTestCase
+from drivers.tests.base import BaseRedisDriverTestCase, BaseUsedAndTotalTestCase
+
 
 LOG = logging.getLogger(__name__)
 
 
-class AbstractTestDriverRedis(BaseDriverTestCase):
-
-    host = '127.0.0.1'
-    port = settings.REDIS_PORT
-    db_password = 'OPlpplpooi'
-    engine_name = 'redis'
-    instance_type = 4
-    driver_class = Redis
-    driver_client_lookup = '__redis_client__'
-
-#    def setUp(self):
-#        redis_host = '127.0.0.1'
-#        redis_port = settings.REDIS_PORT
-#        self.endpoint = "{}:{}".format(redis_host, redis_port)
-#        self.databaseinfra = factory_physical.DatabaseInfraFactory(
-#            password="OPlpplpooi", endpoint=self.endpoint,
-#            engine__engine_type__name='redis'
-#        )
-#        self.instance = factory_physical.InstanceFactory(
-#            databaseinfra=self.databaseinfra, port=redis_port, instance_type=4,
-#            address=redis_host
-#        )
-#        self.driver = Redis(databaseinfra=self.databaseinfra)
-#        self._redis_client = None
-#
-#    def tearDown(self):
-#        if not Database.objects.filter(databaseinfra_id=self.databaseinfra.id):
-#            self.databaseinfra.delete()
-#        self.driver = self.databaseinfra = self._redis_client = None
-
-    @property
-    def redis_client(self):
-        return self.driver_client
-
-
-class RedisUsedAndTotalTestCase(AbstractTestDriverRedis):
+class RedisUsedAndTotalTestCase(BaseRedisDriverTestCase, BaseUsedAndTotalTestCase):
 
     """
     Tests Redis total and used
     """
-
-    def setUp(self):
-        super(RedisUsedAndTotalTestCase, self).setUp()
-        self.masters_quantity = 1
-        self.driver.check_instance_is_master = mock.MagicMock(
-            side_effect=self._check_instance_is_master
-        )
-
-    def _check_instance_is_master(self, instance):
-
-        n = int(instance.address.split('.')[-1]) - 1
-
-        return n % 2 == 0
-
-    def _create_more_instances(self, qt=1, total_size_in_bytes=50,
-                               used_size_in_bytes=25):
-
-        def _create(n):
-            n += 2
-            return factory_physical.InstanceFactory(
-                databaseinfra=self.databaseinfra,
-                address='127.{0}.{0}.{0}'.format(n), instance_type=4,
-                total_size_in_bytes=total_size_in_bytes,
-                used_size_in_bytes=used_size_in_bytes
-            )
-
-        return map(_create, range(qt))
 
     def test_masters_single_instance(self):
         """
@@ -123,7 +61,7 @@ class RedisUsedAndTotalTestCase(AbstractTestDriverRedis):
         self.assertEqual(self.driver.masters_used_size_in_bytes, 75)
 
 
-class RedisEngineTestCase(AbstractTestDriverRedis):
+class RedisEngineTestCase(BaseRedisDriverTestCase):
 
     """
     Tests Redis Engine
@@ -156,7 +94,7 @@ class RedisEngineTestCase(AbstractTestDriverRedis):
                          self.driver.get_connection(database=self.database))
 
 
-class ManageDatabaseRedisTestCase(AbstractTestDriverRedis):
+class ManageDatabaseRedisTestCase(BaseRedisDriverTestCase):
 
     """ Test case to managing database in redis engine """
 
@@ -175,7 +113,7 @@ class ManageDatabaseRedisTestCase(AbstractTestDriverRedis):
         super(ManageDatabaseRedisTestCase, self).tearDown()
 
 
-class ExclusiveMethodsBase(AbstractTestDriverRedis):
+class ExclusiveMethodsBase(BaseRedisDriverTestCase):
 
     @property
     def get_connection_base(self):

@@ -11,6 +11,7 @@ from physical.models import Instance
 from logical.models import Database
 from drivers.mysqldb import MySQL
 from drivers.mongodb import MongoDB
+from drivers.redis import Redis
 
 
 class BaseDriverTestCase(TestCase):
@@ -73,14 +74,17 @@ class BaseUsedAndTotalTestCase(BaseDriverTestCase):
 
         return n % 2 == 0
 
-    def _create_more_instances(self, qt=1, total_size_in_bytes=50):
+    def _create_more_instances(self, qt=1, total_size_in_bytes=50,
+                               used_size_in_bytes=25):
 
         def _create(n):
             n += 2
             return factory_physical.InstanceFactory(
                 databaseinfra=self.databaseinfra,
                 address='127.{0}.{0}.{0}'.format(n), port=self.port,
-                instance_type=self.instance_type, total_size_in_bytes=total_size_in_bytes
+                instance_type=self.instance_type,
+                total_size_in_bytes=total_size_in_bytes,
+                used_size_in_bytes=used_size_in_bytes
             )
 
         return map(_create, range(qt))
@@ -106,3 +110,14 @@ class BaseMongoDriverTestCase(BaseDriverTestCase):
     instance_type = 2
     driver_class = MongoDB
     driver_client_lookup = '__mongo_client__'
+
+
+class BaseRedisDriverTestCase(BaseDriverTestCase):
+
+    host = '127.0.0.1'
+    port = settings.REDIS_PORT
+    db_password = 'OPlpplpooi'
+    engine_name = 'redis'
+    instance_type = 4
+    driver_class = Redis
+    driver_client_lookup = '__redis_client__'
