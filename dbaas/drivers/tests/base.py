@@ -1,8 +1,11 @@
 from unittest import TestCase
 
+from django.conf import settings
+
 from physical.tests import factory as factory_physical
 from physical.models import Instance
 from logical.models import Database
+from drivers.mysqldb import MySQL
 
 
 class BaseDriverTestCase(TestCase):
@@ -37,7 +40,7 @@ class BaseDriverTestCase(TestCase):
             self.databaseinfra.delete()
         if self._driver_client:
             self.driver_client.close()
-        self.driver = self.databaseinfra = self._driver_client = None
+        # self.driver = self.databaseinfra = self._driver_client = None
 
     @property
     def driver_client(self):
@@ -46,5 +49,16 @@ class BaseDriverTestCase(TestCase):
                 self.driver, self.driver_client_lookup
             )
             self._driver_client = get_driver_func(self.instance)
-            # self._driver_client = self.driver.__redis_client__(self.instance)
         return self._driver_client
+
+
+class BaseMysqlDriverTestCase(BaseDriverTestCase):
+
+    host = settings.DB_HOST
+    port = 3306
+    db_user = 'root'
+    db_password = settings.DB_PASSWORD
+    engine_name = 'mysql'
+    instance_type = 1
+    driver_class = MySQL
+    driver_client_lookup = '__mysql_client__'

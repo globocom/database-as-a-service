@@ -3,53 +3,16 @@ from __future__ import absolute_import, unicode_literals
 from mock import MagicMock
 import logging
 from drivers import DriverFactory
-from drivers.tests.base import BaseDriverTestCase
+from drivers.tests.base import BaseMysqlDriverTestCase
 from physical.tests import factory as factory_physical
 from logical.tests import factory as factory_logical
 from logical.models import Database
 from ..mysqldb import MySQL, MySQLFOXHA
-from django.conf import settings
 
 LOG = logging.getLogger(__name__)
 
 
-class AbstractTestDriverMysql(BaseDriverTestCase):
-
-    host = settings.DB_HOST
-    port = 3306
-    db_user = 'root'
-    db_password = settings.DB_PASSWORD
-    engine_name = 'mysql'
-    instance_type = 1
-    driver_class = MySQL
-    driver_client_lookup = '__mysql_client__'
-
-#    def setUp(self):
-#        self.mysql_host = '127.0.0.1'
-#        self.mysql_port = settings.DB_PORT or 3306
-#        self.mysql_endpoint = '{}:{}'.format(self.mysql_host, self.mysql_port)
-#        self.databaseinfra = factory_physical.DatabaseInfraFactory(
-#            engine__engine_type__name='mysql', user="root",
-#            password=settings.DB_PASSWORD, endpoint=self.mysql_endpoint)
-#        self.instance = factory_physical.InstanceFactory(
-#            databaseinfra=self.databaseinfra, address=self.mysql_host,
-#            port=self.mysql_port, instance_type=1)
-#        self.driver = MySQL(databaseinfra=self.databaseinfra)
-#        self._mysql_client = None
-#
-#    def tearDown(self):
-#        if not Database.objects.filter(databaseinfra_id=self.databaseinfra.id):
-#            self.databaseinfra.delete()
-#        if self._mysql_client:
-#            self._mysql_client.close()
-#        self.driver = self.databaseinfra = self._mysql_client = None
-
-    @property
-    def mysql_client(self):
-        return self._driver_client
-
-
-class MySQLUsedAndTotalTestCase(AbstractTestDriverMysql):
+class MySQLUsedAndTotalTestCase(BaseMysqlDriverTestCase):
 
     """
     Tests MySQL total and used
@@ -109,7 +72,7 @@ class MySQLUsedAndTotalTestCase(AbstractTestDriverMysql):
         self.assertEqual(self.driver.masters_used_size_in_bytes, 10)
 
 
-class MySQLEngineTestCase(AbstractTestDriverMysql):
+class MySQLEngineTestCase(BaseMysqlDriverTestCase):
 
     """
     Tests MySQL Engine
@@ -147,7 +110,7 @@ class MySQLEngineTestCase(AbstractTestDriverMysql):
                          self.driver.get_connection(database=self.database))
 
 
-class ManageDatabaseMySQLTestCase(AbstractTestDriverMysql):
+class ManageDatabaseMySQLTestCase(BaseMysqlDriverTestCase):
 
     """ Test case to managing database in mysql engine """
 
@@ -166,7 +129,7 @@ class ManageDatabaseMySQLTestCase(AbstractTestDriverMysql):
         super(ManageDatabaseMySQLTestCase, self).tearDown()
 
     def test_mysqldb_create_and_drop_database(self):
-        LOG.debug("mysql_client: %s" % type(self.mysql_client))
+        LOG.debug("mysql_client: %s" % type(self.driver_client))
         # ensures database is removed
         try:
             self.driver.remove_database(self.database)
@@ -181,7 +144,7 @@ class ManageDatabaseMySQLTestCase(AbstractTestDriverMysql):
         self.assertFalse(self.database.name in self.driver.list_databases())
 
 
-class ManageCredentialsMySQLTestCase(AbstractTestDriverMysql):
+class ManageCredentialsMySQLTestCase(BaseMysqlDriverTestCase):
 
     """ Test case to managing credentials in mysqldb engine """
 
