@@ -9,8 +9,8 @@ class BaseDriverTestCase(TestCase):
 
     host = None
     port = None
-    db_user = 'root'
-    db_password = '123'
+    db_user = 'admin'
+    db_password = '123456'
     engine_name = ''
     instance_type = None
     driver_class = None

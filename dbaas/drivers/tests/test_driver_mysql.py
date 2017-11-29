@@ -17,6 +17,7 @@ class AbstractTestDriverMysql(BaseDriverTestCase):
 
     host = settings.DB_HOST
     port = 3306
+    db_user = 'root'
     db_password = settings.DB_PASSWORD
     engine_name = 'mysql'
     instance_type = 1
