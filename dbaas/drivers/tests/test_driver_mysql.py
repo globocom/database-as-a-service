@@ -15,7 +15,9 @@ LOG = logging.getLogger(__name__)
 
 class AbstractTestDriverMysql(BaseDriverTestCase):
 
+    host = settings.DB_HOST
     port = 3306
+    db_password = settings.DB_PASSWORD
     engine_name = 'mysql'
     instance_type = 1
     driver_class = MySQL
@@ -55,6 +57,8 @@ class MySQLUsedAndTotalTestCase(AbstractTestDriverMysql):
     def setUp(self):
         super(MySQLUsedAndTotalTestCase, self).setUp()
         self.masters_quantity = 1
+        self.instance.address = '127.0.0.1'
+        self.instance.save()
         self.driver.check_instance_is_master = MagicMock(
             side_effect=self._check_instance_is_master
         )
@@ -110,7 +114,7 @@ class MySQLEngineTestCase(AbstractTestDriverMysql):
     Tests MySQL Engine
     """
     def setUp(self):
-        super(ManageDatabaseMySQLTestCase, self).setUp()
+        super(MySQLEngineTestCase, self).setUp()
 
     def test_mysqldb_app_installed(self):
         self.assertTrue(DriverFactory.is_driver_available("mysql_single"))
@@ -123,7 +127,7 @@ class MySQLEngineTestCase(AbstractTestDriverMysql):
 
     def test_connection_string(self):
         self.assertEqual(
-            "mysql://<user>:<password>@{}".format(self.mysql_endpoint), self.driver.get_connection())
+            "mysql://<user>:<password>@{}".format(self.endpoint), self.driver.get_connection())
 
     def test_get_user(self):
         self.assertEqual(self.databaseinfra.user, self.driver.get_user())
@@ -138,7 +142,7 @@ class MySQLEngineTestCase(AbstractTestDriverMysql):
     def test_connection_with_database(self):
         self.database = factory_logical.DatabaseFactory(
             name="my_db_url_name", databaseinfra=self.databaseinfra)
-        self.assertEqual("mysql://<user>:<password>@{}/my_db_url_name".format(self.mysql_endpoint),
+        self.assertEqual("mysql://<user>:<password>@{}/my_db_url_name".format(self.endpoint),
                          self.driver.get_connection(database=self.database))
 
 

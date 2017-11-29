@@ -1,6 +1,7 @@
 from unittest import TestCase
 
 from physical.tests import factory as factory_physical
+from physical.models import Instance
 from logical.models import Database
 
 
@@ -31,11 +32,12 @@ class BaseDriverTestCase(TestCase):
         self._driver_client = None
 
     def tearDown(self):
+        Instance.objects.all().delete()
         if not Database.objects.filter(databaseinfra_id=self.databaseinfra.id):
             self.databaseinfra.delete()
         if self._driver_client:
             self.driver_client.close()
-        # self.driver = self.databaseinfra = self._redis_client = None
+        self.driver = self.databaseinfra = self._driver_client = None
 
     @property
     def driver_client(self):
