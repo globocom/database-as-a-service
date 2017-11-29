@@ -2,44 +2,50 @@
 from __future__ import absolute_import, unicode_literals
 import logging
 import mock
-from django.test import TestCase
 from django.conf import settings
 from drivers import DriverFactory
 from physical.tests import factory as factory_physical
 from logical.tests import factory as factory_logical
 from logical.models import Database
 from ..redis import Redis, RedisSentinel, RedisCluster
+from drivers.tests.base import BaseDriverTestCase
 
 LOG = logging.getLogger(__name__)
 
 
-class AbstractTestDriverRedis(TestCase):
+class AbstractTestDriverRedis(BaseDriverTestCase):
 
-    def setUp(self):
-        redis_host = '127.0.0.1'
-        redis_port = settings.REDIS_PORT
-        self.endpoint = "{}:{}".format(redis_host, redis_port)
-        self.databaseinfra = factory_physical.DatabaseInfraFactory(
-            password="OPlpplpooi", endpoint=self.endpoint,
-            engine__engine_type__name='redis'
-        )
-        self.instance = factory_physical.InstanceFactory(
-            databaseinfra=self.databaseinfra, port=redis_port, instance_type=4,
-            address=redis_host
-        )
-        self.driver = Redis(databaseinfra=self.databaseinfra)
-        self._redis_client = None
+    host = '127.0.0.1'
+    port = settings.REDIS_PORT
+    db_password = 'OPlpplpooi'
+    engine_name = 'redis'
+    instance_type = 4
+    driver_class = Redis
+    driver_client_lookup = '__redis_client__'
 
-    def tearDown(self):
-        if not Database.objects.filter(databaseinfra_id=self.databaseinfra.id):
-            self.databaseinfra.delete()
-        self.driver = self.databaseinfra = self._redis_client = None
+#    def setUp(self):
+#        redis_host = '127.0.0.1'
+#        redis_port = settings.REDIS_PORT
+#        self.endpoint = "{}:{}".format(redis_host, redis_port)
+#        self.databaseinfra = factory_physical.DatabaseInfraFactory(
+#            password="OPlpplpooi", endpoint=self.endpoint,
+#            engine__engine_type__name='redis'
+#        )
+#        self.instance = factory_physical.InstanceFactory(
+#            databaseinfra=self.databaseinfra, port=redis_port, instance_type=4,
+#            address=redis_host
+#        )
+#        self.driver = Redis(databaseinfra=self.databaseinfra)
+#        self._redis_client = None
+#
+#    def tearDown(self):
+#        if not Database.objects.filter(databaseinfra_id=self.databaseinfra.id):
+#            self.databaseinfra.delete()
+#        self.driver = self.databaseinfra = self._redis_client = None
 
     @property
     def redis_client(self):
-        if self._redis_client is None:
-            self._redis_client = self.driver.__redis_client__(self.instance)
-        return self._redis_client
+        return self.driver_client
 
 
 class RedisUsedAndTotalTestCase(AbstractTestDriverRedis):

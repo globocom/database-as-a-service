@@ -2,41 +2,46 @@
 from __future__ import absolute_import, unicode_literals
 import os
 import mock
-from django.test import TestCase
 from drivers import DriverFactory
 from physical.tests import factory as factory_physical
 from logical.tests import factory as factory_logical
 from logical.models import Database
 from ..mongodb import MongoDB, MongoDBReplicaSet
+from drivers.tests.base import BaseDriverTestCase
 
 
-class AbstractTestDriverMongo(TestCase):
+class AbstractTestDriverMongo(BaseDriverTestCase):
 
-    def setUp(self):
-        mongo_host = os.getenv('TESTS_MONGODB_HOST', '127.0.0.1')
-        mongo_port = os.getenv('TESTS_MONGODB_PORT', '27017')
-        self.mongo_endpoint = '{}:{}'.format(mongo_host, mongo_port)
-        self.databaseinfra = factory_physical.DatabaseInfraFactory(
-            engine__engine_type__name='mongodb'
-        )
-        self.instance = factory_physical.InstanceFactory(
-            databaseinfra=self.databaseinfra, address=mongo_host,
-            instance_type=2)
-        self.driver = MongoDB(databaseinfra=self.databaseinfra)
-        self._mongo_client = None
+    host = os.getenv('TESTS_MONGODB_HOST', '127.0.0.1')
+    port = os.getenv('TESTS_MONGODB_PORT', '27017')
+    engine_type = 'mongodb'
+    instance_type = 2
+    driver_class = MongoDB
+    driver_client_lookup = '__mongo_client__'
 
-    def tearDown(self):
-        if not Database.objects.filter(databaseinfra_id=self.databaseinfra.id):
-            self.databaseinfra.delete()
-        if self._mongo_client:
-            self._mongo_client.close()
-        self.driver = self.databaseinfra = self._mongo_client = None
+#    def setUp(self):
+#        mongo_host = os.getenv('TESTS_MONGODB_HOST', '127.0.0.1')
+#        mongo_port = os.getenv('TESTS_MONGODB_PORT', '27017')
+#        self.mongo_endpoint = '{}:{}'.format(mongo_host, mongo_port)
+#        self.databaseinfra = factory_physical.DatabaseInfraFactory(
+#            engine__engine_type__name='mongodb'
+#        )
+#        self.instance = factory_physical.InstanceFactory(
+#            databaseinfra=self.databaseinfra, address=mongo_host,
+#            instance_type=2)
+#        self.driver = MongoDB(databaseinfra=self.databaseinfra)
+#        self._mongo_client = None
+#
+#    def tearDown(self):
+#        if not Database.objects.filter(databaseinfra_id=self.databaseinfra.id):
+#            self.databaseinfra.delete()
+#        if self._mongo_client:
+#            self._mongo_client.close()
+#        self.driver = self.databaseinfra = self._mongo_client = None
 
     @property
     def mongo_client(self):
-        if self._mongo_client is None:
-            self._mongo_client = self.driver.__mongo_client__(self.instance)
-        return self._mongo_client
+        return self.driver_client
 
 
 class MongoUsedAndTotalTestCase(AbstractTestDriverMongo):
@@ -114,7 +119,7 @@ class MongoDBEngineTestCase(AbstractTestDriverMongo):
 
     def test_connection_string(self):
         self.assertEqual(
-            "mongodb://<user>:<password>@{}".format(self.mongo_endpoint), self.driver.get_connection())
+            "mongodb://<user>:<password>@{}".format(self.endpoint), self.driver.get_connection())
 
     def test_get_user(self):
         self.assertEqual(self.databaseinfra.user, self.driver.get_user())
@@ -134,7 +139,7 @@ class MongoDBEngineTestCase(AbstractTestDriverMongo):
 
         expected_conn = ("mongodb://<user>:<password>"
                           "@{},127.0.0.2:27018"
-                          "?replicaSet=my_repl").format(self.mongo_endpoint)
+                          "?replicaSet=my_repl").format(self.endpoint)
 
         self.assertEqual(expected_conn, self.driver.get_connection())
 
@@ -143,7 +148,7 @@ class MongoDBEngineTestCase(AbstractTestDriverMongo):
             name="my_db_url_name", databaseinfra=self.databaseinfra)
 
         expected_conn = ("mongodb://<user>:<password>"
-                         "@{}/my_db_url_name").format(self.mongo_endpoint)
+                         "@{}/my_db_url_name").format(self.endpoint)
 
         self.assertEqual(expected_conn, self.driver.get_connection(database=self.database))
 
@@ -157,7 +162,7 @@ class MongoDBEngineTestCase(AbstractTestDriverMongo):
 
         expected_conn = ("mongodb://<user>:<password>"
                          "@{},127.0.0.2:27018/my_db_url_name"
-                         "?replicaSet=my_repl").format(self.mongo_endpoint)
+                         "?replicaSet=my_repl").format(self.endpoint)
 
         self.assertEqual(expected_conn, self.driver.get_connection(database=self.database))
 
