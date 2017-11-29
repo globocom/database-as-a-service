@@ -7,73 +7,14 @@ from physical.tests import factory as factory_physical
 from logical.tests import factory as factory_logical
 from logical.models import Database
 from ..mongodb import MongoDB, MongoDBReplicaSet
-from drivers.tests.base import BaseDriverTestCase
+from drivers.tests.base import BaseMongoDriverTestCase, BaseUsedAndTotalTestCase
 
 
-class AbstractTestDriverMongo(BaseDriverTestCase):
-
-    host = os.getenv('TESTS_MONGODB_HOST', '127.0.0.1')
-    port = os.getenv('TESTS_MONGODB_PORT', '27017')
-    engine_name = 'mongodb'
-    instance_type = 2
-    driver_class = MongoDB
-    driver_client_lookup = '__mongo_client__'
-
-#    def setUp(self):
-#        mongo_host = os.getenv('TESTS_MONGODB_HOST', '127.0.0.1')
-#        mongo_port = os.getenv('TESTS_MONGODB_PORT', '27017')
-#        self.mongo_endpoint = '{}:{}'.format(mongo_host, mongo_port)
-#        self.databaseinfra = factory_physical.DatabaseInfraFactory(
-#            engine__engine_type__name='mongodb'
-#        )
-#        self.instance = factory_physical.InstanceFactory(
-#            databaseinfra=self.databaseinfra, address=mongo_host,
-#            instance_type=2)
-#        self.driver = MongoDB(databaseinfra=self.databaseinfra)
-#        self._mongo_client = None
-#
-#    def tearDown(self):
-#        if not Database.objects.filter(databaseinfra_id=self.databaseinfra.id):
-#            self.databaseinfra.delete()
-#        if self._mongo_client:
-#            self._mongo_client.close()
-#        self.driver = self.databaseinfra = self._mongo_client = None
-
-    @property
-    def mongo_client(self):
-        return self.driver_client
-
-
-class MongoUsedAndTotalTestCase(AbstractTestDriverMongo):
+class MongoUsedAndTotalTestCase(BaseMongoDriverTestCase, BaseUsedAndTotalTestCase):
 
     """
     Tests Mongo total and used
     """
-
-    def setUp(self):
-        super(MongoUsedAndTotalTestCase, self).setUp()
-        self.masters_quantity = 1
-        self.driver.check_instance_is_master = mock.MagicMock(
-            side_effect=self._check_instance_is_master
-        )
-
-    def _check_instance_is_master(self, instance):
-
-        n = int(instance.address.split('.')[-1]) - 1
-
-        return n % 2 == 0
-
-    def _create_more_instances(self, qt=1, total_size_in_bytes=50):
-
-        def _create(n):
-            n += 2
-            return factory_physical.InstanceFactory(
-                databaseinfra=self.databaseinfra,
-                address='127.{0}.{0}.{0}'.format(n), instance_type=2,
-                total_size_in_bytes=total_size_in_bytes
-            )
-
-        return map(_create, range(qt))
 
     def test_masters_single_instance(self):
         """
@@ -102,7 +43,7 @@ class MongoUsedAndTotalTestCase(AbstractTestDriverMongo):
         self.assertEqual(self.driver.masters_used_size_in_bytes, 10)
 
 
-class MongoDBEngineTestCase(AbstractTestDriverMongo):
+class MongoDBEngineTestCase(BaseMongoDriverTestCase):
 
     """
     Tests MongoDB Engine
@@ -167,7 +108,7 @@ class MongoDBEngineTestCase(AbstractTestDriverMongo):
         self.assertEqual(expected_conn, self.driver.get_connection(database=self.database))
 
 
-class ManageDatabaseMongoDBTestCase(AbstractTestDriverMongo):
+class ManageDatabaseMongoDBTestCase(BaseMongoDriverTestCase):
 
     """ Test case to managing database in mongodb engine """
 
@@ -176,7 +117,7 @@ class ManageDatabaseMongoDBTestCase(AbstractTestDriverMongo):
         self.database = factory_logical.DatabaseFactory(
             databaseinfra=self.databaseinfra)
         # ensure database is dropped
-        self.mongo_client.drop_database(self.database.name)
+        self.driver_client.drop_database(self.database.name)
 
     def tearDown(self):
         if not Database.objects.filter(databaseinfra_id=self.databaseinfra.id):
@@ -185,21 +126,21 @@ class ManageDatabaseMongoDBTestCase(AbstractTestDriverMongo):
 
     def test_mongodb_create_database(self):
         self.assertFalse(
-            self.database.name in self.mongo_client.database_names())
+            self.database.name in self.driver_client.database_names())
         self.driver.create_database(self.database)
         self.assertTrue(
-            self.database.name in self.mongo_client.database_names())
+            self.database.name in self.driver_client.database_names())
 
     def test_mongodb_remove_database(self):
         self.driver.create_database(self.database)
         self.assertTrue(
-            self.database.name in self.mongo_client.database_names())
+            self.database.name in self.driver_client.database_names())
         self.driver.remove_database(self.database)
         self.assertFalse(
-            self.database.name in self.mongo_client.database_names())
+            self.database.name in self.driver_client.database_names())
 
 
-class ManageCredentialsMongoDBTestCase(AbstractTestDriverMongo):
+class ManageCredentialsMongoDBTestCase(BaseMongoDriverTestCase):
 
     """ Test case to managing credentials in mongodb engine """
 
@@ -218,11 +159,11 @@ class ManageCredentialsMongoDBTestCase(AbstractTestDriverMongo):
         super(ManageCredentialsMongoDBTestCase, self).tearDown()
 
     def __find_user__(self, credential):
-        v = self.mongo_client.server_info()['version']
+        v = self.driver_client.server_info()['version']
         if v < '2.6':
-            return getattr(self.mongo_client, credential.database.name).system.users.find_one({"user": credential.user})
+            return getattr(self.driver_client, credential.database.name).system.users.find_one({"user": credential.user})
         else:
-            return getattr(self.mongo_client, "admin").system.users.find_one({"user": credential.user, "db": credential.database.name})
+            return getattr(self.driver_client, "admin").system.users.find_one({"user": credential.user, "db": credential.database.name})
 
     def test_mongodb_create_credential(self):
         self.assertIsNone(self.__find_user__(

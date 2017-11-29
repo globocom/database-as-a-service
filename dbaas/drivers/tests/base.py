@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+from __future__ import absolute_import, unicode_literals
+import os
 from unittest import TestCase
 from mock import MagicMock
 
@@ -7,6 +10,7 @@ from physical.tests import factory as factory_physical
 from physical.models import Instance
 from logical.models import Database
 from drivers.mysqldb import MySQL
+from drivers.mongodb import MongoDB
 
 
 class BaseDriverTestCase(TestCase):
@@ -53,18 +57,6 @@ class BaseDriverTestCase(TestCase):
         return self._driver_client
 
 
-class BaseMysqlDriverTestCase(BaseDriverTestCase):
-
-    host = settings.DB_HOST
-    port = 3306
-    db_user = 'root'
-    db_password = settings.DB_PASSWORD
-    engine_name = 'mysql'
-    instance_type = 1
-    driver_class = MySQL
-    driver_client_lookup = '__mysql_client__'
-
-
 class BaseUsedAndTotalTestCase(BaseDriverTestCase):
 
     def setUp(self):
@@ -92,3 +84,25 @@ class BaseUsedAndTotalTestCase(BaseDriverTestCase):
             )
 
         return map(_create, range(qt))
+
+
+class BaseMysqlDriverTestCase(BaseDriverTestCase):
+
+    host = settings.DB_HOST
+    port = 3306
+    db_user = 'root'
+    db_password = settings.DB_PASSWORD
+    engine_name = 'mysql'
+    instance_type = 1
+    driver_class = MySQL
+    driver_client_lookup = '__mysql_client__'
+
+
+class BaseMongoDriverTestCase(BaseDriverTestCase):
+
+    host = os.getenv('TESTS_MONGODB_HOST', '127.0.0.1')
+    port = os.getenv('TESTS_MONGODB_PORT', '27017')
+    engine_name = 'mongodb'
+    instance_type = 2
+    driver_class = MongoDB
+    driver_client_lookup = '__mongo_client__'
