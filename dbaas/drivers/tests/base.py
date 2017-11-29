@@ -65,7 +65,7 @@ class BaseMysqlDriverTestCase(BaseDriverTestCase):
     driver_client_lookup = '__mysql_client__'
 
 
-class BaseUsedAndTotalTestCase(BaseMysqlDriverTestCase):
+class BaseUsedAndTotalTestCase(BaseDriverTestCase):
 
     def setUp(self):
         super(BaseUsedAndTotalTestCase, self).setUp()
