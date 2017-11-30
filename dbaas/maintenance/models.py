@@ -319,16 +319,30 @@ class DatabaseUpgrade(DatabaseMaintenanceTask):
         null=False, unique=False, related_name="database_upgrades"
     )
     source_plan = models.ForeignKey(
-        Plan, verbose_name="Source", null=False, unique=False,
+        Plan, verbose_name="Source", null=True, blank=True, unique=False,
         related_name="database_upgrades_source"
     )
+    source_plan_name = models.CharField(
+        verbose_name="Source", max_length=100, null=True, blank=True)
     target_plan = models.ForeignKey(
-        Plan, verbose_name="Target", null=False, unique=False,
+        Plan, verbose_name="Target", null=True, blank=True, unique=False,
         related_name="database_upgrades_target"
+    )
+    target_plan_name = models.CharField(
+        verbose_name="Target", max_length=100, null=True, blank=True
     )
 
     def __unicode__(self):
         return "{} upgrade".format(self.database.name)
+
+    def save(self, *args, **kwargs):
+        if self.source_plan:
+            self.source_plan_name = self.source_plan.name
+
+        if self.target_plan:
+            self.target_plan_name = self.target_plan.name
+
+        super(DatabaseUpgrade, self).save(*args, **kwargs)
 
 
 class DatabaseReinstallVM(DatabaseMaintenanceTask):
