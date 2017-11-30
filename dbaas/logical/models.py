@@ -452,31 +452,31 @@ class Database(BaseModel):
 
     @property
     def total_size(self):
-        return self.databaseinfra.per_database_size_bytes
+        return self.driver.masters_total_size_in_bytes
 
     @property
     def total_size_in_kb(self):
-        return round(self.databaseinfra.per_database_size_bytes * KB_FACTOR, 2)
+        return round(self.driver.masters_total_size_in_bytes * KB_FACTOR, 2)
 
     @property
     def total_size_in_mb(self):
-        return round(self.databaseinfra.per_database_size_bytes * MB_FACTOR, 2)
+        return round(self.driver.masters_total_size_in_bytes * MB_FACTOR, 2)
 
     @property
     def total_size_in_gb(self):
-        return round(self.databaseinfra.per_database_size_bytes * GB_FACTOR, 2)
+        return round(self.driver.masters_total_size_in_bytes * GB_FACTOR, 2)
 
     @property
     def used_size_in_kb(self):
-        return self.used_size_in_bytes * KB_FACTOR
+        return self.driver.masters_used_size_in_bytes * KB_FACTOR
 
     @property
     def used_size_in_mb(self):
-        return self.used_size_in_bytes * MB_FACTOR
+        return self.driver.masters_used_size_in_bytes * MB_FACTOR
 
     @property
     def used_size_in_gb(self):
-        return self.used_size_in_bytes * GB_FACTOR
+        return self.driver.masters_used_size_in_bytes * GB_FACTOR
 
     @property
     def capacity(self):
