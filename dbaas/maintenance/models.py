@@ -320,13 +320,14 @@ class DatabaseUpgrade(DatabaseMaintenanceTask):
     )
     source_plan = models.ForeignKey(
         Plan, verbose_name="Source", null=True, blank=True, unique=False,
-        related_name="database_upgrades_source"
+        related_name="database_upgrades_source", on_delete=models.SET_NULL
     )
     source_plan_name = models.CharField(
-        verbose_name="Source", max_length=100, null=True, blank=True)
+        verbose_name="Source", max_length=100, null=True, blank=True
+    )
     target_plan = models.ForeignKey(
         Plan, verbose_name="Target", null=True, blank=True, unique=False,
-        related_name="database_upgrades_target"
+        related_name="database_upgrades_target", on_delete=models.SET_NULL
     )
     target_plan_name = models.CharField(
         verbose_name="Target", max_length=100, null=True, blank=True
