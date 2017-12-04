@@ -12,13 +12,14 @@ LIST_FILTER = [
     "database__team", "status",
 ]
 LIST_DISPLAY = (
-    "database", "database_team", "source_offer", "target_offer",
+    "database", "database_team", "source_offer_name", "target_offer_name",
     "current_step", "friendly_status", "maintenance_action", "link_task",
     "started_at", "finished_at"
 )
 READONLY_FIELDS = (
-    "database", "source_offer", "target_offer", "link_task", "started_at",
-    "finished_at", "current_step", "status", "maintenance_action"
+    "database", "source_offer", "source_offer_name", "target_offer",
+    "target_offer_name", "link_task", "started_at", "finished_at",
+    "current_step", "status", "maintenance_action"
 )
 EXCLUDE = ("task", "can_do_retry")
 ORDERING = ["-started_at"]
