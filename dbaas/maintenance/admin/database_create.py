@@ -17,15 +17,15 @@ class DatabaseCreateAdmin(DatabaseMaintenanceTaskAdmin):
     list_filter = ["plan", "team", "status", "project"]
 
     list_display = (
-        "name", "infra", "team", "project", "environment", "plan", "user",
+        "name", "infra", "team", "project", "environment", "plan_name", "user",
         "current_step", "friendly_status", "maintenance_action", "link_task",
         "started_at", "finished_at"
     )
     readonly_fields = (
-        "database", "infra", "plan", "environment", "team", "project", "name",
-        "description", "subscribe_to_email_events", "is_protected", "user",
-        "link_task", "started_at", "finished_at", "current_step", "status",
-        "maintenance_action"
+        "database", "infra", "plan", "plan_name", "environment", "team",
+        "project", "name", "description", "subscribe_to_email_events",
+        "is_protected", "user", "link_task", "started_at", "finished_at",
+        "current_step", "status", "maintenance_action"
     )
 
     def maintenance_action(self, maintenance_task):
