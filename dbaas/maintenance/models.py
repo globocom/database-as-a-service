@@ -375,14 +375,16 @@ class DatabaseResize(DatabaseMaintenanceTask):
     )
     source_offer = models.ForeignKey(
         CloudStackPack, verbose_name="Source", null=True, blank=True,
-        unique=False, related_name="database_resizes_source"
+        unique=False, related_name="database_resizes_source",
+        on_delete=models.SET_NULL
     )
     source_offer_name = models.CharField(
         verbose_name="Source", max_length=100, null=True, blank=True
     )
     target_offer = models.ForeignKey(
         CloudStackPack, verbose_name="Target", null=True, blank=True,
-        unique=False, related_name="database_resizes_target"
+        unique=False, related_name="database_resizes_target",
+        on_delete=models.SET_NULL
     )
     target_offer_name = models.CharField(
         verbose_name="Target", max_length=100, null=True, blank=True
