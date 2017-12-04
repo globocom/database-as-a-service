@@ -374,13 +374,28 @@ class DatabaseResize(DatabaseMaintenanceTask):
         null=False, unique=False, related_name="database_resizes"
     )
     source_offer = models.ForeignKey(
-        CloudStackPack, verbose_name="Source", null=False, unique=False,
-        related_name="database_resizes_source"
+        CloudStackPack, verbose_name="Source", null=True, blank=True,
+        unique=False, related_name="database_resizes_source"
+    )
+    source_offer_name = models.CharField(
+        verbose_name="Source", max_length=100, null=True, blank=True
     )
     target_offer = models.ForeignKey(
-        CloudStackPack, verbose_name="Target", null=False, unique=False,
-        related_name="database_resizes_target"
+        CloudStackPack, verbose_name="Target", null=True, blank=True,
+        unique=False, related_name="database_resizes_target"
     )
+    target_offer_name = models.CharField(
+        verbose_name="Target", max_length=100, null=True, blank=True
+    )
+
+    def save(self, *args, **kwargs):
+        if self.source_offer:
+            self.source_offer_name = self.source_offer.name
+
+        if self.target_offer:
+            self.target_offer_name = self.target_offer.name
+
+        super(DatabaseResize, self).save(*args, **kwargs)
 
     def __unicode__(self):
         return "{} resize".format(self.database.name)

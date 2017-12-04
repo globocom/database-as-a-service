@@ -79,3 +79,35 @@ class DatabaseResizeTestCase(TestCase):
 
         old_resize = DatabaseResize.objects.get(id=self.database_resize.id)
         self.assertFalse(old_resize.can_do_retry)
+
+    def test_model_save_pack_name(self):
+        self.assertGreater(self.database_resize.id, 0)
+        self.assertIsNotNone(self.database_resize.source_offer)
+        self.assertEqual(
+            self.database_resize.source_offer.name,
+            self.database_resize.source_offer_name
+        )
+        self.assertIsNotNone(self.database_resize.target_offer)
+        self.assertEqual(
+            self.database_resize.target_offer.name,
+            self.database_resize.target_offer_name
+        )
+
+    def test_model_do_not_save_plan_name(self):
+        self.assertEqual(
+            self.database_resize.source_offer.name,
+            self.database_resize.source_offer_name
+        )
+        self.database_resize.source_offer = None
+
+        self.assertEqual(
+            self.database_resize.target_offer.name,
+            self.database_resize.target_offer_name
+        )
+        self.database_resize.target_offer = None
+
+        self.assertGreater(self.database_resize.id, 0)
+        self.database_resize.save()
+
+        self.assertIsNotNone(self.database_resize.source_offer_name)
+        self.assertIsNotNone(self.database_resize.target_offer_name)
