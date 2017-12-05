@@ -7,10 +7,106 @@ from drivers import DriverFactory
 from logical.tests import factory as factory_logical
 from logical.models import Database
 from ..redis import Redis, RedisSentinel, RedisCluster
-from drivers.tests.base import BaseRedisDriverTestCase, BaseUsedAndTotalTestCase
+from drivers.tests.base import BaseRedisDriverTestCase, BaseUsedAndTotalTestCase, FakeDriverClient
+from physical.models import Instance
 
 
 LOG = logging.getLogger(__name__)
+
+
+@mock.patch('drivers.redis.Redis.redis', new=FakeDriverClient)
+class RedisSingleUpdateUsedSizeTestCase(BaseRedisDriverTestCase, BaseUsedAndTotalTestCase):
+
+    def test_instance_alive(self):
+        self.instance.used_size_in_bytes = 0
+        self.instance.save()
+        result = self.driver.update_infra_instances_used_size()
+        self._validate_instances()
+        self.assertListEqual(result['updated'], [self.instance])
+        self.assertEqual(result['error'], [])
+
+    def test_instance_dead(self):
+        self.instance.used_size_in_bytes = 0
+        self.instance.status = Instance.DEAD
+        self.instance.save()
+        result = self.driver.update_infra_instances_used_size()
+        self._validate_instances(expected_used_size=0)
+        self.assertListEqual(result['error'], [self.instance])
+        self.assertEqual(result['updated'], [])
+
+
+@mock.patch('drivers.redis.redis', new=FakeDriverClient)
+class RedisSentinelUpdateUsedSizeTestCase(BaseRedisDriverTestCase, BaseUsedAndTotalTestCase):
+
+    driver_class = RedisSentinel
+
+    def setUp(self):
+        super(RedisSentinelUpdateUsedSizeTestCase, self).setUp()
+        instances = self._create_more_instances(3)
+        self._change_instance_type(instances[-2:], Instance.REDIS_SENTINEL)
+
+    def test_instance_alive(self):
+        self.instance.used_size_in_bytes = 0
+        self.instance.save()
+        result = self.driver.update_infra_instances_used_size()
+        self._validate_instances()
+        self.assertListEqual(result['updated'], list(self.databaseinfra.instances.filter(instance_type=Instance.REDIS)))
+        self.assertEqual(result['error'], [])
+
+    def test_instance_dead(self):
+        self.instance.used_size_in_bytes = 0
+        self.instance.status = Instance.DEAD
+        self.instance.save()
+        result = self.driver.update_infra_instances_used_size()
+
+        self.assertEqual(self.instance.used_size_in_bytes, 0)
+
+        alive_instances = list(self.databaseinfra.instances.filter(
+            status=Instance.ALIVE, instance_type=Instance.REDIS
+        ))
+
+        self.assertEqual(alive_instances[0].used_size_in_bytes, 40)
+        self.assertListEqual(result['error'], [self.instance])
+        self.assertEqual(result['updated'], alive_instances)
+
+
+@mock.patch('drivers.redis.Redis.redis', new=FakeDriverClient)
+class RedisClusterUpdateUsedSizeTestCase(BaseRedisDriverTestCase, BaseUsedAndTotalTestCase):
+
+    driver_class = RedisSentinel
+
+    def setUp(self):
+        super(RedisClusterUpdateUsedSizeTestCase, self).setUp()
+        self._create_more_instances(5, used_size_in_bytes=0)
+
+    def test_instance_alive(self):
+        self.instance.used_size_in_bytes = 0
+        self.instance.save()
+        result = self.driver.update_infra_instances_used_size()
+        self._validate_instances()
+        self.assertEqual(len(result['updated']), 6)
+        self.assertListEqual(result['updated'], list(self.databaseinfra.instances.filter(instance_type=Instance.REDIS)))
+        self.assertEqual(result['error'], [])
+
+    def test_instance_dead(self):
+        self.instance.used_size_in_bytes = 0
+        self.instance.status = Instance.DEAD
+        self.instance.save()
+        alive_instances = list(self.databaseinfra.instances.filter(
+            status=Instance.ALIVE, instance_type=Instance.REDIS
+        ))
+        another_dead_instance = alive_instances.pop()
+        another_dead_instance.status = Instance.DEAD
+        another_dead_instance.save()
+        result = self.driver.update_infra_instances_used_size()
+
+        self.assertEqual(self.instance.used_size_in_bytes, 0)
+
+        self.assertListEqual(result['error'], [self.instance, another_dead_instance])
+        self._validate_instances(instances=result['error'], expected_used_size=0)
+        self.assertEqual(len(result['updated']), 4)
+        self.assertEqual(result['updated'], alive_instances)
+        self._validate_instances(instances=result['updated'], expected_used_size=40)
 
 
 class RedisUsedAndTotalTestCase(BaseRedisDriverTestCase, BaseUsedAndTotalTestCase):
