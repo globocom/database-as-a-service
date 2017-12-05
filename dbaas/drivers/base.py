@@ -144,6 +144,9 @@ class BaseDriver(object):
         """ Returns a mapping with same attributes of databaseinfra """
         raise NotImplementedError()
 
+    def update_infra_instances_used_size(self):
+        raise NotImplementedError()
+
     def create_user(self, credential, roles=None):
         raise NotImplementedError()
 
