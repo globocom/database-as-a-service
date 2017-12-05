@@ -57,7 +57,7 @@ class ArgumentsToResizeDatabase(ArgumentsTo):
 
 
 class ArgumentsToUpgradeDatabase(ArgumentsTo):
-    KEY = 'notification.tasks.reinstall_vm'
+    KEY = 'notification.tasks.upgrade_database'
 
     def build(self):
         return [
@@ -69,7 +69,7 @@ class ArgumentsToUpgradeDatabase(ArgumentsTo):
 
 
 class ArgumentsToReinstallVM(ArgumentsTo):
-    KEY = 'notification.tasks.upgrade_database'
+    KEY = 'notification.tasks.reinstall_vm'
 
     def build(self):
         return [

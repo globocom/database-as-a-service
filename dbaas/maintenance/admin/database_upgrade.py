@@ -12,14 +12,15 @@ class DatabaseUpgradeAdmin(DatabaseMaintenanceTaskAdmin):
     ]
 
     list_display = (
-        "database", "database_team", "source_plan", "target_plan",
+        "database", "database_team", "source_plan_name", "target_plan_name",
         "current_step", "friendly_status", "maintenance_action", "link_task",
         "started_at", "finished_at"
     )
 
     readonly_fields = (
-        "database", "source_plan", "target_plan", "link_task", "started_at",
-        "finished_at", "current_step", "status", "maintenance_action"
+        "database", "source_plan", "source_plan_name", "target_plan",
+        "target_plan_name", "link_task", "started_at", "finished_at",
+        "current_step", "status", "maintenance_action"
     )
 
     def maintenance_action(self, maintenance_task):
