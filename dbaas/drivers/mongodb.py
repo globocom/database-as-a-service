@@ -213,6 +213,27 @@ class MongoDB(BaseDriver):
                 raise ConnectionError(
                     'Error connection to databaseinfra %s: %s' % (self.databaseinfra, e.message))
 
+    def update_infra_instances_used_size(self):
+        result = {
+            'updated': [],
+            'error': []
+        }
+
+        for instance in self.get_database_instances():
+            with self.pymongo(instance=instance) as client:
+                if instance.status == Instance.ALIVE:
+                    database_info = client.admin.command('listDatabases')
+                    instance.used_size_in_bytes = database_info.get(
+                        'totalSize', 0
+                    )
+                    instance.save()
+                    result['updated'].append(instance)
+                else:
+                    result['error'].append(instance)
+
+        return result
+
+
     def info(self):
         databaseinfra_status = DatabaseInfraStatus(
             databaseinfra_model=self.databaseinfra)

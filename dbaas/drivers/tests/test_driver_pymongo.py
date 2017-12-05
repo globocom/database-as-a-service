@@ -7,7 +7,68 @@ from physical.tests import factory as factory_physical
 from logical.tests import factory as factory_logical
 from logical.models import Database
 from ..mongodb import MongoDB, MongoDBReplicaSet
-from drivers.tests.base import BaseMongoDriverTestCase, BaseUsedAndTotalTestCase
+from drivers.tests.base import (BaseMongoDriverTestCase, BaseUsedAndTotalTestCase,
+                                FakeDriverClient)
+from physical.models import Instance
+
+
+@mock.patch('drivers.mongodb.MongoDB.pymongo', new=FakeDriverClient)
+class MongoSingleUpdateUsedSizeTestCase(BaseMongoDriverTestCase, BaseUsedAndTotalTestCase):
+
+    def test_instance_alive(self):
+        self.instance.used_size_in_bytes = 0
+        self.instance.save()
+        result = self.driver.update_infra_instances_used_size()
+        self._validate_instances()
+        self.assertListEqual(result['updated'], [self.instance])
+        self.assertEqual(result['error'], [])
+
+    def test_instance_dead(self):
+        self.instance.used_size_in_bytes = 0
+        self.instance.status = Instance.DEAD
+        self.instance.save()
+        result = self.driver.update_infra_instances_used_size()
+        self._validate_instances(expected_used_size=0)
+        self.assertListEqual(result['error'], [self.instance])
+        self.assertEqual(result['updated'], [])
+
+
+@mock.patch('drivers.mongodb.MongoDB.pymongo', new=FakeDriverClient)
+class MongoReplicaSetUpdateUsedSizeTestCase(BaseMongoDriverTestCase, BaseUsedAndTotalTestCase):
+
+    driver_class = MongoDBReplicaSet
+
+    def setUp(self):
+        super(MongoReplicaSetUpdateUsedSizeTestCase, self).setUp()
+        instances = self._create_more_instances(3)
+        self._change_instance_type(instances[-2:], Instance.MONGODB_ARBITER)
+
+    def test_instance_alive(self):
+        self.instance.used_size_in_bytes = 0
+        self.instance.save()
+        result = self.driver.update_infra_instances_used_size()
+        self._validate_instances()
+        self.assertListEqual(
+            result['updated'],
+            list(self.databaseinfra.instances.filter(instance_type=Instance.MONGODB))
+        )
+        self.assertEqual(result['error'], [])
+
+    def test_instance_dead(self):
+        self.instance.used_size_in_bytes = 0
+        self.instance.status = Instance.DEAD
+        self.instance.save()
+        result = self.driver.update_infra_instances_used_size()
+
+        self.assertEqual(self.instance.used_size_in_bytes, 0)
+
+        alive_instances = list(self.databaseinfra.instances.filter(
+            status=Instance.ALIVE, instance_type=Instance.MONGODB
+        ))
+
+        self.assertEqual(alive_instances[0].used_size_in_bytes, 40)
+        self.assertListEqual(result['error'], [self.instance])
+        self.assertEqual(result['updated'], alive_instances)
 
 
 class MongoUsedAndTotalTestCase(BaseMongoDriverTestCase, BaseUsedAndTotalTestCase):
