@@ -78,15 +78,22 @@ var Validator = {};
     if(allowedValues == "")
       return true;
 
-    var allowedSet = allowedValues.split(/\s*[\s,]\s*/)
+    var allowedSet = allowedValues.split(/\s*[,]\s*/)
+    console.log(allowedSet)
     for (var i in allowedSet) {
       try{
         var constraintVal = new BigNumber(allowedSet[i])
+        console.log("worked for value"+allowedSet[i])
+
+        if ( value.equals(constraintVal) ) {
+          return true;
+        }
+
       } catch (err) {
-        return testNumberRange(value, allowedSet[i])
-      }
-      if ( value.equals(constraintVal) ) {
-        return true;
+        console.log("failed for value"+allowedSet[i])
+        if( testNumberRange(value, allowedSet[i]) ){
+          return true;
+        }
       }
     }
 
@@ -94,7 +101,7 @@ var Validator = {};
   }
 
   var testNumberRange = function(value, range){
-    var nums = range.split(/\s*[\s:]\s*/)
+    var nums = range.split(/\s*[:]\s*/)
     var lowerLimit = new BigNumber( nums[0] )
     if(nums[1] != ""){
       var upperLimit = new BigNumber( nums[1] )
@@ -103,6 +110,7 @@ var Validator = {};
       }
     }
     else {
+      console.log(lowerLimit)
       if( value.gte(lowerLimit) ){
         return true;
       }
