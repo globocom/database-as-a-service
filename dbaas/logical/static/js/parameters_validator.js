@@ -40,20 +40,28 @@ var Validator = {};
         return validateString(value, allowedValues)
       }
       if (acceptableType=="integer") {
-        var numericVal = +value;
-        if(numericVal!=parseInt(numericVal,10))
+        
+        try {
+          var bigVal = new BigNumber(value)
+        } catch (err) {
           return false;
+        }
 
         if(value.indexOf('.') !== -1)
           return false;
 
-        return validateNumber(value, allowedValues)
+        return validateNumber(bigVal, allowedValues)
       }
       if (acceptableType=="float") {
         if(value.indexOf('.') == -1)
           return false;
 
-        return validateNumber(value, allowedValues)
+        try {
+          var bigVal = new BigNumber(value)
+        } catch (err) {
+          return false;
+        }
+        return validateNumber(bigVal, allowedValues)
       }
       if (acceptableType=="boolean") {
         return true;
@@ -62,9 +70,9 @@ var Validator = {};
     }
 
   var validateNumber = function(value, allowedValues){
-    var numericVal = +value;
+    // var numericVal = +value;
 
-    if(isNaN(numericVal))
+    if(value.isNaN())
       return false;
 
     if(allowedValues == "")
@@ -72,11 +80,12 @@ var Validator = {};
 
     var allowedSet = allowedValues.split(/\s*[\s,]\s*/)
     for (var i in allowedSet) {
-      if( isNaN(+allowedSet[i]) ){
-        if(testNumberRange(value, allowedSet[i]))
-          return true;
+      try{
+        var constraintVal = new BigNumber(allowedSet[i])
+      } catch (err) {
+        return testNumberRange(value, allowedSet[i])
       }
-      else if (value == +allowedSet[i]) {
+      if ( value.equals(constraintVal) ) {
         return true;
       }
     }
@@ -86,15 +95,15 @@ var Validator = {};
 
   var testNumberRange = function(value, range){
     var nums = range.split(/\s*[\s:]\s*/)
-    var lowerLimit = +nums[0]
+    var lowerLimit = new BigNumber( nums[0] )
     if(nums[1] != ""){
-      var upperLimit = +nums[1]
-      if(value >= lowerLimit && value <= upperLimit){
+      var upperLimit = new BigNumber( nums[1] )
+      if( value.gte(lowerLimit) && value.lte(upperLimit) ){
         return true;
       }
     }
     else {
-      if(value>=lowerLimit){
+      if( value.gte(lowerLimit) ){
         return true;
       }
     }
