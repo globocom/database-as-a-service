@@ -14,6 +14,36 @@ from drivers.mongodb import MongoDB
 from drivers.redis import Redis
 
 
+class FakeDriverClient(object):
+
+    def __init__(self, instance):
+        self.instance = instance
+
+    def __exit__(self, *args, **kw):
+        pass
+
+    def __enter__(self):
+        return self
+
+    def info(self):
+        """
+        Mock for redis driver
+        """
+        return {
+            'used_memory': 40
+        }
+
+    @property
+    def admin(self):
+        """
+        Mock for pymongo driver
+        """
+
+        return type(str('FakeCommand'),
+                    (object,),
+                    {'command': lambda self, string: {'totalSize': 40}})()
+
+
 class BaseDriverTestCase(TestCase):
 
     host = None
@@ -88,6 +118,17 @@ class BaseUsedAndTotalTestCase(BaseDriverTestCase):
             )
 
         return map(_create, range(qt))
+
+    def _change_instance_type(self, instances, instance_type):
+        for instance in instances:
+            instance.instance_type = instance_type
+            instance.save()
+
+    def _validate_instances(self, instances=None, expected_used_size=40):
+        if instances is None:
+            instances = self.databaseinfra.instances.filter(instance_type=self.instance_type)
+        for instance in instances:
+            self.assertEqual(instance.used_size_in_bytes, expected_used_size)
 
 
 class BaseMysqlDriverTestCase(BaseDriverTestCase):
