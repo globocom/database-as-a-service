@@ -3,7 +3,7 @@ from django.core.urlresolvers import reverse
 from errors import DatabaseInQuarantineError, DatabaseIsDeadError, \
     BusyDatabaseError, MigrationDatabaseError, NoResizeOption, \
     DatabaseWithoutPersistence
-
+from decimal import Decimal, DecimalException
 
 class ParameterValidator(object):
 
@@ -37,8 +37,8 @@ class ParameterValidator(object):
     @classmethod
     def validate_number(cls, value, allowed_values):
         try:
-            numeric = float(value)
-        except ValueError:
+            numeric = Decimal(value)
+        except (ValueError, DecimalException):
             return False
 
         if allowed_values == "":
@@ -48,9 +48,9 @@ class ParameterValidator(object):
         for allowed_value in allowed_values:
             allowed_value = allowed_value.strip()
             try:
-                if float(allowed_value) == float(value):
+                if Decimal(allowed_value) == Decimal(value):
                     return True
-            except ValueError:
+            except (ValueError, DecimalException):
                 if cls.test_number_range(value, allowed_value):
                     return True
 
@@ -58,11 +58,11 @@ class ParameterValidator(object):
     
     @classmethod
     def test_number_range(cls, value, range):
-        value = float(value)
+        value = Decimal(value)
         nums = range.split(':')
-        lower_limit = float(nums[0])
+        lower_limit = Decimal(nums[0])
         if nums[1] != "":
-          upper_limit = float(nums[1])
+          upper_limit = Decimal(nums[1])
           if value >= lower_limit and value <= upper_limit:
             return True  
         else:

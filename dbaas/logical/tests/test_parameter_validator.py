@@ -56,12 +56,26 @@ class IntegerTestCase(TestCase):
 		result = ParameterValidator.validate_value('1', self.parameter)
 		self.assertTrue(result)
 
+		self.parameter.allowed_values = '0:18446744073709551615'
+		result = ParameterValidator.validate_value('0', self.parameter)
+		self.assertTrue(result)
+
+		result = ParameterValidator.validate_value('18446744073709551615', self.parameter)
+		self.assertTrue(result)
+
 	def test_range_integer_invalid(self):
 		self.parameter.allowed_values = '0:2'
 		result = ParameterValidator.validate_value('-1', self.parameter)
 		self.assertFalse(result)
 
 		result = ParameterValidator.validate_value('3', self.parameter)
+		self.assertFalse(result)
+
+		self.parameter.allowed_values = '0:18446744073709551615'
+		result = ParameterValidator.validate_value('-1', self.parameter)
+		self.assertFalse(result)
+
+		result = ParameterValidator.validate_value('18446744073709551617', self.parameter)
 		self.assertFalse(result)
 
 	def test_unlimited_range_integer_acceptable(self):
