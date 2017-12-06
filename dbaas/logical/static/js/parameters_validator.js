@@ -79,18 +79,15 @@ var Validator = {};
       return true;
 
     var allowedSet = allowedValues.split(/\s*[,]\s*/)
-    console.log(allowedSet)
     for (var i in allowedSet) {
       try{
         var constraintVal = new BigNumber(allowedSet[i])
-        console.log("worked for value"+allowedSet[i])
 
         if ( value.equals(constraintVal) ) {
           return true;
         }
 
       } catch (err) {
-        console.log("failed for value"+allowedSet[i])
         if( testNumberRange(value, allowedSet[i]) ){
           return true;
         }
@@ -110,7 +107,6 @@ var Validator = {};
       }
     }
     else {
-      console.log(lowerLimit)
       if( value.gte(lowerLimit) ){
         return true;
       }
