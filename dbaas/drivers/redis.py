@@ -191,6 +191,7 @@ class Redis(BaseDriver):
                     instance.used_size_in_bytes = database_info.get(
                         'used_memory', 0
                     )
+                    instance.total_size_in_bytes = self.maxmemory
                     instance.save()
                     result['updated'].append(instance)
                 else:
