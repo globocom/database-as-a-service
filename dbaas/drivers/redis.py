@@ -170,7 +170,14 @@ class Redis(BaseDriver):
 
         return dbs_names
 
-    def update_infra_instances_used_size(self):
+    @property
+    def maxmemory(self):
+        return int(
+            self.databaseinfra.get_parameter_value_by_parameter_name('maxmemory') or
+            self.databaseinfra.get_dbaas_parameter_default_value('maxmemory')
+        )
+
+    def update_infra_instances_sizes(self):
 
         result = {
             'updated': [],
