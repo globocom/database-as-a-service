@@ -124,11 +124,12 @@ class BaseUsedAndTotalTestCase(BaseDriverTestCase):
             instance.instance_type = instance_type
             instance.save()
 
-    def _validate_instances(self, instances=None, expected_used_size=40):
+    def _validate_instances_sizes(self, instances=None, expected_used_size=40, expected_total_size=90):
         if instances is None:
             instances = self.databaseinfra.instances.filter(instance_type=self.instance_type)
         for instance in instances:
             self.assertEqual(instance.used_size_in_bytes, expected_used_size)
+            self.assertEqual(instance.total_size_in_bytes, expected_total_size)
 
 
 class BaseMysqlDriverTestCase(BaseDriverTestCase):
