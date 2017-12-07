@@ -9,9 +9,44 @@ from logical.models import Database
 from ..redis import Redis, RedisSentinel, RedisCluster
 from drivers.tests.base import BaseRedisDriverTestCase, BaseUsedAndTotalTestCase, FakeDriverClient
 from physical.models import Instance
+from physical.tests.factory import (DatabaseInfraParameterFactory, CloudStackOfferingFactory,
+                                    DatabaseInfraOfferingFactory)
 
 
 LOG = logging.getLogger(__name__)
+
+
+class RedisDriverPropertiesTestCase(BaseRedisDriverTestCase):
+
+    def setUp(self):
+        super(RedisDriverPropertiesTestCase, self).setUp()
+        cs_offering = CloudStackOfferingFactory(memory_size_mb=9)
+        DatabaseInfraOfferingFactory(
+            databaseinfra=self.databaseinfra,
+            offering=cs_offering
+        )
+
+    def test_maxmemory_from_parameter(self):
+        '''
+            Test property: maxmemory from parameter
+            case: Validates when maxmemory from parameter table
+        '''
+
+        DatabaseInfraParameterFactory(
+            value='110000', parameter__name='maxmemory',
+            databaseinfra=self.databaseinfra
+        )
+
+        self.assertEqual(self.driver.maxmemory, 110000)
+
+    def test_maxmemory_from_configuration(self):
+        '''
+            Test property: maxmemory from configuration
+            case: Validates maxmemory come from configuration
+                  when not found on parameter table
+        '''
+
+        self.assertEqual(self.driver.maxmemory, 4718592)
 
 
 @mock.patch('drivers.redis.Redis.redis', new=FakeDriverClient)
