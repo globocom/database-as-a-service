@@ -21,7 +21,9 @@ class DatabaseAPITestCase(DbaaSAPITestCase, BasicTestsMixin):
 
     def setUp(self):
         super(DatabaseAPITestCase, self).setUp()
-        self.datainfra = physical_factory.DatabaseInfraFactory()
+        self.datainfra = physical_factory.DatabaseInfraFactory(
+            engine__engine_type__name='mongodb'
+        )
         self.instance = physical_factory.InstanceFactory(
             address="127.0.0.1", port=27017, databaseinfra=self.datainfra)
         self.team = TeamFactory()
@@ -35,7 +37,10 @@ class DatabaseAPITestCase(DbaaSAPITestCase, BasicTestsMixin):
         )
 
     def model_create(self):
-        return factory.DatabaseFactory(databaseinfra=self.datainfra)
+        return factory.DatabaseFactory(
+            databaseinfra=self.datainfra,
+            databaseinfra__engine__engine_type__name='mongodb'
+        )
 
     @patch('notification.tasks.create_database.delay')
     def test_post_create_new(self, mock_delay):

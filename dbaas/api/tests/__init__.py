@@ -3,6 +3,7 @@ from __future__ import absolute_import, unicode_literals
 import re
 import logging
 import json
+from mock import patch, MagicMock
 from rest_framework import test, status
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
@@ -10,6 +11,7 @@ from django.conf import settings
 from django.core.urlresolvers import reverse
 from account.models import Role, Team
 from physical.models import Environment
+from dbaas.tests.helpers import InstanceHelper
 
 LOG = logging.getLogger(__name__)
 
@@ -57,6 +59,7 @@ class DbaaSAPITestCase(test.APITestCase):
         self.client.logout()
 
 
+@patch('drivers.fake.FakeDriver.check_instance_is_master', new=MagicMock(side_effect=InstanceHelper.check_instance_is_master))
 class BasicTestsMixin(object):
     SERVER_URL = "http://testserver"
 
