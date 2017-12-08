@@ -1,77 +1,33 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
-import os
-import mock
+from mock import patch, MagicMock
 from drivers import DriverFactory
 from physical.tests import factory as factory_physical
 from logical.tests import factory as factory_logical
 from logical.models import Database
 from ..mongodb import MongoDB, MongoDBReplicaSet
-from drivers.tests.base import (BaseMongoDriverTestCase, BaseUsedAndTotalTestCase,
-                                FakeDriverClient)
+from drivers.tests.base import (BaseMongoDriverTestCase, FakeDriverClient,
+                                BaseSingleInstanceUpdateSizesTest,
+                                BaseHAInstanceUpdateSizesTest)
 from physical.models import Instance
 
 
-@mock.patch('drivers.mongodb.MongoDB.pymongo', new=FakeDriverClient)
-class MongoSingleUpdateUsedSizeTestCase(BaseMongoDriverTestCase, BaseUsedAndTotalTestCase):
-
-    def test_instance_alive(self):
-        self.instance.used_size_in_bytes = 0
-        self.instance.save()
-        result = self.driver.update_infra_instances_used_size()
-        self._validate_instances()
-        self.assertListEqual(result['updated'], [self.instance])
-        self.assertEqual(result['error'], [])
-
-    def test_instance_dead(self):
-        self.instance.used_size_in_bytes = 0
-        self.instance.status = Instance.DEAD
-        self.instance.save()
-        result = self.driver.update_infra_instances_used_size()
-        self._validate_instances(expected_used_size=0)
-        self.assertListEqual(result['error'], [self.instance])
-        self.assertEqual(result['updated'], [])
+@patch('drivers.mongodb.MongoDB.pymongo', new=FakeDriverClient)
+@patch('physical.models.DiskOffering.size_bytes', new=MagicMock(return_value=90))
+class MongoSingleUpdateSizesTestCase(BaseSingleInstanceUpdateSizesTest, BaseMongoDriverTestCase):
+    pass
 
 
-@mock.patch('drivers.mongodb.MongoDB.pymongo', new=FakeDriverClient)
-class MongoReplicaSetUpdateUsedSizeTestCase(BaseMongoDriverTestCase, BaseUsedAndTotalTestCase):
+@patch('drivers.mongodb.MongoDB.pymongo', new=FakeDriverClient)
+@patch('physical.models.DiskOffering.size_bytes', new=MagicMock(return_value=90))
+class MongoReplicaSetUpdateSizesTestCase(BaseMongoDriverTestCase, BaseHAInstanceUpdateSizesTest):
 
     driver_class = MongoDBReplicaSet
-
-    def setUp(self):
-        super(MongoReplicaSetUpdateUsedSizeTestCase, self).setUp()
-        instances = self._create_more_instances(3)
-        self._change_instance_type(instances[-2:], Instance.MONGODB_ARBITER)
-
-    def test_instance_alive(self):
-        self.instance.used_size_in_bytes = 0
-        self.instance.save()
-        result = self.driver.update_infra_instances_used_size()
-        self._validate_instances()
-        self.assertListEqual(
-            result['updated'],
-            list(self.databaseinfra.instances.filter(instance_type=Instance.MONGODB))
-        )
-        self.assertEqual(result['error'], [])
-
-    def test_instance_dead(self):
-        self.instance.used_size_in_bytes = 0
-        self.instance.status = Instance.DEAD
-        self.instance.save()
-        result = self.driver.update_infra_instances_used_size()
-
-        self.assertEqual(self.instance.used_size_in_bytes, 0)
-
-        alive_instances = list(self.databaseinfra.instances.filter(
-            status=Instance.ALIVE, instance_type=Instance.MONGODB
-        ))
-
-        self.assertEqual(alive_instances[0].used_size_in_bytes, 40)
-        self.assertListEqual(result['error'], [self.instance])
-        self.assertEqual(result['updated'], alive_instances)
+    secondary_instance_quantity = 2
+    secondary_instance_type = Instance.MONGODB_ARBITER
 
 
-class MongoUsedAndTotalTestCase(BaseMongoDriverTestCase, BaseUsedAndTotalTestCase):
+class MongoUsedAndTotalTestCase(BaseMongoDriverTestCase):
 
     """
     Tests Mongo total and used
@@ -93,10 +49,15 @@ class MongoUsedAndTotalTestCase(BaseMongoDriverTestCase, BaseUsedAndTotalTestCas
             Test validates return total and used size when has single instance
         """
         self.driver = MongoDBReplicaSet(databaseinfra=self.databaseinfra)
-        self.driver.check_instance_is_master = mock.MagicMock(
-            side_effect=self._check_instance_is_master
+        self.driver.check_instance_is_master = MagicMock(
+            side_effect=self.instance_helper.check_instance_is_master
         )
-        self._create_more_instances()
+        self.instance_helper.create_instances_by_quant(
+            infra=self.databaseinfra, base_address='131',
+            instance_type=self.instance_type,
+            total_size_in_bytes=35, used_size_in_bytes=10
+        )
+
         self.instance.total_size_in_bytes = 35
         self.instance.used_size_in_bytes = 10
         self.instance.save()
@@ -121,7 +82,7 @@ class MongoDBEngineTestCase(BaseMongoDriverTestCase):
 
     def test_connection_string(self):
         self.assertEqual(
-            "mongodb://<user>:<password>@{}".format(self.endpoint), self.driver.get_connection())
+            "mongodb://<user>:<password>@{}".format(self.instance_endpoint), self.driver.get_connection())
 
     def test_get_user(self):
         self.assertEqual(self.databaseinfra.user, self.driver.get_user())
@@ -133,7 +94,7 @@ class MongoDBEngineTestCase(BaseMongoDriverTestCase):
     def test_get_default_port(self):
         self.assertEqual(27017, self.driver.default_port)
 
-    @mock.patch.object(MongoDB, 'get_replica_name')
+    @patch.object(MongoDB, 'get_replica_name')
     def test_connection_string_when_in_replica_set(self, get_replica_name):
         self.instance = factory_physical.InstanceFactory(
             databaseinfra=self.databaseinfra, address='127.0.0.2', port=27018)
@@ -141,7 +102,7 @@ class MongoDBEngineTestCase(BaseMongoDriverTestCase):
 
         expected_conn = ("mongodb://<user>:<password>"
                           "@{},127.0.0.2:27018"
-                          "?replicaSet=my_repl").format(self.endpoint)
+                          "?replicaSet=my_repl").format(self.instance_endpoint)
 
         self.assertEqual(expected_conn, self.driver.get_connection())
 
@@ -150,11 +111,11 @@ class MongoDBEngineTestCase(BaseMongoDriverTestCase):
             name="my_db_url_name", databaseinfra=self.databaseinfra)
 
         expected_conn = ("mongodb://<user>:<password>"
-                         "@{}/my_db_url_name").format(self.endpoint)
+                         "@{}/my_db_url_name").format(self.instance_endpoint)
 
         self.assertEqual(expected_conn, self.driver.get_connection(database=self.database))
 
-    @mock.patch.object(MongoDB, 'get_replica_name')
+    @patch.object(MongoDB, 'get_replica_name')
     def test_connection_with_database_and_replica(self, get_replica_name):
         self.instance = factory_physical.InstanceFactory(
             databaseinfra=self.databaseinfra, address='127.0.0.2', port=27018)
@@ -164,7 +125,7 @@ class MongoDBEngineTestCase(BaseMongoDriverTestCase):
 
         expected_conn = ("mongodb://<user>:<password>"
                          "@{},127.0.0.2:27018/my_db_url_name"
-                         "?replicaSet=my_repl").format(self.endpoint)
+                         "?replicaSet=my_repl").format(self.instance_endpoint)
 
         self.assertEqual(expected_conn, self.driver.get_connection(database=self.database))
 
@@ -177,6 +138,8 @@ class ManageDatabaseMongoDBTestCase(BaseMongoDriverTestCase):
         super(ManageDatabaseMongoDBTestCase, self).setUp()
         self.database = factory_logical.DatabaseFactory(
             databaseinfra=self.databaseinfra)
+        self.instance.address = '127.0.0.1'
+        self.instance.save()
         # ensure database is dropped
         self.driver_client.drop_database(self.database.name)
 
@@ -211,6 +174,8 @@ class ManageCredentialsMongoDBTestCase(BaseMongoDriverTestCase):
             databaseinfra=self.databaseinfra)
         self.credential = factory_logical.CredentialFactory(
             database=self.database)
+        self.instance.address = '127.0.0.1'
+        self.instance.save()
         self.driver.create_database(self.database)
 
     def tearDown(self):
