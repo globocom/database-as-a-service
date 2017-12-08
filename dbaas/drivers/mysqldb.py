@@ -149,7 +149,7 @@ class MySQL(BaseDriver):
     def query(self, query_string, instance=None):
         return self.__query(query_string, instance)
 
-    def update_infra_instances_used_size(self):
+    def update_infra_instances_sizes(self):
         result = {
             'updated': [],
             'error': []
@@ -167,6 +167,10 @@ class MySQL(BaseDriver):
                         db_sizes
                     )
                 )
+                instance.total_size_in_bytes = (self.databaseinfra.
+                                                disk_offering.size_bytes()
+                                                if self.databaseinfra.disk_offering
+                                                else 0.0)
                 instance.save()
                 result['updated'].append(instance)
             else:
