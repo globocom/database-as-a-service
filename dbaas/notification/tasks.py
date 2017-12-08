@@ -402,7 +402,7 @@ def update_database_status(self):
 
 @app.task(bind=True)
 @only_one(key="get_databases_used_size")
-def update_database_used_size(self):
+def update_database_used_size_old(self):
     LOG.info("Retrieving all databases")
     try:
         worker_name = get_worker_name()
@@ -420,6 +420,35 @@ def update_database_used_size(self):
             database.save(update_fields=['used_size_in_bytes'])
             msg = "\nUpdating used size in bytes for database: {}, used size: {}".format(
                 database, database.used_size_in_bytes)
+            msgs.append(msg)
+            LOG.info(msg)
+
+        task_history.update_status_for(TaskHistory.STATUS_SUCCESS, details="\n".join(
+            value for value in msgs))
+    except Exception as e:
+        task_history.update_status_for(TaskHistory.STATUS_ERROR, details=e)
+
+    return
+
+
+@app.task(bind=True)
+@only_one(key="update_infra_instances_sizes")
+def update_infra_instances_sizes(self):
+    """
+        Update used and total size of all instances databases
+    """
+
+    LOG.info("Retrieving all databases")
+    try:
+        worker_name = get_worker_name()
+        task_history = TaskHistory.register(
+            request=self.request, user=None, worker_name=worker_name)
+        databases = Database.objects.all()
+        msgs = []
+        for database in databases:
+            instances = database.driver.update_infra_instances_sizes()
+            msg = "\nUpdating used size in bytes for database: {}, instances updated: {}, instances with error: {}".format(
+                database, instances.get('updated', '-'), instances.get('error', '-'))
             msgs.append(msg)
             LOG.info(msg)
 
