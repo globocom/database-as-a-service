@@ -102,7 +102,7 @@ class BaseDriverTest(object):
 
 class BaseMysqlDriverTestCase(BaseDriverTest, TestCase):
 
-    host = '127.0.0.1'
+    host = settings.DB_HOST
     port = 3306
     db_user = 'root'
     db_password = settings.DB_PASSWORD
