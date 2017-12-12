@@ -1,5 +1,6 @@
 # coding: utf-8
 # from unittest import TestCase
+from mock import patch, MagicMock
 from django.test import TestCase
 from django.conf import settings
 from physical.models import Instance
@@ -9,17 +10,21 @@ from django.template import Template, Context
 from lxml import html as lhtml
 from _mysql_exceptions import OperationalError
 from drivers.base import DatabaseDoesNotExist, InvalidCredential
+from dbaas.tests.helpers import InstanceHelper
 
 
 class CapacityBaseTestCase(TestCase):
 
-    KB2GB_FACTOR = (1.0 * 1024 * 1024)
+    KB2GB_FACTOR = MB2BYTE_FACTOR = (1.0 * 1024 * 1024)
     BYTE2GB_FACTOR = (1.0 * 1024 * 1024 * 1024)
+    ENGINE = 'mysql'
 
     @classmethod
     def setUpClass(cls):
         try:
-            cls._create_database_structure()
+            with patch('drivers.fake.FakeDriver.check_instance_is_master',
+                       new=MagicMock(side_effect=InstanceHelper.check_instance_is_master)):
+                cls._create_database_structure()
         except Exception, e:
             cls.clean_database()
             assert False, "{}".format(e)
@@ -34,7 +39,7 @@ class CapacityBaseTestCase(TestCase):
         mysql_port = settings.DB_PORT or 3306
         cls.mysql_endpoint = '{}:{}'.format(mysql_host, mysql_port)
         cls.engine_type = factory_physical.EngineTypeFactory(
-            name='mysql'
+            name=cls.ENGINE
         )
         cls.engine = factory_physical.EngineFactory(
             engine_type=cls.engine_type
@@ -59,7 +64,8 @@ class CapacityBaseTestCase(TestCase):
             port=123, is_active=True,
             instance_type=Instance.MYSQL,
             databaseinfra=cls.databaseinfra,
-            hostname=cls.hostname
+            hostname=cls.hostname,
+
         )
         cls.database = factory_logical.DatabaseFactory(
             name='test_db_1',
@@ -126,6 +132,8 @@ class CapacityBaseTestCase(TestCase):
             'database': self.database}))
 
 
+@patch('drivers.fake.FakeDriver.check_instance_is_master',
+       new=MagicMock(side_effect=InstanceHelper.check_instance_is_master))
 class DiskCapacityTestCase(CapacityBaseTestCase):
 
     def _change_fields(
@@ -146,6 +154,9 @@ class DiskCapacityTestCase(CapacityBaseTestCase):
         self.database.plan.save()
         self.database.used_size_in_bytes = used_database_size * self.BYTE2GB_FACTOR  # 2.5GB
         self.database.save()
+        self.instance.total_size_in_bytes = total_disk_size * self.BYTE2GB_FACTOR
+        self.instance.used_size_in_bytes = used_database_size * self.BYTE2GB_FACTOR
+        self.instance.save()
 
     def test_no_bar_when_obj_not_found_on_context(self):
         html = '{% load capacity %}'
@@ -228,6 +239,8 @@ class DiskCapacityTestCase(CapacityBaseTestCase):
         self.assertIn('80.10%', free_bar.attrib.get('style', ''))
 
 
+@patch('drivers.fake.FakeDriver.check_instance_is_master',
+       new=MagicMock(side_effect=InstanceHelper.check_instance_is_master))
 class MemoryCapacityTestCase(CapacityBaseTestCase):
 
     def test_no_bar_when_obj_not_found_on_context(self):
@@ -240,10 +253,11 @@ class MemoryCapacityTestCase(CapacityBaseTestCase):
 
     def test_percent(self):
 
-        self.databaseinfra.per_database_size_mbytes = 500
-        self.databaseinfra.save()
-        self.database.used_size_in_bytes = 400000000
-        self.database.save()
+        # self.databaseinfra.per_database_size_mbytes = 500
+        # self.databaseinfra.save()
+        self.instance.total_size_in_bytes = 10 * self.BYTE2GB_FACTOR
+        self.instance.used_size_in_bytes = 7.45 * self.BYTE2GB_FACTOR
+        self.instance.save()
 
         rendered_progress_bar = self._render_templatetag('memory')
         root = lhtml.fromstring(rendered_progress_bar)
@@ -252,15 +266,18 @@ class MemoryCapacityTestCase(CapacityBaseTestCase):
         free_bar = root.cssselect('.bar.free-bar')[0]
 
         self.assertEqual(len(labels), 2)
-        self.assertIn('74.00%', database_bar.attrib.get('style', ''))
-        self.assertIn('26.00%', free_bar.attrib.get('style', ''))
+        self.assertIn('74.50%', database_bar.attrib.get('style', ''))
+        self.assertIn('25.50%', free_bar.attrib.get('style', ''))
 
     def test_0_percent(self):
         self.nfsaas_host_attr.nfsaas_size_kb = 10 * self.KB2GB_FACTOR  # 10GB
         self.nfsaas_host_attr.nfsaas_used_size_kb = 0
         self.nfsaas_host_attr.save()
-        self.database.used_size_in_bytes = 0
-        self.database.save()
+        # self.database.used_size_in_bytes = 0
+        # self.database.save()
+        self.instance.used_size_in_bytes = 0
+        self.instance.total_size_in_bytes = 10 * self.BYTE2GB_FACTOR
+        self.instance.save()
 
         rendered_progress_bar = self._render_templatetag('memory')
         root = lhtml.fromstring(rendered_progress_bar)

@@ -5,7 +5,7 @@ from django import template
 from django.utils.safestring import mark_safe
 from django.utils.functional import cached_property
 import logging
-from logical.models import MB_FACTOR
+from logical.models import MB_FACTOR, GB_FACTOR
 
 getcontext().rounding = ROUND_HALF_EVEN
 TWO = Decimal(10) ** -2
@@ -89,7 +89,7 @@ class DetailedProgressBarNode(template.Node):
         if self.bar_type == 'disk':
             is_in_memory_and_not_persisted = (self.is_in_memory and
                                               not self.is_persisted)
-            not_in_memory_and_used_disk_none = (self.used_disk_in_gb is None and
+            not_in_memory_and_used_disk_none = (not self.used_disk_in_gb and
                                                 not self.is_in_memory)
 
             if is_in_memory_and_not_persisted or not_in_memory_and_used_disk_none:
@@ -106,24 +106,29 @@ class DetailedProgressBarNode(template.Node):
     def _make_memory_part(self, **kw):
         self.memory_parts.append(kw)
 
-    @cached_property
+    @property
     def total_disk_in_gb(self):
+        return self.normalize_number(self.instance.total_size_in_bytes * GB_FACTOR)
         host_attr = self.instance.hostname.nfsaas_host_attributes.filter(is_active=True).first()
         total_disk_in_gb = (host_attr.nfsaas_size_kb or 0.0) * MB_FACTOR
         return self.normalize_number(total_disk_in_gb)
 
-    @cached_property
+    @property
     def used_disk_in_gb(self):
+        host_attr = self.instance.hostname.nfsaas_host_attributes.filter(is_active=True).first()
+        total_disk_in_gb = (host_attr.nfsaas_used_size_kb or 0.0) * MB_FACTOR
+        return self.normalize_number(total_disk_in_gb)
         used_disk_in_gb = self.databaseinfra.disk_used_size_in_gb
         return self.normalize_number(used_disk_in_gb) if used_disk_in_gb is not None else None
 
-    @cached_property
+    @property
     def used_database_in_gb(self):
+        return self.normalize_number(self.instance.used_size_in_bytes * GB_FACTOR)
         if self.is_in_memory and not self.is_persisted:
             return self.used_disk_in_gb or 0
         return self.normalize_number(self.database.used_size_in_gb)
 
-    @cached_property
+    @property
     def used_other_in_gb(self):
         if self.used_disk_in_gb is None:
             return None
@@ -131,7 +136,7 @@ class DetailedProgressBarNode(template.Node):
             used_other_in_gb = self.used_disk_in_gb - self.used_database_in_gb
             return self.normalize_number(used_other_in_gb)
 
-    @cached_property
+    @property
     def free_disk_in_gb(self):
         if self.used_disk_in_gb is None:
             free_disk_in_gb = self.total_disk_in_gb - self.used_database_in_gb
@@ -140,13 +145,16 @@ class DetailedProgressBarNode(template.Node):
 
         return self.normalize_number(free_disk_in_gb)
 
-    @cached_property
+    @property
     def database_percent(self):
-        database_percent = (self.used_database_in_gb * 100) / self.total_disk_in_gb
+        if self.total_disk_in_gb:
+            database_percent = (self.used_database_in_gb * 100) / self.total_disk_in_gb
+        else:
+            database_percent = 0.0
 
         return self.normalize_number(database_percent)
 
-    @cached_property
+    @property
     def other_percent(self):
         if self.used_disk_in_gb is None or self.is_in_memory:
             other_percent = 0
@@ -155,13 +163,15 @@ class DetailedProgressBarNode(template.Node):
 
         return self.normalize_number(other_percent)
 
-    @cached_property
+    @property
     def free_percent(self):
         free_percent = 100 - (self.database_percent + self.other_percent)
 
         return self.normalize_number(free_percent)
 
     def render_disk_bar(self):
+        # Fazer o loop para reiderizar com a instancia
+        # self.instance = self.database.driver.get_master_instance()
         self._make_disk_part(**{
             'name': 'database',
             'label': 'Used' if self.is_in_memory else 'Database',
@@ -186,25 +196,27 @@ class DetailedProgressBarNode(template.Node):
         })
         return self.render_template(self.disk_parts, 'disk')
 
-    @cached_property
+    @property
     def total_db_memory_in_gb(self):
+        return self.normalize_number(self.instance.total_size_in_bytes * GB_FACTOR)
         return self.normalize_number(self.database.total_size_in_gb)
 
-    @cached_property
+    @property
     def used_db_memory_in_gb(self):
+        return self.normalize_number(self.instance.used_size_in_bytes * GB_FACTOR)
         return self.normalize_number(self.database.used_size_in_gb)
 
-    @cached_property
+    @property
     def used_db_memory_percent(self):
         used_memory_percent = (self.used_db_memory_in_gb * 100) / self.total_db_memory_in_gb
 
         return self.normalize_number(used_memory_percent)
 
-    @cached_property
+    @property
     def free_db_memory_percent(self):
         return self.normalize_number(100 - self.used_db_memory_percent)
 
-    @cached_property
+    @property
     def free_db_memory_size_in_gb(self):
         return self.total_db_memory_in_gb - self.used_db_memory_in_gb
 
