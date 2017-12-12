@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 
-from physical.tests.factory import InstanceFactory
+from physical.tests.factory import InstanceFactory, HostFactory
 
 
 class UsedAndTotalValidator(object):
@@ -59,17 +59,19 @@ class InstanceHelper(object):
     @staticmethod
     def create_instances_by_quant(infra, port=3306, qt=1, total_size_in_bytes=50,
                                   used_size_in_bytes=25, instance_type=1,
-                                  base_address='127'):
+                                  base_address='127', hostname=None):
         """
             Helper create instances by quantity
         """
         def _create(n):
+            extra_params = dict(**{'hostname': hostname} if hostname else {})
             return InstanceFactory(
                 databaseinfra=infra,
                 address='{0}.7{1}.{2}.{2}'.format(base_address, infra.id, n), port=port,
                 instance_type=instance_type,
                 total_size_in_bytes=total_size_in_bytes,
-                used_size_in_bytes=used_size_in_bytes
+                used_size_in_bytes=used_size_in_bytes,
+                **extra_params
             )
 
         return map(_create, range(1, qt + 1))
