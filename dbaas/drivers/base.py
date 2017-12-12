@@ -282,6 +282,17 @@ class BaseDriver(object):
             sleep(10)
         raise Exception("Could not switch master because of replication's delay")
 
+    def wait_for_replication_ok(self, instance, attempts=100):
+        from time import sleep
+        for attempt in range(0, attempts):
+            if self.is_replication_ok(instance):
+                return
+            LOG.info("Waiting 10s to check replication...")
+            sleep(10)
+            
+        raise Exception("Replication's delayed")
+
+
     def get_database_agents(self):
         """ Returns database agents list"""
         raise NotImplementedError()
