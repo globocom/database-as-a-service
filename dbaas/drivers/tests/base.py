@@ -66,10 +66,16 @@ class BaseDriverTest(object):
             password=self.db_password, endpoint="{}:{}".format(host, port),
             engine__engine_type__name=self.engine_name, user=self.db_user
         )
+        hostname = factory_physical.HostFactory()
+        self.nfsaas_host_attr = factory_physical.NFSaaSHostAttr(
+            host=hostname,
+            # nfsaas_size_kb=cls.database.total_size_in_kb,
+            nfsaas_used_size_kb=float(40.0/1024.0)
+        )
         self.instances = self.instance_helper.create_instances_by_quant(
             infra=self.databaseinfra, port=self.port, qt=self.instances_quantity,
             total_size_in_bytes=0, used_size_in_bytes=0,
-            instance_type=self.instance_type
+            instance_type=self.instance_type, hostname=hostname
         )
         self.instance = self.instances[0]
         self.instance_endpoint = "{}:{}".format(self.instance.address, self.instance.port)
@@ -77,6 +83,7 @@ class BaseDriverTest(object):
         self._driver_client = None
 
     def tearDown(self):
+        factory_physical.HostFactory.FACTORY_FOR.objects.all().delete()
         Instance.objects.all().delete()
         if not Database.objects.filter(databaseinfra_id=self.databaseinfra.id):
             self.databaseinfra.delete()
