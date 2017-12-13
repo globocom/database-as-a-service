@@ -8,7 +8,7 @@ from contextlib import contextmanager
 from . import BaseDriver
 from . import DatabaseInfraStatus
 from . import DatabaseStatus
-from . import ConnectionError
+from .errors import ConnectionError
 from system.models import Configuration
 from physical.models import Instance
 from util import exec_remote_command

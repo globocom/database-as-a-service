@@ -2,69 +2,13 @@
 from __future__ import absolute_import, unicode_literals
 import logging
 from django.utils.translation import ugettext_lazy as _
-from django_services.service.exceptions import InternalException
+from .errors import ConnectionError
+
 
 LOG = logging.getLogger(__name__)
 
-__all__ = ['GenericDriverError', 'ReplicationError', 'ConnectionError',
-           'AuthenticationError', 'DatabaseAlreadyExists', 'CredentialAlreadyExists', 'InvalidCredential',
-           'BaseDriver', 'DatabaseStatus', 'DatabaseInfraStatus', 'DatabaseDoesNotExist']
+__all__ = ['BaseDriver', 'DatabaseStatus', 'DatabaseInfraStatus']
 
-
-class GenericDriverError(InternalException):
-
-    """ Exception raises when any kind of problem happens when executing operations on databaseinfra """
-
-    def __init__(self, message=None):
-        self.message = message
-
-    def __unicode__(self):
-        return "%s: %s" % (type(self).__name__, self.message)
-
-    def __str__(self):
-        return b"%s: %s" % (type(self).__name__, self.message)
-
-    def __repr__(self):
-        return b"%s: %s" % (type(self).__name__, self.message)
-
-class ReplicationError(GenericDriverError):
-    """ Raised when there is any replication failure on databaseinfra """
-    pass
-
-class ConnectionError(GenericDriverError):
-
-    """ Raised when there is any problem to connect on databaseinfra """
-    pass
-
-
-class AuthenticationError(ConnectionError):
-
-    """ Raised when there is any problem authenticating on databaseinfra """
-    pass
-
-
-class DatabaseAlreadyExists(InternalException):
-
-    """ Raised when database already exists in datainfra """
-    pass
-
-
-class DatabaseDoesNotExist(InternalException):
-
-    """ Raised when there is no requested database """
-    pass
-
-
-class CredentialAlreadyExists(InternalException):
-
-    """ Raised when credential already exists in database """
-    pass
-
-
-class InvalidCredential(InternalException):
-
-    """ Raised when credential no more exists in database """
-    pass
 
 
 class BaseDriver(object):
@@ -284,20 +228,6 @@ class BaseDriver(object):
             LOG.info("Waiting 10s to check replication...")
             sleep(10)
         raise Exception("Could not switch master because of replication's delay")
-
-    def wait_for_replication_ok(self, instance, attempts=100):
-        from time import sleep
-        for attempt in range(0, attempts):
-            try:
-                if self.is_replication_ok(instance):
-                    return
-            except ReplicationError, error:
-                pass
-            LOG.info("Waiting 10s to check replication...")
-            sleep(10)
-
-        raise Exception(error)
-
 
     def get_database_agents(self):
         """ Returns database agents list"""
