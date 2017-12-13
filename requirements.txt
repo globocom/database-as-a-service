@@ -53,7 +53,7 @@ wsgiref==0.1.2
 dbaas_cloudstack==0.9.10
 dbaas_credentials==1.1.13
 dbaas_nfsaas==0.6.18
-dbaas_zabbix==0.4.23
+dbaas_zabbix==0.4.26
 dbaas_dbmonitor==0.2.8
 django-filter==0.9.1
 dbaas-aclapi==0.1.10

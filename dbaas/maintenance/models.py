@@ -319,16 +319,31 @@ class DatabaseUpgrade(DatabaseMaintenanceTask):
         null=False, unique=False, related_name="database_upgrades"
     )
     source_plan = models.ForeignKey(
-        Plan, verbose_name="Source", null=False, unique=False,
-        related_name="database_upgrades_source"
+        Plan, verbose_name="Source", null=True, blank=True, unique=False,
+        related_name="database_upgrades_source", on_delete=models.SET_NULL
+    )
+    source_plan_name = models.CharField(
+        verbose_name="Source", max_length=100, null=True, blank=True
     )
     target_plan = models.ForeignKey(
-        Plan, verbose_name="Target", null=False, unique=False,
-        related_name="database_upgrades_target"
+        Plan, verbose_name="Target", null=True, blank=True, unique=False,
+        related_name="database_upgrades_target", on_delete=models.SET_NULL
+    )
+    target_plan_name = models.CharField(
+        verbose_name="Target", max_length=100, null=True, blank=True
     )
 
     def __unicode__(self):
         return "{} upgrade".format(self.database.name)
+
+    def save(self, *args, **kwargs):
+        if self.source_plan:
+            self.source_plan_name = self.source_plan.name
+
+        if self.target_plan:
+            self.target_plan_name = self.target_plan.name
+
+        super(DatabaseUpgrade, self).save(*args, **kwargs)
 
 
 class DatabaseReinstallVM(DatabaseMaintenanceTask):
@@ -359,13 +374,30 @@ class DatabaseResize(DatabaseMaintenanceTask):
         null=False, unique=False, related_name="database_resizes"
     )
     source_offer = models.ForeignKey(
-        CloudStackPack, verbose_name="Source", null=False, unique=False,
-        related_name="database_resizes_source"
+        CloudStackPack, verbose_name="Source", null=True, blank=True,
+        unique=False, related_name="database_resizes_source",
+        on_delete=models.SET_NULL
+    )
+    source_offer_name = models.CharField(
+        verbose_name="Source", max_length=100, null=True, blank=True
     )
     target_offer = models.ForeignKey(
-        CloudStackPack, verbose_name="Target", null=False, unique=False,
-        related_name="database_resizes_target"
+        CloudStackPack, verbose_name="Target", null=True, blank=True,
+        unique=False, related_name="database_resizes_target",
+        on_delete=models.SET_NULL
     )
+    target_offer_name = models.CharField(
+        verbose_name="Target", max_length=100, null=True, blank=True
+    )
+
+    def save(self, *args, **kwargs):
+        if self.source_offer:
+            self.source_offer_name = self.source_offer.name
+
+        if self.target_offer:
+            self.target_offer_name = self.target_offer.name
+
+        super(DatabaseResize, self).save(*args, **kwargs)
 
     def __unicode__(self):
         return "{} resize".format(self.database.name)
@@ -394,7 +426,13 @@ class DatabaseCreate(DatabaseMaintenanceTask):
         Database, related_name='databases_create', null=True, blank=True,
     )
     infra = models.ForeignKey(DatabaseInfra, related_name='databases_create')
-    plan = models.ForeignKey(Plan, related_name='databases_create')
+    plan = models.ForeignKey(
+        Plan, null=True, blank=True,
+        related_name='databases_create', on_delete=models.SET_NULL
+    )
+    plan_name = models.CharField(
+        verbose_name="Plan", max_length=100, null=True, blank=True
+    )
     environment = models.ForeignKey(
         Environment, related_name='databases_create'
     )
@@ -421,6 +459,12 @@ class DatabaseCreate(DatabaseMaintenanceTask):
             self.database = maintenance.database
 
         super(DatabaseCreate, self).update_step(step)
+
+    def save(self, *args, **kwargs):
+        if self.plan:
+            self.plan_name = self.plan.name
+
+        super(DatabaseCreate, self).save(*args, **kwargs)
 
 
 class DatabaseRestore(DatabaseMaintenanceTask):

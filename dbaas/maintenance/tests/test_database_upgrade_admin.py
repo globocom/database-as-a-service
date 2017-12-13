@@ -13,13 +13,14 @@ LIST_FILTER = [
     "status",
 ]
 LIST_DISPLAY = (
-    "database", "database_team", "source_plan", "target_plan",
+    "database", "database_team", "source_plan_name", "target_plan_name",
     "current_step", "friendly_status", "maintenance_action", "link_task",
     "started_at", "finished_at"
 )
 READONLY_FIELDS = (
-    "database", "source_plan", "target_plan", "link_task", "started_at",
-    "finished_at", "current_step", "status", "maintenance_action"
+    "database", "source_plan", "source_plan_name", "target_plan",
+    "target_plan_name", "link_task", "started_at", "finished_at",
+    "current_step", "status", "maintenance_action"
 )
 EXCLUDE = ("task", "can_do_retry")
 ORDERING = ["-started_at"]
@@ -134,3 +135,35 @@ class DatabaseUpgradeTestCase(TestCase):
         url = self.database_upgrade.database.get_upgrade_retry_url()
         button = self.admin.maintenance_action(self.database_upgrade)
         self.assertIn(url, button)
+
+    def test_model_save_plan_name(self):
+        self.assertGreater(self.database_upgrade.id, 0)
+        self.assertIsNotNone(self.database_upgrade.source_plan)
+        self.assertEqual(
+            self.database_upgrade.source_plan.name,
+            self.database_upgrade.source_plan_name
+        )
+        self.assertIsNotNone(self.database_upgrade.target_plan)
+        self.assertEqual(
+            self.database_upgrade.target_plan.name,
+            self.database_upgrade.target_plan_name
+        )
+
+    def test_model_do_not_save_plan_name(self):
+        self.assertEqual(
+            self.database_upgrade.source_plan.name,
+            self.database_upgrade.source_plan_name
+        )
+        self.database_upgrade.source_plan = None
+
+        self.assertEqual(
+            self.database_upgrade.target_plan.name,
+            self.database_upgrade.target_plan_name
+        )
+        self.database_upgrade.target_plan = None
+
+        self.assertGreater(self.database_upgrade.id, 0)
+        self.database_upgrade.save()
+
+        self.assertIsNotNone(self.database_upgrade.source_plan_name)
+        self.assertIsNotNone(self.database_upgrade.target_plan_name)
