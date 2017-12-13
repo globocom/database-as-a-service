@@ -9,6 +9,7 @@ from . import DatabaseInfraStatus
 from . import DatabaseStatus
 from . import AuthenticationError
 from . import ConnectionError
+from . import ReplicationError
 from physical.models import Instance
 from util import make_db_random_password
 from system.models import Configuration
@@ -331,7 +332,7 @@ class MongoDB(BaseDriver):
                     primary_opttime = member['optimeDate'].replace(tzinfo=tz.tzutc()).astimezone(tz.tzlocal())
 
             if primary_opttime is None:
-                raise Exception("There is not any Primary in the Replica Set")
+                raise ReplicationError("There is not any Primary in the Replica Set")
 
             instance_opttime = None
             for member in replSetGetStatus['members']:
@@ -340,7 +341,7 @@ class MongoDB(BaseDriver):
                     instance_member = member
 
             if instance_opttime is None:
-                raise Exception("Could not find the instance in the Replica Set")
+                raise ReplicationError("Could not find the instance in the Replica Set")
 
         delay = primary_opttime - instance_opttime
         seconds_delay = delay.days * 24 * 3600 + delay.seconds

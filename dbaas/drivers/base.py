@@ -6,7 +6,7 @@ from django_services.service.exceptions import InternalException
 
 LOG = logging.getLogger(__name__)
 
-__all__ = ['GenericDriverError', 'ConnectionError',
+__all__ = ['GenericDriverError', 'ReplicationError', 'ConnectionError',
            'AuthenticationError', 'DatabaseAlreadyExists', 'CredentialAlreadyExists', 'InvalidCredential',
            'BaseDriver', 'DatabaseStatus', 'DatabaseInfraStatus', 'DatabaseDoesNotExist']
 
@@ -27,6 +27,9 @@ class GenericDriverError(InternalException):
     def __repr__(self):
         return b"%s: %s" % (type(self).__name__, self.message)
 
+class ReplicationError(GenericDriverError):
+    """ Raised when there is any replication failure on databaseinfra """
+    pass
 
 class ConnectionError(GenericDriverError):
 
@@ -285,12 +288,15 @@ class BaseDriver(object):
     def wait_for_replication_ok(self, instance, attempts=100):
         from time import sleep
         for attempt in range(0, attempts):
-            if self.is_replication_ok(instance):
-                return
+            try:
+                if self.is_replication_ok(instance):
+                    return
+            except ReplicationError, error:
+                pass
             LOG.info("Waiting 10s to check replication...")
             sleep(10)
-            
-        raise Exception("Replication's delayed")
+
+        raise Exception(error)
 
 
     def get_database_agents(self):
