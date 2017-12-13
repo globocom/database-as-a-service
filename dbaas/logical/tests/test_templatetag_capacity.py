@@ -8,7 +8,7 @@ from logical.tests import factory as factory_logical
 from django.template import Template, Context
 from lxml import html as lhtml
 from _mysql_exceptions import OperationalError
-from drivers.base import DatabaseDoesNotExist, InvalidCredential
+from drivers.errors import DatabaseDoesNotExist, InvalidCredential
 
 
 class CapacityBaseTestCase(TestCase):

@@ -7,9 +7,7 @@ from contextlib import contextmanager
 from . import BaseDriver
 from . import DatabaseInfraStatus
 from . import DatabaseStatus
-from . import AuthenticationError
-from . import ConnectionError
-from . import ReplicationError
+from .errors import ConnectionError, AuthenticationError
 from physical.models import Instance
 from util import make_db_random_password
 from system.models import Configuration

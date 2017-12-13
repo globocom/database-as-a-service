@@ -20,7 +20,7 @@ from django.forms.models import modelform_factory
 from django.core.exceptions import FieldError
 from dbaas import constants
 from account.models import Team
-from drivers import DatabaseAlreadyExists
+from drivers.errors import DatabaseAlreadyExists
 from notification.tasks import TaskRegister
 from system.models import Configuration
 from util.html import show_info_popup
