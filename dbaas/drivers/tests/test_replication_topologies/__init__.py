@@ -65,6 +65,7 @@ class AbstractReplicationTopologySettingsTestCase(TestCase):
         ) + self._get_resize_extra_steps() + (
             'workflow.steps.util.infra.Offering',
             'workflow.steps.util.vm.InstanceIsSlave',
+            'workflow.steps.util.vm.WaitForReplication',
             'workflow.steps.util.zabbix.EnableAlarms',
         )}]
 
