@@ -14,6 +14,7 @@ from . import DatabaseAlreadyExists
 from . import InvalidCredential
 from . import DatabaseStatus
 from . import DatabaseDoesNotExist
+from . import ReplicationError
 from . import CredentialAlreadyExists
 from util import make_db_random_password
 from system.models import Configuration
@@ -300,7 +301,7 @@ class MySQL(BaseDriver):
             query_string="show slave status", instance=instance)
         seconds_behind_master = results[0]['Seconds_Behind_Master']
         if seconds_behind_master is None:
-            raise Exception("Replication is not running")
+            raise ReplicationError("Replication is not running")
         return int(seconds_behind_master)
 
     def is_replication_ok(self, instance):
