@@ -7,7 +7,8 @@ from contextlib import contextmanager
 from . import BaseDriver
 from . import DatabaseInfraStatus
 from . import DatabaseStatus
-from .errors import ConnectionError, AuthenticationError
+from .errors import ConnectionError, AuthenticationError, \
+    ReplicationNoPrimary, ReplicationNoInstances
 from physical.models import Instance
 from util import make_db_random_password
 from system.models import Configuration
@@ -321,8 +322,9 @@ class MongoDB(BaseDriver):
         if self.check_instance_is_master(instance=instance):
             return 0
 
+        instance_opttime = None
+        instance_member = None
         with self.pymongo() as client:
-
             replSetGetStatus = client.admin.command('replSetGetStatus')
             primary_opttime = None
             for member in replSetGetStatus['members']:
@@ -330,16 +332,15 @@ class MongoDB(BaseDriver):
                     primary_opttime = member['optimeDate'].replace(tzinfo=tz.tzutc()).astimezone(tz.tzlocal())
 
             if primary_opttime is None:
-                raise ReplicationError("There is not any Primary in the Replica Set")
+                raise ReplicationNoPrimary("There is not any Primary in the Replica Set")
 
-            instance_opttime = None
             for member in replSetGetStatus['members']:
                 if member["name"] == "{}:{}".format(instance.address, instance.port):
                     instance_opttime = member['optimeDate'].replace(tzinfo=tz.tzutc()).astimezone(tz.tzlocal())
                     instance_member = member
 
-            if instance_opttime is None:
-                raise ReplicationError("Could not find the instance in the Replica Set")
+        if instance_opttime is None:
+            raise ReplicationNoInstances("Could not find the instance in the Replica Set")
 
         delay = primary_opttime - instance_opttime
         seconds_delay = delay.days * 24 * 3600 + delay.seconds
