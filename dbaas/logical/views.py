@@ -18,7 +18,6 @@ from account.models import Team
 from drivers.base import CredentialAlreadyExists
 from physical.models import Host, DiskOffering, Environment, Plan
 from util import get_credentials_for
-from notification.models import TaskHistory
 from notification.tasks import TaskRegister
 from system.models import Configuration
 from .errors import DisabledDatabase
@@ -343,7 +342,7 @@ def database_change_parameters(request, context, database):
 def database_change_parameters_retry(request, context, database):
     can_do_change_parameters, error = database.can_do_change_parameters_retry()
     if can_do_change_parameters:
-        changed_parameters = _update_database_parameters(request.POST, database)
+        _update_database_parameters(request.POST, database)
 
         last_change_parameters = database.change_parameters.last()
 
