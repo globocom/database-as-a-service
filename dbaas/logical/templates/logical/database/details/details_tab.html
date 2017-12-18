@@ -1,43 +1,11 @@
 {% extends "logical/database/details/base.html" %}
 {% load capacity admin_static %}
 
+{% block extrastyle %}
+  {{ block.super }}
+  <link rel="stylesheet" type="text/css" href="{% static 'admin/progress_bar.css' %}" />
+{% endblock extrastyle %}
 {% block tab %}
-<style>
-    .controls.controls-300 {
-        width: 300px;
-    }
-    .progress {
-        margin-bottom: 10px;
-    }
-    .progress-bar.bar {
-        float: right;
-    }
-     .bar.database-bar {
-        background-image: none;
-    }
-     .bar.other-bar {
-        background-image: none;
-    }
-     .bar.free-bar {
-        background-image: none;
-    }
-    .bar-label-container, .bar-label-container {
-        font-size: 16px;
-    }
-    .bar-label-container .bar-label {
-        line-height: 25px;
-    }
-    .bar-label-container .bar-label .bar-label-color, .bar-label-container .bar-label .bar-label-text {
-        display: inline-block;
-    }
-    .bar-label-container .bar-label .bar-label-color {
-        width: 10px;
-        height: 10px;
-    }
-    .bar-label-container .bar-label .bar-label-text {
-        width: 70px;
-    }
-</style>
 
 <fieldset class="module aligned ">
   <div class="control-group">
