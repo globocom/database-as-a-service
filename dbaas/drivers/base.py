@@ -147,6 +147,21 @@ class BaseDriver(object):
     def update_infra_instances_used_size(self):
         raise NotImplementedError()
 
+    def get_master_instance_total_size_in_gb(self, instance=None):
+        """ Return total size of a instance.
+            If instance not passed the total of first master instance
+            will be returned.
+        """
+        from logical.models import GB_FACTOR
+        if instance is None:
+            instance = self.get_master_instance()
+            if instance and isinstance(instance, Iterable):
+                instance = instance[0]
+
+        if hasattr(instance, 'total_size_in_bytes'):
+            return (instance.total_size_in_bytes or 0) * GB_FACTOR
+        return 0
+
     def create_user(self, credential, roles=None):
         raise NotImplementedError()
 

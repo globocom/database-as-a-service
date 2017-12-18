@@ -85,6 +85,7 @@ class RedisUsedAndTotalTestCase(BaseRedisDriverTestCase):
         instance.used_size_in_bytes = 55
         instance.save()
         self.assertEqual(self.driver.masters_total_size_in_bytes, 105)
+        self.assertEqual(self.driver.get_master_instance_total_size_in_gb(), 105 * self.GB_FACTOR)
         self.assertEqual(self.driver.masters_used_size_in_bytes, 55)
 
     def test_masters_sentinel_instance(self):
@@ -105,6 +106,7 @@ class RedisUsedAndTotalTestCase(BaseRedisDriverTestCase):
         instance.used_size_in_bytes = 10
         instance.save()
         self.assertEqual(self.driver.masters_total_size_in_bytes, 35)
+        self.assertEqual(self.driver.get_master_instance_total_size_in_gb(), 35 * self.GB_FACTOR)
         self.assertEqual(self.driver.masters_used_size_in_bytes, 10)
 
     def test_masters_cluster_instance(self):
@@ -125,6 +127,7 @@ class RedisUsedAndTotalTestCase(BaseRedisDriverTestCase):
         instance.used_size_in_bytes = 25
         instance.save()
         self.assertEqual(self.driver.masters_total_size_in_bytes, 150)
+        self.assertEqual(self.driver.get_master_instance_total_size_in_gb(), 50 * self.GB_FACTOR)
         self.assertEqual(self.driver.masters_used_size_in_bytes, 75)
 
 
