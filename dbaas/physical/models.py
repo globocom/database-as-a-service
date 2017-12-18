@@ -800,8 +800,8 @@ class Instance(BaseModel):
     read_only = models.BooleanField(
         verbose_name=_("Is instance read only"), default=False)
     shard = models.IntegerField(null=True, blank=True)
-    used_size_in_bytes = models.FloatField(default=0.0)
-    total_size_in_bytes = models.FloatField(default=0.0)
+    used_size_in_bytes = models.FloatField(null=True, blank=True)
+    total_size_in_bytes = models.FloatField(null=True, blank=True)
 
     class Meta:
         unique_together = (

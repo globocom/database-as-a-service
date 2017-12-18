@@ -10,12 +10,12 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         # Adding field 'Instance.used_size_in_bytes'
         db.add_column(u'physical_instance', 'used_size_in_bytes',
-                      self.gf('django.db.models.fields.FloatField')(default=0.0),
+                      self.gf('django.db.models.fields.FloatField')(null=True, blank=True),
                       keep_default=False)
 
         # Adding field 'Instance.total_size_in_bytes'
         db.add_column(u'physical_instance', 'total_size_in_bytes',
-                      self.gf('django.db.models.fields.FloatField')(default=0.0),
+                      self.gf('django.db.models.fields.FloatField')(null=True, blank=True),
                       keep_default=False)
 
 
@@ -127,9 +127,9 @@ class Migration(SchemaMigration):
             'read_only': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'shard': ('django.db.models.fields.IntegerField', [], {'null': 'True', 'blank': 'True'}),
             'status': ('django.db.models.fields.IntegerField', [], {'default': '2'}),
-            'total_size_in_bytes': ('django.db.models.fields.FloatField', [], {'default': '0.0'}),
+            'total_size_in_bytes': ('django.db.models.fields.FloatField', [], {'null': 'True', 'blank': 'True'}),
             'updated_at': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
-            'used_size_in_bytes': ('django.db.models.fields.FloatField', [], {'default': '0.0'})
+            'used_size_in_bytes': ('django.db.models.fields.FloatField', [], {'null': 'True', 'blank': 'True'})
         },
         u'physical.parameter': {
             'Meta': {'ordering': "(u'engine_type__name', u'name')", 'unique_together': "((u'name', u'engine_type'),)", 'object_name': 'Parameter'},
