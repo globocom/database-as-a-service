@@ -1,0 +1,44 @@
+.controls.controls-300 {
+    width: 300px;
+}
+.progress {
+    margin-bottom: 10px;
+}
+.progress-bar.bar {
+    float: right;
+}
+ .bar.database-bar {
+    background-image: none;
+}
+ .bar.other-bar {
+    background-image: none;
+}
+ .bar.free-bar {
+    background-image: none;
+}
+.bar-label-container, .bar-label-container {
+    font-size: 16px;
+}
+.bar-label-container .bar-label {
+    line-height: 25px;
+}
+.bar-label-container .bar-label .bar-label-color, .bar-label-container .bar-label .bar-label-text {
+    display: inline-block;
+}
+.bar-label-container .bar-label .bar-label-color {
+    width: 10px;
+    height: 10px;
+}
+.bar-label-container .bar-label .bar-label-text {
+    width: 70px;
+}
+
+.progress-bar-container {
+    margin-bottom: 20px
+}
+
+.progress-bar-container .header {
+    white-space: nowrap;
+}
+
+
