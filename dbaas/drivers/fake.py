@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 import logging
-from . import BaseDriver, DatabaseInfraStatus, DatabaseAlreadyExists, CredentialAlreadyExists, InvalidCredential
+from . import BaseDriver, DatabaseInfraStatus, DatabaseAlreadyExists, CredentialAlreadyExists, InvalidCredential, ConnectionError
 from physical.models import Instance
 
 LOG = logging.getLogger(__name__)
@@ -82,6 +82,24 @@ class FakeDriver(BaseDriver):
             databaseinfra_model=self.databaseinfra)
         LOG.info('Info')
         return databaseinfra_status
+
+    def get_master_instance(self, ):
+        instances = self.get_database_instances()
+        masters = []
+        for instance in instances:
+            try:
+                if self.check_instance_is_master(instance):
+                    masters.append(instance)
+            except ConnectionError:
+                continue
+
+        if masters:
+            if len(masters) == 1:
+                return masters[0]
+            else:
+                return masters
+        else:
+            return None
 
     def change_default_pwd(self, instance):
         LOG.info('Change default password')
