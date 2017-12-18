@@ -18,6 +18,7 @@ from . import CredentialAlreadyExists
 from util import make_db_random_password
 from system.models import Configuration
 from physical.models import Instance
+import datetime
 from util import exec_remote_command
 from util import build_context_script
 
@@ -303,11 +304,23 @@ class MySQL(BaseDriver):
             raise Exception("Replication is not running")
         return int(seconds_behind_master)
 
-    def is_replication_ok(self, instance):
-        if self.get_replication_info(instance=instance) == 0:
-            return True
+    def get_heartbeat_replication_info(self, instance):
+        results = self.__query(
+            query_string="select DATE_FORMAT(ts, '%Y-%m-%d %H:%i:%s') ts, DATE_FORMAT(now(), '%Y-%m-%d %H:%i:%s') now from heartbeat.heartbeat",
+            instance=instance)
+        now = datetime.datetime.strptime(results[0]['now'], '%Y-%m-%d %H:%M:%S')
+        ts = datetime.datetime.strptime(results[0]['ts'], '%Y-%m-%d %H:%M:%S')
+        datediff = now - ts
+        return datediff.seconds
 
-        return False
+    def is_replication_ok(self, instance):
+        if self.get_replication_info(instance=instance) != 0:
+            return False
+
+        if self.get_heartbeat_replication_info(instance=instance) != 0:
+            return False
+
+        return True
 
     def initialization_script_path(self, host=None):
         return "/etc/init.d/mysql {option}"
