@@ -227,12 +227,6 @@ class InstanceIsSlave(ChangeMaster):
     def undo(self):
         super(InstanceIsSlave, self).do()
 
-class WaitForReplication(VmStep):
-    def __unicode__(self):
-        return "Waiting for replication ok..."
-
-    def do(self):
-        self.driver.wait_for_replication_ok(self.instance)
 
 class CreateVirtualMachine(VmStep):
 

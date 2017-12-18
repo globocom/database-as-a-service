@@ -30,6 +30,7 @@ class BaseTopology(object):
             'workflow.steps.util.database.StartSlave',
             'workflow.steps.util.agents.Start',
             'workflow.steps.util.database.CheckIsUp',
+            'workflow.steps.util.database.WaitForReplication',
         )
 
     def get_resize_steps(self):
@@ -47,7 +48,6 @@ class BaseTopology(object):
         ) + self.get_resize_extra_steps() + (
             'workflow.steps.util.infra.Offering',
             'workflow.steps.util.vm.InstanceIsSlave',
-            'workflow.steps.util.vm.WaitForReplication',
             'workflow.steps.util.zabbix.EnableAlarms',
         )}]
 
