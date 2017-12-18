@@ -100,6 +100,7 @@ class MySQLFoxHA(MySQLSingle):
             'workflow.steps.mysql.deploy.config_vms_foreman.ConfigVMsForeman',
             'workflow.steps.mysql.deploy.run_pupet_setup.RunPuppetSetup',
             'workflow.steps.mysql.deploy.config_fox.ConfigFox',
+            'workflow.steps.mysql.deploy.check_replication.CheckReplicationFoxHA',
             'workflow.steps.util.deploy.config_backup_log.ConfigBackupLog',
             'workflow.steps.util.deploy.check_database_connection.CheckDatabaseConnection',
             'workflow.steps.util.deploy.check_dns.CheckDns',
