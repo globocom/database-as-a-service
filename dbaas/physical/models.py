@@ -3,11 +3,11 @@ from __future__ import absolute_import, unicode_literals
 import os
 import logging
 import simple_audit
-from django.db.models.signals import pre_save, post_save, pre_delete
+from django.db.models.signals import post_save, pre_delete
 from django.dispatch import receiver
 from django.core.exceptions import ValidationError
 from django.core.cache import cache
-from django.db import models, transaction
+from django.db import models
 from django.utils.html import format_html
 from django.utils.translation import ugettext_lazy as _
 from django_extensions.db.fields.encrypted import EncryptedCharField
@@ -866,7 +866,7 @@ class Instance(BaseModel):
             status = self.databaseinfra.get_driver().check_status(
                 instance=self)
             return status
-        except Exception, e:
+        except:
             return False
 
     @property
