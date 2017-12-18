@@ -87,13 +87,31 @@
   </div>
   <div class="control-group">
     <div class="control-label"><label>Disk:</label></div>
-    <div class="controls"><p class="readonly">{{ database.infra.disk_offering }}</p></div>
+    <div class="controls">
+      <p class="readonly">
+        total {% widthratio database.infra.disk_offering.size_gb 1 masters_quant %} GB
+        {% if masters_quant > 1 %}
+          ({{ masters_quant }} x {{ database.infra.disk_offering.size_gb }} GB)
+        {% endif %}
+      </p>
+    </div>
     <div class="controls controls-300">{% render_detailed_capacity_html database disk %}</div>
   </div>
   {% if database.engine.engine_type.is_in_memory %}
     <div class="control-group">
       <div class="control-label"><label>Memory database:</label></div>
-        <div class="controls"><p class="readonly">Total ({{ database.total_size_in_gb }} GB)</p></div>
+      <div class="controls">
+        <p class="readonly">
+          {% if database.total_size_in_gb %}
+            total {{ database.total_size_in_gb }} GB
+            {% if masters_quant > 1 %}
+              ({{ masters_quant }} x {{ database.driver.get_master_instance_total_size_in_gb }} GB)
+            {% endif %}
+          {% else %}
+            Total memory size not collected yet. Will be updated in a few minutes...
+          {% endif %}
+        </p>
+      </div>
       <div class="controls controls-300">{% render_detailed_capacity_html database memory %}</div>
     </div>
     <div class="control-group">
