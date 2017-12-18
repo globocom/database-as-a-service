@@ -583,7 +583,6 @@ class RedisCluster(Redis):
             socket_timeout=self.connection_timeout_in_seconds,
         )
 
-
     def get_replication_info(self, instance):
         if self.check_instance_is_master(instance=instance):
             return 0
