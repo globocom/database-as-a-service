@@ -408,7 +408,7 @@ class MongoDB(BaseDriver):
         client = self.get_client(None)
         try:
             client.admin.command('replSetStepDown', 10)
-        except pymongo.errors.AutoReconnect, e:
+        except pymongo.errors.AutoReconnect:
             pass
 
     def get_database_agents(self):
@@ -494,7 +494,6 @@ class MongoDB(BaseDriver):
         config['REPLICASETNAME'] = self.get_replica_name()
         config['MONGODBKEY'] = instance.databaseinfra.database_key
         return config
-
 
     def configuration_parameters_for_log_resize(self, instance):
         return {
