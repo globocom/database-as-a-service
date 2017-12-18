@@ -42,6 +42,8 @@ class MongoUsedAndTotalTestCase(BaseMongoDriverTestCase):
         self.instance.used_size_in_bytes = 55
         self.instance.save()
         self.assertEqual(self.driver.masters_total_size_in_bytes, 105)
+        expected_total_size_in_gb = 105 * self.GB_FACTOR
+        self.assertEqual(self.driver.get_master_instance_total_size_in_gb(), expected_total_size_in_gb)
         self.assertEqual(self.driver.masters_used_size_in_bytes, 55)
 
     def test_masters_replicaset_instance(self):
@@ -62,6 +64,8 @@ class MongoUsedAndTotalTestCase(BaseMongoDriverTestCase):
         self.instance.used_size_in_bytes = 10
         self.instance.save()
         self.assertEqual(self.driver.masters_total_size_in_bytes, 35)
+        expected_total_size_in_gb = 35 * self.GB_FACTOR
+        self.assertEqual(self.driver.get_master_instance_total_size_in_gb(), expected_total_size_in_gb)
         self.assertEqual(self.driver.masters_used_size_in_bytes, 10)
 
 

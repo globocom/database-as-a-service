@@ -8,7 +8,7 @@ from django.test import TestCase
 
 from physical.tests import factory as factory_physical
 from physical.models import Instance
-from logical.models import Database
+from logical.models import Database, GB_FACTOR
 from drivers.mysqldb import MySQL
 from drivers.mongodb import MongoDB
 from drivers.redis import Redis
@@ -47,6 +47,7 @@ class FakeDriverClient(object):
 
 class BaseDriverTest(object):
 
+    GB_FACTOR = GB_FACTOR
     host = None
     port = None
     db_user = 'admin'
