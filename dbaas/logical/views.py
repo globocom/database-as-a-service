@@ -140,7 +140,12 @@ def database_details(request, context, database):
     engine = str(database.engine)
     topology = database.databaseinfra.plan.replication_topology
     engine = engine + " - " + topology.details if topology.details else engine
+    try:
+        masters_quant = len(database.driver.get_master_instance())
+    except TypeError:
+        masters_quant = 1
 
+    context['masters_quant'] = masters_quant
     context['engine'] = engine
     context['projects'] = Project.objects.all()
     context['teams'] = Team.objects.all()
