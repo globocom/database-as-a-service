@@ -7,7 +7,7 @@ from logical.models import Database
 from models import Snapshot
 from notification.models import TaskHistory
 from system.models import Configuration
-from drivers.base import ConnectionError
+from drivers.errors import ConnectionError
 import datetime
 import time
 from datetime import date, timedelta
