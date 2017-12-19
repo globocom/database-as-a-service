@@ -22,23 +22,26 @@ class CheckReplicationFoxHA(BaseStep):
             for instance in workflow_dict['instances']:
 
                 attempt = 1
-                retries = 60
-                interval = 10
+                retries = 20
+                interval = 30
                 while True:
 
                     LOG.info("Check if replication is ok on {} - attempt {} of {}"
                              .format(instance, attempt, retries))
 
                     if driver.is_replication_ok(instance):
-                        LOG.info("Replication is ok on {}".format(instance))
-                        break
+                        if driver.is_heartbeat_replication_ok(instance):
+                            LOG.info("Replication is ok on {}".format(instance))
+                            break
+                        else:
+                            LOG.info("Heartbeat replication is not ok on {}".format(instance))
+                            LOG.info("Restarting slave on {}".format(instance))
 
-                    driver.stop_slave(instance)
-                    sleep(1)
-                    driver.start_slave(instance)
-                    sleep(interval)
-
-                    LOG.info("Replication is not ok on {}".format(instance))
+                            driver.stop_slave(instance)
+                            sleep(1)
+                            driver.start_slave(instance)
+                    else:
+                        LOG.info("Replication is not ok on {}".format(instance))
 
                     attempt += 1
                     if attempt == retries:
@@ -47,7 +50,6 @@ class CheckReplicationFoxHA(BaseStep):
                         raise Exception(error)
 
                     sleep(interval)
-
 
             return True
         except Exception:
