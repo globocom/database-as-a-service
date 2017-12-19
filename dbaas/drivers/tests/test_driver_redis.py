@@ -3,11 +3,14 @@ from __future__ import absolute_import, unicode_literals
 import logging
 import mock
 from django.conf import settings
+
 from drivers import DriverFactory
 from logical.tests import factory as factory_logical
 from logical.models import Database
-from ..redis import Redis, RedisSentinel, RedisCluster
-from drivers.tests.base import BaseRedisDriverTestCase, FakeDriverClient, BaseSingleInstanceUpdateSizesTest, BaseHAInstanceUpdateSizesTest
+from drivers.redis import Redis, RedisSentinel, RedisCluster
+from drivers.tests.base import (BaseRedisDriverTestCase, FakeDriverClient,
+                                BaseSingleInstanceUpdateSizesTest,
+                                BaseHAInstanceUpdateSizesTest)
 from physical.models import Instance
 from physical.tests.factory import (DatabaseInfraParameterFactory, CloudStackOfferingFactory,
                                     DatabaseInfraOfferingFactory)
@@ -80,10 +83,9 @@ class RedisUsedAndTotalTestCase(BaseRedisDriverTestCase):
             Test validates return total and used size when has single instance
         """
 
-        instance = self.instances[0]
-        instance.total_size_in_bytes = 105
-        instance.used_size_in_bytes = 55
-        instance.save()
+        self.instance.total_size_in_bytes = 105
+        self.instance.used_size_in_bytes = 55
+        self.instance.save()
         self.assertEqual(self.driver.masters_total_size_in_bytes, 105)
         self.assertEqual(self.driver.get_master_instance_total_size_in_gb(), 105 * self.GB_FACTOR)
         self.assertEqual(self.driver.masters_used_size_in_bytes, 55)
@@ -101,10 +103,9 @@ class RedisUsedAndTotalTestCase(BaseRedisDriverTestCase):
             instance_type=self.instance_type,
             total_size_in_bytes=35, used_size_in_bytes=10
         )
-        instance = self.instances[0]
-        instance.total_size_in_bytes = 35
-        instance.used_size_in_bytes = 10
-        instance.save()
+        self.instance.total_size_in_bytes = 35
+        self.instance.used_size_in_bytes = 10
+        self.instance.save()
         self.assertEqual(self.driver.masters_total_size_in_bytes, 35)
         self.assertEqual(self.driver.get_master_instance_total_size_in_gb(), 35 * self.GB_FACTOR)
         self.assertEqual(self.driver.masters_used_size_in_bytes, 10)
@@ -122,10 +123,9 @@ class RedisUsedAndTotalTestCase(BaseRedisDriverTestCase):
             total_size_in_bytes=50, used_size_in_bytes=25,
             instance_type=self.instance_type
         )
-        instance = self.instances[0]
-        instance.total_size_in_bytes = 50
-        instance.used_size_in_bytes = 25
-        instance.save()
+        self.instance.total_size_in_bytes = 50
+        self.instance.used_size_in_bytes = 25
+        self.instance.save()
         self.assertEqual(self.driver.masters_total_size_in_bytes, 150)
         self.assertEqual(self.driver.get_master_instance_total_size_in_gb(), 50 * self.GB_FACTOR)
         self.assertEqual(self.driver.masters_used_size_in_bytes, 75)
@@ -201,8 +201,8 @@ class ExclusiveMethodsSingle(ExclusiveMethodsBase):
         self.instance = self.driver.databaseinfra.instances.first()
 
     def test_get_connection(self):
-        instance = self.instances[0]
-        host = '{}:{}'.format(instance.address, instance.port)
+        # instance = self.instances[0]
+        host = '{}:{}'.format(self.instance.address, self.instance.port)
 
         url = self.driver.get_connection(None)
         expected = self.get_connection_base.format('redis', host, '0')
@@ -219,12 +219,12 @@ class ExclusiveMethodsSentinel(ExclusiveMethodsBase):
         self.driver = klass(databaseinfra=self.databaseinfra)
 
     def test_get_connection(self):
-        self.instance = self.instances[0]
-        host =  ",".join([
+        # self.instance = self.instances[0]
+        host = ",".join([
             "{}:{}".format(instance.address, instance.port)
             for instance in self.databaseinfra.instances.filter(
-                instance_type=self.instance.REDIS_SENTINEL, is_active=True
-        )])
+                instance_type=self.instance.REDIS_SENTINEL, is_active=True)
+        ])
 
         url = self.driver.get_connection(None)
         expected = self.get_connection_base.format(
