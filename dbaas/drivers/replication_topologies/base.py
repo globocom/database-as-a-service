@@ -30,6 +30,7 @@ class BaseTopology(object):
             'workflow.steps.util.database.StartSlave',
             'workflow.steps.util.agents.Start',
             'workflow.steps.util.database.CheckIsUp',
+            'workflow.steps.util.database.WaitForReplication',
         )
 
     def get_resize_steps(self):
