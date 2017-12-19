@@ -2,6 +2,7 @@
 from __future__ import absolute_import, unicode_literals
 from mock import MagicMock, patch
 import logging
+from django.conf import settings
 
 from drivers import DriverFactory
 from drivers.tests.base import (BaseMysqlDriverTestCase,
@@ -130,7 +131,7 @@ class ManageDatabaseMySQLTestCase(BaseMysqlDriverTestCase):
             databaseinfra=self.databaseinfra)
         # ensure database is dropped
         # get fake driver
-        self.instance.address = '127.0.0.1'
+        self.instance.address = settings.DB_HOST
         self.instance.save()
         driver = self.databaseinfra.get_driver()
         driver.remove_database(self.database)
