@@ -307,13 +307,16 @@ class MySQL(BaseDriver):
         return datediff.seconds
 
     def is_replication_ok(self, instance):
-        if self.get_replication_info(instance=instance) != 0:
-            return False
+        if self.get_replication_info(instance=instance) == 0:
+            return True
 
-        if self.get_heartbeat_replication_info(instance=instance) != 0:
-            return False
+        return False
 
-        return True
+    def is_heartbeat_replication_ok(self, instance):
+        if self.get_heartbeat_replication_info(instance=instance) == 0:
+            return True
+
+        return False
 
     def initialization_script_path(self, host=None):
         return "/etc/init.d/mysql {option}"
