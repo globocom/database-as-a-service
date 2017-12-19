@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
+import os
 from mock import patch, MagicMock
+
 from drivers import DriverFactory
 from physical.tests import factory as factory_physical
 from logical.tests import factory as factory_logical
 from logical.models import Database
-from ..mongodb import MongoDB, MongoDBReplicaSet
+from drivers.mongodb import MongoDB, MongoDBReplicaSet
 from drivers.tests.base import (BaseMongoDriverTestCase, FakeDriverClient,
                                 BaseSingleInstanceUpdateSizesTest,
                                 BaseHAInstanceUpdateSizesTest)
@@ -142,7 +144,7 @@ class ManageDatabaseMongoDBTestCase(BaseMongoDriverTestCase):
         super(ManageDatabaseMongoDBTestCase, self).setUp()
         self.database = factory_logical.DatabaseFactory(
             databaseinfra=self.databaseinfra)
-        self.instance.address = '127.0.0.1'
+        self.instance.address = os.getenv('TESTS_MONGODB_HOST', '127.0.0.1')
         self.instance.save()
         # ensure database is dropped
         self.driver_client.drop_database(self.database.name)
@@ -178,7 +180,8 @@ class ManageCredentialsMongoDBTestCase(BaseMongoDriverTestCase):
             databaseinfra=self.databaseinfra)
         self.credential = factory_logical.CredentialFactory(
             database=self.database)
-        self.instance.address = '127.0.0.1'
+        self.instance.address = os.getenv('TESTS_MONGODB_HOST', '127.0.0.1')
+        # self.instance.address = '127.0.0.1'
         self.instance.save()
         self.driver.create_database(self.database)
 
