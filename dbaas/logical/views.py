@@ -11,6 +11,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.http import HttpResponse, HttpResponseRedirect
 from django.template import RequestContext
+
 from dbaas_cloudstack.models import CloudStackPack
 from dbaas_credentials.models import CredentialType
 from dbaas import constants
@@ -20,10 +21,10 @@ from physical.models import Host, DiskOffering, Environment, Plan
 from util import get_credentials_for
 from notification.tasks import TaskRegister
 from system.models import Configuration
-from .errors import DisabledDatabase
-from .forms.database import DatabaseDetailsForm
-from .models import Credential, Database, Project
-from .validators import check_is_database_enabled, check_is_database_dead
+from logical.errors import DisabledDatabase
+from logical.forms.database import DatabaseDetailsForm
+from logical.models import Credential, Database, Project
+from logical.validators import check_is_database_enabled, check_is_database_dead
 
 
 class CredentialView(BaseDetailView):

@@ -4,6 +4,7 @@ import datetime
 from celery.utils.log import get_task_logger
 from celery.exceptions import SoftTimeLimitExceeded
 from django.db.models import Sum, Count
+
 from dbaas.celery import app
 from account.models import Team
 from logical.models import Database
@@ -17,12 +18,12 @@ from util.providers import make_infra, clone_infra, destroy_infra, \
     get_database_change_parameter_retry_steps_count, get_deploy_instances_size
 from simple_audit.models import AuditRequest
 from system.models import Configuration
-from .models import TaskHistory
+from notification.models import TaskHistory
 from workflow.workflow import steps_for_instances, rollback_for_instances_full
-from maintenance.models import DatabaseUpgrade, DatabaseResize
-from maintenance.models import DatabaseChangeParameter
-from maintenance.models import DatabaseReinstallVM
+from maintenance.models import (DatabaseUpgrade, DatabaseResize,
+                                DatabaseChangeParameter, DatabaseReinstallVM)
 from maintenance.tasks import restore_database
+
 
 LOG = get_task_logger(__name__)
 

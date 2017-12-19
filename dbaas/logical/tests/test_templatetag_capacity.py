@@ -3,12 +3,13 @@
 from mock import patch, MagicMock
 from django.test import TestCase
 from django.conf import settings
-from physical.models import Instance
-from physical.tests import factory as factory_physical
-from logical.tests import factory as factory_logical
 from django.template import Template, Context
 from lxml import html as lhtml
 from _mysql_exceptions import OperationalError
+
+from physical.models import Instance
+from physical.tests import factory as factory_physical
+from logical.tests import factory as factory_logical
 from drivers.base import DatabaseDoesNotExist, InvalidCredential
 from dbaas.tests.helpers import InstanceHelper
 
@@ -72,7 +73,6 @@ class CapacityBaseTestCase(TestCase):
         )
         cls.nfsaas_host_attr = factory_physical.NFSaaSHostAttr(
             host=cls.hostname,
-            # nfsaas_size_kb=cls.database.total_size_in_kb,
             nfsaas_used_size_kb=cls.database.used_size_in_kb
         )
 

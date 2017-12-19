@@ -52,7 +52,6 @@ class DbaaSAPITestCase(test.APITestCase):
         self.superuser = User.objects.create_superuser(
             self.USERNAME, email="%s@admin.com" % self.USERNAME, password=self.PASSWORD)
         self.team.users.add(self.superuser)
-        # self.client =
         self.client.login(username=self.USERNAME, password=self.PASSWORD)
 
     def tearDown(self):

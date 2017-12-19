@@ -5,15 +5,14 @@ import redis
 from redis.sentinel import Sentinel
 from rediscluster import StrictRedisCluster
 from contextlib import contextmanager
-from . import BaseDriver
-from . import DatabaseInfraStatus
-from . import DatabaseStatus
-from . import ConnectionError
+
+from drivers import BaseDriver, DatabaseInfraStatus, DatabaseStatus, ConnectionError
 from system.models import Configuration
 from physical.models import Instance
 from util import exec_remote_command
 from util import build_context_script
 from dbaas_cloudstack.models import HostAttr
+
 
 LOG = logging.getLogger(__name__)
 

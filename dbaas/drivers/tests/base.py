@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 import os
-from mock import patch, MagicMock
+from mock import MagicMock
 
 from django.conf import settings
 from django.test import TestCase
@@ -70,7 +70,6 @@ class BaseDriverTest(object):
         hostname = factory_physical.HostFactory()
         self.nfsaas_host_attr = factory_physical.NFSaaSHostAttr(
             host=hostname,
-            # nfsaas_size_kb=cls.database.total_size_in_kb,
             nfsaas_used_size_kb=float(40.0/1024.0)
         )
         self.instances = self.instance_helper.create_instances_by_quant(
