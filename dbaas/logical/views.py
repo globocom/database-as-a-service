@@ -15,10 +15,9 @@ from dbaas_cloudstack.models import CloudStackPack
 from dbaas_credentials.models import CredentialType
 from dbaas import constants
 from account.models import Team
-from drivers.base import CredentialAlreadyExists
+from drivers.errors import CredentialAlreadyExists
 from physical.models import Host, DiskOffering, Environment, Plan
 from util import get_credentials_for
-from notification.models import TaskHistory
 from notification.tasks import TaskRegister
 from system.models import Configuration
 from .errors import DisabledDatabase
@@ -53,7 +52,7 @@ class CredentialView(BaseDetailView):
 
             credential = Credential.create_new_credential(username, database)
             return self.as_json(credential)
-        except CredentialAlreadyExists, e:
+        except CredentialAlreadyExists:
             return self.as_json({"error": "credential already exists"})
         except ValidationError, e:
             return self.as_json({"error": ", ".join(e.messages)})
