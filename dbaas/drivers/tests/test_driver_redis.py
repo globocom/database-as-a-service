@@ -90,6 +90,18 @@ class RedisUsedAndTotalTestCase(BaseRedisDriverTestCase):
         self.assertEqual(self.driver.get_master_instance_total_size_in_gb(), 105 * self.GB_FACTOR)
         self.assertEqual(self.driver.masters_used_size_in_bytes, 55)
 
+    def test_masters_single_instance_none(self):
+        """
+            Test validates return total and used size when has single instance
+        """
+
+        self.instance.total_size_in_bytes = None
+        self.instance.used_size_in_bytes = None
+        self.instance.save()
+        self.assertEqual(self.driver.masters_total_size_in_bytes, 0)
+        self.assertEqual(self.driver.get_master_instance_total_size_in_gb(), 0)
+        self.assertEqual(self.driver.masters_used_size_in_bytes, 0)
+
     def test_masters_sentinel_instance(self):
         """
             Test validates return total and used size when has sentinel instance

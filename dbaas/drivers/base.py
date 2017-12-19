@@ -37,7 +37,7 @@ class BaseDriver(object):
         masters = self.get_master_instance()
         masters = [masters] if not isinstance(masters, Iterable) else masters
         return sum(map(
-            lambda m: getattr(m, field_lookup), masters
+            lambda m: getattr(m, field_lookup) or 0, masters
         ))
 
     @property
