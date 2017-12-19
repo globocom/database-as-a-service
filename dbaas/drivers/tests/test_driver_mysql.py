@@ -2,14 +2,15 @@
 from __future__ import absolute_import, unicode_literals
 from mock import MagicMock, patch
 import logging
+
 from drivers import DriverFactory
 from drivers.tests.base import (BaseMysqlDriverTestCase,
                                 BaseSingleInstanceUpdateSizesTest,
                                 BaseHAInstanceUpdateSizesTest)
 from logical.tests import factory as factory_logical
 from logical.models import Database
-from ..mysqldb import MySQL, MySQLFOXHA
-from physical.models import Instance
+from drivers.mysqldb import MySQL, MySQLFOXHA
+
 
 LOG = logging.getLogger(__name__)
 
@@ -27,22 +28,6 @@ FAKE_QUERY_RESULT = (
 class MySQLSingleUpdateUsedSizeTestCase(BaseMysqlDriverTestCase, BaseSingleInstanceUpdateSizesTest):
 
     pass
-#    def test_instance_alive(self, mock_query):
-#        self.instance.used_size_in_bytes = 0
-#        self.instance.save()
-#        result = self.driver.update_infra_instances_used_size()
-#        self._validate_instances()
-#        self.assertListEqual(result['updated'], [self.instance])
-#        self.assertEqual(result['error'], [])
-#
-#    def test_instance_dead(self, mock_query):
-#        self.instance.used_size_in_bytes = 0
-#        self.instance.status = Instance.DEAD
-#        self.instance.save()
-#        result = self.driver.update_infra_instances_used_size()
-#        self._validate_instances(expected_used_size=0)
-#        self.assertListEqual(result['error'], [self.instance])
-#        self.assertEqual(result['updated'], [])
 
 
 @patch('drivers.mysqldb.MySQL.query', new=MagicMock(return_value=FAKE_QUERY_RESULT))
@@ -51,37 +36,6 @@ class MySQLFOXHAUpdateUsedSizeTestCase(BaseMysqlDriverTestCase, BaseHAInstanceUp
 
     driver_class = MySQLFOXHA
     instances_quantity = 2
-
-#    def setUp(self):
-#        super(MySQLFOXHAUpdateUsedSizeTestCase, self).setUp()
-#        instances = self._create_more_instances(3)
-#        self._change_instance_type(instances[-2:], Instance.MYSQL)
-#        self.instance.used_size_in_bytes = 0
-#        self.instance.save()
-#
-#    def test_instance_alive(self, mock_query):
-#        result = self.driver.update_infra_instances_used_size()
-#        self._validate_instances()
-#        self.assertListEqual(
-#            result['updated'],
-#            list(self.databaseinfra.instances.filter(instance_type=Instance.MYSQL))
-#        )
-#        self.assertEqual(result['error'], [])
-#
-#    def test_instance_dead(self, mock_query):
-#        self.instance.status = Instance.DEAD
-#        self.instance.save()
-#        result = self.driver.update_infra_instances_used_size()
-#
-#        self.assertEqual(self.instance.used_size_in_bytes, 0)
-#
-#        alive_instances = list(self.databaseinfra.instances.filter(
-#            status=Instance.ALIVE, instance_type=Instance.MYSQL
-#        ))
-#
-#        self.assertEqual(alive_instances[0].used_size_in_bytes, 40)
-#        self.assertListEqual(result['error'], [self.instance])
-#        self.assertEqual(result['updated'], alive_instances)
 
 
 class MySQLUsedAndTotalTestCase(BaseMysqlDriverTestCase):

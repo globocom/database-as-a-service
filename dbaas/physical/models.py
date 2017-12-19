@@ -11,10 +11,12 @@ from django.db import models
 from django.utils.html import format_html
 from django.utils.translation import ugettext_lazy as _
 from django_extensions.db.fields.encrypted import EncryptedCharField
+
 from util.models import BaseModel
 from drivers import DatabaseInfraStatus
 from system.models import Configuration
-from .errors import NoDiskOfferingGreaterError, NoDiskOfferingLesserError
+from physical.errors import NoDiskOfferingGreaterError, NoDiskOfferingLesserError
+
 
 LOG = logging.getLogger(__name__)
 

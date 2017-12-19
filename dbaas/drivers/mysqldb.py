@@ -5,19 +5,14 @@ import logging
 import _mysql as mysqldb
 import _mysql_exceptions
 from contextlib import contextmanager
-from . import BaseDriver
-from . import DatabaseInfraStatus
-from . import AuthenticationError
-from . import ConnectionError
-from . import GenericDriverError
-from . import DatabaseAlreadyExists
-from . import InvalidCredential
-from . import DatabaseStatus
-from . import DatabaseDoesNotExist
-from . import CredentialAlreadyExists
+
+from drivers import (BaseDriver, DatabaseInfraStatus, AuthenticationError, ConnectionError,
+                     GenericDriverError, DatabaseAlreadyExists, InvalidCredential, DatabaseStatus,
+                     DatabaseDoesNotExist, CredentialAlreadyExists)
 from util import make_db_random_password
 from system.models import Configuration
 from physical.models import Instance
+
 
 LOG = logging.getLogger(__name__)
 

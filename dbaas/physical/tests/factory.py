@@ -4,7 +4,7 @@ import factory
 # TODO: Remove this specific dbaas imports
 from dbaas_nfsaas.models import HostAttr
 from dbaas_cloudstack.models import DatabaseInfraOffering, CloudStackOffering
-from .. import models
+from physical import models
 
 
 class EnvironmentFactory(factory.DjangoModelFactory):
@@ -38,7 +38,7 @@ class DiskOfferingFactory(factory.DjangoModelFactory):
     FACTORY_FOR = models.DiskOffering
 
     name = factory.Sequence(lambda n: 'disk-offering-{0}'.format(n))
-    size_kb = 1048576 # 1gb
+    size_kb = 1048576  # 1gb
 
 
 class ReplicationTopologyFactory(factory.DjangoModelFactory):

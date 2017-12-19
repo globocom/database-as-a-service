@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 
-from physical.tests.factory import InstanceFactory, HostFactory
+from physical.tests.factory import InstanceFactory
 
 
 class UsedAndTotalValidator(object):
@@ -38,17 +38,6 @@ class InstanceHelper(object):
     def check_instance_is_master(instance):
         """
             Method for mock the real check_instance_is_master.
-            This method return master if the last digit minus 1 of address
-            is divisible by 2
-
-            Ex. Address = '127.0.0.1' the last char is 1. Now subtract 1 and we
-                have 0. Now check if 0 is divisible by 2. This case return True
-
-            Ex. Address = '127.0.0.2' the last char is 2. Now subtract 1 and we
-                have 1. Now check if 1 is divisible by 2. This case return False
-
-            Ex. Address = '127.0.0.3' the last char is 3. Now subtract 1 and we
-                have 2. Now check if 2 is divisible by 2. This case return True
         """
 
         quantity_of_masters = instance.databaseinfra.instances.count() / 2

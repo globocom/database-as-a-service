@@ -1,18 +1,20 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
+import logging
 import mock
 from django.test import TestCase
+from django.core.cache import cache
 from django.contrib.admin.sites import AdminSite
+
 from logical.tests import factory as factory_logical
-from ..admin.databaseinfra import DatabaseInfraAdmin
-from ..models import (DatabaseInfra, Plan, Instance, Host, Parameter,
-                      DatabaseInfraParameter)
+from physical.admin.databaseinfra import DatabaseInfraAdmin
+from physical.models import (DatabaseInfra, Plan, Instance, Host, Parameter,
+                             DatabaseInfraParameter)
 from dbaas_nfsaas.models import HostAttr
 from dbaas_cloudstack.models import DatabaseInfraOffering, CloudStackOffering
-from . import factory
+from physical.tests import factory
 from drivers.fake import FakeDriver
-from django.core.cache import cache
-import logging
+
 
 LOG = logging.getLogger(__name__)
 EDITING_CLOUDSTACK_READ_ONLY_FIELDS = ('disk_offering', )
