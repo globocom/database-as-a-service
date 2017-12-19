@@ -6,12 +6,14 @@ import _mysql as mysqldb
 import _mysql_exceptions
 from contextlib import contextmanager
 
-from drivers import (BaseDriver, DatabaseInfraStatus, AuthenticationError, ConnectionError,
-                     GenericDriverError, DatabaseAlreadyExists, InvalidCredential, DatabaseStatus,
-                     DatabaseDoesNotExist, CredentialAlreadyExists)
 from util import make_db_random_password
 from system.models import Configuration
 from physical.models import Instance
+
+from drivers import BaseDriver, DatabaseInfraStatus, DatabaseStatus
+from drivers.errors import AuthenticationError, ConnectionError, GenericDriverError, \
+    DatabaseAlreadyExists, InvalidCredential, DatabaseDoesNotExist, \
+    CredentialAlreadyExists, ReplicationNotRunningError
 
 
 LOG = logging.getLogger(__name__)
@@ -319,10 +321,11 @@ class MySQL(BaseDriver):
 
     def get_replication_info(self, instance):
         results = self.__query(
-            query_string="show slave status", instance=instance)
+            query_string="show slave status", instance=instance
+        )
         seconds_behind_master = results[0]['Seconds_Behind_Master']
         if seconds_behind_master is None:
-            raise Exception("Replication is not running")
+            raise ReplicationNotRunningError
         return int(seconds_behind_master)
 
     def is_replication_ok(self, instance):

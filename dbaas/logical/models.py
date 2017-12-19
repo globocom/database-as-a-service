@@ -20,7 +20,8 @@ from physical.models import DatabaseInfra, Environment
 from drivers import factory_for
 from system.models import Configuration
 from account.models import Team
-from drivers.base import ConnectionError, DatabaseStatus
+from drivers.base import DatabaseStatus
+from drivers.errors import ConnectionError
 from logical.validators import database_name_evironment_constraint
 from notification.models import TaskHistory
 

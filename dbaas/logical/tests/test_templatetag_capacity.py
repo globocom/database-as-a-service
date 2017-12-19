@@ -10,8 +10,8 @@ from _mysql_exceptions import OperationalError
 from physical.models import Instance
 from physical.tests import factory as factory_physical
 from logical.tests import factory as factory_logical
-from drivers.base import DatabaseDoesNotExist, InvalidCredential
 from dbaas.tests.helpers import InstanceHelper
+from drivers.errors import DatabaseDoesNotExist, InvalidCredential
 
 
 class CapacityBaseTestCase(TestCase):
