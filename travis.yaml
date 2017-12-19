@@ -3,6 +3,10 @@ language: python
 python:
     - "2.7"
 
+dist: trusty
+
+group: deprecated-2017Q4
+
 install:
     - pip install -r requirements_test.txt
 
