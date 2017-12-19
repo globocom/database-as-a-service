@@ -11,7 +11,6 @@ LOG = logging.getLogger(__name__)
 __all__ = ['BaseDriver', 'DatabaseStatus', 'DatabaseInfraStatus']
 
 
-
 class BaseDriver(object):
 
     """
