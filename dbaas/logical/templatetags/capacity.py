@@ -159,7 +159,8 @@ class DetailedProgressBarNode(template.Node):
     @property
     def disk_percent(self):
         if self.total_disk_in_gb:
-            disk_percent = (((self.used_disk_in_gb or Decimal(0))) * 100) / self.total_disk_in_gb
+            used_disk = self.used_disk_in_gb or Decimal(0)
+            disk_percent = (used_disk * 100) / self.total_disk_in_gb
         else:
             disk_percent = 0.0
 
