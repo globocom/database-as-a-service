@@ -3,6 +3,7 @@ import logging
 from datetime import datetime
 from time import sleep
 from dbaas_cloudstack.models import HostAttr
+from drivers.errors import ReplicationNotRunningError
 from logical.models import Database
 from util import build_context_script, exec_remote_command
 from util import exec_remote_command_host
@@ -138,6 +139,42 @@ class StopSlave(DatabaseStep):
 
     def undo(self):
         StartSlave(self.instance).do()
+
+
+class WaitForReplication(DatabaseStep):
+
+    def __unicode__(self):
+        return "Waiting for replication ok..."
+
+    def check_replication_ok(self, instance):
+        attempts = 0
+        while not self.driver.is_replication_ok(instance):
+            if attempts == CHECK_ATTEMPTS:
+                return False
+
+            attempts += 1
+            LOG.info("Replication is not ok for {} (Attempt {}/{})".format(
+                instance, attempts, CHECK_ATTEMPTS
+            ))
+            sleep(CHECK_SECONDS)
+
+        return True
+
+    def do(self):
+        not_running = []
+        for instance in self.driver.get_database_instances():
+            try:
+                if not self.check_replication_ok(instance):
+                    not_running.append(instance)
+            except ReplicationNotRunningError:
+                not_running.append(instance)
+
+        for instance in not_running:
+            self.driver.stop_slave(instance)
+            sleep(CHECK_SECONDS)
+            self.driver.start_slave(instance)
+            if not self.check_replication_ok(instance):
+                raise ReplicationNotRunningError
 
 
 class CheckIsUp(DatabaseStep):
