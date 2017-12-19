@@ -6,7 +6,8 @@ from redis.sentinel import Sentinel
 from rediscluster import StrictRedisCluster
 from contextlib import contextmanager
 
-from drivers import BaseDriver, DatabaseInfraStatus, DatabaseStatus, ConnectionError
+from drivers import BaseDriver, DatabaseInfraStatus, DatabaseStatus
+from drivers.errors import ConnectionError
 from system.models import Configuration
 from physical.models import Instance
 from util import exec_remote_command

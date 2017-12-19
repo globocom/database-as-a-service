@@ -844,7 +844,10 @@ class Instance(BaseModel):
         if not self.databaseinfra.engine_id:
             raise ValidationError({'engine': _("No engine selected")})
 
-        from drivers import factory_for, GenericDriverError, ConnectionError, AuthenticationError
+        from drivers import factory_for
+        from drivers.errors import GenericDriverError, ConnectionError, \
+            AuthenticationError
+
         try:
             engine = factory_for(self.databaseinfra)
             # validate instance connection before saving

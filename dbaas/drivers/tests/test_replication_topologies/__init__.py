@@ -48,6 +48,7 @@ class AbstractReplicationTopologySettingsTestCase(TestCase):
             'workflow.steps.util.database.StartSlave',
             'workflow.steps.util.agents.Start',
             'workflow.steps.util.database.CheckIsUp',
+            'workflow.steps.util.database.WaitForReplication',
         )
 
     def _get_resize_settings(self):

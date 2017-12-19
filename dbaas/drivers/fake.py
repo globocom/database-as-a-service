@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 import logging
-from drivers import BaseDriver, DatabaseInfraStatus, ConnectionError
+from drivers import BaseDriver, DatabaseInfraStatus
+from drivers.errors import ConnectionError
 from physical.models import Instance
 
 LOG = logging.getLogger(__name__)
