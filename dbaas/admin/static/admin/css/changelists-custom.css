@@ -2,3 +2,7 @@
     max-height: 300px;
     overflow: scroll;
 }
+
+#result_list td {
+	max-width: 250px;	
+}

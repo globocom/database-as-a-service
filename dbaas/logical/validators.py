@@ -3,7 +3,86 @@ from django.core.urlresolvers import reverse
 from errors import DatabaseInQuarantineError, DatabaseIsDeadError, \
     BusyDatabaseError, MigrationDatabaseError, NoResizeOption, \
     DatabaseWithoutPersistence
+from decimal import Decimal, DecimalException
 
+class ParameterValidator(object):
+
+    @classmethod
+    def validate_value(cls, value, parameter):
+        par_type = parameter.parameter_type
+
+        if par_type == "" or par_type == "boolean":
+            return True
+
+        validate_function = getattr(cls, "validate_{}".format(par_type))
+
+        return validate_function(value, parameter.allowed_values)
+
+    @classmethod
+    def validate_integer(cls, value, allowed_values):
+        try:
+            int(value)
+        except ValueError:
+            return False
+
+        return cls.validate_number(value, allowed_values)
+
+    @classmethod
+    def validate_float(cls, value, allowed_values):
+        if not '.' in value:
+            return False
+
+        return cls.validate_number(value, allowed_values)
+
+    @classmethod
+    def validate_number(cls, value, allowed_values):
+        try:
+            numeric = Decimal(value)
+        except (ValueError, DecimalException):
+            return False
+
+        if allowed_values == "":
+            return True
+
+        allowed_values = allowed_values.split(',')
+        for allowed_value in allowed_values:
+            allowed_value = allowed_value.strip()
+            try:
+                if Decimal(allowed_value) == Decimal(value):
+                    return True
+            except (ValueError, DecimalException):
+                if cls.test_number_range(value, allowed_value):
+                    return True
+
+        return False
+    
+    @classmethod
+    def test_number_range(cls, value, range):
+        value = Decimal(value)
+        nums = range.split(':')
+        lower_limit = Decimal(nums[0])
+        if nums[1] != "":
+          upper_limit = Decimal(nums[1])
+          if value >= lower_limit and value <= upper_limit:
+            return True  
+        else:
+            return value >= lower_limit
+
+        return False
+
+    @classmethod
+    def validate_string(cls, value, allowed_values):
+
+        if allowed_values == "":
+            return True;
+
+        allowed_set = allowed_values.split(',')
+        for allowed_value in allowed_set:
+            allowed_value = allowed_value.strip()
+            if value == allowed_value:
+                return True
+
+        return False
 
 def database_name_evironment_constraint(database_name, environment_name):
     from logical.models import Database

@@ -29,9 +29,10 @@ from logical.views import database_details, database_hosts, \
     database_credentials, database_resizes, database_backup, database_dns, \
     database_metrics, database_destroy, database_delete_host, \
     database_upgrade, database_upgrade_retry, database_resize_retry, \
-    database_resize_rollback, database_make_backup, database_parameters, \
+    database_resize_rollback, database_make_backup, \
     database_change_parameters, database_change_parameters_retry, \
-    database_switch_write, database_reinstall_vm, database_reinstall_vm_retry
+    database_switch_write, database_reinstall_vm, database_reinstall_vm_retry,\
+    DatabaseParameters
 from logical.forms import DatabaseForm
 from logical.service.database import DatabaseService
 
@@ -62,7 +63,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     list_filter_basic = [
         "project", "databaseinfra__environment", "databaseinfra__engine",
         "databaseinfra__plan", "databaseinfra__engine__engine_type", "status",
-        "databaseinfra__plan__has_persistence"
+        "databaseinfra__plan__has_persistence", "databaseinfra__plan__replication_topology__name"
     ]
     list_filter_advanced = list_filter_basic + ["is_in_quarantine", "team"]
     add_form_template = "logical/database/database_add_form.html"
@@ -584,7 +585,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             ),
             url(
                 r'^/?(?P<id>\d+)/parameters/$',
-                self.admin_site.admin_view(database_parameters),
+                self.admin_site.admin_view(DatabaseParameters.as_view()),
                 name="logical_database_parameters"
             ),
             url(
