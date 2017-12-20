@@ -170,7 +170,6 @@ class MySQL(BaseDriver):
         r = self.__query("SELECT VERSION()")
         databaseinfra_status.version = r[0]['VERSION()']
 
-        self.__query("SHOW DATABASES")
         db_sizes = self.__query("SELECT s.schema_name 'Database', ifnull(SUM( t.data_length + t.index_length), 0) 'Size' \
                                 FROM information_schema.SCHEMATA s \
                                   left outer join information_schema.TABLES t on s.schema_name = t.table_schema \
