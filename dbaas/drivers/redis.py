@@ -177,27 +177,16 @@ class Redis(BaseDriver):
             self.databaseinfra.get_dbaas_parameter_default_value('maxmemory')
         )
 
-    def update_infra_instances_sizes(self):
+    def get_total_size_from_instance(self, instance):
+        return self.maxmemory
 
-        result = {
-            'updated': [],
-            'error': []
-        }
-
-        for instance in self.get_database_instances():
-            with self.redis(instance=instance) as client:
-                if instance.status == Instance.ALIVE:
-                    database_info = client.info()
-                    instance.used_size_in_bytes = database_info.get(
-                        'used_memory', 0
-                    )
-                    instance.total_size_in_bytes = self.maxmemory
-                    instance.save()
-                    result['updated'].append(instance)
-                else:
-                    result['error'].append(instance)
-
-        return result
+    def get_used_size_from_instance(self, instance):
+        with self.redis(instance=instance) as client:
+            if instance.status == Instance.ALIVE:
+                database_info = client.info()
+                return database_info.get(
+                    'used_memory', 0
+                )
 
     def info(self):
         infra_status = DatabaseInfraStatus(

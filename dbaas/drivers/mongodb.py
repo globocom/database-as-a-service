@@ -213,29 +213,36 @@ class MongoDB(BaseDriver):
                 raise ConnectionError(
                     'Error connection to databaseinfra %s: %s' % (self.databaseinfra, e.message))
 
-    def update_infra_instances_sizes(self):
-        result = {
-            'updated': [],
-            'error': []
-        }
+    def get_total_size_from_instance(self, instance):
+        return (self.databaseinfra.disk_offering.size_bytes()
+                if self.databaseinfra.disk_offering else 0.0)
 
-        for instance in self.get_database_instances():
-            with self.pymongo(instance=instance) as client:
-                if instance.status == Instance.ALIVE:
-                    database_info = client.admin.command('listDatabases')
-                    instance.used_size_in_bytes = database_info.get(
-                        'totalSize', 0
-                    )
-                    instance.total_size_in_bytes = (self.databaseinfra.
-                                                    disk_offering.size_bytes()
-                                                    if self.databaseinfra.disk_offering
-                                                    else 0.0)
-                    instance.save()
-                    result['updated'].append(instance)
-                else:
-                    result['error'].append(instance)
+    def get_used_size_from_instance(self, instance):
+        with self.pymongo(instance=instance) as client:
+            database_info = client.admin.command('listDatabases')
+            return database_info.get(
+                'totalSize', 0
+            )
 
-        return result
+#    def update_infra_instances_sizes(self):
+#        result = {
+#            'updated': [],
+#            'error': []
+#        }
+#
+#        for instance in self.get_database_instances():
+#            with self.pymongo(instance=instance) as client:
+#                if instance.status == Instance.ALIVE:
+#                    database_info = client.admin.command('listDatabases')
+#                    instance.used_size_in_bytes = database_info.get(
+#                        'totalSize', 0
+#                    )
+#                    instance.save()
+#                    result['updated'].append(instance)
+#                else:
+#                    result['error'].append(instance)
+#
+#        return result
 
     def info(self):
         databaseinfra_status = DatabaseInfraStatus(
