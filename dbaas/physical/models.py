@@ -814,6 +814,10 @@ class Instance(BaseModel):
         )
 
     @property
+    def is_alive(self):
+        return self.status == self.ALIVE
+
+    @property
     def is_database(self):
         return self.instance_type in (self.MYSQL, self.MONGODB, self.REDIS)
 
