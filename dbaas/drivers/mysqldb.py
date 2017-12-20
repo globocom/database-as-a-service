@@ -161,35 +161,6 @@ class MySQL(BaseDriver):
             )
         )
 
-#    def update_infra_instances_sizes(self):
-#        result = {
-#            'updated': [],
-#            'error': []
-#        }
-#
-#        for instance in self.get_database_instances():
-#            if instance.status == Instance.ALIVE:
-#                db_sizes = self.query("SELECT s.schema_name 'Database', ifnull(SUM( t.data_length + t.index_length), 0) 'Size' \
-#                                        FROM information_schema.SCHEMATA s \
-#                                        left outer join information_schema.TABLES t on s.schema_name = t.table_schema \
-#                                        GROUP BY s.schema_name", instance=instance)
-#                instance.used_size_in_bytes = sum(
-#                    map(
-#                        lambda d: float(d.get('Size', 0)),
-#                        db_sizes
-#                    )
-#                )
-#                instance.total_size_in_bytes = (self.databaseinfra.
-#                                                disk_offering.size_bytes()
-#                                                if self.databaseinfra.disk_offering
-#                                                else 0.0)
-#                instance.save()
-#                result['updated'].append(instance)
-#            else:
-#                result['error'].append(instance)
-#
-#        return result
-
     def info(self):
         from logical.models import Database
 
