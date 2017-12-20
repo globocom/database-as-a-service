@@ -7,6 +7,7 @@ from django.core.exceptions import ValidationError, PermissionDenied
 from django.core.urlresolvers import reverse
 from django.shortcuts import get_object_or_404, render_to_response
 from django.views.generic.detail import BaseDetailView
+from django.views.generic import TemplateView
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.http import HttpResponse, HttpResponseRedirect
@@ -24,7 +25,8 @@ from system.models import Configuration
 from logical.errors import DisabledDatabase
 from logical.forms.database import DatabaseDetailsForm
 from logical.models import Credential, Database, Project
-from logical.validators import check_is_database_enabled, check_is_database_dead
+from logical.validators import (check_is_database_enabled, check_is_database_dead,
+                                ParameterValidator)
 
 
 class CredentialView(BaseDetailView):
@@ -78,44 +80,58 @@ class CredentialView(BaseDetailView):
         credential.delete()
         return self.as_json(credential)
 
+def check_permission(request, id, tab):
+    is_dba = request.user.team_set.filter(role__name="role_dba")
+
+    database = Database.objects.get(id=id)
+    if not is_dba:
+        can_access = True
+        if database.team not in request.user.team_set.all():
+            messages.add_message(
+                request, messages.ERROR,
+                'This database belong to {} team, you are not member of this team'.format(database.team)
+            )
+            can_access = False
+        elif database.is_in_quarantine:
+            messages.add_message(
+                request, messages.ERROR,
+                'This database is in quarantine, please contact your DBA'
+            )
+            can_access = False
+
+        if not can_access:
+            return HttpResponseRedirect(
+                reverse('admin:logical_database_changelist')
+            )
+
+    context = {
+        'database': database,
+        'current_tab': tab,
+        'user': request.user,
+        'is_dba': is_dba
+    }
+
+    return context
 
 def database_view(tab):
     def database_decorator(func):
         def func_wrapper(request, id):
-            is_dba = request.user.team_set.filter(role__name="role_dba")
+            context = check_permission(request, id, tab)
 
-            database = Database.objects.get(id=id)
-            if not is_dba:
-                can_access = True
-                if database.team not in request.user.team_set.all():
-                    messages.add_message(
-                        request, messages.ERROR,
-                        'This database belong to {} team, you are not member of this team'.format(database.team)
-                    )
-                    can_access = False
-                elif database.is_in_quarantine:
-                    messages.add_message(
-                        request, messages.ERROR,
-                        'This database is in quarantine, please contact your DBA'
-                    )
-                    can_access = False
-
-                if not can_access:
-                    return HttpResponseRedirect(
-                        reverse('admin:logical_database_changelist')
-                    )
-
-            context = {
-                'database': database,
-                'current_tab': tab,
-                'user': request.user,
-                'is_dba': is_dba
-            }
-
-            return func(request, context, database)
+            return func(request, context, context['database'])
         return func_wrapper
     return database_decorator
 
+
+# TODO: RESOLVER ESSE CONFLITO COM O DECORATOR DE CIMA
+def database_view_class(tab):
+    def database_decorator(func):
+        def func_wrapper(self, request, id):
+            context = check_permission(request, id, tab)
+
+            return func(self, request, context, context['database'])
+        return func_wrapper
+    return database_decorator
 
 def user_tasks(user):
     url = reverse('admin:notification_taskhistory_changelist')
@@ -162,166 +178,210 @@ def database_credentials(request, context, database=None):
         "logical/database/details/credentials_tab.html", context
     )
 
-
-def _update_database_parameters(request_post, database):
-    from physical.models import DatabaseInfraParameter
-    from physical.models import Parameter
-    changed_parameters = []
-    for key in request_post.keys():
-        if key.startswith("new_value_"):
-            parameter_new_value = request_post.get(key)
-            if parameter_new_value:
-                parameter_id = key.split("new_value_")[1]
-                parameter = Parameter.objects.get(id=parameter_id)
-                changed = DatabaseInfraParameter.update_parameter_value(
-                    databaseinfra=database.databaseinfra,
-                    parameter=parameter,
-                    value=parameter_new_value,
-                )
-                if changed:
-                    changed_parameters.append(parameter_id)
-
-        if key.startswith("checkbox_reset_"):
-            reset_default_value = request_post.get(key)
-            if reset_default_value == "on":
-                parameter_id = key.split("checkbox_reset_")[1]
-                parameter = Parameter.objects.get(id=parameter_id)
-                changed = DatabaseInfraParameter.set_reset_default(
-                    databaseinfra=database.databaseinfra,
-                    parameter=parameter,
-                )
-                if changed:
-                    changed_parameters.append(parameter_id)
-
-    return changed_parameters
-
-
-@database_view('parameters')
-def database_parameters(request, context, database):
-    from physical.models import DatabaseInfraParameter
+class DatabaseParameters(TemplateView):
 
     PROTECTED = 1
     EDITABLE = 2
     TASK_RUNNING = 3
     TASK_ERROR = 4
     TASK_SUCCESS = 5
+    template_name = "logical/database/details/parameters_tab.html"
 
-    form_status = PROTECTED
+    @staticmethod
+    def update_database_parameters(request_post, database):
+        from physical.models import DatabaseInfraParameter
+        from physical.models import Parameter
 
-    if request.method == 'POST':
+        error = False
+
+        for key in request_post.keys():
+            if key.startswith("new_value_"):
+                parameter_new_value = request_post.get(key)
+                if parameter_new_value:
+                    parameter_id = key.split("new_value_")[1]
+                    parameter = Parameter.objects.get(id=parameter_id)
+                    if not ParameterValidator.validate_value(parameter_new_value, parameter):
+                        error = "Invalid Parameter Value for {}".format(parameter.name)
+                        return None, error
+
+        changed_parameters = []
+        for key in request_post.keys():
+            if key.startswith("new_value_"):
+                parameter_new_value = request_post.get(key)
+                if parameter_new_value:
+                    parameter_id = key.split("new_value_")[1]
+                    parameter = Parameter.objects.get(id=parameter_id)
+                    changed = DatabaseInfraParameter.update_parameter_value(
+                        databaseinfra=database.databaseinfra,
+                        parameter=parameter,
+                        value=parameter_new_value,
+                    )
+                    if changed:
+                        changed_parameters.append(parameter_id)
+
+            if key.startswith("checkbox_reset_"):
+                reset_default_value = request_post.get(key)
+                if reset_default_value == "on":
+                    parameter_id = key.split("checkbox_reset_")[1]
+                    parameter = Parameter.objects.get(id=parameter_id)
+                    changed = DatabaseInfraParameter.set_reset_default(
+                        databaseinfra=database.databaseinfra,
+                        parameter=parameter,
+                    )
+                    if changed:
+                        changed_parameters.append(parameter_id)
+
+        return changed_parameters, error
+
+    def get_form_parameters(self, database):
+        from physical.models import DatabaseInfraParameter
+        form_parameters = []
+
+        topology_parameters = database.plan.replication_topology.parameter.all()
+        databaseinfra = database.databaseinfra
+
+        for topology_parameter in topology_parameters:
+            editable_parameter = True
+            default_value = databaseinfra.get_dbaas_parameter_default_value(
+                parameter_name=topology_parameter.name
+            )
+            if not topology_parameter.dynamic:
+                self.there_is_static_parameter = True
+
+
+            try:
+                infra_parameter = DatabaseInfraParameter.objects.get(
+                    databaseinfra=databaseinfra,
+                    parameter=topology_parameter
+                )
+            except DatabaseInfraParameter.DoesNotExist:
+                current_value = '-'
+                applied_on_database = True
+                reset_default_value = False
+            else:
+                current_value = infra_parameter.value
+                applied_on_database = infra_parameter.applied_on_database
+                reset_default_value = infra_parameter.reset_default_value
+
+            if self.form_status==self.TASK_ERROR:
+                try:
+                    infra_parameter = DatabaseInfraParameter.objects.get(
+                        databaseinfra=databaseinfra,
+                        parameter=topology_parameter,
+                        applied_on_database=False
+                    )
+                except DatabaseInfraParameter.DoesNotExist:
+                    editable_parameter = False
+                else:
+                    editable_parameter = True
+
+            database_parameter = {
+                "id": topology_parameter.id,
+                "name": topology_parameter.name,
+                "dynamic": topology_parameter.dynamic,
+                "dbaas_default_value": default_value,
+                "current_value": current_value,
+                "new_value": "",
+                "applied_on_database": applied_on_database,
+                "reset_default_value": reset_default_value,
+                "editable_parameter": editable_parameter,
+                "parameter_type": topology_parameter.parameter_type,
+                "allowed_values": topology_parameter.allowed_values,
+                "description": topology_parameter.description,
+                "engine_type": database.engine.engine_type.name,
+            }
+            form_parameters.append(database_parameter)
+
+        return form_parameters
+
+
+
+    def get_context_data(self, **kwargs):
+        from physical.models import DatabaseInfraParameter
+
+        parameters_changed_pending = DatabaseInfraParameter.objects.filter(
+            databaseinfra=self.database.databaseinfra,
+            applied_on_database=False
+        )
+        if parameters_changed_pending:
+            self.form_status = self.TASK_RUNNING
+
+        last_change_parameters = self.database.change_parameters.last()
+        if last_change_parameters:
+            if last_change_parameters.is_running:
+                self.form_status = self.TASK_RUNNING
+            elif last_change_parameters.is_status_error:
+                self.form_status = self.TASK_ERROR
+
+        form_database_parameters = self.get_form_parameters(self.database)
+        
+        self.context['form_database_parameters'] = form_database_parameters
+        self.context['static_parameter'] = self.there_is_static_parameter
+        self.context['PROTECTED'] = self.PROTECTED
+        self.context['EDITABLE'] = self.EDITABLE
+        self.context['TASK_RUNNING'] = self.TASK_RUNNING
+        self.context['TASK_ERROR'] = self.TASK_ERROR
+        self.context['TASK_SUCCESS'] = self.TASK_SUCCESS
+        self.context['form_status'] = self.form_status
+        self.context['last_change_parameters'] = last_change_parameters
+
+        return self.context
+
+
+
+    def post(self, request, *args, **kwargs):
+        
+        context, database = args
+
         if 'edit_parameters' in request.POST:
-            form_status = EDITABLE
-        elif 'calcel_edit_parameters' in request.POST:
-            form_status = PROTECTED
-        elif 'retry_update_parameters' in request.POST:
-            form_status = TASK_ERROR
+            self.form_status = self.EDITABLE
+            return self.get(request)
+
+        if 'cancel_edit_parameters' in request.POST:
+            self.form_status = self.PROTECTED
+            return self.get(request)
+
+        if 'retry_update_parameters' in request.POST:
+            self.form_status = self.TASK_ERROR
             can_do_change_parameters_retry, error = database.can_do_change_parameters_retry()
             if not can_do_change_parameters_retry:
                 messages.add_message(request, messages.ERROR, error)
+                return self.get(request)
             else:
-                changed_parameters = _update_database_parameters(request.POST, database)
+                changed_parameters, error = self.update_database_parameters(request.POST, database)
+                if error:
+                    messages.add_message(request, messages.ERROR, error)
+                    return self.get(request)
                 return HttpResponseRedirect(
                     reverse('admin:change_parameters_retry',
                             kwargs={'id': database.id})
                 )
         else:
-            form_status = EDITABLE
+            self.form_status = self.EDITABLE
             can_do_change_parameters, error = database.can_do_change_parameters()
             if not can_do_change_parameters:
                 messages.add_message(request, messages.ERROR, error)
+                return self.get(request)                
             else:
-                changed_parameters = _update_database_parameters(request.POST, database)
+                changed_parameters, error = self.update_database_parameters(request.POST, database)
+                if error:
+                    messages.add_message(request, messages.ERROR, error)
+                    return self.get(request)
                 if changed_parameters:
                     return HttpResponseRedirect(
                         reverse('admin:change_parameters',
                                 kwargs={'id': database.id})
                     )
+                return self.get(request)
 
-    form_database_parameters = []
-    databaseinfra = database.databaseinfra
-    static_parameter = False
-    custom_parameter = False
 
-    parameters_changed = DatabaseInfraParameter.objects.filter(
-        databaseinfra=database.databaseinfra,
-        applied_on_database=False
-    )
-    if parameters_changed:
-        form_status = TASK_RUNNING
 
-    last_change_parameters = database.change_parameters.last()
-    last_change_parameters_error = False
-    if last_change_parameters:
-        if last_change_parameters.is_running:
-            form_status = TASK_RUNNING
-        elif last_change_parameters.is_status_error:
-            form_status = TASK_ERROR
-            last_change_parameters_error = True
-
-    topology_parameters = database.plan.replication_topology.parameter.all()
-    for topology_parameter in topology_parameters:
-        editable_parameter = True
-        defaul_value = databaseinfra.get_dbaas_parameter_default_value(
-            parameter_name=topology_parameter.name
-        )
-        if not topology_parameter.dynamic:
-            static_parameter = True
-
-        try:
-            infra_parameter = DatabaseInfraParameter.objects.get(
-                databaseinfra=databaseinfra,
-                parameter=topology_parameter
-            )
-        except DatabaseInfraParameter.DoesNotExist:
-            current_value = '-'
-            applied_on_database = True
-            reset_default_value = False
-        else:
-            current_value = infra_parameter.value
-            applied_on_database = infra_parameter.applied_on_database
-            reset_default_value = infra_parameter.reset_default_value
-
-        if last_change_parameters_error:
-            try:
-                infra_parameter = DatabaseInfraParameter.objects.get(
-                    databaseinfra=databaseinfra,
-                    parameter=topology_parameter,
-                    applied_on_database=False
-                )
-            except DatabaseInfraParameter.DoesNotExist:
-                editable_parameter = False
-            else:
-                editable_parameter = True
-
-        database_parameter = {
-            "id": topology_parameter.id,
-            "name": topology_parameter.name,
-            "dynamic": topology_parameter.dynamic,
-            "dbaas_default_value": defaul_value,
-            "current_value": current_value,
-            "new_value": "",
-            "applied_on_database": applied_on_database,
-            "reset_default_value": reset_default_value,
-            "editable_parameter": editable_parameter,
-        }
-        form_database_parameters.append(database_parameter)
-
-    context['form_database_parameters'] = form_database_parameters
-    context['static_parameter'] = static_parameter
-    context['custom_parameter'] = custom_parameter
-    context['PROTECTED'] = PROTECTED
-    context['EDITABLE'] = EDITABLE
-    context['TASK_RUNNING'] = TASK_RUNNING
-    context['TASK_ERROR'] = TASK_ERROR
-    context['TASK_SUCCESS'] = TASK_SUCCESS
-    context['form_status'] = form_status
-    context['last_change_parameters'] = last_change_parameters
-
-    return render_to_response(
-        "logical/database/details/parameters_tab.html",
-        context, RequestContext(request)
-    )
-
+    @database_view_class('parameters')
+    def dispatch(self, request, *args, **kwargs):
+        self.context, self.database = args
+        self.there_is_static_parameter = False
+        self.form_status = self.PROTECTED
+        return super(DatabaseParameters, self).dispatch(request, *args, **kwargs)
 
 @database_view("")
 def database_change_parameters(request, context, database):
@@ -343,7 +403,14 @@ def database_change_parameters(request, context, database):
 def database_change_parameters_retry(request, context, database):
     can_do_change_parameters, error = database.can_do_change_parameters_retry()
     if can_do_change_parameters:
-        _update_database_parameters(request.POST, database)
+        changed_parameters, parameter_error = DatabaseParameters.update_database_parameters(request.POST, database)
+
+        if parameter_error:
+            messages.add_message(request, messages.ERROR, error)
+            return HttpResponseRedirect(
+                reverse('admin:change_parameters_retry',
+                        kwargs={'id': database.id})
+            )
 
         last_change_parameters = database.change_parameters.last()
 

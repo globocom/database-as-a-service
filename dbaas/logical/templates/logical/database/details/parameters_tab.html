@@ -13,13 +13,16 @@
       <thead>
         <tr>
           <th>Parameter</th>
-          <th>DBaaS default value</th>
-          <th>Custom value</th>
+          <th class="default_value_header">DBaaS default value</th>
+          <th class="custom_value_header">Custom value</th>
           {% if is_dba %}
             {% if form_status  == EDITABLE or form_status == TASK_ERROR %}
-              <th>New custom value</th>
+              <th class="new_value_header">New custom value</th>
             {% endif %}
           {% endif %}
+          <th class="type_header">Type</th>
+          <th class="allowed_values">Allowed values</th>
+          <th>Description</th>
         </tr>
       <tbody>
         {% for parameter in form_database_parameters %}
@@ -43,32 +46,71 @@
             {% if is_dba %}
               {% if form_status  == EDITABLE or form_status == TASK_ERROR %}
                 <td>
-                  <input type="text" placeholder="type new value"
-                   maxlength="200" id="new_value_{{parameter.id}}"
-                   name="new_value_{{parameter.id}}" value="{{parameter.new_value}}"
-                   {% if not parameter.editable_parameter %} disabled {% endif %}
-                  >
-                </td>
-                <td>
-
+                  <p class="error_message">Invalid value.</p>
+                  {% if parameter.parameter_type == "boolean" %}
+                    {% if parameter.engine_type == "mysql" %}
+                        <select class="new_custom_value_input" id="new_value_{{parameter.id}}"
+                         name="new_value_{{parameter.id}}" value="{{parameter.new_value}}"
+                         {% if not parameter.editable_parameter %} disabled {% endif %}>
+                            <option value=""></option>
+                            <option value="ON">ON</option>
+                            <option value="OFF">OFF</option>
+                        </select>
+                    {% endif %}
+                    {% if parameter.engine_type == "redis" %}
+                        <select class="new_custom_value_input" id="new_value_{{parameter.id}}"
+                         name="new_value_{{parameter.id}}" value="{{parameter.new_value}}"
+                         {% if not parameter.editable_parameter %} disabled {% endif %}>
+                            <option value=""></option>
+                            <option value="yes">yes</option>
+                            <option value="no">no</option>
+                        </select>
+                    {% endif %}
+                    {% if parameter.engine_type == "mongodb" %}
+                        <select class="new_custom_value_input" id="new_value_{{parameter.id}}"
+                         name="new_value_{{parameter.id}}" value="{{parameter.new_value}}"
+                         {% if not parameter.editable_parameter %} disabled {% endif %}>
+                            <option value=""></option>
+                            <option value="true">true</option>
+                            <option value="false">false</option>
+                        </select>
+                    {% endif %}
+                  {% else %}
+                    <input type="text" class="new_custom_value_input" placeholder="type new value"
+                     maxlength="200" id="new_value_{{parameter.id}}"
+                     name="new_value_{{parameter.id}}" value="{{parameter.new_value}}"
+                     {% if not parameter.editable_parameter %} disabled {% endif %}
+                    >
+                  {% endif %}
                   <label class="checkbox">
-                    <input id="checkbox_reset_{{parameter.id}}" name="checkbox_reset_{{parameter.id}}"
+                    <input class="checkbox_action" id="checkbox_reset_{{parameter.id}}" name="checkbox_reset_{{parameter.id}}"
                       type="checkbox"
                        onclick=
                        {% if not parameter.editable_parameter %}
                        "return false;"
                        {% else %}
-                       "reset_default(this, {{parameter.id}});"
+                       "resetDefault(this, {{parameter.id}});"
                        {% endif %}
                        {% if not parameter.editable_parameter %} disabled {% endif %}
                     />
-                    <span><label class="vCheckboxLabel" for="checkbox_reset_{{parameter.id}}">Reset to DBaaS default value</label></span>
+                    <input type="hidden" name="dynamic_{{parameter.id}}" id="dynamic_{{parameter.id}}" value="{{parameter.dynamic}}">
+                    <span><label class="vCheckboxLabel" for="checkbox_reset_{{parameter.id}}">Reset to default value</label></span>
                   </label>
-
                 </td>
-                <td><input type="hidden" name="dynamic_{{parameter.id}}" id="dynamic_{{parameter.id}}" value="{{parameter.dynamic}}"></td>
+                
               {% endif %}
             {% endif %}
+            <td class="type_cell">
+             {{parameter.parameter_type}}
+             <input name="parameter_type_hidden" type="hidden" class="type_meta" value="{{parameter.parameter_type}}">
+            </td>
+            <td class="allowed_values_cell">
+             {{parameter.allowed_values}}
+             <input name="allowed_values_hidden" type="hidden" class="allowed_values_meta" value="{{parameter.allowed_values}}">
+            </td>
+            <td class="parameter_description_cell">
+             {{parameter.description}}
+            </td>
 
 
           </tr>
@@ -80,44 +122,7 @@
   </div>
 </fieldset>
 
-<!-- Modal -->
-<div class="modal fade" id="change_parameter_modal" tabindex="-1" role="dialog" aria-labelledby="change parameter" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <!-- Modal Header -->
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal">
-          <span aria-hidden="true">&times;</span>
-        </button>
-        <h4 class="modal-title">Change Parameter</h4>
-      </div>
-
-      <!-- Modal Body -->
-      <div class="modal-body">
-        <div role="form">
-          <div class="form-group">
-            <label>
-              {% if database.infra.plan.is_ha %}
-                Change parameter process will switch hosts, and <b class="bold_red">it may cause connections errors</b> during the process.
-              {% else %}
-                Change parameter process <b class="bold_red">will stop the database</b> and, consequently, it will be <b class="bold_red">unavailable</b> until the the end of the process.
-              {% endif %}
-
-              <br><br>
-              Please type <u><b>yes</b></u> to confirm:
-            </label>
-            <input autocomplete="off" class="vTextField" id="id_change_parameter_yes" maxlength="300" name="change_parameter_yes" type="text"/>
-          </div>
-        </div>
-      </div>
-
-      <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-        <input type="submit" value="Apply" name="change_parameter_btn_modal" id="id_change_parameter_btn_modal"/>
-      </div>
-    </div>
-  </div>
-</div>
+{% include "admin/confirmation_modal_input.html" with modal_id="change_parameter" title="Change Parameter" body_text="logical/modal/change_static_parameter.html" input_name="change_parameter_yes" submit_button_value="Apply" submit_button_name="change_parameter_btn_modal" submit_button_id="id_change_parameter_btn_modal" %}
 
 {% include "admin/confirmation_modal.html" with modal_id="save_changes" confirmation_message="Do you want to save the changes made to the parameters?" box_title="Saving changes" button_type="submit" button_value="Apply" button_name="change_parameter_btn_modal" %}
 
@@ -133,25 +138,23 @@
           <div class="pull-left save-options-box">
 
 
-            {%if static_parameter %}
+            {% if static_parameter %}
               <p>* Static parameter, it will be necessary restart the database if changed.</p>
             {% endif %}
 
             {% if form_status  == PROTECTED or form_status == TASK_SUCCESS %}
             <input type="submit" value="Edit" name="edit_parameters" id="id_edit_parameters_btn" class="btn btn-primary"/>
           {% elif  form_status  == EDITABLE %}
-            <input type="submit" value="Save" name="save_parameters"
-              onclick="return confirm_msg();" class="btn btn-primary"
+            <input type="submit" value="Save" name="save_parameters" class="btn btn-primary save_button"
               id="save_parameters"
             />
-            <input type="submit" value="Cancel" name="calcel_edit_parameters"
-              id="id_calcel_edit_parameters_btn" class="btn btn-primary"
+            <input type="submit" value="Cancel" name="cancel_edit_parameters"
+              id="id_cancel_edit_parameters_btn" class="btn btn-primary"
             />
 
           {% elif  form_status  == TASK_ERROR %}
             <input type="submit" value="Retry Change Parameters"
-              name="retry_button" data-toggle="modal" data-target="#retry_save_changes"
-              class="btn btn-warning"
+              name="retry_button" id="id_retry_save_parameters" class="btn btn-warning save_button"
             />
             <p><a href="{% url 'admin:maintenance_databasechangeparameter_change' last_change_parameters.id %}" target='_blank'>Last change parameters</a> has an <b>error</b>, please check the <a href="{% url 'admin:notification_taskhistory_change' last_change_parameters.task.id %}" target='_blank'>task</a> and retry the database change parameters clicking in button above</p>
           {% endif %}
@@ -165,9 +168,11 @@
 {% block js_footer %}
 {{ block.super }}
 
+<script src="{% static "assets/js/bignumber.min.js" %}"></script>
+<script src="{% static "js/parameters_validator.js" %}"></script>
 <script type="text/javascript">
 
-  function reset_default(checkbox_control, id)
+  function resetDefault(checkbox_control, id)
   {
     if (checkbox_control.checked)
     {
@@ -183,22 +188,36 @@
       new_value.value = "";
     }
   }
+  
+  // Keep append order on save_button
+  $(".save_button").on('click',function(event){
+    Validator.validateAll(event);
+  });
 
+  $(".save_button").on('click',function(event){
+    setModal($(this).attr('id'));
+  });
 
-  function confirm_msg()
+  $(".new_custom_value_input").blur( function(){
+      Validator.validateSingleInput($(this));
+  });  
+
+  function setModal(button_id)
   {
-    there_is_static = check_static_parameter_changed();
-    if (there_is_static)
+    var bnt = document.getElementById(button_id);
+    bnt.setAttribute("data-toggle", "modal");
+
+    thereIsStatic = check_static_parameter_changed();
+    if (thereIsStatic)
     {
-      var bnt = document.getElementById("save_parameters");
-      bnt.setAttribute("data-toggle", "modal");
-      bnt.setAttribute("data-target", "#change_parameter_modal");
+      bnt.setAttribute("data-target", "#change_parameter");
     }
     else
     {
-      var bnt = document.getElementById("save_parameters");
-      bnt.setAttribute("data-toggle", "modal");
-      bnt.setAttribute("data-target", "#save_changes");
+      if(btn.getAttribute("name")=="retry_button")
+        bnt.setAttribute("data-target", "#retry_save_changes");
+      else
+        bnt.setAttribute("data-target", "#save_changes");
     }
   }
 

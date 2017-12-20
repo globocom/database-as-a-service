@@ -1,5 +1,39 @@
 
 /* Box Plan */
+#table-parameters th, #table-parameters .parameter_description_cell {
+    width: 300px;
+}
+
+#table-parameters .new_value_header {
+    width: 100px;
+}
+
+#table-parameters .type_header {
+    width: 10px;
+}
+
+#table-parameters .allowed_values, #table-parameters .default_value_header, #table-parameters .custom_value_header {
+    width: 120px;
+}
+
+
+p.error_message {
+    display: none;
+    color: red;
+    margin: 0px;
+}
+
+.vcheckboxlabel{
+    margin: 0;
+    display: inline-block;
+}
+
+.checkbox_action{
+    display: inline-block;
+    float: none;
+    margin-bottom: 5px: 
+}
+
 .plans {
     margin: auto;
 }

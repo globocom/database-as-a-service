@@ -53,40 +53,7 @@
   </div>
 </fieldset>
 
-<!-- Modal -->
-<div class="modal fade" id="delete_modal" tabindex="-1" role="dialog" aria-labelledby="delete modal" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <!-- Modal Header -->
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal">
-          <span aria-hidden="true">&times;</span>
-        </button>
-        <h4 class="modal-title">Delete database {{ database.name }}</h4>
-      </div>
-
-      <!-- Modal Body -->
-      <div class="modal-body">
-        <div role="form">
-          <div class="form-group">
-            <label for="id_database_name">
-              <u><b>{{ database.name }}</b></u> and all of its database will be <b class="bold_red">permanently deleted!</b>
-              <br><br>
-              Please type <u><b>{{ database.name }}</b></u> to confirm:
-            </label>
-            <input autocomplete="off" class="vTextField" id="id_database_name" maxlength="300" name="database_name" type="text"/>
-          </div>
-        </div>
-      </div>
-
-      <div class="modal-footer">
-        <button type="button" class="btn btn-default"data-dismiss="modal">Cancel</button>
-        <input type="submit" value="Delete" name="database_destroy" id="id_destroy_btn"/>
-      </div>
-    </div>
-  </div>
-</div>
-
+{% include "admin/confirmation_modal_input.html" with modal_id="delete_modal" title="Delete database" body_text="logical/modal/delete_database.html" input_name="database_name" submit_button_value="Delete" submit_button_name="database_destroy" submit_button_id="id_destroy_btn"   %}
 
 {% include "admin/confirmation_modal.html" with modal_id="undo_quarantine_modal" confirmation_message="Are you sure you want to get the database out of quarantine?" box_title="Undo quarantine now" button_class="btn btn-primary" button_type="submit" button_value="Undo Quarantine" button_name="undo_quarantine" id_optional="id=confirm_undo_quarantine_button" %}
 
