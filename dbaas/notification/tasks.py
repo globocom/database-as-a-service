@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 import datetime
+import traceback
 from celery.utils.log import get_task_logger
 from celery.exceptions import SoftTimeLimitExceeded
 from django.db.models import Sum, Count
@@ -395,8 +396,11 @@ def update_database_status(self):
 
         task_history.update_status_for(TaskHistory.STATUS_SUCCESS, details="\n".join(
             value for value in msgs))
-    except Exception as e:
-        task_history.update_status_for(TaskHistory.STATUS_ERROR, details=e)
+    except Exception:
+        task_history.update_status_for(
+            TaskHistory.STATUS_ERROR,
+            details=traceback.format_exc()
+        )
 
     return
 
