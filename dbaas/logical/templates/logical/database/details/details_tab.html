@@ -89,15 +89,17 @@
     <div class="control-label"><label>Disk:</label></div>
     <div class="controls">
       <p class="readonly">
-        total {% widthratio database.infra.disk_offering.size_gb 1 masters_quant %} GB
-        {% if masters_quant > 1 %}
-          ({{ masters_quant }} x {{ database.infra.disk_offering.size_gb }} GB)
+        {% if database.has_persistence %}
+          total {% widthratio database.infra.disk_offering.size_gb 1 masters_quant %} GB
+          {% if masters_quant > 1 %}
+            ({{ masters_quant }} x {{ database.infra.disk_offering.size_gb }} GB)
+          {% endif %}
         {% endif %}
       </p>
     </div>
     <div class="controls controls-300">{% render_detailed_capacity_html database disk %}</div>
   </div>
-  {% if database.engine.engine_type.is_in_memory %}
+  {% if database.is_in_memory %}
     <div class="control-group">
       <div class="control-label"><label>Memory database:</label></div>
       <div class="controls">
@@ -118,7 +120,7 @@
       <div class="control-label"><label>Persisted:</label></div>
       <div class="controls">
         <p class="readonly">
-          {% if database.plan.has_persistence %}
+          {% if database.has_persistence %}
             Yes
           {% else %}
             No
