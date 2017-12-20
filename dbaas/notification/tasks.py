@@ -451,9 +451,9 @@ def update_infra_instances_sizes(self):
         databases = Database.objects.all()
         msgs = []
         for database in databases:
-            instances = database.driver.update_infra_instances_sizes()
-            msg = "\nUpdating used size in bytes for database: {}, instances updated: {}, instances with error: {}".format(
-                database, instances.get('updated', '-'), instances.get('error', '-'))
+            updated_instances = database.driver.update_infra_instances_sizes()
+            msg = ("\nUpdating used size in bytes for database: {}:\n\n"
+                   "{}").format(database, "".join(updated_instances))
             msgs.append(msg)
             LOG.info(msg)
 
