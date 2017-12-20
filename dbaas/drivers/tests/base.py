@@ -148,8 +148,8 @@ class BaseSingleInstanceUpdateSizesTest(BaseDriverTest):
         self.driver.databaseinfra.get_parameter_value_by_parameter_name = MagicMock(return_value=90)
         result = self.driver.update_infra_instances_sizes()
         self.validator_helper.instances_sizes(self.driver.get_database_instances())
-        self.assertListEqual(result['updated'], [self.instances[0]])
-        self.assertEqual(result['error'], [])
+        self.assertListEqual(result[0], [self.instances[0]])
+        self.assertEqual(result[1], [])
 
     def test_instance_dead(self):
         self.instance_helper.kill_instances(self.instances)
@@ -159,8 +159,8 @@ class BaseSingleInstanceUpdateSizesTest(BaseDriverTest):
             expected_used_size=0,
             expected_total_size=0
         )
-        self.assertListEqual(result['error'], [self.instances[0]])
-        self.assertEqual(result['updated'], [])
+        self.assertListEqual(result[1], [self.instances[0]])
+        self.assertEqual(result[0], [])
 
 
 class BaseHAInstanceUpdateSizesTest(BaseDriverTest):
@@ -187,10 +187,10 @@ class BaseHAInstanceUpdateSizesTest(BaseDriverTest):
             database_instances
         )
 
-        updated_instances = result['updated']
+        updated_instances = result[0]
 
         self.assertListEqual(updated_instances, database_instances)
-        self.assertEqual(result['error'], [])
+        self.assertEqual(result[1], [])
 
     def test_instance_dead(self):
         self.instance_helper.kill_instances(self.instances[self.dead_instance_quantity:])
@@ -209,8 +209,8 @@ class BaseHAInstanceUpdateSizesTest(BaseDriverTest):
             expected_total_size=0
         )
 
-        updated_instances = result['updated']
-        error_instances = result['error']
+        updated_instances = result[0]
+        error_instances = result[1]
 
         self.assertListEqual(error_instances, list(dead_instances))
         self.assertListEqual(updated_instances, list(alive_instances))
