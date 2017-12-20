@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 from __future__ import unicode_literals
+import datetime
 import logging
 import _mysql as mysqldb
 import _mysql_exceptions
@@ -296,8 +297,23 @@ class MySQL(BaseDriver):
             raise ReplicationNotRunningError
         return int(seconds_behind_master)
 
+    def get_heartbeat_replication_info(self, instance):
+        results = self.__query(
+            query_string="select DATE_FORMAT(ts, '%Y-%m-%d %H:%i:%s') ts, DATE_FORMAT(now(), '%Y-%m-%d %H:%i:%s') now from heartbeat.heartbeat",
+            instance=instance)
+        now = datetime.datetime.strptime(results[0]['now'], '%Y-%m-%d %H:%M:%S')
+        ts = datetime.datetime.strptime(results[0]['ts'], '%Y-%m-%d %H:%M:%S')
+        datediff = now - ts
+        return datediff.seconds
+
     def is_replication_ok(self, instance):
         if self.get_replication_info(instance=instance) == 0:
+            return True
+
+        return False
+
+    def is_heartbeat_replication_ok(self, instance):
+        if self.get_heartbeat_replication_info(instance=instance) == 0:
             return True
 
         return False
