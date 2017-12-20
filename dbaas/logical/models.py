@@ -189,6 +189,14 @@ class Database(BaseModel):
         ordering = ('name', )
 
     @property
+    def is_in_memory(self):
+        return self.engine.engine_type.is_in_memory
+
+    @property
+    def has_persistence(self):
+        return self.plan.has_persistence
+
+    @property
     def infra(self):
         return self.databaseinfra
 
