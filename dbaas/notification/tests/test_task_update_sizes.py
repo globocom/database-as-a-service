@@ -33,7 +33,7 @@ class UpdateInfraInstancesSizesTestCase(TestCase):
         Instance.objects.all().delete()
 
     def test_updated_for_one_database(self, mock_driver, mock_task_history):
-        mock_driver.update_infra_instances_used_size.return_value = {'updated': None, 'error': None}
+        mock_driver.update_infra_instances_used_size.return_value = []
         mock_task_history.STATUS_SUCCESS = 'SUCCESS'
         update_infra_instances_sizes()
 

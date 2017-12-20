@@ -133,6 +133,10 @@ class BaseRedisDriverTestCase(BaseDriverTest, TestCase):
     driver_client_lookup = '__redis_client__'
 
 
+def make_expected_instances(instances, prefix):
+    return map(lambda i: '{}{}'.format(i.dns, prefix), instances)
+
+
 class BaseSingleInstanceUpdateSizesTest(BaseDriverTest):
 
     instances_quantity = 1
@@ -148,8 +152,9 @@ class BaseSingleInstanceUpdateSizesTest(BaseDriverTest):
         self.driver.databaseinfra.get_parameter_value_by_parameter_name = MagicMock(return_value=90)
         result = self.driver.update_infra_instances_sizes()
         self.validator_helper.instances_sizes(self.driver.get_database_instances())
-        self.assertListEqual(result[0], [self.instances[0]])
-        self.assertEqual(result[1], [])
+        self.assertListEqual(result, make_expected_instances(
+            self.instances[:1], ' - OK\n')
+        )
 
     def test_instance_dead(self):
         self.instance_helper.kill_instances(self.instances)
@@ -159,8 +164,9 @@ class BaseSingleInstanceUpdateSizesTest(BaseDriverTest):
             expected_used_size=0,
             expected_total_size=0
         )
-        self.assertListEqual(result[1], [self.instances[0]])
-        self.assertEqual(result[0], [])
+        self.assertListEqual(result, make_expected_instances(
+            self.instances[:1], ' - ERROR\n')
+        )
 
 
 class BaseHAInstanceUpdateSizesTest(BaseDriverTest):
@@ -181,20 +187,18 @@ class BaseHAInstanceUpdateSizesTest(BaseDriverTest):
         self.driver.databaseinfra.get_parameter_value_by_parameter_name = MagicMock(return_value=90)
 
     def test_instance_alive(self):
-        result = self.driver.update_infra_instances_sizes()
+        updated_instances = self.driver.update_infra_instances_sizes()
         database_instances = self.driver.get_database_instances()
         self.validator_helper.instances_sizes(
             database_instances
         )
 
-        updated_instances = result[0]
-
-        self.assertListEqual(updated_instances, database_instances)
-        self.assertEqual(result[1], [])
+        expected_result = make_expected_instances(database_instances, ' - OK\n')
+        self.assertListEqual(updated_instances, expected_result)
 
     def test_instance_dead(self):
         self.instance_helper.kill_instances(self.instances[self.dead_instance_quantity:])
-        result = self.driver.update_infra_instances_sizes()
+        instances = self.driver.update_infra_instances_sizes()
 
         all_instances = self.databaseinfra.instances.filter(
             instance_type=self.instance_type
@@ -209,8 +213,13 @@ class BaseHAInstanceUpdateSizesTest(BaseDriverTest):
             expected_total_size=0
         )
 
-        updated_instances = result[0]
-        error_instances = result[1]
+        expected_error_instances = make_expected_instances(
+            dead_instances, ' - ERROR\n'
+        )
+        expected_updated_instances = make_expected_instances(
+            alive_instances, ' - OK\n'
+        )
 
-        self.assertListEqual(error_instances, list(dead_instances))
-        self.assertListEqual(updated_instances, list(alive_instances))
+        self.assertListEqual(
+            instances, expected_updated_instances + expected_error_instances
+        )

@@ -105,19 +105,18 @@ class BaseDriver(object):
         raise NotImplementedError()
 
     def update_infra_instances_sizes(self):
-        updated = []
-        error = []
+        updated_instances = []
 
         for instance in self.get_database_instances():
             if instance.is_alive:
                 instance.used_size_in_bytes = self.get_used_size_from_instance(instance)
                 instance.total_size_in_bytes = self.get_total_size_from_instance(instance)
                 instance.save()
-                updated.append(instance)
+                updated_instances.append("{} - OK\n".format(instance.dns))
             else:
-                error.append(instance)
+                updated_instances.append("{} - ERROR\n".format(instance.dns))
 
-        return updated, error
+        return updated_instances
 
     def get_master_instance_total_size_in_gb(self, instance=None):
         """ Return total size of a instance.
