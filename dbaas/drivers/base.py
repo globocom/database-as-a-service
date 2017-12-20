@@ -90,8 +90,37 @@ class BaseDriver(object):
         """ Returns a mapping with same attributes of databaseinfra """
         raise NotImplementedError()
 
-    def update_infra_instances_used_size(self):
+    def get_total_size_from_instance(self, instance):
+        """
+            Method used in update_infra_instances_sizes.
+            Return total size in bytes from instance.
+        """
         raise NotImplementedError()
+
+    def get_used_size_from_instance(self, instance):
+        """
+            Method used in update_infra_instances_sizes.
+            Return used size in bytes from instance.
+        """
+        raise NotImplementedError()
+
+    def update_infra_instances_sizes(self):
+
+        result = {
+            'updated': [],
+            'error': []
+        }
+
+        for instance in self.get_database_instances():
+            if instance.is_alive:
+                instance.used_size_in_bytes = self.get_used_size_from_instance(instance)
+                instance.total_size_in_bytes = self.get_total_size_from_instance(instance)
+                instance.save()
+                result['updated'].append(instance)
+            else:
+                result['error'].append(instance)
+
+        return result
 
     def get_master_instance_total_size_in_gb(self, instance=None):
         """ Return total size of a instance.
