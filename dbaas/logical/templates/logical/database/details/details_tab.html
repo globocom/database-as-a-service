@@ -85,20 +85,22 @@
     <div class="control-label"><label>Environment:</label></div>
     <div class="controls"><p class="readonly">{{ database.environment }}</p></div>
   </div>
-  <div class="control-group">
-    <div class="control-label"><label>Disk:</label></div>
-    <div class="controls">
-      <p class="readonly">
-        {% if database.has_persistence %}
+
+  {% if database.has_persistence %}
+    <div class="control-group">
+      <div class="control-label"><label>Disk:</label></div>
+      <div class="controls">
+        <p class="readonly">
           total {% widthratio database.infra.disk_offering.size_gb 1 masters_quant %} GB
           {% if masters_quant > 1 %}
             ({{ masters_quant }} x {{ database.infra.disk_offering.size_gb }} GB)
           {% endif %}
-        {% endif %}
-      </p>
+        </p>
+      </div>
+      <div class="controls controls-300">{% render_detailed_capacity_html database disk %}</div>
     </div>
-    <div class="controls controls-300">{% render_detailed_capacity_html database disk %}</div>
-  </div>
+  {% endif %}
+
   {% if database.is_in_memory %}
     <div class="control-group">
       <div class="control-label"><label>Memory database:</label></div>
