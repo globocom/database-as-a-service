@@ -136,7 +136,6 @@ def region_migration_start(self, infra, instances, since_step=None):
             'workflow.steps.util.database.CheckIsDown',
         )}, {
         'Creating new virtual machine': (
-            'workflow.steps.util.vm.RemoveVM',
             'workflow.steps.util.vm.MigrationCreateNewVM',
         )}, {
         'Creating new infra': (
