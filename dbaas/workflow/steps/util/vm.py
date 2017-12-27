@@ -471,28 +471,3 @@ class RemoveHostMigration(RemoveHost):
         if not base_env.migrate_environment:
             base_env = Environment.objects.get(migrate_environment=base_env)
         return base_env
-
-    def do(self):
-        try:
-            super(RemoveHostMigration, self).do()
-        except Exception as err:
-            LOG.error("Error removing VM: {}".format(err))
-
-
-class RemoveVM(VmStep):
-
-    def __unicode__(self):
-        return "Destroying virtual machine..."
-
-    def do(self):
-        host_attr = HostAttr.objects.get(host=self.host)
-        if not self.cs_provider.destroy_virtual_machine(
-                project_id=self.cs_credentials.project,
-                environment=self.environment,
-                vm_id=host_attr.vm_id
-        ):
-            raise Exception("Could not remove Host - {} {} {}".format(
-                self.environment, host_attr.vm_id, self.cs_credentials.project
-            ))
-
-        sleep(60*5)
