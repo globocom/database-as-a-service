@@ -120,6 +120,9 @@ class StartSlave(DatabaseStep):
         return "Starting slave..."
 
     def do(self):
+        if not self.infra.plan.is_ha:
+            return
+
         CheckIsUp(self.instance)
         self.driver.start_slave(instance=self.instance)
 
@@ -133,6 +136,9 @@ class StopSlave(DatabaseStep):
         return "Stopping slave..."
 
     def do(self):
+        if not self.infra.plan.is_ha:
+            return
+
         CheckIsUp(self.instance)
         self.driver.stop_slave(instance=self.instance)
 
