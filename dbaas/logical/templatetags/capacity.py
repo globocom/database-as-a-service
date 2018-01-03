@@ -114,7 +114,7 @@ class DetailedProgressBarNode(template.Node):
 
     @property
     def total_disk_in_gb(self):
-        return self.normalize_number(self.instance.total_size_in_bytes * GB_FACTOR)
+        return self.normalize_number(self.host_attr.nfsaas_size_kb * MB_FACTOR)
 
     @property
     def used_disk_in_gb(self):
