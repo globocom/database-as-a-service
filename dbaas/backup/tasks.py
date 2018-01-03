@@ -133,7 +133,7 @@ def make_instance_snapshot_backup(instance, error, group):
         if not locked:
             snapshot_final_status = Snapshot.WARNING
 
-        if type(driver).__name__ == 'MySQL':
+        if 'MySQL' in type(driver).__name__:
             mysql_binlog_save(client, instance, cloudstack_hostattr)
 
         nfs_snapshot = create_snapshot(
