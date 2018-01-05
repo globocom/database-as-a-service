@@ -117,6 +117,7 @@ class CreateVirtualMachine(BaseStep):
                 instance.hostname = host
                 instance.databaseinfra = workflow_dict['databaseinfra']
                 instance.instance_type = Instance.MYSQL
+                instance.offering = offering
                 instance.save()
                 LOG.info("Instance created!")
 

@@ -48,6 +48,9 @@ class CreateVirtualMachine(BaseStep):
             )
             bundles = list(cs_plan_attrs.bundles_actives)
 
+            strong_offering = cs_plan_attrs.get_stronger_offering()
+            weaker_offering = cs_plan_attrs.get_weaker_offering()
+
             for index, vm_name in enumerate(workflow_dict['names']['vms']):
 
                 if len(bundles) == 1:
@@ -60,10 +63,7 @@ class CreateVirtualMachine(BaseStep):
                         bundle = LastUsedBundle.get_next_bundle(
                             current_bundle=bundle, bundles=bundles)
 
-                if index == 2:
-                    offering = cs_plan_attrs.get_weaker_offering()
-                else:
-                    offering = cs_plan_attrs.get_stronger_offering()
+                offering = weaker_offering if index == 2 else strong_offering
 
                 try:
                     DatabaseInfraOffering.objects.get(
@@ -129,6 +129,7 @@ class CreateVirtualMachine(BaseStep):
                     instance.hostname = host
                     instance.databaseinfra = workflow_dict['databaseinfra']
                     instance.instance_type = Instance.REDIS
+                    instance.offering = strong_offering
                     instance.save()
                     LOG.info("Instance created!")
 
@@ -152,6 +153,7 @@ class CreateVirtualMachine(BaseStep):
                     instance.hostname = host
                     instance.databaseinfra = workflow_dict['databaseinfra']
                     instance.instance_type = Instance.REDIS_SENTINEL
+                    instance.offering = weaker_offering
                     instance.save()
                     LOG.info("Instance created!")
                     workflow_dict['instances'].append(instance)

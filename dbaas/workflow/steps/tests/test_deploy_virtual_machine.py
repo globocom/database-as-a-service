@@ -36,6 +36,8 @@ class CreateVirtualMachineMySQLSingleTestCase(TestBaseStep):
     vm_count = 0
     cloudstack_provider_path = 'workflow.steps.mysql.deploy.create_virtualmachines.CloudStackProvider'
     expected_instances_quantity = None
+    strong_instances_quantity = 1
+    weaker_instances_quantity = 0
 
     def _fake_deploy_virtual_machine(*args, **kw):
         fake_vm_dict = {
@@ -53,6 +55,14 @@ class CreateVirtualMachineMySQLSingleTestCase(TestBaseStep):
             provider_mock().deploy_virtual_machine.side_effect = self._fake_deploy_virtual_machine
             result = self.create_vm_workflow.do(workflow_dict or self.fake_workflow_dict)
             self.assertEqual(result, expected_result)
+
+    def _validate_instance_offering(self, instances):
+
+        strong_instances = instances.filter(offering__weaker=False)
+        weaker_instances = instances.filter(offering__weaker=True)
+
+        self.assertEqual(strong_instances.count(), self.strong_instances_quantity)
+        self.assertEqual(weaker_instances.count(), self.weaker_instances_quantity)
 
     def setUp(self):
         super(CreateVirtualMachineMySQLSingleTestCase, self).setUp()
@@ -99,10 +109,12 @@ class CreateVirtualMachineMySQLSingleTestCase(TestBaseStep):
     def test_create_instance(self):
         self.assertEqual(self.infra.instances.filter(address__contains='fake_address').count(), 0)
         self._create_vm_workflow()
+        instances = self.infra.instances.filter(address__contains='fake_address')
         self.assertEqual(
-            self.infra.instances.filter(address__contains='fake_address').count(),
+            instances.count(),
             self.expected_instances_quantity or self.vm_quantity
         )
+        self._validate_instance_offering(instances)
 
     def test_create_hostattr(self):
         self._create_vm_workflow()
@@ -124,6 +136,8 @@ class CreateVirtualMachineMySQLSingleTestCase(TestBaseStep):
 
 class CreateVirtualMachineMySQLHATestCase(CreateVirtualMachineMySQLSingleTestCase):
     vm_quantity = 2
+    strong_instances_quantity = 2
+    weaker_instances_quantity = 0
 
 
 @patch('workflow.steps.mysql.deploy.create_virtualmachines_fox.get_credentials_for',
@@ -132,6 +146,8 @@ class CreateVirtualMachineMySQLFoxHATestCase(CreateVirtualMachineMySQLSingleTest
     vm_quantity = 2
     create_class = CreateVirtualMachineMySQLFox
     cloudstack_provider_path = 'workflow.steps.mysql.deploy.create_virtualmachines_fox.CloudStackProvider'
+    strong_instances_quantity = 2
+    weaker_instances_quantity = 0
 
     @patch('workflow.steps.mysql.deploy.create_virtualmachines_fox.LastUsedBundle.get_next_infra_bundle')
     @patch('workflow.steps.mysql.deploy.create_virtualmachines_fox.LastUsedBundle.get_next_bundle')
@@ -186,6 +202,8 @@ class CreateVirtualMachineRedisSentinelTestCase(CreateVirtualMachineRedisSingleT
     vm_quantity = 3
     expected_next_count = 2
     expected_instances_quantity = 5
+    strong_instances_quantity = 2
+    weaker_instances_quantity = 3
 
     def setUp(self):
         super(CreateVirtualMachineRedisSentinelTestCase, self).setUp()
@@ -224,6 +242,8 @@ class CreateVirtualMachineMongoSingleTestCase(CreateVirtualMachineMySQLSingleTes
 class CreateVirtualMachineMongoArbiterTestCase(CreateVirtualMachineMongoSingleTestCase):
     vm_quantity = 3
     expected_next_count = 2
+    strong_instances_quantity = 2
+    weaker_instances_quantity = 1
 
     def setUp(self):
         super(CreateVirtualMachineMongoArbiterTestCase, self).setUp()
