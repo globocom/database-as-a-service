@@ -11,6 +11,8 @@ from django.db import models
 from django.utils.html import format_html
 from django.utils.translation import ugettext_lazy as _
 from django_extensions.db.fields.encrypted import EncryptedCharField
+# TODO: remove cloudstack import
+from dbaas_cloudstack.models import CloudStackOffering
 
 from util.models import BaseModel
 from drivers import DatabaseInfraStatus
@@ -835,6 +837,7 @@ class Instance(BaseModel):
     shard = models.IntegerField(null=True, blank=True)
     used_size_in_bytes = models.FloatField(null=True, blank=True)
     total_size_in_bytes = models.FloatField(null=True, blank=True)
+    offering = models.ForeignKey(CloudStackOffering, null=True)
 
     class Meta:
         unique_together = (
