@@ -3,7 +3,8 @@ import logging
 from django.core.exceptions import ObjectDoesNotExist
 
 from dbaas_cloudstack.provider import CloudStackProvider
-from dbaas_cloudstack.models import (CredentialType, PlanAttr, HostAttr, LastUsedBundle,
+from dbaas_credentials.models import CredentialType
+from dbaas_cloudstack.models import (PlanAttr, HostAttr, LastUsedBundle,
                                      LastUsedBundleDatabaseInfra, DatabaseInfraOffering)
 
 from physical.models import Host
