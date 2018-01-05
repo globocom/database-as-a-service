@@ -3,7 +3,9 @@ from __future__ import absolute_import, unicode_literals
 import factory
 # TODO: Remove this specific dbaas imports
 from dbaas_nfsaas.models import HostAttr
-from dbaas_cloudstack.models import DatabaseInfraOffering, CloudStackOffering
+from dbaas_cloudstack.models import (DatabaseInfraOffering, CloudStackOffering,
+                                     PlanAttr, OfferingGroup, BundleGroup,
+                                     CloudStackBundle, CloudStackRegion)
 from physical import models
 
 
@@ -47,6 +49,7 @@ class ReplicationTopologyFactory(factory.DjangoModelFactory):
     name = factory.Sequence(lambda n: 'disk-offering-{0}'.format(n))
     class_path = 'drivers.replication_topologies.base.FakeTestTopology'
 
+
 class ParameterFactory(factory.DjangoModelFactory):
     FACTORY_FOR = models.Parameter
 
@@ -55,6 +58,48 @@ class ParameterFactory(factory.DjangoModelFactory):
     allowed_values = ''
     parameter_type = ''
 
+
+class CloudStackRegionFactory(factory.DjangoModelFactory):
+    FACTORY_FOR = CloudStackRegion
+
+
+class CloudStackBundleFactory(factory.DjangoModelFactory):
+    FACTORY_FOR = CloudStackBundle
+    is_active = True
+
+
+class BundleGroupFactory(factory.DjangoModelFactory):
+    FACTORY_FOR = BundleGroup
+
+    @factory.post_generation
+    def bundles(self, create, extracted, **kwargs):
+        if not create:
+            # Simple build, do nothing.
+            return
+
+        if extracted:
+            # A list of groups were passed in, use them
+            for bundle in extracted:
+                self.bundles.add(bundle)
+        else:
+            self.bundles.add(CloudStackBundleFactory())
+
+
+class OfferingGroupFactory(factory.DjangoModelFactory):
+    FACTORY_FOR = OfferingGroup
+
+    @factory.post_generation
+    def offerings(self, create, extracted, **kwargs):
+        if not create:
+            # Simple build, do nothing.
+            return
+
+        if extracted:
+            # A list of groups were passed in, use them
+            for off in extracted:
+                self.offerings.add(off)
+        else:
+            self.offerings.add(CloudStackOfferingFactory())
 
 
 class PlanFactory(factory.DjangoModelFactory):
@@ -79,6 +124,13 @@ class PlanFactory(factory.DjangoModelFactory):
                 self.environments.add(env)
         else:
             self.environments.add(EnvironmentFactory())
+
+
+class PlanAttrFactory(factory.DjangoModelFactory):
+    FACTORY_FOR = PlanAttr
+    offering_group = factory.SubFactory(OfferingGroupFactory)
+    plan = factory.SubFactory(PlanFactory)
+    bundle_group = factory.SubFactory(BundleGroupFactory)
 
 
 class DatabaseInfraFactory(factory.DjangoModelFactory):
@@ -145,13 +197,6 @@ class NFSaaSHostAttr(factory.DjangoModelFactory):
     is_active = True
     nfsaas_size_kb = 1000
     nfsaas_used_size_kb = 10
-
-
-class ParameterFactory(factory.DjangoModelFactory):
-    FACTORY_FOR = models.Parameter
-
-    engine_type = factory.SubFactory(EngineTypeFactory)
-    name = 'fake_parameter'
 
 
 class DatabaseInfraParameterFactory(factory.DjangoModelFactory):
