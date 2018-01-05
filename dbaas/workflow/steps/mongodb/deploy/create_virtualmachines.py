@@ -1,19 +1,17 @@
 # -*- coding: utf-8 -*-
 import logging
-from util import get_credentials_for
-from util import full_stack
 from dbaas_cloudstack.provider import CloudStackProvider
-from dbaas_credentials.models import CredentialType
-from dbaas_cloudstack.models import PlanAttr
-from dbaas_cloudstack.models import HostAttr
-from dbaas_cloudstack.models import LastUsedBundle
-from dbaas_cloudstack.models import DatabaseInfraOffering
-from dbaas_cloudstack.models import LastUsedBundleDatabaseInfra
+from dbaas_cloudstack.models import (CredentialType, PlanAttr, HostAttr, LastUsedBundle,
+                                     LastUsedBundleDatabaseInfra, DatabaseInfraOffering)
+
 from django.core.exceptions import ObjectDoesNotExist
 from physical.models import Host
 from physical.models import Instance
-from ...util.base import BaseStep
-from ....exceptions.error_codes import DBAAS_0011
+from workflow.steps.util.base import BaseStep
+from workflow.exceptions.error_codes import DBAAS_0011
+from util import get_credentials_for
+from util import full_stack
+
 
 LOG = logging.getLogger(__name__)
 
