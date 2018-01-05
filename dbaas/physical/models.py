@@ -150,8 +150,8 @@ class Parameter(BaseModel):
 
     parameter_type = models.CharField(
         verbose_name=_("Type"),
-        max_length = 100,
-        choices = TYPE_CHOICES,
+        max_length=100,
+        choices=TYPE_CHOICES,
         default='',
     )
 
@@ -160,7 +160,6 @@ class Parameter(BaseModel):
         help_text="Custom method with steps for changing this parameter.",
         blank=True, null=True
     )
-
 
     dynamic = models.BooleanField(
         verbose_name=_("Dynamic"),
