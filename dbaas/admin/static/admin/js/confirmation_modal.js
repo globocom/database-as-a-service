@@ -8,4 +8,28 @@
 	    }
 	} );
 
+	$( '.modal.fade' ).on( 'hidden', function( e ) {
+        $(".btn-accept-modal.inactive").removeClass("inactive")
+        .addClass("active")
+        .removeAttr("disabled");
+	} );
+
+	function block() {
+		var button = $(this)
+		if(button.hasClass("active")) {
+			button.removeClass("active")
+        	.addClass("inactive");
+        	console.log("cliclk1")
+    	}
+    	else {
+    		button.attr("disabled", "disabled");
+    		console.log("click impedido")
+    	}
+	}
+
+	var allButtons = document.getElementsByClassName('btn-accept-modal')
+	for (var x = 0; x < allButtons.length; x++){
+		allButtons[x].addEventListener("click", block, true);
+	}
+
 })(django.jQuery);
