@@ -227,9 +227,9 @@
       btn = document.getElementById("id_change_parameter_btn_modal");
       btn.disabled = $(this).val() != "yes";
       if (btn.disabled) {
-        btn.className = 'btn';
+        $(btn).removeClass('btn-primary');
       } else {
-        btn.className = 'btn btn-primary';
+        $(btn).addClass('btn-primary');
       }
     });
     $("#id_change_parameter_yes").keyup();

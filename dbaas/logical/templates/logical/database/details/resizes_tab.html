@@ -135,9 +135,9 @@
       btn = document.getElementById("id_resize_vm_btn_modal");
       btn.disabled = $(this).val() != "yes";
       if (btn.disabled) {
-        btn.className = 'btn';
+        $(btn).removeClass ('btn-primary');
       } else {
-        btn.className = 'btn btn-primary';
+        $(btn).addClass('btn-primary');
       }
     });
     $("#id_resize_vm_yes").keyup()
