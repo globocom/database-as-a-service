@@ -73,9 +73,9 @@
       btn = document.getElementById('id_destroy_btn')
       btn.disabled = '{{ database.name }}' != $(this).val();
       if (btn.disabled){
-        btn.className = 'resize_button btn';
+        $(btn).removeClass('btn-danger');
       } else {
-        btn.className = 'resize_button btn btn-danger';
+        $(btn).addClass('btn btn-danger');
       }
     });
     $("#id_database_name").keyup()
