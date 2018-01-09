@@ -17,8 +17,8 @@ class UpdateInstances(object):
 
             for instance in infra_offering.databaseinfra.instances.all():
                 if instance.is_database:
-                    instance.offering = weaker_offering
+                    instance.offering = strong_offering
                 else:
-                    instance.oferring = strong_offering
+                    instance.oferring = weaker_offering
 
                 instance.save()
