@@ -273,6 +273,28 @@ class ConfigurationRedis(ConfigurationBase):
         return self.get_parameter(parameter_name, default)
 
     @property
+    def client_output_buffer_limit_normal(self):
+        parameter_name = inspect.stack()[0][3]
+        default = "0 0 0"
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def client_output_buffer_limit_slave(self):
+        parameter_name = inspect.stack()[0][3]
+        default_hard = int(self.memory_size_in_bytes / 4)
+        default_soft = int(self.memory_size_in_bytes / 16)
+        default_soft_second = int(self.memory_size_in_mb / 17)
+        default = "{} {} {}".format(
+            default_hard, default_soft, default_soft_second)
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def client_output_buffer_limit_pubsub(self):
+        parameter_name = inspect.stack()[0][3]
+        default = "33554432 8388608 60"
+        return self.get_parameter(parameter_name, default)
+
+    @property
     def cluster_enabled(self):
         return 'no'
 
