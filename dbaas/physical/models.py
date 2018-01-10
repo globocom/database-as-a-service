@@ -18,6 +18,7 @@ from util.models import BaseModel
 from drivers import DatabaseInfraStatus
 from system.models import Configuration
 from physical.errors import NoDiskOfferingGreaterError, NoDiskOfferingLesserError
+from django.db.models import Q
 
 
 LOG = logging.getLogger(__name__)
@@ -722,10 +723,11 @@ class DatabaseInfra(BaseModel):
             return dbinfraparameter.value
 
     def get_parameter_value_by_parameter_name(self, parameter_name):
+        parameter_name_hyphen = parameter_name.replace('_', '-')
         try:
             dbinfraparameter = DatabaseInfraParameter.objects.get(
+                Q(parameter__name=parameter_name) | Q(parameter__name=parameter_name_hyphen),
                 databaseinfra=self,
-                parameter__name=parameter_name
             )
         except DatabaseInfraParameter.DoesNotExist:
             return None
