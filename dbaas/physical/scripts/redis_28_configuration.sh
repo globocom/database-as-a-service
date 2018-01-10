@@ -595,8 +595,8 @@ hash-max-ziplist-value {{ configuration.hash_max_ziplist_value.value }}
 # Similarly to hashes, small lists are also encoded in a special way in order
 # to save a lot of space. The special representation is only used when
 # you are under the following limits:
-list-max-ziplist-entries {{ configuration.list_max_ziplist_entries.value }}
-list-max-ziplist-value {{ configuration.list_max_ziplist_value.value }}
+#list-max-ziplist-entries 512
+#list-max-ziplist-value 64
 
 # Sets have a special encoding in just one case: when a set is composed
 # of just strings that happens to be integers in radix 10 in the range

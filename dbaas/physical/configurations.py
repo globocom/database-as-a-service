@@ -219,18 +219,6 @@ class ConfigurationRedis(ConfigurationBase):
         return self.get_parameter(parameter_name, default)
 
     @property
-    def list_max_ziplist_entries(self):
-        parameter_name = inspect.stack()[0][3]
-        default = 512
-        return self.get_parameter(parameter_name, default)
-
-    @property
-    def list_max_ziplist_value(self):
-        parameter_name = inspect.stack()[0][3]
-        default = 64
-        return self.get_parameter(parameter_name, default)
-
-    @property
     def set_max_intset_entries(self):
         parameter_name = inspect.stack()[0][3]
         default = 512
