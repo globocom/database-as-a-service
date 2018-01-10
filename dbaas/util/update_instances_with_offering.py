@@ -15,10 +15,6 @@ class UpdateInstances(object):
             strong_offering = infra_offering.offering
             weaker_offering = plan_attr.get_weaker_offering()
 
-            for instance in infra_offering.databaseinfra.instances.all():
-                if instance.is_database:
-                    instance.offering = strong_offering
-                else:
-                    instance.oferring = weaker_offering
-
-                instance.save()
+            for host in infra_offering.databaseinfra.hosts:
+                host.offering = strong_offering if host.database_instance() else weaker_offering
+                host.save()
