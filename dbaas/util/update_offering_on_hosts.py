@@ -1,7 +1,7 @@
 # coding: utf-8
 
 
-class UpdateInstances(object):
+class UpdateHosts(object):
 
     @staticmethod
     def do():
@@ -25,5 +25,6 @@ class UpdateInstances(object):
 
         for db in Database.objects.all():
             print db.name
+            print "\n\n"
             for i in db.infra.hosts:
                 print i.offering
