@@ -55,8 +55,9 @@ class CreateVirtualMachine(BaseStep):
                 bundle = LastUsedBundle.get_next_infra_bundle(
                     plan=workflow_dict['plan'], bundles=bundles)
 
+            offering = cs_plan_attrs.get_stronger_offering()
+
             for index, vm_name in enumerate(workflow_dict['names']['vms']):
-                offering = cs_plan_attrs.get_stronger_offering()
 
                 try:
                     DatabaseInfraOffering.objects.get(
@@ -92,6 +93,7 @@ class CreateVirtualMachine(BaseStep):
                 host.address = vm['virtualmachine'][0]['nic'][0]['ipaddress']
                 host.hostname = host.address
                 host.cloud_portal_host = True
+                host.offering = offering
                 host.save()
                 LOG.info("Host created!")
 
@@ -112,7 +114,6 @@ class CreateVirtualMachine(BaseStep):
                 instance.hostname = host
                 instance.databaseinfra = workflow_dict['databaseinfra']
                 instance.instance_type = Instance.MYSQL
-                instance.offering = offering
                 instance.save()
                 LOG.info("Instance created!")
 

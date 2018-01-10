@@ -99,6 +99,7 @@ class CreateVirtualMachine(BaseStep):
                 host.address = vm['virtualmachine'][0]['nic'][0]['ipaddress']
                 host.hostname = host.address
                 host.cloud_portal_host = True
+                host.offering = offering
                 host.save()
                 LOG.info("Host created!")
 
@@ -119,10 +120,8 @@ class CreateVirtualMachine(BaseStep):
 
                 instance.is_active = True
                 if index == 2:
-                    instance.offering = weaker_offering
                     instance.instance_type = Instance.MONGODB_ARBITER
                 else:
-                    instance.offering = strong_offering
                     instance.instance_type = Instance.MONGODB
 
                 instance.hostname = host
