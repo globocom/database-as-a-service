@@ -751,6 +751,7 @@ class Host(BaseModel):
     os_description = models.CharField(
         verbose_name=_("Operating system description"),
         max_length=255, null=True, blank=True)
+    offering = models.ForeignKey(CloudStackOffering, null=True)
 
     def __unicode__(self):
         return self.hostname
@@ -836,7 +837,6 @@ class Instance(BaseModel):
     shard = models.IntegerField(null=True, blank=True)
     used_size_in_bytes = models.FloatField(null=True, blank=True)
     total_size_in_bytes = models.FloatField(null=True, blank=True)
-    offering = models.ForeignKey(CloudStackOffering, null=True)
 
     class Meta:
         unique_together = (
