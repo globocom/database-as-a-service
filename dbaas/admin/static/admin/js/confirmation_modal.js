@@ -19,11 +19,9 @@
 		if(button.hasClass("active")) {
 			button.removeClass("active")
         	.addClass("inactive");
-        	console.log("cliclk1")
     	}
     	else {
     		button.attr("disabled", "disabled");
-    		console.log("click impedido")
     	}
 	}
 
