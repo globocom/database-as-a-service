@@ -664,9 +664,9 @@ activerehashing {{ configuration.activerehashing.value }}
 # subscribers and slaves receive data in a push fashion.
 #
 # Both the hard or the soft limit can be disabled just setting it to zero.
-client-output-buffer-limit normal 0 0 0
-client-output-buffer-limit slave 256mb 64mb 60
-client-output-buffer-limit pubsub 32mb 8mb 60
+client-output-buffer-limit normal {{ configuration.client_output_buffer_limit_normal.value }}
+client-output-buffer-limit slave {{ configuration.client_output_buffer_limit_slave.value }}
+client-output-buffer-limit pubsub {{ configuration.client_output_buffer_limit_pubsub.value }}
 
 ################################## INCLUDES ###################################
 
