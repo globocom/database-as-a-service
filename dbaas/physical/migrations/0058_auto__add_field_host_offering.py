@@ -8,15 +8,15 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Adding field 'Instance.offering'
-        db.add_column(u'physical_instance', 'offering',
+        # Adding field 'Host.offering'
+        db.add_column(u'physical_host', 'offering',
                       self.gf('django.db.models.fields.related.ForeignKey')(to=orm['dbaas_cloudstack.CloudStackOffering'], null=True),
                       keep_default=False)
 
 
     def backwards(self, orm):
-        # Deleting field 'Instance.offering'
-        db.delete_column(u'physical_instance', 'offering_id')
+        # Deleting field 'Host.offering'
+        db.delete_column(u'physical_host', 'offering_id')
 
 
     models = {
@@ -122,6 +122,7 @@ class Migration(SchemaMigration):
             'hostname': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '255'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'monitor_url': ('django.db.models.fields.URLField', [], {'max_length': '500', 'null': 'True', 'blank': 'True'}),
+            'offering': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['dbaas_cloudstack.CloudStackOffering']", 'null': 'True'}),
             'os_description': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True', 'blank': 'True'}),
             'updated_at': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'})
         },
@@ -136,7 +137,6 @@ class Migration(SchemaMigration):
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'instance_type': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
             'is_active': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
-            'offering': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['dbaas_cloudstack.CloudStackOffering']", 'null': 'True'}),
             'port': ('django.db.models.fields.IntegerField', [], {}),
             'read_only': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'shard': ('django.db.models.fields.IntegerField', [], {'null': 'True', 'blank': 'True'}),
