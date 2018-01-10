@@ -18,3 +18,12 @@ class UpdateInstances(object):
             for host in infra_offering.databaseinfra.hosts:
                 host.offering = strong_offering if host.database_instance() else weaker_offering
                 host.save()
+
+    @staticmethod
+    def see_offering():
+        from logical.models import Database
+
+        for db in Database.objects.all():
+            print db.name
+            for i in db.infra.hosts:
+                print i.offering
