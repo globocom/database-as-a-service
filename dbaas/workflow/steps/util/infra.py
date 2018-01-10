@@ -37,9 +37,10 @@ class Offering(Update):
 
         self.infra_offering.offering = offering
         self.infra_offering.save()
+
         if self.instance.is_database:
-            self.instance.offering = offering
-            self.instance.save()
+            self.instance.host.offering = offering
+            self.instance.host.save()
 
     def do(self):
         self.change_infra_offering(self.target_offering)
