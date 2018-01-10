@@ -99,6 +99,7 @@ class CreateVirtualMachine(BaseStep):
                 host.address = vm['virtualmachine'][0]['nic'][0]['ipaddress']
                 host.hostname = host.address
                 host.cloud_portal_host = True
+                host.offering = offering
                 host.save()
                 LOG.info("Host created!")
 
@@ -129,7 +130,6 @@ class CreateVirtualMachine(BaseStep):
                     instance.hostname = host
                     instance.databaseinfra = workflow_dict['databaseinfra']
                     instance.instance_type = Instance.REDIS
-                    instance.offering = strong_offering
                     instance.save()
                     LOG.info("Instance created!")
 
@@ -153,7 +153,6 @@ class CreateVirtualMachine(BaseStep):
                     instance.hostname = host
                     instance.databaseinfra = workflow_dict['databaseinfra']
                     instance.instance_type = Instance.REDIS_SENTINEL
-                    instance.offering = weaker_offering
                     instance.save()
                     LOG.info("Instance created!")
                     workflow_dict['instances'].append(instance)
