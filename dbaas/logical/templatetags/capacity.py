@@ -100,8 +100,8 @@ class DetailedProgressBarNode(template.Node):
         html = ''
         for instance in self.master_instances:
             self.instance = instance
-            self.host_attr = instance.hostname.nfsaas_host_attributes.filter(is_active=True).first()
             try:
+                self.host_attr = instance.hostname.nfsaas_host_attributes.filter(is_active=True).first()
                 html += self.render_bar()
             except Exception, e:
                 LOG.error(
