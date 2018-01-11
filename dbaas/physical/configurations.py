@@ -219,18 +219,6 @@ class ConfigurationRedis(ConfigurationBase):
         return self.get_parameter(parameter_name, default)
 
     @property
-    def list_max_ziplist_entries(self):
-        parameter_name = inspect.stack()[0][3]
-        default = 512
-        return self.get_parameter(parameter_name, default)
-
-    @property
-    def list_max_ziplist_value(self):
-        parameter_name = inspect.stack()[0][3]
-        default = 64
-        return self.get_parameter(parameter_name, default)
-
-    @property
     def set_max_intset_entries(self):
         parameter_name = inspect.stack()[0][3]
         default = 512
@@ -252,6 +240,58 @@ class ConfigurationRedis(ConfigurationBase):
     def activerehashing(self):
         parameter_name = inspect.stack()[0][3]
         default = 'yes'
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def repl_ping_slave_period(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 10
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def repl_timeout(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 60
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def repl_disable_tcp_nodelay(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 'no'
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def repl_backlog_size(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 1048576
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def repl_backlog_ttl(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 3600
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def client_output_buffer_limit_normal(self):
+        parameter_name = inspect.stack()[0][3]
+        default = "0 0 0"
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def client_output_buffer_limit_slave(self):
+        parameter_name = inspect.stack()[0][3]
+        default_hard = int(self.memory_size_in_bytes / 4)
+        default_soft = int(self.memory_size_in_bytes / 16)
+        default_soft_second = int(self.memory_size_in_mb / 17)
+        default = "{} {} {}".format(
+            default_hard, default_soft, default_soft_second)
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def client_output_buffer_limit_pubsub(self):
+        parameter_name = inspect.stack()[0][3]
+        default = "33554432 8388608 60"
         return self.get_parameter(parameter_name, default)
 
     @property

@@ -302,10 +302,25 @@ class Redis(BaseDriver):
             )
 
         with self.redis(instance) as client:
-            return client.config_get()
+            config = client.config_get()
+
+            if 'client-output-buffer-limit' in config:
+                config_COBL = config['client-output-buffer-limit']
+                config_COBL_normal = config_COBL.split("normal ")[1].split(" slave")[0]
+                config_COBL_slave = config_COBL.split("slave ")[1].split(" pubsub")[0]
+                config_COBL_pubsub = config_COBL.split("pubsub ")[1]
+                config['client-output-buffer-limit-normal'] = config_COBL_normal
+                config['client-output-buffer-limit-slave'] = config_COBL_slave
+                config['client-output-buffer-limit-pubsub'] = config_COBL_pubsub
+
+            return config
 
     def set_configuration(self, instance, name, value):
         with self.redis(instance) as client:
+            if name.startswith('client-output-buffer-limit-'):
+                name, prefix = name.rsplit("-", 1)
+                value = '{} {}'.format(prefix, value)
+
             client.config_set(name, value)
 
     def get_database_process_name(self):
