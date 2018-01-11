@@ -201,7 +201,7 @@ slave-read-only {{ configuration.slave_read_only.value }}
 # this interval with the repl_ping_slave_period option. The default value is 10
 # seconds.
 #
-# repl-ping-slave-period 10
+repl-ping-slave-period {{ configuration.repl_ping_slave_period.value }}
 
 # The following option sets a timeout for both Bulk transfer I/O timeout and
 # master data or ping response timeout. The default value is 60 seconds.
@@ -210,7 +210,48 @@ slave-read-only {{ configuration.slave_read_only.value }}
 # specified for repl-ping-slave-period otherwise a timeout will be detected
 # every time there is low traffic between the master and the slave.
 #
-# repl-timeout 60
+repl-timeout {{ configuration.repl_timeout.value }}
+
+# Disable TCP_NODELAY on the slave socket after SYNC?
+#
+# If you select "yes" Redis will use a smaller number of TCP packets and
+# less bandwidth to send data to slaves. But this can add a delay for
+# the data to appear on the slave side, up to 40 milliseconds with
+# Linux kernels using a default configuration.
+#
+# If you select "no" the delay for data to appear on the slave side will
+# be reduced but more bandwidth will be used for replication.
+#
+# By default we optimize for low latency, but in very high traffic conditions
+# or when the master and slaves are many hops away, turning this to "yes" may
+# be a good idea.
+repl-disable-tcp-nodelay {{ configuration.repl_disable_tcp_nodelay.value }}
+
+# Set the replication backlog size. The backlog is a buffer that accumulates
+# slave data when slaves are disconnected for some time, so that when a slave
+# wants to reconnect again, often a full resync is not needed, but a partial
+# resync is enough, just passing the portion of data the slave missed while
+# disconnected.
+#
+# The bigger the replication backlog, the longer the time the slave can be
+# disconnected and later be able to perform a partial resynchronization.
+#
+# The backlog is only allocated once there is at least a slave connected.
+#
+repl-backlog-size {{ configuration.repl_backlog_size.value }}
+
+# After a master has no longer connected slaves for some time, the backlog
+# will be freed. The following option configures the amount of seconds that
+# need to elapse, starting from the time the last slave disconnected, for
+# the backlog buffer to be freed.
+#
+# Note that slaves never free the backlog for timeout, since they may be
+# promoted to masters later, and should be able to correctly "partially
+# resynchronize" with the slaves: hence they should always accumulate backlog.
+#
+# A value of 0 means to never release the backlog.
+#
+repl-backlog-ttl {{ configuration.repl_backlog_ttl.value }}
 
 # The slave priority is an integer number published by Redis in the INFO output.
 # It is used by Redis Sentinel in order to select a slave to promote into a
@@ -584,8 +625,8 @@ hash-max-ziplist-value {{ configuration.hash_max_ziplist_value.value }}
 # Similarly to hashes, small lists are also encoded in a special way in order
 # to save a lot of space. The special representation is only used when
 # you are under the following limits:
-list-max-ziplist-entries {{ configuration.list_max_ziplist_entries.value }}
-list-max-ziplist-value {{ configuration.list_max_ziplist_value.value }}
+#list-max-ziplist-entries 512
+#list-max-ziplist-value 64
 
 # Sets have a special encoding in just one case: when a set is composed
 # of just strings that happens to be integers in radix 10 in the range
@@ -653,9 +694,9 @@ activerehashing {{ configuration.activerehashing.value }}
 # subscribers and slaves receive data in a push fashion.
 #
 # Both the hard or the soft limit can be disabled just setting it to zero.
-client-output-buffer-limit normal 0 0 0
-client-output-buffer-limit slave 256mb 64mb 60
-client-output-buffer-limit pubsub 32mb 8mb 60
+client-output-buffer-limit normal {{ configuration.client_output_buffer_limit_normal.value }}
+client-output-buffer-limit slave {{ configuration.client_output_buffer_limit_slave.value }}
+client-output-buffer-limit pubsub {{ configuration.client_output_buffer_limit_pubsub.value }}
 
 ################################## INCLUDES ###################################
 
