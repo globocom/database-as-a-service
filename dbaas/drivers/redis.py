@@ -317,15 +317,9 @@ class Redis(BaseDriver):
 
     def set_configuration(self, instance, name, value):
         with self.redis(instance) as client:
-            if name == 'client-output-buffer-limit-normal':
-                name = 'client-output-buffer-limit'
-                value = 'normal {}'.format(value)
-            elif name == 'client-output-buffer-limit-slave':
-                name = 'client-output-buffer-limit'
-                value = 'slave {}'.format(value)
-            elif name == 'client-output-buffer-limit-pubsub':
-                name = 'client-output-buffer-limit'
-                value = 'pubsub {}'.format(value)
+            if name.startswith('client-output-buffer-limit-'):
+                name, prefix = name.rsplit("-", 1)
+                value = '{} {}'.format(prefix, value)
 
             client.config_set(name, value)
 
