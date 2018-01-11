@@ -281,11 +281,7 @@ class ConfigurationRedis(ConfigurationBase):
     @property
     def client_output_buffer_limit_slave(self):
         parameter_name = inspect.stack()[0][3]
-        default_hard = int(self.memory_size_in_bytes / 4)
-        default_soft = int(self.memory_size_in_bytes / 16)
-        default_soft_second = int(self.memory_size_in_mb / 17)
-        default = "{} {} {}".format(
-            default_hard, default_soft, default_soft_second)
+        default = "268435456 67108864 60"
         return self.get_parameter(parameter_name, default)
 
     @property
