@@ -58,11 +58,13 @@ class HostSerializer(serializers.ModelSerializer):
 
     def get_offering(self, host):
         offering = host.offering
-        return {
-            'type': '{}c{}'.format(offering.cpus, offering.memory_size_mb),
-            'cpus': offering.cpus,
-            'memory': offering.memory_size_mb
-        }
+        if offering:
+            return {
+                'type': '{}c{}'.format(offering.cpus, offering.memory_size_mb),
+                'cpus': offering.cpus,
+                'memory': offering.memory_size_mb
+            }
+        return {}
 
 
 class HostAPI(viewsets.ReadOnlyModelViewSet):
