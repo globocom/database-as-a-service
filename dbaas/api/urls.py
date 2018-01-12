@@ -1,6 +1,5 @@
 # -*- coding:utf-8 -*-
 from rest_framework.routers import DefaultRouter
-from django.http import HttpResponseRedirect
 from django.conf import settings
 from django.conf.urls import patterns, url, include
 
@@ -15,6 +14,7 @@ from .extra_dns import ExtraDnsAPI
 from .task import TaskAPI
 from .team import TeamAPI
 from .user import UserAPI
+from .host import HostAPI
 from .snapshot import SnapshotAPI
 from .database_history import DatabaseHistoryAPI
 
@@ -27,6 +27,7 @@ router.register(r'environment', EnvironmentAPI)
 router.register(r'plan', PlanAPI)
 router.register(r'engine', EngineAPI)
 router.register(r'engine_type', EngineTypeAPI)
+router.register(r'host', HostAPI)
 
 # logical
 router.register(r'project', ProjectAPI)
