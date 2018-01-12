@@ -10,9 +10,9 @@ from physical.models import Host
 class HostSerializer(serializers.ModelSerializer):
     team_name = serializers.SerializerMethodField('get_team_name')
     env_name = serializers.SerializerMethodField('get_env_name')
+    region_name = serializers.SerializerMethodField('get_region_name')
     offering = serializers.SerializerMethodField('get_offering')
-    total_disk_kb = serializers.SerializerMethodField('get_total_disk')
-    used_disk_kb = serializers.SerializerMethodField('get_used_disk')
+    disk = serializers.SerializerMethodField('get_disk')
 
     class Meta:
         model = Host
@@ -23,9 +23,9 @@ class HostSerializer(serializers.ModelSerializer):
             'created_at',
             'team_name',
             'env_name',
+            'region_name',
             'offering',
-            'total_disk_kb',
-            'used_disk_kb',
+            'disk',
         )
 
     def get_database(self, host):
@@ -39,20 +39,29 @@ class HostSerializer(serializers.ModelSerializer):
 
         return database and database.team.name
 
-    def get_env_name(self, host):
+    def get_env(self, host):
         database = self.get_database(host)
 
-        return database and database.environment.name
+        return database and database.environment
 
-    def get_total_disk(self, host):
+    def get_env_name(self, host):
+        env = self.get_env(host)
+
+        return env and env.name
+
+    def get_region_name(self, host):
+        env = self.get_env(host)
         try:
-            return host.active_disk.nfsaas_size_kb
+            return env and env.cs_environment_region.first().name
         except ObjectDoesNotExist:
             return
 
-    def get_used_disk(self, host):
+    def get_disk(self, host):
         try:
-            return host.active_disk.nfsaas_used_size_kb
+            return {
+                'total': host.active_disk.nfsaas_size_kb,
+                'used': host.active_disk.nfsaas_used_size_kb,
+            }
         except ObjectDoesNotExist:
             return
 
@@ -75,6 +84,7 @@ class HostAPI(viewsets.ReadOnlyModelViewSet):
 
     model = Host
     serializer_class = HostSerializer
+    queryset = Host.objects.all()
     permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
     filter_backends = (filters.OrderingFilter,)
     filter_fields = (
