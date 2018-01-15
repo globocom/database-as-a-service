@@ -97,7 +97,7 @@
                     <span><label class="vCheckboxLabel" for="checkbox_reset_{{parameter.id}}">Reset to default value</label></span>
                   </label>
                 </td>
-                
+
               {% endif %}
             {% endif %}
             <td class="type_cell">
@@ -188,7 +188,7 @@
       new_value.value = "";
     }
   }
-  
+
   // Keep append order on save_button
   $(".save_button").on('click',function(event){
     Validator.validateAll(event);
@@ -200,7 +200,7 @@
 
   $(".new_custom_value_input").blur( function(){
       Validator.validateSingleInput($(this));
-  });  
+  });
 
   function setModal(button_id)
   {
@@ -210,11 +210,15 @@
     thereIsStatic = check_static_parameter_changed();
     if (thereIsStatic)
     {
-      bnt.setAttribute("data-target", "#change_parameter");
+
+      if(bnt.getAttribute("name")=="retry_button")
+        bnt.setAttribute("data-target", "#retry_save_changes");
+      else
+        bnt.setAttribute("data-target", "#change_parameter");
     }
     else
     {
-      if(btn.getAttribute("name")=="retry_button")
+      if(bnt.getAttribute("name")=="retry_button")
         bnt.setAttribute("data-target", "#retry_save_changes");
       else
         bnt.setAttribute("data-target", "#save_changes");
@@ -224,7 +228,7 @@
   jQuery(document).ready(function($) {
 
     $("#id_change_parameter_yes").keyup(function() {
-      btn = document.getElementById("id_change_parameter_btn_modal");
+      var btn = document.getElementById("id_change_parameter_btn_modal");
       btn.disabled = $(this).val() != "yes";
       if (btn.disabled) {
         btn.className = 'btn';
