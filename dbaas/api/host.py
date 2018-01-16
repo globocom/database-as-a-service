@@ -3,6 +3,8 @@ from __future__ import absolute_import, unicode_literals
 from rest_framework import viewsets, serializers, permissions
 from rest_framework import filters
 from django.core.exceptions import ObjectDoesNotExist
+from util import get_credentials_for
+from dbaas_credentials.models import CredentialType
 
 from physical.models import Host
 
@@ -13,6 +15,7 @@ class HostSerializer(serializers.ModelSerializer):
     region_name = serializers.SerializerMethodField('get_region_name')
     offering = serializers.SerializerMethodField('get_offering')
     disks = serializers.SerializerMethodField('get_disks')
+    project_id = serializers.SerializerMethodField('get_project_id')
 
     class Meta:
         model = Host
@@ -26,6 +29,7 @@ class HostSerializer(serializers.ModelSerializer):
             'region_name',
             'offering',
             'disks',
+            'project_id'
         )
 
     def get_database(self, host):
@@ -48,6 +52,14 @@ class HostSerializer(serializers.ModelSerializer):
         env = self.get_env(host)
 
         return env and env.name
+
+    def get_project_id(self, host):
+        env = self.get_env(host)
+
+        credential = get_credentials_for(
+            env, CredentialType.CLOUDSTACK)
+
+        return credential and credential.project
 
     def get_region_name(self, host):
         env = self.get_env(host)
