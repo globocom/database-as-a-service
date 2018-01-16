@@ -12,7 +12,7 @@ class HostSerializer(serializers.ModelSerializer):
     env_name = serializers.SerializerMethodField('get_env_name')
     region_name = serializers.SerializerMethodField('get_region_name')
     offering = serializers.SerializerMethodField('get_offering')
-    disk = serializers.SerializerMethodField('get_disk')
+    disks = serializers.SerializerMethodField('get_disks')
 
     class Meta:
         model = Host
@@ -25,7 +25,7 @@ class HostSerializer(serializers.ModelSerializer):
             'env_name',
             'region_name',
             'offering',
-            'disk',
+            'disks',
         )
 
     def get_database(self, host):
@@ -56,14 +56,14 @@ class HostSerializer(serializers.ModelSerializer):
         except ObjectDoesNotExist:
             return
 
-    def get_disk(self, host):
-        try:
-            return {
-                'total': host.active_disk.nfsaas_size_kb,
-                'used': host.active_disk.nfsaas_used_size_kb,
-            }
-        except ObjectDoesNotExist:
-            return
+    def get_disks(self, host):
+        return map(
+            lambda d: {
+                'active': d.is_active,
+                'total': d.nfsaas_size_kb,
+                'used': d.nfsaas_used_size_kb,
+                'export_id': d.nfsaas_export_id
+            }, host.nfsaas_host_attributes.all())
 
     def get_offering(self, host):
         offering = host.offering
