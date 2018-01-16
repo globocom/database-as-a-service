@@ -37,7 +37,7 @@ class HostAdmin(services_admin.DjangoServicesAdmin):
         "address", "os_description"
     )
     list_display = (
-        "hostname", "address", "os_description", "monitor_url_html",
+        "hostname", "address", "offering", "os_description", "monitor_url_html",
         "get_bundle"
     )
     save_on_top = True
