@@ -40,6 +40,7 @@ class HostAdmin(services_admin.DjangoServicesAdmin):
         "hostname", "address", "offering", "os_description", "monitor_url_html",
         "get_bundle"
     )
+    readonly_fields = ("offering",)
     save_on_top = True
 
     def get_bundle(self, obj):
