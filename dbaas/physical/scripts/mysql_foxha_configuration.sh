@@ -59,7 +59,6 @@ query_cache_type                = {{ configuration.query_cache_type.value }}
 query_cache_size                = {{ configuration.query_cache_size.value }}
 
 thread_stack                    = {{ configuration.thread_stack.value }}
-thread_concurrency              = {{ configuration.thread_concurrency.value }}
 
 max_allowed_packet              = {{ configuration.max_allowed_packet.value }}
 sort_buffer_size                = {{ configuration.sort_buffer_size.value }}
