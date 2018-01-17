@@ -3,7 +3,7 @@ import logging
 from dbaas_cloudstack.models import HostAttr as CsHostAttr
 from dbaas_credentials.models import CredentialType
 from dbaas_nfsaas.models import HostAttr
-from util import check_ssh, get_credentials_for, exec_remote_command, \
+from util import check_ssh, get_credentials_for, exec_remote_command_host, \
     build_context_script
 from physical.models import Instance
 from physical.configurations import configuration_factory
@@ -117,12 +117,8 @@ class InitDatabaseRedis(BaseStep):
 
                     script = build_context_script(contextdict, script)
                     output = {}
-                    return_code = exec_remote_command(
-                        server=host.address,
-                        username=host_csattr.vm_user,
-                        password=host_csattr.vm_password,
-                        command=script,
-                        output=output
+                    return_code = exec_remote_command_host(
+                        host, script, output
                     )
 
                     if return_code != 0:
@@ -151,13 +147,8 @@ class InitDatabaseRedis(BaseStep):
 
             for host in workflow_dict['hosts']:
                 LOG.info("Removing database files on host %s" % host)
-                host_csattr = CsHostAttr.objects.get(host=host)
-
-                exec_remote_command(
-                    server=host.address,
-                    username=host_csattr.vm_user,
-                    password=host_csattr.vm_password,
-                    command="/opt/dbaas/scripts/dbaas_deletedatabasefiles.sh"
+                exec_remote_command_host(
+                    host, "/opt/dbaas/scripts/dbaas_deletedatabasefiles.sh"
                 )
 
             return True
