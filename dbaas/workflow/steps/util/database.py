@@ -167,6 +167,9 @@ class WaitForReplication(DatabaseStep):
         return True
 
     def do(self):
+        if not self.infra.plan.is_ha:
+            return
+
         not_running = []
         for instance in self.driver.get_database_instances():
             try:
