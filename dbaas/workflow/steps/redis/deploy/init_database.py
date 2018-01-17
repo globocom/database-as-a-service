@@ -41,9 +41,7 @@ class InitDatabaseRedis(BaseStep):
                 LOG.info("Getting vm credentials...")
 
                 LOG.info("Cheking host ssh...")
-                host_ready = check_ssh(
-                    server=host.address, username=host.user,
-                    password=host.password, wait=5, interval=10)
+                host_ready = check_ssh(host, wait=5, interval=10)
 
                 if not host_ready:
                     LOG.warn("Host %s is not ready..." % host)

@@ -67,10 +67,7 @@ def start_vm(workflow_dict):
         for instance_detail in instances_detail:
             instance = instance_detail['instance']
             host = instance.hostname
-            host_ready = check_ssh(
-                server=host.address, username=host.user,
-                password=host.password, wait=5, interval=10
-            )
+            host_ready = check_ssh(host, wait=5, interval=10)
             if not host_ready:
                 error = "Host %s is not ready..." % host
                 LOG.warn(error)

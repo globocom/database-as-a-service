@@ -255,9 +255,10 @@ def exec_remote_command_host(host, command, output=None):
     )
 
 
-def check_ssh(server, username, password, retries=30, wait=30, interval=40):
-    username = username
-    password = password
+def check_ssh(host, retries=30, wait=30, interval=40):
+    server = host.address
+    username = host.user
+    password = host.password
     ssh = paramiko.SSHClient()
     ssh.load_system_host_keys()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())

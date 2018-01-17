@@ -131,10 +131,7 @@ class WaitingBeReady(VmStep):
         return "Waiting for VM be ready..."
 
     def do(self):
-        host_ready = check_ssh(
-            self.host.address, self.host.user, self.host.password,
-            wait=5, interval=10
-        )
+        host_ready = check_ssh(self.host, wait=5, interval=10)
         if not host_ready:
             raise EnvironmentError('VM is not ready')
 
