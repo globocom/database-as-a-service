@@ -46,7 +46,6 @@ query_cache_type                = {{ configuration.query_cache_type.value }}
 query_cache_size                = {{ configuration.query_cache_size.value }}
 
 thread_stack                    = {{ configuration.thread_stack.value }}
-thread_concurrency              = {{ configuration.thread_concurrency.value }}
 
 max_allowed_packet              = {{ configuration.max_allowed_packet.value }}
 sort_buffer_size                = {{ configuration.sort_buffer_size.value }}
@@ -94,6 +93,8 @@ innodb_max_dirty_pages_pct      = {{ configuration.innodb_max_dirty_pages_pct.va
 innodb_max_purge_lag            = {{ configuration.innodb_max_purge_lag.value }}
 
 explicit_defaults_for_timestamp = {{ configuration.explicit_defaults_for_timestamp.value }}
+
+!include /etc/server_id.cnf
 
 EOF_DBAAS
 ) > /etc/my.cnf
