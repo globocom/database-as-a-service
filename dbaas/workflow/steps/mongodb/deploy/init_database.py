@@ -6,11 +6,8 @@ from dbaas_credentials.models import CredentialType
 from dbaas_nfsaas.models import HostAttr
 from dbaas_cloudstack.models import HostAttr as CsHostAttr
 from physical.configurations import configuration_factory
-from util import full_stack
-from util import check_ssh
-from util import get_credentials_for
-from util import exec_remote_command
-from util import build_context_script
+from util import full_stack, check_ssh, get_credentials_for, \
+    exec_remote_command_host, build_context_script
 from workflow.steps.util.base import BaseStep
 from workflow.exceptions.error_codes import DBAAS_0014
 
@@ -133,14 +130,9 @@ class InitDatabaseMongoDB(BaseStep):
 
                     script = build_context_script(contextdict, script)
                     output = {}
-                    return_code = exec_remote_command(
-                        server=host.address,
-                        username=host_csattr.vm_user,
-                        password=host_csattr.vm_password,
-                        command=script,
-                        output=output
+                    return_code = exec_remote_command_host(
+                        host, script, output
                     )
-
                     if return_code != 0:
                         error_msg = "Error executing script. Stdout: {} - " \
                                     "stderr: {}".format(output['stdout'],
@@ -160,15 +152,9 @@ class InitDatabaseMongoDB(BaseStep):
                 )
 
                 host = workflow_dict['hosts'][0]
-                host_csattr = CsHostAttr.objects.get(host=host)
-
                 output = {}
-                return_code = exec_remote_command(
-                    server=host.address,
-                    username=host_csattr.vm_user,
-                    password=host_csattr.vm_password,
-                    command=scripts_to_run,
-                    output=output
+                return_code = exec_remote_command_host(
+                    host, scripts_to_run, output
                 )
 
                 if return_code != 0:
@@ -192,13 +178,8 @@ class InitDatabaseMongoDB(BaseStep):
 
             for host in workflow_dict['hosts']:
                 LOG.info("Removing database files on host %s" % host)
-                host_csattr = CsHostAttr.objects.get(host=host)
-
-                exec_remote_command(
-                    server=host.address,
-                    username=host_csattr.vm_user,
-                    password=host_csattr.vm_password,
-                    command="/opt/dbaas/scripts/dbaas_deletedatabasefiles.sh"
+                exec_remote_command_host(
+                    host, "/opt/dbaas/scripts/dbaas_deletedatabasefiles.sh"
                 )
 
             return True

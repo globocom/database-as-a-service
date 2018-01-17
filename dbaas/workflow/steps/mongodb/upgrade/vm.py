@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
-from util import build_context_script, exec_remote_command
+from util import build_context_script, exec_remote_command_host
 from workflow.steps.util.vm import VmStep
 from workflow.steps.util import test_bash_script_error
 from workflow.steps.mongodb.util import build_change_release_alias_script
@@ -25,10 +25,7 @@ class ChangeBinaryBase(VmStep):
         )
 
         output = {}
-        return_code = exec_remote_command(
-            self.host.address, self.host_cs.vm_user, self.host_cs.vm_password,
-            script, output
-        )
+        return_code = exec_remote_command_host(self.host, script, output)
         if return_code != 0:
             raise EnvironmentError(
                 'Could change binary {}: {}'.format(return_code, output)

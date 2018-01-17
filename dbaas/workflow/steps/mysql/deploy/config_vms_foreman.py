@@ -1,11 +1,8 @@
 # -*- coding: utf-8 -*-
 import logging
-from util import full_stack
-from util import get_credentials_for
-from util import exec_remote_command
+from util import full_stack, get_credentials_for, exec_remote_command_host
 from dbaas_foreman import get_foreman_provider
 from dbaas_credentials.models import CredentialType
-from dbaas_cloudstack.models import HostAttr
 from ...util.base import BaseStep
 from ....exceptions.error_codes import DBAAS_0007
 
@@ -31,14 +28,9 @@ class ConfigVMsForeman(BaseStep):
 
             for host in workflow_dict['hosts']:
                 LOG.info('Get fqdn for host {}'.format(host))
-                host_attr = HostAttr.objects.get(host=host)
                 script = 'hostname'
                 output = {}
-                return_code = exec_remote_command(server=host.address,
-                                                  username=host_attr.vm_user,
-                                                  password=host_attr.vm_password,
-                                                  command=script,
-                                                  output=output)
+                return_code = exec_remote_command_host(host, script, output)
                 LOG.info(output)
                 if return_code != 0:
                     raise Exception(str(output))

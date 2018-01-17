@@ -195,16 +195,9 @@ def scp_get_file(server, username, password, localpath, remotepath):
 
 
 def get_remote_file_content(file_path, host):
-    from dbaas_cloudstack.models import HostAttr
-
     output = {}
-    host_attr = HostAttr.objects.get(host=host)
-
     script = 'cat {}'.format(file_path)
-    return_code = exec_remote_command(
-        server=host.address, username=host_attr.vm_user,
-        password=host_attr.vm_password, command=script, output=output
-    )
+    return_code = exec_remote_command_host(host, script, output)
 
     if return_code != 0:
         raise Exception(str(output))
@@ -249,7 +242,10 @@ def exec_remote_command(server, username, password, command, output={}):
         return None
 
 
-def exec_remote_command_host(host, command, output={}):
+def exec_remote_command_host(host, command, output=None):
+    if not output:
+        output = {}
+
     from dbaas_cloudstack.models import HostAttr
     host_attr = HostAttr.objects.get(host=host)
 
@@ -324,10 +320,12 @@ def gen_infra_names(name, qt):
     return names
 
 
-def get_credentials_for(environment, credential_type):
+def get_credentials_for(environment, credential_type, **kwargs):
     from dbaas_credentials.models import Credential
-    return Credential.objects.filter(integration_type__type=credential_type,
-                                     environments=environment)[0]
+    return Credential.objects.filter(
+        integration_type__type=credential_type, environments=environment,
+        **kwargs
+    )[0]
 
 
 def build_dict(**kwargs):

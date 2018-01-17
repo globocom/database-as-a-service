@@ -1,13 +1,10 @@
-from util import exec_remote_command
 from datetime import datetime
 from dbaas.celery import app
 import models
 import logging
 from notification.models import TaskHistory
-from util import get_worker_name
-from util import build_context_script
-from util import get_dict_lines
-from django.core.exceptions import ObjectDoesNotExist
+from util import exec_remote_command_host, get_worker_name, \
+    build_context_script, get_dict_lines
 from registered_functions.functools import _get_function
 from workflow.steps.util.dns import ChangeTTLTo5Minutes, ChangeTTLTo3Hours
 from workflow.workflow import steps_for_instances
@@ -49,26 +46,13 @@ def execute_scheduled_maintenance(self, maintenance_id):
         host = hm.host
         update_task = "\nRunning Maintenance on {}".format(host)
 
-        try:
-            cloudstack_host_attributes = host.cs_host_attributes.get()
-        except ObjectDoesNotExist as e:
-            LOG.warn(
-                "Host {} does not have cloudstack attrs...{}".format(hm.host, e))
-            hm.status = hm.UNAVAILABLECSHOSTATTR
-            hm.finished_at = datetime.now()
-            hm.save()
-            continue
-
         param_dict = {}
         for param in models.MaintenanceParameters.objects.filter(maintenance=maintenance):
             param_function = _get_function(param.function_name)
             param_dict[param.parameter_name] = param_function(host.id)
 
         main_script = build_context_script(param_dict, maintenance.main_script)
-        exit_status = exec_remote_command(server=host.address,
-                                          username=cloudstack_host_attributes.vm_user,
-                                          password=cloudstack_host_attributes.vm_password,
-                                          command=main_script, output=main_output)
+        exit_status = exec_remote_command_host(host, main_script, main_output)
 
         if exit_status == 0:
             hm.status = hm.SUCCESS
@@ -80,11 +64,11 @@ def execute_scheduled_maintenance(self, maintenance_id):
                 hm.save()
 
                 rollback_script = build_context_script(
-                    param_dict, maintenance.rollback_script)
-                exit_status = exec_remote_command(server=host.address,
-                                                  username=cloudstack_host_attributes.vm_user,
-                                                  password=cloudstack_host_attributes.vm_password,
-                                                  command=rollback_script, output=rollback_output)
+                    param_dict, maintenance.rollback_script
+                )
+                exit_status = exec_remote_command_host(
+                    host, rollback_script, rollback_output
+                )
 
                 if exit_status == 0:
                     hm.status = hm.ROLLBACK_SUCCESS

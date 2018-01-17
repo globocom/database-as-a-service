@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 import logging
 from dbaas_cloudstack.models import HostAttr
-from util import exec_remote_command, check_ssh
+from util import exec_remote_command_host, check_ssh, full_stack, \
+    build_context_script
 from workflow.exceptions.error_codes import DBAAS_0015
-from util import full_stack
-from util import build_context_script
 from dbaas_cloudstack.provider import CloudStackProvider
 from dbaas_credentials.models import CredentialType
 from util import get_credentials_for
@@ -22,16 +21,11 @@ def run_vm_script(workflow_dict, context_dict, script):
         for instance_detail in instances_detail:
             instance = instance_detail['instance']
             host = instance.hostname
-            host_csattr = HostAttr.objects.get(host=host)
             final_context_dict['HOSTADDRESS'] = instance.address
             final_context_dict['PORT'] = instance.port
             command = build_context_script(final_context_dict, script)
             output = {}
-            return_code = exec_remote_command(server=host.address,
-                                              username=host_csattr.vm_user,
-                                              password=host_csattr.vm_password,
-                                              command=command,
-                                              output=output)
+            return_code = exec_remote_command_host(host, command, output)
             if return_code:
                 raise Exception, "Could not run script. Output: {}".format(
                     output)

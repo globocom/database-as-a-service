@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
 from util import full_stack
-from util import exec_remote_command
-from dbaas_cloudstack.models import HostAttr as CS_HostAttr
+from util import exec_remote_command_host
 from workflow.steps.util.base import BaseStep
 from workflow.steps.util import test_bash_script_error
 from workflow.steps.util import monit_script
@@ -21,18 +20,11 @@ class StartMonit(BaseStep):
             option = 'start'
             for host in workflow_dict['hosts']:
                 LOG.info("{} monit on host {}".format(option, host))
-                cs_host_attr = CS_HostAttr.objects.get(host=host)
-
                 script = test_bash_script_error()
                 script += monit_script(option)
-
                 LOG.info(script)
                 output = {}
-                return_code = exec_remote_command(server=host.address,
-                                                  username=cs_host_attr.vm_user,
-                                                  password=cs_host_attr.vm_password,
-                                                  command=script,
-                                                  output=output)
+                return_code = exec_remote_command_host(host, script, output)
                 LOG.info(output)
                 if return_code != 0:
                     LOG.error("Error monit")
