@@ -94,6 +94,8 @@ class CreateVirtualMachine(BaseStep):
                 host.hostname = host.address
                 host.cloud_portal_host = True
                 host.offering = offering
+                host.user = vm_credentials.user
+                host.password = vm_credentials.password
                 host.save()
                 LOG.info("Host created!")
 
