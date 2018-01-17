@@ -541,12 +541,6 @@ class ConfigurationMySQL(ConfigurationBase):
         return self.get_parameter(parameter_name, default)
 
     @property
-    def thread_concurrency(self):
-        parameter_name = inspect.stack()[0][3]
-        default = 16
-        return self.get_parameter(parameter_name, default)
-
-    @property
     def log_slave_updates(self):
         parameter_name = inspect.stack()[0][3]
         default = 'ON'
