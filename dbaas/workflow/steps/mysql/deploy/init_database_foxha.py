@@ -46,12 +46,7 @@ class InitDatabaseFoxHA(BaseStep):
                 host = hosts[0]
 
                 LOG.info("Cheking host ssh...")
-                host_ready = check_ssh(
-                    server=host.address,
-                    username=host.user,
-                    password=host.password,
-                    retries=60, wait=30, interval=10
-                )
+                host_ready = check_ssh(host, retries=60, wait=30, interval=10)
 
                 if not host_ready:
                     LOG.warn("Host %s is not ready..." % host)
