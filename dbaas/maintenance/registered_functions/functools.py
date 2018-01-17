@@ -1,6 +1,8 @@
 import sys
 import inspect
 import logging
+from django.core.exceptions import ObjectDoesNotExist
+
 LOG = logging.getLogger(__name__)
 
 
@@ -103,45 +105,27 @@ def get_infra_password(host_id):
 
 
 def get_host_user(host_id):
-    """Return HOST_USER"""
+    """Return HOST_PASSWORD"""
     from physical.models import Host
-    host = Host.objects.filter(id=host_id).select_related('cs_host_attributes')
 
     try:
-        host = host[0]
-    except IndexError as e:
+        host = Host.objects.get(id=host_id)
+    except ObjectDoesNotExist as e:
         LOG.warn("Host id does not exists: {}. {}".format(host_id, e))
-        return None
-
-    try:
-        host_attr = host.cs_host_attributes.all()[0]
-    except IndexError as e:
-        LOG.warn(
-            "Host id does not own a cs_host_attr: {}. {}".format(host_id, e))
-        return None
-
-    return host_attr.vm_user
+    else:
+        return host.user
 
 
 def get_host_password(host_id):
     """Return HOST_PASSWORD"""
     from physical.models import Host
-    host = Host.objects.filter(id=host_id).select_related('cs_host_attributes')
 
     try:
-        host = host[0]
-    except IndexError as e:
+        host = Host.objects.get(id=host_id)
+    except ObjectDoesNotExist as e:
         LOG.warn("Host id does not exists: {}. {}".format(host_id, e))
-        return None
-
-    try:
-        host_attr = host.cs_host_attributes.all()[0]
-    except IndexError as e:
-        LOG.warn(
-            "Host id does not own a cs_host_attr: {}. {}".format(host_id, e))
-        return None
-
-    return host_attr.vm_password
+    else:
+        return host.password
 
 
 def get_engine_type_name(host_id):
@@ -179,7 +163,6 @@ def get_offering_size(host_id):
 
 def get_there_is_backup_log_config(host_id):
     """Return THERE_IS_BACKUP_LOG_CONFIG"""
-    from django.core.exceptions import ObjectDoesNotExist
     from physical.models import Host
     from backup.models import LogConfiguration
 
@@ -205,7 +188,6 @@ def get_there_is_backup_log_config(host_id):
 
 def get_log_configuration_mount_point_path(host_id):
     """Return LOG_CONFIGURATION_MOUNT_POINT_PATH"""
-    from django.core.exceptions import ObjectDoesNotExist
     from physical.models import Host
     from backup.models import LogConfiguration
 
@@ -227,7 +209,6 @@ def get_log_configuration_mount_point_path(host_id):
 
 def get_log_configuration_backup_log_export_path(host_id):
     """Return LOG_CONFIGURATION_BACKUP_LOG_EXPORT_PATH"""
-    from django.core.exceptions import ObjectDoesNotExist
     from physical.models import Host
     from backup.models import LogConfiguration
 
@@ -249,7 +230,6 @@ def get_log_configuration_backup_log_export_path(host_id):
 
 def get_log_configuration_database_log_path(host_id):
     """Return LOG_CONFIGURATION_DATABASE_LOG_PATH"""
-    from django.core.exceptions import ObjectDoesNotExist
     from physical.models import Host
     from backup.models import LogConfiguration
 
@@ -271,7 +251,6 @@ def get_log_configuration_database_log_path(host_id):
 
 def get_log_configuration_retention_backup_log_days(host_id):
     """Return LOG_CONFIGURATION_RETENTION_BACKUP_LOG_DAYS"""
-    from django.core.exceptions import ObjectDoesNotExist
     from physical.models import Host
     from backup.models import LogConfiguration
 
@@ -293,7 +272,6 @@ def get_log_configuration_retention_backup_log_days(host_id):
 
 def get_log_configuration_backup_log_script(host_id):
     """Return LOG_CONFIGURATION_BACKUP_LOG_SCRIPT"""
-    from django.core.exceptions import ObjectDoesNotExist
     from physical.models import Host
     from backup.models import LogConfiguration
 
@@ -315,7 +293,6 @@ def get_log_configuration_backup_log_script(host_id):
 
 def get_log_configuration_config_backup_log_script(host_id):
     """Return LOG_CONFIGURATION_CONFIG_BACKUP_LOG_SCRIPT"""
-    from django.core.exceptions import ObjectDoesNotExist
     from physical.models import Host
     from backup.models import LogConfiguration
 
@@ -337,7 +314,6 @@ def get_log_configuration_config_backup_log_script(host_id):
 
 def get_log_configuration_clean_backup_log_script(host_id):
     """Return LOG_CONFIGURATION_CLEAN_BACKUP_LOG_SCRIPT"""
-    from django.core.exceptions import ObjectDoesNotExist
     from physical.models import Host
     from backup.models import LogConfiguration
 
@@ -359,7 +335,6 @@ def get_log_configuration_clean_backup_log_script(host_id):
 
 def get_log_configuration_cron_minute(host_id):
     """Return LOG_CONFIGURATION_CRON_MINUTE"""
-    from django.core.exceptions import ObjectDoesNotExist
     from physical.models import Host
     from backup.models import LogConfiguration
 
@@ -381,7 +356,6 @@ def get_log_configuration_cron_minute(host_id):
 
 def get_log_configuration_cron_hour(host_id):
     """Return LOG_CONFIGURATION_CRON_HOUR"""
-    from django.core.exceptions import ObjectDoesNotExist
     from physical.models import Host
     from backup.models import LogConfiguration
 

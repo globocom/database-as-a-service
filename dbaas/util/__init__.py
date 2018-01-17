@@ -246,13 +246,10 @@ def exec_remote_command_host(host, command, output=None):
     if not output:
         output = {}
 
-    from dbaas_cloudstack.models import HostAttr
-    host_attr = HostAttr.objects.get(host=host)
-
     return exec_remote_command(
         server=host.address,
-        username=host_attr.vm_user,
-        password=host_attr.vm_password,
+        username=host.user,
+        password=host.password,
         command=command,
         output=output
     )

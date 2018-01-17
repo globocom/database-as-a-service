@@ -2,7 +2,6 @@
 import logging
 from dbaas_credentials.models import CredentialType
 from dbaas_nfsaas.models import HostAttr
-from dbaas_cloudstack.models import HostAttr as CsHostAttr
 from itertools import permutations
 from physical.configurations import configuration_factory
 from util import check_ssh, get_credentials_for, exec_remote_command_host, \
@@ -44,21 +43,21 @@ class InitDatabaseFoxHA(BaseStep):
             for index, hosts in enumerate(permutations(workflow_dict['hosts'])):
 
                 LOG.info("Getting vm credentials...")
-                host_csattr = CsHostAttr.objects.get(host=hosts[0])
+                host = hosts[0]
 
                 LOG.info("Cheking host ssh...")
                 host_ready = check_ssh(
-                    server=hosts[0].address,
-                    username=host_csattr.vm_user,
-                    password=host_csattr.vm_password,
+                    server=host.address,
+                    username=host.user,
+                    password=host.password,
                     retries=60, wait=30, interval=10
                 )
 
                 if not host_ready:
-                    LOG.warn("Host %s is not ready..." % hosts[0])
+                    LOG.warn("Host %s is not ready..." % host)
                     return False
 
-                host_nfsattr = HostAttr.objects.get(host=hosts[0])
+                host_nfsattr = HostAttr.objects.get(host=host)
 
                 contextdict = {
                     'EXPORTPATH': host_nfsattr.nfsaas_path,
@@ -75,7 +74,7 @@ class InitDatabaseFoxHA(BaseStep):
                 }
 
                 if len(workflow_dict['hosts']) > 1:
-                    LOG.info("Updating contexdict for %s" % hosts[0])
+                    LOG.info("Updating contexdict for %s" % host)
 
                     contextdict.update({
                         'SERVERID': index + 1,
@@ -90,7 +89,6 @@ class InitDatabaseFoxHA(BaseStep):
                     plan.script.start_database_template
                 )
 
-                host = hosts[0]
                 host.update_os_description()
                 for script in scripts:
                     LOG.info("Executing script on %s" % host)
