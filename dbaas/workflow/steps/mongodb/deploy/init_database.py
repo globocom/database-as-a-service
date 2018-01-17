@@ -4,7 +4,6 @@ import string
 import random
 from dbaas_credentials.models import CredentialType
 from dbaas_nfsaas.models import HostAttr
-from dbaas_cloudstack.models import HostAttr as CsHostAttr
 from physical.configurations import configuration_factory
 from util import full_stack, check_ssh, get_credentials_for, \
     exec_remote_command_host, build_context_script
@@ -58,12 +57,11 @@ class InitDatabaseMongoDB(BaseStep):
                 host = instance.hostname
 
                 LOG.info("Getting vm credentials...")
-                host_csattr = CsHostAttr.objects.get(host=host)
 
                 LOG.info("Cheking host ssh...")
                 host_ready = check_ssh(
-                    server=host.address, username=host_csattr.vm_user,
-                    password=host_csattr.vm_password, wait=5, interval=10
+                    server=host.address, username=host.user,
+                    password=host.password, wait=5, interval=10
                 )
 
                 if not host_ready:
