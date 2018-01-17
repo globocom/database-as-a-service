@@ -754,6 +754,8 @@ class Host(BaseModel):
         verbose_name=_("Operating system description"),
         max_length=255, null=True, blank=True)
     offering = models.ForeignKey(CloudStackOffering, null=True)
+    user = models.CharField(max_length=255, blank=True, null=True)
+    password = EncryptedCharField(max_length=255, blank=True, null=True)
 
     def __unicode__(self):
         return self.hostname
