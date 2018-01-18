@@ -243,7 +243,7 @@ def exec_remote_command(server, username, password, command, output={}):
 
 
 def exec_remote_command_host(host, command, output=None):
-    if not output:
+    if output is None:
         output = {}
 
     return exec_remote_command(
