@@ -105,12 +105,12 @@ def get_infra_password(host_id):
 
 
 def get_host_user(host_id):
-    """Return HOST_PASSWORD"""
+    """Return HOST_USER"""
     from physical.models import Host
 
     try:
         host = Host.objects.get(id=host_id)
-    except ObjectDoesNotExist as e:
+    except Host.DoesNotExist as e:
         LOG.warn("Host id does not exists: {}. {}".format(host_id, e))
     else:
         return host.user
@@ -122,7 +122,7 @@ def get_host_password(host_id):
 
     try:
         host = Host.objects.get(id=host_id)
-    except ObjectDoesNotExist as e:
+    except Host.DoesNotExist as e:
         LOG.warn("Host id does not exists: {}. {}".format(host_id, e))
     else:
         return host.password
