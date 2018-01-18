@@ -243,7 +243,7 @@ class CheckIsDown(DatabaseStep):
             processes = int(output['stdout'][0])
             if processes == 0:
                 return False
-            LOG.info("{} is runnig".format(self.process_name))
+            LOG.info("{} is running".format(self.process_name))
             sleep(CHECK_SECONDS)
 
         return True
