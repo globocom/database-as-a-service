@@ -16,6 +16,7 @@ class HostSerializer(serializers.ModelSerializer):
     offering = serializers.SerializerMethodField('get_offering')
     disks = serializers.SerializerMethodField('get_disks')
     project_id = serializers.SerializerMethodField('get_project_id')
+    database = serializers.SerializerMethodField('get_database_metadata')
 
     class Meta:
         model = Host
@@ -29,7 +30,8 @@ class HostSerializer(serializers.ModelSerializer):
             'region_name',
             'offering',
             'disks',
-            'project_id'
+            'project_id',
+            'database'
         )
 
     def get_database(self, host):
@@ -37,6 +39,22 @@ class HostSerializer(serializers.ModelSerializer):
         database = first_instance and first_instance.databaseinfra.databases.first()
 
         return database
+
+    def get_database_metadata(self, host):
+        database = self.get_database(host)
+
+        if database is None:
+            return {}
+        return {
+            'project_name': database.project and database.project.name,
+            'engine': str(database.engine),
+            'name': database.name,
+            'id': database.id,
+            'infra': {
+                'id': database.infra.id,
+                'name': database.infra.name
+            }
+        }
 
     def get_team_name(self, host):
         database = self.get_database(host)
@@ -108,3 +126,16 @@ class HostAPI(viewsets.ReadOnlyModelViewSet):
     ordering_fields = ('created_at', 'updated_at', 'id')
     ordering = ('-created_at',)
     datetime_fields = ('created_at', 'updated_at')
+
+    def get_queryset(self, *args, **kw):
+        def has_database(host):
+            first_instance = host.instances.first()
+            if not first_instance:
+                return False
+            return first_instance and first_instance.databaseinfra.databases.exists()
+
+        hosts = Host.objects.all()
+        filtered_hosts = filter(lambda h: has_database(h), hosts)
+        host_ids = map(lambda h: h.id, filtered_hosts)
+
+        return hosts.filter(id__in=host_ids)
