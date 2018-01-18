@@ -108,8 +108,12 @@ class Engine(BaseModel):
     def name(self):
         return self.engine_type.name
 
+    @property
+    def full_name(self):
+        return "{}_{}".format(self.name, self.version)
+
     def __unicode__(self):
-        return "%s_%s" % (self.name, self.version)
+        return self.full_name
 
     @property
     def is_redis(self):
