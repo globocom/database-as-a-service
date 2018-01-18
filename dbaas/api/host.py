@@ -17,6 +17,7 @@ class HostSerializer(serializers.ModelSerializer):
     disks = serializers.SerializerMethodField('get_disks')
     project_id = serializers.SerializerMethodField('get_project_id')
     database = serializers.SerializerMethodField('get_database_metadata')
+    identifier = serializers.SerializerMethodField('get_vm_id')
 
     class Meta:
         model = Host
@@ -28,11 +29,18 @@ class HostSerializer(serializers.ModelSerializer):
             'team_name',
             'env_name',
             'region_name',
+            'hostname',
+            'identifier',
             'offering',
             'disks',
             'project_id',
             'database'
         )
+
+    def get_vm_id(self, host):
+        host_attr = host.cs_host_attributes.first()
+
+        return host_attr and host_attr.vm_id
 
     def get_database(self, host):
         first_instance = host.instances.first()
@@ -122,6 +130,7 @@ class HostAPI(viewsets.ReadOnlyModelViewSet):
         'os_description',
         'updated_at',
         'created_at',
+        'hostname'
     )
     ordering_fields = ('created_at', 'updated_at', 'id')
     ordering = ('-created_at',)
