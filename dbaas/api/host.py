@@ -16,6 +16,8 @@ class HostSerializer(serializers.ModelSerializer):
     offering = serializers.SerializerMethodField('get_offering')
     disks = serializers.SerializerMethodField('get_disks')
     project_id = serializers.SerializerMethodField('get_project_id')
+    database = serializers.SerializerMethodField('get_database_metadata')
+    identifier = serializers.SerializerMethodField('get_vm_id')
 
     class Meta:
         model = Host
@@ -27,16 +29,40 @@ class HostSerializer(serializers.ModelSerializer):
             'team_name',
             'env_name',
             'region_name',
+            'hostname',
+            'identifier',
             'offering',
             'disks',
-            'project_id'
+            'project_id',
+            'database'
         )
+
+    def get_vm_id(self, host):
+        host_attr = host.cs_host_attributes.first()
+
+        return host_attr and host_attr.vm_id
 
     def get_database(self, host):
         first_instance = host.instances.first()
         database = first_instance and first_instance.databaseinfra.databases.first()
 
         return database
+
+    def get_database_metadata(self, host):
+        database = self.get_database(host)
+
+        if database is None:
+            return {}
+        return {
+            'project_name': database.project and database.project.name,
+            'engine': str(database.engine),
+            'name': database.name,
+            'id': database.id,
+            'infra': {
+                'id': database.infra.id,
+                'name': database.infra.name
+            }
+        }
 
     def get_team_name(self, host):
         database = self.get_database(host)
@@ -104,7 +130,21 @@ class HostAPI(viewsets.ReadOnlyModelViewSet):
         'os_description',
         'updated_at',
         'created_at',
+        'hostname'
     )
     ordering_fields = ('created_at', 'updated_at', 'id')
     ordering = ('-created_at',)
     datetime_fields = ('created_at', 'updated_at')
+
+    def get_queryset(self, *args, **kw):
+        def has_database(host):
+            first_instance = host.instances.first()
+            if not first_instance:
+                return False
+            return first_instance and first_instance.databaseinfra.databases.exists()
+
+        hosts = Host.objects.all()
+        filtered_hosts = filter(lambda h: has_database(h), hosts)
+        host_ids = map(lambda h: h.id, filtered_hosts)
+
+        return hosts.filter(id__in=host_ids)
