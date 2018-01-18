@@ -108,3 +108,16 @@ class HostAPI(viewsets.ReadOnlyModelViewSet):
     ordering_fields = ('created_at', 'updated_at', 'id')
     ordering = ('-created_at',)
     datetime_fields = ('created_at', 'updated_at')
+
+    def get_queryset(self, *args, **kw):
+        def has_database(host):
+            first_instance = host.instances.first()
+            if not first_instance:
+                return False
+            return first_instance and first_instance.databaseinfra.databases.exists()
+
+        hosts = Host.objects.all()
+        filtered_hosts = filter(lambda h: has_database(h), hosts)
+        host_ids = map(lambda h: h.id, filtered_hosts)
+
+        return hosts.filter(id__in=host_ids)
