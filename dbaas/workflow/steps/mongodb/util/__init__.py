@@ -26,6 +26,19 @@ def build_permission_script():
         die_if_error "Error changing mongodb key file permission"
         """
 
+def build_change_release_alias_script():
+    return """
+        cd {{TARGET_PATH}}
+        die_if_error "Error change current path"
+
+        rm -f mongodb
+        die_if_error "Error deleting mongodb alias"
+
+        ln -s {{MONGODB_RELEASE_FOLDER}} mongodb
+        die_if_error "Error creating mongodb alias"
+    """
+
+
 
 def build_start_database_script(wait_time=0):
     return """
