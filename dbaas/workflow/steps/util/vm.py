@@ -131,10 +131,7 @@ class WaitingBeReady(VmStep):
         return "Waiting for VM be ready..."
 
     def do(self):
-        host_ready = check_ssh(
-            self.host.address, self.host_cs.vm_user,
-            self.host_cs.vm_password, wait=5, interval=10
-        )
+        host_ready = check_ssh(self.host, wait=5, interval=10)
         if not host_ready:
             raise EnvironmentError('VM is not ready')
 
@@ -230,8 +227,20 @@ class InstanceIsSlave(ChangeMaster):
 
 class CreateVirtualMachine(VmStep):
 
+    def __init__(self, instance):
+        super(CreateVirtualMachine, self).__init__(instance)
+        self._vm_credential = None
+
     def __unicode__(self):
         return "Creating virtualmachine..."
+
+    @property
+    def vm_credentials(self):
+        if not self._vm_credential:
+            self._vm_credential = get_credentials_for(
+                self.environment, CredentialType.VM
+            )
+        return self._vm_credential
 
     def create_host(self, address):
         from physical.models import Host
@@ -239,21 +248,18 @@ class CreateVirtualMachine(VmStep):
         host = Host()
         host.address = address
         host.hostname = host.address
+        host.user = self.vm_credentials.user
+        host.password = self.vm_credentials.password
         host.save()
         return host
 
     def create_host_attr(self, host, vm_id, bundle):
         from dbaas_cloudstack.models import HostAttr
-
-        vm_credentials = get_credentials_for(
-            environment=self.environment,
-            credential_type=CredentialType.VM
-        )
         host_attr = HostAttr()
         host_attr.vm_id = vm_id
         host_attr.host = host
-        host_attr.vm_user = vm_credentials.user
-        host_attr.vm_password = vm_credentials.password
+        host_attr.vm_user = self.vm_credentials.user
+        host_attr.vm_password = self.vm_credentials.password
         host_attr.bundle = bundle
         host_attr.save()
 

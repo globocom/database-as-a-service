@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
-from dbaas_cloudstack.models import HostAttr as CsHostAttr
 from workflow.steps.util.nfsaas_utils import create_snapshot
-from util import exec_remote_command
+from util import exec_remote_command_host
 
 LOG = logging.getLogger(__name__)
 
@@ -14,29 +13,17 @@ def use_database_initialization_script(databaseinfra, host, option):
     command = initialization_script.format(option=option)
     command += ' > /dev/null'
 
-    cs_host_attr = CsHostAttr.objects.get(host=host)
-
     output = {}
-    return_code = exec_remote_command(server=host.address,
-                                      username=cs_host_attr.vm_user,
-                                      password=cs_host_attr.vm_password,
-                                      command=command,
-                                      output=output)
-
+    return_code = exec_remote_command_host(host, command, output)
     return return_code, output
 
 
 def update_fstab(host, source_export_path, target_export_path):
-    cs_host_attr = CsHostAttr.objects.get(host=host)
-
-    command = """sed -i s/"{}"/"{}"/g /etc/fstab""".format(source_export_path,
-                                                           target_export_path)
+    command = """sed -i s/"{}"/"{}"/g /etc/fstab""".format(
+        source_export_path, target_export_path
+    )
     output = {}
-    return_code = exec_remote_command(server=host.address,
-                                      username=cs_host_attr.vm_user,
-                                      password=cs_host_attr.vm_password,
-                                      command=command,
-                                      output=output)
+    return_code = exec_remote_command_host(host, command, output)
     return return_code, output
 
 

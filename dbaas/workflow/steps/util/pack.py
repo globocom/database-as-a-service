@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-from util import build_context_script, exec_remote_command, get_credentials_for
+from util import build_context_script, exec_remote_command_host, \
+    get_credentials_for
 from dbaas_cloudstack.models import HostAttr, CloudStackPack, PlanAttr
 from dbaas_credentials.models import CredentialType
 from physical.configurations import configuration_factory
@@ -87,11 +88,7 @@ class Configure(PackStep):
         )
 
         output = {}
-        return_code = exec_remote_command(
-            self.host.address, self.host_cs.vm_user, self.host_cs.vm_password,
-            script, output
-        )
-
+        return_code = exec_remote_command_host(self.host, script, output)
         if return_code != 0:
             raise EnvironmentError(
                 'Could not execute pack script {}: {}'.format(
