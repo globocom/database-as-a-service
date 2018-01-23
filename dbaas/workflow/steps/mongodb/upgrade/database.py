@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-from workflow.steps.util.database import DatabaseStep
 import logging
+from workflow.steps.util.database import DatabaseStep
 
 LOG = logging.getLogger(__name__)
 
@@ -21,5 +21,7 @@ class SetFeatureCompatibilityVersion34(DatabaseStep):
             client.admin.command('setFeatureCompatibilityVersion', '3.4')
             if self.getFeatureCompatibilityVersion(client) != '3.4':
                 raise EnvironmentError(
-                    'Could not set featureCompatibilityVersion on {}'.format(self.infra.name)
+                    'Could not set featureCompatibilityVersion on {}'.format(
+                        self.infra.name
+                    )
                 )

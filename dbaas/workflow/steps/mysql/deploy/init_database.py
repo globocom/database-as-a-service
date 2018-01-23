@@ -2,14 +2,11 @@
 import logging
 from dbaas_credentials.models import CredentialType
 from dbaas_nfsaas.models import HostAttr
-from dbaas_cloudstack.models import HostAttr as CsHostAttr
 from itertools import permutations
 from physical.configurations import configuration_factory
 from util import check_ssh
-from util import get_credentials_for
-from util import exec_remote_command
-from util import full_stack
-from util import build_context_script
+from util import get_credentials_for, exec_remote_command_host, full_stack, \
+    build_context_script
 from workflow.steps.util.base import BaseStep
 from workflow.exceptions.error_codes import DBAAS_0013
 
@@ -42,19 +39,16 @@ class InitDatabase(BaseStep):
             for index, hosts in enumerate(permutations(workflow_dict['hosts'])):
 
                 LOG.info("Getting vm credentials...")
-                host_csattr = CsHostAttr.objects.get(host=hosts[0])
+                host = hosts[0]
 
                 LOG.info("Cheking host ssh...")
-                host_ready = check_ssh(
-                    server=hosts[0].address, username=host_csattr.vm_user,
-                    password=host_csattr.vm_password, wait=5, interval=10
-                )
+                host_ready = check_ssh(host, wait=5, interval=10)
 
                 if not host_ready:
-                    LOG.warn("Host %s is not ready..." % hosts[0])
+                    LOG.warn("Host %s is not ready..." % host)
                     return False
 
-                host_nfsattr = HostAttr.objects.get(host=hosts[0])
+                host_nfsattr = HostAttr.objects.get(host=host)
 
                 contextdict = {
                     'EXPORTPATH': host_nfsattr.nfsaas_path,
@@ -71,7 +65,7 @@ class InitDatabase(BaseStep):
                 }
 
                 if len(workflow_dict['hosts']) > 1:
-                    LOG.info("Updating contexdict for %s" % hosts[0])
+                    LOG.info("Updating contexdict for %s" % host)
 
                     contextdict.update({
                         'SERVERID': index + 1,
@@ -92,21 +86,15 @@ class InitDatabase(BaseStep):
                     plan.script.start_database_template
                 )
 
-                host = hosts[0]
                 host.update_os_description()
                 for script in scripts:
                     LOG.info("Executing script on %s" % host)
 
                     script = build_context_script(contextdict, script)
                     output = {}
-                    return_code = exec_remote_command(
-                        server=host.address,
-                        username=host_csattr.vm_user,
-                        password=host_csattr.vm_password,
-                        command=script,
-                        output=output
+                    return_code = exec_remote_command_host(
+                        host, script, output
                     )
-
                     if return_code != 0:
                         error_msg = "Error executing script. Stdout: {} - " \
                                     "stderr: {}".format(output['stdout'],
@@ -121,18 +109,11 @@ class InitDatabase(BaseStep):
                     contextdict.update({'IPMASTER': hosts[1].address})
                     script = build_context_script(contextdict, script)
 
-                    host_csattr = CsHostAttr.objects.get(host=host)
-
                     LOG.info("Executing script on %s" % host)
                     output = {}
-                    return_code = exec_remote_command(
-                        server=host.address,
-                        username=host_csattr.vm_user,
-                        password=host_csattr.vm_password,
-                        command=script,
-                        output=output
+                    return_code = exec_remote_command_host(
+                        host, script, output
                     )
-
                     if return_code != 0:
                         error_msg = "Error executing script. Stdout: {} - " \
                                     "stderr: {}".format(output['stdout'],
@@ -154,13 +135,8 @@ class InitDatabase(BaseStep):
 
             for host in workflow_dict['hosts']:
                 LOG.info("Removing database files on host %s" % host)
-                host_csattr = CsHostAttr.objects.get(host=host)
-
-                exec_remote_command(
-                    server=host.address,
-                    username=host_csattr.vm_user,
-                    password=host_csattr.vm_password,
-                    command="/opt/dbaas/scripts/dbaas_deletedatabasefiles.sh"
+                exec_remote_command_host(
+                    host, "/opt/dbaas/scripts/dbaas_deletedatabasefiles.sh"
                 )
 
             return True

@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
-from dbaas_cloudstack.models import HostAttr as CsHostAttr
-from util import exec_remote_command
+from util import exec_remote_command_host
 from util import full_stack
 from workflow.steps.util.base import BaseStep
 from workflow.exceptions.error_codes import DBAAS_0013
@@ -21,15 +20,10 @@ class RunPuppetSetup(BaseStep):
             for host in workflow_dict['hosts']:
 
                 LOG.info("Getting vm credentials...")
-                host_csattr = CsHostAttr.objects.get(host=host)
 
                 LOG.info("Run puppet-setup on host {}".format(host))
                 output = {}
-                return_code = exec_remote_command(server=host.address,
-                                                  username=host_csattr.vm_user,
-                                                  password=host_csattr.vm_password,
-                                                  command=script,
-                                                  output=output)
+                return_code = exec_remote_command_host(host, script, output)
                 #if return_code != 0:
                 #    raise Exception(str(output))
 

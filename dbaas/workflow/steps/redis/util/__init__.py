@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
-from util import exec_remote_command
-from util import build_context_script
-from dbaas_cloudstack.models import HostAttr
+from util import build_context_script, exec_remote_command_host
 from workflow.steps.util import test_bash_script_error
 
 LOG = logging.getLogger(__name__)
@@ -95,18 +93,13 @@ def build_start_http_script():
 
 
 def change_slave_priority_file(host, original_value, final_value):
-    host_attr = HostAttr.objects.get(host=host)
     script = test_bash_script_error()
     script += """
         sed -i 's/slave-priority {}/slave-priority {}/g' /data/redis.conf
     """.format(original_value, final_value)
     script = build_context_script({}, script)
     output = {}
-    return_code = exec_remote_command(server=host.address,
-                                      username=host_attr.vm_user,
-                                      password=host_attr.vm_password,
-                                      command=script,
-                                      output=output)
+    return_code = exec_remote_command_host(host, script, output)
     LOG.info(output)
     if return_code != 0:
         raise Exception(str(output))
@@ -119,7 +112,6 @@ def change_slave_priority_instance(instance, final_value):
 
 def reset_sentinel(host, sentinel_host, sentinel_port, service_name):
     LOG.info('Reseting Sentinel {}:{}'.format(sentinel_host, sentinel_port))
-    host_attr = HostAttr.objects.get(host=host)
     script = test_bash_script_error()
     script += """
         /usr/local/redis/src/redis-cli -h {} -p {} <<EOF_DBAAS
@@ -130,11 +122,7 @@ def reset_sentinel(host, sentinel_host, sentinel_port, service_name):
     """.format(sentinel_host, sentinel_port, service_name)
     script = build_context_script({}, script)
     output = {}
-    return_code = exec_remote_command(server=host.address,
-                                      username=host_attr.vm_user,
-                                      password=host_attr.vm_password,
-                                      command=script,
-                                      output=output)
+    return_code = exec_remote_command_host(host, script, output)
     LOG.info(output)
     if return_code != 0:
         raise Exception(str(output))
@@ -142,7 +130,6 @@ def reset_sentinel(host, sentinel_host, sentinel_port, service_name):
 
 def failover_sentinel(host, sentinel_host, sentinel_port, service_name):
     LOG.info('Failover of Sentinel {}:{}'.format(sentinel_host, sentinel_port))
-    host_attr = HostAttr.objects.get(host=host)
     script = test_bash_script_error()
     script += """
         /usr/local/redis/src/redis-cli -h {} -p {} <<EOF_DBAAS
@@ -153,11 +140,7 @@ def failover_sentinel(host, sentinel_host, sentinel_port, service_name):
     """.format(sentinel_host, sentinel_port, service_name)
     script = build_context_script({}, script)
     output = {}
-    return_code = exec_remote_command(server=host.address,
-                                      username=host_attr.vm_user,
-                                      password=host_attr.vm_password,
-                                      command=script,
-                                      output=output)
+    return_code = exec_remote_command_host(host, script, output)
     LOG.info(output)
     if return_code != 0:
         raise Exception(str(output))

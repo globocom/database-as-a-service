@@ -11,7 +11,7 @@ from drivers.errors import ConnectionError
 import datetime
 import time
 from datetime import date, timedelta
-from util import exec_remote_command
+from util import exec_remote_command_host
 from dbaas_cloudstack.models import HostAttr as Cloudstack_HostAttr
 from util import get_worker_name
 from util import build_dict
@@ -70,11 +70,7 @@ def mysql_binlog_save(client, instance, cloudstack_hostattr):
         command = 'echo "master=%s;position=%s" > %smysql_binlog_master_file_pos' % (
             binlog_file, binlog_pos, datadir)
 
-        exec_remote_command(server=instance.hostname.address,
-                            username=cloudstack_hostattr.vm_user,
-                            password=cloudstack_hostattr.vm_password,
-                            command=command,
-                            output=output)
+        exec_remote_command_host(instance.hostname, command, output)
     except Exception as e:
         LOG.error(
             "Error saving mysql master binlog file and position: %s" % (e))
@@ -162,11 +158,7 @@ def make_instance_snapshot_backup(instance, error, group):
     command = "du -sb /data/.snapshot/%s | awk '{print $1}'" % (
         snapshot.snapshot_name)
     try:
-        exec_remote_command(server=instance.hostname.address,
-                            username=cloudstack_hostattr.vm_user,
-                            password=cloudstack_hostattr.vm_password,
-                            command=command,
-                            output=output)
+        exec_remote_command_host(instance.hostname, command, output)
         size = int(output['stdout'][0])
         snapshot.size = size
     except Exception as e:
@@ -196,11 +188,7 @@ def make_instance_snapshot_backup(instance, error, group):
                    target_path=target_path,
                    snapshot_path=snapshot_path)
         try:
-            exec_remote_command(server=instance.hostname.address,
-                                username=cloudstack_hostattr.vm_user,
-                                password=cloudstack_hostattr.vm_password,
-                                command=command,
-                                output=output)
+            exec_remote_command_host(instance.hostname, command, output)
         except Exception as e:
             LOG.error("Error exec remote command %s" % (e))
 
