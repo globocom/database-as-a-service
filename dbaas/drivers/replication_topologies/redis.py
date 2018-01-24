@@ -75,7 +75,6 @@ class RedisSingle(BaseRedis):
                 'workflow.steps.util.plan.ConfigureForNewInfra',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
-                # new step: update endpoint and dnsendpoint
                 'workflow.steps.util.infra.UpdateEndpoint',
             )}, {
             'Check DNS': (
@@ -89,7 +88,6 @@ class RedisSingle(BaseRedis):
                 'workflow.steps.util.db_monitor.CreateInfraMonitoring',
             )
         }]
-
 
 
 class RedisSentinel(BaseRedis):
