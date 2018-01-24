@@ -245,20 +245,12 @@ class BaseDriver(object):
         pass
 
     def agents_command(self, host, command):
-        from dbaas_cloudstack.models import HostAttr
-        from util import exec_remote_command
+        from util import exec_remote_command_host
 
-        host_attr = HostAttr.objects.get(host=host)
         for agent in self.get_database_agents():
             script = '/etc/init.d/{} {}'.format(agent, command)
             output = {}
-            return_code = exec_remote_command(
-                server=host.address,
-                username=host_attr.vm_user,
-                password=host_attr.vm_password,
-                command=script,
-                output=output
-            )
+            return_code = exec_remote_command_host(host, script, output)
             LOG.info(
                 'Running {} - Return Code: {}. Output script: {}'.format(
                     script, return_code, output

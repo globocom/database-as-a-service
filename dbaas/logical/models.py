@@ -221,6 +221,11 @@ class Database(BaseModel):
         else:
             return True
 
+    def __clean_task_rollback(self, task_name):
+        if task_name.endswith('_rollback'):
+            return task_name.rsplit('_rollback', 1)[0]
+        return task_name
+
     def update_task(self, task):
         lock = self.lock.first()
         if not lock:
@@ -231,11 +236,10 @@ class Database(BaseModel):
                 database=self
             ).first()
 
-            task_name = task.task_name
-            if task_name.endswith('_rollback'):
-                task_name = task_name.rsplit('_rollback', 1)[0]
+            task_name = self.__clean_task_rollback(task.task_name)
+            lock_task_name = self.__clean_task_rollback(lock.task.task_name)
 
-            if lock.task.task_name != task_name or not lock.task.is_status_error:
+            if lock_task_name != task_name or not lock.task.is_status_error:
                 return False
 
             lock.task = task

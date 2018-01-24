@@ -108,8 +108,12 @@ class Engine(BaseModel):
     def name(self):
         return self.engine_type.name
 
+    @property
+    def full_name(self):
+        return "{}_{}".format(self.name, self.version)
+
     def __unicode__(self):
-        return "%s_%s" % (self.name, self.version)
+        return self.full_name
 
     @property
     def is_redis(self):
@@ -754,6 +758,8 @@ class Host(BaseModel):
         verbose_name=_("Operating system description"),
         max_length=255, null=True, blank=True)
     offering = models.ForeignKey(CloudStackOffering, null=True)
+    user = models.CharField(max_length=255, blank=True, null=True)
+    password = EncryptedCharField(max_length=255, blank=True, null=True)
 
     def __unicode__(self):
         return self.hostname

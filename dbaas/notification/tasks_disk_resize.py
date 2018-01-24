@@ -13,7 +13,7 @@ from logical.errors import BusyDatabaseError
 from logical.models import Database
 from system.models import Configuration
 from .models import TaskHistory
-from util import email_notifications, exec_remote_command
+from util import email_notifications, exec_remote_command_host
 
 
 def zabbix_collect_used_disk(task):
@@ -214,15 +214,10 @@ def disk_auto_resize(database, current_size, usage_percentage):
 
 def host_mount_data_percentage(address, task):
     host = Host.objects.filter(address=address).first()
-    vm = host.cs_host_attributes.first()
 
     output_message = {}
-    command_status = exec_remote_command(
-        server=host.address,
-        username=vm.vm_user,
-        password=vm.vm_password,
-        command='df -hk | grep /data',
-        output=output_message
+    command_status = exec_remote_command_host(
+        host, 'df -hk | grep /data', output_message
     )
 
     if command_status != 0:

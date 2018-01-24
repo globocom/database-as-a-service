@@ -10,9 +10,7 @@ from drivers import BaseDriver, DatabaseInfraStatus, DatabaseStatus
 from drivers.errors import ConnectionError
 from system.models import Configuration
 from physical.models import Instance
-from util import exec_remote_command
-from util import build_context_script
-from dbaas_cloudstack.models import HostAttr
+from util import exec_remote_command_host, build_context_script
 
 
 LOG = logging.getLogger(__name__)
@@ -447,7 +445,6 @@ class RedisSentinel(Redis):
     def switch_master(self, instance=None):
         sentinel_instance = self.instances_filtered.first()
         host = sentinel_instance.hostname
-        host_attr = HostAttr.objects.get(host=host)
 
         script = """
         #!/bin/bash
@@ -475,11 +472,7 @@ class RedisSentinel(Redis):
 
         script = build_context_script({}, script)
         output = {}
-        return_code = exec_remote_command(
-            server=host.address, username=host_attr.vm_user,
-            password=host_attr.vm_password, command=script, output=output
-        )
-
+        return_code = exec_remote_command_host(host, script, output)
         LOG.info(output)
         if return_code != 0:
             raise Exception(str(output))
@@ -625,7 +618,6 @@ class RedisCluster(Redis):
         if not slave_instance:
             raise Exception('There is no slave for {}'.format(instance))
         host = slave_instance.hostname
-        host_attr = HostAttr.objects.get(host=host)
 
         script = """
         #!/bin/bash
@@ -652,12 +644,9 @@ class RedisCluster(Redis):
         )
 
         script = build_context_script({}, script)
-        output = {}
-        return_code = exec_remote_command(
-            server=host.address, username=host_attr.vm_user,
-            password=host_attr.vm_password, command=script, output=output
-        )
 
+        output = {}
+        return_code = exec_remote_command_host(host, script, output)
         LOG.info(output)
         if return_code != 0:
             raise Exception(str(output))

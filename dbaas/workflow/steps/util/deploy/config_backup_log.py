@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 import logging
-from dbaas_cloudstack.models import HostAttr as CsHostAttr
-from util import full_stack
-from util import exec_remote_command
-from util import build_context_script
+from util import full_stack, exec_remote_command_host, build_context_script
 from workflow.steps.util import test_bash_script_error
 from workflow.steps.util import get_backup_log_configuration_dict
 from workflow.steps.util import build_backup_log_script
@@ -38,7 +35,6 @@ class ConfigBackupLog(BaseStep):
                 host = instance.hostname
 
                 LOG.info("Getting vm credentials...")
-                host_csattr = CsHostAttr.objects.get(host=host)
 
                 script = test_bash_script_error()
                 script += build_backup_log_script()
@@ -47,11 +43,7 @@ class ConfigBackupLog(BaseStep):
 
                 script = build_context_script(contextdict, script)
                 output = {}
-                return_code = exec_remote_command(server=host.address,
-                                                  username=host_csattr.vm_user,
-                                                  password=host_csattr.vm_password,
-                                                  command=script,
-                                                  output=output)
+                return_code = exec_remote_command_host(host, script, output)
 
                 if return_code != 0:
                     raise Exception(str(output))
@@ -76,12 +68,9 @@ class ConfigBackupLog(BaseStep):
 
             instance = workflow_dict['instances'][0]
             host = instance.hostname
-            host_csattr = CsHostAttr.objects.get(host=host)
-
-            exec_remote_command(server=host.address,
-                                username=host_csattr.vm_user,
-                                password=host_csattr.vm_password,
-                                command=backup_log_dict['CLEAN_BACKUP_LOG_SCRIPT'])
+            exec_remote_command_host(
+                host, backup_log_dict['CLEAN_BACKUP_LOG_SCRIPT']
+            )
 
             return True
 

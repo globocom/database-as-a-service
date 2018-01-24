@@ -5,8 +5,7 @@ from time import sleep
 from dbaas_cloudstack.models import HostAttr
 from drivers.errors import ReplicationNotRunningError
 from logical.models import Database
-from util import build_context_script, exec_remote_command
-from util import exec_remote_command_host
+from util import build_context_script, exec_remote_command_host
 from workflow.steps.mongodb.util import build_change_oplogsize_script
 from workflow.steps.util.base import BaseInstanceStep
 from restore_snapshot import use_database_initialization_script
@@ -70,11 +69,7 @@ class DatabaseStep(BaseInstanceStep):
         )
 
         output = {}
-        return_code = exec_remote_command(
-            self.host.address, self.host_cs.vm_user, self.host_cs.vm_password,
-            final_script, output
-        )
-
+        return_code = exec_remote_command_host(self.host, final_script, output)
         if return_code != 0:
             raise EnvironmentError(
                 'Could not execute replica script {}: {}'.format(
@@ -167,6 +162,9 @@ class WaitForReplication(DatabaseStep):
         return True
 
     def do(self):
+        if not self.infra.plan.is_ha:
+            return
+
         not_running = []
         for instance in self.driver.get_database_instances():
             try:
@@ -239,15 +237,13 @@ class CheckIsDown(DatabaseStep):
 
         for _ in range(CHECK_ATTEMPTS):
             output = {}
-            return_code = exec_remote_command_host(
-                self.host, script, output
-            )
+            return_code = exec_remote_command_host(self.host, script, output)
             if return_code != 0:
                 raise Exception(str(output))
             processes = int(output['stdout'][0])
             if processes == 0:
                 return False
-            LOG.info("{} is runnig".format(self.process_name))
+            LOG.info("{} is running".format(self.process_name))
             sleep(CHECK_SECONDS)
 
         return True
@@ -330,9 +326,7 @@ class ResizeOpLogSize(DatabaseStep):
         script = build_change_oplogsize_script(
             instance=self.instance, oplogsize=oplogsize.value)
         output = {}
-        return_code = exec_remote_command_host(
-            self.host, script, output
-        )
+        return_code = exec_remote_command_host(self.host, script, output)
         if return_code != 0:
             raise Exception(str(output))
         self.instance.port = self.instance.old_port
