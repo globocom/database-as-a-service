@@ -159,9 +159,10 @@
       btn = document.getElementById("add_read_only_btn");
       btn.disabled = $(this).val() == "";
       if (btn.disabled) {
-        btn.className = 'action_button btn';
+        $(btn).addClass('action_button')
+              .removeClass('btn-primary');
       } else {
-        btn.className = 'action_button btn btn-primary';
+        $(btn).addClass('btn-primary');
       }
     });
     $("#id_add_read_qtd").change();
