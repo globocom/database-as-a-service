@@ -250,6 +250,7 @@ class CreateVirtualMachine(VmStep):
         host.hostname = host.address
         host.user = self.vm_credentials.user
         host.password = self.vm_credentials.password
+        host.offering = self.cs_offering
         host.save()
         return host
 

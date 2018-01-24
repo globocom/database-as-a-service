@@ -125,3 +125,13 @@ class UpdateMigratePlan(BaseInstanceStepMigration):
         if self.plan:
             self.infra.plan = self.plan
             self.infra.save()
+
+class UpdateEndpoint(BaseInstanceStep):
+
+    def __unicode__(self):
+        return "Updating endpoint..."
+
+    def do(self):
+        self.infra.endpoint = "{}:{}".format(self.instance.address, self.instance.port)
+        self.infra.endpoint_dns = "{}:{}".format(self.instance.dns, self.instance.port)
+        self.infra.save()
