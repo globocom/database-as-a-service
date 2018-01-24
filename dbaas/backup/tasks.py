@@ -206,23 +206,28 @@ def make_databases_backup(self):
 
     LOG.info("Making databases backups")
     worker_name = get_worker_name()
-    task_history = TaskHistory.register(request=self.request,
-                                        worker_name=worker_name, user=None)
+    task_history = TaskHistory.register(
+        request=self.request, worker_name=worker_name, user=None
+    )
 
     status = TaskHistory.STATUS_SUCCESS
-    envs = Environment.objects.all()
-    # TODO: back here to do right
-    env_names_order = ['prod', 'qa2', 'dev-cta-nao-usar', 'dev']
+    environments = Environment.objects.all()
+
+    env_names_order = Configuration.get_by_name_as_list('prod_envs') + Configuration.get_by_name_as_list('dev_envs')
+    if not env_names_order:
+        env_names_order = [env.name for env in environments]
+
     databaseinfras = DatabaseInfra.objects.filter(
         plan__provider=Plan.CLOUDSTACK, plan__has_persistence=True
     )
 
     for env_name in env_names_order:
         try:
-            env = envs.get(name=env_name)
+            env = environments.get(name=env_name)
         except Environment.DoesNotExist:
             continue
-        msg = 'Starting Backup for env {}'.format(env.name)
+
+        msg = '\nStarting Backup for env {}'.format(env.name)
         task_history.update_details(persist=True, details=msg)
         databaseinfras_by_env = databaseinfras.filter(environment=env)
         error = {}
