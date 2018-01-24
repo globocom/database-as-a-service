@@ -17,8 +17,8 @@ setreplication()
     MASTER_HOST='{{IPMASTER}}',
     MASTER_USER='{{REPLICA_USER}}',
     MASTER_PASSWORD='{{REPLICA_PASSWORD}}',
-    MASTER_LOG_FILE='mysql-bin.000004',
-    MASTER_LOG_POS=120;
+    MASTER_LOG_FILE='{{MASTER_LOG_FILE}}',
+    MASTER_LOG_POS={{MASTER_LOG_POS}};
     exit
 EOF_DBAAS
     die_if_error "Error setting replication"

@@ -120,6 +120,19 @@ class InitDatabaseFoxHA(BaseStep):
                     script = plan.script.start_replication_template
                     host = hosts[0]
                     contextdict.update({'IPMASTER': hosts[1].address})
+
+                    engine_version = workflow_dict['databaseinfra'].engine.version
+                    if engine_version[0:3] == '5.6':
+                        master_log_file = 'mysql-bin.000004'
+                        master_log_pos = 120
+                    elif engine_version[0:3] == '5.7':
+                        master_log_file = 'mysql-bin.000003'
+                        master_log_pos = 154
+                    else:
+                        raise Exception('Log file and pos is unknown for engine version {}.'.format(engine_version))
+
+                    contextdict.update({'MASTER_LOG_FILE': master_log_file,
+                                       'MASTER_LOG_POS': master_log_pos})
                     script = build_context_script(contextdict, script)
 
                     host_csattr = CsHostAttr.objects.get(host=host)
