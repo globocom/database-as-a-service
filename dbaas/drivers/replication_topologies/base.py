@@ -81,7 +81,8 @@ class BaseTopology(object):
                 'workflow.steps.util.db_monitor.DisableMonitoring',
             ),
         }] + [{
-            self.get_upgrade_steps_description(): (
+            self.get_upgrade_steps_description(): \
+            self.get_upgrade_steps_extra_begin() + (
                 'workflow.steps.util.vm.ChangeMaster',
                 'workflow.steps.util.database.Stop',
                 'workflow.steps.util.database.CheckIsDown',
@@ -95,6 +96,9 @@ class BaseTopology(object):
                 'workflow.steps.util.database.CheckIsUp',
             ),
         }] + self.get_upgrade_steps_final()
+
+    def get_upgrade_steps_extra_begin(self):
+        return ()
 
     def get_upgrade_steps_extra(self):
         return (

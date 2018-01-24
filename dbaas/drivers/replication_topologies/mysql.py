@@ -35,6 +35,18 @@ class BaseMysql(BaseTopology):
             'workflow.steps.util.clone.clone_database.CloneDatabase',
         ) + self.monitoring_steps()
 
+    def get_upgrade_steps_extra(self):
+        return super(BaseMysql, self).get_upgrade_steps_extra() + (
+            'workflow.steps.util.database_mysql.SetFilePermission',
+            'workflow.steps.util.database_mysql.SkipSlaveStart',
+            'workflow.steps.util.database.Start',
+            'workflow.steps.util.database.CheckIsUp',
+            'workflow.steps.util.database_mysql.DoNotSkipSlaveStart',
+            'workflow.steps.util.database_mysql.UpgradeMySQL',
+            'workflow.steps.util.database.Stop',
+            'workflow.steps.util.database.CheckIsDown',
+        )
+
     def switch_master(self, driver):
         raise NotImplementedError()
 
@@ -71,6 +83,66 @@ class MySQLSingle(BaseMysql):
 
 
 class MySQLFoxHA(MySQLSingle):
+
+    def get_upgrade_steps_extra_begin(self):
+        return super(MySQLFoxHA, self).get_upgrade_steps_extra_begin() + (
+            'workflow.steps.util.database.StopSlave',
+            'workflow.steps.util.database.StartSlave',
+        )
+
+    """
+    def get_upgrade_steps(self):
+        return [{
+            self.get_upgrade_steps_initial_description(): (
+                'workflow.steps.util.zabbix.DestroyAlarms',
+                'workflow.steps.util.db_monitor.DisableMonitoring',
+            ),
+        }] + [{
+            self.get_upgrade_steps_description(): (
+                'workflow.steps.util.vm.ChangeMaster',
+                'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.CheckIsDown',
+                'workflow.steps.util.vm.Stop',
+                'workflow.steps.util.vm.InstallNewTemplate',
+                'workflow.steps.util.vm.Start',
+                'workflow.steps.util.vm.WaitingBeReady',
+                'workflow.steps.util.vm.UpdateOSDescription',
+            ) + self.get_upgrade_steps_extra() + (
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.CheckIsUp',
+            ),
+        }] + self.get_upgrade_steps_final()
+
+
+
+
+    def get_upgrade_steps(self):
+        return [{
+            self.get_upgrade_steps_initial_description(): (
+                'workflow.steps.util.zabbix.DestroyAlarms',
+                'workflow.steps.util.db_monitor.DisableMonitoring',
+            ),
+        }] + [{
+            self.get_upgrade_steps_description(): (
+                'workflow.steps.util.database.StopSlave',
+                'workflow.steps.util.database.StartSlave',
+                'workflow.steps.util.vm.ChangeMaster',
+                'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.CheckIsDown',
+                'workflow.steps.util.vm.Stop',
+                'workflow.steps.util.vm.InstallNewTemplate',
+                'workflow.steps.util.vm.Start',
+                'workflow.steps.util.vm.WaitingBeReady',
+                'workflow.steps.util.vm.UpdateOSDescription',
+            ) + self.get_upgrade_steps_extra() + (
+                'workflow.steps.util.database_mysql.SkipSlaveStart',
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.database_mysql.DoNotSkipSlaveStart',
+            ),
+        }] + self.get_upgrade_steps_final()
+
+    """
 
     def get_restore_snapshot_steps(self):
         return (
