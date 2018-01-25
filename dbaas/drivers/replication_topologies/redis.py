@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-from base import BaseTopology
+from base import BaseTopology, InstanceDeploy
+from physical.models import Instance
 
 
 class BaseRedis(BaseTopology):
@@ -52,8 +53,8 @@ class RedisSingle(BaseRedis):
     def driver_name(self):
         return 'redis_single'
 
-    def deploy_quantity_of_instances(self):
-        return 1
+    def deploy_instances(self):
+        return [[InstanceDeploy(Instance.REDIS, 6379)]]
 
     def get_deploy_steps(self):
         return [{
@@ -147,8 +148,15 @@ class RedisSentinelNoPersistence(RedisSentinel):
 
 class RedisCluster(BaseRedis):
 
-    def deploy_quantity_of_instances(self):
-        return 6
+    def deploy_instances(self):
+        return [
+            [InstanceDeploy(Instance.REDIS, 6379)],
+            [InstanceDeploy(Instance.REDIS, 6379)],
+            [InstanceDeploy(Instance.REDIS, 6379)],
+            [InstanceDeploy(Instance.REDIS, 6379)],
+            [InstanceDeploy(Instance.REDIS, 6379)],
+            [InstanceDeploy(Instance.REDIS, 6379)],
+        ]
 
     def get_deploy_steps(self):
         return [{
