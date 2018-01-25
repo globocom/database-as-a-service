@@ -13,8 +13,11 @@ class ZabbixStep(BaseInstanceStep):
         integration = CredentialType.objects.get(type=CredentialType.ZABBIX)
         environment = self.instance.databaseinfra.environment
         self.credentials = Credential.get_credentials(environment, integration)
-        self.instances = self.host.instances.all()
         self.provider = None
+
+    @property
+    def instances(self):
+        return self.host.instances.all()
 
     @property
     def zabbix_provider(self):
@@ -57,6 +60,8 @@ class DestroyAlarms(ZabbixStep):
         return monitors
 
     def do(self):
+        if not self.host:
+            return
         for host in self.hosts_in_zabbix:
             monitors = self.zabbix_provider.get_host_triggers(host)
 
