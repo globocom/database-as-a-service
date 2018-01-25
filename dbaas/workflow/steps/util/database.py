@@ -22,7 +22,10 @@ class DatabaseStep(BaseInstanceStep):
         super(DatabaseStep, self).__init__(instance)
 
         self.driver = self.infra.get_driver()
-        self.host_cs = HostAttr.objects.get(host=self.host)
+
+    @property
+    def host_cs(self):
+        return HostAttr.objects.get(host=self.host)
 
     def do(self):
         raise NotImplementedError
@@ -77,13 +80,24 @@ class DatabaseStep(BaseInstanceStep):
                 )
             )
 
+    @property
+    def is_valid(self):
+        return self.host
+
 
 class Stop(DatabaseStep):
 
     def __unicode__(self):
         return "Stopping database..."
 
+    @property
+    def undo_klass(self):
+        return Start
+
     def do(self):
+        if not self.is_valid:
+            return
+
         return_code, output = self.stop_database()
         if return_code != 0 and not self.is_down:
             raise EnvironmentError(
@@ -91,7 +105,7 @@ class Stop(DatabaseStep):
             )
 
     def undo(self):
-        Start(self.instance).do()
+        self.undo_klass(self.instance).do()
 
 
 class Start(DatabaseStep):
@@ -99,7 +113,14 @@ class Start(DatabaseStep):
     def __unicode__(self):
         return "Starting database..."
 
+    @property
+    def undo_klass(self):
+        return Stop
+
     def do(self):
+        if not self.is_valid:
+            return
+
         return_code, output = self.start_database()
         if return_code != 0 and not self.is_up:
             raise EnvironmentError(
@@ -107,7 +128,32 @@ class Start(DatabaseStep):
             )
 
     def undo(self):
-        Stop(self.instance).do()
+        self.undo_klass(self.instance).do()
+
+
+class OnlyInSentinel(DatabaseStep):
+
+    @property
+    def is_valid(self):
+        base = super(OnlyInSentinel, self).is_valid
+        if not base:
+            return False
+
+        return not self.instance.is_database
+
+
+class StartSentinel(Start, OnlyInSentinel):
+
+    @property
+    def undo_klass(self):
+        return StopSentinel
+
+
+class StopSentinel(Stop, OnlyInSentinel):
+
+    @property
+    def undo_klass(self):
+        return StartSentinel
 
 
 class StartSlave(DatabaseStep):
@@ -187,6 +233,9 @@ class CheckIsUp(DatabaseStep):
         return "Checking database is up..."
 
     def do(self):
+        if not self.instance.is_database:
+            return
+
         if not self.is_up:
             raise EnvironmentError('Database is down, should be up')
 
@@ -249,6 +298,9 @@ class CheckIsDown(DatabaseStep):
         return True
 
     def do(self):
+        if not self.instance.is_database:
+            return
+
         if not self.is_down:
             raise EnvironmentError('Database is up, should be down')
 
@@ -358,8 +410,12 @@ class SetSlave(DatabaseStep):
     def __unicode__(self):
         return "Setting slaves..."
 
+    @property
+    def is_valid(self):
+        return self.instance.is_database
+
     def do(self):
-        if not self.instance.is_database:
+        if not self.is_valid:
             return
 
         master = self.infra.get_driver().get_master_instance()
@@ -368,6 +424,17 @@ class SetSlave(DatabaseStep):
 
         client = self.infra.get_driver().get_client(self.instance)
         client.slaveof(master.address, master.port)
+
+
+class SetSlaveNewInfra(SetSlave):
+
+    @property
+    def is_valid(self):
+        base = super(SetSlaveNewInfra, self).is_valid
+        if not base:
+            return False
+
+        return self.instance != self.infra.instances.first()
 
 
 class SetSlavesMigration(SetSlave):
@@ -397,7 +464,6 @@ class Create(DatabaseStep):
 
     def do(self):
         creating = self.creating
-
         if creating.database:
             return
 
