@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 class BaseTopology(object):
 
-    def deploy_quantity_of_instances(self):
+    def deploy_instances(self):
         raise NotImplementedError
 
     def deploy_first_steps(self):
@@ -258,3 +258,10 @@ class FakeTestTopology(BaseTopology):
     @property
     def driver_name(self):
         return 'fake'
+
+
+class InstanceDeploy():
+
+    def __init__(self, instance_type , port):
+        self.instance_type = instance_type
+        self.port = port
