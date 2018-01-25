@@ -19,6 +19,10 @@ class Disk(BaseInstanceStep):
     def is_valid(self):
         return bool(self.instance.hostname.nfsaas_host_attributes.first())
 
+    @property
+    def has_active(self):
+        disks = self.host.nfsaas_host_attributes.filter(is_active=True)
+        return len(disks) > 0
 
 
 class CreateExport(Disk):
@@ -28,6 +32,9 @@ class CreateExport(Disk):
 
     def do(self):
         if not self.host.database_instance():
+            return
+
+        if self.has_active:
             return
 
         LOG.info('Creating export for {}'.format(self.instance))
