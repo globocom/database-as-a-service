@@ -137,6 +137,56 @@ class RedisSentinel(BaseRedis):
             'workflow.steps.util.restore_snapshot.clean_old_volumes.CleanOldVolumes',
         )
 
+    def deploy_instances(self):
+        return [[
+            InstanceDeploy(Instance.REDIS, 6379),
+            InstanceDeploy(Instance.REDIS_SENTINEL, 26379)
+        ], [
+            InstanceDeploy(Instance.REDIS, 6379),
+            InstanceDeploy(Instance.REDIS_SENTINEL, 26379)
+        ], [
+            InstanceDeploy(Instance.REDIS_SENTINEL, 26379),
+        ]]
+
+    def get_deploy_steps(self):
+        return [{
+            'Creating virtual machine': (
+                'workflow.steps.util.vm.CreateVirtualMachineNewInfra',
+            )}, {
+            'Creating dns': (
+                'workflow.steps.util.dns.CreateDNSSentinel',
+            )}, {
+            'Creating disk': (
+                'workflow.steps.util.disk.CreateExport',
+            )}, {
+            'Waiting VMs': (
+                'workflow.steps.util.vm.WaitingBeReady',
+                'workflow.steps.util.vm.UpdateOSDescription'
+            )}, {
+            'Configuring database': (
+                'workflow.steps.util.plan.InitializationForNewInfraSentinel',
+                'workflow.steps.util.plan.ConfigureForNewInfraSentinel',
+            )}, {
+            'Starting database': (
+                'workflow.steps.util.database.StartSentinel',
+                'workflow.steps.util.database.CheckIsUp',
+            )}, {
+            'Configuring sentinel': (
+                'workflow.steps.redis.upgrade.sentinel.Reset',
+                'workflow.steps.util.database.SetSlave'
+            )}, {
+            'Check DNS': (
+                'workflow.steps.util.dns.CheckIsReady',
+            )}, {
+            'Creating Database': (
+                'workflow.steps.util.database.Create',
+            )}, {
+            'Creating monitoring and alarms': (
+                'workflow.steps.util.zabbix.CreateAlarms',
+                'workflow.steps.util.db_monitor.CreateInfraMonitoring',
+            )
+        }]
+
 
 class RedisNoPersistence(RedisSingle):
     pass
