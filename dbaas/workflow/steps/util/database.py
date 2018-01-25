@@ -481,6 +481,8 @@ class Create(DatabaseStep):
         creating.database = database
         creating.save()
 
+        database.pin_task(self.creating.task)
+
     def undo(self):
         creating = self.creating
         if not creating.database:
