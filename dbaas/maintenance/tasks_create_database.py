@@ -98,6 +98,7 @@ def create_database(
     ):
         database_create.set_success()
         task.set_status_success('Database created')
+        database_create.database.finish_task()
     else:
         database_create.set_error()
         task.set_status_error(
