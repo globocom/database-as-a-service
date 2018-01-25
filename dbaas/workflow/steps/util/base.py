@@ -86,6 +86,10 @@ class BaseInstanceStep(object):
         if resize and resize.is_running:
             return resize
 
+    @property
+    def is_valid(self):
+        return True
+
     def do(self):
         raise NotImplementedError
 

@@ -40,7 +40,6 @@ class PlanStep(BaseInstanceStep):
             'ENGINE': self.plan.engine.engine_type.name,
             'UPGRADE': True,
             'DRIVER_NAME': self.infra.get_driver().topology_name(),
-            'IS_READ_ONLY': self.instance.read_only,
             'DISK_SIZE_IN_GB': self.disk_offering.size_gb(),
             'ENVIRONMENT': self.environment,
             'HAS_PERSISTENCE': self.infra.plan.has_persistence,
@@ -113,6 +112,21 @@ class PlanStepNewInfra(PlanStep):
         return database
 
 
+class PlanStepNewInfraSentinel(PlanStepNewInfra):
+
+    @property
+    def is_valid(self):
+        return self.instance.is_sentinel
+
+    def get_variables_specifics(self):
+        driver = self.infra.get_driver()
+        base = super(PlanStepNewInfraSentinel, self).get_variables_specifics()
+        base.update(driver.master_parameters(
+            self.instance, self.infra.instances.first())
+        )
+        return base
+
+
 class PlanStepRestore(PlanStep):
 
     @property
@@ -143,7 +157,8 @@ class Initialization(PlanStep):
         return driver.initialization_parameters(self.instance)
 
     def do(self):
-        self.run_script(self.plan.script.initialization_template)
+        if self.is_valid:
+            self.run_script(self.plan.script.initialization_template)
 
 
 class Configure(PlanStep):
@@ -156,7 +171,8 @@ class Configure(PlanStep):
         return driver.configuration_parameters(self.instance)
 
     def do(self):
-        self.run_script(self.plan.script.configuration_template)
+        if self.is_valid:
+            self.run_script(self.plan.script.configuration_template)
 
 
 class InitializationForUpgrade(Initialization, PlanStepUpgrade):
@@ -172,6 +188,16 @@ class InitializationForNewInfra(Initialization, PlanStepNewInfra):
 
 
 class ConfigureForNewInfra(Configure, PlanStepNewInfra):
+    pass
+
+
+class InitializationForNewInfraSentinel(
+    Initialization, PlanStepNewInfraSentinel
+):
+    pass
+
+
+class ConfigureForNewInfraSentinel(Configure, PlanStepNewInfraSentinel):
     pass
 
 
