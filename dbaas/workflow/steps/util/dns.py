@@ -97,21 +97,26 @@ class CreateDNS(DNSStep):
     def __unicode__(self):
         return "Creating DNS..."
 
+    @property
+    def database_sufix(self):
+        return {}
+
     def do(self):
-        host = self.instance.hostname
-        host.hostname = add_dns_record(
-            databaseinfra=self.infra,
-            name=self.instance.vm_name,
-            ip=host.address,
-            type=HOST
-        )
-        host.save()
+        if self.host.hostname == self.host.address:
+            self.host.hostname = add_dns_record(
+                databaseinfra=self.infra,
+                name=self.instance.vm_name,
+                ip=self.host.address,
+                type=HOST
+            )
+            self.host.save()
 
         self.instance.dns = add_dns_record(
             databaseinfra=self.infra,
             name=self.instance.vm_name,
             ip=self.instance.address,
-            type=INSTANCE
+            type=INSTANCE,
+            **self.database_sufix
         )
         self.instance.save()
 
@@ -125,6 +130,16 @@ class CreateDNS(DNSStep):
             databaseinfra=self.infra,
             ip=self.instance.address
         )
+
+
+class CreateDNSSentinel(CreateDNS):
+
+    @property
+    def database_sufix(self):
+        base = super(CreateDNSSentinel, self).database_sufix
+        if not self.instance.is_database:
+            base['database_sufix'] = 'sentinel'
+        return base
 
 
 class CheckIsReady(DNSStep):
