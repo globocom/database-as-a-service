@@ -139,7 +139,10 @@ class OnlyInSentinel(DatabaseStep):
         if not base:
             return False
 
-        return not self.instance.is_database
+        if self.host.database_instance():
+            return self.instance.is_database
+
+        return True
 
 
 class StartSentinel(Start, OnlyInSentinel):
