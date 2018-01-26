@@ -138,8 +138,13 @@ configure_graylog()
     /etc/init.d/rsyslog restart
 }
 
-createconfigdbfile
-createserveriddbfile
-configure_graylog
+
+{% if CONFIGFILE_ONLY %}
+    createconfigdbfile
+{% else %}
+    createconfigdbfile
+    createserveriddbfile
+    configure_graylog
+{% endif %}
 
 exit 0
