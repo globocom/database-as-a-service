@@ -292,47 +292,6 @@ repl-ping-slave-period {{ configuration.repl_ping_slave_period.value }}
 #
 repl-timeout {{ configuration.repl_timeout.value }}
 
-# Disable TCP_NODELAY on the slave socket after SYNC?
-#
-# If you select "yes" Redis will use a smaller number of TCP packets and
-# less bandwidth to send data to slaves. But this can add a delay for
-# the data to appear on the slave side, up to 40 milliseconds with
-# Linux kernels using a default configuration.
-#
-# If you select "no" the delay for data to appear on the slave side will
-# be reduced but more bandwidth will be used for replication.
-#
-# By default we optimize for low latency, but in very high traffic conditions
-# or when the master and slaves are many hops away, turning this to "yes" may
-# be a good idea.
-repl-disable-tcp-nodelay {{ configuration.repl_disable_tcp_nodelay.value }}
-
-# Set the replication backlog size. The backlog is a buffer that accumulates
-# slave data when slaves are disconnected for some time, so that when a slave
-# wants to reconnect again, often a full resync is not needed, but a partial
-# resync is enough, just passing the portion of data the slave missed while
-# disconnected.
-#
-# The bigger the replication backlog, the longer the time the slave can be
-# disconnected and later be able to perform a partial resynchronization.
-#
-# The backlog is only allocated once there is at least a slave connected.
-#
-repl-backlog-size {{ configuration.repl_backlog_size.value }}
-
-# After a master has no longer connected slaves for some time, the backlog
-# will be freed. The following option configures the amount of seconds that
-# need to elapse, starting from the time the last slave disconnected, for
-# the backlog buffer to be freed.
-#
-# Note that slaves never free the backlog for timeout, since they may be
-# promoted to masters later, and should be able to correctly "partially
-# resynchronize" with the slaves: hence they should always accumulate backlog.
-#
-# A value of 0 means to never release the backlog.
-#
-repl-backlog-ttl {{ configuration.repl_backlog_ttl.value }}
-
 # The slave priority is an integer number published by Redis in the INFO output.
 # It is used by Redis Sentinel in order to select a slave to promote into a
 # master if the master is no longer working correctly.
@@ -1073,27 +1032,34 @@ configure_graylog()
     /etc/init.d/rsyslog restart
 }
 
-create_config_http
-configure_graylog
+{% if CONFIGFILE_ONLY %}
 
-{% if ONLY_SENTINEL %}
-
-    createinitsentinelfile
-    createconfigsentinelfile
-    register_init_sentinel_service
+    createconfigdbfile
 
 {% else %}
 
-    createinitdbfile
-    createconfigdbfile
-    register_init_redis_service
+    create_config_http
+    configure_graylog
 
-    {% if 'redis_sentinel' in DRIVER_NAME %}
+    {% if ONLY_SENTINEL %}
+
         createinitsentinelfile
         createconfigsentinelfile
         register_init_sentinel_service
-    {% endif %}
 
+    {% else %}
+
+        createinitdbfile
+        createconfigdbfile
+        register_init_redis_service
+
+        {% if 'redis_sentinel' in DRIVER_NAME %}
+            createinitsentinelfile
+            createconfigsentinelfile
+            register_init_sentinel_service
+        {% endif %}
+
+{% endif %}
 {% endif %}
 
 exit 0
