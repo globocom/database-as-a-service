@@ -2,6 +2,7 @@
 from util import build_context_script, exec_remote_command_host, \
     get_credentials_for
 from dbaas_cloudstack.models import HostAttr, PlanAttr
+from dbaas_cloudstack.models import CloudStackPack
 from dbaas_credentials.models import CredentialType
 from dbaas_nfsaas.models import HostAttr as HostAttrNfsaas
 from base import BaseInstanceStep, BaseInstanceStepMigration
@@ -15,6 +16,11 @@ class PlanStep(BaseInstanceStep):
 
     def __init__(self, instance):
         super(PlanStep, self).__init__(instance)
+        self.pack = CloudStackPack.objects.get(
+            offering__serviceofferingid=self.database.offering_id,
+            offering__region__environment=self.environment,
+            engine_type__name=self.database.engine_type
+        )
 
     @property
     def cs_plan(self):
@@ -67,7 +73,7 @@ class PlanStep(BaseInstanceStep):
         if self.resize:
             return self.resize.target_offer.offering
 
-        return self.cs_plan.get_stronger_offering()
+        return self.pack.offering
 
     def get_configuration(self):
         try:
@@ -179,15 +185,13 @@ class InitializationRestore(Initialization, PlanStepRestore):
     pass
 
 
-class ConfigureRestore(Configure, PlanStepRestore):
-    pass
-
-
 class ConfigureForResizeLog(Configure):
 
     def get_variables_specifics(self):
         driver = self.infra.get_driver()
-        return driver.configuration_parameters_for_log_resize(self.instance)
+        base = driver.configuration_parameters_for_log_resize(self.instance)
+        base.update({'CONFIGFILE_ONLY': True})
+        return base
 
 
 class InitializationMigration(Initialization, BaseInstanceStepMigration):
@@ -227,3 +231,22 @@ class ConfigureRestore(Configure):
         base.update(self.kwargs)
         LOG.info(base)
         return base
+
+class ConfigureOnlyDBConfigFile(Configure):
+    def get_variables_specifics(self):
+        base = super(ConfigureOnlyDBConfigFile, self).get_variables_specifics()
+        base.update({'CONFIGFILE_ONLY': True})
+        return base
+
+class ConfigureForUpgradeOnlyDBConfigFile(ConfigureOnlyDBConfigFile, PlanStepUpgrade):
+    pass
+
+class ResizeConfigure(ConfigureOnlyDBConfigFile):
+
+    def do(self):
+        self.pack = self.resize.target_offer
+        super(ResizeConfigure, self).do()
+
+    def undo(self):
+        self.pack = self.resize.source_offer
+        super(ResizeConfigure, self).undo()
