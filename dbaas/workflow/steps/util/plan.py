@@ -122,8 +122,8 @@ class PlanStepNewInfraSentinel(PlanStepNewInfra):
         driver = self.infra.get_driver()
         base = super(PlanStepNewInfraSentinel, self).get_variables_specifics()
         base.update(driver.master_parameters(
-            self.instance, self.infra.instances.first())
-        )
+            self.instance, self.infra.instances.first()
+        ))
         return base
 
 
@@ -192,12 +192,12 @@ class ConfigureForNewInfra(Configure, PlanStepNewInfra):
 
 
 class InitializationForNewInfraSentinel(
-    Initialization, PlanStepNewInfraSentinel
+    PlanStepNewInfraSentinel, Initialization
 ):
     pass
 
 
-class ConfigureForNewInfraSentinel(Configure, PlanStepNewInfraSentinel):
+class ConfigureForNewInfraSentinel(PlanStepNewInfraSentinel, Configure):
     pass
 
 
