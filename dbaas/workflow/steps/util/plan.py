@@ -138,6 +138,14 @@ class PlanStepRestore(PlanStep):
         except HostAttrNfsaas.DoesNotExist:
             return None
 
+    def get_variables_specifics(self):
+        driver = self.infra.get_driver()
+        base = super(PlanStepRestore, self).get_variables_specifics()
+        base.update(driver.master_parameters(
+            self.instance, self.restore.master_for(self.instance)
+        ))
+        return base
+
 
 class PlanStepUpgrade(PlanStep):
 
@@ -201,11 +209,7 @@ class ConfigureForNewInfraSentinel(PlanStepNewInfraSentinel, Configure):
     pass
 
 
-class InitializationRestore(Initialization, PlanStepRestore):
-    pass
-
-
-class ConfigureRestore(Configure, PlanStepRestore):
+class InitializationRestore(PlanStepRestore, Initialization):
     pass
 
 
@@ -242,7 +246,7 @@ class ConfigureMigration(Configure, BaseInstanceStepMigration):
         return offering_base.equivalent_offering
 
 
-class ConfigureRestore(Configure):
+class ConfigureRestore(PlanStepRestore, Configure):
 
     def __init__(self, instance, **kwargs):
         super(ConfigureRestore, self).__init__(instance)
