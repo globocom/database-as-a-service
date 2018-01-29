@@ -27,22 +27,18 @@ class Reset(BaseInstanceStep):
     def undo(self):
         pass
 
+
 class ResetAllSentinel(BaseInstanceStep):
+
     def __unicode__(self):
         return "Resetting Sentinel..."
 
-    def __init__(self, instance):
-        super(ResetAllSentinel, self).__init__(instance)
-        self.driver = self.infra.get_driver()
-        self.sentinel_instances = self.driver.get_non_database_instances()
-
     def do(self):
-        sleep(10)
-        for sentinel_instance in self.sentinel_instances:
+        driver = self.infra.get_driver()
+        for sentinel_instance in driver.get_non_database_instances():
             reset_sentinel(
                 sentinel_instance.hostname,
                 sentinel_instance.address,
                 sentinel_instance.port,
                 self.infra.name
             )
-            sleep(1)
