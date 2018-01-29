@@ -49,6 +49,40 @@ class TestRedisSingle(AbstractBaseRedisTestCase):
     def _get_replication_topology_driver(self):
         return RedisSingle()
 
+    def _get_deploy_settings(self):
+        return [{
+            'Creating virtual machine': (
+                'workflow.steps.util.vm.CreateVirtualMachineNewInfra',
+            )}, {
+            'Creating dns': (
+                'workflow.steps.util.dns.CreateDNS',
+            )}, {
+            'Creating disk': (
+                'workflow.steps.util.disk.CreateExport',
+            )}, {
+            'Waiting VMs': (
+                'workflow.steps.util.vm.WaitingBeReady',
+                'workflow.steps.util.vm.UpdateOSDescription'
+            )}, {
+            'Configuring database': (
+                'workflow.steps.util.plan.InitializationForNewInfra',
+                'workflow.steps.util.plan.ConfigureForNewInfra',
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.infra.UpdateEndpoint',
+            )}, {
+            'Check DNS': (
+                'workflow.steps.util.dns.CheckIsReady',
+            )}, {
+            'Creating Database': (
+                'workflow.steps.util.database.Create',
+            )}, {
+            'Creating monitoring and alarms': (
+                'workflow.steps.util.zabbix.CreateAlarms',
+                'workflow.steps.util.db_monitor.CreateInfraMonitoring',
+            )
+        }]
+
 
 class TestRedisSentinel(AbstractBaseRedisTestCase):
 
@@ -94,7 +128,7 @@ class TestRedisSentinel(AbstractBaseRedisTestCase):
             ),
         }] + super(TestRedisSentinel, self)._get_reinstallvm_steps_final()
 
-    def get_deploy_steps(self):
+    def _get_deploy_settings(self):
         return [{
             'Creating virtual machine': (
                 'workflow.steps.util.vm.CreateVirtualMachineNewInfra',
