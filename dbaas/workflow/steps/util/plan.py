@@ -229,6 +229,8 @@ class ConfigureRestore(Configure):
     def get_variables_specifics(self):
         base = super(ConfigureRestore, self).get_variables_specifics()
         base.update(self.kwargs)
+        base.update({'CONFIGFILE_ONLY': True,
+                    'CREATE_SENTINEL_CONFIG': True})
         LOG.info(base)
         return base
 
