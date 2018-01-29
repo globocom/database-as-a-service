@@ -525,23 +525,28 @@ class DatabaseRestore(DatabaseMaintenanceTask):
                 pairs[master].append(slave)
 
         for master, slaves in pairs.items():
-            for slave in slaves:
-                instance = DatabaseRestoreInstancePair()
-                instance.master = master
-                instance.slave = slave
-                instance.restore = self
-                instance.save()
+            if slaves:
+                for slave in slaves:
+                    self.__add_instance(master, slave)
+            else:
+                self.__add_instance(master, master)
+
+    def __add_instance(self, master, slave):
+        instance = DatabaseRestoreInstancePair()
+        instance.master = master
+        instance.slave = slave
+        instance.restore = self
+        instance.save()
 
     def instances_pairs(self):
         return self.restore_instances.all().order_by('master')
 
     @property
     def instances(self):
-        instances = []
+        instances = set()
         for pairs in self.instances_pairs():
-            if pairs.master not in instances:
-                instances.append(pairs.master)
-            instances.append(pairs.slave)
+            instances.add(pairs.master)
+            instances.add(pairs.slave)
 
         return instances
 
