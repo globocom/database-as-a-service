@@ -321,6 +321,9 @@ class BaseDriver(object):
     def configuration_parameters(self, instance):
         return {}
 
+    def master_parameters(self, instance, master):
+        return {}
+
     def configuration_parameters_for_log_resize(self, instance):
         return {}
 
