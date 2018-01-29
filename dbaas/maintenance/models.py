@@ -505,6 +505,9 @@ class DatabaseRestore(DatabaseMaintenanceTask):
         driver = self.database.infra.get_driver()
         pairs = {}
         for instance in self.database.infra.instances.all():
+            if not instance.is_database:
+                continue
+
             if driver.check_instance_is_master(instance):
                 master = instance
                 slave = None
