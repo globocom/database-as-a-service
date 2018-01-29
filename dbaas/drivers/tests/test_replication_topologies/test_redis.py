@@ -83,21 +83,42 @@ class TestRedisSingle(AbstractBaseRedisTestCase):
             )
         }]
 
-class TestRedisSentinel(AbstractBaseRedisTestCase):
-
     def _get_restore_snapshot_settings(self):
-        return (
-            'workflow.steps.util.restore_snapshot.restore_snapshot.RestoreSnapshot',
-            'workflow.steps.util.restore_snapshot.grant_nfs_access.GrantNFSAccess',
-            'workflow.steps.util.restore_snapshot.stop_database.StopDatabase',
-            'workflow.steps.util.restore_snapshot.umount_data_volume.UmountDataVolume',
-            'workflow.steps.util.restore_snapshot.update_fstab.UpdateFstab',
-            'workflow.steps.util.restore_snapshot.mount_data_volume.MountDataVolume',
-            'workflow.steps.redis.restore_snapshot.start_database.StartDatabase',
-            'workflow.steps.util.restore_snapshot.make_export_snapshot.MakeExportSnapshot',
-            'workflow.steps.util.restore_snapshot.update_dbaas_metadata.UpdateDbaaSMetadata',
-            'workflow.steps.util.restore_snapshot.clean_old_volumes.CleanOldVolumes',
-        )
+        return [{
+            'Disable monitoring': (
+                'workflow.steps.util.zabbix.DisableAlarms',
+                'workflow.steps.util.db_monitor.DisableMonitoring',
+            )}, {
+            'Restoring': (
+                'workflow.steps.util.disk.RestoreSnapshot',
+            )}, {
+            'Stopping datbase': (
+                'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.CheckIsDown',
+            )}, {
+            'Configuring': (
+                'workflow.steps.util.disk.AddDiskPermissionsRestoredDisk',
+                'workflow.steps.util.disk.UnmountOldestExportRestore',
+                'workflow.steps.util.disk.MountNewerExportRestore',
+                'workflow.steps.util.disk.ConfigureFstabRestore',
+                'workflow.steps.util.plan.InitializationRestore',
+                'workflow.steps.util.plan.ConfigureRestore',
+            )}, {
+            'Starting database': (
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.CheckIsUp',
+            )}, {
+            'Old data': (
+                'workflow.steps.util.disk.BackupRestore',
+                'workflow.steps.util.disk.UpdateRestore',
+            )}, {
+            'Enabling monitoring': (
+                'workflow.steps.util.db_monitor.EnableMonitoring',
+                'workflow.steps.util.zabbix.EnableAlarms',
+            )
+        }]
+
+class TestRedisSentinel(AbstractBaseRedisTestCase):
 
     def _get_replication_topology_driver(self):
         return RedisSentinel()
@@ -163,6 +184,46 @@ class TestRedisSentinel(AbstractBaseRedisTestCase):
             'Creating monitoring and alarms': (
                 'workflow.steps.util.zabbix.CreateAlarms',
                 'workflow.steps.util.db_monitor.CreateInfraMonitoring',
+            )
+        }]
+
+    def _get_restore_snapshot_settings(self):
+        return [{
+            'Disable monitoring': (
+                'workflow.steps.util.zabbix.DisableAlarms',
+                'workflow.steps.util.db_monitor.DisableMonitoring',
+            )}, {
+            'Restoring': (
+                'workflow.steps.util.disk.RestoreSnapshot',
+            )}, {
+            'Stopping datbase': (
+                'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.CheckIsDown',
+            )}, {
+            'Configuring': (
+                'workflow.steps.util.disk.AddDiskPermissionsRestoredDisk',
+                'workflow.steps.util.disk.UnmountOldestExportRestore',
+                'workflow.steps.util.disk.MountNewerExportRestore',
+                'workflow.steps.util.disk.ConfigureFstabRestore',
+                'workflow.steps.util.disk.CleanData',
+                'workflow.steps.util.plan.InitializationRestore',
+                'workflow.steps.util.plan.ConfigureRestore',
+            )}, {
+            'Starting database': (
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.CheckIsUp',
+            )}, {
+            'Configuring sentinel': (
+                'workflow.steps.util.database.SetSlave',
+                'workflow.steps.redis.upgrade.sentinel.ResetAllSentinel',
+            )}, {
+            'Old data': (
+                'workflow.steps.util.disk.BackupRestore',
+                'workflow.steps.util.disk.UpdateRestore',
+            )}, {
+            'Enabling monitoring': (
+                'workflow.steps.util.db_monitor.EnableMonitoring',
+                'workflow.steps.util.zabbix.EnableAlarms',
             )
         }]
 
