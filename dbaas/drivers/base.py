@@ -331,6 +331,9 @@ class BaseDriver(object):
     def topology_name(cls):
         return []
 
+    def get_master_for(self, instance):
+        return self.get_master_instance()
+
 
 class DatabaseStatus(object):
 
