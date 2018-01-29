@@ -94,6 +94,45 @@ class TestRedisSentinel(AbstractBaseRedisTestCase):
             ),
         }] + super(TestRedisSentinel, self)._get_reinstallvm_steps_final()
 
+    def get_deploy_steps(self):
+        return [{
+            'Creating virtual machine': (
+                'workflow.steps.util.vm.CreateVirtualMachineNewInfra',
+            )}, {
+            'Creating dns': (
+                'workflow.steps.util.dns.CreateDNSSentinel',
+            )}, {
+            'Creating disk': (
+                'workflow.steps.util.disk.CreateExport',
+            )}, {
+            'Waiting VMs': (
+                'workflow.steps.util.vm.WaitingBeReady',
+                'workflow.steps.util.vm.UpdateOSDescription'
+            )}, {
+            'Configuring database': (
+                'workflow.steps.util.plan.InitializationForNewInfraSentinel',
+                'workflow.steps.util.plan.ConfigureForNewInfraSentinel',
+            )}, {
+            'Starting database': (
+                'workflow.steps.util.database.StartSentinel',
+                'workflow.steps.util.database.CheckIsUp',
+            )}, {
+            'Configuring sentinel': (
+                'workflow.steps.redis.upgrade.sentinel.Reset',
+                'workflow.steps.util.database.SetSlave'
+            )}, {
+            'Check DNS': (
+                'workflow.steps.util.dns.CheckIsReady',
+            )}, {
+            'Creating Database': (
+                'workflow.steps.util.database.Create',
+            )}, {
+            'Creating monitoring and alarms': (
+                'workflow.steps.util.zabbix.CreateAlarms',
+                'workflow.steps.util.db_monitor.CreateInfraMonitoring',
+            )
+        }]
+
 class AbstractBaseRedisNoPersistenceTestCase(AbstractBaseRedisTestCase):
     pass
 
