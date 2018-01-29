@@ -1185,7 +1185,9 @@ configure_graylog()
 
 {% if CONFIGFILE_ONLY %}
 
-    createconfigdbfile
+    {% if not ONLY_SENTINEL %}
+        createconfigdbfile
+    {% endif %}
 
 {% else %}
 
@@ -1212,6 +1214,10 @@ configure_graylog()
 
     {% endif %}
 
+{% endif %}
+
+{% if 'redis_sentinel' in DRIVER_NAME and CREATE_SENTINEL_CONFIG %}
+    createconfigsentinelfile
 {% endif %}
 
 exit 0
