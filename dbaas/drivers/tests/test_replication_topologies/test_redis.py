@@ -83,7 +83,6 @@ class TestRedisSingle(AbstractBaseRedisTestCase):
             )
         }]
 
-
 class TestRedisSentinel(AbstractBaseRedisTestCase):
 
     def _get_restore_snapshot_settings(self):
