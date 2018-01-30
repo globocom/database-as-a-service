@@ -400,7 +400,7 @@ class MySQL(BaseDriver):
             environment=self.databaseinfra.environment,
             credential_type=CredentialType.MYSQL
         )
-        return credential.user, credential.password
+        return credential.user, credential.password, ''
 
 
 class MySQLFOXHA(MySQL):
