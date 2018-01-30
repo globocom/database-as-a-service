@@ -468,13 +468,7 @@ class MongoDB(BaseDriver):
         return "mongod"
 
     def initialization_parameters(self, instance):
-        database_rule = 'SECONDARY'
-        if instance.instance_type == instance.MONGODB_ARBITER:
-            database_rule = 'ARBITER'
-
-        return {
-            'DATABASERULE': database_rule
-        }
+        return {'DATABASERULE': "PRIMARY"}
 
     def configuration_parameters(self, instance):
         config = {}
@@ -527,6 +521,15 @@ class MongoDBReplicaSet(MongoDB):
                 logSize = oplogc["options"]["size"]
 
         return logSize / 1024 / 1024
+
+    def initialization_parameters(self, instance):
+        database_rule = 'SECONDARY'
+        if instance.instance_type == instance.MONGODB_ARBITER:
+            database_rule = 'ARBITER'
+
+        return {
+            'DATABASERULE': database_rule
+        }
 
     @classmethod
     def topology_name(cls):
