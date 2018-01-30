@@ -27,9 +27,10 @@ def get_or_create_infra(base_name, plan, environment, retry_from=None):
         infra.save()
 
         driver = infra.get_driver()
-        user, password = driver.build_new_infra_auth()
+        user, password, key = driver.build_new_infra_auth()
         infra.user = user
         infra.password = password
+        infra.database_key = key
         infra.save()
 
     return infra

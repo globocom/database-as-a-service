@@ -2,6 +2,8 @@
 from __future__ import absolute_import, unicode_literals
 import logging
 import pymongo
+import string
+import random
 from django.core.cache import cache
 from contextlib import contextmanager
 from dbaas_credentials.models import CredentialType
@@ -492,7 +494,8 @@ class MongoDB(BaseDriver):
             environment=self.databaseinfra.environment,
             credential_type=CredentialType.MONGODB
         )
-        return credential.user, credential.password
+        key = ''.join(random.choice(string.hexdigits) for _ in range(50))
+        return credential.user, credential.password, key
 
 
 class MongoDBReplicaSet(MongoDB):
