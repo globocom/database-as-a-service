@@ -137,7 +137,6 @@ class AbstractReplicationTopologySettingsTestCase(TestCase):
     def _get_add_database_instances_first_settings(self):
         return (
             'workflow.steps.util.vm.CreateVirtualMachineHorizontalElasticity',
-            'workflow.steps.util.infra.UpdateOfferingNewHost',
             'workflow.steps.util.dns.CreateDNS',
             'workflow.steps.util.vm.WaitingBeReady',
             'workflow.steps.util.vm.UpdateOSDescription',
