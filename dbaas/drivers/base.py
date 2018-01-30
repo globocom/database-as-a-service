@@ -330,6 +330,9 @@ class BaseDriver(object):
     def configuration_parameters_migration(self, instance):
         return self.configuration_parameters(instance)
 
+    def start_replication_parameters(self, instance):
+        return {}
+
     @classmethod
     def topology_name(cls):
         return []
