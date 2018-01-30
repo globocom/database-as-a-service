@@ -159,3 +159,47 @@ class MongoDBReplicaset(BaseMongoDB):
     @property
     def driver_name(self):
         return 'mongodb_replica_set'
+
+    def deploy_instances(self):
+        return [
+            [InstanceDeploy(Instance.MONGODB, 27017)],
+            [InstanceDeploy(Instance.MONGODB, 27017)],
+            [InstanceDeploy(Instance.MONGODB_ARBITER, 27017)]
+        ]
+
+    def get_deploy_steps(self):
+        return [{
+            'Creating virtual machine': (
+                'workflow.steps.util.vm.CreateVirtualMachineNewInfra',
+            )}, {
+            'Creating dns': (
+                'workflow.steps.util.dns.CreateDNS',
+            )}, {
+            'Creating disk': (
+                'workflow.steps.util.disk.CreateExport',
+            )}, {
+            'Waiting VMs': (
+                'workflow.steps.util.vm.WaitingBeReady',
+                'workflow.steps.util.vm.UpdateOSDescription'
+            )}, {
+            'Configuring database': (
+                'workflow.steps.util.plan.InitializationForNewInfra',
+                'workflow.steps.util.plan.ConfigureForNewInfra',
+                'workflow.steps.util.database.Start',
+            )}, {
+            'Check Database': (
+                'workflow.steps.util.plan.StartReplicationNewInfra',
+                'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.infra.UpdateEndpoint',
+            )}, {
+            'Check DNS': (
+                'workflow.steps.util.dns.CheckIsReady',
+            )}, {
+            'Creating Database': (
+                'workflow.steps.util.database.Create',
+            )}, {
+            'Creating monitoring and alarms': (
+                'workflow.steps.util.zabbix.CreateAlarms',
+                'workflow.steps.util.db_monitor.CreateInfraMonitoring',
+            )
+        }]
