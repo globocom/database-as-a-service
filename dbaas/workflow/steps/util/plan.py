@@ -183,6 +183,28 @@ class Configure(PlanStep):
             self.run_script(self.plan.script.configuration_template)
 
 
+class StartReplication(PlanStep):
+
+    def __unicode__(self):
+        return "Executing replication start script..."
+
+    def get_variables_specifics(self):
+        driver = self.infra.get_driver()
+        return driver.start_replication_parameters(self.instance)
+
+    @property
+    def is_valid(self):
+        base = super(StartReplication, self).is_valid
+        if not base:
+            return base
+
+        return self.instance == self.infra.instances.first()
+
+    def do(self):
+        if self.is_valid:
+            self.run_script(self.plan.script.start_replication_template)
+
+
 class InitializationForUpgrade(Initialization, PlanStepUpgrade):
     pass
 
@@ -196,6 +218,10 @@ class InitializationForNewInfra(Initialization, PlanStepNewInfra):
 
 
 class ConfigureForNewInfra(Configure, PlanStepNewInfra):
+    pass
+
+
+class StartReplicationNewInfra(StartReplication, PlanStepNewInfra):
     pass
 
 
