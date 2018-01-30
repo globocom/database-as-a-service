@@ -135,3 +135,6 @@ class UpdateEndpoint(BaseInstanceStep):
         self.infra.endpoint = "{}:{}".format(self.instance.address, self.instance.port)
         self.infra.endpoint_dns = "{}:{}".format(self.instance.dns, self.instance.port)
         self.infra.save()
+
+    def undo(self):
+        pass
