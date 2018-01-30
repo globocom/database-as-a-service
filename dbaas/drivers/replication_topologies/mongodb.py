@@ -34,11 +34,13 @@ class MongoDBSingle(BaseMongoDB):
     def get_upgrade_steps_extra(self):
         return ('workflow.steps.mongodb.upgrade.vm.ChangeBinaryTo32',) + \
             super(MongoDBSingle, self).get_upgrade_steps_extra() + (
+            'workflow.steps.util.plan.ConfigureOnlyDBConfigFile',
             'workflow.steps.util.database.Start',
             'workflow.steps.util.database.CheckIsUp',
             'workflow.steps.util.database.Stop',
             'workflow.steps.util.database.CheckIsDown',
             'workflow.steps.mongodb.upgrade.vm.ChangeBinaryTo34',
+            'workflow.steps.util.plan.ConfigureForUpgradeOnlyDBConfigFile',
         )
 
     def get_upgrade_steps_final(self):
@@ -99,8 +101,7 @@ class MongoDBReplicaset(BaseMongoDB):
         return (
             'workflow.steps.mongodb.upgrade.vm.ChangeBinaryTo32',
             'workflow.steps.util.plan.InitializationForUpgrade',
-            'workflow.steps.util.plan.ConfigureForUpgrade',
-            'workflow.steps.util.pack.Configure',
+            'workflow.steps.util.plan.Configure',
         )
 
     def get_upgrade_steps_final(self):
@@ -110,6 +111,7 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.util.database.Stop',
                 'workflow.steps.util.database.CheckIsDown',
                 'workflow.steps.mongodb.upgrade.vm.ChangeBinaryTo34',
+                'workflow.steps.util.plan.ConfigureForUpgradeOnlyDBConfigFile',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
             ),
@@ -123,7 +125,6 @@ class MongoDBReplicaset(BaseMongoDB):
         return (
             'workflow.steps.util.plan.Initialization',
             'workflow.steps.util.plan.Configure',
-            'workflow.steps.util.pack.Configure',
             'workflow.steps.mongodb.horizontal_elasticity.database.CreateDataDir',
             'workflow.steps.util.database.Start',
             'workflow.steps.mongodb.horizontal_elasticity.database.AddInstanceToReplicaSet',
@@ -145,7 +146,7 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.util.database.ResizeOpLogSize',
                 'workflow.steps.util.database.Stop',
                 'workflow.steps.util.database.CheckIsDown',
-                'workflow.steps.util.plan.Configure',
+                'workflow.steps.util.plan.ConfigureOnlyDBConfigFile',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
                 'workflow.steps.util.db_monitor.EnableMonitoring',

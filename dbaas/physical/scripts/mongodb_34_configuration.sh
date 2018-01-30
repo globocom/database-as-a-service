@@ -141,8 +141,12 @@ configure_graylog()
     /etc/init.d/rsyslog restart
 }
 
-createconfigdbfile
-createmongodbkeyfile
-configure_graylog
+{% if CONFIGFILE_ONLY %}
+    createconfigdbfile
+{% else %}
+    createconfigdbfile
+    createmongodbkeyfile
+    configure_graylog
+{% endif %}
 
 exit 0
