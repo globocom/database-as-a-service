@@ -6,11 +6,10 @@ import logging
 import _mysql as mysqldb
 import _mysql_exceptions
 from contextlib import contextmanager
-
-from util import make_db_random_password
+from dbaas_credentials.models import CredentialType
+from util import make_db_random_password, get_credentials_for
 from system.models import Configuration
 from physical.models import Instance
-
 from drivers import BaseDriver, DatabaseInfraStatus, DatabaseStatus
 from drivers.errors import AuthenticationError, ConnectionError, GenericDriverError, \
     DatabaseAlreadyExists, InvalidCredential, DatabaseDoesNotExist, \
@@ -395,6 +394,13 @@ class MySQL(BaseDriver):
     @classmethod
     def topology_name(cls):
         return ['mysql_single']
+
+    def build_new_infra_auth(self):
+        credential = get_credentials_for(
+            environment=self.databaseinfra.environment,
+            credential_type=CredentialType.MYSQL
+        )
+        return credential.user, credential.password
 
 
 class MySQLFOXHA(MySQL):

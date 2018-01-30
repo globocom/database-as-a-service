@@ -337,6 +337,9 @@ class BaseDriver(object):
     def get_master_for(self, instance):
         return self.get_master_instance()
 
+    def build_new_infra_auth(self):
+        raise NotImplemented
+
 
 class DatabaseStatus(object):
 

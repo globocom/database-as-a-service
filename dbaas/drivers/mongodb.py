@@ -4,13 +4,14 @@ import logging
 import pymongo
 from django.core.cache import cache
 from contextlib import contextmanager
+from dbaas_credentials.models import CredentialType
 from . import BaseDriver
 from . import DatabaseInfraStatus
 from . import DatabaseStatus
 from .errors import ConnectionError, AuthenticationError, \
     ReplicationNoPrimary, ReplicationNoInstances
 from physical.models import Instance
-from util import make_db_random_password
+from util import make_db_random_password, get_credentials_for
 from system.models import Configuration
 from dateutil import tz
 
@@ -491,6 +492,13 @@ class MongoDB(BaseDriver):
     @classmethod
     def topology_name(cls):
         return ['mongodb_single']
+
+    def build_new_infra_auth(self):
+        credential = get_credentials_for(
+            environment=self.databaseinfra.environment,
+            credential_type=CredentialType.MONGODB
+        )
+        return credential.user, credential.password
 
 
 class MongoDBReplicaSet(MongoDB):
