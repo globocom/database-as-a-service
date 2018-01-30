@@ -1,6 +1,6 @@
 from django.db.models import Q
 from physical.models import DatabaseInfra, Instance
-from util import slugify, gen_infra_names, get_vm_name, make_db_random_password
+from util import slugify, gen_infra_names, get_vm_name
 from util.providers import get_deploy_settings, get_deploy_instances
 from workflow.workflow import steps_for_instances, rollback_for_instances_full
 from models import DatabaseCreate
@@ -18,13 +18,18 @@ def get_or_create_infra(base_name, plan, environment, retry_from=None):
         infra.name_prefix = base_name['name_prefix']
         infra.name_stamp = base_name['name_stamp']
         infra.last_vm_created = 0
-        infra.password = make_db_random_password()
         infra.engine = plan.engine
         infra.plan = plan
         infra.disk_offering = plan.disk_offering
         infra.environment = environment
         infra.capacity = 1
         infra.per_database_size_mbytes = plan.max_db_size
+        infra.save()
+
+        driver = infra.get_driver()
+        user, password = driver.build_new_infra_auth()
+        infra.user = user
+        infra.password = password
         infra.save()
 
     return infra
