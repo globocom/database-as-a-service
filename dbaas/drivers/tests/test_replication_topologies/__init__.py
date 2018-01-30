@@ -58,7 +58,7 @@ class AbstractReplicationTopologySettingsTestCase(TestCase):
             'workflow.steps.util.agents.Stop',
             'workflow.steps.util.database.StopSlave',
             'workflow.steps.util.database.Stop',
-            'workflow.steps.util.pack.ResizeConfigure',
+            'workflow.steps.util.plan.ResizeConfigure',
             'workflow.steps.util.vm.Stop',
             'workflow.steps.util.vm.ChangeOffering',
             'workflow.steps.util.vm.Start',
@@ -118,7 +118,6 @@ class AbstractReplicationTopologySettingsTestCase(TestCase):
         return (
             'workflow.steps.util.plan.InitializationForUpgrade',
             'workflow.steps.util.plan.ConfigureForUpgrade',
-            'workflow.steps.util.pack.Configure',
         )
 
     def _get_upgrade_steps_final(self):
@@ -138,6 +137,7 @@ class AbstractReplicationTopologySettingsTestCase(TestCase):
     def _get_add_database_instances_first_settings(self):
         return (
             'workflow.steps.util.vm.CreateVirtualMachineHorizontalElasticity',
+            'workflow.steps.util.infra.UpdateOfferingNewHost',
             'workflow.steps.util.dns.CreateDNS',
             'workflow.steps.util.vm.WaitingBeReady',
             'workflow.steps.util.vm.UpdateOSDescription',
@@ -185,7 +185,7 @@ class AbstractReplicationTopologySettingsTestCase(TestCase):
         }]
 
     def _get_change_parameter_config_steps(self):
-        return ('workflow.steps.util.pack.Configure', )
+        return ('workflow.steps.util.plan.ConfigureOnlyDBConfigFile', )
 
     def _get_change_static_parameter_steps(self):
         return [{
@@ -242,7 +242,6 @@ class AbstractReplicationTopologySettingsTestCase(TestCase):
                 'workflow.steps.util.vm.UpdateOSDescription',
                 'workflow.steps.util.plan.Initialization',
                 'workflow.steps.util.plan.Configure',
-                'workflow.steps.util.pack.Configure',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
             ),
