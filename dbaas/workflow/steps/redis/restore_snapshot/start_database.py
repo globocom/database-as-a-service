@@ -5,6 +5,7 @@ from time import sleep
 from workflow.steps.util.base import BaseStep
 from workflow.exceptions.error_codes import DBAAS_0021
 from workflow.steps.util.restore_snapshot import use_database_initialization_script
+from workflow.steps.redis.util import reset_sentinel
 from workflow.steps.util.plan import ConfigureRestore
 
 LOG = logging.getLogger(__name__)
@@ -27,7 +28,7 @@ class StartDatabase(BaseStep):
             for host in hosts:
                 LOG.info('Configuring {}'.format(host))
                 ConfigureRestore(
-                    master.database_instance(),
+                    host.database_instance(),
                     SENTINELMASTER=master.address,
                     SENTINELMASTERPORT=master.database_instance().port,
                     MASTERNAME=databaseinfra.name
@@ -43,6 +44,19 @@ class StartDatabase(BaseStep):
 
                 LOG.info('Wait 1 minute before start other instance')
                 sleep(60)
+
+            driver = databaseinfra.get_driver()
+            sentinel_instances = driver.get_non_database_instances()
+            for sentinel_instance in sentinel_instances:
+                host = sentinel_instance.hostname
+                if host not in hosts:
+                    LOG.info("Reset sentinel instance on host: {}".format(host))
+                    reset_sentinel(
+                        host,
+                        sentinel_instance.address,
+                        sentinel_instance.port,
+                        databaseinfra.name
+                    )
 
             return True
         except Exception:

@@ -40,7 +40,6 @@ class AbstractBaseRedisTestCase(AbstractReplicationTopologySettingsTestCase):
         return (
             'workflow.steps.util.plan.InitializationForUpgrade',
             'workflow.steps.util.plan.ConfigureForUpgrade',
-            'workflow.steps.util.pack.Configure',
         )
 
 
@@ -135,7 +134,6 @@ class TestRedisSentinel(AbstractBaseRedisTestCase):
         return (
             'workflow.steps.util.plan.Initialization',
             'workflow.steps.util.plan.Configure',
-            'workflow.steps.util.pack.Configure',
             'workflow.steps.util.database.Start',
             'workflow.steps.redis.horizontal_elasticity.database.AddInstanceToRedisCluster',
         )

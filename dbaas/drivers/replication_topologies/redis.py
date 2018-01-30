@@ -32,7 +32,6 @@ class BaseRedis(BaseTopology):
         return (
             'workflow.steps.util.plan.InitializationForUpgrade',
             'workflow.steps.util.plan.ConfigureForUpgrade',
-            'workflow.steps.util.pack.Configure',
         )
 
     def get_resize_extra_steps(self):
@@ -149,7 +148,6 @@ class RedisSentinel(BaseRedis):
         return (
             'workflow.steps.util.plan.Initialization',
             'workflow.steps.util.plan.Configure',
-            'workflow.steps.util.pack.Configure',
             'workflow.steps.util.database.Start',
             'workflow.steps.redis.horizontal_elasticity.database.AddInstanceToRedisCluster',
         )
@@ -273,6 +271,7 @@ class RedisCluster(BaseRedis):
         return [{
             'Creating virtual machine': (
                 'workflow.steps.util.vm.CreateVirtualMachineNewInfra',
+                'workflow.steps.util.infra.UpdateOfferingNewHost',
             )}, {
             'Creating dns': (
                 'workflow.steps.util.dns.CreateDNS',

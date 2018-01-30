@@ -1183,27 +1183,41 @@ configure_graylog()
     /etc/init.d/rsyslog restart
 }
 
-create_config_http
-configure_graylog
+{% if CONFIGFILE_ONLY %}
 
-{% if ONLY_SENTINEL %}
-
-    createinitsentinelfile
-    createconfigsentinelfile
-    register_init_sentinel_service
+    {% if not ONLY_SENTINEL %}
+        createconfigdbfile
+    {% endif %}
 
 {% else %}
 
-    createinitdbfile
-    createconfigdbfile
-    register_init_redis_service
+    create_config_http
+    configure_graylog
 
-    {% if 'redis_sentinel' in DRIVER_NAME %}
+    {% if ONLY_SENTINEL %}
+
         createinitsentinelfile
         createconfigsentinelfile
         register_init_sentinel_service
+
+    {% else %}
+
+        createinitdbfile
+        createconfigdbfile
+        register_init_redis_service
+
+        {% if 'redis_sentinel' in DRIVER_NAME %}
+            createinitsentinelfile
+            createconfigsentinelfile
+            register_init_sentinel_service
+        {% endif %}
+
     {% endif %}
 
+{% endif %}
+
+{% if 'redis_sentinel' in DRIVER_NAME and CREATE_SENTINEL_CONFIG %}
+    createconfigsentinelfile
 {% endif %}
 
 exit 0
