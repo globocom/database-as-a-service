@@ -37,9 +37,15 @@ class MongoDB(BaseDriver):
 
         key = 'mongo.replica.%d' % self.databaseinfra.pk
         repl_name = cache.get(key, None)
+
         if not repl_name:
             repl_name = self.__get_replica_name()
-            cache.set(key, repl_name or '')
+
+        if not repl_name:
+            repl_name = self.replica_set_name
+
+        cache.set(key, repl_name or '')
+
         return repl_name
 
     def __get_replica_name(self):
@@ -527,6 +533,11 @@ class MongoDBReplicaSet(MongoDB):
 
     def initialization_parameters(self, instance):
         database_rule = 'SECONDARY'
+
+        database = self.databaseinfra.databases.first()
+        if not database and self.databaseinfra.instances.first() == instance:
+            database_rule = 'PRIMARY'
+
         if instance.instance_type == instance.MONGODB_ARBITER:
             database_rule = 'ARBITER'
 
@@ -537,3 +548,10 @@ class MongoDBReplicaSet(MongoDB):
     @classmethod
     def topology_name(cls):
         return ['mongodb_replica_set']
+
+    def start_replication_parameters(self, instance):
+        base = self.configuration_parameters(instance)
+        base['DATABASERULE'] = 'PRIMARY'
+        for index, host in enumerate(self.databaseinfra.hosts, start=1):
+            base["HOST{:02d}".format(index)] = host
+        return base
