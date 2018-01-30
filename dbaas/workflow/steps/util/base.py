@@ -65,7 +65,7 @@ class BaseInstanceStep(object):
     @property
     def restore(self):
         restore = self.database.database_restore.last()
-        if restore.is_running:
+        if restore and restore.is_running:
             return restore
 
     @property
@@ -82,13 +82,18 @@ class BaseInstanceStep(object):
     @property
     def resize(self):
         resize = self.database.resizes.last()
-
         if resize and resize.is_running:
             return resize
 
     @property
     def is_valid(self):
         return True
+
+    @property
+    def upgrade(self):
+        upgrade = self.database.upgrades.last()
+        if upgrade and upgrade.is_running:
+            return upgrade
 
     def do(self):
         raise NotImplementedError

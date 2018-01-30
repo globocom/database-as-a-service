@@ -38,7 +38,7 @@ class PlanStep(BaseInstanceStep):
             'DBPASSWORD': self.infra.password,
             'HOST': self.host.hostname.split('.')[0],
             'ENGINE': self.plan.engine.engine_type.name,
-            'UPGRADE': True,
+            'UPGRADE': bool(self.upgrade),
             'DRIVER_NAME': self.infra.get_driver().topology_name(),
             'DISK_SIZE_IN_GB': self.disk_offering.size_gb(),
             'ENVIRONMENT': self.environment,
