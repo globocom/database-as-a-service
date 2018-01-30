@@ -271,7 +271,6 @@ class RedisCluster(BaseRedis):
         return [{
             'Creating virtual machine': (
                 'workflow.steps.util.vm.CreateVirtualMachineNewInfra',
-                'workflow.steps.util.infra.UpdateOfferingNewHost',
             )}, {
             'Creating dns': (
                 'workflow.steps.util.dns.CreateDNS',

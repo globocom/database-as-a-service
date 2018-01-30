@@ -48,15 +48,6 @@ class Offering(Update):
         self.change_infra_offering(self.source_offering)
 
 
-class UpdateOfferingNewHost(Update):
-    def __unicode__(self):
-        return "Updating offering info..."
-
-    def do(self):
-        self.instance.hostname.offering = self.infra_offering.offering
-        self.instance.hostname.save()
-
-
 class OfferingMigration(Offering):
 
     @property
