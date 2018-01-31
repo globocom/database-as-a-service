@@ -4,7 +4,8 @@ from util import get_credentials_for
 from dbaas_credentials.models import CredentialType
 from dbaas_foxha.provider import FoxHAProvider
 from dbaas_foxha.dbaas_api import DatabaseAsAServiceApi
-from base import BaseTopology
+from base import BaseTopology, InstanceDeploy
+from physical.models import Instance
 
 LOG = logging.getLogger(__name__)
 
@@ -53,6 +54,41 @@ class BaseMysql(BaseTopology):
 
 class MySQLSingle(BaseMysql):
 
+    def get_deploy_steps(self):
+        return [{
+            'Creating virtual machine': (
+                'workflow.steps.util.vm.CreateVirtualMachineNewInfra',
+            )}, {
+            'Creating dns': (
+                'workflow.steps.util.dns.CreateDNS',
+            )}, {
+            'Creating disk': (
+                'workflow.steps.util.disk.CreateExport',
+            )}, {
+            'Waiting VMs': (
+                'workflow.steps.util.vm.WaitingBeReady',
+                'workflow.steps.util.vm.UpdateOSDescription'
+            )}, {
+            'Configuring database': (
+                'workflow.steps.util.infra.UpdateEndpoint',
+                'workflow.steps.util.plan.InitializationForNewInfra',
+                'workflow.steps.util.plan.ConfigureForNewInfra',
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.database.StartMonit',
+            )}, {
+            'Check DNS': (
+                'workflow.steps.util.dns.CheckIsReady',
+            )}, {
+            'Creating Database': (
+                'workflow.steps.util.database.Create',
+            )}, {
+            'Creating monitoring and alarms': (
+                'workflow.steps.util.zabbix.CreateAlarms',
+                'workflow.steps.util.db_monitor.CreateInfraMonitoring',
+            )
+        }]
+
     def switch_master(self, driver):
         return True
 
@@ -69,8 +105,14 @@ class MySQLSingle(BaseMysql):
     def driver_name(self):
         return 'mysql_single'
 
+    def deploy_instances(self):
+        return [[InstanceDeploy(Instance.MYSQL, 3306)]]
+
 
 class MySQLFoxHA(MySQLSingle):
+
+    def get_deploy_steps(self):
+        return self.deploy_first_steps() + self.monitoring_steps() + self.deploy_last_steps()
 
     def get_restore_snapshot_steps(self):
         return (

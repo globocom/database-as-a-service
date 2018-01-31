@@ -10,6 +10,9 @@ from workflow.steps.mongodb.util import build_change_oplogsize_script
 from workflow.steps.util.base import BaseInstanceStep
 from restore_snapshot import use_database_initialization_script
 
+from workflow.steps.util import test_bash_script_error
+from workflow.steps.util import monit_script
+
 LOG = logging.getLogger(__name__)
 
 CHECK_SECONDS = 10
@@ -454,6 +457,27 @@ class SetSlavesMigration(SetSlave):
 
             client = self.infra.get_driver().get_client(instance)
             client.slaveof(master.address, master.port)
+
+class StartMonit(DatabaseStep):
+    def __unicode__(self):
+        return "Starting monit..."
+
+    def do(self):
+        LOG.info("Start monit on host {}".format(self.host))
+        script = test_bash_script_error()
+        action = 'start'
+        script += monit_script(action)
+
+        LOG.info(script)
+        output = {}
+        return_code = exec_remote_command_host(self.host, script, output)
+        LOG.info(output)
+        if return_code != 0:
+            LOG.error("Error starting monit")
+            LOG.error(str(output))
+
+    def undo(self):
+        pass
 
 
 class Create(DatabaseStep):
