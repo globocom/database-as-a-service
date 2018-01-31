@@ -16,11 +16,18 @@ class PlanStep(BaseInstanceStep):
 
     def __init__(self, instance):
         super(PlanStep, self).__init__(instance)
-        self.pack = CloudStackPack.objects.get(
-            offering__serviceofferingid=self.database.offering_id,
-            offering__region__environment=self.environment,
-            engine_type__name=self.database.engine_type
-        )
+        self._pack = None
+
+    @property
+    def pack(self):
+        if not self._pack:
+            offering = self.infra.cs_dbinfra_offering.get().offering
+            self._pack = CloudStackPack.objects.get(
+                offering__serviceofferingid=offering.serviceofferingid,
+                offering__region__environment=self.environment,
+                engine_type__name=self.infra.engine_name
+            )
+        return self._pack
 
     @property
     def cs_plan(self):
@@ -300,15 +307,17 @@ class ConfigureOnlyDBConfigFile(Configure):
         base.update({'CONFIGFILE_ONLY': True})
         return base
 
+
 class ConfigureForUpgradeOnlyDBConfigFile(ConfigureOnlyDBConfigFile, PlanStepUpgrade):
     pass
+
 
 class ResizeConfigure(ConfigureOnlyDBConfigFile):
 
     def do(self):
-        self.pack = self.resize.target_offer
+        self._pack = self.resize.target_offer
         super(ResizeConfigure, self).do()
 
     def undo(self):
-        self.pack = self.resize.source_offer
+        self._pack = self.resize.source_offer
         super(ResizeConfigure, self).undo()
