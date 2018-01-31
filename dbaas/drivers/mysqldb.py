@@ -362,7 +362,7 @@ class MySQL(BaseDriver):
         return 3306
 
     def get_default_instance_type(self):
-        return Instance.MySQL
+        return Instance.MYSQL
 
     def get_configuration(self):
         configurations = {}
