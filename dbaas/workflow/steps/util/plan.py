@@ -205,6 +205,13 @@ class StartReplication(PlanStep):
         driver = self.infra.get_driver()
         return driver.start_replication_parameters(self.instance)
 
+    def do(self):
+        if self.is_valid:
+            self.run_script(self.plan.script.start_replication_template)
+
+
+class StartReplicationFirstNode(StartReplication):
+
     @property
     def is_valid(self):
         base = super(StartReplication, self).is_valid
@@ -212,10 +219,6 @@ class StartReplication(PlanStep):
             return base
 
         return self.instance == self.infra.instances.first()
-
-    def do(self):
-        if self.is_valid:
-            self.run_script(self.plan.script.start_replication_template)
 
 
 class InitializationForUpgrade(Initialization, PlanStepUpgrade):
@@ -235,6 +238,12 @@ class ConfigureForNewInfra(Configure, PlanStepNewInfra):
 
 
 class StartReplicationNewInfra(StartReplication, PlanStepNewInfra):
+    pass
+
+
+class StartReplicationFirstNodeNewInfra(
+    StartReplicationFirstNode, PlanStepNewInfra
+):
     pass
 
 
