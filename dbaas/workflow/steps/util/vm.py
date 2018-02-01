@@ -7,7 +7,7 @@ from dbaas_credentials.models import CredentialType
 from dbaas_cloudstack.models import LastUsedBundleDatabaseInfra, \
     LastUsedBundle, DatabaseInfraOffering
 from physical.models import Environment, Instance
-from util import check_ssh, get_credentials_for
+from util import exec_remote_command_host, check_ssh, get_credentials_for
 from base import BaseInstanceStep, BaseInstanceStepMigration
 
 CHANGE_MASTER_ATTEMPS = 4
@@ -476,3 +476,34 @@ class RemoveHostMigration(RemoveHost):
         if not base_env.migrate_environment:
             base_env = Environment.objects.get(migrate_environment=base_env)
         return base_env
+
+
+class CheckHostName(VmStep):
+
+    def __unicode__(self):
+        return "Checking VM hostname..."
+
+    @property
+    def is_hostname_valid(self):
+        output = {}
+        script = "hostname | grep 'localhost.localdomain' | wc -l"
+        return_code = exec_remote_command_host(self.host, script, output)
+        if return_code != 0:
+            raise EnvironmentError(str(output))
+
+        return int(output['stdout'][0]) < 1
+
+    def do(self):
+        if not self.is_hostname_valid:
+            raise EnvironmentError('Hostname invalid')
+
+
+class CheckHostNameAndReboot(CheckHostName):
+
+    def __unicode__(self):
+        return "Checking VM hostname..."
+
+    def do(self):
+        if not self.is_hostname_valid:
+            script = '/sbin/reboot -f > /dev/null 2>&1 &'
+            exec_remote_command_host(self.host, script)
