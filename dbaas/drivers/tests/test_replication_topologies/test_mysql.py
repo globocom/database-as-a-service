@@ -152,3 +152,66 @@ class TestMySQLFoxHA(AbstractBaseMySQLTestCase):
             'workflow.steps.util.deploy.build_database.BuildDatabase',
             'workflow.steps.util.deploy.check_database_binds.CheckDatabaseBinds',
         )
+
+    def _get_deploy_settings(self):
+        return [{
+            'Creating virtual machine': (
+                'workflow.steps.util.vm.CreateVirtualMachineNewInfra',
+            )}, {
+            'Creating VIP': (
+                'workflow.steps.util.network.CreateVip',
+            )}, {
+            'Creating dns': (
+                'workflow.steps.util.dns.CreateDNS',
+            )}, {
+            'Creating disk': (
+                'workflow.steps.util.disk.CreateExport',
+            )}, {
+            'Waiting VMs': (
+                'workflow.steps.util.vm.WaitingBeReady',
+                'workflow.steps.util.vm.UpdateOSDescription',
+                'workflow.steps.util.vm.CheckHostNameAndReboot',
+            )}, {
+            'Check hostname': (
+                'workflow.steps.util.vm.WaitingBeReady',
+                'workflow.steps.util.vm.CheckHostName',
+            )}, {
+            'Check puppet': (
+                'workflow.steps.util.puppet.ExecuteIfProblem',
+                'workflow.steps.util.puppet.WaitingBeDone',
+                'workflow.steps.util.puppet.CheckStatus',
+            )}, {
+            'Configure foreman': (
+                'workflow.steps.util.foreman.SetupDSRC',
+                'workflow.steps.util.puppet.Execute',
+                'workflow.steps.util.puppet.CheckStatus',
+            )}, {
+            'Configuring database': (
+                'workflow.steps.util.plan.InitializationForNewInfra',
+                'workflow.steps.util.plan.ConfigureForNewInfra',
+                'workflow.steps.util.database.Start',
+            )}, {
+            'Check database': (
+                'workflow.steps.util.plan.StartReplicationNewInfra',
+                'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.database.StartMonit',
+            )}, {
+            'FoxHA configure': (
+                'workflow.steps.util.fox.ConfigureGroup',
+                'workflow.steps.util.fox.ConfigureNode',
+            )}, {
+            'FoxHA start': (
+                'workflow.steps.util.fox.Start',
+                'workflow.steps.util.fox.IsReplicationOk'
+            )}, {
+            'Check DNS': (
+                'workflow.steps.util.dns.CheckIsReady',
+            )}, {
+            'Creating Database': (
+                'workflow.steps.util.database.Create',
+            )}, {
+            'Creating monitoring and alarms': (
+                'workflow.steps.util.zabbix.CreateAlarms',
+                'workflow.steps.util.db_monitor.CreateInfraMonitoring',
+            )
+        }]
