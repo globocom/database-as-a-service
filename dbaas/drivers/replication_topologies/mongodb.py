@@ -223,7 +223,7 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.util.database.Start',
             )}, {
             'Check Database': (
-                'workflow.steps.util.plan.StartReplicationNewInfra',
+                'workflow.steps.util.plan.StartReplicationFirstNodeNewInfra',
                 'workflow.steps.util.database.CheckIsUp',
                 'workflow.steps.util.infra.UpdateEndpoint',
             )}, {
