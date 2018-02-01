@@ -407,3 +407,18 @@ class MySQLFOXHA(MySQL):
     @classmethod
     def topology_name(cls):
         return ['mysql_foxha']
+
+    def start_replication_parameters(self, instance):
+        base = self.initialization_parameters(instance)
+
+        replica_credential = get_credentials_for(
+            self.databaseinfra.environment, CredentialType.MYSQL_REPLICA
+        )
+        base['REPLICA_USER'] = replica_credential.user
+        base['REPLICA_PASSWORD'] = replica_credential.password
+
+        hosts = set(self.databaseinfra.hosts)
+        hosts.discard(instance.hostname)
+        base['IPMASTER'] = hosts.pop().address
+
+        return base
