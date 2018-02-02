@@ -80,17 +80,12 @@ class CreateAlarms(ZabbixStep):
 
     def do(self):
         DestroyAlarms(self.instance).do()
-        zabbix_provider = factory_for(
-            databaseinfra=self.instance.databaseinfra,
-            credentials=self.credentials,
-            engine_version=self.engine_version
-        )
-        zabbix_provider.create_instance_basic_monitors(
+        self.zabbix_provider.create_instance_basic_monitors(
             self.host
         )
 
         for instance in self.instances:
-            zabbix_provider.create_instance_monitors(instance)
+            self.zabbix_provider.create_instance_monitors(instance)
 
     def undo(self):
         DestroyAlarms(self.instance).do()
