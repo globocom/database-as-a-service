@@ -112,21 +112,6 @@ class TestMySQLFoxHA(AbstractBaseMySQLTestCase):
     def _get_replication_topology_driver(self):
         return MySQLFoxHA()
 
-    def _get_restore_snapshot_settings(self):
-        return (
-            'workflow.steps.mysql.restore_snapshot.restore_snapshot.RestoreSnapshot',
-            'workflow.steps.util.restore_snapshot.grant_nfs_access.GrantNFSAccess',
-            'workflow.steps.util.restore_snapshot.make_export_snapshot.MySQLSaveBinlogPosition',
-            'workflow.steps.mysql.restore_snapshot.stop_database.StopDatabase',
-            'workflow.steps.mysql.restore_snapshot.umount_data_volume.UmountDataVolume',
-            'workflow.steps.util.restore_snapshot.update_fstab.UpdateFstab',
-            'workflow.steps.util.restore_snapshot.mount_data_volume.MountDataVolume',
-            'workflow.steps.mysql.restore_snapshot.start_database_and_replication.StartDatabaseAndReplication',
-            'workflow.steps.util.restore_snapshot.make_export_snapshot.MakeExportSnapshot',
-            'workflow.steps.util.restore_snapshot.update_dbaas_metadata.UpdateDbaaSMetadata',
-            'workflow.steps.util.restore_snapshot.clean_old_volumes.CleanOldVolumes',
-        )
-
     def _get_deploy_first_settings(self):
         return (
             'workflow.steps.util.deploy.build_databaseinfra.BuildDatabaseInfra',
@@ -211,7 +196,55 @@ class TestMySQLFoxHA(AbstractBaseMySQLTestCase):
                 'workflow.steps.util.database.Create',
             )}, {
             'Creating monitoring and alarms': (
+                'workflow.steps.util.mysql.CreateAlarmsVip',
                 'workflow.steps.util.zabbix.CreateAlarms',
                 'workflow.steps.util.db_monitor.CreateInfraMonitoring',
+            )
+        }]
+
+    def _get_restore_snapshot_settings(self):
+        return [{
+            'Disable monitoring': (
+                'workflow.steps.util.zabbix.DisableAlarms',
+                'workflow.steps.util.db_monitor.DisableMonitoring',
+            )}, {
+            'Restoring': (
+                'workflow.steps.util.mysql.RestoreSnapshotMySQL',
+            )}, {
+            'Stopping datbase': (
+                'workflow.steps.util.mysql.SaveMySQLBinlog',
+                'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.CheckIsDown',
+            )}, {
+            'Configuring': (
+                'workflow.steps.util.mysql.AddDiskPermissionsRestoredDiskMySQL',
+                'workflow.steps.util.mysql.UnmountOldestExportRestoreMySQL',
+                'workflow.steps.util.mysql.MountNewerExportRestoreMySQL',
+                'workflow.steps.util.mysql.ConfigureFstabRestoreMySQL',
+                'workflow.steps.util.disk.RemoveDeprecatedFiles',
+                'workflow.steps.util.plan.ConfigureRestore',
+            )}, {
+            'Starting database': (
+                'workflow.steps.util.database.Start',
+            )}, {
+            'Configuring replication': (
+                'workflow.steps.util.mysql.SetMasterRestore',
+            )}, {
+            'Start slave': (
+                'workflow.steps.util.mysql.StartSlave',
+            )}, {
+            'Configure FoxHA': (
+                'workflow.steps.util.mysql.ConfigureFoxHARestore',
+            )}, {
+            'Check database': (
+                'workflow.steps.util.database.CheckIsUp',
+            )}, {
+            'Old data': (
+                'workflow.steps.util.disk.BackupRestore',
+                'workflow.steps.util.disk.UpdateRestore',
+            )}, {
+            'Enabling monitoring': (
+                'workflow.steps.util.db_monitor.EnableMonitoring',
+                'workflow.steps.util.zabbix.EnableAlarms',
             )
         }]
