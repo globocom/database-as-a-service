@@ -118,12 +118,13 @@ class CreateDNS(DNSStep):
             type=INSTANCE,
             **self.database_sufix
         )
-        self.instance.save()
 
         self.provider.create_database_dns_for_ip(
             databaseinfra=self.infra,
             ip=self.instance.address
         )
+
+        self.instance.save()
 
     def undo(self):
         self.provider.remove_databases_dns_for_ip(
