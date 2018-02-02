@@ -500,8 +500,7 @@ class MongoDB(BaseDriver):
             environment=self.databaseinfra.environment,
             credential_type=CredentialType.MONGODB
         )
-        key = ''.join(random.choice(string.hexdigits) for _ in range(50))
-        return credential.user, credential.password, key
+        return credential.user, credential.password, None
 
 
 class MongoDBReplicaSet(MongoDB):
@@ -555,3 +554,8 @@ class MongoDBReplicaSet(MongoDB):
         for index, host in enumerate(self.databaseinfra.hosts, start=1):
             base["HOST{:02d}".format(index)] = host
         return base
+
+    def build_new_infra_auth(self):
+        user, password, key = super(MongoDBReplicaSet, self).build_new_infra_auth()
+        key = ''.join(random.choice(string.hexdigits) for _ in range(50))
+        return user, password, key
