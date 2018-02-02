@@ -95,6 +95,12 @@ class BaseInstanceStep(object):
         if upgrade and upgrade.is_running:
             return upgrade
 
+    @property
+    def create(self):
+        create = self.database.databases_create.last()
+        if create and create.is_running:
+            return create
+
     def do(self):
         raise NotImplementedError
 
