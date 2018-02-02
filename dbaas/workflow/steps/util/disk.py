@@ -375,6 +375,10 @@ class RestoreSnapshot(Disk):
 
         return "Restoring {}...".format(self.snapshot)
 
+    @property
+    def disk_host(self):
+        return self.restore.master_for(self.instance).hostname
+
     def do(self):
         snapshot = self.snapshot
         if not snapshot:
@@ -399,7 +403,7 @@ class RestoreSnapshot(Disk):
         disk.nfsaas_path = job_result['full_path']
         disk.is_active = False
         disk.id = None
-        disk.host = self.restore.master_for(self.instance).hostname
+        disk.host = self.disk_host
         disk.save()
 
     def undo(self):
@@ -544,3 +548,14 @@ class UpdateRestore(Disk):
     def undo(self):
         # ToDo
         pass
+
+
+class RemoveDeprecatedFiles(DiskCommand):
+
+    def __unicode__(self):
+        return "Removing deprecated files..."
+
+    @property
+    def scripts(self):
+        driver = self.infra.get_driver()
+        return {'Remove Deprecated': driver.remove_deprectaed_files()}
