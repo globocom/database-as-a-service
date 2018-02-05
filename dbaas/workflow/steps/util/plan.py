@@ -304,10 +304,16 @@ class ConfigureRestore(PlanStepRestore, Configure):
 
     def get_variables_specifics(self):
         base = super(ConfigureRestore, self).get_variables_specifics()
+
         base.update(self.kwargs)
-        base.update({'CONFIGFILE_ONLY': True,
-                    'CREATE_SENTINEL_CONFIG': True})
-        LOG.info(base)
+        base['CONFIGFILE_ONLY'] = True,
+        base['CREATE_SENTINEL_CONFIG'] = True
+
+        driver = self.infra.get_driver()
+        base.update(driver.master_parameters(
+            self.instance, self.restore.master_for(self.instance)
+        ))
+
         return base
 
 class ConfigureOnlyDBConfigFile(Configure):
