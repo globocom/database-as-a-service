@@ -543,10 +543,13 @@ class DatabaseRestore(DatabaseMaintenanceTask):
 
     @property
     def instances(self):
-        instances = set()
+        instances = []
         for pairs in self.instances_pairs():
-            instances.add(pairs.master)
-            instances.add(pairs.slave)
+            if pairs.master not in instances:
+                instances.append(pairs.master)
+
+            if pairs.slave not in instances:
+                instances.append(pairs.slave)
 
         return instances
 
