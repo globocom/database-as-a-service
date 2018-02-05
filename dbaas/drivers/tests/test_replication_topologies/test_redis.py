@@ -213,7 +213,7 @@ class TestRedisSentinel(AbstractBaseRedisTestCase):
             )}, {
             'Configuring sentinel': (
                 'workflow.steps.redis.upgrade.sentinel.ResetAllSentinel',
-                'workflow.steps.util.database.SetSlave',
+                'workflow.steps.util.database.SetSlaveRestore',
             )}, {
             'Old data': (
                 'workflow.steps.util.disk.BackupRestore',
