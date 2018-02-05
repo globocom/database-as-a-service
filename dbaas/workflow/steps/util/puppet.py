@@ -23,7 +23,7 @@ class Puppet(BaseInstanceStep):
         if return_code != 0:
             raise EnvironmentError(str(output))
 
-        return int(output['stdout'][0]) == 0
+        return int(output['stdout'][0]) > 0
 
     @property
     def puppet_code_status(self):
