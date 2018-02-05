@@ -420,16 +420,27 @@ class SetSlave(DatabaseStep):
     def is_valid(self):
         return self.instance.is_database
 
+    @property
+    def master(self):
+        return self.infra.get_driver().get_master_instance()
+
     def do(self):
         if not self.is_valid:
             return
 
-        master = self.infra.get_driver().get_master_instance()
+        master = self.master
         if master == self.instance:
             return
 
         client = self.infra.get_driver().get_client(self.instance)
         client.slaveof(master.address, master.port)
+
+
+class SetSlaveRestore(SetSlave):
+
+    @property
+    def master(self):
+        return self.restore.master_for(self.instance)
 
 
 class SetSlaveNewInfra(SetSlave):
