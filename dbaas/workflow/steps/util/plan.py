@@ -21,7 +21,7 @@ class PlanStep(BaseInstanceStep):
     @property
     def pack(self):
         if not self._pack:
-            offering = self.host.offering
+            offering = self.infra.cs_dbinfra_offering.get().offering
             self._pack = CloudStackPack.objects.get(
                 offering__serviceofferingid=offering.serviceofferingid,
                 offering__region__environment=self.environment,
