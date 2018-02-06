@@ -32,19 +32,3 @@ class AddInstanceToReplicaSet(DatabaseStep):
         script = test_bash_script_error()
         script += build_remove_read_only_replica_set_member_script()
         self._execute_script(self.script_variables, script)
-
-
-class CreateDataDir(DatabaseStep):
-
-    def __unicode__(self):
-        return "Creating data dir..."
-
-    @property
-    def script_variables(self):
-        return {}
-
-    def do(self):
-
-        script = test_bash_script_error()
-        script += build_create_data_dir_script()
-        self._execute_script(self.script_variables, script)

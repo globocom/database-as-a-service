@@ -159,7 +159,6 @@ class MongoDBReplicaset(BaseMongoDB):
         return (
             'workflow.steps.util.plan.Initialization',
             'workflow.steps.util.plan.Configure',
-            'workflow.steps.mongodb.horizontal_elasticity.database.CreateDataDir',
             'workflow.steps.util.database.Start',
             'workflow.steps.mongodb.horizontal_elasticity.database.AddInstanceToReplicaSet',
         )
