@@ -133,6 +133,22 @@ class CreateDNS(DNSStep):
         )
 
 
+class RegisterDNSVip(DNSStep):
+
+    def __unicode__(self):
+        return "Registry dns for VIP..."
+
+    @property
+    def is_valid(self):
+        return self.instance == self.infra.instances.first()
+
+    def do(self):
+        if not self.is_valid:
+            return
+
+        self.provider.create_database_dns(self.infra)
+
+
 class CreateDNSSentinel(CreateDNS):
 
     @property
