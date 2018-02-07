@@ -169,6 +169,8 @@ class TestMySQLFoxHA(AbstractBaseMySQLTestCase):
             )}, {
             'Configure foreman': (
                 'workflow.steps.util.foreman.SetupDSRC',
+            )}, {
+            'Running puppet': (
                 'workflow.steps.util.puppet.Execute',
                 'workflow.steps.util.puppet.CheckStatus',
             )}, {
