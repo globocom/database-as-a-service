@@ -173,4 +173,5 @@ class CheckIsReady(DNSStep):
             return
 
         for dns in DatabaseInfraDNSList.objects.filter(databaseinfra=self.infra.id):
-            check_nslookup(dns.dns, self.credentials.project)
+            if not check_nslookup(dns.dns, self.credentials.project):
+                raise EnvironmentError("DNS {} is not ready".format(dns.dns))
