@@ -241,7 +241,7 @@ class RedisSentinel(BaseRedis):
                 'workflow.steps.util.database.Create',
             )}, {
             'Creating monitoring and alarms': (
-                'workflow.steps.util.zabbix.CreateAlarms',
+                'workflow.steps.util.sentinel.CreateAlarmsNewInfra',
                 'workflow.steps.util.db_monitor.CreateInfraMonitoring',
             )
         }]
