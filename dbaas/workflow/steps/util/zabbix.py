@@ -79,6 +79,9 @@ class CreateAlarms(ZabbixStep):
         return self.instance.databaseinfra.engine.version
 
     def do(self):
+        if not self.is_valid:
+            return
+
         DestroyAlarms(self.instance).do()
         self.zabbix_provider.create_instance_basic_monitors(
             self.host
@@ -88,10 +91,14 @@ class CreateAlarms(ZabbixStep):
             self.zabbix_provider.create_instance_monitors(instance)
 
     def undo(self):
+        if not self.is_valid:
+            return
+
         DestroyAlarms(self.instance).do()
 
 
 class CreateAlarmsForUpgrade(CreateAlarms):
+
     @property
     def engine_version(self):
         return self.plan.engine_equivalent_plan.engine.version
