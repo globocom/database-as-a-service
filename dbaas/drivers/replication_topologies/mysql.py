@@ -231,6 +231,7 @@ class MySQLFoxHA(MySQLSingle):
             )}, {
             'Creating VIP': (
                 'workflow.steps.util.network.CreateVip',
+                'workflow.steps.util.dns.RegisterDNSVip',
             )}, {
             'Creating dns': (
                 'workflow.steps.util.dns.CreateDNS',
