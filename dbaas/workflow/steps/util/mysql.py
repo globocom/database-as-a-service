@@ -119,10 +119,8 @@ class ZabbixVip(ZabbixStep):
         return self.instance == self.infra.instances.first()
 
     @property
-    def vip_instance(self):
-        Instance = namedtuple("Instance", "dns")
-        dns = self.zabbix_provider.mysql_infra_dns_from_endpoint_dns
-        return Instance(dns)
+    def vip_instance_dns(self):
+        return self.zabbix_provider.mysql_infra_dns_from_endpoint_dns
 
 
 class CreateAlarmsVip(ZabbixVip):
@@ -138,7 +136,10 @@ class CreateAlarmsVip(ZabbixVip):
         if not self.is_valid:
             return
 
-        self.zabbix_provider.create_instance_monitors(self.vip_instance)
+        extra = self.zabbix_provider.get_database_monitors_extra_parameters()
+        self.zabbix_provider._create_database_monitors(
+            host=self.vip_instance_dns, dbtype='mysql', alarm='group', **extra
+        )
 
     def undo(self):
         DestroyAlarmsVip(self.instance).do()
@@ -153,7 +154,7 @@ class DestroyAlarmsVip(ZabbixVip):
         if not self.is_valid:
             return
 
-        self.zabbix_provider.delete_instance_monitors(self.vip_instance.dns)
+        self.zabbix_provider.delete_instance_monitors(self.vip_instance_dns)
 
     def undo(self):
         CreateAlarmsVip(self.instance).do()
