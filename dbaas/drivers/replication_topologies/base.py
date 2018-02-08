@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 class BaseTopology(object):
 
-    def deploy_quantity_of_instances(self):
+    def deploy_instances(self):
         raise NotImplementedError
 
     def deploy_first_steps(self):
@@ -113,7 +113,6 @@ class BaseTopology(object):
     def get_add_database_instances_first_steps(self):
         return (
             'workflow.steps.util.vm.CreateVirtualMachineHorizontalElasticity',
-            'workflow.steps.util.infra.UpdateOfferingNewHost',
             'workflow.steps.util.dns.CreateDNS',
             'workflow.steps.util.vm.WaitingBeReady',
             'workflow.steps.util.vm.UpdateOSDescription',
@@ -257,3 +256,10 @@ class FakeTestTopology(BaseTopology):
     @property
     def driver_name(self):
         return 'fake'
+
+
+class InstanceDeploy():
+
+    def __init__(self, instance_type , port):
+        self.instance_type = instance_type
+        self.port = port

@@ -16,11 +16,18 @@ class PlanStep(BaseInstanceStep):
 
     def __init__(self, instance):
         super(PlanStep, self).__init__(instance)
-        self.pack = CloudStackPack.objects.get(
-            offering__serviceofferingid=self.database.offering_id,
-            offering__region__environment=self.environment,
-            engine_type__name=self.database.engine_type
-        )
+        self._pack = None
+
+    @property
+    def pack(self):
+        if not self._pack:
+            offering = self.infra.cs_dbinfra_offering.get().offering
+            self._pack = CloudStackPack.objects.get(
+                offering__serviceofferingid=offering.serviceofferingid,
+                offering__region__environment=self.environment,
+                engine_type__name=self.infra.engine_name
+            )
+        return self._pack
 
     @property
     def cs_plan(self):
@@ -44,9 +51,8 @@ class PlanStep(BaseInstanceStep):
             'DBPASSWORD': self.infra.password,
             'HOST': self.host.hostname.split('.')[0],
             'ENGINE': self.plan.engine.engine_type.name,
-            'UPGRADE': True,
+            'UPGRADE': bool(self.upgrade),
             'DRIVER_NAME': self.infra.get_driver().topology_name(),
-            'IS_READ_ONLY': self.instance.read_only,
             'DISK_SIZE_IN_GB': self.disk_offering.size_gb(),
             'ENVIRONMENT': self.environment,
             'HAS_PERSISTENCE': self.infra.plan.has_persistence,
@@ -119,6 +125,21 @@ class PlanStepNewInfra(PlanStep):
         return database
 
 
+class PlanStepNewInfraSentinel(PlanStepNewInfra):
+
+    @property
+    def is_valid(self):
+        return self.instance.is_sentinel
+
+    def get_variables_specifics(self):
+        driver = self.infra.get_driver()
+        base = super(PlanStepNewInfraSentinel, self).get_variables_specifics()
+        base.update(driver.master_parameters(
+            self.instance, self.infra.instances.first()
+        ))
+        return base
+
+
 class PlanStepRestore(PlanStep):
 
     @property
@@ -129,6 +150,14 @@ class PlanStepRestore(PlanStep):
             ).last()
         except HostAttrNfsaas.DoesNotExist:
             return None
+
+    def get_variables_specifics(self):
+        driver = self.infra.get_driver()
+        base = super(PlanStepRestore, self).get_variables_specifics()
+        base.update(driver.master_parameters(
+            self.instance, self.restore.master_for(self.instance)
+        ))
+        return base
 
 
 class PlanStepUpgrade(PlanStep):
@@ -149,7 +178,8 @@ class Initialization(PlanStep):
         return driver.initialization_parameters(self.instance)
 
     def do(self):
-        self.run_script(self.plan.script.initialization_template)
+        if self.is_valid:
+            self.run_script(self.plan.script.initialization_template)
 
 
 class Configure(PlanStep):
@@ -162,7 +192,33 @@ class Configure(PlanStep):
         return driver.configuration_parameters(self.instance)
 
     def do(self):
-        self.run_script(self.plan.script.configuration_template)
+        if self.is_valid:
+            self.run_script(self.plan.script.configuration_template)
+
+
+class StartReplication(PlanStep):
+
+    def __unicode__(self):
+        return "Executing replication start script..."
+
+    def get_variables_specifics(self):
+        driver = self.infra.get_driver()
+        return driver.start_replication_parameters(self.instance)
+
+    def do(self):
+        if self.is_valid:
+            self.run_script(self.plan.script.start_replication_template)
+
+
+class StartReplicationFirstNode(StartReplication):
+
+    @property
+    def is_valid(self):
+        base = super(StartReplication, self).is_valid
+        if not base:
+            return base
+
+        return self.instance == self.infra.instances.first()
 
 
 class InitializationForUpgrade(Initialization, PlanStepUpgrade):
@@ -181,7 +237,27 @@ class ConfigureForNewInfra(Configure, PlanStepNewInfra):
     pass
 
 
-class InitializationRestore(Initialization, PlanStepRestore):
+class StartReplicationNewInfra(StartReplication, PlanStepNewInfra):
+    pass
+
+
+class StartReplicationFirstNodeNewInfra(
+    StartReplicationFirstNode, PlanStepNewInfra
+):
+    pass
+
+
+class InitializationForNewInfraSentinel(
+    PlanStepNewInfraSentinel, Initialization
+):
+    pass
+
+
+class ConfigureForNewInfraSentinel(PlanStepNewInfraSentinel, Configure):
+    pass
+
+
+class InitializationRestore(PlanStepRestore, Initialization):
     pass
 
 
@@ -220,7 +296,7 @@ class ConfigureMigration(Configure, BaseInstanceStepMigration):
         return offering_base.equivalent_offering
 
 
-class ConfigureRestore(Configure):
+class ConfigureRestore(PlanStepRestore, Configure):
 
     def __init__(self, instance, **kwargs):
         super(ConfigureRestore, self).__init__(instance)
@@ -228,10 +304,16 @@ class ConfigureRestore(Configure):
 
     def get_variables_specifics(self):
         base = super(ConfigureRestore, self).get_variables_specifics()
+
         base.update(self.kwargs)
-        base.update({'CONFIGFILE_ONLY': True,
-                    'CREATE_SENTINEL_CONFIG': True})
-        LOG.info(base)
+        base['CONFIGFILE_ONLY'] = True,
+        base['CREATE_SENTINEL_CONFIG'] = True
+
+        driver = self.infra.get_driver()
+        base.update(driver.master_parameters(
+            self.instance, self.restore.master_for(self.instance)
+        ))
+
         return base
 
 class ConfigureOnlyDBConfigFile(Configure):
@@ -240,15 +322,17 @@ class ConfigureOnlyDBConfigFile(Configure):
         base.update({'CONFIGFILE_ONLY': True})
         return base
 
+
 class ConfigureForUpgradeOnlyDBConfigFile(ConfigureOnlyDBConfigFile, PlanStepUpgrade):
     pass
+
 
 class ResizeConfigure(ConfigureOnlyDBConfigFile):
 
     def do(self):
-        self.pack = self.resize.target_offer
+        self._pack = self.resize.target_offer
         super(ResizeConfigure, self).do()
 
     def undo(self):
-        self.pack = self.resize.source_offer
+        self._pack = self.resize.source_offer
         super(ResizeConfigure, self).undo()

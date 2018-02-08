@@ -6,11 +6,10 @@ import logging
 import _mysql as mysqldb
 import _mysql_exceptions
 from contextlib import contextmanager
-
-from util import make_db_random_password
+from dbaas_credentials.models import CredentialType
+from util import make_db_random_password, get_credentials_for
 from system.models import Configuration
 from physical.models import Instance
-
 from drivers import BaseDriver, DatabaseInfraStatus, DatabaseStatus
 from drivers.errors import AuthenticationError, ConnectionError, GenericDriverError, \
     DatabaseAlreadyExists, InvalidCredential, DatabaseDoesNotExist, \
@@ -363,7 +362,7 @@ class MySQL(BaseDriver):
         return 3306
 
     def get_default_instance_type(self):
-        return Instance.MySQL
+        return Instance.MYSQL
 
     def get_configuration(self):
         configurations = {}
@@ -396,8 +395,30 @@ class MySQL(BaseDriver):
     def topology_name(cls):
         return ['mysql_single']
 
+    def build_new_infra_auth(self):
+        credential = get_credentials_for(
+            environment=self.databaseinfra.environment,
+            credential_type=CredentialType.MYSQL
+        )
+        return credential.user, credential.password, ''
+
 
 class MySQLFOXHA(MySQL):
     @classmethod
     def topology_name(cls):
         return ['mysql_foxha']
+
+    def start_replication_parameters(self, instance):
+        base = self.initialization_parameters(instance)
+
+        replica_credential = get_credentials_for(
+            self.databaseinfra.environment, CredentialType.MYSQL_REPLICA
+        )
+        base['REPLICA_USER'] = replica_credential.user
+        base['REPLICA_PASSWORD'] = replica_credential.password
+
+        hosts = set(self.databaseinfra.hosts)
+        hosts.discard(instance.hostname)
+        base['IPMASTER'] = hosts.pop().address
+
+        return base

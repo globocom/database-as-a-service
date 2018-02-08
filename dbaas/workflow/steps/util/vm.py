@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import logging
 from time import sleep
 from django.core.exceptions import ObjectDoesNotExist
 from dbaas_cloudstack.models import HostAttr, PlanAttr
@@ -7,12 +6,9 @@ from dbaas_cloudstack.provider import CloudStackProvider
 from dbaas_credentials.models import CredentialType
 from dbaas_cloudstack.models import LastUsedBundleDatabaseInfra, \
     LastUsedBundle, DatabaseInfraOffering
-from maintenance.models import DatabaseResize
-from physical.models import Environment, DatabaseInfra
-from util import check_ssh, get_credentials_for
+from physical.models import Environment, Instance
+from util import exec_remote_command_host, check_ssh, get_credentials_for
 from base import BaseInstanceStep, BaseInstanceStepMigration
-
-LOG = logging.getLogger(__name__)
 
 CHANGE_MASTER_ATTEMPS = 4
 CHANGE_MASTER_SECONDS = 15
@@ -28,7 +24,7 @@ class VmStep(BaseInstanceStep):
         try:
             return HostAttr.objects.get(host=self.host)
         except ObjectDoesNotExist:
-            LOG.info('Host {} does not have HostAttr'.format(self.host))
+            return
 
     def __init__(self, instance):
         super(VmStep, self).__init__(instance)
@@ -250,6 +246,7 @@ class CreateVirtualMachine(VmStep):
         host.hostname = host.address
         host.user = self.vm_credentials.user
         host.password = self.vm_credentials.password
+        host.offering = self.cs_offering
         host.save()
         return host
 
@@ -266,7 +263,9 @@ class CreateVirtualMachine(VmStep):
     def create_instance(self, host):
         self.instance.hostname = host
         self.instance.address = host.address
-        self.instance.port = self.driver.get_default_database_port()
+
+        if not self.instance.port:
+            self.instance.port = self.driver.get_default_database_port()
 
         if not self.instance.instance_type:
             self.instance.instance_type = self.driver.get_default_instance_type()
@@ -301,8 +300,6 @@ class CreateVirtualMachine(VmStep):
             ).save()
 
     def deploy_vm(self, bundle):
-        LOG.info("VM : {}".format(self.vm_name))
-
         error, vm = self.cs_provider.deploy_virtual_machine(
             offering=self.cs_offering.serviceofferingid,
             bundle=bundle,
@@ -322,37 +319,31 @@ class CreateVirtualMachine(VmStep):
         return address, vm_id
 
     def do(self):
-        LOG.info('Creating virtualmachine {}'.format(self.instance))
-        bundle = self.get_next_bundle()
-        address, vm_id = self.deploy_vm(bundle=bundle)
+        host = self.host
+        if not host:
+            bundle = self.get_next_bundle()
+            address, vm_id = self.deploy_vm(bundle=bundle)
+            host = self.create_host(address=address)
+            self.create_host_attr(host=host, vm_id=vm_id, bundle=bundle)
 
-        host = self.create_host(address=address)
-        self.create_host_attr(host=host, vm_id=vm_id, bundle=bundle)
         self.create_instance(host=host)
         self.update_databaseinfra_last_vm_created()
         self.register_infra_offering()
 
     def undo(self):
-        from django.core.exceptions import ObjectDoesNotExist
-        from dbaas_cloudstack.models import HostAttr
+        if self.host_cs:
+            self.cs_provider.destroy_virtual_machine(
+                project_id=self.cs_credentials.project,
+                environment=self.environment,
+                vm_id=self.host_cs.vm_id)
 
-        LOG.info('Running undo of CreateVirtualMachine')
+            self.host_cs.delete()
 
-        try:
-            host = self.instance.hostname
-        except ObjectDoesNotExist:
-            return
+        if self.host:
+            self.host.delete()
 
-        host_attr = HostAttr.objects.get(host=host)
-
-        self.cs_provider.destroy_virtual_machine(
-            project_id=self.cs_credentials.project,
-            environment=self.environment,
-            vm_id=host_attr.vm_id)
-
-        host_attr.delete()
-        self.instance.delete()
-        host.delete()
+        if self.instance.id:
+            self.instance.delete()
 
     @property
     def read_only_instance(self):
@@ -363,7 +354,18 @@ class CreateVirtualMachineNewInfra(CreateVirtualMachine):
 
     @property
     def cs_offering(self):
-        return PlanAttr.objects.get(plan=self.plan).get_stronger_offering()
+        plan_attr = PlanAttr.objects.get(plan=self.plan)
+        if self.instance.is_database:
+            return plan_attr.get_stronger_offering()
+        return plan_attr.get_weaker_offering()
+
+    def do(self):
+        try:
+            pair = self.infra.instances.get(dns=self.instance.dns)
+        except Instance.DoesNotExist:
+            super(CreateVirtualMachineNewInfra, self).do()
+        else:
+            self.create_instance(host=pair.hostname)
 
 class CreateVirtualMachineHorizontalElasticity(CreateVirtualMachine):
 
@@ -398,9 +400,6 @@ class MigrationCreateNewVM(CreateVirtualMachine):
 
     def do(self):
         if self.host.future_host:
-            LOG.warning("Host {} already have a future host configured".format(
-                self.host
-            ))
             return
 
         bundle = self.get_next_bundle()
@@ -477,3 +476,34 @@ class RemoveHostMigration(RemoveHost):
         if not base_env.migrate_environment:
             base_env = Environment.objects.get(migrate_environment=base_env)
         return base_env
+
+
+class CheckHostName(VmStep):
+
+    def __unicode__(self):
+        return "Checking VM hostname..."
+
+    @property
+    def is_hostname_valid(self):
+        output = {}
+        script = "hostname | grep 'localhost.localdomain' | wc -l"
+        return_code = exec_remote_command_host(self.host, script, output)
+        if return_code != 0:
+            raise EnvironmentError(str(output))
+
+        return int(output['stdout'][0]) < 1
+
+    def do(self):
+        if not self.is_hostname_valid:
+            raise EnvironmentError('Hostname invalid')
+
+
+class CheckHostNameAndReboot(CheckHostName):
+
+    def __unicode__(self):
+        return "Checking VM hostname..."
+
+    def do(self):
+        if not self.is_hostname_valid:
+            script = '/sbin/reboot -f > /dev/null 2>&1 &'
+            exec_remote_command_host(self.host, script)

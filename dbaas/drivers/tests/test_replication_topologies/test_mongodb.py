@@ -56,6 +56,74 @@ class TestMongoDBSingle(AbstractBaseMondodbTestCase):
             ),
         }] + super(TestMongoDBSingle, self)._get_upgrade_steps_final()
 
+    def _get_deploy_settings(self):
+        return [{
+            'Creating virtual machine': (
+                'workflow.steps.util.vm.CreateVirtualMachineNewInfra',
+            )}, {
+            'Creating dns': (
+                'workflow.steps.util.dns.CreateDNS',
+            )}, {
+            'Creating disk': (
+                'workflow.steps.util.disk.CreateExport',
+            )}, {
+            'Waiting VMs': (
+                'workflow.steps.util.vm.WaitingBeReady',
+                'workflow.steps.util.vm.UpdateOSDescription'
+            )}, {
+            'Configuring database': (
+                'workflow.steps.util.plan.InitializationForNewInfra',
+                'workflow.steps.util.plan.ConfigureForNewInfra',
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.infra.UpdateEndpoint',
+            )}, {
+            'Check DNS': (
+                'workflow.steps.util.dns.CheckIsReady',
+            )}, {
+            'Creating Database': (
+                'workflow.steps.util.database.Create',
+            )}, {
+            'Creating monitoring and alarms': (
+                'workflow.steps.util.zabbix.CreateAlarms',
+                'workflow.steps.util.db_monitor.CreateInfraMonitoring',
+            )
+        }]
+
+    def _get_restore_snapshot_settings(self):
+        return [{
+            'Disable monitoring': (
+                'workflow.steps.util.zabbix.DisableAlarms',
+                'workflow.steps.util.db_monitor.DisableMonitoring',
+            )}, {
+            'Restoring': (
+                'workflow.steps.util.disk.RestoreSnapshot',
+            )}, {
+            'Stopping datbase': (
+                'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.CheckIsDown',
+            )}, {
+            'Configuring': (
+                'workflow.steps.util.disk.AddDiskPermissionsRestoredDisk',
+                'workflow.steps.util.disk.UnmountOldestExportRestore',
+                'workflow.steps.util.disk.MountNewerExportRestore',
+                'workflow.steps.util.disk.ConfigureFstabRestore',
+                'workflow.steps.util.plan.ConfigureRestore',
+            )}, {
+            'Starting database': (
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.CheckIsUp',
+            )}, {
+            'Old data': (
+                'workflow.steps.util.disk.BackupRestore',
+                'workflow.steps.util.disk.UpdateRestore',
+            )}, {
+            'Enabling monitoring': (
+                'workflow.steps.util.db_monitor.EnableMonitoring',
+                'workflow.steps.util.zabbix.EnableAlarms',
+            )
+        }]
+
 
 class TestMongoDBReplicaset(AbstractBaseMondodbTestCase):
 
@@ -93,7 +161,6 @@ class TestMongoDBReplicaset(AbstractBaseMondodbTestCase):
         return (
             'workflow.steps.util.plan.Initialization',
             'workflow.steps.util.plan.Configure',
-            'workflow.steps.mongodb.horizontal_elasticity.database.CreateDataDir',
             'workflow.steps.util.database.Start',
             'workflow.steps.mongodb.horizontal_elasticity.database.AddInstanceToReplicaSet',
         )
@@ -122,3 +189,77 @@ class TestMongoDBReplicaset(AbstractBaseMondodbTestCase):
 
             )
         }] + self._get_change_parameter_steps_final()
+
+    def _get_deploy_settings(self):
+        return [{
+            'Creating virtual machine': (
+                'workflow.steps.util.vm.CreateVirtualMachineNewInfra',
+            )}, {
+            'Creating dns': (
+                'workflow.steps.util.dns.CreateDNS',
+            )}, {
+            'Creating disk': (
+                'workflow.steps.util.disk.CreateExport',
+            )}, {
+            'Waiting VMs': (
+                'workflow.steps.util.vm.WaitingBeReady',
+                'workflow.steps.util.vm.UpdateOSDescription'
+            )}, {
+            'Configuring database': (
+                'workflow.steps.util.plan.InitializationForNewInfra',
+                'workflow.steps.util.plan.ConfigureForNewInfra',
+                'workflow.steps.util.database.Start',
+            )}, {
+            'Check Database': (
+                'workflow.steps.util.plan.StartReplicationFirstNodeNewInfra',
+                'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.infra.UpdateEndpoint',
+            )}, {
+            'Check DNS': (
+                'workflow.steps.util.dns.CheckIsReady',
+            )}, {
+            'Creating Database': (
+                'workflow.steps.util.database.Create',
+            )}, {
+            'Creating monitoring and alarms': (
+                'workflow.steps.util.zabbix.CreateAlarms',
+                'workflow.steps.util.db_monitor.CreateInfraMonitoring',
+            )
+        }]
+
+    def _get_restore_snapshot_settings(self):
+        return [{
+            'Disable monitoring': (
+                'workflow.steps.util.zabbix.DisableAlarms',
+                'workflow.steps.util.db_monitor.DisableMonitoring',
+            )}, {
+            'Restoring': (
+                'workflow.steps.util.disk.RestoreSnapshot',
+            )}, {
+            'Stopping datbase': (
+                'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.CheckIsDown',
+            )}, {
+            'Configuring': (
+                'workflow.steps.util.disk.AddDiskPermissionsRestoredDisk',
+                'workflow.steps.util.disk.UnmountOldestExportRestore',
+                'workflow.steps.util.disk.MountNewerExportRestore',
+                'workflow.steps.util.disk.ConfigureFstabRestore',
+                'workflow.steps.util.disk.CleanDataMongoDB',
+                'workflow.steps.util.plan.ConfigureRestore',
+            )}, {
+            'Starting database': (
+                'workflow.steps.util.database.Start',
+            )}, {
+            'Check database': (
+                'workflow.steps.util.database.CheckIsUp',
+            )}, {
+            'Old data': (
+                'workflow.steps.util.disk.BackupRestore',
+                'workflow.steps.util.disk.UpdateRestore',
+            )}, {
+            'Enabling monitoring': (
+                'workflow.steps.util.db_monitor.EnableMonitoring',
+                'workflow.steps.util.zabbix.EnableAlarms',
+            )
+        }]

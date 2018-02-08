@@ -505,6 +505,9 @@ class DatabaseRestore(DatabaseMaintenanceTask):
         driver = self.database.infra.get_driver()
         pairs = {}
         for instance in self.database.infra.instances.all():
+            if not instance.is_database:
+                continue
+
             if driver.check_instance_is_master(instance):
                 master = instance
                 slave = None
@@ -522,12 +525,18 @@ class DatabaseRestore(DatabaseMaintenanceTask):
                 pairs[master].append(slave)
 
         for master, slaves in pairs.items():
-            for slave in slaves:
-                instance = DatabaseRestoreInstancePair()
-                instance.master = master
-                instance.slave = slave
-                instance.restore = self
-                instance.save()
+            if slaves:
+                for slave in slaves:
+                    self.__add_instance(master, slave)
+            else:
+                self.__add_instance(master, master)
+
+    def __add_instance(self, master, slave):
+        instance = DatabaseRestoreInstancePair()
+        instance.master = master
+        instance.slave = slave
+        instance.restore = self
+        instance.save()
 
     def instances_pairs(self):
         return self.restore_instances.all().order_by('master')
@@ -538,7 +547,9 @@ class DatabaseRestore(DatabaseMaintenanceTask):
         for pairs in self.instances_pairs():
             if pairs.master not in instances:
                 instances.append(pairs.master)
-            instances.append(pairs.slave)
+
+            if pairs.slave not in instances:
+                instances.append(pairs.slave)
 
         return instances
 

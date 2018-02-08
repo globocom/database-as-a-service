@@ -2,15 +2,18 @@
 from __future__ import absolute_import, unicode_literals
 import logging
 import pymongo
+import string
+import random
 from django.core.cache import cache
 from contextlib import contextmanager
+from dbaas_credentials.models import CredentialType
 from . import BaseDriver
 from . import DatabaseInfraStatus
 from . import DatabaseStatus
 from .errors import ConnectionError, AuthenticationError, \
     ReplicationNoPrimary, ReplicationNoInstances
 from physical.models import Instance
-from util import make_db_random_password
+from util import make_db_random_password, get_credentials_for
 from system.models import Configuration
 from dateutil import tz
 
@@ -34,9 +37,15 @@ class MongoDB(BaseDriver):
 
         key = 'mongo.replica.%d' % self.databaseinfra.pk
         repl_name = cache.get(key, None)
+
         if not repl_name:
             repl_name = self.__get_replica_name()
-            cache.set(key, repl_name or '')
+
+        if not repl_name:
+            repl_name = self.replica_set_name
+
+        cache.set(key, repl_name or '')
+
         return repl_name
 
     def __get_replica_name(self):
@@ -467,13 +476,7 @@ class MongoDB(BaseDriver):
         return "mongod"
 
     def initialization_parameters(self, instance):
-        database_rule = 'SECONDARY'
-        if instance.instance_type == instance.MONGODB_ARBITER:
-            database_rule = 'ARBITER'
-
-        return {
-            'DATABASERULE': database_rule
-        }
+        return {'DATABASERULE': "PRIMARY"}
 
     def configuration_parameters(self, instance):
         config = {}
@@ -491,6 +494,13 @@ class MongoDB(BaseDriver):
     @classmethod
     def topology_name(cls):
         return ['mongodb_single']
+
+    def build_new_infra_auth(self):
+        credential = get_credentials_for(
+            environment=self.databaseinfra.environment,
+            credential_type=CredentialType.MONGODB
+        )
+        return credential.user, credential.password, None
 
 
 class MongoDBReplicaSet(MongoDB):
@@ -520,6 +530,32 @@ class MongoDBReplicaSet(MongoDB):
 
         return logSize / 1024 / 1024
 
+    def initialization_parameters(self, instance):
+        database_rule = 'SECONDARY'
+
+        database = self.databaseinfra.databases.first()
+        if not database and self.databaseinfra.instances.first() == instance:
+            database_rule = 'PRIMARY'
+
+        if instance.instance_type == instance.MONGODB_ARBITER:
+            database_rule = 'ARBITER'
+
+        return {
+            'DATABASERULE': database_rule
+        }
+
     @classmethod
     def topology_name(cls):
         return ['mongodb_replica_set']
+
+    def start_replication_parameters(self, instance):
+        base = self.configuration_parameters(instance)
+        base['DATABASERULE'] = 'PRIMARY'
+        for index, host in enumerate(self.databaseinfra.hosts, start=1):
+            base["HOST{:02d}".format(index)] = host
+        return base
+
+    def build_new_infra_auth(self):
+        user, password, key = super(MongoDBReplicaSet, self).build_new_infra_auth()
+        key = ''.join(random.choice(string.hexdigits) for _ in range(50))
+        return user, password, key

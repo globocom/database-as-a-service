@@ -10,6 +10,9 @@ from workflow.steps.mongodb.util import build_change_oplogsize_script
 from workflow.steps.util.base import BaseInstanceStep
 from restore_snapshot import use_database_initialization_script
 
+from workflow.steps.util import test_bash_script_error
+from workflow.steps.util import monit_script
+
 LOG = logging.getLogger(__name__)
 
 CHECK_SECONDS = 10
@@ -22,7 +25,10 @@ class DatabaseStep(BaseInstanceStep):
         super(DatabaseStep, self).__init__(instance)
 
         self.driver = self.infra.get_driver()
-        self.host_cs = HostAttr.objects.get(host=self.host)
+
+    @property
+    def host_cs(self):
+        return HostAttr.objects.get(host=self.host)
 
     def do(self):
         raise NotImplementedError
@@ -77,13 +83,24 @@ class DatabaseStep(BaseInstanceStep):
                 )
             )
 
+    @property
+    def is_valid(self):
+        return self.host
+
 
 class Stop(DatabaseStep):
 
     def __unicode__(self):
         return "Stopping database..."
 
+    @property
+    def undo_klass(self):
+        return Start
+
     def do(self):
+        if not self.is_valid:
+            return
+
         return_code, output = self.stop_database()
         if return_code != 0 and not self.is_down:
             raise EnvironmentError(
@@ -91,7 +108,7 @@ class Stop(DatabaseStep):
             )
 
     def undo(self):
-        Start(self.instance).do()
+        self.undo_klass(self.instance).do()
 
 
 class Start(DatabaseStep):
@@ -99,7 +116,14 @@ class Start(DatabaseStep):
     def __unicode__(self):
         return "Starting database..."
 
+    @property
+    def undo_klass(self):
+        return Stop
+
     def do(self):
+        if not self.is_valid:
+            return
+
         return_code, output = self.start_database()
         if return_code != 0 and not self.is_up:
             raise EnvironmentError(
@@ -107,7 +131,35 @@ class Start(DatabaseStep):
             )
 
     def undo(self):
-        Stop(self.instance).do()
+        self.undo_klass(self.instance).do()
+
+
+class OnlyInSentinel(DatabaseStep):
+
+    @property
+    def is_valid(self):
+        base = super(OnlyInSentinel, self).is_valid
+        if not base:
+            return False
+
+        if self.host.database_instance():
+            return self.instance.is_database
+
+        return True
+
+
+class StartSentinel(Start, OnlyInSentinel):
+
+    @property
+    def undo_klass(self):
+        return StopSentinel
+
+
+class StopSentinel(Stop, OnlyInSentinel):
+
+    @property
+    def undo_klass(self):
+        return StartSentinel
 
 
 class StartSlave(DatabaseStep):
@@ -187,6 +239,9 @@ class CheckIsUp(DatabaseStep):
         return "Checking database is up..."
 
     def do(self):
+        if not self.instance.is_database:
+            return
+
         if not self.is_up:
             raise EnvironmentError('Database is down, should be up')
 
@@ -249,6 +304,9 @@ class CheckIsDown(DatabaseStep):
         return True
 
     def do(self):
+        if not self.instance.is_database:
+            return
+
         if not self.is_down:
             raise EnvironmentError('Database is up, should be down')
 
@@ -358,16 +416,42 @@ class SetSlave(DatabaseStep):
     def __unicode__(self):
         return "Setting slaves..."
 
+    @property
+    def is_valid(self):
+        return self.instance.is_database
+
+    @property
+    def master(self):
+        return self.infra.get_driver().get_master_instance()
+
     def do(self):
-        if not self.instance.is_database:
+        if not self.is_valid:
             return
 
-        master = self.infra.get_driver().get_master_instance()
+        master = self.master
         if master == self.instance:
             return
 
         client = self.infra.get_driver().get_client(self.instance)
         client.slaveof(master.address, master.port)
+
+
+class SetSlaveRestore(SetSlave):
+
+    @property
+    def master(self):
+        return self.restore.master_for(self.instance)
+
+
+class SetSlaveNewInfra(SetSlave):
+
+    @property
+    def is_valid(self):
+        base = super(SetSlaveNewInfra, self).is_valid
+        if not base:
+            return False
+
+        return self.instance != self.infra.instances.first()
 
 
 class SetSlavesMigration(SetSlave):
@@ -385,6 +469,27 @@ class SetSlavesMigration(SetSlave):
             client = self.infra.get_driver().get_client(instance)
             client.slaveof(master.address, master.port)
 
+class StartMonit(DatabaseStep):
+    def __unicode__(self):
+        return "Starting monit..."
+
+    def do(self):
+        LOG.info("Start monit on host {}".format(self.host))
+        script = test_bash_script_error()
+        action = 'start'
+        script += monit_script(action)
+
+        LOG.info(script)
+        output = {}
+        return_code = exec_remote_command_host(self.host, script, output)
+        LOG.info(output)
+        if return_code != 0:
+            LOG.error("Error starting monit")
+            LOG.error(str(output))
+
+    def undo(self):
+        pass
+
 
 class Create(DatabaseStep):
 
@@ -397,7 +502,6 @@ class Create(DatabaseStep):
 
     def do(self):
         creating = self.creating
-
         if creating.database:
             return
 
@@ -414,6 +518,8 @@ class Create(DatabaseStep):
 
         creating.database = database
         creating.save()
+
+        database.pin_task(self.creating.task)
 
     def undo(self):
         creating = self.creating

@@ -19,6 +19,10 @@ class Disk(BaseInstanceStep):
     def is_valid(self):
         return bool(self.instance.hostname.nfsaas_host_attributes.first())
 
+    @property
+    def has_active(self):
+        disks = self.host.nfsaas_host_attributes.filter(is_active=True)
+        return len(disks) > 0
 
 
 class CreateExport(Disk):
@@ -28,6 +32,9 @@ class CreateExport(Disk):
 
     def do(self):
         if not self.host.database_instance():
+            return
+
+        if self.has_active:
             return
 
         LOG.info('Creating export for {}'.format(self.instance))
@@ -368,6 +375,10 @@ class RestoreSnapshot(Disk):
 
         return "Restoring {}...".format(self.snapshot)
 
+    @property
+    def disk_host(self):
+        return self.restore.master_for(self.instance).hostname
+
     def do(self):
         snapshot = self.snapshot
         if not snapshot:
@@ -392,7 +403,7 @@ class RestoreSnapshot(Disk):
         disk.nfsaas_path = job_result['full_path']
         disk.is_active = False
         disk.id = None
-        disk.host = self.restore.master_for(self.instance).hostname
+        disk.host = self.disk_host
         disk.save()
 
     def undo(self):
@@ -462,10 +473,22 @@ class CleanData(DiskCommand):
         return self.restore.is_slave(self.instance)
 
     @property
+    def directory(self):
+        return '{}/data'.format(self.OLD_DIRECTORY)
+
+    @property
     def scripts(self):
         message = 'Could not remove data from {}'.format(self.OLD_DIRECTORY)
-        script = 'rm -rf {}/data'.format(self.OLD_DIRECTORY)
+        script = 'rm -rf {}'.format(self.directory)
         return {message: script}
+
+
+class CleanDataMongoDB(CleanData):
+
+    @property
+    def directory(self):
+        base = super(CleanDataMongoDB, self).directory
+        return base + '/*'
 
 
 class BackupRestore(Disk):
@@ -525,3 +548,14 @@ class UpdateRestore(Disk):
     def undo(self):
         # ToDo
         pass
+
+
+class RemoveDeprecatedFiles(DiskCommand):
+
+    def __unicode__(self):
+        return "Removing deprecated files..."
+
+    @property
+    def scripts(self):
+        driver = self.infra.get_driver()
+        return {'Remove Deprecated': driver.remove_deprectaed_files()}

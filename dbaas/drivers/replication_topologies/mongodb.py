@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-from base import BaseTopology
+from physical.models import Instance
+from base import BaseTopology, InstanceDeploy
 
 
 class BaseMongoDB(BaseTopology):
@@ -53,6 +54,77 @@ class MongoDBSingle(BaseMongoDB):
     def driver_name(self):
         return 'mongodb_single'
 
+    def deploy_instances(self):
+        return [[InstanceDeploy(Instance.MONGODB, 27017)]]
+
+    def get_deploy_steps(self):
+        return [{
+            'Creating virtual machine': (
+                'workflow.steps.util.vm.CreateVirtualMachineNewInfra',
+            )}, {
+            'Creating dns': (
+                'workflow.steps.util.dns.CreateDNS',
+            )}, {
+            'Creating disk': (
+                'workflow.steps.util.disk.CreateExport',
+            )}, {
+            'Waiting VMs': (
+                'workflow.steps.util.vm.WaitingBeReady',
+                'workflow.steps.util.vm.UpdateOSDescription'
+            )}, {
+            'Configuring database': (
+                'workflow.steps.util.plan.InitializationForNewInfra',
+                'workflow.steps.util.plan.ConfigureForNewInfra',
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.infra.UpdateEndpoint',
+            )}, {
+            'Check DNS': (
+                'workflow.steps.util.dns.CheckIsReady',
+            )}, {
+            'Creating Database': (
+                'workflow.steps.util.database.Create',
+            )}, {
+            'Creating monitoring and alarms': (
+                'workflow.steps.util.zabbix.CreateAlarms',
+                'workflow.steps.util.db_monitor.CreateInfraMonitoring',
+            )
+        }]
+
+    def get_restore_snapshot_steps(self):
+        return [{
+            'Disable monitoring': (
+                'workflow.steps.util.zabbix.DisableAlarms',
+                'workflow.steps.util.db_monitor.DisableMonitoring',
+            )}, {
+            'Restoring': (
+                'workflow.steps.util.disk.RestoreSnapshot',
+            )}, {
+            'Stopping datbase': (
+                'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.CheckIsDown',
+            )}, {
+            'Configuring': (
+                'workflow.steps.util.disk.AddDiskPermissionsRestoredDisk',
+                'workflow.steps.util.disk.UnmountOldestExportRestore',
+                'workflow.steps.util.disk.MountNewerExportRestore',
+                'workflow.steps.util.disk.ConfigureFstabRestore',
+                'workflow.steps.util.plan.ConfigureRestore',
+            )}, {
+            'Starting database': (
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.CheckIsUp',
+            )}, {
+            'Old data': (
+                'workflow.steps.util.disk.BackupRestore',
+                'workflow.steps.util.disk.UpdateRestore',
+            )}, {
+            'Enabling monitoring': (
+                'workflow.steps.util.db_monitor.EnableMonitoring',
+                'workflow.steps.util.zabbix.EnableAlarms',
+            )
+        }]
+
 
 class MongoDBReplicaset(BaseMongoDB):
 
@@ -87,7 +159,6 @@ class MongoDBReplicaset(BaseMongoDB):
         return (
             'workflow.steps.util.plan.Initialization',
             'workflow.steps.util.plan.Configure',
-            'workflow.steps.mongodb.horizontal_elasticity.database.CreateDataDir',
             'workflow.steps.util.database.Start',
             'workflow.steps.mongodb.horizontal_elasticity.database.AddInstanceToReplicaSet',
         )
@@ -122,3 +193,84 @@ class MongoDBReplicaset(BaseMongoDB):
     @property
     def driver_name(self):
         return 'mongodb_replica_set'
+
+    def deploy_instances(self):
+        return [
+            [InstanceDeploy(Instance.MONGODB, 27017)],
+            [InstanceDeploy(Instance.MONGODB, 27017)],
+            [InstanceDeploy(Instance.MONGODB_ARBITER, 27017)]
+        ]
+
+    def get_deploy_steps(self):
+        return [{
+            'Creating virtual machine': (
+                'workflow.steps.util.vm.CreateVirtualMachineNewInfra',
+            )}, {
+            'Creating dns': (
+                'workflow.steps.util.dns.CreateDNS',
+            )}, {
+            'Creating disk': (
+                'workflow.steps.util.disk.CreateExport',
+            )}, {
+            'Waiting VMs': (
+                'workflow.steps.util.vm.WaitingBeReady',
+                'workflow.steps.util.vm.UpdateOSDescription'
+            )}, {
+            'Configuring database': (
+                'workflow.steps.util.plan.InitializationForNewInfra',
+                'workflow.steps.util.plan.ConfigureForNewInfra',
+                'workflow.steps.util.database.Start',
+            )}, {
+            'Check Database': (
+                'workflow.steps.util.plan.StartReplicationFirstNodeNewInfra',
+                'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.infra.UpdateEndpoint',
+            )}, {
+            'Check DNS': (
+                'workflow.steps.util.dns.CheckIsReady',
+            )}, {
+            'Creating Database': (
+                'workflow.steps.util.database.Create',
+            )}, {
+            'Creating monitoring and alarms': (
+                'workflow.steps.util.zabbix.CreateAlarms',
+                'workflow.steps.util.db_monitor.CreateInfraMonitoring',
+            )
+        }]
+
+    def get_restore_snapshot_steps(self):
+        return [{
+            'Disable monitoring': (
+                'workflow.steps.util.zabbix.DisableAlarms',
+                'workflow.steps.util.db_monitor.DisableMonitoring',
+            )}, {
+            'Restoring': (
+                'workflow.steps.util.disk.RestoreSnapshot',
+            )}, {
+            'Stopping datbase': (
+                'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.CheckIsDown',
+            )}, {
+            'Configuring': (
+                'workflow.steps.util.disk.AddDiskPermissionsRestoredDisk',
+                'workflow.steps.util.disk.UnmountOldestExportRestore',
+                'workflow.steps.util.disk.MountNewerExportRestore',
+                'workflow.steps.util.disk.ConfigureFstabRestore',
+                'workflow.steps.util.disk.CleanDataMongoDB',
+                'workflow.steps.util.plan.ConfigureRestore',
+            )}, {
+            'Starting database': (
+                'workflow.steps.util.database.Start',
+            )}, {
+            'Check database': (
+                'workflow.steps.util.database.CheckIsUp',
+            )}, {
+            'Old data': (
+                'workflow.steps.util.disk.BackupRestore',
+                'workflow.steps.util.disk.UpdateRestore',
+            )}, {
+            'Enabling monitoring': (
+                'workflow.steps.util.db_monitor.EnableMonitoring',
+                'workflow.steps.util.zabbix.EnableAlarms',
+            )
+        }]

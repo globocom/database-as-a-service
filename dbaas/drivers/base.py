@@ -321,15 +321,27 @@ class BaseDriver(object):
     def configuration_parameters(self, instance):
         return {}
 
+    def master_parameters(self, instance, master):
+        return {}
+
     def configuration_parameters_for_log_resize(self, instance):
         return {}
 
     def configuration_parameters_migration(self, instance):
         return self.configuration_parameters(instance)
 
+    def start_replication_parameters(self, instance):
+        return {}
+
     @classmethod
     def topology_name(cls):
         return []
+
+    def get_master_for(self, instance):
+        return self.get_master_instance()
+
+    def build_new_infra_auth(self):
+        raise NotImplemented
 
 
 class DatabaseStatus(object):
