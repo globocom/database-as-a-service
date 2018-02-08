@@ -1,7 +1,7 @@
 from django.db.models import Q
 from physical.models import DatabaseInfra, Instance
-from util import slugify, gen_infra_names, get_vm_name, make_db_random_password
-from util.providers import get_deploy_settings, get_deploy_instances_size
+from util import slugify, gen_infra_names, get_vm_name
+from util.providers import get_deploy_settings, get_deploy_instances
 from workflow.workflow import steps_for_instances, rollback_for_instances_full
 from models import DatabaseCreate
 
@@ -18,7 +18,6 @@ def get_or_create_infra(base_name, plan, environment, retry_from=None):
         infra.name_prefix = base_name['name_prefix']
         infra.name_stamp = base_name['name_stamp']
         infra.last_vm_created = 0
-        infra.password = make_db_random_password()
         infra.engine = plan.engine
         infra.plan = plan
         infra.disk_offering = plan.disk_offering
@@ -27,31 +26,41 @@ def get_or_create_infra(base_name, plan, environment, retry_from=None):
         infra.per_database_size_mbytes = plan.max_db_size
         infra.save()
 
+        driver = infra.get_driver()
+        user, password, key = driver.build_new_infra_auth()
+        infra.user = user
+        infra.password = password
+        infra.database_key = key
+        infra.save()
+
     return infra
 
 
 def get_instances_for(infra, topology_path):
     instances = []
-    number_of_vms = get_deploy_instances_size(topology_path)
-    for i in range(number_of_vms):
-        instance_name = get_vm_name(infra.name_prefix, infra.name_stamp, i + 1)
-
-        try:
-            instance = infra.instances.get(
-                Q(hostname__hostname__startswith=instance_name) |
-                Q(dns__startswith=instance_name)
+    group_instances = get_deploy_instances(topology_path)
+    for count, group in enumerate(group_instances):
+        for instance_type in group:
+            instance_name = get_vm_name(
+                infra.name_prefix, infra.name_stamp, count + 1
             )
-        except Instance.DoesNotExist:
-            instance = Instance()
-            instance.dns = instance_name
-            instance.databaseinfra = infra
 
-            driver = infra.get_driver()
-            instance.port = driver.get_default_database_port()
-            instance.instance_type = driver.get_default_instance_type()
+            try:
+                instance = infra.instances.get(
+                    Q(hostname__hostname__startswith=instance_name) |
+                    Q(dns__startswith=instance_name),
+                    port=instance_type.port,
+                )
+            except Instance.DoesNotExist:
+                instance = Instance()
+                instance.dns = instance_name
+                instance.databaseinfra = infra
 
-        instance.vm_name = instance.dns
-        instances.append(instance)
+                instance.port = instance_type.port
+                instance.instance_type = instance_type.instance_type
+
+            instance.vm_name = instance.dns
+            instances.append(instance)
 
     return instances
 
@@ -95,6 +104,7 @@ def create_database(
     ):
         database_create.set_success()
         task.set_status_success('Database created')
+        database_create.database.finish_task()
     else:
         database_create.set_error()
         task.set_status_error(

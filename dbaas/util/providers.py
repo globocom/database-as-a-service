@@ -165,8 +165,8 @@ def get_destroy_settings(class_path):
     return get_replication_topology_instance(class_path).get_destroy_steps()
 
 
-def get_deploy_instances_size(class_path):
-    return get_replication_topology_instance(class_path).deploy_quantity_of_instances()
+def get_deploy_instances(class_path):
+    return get_replication_topology_instance(class_path).deploy_instances()
 
 
 def get_clone_settings(class_path):

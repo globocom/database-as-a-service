@@ -48,15 +48,6 @@ class Offering(Update):
         self.change_infra_offering(self.source_offering)
 
 
-class UpdateOfferingNewHost(Update):
-    def __unicode__(self):
-        return "Updating offering info..."
-
-    def do(self):
-        self.instance.hostname.offering = self.infra_offering.offering
-        self.instance.hostname.save()
-
-
 class OfferingMigration(Offering):
 
     @property
@@ -134,3 +125,16 @@ class UpdateMigratePlan(BaseInstanceStepMigration):
         if self.plan:
             self.infra.plan = self.plan
             self.infra.save()
+
+class UpdateEndpoint(BaseInstanceStep):
+
+    def __unicode__(self):
+        return "Updating endpoint..."
+
+    def do(self):
+        self.infra.endpoint = "{}:{}".format(self.instance.address, self.instance.port)
+        self.infra.endpoint_dns = "{}:{}".format(self.instance.dns, self.instance.port)
+        self.infra.save()
+
+    def undo(self):
+        pass

@@ -97,34 +97,66 @@ class CreateDNS(DNSStep):
     def __unicode__(self):
         return "Creating DNS..."
 
+    @property
+    def database_sufix(self):
+        return {}
+
     def do(self):
-        host = self.instance.hostname
-        host.hostname = add_dns_record(
-            databaseinfra=self.infra,
-            name=self.instance.vm_name,
-            ip=host.address,
-            type=HOST
-        )
-        host.save()
+        if self.host.hostname == self.host.address:
+            self.host.hostname = add_dns_record(
+                databaseinfra=self.infra,
+                name=self.instance.vm_name,
+                ip=self.host.address,
+                type=HOST
+            )
+            self.host.save()
 
         self.instance.dns = add_dns_record(
             databaseinfra=self.infra,
             name=self.instance.vm_name,
             ip=self.instance.address,
-            type=INSTANCE
+            type=INSTANCE,
+            **self.database_sufix
         )
-        self.instance.save()
 
         self.provider.create_database_dns_for_ip(
             databaseinfra=self.infra,
             ip=self.instance.address
         )
 
+        self.instance.save()
+
     def undo(self):
         self.provider.remove_databases_dns_for_ip(
             databaseinfra=self.infra,
             ip=self.instance.address
         )
+
+
+class RegisterDNSVip(DNSStep):
+
+    def __unicode__(self):
+        return "Registry dns for VIP..."
+
+    @property
+    def is_valid(self):
+        return self.instance == self.infra.instances.first()
+
+    def do(self):
+        if not self.is_valid:
+            return
+
+        self.provider.create_database_dns(self.infra)
+
+
+class CreateDNSSentinel(CreateDNS):
+
+    @property
+    def database_sufix(self):
+        base = super(CreateDNSSentinel, self).database_sufix
+        if not self.instance.is_database:
+            base['database_sufix'] = 'sentinel'
+        return base
 
 
 class CheckIsReady(DNSStep):
@@ -141,4 +173,5 @@ class CheckIsReady(DNSStep):
             return
 
         for dns in DatabaseInfraDNSList.objects.filter(databaseinfra=self.infra.id):
-            check_nslookup(dns.dns, self.credentials.project)
+            if not check_nslookup(dns.dns, self.credentials.project):
+                raise EnvironmentError("DNS {} is not ready".format(dns.dns))

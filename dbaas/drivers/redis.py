@@ -10,7 +10,9 @@ from drivers import BaseDriver, DatabaseInfraStatus, DatabaseStatus
 from drivers.errors import ConnectionError
 from system.models import Configuration
 from physical.models import Instance
-from util import exec_remote_command_host, build_context_script
+from util import exec_remote_command_host, build_context_script, \
+    make_db_random_password
+
 
 
 LOG = logging.getLogger(__name__)
@@ -348,6 +350,9 @@ class Redis(BaseDriver):
     @classmethod
     def topology_name(cls):
         return ['redis_single']
+
+    def build_new_infra_auth(self):
+        return '', make_db_random_password(), ''
 
 
 class RedisSentinel(Redis):

@@ -16,7 +16,7 @@ from util.providers import make_infra, clone_infra, destroy_infra, \
     get_database_upgrade_setting, get_resize_settings, \
     get_database_change_parameter_setting, \
     get_reinstallvm_steps_setting, \
-    get_database_change_parameter_retry_steps_count, get_deploy_instances_size
+    get_database_change_parameter_retry_steps_count, get_deploy_instances
 from simple_audit.models import AuditRequest
 from system.models import Configuration
 from notification.models import TaskHistory
@@ -1319,7 +1319,7 @@ class TaskRegister(object):
         task = cls.create_task(task_params)
 
         try:
-            get_deploy_instances_size(plan.replication_topology.class_path)
+            get_deploy_instances(plan.replication_topology.class_path)
         except NotImplementedError:
             return create_database.delay(
                 name=name, plan=plan, environment=environment, team=team,
@@ -1400,7 +1400,7 @@ class TaskRegister(object):
         task = cls.create_task(task_params)
 
         try:
-            get_deploy_instances_size(
+            get_deploy_instances(
                 database.plan.replication_topology.class_path
             )
         except NotImplementedError:

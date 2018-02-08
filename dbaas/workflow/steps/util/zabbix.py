@@ -13,8 +13,11 @@ class ZabbixStep(BaseInstanceStep):
         integration = CredentialType.objects.get(type=CredentialType.ZABBIX)
         environment = self.instance.databaseinfra.environment
         self.credentials = Credential.get_credentials(environment, integration)
-        self.instances = self.host.instances.all()
         self.provider = None
+
+    @property
+    def instances(self):
+        return self.host.instances.all()
 
     @property
     def zabbix_provider(self):
@@ -57,6 +60,8 @@ class DestroyAlarms(ZabbixStep):
         return monitors
 
     def do(self):
+        if not self.host:
+            return
         for host in self.hosts_in_zabbix:
             monitors = self.zabbix_provider.get_host_triggers(host)
 
@@ -74,24 +79,26 @@ class CreateAlarms(ZabbixStep):
         return self.instance.databaseinfra.engine.version
 
     def do(self):
+        if not self.is_valid:
+            return
+
         DestroyAlarms(self.instance).do()
-        zabbix_provider = factory_for(
-            databaseinfra=self.instance.databaseinfra,
-            credentials=self.credentials,
-            engine_version=self.engine_version
-        )
-        zabbix_provider.create_instance_basic_monitors(
+        self.zabbix_provider.create_instance_basic_monitors(
             self.host
         )
 
         for instance in self.instances:
-            zabbix_provider.create_instance_monitors(instance)
+            self.zabbix_provider.create_instance_monitors(instance)
 
     def undo(self):
+        if not self.is_valid:
+            return
+
         DestroyAlarms(self.instance).do()
 
 
 class CreateAlarmsForUpgrade(CreateAlarms):
+
     @property
     def engine_version(self):
         return self.plan.engine_equivalent_plan.engine.version
