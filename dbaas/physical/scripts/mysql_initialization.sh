@@ -50,7 +50,7 @@ filepermission()
 
 mountdatadisk
 
-if [ "{{UPGRADE}}" != "True" ]; then
+if [ "{{MOVE_DATA}}" != "True" ]; then
     movedatabase
 fi
 

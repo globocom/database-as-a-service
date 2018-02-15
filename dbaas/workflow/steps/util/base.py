@@ -96,6 +96,12 @@ class BaseInstanceStep(object):
             return upgrade
 
     @property
+    def resinstall_vm(self):
+        reinstall_vm = self.database.reinstall_vm.last()
+        if reinstall_vm and reinstall_vm.is_running:
+            return reinstall_vm
+
+    @property
     def create(self):
         create = self.database.databases_create.last()
         if create and create.is_running:
