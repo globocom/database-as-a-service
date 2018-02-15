@@ -35,7 +35,9 @@ class TaskHistory(BaseModel):
     task_name = models.CharField(
         _('Task Name'), max_length=200, null=True, blank=True
     )
-    user = models.CharField(max_length=255, null=True, blank=True)
+    user = models.CharField(
+        max_length=255, null=True, blank=True, db_index=True
+    )
     ended_at = models.DateTimeField(
         verbose_name=_("Ended at"), null=True, blank=True, editable=False
     )
