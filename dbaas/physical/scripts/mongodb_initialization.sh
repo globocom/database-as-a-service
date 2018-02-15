@@ -64,11 +64,11 @@ if [ "{{DATABASERULE}}" != "ARBITER" ]; then
     mountdatadisk
 fi
 
-if [ "{{UPGRADE}}" != "True" ]; then
+if [ "{{MOVE_DATA}}" != "True" ]; then
   movedatabase
 fi
 
-if [ "{{DATABASERULE}}" = "ARBITER" ] &&  [ "{{UPGRADE}}" = "True" ]; then
+if [ "{{DATABASERULE}}" = "ARBITER" ] &&  [ "{{MOVE_DATA}}" = "True" ]; then
    movedatabase
 fi
 
