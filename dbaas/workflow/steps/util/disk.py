@@ -455,9 +455,6 @@ class MountNewerExportRestore(MountNewerExport):
 
 class ConfigureFstabRestore(MountNewerExportRestore, ConfigureFstab):
 
-    def add_configure_script(self, scripts):
-        pass
-
     def undo(self):
         # ToDo
         pass
