@@ -256,7 +256,7 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.util.disk.UnmountOldestExportRestore',
                 'workflow.steps.util.disk.MountNewerExportRestore',
                 'workflow.steps.util.disk.ConfigureFstabRestore',
-                'workflow.steps.util.disk.CleanDataMongoDB',
+                'workflow.steps.util.disk.CleanData',
                 'workflow.steps.util.plan.ConfigureRestore',
             )}, {
             'Starting database': (
