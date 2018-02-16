@@ -100,7 +100,6 @@ class TestRedisSingle(AbstractBaseRedisTestCase):
                 'workflow.steps.util.disk.UnmountOldestExportRestore',
                 'workflow.steps.util.disk.MountNewerExportRestore',
                 'workflow.steps.util.disk.ConfigureFstabRestore',
-                'workflow.steps.util.plan.InitializationRestore',
                 'workflow.steps.util.plan.ConfigureRestore',
             )}, {
             'Starting database': (
@@ -204,7 +203,7 @@ class TestRedisSentinel(AbstractBaseRedisTestCase):
                 'workflow.steps.util.disk.MountNewerExportRestore',
                 'workflow.steps.util.disk.ConfigureFstabRestore',
                 'workflow.steps.util.disk.CleanData',
-                'workflow.steps.util.plan.InitializationRestore',
+                'workflow.steps.util.disk.RemoveDeprecatedFiles',
                 'workflow.steps.util.plan.ConfigureRestore',
             )}, {
             'Starting database': (
