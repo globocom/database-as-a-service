@@ -471,21 +471,13 @@ class CleanData(DiskCommand):
 
     @property
     def directory(self):
-        return '{}/data'.format(self.OLD_DIRECTORY)
+        return '{}/data/*'.format(self.OLD_DIRECTORY)
 
     @property
     def scripts(self):
         message = 'Could not remove data from {}'.format(self.OLD_DIRECTORY)
         script = 'rm -rf {}'.format(self.directory)
         return {message: script}
-
-
-class CleanDataMongoDB(CleanData):
-
-    @property
-    def directory(self):
-        base = super(CleanDataMongoDB, self).directory
-        return base + '/*'
 
 
 class BackupRestore(Disk):
