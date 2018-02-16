@@ -97,7 +97,7 @@ class DiskMountCommand(DiskCommand):
     @property
     def scripts(self):
         message = 'Could not mount {}'.format(self.path_mount)
-        script = 'mkdir -p {0} && mount -t nfs -o bg,intr {1} {0}'.format(
+        script = 'mkdir -p {0} && mount -t nfs -o bg,intr,nolock {1} {0}'.format(
             self.path_mount, self.export_remote_path
         )
         return {message: script}
