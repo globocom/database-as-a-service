@@ -60,7 +60,7 @@ def build_mount_snapshot_volume_script():
     return """
         mkdir /data2
 
-        mount -t nfs -o bg,intr {{EXPORT_PATH}} /data2
+        mount -t nfs -o bg,intr,nolock {{EXPORT_PATH}} /data2
         die_if_error "Error mounting volume"
 
         cp -rp /data2/.snapshot/{{SNAPSHOPT_NAME}}/* /data/

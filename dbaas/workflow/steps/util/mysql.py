@@ -1,4 +1,3 @@
-from collections import namedtuple
 from backup.tasks import mysql_binlog_save
 from workflow.steps.mysql.util import get_replication_information_from_file, \
     change_master_to, start_slave
@@ -108,7 +107,7 @@ class MountNewerExportRestoreMySQL(DiskRestoreMySQL, MountNewerExportRestore):
     pass
 
 
-class ConfigureFstabRestoreMySQL(ConfigureFstabRestore):
+class ConfigureFstabRestoreMySQL(DiskRestoreMySQL, ConfigureFstabRestore):
     pass
 
 

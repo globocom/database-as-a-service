@@ -257,10 +257,6 @@ class ConfigureForNewInfraSentinel(PlanStepNewInfraSentinel, Configure):
     pass
 
 
-class InitializationRestore(PlanStepRestore, Initialization):
-    pass
-
-
 class ConfigureForResizeLog(Configure):
 
     def get_variables_specifics(self):
