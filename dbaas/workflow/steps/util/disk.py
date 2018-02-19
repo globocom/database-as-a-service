@@ -97,7 +97,7 @@ class DiskMountCommand(DiskCommand):
     @property
     def scripts(self):
         message = 'Could not mount {}'.format(self.path_mount)
-        script = 'mkdir -p {0} && mount -t nfs -o bg,intr {1} {0}'.format(
+        script = 'mkdir -p {0} && mount -t nfs -o bg,intr,nolock {1} {0}'.format(
             self.path_mount, self.export_remote_path
         )
         return {message: script}
@@ -455,9 +455,6 @@ class MountNewerExportRestore(MountNewerExport):
 
 class ConfigureFstabRestore(MountNewerExportRestore, ConfigureFstab):
 
-    def add_configure_script(self, scripts):
-        pass
-
     def undo(self):
         # ToDo
         pass
@@ -474,21 +471,13 @@ class CleanData(DiskCommand):
 
     @property
     def directory(self):
-        return '{}/data'.format(self.OLD_DIRECTORY)
+        return '{}/data/*'.format(self.OLD_DIRECTORY)
 
     @property
     def scripts(self):
         message = 'Could not remove data from {}'.format(self.OLD_DIRECTORY)
         script = 'rm -rf {}'.format(self.directory)
         return {message: script}
-
-
-class CleanDataMongoDB(CleanData):
-
-    @property
-    def directory(self):
-        base = super(CleanDataMongoDB, self).directory
-        return base + '/*'
 
 
 class BackupRestore(Disk):
