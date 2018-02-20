@@ -98,7 +98,8 @@ class TaskAPI(viewsets.ReadOnlyModelViewSet):
         'database_disk_resize',
         'backup.tasks.restore_snapshot',
         'notification.tasks.upgrade_mongodb_24_to_30',
-        'notification.tasks.upgrade_database'
+        'notification.tasks.upgrade_database',
+        'notification.tasks.reinstall_vm_database'
     ]
     model = TaskHistory
     serializer_class = TaskSerializer
