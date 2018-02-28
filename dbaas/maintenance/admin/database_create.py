@@ -13,7 +13,7 @@ from notification.tasks import TaskRegister
 
 class DatabaseCreateAdmin(DatabaseMaintenanceTaskAdmin):
 
-    search_fields = ["name", "infra", "user", "task__id", "task__task_id"]
+    search_fields = ["name", "infra__name", "user", "task__id", "task__task_id"]
     list_filter = ["plan", "team", "status", "project"]
 
     list_display = (
