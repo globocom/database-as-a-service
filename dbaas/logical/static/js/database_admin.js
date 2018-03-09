@@ -45,7 +45,7 @@
         },
         filter_plans: function(engine_id) {
             var environment_id = $("#id_environment").val() || "none";
-            var engine_id = $("#id_engine").val() || engine_id || "none";
+            engine_id = engine_id || $("#id_engine").val() || "none";
             var data_environment_attribute = "data-environment-" + environment_id;
             var data_engine_attribute = "data-engine-" + engine_id;
             $(".plan").each(function(index, el) {
