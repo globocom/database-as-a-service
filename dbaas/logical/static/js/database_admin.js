@@ -43,9 +43,9 @@
         update_engines: function(engines) {
             this.filter_engines(engines);
         },
-        filter_plans: function() {
+        filter_plans: function(engine_id) {
             var environment_id = $("#id_environment").val() || "none";
-            var engine_id = $("#id_engine").val() || "none";
+            var engine_id = $("#id_engine").val() || engine_id || "none";
             var data_environment_attribute = "data-environment-" + environment_id;
             var data_engine_attribute = "data-engine-" + engine_id;
             $(".plan").each(function(index, el) {
@@ -62,33 +62,25 @@
             var current_engine = $("#id_engine").val() || "none";
             if(environment_id !== "none"){
                 var engine_selector = document.getElementById("id_engine");
+                var self = this;
                 $.ajax({
                     type: "GET",
                     dataType: "json",
                     url: "/physical/engines_by_env/" + environment_id + "/"
                 }).done(function (response) {
                     if(response.engines.length !== 0){
-                        var engines = [];
-                        for (var i=0; i<response.engines.length; i++){
-                            engines.push(parseInt(response.engines[i]));
+                        response.engines.push("");
+                        var options2ShowSelector = response.engines.map(function(id) {
+                          return "[value='" + id + "']";
+                        }).join(",");
+                        var $engineOptions = $("#id_engine option");
+                        $engineOptions.hide();
+                        $engineOptions.filter(options2ShowSelector).show();
+                        var selectedId = parseInt($engineOptions.filter(':selected').val(), 10);
+                        if (response.engines.indexOf(selectedId) === -1) {
+                          $engineOptions.filter("[value='']").eq(0).attr('selected', 'selected');
+                          self.filter_plans('none');
                         }
-                        var options_list = [];
-                        for(var i=1; i<=Object.keys(all_engines).length; i++){
-                            var text = all_engines[i];
-                            if($.inArray(i, engines) !== -1){
-                                if (i == current_engine) {
-                                    options_list.push([text,'<option selected="selected" value="' + i + '">' + text + '</option>']);
-                                } else {
-                                    options_list.push([text,'<option value="' + i + '">' + text + '</option>']);
-                                }
-                            }
-                        }
-                        options_list.sort(function(a,b){return a[0]>b[0];});
-
-                        var html_input = "";
-                        html_input += '<option value>---------</option>';
-                        for(var i=0; i< options_list.length; i++){ html_input += options_list[i][1]; }
-                        engine_selector.innerHTML = html_input;
                     }
                     else{
                         engine_selector.innerHTML = '<option selected="selected">' +
