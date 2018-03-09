@@ -31,7 +31,11 @@ p.error_message {
 .checkbox_action{
     display: inline-block;
     float: none;
-    margin-bottom: 5px: 
+    margin-bottom: 5px:
+}
+
+#id_engine option {
+    display: none;
 }
 
 .plans {
