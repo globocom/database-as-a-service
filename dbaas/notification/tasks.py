@@ -1139,6 +1139,11 @@ class TaskRegister(object):
         if database:
             task.object_id = database.id
             task.object_class = database._meta.db_table
+            database_name = database.name
+        else:
+            database_name = params.pop('database_name', '')
+
+        task.database_name = database_name
 
         for k, v in params.iteritems():
             setattr(task, k, v)
@@ -1314,6 +1319,7 @@ class TaskRegister(object):
         task_params = {
             'task_name': "create_database",
             'arguments': "Database name: {}".format(name),
+            'database_name': name
         }
         task_params.update(**{'user': user} if register_user else {})
         task = cls.create_task(task_params)
@@ -1340,6 +1346,7 @@ class TaskRegister(object):
         task_params = {
             'task_name': "create_database",
             'arguments': "Database name: {}".format(rollback_from.name),
+            'database_name': rollback_from.name
         }
         if user:
             task_params['user'] = user
@@ -1542,6 +1549,5 @@ class TaskRegister(object):
         }
 
         return cls.create_task(task_params)
-
 
     # ============  END TASKS   ============

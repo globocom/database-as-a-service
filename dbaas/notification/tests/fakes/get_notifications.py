@@ -16,6 +16,7 @@ THREE_TASKS_THREE_NEWS = [
         u'task_status': 'RUNNING',
         u'user': 'admin',
         u'arguments': 'Database: fake_database_name_2, New Disk Offering: Micro',
+        u'database_name': 'fake_database_name_from_obj',
         u'updated_at': 1501177162,
         u'is_new': 1,
         u'read': 0,

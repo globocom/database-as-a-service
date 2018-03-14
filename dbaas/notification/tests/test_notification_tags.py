@@ -88,7 +88,7 @@ class NotificationTagTestCase(TestCase):
         database_els = notification.cssselect('.notify-database')
 
         self.assertEqual(database_els[0].text_content().strip(), 'database: fake_database_name_1')
-        self.assertEqual(database_els[1].text_content().strip(), 'database: fake_database_name_2')
+        self.assertEqual(database_els[1].text_content().strip(), 'database: fake_database_name_from_obj')
         self.assertEqual(database_els[2].text_content().strip(), 'database: fake_database_name_3')
 
     @patch('notification.templatetags.notification_tags.UserTasks.get_notifications')

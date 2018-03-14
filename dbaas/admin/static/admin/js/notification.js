@@ -135,7 +135,10 @@ Base.DbaasNotification = {};
 
           return cont;
         },
-        parseArguments: function() {
+        databaseName: function() {
+          if (this.database_name) {
+            return this.database_name;
+          }
           var regex = /database( name)?: ([\w-_\ ]+),?/i;
           var parsedArguments = this.arguments.match(regex);
               if (parsedArguments) {
@@ -171,7 +174,7 @@ Base.DbaasNotification = {};
                 <span class="notify-label"><span class="label label-{{ statusCssClass }}">{{ task_status }}</span></span>
                 <span class="notify-body">
                   <div class="notify-task"><span class="notify-description">task name:</span> {{ parseTaskName }}</div>
-                  <div class="notify-database"><b>database:</b> {{ parseArguments }}</div>
+                  <div class="notify-database"><b>database:</b> {{ databaseName }}</div>
                 </span>
               </a>
             </li>
