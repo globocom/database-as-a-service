@@ -17,12 +17,14 @@ class SaveTaskTestCase(TestCase):
         self.fake_task.task_status = 'SUCCESS'
         self.fake_task.updated_at = datetime(2017, 7, 27, 14, 39, 22, 160307)
         self.fake_task.arguments = 'Database: database_fake, New Disk Offering: Micro'
+        self.fake_task.database_name = 'database_fake'
 
         self.default_expected_params = {
             u'task_id': self.fake_task.id,
             u'task_name': u'fake_task',
             u'task_status': 'SUCCESS',
             u'user': 'admin', u'arguments': self.fake_task.arguments,
+            u'database_name': 'database_fake',
             u'updated_at': 1501177162,
             u'is_new': 1,
             u'read': 0,

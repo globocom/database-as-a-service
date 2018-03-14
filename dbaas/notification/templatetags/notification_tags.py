@@ -50,7 +50,6 @@ def get_notifications(username):
                 <span class="notify-new"><i class="icon-eye-open"></i></span>
             </a>
         </li>'''
-        # <li class="divider"></li>'''
 
     tasks = UserTasks.get_notifications(username)
     lis_html = ''
@@ -60,7 +59,7 @@ def get_notifications(username):
             'li_class': '' if int(task.get('read')) else 'new',
             'task_status_css_class': get_css_class(task.get('task_status')),
             'parsed_task_name': task['task_name'].split('.')[-1],
-            'parsed_arguments': parse_arguments(task['arguments']),
+            'parsed_arguments': task.get('database_name') or parse_arguments(task['arguments']),
             'url': reverse('admin:notification_taskhistory_changelist')
         })
         lis_html += li_tmpl.format(**task)

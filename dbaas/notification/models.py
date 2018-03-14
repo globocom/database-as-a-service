@@ -209,6 +209,7 @@ def save_task(sender, instance, **kwargs):
             'task_name': instance.task_name.split('.')[-1],
             'task_status': instance.task_status,
             'user': username, 'arguments': instance.arguments,
+            'database_name': instance.database_name or '',
             'updated_at': int(time.mktime(instance.updated_at.timetuple())),
             'is_new': 1,
             'read': 0
