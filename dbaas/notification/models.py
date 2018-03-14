@@ -56,6 +56,9 @@ class TaskHistory(BaseModel):
     )
     object_id = models.IntegerField(null=True, blank=True)
     object_class = models.CharField(max_length=255, null=True, blank=True)
+    database_name = models.CharField(
+        max_length=255, null=True, blank=True, db_index=True
+    )
 
     def __unicode__(self):
         return u"%s" % self.task_id
