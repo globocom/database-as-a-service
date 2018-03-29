@@ -31,7 +31,7 @@ ecdsa==0.13
 gunicorn==19.7.1
 httpretty==0.8.14
 itsdangerous==0.24
-kombu==3.0.35
+kombu==4.1.0
 logilab-common==0.60.0
 paramiko==2.1.1
 pyasn1==0.1.7
