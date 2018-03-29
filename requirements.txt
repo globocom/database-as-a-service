@@ -38,7 +38,7 @@ pyasn1==0.4.2
 pycrypto==2.6.1
 pymongo==3.6.1
 python-gnupg==0.4.2
-python-keyczar==0.71c
+python-keyczar==0.716
 python-ldap==2.3.13
 python-slugify==0.0.6
 pytz==2013.7
