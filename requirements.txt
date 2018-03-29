@@ -22,7 +22,7 @@ django-ckeditor-updated==4.4.4
 django-email-extras==0.3.3
 django-extensions==2.0.6
 django-ganalytics==0.7.0
-django-haystack==2.1.0
+django-haystack==2.8.0
 django-services==0.0.8
 django-simple-audit==0.1.22
 djangorestframework==2.3.8
