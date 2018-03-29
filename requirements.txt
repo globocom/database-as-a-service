@@ -5,7 +5,7 @@ Markdown==2.6.11
 MarkupSafe==1.0
 MySQL-python==1.2.5
 Pillow==5.0.0
-PyYAML==3.10
+PyYAML==3.12
 South==1.0
 Unidecode==0.04.14
 Werkzeug==0.9.4
