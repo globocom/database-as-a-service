@@ -16,7 +16,7 @@ astroid==1.6.2
 billiard==3.5.0.3
 bootstrap-admin==0.3.9
 celery==4.1.0
-django-adminplus==0.3
+django-adminplus==0.5
 django-auth-ldap==1.1.4
 django-ckeditor-updated==4.4
 django-email-extras==0.1.13
