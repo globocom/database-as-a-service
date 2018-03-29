@@ -12,7 +12,7 @@ Werkzeug==0.14.1
 Whoosh==2.7.4
 amqp==2.2.2
 anyjson==0.3.3
-astroid==1.0.0
+astroid==1.6.2
 billiard==3.3.0.19
 bootstrap-admin==0.2.5
 celery==3.1.17
