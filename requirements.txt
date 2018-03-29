@@ -1,6 +1,6 @@
 Django==2.0.3
 Flask==0.12.2
-Jinja2==2.7.2
+Jinja2==2.10
 Markdown==2.3.1
 MarkupSafe==0.18
 MySQL-python==1.2.5
