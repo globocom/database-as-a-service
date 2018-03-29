@@ -69,6 +69,6 @@ python-dateutil==2.7.2
 django-redis==4.9.0
 backstage_oauth2==0.1.3
 django-all-access==0.9.0
-oauthlib==2.0.4
+oauthlib==2.0.7
 requests-oauthlib==0.8.0
 python-memcached==1.58
