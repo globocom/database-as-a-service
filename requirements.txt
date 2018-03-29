@@ -41,7 +41,7 @@ python-gnupg==0.4.2
 python-keyczar==0.716
 python-ldap==3.0.0
 python-slugify==1.2.5
-pytz==2013.7
+pytz==2018.3
 raven==3.5.0
 redis==2.10.6
 redis-py-cluster-gcom==1.3.4
