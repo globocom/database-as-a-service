@@ -19,7 +19,7 @@ celery==4.1.0
 django-adminplus==0.5
 django-auth-ldap==1.4.0
 django-ckeditor-updated==4.4.4
-django-email-extras==0.1.13
+django-email-extras==0.3.3
 django-extensions==1.2.2
 django-ganalytics==0.2
 django-haystack==2.1.0
