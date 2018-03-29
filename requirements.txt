@@ -55,7 +55,7 @@ dbaas_credentials==1.1.14
 dbaas_nfsaas==0.6.18
 dbaas_zabbix==0.4.29
 dbaas_dbmonitor==0.2.8
-django-filter==0.9.1
+django-filter==1.1.0
 dbaas-aclapi==0.1.10
 dbaas_dnsapi==0.1.6
 dbaas_networkapi==0.1.10
