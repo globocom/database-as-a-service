@@ -14,7 +14,7 @@ amqp==2.2.2
 anyjson==0.3.3
 astroid==1.6.2
 billiard==3.5.0.3
-bootstrap-admin==0.2.5
+bootstrap-admin==0.3.9
 celery==3.1.17
 django-adminplus==0.3
 django-auth-ldap==1.1.4
