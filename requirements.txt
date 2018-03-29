@@ -65,7 +65,7 @@ GloboNetworkAPI==0.8.5
 Dex==0.6
 click==6.7
 requests==2.18.4
-python-dateutil==2.4.1
+python-dateutil==2.7.2
 django-redis==4.4.4
 backstage_oauth2==0.1.3
 django-all-access==0.5.1
