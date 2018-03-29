@@ -30,7 +30,7 @@ django-celery==3.2.2
 ecdsa==0.13
 gunicorn==19.7.1
 httpretty==0.8.14
-itsdangerous==0.23
+itsdangerous==0.24
 kombu==3.0.35
 logilab-common==0.60.0
 paramiko==2.1.1
