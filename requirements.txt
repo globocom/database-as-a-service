@@ -61,7 +61,7 @@ dbaas_dnsapi==0.1.6
 dbaas_networkapi==0.1.10
 dbaas_foreman==0.1.4
 dbaas_foxha==0.2.8
-GloboNetworkAPI==0.6.24
+GloboNetworkAPI==0.8.5
 Dex==0.6
 click==3.3
 requests==2.5.1
