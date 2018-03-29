@@ -28,7 +28,7 @@ django-simple-audit==0.1.22
 djangorestframework==3.7.7
 django-celery==3.2.2
 ecdsa==0.13
-gunicorn==19.6.0
+gunicorn==19.7.1
 httpretty==0.8.0
 itsdangerous==0.23
 kombu==3.0.35
