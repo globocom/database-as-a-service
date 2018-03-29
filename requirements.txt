@@ -9,7 +9,7 @@ PyYAML==3.12
 South==1.0.2
 Unidecode==1.0.22
 Werkzeug==0.14.1
-Whoosh==2.7.2
+Whoosh==2.7.4
 amqp==1.4.6
 anyjson==0.3.3
 astroid==1.0.0
