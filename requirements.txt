@@ -63,7 +63,7 @@ dbaas_foreman==0.1.4
 dbaas_foxha==0.2.8
 GloboNetworkAPI==0.8.5
 Dex==0.6
-click==3.3
+click==6.7
 requests==2.5.1
 python-dateutil==2.4.1
 django-redis==4.4.4
