@@ -1,0 +1,46 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_static %}
+{% load show_plans from filter_plans %}
+
+{% block extrastyle %}
+  {{ block.super }}
+
+{% endblock %}
+
+{% block content_title %}
+  <h1>
+    Plans
+  </h1>
+{% endblock %}
+
+{% block content %}
+
+  <div class="content-main">
+    <div class="well">
+      {% for env in environments %}
+        {% for eng in engines %}
+          {% show_plans env eng %}
+        {% endfor %}
+      {% endfor %}
+    </div>
+  </div>
+
+{% endblock %}
+
+{% block breadcrumbs %}
+  <ul class="breadcrumb">
+    <li>
+      <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+      <span class="divider">/</span>
+    </li>
+    <li>
+      <a href="/physical/plans_details/">{% trans 'Plans' %}</a>
+    </li>
+  </ul>
+{% endblock %}
+
+{% block js_footer_commons %}
+  {{ block.super }}
+  <script src="{% static "admin/js/jquery.js" %}">
+  <script type="text/javascript" src="{% static "admin/js/bootstrap.min.js" %}"></script>
+{% endblock %}
