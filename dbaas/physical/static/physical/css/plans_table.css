@@ -1,0 +1,18 @@
+<style>
+
+     .plans-table{
+        width: 100%;
+     }
+     .plans-table .plan-name{
+        width: 30%;
+     }
+
+     .plans-table .plan-cpu{
+        width: 25%;
+     }
+
+     .plans-table td, .plans-table th {
+        width: 15%;
+     }
+
+</style>

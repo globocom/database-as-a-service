@@ -1,0 +1,49 @@
+{% load static %}
+
+{% block extrastyle %}
+    <link rel="stylesheet" type="text/css" href="{% static "physical/css/plans_table.css" %}" />
+{% endblock %}
+
+{% if selected_plans %}
+    <h3>{{eng_name}} - {{env_name|upper}}</h3>
+    <table id="table-parameters-{{eng_name}}{{env_name}}" class="plans-table table table-bordered">
+        <thead>
+            <tr>
+              <th class="plan-name">Nome</th>
+              <th class="plan-cpu">Cpu/Memoria</th>
+              <th>Disco</th>
+              <th>HA</th>
+              <th>Persistido</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for plan in selected_plans %}
+                <tr>
+                    <td class="plan-name">
+                        {{ plan.name }}
+                    </td>
+                    <td>
+                        {{ plan.cloudstack_attr.get_stronger_offering.name }}
+                    </td>
+                    <td>
+                        {{ plan.disk_offering.size_gb }}Gb
+                    </td>
+                    <td>
+                        {% if plan.is_ha %}
+                            <img src="/static/0.0.11/admin/img/icon-yes.gif" alt="True">
+                        {% else %}
+                            <img src="/static/0.0.11/admin/img/icon-no.gif" alt="False">
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if plan.has_persistence %}
+                            <img src="/static/0.0.11/admin/img/icon-yes.gif" alt="True">
+                        {% else %}
+                            <img src="/static/0.0.11/admin/img/icon-no.gif" alt="False">
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endif %}
