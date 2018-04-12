@@ -13,6 +13,7 @@ from django.utils.translation import ugettext_lazy as _
 from django_extensions.db.fields.encrypted import EncryptedCharField
 # TODO: remove cloudstack import
 from dbaas_cloudstack.models import CloudStackOffering
+from slugify import slugify
 
 from util.models import BaseModel
 from drivers import DatabaseInfraStatus
@@ -417,6 +418,11 @@ class Plan(BaseModel):
     @property
     def is_cloudstack(self):
         return self.provider == Plan.CLOUDSTACK
+
+    @property
+    def tsuru_label(self):
+
+        return slugify(self.name + '-' + self.environment())
 
     def __unicode__(self):
         return "%s" % (self.name)

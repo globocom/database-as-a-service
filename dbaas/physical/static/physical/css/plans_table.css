@@ -11,8 +11,12 @@
         width: 25%;
      }
 
-     .plans-table td, .plans-table th {
-        width: 15%;
+     .plans-table .plan-offering{
+        width: 8%;
+     }
+
+     .plans-table .checkbox-cell {
+        width: 8%;
      }
 
 </style>
