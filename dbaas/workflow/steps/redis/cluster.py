@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from system.models import Configuration
 from workflow.steps.util.plan import PlanStep
+from time import sleep
 
 
 class BaseClusterStep(PlanStep):
@@ -129,37 +130,62 @@ class SetInstanceShardTag(BaseClusterStep):
     def __unicode__(self):
         return "Setting instance shard tag..."
 
-    def do(self):
-        if self.instance.id != self.infra.instances.first().id:
-            return
+    def __init__(self, instance):
+        super(SetInstanceShardTag, self).__init__(instance)
+        self.instances = self.infra.instances.all()
 
-        cluster_client = self.infra.get_driver().get_cluster_client(None)
-        cluster_nodes = cluster_client.cluster_nodes()
-        instances = self.infra.instances.all()
-        shard = 1
-
-        for cluster_node in cluster_nodes:
+    def check_cluster_status(self):
+        for cluster_node in self.cluster_nodes:
             if cluster_node['link-state'] != 'connected':
                 msg = "The node {}:{} is not connected to the cluster.".format(
                     cluster_node['host'], cluster_node['port']
                 )
                 raise AssertionError(msg)
 
-        for instance in instances:
-            for cluster_node in cluster_nodes:
-                if cluster_node['host'] == instance.address and cluster_node['port'] == instance.port:
-                    if cluster_node['master'] is None:
-                        cluster_node['shard'] = "{0:02d}".format(shard)
-                        shard += 1
+    def identify_cluster_nodes_masters(self):
+        attempt = 1
+        retries = 10
+        interval = 10
+        while True:
+            shard = 1
+            for instance in self.instances:
+                for cluster_node in self.cluster_nodes:
+                    if cluster_node['host'] == instance.address and cluster_node['port'] == instance.port:
+                        if cluster_node['master'] is None:
+                            cluster_node['shard'] = "{0:02d}".format(shard)
+                            shard += 1
+            masters = shard - 1
+            if len(self.instances) / 2 == masters:
+                break
+            attempt += 1
+            if attempt == retries - 1:
+                msg = "Could not get cluster configuration. There are {} masters and {} instances".format(masters, len(self.instances))
+                raise Exception(msg)
+            sleep(interval)
+            self.retrieve_cluster_nodes_info()
 
-        for cluster_node in cluster_nodes:
+    def update_instance_shard(self):
+        for cluster_node in self.cluster_nodes:
             if cluster_node['master']:
-                for cluster_node_master in cluster_nodes:
+                for cluster_node_master in self.cluster_nodes:
                     if cluster_node_master['id'] == cluster_node['master']:
                         cluster_node['shard'] = cluster_node_master['shard']
 
-        for instance in instances:
-            for cluster_node in cluster_nodes:
+        for instance in self.instances:
+            for cluster_node in self.cluster_nodes:
                 if cluster_node['host'] == instance.address and cluster_node['port'] == instance.port:
                     instance.shard = cluster_node['shard']
                     instance.save()
+
+    def retrieve_cluster_nodes_info(self):
+        cluster_client = self.infra.get_driver().get_cluster_client(None)
+        self.cluster_nodes = cluster_client.cluster_nodes()
+
+    def do(self):
+        if self.instance.id != self.instances.first().id:
+            return
+
+        self.retrieve_cluster_nodes_info()
+        self.check_cluster_status()
+        self.identify_cluster_nodes_masters()
+        self.update_instance_shard()
