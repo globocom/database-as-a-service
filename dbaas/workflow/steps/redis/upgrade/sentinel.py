@@ -9,10 +9,9 @@ class Reset(BaseInstanceStep):
     def __unicode__(self):
         return "Resetting Sentinel..."
 
-    def __init__(self, instance):
-        super(Reset, self).__init__(instance)
-        self.driver = self.instance.databaseinfra.get_driver()
-        self.sentinel_instance = self.host.non_database_instance()
+    @property
+    def sentinel_instance(self):
+        self.host.non_database_instance()
 
     def do(self):
         sleep(10)
