@@ -740,9 +740,10 @@ class DatabaseInfra(BaseModel):
 
     @property
     def hosts(self):
-        hosts = set()
+        hosts = []
         for instance in self.instances.all():
-            hosts.add(instance.hostname)
+            if instance.hostname not in hosts:
+                hosts.append(instance.hostname)
         return hosts
 
 
