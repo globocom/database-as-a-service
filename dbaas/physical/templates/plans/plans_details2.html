@@ -1,0 +1,64 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_static %}
+{% load table_add_plans from filter_plans %}
+
+{% block extrastyle %}
+    {% load static %}
+  {{ block.super }}
+    <link rel="stylesheet" type="text/css" href="{% static "physical/css/plans_table_alt.css" %}" />
+
+{% endblock %}
+
+{% block content_title %}
+  <h1>
+    Plans
+  </h1>
+{% endblock %}
+
+{% block content %}
+
+  <div class="content-main">
+    <div class="well">
+      <table id="all-plans-table" class="plans-table table table-bordered">
+        <thead>
+            <tr>
+              <th class="plan-name">Name</th>
+              <th class="plan-name">Tsuru name</th>
+              <th class="plan-env">Env</th>
+              <th class="plan-cpu">Cpu/Memory</th>
+              <th class="plan-offering">Disk</th>
+              <th class="checkbox-cell">HA</th>
+              <th class="checkbox-cell">Persisted</th>
+            </tr>
+        </thead>
+        <tbody>
+          {% for env in environments %}
+            {% for eng in engines %}
+              {% table_add_plans env eng %}
+            {% endfor %}
+          {% endfor %}
+        </tbody>
+      </table>
+
+    </div>
+  </div>
+
+{% endblock %}
+
+{% block breadcrumbs %}
+  <ul class="breadcrumb">
+    <li>
+      <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+      <span class="divider">/</span>
+    </li>
+    <li>
+      <a href="/physical/plans_details/">{% trans 'Plans' %}</a>
+    </li>
+  </ul>
+{% endblock %}
+
+{% block js_footer_commons %}
+  {{ block.super }}
+  <script src="{% static "admin/js/jquery.js" %}">
+  <script type="text/javascript" src="{% static "admin/js/bootstrap.min.js" %}"></script>
+{% endblock %}
