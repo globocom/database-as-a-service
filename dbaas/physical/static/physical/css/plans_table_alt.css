@@ -1,0 +1,26 @@
+<style>
+
+     .plans-table{
+        width: 100%;
+     }
+     .plans-table .plan-name{
+        width: 27%;
+     }
+
+     .plans-table .plan-env{
+        width: 8%;
+     }
+
+     .plans-table .plan-cpu{
+        width: 25%;
+     }
+
+     .plans-table .plan-offering{
+        width: 8%;
+     }
+
+     .plans-table .checkbox-cell {
+        width: 8%;
+     }
+
+</style>
