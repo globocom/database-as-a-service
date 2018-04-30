@@ -422,7 +422,7 @@ class Plan(BaseModel):
     @property
     def tsuru_label(self):
 
-        return slugify(self.name + '-' + self.environment())
+        return slugify("{}-{}".format(self.name, self.environment()))
 
     def __unicode__(self):
         return "%s" % (self.name)
