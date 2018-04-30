@@ -1,35 +1,33 @@
-{% if selected_plans %}
-    {% for plan in selected_plans %}
-        <tr>
-            <td class="plan-name">
-                {{ plan.name }}
-            </td>
-            <td>
-                {{ plan.tsuru_label }}
-            </td>
-            <td>
-                {{ env_name }}
-            </td>
-            <td>
-                {{ plan.cloudstack_attr.get_stronger_offering.name }}
-            </td>
-            <td>
-                {{ plan.disk_offering.size_gb }}Gb
-            </td>
-            <td class="checkbox-cell">
-                {% if plan.is_ha %}
-                    <img src="/static/0.0.11/admin/img/icon-yes.gif" alt="True">
-                {% else %}
-                    <img src="/static/0.0.11/admin/img/icon-no.gif" alt="False">
-                {% endif %}
-            </td>
-            <td class="checkbox-cell">
-                {% if plan.has_persistence %}
-                    <img src="/static/0.0.11/admin/img/icon-yes.gif" alt="True">
-                {% else %}
-                    <img src="/static/0.0.11/admin/img/icon-no.gif" alt="False">
-                {% endif %}
-            </td>
-        </tr>
-    {% endfor %}
-{% endif %}
+{% for plan in selected_plans %}
+    <tr>
+        <td class="plan-name">
+            {{ plan.name }}
+        </td>
+        <td>
+            {{ plan.tsuru_label }}
+        </td>
+        <td>
+            {{ env_name }}
+        </td>
+        <td>
+            {{ plan.cloudstack_attr.get_stronger_offering.name }}
+        </td>
+        <td>
+            {{ plan.disk_offering.size_gb }}Gb
+        </td>
+        <td class="checkbox-cell">
+            {% if plan.is_ha %}
+                <img src="/static/0.0.11/admin/img/icon-yes.gif" alt="True">
+            {% else %}
+                <img src="/static/0.0.11/admin/img/icon-no.gif" alt="False">
+            {% endif %}
+        </td>
+        <td class="checkbox-cell">
+            {% if plan.has_persistence %}
+                <img src="/static/0.0.11/admin/img/icon-yes.gif" alt="True">
+            {% else %}
+                <img src="/static/0.0.11/admin/img/icon-no.gif" alt="False">
+            {% endif %}
+        </td>
+    </tr>
+{% endfor %}
