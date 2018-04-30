@@ -1,9 +1,11 @@
 {% extends "admin/base_site.html" %}
 {% load i18n admin_static %}
-{% load show_plans from filter_plans %}
+{% load table_add_plans from filter_plans %}
 
 {% block extrastyle %}
+    {% load static %}
   {{ block.super }}
+    <link rel="stylesheet" type="text/css" href="{% static "physical/css/plans_table_alt.css" %}" />
 
 {% endblock %}
 
@@ -17,11 +19,27 @@
 
   <div class="content-main">
     <div class="well">
-      {% for env in environments %}
-        {% for eng in engines %}
-          {% show_plans env eng %}
-        {% endfor %}
-      {% endfor %}
+      <table id="all-plans-table" class="plans-table table table-bordered">
+        <thead>
+            <tr>
+              <th class="plan-name">Name</th>
+              <th class="plan-name">Tsuru name</th>
+              <th class="plan-env">Env</th>
+              <th class="plan-cpu">Cpu/Memory</th>
+              <th class="plan-offering">Disk</th>
+              <th class="checkbox-cell">HA</th>
+              <th class="checkbox-cell">Persisted</th>
+            </tr>
+        </thead>
+        <tbody>
+          {% for eng in engines %}
+            {% for env in environments %}
+              {% table_add_plans env eng %}
+            {% endfor %}
+          {% endfor %}
+        </tbody>
+      </table>
+
     </div>
   </div>
 
