@@ -282,6 +282,9 @@ class CreateVirtualMachine(VmStep):
     def get_next_bundle(self):
         return LastUsedBundleDatabaseInfra.get_next_infra_bundle(self.infra)
 
+    def set_last_bundle(self, bundle):
+        LastUsedBundleDatabaseInfra.set_last_infra_bundle(self.infra, bundle)
+
     @property
     def vm_name(self):
         return self.instance.vm_name
@@ -321,10 +324,12 @@ class CreateVirtualMachine(VmStep):
     def do(self):
         host = self.host
         if not host:
+            self.plan.validate_min_environment_bundles(self.environment)
             bundle = self.get_next_bundle()
             address, vm_id = self.deploy_vm(bundle=bundle)
             host = self.create_host(address=address)
             self.create_host_attr(host=host, vm_id=vm_id, bundle=bundle)
+            self.set_last_bundle(bundle)
 
         self.create_instance(host=host)
         self.update_databaseinfra_last_vm_created()
