@@ -3,10 +3,9 @@
 {% load table_add_plans from filter_plans %}
 
 {% block extrastyle %}
-    {% load static %}
+  {% load static %}
   {{ block.super }}
-    <link rel="stylesheet" type="text/css" href="{% static "physical/css/plans_table_alt.css" %}" />
-
+  <link rel="stylesheet" type="text/css" href="{% static "physical/css/plans_table_alt.css" %}" />
 {% endblock %}
 
 {% block content_title %}
@@ -32,9 +31,9 @@
             </tr>
         </thead>
         <tbody>
-          {% for eng in engines %}
-            {% for env in environments %}
-              {% table_add_plans env eng %}
+          {% for engine in engines %}
+            {% for environment in environments %}
+              {% table_add_plans environment engine %}
             {% endfor %}
           {% endfor %}
         </tbody>
