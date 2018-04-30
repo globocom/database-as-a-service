@@ -18,14 +18,11 @@ def engines_by_env(self, environment_id):
     })
     return HttpResponse(response_json, content_type="application/json")
 
-def plans_details(self, template_id):
+def plans_details(self):
 
     context = {}
 
-    if template_id == '1':
-        template = "plans/plans_details.html"
-    else:
-        template = "plans/plans_details2.html"
+    template = "plans/plans_details.html"
 
     all_environments = Environment.objects.all()
     all_engines = Engine.objects.all()
