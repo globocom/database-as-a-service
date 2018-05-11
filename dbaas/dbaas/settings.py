@@ -403,6 +403,8 @@ REST_FRAMEWORK = {
 
 LOGIN_URL = "/accounts/login/backstage/"
 LOGIN_REDIRECT_URL = "/accounts/callback/backstage/"
+LOGOUT_REDIRECT_URL = os.getenv('DBAAS_LOGOUT_REDIRECT_URL', None)
+
 
 # sentry configuration
 RAVEN_CONFIG = {

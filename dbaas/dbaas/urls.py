@@ -79,6 +79,18 @@ if settings.DBAAS_OAUTH2_LOGIN_ENABLE:
         url(r'', include('glb_version.urls')),
     )
 
+if settings.LOGOUT_REDIRECT_URL:
+    logout_pattern = patterns(
+        '',
+        url(
+            r'^admin/logout/$',
+            'django.contrib.auth.views.logout',
+            {'next_page': settings.LOGOUT_REDIRECT_URL},
+            name='logout'
+        ),
+    )
+    urlpatterns = logout_pattern + urlpatterns
+
 
 # django flatpages
 urlpatterns += patterns(
