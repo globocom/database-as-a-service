@@ -329,7 +329,7 @@ class CreateVirtualMachine(VmStep):
         host = self.host
         if not host:
             self.plan.validate_min_environment_bundles(self.environment)
-            if len(self.infra.instances.all()) == 0:
+            if self.infra.instances.count() == 0:
                 bundle = self.get_next_plan_bundle()
             else:
                 bundle = self.get_next_bundle()
