@@ -101,10 +101,10 @@ class Provider(object):
         content = response.json()
 
         host = Host()
-        host.address = content["ip"]
+        host.address = content["address"]
         host.hostname = host.address
-        host.user = self.credential.user
-        host.password = self.credential.password
+        host.user = self.vm_credential.user
+        host.password = self.vm_credential.password
         host.provider = self.provider
         host.identifier = content["id"]
         host.save()
