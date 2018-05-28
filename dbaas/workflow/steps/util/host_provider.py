@@ -112,14 +112,23 @@ class Provider(object):
         return host
 
     def destroy_host(self, host):
-        pass
+        url = "{}/{}/{}/host/{}".format(
+            self.credential.endpoint, self.provider, self.environment,
+            self.instance.hostname.identifier
+        )
+
+        response = delete(url)
+        if not response.ok:
+            raise IndexError(response.content, response)
 
 
 class HostProviderStep(BaseInstanceStep):
 
-    def __init__(self, instance):
+    # TODO: Coloquei como parâmetro default, pq na hora de apagar ele nao passa
+    # o host, poderá ficar assim ?
+    def __init__(self, instance=None):
         super(HostProviderStep, self).__init__(instance)
-        self.driver = self.infra.get_driver()
+        self.driver = self.instance and self.infra.get_driver()
         self.credentials = None
         self._provider = None
 
@@ -241,7 +250,7 @@ class CreateVirtualMachine(HostProviderStep):
         if not self.instance.instance_type:
             self.instance.instance_type = self.driver.get_default_instance_type()
 
-        self.instance.read_only = self.read_only_instance
+        self.instance.read_only = bool(self.database)
         self.instance.save()
 
     def update_databaseinfra_last_vm_created(self):
@@ -255,7 +264,9 @@ class CreateVirtualMachine(HostProviderStep):
         return self.instance.vm_name
 
     def do(self):
-        host = self.provider.create_host(self.infra, self.vm_name, offering)
+        # TODO: o cloudstack_attr vai morrer ? onde o offering ficará ?
+        offering = self.infra.plan.cloudstack_attr.get_stronger_offering()
+        host = self.provider.create_host(self.infra, offering, self.vm_name)
 
         self.create_instance(host)
         self.update_databaseinfra_last_vm_created()
