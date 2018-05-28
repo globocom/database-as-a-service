@@ -874,6 +874,16 @@ class Instance(BaseModel):
         return self.instance_type in (self.MYSQL, self.MONGODB, self.REDIS)
 
     @property
+    def offering(self):
+        # TODO: cloudstack vai morrer ?
+        cloudstack_attr = self.databaseinfra.plan.cloudstack_attr
+
+        if self.is_database:
+            return cloudstack_attr.get_stronger_offering()
+
+        return cloudstack_attr.get_weaker_offering()
+
+    @property
     def is_redis(self):
         return self.instance_type == self.REDIS
 
