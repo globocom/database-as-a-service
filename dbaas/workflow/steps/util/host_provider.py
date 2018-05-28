@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from django.core.exceptions import ObjectDoesNotExist
-from requests import post
+from requests import post, delete
 from dbaas_credentials.models import CredentialType
 from physical.models import Host
 from util import check_ssh, get_credentials_for
@@ -242,12 +242,13 @@ class CreateVirtualMachine(HostProviderStep):
         self.create_instance(host)
         self.update_databaseinfra_last_vm_created()
 
-    def undo(self):
-        try:
-            host = self.instance.hostname
-        except ObjectDoesNotExist:
-            return
+    def undo(self, workflow_dict):
 
-        self.provider.destroy_host(host)
-        self.instance.delete()
-        host.delete()
+        for instance in workflow_dict['databaseinfra'].instances.all():
+            self.instance = instance
+            host = instance.hostname
+            self.provider.destroy_host(host)
+            host.delete()
+            instance.delete()
+
+        return True
