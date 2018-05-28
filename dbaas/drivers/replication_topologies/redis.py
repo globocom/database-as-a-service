@@ -7,7 +7,7 @@ class BaseRedis(BaseTopology):
     def deploy_first_steps(self):
         return (
             'workflow.steps.redis.deploy.build_databaseinfra.BuildDatabaseInfra',
-            'workflow.steps.redis.deploy.create_virtualmachines.CreateVirtualMachine',
+            'workflow.steps.util.host_provider.CreateVirtualMachine',
             'workflow.steps.redis.deploy.create_dns.CreateDns',
             'workflow.steps.util.deploy.create_nfs.CreateNfs',
             'workflow.steps.redis.deploy.init_database.InitDatabaseRedis',
@@ -58,7 +58,7 @@ class RedisSingle(BaseRedis):
     def get_deploy_steps(self):
         return [{
             'Creating virtual machine': (
-                'workflow.steps.util.vm.CreateVirtualMachineNewInfra',
+                'workflow.steps.util.host_provider.CreateVirtualMachine',
             )}, {
             'Creating dns': (
                 'workflow.steps.util.dns.CreateDNS',
@@ -209,7 +209,8 @@ class RedisSentinel(BaseRedis):
     def get_deploy_steps(self):
         return [{
             'Creating virtual machine': (
-                'workflow.steps.util.vm.CreateVirtualMachineNewInfra',
+                # 'workflow.steps.util.vm.CreateVirtualMachineNewInfra',
+                'workflow.steps.util.host_provider.CreateVirtualMachine',
             )}, {
             'Creating dns': (
                 'workflow.steps.util.dns.CreateDNSSentinel',
