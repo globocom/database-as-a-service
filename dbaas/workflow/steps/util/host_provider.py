@@ -16,6 +16,7 @@ class Provider(object):
     def __init__(self, instance):
         self.instance = instance
         self._credential = None
+        self._vm_credential = None
 
     @property
     def environment(self):
@@ -35,6 +36,17 @@ class Provider(object):
             )
 
         return self._credential
+
+    @property
+    def vm_credential(self):
+        # TODO Lembrar de colocar o project pra quando tiver um provider
+        # diferente
+        if not self._vm_credential:
+            self._vm_credential = get_credentials_for(
+                self.environment, CredentialType.VM,
+            )
+
+        return self._vm_credential
 
     @property
     def provider(self):
