@@ -53,7 +53,16 @@ class Provider(object):
         return self.credential.project
 
     def start(self):
-        pass
+        url = "{}/{}/{}/host/start".format(
+            self.credential.endpoint, self.provider, self.environment
+        )
+        data = {
+            "host_id": self.instance.identifier
+        }
+
+        response = post(url, json=data)
+        if not response.ok:
+            raise IndexError(response.content, response)
 
     def stop(self):
         pass
