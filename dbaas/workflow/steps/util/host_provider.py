@@ -2,9 +2,10 @@
 from django.core.exceptions import ObjectDoesNotExist
 from requests import post, delete
 from dbaas_credentials.models import CredentialType
-from physical.models import Host
+from physical.models import Host, Instance
 from util import check_ssh, get_credentials_for
 from base import BaseInstanceStep
+
 
 
 CHANGE_MASTER_ATTEMPS = 4
@@ -245,11 +246,6 @@ class CreateVirtualMachine(HostProviderStep):
     def create_instance(self, host):
         self.instance.hostname = host
         self.instance.address = host.address
-        self.instance.port = self.driver.get_default_database_port()
-
-        if not self.instance.instance_type:
-            self.instance.instance_type = self.driver.get_default_instance_type()
-
         self.instance.read_only = bool(self.database)
         self.instance.save()
 
@@ -264,20 +260,34 @@ class CreateVirtualMachine(HostProviderStep):
         return self.instance.vm_name
 
     def do(self):
-        # TODO: o cloudstack_attr vai morrer ? onde o offering ficará ?
-        offering = self.infra.plan.cloudstack_attr.get_stronger_offering()
-        host = self.provider.create_host(self.infra, offering, self.vm_name)
+        # TODO: Remove cloudstack dependencies
+        if self.instance.is_database:
+            offering = self.infra.plan.cloudstack_attr.get_stronger_offering()
+        else:
+            offering = self.infra.plan.cloudstack_attr.get_weaker_offering()
+
+        try:
+            pair = self.infra.instances.get(dns=self.instance.dns)
+        except Instance.DoesNotExist:
+            host = self.provider.create_host(self.infra, offering, self.vm_name)
+            self.update_databaseinfra_last_vm_created()
+        else:
+            host = pair.hostname
 
         self.create_instance(host)
-        self.update_databaseinfra_last_vm_created()
 
-    def undo(self, workflow_dict):
+    def undo(self):
+        try:
+            host = self.instance.hostname
+        except ObjectDoesNotExist:
+            self.instance.delete()
+            return
 
-        for instance in workflow_dict['databaseinfra'].instances.all():
-            self.instance = instance
-            host = instance.hostname
-            self.provider.destroy_host(host)
-            host.delete()
-            instance.delete()
-
-        return True
+        try:
+            self.provider.destroy_host(
+                Host.objects.get(id=host.id)
+            )
+        except (Host.DoesNotExist, IndexError):
+            pass
+        self.instance.delete()
+        host.delete()
