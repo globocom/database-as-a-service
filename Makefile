@@ -86,9 +86,11 @@ run: # run local server
 	@cd dbaas && python manage.py runserver 0.0.0.0:8000 $(filter-out $@,$(MAKECMDGOALS))
 
 
+run_celery_debug: # run local celery
+	@cd dbaas && CELERY_RDBSIG=1 celery worker -E --loglevel=DEBUG --app=dbaas --beat $(filter-out $@,$(MAKECMDGOALS))
+
 run_celery: # run local celery
 	@cd dbaas && celery worker -E --loglevel=DEBUG --app=dbaas --beat $(filter-out $@,$(MAKECMDGOALS))
-
 
 shell: # run django shell
 	@cd dbaas && python manage.py shell_plus --use-pythonrc
