@@ -424,6 +424,7 @@ class DatabaseCreate(DatabaseMaintenanceTask):
     )
     database = models.ForeignKey(
         Database, related_name='databases_create', null=True, blank=True,
+        on_delete=models.SET_NULL
     )
     infra = models.ForeignKey(DatabaseInfra, related_name='databases_create')
     plan = models.ForeignKey(
