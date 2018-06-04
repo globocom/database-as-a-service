@@ -20,10 +20,15 @@ from util.providers import make_infra, clone_infra, destroy_infra, \
 from simple_audit.models import AuditRequest
 from system.models import Configuration
 from notification.models import TaskHistory
-from workflow.workflow import steps_for_instances, rollback_for_instances_full
+from workflow.workflow import (steps_for_instances, rollback_for_instances_full,
+                               total_of_steps)
 from maintenance.models import (DatabaseUpgrade, DatabaseResize,
                                 DatabaseChangeParameter, DatabaseReinstallVM)
 from maintenance.tasks import restore_database
+from maintenance.models import DatabaseCreate
+from util.providers import get_deploy_settings, get_deploy_instances
+from maintenance.tasks_create_database import get_instances_for
+
 
 
 LOG = get_task_logger(__name__)
@@ -150,9 +155,33 @@ def destroy_database(self, database, task_history=None, user=None):
         task_history.add_detail('')
         task_history.add_detail('Loading Process...')
 
-        databaseinfra = database.databaseinfra
+        infra = database.databaseinfra
 
-        destroy_infra(databaseinfra=databaseinfra, task=task_history)
+        # destroy_infra(databaseinfra=databaseinfra, task=task_history)
+        database_create = DatabaseCreate()
+        database_create.task = task_history
+        database_create.name = database.name
+        database_create.plan = database.plan
+        database_create.environment = database.environment
+        database_create.team = database.team
+        database_create.project = database.project
+        database_create.description = database.description
+        database_create.is_protected = database.is_protected
+        database_create.user = user.username if user else task.user
+        database_create.infra = database.infra
+        database_create.database = infra.databases.first()
+        database_create.save()
+
+        topology_path = database_create.plan.replication_topology.class_path
+        steps = get_deploy_settings(topology_path)
+
+        instances = get_instances_for(infra, topology_path)
+        database_create.current_step = total_of_steps(steps, instances)
+
+        database_create.save()
+
+        from maintenance.tasks_create_database import rollback_create
+        rollback_create(database_create, task_history, user)
 
         task_history.update_status_for(
             TaskHistory.STATUS_SUCCESS, details='Database destroyed successfully')
