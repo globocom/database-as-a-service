@@ -58,24 +58,28 @@ class Provider(object):
             self.credential.endpoint, self.provider, self.environment
         )
         data = {
-            "host_id": self.instance.identifier
+            "host_id": self.instance.hostname.identifier
         }
 
         response = post(url, json=data)
         if not response.ok:
             raise IndexError(response.content, response)
+
+        return True
 
     def stop(self):
         url = "{}/{}/{}/host/stop".format(
             self.credential.endpoint, self.provider, self.environment
         )
         data = {
-            "host_id": self.instance.identifier
+            "host_id": self.instance.hostname.identifier
         }
 
         response = post(url, json=data)
         if not response.ok:
             raise IndexError(response.content, response)
+
+        return True
 
     def new_version(self, engine):
         pass
