@@ -624,7 +624,7 @@ def database_resizes(request, context, database):
         offering__region__environment=database.environment,
         engine_type__name=database.engine_type
     ))
-    context['current_vm_offering'] = database.infra.cs_dbinfra_offering.get().offering
+    context['current_vm_offering'] = database.infra.hosts[0].offering
     for offering in context['vm_offerings']:
         if offering.offering == context['current_vm_offering']:
             break
