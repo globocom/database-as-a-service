@@ -113,6 +113,10 @@ class Engine(BaseModel):
     def full_name(self):
         return "{}_{}".format(self.name, self.version)
 
+    @property
+    def full_name_for_host_provider(self):
+        return self.full_name.replace(".", "_")
+
     def __unicode__(self):
         return self.full_name
 
