@@ -26,9 +26,9 @@ class DatabaseStep(BaseInstanceStep):
 
         self.driver = self.infra.get_driver()
 
-    @property
-    def host_cs(self):
-        return HostAttr.objects.get(host=self.host)
+#    @property
+#    def host_cs(self):
+#        return HostAttr.objects.get(host=self.host)
 
     def do(self):
         raise NotImplementedError
