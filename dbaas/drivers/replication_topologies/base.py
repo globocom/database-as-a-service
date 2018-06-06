@@ -227,7 +227,7 @@ class BaseTopology(object):
                 'workflow.steps.util.vm.ChangeMaster',
                 'workflow.steps.util.database.Stop',
                 'workflow.steps.util.host_provider.Stop',
-                'workflow.steps.util.vm.ReinstallTemplate',
+                'workflow.steps.util.host_provider.ReinstallTemplate',
                 'workflow.steps.util.host_provider.Start',
                 'workflow.steps.util.vm.WaitingBeReady',
                 'workflow.steps.util.vm.UpdateOSDescription',
