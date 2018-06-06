@@ -42,7 +42,7 @@ class BaseTopology(object):
             'workflow.steps.util.database.Stop',
             'workflow.steps.util.plan.ResizeConfigure',
             'workflow.steps.util.host_provider.Stop',
-            'workflow.steps.util.vm.ChangeOffering',
+            'workflow.steps.util.host_provider.ChangeOffering',
             'workflow.steps.util.host_provider.Start',
             'workflow.steps.util.database.Start',
         ) + self.get_resize_extra_steps() + (
@@ -85,9 +85,9 @@ class BaseTopology(object):
                 'workflow.steps.util.vm.ChangeMaster',
                 'workflow.steps.util.database.Stop',
                 'workflow.steps.util.database.CheckIsDown',
-                'workflow.steps.util.vm.Stop',
+                'workflow.steps.util.host_provider.Stop',
                 'workflow.steps.util.vm.InstallNewTemplate',
-                'workflow.steps.util.vm.Start',
+                'workflow.steps.util.host_provider.Start',
                 'workflow.steps.util.vm.WaitingBeReady',
                 'workflow.steps.util.vm.UpdateOSDescription',
             ) + self.get_upgrade_steps_extra() + (
@@ -226,9 +226,9 @@ class BaseTopology(object):
             'Reinstall VM': (
                 'workflow.steps.util.vm.ChangeMaster',
                 'workflow.steps.util.database.Stop',
-                'workflow.steps.util.vm.Stop',
+                'workflow.steps.util.host_provider.Stop',
                 'workflow.steps.util.vm.ReinstallTemplate',
-                'workflow.steps.util.vm.Start',
+                'workflow.steps.util.host_provider.Start',
                 'workflow.steps.util.vm.WaitingBeReady',
                 'workflow.steps.util.vm.UpdateOSDescription',
                 'workflow.steps.util.plan.Initialization',
