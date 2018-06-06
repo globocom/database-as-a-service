@@ -41,9 +41,9 @@ class BaseTopology(object):
             'workflow.steps.util.database.StopSlave',
             'workflow.steps.util.database.Stop',
             'workflow.steps.util.plan.ResizeConfigure',
-            'workflow.steps.util.vm.Stop',
+            'workflow.steps.util.host_provider.Stop',
             'workflow.steps.util.vm.ChangeOffering',
-            'workflow.steps.util.vm.Start',
+            'workflow.steps.util.host_provider.Start',
             'workflow.steps.util.database.Start',
         ) + self.get_resize_extra_steps() + (
             'workflow.steps.util.infra.Offering',
