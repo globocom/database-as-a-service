@@ -29,7 +29,7 @@ class Provider(object):
 
     @property
     def engine(self):
-        return str(self.instance.databaseinfra.engine).replace(".", "_")
+        return self.instance.databaseinfra.engine.full_name_for_host_provider
 
     @property
     def credential(self):
@@ -85,8 +85,20 @@ class Provider(object):
 
         return True
 
-    def new_version(self, engine):
-        pass
+    def new_version(self, engine=None):
+        url = "{}/{}/{}/host/reinstall".format(
+            self.credential.endpoint, self.provider, self.environment
+        )
+        data = {"host_id": self.host.identifier}
+        data.update(
+            **{'engine': engine.full_name_for_host_provider} if engine else {}
+        )
+
+        response = post(url, json=data)
+        if response.status_code != 200:
+            raise IndexError(response.content, response)
+
+        return True
 
     def new_offering(self, offering):
         url = "{}/{}/{}/host/resize".format(
@@ -214,15 +226,11 @@ class InstallNewTemplate(HostProviderStep):
 
 class ReinstallTemplate(HostProviderStep):
 
-    def __init__(self, instance):
-        super(ReinstallTemplate, self).__init__(instance)
-        self.future_engine = self.plan.engine
-
     def __unicode__(self):
         return "Reinstalling template to VM..."
 
     def do(self):
-        reinstall = self.provider.new_version(self.future_engine)
+        reinstall = self.provider.new_version()
         if not reinstall:
             raise EnvironmentError('Could not reinstall VM')
 
