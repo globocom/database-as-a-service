@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 import logging
+import requests
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.encoding import python_2_unicode_compatible
+from collections import namedtuple
+from dbaas_credentials.models import CredentialType
+from util import get_credentials_for
 
 LOG = logging.getLogger(__name__)
 
@@ -130,3 +134,31 @@ class BaseInstanceStepMigration(BaseInstanceStep):
     def plan(self):
         plan = super(BaseInstanceStepMigration, self).plan
         return plan.migrate_plan
+
+
+class HostProviderClient(object):
+    credential_type = CredentialType.HOST_PROVIDER
+
+    def __init__(self, env):
+        self.env = env
+        self._credential = None
+
+    @property
+    def credential(self):
+        if not self._credential:
+            self._credential = get_credentials_for(
+                self.env, self.credential_type
+            )
+        return self._credential
+
+
+    def get_vm_by_host(self, host):
+        api_host_url = '/{}/{}/host/{}'.format(
+            self.credential.project,
+            self.env.name,
+            host.identifier
+        )
+        resp = requests.get('{}{}'.format(self.credential.endpoint, api_host_url))
+        if resp.ok:
+            vm = resp.json()
+            return namedtuple('VMProperties', vm.keys())(*vm.values())
