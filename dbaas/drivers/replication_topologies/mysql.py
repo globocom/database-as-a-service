@@ -57,7 +57,7 @@ class MySQLSingle(BaseMysql):
     def get_deploy_steps(self):
         return [{
             'Creating virtual machine': (
-                'workflow.steps.util.vm.CreateVirtualMachineNewInfra',
+                'workflow.steps.util.host_provider.CreateVirtualMachine',
             )}, {
             'Creating dns': (
                 'workflow.steps.util.dns.CreateDNS',
@@ -227,7 +227,7 @@ class MySQLFoxHA(MySQLSingle):
     def get_deploy_steps(self):
         return [{
             'Creating virtual machine': (
-                'workflow.steps.util.vm.CreateVirtualMachineNewInfra',
+                'workflow.steps.util.host_provider.CreateVirtualMachine',
             )}, {
             'Creating VIP': (
                 'workflow.steps.util.network.CreateVip',
