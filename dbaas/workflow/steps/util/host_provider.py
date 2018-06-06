@@ -24,6 +24,10 @@ class Provider(object):
         return self.instance.databaseinfra.environment
 
     @property
+    def host(self):
+        return self.instance.hostname
+
+    @property
     def engine(self):
         return str(self.instance.databaseinfra.engine).replace(".", "_")
 
@@ -85,7 +89,21 @@ class Provider(object):
         pass
 
     def new_offering(self, offering):
-        pass
+        url = "{}/{}/{}/host/resize".format(
+            self.credential.endpoint, self.provider, self.environment
+        )
+
+        data = {
+            "host_id": self.host.identifier,
+            "cpus": offering.cpus,
+            'memory': offering.memory_size_mb
+        }
+
+        response = post(url, json=data)
+        if response.status_code != 200:
+            raise IndexError(response.content, response)
+
+        return True
 
     def create_host(self, infra, offering, name):
         url = "{}/{}/{}/host/new".format(
@@ -232,7 +250,7 @@ class ChangeOffering(HostProviderStep):
         return "Resizing VM..."
 
     def do(self):
-        success = self.provider.new_offering(offering)
+        success = self.provider.new_offering(self.resize.target_offer.offering)
         if not success:
             raise Exception("Could not change offering")
 
