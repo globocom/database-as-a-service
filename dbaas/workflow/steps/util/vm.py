@@ -9,12 +9,14 @@ from dbaas_cloudstack.models import LastUsedBundleDatabaseInfra, \
 from physical.models import Environment, Instance
 from util import exec_remote_command_host, check_ssh, get_credentials_for
 from base import BaseInstanceStep, BaseInstanceStepMigration
+from workflow.steps.util.base import HostProviderClient
 
 CHANGE_MASTER_ATTEMPS = 4
 CHANGE_MASTER_SECONDS = 15
 
 
 class VmStep(BaseInstanceStep):
+
 
     @property
     def host_cs(self):
@@ -157,8 +159,10 @@ class ChangeOffering(VmStep):
         return "Resizing VM..."
 
     def do(self):
+        host_provider_cli = HostProviderClient(self.infra.environment)
+        vm = host_provider_cli.get_vm_by_host(self.host)
         cloudstack_offering_id = self.cs_provider.get_vm_offering_id(
-            vm_id=self.host_cs.vm_id,
+            vm_id=vm.identifier,
             project_id=self.cs_credentials.project
         )
 
@@ -166,7 +170,7 @@ class ChangeOffering(VmStep):
             return
 
         success = self.cs_provider.change_service_for_vm(
-            self.host_cs.vm_id, self.target_offering_id
+            vm.identifier, self.target_offering_id
         )
         if not success:
             raise Exception("Could not change offering")
