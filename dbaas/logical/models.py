@@ -588,8 +588,7 @@ class Database(BaseModel):
     def get_cloudstack_service_offering_id(self):
         LOG.info("Get offering")
         try:
-            offer_id = self.databaseinfra.cs_dbinfra_offering.get(
-            ).offering.serviceofferingid
+            offer_id = self.infra.plan.cloudstack_attr.get_stronger_offering().serviceofferingid
         except Exception as e:
             LOG.info("Oops...{}".format(e))
             offer_id = None
