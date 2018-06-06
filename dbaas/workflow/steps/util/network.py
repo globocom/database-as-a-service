@@ -7,6 +7,8 @@ from dbaas_networkapi.equipment import Equipment
 from dbaas_networkapi.provider import NetworkProvider
 from dbaas_networkapi.utils import get_vip_ip_from_databaseinfra
 from base import BaseInstanceStep
+from workflow.steps.util.base import HostProviderClient
+
 
 
 class Network(BaseInstanceStep):
@@ -31,11 +33,20 @@ class CreateVip(Network):
     @property
     def equipments(self):
         equipments = []
+        host_provider_cli = HostProviderClient(self.infra.environment)
         for instance in self.infra.instances.all():
-            cs_host = HostAttr.objects.get(host=instance.hostname)
+            host = instance.hostname
+            vm = host_provider_cli.get_vm_by_host(host)
+            if vm is None:
+                raise Exception(
+                    "Cannot get information for host {} for identifier {}".format(
+                        host,
+                        host.identifier
+                    )
+                )
             equipment = Equipment(
-                '{}-{}'.format(self.api.vm_name, cs_host.vm_id),
-                instance.hostname.address, instance.port
+                '{}-{}'.format(self.api.vm_name, vm.identifier),
+                host.address, instance.port
             )
             equipments.append(equipment)
 
