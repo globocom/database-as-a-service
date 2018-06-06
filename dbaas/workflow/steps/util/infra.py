@@ -8,10 +8,6 @@ class Update(BaseInstanceStep):
     def __init__(self, instance):
         super(Update, self).__init__(instance)
 
-        self.infra_offering = DatabaseInfraOffering.objects.get(
-            databaseinfra=self.infra
-        )
-
     def do(self):
         raise NotImplementedError
 
@@ -34,9 +30,6 @@ class Offering(Update):
     def change_infra_offering(self, offering):
         if not offering:
             return
-
-        self.infra_offering.offering = offering
-        self.infra_offering.save()
 
         self.instance.hostname.offering = offering
         self.instance.hostname.save()
