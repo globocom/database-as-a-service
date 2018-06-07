@@ -86,7 +86,7 @@ class BaseTopology(object):
                 'workflow.steps.util.database.Stop',
                 'workflow.steps.util.database.CheckIsDown',
                 'workflow.steps.util.host_provider.Stop',
-                'workflow.steps.util.vm.InstallNewTemplate',
+                'workflow.steps.util.host_provider.InstallNewTemplate',
                 'workflow.steps.util.host_provider.Start',
                 'workflow.steps.util.vm.WaitingBeReady',
                 'workflow.steps.util.vm.UpdateOSDescription',

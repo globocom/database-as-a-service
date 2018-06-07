@@ -26,7 +26,7 @@ class ChangeBinaryBase(VmStep):
 
         output = {}
         return_code = exec_remote_command(
-            self.host.address, self.host_cs.vm_user, self.host_cs.vm_password,
+            self.host.address, self.host.user, self.host.password,
             script, output
         )
         if return_code != 0:
