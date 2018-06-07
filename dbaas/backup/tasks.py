@@ -12,7 +12,6 @@ import datetime
 import time
 from datetime import date, timedelta
 from util import exec_remote_command_host
-from dbaas_cloudstack.models import HostAttr as Cloudstack_HostAttr
 from util import get_worker_name
 from util import build_dict
 from util.providers import get_restore_snapshot_settings
@@ -52,7 +51,7 @@ def register_backup_dbmonitor(databaseinfra, snapshot):
         LOG.error("Error register backup on DBMonitor %s" % (e))
 
 
-def mysql_binlog_save(client, instance, cloudstack_hostattr):
+def mysql_binlog_save(client, instance):
 
     try:
         client.query('show master status')
@@ -121,16 +120,13 @@ def make_instance_snapshot_backup(instance, error, group):
         databaseinfra = instance.databaseinfra
         driver = databaseinfra.get_driver()
         client = driver.get_client(instance)
-        cloudstack_hostattr = Cloudstack_HostAttr.objects.get(
-            host=instance.hostname
-        )
 
         locked = lock_instance(driver, instance, client)
         if not locked:
             snapshot_final_status = Snapshot.WARNING
 
         if 'MySQL' in type(driver).__name__:
-            mysql_binlog_save(client, instance, cloudstack_hostattr)
+            mysql_binlog_save(client, instance)
 
         nfs_snapshot = create_snapshot(
             environment=databaseinfra.environment, host=instance.hostname
