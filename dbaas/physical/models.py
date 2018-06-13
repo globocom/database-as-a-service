@@ -567,6 +567,12 @@ class DatabaseInfra(BaseModel):
             raise ValidationError({'engine': _("Invalid environment")})
 
     @property
+    def offering(self):
+        database_instances = self.get_driver().get_database_instances()
+
+        return database_instances and database_instances[0].offering
+
+    @property
     def engine_name(self):
         if self.engine and self.engine.engine_type:
             return self.engine.engine_type.name
@@ -721,7 +727,8 @@ class DatabaseInfra(BaseModel):
         parameter_name = parameter_name.replace('-', '_')
         configuration = configuration_factory(
             self,
-            self.cs_dbinfra_offering.get().offering.memory_size_mb
+            # self.cs_dbinfra_offering.get().offering.memory_size_mb
+            self.offering.memory_size_mb
         )
         return getattr(configuration, parameter_name).default
 
