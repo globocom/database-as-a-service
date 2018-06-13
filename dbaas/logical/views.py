@@ -625,7 +625,8 @@ def database_resizes(request, context, database):
         engine_type__name=database.engine_type
     ))
     # TODO: put offering on databaseinfra too
-    context['current_vm_offering'] = database.infra.hosts[0].offering
+    context['current_vm_offering'] = (database.infra.hosts[0].offering
+                                      or database.infra.plan.cloudstack_attr.get_stronger_offering())
     for offering in context['vm_offerings']:
         if offering.offering == context['current_vm_offering']:
             break
