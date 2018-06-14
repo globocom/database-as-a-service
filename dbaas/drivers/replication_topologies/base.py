@@ -112,7 +112,7 @@ class BaseTopology(object):
 
     def get_add_database_instances_first_steps(self):
         return (
-            'workflow.steps.util.vm.CreateVirtualMachineHorizontalElasticity',
+            'workflow.steps.util.host_provider.CreateVirtualMachine',
             'workflow.steps.util.dns.CreateDNS',
             'workflow.steps.util.vm.WaitingBeReady',
             'workflow.steps.util.vm.UpdateOSDescription',
