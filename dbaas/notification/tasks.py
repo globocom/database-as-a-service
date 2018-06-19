@@ -990,7 +990,8 @@ def add_instances_to_database(self, database, user, task, number_of_instances=1)
         new_instance = Instance(
             databaseinfra=infra,
             dns=vm_name,
-            port=driver.get_default_database_port()
+            port=driver.get_default_database_port(),
+            instance_type=driver.get_default_instance_type()
         )
         new_instance.vm_name = vm_name
         instances.append(new_instance)
