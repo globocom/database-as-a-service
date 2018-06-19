@@ -886,13 +886,17 @@ class Instance(BaseModel):
 
     @property
     def offering(self):
-        # TODO: cloudstack vai morrer ?
+        host_offering = self.hostname.offering
+        if host_offering:
+            return host_offering
+
         cloudstack_attr = self.databaseinfra.plan.cloudstack_attr
 
-        if self.is_database:
-            return cloudstack_attr.get_stronger_offering()
+        if not self.is_database:
+            return cloudstack_attr.get_weaker_offering()
 
-        return cloudstack_attr.get_weaker_offering()
+        return cloudstack_attr.get_stronger_offering()
+
 
     @property
     def is_redis(self):
