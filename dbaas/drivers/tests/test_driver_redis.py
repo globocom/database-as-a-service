@@ -53,6 +53,8 @@ class RedisDriverPropertiesTestCase(BaseRedisDriverTestCase):
                   when not found on parameter table
         '''
 
+        self.databaseinfra.plan.provider = 1
+        self.databaseinfra.plan.save()
         self.assertEqual(self.driver.maxmemory, 4718592)
 
 

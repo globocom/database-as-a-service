@@ -14,6 +14,7 @@ from dbaas_nfsaas.models import HostAttr
 from dbaas_cloudstack.models import DatabaseInfraOffering, CloudStackOffering
 from physical.tests import factory
 from drivers.fake import FakeDriver
+from mock import patch
 
 
 LOG = logging.getLogger(__name__)
@@ -26,7 +27,8 @@ class PropertiesTestCase(TestCase):
     KB2GB_FACTOR = (1.0 * 1024 * 1024)
 
     @classmethod
-    def setUpClass(cls):
+    @patch('drivers.base.BaseDriver.get_database_instances')
+    def setUpClass(cls, instances_mock):
         cls.databaseinfra = factory.DatabaseInfraFactory(
             name="__test__ mysqlinfra",
             user="root", password='Fake')
@@ -46,6 +48,15 @@ class PropertiesTestCase(TestCase):
             databaseinfra=cls.databaseinfra,
             offering=cs_offering
         )
+        instances_mock.return_value = [cls.instance]
+        factory.PlanAttrFactory.create(plan=cls.databaseinfra.plan)
+        cls.instance.hostname.offering = cs_offering
+        cls.instance.hostname.save()
+        offering = cls.databaseinfra.offering
+        offering.memory_size_mb = 9
+        offering.save()
+        cls.databaseinfra.plan.provider = 1
+        cls.databaseinfra.plan.save()
 
     @classmethod
     def tearDownClass(cls):
@@ -107,13 +118,15 @@ class PropertiesTestCase(TestCase):
 
         self.assertEqual(self.databaseinfra.per_database_size_bytes, 110000)
 
-    def test_size_for_redis_engine_configuration(self):
+    @patch('drivers.base.BaseDriver.get_database_instances')
+    def test_size_for_redis_engine_configuration(self, instances_mock):
         '''
             Test property: per_database_size_bytes
             case: When engine type is redis the value must be from configuration
                   when not found on parameter table
         '''
 
+        instances_mock.return_value = [self.instance]
         self.databaseinfra.engine.engine_type.name = 'redis'
         self.databaseinfra.engine.engine_type.save()
         self.assertEqual(self.databaseinfra.per_database_size_bytes, 4718592)
