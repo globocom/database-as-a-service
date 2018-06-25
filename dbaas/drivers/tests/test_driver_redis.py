@@ -29,6 +29,8 @@ class RedisDriverPropertiesTestCase(BaseRedisDriverTestCase):
             offering=cs_offering
         )
         PlanAttrFactory.create(plan=self.databaseinfra.plan)
+        self.databaseinfra.plan.provider = 1
+        self.databaseinfra.plan.save()
         offering = self.databaseinfra.offering
         offering.memory_size_mb = 9
         offering.save()
