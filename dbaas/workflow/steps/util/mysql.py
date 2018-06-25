@@ -70,7 +70,7 @@ class SaveMySQLBinlog(MySQLStep):
 
         driver = self.infra.get_driver()
         client = driver.get_client(self.instance)
-        mysql_binlog_save(client, self.instance, self.host)
+        mysql_binlog_save(client, self.instance)
 
 
 class RestoreSnapshotMySQL(RestoreSnapshot):
