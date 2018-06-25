@@ -108,7 +108,7 @@ class PlanFactory(factory.DjangoModelFactory):
     name = factory.Sequence(lambda n: 'plan-{0}'.format(n))
     is_active = True
     engine = factory.SubFactory(EngineFactory)
-    provider = 1
+    provider = 0
     disk_offering = factory.SubFactory(DiskOfferingFactory)
     replication_topology = factory.SubFactory(ReplicationTopologyFactory)
 
