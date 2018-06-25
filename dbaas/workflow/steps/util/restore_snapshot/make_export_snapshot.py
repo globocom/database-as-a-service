@@ -69,8 +69,7 @@ class MySQLSaveBinlogPosition(BaseStep):
             instance = host_and_export['host'].instances.first()
             driver = workflow_dict['database'].infra.get_driver()
             client = driver.get_client(instance)
-            host = CsHostAttr.objects.get(host=instance.hostname)
-            mysql_binlog_save(client, instance, host)
+            mysql_binlog_save(client, instance)
 
         return True
 
