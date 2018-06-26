@@ -14,6 +14,13 @@ class Foreman(BaseInstanceStep):
         )
         self.provider = get_foreman_provider(self.infra, self.credentials)
 
+    @property
+    def fqdn(self):
+        output = {}
+        script = 'hostname'
+        exec_remote_command_host(self.host, script, output)
+        return output['stdout'][0].strip()
+
     def do(self):
         raise NotImplementedError
 
@@ -26,15 +33,18 @@ class SetupDSRC(Foreman):
     def __unicode__(self):
         return "Foreman registering DSRC class..."
 
-    @property
-    def fqdn(self):
-        output = {}
-        script = 'hostname'
-        exec_remote_command_host(self.host, script, output)
-        return output['stdout'][0].strip()
-
     def do(self):
         vip = Vip.objects.get(databaseinfra=self.infra)
         self.provider.setup_database_dscp(
             self.fqdn, vip.vip_ip, vip.dscp, self.instance.port
         )
+
+
+class DeleteHost(Foreman):
+
+    def __unicode__(self):
+        return "Foreman removing host..."
+
+    def do(self):
+        self.provider.delete_host(self.fqdn)
+        self.provider.delete_host(self.host.hostname)
