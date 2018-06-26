@@ -349,8 +349,23 @@ class MySQLFoxHA(MySQLSingle):
             'workflow.steps.util.puppet.CheckStatus',
         )
 
-    def get_reinstall_vm_extra_steps(self):
+    def get_reinstallvm_steps(self):
         return [{
+            'Disable monitoring and alarms': (
+                'workflow.steps.util.zabbix.DisableAlarms',
+                'workflow.steps.util.db_monitor.DisableMonitoring',
+            ),
+        }] + [{
+            'Reinstall VM': (
+                'workflow.steps.util.vm.ChangeMaster',
+                'workflow.steps.util.database.Stop',
+                'workflow.steps.util.host_provider.Stop',
+                'workflow.steps.util.host_provider.ReinstallTemplate',
+                'workflow.steps.util.host_provider.Start',
+                'workflow.steps.util.vm.WaitingBeReady',
+                'workflow.steps.util.vm.UpdateOSDescription',
+            ),
+        }] + [{
             'Configure Puppet': (
                 'workflow.steps.util.vm.CheckHostName',
                 'workflow.steps.util.puppet.ExecuteIfProblem',
@@ -360,4 +375,11 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.puppet.Execute',
                 'workflow.steps.util.puppet.CheckStatus',
             ),
-        }]
+        }] + [{
+            'Start Database': (
+                'workflow.steps.util.plan.Initialization',
+                'workflow.steps.util.plan.Configure',
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.CheckIsUp',
+            ),
+        }] + self.get_reinstallvm_steps_final()
