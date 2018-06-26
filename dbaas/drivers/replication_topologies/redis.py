@@ -83,6 +83,9 @@ class RedisSingle(BaseRedis):
             'Creating Database': (
                 'workflow.steps.util.database.Create',
             )}, {
+            'Check ACL': (
+                'workflow.steps.util.acl.BindNewInstance',
+            )}, {
             'Creating monitoring and alarms': (
                 'workflow.steps.util.zabbix.CreateAlarms',
                 'workflow.steps.util.db_monitor.CreateInfraMonitoring',
@@ -189,6 +192,9 @@ class RedisSentinel(BaseRedis):
                 'workflow.steps.util.disk.BackupRestore',
                 'workflow.steps.util.disk.UpdateRestore',
             )}, {
+            'Check ACL': (
+                'workflow.steps.util.acl.BindNewInstance',
+            )}, {
             'Enabling monitoring': (
                 'workflow.steps.util.db_monitor.EnableMonitoring',
                 'workflow.steps.util.zabbix.EnableAlarms',
@@ -238,6 +244,9 @@ class RedisSentinel(BaseRedis):
             )}, {
             'Creating Database': (
                 'workflow.steps.util.database.Create',
+            )}, {
+            'Check ACL': (
+                'workflow.steps.util.acl.BindNewInstance',
             )}, {
             'Creating monitoring and alarms': (
                 'workflow.steps.util.sentinel.CreateAlarmsNewInfra',
@@ -297,6 +306,9 @@ class RedisCluster(BaseRedis):
             )}, {
             'Creating Database': (
                 'workflow.steps.util.database.Create',
+            )}, {
+            'Check ACL': (
+                'workflow.steps.util.acl.BindNewInstance',
             )}, {
             'Creating monitoring and alarms': (
                 'workflow.steps.util.zabbix.CreateAlarms',

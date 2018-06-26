@@ -85,6 +85,9 @@ class MongoDBSingle(BaseMongoDB):
             'Creating Database': (
                 'workflow.steps.util.database.Create',
             )}, {
+            'Check ACL': (
+                'workflow.steps.util.acl.BindNewInstance',
+            )}, {
             'Creating monitoring and alarms': (
                 'workflow.steps.util.zabbix.CreateAlarms',
                 'workflow.steps.util.db_monitor.CreateInfraMonitoring',
@@ -231,6 +234,9 @@ class MongoDBReplicaset(BaseMongoDB):
             )}, {
             'Creating Database': (
                 'workflow.steps.util.database.Create',
+            )}, {
+            'Check ACL': (
+                'workflow.steps.util.acl.BindNewInstance',
             )}, {
             'Creating monitoring and alarms': (
                 'workflow.steps.util.zabbix.CreateAlarms',
