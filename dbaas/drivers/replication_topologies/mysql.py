@@ -359,9 +359,10 @@ class MySQLFoxHA(MySQLSingle):
             'Reinstall VM': (
                 'workflow.steps.util.vm.ChangeMaster',
                 'workflow.steps.util.database.Stop',
-                'workflow.steps.util.host_provider.Stop',
-                'workflow.steps.util.host_provider.ReinstallTemplate',
-                'workflow.steps.util.host_provider.Start',
+                'workflow.steps.util.foreman.DeleteHost',
+                'workflow.steps.util.vm.Stop',
+                'workflow.steps.util.vm.ReinstallTemplate',
+                'workflow.steps.util.vm.Start',
                 'workflow.steps.util.vm.WaitingBeReady',
                 'workflow.steps.util.vm.UpdateOSDescription',
             ),
@@ -383,3 +384,26 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.database.CheckIsUp',
             ),
         }] + self.get_reinstallvm_steps_final()
+
+    def get_upgrade_steps(self):
+        return [{
+            self.get_upgrade_steps_initial_description(): (
+                'workflow.steps.util.zabbix.DestroyAlarms',
+                'workflow.steps.util.db_monitor.DisableMonitoring',
+            ),
+        }] + [{
+            self.get_upgrade_steps_description(): (
+                'workflow.steps.util.vm.ChangeMaster',
+                'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.CheckIsDown',
+                'workflow.steps.util.foreman.DeleteHost',
+                'workflow.steps.util.vm.Stop',
+                'workflow.steps.util.vm.InstallNewTemplate',
+                'workflow.steps.util.vm.Start',
+                'workflow.steps.util.vm.WaitingBeReady',
+                'workflow.steps.util.vm.UpdateOSDescription',
+            ) + self.get_upgrade_steps_extra() + (
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.CheckIsUp',
+            ),
+        }] + self.get_upgrade_steps_final()
