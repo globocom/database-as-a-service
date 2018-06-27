@@ -175,13 +175,17 @@ def destroy_database(self, database, task_history=None, user=None):
         topology_path = database_create.plan.replication_topology.class_path
         steps = get_deploy_settings(topology_path)
 
-        instances = get_instances_for(infra, topology_path)
+        # instances = get_instances_for(infra, topology_path)
+        instances = map(
+            lambda host: host.instances.order_by('instance_type').first(),
+            infra.hosts
+        )
         database_create.current_step = total_of_steps(steps, instances)
 
         database_create.save()
 
         from maintenance.tasks_create_database import rollback_create
-        rollback_create(database_create, task_history, user)
+        rollback_create(database_create, task_history, user, instances=instances)
 
         task_history.update_status_for(
             TaskHistory.STATUS_SUCCESS, details='Database destroyed successfully')

@@ -113,11 +113,12 @@ def create_database(
         )
 
 
-def rollback_create(maintenance, task, user=None):
+def rollback_create(maintenance, task, user=None, instances=None):
     topology_path = maintenance.plan.replication_topology.class_path
     steps = get_deploy_settings(topology_path)
 
-    instances = get_instances_for(maintenance.infra, topology_path)
+    if instances is None:
+        instances = get_instances_for(maintenance.infra, topology_path)
 
     maintenance.id = None
     maintenance.user = user.username if user else task.user
