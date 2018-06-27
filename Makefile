@@ -92,6 +92,9 @@ run_celery_debug: # run local celery
 run_celery: # run local celery
 	@cd dbaas && celery worker -E --loglevel=DEBUG --app=dbaas --beat $(filter-out $@,$(MAKECMDGOALS))
 
+sync_celery: # sync celery tasks
+	@cd dbaas && python manage.py sync_celery --celery_hosts=1
+
 shell: # run django shell
 	@cd dbaas && python manage.py shell_plus --use-pythonrc
 
