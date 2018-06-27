@@ -343,3 +343,27 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.zabbix.EnableAlarms',
             )
         }]
+
+    def get_upgrade_steps_extra(self):
+        return super(MySQLFoxHA, self).get_upgrade_steps_extra() + (
+            'workflow.steps.util.vm.CheckHostName',
+            'workflow.steps.util.puppet.ExecuteIfProblem',
+            'workflow.steps.util.puppet.WaitingBeDone',
+            'workflow.steps.util.puppet.CheckStatus',
+            'workflow.steps.util.foreman.SetupDSRC',
+            'workflow.steps.util.puppet.Execute',
+            'workflow.steps.util.puppet.CheckStatus',
+        )
+
+    def get_reinstall_vm_extra_steps(self):
+        return [{
+            'Configure Puppet': (
+                'workflow.steps.util.vm.CheckHostName',
+                'workflow.steps.util.puppet.ExecuteIfProblem',
+                'workflow.steps.util.puppet.WaitingBeDone',
+                'workflow.steps.util.puppet.CheckStatus',
+                'workflow.steps.util.foreman.SetupDSRC',
+                'workflow.steps.util.puppet.Execute',
+                'workflow.steps.util.puppet.CheckStatus',
+            ),
+        }]
