@@ -37,16 +37,10 @@ class HostAdmin(services_admin.DjangoServicesAdmin):
         "address", "os_description"
     )
     list_display = (
-        "hostname", "address", "offering", "os_description", "monitor_url_html",
-        "get_bundle"
+        "hostname", "address", "offering", "os_description", "monitor_url_html"
     )
     readonly_fields = ("offering",)
     save_on_top = True
-
-    def get_bundle(self, obj):
-        return obj.cs_host_attributes.last().bundle
-    get_bundle.admin_order_field = 'bundle'
-    get_bundle.short_description = 'Bundle Name'
 
     def monitor_url_html(self, host):
         return "<a href='%(u)s' target='_blank'>%(u)s</a>" % {'u': host.monitor_url}
