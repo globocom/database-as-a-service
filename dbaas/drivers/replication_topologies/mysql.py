@@ -195,10 +195,27 @@ class MySQLFoxHA(MySQLSingle):
         )
 
     def check_instance_is_master(self, driver, instance):
-        return self._get_fox_provider(driver).node_is_master(
+        fox_node_is_master = self._get_fox_provider(driver).node_is_master(
             group_name=driver.databaseinfra.name,
             node_ip=instance.address
         )
+
+        if not fox_node_is_master:
+            return fox_node_is_master
+
+        query = "show variables like 'server_id'"
+
+        try:
+            instance_result = driver.query(query, instance)
+            master_result = driver.query(query)
+        except Exception, e:
+            LOG.warning("Ops... %s" % e)
+            return False
+
+        instance_server_id = int(instance_result[0]['Value'])
+        master_server_id = int(master_result[0]['Value'])
+
+        return instance_server_id == master_server_id
 
     def set_master(self, driver, instance):
         self._get_fox_provider(driver).set_master(
