@@ -27,6 +27,7 @@ class BaseTopology(object):
 
     def get_resize_extra_steps(self):
         return (
+            'workflow.steps.util.database.Start',
             'workflow.steps.util.database.StartSlave',
             'workflow.steps.util.agents.Start',
             'workflow.steps.util.database.CheckIsUp',
@@ -44,7 +45,6 @@ class BaseTopology(object):
             'workflow.steps.util.vm.Stop',
             'workflow.steps.util.vm.ChangeOffering',
             'workflow.steps.util.vm.Start',
-            'workflow.steps.util.database.Start',
         ) + self.get_resize_extra_steps() + (
             'workflow.steps.util.infra.Offering',
             'workflow.steps.util.vm.InstanceIsSlave',
