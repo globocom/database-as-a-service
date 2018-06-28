@@ -73,7 +73,7 @@
     <div class="control-group">
       <div class="control-label"><label>Engine upgrade:</label></div>
       <div class="controls">
-        <a href="{{ database.get_mongodb_engine_version_upgrade_url }}" class="btn btn-primary" title="Start engine upgrade" onclick="return confirm('Are you sure?')">Migrate MongoDB 2.4 to 3.0</a>
+        <a href="{{ database.get_mongodb_engine_version_upgrade_url }}" class="btn btn-primary" title="Start engine upgrade" onclick="return confirm('Are you sure?')">Upgrade MongoDB 2.4 to 3.0</a>
       </div>
     </div>
   {% elif can_do_upgrade and database.databaseinfra.plan.replication_topology.can_upgrade_db %}
@@ -81,10 +81,10 @@
       <div class="control-label"><label>Engine upgrade:</label></div>
       <div class="controls">
         {% if last_upgrade and last_upgrade.is_status_error %}
-          <a href="{{ database.get_upgrade_retry_url }}" class="btn btn-warning" title="Retry upgrade" onclick="return confirm('Are you sure?')">Retry migrate {{ database.infra.engine_name }} {{ database.infra.plan.engine.version}} to {{ database.infra.plan.engine_equivalent_plan.engine.version }}</a>
+          <a href="{{ database.get_upgrade_retry_url }}" class="btn btn-warning" title="Retry upgrade" onclick="return confirm('Are you sure?')">Retry upgrade {{ database.infra.engine_name }} {{ database.infra.plan.engine.version}} to {{ database.infra.plan.engine_equivalent_plan.engine.version }}</a>
           <p><a href="{% url 'admin:maintenance_databaseupgrade_change' last_upgrade.id %}" target='_blank'>Last upgrade</a> has an <b>error</b>, please check the <a href="{% url 'admin:notification_taskhistory_change' last_upgrade.task.id %}" target='_blank'>task</a> and retry the database upgrade clicking in button above</p>
         {% else %}
-          <a href="{{ database.get_upgrade_url }}" class="btn btn-primary" title="Start upgrade" onclick="return confirm('Are you sure?')">Migrate {{ database.infra.engine_name }} {{database.infra.plan.engine.version }} to {{ database.infra.plan.engine_equivalent_plan.engine.version }}</a>
+          <a href="{{ database.get_upgrade_url }}" class="btn btn-primary" title="Start upgrade" onclick="return confirm('Are you sure?')">Upgrade {{ database.infra.engine_name }} {{database.infra.plan.engine.version }} to {{ database.infra.plan.engine_equivalent_plan.engine.version }}</a>
         {% endif %}
       </div>
     </div>
