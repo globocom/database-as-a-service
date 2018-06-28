@@ -25,6 +25,14 @@ class BaseMysql(BaseTopology):
             'workflow.steps.util.deploy.start_monit.StartMonit',
         )
 
+    def get_resize_extra_steps(self):
+        return (
+            'workflow.steps.util.database.CheckIsUp',
+            'workflow.steps.util.database.StartSlave',
+            'workflow.steps.util.agents.Start',
+            'workflow.steps.util.database.WaitForReplication',
+        )
+
     def deploy_last_steps(self):
         return (
             'workflow.steps.util.deploy.build_database.BuildDatabase',
