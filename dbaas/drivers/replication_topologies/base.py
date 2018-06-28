@@ -232,7 +232,7 @@ class BaseTopology(object):
                 'workflow.steps.util.vm.WaitingBeReady',
                 'workflow.steps.util.vm.UpdateOSDescription',
             ),
-        }] + self.get_reinstall_vm_extra_steps() + [{
+        }] + [{
             'Start Database': (
                 'workflow.steps.util.plan.Initialization',
                 'workflow.steps.util.plan.Configure',
@@ -248,9 +248,6 @@ class BaseTopology(object):
                 'workflow.steps.util.zabbix.EnableAlarms',
             ),
         }]
-
-    def get_reinstall_vm_extra_steps(self):
-        return []
 
     @property
     def driver_name(self):
