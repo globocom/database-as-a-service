@@ -144,6 +144,7 @@ class TestMongoDBReplicaset(AbstractBaseMondodbTestCase):
         return [{
             'Upgrading to MongoDB 3.4': (
                 'workflow.steps.util.vm.ChangeMaster',
+                'workflow.steps.util.database.CheckIfSwitchMaster',
                 'workflow.steps.util.database.Stop',
                 'workflow.steps.util.database.CheckIsDown',
                 'workflow.steps.mongodb.upgrade.vm.ChangeBinaryTo34',

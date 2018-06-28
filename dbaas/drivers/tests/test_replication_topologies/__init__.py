@@ -45,6 +45,7 @@ class AbstractReplicationTopologySettingsTestCase(TestCase):
 
     def _get_resize_extra_steps(self):
         return (
+            'workflow.steps.util.database.Start',
             'workflow.steps.util.database.StartSlave',
             'workflow.steps.util.agents.Start',
             'workflow.steps.util.database.CheckIsUp',
@@ -55,6 +56,7 @@ class AbstractReplicationTopologySettingsTestCase(TestCase):
         return [{'Resizing database': (
             'workflow.steps.util.zabbix.DisableAlarms',
             'workflow.steps.util.vm.ChangeMaster',
+            'workflow.steps.util.database.CheckIfSwitchMaster',
             'workflow.steps.util.agents.Stop',
             'workflow.steps.util.database.StopSlave',
             'workflow.steps.util.database.Stop',
@@ -62,7 +64,6 @@ class AbstractReplicationTopologySettingsTestCase(TestCase):
             'workflow.steps.util.vm.Stop',
             'workflow.steps.util.vm.ChangeOffering',
             'workflow.steps.util.vm.Start',
-            'workflow.steps.util.database.Start',
         ) + self._get_resize_extra_steps() + (
             'workflow.steps.util.infra.Offering',
             'workflow.steps.util.vm.InstanceIsSlave',
@@ -101,6 +102,7 @@ class AbstractReplicationTopologySettingsTestCase(TestCase):
         }] + [{
             self._get_upgrade_steps_description(): (
                 'workflow.steps.util.vm.ChangeMaster',
+                'workflow.steps.util.database.CheckIfSwitchMaster',
                 'workflow.steps.util.database.Stop',
                 'workflow.steps.util.database.CheckIsDown',
                 'workflow.steps.util.vm.Stop',
@@ -192,6 +194,7 @@ class AbstractReplicationTopologySettingsTestCase(TestCase):
                 'workflow.steps.util.zabbix.DisableAlarms',
                 'workflow.steps.util.db_monitor.DisableMonitoring',
                 'workflow.steps.util.vm.ChangeMaster',
+                'workflow.steps.util.database.CheckIfSwitchMaster',
                 'workflow.steps.util.database.Stop',
                 'workflow.steps.util.database.CheckIsDown',
             ) + self._get_change_parameter_config_steps() + (
@@ -233,18 +236,25 @@ class AbstractReplicationTopologySettingsTestCase(TestCase):
         }] + [{
             'Reinstall VM': (
                 'workflow.steps.util.vm.ChangeMaster',
+                'workflow.steps.util.database.CheckIfSwitchMaster',
                 'workflow.steps.util.database.Stop',
                 'workflow.steps.util.vm.Stop',
                 'workflow.steps.util.vm.ReinstallTemplate',
                 'workflow.steps.util.vm.Start',
                 'workflow.steps.util.vm.WaitingBeReady',
                 'workflow.steps.util.vm.UpdateOSDescription',
+            ),
+        }] + self._get_reinstall_vm_extra_steps() + [{
+            'Start Database': (
                 'workflow.steps.util.plan.Initialization',
                 'workflow.steps.util.plan.Configure',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
             ),
         }] + self._get_reinstallvm_steps_final()
+
+    def _get_reinstall_vm_extra_steps(self):
+        return []
 
     def _get_reinstallvm_steps_final(self):
         return [{

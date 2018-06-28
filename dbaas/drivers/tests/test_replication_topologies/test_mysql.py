@@ -31,6 +31,13 @@ class AbstractBaseMySQLTestCase(AbstractReplicationTopologySettingsTestCase):
             'workflow.steps.util.clone.clone_database.CloneDatabase',
         ) + self._get_monitoring_settings()
 
+    def _get_resize_extra_steps(self):
+        return (
+            'workflow.steps.util.database.CheckIsUp',
+            'workflow.steps.util.database.StartSlave',
+            'workflow.steps.util.agents.Start',
+            'workflow.steps.util.database.WaitForReplication',
+        )
 
 class TestMySQLSingle(AbstractBaseMySQLTestCase):
 
@@ -250,4 +257,28 @@ class TestMySQLFoxHA(AbstractBaseMySQLTestCase):
                 'workflow.steps.util.db_monitor.EnableMonitoring',
                 'workflow.steps.util.zabbix.EnableAlarms',
             )
+        }]
+
+    def _get_upgrade_steps_extra(self):
+        return super(TestMySQLFoxHA, self)._get_upgrade_steps_extra() + (
+            'workflow.steps.util.vm.CheckHostName',
+            'workflow.steps.util.puppet.ExecuteIfProblem',
+            'workflow.steps.util.puppet.WaitingBeDone',
+            'workflow.steps.util.puppet.CheckStatus',
+            'workflow.steps.util.foreman.SetupDSRC',
+            'workflow.steps.util.puppet.Execute',
+            'workflow.steps.util.puppet.CheckStatus',
+        )
+
+    def _get_reinstall_vm_extra_steps(self):
+        return [{
+            'Configure Puppet': (
+                'workflow.steps.util.vm.CheckHostName',
+                'workflow.steps.util.puppet.ExecuteIfProblem',
+                'workflow.steps.util.puppet.WaitingBeDone',
+                'workflow.steps.util.puppet.CheckStatus',
+                'workflow.steps.util.foreman.SetupDSRC',
+                'workflow.steps.util.puppet.Execute',
+                'workflow.steps.util.puppet.CheckStatus',
+            ),
         }]
