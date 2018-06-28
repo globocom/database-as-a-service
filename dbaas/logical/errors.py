@@ -25,7 +25,7 @@ class BusyDatabaseError(DisabledDatabase):
 class MigrationDatabaseError(DisabledDatabase):
     def __init__(self, database, operation, url):
         msg = 'Database {} cannot do {} ' \
-              'because it is being migrated'.format(database, operation)
+              'because it is being upgraded'.format(database, operation)
         super(MigrationDatabaseError, self).__init__(msg, url)
 
 
