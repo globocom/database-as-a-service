@@ -541,3 +541,24 @@ class Create(DatabaseStep):
 
         database.delete()
         LOG.info("Database destroyed....")
+
+
+class CheckIfInstanceIsMasterRestore(DatabaseStep):
+    def __unicode__(self):
+        return "Checking if restored instance is master..."
+
+    def do(self):
+
+        if not self.infra.plan.is_ha:
+            return
+
+        if not self.restore.is_master(self.instance):
+            return
+
+        for _ in range(CHECK_ATTEMPTS):
+            master = self.driver.get_master_instance()
+            if master and master == self.instance:
+                return
+            sleep(CHECK_SECONDS)
+
+        raise EnvironmentError('The instance is not master.')
