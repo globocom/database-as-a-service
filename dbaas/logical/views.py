@@ -1020,7 +1020,6 @@ def _destroy_databases(request, database):
         )
     )
 
-
 @database_view('destroy')
 def database_destroy(request, context, database):
     if request.method == 'POST':
@@ -1037,6 +1036,41 @@ def database_destroy(request, context, database):
         context, RequestContext(request)
     )
 
+def format_string(context, is_enabled):
+    if is_enabled:
+        context.update({'alarm_label': 'Disable'})
+    else:
+        context.update({'alarm_label': 'Enable'})
+    context.update({'confirmation_message': "Are you sure you want to {} alarms?".
+                   format(context['alarm_label']),
+                    'box_title': "{} alarm now".format(context['alarm_label']),
+                    'button_value': context['alarm_label']})
+
+
+@database_view('alarm')
+def database_alarm(request, context, database):
+
+    from workflow.steps.util.zabbix import ZabbixStep, DisableAlarms, EnableAlarms
+
+    is_enabled = True
+
+    if request.method == 'POST':
+        if 'database_alarm' in request.POST:
+            zabbix_step = ZabbixStep(database.databaseinfra.instances.first())
+            database.zabbix_alarm = zabbix_step.zabbix_provider.is_alarms_enabled()
+            if database.zabbix_alarm:
+                is_enabled = True
+                DisableAlarms(database.databaseinfra.instances.first()).do()
+            else:
+                is_enabled = False
+                EnableAlarms(database.databaseinfra.instances.first()).do()
+
+    format_string(context, is_enabled)
+
+    return render_to_response(
+        "logical/database/details/alarm_tab.html",
+        context, RequestContext(request)
+    )
 
 def database_switch_write(request, database_id, host_id):
     database = Database.objects.get(id=database_id)
