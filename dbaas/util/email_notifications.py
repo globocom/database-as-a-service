@@ -94,6 +94,9 @@ def database_usage(context={}):
         addr_to = Configuration.get_by_name("new_user_notify_email")
 
     context['domain'] = get_domain()
+    database = context['database']
+    context['database_url'] = get_domain()+ reverse('admin:logical_database_hosts',
+                                                    kwargs={'id': database.id})
 
     send_mail_template(subject, template, addr_from, addr_to,
                        fail_silently=False, attachments=None, context=context)
@@ -134,7 +137,9 @@ def disk_resize_notification(database, new_disk, usage_percentage):
         'domain': get_domain(),
         'database': database,
         'usage_percentage': usage_percentage,
-        'new_disk_offering': new_disk
+        'new_disk_offering': new_disk,
+        'database_url': get_domain() + reverse('admin:logical_database_hosts',
+                                               kwargs={'id': database.id})
     }
 
     send_mail_template(
