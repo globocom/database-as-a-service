@@ -533,6 +533,9 @@ class UpdateRestore(Disk):
         return self.restore.is_master(self.instance)
 
     def do(self):
+        if not self.is_valid:
+            return
+
         old_disk = self.host.active_disk
         new_disk = self.host.nfsaas_host_attributes.last()
 
