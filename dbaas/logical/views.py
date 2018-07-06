@@ -1020,6 +1020,7 @@ def _destroy_databases(request, database):
         )
     )
 
+
 @database_view('destroy')
 def database_destroy(request, context, database):
     if request.method == 'POST':
