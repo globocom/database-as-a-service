@@ -9,7 +9,7 @@ from dbaas_nfsaas.models import HostAttr as HostAttrNfsaas
 
 class HostAttrInline(admin.StackedInline):
     model = HostAttr
-    max_num = 0
+    max_num = 1
     template = 'admin/physical/shared/inline_form.html'
 
     def has_delete_permission(self, request, obj=None):
@@ -39,7 +39,7 @@ class HostAdmin(services_admin.DjangoServicesAdmin):
     list_display = (
         "hostname", "address", "offering", "os_description", "monitor_url_html"
     )
-    readonly_fields = ("offering",)
+    readonly_fields = ("offering", "identifier")
     save_on_top = True
 
     def monitor_url_html(self, host):
@@ -49,6 +49,6 @@ class HostAdmin(services_admin.DjangoServicesAdmin):
     monitor_url_html.admin_order_field = "monitor_url"
 
     inlines = [
-        HostAttrInline,
         HostAttrNfsaasInline,
+        HostAttrInline,
     ]
