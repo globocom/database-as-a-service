@@ -208,7 +208,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 icon="icon-warning-sign", css_class="show-resize"
             )
         else:
-            return database.offering
+            return database.databaseinfra.offering
 
     offering_html.short_description = _("offering")
 
