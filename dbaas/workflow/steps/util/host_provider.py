@@ -142,6 +142,7 @@ class Provider(object):
         host.password = self.vm_credential.password
         host.provider = self.provider
         host.identifier = content["id"]
+        host.offering = offering
         host.save()
 
         return host
