@@ -821,6 +821,14 @@ class Host(BaseModel):
         return self.nfsaas_host_attributes.get(is_active=True)
 
 
+class Volume(BaseModel):
+    host = models.ForeignKey(Host, related_name="volumes")
+    identifier = models.CharField(max_length=255)
+    is_active = models.BooleanField(default=True)
+    total_size_kb = models.IntegerField(null=True, blank=True)
+    used_size_kb = models.IntegerField(null=True, blank=True)
+
+
 class Instance(BaseModel):
 
     DEAD = 0
