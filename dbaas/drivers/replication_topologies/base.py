@@ -116,7 +116,7 @@ class BaseTopology(object):
             'workflow.steps.util.dns.CreateDNS',
             'workflow.steps.util.vm.WaitingBeReady',
             'workflow.steps.util.vm.UpdateOSDescription',
-            'workflow.steps.util.disk.CreateExport',
+            'workflow.steps.util.volume_provider.NewVolume',
         )
 
     def get_add_database_instances_last_steps(self):
