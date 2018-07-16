@@ -1,6 +1,7 @@
-<h2>Database {{database}} is almost full</h2>
+<h2>Database {{database.name}} is almost full</h2>
 <br>
-The Database {{database}} in {{environment}} environment is {{percent}}% in use.
+The Database <a href="{{database_url}}">{{database.name}}</a> in
+{{environment}} environment is {{percent}}% in use.
 <br><br>
 It is using {{used|floatformat}} {{measure_unity}} of {{capacity}} {{measure_unity}}
 <br><br>
