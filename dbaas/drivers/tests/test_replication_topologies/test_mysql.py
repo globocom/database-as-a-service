@@ -270,6 +270,65 @@ class TestMySQLFoxHA(AbstractBaseMySQLTestCase):
             'workflow.steps.util.puppet.CheckStatus',
         )
 
+    def _get_upgrade_settings(self):
+        return [{
+            self._get_upgrade_steps_initial_description(): (
+                'workflow.steps.util.zabbix.DestroyAlarms',
+                'workflow.steps.util.db_monitor.DisableMonitoring',
+            ),
+        }] + [{
+            self._get_upgrade_steps_description(): (
+                'workflow.steps.util.vm.ChangeMaster',
+                'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.CheckIsDown',
+                'workflow.steps.util.foreman.DeleteHost',
+                'workflow.steps.util.vm.Stop',
+                'workflow.steps.util.vm.InstallNewTemplate',
+                'workflow.steps.util.vm.Start',
+                'workflow.steps.util.vm.WaitingBeReady',
+                'workflow.steps.util.vm.UpdateOSDescription',
+            ) + self._get_upgrade_steps_extra() + (
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.CheckIsUp',
+            ),
+        }] + self._get_upgrade_steps_final()
+
+    def _get_reinstallvm_steps(self):
+        return [{
+            'Disable monitoring and alarms': (
+                'workflow.steps.util.zabbix.DisableAlarms',
+                'workflow.steps.util.db_monitor.DisableMonitoring',
+            ),
+        }] + [{
+            'Reinstall VM': (
+                'workflow.steps.util.vm.ChangeMaster',
+                'workflow.steps.util.database.Stop',
+                'workflow.steps.util.foreman.DeleteHost',
+                'workflow.steps.util.vm.Stop',
+                'workflow.steps.util.vm.ReinstallTemplate',
+                'workflow.steps.util.vm.Start',
+                'workflow.steps.util.vm.WaitingBeReady',
+                'workflow.steps.util.vm.UpdateOSDescription',
+            ),
+        }] + [{
+            'Configure Puppet': (
+                'workflow.steps.util.vm.CheckHostName',
+                'workflow.steps.util.puppet.ExecuteIfProblem',
+                'workflow.steps.util.puppet.WaitingBeDone',
+                'workflow.steps.util.puppet.CheckStatus',
+                'workflow.steps.util.foreman.SetupDSRC',
+                'workflow.steps.util.puppet.Execute',
+                'workflow.steps.util.puppet.CheckStatus',
+            ),
+        }] + [{
+            'Start Database': (
+                'workflow.steps.util.plan.Initialization',
+                'workflow.steps.util.plan.Configure',
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.CheckIsUp',
+            ),
+        }] + self._get_reinstallvm_steps_final()
+
     def _get_reinstall_vm_extra_steps(self):
         return [{
             'Configure Puppet': (
