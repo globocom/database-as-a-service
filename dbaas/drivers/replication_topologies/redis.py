@@ -64,13 +64,14 @@ class RedisSingle(BaseRedis):
                 'workflow.steps.util.dns.CreateDNS',
             )}, {
             'Creating disk': (
-                'workflow.steps.util.disk.CreateExport',
+                'workflow.steps.util.volume_provider.MountDataVolume',
             )}, {
             'Waiting VMs': (
                 'workflow.steps.util.vm.WaitingBeReady',
                 'workflow.steps.util.vm.UpdateOSDescription'
             )}, {
             'Configuring database': (
+                'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.InitializationForNewInfra',
                 'workflow.steps.util.plan.ConfigureForNewInfra',
                 'workflow.steps.util.database.Start',
@@ -148,6 +149,7 @@ class RedisSentinel(BaseRedis):
 
     def get_add_database_instances_middle_steps(self):
         return (
+            'workflow.steps.util.volume_provider.MountDataVolume',
             'workflow.steps.util.plan.Initialization',
             'workflow.steps.util.plan.Configure',
             'workflow.steps.util.database.Start',
@@ -221,13 +223,14 @@ class RedisSentinel(BaseRedis):
                 'workflow.steps.util.dns.CreateDNSSentinel',
             )}, {
             'Creating disk': (
-                'workflow.steps.util.disk.CreateExport',
+                'workflow.steps.util.volume_provider.MountDataVolume',
             )}, {
             'Waiting VMs': (
                 'workflow.steps.util.vm.WaitingBeReady',
                 'workflow.steps.util.vm.UpdateOSDescription'
             )}, {
             'Configuring database': (
+                'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.InitializationForNewInfraSentinel',
                 'workflow.steps.util.plan.ConfigureForNewInfraSentinel',
             )}, {
@@ -284,13 +287,14 @@ class RedisCluster(BaseRedis):
                 'workflow.steps.util.dns.CreateDNS',
             )}, {
             'Creating disk': (
-                'workflow.steps.util.disk.CreateExport',
+                'workflow.steps.util.volume_provider.MountDataVolume',
             )}, {
             'Waiting VMs': (
                 'workflow.steps.util.vm.WaitingBeReady',
                 'workflow.steps.util.vm.UpdateOSDescription'
             )}, {
             'Configuring database': (
+                'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.InitializationForNewInfra',
                 'workflow.steps.util.plan.ConfigureForNewInfra',
                 'workflow.steps.util.database.Start',

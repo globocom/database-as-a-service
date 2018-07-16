@@ -63,13 +63,14 @@ class MySQLSingle(BaseMysql):
                 'workflow.steps.util.dns.CreateDNS',
             )}, {
             'Creating disk': (
-                'workflow.steps.util.disk.CreateExport',
+                'workflow.steps.util.volume_provider.NewVolume',
             )}, {
             'Waiting VMs': (
                 'workflow.steps.util.vm.WaitingBeReady',
                 'workflow.steps.util.vm.UpdateOSDescription'
             )}, {
             'Configuring database': (
+                'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.infra.UpdateEndpoint',
                 'workflow.steps.util.plan.InitializationForNewInfra',
                 'workflow.steps.util.plan.ConfigureForNewInfra',
@@ -240,7 +241,7 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.dns.CreateDNS',
             )}, {
             'Creating disk': (
-                'workflow.steps.util.disk.CreateExport',
+                'workflow.steps.util.volume_provider.NewVolume',
             )}, {
             'Waiting VMs': (
                 'workflow.steps.util.vm.WaitingBeReady',
@@ -264,6 +265,7 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.puppet.CheckStatus',
             )}, {
             'Configuring database': (
+                'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.InitializationForNewInfra',
                 'workflow.steps.util.plan.ConfigureForNewInfra',
                 'workflow.steps.util.database.Start',
