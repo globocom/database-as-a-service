@@ -714,8 +714,7 @@ def upgrade_mongodb_24_to_30(self, database, user, task_history=None):
 
 @app.task(bind=True)
 def database_disk_resize(self, database, disk_offering, task_history, user):
-    from dbaas_nfsaas.models import HostAttr
-    from workflow.steps.util.nfsaas_utils import resize_disk
+    from workflow.steps.util.volume_provider import ResizeVolume
 
     AuditRequest.new_request("database_disk_resize", user, "localhost")
 
@@ -739,28 +738,24 @@ def database_disk_resize(self, database, disk_offering, task_history, user):
             details='\nLoading Disk offering'
         )
 
+        databaseinfra.disk_offering = disk_offering
+        databaseinfra.save()
+
         for instance in databaseinfra.get_driver().get_database_instances():
-            if not HostAttr.objects.filter(host_id=instance.hostname_id).exists():
-                continue
 
             task_history.update_details(
                 persist=True,
                 details='\nChanging instance {} to '
                         'NFS {}'.format(instance, disk_offering)
             )
-            if resize_disk(
-                    environment=database.environment,
-                    host=instance.hostname,
-                    disk_offering=disk_offering):
-                resized.append(instance)
+            ResizeVolume(instance).do()
+            resized.append(instance)
 
         task_history.update_details(
             persist=True,
             details='\nUpdate DBaaS metadata from {} to '
                     '{}'.format(databaseinfra.disk_offering, disk_offering)
         )
-        databaseinfra.disk_offering = disk_offering
-        databaseinfra.save()
 
         task_history.update_status_for(
             status=TaskHistory.STATUS_SUCCESS,
@@ -786,11 +781,8 @@ def database_disk_resize(self, database, disk_offering, task_history, user):
                 persist=True,
                 details='\nUndo NFS change for instance {}'.format(instance)
             )
-            resize_disk(
-                environment=database.environment,
-                host=instance.hostname,
-                disk_offering=old_disk_offering
-            )
+            ResizeVolume(instance).do()
+            resized.append(instance)
 
         task_history.update_status_for(TaskHistory.STATUS_ERROR, details=error)
         database.finish_task()
