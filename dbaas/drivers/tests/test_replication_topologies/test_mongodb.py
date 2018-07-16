@@ -144,6 +144,7 @@ class TestMongoDBReplicaset(AbstractBaseMondodbTestCase):
         return [{
             'Upgrading to MongoDB 3.4': (
                 'workflow.steps.util.vm.ChangeMaster',
+                'workflow.steps.util.database.CheckIfSwitchMaster',
                 'workflow.steps.util.database.Stop',
                 'workflow.steps.util.database.CheckIsDown',
                 'workflow.steps.mongodb.upgrade.vm.ChangeBinaryTo34',
@@ -246,6 +247,7 @@ class TestMongoDBReplicaset(AbstractBaseMondodbTestCase):
                 'workflow.steps.util.disk.MountNewerExportRestore',
                 'workflow.steps.util.disk.ConfigureFstabRestore',
                 'workflow.steps.util.disk.CleanData',
+                'workflow.steps.util.disk.CleanDataArbiter',
                 'workflow.steps.util.plan.ConfigureRestore',
             )}, {
             'Starting database': (
@@ -253,6 +255,9 @@ class TestMongoDBReplicaset(AbstractBaseMondodbTestCase):
             )}, {
             'Check database': (
                 'workflow.steps.util.database.CheckIsUp',
+            )}, {
+            'Check if there is a master': (
+                'workflow.steps.util.database.CheckIfInstanceIsMasterRestore',
             )}, {
             'Old data': (
                 'workflow.steps.util.disk.BackupRestore',
