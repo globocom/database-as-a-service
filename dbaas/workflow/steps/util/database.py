@@ -87,6 +87,23 @@ class DatabaseStep(BaseInstanceStep):
     def is_valid(self):
         return self.host
 
+    def is_os_process_running(self, process_name):
+        script = "ps -ef | grep {} | grep -v grep | wc -l".format(
+            process_name
+        )
+
+        for _ in range(CHECK_ATTEMPTS):
+            output = {}
+            return_code = exec_remote_command_host(self.host, script, output)
+            if return_code != 0:
+                raise Exception(str(output))
+            processes = int(output['stdout'][0])
+            if processes == 0:
+                return False
+            LOG.info("{} is running".format(process_name))
+            sleep(CHECK_SECONDS)
+
+        return True
 
 class Stop(DatabaseStep):
 
@@ -105,6 +122,12 @@ class Stop(DatabaseStep):
         if return_code != 0 and not self.is_down:
             raise EnvironmentError(
                 'Could not stop database {}: {}'.format(return_code, output)
+            )
+
+        process_name = self.driver.get_database_process_name()
+        if self.is_os_process_running(process_name):
+            raise EnvironmentError(
+                '{} is running on server'.format(process_name)
             )
 
     def undo(self):
@@ -285,24 +308,6 @@ class CheckIsDown(DatabaseStep):
     def __unicode__(self):
         return "Checking database is down..."
 
-    def __is_os_process_running(self):
-        script = "ps -ef | grep {} | grep -v grep | wc -l".format(
-            self.process_name
-        )
-
-        for _ in range(CHECK_ATTEMPTS):
-            output = {}
-            return_code = exec_remote_command_host(self.host, script, output)
-            if return_code != 0:
-                raise Exception(str(output))
-            processes = int(output['stdout'][0])
-            if processes == 0:
-                return False
-            LOG.info("{} is running".format(self.process_name))
-            sleep(CHECK_SECONDS)
-
-        return True
-
     def do(self):
         if not self.instance.is_database:
             return
@@ -310,10 +315,10 @@ class CheckIsDown(DatabaseStep):
         if not self.is_down:
             raise EnvironmentError('Database is up, should be down')
 
-        self.process_name = self.driver.get_database_process_name()
-        if self.__is_os_process_running():
+        process_name = self.driver.get_database_process_name()
+        if self.is_os_process_running(process_name):
             raise EnvironmentError(
-                '{} is running on server'.format(self.process_name)
+                '{} is running on server'.format(process_name)
             )
 
 
