@@ -366,10 +366,12 @@ class Plan(BaseModel):
 
     PREPROVISIONED = 0
     CLOUDSTACK = 1
+    AMAZON = 2
 
     PROVIDER_CHOICES = (
         (PREPROVISIONED, 'Pre Provisioned'),
         (CLOUDSTACK, 'Cloud Stack'),
+        (AMAZON, 'Amazon'),
     )
 
     name = models.CharField(
