@@ -3,7 +3,7 @@ import logging
 import re
 from ..util import factory_arguments_for_task
 from logical.tests.factory import DatabaseFactory
-from maintenance.tests.factory import CloudStackPackFactory
+from physical.tests.factory import OfferingFactory
 from account.tests.factory import UserFactory
 from .factory import DatabaseBindFactory
 
@@ -33,7 +33,7 @@ class ArgumentsTestCase(TestCase):
             'environment': database.environment,
             'project': database.project,
             'plan': database.databaseinfra.plan,
-            'cloudstackpack': CloudStackPackFactory(),
+            'offering': OfferingFactory(),
             'disk_offering': database.databaseinfra.disk_offering,
             'user': UserFactory(),
             'origin_database': database,
