@@ -101,6 +101,13 @@ class CreateDNS(DNSStep):
     def database_sufix(self):
         return {}
 
+    @property
+    def can_run(self):
+        from util import get_credentials_for
+        from dbaas_credentials.models import CredentialType
+        credential = get_credentials_for(self.environment, CredentialType.DNSAPI)
+        return bool(credential)
+
     def do(self):
         if self.host.hostname == self.host.address:
             self.host.hostname = add_dns_record(
