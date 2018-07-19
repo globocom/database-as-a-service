@@ -20,8 +20,16 @@ class Provider(object):
         self._vm_credential = None
 
     @property
+    def infra(self):
+        return self.instance.databaseinfra
+
+    @property
+    def plan(self):
+        return self.infra.plan
+
+    @property
     def environment(self):
-        return self.instance.databaseinfra.environment
+        return self.infra.environment
 
     @property
     def host(self):
@@ -29,7 +37,7 @@ class Provider(object):
 
     @property
     def engine(self):
-        return self.instance.databaseinfra.engine.full_name_for_host_provider
+        return self.infra.engine.full_name_for_host_provider
 
     @property
     def credential(self):
