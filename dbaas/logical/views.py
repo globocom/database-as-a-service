@@ -13,12 +13,11 @@ from django.utils.decorators import method_decorator
 from django.http import HttpResponse, HttpResponseRedirect
 from django.template import RequestContext
 
-from dbaas_cloudstack.models import CloudStackPack
 from dbaas_credentials.models import CredentialType
 from dbaas import constants
 from account.models import Team
 from drivers.errors import CredentialAlreadyExists
-from physical.models import Host, DiskOffering, Environment, Plan
+from physical.models import Host, DiskOffering, Environment, Plan, Offering
 from util import get_credentials_for
 from notification.tasks import TaskRegister
 from system.models import Configuration
@@ -504,12 +503,12 @@ def _vm_resize(request, database):
     except DisabledDatabase as err:
         messages.add_message(request, messages.ERROR, err.message)
     else:
-        cloudstack_pack = CloudStackPack.objects.get(
+        offering = Offering.objects.get(
             id=request.POST.get('vm_offering')
         )
         Database.resize(
             database=database,
-            cloudstackpack=cloudstack_pack,
+            offering=offering,
             user=request.user,
         )
 
@@ -538,8 +537,8 @@ def database_resize_retry(request, context, database):
         TaskRegister.database_resize_retry(
             database=database,
             user=request.user,
-            cloudstack_pack=last_resize.target_offer,
-            original_cloudstackpack=last_resize.source_offer,
+            offering=last_resize.target_offer,
+            original_offering=last_resize.source_offer,
             since_step=last_resize.current_step
         )
 
@@ -620,15 +619,11 @@ def database_resizes(request, context, database):
             database.save()
 
     context['last_vm_resize'] = database.resizes.last()
-    context['vm_offerings'] = list(CloudStackPack.objects.filter(
-        offering__region__environment=database.environment,
-        engine_type__name=database.engine_type
+    context['vm_offerings'] = list(database.environment.offerings.all(
     ))
-    # TODO: put offering on databaseinfra too
-    context['current_vm_offering'] = (database.infra.hosts[0].offering
-                                      or database.infra.plan.cloudstack_attr.get_stronger_offering())
+    context['current_vm_offering'] = database.infra.hosts[0].offering
     for offering in context['vm_offerings']:
-        if offering.offering == context['current_vm_offering']:
+        if offering == context['current_vm_offering']:
             break
     else:
         context['vm_offerings'].append(context['current_vm_offering'])
