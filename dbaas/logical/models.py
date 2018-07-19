@@ -534,12 +534,12 @@ class Database(BaseModel):
         )
 
     @classmethod
-    def resize(cls, database, cloudstackpack, user):
+    def resize(cls, database, offering, user):
         from notification.tasks import TaskRegister
 
         TaskRegister.database_resize(
             database=database, user=user,
-            cloudstack_pack=cloudstackpack
+            offering=offering
         )
 
 #    @classmethod
