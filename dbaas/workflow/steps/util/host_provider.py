@@ -44,16 +44,13 @@ class Provider(object):
         # TODO Remove hard coded "Cloudstack"
         if not self._credential:
             self._credential = get_credentials_for(
-                self.environment, CredentialType.HOST_PROVIDER,
-                project="cloudstack"
+                self.environment, CredentialType.HOST_PROVIDER
             )
 
         return self._credential
 
     @property
     def vm_credential(self):
-        # TODO Lembrar de colocar o project pra quando tiver um provider
-        # diferente
         if not self._vm_credential:
             self._vm_credential = get_credentials_for(
                 self.environment, CredentialType.VM,
@@ -168,8 +165,6 @@ class Provider(object):
 
 class HostProviderStep(BaseInstanceStep):
 
-    # TODO: Coloquei como parâmetro default, pq na hora de apagar ele nao passa
-    # o host, poderá ficar assim ?
     def __init__(self, instance=None):
         super(HostProviderStep, self).__init__(instance)
         self.driver = self.instance and self.infra.get_driver()
