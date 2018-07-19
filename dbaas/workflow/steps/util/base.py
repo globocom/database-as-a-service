@@ -64,7 +64,7 @@ class BaseInstanceStep(object):
 
     @property
     def environment(self):
-        return self.instance.databaseinfra.environment
+        return self.infra.environment
 
     @property
     def restore(self):
@@ -91,6 +91,10 @@ class BaseInstanceStep(object):
 
     @property
     def is_valid(self):
+        return True
+
+    @property
+    def can_run(self):
         return True
 
     @property
@@ -162,3 +166,16 @@ class HostProviderClient(object):
         if resp.ok:
             vm = resp.json()
             return namedtuple('VMProperties', vm.keys())(*vm.values())
+
+    def get_offering_id(self, cpus, memory):
+        api_host_url = '/{}/{}/credential/{}/{}'.format(
+            self.credential.project,
+            self.env.name,
+            cpus,
+            memory
+        )
+
+        resp = requests.get('{}{}'.format(self.credential.endpoint, api_host_url))
+        if resp.ok:
+            data = resp.json()
+            return data.get('offering_id')
