@@ -6,11 +6,10 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from dateutil import tz
 from datetime import datetime
-from dbaas_cloudstack.models import CloudStackPack
 from account.models import Team
 from backup.models import BackupGroup
 from logical.models import Database, Project
-from physical.models import Host, Plan, Environment, DatabaseInfra, Instance
+from physical.models import Host, Plan, Environment, DatabaseInfra, Instance, Offering
 from notification.models import TaskHistory
 from util.models import BaseModel
 from django.db.models.signals import post_save
@@ -374,7 +373,7 @@ class DatabaseResize(DatabaseMaintenanceTask):
         null=False, unique=False, related_name="database_resizes"
     )
     source_offer = models.ForeignKey(
-        CloudStackPack, verbose_name="Source", null=True, blank=True,
+        Offering, verbose_name="Source", null=True, blank=True,
         unique=False, related_name="database_resizes_source",
         on_delete=models.SET_NULL
     )
@@ -382,7 +381,7 @@ class DatabaseResize(DatabaseMaintenanceTask):
         verbose_name="Source", max_length=100, null=True, blank=True
     )
     target_offer = models.ForeignKey(
-        CloudStackPack, verbose_name="Target", null=True, blank=True,
+        Offering, verbose_name="Target", null=True, blank=True,
         unique=False, related_name="database_resizes_target",
         on_delete=models.SET_NULL
     )
