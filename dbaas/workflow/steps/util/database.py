@@ -2,7 +2,6 @@
 import logging
 from datetime import datetime
 from time import sleep
-from dbaas_cloudstack.models import HostAttr
 from drivers.errors import ReplicationNotRunningError
 from logical.models import Database
 from util import build_context_script, exec_remote_command_host
@@ -25,10 +24,6 @@ class DatabaseStep(BaseInstanceStep):
         super(DatabaseStep, self).__init__(instance)
 
         self.driver = self.infra.get_driver()
-
-#    @property
-#    def host_cs(self):
-#        return HostAttr.objects.get(host=self.host)
 
     def do(self):
         raise NotImplementedError
