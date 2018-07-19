@@ -1,5 +1,4 @@
 from django.core.exceptions import ObjectDoesNotExist
-from dbaas_cloudstack.models import HostAttr
 from dbaas_dnsapi.utils import get_dns_name_domain, add_dns_record
 from dbaas_dnsapi.models import FOXHA
 from dbaas_networkapi.dbaas_api import DatabaseAsAServiceApi
