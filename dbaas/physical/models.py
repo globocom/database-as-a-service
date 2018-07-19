@@ -11,8 +11,6 @@ from django.db import models
 from django.utils.html import format_html
 from django.utils.translation import ugettext_lazy as _
 from django_extensions.db.fields.encrypted import EncryptedCharField
-# TODO: remove cloudstack import
-from dbaas_cloudstack.models import CloudStackOffering
 from slugify import slugify
 
 from util.models import BaseModel
@@ -23,6 +21,13 @@ from django.db.models import Q
 
 
 LOG = logging.getLogger(__name__)
+
+
+class Offering(BaseModel):
+    name = models.CharField(verbose_name=_("Name"), max_length=100, help_text="Offering name")
+    cpus = models.IntegerField(verbose_name=_("Number of CPUs"), default=0,)
+    memory_size_mb = models.IntegerField(verbose_name=_("Memory (MB)"), default=0,)
+    environment = models.ForeignKey('Environment', related_name="offerings")
 
 
 class Environment(BaseModel):
