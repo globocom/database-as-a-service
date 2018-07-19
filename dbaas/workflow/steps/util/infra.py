@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from dbaas_cloudstack.models import DatabaseInfraOffering
 from physical.models import Instance
 from base import BaseInstanceStep, BaseInstanceStepMigration
 
@@ -21,11 +20,11 @@ class Offering(Update):
 
     @property
     def target_offering(self):
-        return self.resize.target_offer.offering
+        return self.resize.target_offer
 
     @property
     def source_offering(self):
-        return self.resize.source_offer.offering
+        return self.resize.source_offer
 
     def change_infra_offering(self, offering):
         if not offering:
@@ -54,10 +53,10 @@ class Memory(Update):
         return "Updating max_memory info..."
 
     def do(self):
-        self.set_max_memory_for(self.resize.target_offer.offering)
+        self.set_max_memory_for(self.resize.target_offer)
 
     def undo(self):
-        self.set_max_memory_for(self.resize.source_offer.offering)
+        self.set_max_memory_for(self.resize.source_offer)
 
     def set_max_memory_for(self, offering):
         new_max_memory = offering.memory_size_mb
