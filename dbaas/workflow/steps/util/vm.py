@@ -10,7 +10,7 @@ from physical.models import Environment, Instance
 from util import exec_remote_command_host, check_ssh, get_credentials_for
 from base import BaseInstanceStep, BaseInstanceStepMigration
 
-CHANGE_MASTER_ATTEMPS = 4
+CHANGE_MASTER_ATTEMPS = 30
 CHANGE_MASTER_SECONDS = 15
 
 
