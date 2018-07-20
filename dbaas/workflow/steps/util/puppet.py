@@ -41,11 +41,11 @@ class Puppet(BaseInstanceStep):
     def puppet_code_status(self):
         output = {}
         script = "tail -7 /var/log/ks-post.log"
-        exec_remote_command_host(self.host, script, output)
+        exec_remote_command_host(self.host, script, output, True)
         for line in output["stdout"]:
             if "puppet-setup" in line and "return code:" in line:
                 return int(line.split("return code: ")[1]), output
-        return 0, output
+        return -1, output
 
 
 class Execute(Puppet):
