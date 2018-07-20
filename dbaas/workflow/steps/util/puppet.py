@@ -1,10 +1,12 @@
 from time import sleep
 from util import exec_remote_command_host
 from base import BaseInstanceStep
+import logging
 
+LOG = logging.getLogger(__name__)
 
 CHECK_ATTEMPTS = 60
-CHECK_SECONDS = 20
+CHECK_SECONDS = 30
 
 
 class Puppet(BaseInstanceStep):
