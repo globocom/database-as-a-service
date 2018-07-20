@@ -87,10 +87,29 @@ class WaitingBeDone(Puppet):
     def do(self):
         for _ in range(CHECK_ATTEMPTS):
             if not self.is_running_bootstrap:
+                LOG.debug('Bootstrap is not running!')
                 return
+            LOG.debug('Bootstrap is running!')
             sleep(CHECK_SECONDS)
 
         raise EnvironmentError("Puppet is running yet...")
+
+
+class WaitingBeStarted(Puppet):
+
+    def __unicode__(self):
+        return "Waiting puppet-setup be starded..."
+
+    def do(self):
+        for _ in range(CHECK_ATTEMPTS):
+            if self.has_bootstrap_started:
+                LOG.debug('Bootstrap has already been started!')
+                return
+            LOG.debug('Bootstrap has not been started yet!')
+            sleep(CHECK_SECONDS)
+
+        raise EnvironmentError("Puppet is running yet...")
+
 
 
 class CheckStatus(Puppet):
