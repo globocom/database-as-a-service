@@ -63,14 +63,20 @@ class Execute(Puppet):
 
 class ExecuteIfProblem(Execute):
 
+    def __unicode__(self):
+        return "Executing puppet-setup if problem..."
+
     def do(self):
         if self.is_running_bootstrap:
+            LOG.debug('ExecuteIfProblem - Bootstrap is running!')
             return
 
         puppet_code_status, output = self.puppet_code_status
         if puppet_code_status == 0:
+            LOG.debug('ExecuteIfProblem - puppet_code_status == 0!')
             return
-        
+
+        LOG.debug('ExecuteIfProblem - puppet_code_status != 0!')
         super(ExecuteIfProblem, self).do()
 
 class WaitingBeDone(Puppet):
