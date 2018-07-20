@@ -274,6 +274,8 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.vm.CheckHostName',
             )}, {
             'Check puppet': (
+                'workflow.steps.util.puppet.WaitingBeStarted',
+                'workflow.steps.util.puppet.WaitingBeDone',
                 'workflow.steps.util.puppet.ExecuteIfProblem',
                 'workflow.steps.util.puppet.WaitingBeDone',
                 'workflow.steps.util.puppet.CheckStatus',
@@ -339,6 +341,7 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.plan.ConfigureRestore',
             )}, {
             'Starting database': (
+                'workflow.steps.util.database.Stop',
                 'workflow.steps.util.database.Start',
             )}, {
             'Configuring replication': (
@@ -366,6 +369,8 @@ class MySQLFoxHA(MySQLSingle):
     def get_upgrade_steps_extra(self):
         return super(MySQLFoxHA, self).get_upgrade_steps_extra() + (
             'workflow.steps.util.vm.CheckHostName',
+            'workflow.steps.util.puppet.WaitingBeStarted',
+            'workflow.steps.util.puppet.WaitingBeDone',
             'workflow.steps.util.puppet.ExecuteIfProblem',
             'workflow.steps.util.puppet.WaitingBeDone',
             'workflow.steps.util.puppet.CheckStatus',
@@ -394,6 +399,8 @@ class MySQLFoxHA(MySQLSingle):
         }] + [{
             'Configure Puppet': (
                 'workflow.steps.util.vm.CheckHostName',
+                'workflow.steps.util.puppet.WaitingBeStarted',
+                'workflow.steps.util.puppet.WaitingBeDone',
                 'workflow.steps.util.puppet.ExecuteIfProblem',
                 'workflow.steps.util.puppet.WaitingBeDone',
                 'workflow.steps.util.puppet.CheckStatus',
@@ -405,6 +412,7 @@ class MySQLFoxHA(MySQLSingle):
             'Start Database': (
                 'workflow.steps.util.plan.Initialization',
                 'workflow.steps.util.plan.Configure',
+                'workflow.steps.util.database.Stop',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
             ),
@@ -428,6 +436,7 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.vm.WaitingBeReady',
                 'workflow.steps.util.vm.UpdateOSDescription',
             ) + self.get_upgrade_steps_extra() + (
+                'workflow.steps.util.database.Stop',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
             ),
