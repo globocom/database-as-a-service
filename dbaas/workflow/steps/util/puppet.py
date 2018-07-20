@@ -21,7 +21,17 @@ class Puppet(BaseInstanceStep):
     def is_running_bootstrap(self):
         output = {}
         script = "ps -ef | grep bootstrap-puppet3-loop.sh | grep -v grep | wc -l"
-        return_code = exec_remote_command_host(self.host, script, output)
+        return_code = exec_remote_command_host(self.host, script, output, True)
+        if return_code != 0:
+            raise EnvironmentError(str(output))
+
+        return int(output['stdout'][0]) > 0
+
+    @property
+    def has_bootstrap_started(self):
+        output = {}
+        script = "cat /var/log/ks-post.log | wc -l"
+        return_code = exec_remote_command_host(self.host, script, output, True)
         if return_code != 0:
             raise EnvironmentError(str(output))
 
