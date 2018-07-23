@@ -620,7 +620,7 @@ def database_resizes(request, context, database):
 
     context['last_vm_resize'] = database.resizes.last()
     context['vm_offerings'] = list(database.environment.offerings.all(
-    ))
+    ).order_by('cpus', 'memory_size_mb'))
     context['current_vm_offering'] = database.infra.hosts[0].offering
     for offering in context['vm_offerings']:
         if offering == context['current_vm_offering']:
