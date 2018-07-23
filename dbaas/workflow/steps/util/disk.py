@@ -491,6 +491,16 @@ class CleanData(DiskCommand):
         return {message: script}
 
 
+class CleanDataArbiter(CleanData):
+
+    def __unicode__(self):
+        return "Removing data from arbiter..."
+
+    @property
+    def is_valid(self):
+        return self.instance.instance_type == self.instance.MONGODB_ARBITER
+
+
 class BackupRestore(Disk):
 
     def __unicode__(self):
@@ -534,6 +544,9 @@ class UpdateRestore(Disk):
         return self.restore.is_master(self.instance)
 
     def do(self):
+        if not self.is_valid:
+            return
+
         old_disk = self.host.active_disk
         new_disk = self.host.nfsaas_host_attributes.last()
 
