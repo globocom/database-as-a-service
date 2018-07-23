@@ -134,7 +134,7 @@ class Provider(object):
             "group": infra.name
         }
 
-        response = post(url, json=data)
+        response = post(url, json=data, timeout=600)
         if response.status_code != 201:
             raise IndexError(response.content, response)
 
