@@ -353,7 +353,7 @@ def database_notification_for_team(team=None):
             if percent_usage >= threshold_database_notification:
                 LOG.info("Sending database notification...")
                 context = {}
-                context['database'] = database.name
+                context['database'] = database
                 context['team'] = team
                 context['measure_unity'] = "MB"
                 context['used'] = used
@@ -373,7 +373,7 @@ def database_notification(self):
     if threshold_database_notification <= 0, the notification is disabled.
     """
     # get all teams and for each one create a new task
-    LOG.info("retrieving all teams and sendind database notification")
+    LOG.info("retrieving all teams and sending database notification")
     teams = Team.objects.all()
     msgs = {}
 

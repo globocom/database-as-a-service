@@ -5,8 +5,7 @@
 <br><br>
 {% endif %}
 
-The Database {{database.name}} in {{database.environment}} environment was almost full ({{usage_percentage}}% in use).
-<br><br>
+The Database <a href="{{database_url}}">{{database.name}}</a> in {{database.environment}} environment was almost full ({{usage_percentage}}% in use).<br><br>
 It was automatically resized from {{database.databaseinfra.disk_offering}} to {{new_disk_offering}}.
 <br><br>
 {% if database.team.email %}
@@ -19,3 +18,4 @@ If this is not right, contact the DBaaS system administrators.
 Regards,<br>
 DBaaS notification robot<br>
 {{domain}}<br>
+
