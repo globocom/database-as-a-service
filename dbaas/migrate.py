@@ -18,10 +18,16 @@ def migrate_off(old_off, plan, strong=True):
             cpus=old_off.cpus,
             memory_size_mb=old_off.memory_size_mb,
             environment=old_off.region.environment,
-            name=old_off.name.replace("(weaker)", "")
         )
 
-        off, created = Offering.objects.get_or_create(**params)
+        try:
+            off = Offering.objects.get(**params)
+        except Offering.DoesNotExist:
+            params.update({
+                'name': old_off.name.replace(" (weaker)", "")
+            })
+            off = Offering.objects.create(**params)
+
         if strong:
             plan.stronger_offering = off
         else:
