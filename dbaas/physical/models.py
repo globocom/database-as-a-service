@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+#  *- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 import os
 import logging
@@ -28,6 +28,9 @@ class Offering(BaseModel):
     cpus = models.IntegerField(verbose_name=_("Number of CPUs"), default=0,)
     memory_size_mb = models.IntegerField(verbose_name=_("Memory (MB)"), default=0,)
     environment = models.ForeignKey('Environment', related_name="offerings")
+
+    def __unicode__(self):
+        return '{} - {}'.format(self.name, self.environment.name)
 
 
 class Environment(BaseModel):
