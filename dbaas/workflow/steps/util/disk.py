@@ -30,6 +30,17 @@ class CreateExport(Disk):
     def __unicode__(self):
         return "Creating Export..."
 
+    @property
+    def can_run(self):
+        from util import get_credentials_for
+        from dbaas_credentials.models import CredentialType
+        try:
+            credential = get_credentials_for(self.environment, CredentialType.FAAS)
+        except IndexError:
+            return False
+        else:
+            return True
+
     def do(self):
         if not self.host.database_instance():
             return
