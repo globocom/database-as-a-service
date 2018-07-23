@@ -30,7 +30,7 @@ class Offering(BaseModel):
     environment = models.ForeignKey('Environment', related_name="offerings")
 
     def __unicode__(self):
-        return '{} - {}'.format(self.name, self.environment.name)
+        return '{}'.format(self.name)
 
 
 class Environment(BaseModel):
