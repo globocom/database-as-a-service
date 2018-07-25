@@ -4,7 +4,7 @@ Jinja2==2.7.2
 Markdown==2.3.1
 MarkupSafe==0.18
 MySQL-python==1.2.5
-Pillow==2.3.0
+Pillow==3.3.2
 PyYAML==3.10
 South==1.0
 Unidecode==0.04.14
