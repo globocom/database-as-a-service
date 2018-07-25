@@ -21,6 +21,16 @@ class Foreman(BaseInstanceStep):
         exec_remote_command_host(self.host, script, output)
         return output['stdout'][0].strip()
 
+    @property
+    def reverse_ip(self):
+        output = {}
+        script = 'nslookup {}'.format(self.host.address)
+        exec_remote_command_host(self.host, script, output)
+        ret = output['stdout'][3]
+        if 'name = ' not in ret:
+            return None
+        return ret.split('name = ')[1].split('.\n')[0]
+
     def do(self):
         raise NotImplementedError
 
@@ -46,5 +56,11 @@ class DeleteHost(Foreman):
         return "Foreman removing host..."
 
     def do(self):
-        self.provider.delete_host(self.fqdn)
-        self.provider.delete_host(self.host.hostname)
+        fqdn = self.fqdn
+        hostname = self.host.hostname
+        reverse_ip = self.reverse_ip
+        self.provider.delete_host(fqdn)
+        self.provider.delete_host(hostname)
+        if reverse_ip:
+            if reverse_ip.split('.')[0] == hostname.split('.')[0]:
+                self.provider.delete_host(reverse_ip)
