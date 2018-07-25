@@ -137,7 +137,7 @@ class CreateAlarmsVip(ZabbixVip):
 
         extra = self.zabbix_provider.get_database_monitors_extra_parameters()
         self.zabbix_provider._create_database_monitors(
-            host=self.vip_instance_dns, dbtype='mysql', alarm='group', **extra
+            host=self.vip_instance_dns, dbtype='mysql', alarm='yes', **extra
         )
 
     def undo(self):
