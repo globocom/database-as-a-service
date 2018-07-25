@@ -294,7 +294,6 @@ class CreateVirtualMachine(HostProviderStep):
         self.infra.last_vm_created = last_vm_created
         self.infra.save()
 
-    @property
     def delete_instance(self):
         if self.instance.id:
             self.instance.delete()
