@@ -4,7 +4,7 @@ Jinja2==2.7.2
 Markdown==2.3.1
 MarkupSafe==0.18
 MySQL-python==1.2.5
-Pillow==3.3.2
+Pillow==2.3.0
 PyYAML==3.10
 South==1.0
 Unidecode==0.04.14
@@ -33,8 +33,9 @@ httpretty==0.8.0
 itsdangerous==0.23
 kombu==3.0.35
 logilab-common==0.60.0
-paramiko==2.1.5
+paramiko==2.1.1
 pyasn1==0.1.7
+pycrypto==2.6
 pymongo==3.4.0
 python-gnupg==0.3.6
 python-keyczar==0.71c
