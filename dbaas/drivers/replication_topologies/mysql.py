@@ -25,6 +25,14 @@ class BaseMysql(BaseTopology):
             'workflow.steps.util.deploy.start_monit.StartMonit',
         )
 
+    def get_resize_extra_steps(self):
+        return (
+            'workflow.steps.util.database.CheckIsUp',
+            'workflow.steps.util.database.StartSlave',
+            'workflow.steps.util.agents.Start',
+            'workflow.steps.util.database.WaitForReplication',
+        )
+
     def deploy_last_steps(self):
         return (
             'workflow.steps.util.deploy.build_database.BuildDatabase',
@@ -191,10 +199,27 @@ class MySQLFoxHA(MySQLSingle):
         )
 
     def check_instance_is_master(self, driver, instance):
-        return self._get_fox_provider(driver).node_is_master(
+        fox_node_is_master = self._get_fox_provider(driver).node_is_master(
             group_name=driver.databaseinfra.name,
             node_ip=instance.address
         )
+
+        if not fox_node_is_master:
+            return fox_node_is_master
+
+        query = "show variables like 'server_id'"
+
+        try:
+            instance_result = driver.query(query, instance)
+            master_result = driver.query(query)
+        except Exception, e:
+            LOG.warning("Ops... %s" % e)
+            return False
+
+        instance_server_id = int(instance_result[0]['Value'])
+        master_server_id = int(master_result[0]['Value'])
+
+        return instance_server_id == master_server_id
 
     def set_master(self, driver, instance):
         self._get_fox_provider(driver).set_master(
@@ -253,6 +278,8 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.vm.CheckHostName',
             )}, {
             'Check puppet': (
+                'workflow.steps.util.puppet.WaitingBeStarted',
+                'workflow.steps.util.puppet.WaitingBeDone',
                 'workflow.steps.util.puppet.ExecuteIfProblem',
                 'workflow.steps.util.puppet.WaitingBeDone',
                 'workflow.steps.util.puppet.CheckStatus',
@@ -322,6 +349,7 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.plan.ConfigureRestore',
             )}, {
             'Starting database': (
+                'workflow.steps.util.database.Stop',
                 'workflow.steps.util.database.Start',
             )}, {
             'Configuring replication': (
@@ -349,6 +377,8 @@ class MySQLFoxHA(MySQLSingle):
     def get_upgrade_steps_extra(self):
         return super(MySQLFoxHA, self).get_upgrade_steps_extra() + (
             'workflow.steps.util.vm.CheckHostName',
+            'workflow.steps.util.puppet.WaitingBeStarted',
+            'workflow.steps.util.puppet.WaitingBeDone',
             'workflow.steps.util.puppet.ExecuteIfProblem',
             'workflow.steps.util.puppet.WaitingBeDone',
             'workflow.steps.util.puppet.CheckStatus',
@@ -368,15 +398,17 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.vm.ChangeMaster',
                 'workflow.steps.util.database.Stop',
                 'workflow.steps.util.foreman.DeleteHost',
-                'workflow.steps.util.vm.Stop',
-                'workflow.steps.util.vm.ReinstallTemplate',
-                'workflow.steps.util.vm.Start',
+                'workflow.steps.util.host_provider.Stop',
+                'workflow.steps.util.host_provider.ReinstallTemplate',
+                'workflow.steps.util.host_provider.Start',
                 'workflow.steps.util.vm.WaitingBeReady',
                 'workflow.steps.util.vm.UpdateOSDescription',
             ),
         }] + [{
             'Configure Puppet': (
                 'workflow.steps.util.vm.CheckHostName',
+                'workflow.steps.util.puppet.WaitingBeStarted',
+                'workflow.steps.util.puppet.WaitingBeDone',
                 'workflow.steps.util.puppet.ExecuteIfProblem',
                 'workflow.steps.util.puppet.WaitingBeDone',
                 'workflow.steps.util.puppet.CheckStatus',
@@ -388,6 +420,7 @@ class MySQLFoxHA(MySQLSingle):
             'Start Database': (
                 'workflow.steps.util.plan.Initialization',
                 'workflow.steps.util.plan.Configure',
+                'workflow.steps.util.database.Stop',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
             ),
@@ -405,12 +438,13 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.database.Stop',
                 'workflow.steps.util.database.CheckIsDown',
                 'workflow.steps.util.foreman.DeleteHost',
-                'workflow.steps.util.vm.Stop',
-                'workflow.steps.util.vm.InstallNewTemplate',
-                'workflow.steps.util.vm.Start',
+                'workflow.steps.util.host_provider.Stop',
+                'workflow.steps.util.host_provider.InstallNewTemplate',
+                'workflow.steps.util.host_provider.Start',
                 'workflow.steps.util.vm.WaitingBeReady',
                 'workflow.steps.util.vm.UpdateOSDescription',
             ) + self.get_upgrade_steps_extra() + (
+                'workflow.steps.util.database.Stop',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
             ),

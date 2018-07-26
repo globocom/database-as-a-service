@@ -27,6 +27,7 @@ class BaseTopology(object):
 
     def get_resize_extra_steps(self):
         return (
+            'workflow.steps.util.database.Start',
             'workflow.steps.util.database.StartSlave',
             'workflow.steps.util.agents.Start',
             'workflow.steps.util.database.CheckIsUp',
@@ -37,6 +38,7 @@ class BaseTopology(object):
         return [{'Resizing database': (
             'workflow.steps.util.zabbix.DisableAlarms',
             'workflow.steps.util.vm.ChangeMaster',
+            'workflow.steps.util.database.CheckIfSwitchMaster',
             'workflow.steps.util.agents.Stop',
             'workflow.steps.util.database.StopSlave',
             'workflow.steps.util.database.Stop',
@@ -44,7 +46,6 @@ class BaseTopology(object):
             'workflow.steps.util.host_provider.Stop',
             'workflow.steps.util.host_provider.ChangeOffering',
             'workflow.steps.util.host_provider.Start',
-            'workflow.steps.util.database.Start',
         ) + self.get_resize_extra_steps() + (
             'workflow.steps.util.infra.Offering',
             'workflow.steps.util.vm.InstanceIsSlave',
@@ -83,6 +84,7 @@ class BaseTopology(object):
         }] + [{
             self.get_upgrade_steps_description(): (
                 'workflow.steps.util.vm.ChangeMaster',
+                'workflow.steps.util.database.CheckIfSwitchMaster',
                 'workflow.steps.util.database.Stop',
                 'workflow.steps.util.database.CheckIsDown',
                 'workflow.steps.util.host_provider.Stop',
@@ -174,6 +176,7 @@ class BaseTopology(object):
                 'workflow.steps.util.zabbix.DisableAlarms',
                 'workflow.steps.util.db_monitor.DisableMonitoring',
                 'workflow.steps.util.vm.ChangeMaster',
+                'workflow.steps.util.database.CheckIfSwitchMaster',
                 'workflow.steps.util.database.Stop',
                 'workflow.steps.util.database.CheckIsDown',
             ) + self.get_change_parameter_config_steps() + (
@@ -225,6 +228,7 @@ class BaseTopology(object):
         }] + [{
             'Reinstall VM': (
                 'workflow.steps.util.vm.ChangeMaster',
+                'workflow.steps.util.database.CheckIfSwitchMaster',
                 'workflow.steps.util.database.Stop',
                 'workflow.steps.util.host_provider.Stop',
                 'workflow.steps.util.host_provider.ReinstallTemplate',

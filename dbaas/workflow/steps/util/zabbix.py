@@ -63,9 +63,7 @@ class DestroyAlarms(ZabbixStep):
         if not self.host:
             return
         for host in self.hosts_in_zabbix:
-            monitors = self.zabbix_provider.get_host_triggers(host)
-
-            if monitors:
+            if self.zabbix_provider.get_host_triggers(host):
                 self.zabbix_provider.delete_instance_monitors(host)
 
 
@@ -91,9 +89,6 @@ class CreateAlarms(ZabbixStep):
             self.zabbix_provider.create_instance_monitors(instance)
 
     def undo(self):
-        if not self.is_valid:
-            return
-
         DestroyAlarms(self.instance).do()
 
 

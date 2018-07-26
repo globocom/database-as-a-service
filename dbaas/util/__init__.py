@@ -214,7 +214,8 @@ def get_mongodb_key_file(infra):
     return get_remote_file_content('/data/mongodb.key', instance.hostname)
 
 
-def exec_remote_command(server, username, password, command, output={}):
+def exec_remote_command(server, username, password, command, output={},
+                        retry=False):
 
     try:
         LOG.info(
@@ -237,12 +238,18 @@ def exec_remote_command(server, username, password, command, output={}):
             paramiko.ssh_exception.AuthenticationException,
             paramiko.ssh_exception.SSHException,
             socket.error) as e:
-        LOG.warning("We caught an exception: %s ." % (e))
+        msg = "We caught an exception: {}.".format(e)
+        LOG.warning(msg)
+        if retry:
+            LOG.warning('It will retry in 10 seconds!')
+            sleep(10)
+            return exec_remote_command(server, username,
+                password, command, output, retry=False)
         output['exception'] = str(e)
         return None
 
 
-def exec_remote_command_host(host, command, output=None):
+def exec_remote_command_host(host, command, output=None, retry=False):
     if output is None:
         output = {}
 
@@ -251,7 +258,8 @@ def exec_remote_command_host(host, command, output=None):
         username=host.user,
         password=host.password,
         command=command,
-        output=output
+        output=output,
+        retry=retry
     )
 
 
