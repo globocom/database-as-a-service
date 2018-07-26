@@ -9,11 +9,22 @@ class ZabbixStep(BaseInstanceStep):
 
     def __init__(self, instance):
         super(ZabbixStep, self).__init__(instance)
+        self.provider = None
 
+    @property
+    def credentials(self):
         integration = CredentialType.objects.get(type=CredentialType.ZABBIX)
         environment = self.instance.databaseinfra.environment
-        self.credentials = Credential.get_credentials(environment, integration)
-        self.provider = None
+        return Credential.get_credentials(environment, integration)
+
+    @property
+    def can_run(self):
+        try:
+            credential = self.credentials
+        except IndexError:
+            return False
+        else:
+            return True
 
     @property
     def instances(self):

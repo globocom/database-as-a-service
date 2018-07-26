@@ -5,6 +5,7 @@ from dbaas_credentials.models import CredentialType
 from dbaas_nfsaas.models import HostAttr as HostAttrNfsaas
 from base import BaseInstanceStep, BaseInstanceStepMigration
 from physical.configurations import configuration_factory
+from physical.models import Offering
 import logging
 
 LOG = logging.getLogger(__name__)
@@ -58,7 +59,10 @@ class PlanStep(BaseInstanceStep):
         if self.resize:
             return self.resize.target_offer
 
-        return self.infra.plan.stronger_offering
+        try:
+            return self.infra.offering
+        except Offering.DoesNotExist:
+            return self.instance.offering
 
     def get_configuration(self):
         try:
