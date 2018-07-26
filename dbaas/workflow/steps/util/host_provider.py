@@ -298,6 +298,14 @@ class CreateVirtualMachine(HostProviderStep):
         self.infra.last_vm_created = last_vm_created
         self.infra.save()
 
+    def delete_instance(self):
+        if self.instance.id:
+            self.instance.delete()
+
+    @property
+    def is_readonly_instance(self):
+        return bool(self.database)
+
     @property
     def is_readonly_instance(self):
         return bool(self.database)
@@ -308,13 +316,11 @@ class CreateVirtualMachine(HostProviderStep):
 
     @property
     def stronger_offering(self):
-        plan = self.infra.plan
-        return plan.stronger_offering
+        return self.plan.stronger_offering
 
     @property
     def weaker_offering(self):
-        plan = self.infra.plan
-        return plan.weaker_offering
+        return self.plan.weaker_offering
 
     def do(self):
         if self.instance.is_database:

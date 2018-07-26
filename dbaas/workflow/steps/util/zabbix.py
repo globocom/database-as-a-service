@@ -63,10 +63,7 @@ class DestroyAlarms(ZabbixStep):
         if not self.host:
             return
         for host in self.hosts_in_zabbix:
-            monitors = self.zabbix_provider.get_host_triggers(host)
-
-            if monitors:
-                self.zabbix_provider.delete_instance_monitors(host)
+            self.zabbix_provider.delete_instance_monitors(host)
 
 
 class CreateAlarms(ZabbixStep):

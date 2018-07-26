@@ -6,6 +6,18 @@ from ..service.host import HostService
 from dbaas_nfsaas.models import HostAttr as HostAttrNfsaas
 
 
+<<<<<<< HEAD
+=======
+class HostAttrInline(admin.StackedInline):
+    model = HostAttr
+    max_num = 0
+    template = 'admin/physical/shared/inline_form.html'
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+>>>>>>> master
 class HostAttrNfsaasInline(admin.StackedInline):
     model = HostAttrNfsaas
     max_num = 0
