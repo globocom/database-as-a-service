@@ -342,6 +342,7 @@ class Redis(BaseDriver):
             'HOSTADDRESS': redis_address,
             'PORT': redis_port,
             'ONLY_SENTINEL': only_sentinel,
+            'HAS_FAAS_DISK': host.nfsaas_host_attributes.exists()
         }
 
     def configuration_parameters_migration(self, instance):
