@@ -910,7 +910,11 @@ class Instance(BaseModel):
 
     @property
     def offering(self):
-        host_offering = self.hostname.offering
+        try:
+            host_offering = self.hostname.offering
+        except Offering.DoesNotExist:
+            host_offering = None
+
         if host_offering:
             return host_offering
 
