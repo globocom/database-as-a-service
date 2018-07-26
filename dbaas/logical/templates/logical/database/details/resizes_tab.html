@@ -28,8 +28,8 @@
             {% else %}
               <select id="id_vm_offering" name="vm_offering">
                 {% for vm_offering in vm_offerings %}
-                  {% if vm_offering.offering == current_vm_offering or vm_offering == current_vm_offering %}
-                    <option value="{{current_vm_offering.serviceofferingid}}"selected="selected">*
+                  {% if vm_offering == current_vm_offering %}
+                    <option value="{{vm_offering.id}}" selected="selected">*
                   {% else %}
                     <option value="{{vm_offering.id}}">
                   {% endif %}

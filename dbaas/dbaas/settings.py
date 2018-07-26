@@ -199,7 +199,6 @@ INSTALLED_APPS = (
     'ckeditor',
     'notification',
     'djcelery',
-    'dbaas_cloudstack',
     'dbaas_credentials',
     'dbaas_nfsaas',
     'dbaas_dbmonitor',

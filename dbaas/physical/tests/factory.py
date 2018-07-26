@@ -1,11 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 import factory
-# TODO: Remove this specific dbaas imports
 from dbaas_nfsaas.models import HostAttr
-from dbaas_cloudstack.models import (DatabaseInfraOffering, CloudStackOffering,
-                                     PlanAttr, OfferingGroup, BundleGroup,
-                                     CloudStackBundle, CloudStackRegion)
 from physical import models
 
 
@@ -59,47 +55,13 @@ class ParameterFactory(factory.DjangoModelFactory):
     parameter_type = ''
 
 
-class CloudStackRegionFactory(factory.DjangoModelFactory):
-    FACTORY_FOR = CloudStackRegion
+class OfferingFactory(factory.DjangoModelFactory):
+    FACTORY_FOR = models.Offering
 
-
-class CloudStackBundleFactory(factory.DjangoModelFactory):
-    FACTORY_FOR = CloudStackBundle
-    is_active = True
-
-
-class BundleGroupFactory(factory.DjangoModelFactory):
-    FACTORY_FOR = BundleGroup
-
-    @factory.post_generation
-    def bundles(self, create, extracted, **kwargs):
-        if not create:
-            # Simple build, do nothing.
-            return
-
-        if extracted:
-            # A list of groups were passed in, use them
-            for bundle in extracted:
-                self.bundles.add(bundle)
-        else:
-            self.bundles.add(CloudStackBundleFactory())
-
-
-class OfferingGroupFactory(factory.DjangoModelFactory):
-    FACTORY_FOR = OfferingGroup
-
-    @factory.post_generation
-    def offerings(self, create, extracted, **kwargs):
-        if not create:
-            # Simple build, do nothing.
-            return
-
-        if extracted:
-            # A list of groups were passed in, use them
-            for off in extracted:
-                self.offerings.add(off)
-        else:
-            self.offerings.add(CloudStackOfferingFactory())
+    name = factory.Sequence(lambda n: 'Offering-{0}'.format(n))
+    memory_size_mb = 998
+    cpus = 1
+    environment = factory.SubFactory(EnvironmentFactory)
 
 
 class PlanFactory(factory.DjangoModelFactory):
@@ -111,6 +73,8 @@ class PlanFactory(factory.DjangoModelFactory):
     provider = 0
     disk_offering = factory.SubFactory(DiskOfferingFactory)
     replication_topology = factory.SubFactory(ReplicationTopologyFactory)
+    stronger_offering = factory.SubFactory(OfferingFactory)
+    weaker_offering = factory.SubFactory(OfferingFactory)
 
     @factory.post_generation
     def environments(self, create, extracted, **kwargs):
@@ -124,13 +88,6 @@ class PlanFactory(factory.DjangoModelFactory):
                 self.environments.add(env)
         else:
             self.environments.add(EnvironmentFactory())
-
-
-class PlanAttrFactory(factory.DjangoModelFactory):
-    FACTORY_FOR = PlanAttr
-    offering_group = factory.SubFactory(OfferingGroupFactory)
-    plan = factory.SubFactory(PlanFactory)
-    bundle_group = factory.SubFactory(BundleGroupFactory)
 
 
 class DatabaseInfraFactory(factory.DjangoModelFactory):
@@ -157,22 +114,6 @@ class DatabaseInfraFactory(factory.DjangoModelFactory):
         return PlanFactory(environments=[self.environment])
 
 
-class CloudStackOfferingFactory(factory.DjangoModelFactory):
-    FACTORY_FOR = CloudStackOffering
-
-    serviceofferingid = '999'
-    name = factory.Sequence(lambda n: 'CloudStackOffering-{0}'.format(n))
-    weaker = False
-    memory_size_mb = 998
-
-
-class DatabaseInfraOfferingFactory(factory.DjangoModelFactory):
-    FACTORY_FOR = DatabaseInfraOffering
-
-    databaseinfra = factory.SubFactory(DatabaseInfraFactory)
-    offering = factory.SubFactory(CloudStackOfferingFactory)
-
-
 class InstanceFactory(factory.DjangoModelFactory):
     FACTORY_FOR = models.Instance
 
@@ -187,6 +128,14 @@ class InstanceFactory(factory.DjangoModelFactory):
     used_size_in_bytes = 50
 
 
+class DatabaseInfraParameterFactory(factory.DjangoModelFactory):
+    FACTORY_FOR = models.DatabaseInfraParameter
+
+    databaseinfra = factory.SubFactory(DatabaseInfraFactory)
+    parameter = factory.SubFactory(ParameterFactory)
+    value = ''
+
+
 class NFSaaSHostAttr(factory.DjangoModelFactory):
     FACTORY_FOR = HostAttr
 
@@ -197,11 +146,3 @@ class NFSaaSHostAttr(factory.DjangoModelFactory):
     is_active = True
     nfsaas_size_kb = 1000
     nfsaas_used_size_kb = 10
-
-
-class DatabaseInfraParameterFactory(factory.DjangoModelFactory):
-    FACTORY_FOR = models.DatabaseInfraParameter
-
-    databaseinfra = factory.SubFactory(DatabaseInfraFactory)
-    parameter = factory.SubFactory(ParameterFactory)
-    value = ''

@@ -133,16 +133,6 @@ def destroy_infra(databaseinfra, task=None):
         return False
 
 
-def get_cloudstack_pack(database):
-    from dbaas_cloudstack.models import CloudStackPack
-
-    return CloudStackPack.objects.get(
-        offering__serviceofferingid=database.offering_id,
-        offering__region__environment=database.environment,
-        engine_type__name=database.engine_type
-    )
-
-
 def get_vm_qt(plan):
     if plan.is_ha:
         if plan.engine_type.name == 'mongodb':

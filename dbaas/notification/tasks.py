@@ -1037,11 +1037,10 @@ def remove_readonly_instance(self, instance, user, task):
 
 
 @app.task(bind=True)
-def resize_database(self, database, user, task, cloudstackpack, original_cloudstackpack=None, since_step=0):
-    from util.providers import get_cloudstack_pack
+def resize_database(self, database, user, task, offering, original_offering=None, since_step=0):
 
     self.request.kwargs['database'] = database
-    self.request.kwargs['cloudstackpack'] = cloudstackpack.offering
+    self.request.kwargs['offering'] = offering
 
     worker_name = get_worker_name()
     task = TaskHistory.register(
@@ -1051,13 +1050,13 @@ def resize_database(self, database, user, task, cloudstackpack, original_cloudst
 
     infra = database.infra
 
-    if not original_cloudstackpack:
-        original_cloudstackpack = get_cloudstack_pack(database)
+    if not original_offering:
+        original_offering = database.infra.offering
 
     database_resize = DatabaseResize(
         database=database,
-        source_offer=original_cloudstackpack,
-        target_offer=cloudstackpack,
+        source_offer=original_offering,
+        target_offer=offering,
         task=task
     )
 
@@ -1085,7 +1084,7 @@ def resize_database(self, database, user, task, cloudstackpack, original_cloudst
 @app.task(bind=True)
 def resize_database_rollback(self, from_resize, user, task):
     self.request.kwargs['database'] = from_resize.database
-    self.request.kwargs['target_offer'] = from_resize.target_offer.offering
+    self.request.kwargs['target_offer'] = from_resize.target_offer
     task = TaskHistory.register(self.request, user, task, get_worker_name())
 
     infra = from_resize.database.infra
@@ -1219,7 +1218,7 @@ class TaskRegister(object):
         destroy_database.delay(database=database, user=user, task_history=task)
 
     @classmethod
-    def database_resize(cls, database, user, cloudstack_pack, **kw):
+    def database_resize(cls, database, user, offering, **kw):
         task_params = {
             'task_name': 'resize_database',
             'arguments': 'Database name: {}'.format(database.name),
@@ -1232,15 +1231,15 @@ class TaskRegister(object):
             database=database,
             user=user,
             task=task,
-            cloudstackpack=cloudstack_pack
+            offering=offering
         )
 
     @classmethod
     def database_resize_retry(cls,
                               database,
                               user,
-                              cloudstack_pack,
-                              original_cloudstackpack,
+                              offering,
+                              original_offering,
                               since_step,
                               **kw):
         task_params = {
@@ -1255,8 +1254,8 @@ class TaskRegister(object):
             database=database,
             user=user,
             task=task,
-            cloudstackpack=cloudstack_pack,
-            original_cloudstackpack=original_cloudstackpack,
+            offering=offering,
+            original_offering=original_offering,
             since_step=since_step
         )
 
