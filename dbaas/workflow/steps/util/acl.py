@@ -18,14 +18,18 @@ class ACLStep(BaseInstanceStep):
     def __init__(self, instance):
         super(ACLStep, self).__init__(instance)
 
-        acl_credential = get_credentials_for(
-            environment=self.environment,
-            credential_type=CredentialType.ACLAPI)
-        self.acl_client = AclClient(
-            acl_credential.endpoint,
-            acl_credential.user,
-            acl_credential.password,
-            self.environment)
+        try:
+            acl_credential = get_credentials_for(
+                environment=self.environment,
+                credential_type=CredentialType.ACLAPI)
+        except IndexError:
+            self.acl_client = None
+        else:
+            self.acl_client = AclClient(
+                acl_credential.endpoint,
+                acl_credential.user,
+                acl_credential.password,
+                self.environment)
 
     def do(self):
         raise NotImplementedError
@@ -77,6 +81,17 @@ class BindNewInstance(ACLStep):
         super(BindNewInstance, self).__init__(instance)
         self.instances = [self.instance]
         self.instance_address_list = [self.instance.address]
+
+    @property
+    def can_run(self):
+        from util import get_credentials_for
+        from dbaas_credentials.models import CredentialType
+        try:
+            credential = get_credentials_for(self.environment, CredentialType.ACLAPI)
+        except IndexError:
+            return False
+        else:
+            return True
 
     def do(self):
         for database_bind in self.database.acl_binds.all():
