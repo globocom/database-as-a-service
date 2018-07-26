@@ -20,6 +20,14 @@ class Provider(object):
         self._vm_credential = None
 
     @property
+    def infra(self):
+        return self.instance.databaseinfra
+
+    @property
+    def plan(self):
+        return self.infra.plan
+
+    @property
     def environment(self):
         return self.instance.databaseinfra.environment
 
@@ -277,7 +285,7 @@ class CreateVirtualMachine(HostProviderStep):
     def create_instance(self, host):
         self.instance.hostname = host
         self.instance.address = host.address
-        self.instance.read_only = bool(self.database)
+        self.instance.read_only = self.is_readonly_instance
         self.instance.save()
 
     def update_databaseinfra_last_vm_created(self):
@@ -286,16 +294,35 @@ class CreateVirtualMachine(HostProviderStep):
         self.infra.last_vm_created = last_vm_created
         self.infra.save()
 
+    def delete_instance(self):
+        if self.instance.id:
+            self.instance.delete()
+
+    @property
+    def is_readonly_instance(self):
+        return bool(self.database)
+
     @property
     def vm_name(self):
         return self.instance.vm_name
 
+    @property
+    def stronger_offering(self):
+        plan = self.infra.plan
+        return plan.cloudstack_attr.get_stronger_offering()
+
+    @property
+    def weaker_offering(self):
+        plan = self.infra.plan
+        return plan.cloudstack_attr.get_weaker_offering()
+
     def do(self):
         # TODO: Remove cloudstack dependencies
         if self.instance.is_database:
-            offering = self.infra.plan.cloudstack_attr.get_stronger_offering()
+            offering = (self.infra.offering if self.is_readonly_instance
+                        else self.stronger_offering)
         else:
-            offering = self.infra.plan.cloudstack_attr.get_weaker_offering()
+            offering = self.weaker_offering
 
         try:
             pair = self.infra.instances.get(dns=self.instance.dns)
@@ -311,7 +338,7 @@ class CreateVirtualMachine(HostProviderStep):
         try:
             host = self.instance.hostname
         except ObjectDoesNotExist:
-            self.instance.delete()
+            self.delete_instance()
             return
 
         try:
@@ -320,5 +347,7 @@ class CreateVirtualMachine(HostProviderStep):
             )
         except (Host.DoesNotExist, IndexError):
             pass
-        self.instance.delete()
-        host.delete()
+        self.delete_instance()
+        if host.id:
+            host.delete()
+

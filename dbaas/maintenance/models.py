@@ -552,6 +552,11 @@ class DatabaseRestore(DatabaseMaintenanceTask):
             if pairs.slave not in instances:
                 instances.append(pairs.slave)
 
+
+        for instance in self.database.infra.instances.all():
+            if instance.instance_type == instance.MONGODB_ARBITER:
+                instances.append(instance)
+
         return instances
 
     def master_for(self, instance):

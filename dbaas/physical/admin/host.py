@@ -9,7 +9,7 @@ from dbaas_nfsaas.models import HostAttr as HostAttrNfsaas
 
 class HostAttrInline(admin.StackedInline):
     model = HostAttr
-    max_num = 1
+    max_num = 0
     template = 'admin/physical/shared/inline_form.html'
 
     def has_delete_permission(self, request, obj=None):

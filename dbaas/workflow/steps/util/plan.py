@@ -21,7 +21,7 @@ class PlanStep(BaseInstanceStep):
     @property
     def pack(self):
         if not self._pack:
-            offering = self.infra.plan.cloudstack_attr.get_stronger_offering()
+            offering = self.instance.offering
             self._pack = CloudStackPack.objects.get(
                 offering__serviceofferingid=offering.serviceofferingid,
                 offering__region__environment=self.environment,
@@ -154,9 +154,10 @@ class PlanStepRestore(PlanStep):
     def get_variables_specifics(self):
         driver = self.infra.get_driver()
         base = super(PlanStepRestore, self).get_variables_specifics()
-        base.update(driver.master_parameters(
-            self.instance, self.restore.master_for(self.instance)
-        ))
+        if self.restore.is_master(self.instance) or self.restore.is_slave(self.instance):
+            base.update(driver.master_parameters(
+                self.instance, self.restore.master_for(self.instance)
+            ))
         return base
 
 
@@ -306,9 +307,11 @@ class ConfigureRestore(PlanStepRestore, Configure):
         base['CREATE_SENTINEL_CONFIG'] = True
 
         driver = self.infra.get_driver()
-        base.update(driver.master_parameters(
-            self.instance, self.restore.master_for(self.instance)
-        ))
+
+        if self.restore.is_master(self.instance) or self.restore.is_slave(self.instance):
+            base.update(driver.master_parameters(
+                self.instance, self.restore.master_for(self.instance)
+            ))
 
         return base
 
