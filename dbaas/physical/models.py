@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+#  *- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 import os
 import logging
@@ -11,8 +11,6 @@ from django.db import models
 from django.utils.html import format_html
 from django.utils.translation import ugettext_lazy as _
 from django_extensions.db.fields.encrypted import EncryptedCharField
-# TODO: remove cloudstack import
-from dbaas_cloudstack.models import CloudStackOffering
 from slugify import slugify
 
 from util.models import BaseModel
@@ -23,6 +21,16 @@ from django.db.models import Q
 
 
 LOG = logging.getLogger(__name__)
+
+
+class Offering(BaseModel):
+    name = models.CharField(verbose_name=_("Name"), max_length=100, help_text="Offering name")
+    cpus = models.IntegerField(verbose_name=_("Number of CPUs"), default=0,)
+    memory_size_mb = models.IntegerField(verbose_name=_("Memory (MB)"), default=0,)
+    environment = models.ForeignKey('Environment', related_name="offerings")
+
+    def __unicode__(self):
+        return '{}'.format(self.name)
 
 
 class Environment(BaseModel):
@@ -361,10 +369,12 @@ class Plan(BaseModel):
 
     PREPROVISIONED = 0
     CLOUDSTACK = 1
+    AMAZON = 2
 
     PROVIDER_CHOICES = (
         (PREPROVISIONED, 'Pre Provisioned'),
         (CLOUDSTACK, 'Cloud Stack'),
+        (AMAZON, 'Amazon'),
     )
 
     name = models.CharField(
@@ -406,6 +416,12 @@ class Plan(BaseModel):
     migrate_plan = models.ForeignKey(
         "Plan", related_name='migrate_to', null=True, blank=True
     )
+    stronger_offering = models.ForeignKey(
+        Offering, related_name='main_offerings', null=True, blank=True
+    )
+    weaker_offering = models.ForeignKey(
+        Offering, related_name='weaker_offerings', null=True, blank=True
+    )
 
     @property
     def engine_type(self):
@@ -427,6 +443,14 @@ class Plan(BaseModel):
     def tsuru_label(self):
 
         return slugify("{}-{}".format(self.name, self.environment()))
+
+#    @property
+#    def stronger_offering(self):
+#        return self.offerings.filter(weaker=False).first()
+#
+#    @property
+#    def weaker_offering(self):
+#        return self.offerings.filter(weaker=True).first()
 
     def __unicode__(self):
         return "%s" % (self.name)
@@ -775,7 +799,7 @@ class Host(BaseModel):
     os_description = models.CharField(
         verbose_name=_("Operating system description"),
         max_length=255, null=True, blank=True)
-    offering = models.ForeignKey(CloudStackOffering, null=True)
+    offering = models.ForeignKey(Offering, null=True)
     user = models.CharField(max_length=255, blank=True, null=True)
     password = EncryptedCharField(max_length=255, blank=True, null=True)
     identifier = models.CharField(
@@ -898,12 +922,10 @@ class Instance(BaseModel):
         if host_offering:
             return host_offering
 
-        cloudstack_attr = self.databaseinfra.plan.cloudstack_attr
-
         if not self.is_database:
-            return cloudstack_attr.get_weaker_offering()
+            return self.databaseinfra.plan.weaker_offering
 
-        return cloudstack_attr.get_stronger_offering()
+        return self.databaseinfra.plan.stronger_offering
 
 
     @property

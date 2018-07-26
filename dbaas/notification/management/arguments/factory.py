@@ -52,7 +52,7 @@ class ArgumentsToResizeDatabase(ArgumentsTo):
     def build(self):
         return [
             self.get_database_arg(),
-            "New VM Offering: {}".format(self.args['cloudstackpack']),
+            "New VM Offering: {}".format(self.args['offering']),
         ]
 
 

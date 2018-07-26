@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import logging
-from dbaas_cloudstack.models import HostAttr as CsHostAttr
 from util import full_stack
 from backup.models import BackupGroup
 from backup.tasks import mysql_binlog_save

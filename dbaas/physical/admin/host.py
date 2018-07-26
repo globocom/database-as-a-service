@@ -3,17 +3,7 @@ from __future__ import absolute_import, unicode_literals
 from django_services import admin as services_admin
 from django.contrib import admin
 from ..service.host import HostService
-from dbaas_cloudstack.models import HostAttr
 from dbaas_nfsaas.models import HostAttr as HostAttrNfsaas
-
-
-class HostAttrInline(admin.StackedInline):
-    model = HostAttr
-    max_num = 0
-    template = 'admin/physical/shared/inline_form.html'
-
-    def has_delete_permission(self, request, obj=None):
-        return False
 
 
 class HostAttrNfsaasInline(admin.StackedInline):
@@ -50,5 +40,4 @@ class HostAdmin(services_admin.DjangoServicesAdmin):
 
     inlines = [
         HostAttrNfsaasInline,
-        HostAttrInline,
     ]

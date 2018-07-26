@@ -11,7 +11,6 @@ from physical.admin.databaseinfra import DatabaseInfraAdmin
 from physical.models import (DatabaseInfra, Plan, Instance, Host, Parameter,
                              DatabaseInfraParameter)
 from dbaas_nfsaas.models import HostAttr
-from dbaas_cloudstack.models import DatabaseInfraOffering, CloudStackOffering
 from physical.tests import factory
 from drivers.fake import FakeDriver
 from mock import patch
@@ -43,20 +42,18 @@ class PropertiesTestCase(TestCase):
             host=cls.hostname
         )
 
-        cs_offering = factory.CloudStackOfferingFactory(memory_size_mb=9)
-        cls.infra_offering = factory.DatabaseInfraOfferingFactory(
-            databaseinfra=cls.databaseinfra,
-            offering=cs_offering
+        offering = factory.OfferingFactory(
+            environment=cls.databaseinfra.environment,
+            memory_size_mb=9
         )
+        plan = cls.databaseinfra.plan
+        plan.provider = 1
+        plan.stronger_offering = offering
+        plan.weaker_offering = offering
+        plan.save()
         instances_mock.return_value = [cls.instance]
-        factory.PlanAttrFactory.create(plan=cls.databaseinfra.plan)
-        cls.instance.hostname.offering = cs_offering
+        cls.instance.hostname.offering = offering
         cls.instance.hostname.save()
-        offering = cls.databaseinfra.offering
-        offering.memory_size_mb = 9
-        offering.save()
-        cls.databaseinfra.plan.provider = 1
-        cls.databaseinfra.plan.save()
 
     @classmethod
     def tearDownClass(cls):
@@ -65,8 +62,6 @@ class PropertiesTestCase(TestCase):
         Host.objects.all().delete()
         DatabaseInfra.objects.all().delete()
         Plan.objects.all().delete()
-        CloudStackOffering.objects.all().delete()
-        DatabaseInfraOffering.objects.all().delete()
         Parameter.objects.all().delete()
         DatabaseInfraParameter.objects.all().delete()
 
