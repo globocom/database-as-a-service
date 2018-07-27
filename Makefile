@@ -103,17 +103,9 @@ update_permissions:
 	@cd dbaas && python manage.py update_permissions
 
 
-physical_migrate: # create migration to physical app
-	@cd dbaas && python manage.py schemamigration physical --auto
-
-
-tsuru_migrate: # create migration to tsuru app
-	@cd dbaas && python manage.py schemamigration tsuru --auto
-
-
-logical_migrate: # create migration to logical app
-	@cd dbaas && python manage.py schemamigration logical --auto
-
+generate_migration:
+	$(eval model = $(if $(model),$(model),$(error Modo de uso: make generate_migration model=NOME_DO_MODEL)))
+	@cd dbaas && python manage.py schemamigration ${model} --auto
 
 graph_models: # generate graph models
 	@cd dbaas && python manage.py graph_models -g physical logical tsuru > ~/dbaas_model.dot
