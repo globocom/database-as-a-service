@@ -64,7 +64,7 @@ class RedisSingle(BaseRedis):
                 'workflow.steps.util.dns.CreateDNS',
             )}, {
             'Creating disk': (
-                'workflow.steps.util.volume_provider.MountDataVolume',
+                'workflow.steps.util.volume_provider.NewVolume',
             )}, {
             'Waiting VMs': (
                 'workflow.steps.util.vm.WaitingBeReady',
@@ -223,7 +223,7 @@ class RedisSentinel(BaseRedis):
                 'workflow.steps.util.dns.CreateDNSSentinel',
             )}, {
             'Creating disk': (
-                'workflow.steps.util.volume_provider.MountDataVolume',
+                'workflow.steps.util.volume_provider.NewVolume',
             )}, {
             'Waiting VMs': (
                 'workflow.steps.util.vm.WaitingBeReady',
@@ -287,7 +287,7 @@ class RedisCluster(BaseRedis):
                 'workflow.steps.util.dns.CreateDNS',
             )}, {
             'Creating disk': (
-                'workflow.steps.util.volume_provider.MountDataVolume',
+                'workflow.steps.util.volume_provider.NewVolume',
             )}, {
             'Waiting VMs': (
                 'workflow.steps.util.vm.WaitingBeReady',
