@@ -101,7 +101,7 @@ class MongoDBSingle(BaseMongoDB):
                 'workflow.steps.util.db_monitor.DisableMonitoring',
             )}, {
             'Restoring': (
-                'workflow.steps.util.disk.RestoreSnapshot',
+                'workflow.steps.util.volume_provider.RestoreSnapshot',
             )}, {
             'Stopping datbase': (
                 'workflow.steps.util.database.Stop',
@@ -254,7 +254,7 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.util.db_monitor.DisableMonitoring',
             )}, {
             'Restoring': (
-                'workflow.steps.util.disk.RestoreSnapshot',
+                'workflow.steps.util.volume_provider.RestoreSnapshot',
             )}, {
             'Stopping datbase': (
                 'workflow.steps.util.database.Stop',

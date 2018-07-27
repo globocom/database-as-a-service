@@ -421,7 +421,7 @@ class RestoreSnapshot(Disk):
         if not self.restore.is_master(self.instance):
             return
 
-        delete_export(self.environment, self.latest_disk())
+        delete_export(self.environment, self.latest_disk)
 
 
 class AddDiskPermissionsRestoredDisk(AddDiskPermissions):
