@@ -1,12 +1,9 @@
 from requests import post, delete, get
 from dbaas_credentials.models import CredentialType
+from util import get_credentials_for, exec_remote_command_host
 from physical.models import Volume
-from util import get_credentials_for
 from base import BaseInstanceStep
-from util import exec_remote_command_host
-import logging
 
-LOG = logging.getLogger(__name__)
 
 class VolumeProviderBase(BaseInstanceStep):
 
@@ -16,17 +13,15 @@ class VolumeProviderBase(BaseInstanceStep):
 
     @property
     def credential(self):
-        # TODO Remove hard coded "faas"
         if not self._credential:
             self._credential = get_credentials_for(
-                self.environment, CredentialType.VOLUME_PROVIDER,
-                project="faas"
+                self.environment, CredentialType.VOLUME_PROVIDER
             )
         return self._credential
 
     @property
     def volume(self):
-        return self.host.volumes.first()
+        return self.host.volumes.filter(is_active=True).first()
 
     @property
     def provider(self):
@@ -37,7 +32,6 @@ class VolumeProviderBase(BaseInstanceStep):
         return "{}/{}/{}/".format(
             self.credential.endpoint, self.provider, self.environment
         )
-
 
     def create_volume(self, group, size_kb, to_address):
         url = self.base_url + "volume/new"
@@ -67,8 +61,13 @@ class VolumeProviderBase(BaseInstanceStep):
                     return_code, output
                 )
             )
-
         return output
+
+    def do(self):
+        raise NotImplementedError
+
+    def undo(self):
+        pass
 
 
 class NewVolume(VolumeProviderBase):
@@ -77,16 +76,13 @@ class NewVolume(VolumeProviderBase):
         return "Creating Volume..."
 
     def do(self):
-
         if not self.host.database_instance():
             return
-
         self.create_volume(
             self.infra.name, self.disk_offering.size_kb, self.host.address
         )
 
     def undo(self):
-
         if not self.host.database_instance():
             return
 
@@ -101,7 +97,6 @@ class NewVolume(VolumeProviderBase):
         response = delete(url)
         if not response.ok:
             raise IndexError(response.content, response)
-
         volume.delete()
 
 
@@ -110,12 +105,12 @@ class MountDataVolume(VolumeProviderBase):
         return "Mounting data volume..."
 
     def do(self):
-
         if not self.host.database_instance():
             return
 
         url = "{}commands/{}/mount".format(
-            self.base_url, self.volume.identifier)
+            self.base_url, self.volume.identifier
+        )
 
         response = get(url)
         if not response.ok:
@@ -133,14 +128,10 @@ class ResizeVolume(VolumeProviderBase):
         return "Resizing data volume..."
 
     def do(self):
-
         if not self.host.database_instance():
             return
 
-        volume = self.volume
-
-        url = "{}resize/{}".format(self.base_url, volume.identifier)
-
+        url = "{}resize/{}".format(self.base_url, self.volume.identifier)
         data = {
             "new_size_kb": self.infra.disk_offering.size_kb,
         }
@@ -149,11 +140,9 @@ class ResizeVolume(VolumeProviderBase):
         if not response.ok:
             raise IndexError(response.content, response)
 
+        volume = self.volume
         volume.total_size_kb = self.infra.disk_offering.size_kb
         volume.save()
-
-        LOG.info('{} Volume saved {}'.format(volume.host, volume.total_size_kb))
-        LOG.info("{}, {}".format(self.infra.disk_offering.size_kb, volume.total_size_kb))
 
     def undo(self):
         pass
