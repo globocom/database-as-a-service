@@ -1,14 +1,7 @@
 # -*- coding: utf-8 -*-
-
 from django.db import models
-import simple_audit
-from django.utils.translation import ugettext_lazy as _
 from util.models import BaseModel
-from physical.models import Environment
-from physical.models import EngineType
-import logging
-
-LOG = logging.getLogger(__name__)
+from physical.models import Instance, Environment
 
 
 class BackupGroup(BaseModel):
@@ -20,11 +13,8 @@ class BackupGroup(BaseModel):
 class BackupInfo(BaseModel):
 
     SNAPSHOPT = 1
-    BACKUPLOG = 2
-
     TYPE_CHOICES = (
         (SNAPSHOPT, 'Snapshot'),
-        (BACKUPLOG, 'Backup Log')
     )
 
     RUNNING = 1
@@ -41,27 +31,26 @@ class BackupInfo(BaseModel):
     class Meta:
         abstract = True
 
-    start_at = models.DateTimeField(
-        verbose_name=_("Start time"), null=False, blank=False)
-    end_at = models.DateTimeField(
-        verbose_name=_("End time"), null=True, blank=True)
-    purge_at = models.DateTimeField(
-        verbose_name=_("Purge time"), null=True, blank=True)
-    type = models.IntegerField(
-        verbose_name=_("Type"), choices=TYPE_CHOICES, null=False, blank=False)
+    start_at = models.DateTimeField(null=False, blank=False)
+    end_at = models.DateTimeField(null=True, blank=True)
+    purge_at = models.DateTimeField(null=True, blank=True)
+    type = models.IntegerField(choices=TYPE_CHOICES, null=False, blank=False)
     status = models.IntegerField(
-        verbose_name=_("Status"), choices=STATUS_CHOICES, null=False, blank=False)
-    instance = models.ForeignKey('physical.Instance', related_name="backup_instance",
-                                 unique=False, null=True, blank=True, on_delete=models.SET_NULL)
+        choices=STATUS_CHOICES, null=False, blank=False
+    )
+    instance = models.ForeignKey(
+        Instance, related_name="backup_instance",
+        unique=False, null=True, blank=True, on_delete=models.SET_NULL
+    )
     database_name = models.CharField(
-        verbose_name=_("Database name"), max_length=100, null=True, blank=True,
-        db_index=True)
-    size = models.BigIntegerField(
-        verbose_name=_("Size"), null=True, blank=True)
+        max_length=100, null=True, blank=True, db_index=True
+    )
+    size = models.BigIntegerField(null=True, blank=True)
     environment = models.ForeignKey(
-        'physical.Environment', related_name="backup_environment", unique=False, null=True, blank=True, on_delete=models.SET_NULL)
-    error = models.CharField(
-        verbose_name=_("Error"), max_length=400, null=True, blank=True)
+        Environment, related_name="backup_environment",
+        unique=False, null=True, blank=True, on_delete=models.SET_NULL
+    )
+    error = models.CharField(max_length=400, null=True, blank=True)
     is_automatic = models.BooleanField(
         default=True, help_text='Backup required by DBaaS routine'
     )
@@ -70,7 +59,9 @@ class BackupInfo(BaseModel):
     )
 
     def __unicode__(self):
-        return u"%s from %s started at %s" % (self.type, self.database_name, self.start_at)
+        return "{} from {} started at {}".format(
+            self.type, self.database_name, self.start_at
+        )
 
     @property
     def was_successful(self):
@@ -88,11 +79,13 @@ class BackupInfo(BaseModel):
 class Snapshot(BackupInfo):
 
     snapshopt_id = models.CharField(
-        verbose_name=_("Snapshot ID"), max_length=100, null=True, blank=True)
+        verbose_name="Snapshot ID", max_length=100, null=True, blank=True)
     snapshot_name = models.CharField(
-        verbose_name=_("Snapshot Name"), max_length=200, null=True, blank=True)
+        verbose_name="Snapshot Name", max_length=200, null=True, blank=True)
     export_path = models.CharField(
-        verbose_name=_("Export Path"), max_length=200, null=True, blank=True)
+        verbose_name="Export Path", max_length=200, null=True, blank=True)
 
     def __unicode__(self):
-        return u"Snapshot from %s started at %s" % (self.database_name, self.start_at)
+        return "Snapshot from {} started at {}".format(
+            self.database_name, self.start_at
+        )
