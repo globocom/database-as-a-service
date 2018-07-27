@@ -11,7 +11,6 @@ class BaseRedis(BaseTopology):
             'workflow.steps.redis.deploy.create_dns.CreateDns',
             'workflow.steps.util.deploy.create_nfs.CreateNfs',
             'workflow.steps.redis.deploy.init_database.InitDatabaseRedis',
-            'workflow.steps.util.deploy.config_backup_log.ConfigBackupLog',
             'workflow.steps.util.deploy.check_database_connection.CheckDatabaseConnection',
             'workflow.steps.util.deploy.check_dns.CheckDns',
             'workflow.steps.util.deploy.start_monit.StartMonit',
