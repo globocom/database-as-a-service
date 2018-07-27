@@ -852,6 +852,12 @@ class Volume(BaseModel):
     total_size_kb = models.IntegerField(null=True, blank=True)
     used_size_kb = models.IntegerField(null=True, blank=True)
 
+    def __unicode__(self):
+        name = "Volume: {}".format(self.identifier)
+        if not self.is_active:
+            name = "(Inactive){}".format(name)
+        return name
+
 
 class Instance(BaseModel):
 

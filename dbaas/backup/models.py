@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from datetime import datetime
 from django.db import models
 from util.models import BaseModel
 from physical.models import Instance, Environment, Volume
@@ -57,7 +58,6 @@ class BackupInfo(BaseModel):
     group = models.ForeignKey(
         BackupGroup, related_name='backups', null=True, blank=True
     )
-    identifier = models.CharField(max_length=255, null=True, blank=True)
     volume = models.ForeignKey(
         Volume, related_name="backups",
         unique=False, null=True, blank=True, on_delete=models.SET_NULL
@@ -80,15 +80,23 @@ class BackupInfo(BaseModel):
     def was_error(self):
         return self.status == Snapshot.ERROR
 
+    def set_error(self, msg):
+        self.status = Snapshot.ERROR
+        self.error = msg
+        self.size = 0
+        self.end_at = datetime.now()
+        self.purge_at = datetime.now()
+        self.save()
+
 
 class Snapshot(BackupInfo):
 
     snapshopt_id = models.CharField(
-        verbose_name="Snapshot ID", max_length=100, null=True, blank=True)
+        verbose_name="Snapshot ID", max_length=100, null=True, blank=True
+    )
     snapshot_name = models.CharField(
-        verbose_name="Snapshot Name", max_length=200, null=True, blank=True)
-    export_path = models.CharField(
-        verbose_name="Export Path", max_length=200, null=True, blank=True)
+        verbose_name="Snapshot Name", max_length=200, null=True, blank=True
+    )
 
     def __unicode__(self):
         return "Snapshot from {} started at {}".format(

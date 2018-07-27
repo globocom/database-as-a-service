@@ -4,13 +4,11 @@ from datetime import datetime, date, timedelta
 from time import sleep, strftime
 from dbaas.celery import app
 from drivers.errors import ConnectionError
-from logical.models import Database
 from notification.models import TaskHistory
-from physical.models import DatabaseInfra, Plan, Instance, Environment
+from physical.models import DatabaseInfra, Plan, Instance, Environment, Volume
 from system.models import Configuration
 from util.decorators import only_one
-from workflow.steps.util.nfsaas_utils import create_snapshot, \
-    delete_snapshot, delete_export
+from workflow.steps.util.volume_provider import VolumeProviderBase
 from models import Snapshot, BackupGroup
 from util import exec_remote_command_host, get_worker_name
 
@@ -20,31 +18,27 @@ LOG = getLogger(__name__)
 
 def set_backup_error(databaseinfra, snapshot, errormsg):
     LOG.error(errormsg)
-    snapshot.status = Snapshot.ERROR
-    snapshot.error = errormsg
-    snapshot.size = 0
-    snapshot.end_at = datetime.now()
-    snapshot.purge_at = datetime.now()
-    snapshot.save()
+    snapshot.set_error(errormsg)
     register_backup_dbmonitor(databaseinfra, snapshot)
 
 
 def register_backup_dbmonitor(databaseinfra, snapshot):
     try:
         from dbaas_dbmonitor.provider import DBMonitorProvider
-        DBMonitorProvider().register_backup(databaseinfra=databaseinfra,
-                                            start_at=snapshot.start_at,
-                                            end_at=snapshot.end_at,
-                                            size=snapshot.size,
-                                            status=snapshot.status,
-                                            type=snapshot.type,
-                                            error=snapshot.error)
+        DBMonitorProvider().register_backup(
+            databaseinfra=databaseinfra,
+            start_at=snapshot.start_at,
+            end_at=snapshot.end_at,
+            size=snapshot.size,
+            status=snapshot.status,
+            type=snapshot.type,
+            error=snapshot.error
+        )
     except Exception as e:
         LOG.error("Error register backup on DBMonitor %s" % (e))
 
 
 def mysql_binlog_save(client, instance):
-
     try:
         client.query('show master status')
         r = client.store_result()
@@ -86,33 +80,26 @@ def unlock_instance(driver, instance, client):
 
 def make_instance_snapshot_backup(instance, error, group):
     LOG.info("Make instance backup for %s" % (instance))
+    provider = VolumeProviderBase(instance)
+    infra = instance.databaseinfra
+    database = infra.databases.first()
 
     snapshot = Snapshot()
     snapshot.start_at = datetime.now()
     snapshot.type = Snapshot.SNAPSHOPT
     snapshot.status = Snapshot.RUNNING
     snapshot.instance = instance
-    snapshot.environment = instance.databaseinfra.environment
+    snapshot.environment = infra.environment
     snapshot.group = group
-
-    from dbaas_nfsaas.models import HostAttr as Nfsaas_HostAttr
-    nfsaas_hostattr = Nfsaas_HostAttr.objects.get(
-        host=instance.hostname, is_active=True
-    )
-    snapshot.export_path = nfsaas_hostattr.nfsaas_path
-
-    databases = Database.objects.filter(databaseinfra=instance.databaseinfra)
-    if databases:
-        snapshot.database_name = databases[0].name
+    snapshot.database_name = database.name
+    snapshot.volume = provider.volume
     snapshot.save()
 
     snapshot_final_status = Snapshot.SUCCESS
     locked = None
+    driver = infra.get_driver()
+    client = driver.get_client(instance)
     try:
-        databaseinfra = instance.databaseinfra
-        driver = databaseinfra.get_driver()
-        client = driver.get_client(instance)
-
         locked = lock_instance(driver, instance, client)
         if not locked:
             snapshot_final_status = Snapshot.WARNING
@@ -120,23 +107,13 @@ def make_instance_snapshot_backup(instance, error, group):
         if 'MySQL' in type(driver).__name__:
             mysql_binlog_save(client, instance)
 
-        nfs_snapshot = create_snapshot(
-            environment=databaseinfra.environment, host=instance.hostname
-        )
-
-        if 'id' in nfs_snapshot and 'name' in nfs_snapshot:
-            snapshot.snapshopt_id = nfs_snapshot['id']
-            snapshot.snapshot_name = nfs_snapshot['name']
-        else:
-            errormsg = 'There is no snapshot information'
-            error['errormsg'] = errormsg
-            set_backup_error(databaseinfra, snapshot, errormsg)
-            return snapshot
-
+        response = provider.take_snapshot()
+        snapshot.snapshopt_id = response['identifier']
+        snapshot.snapshot_name = response['description']
     except Exception as e:
-        errormsg = "Error creating snapshot: %s" % (e)
+        errormsg = "Error creating snapshot: {}".format(e)
         error['errormsg'] = errormsg
-        set_backup_error(databaseinfra, snapshot, errormsg)
+        set_backup_error(infra, snapshot, errormsg)
         return snapshot
     finally:
         if locked:
@@ -144,7 +121,8 @@ def make_instance_snapshot_backup(instance, error, group):
 
     output = {}
     command = "du -sb /data/.snapshot/%s | awk '{print $1}'" % (
-        snapshot.snapshot_name)
+        snapshot.snapshot_name
+    )
     try:
         exec_remote_command_host(instance.hostname, command, output)
         size = int(output['stdout'][0])
@@ -153,16 +131,15 @@ def make_instance_snapshot_backup(instance, error, group):
         snapshot.size = 0
         LOG.error("Error exec remote command %s" % (e))
 
-    backup_path = databases[0].backup_path
+    backup_path = database.backup_path
     if backup_path:
-        infraname = databaseinfra.name
         now = datetime.now()
         target_path = "{backup_path}/{today_str}/{hostname}/{now_str}/{infraname}".format(
             backup_path=backup_path,
             today_str=now.strftime("%Y_%m_%d"),
             hostname=instance.hostname.hostname.split('.')[0],
             now_str=now.strftime("%Y%m%d%H%M%S"),
-            infraname=infraname)
+            infraname=infra.name)
         snapshot_path = "/data/.snapshot/{}/data/".format(snapshot.snapshot_name)
         output = {}
         command = """
@@ -183,7 +160,7 @@ def make_instance_snapshot_backup(instance, error, group):
     snapshot.status = snapshot_final_status
     snapshot.end_at = datetime.now()
     snapshot.save()
-    register_backup_dbmonitor(databaseinfra, snapshot)
+    register_backup_dbmonitor(infra, snapshot)
 
     return snapshot
 

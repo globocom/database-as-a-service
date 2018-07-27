@@ -21,7 +21,7 @@ class VolumeProviderBase(BaseInstanceStep):
 
     @property
     def volume(self):
-        return self.host.volumes.filter(is_active=True).first()
+        return self.host.volumes.get(is_active=True)
 
     @property
     def provider(self):
@@ -62,6 +62,13 @@ class VolumeProviderBase(BaseInstanceStep):
                 )
             )
         return output
+
+    def take_snapshot(self):
+        url = "{}snapshot/{}".format(self.base_url, self.volume.identifier)
+        response = post(url)
+        if not response.ok:
+            raise IndexError(response.content, response)
+        return response.json()
 
     def do(self):
         raise NotImplementedError
