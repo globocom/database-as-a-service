@@ -247,9 +247,11 @@ class IsStopped(HostProviderStep):
     def __unicode__(self):
         return "Waiting for VM be stopped..."
 
-    def check_ssh(working=True):
+    def check_ssh(self, working=True):
         for _ in range(self.CHECK_ATTEMPTS):
-            host_ready = check_ssh(self.host, wait=5, interval=10, retries=1, timeout=30)
+            host_ready = check_ssh(
+                self.host, wait=5, interval=10, retries=1, timeout=30
+            )
             if not working:
                 return True
             sleep(self.CHECK_SECONDS)
