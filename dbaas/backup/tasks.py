@@ -290,27 +290,29 @@ def remove_snapshot_backup(snapshot):
 @app.task(bind=True)
 @only_one(key="removedatabaseoldbackupkey")
 def remove_database_old_backups(self):
-
     worker_name = get_worker_name()
-    task_history = TaskHistory.register(request=self.request,
-                                        worker_name=worker_name, user=None)
+    task_history = TaskHistory.register(
+        request=self.request, worker_name=worker_name, user=None
+    )
 
     backup_retention_days = Configuration.get_by_name_as_int(
-        'backup_retention_days')
-
+        'backup_retention_days'
+    )
     LOG.info("Removing backups older than {} days".format(
         backup_retention_days
     ))
-
     backup_time_dt = date.today() - timedelta(days=backup_retention_days)
-    snapshots = Snapshot.objects.filter(start_at__lte=backup_time_dt,
-                                        purge_at__isnull=True,
-                                        instance__isnull=False,
-                                        snapshopt_id__isnull=False)
+    snapshots = Snapshot.objects.filter(
+        start_at__lte=backup_time_dt,
+        purge_at__isnull=True,
+        instance__isnull=False,
+        snapshopt_id__isnull=False
+    )
     msgs = []
     status = TaskHistory.STATUS_SUCCESS
     if len(snapshots) == 0:
         msgs.append("There is no snapshot to purge")
+
     for snapshot in snapshots:
         try:
             remove_snapshot_backup(snapshot=snapshot)
@@ -323,7 +325,6 @@ def remove_database_old_backups(self):
         msgs.append(msg)
 
     task_history.update_status_for(status, details="\n".join(msgs))
-
     return
 
 
