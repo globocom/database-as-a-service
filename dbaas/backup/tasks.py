@@ -5,7 +5,7 @@ from time import sleep, strftime
 from dbaas.celery import app
 from drivers.errors import ConnectionError
 from notification.models import TaskHistory
-from physical.models import DatabaseInfra, Plan, Instance, Environment, Volume
+from physical.models import DatabaseInfra, Environment
 from system.models import Configuration
 from util.decorators import only_one
 from workflow.steps.util.volume_provider import VolumeProviderBase
@@ -35,7 +35,7 @@ def register_backup_dbmonitor(databaseinfra, snapshot):
             error=snapshot.error
         )
     except Exception as e:
-        LOG.error("Error register backup on DBMonitor %s" % (e))
+        LOG.error("Error register backup on DBMonitor {}".format(e))
 
 
 def mysql_binlog_save(client, instance):
@@ -53,12 +53,13 @@ def mysql_binlog_save(client, instance):
 
         output = {}
         command = 'echo "master=%s;position=%s" > %smysql_binlog_master_file_pos' % (
-            binlog_file, binlog_pos, datadir)
+            binlog_file, binlog_pos, datadir
+        )
 
         exec_remote_command_host(instance.hostname, command, output)
     except Exception as e:
         LOG.error(
-            "Error saving mysql master binlog file and position: %s" % (e))
+            "Error saving mysql master binlog file and position: {}".format(e))
 
 
 def lock_instance(driver, instance, client):
@@ -79,7 +80,7 @@ def unlock_instance(driver, instance, client):
 
 
 def make_instance_snapshot_backup(instance, error, group):
-    LOG.info("Make instance backup for %s" % (instance))
+    LOG.info("Make instance backup for {}".format(instance))
     provider = VolumeProviderBase(instance)
     infra = instance.databaseinfra
     database = infra.databases.first()
@@ -98,8 +99,9 @@ def make_instance_snapshot_backup(instance, error, group):
     snapshot_final_status = Snapshot.SUCCESS
     locked = None
     driver = infra.get_driver()
-    client = driver.get_client(instance)
+    client = None
     try:
+        client = driver.get_client(instance)
         locked = lock_instance(driver, instance, client)
         if not locked:
             snapshot_final_status = Snapshot.WARNING
@@ -129,18 +131,21 @@ def make_instance_snapshot_backup(instance, error, group):
         snapshot.size = size
     except Exception as e:
         snapshot.size = 0
-        LOG.error("Error exec remote command %s" % (e))
+        LOG.error("Error exec remote command {}".format(e))
 
     backup_path = database.backup_path
     if backup_path:
         now = datetime.now()
-        target_path = "{backup_path}/{today_str}/{hostname}/{now_str}/{infraname}".format(
-            backup_path=backup_path,
-            today_str=now.strftime("%Y_%m_%d"),
-            hostname=instance.hostname.hostname.split('.')[0],
-            now_str=now.strftime("%Y%m%d%H%M%S"),
-            infraname=infra.name)
-        snapshot_path = "/data/.snapshot/{}/data/".format(snapshot.snapshot_name)
+        target_path = "{}/{}/{}/{}/{}".format(
+            backup_path,
+            now.strftime("%Y_%m_%d"),
+            instance.hostname.hostname.split('.')[0],
+            now.strftime("%Y%m%d%H%M%S"),
+            infra.name
+        )
+        snapshot_path = "/data/.snapshot/{}/data/".format(
+            snapshot.snapshot_name
+        )
         output = {}
         command = """
         if [ -d "{backup_path}" ]
@@ -155,7 +160,7 @@ def make_instance_snapshot_backup(instance, error, group):
         try:
             exec_remote_command_host(instance.hostname, command, output)
         except Exception as e:
-            LOG.error("Error exec remote command %s" % (e))
+            LOG.error("Error exec remote command {}".format(e))
 
     snapshot.status = snapshot_final_status
     snapshot.end_at = datetime.now()
@@ -168,24 +173,22 @@ def make_instance_snapshot_backup(instance, error, group):
 @app.task(bind=True)
 @only_one(key="makedatabasebackupkey")
 def make_databases_backup(self):
-
     LOG.info("Making databases backups")
     worker_name = get_worker_name()
     task_history = TaskHistory.register(
         request=self.request, worker_name=worker_name, user=None
     )
 
+    waiting_msg = "\nWaiting 5 minutes to start the next backup group"
     status = TaskHistory.STATUS_SUCCESS
     environments = Environment.objects.all()
-
-    env_names_order = Configuration.get_by_name_as_list('prod_envs') + Configuration.get_by_name_as_list('dev_envs')
+    prod_envs = Configuration.get_by_name_as_list('prod_envs')
+    dev_envs = Configuration.get_by_name_as_list('dev_envs')
+    env_names_order = prod_envs + dev_envs
     if not env_names_order:
         env_names_order = [env.name for env in environments]
 
-    databaseinfras = DatabaseInfra.objects.filter(
-        plan__provider=Plan.CLOUDSTACK, plan__has_persistence=True
-    )
-
+    infras = DatabaseInfra.objects.filter(plan__has_persistence=True)
     for env_name in env_names_order:
         try:
             env = environments.get(name=env_name)
@@ -194,31 +197,34 @@ def make_databases_backup(self):
 
         msg = '\nStarting Backup for env {}'.format(env.name)
         task_history.update_details(persist=True, details=msg)
-        databaseinfras_by_env = databaseinfras.filter(environment=env)
+        databaseinfras_by_env = infras.filter(environment=env)
         error = {}
         backup_number = 0
-        backups_per_group = len(databaseinfras) / 12
-        for databaseinfra in databaseinfras_by_env:
+        backups_per_group = len(infras) / 12
+        for infra in databaseinfras_by_env:
             if backups_per_group > 0:
                 if backup_number < backups_per_group:
                     backup_number += 1
                 else:
                     backup_number = 0
-                    waiting_msg = "\nWaiting 5 minutes to start the next backup group"
-                    task_history.update_details(persist=True, details=waiting_msg)
+                    task_history.update_details(waiting_msg, True)
                     sleep(300)
-
-            instances = Instance.objects.filter(
-                databaseinfra=databaseinfra, read_only=False
-            )
 
             group = BackupGroup()
             group.save()
 
-            for instance in instances:
+            for instance in infra.instances.filter(read_only=False):
                 try:
-                    if not instance.databaseinfra.get_driver().check_instance_is_eligible_for_backup(instance):
-                        LOG.info('Instance %s is not eligible for backup' % (str(instance)))
+                    driver = instance.databaseinfra.get_driver()
+                    is_eligible = driver.check_instance_is_eligible_for_backup(
+                        instance
+                    )
+                    if not is_eligible:
+                        LOG.info(
+                            'Instance {} is not eligible for backup'.format(
+                                instance
+                            )
+                        )
                         continue
                 except Exception as e:
                     status = TaskHistory.STATUS_ERROR
@@ -227,7 +233,9 @@ def make_databases_backup(self):
                     LOG.error(msg)
 
                 time_now = str(strftime("%m/%d/%Y %H:%M:%S"))
-                start_msg = "\n{} - Starting backup for {} ...".format(time_now, instance)
+                start_msg = "\n{} - Starting backup for {} ...".format(
+                    time_now, instance
+                )
                 task_history.update_details(persist=True, details=start_msg)
                 try:
                     snapshot = make_instance_snapshot_backup(
@@ -268,7 +276,7 @@ def remove_snapshot_backup(snapshot):
         if snapshot.purge_at:
             continue
 
-        LOG.info("Removing backup for %s" % (snapshot))
+        LOG.info("Removing backup for {}".format(snapshot))
 
         provider = VolumeProviderBase(snapshot.instance)
         provider.delete_snapshot(snapshot)
@@ -290,7 +298,9 @@ def remove_database_old_backups(self):
     backup_retention_days = Configuration.get_by_name_as_int(
         'backup_retention_days')
 
-    LOG.info("Removing backups older than %s days" % (backup_retention_days))
+    LOG.info("Removing backups older than {} days".format(
+        backup_retention_days
+    ))
 
     backup_time_dt = date.today() - timedelta(days=backup_retention_days)
     snapshots = Snapshot.objects.filter(start_at__lte=backup_time_dt,
@@ -304,7 +314,7 @@ def remove_database_old_backups(self):
     for snapshot in snapshots:
         try:
             remove_snapshot_backup(snapshot=snapshot)
-            msg = "Backup %s removed" % (snapshot)
+            msg = "Backup {} removed".format(snapshot)
             LOG.info(msg)
         except Exception as e:
             msg = "Error removing backup %s. Error: %s" % (snapshot, str(e))
@@ -389,14 +399,14 @@ def _get_backup_instance(database, task):
 def _check_snapshot_limit(instances, task):
     for instance in instances:
         task.add_detail('\nChecking older backups for {}...'.format(instance))
-
-        backup_limit = Configuration.get_by_name_as_int('backup_retention_days')
+        limit = Configuration.get_by_name_as_int('backup_retention_days')
         snapshots_count = Snapshot.objects.filter(
-            purge_at__isnull=True, instance=instance, snapshopt_id__isnull=False
+            purge_at__isnull=True, instance=instance,
+            snapshopt_id__isnull=False
         ).order_by('start_at').count()
         task.add_detail(
             'Current snapshot limit {}, used {}'.format(
-                backup_limit, snapshots_count
+                limit, snapshots_count
             ),
             level=1
         )
