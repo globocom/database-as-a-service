@@ -96,39 +96,3 @@ class Snapshot(BackupInfo):
 
     def __unicode__(self):
         return u"Snapshot from %s started at %s" % (self.database_name, self.start_at)
-
-
-class LogConfiguration(BaseModel):
-
-    environment = models.ForeignKey(Environment, null=False, blank=False, on_delete=models.CASCADE)
-    engine_type = models.ForeignKey(EngineType, null=False, blank=False, on_delete=models.CASCADE)
-
-    retention_days = models.SmallIntegerField(verbose_name=_("Backup Retention Days"),
-                                              max_length=2, null=False, blank=False, default=7)
-    filer_path = models.CharField(
-        verbose_name=_("Filer Path"), max_length=200, null=False, blank=False)
-    mount_point_path = models.CharField(
-        verbose_name=_("Mount Point Path"), max_length=200, null=False, blank=False)
-    log_path = models.CharField(
-        verbose_name=_("Database Log Path"), max_length=200, null=False, blank=False)
-    backup_log_script = models.CharField(
-        verbose_name=_("Backup Log Script"), max_length=200, null=False, blank=False)
-    config_backup_log_script = models.CharField(
-        verbose_name=_("Config Backup Log Script"), max_length=200, null=False, blank=False)
-    clean_backup_log_script = models.CharField(
-        verbose_name=_("Clean Backup Log Script"), max_length=200, null=False, blank=False)
-    cron_minute = models.CharField(
-        verbose_name=_("Crontab minute"), max_length=10, null=False, blank=False)
-    cron_hour = models.CharField(
-        verbose_name=_("Crontab hour"), max_length=10, null=False, blank=False)
-
-    class Meta:
-        unique_together = (
-            ('environment', 'engine_type')
-        )
-
-    def __unicode__(self):
-        return u"Backup config for %s environment and %s engine type" % (self.environment, self.engine_type)
-
-
-simple_audit.register(LogConfiguration)
