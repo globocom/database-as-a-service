@@ -1,29 +1,24 @@
 # -*- coding: utf-8 -*-
-import logging
+from logging import getLogger
+from datetime import datetime, date, timedelta
+from time import sleep, strftime
 from dbaas.celery import app
-from util.decorators import only_one
-from physical.models import DatabaseInfra, Plan, Instance
-from logical.models import Database
-from models import Snapshot
-from notification.models import TaskHistory
-from system.models import Configuration
 from drivers.errors import ConnectionError
-import datetime
-import time
-from datetime import date, timedelta
-from util import exec_remote_command_host
-from util import get_worker_name
-from util import build_dict
+from logical.models import Database
+from notification.models import TaskHistory
+from physical.models import DatabaseInfra, Plan, Instance, Environment
+from system.models import Configuration
+from util.decorators import only_one
 from util.providers import get_restore_snapshot_settings
+from workflow.steps.util.nfsaas_utils import create_snapshot, \
+    delete_snapshot, delete_export
 from workflow.workflow import start_workflow
+from models import Snapshot, BackupGroup
+from util import exec_remote_command_host, get_worker_name, build_dict
 from notification import tasks
-from workflow.steps.util.nfsaas_utils import create_snapshot, delete_snapshot, \
-    delete_export
-from .models import BackupGroup
-from physical.models import Environment
 
 
-LOG = logging.getLogger(__name__)
+LOG = getLogger(__name__)
 
 
 def set_backup_error(databaseinfra, snapshot, errormsg):
@@ -31,8 +26,8 @@ def set_backup_error(databaseinfra, snapshot, errormsg):
     snapshot.status = Snapshot.ERROR
     snapshot.error = errormsg
     snapshot.size = 0
-    snapshot.end_at = datetime.datetime.now()
-    snapshot.purge_at = datetime.datetime.now()
+    snapshot.end_at = datetime.now()
+    snapshot.purge_at = datetime.now()
     snapshot.save()
     register_backup_dbmonitor(databaseinfra, snapshot)
 
@@ -96,7 +91,7 @@ def make_instance_snapshot_backup(instance, error, group):
     LOG.info("Make instance backup for %s" % (instance))
 
     snapshot = Snapshot()
-    snapshot.start_at = datetime.datetime.now()
+    snapshot.start_at = datetime.now()
     snapshot.type = Snapshot.SNAPSHOPT
     snapshot.status = Snapshot.RUNNING
     snapshot.instance = instance
@@ -164,7 +159,7 @@ def make_instance_snapshot_backup(instance, error, group):
     backup_path = databases[0].backup_path
     if backup_path:
         infraname = databaseinfra.name
-        now = datetime.datetime.now()
+        now = datetime.now()
         target_path = "{backup_path}/{today_str}/{hostname}/{now_str}/{infraname}".format(
             backup_path=backup_path,
             today_str=now.strftime("%Y_%m_%d"),
@@ -189,7 +184,7 @@ def make_instance_snapshot_backup(instance, error, group):
             LOG.error("Error exec remote command %s" % (e))
 
     snapshot.status = snapshot_final_status
-    snapshot.end_at = datetime.datetime.now()
+    snapshot.end_at = datetime.now()
     snapshot.save()
     register_backup_dbmonitor(databaseinfra, snapshot)
 
@@ -237,7 +232,7 @@ def make_databases_backup(self):
                     backup_number = 0
                     waiting_msg = "\nWaiting 5 minutes to start the next backup group"
                     task_history.update_details(persist=True, details=waiting_msg)
-                    time.sleep(300)
+                    sleep(300)
 
             instances = Instance.objects.filter(
                 databaseinfra=databaseinfra, read_only=False
@@ -257,7 +252,7 @@ def make_databases_backup(self):
                         str(instance), str(e))
                     LOG.error(msg)
 
-                time_now = str(time.strftime("%m/%d/%Y %H:%M:%S"))
+                time_now = str(strftime("%m/%d/%Y %H:%M:%S"))
                 start_msg = "\n{} - Starting backup for {} ...".format(time_now, instance)
                 task_history.update_details(persist=True, details=start_msg)
                 try:
@@ -283,7 +278,7 @@ def make_databases_backup(self):
                         str(instance), str(e))
                     LOG.error(msg)
 
-                time_now = str(time.strftime("%m/%d/%Y %H:%M:%S"))
+                time_now = str(strftime("%m/%d/%Y %H:%M:%S"))
                 msg = "\n{} - {}".format(time_now, msg)
                 task_history.update_details(persist=True, details=msg)
 
@@ -303,7 +298,7 @@ def remove_snapshot_backup(snapshot):
 
         delete_snapshot(snapshot)
 
-        snapshot.purge_at = datetime.datetime.now()
+        snapshot.purge_at = datetime.now()
         snapshot.save()
 
     return
