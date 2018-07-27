@@ -1,23 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 from django_services import admin as services_admin
-from django.contrib import admin
 from ..service.host import HostService
-from dbaas_nfsaas.models import HostAttr as HostAttrNfsaas
-
-
-class HostAttrNfsaasInline(admin.StackedInline):
-    model = HostAttrNfsaas
-    max_num = 0
-    template = 'admin/physical/shared/inline_form.html'
-
-    def get_readonly_fields(self, request, obj=None):
-        if obj:
-            return self.readonly_fields + ('nfsaas_size_kb', 'nfsaas_used_size_kb')
-        return self.readonly_fields
-
-    def has_delete_permission(self, request, obj=None):
-        return False
 
 
 class HostAdmin(services_admin.DjangoServicesAdmin):
@@ -33,11 +17,7 @@ class HostAdmin(services_admin.DjangoServicesAdmin):
     save_on_top = True
 
     def monitor_url_html(self, host):
-        return "<a href='%(u)s' target='_blank'>%(u)s</a>" % {'u': host.monitor_url}
+        return "<a href='{0}' target='_blank'>{0}</a>".format(host.monitor_url)
     monitor_url_html.allow_tags = True
     monitor_url_html.short_description = "Monitor url"
     monitor_url_html.admin_order_field = "monitor_url"
-
-    inlines = [
-        HostAttrNfsaasInline,
-    ]
