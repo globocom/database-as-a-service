@@ -52,6 +52,13 @@ class VolumeProviderBase(BaseInstanceStep):
         volume.save()
         return volume
 
+    def destroy_volume(self, volume):
+        url = "{}volume/{}".format(self.base_url, volume.identifier)
+        response = delete(url)
+        if not response.ok:
+            raise IndexError(response.content, response)
+        volume.delete()
+
     def run_script(self, script):
         output = {}
         return_code = exec_remote_command_host(self.host, script, output)
@@ -73,6 +80,13 @@ class VolumeProviderBase(BaseInstanceStep):
     def delete_snapshot(self, snapshot):
         url = "{}snapshot/{}".format(self.base_url, snapshot.snapshopt_id)
         response = delete(url)
+        if not response.ok:
+            raise IndexError(response.content, response)
+        return response.json()
+
+    def restore_snapshot(self, snapshot):
+        url = "{}snapshot/{}/restore".format(self.base_url, snapshot.snapshopt_id)
+        response = post(url)
         if not response.ok:
             raise IndexError(response.content, response)
         return response.json()
@@ -107,11 +121,7 @@ class NewVolume(VolumeProviderBase):
         script = "rm -rf /data/*"
         self.run_script(script)
 
-        url = "{}volume/{}".format(self.base_url, volume.identifier)
-        response = delete(url)
-        if not response.ok:
-            raise IndexError(response.content, response)
-        volume.delete()
+        self.destroy_volume(volume)
 
 
 class MountDataVolume(VolumeProviderBase):
@@ -160,3 +170,35 @@ class ResizeVolume(VolumeProviderBase):
 
     def undo(self):
         pass
+
+
+class RestoreSnapshot(VolumeProviderBase):
+
+    def __unicode__(self):
+        if not self.snapshot:
+            return "Skipping restoring (No snapshot for this instance)..."
+
+        return "Restoring {}...".format(self.snapshot)
+
+    @property
+    def disk_host(self):
+        return self.restore.master_for(self.instance).hostname
+
+    def do(self):
+        snapshot = self.snapshot
+        if not snapshot:
+            return
+
+        response = self.restore_snapshot(snapshot)
+        volume = self.latest_disk
+        volume.identifier = response['identifier']
+        volume.is_active = False
+        volume.id = None
+        volume.host = self.disk_host
+        volume.save()
+
+    def undo(self):
+        if not self.restore.is_master(self.instance):
+            return
+
+        self.destroy_volume(self.latest_disk)
