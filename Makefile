@@ -98,10 +98,8 @@ sync_celery: # sync celery tasks
 shell: # run django shell
 	@cd dbaas && python manage.py shell_plus --use-pythonrc
 
-
 update_permissions:
 	@cd dbaas && python manage.py update_permissions
-
 
 generate_migration:
 	$(eval model = $(if $(model),$(model),$(error Modo de uso: make generate_migration model=NOME_DO_MODEL)))
