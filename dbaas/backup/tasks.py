@@ -9,13 +9,10 @@ from notification.models import TaskHistory
 from physical.models import DatabaseInfra, Plan, Instance, Environment
 from system.models import Configuration
 from util.decorators import only_one
-from util.providers import get_restore_snapshot_settings
 from workflow.steps.util.nfsaas_utils import create_snapshot, \
     delete_snapshot, delete_export
-from workflow.workflow import start_workflow
 from models import Snapshot, BackupGroup
-from util import exec_remote_command_host, get_worker_name, build_dict
-from notification import tasks
+from util import exec_remote_command_host, get_worker_name
 
 
 LOG = getLogger(__name__)
@@ -340,84 +337,6 @@ def remove_database_old_backups(self):
     task_history.update_status_for(status, details="\n".join(msgs))
 
     return
-
-
-@app.task(bind=True)
-def restore_snapshot(self, database, snapshot, user, task_history):
-    try:
-        from dbaas_nfsaas.models import HostAttr
-        LOG.info("Restoring snapshot")
-        worker_name = get_worker_name()
-
-        # task_history = models.TaskHistory.objects.get(id=task_history)
-        task_history = TaskHistory.register(
-            request=self.request, task_history=task_history,
-            user=user, worker_name=worker_name
-        )
-
-        databaseinfra = database.databaseinfra
-
-        snapshot = Snapshot.objects.get(id=snapshot)
-        snapshot_id = snapshot.snapshopt_id
-
-        host_attr_snapshot = HostAttr.objects.get(nfsaas_path=snapshot.export_path)
-        host = database.infra.get_driver().get_master_instance().hostname
-        host_attr = HostAttr.objects.get(host=host, is_active=True)
-
-        export_id_snapshot = host_attr_snapshot.nfsaas_export_id
-        export_id = host_attr.nfsaas_export_id
-        export_path = host_attr.nfsaas_path
-
-        steps = get_restore_snapshot_settings(
-            database.plan.replication_topology.class_path
-        )
-
-        not_primary_instances = databaseinfra.instances.exclude(
-            hostname=host
-        ).exclude(instance_type__in=[
-            Instance.MONGODB_ARBITER, Instance.REDIS_SENTINEL
-        ])
-        not_primary_hosts = [
-            arbiter.hostname for arbiter in databaseinfra.instances.filter(
-                instance_type=Instance.MONGODB_ARBITER
-            )
-        ]
-        for instance in not_primary_instances:
-            not_primary_hosts.append(instance.hostname)
-
-        tasks.disable_zabbix_alarms(database)
-
-        workflow_dict = build_dict(databaseinfra=databaseinfra,
-                                   database=database,
-                                   snapshot_id=snapshot_id,
-                                   export_path=export_path,
-                                   export_id=export_id,
-                                   export_id_snapshot=export_id_snapshot,
-                                   host=host,
-                                   steps=steps,
-                                   not_primary_hosts=not_primary_hosts,
-                                   )
-
-        start_workflow(workflow_dict=workflow_dict, task=task_history)
-
-        if workflow_dict['exceptions']['traceback']:
-            raise Exception('Restore could not be finished')
-        else:
-            task_history.update_status_for(
-                TaskHistory.STATUS_SUCCESS, details='Database sucessfully recovered!')
-
-    except Exception, e:
-        if 'workflow_dict' in locals():
-            error = "\n".join(": ".join(err) for err in
-                              workflow_dict['exceptions']['error_codes'])
-            traceback = "\nException Traceback\n".join(workflow_dict['exceptions']['traceback'])
-            error = "{}\n{}\n{}".format(error, traceback, error)
-        else:
-            error = str(e)
-        task_history.update_status_for(
-            TaskHistory.STATUS_ERROR, details=error)
-    finally:
-        tasks.enable_zabbix_alarms(database)
 
 
 @app.task(bind=True)
