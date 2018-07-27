@@ -270,7 +270,8 @@ def remove_snapshot_backup(snapshot):
 
         LOG.info("Removing backup for %s" % (snapshot))
 
-        delete_snapshot(snapshot)
+        provider = VolumeProviderBase(snapshot.instance)
+        provider.delete_snapshot(snapshot)
 
         snapshot.purge_at = datetime.now()
         snapshot.save()
