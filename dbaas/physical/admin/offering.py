@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 from django_services import admin as services_admin
-from django.contrib import admin
 from ..service.offering import OfferingService
-from dbaas_nfsaas.models import HostAttr as HostAttrNfsaas
 
 
 
