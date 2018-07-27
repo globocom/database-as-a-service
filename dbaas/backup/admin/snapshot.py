@@ -18,11 +18,11 @@ class SnapshotAdmin(admin.ModelAdmin):
 
     list_display = ("database_name", "instance", "start_at",
                     "end_at", "purge_at", "type", "status", "environment")
-    search_fields = ("database_name", "instance__dns", )
+    search_fields = ("database_name", "instance__dns", 'volume')
     readonly_fields = (
         "database_name", "instance", "start_at", "end_at", "purge_at", "type",
-        "status", "snapshopt_id", "snapshot_name", "export_path", "size",
-        "environment", "error", "is_automatic", "group"
+        "status", "snapshopt_id", "snapshot_name", "size", "environment",
+        "error", "is_automatic", "group", 'volume'
     )
     ordering = ["-start_at"]
 
