@@ -70,6 +70,13 @@ class VolumeProviderBase(BaseInstanceStep):
             raise IndexError(response.content, response)
         return response.json()
 
+    def delete_snapshot(self, snapshot):
+        url = "{}snapshot/{}".format(self.base_url, snapshot.snapshopt_id)
+        response = delete(url)
+        if not response.ok:
+            raise IndexError(response.content, response)
+        return response.json()
+
     def do(self):
         raise NotImplementedError
 
