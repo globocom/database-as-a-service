@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from django.db import models
 from util.models import BaseModel
-from physical.models import Instance, Environment
+from physical.models import Instance, Environment, Volume
 
 
 class BackupGroup(BaseModel):
@@ -56,6 +56,11 @@ class BackupInfo(BaseModel):
     )
     group = models.ForeignKey(
         BackupGroup, related_name='backups', null=True, blank=True
+    )
+    identifier = models.CharField(max_length=255, null=True, blank=True)
+    volume = models.ForeignKey(
+        Volume, related_name="backups",
+        unique=False, null=True, blank=True, on_delete=models.SET_NULL
     )
 
     def __unicode__(self):
