@@ -92,13 +92,19 @@ class VolumeProviderBase(BaseInstanceStep):
         return response.json()
 
     def add_access(self, volume, host):
-        "/<string:provider_name>/<string:env>/access/<string:identifier>"
         url = "{}access/{}".format(self.base_url, volume.identifier)
         data = {"to_address": host.address,}
         response = post(url, json=data)
         if not response.ok:
             raise IndexError(response.content, response)
         return response.json()
+
+    def get_mount_command(self, volume):
+        url = "{}commands/{}/mount".format(self.base_url, volume.identifier)
+        response = get(url)
+        if not response.ok:
+            raise IndexError(response.content, response)
+        return response.json()['command']
 
     def do(self):
         raise NotImplementedError
@@ -134,22 +140,19 @@ class NewVolume(VolumeProviderBase):
 
 
 class MountDataVolume(VolumeProviderBase):
+
     def __unicode__(self):
-        return "Mounting data volume..."
+        return "Mounting {} volume...".format(self.directory)
+
+    @property
+    def directory(self):
+        return "/data"
 
     def do(self):
         if not self.host.database_instance():
             return
 
-        url = "{}commands/{}/mount".format(
-            self.base_url, self.volume.identifier
-        )
-
-        response = get(url)
-        if not response.ok:
-            raise IndexError(response.content, response)
-
-        script = response.json()['command']
+        script = self.get_mount_command(self.volume)
         self.run_script(script)
 
     def undo(self):
