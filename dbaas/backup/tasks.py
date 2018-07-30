@@ -202,6 +202,9 @@ def make_databases_backup(self):
         backup_number = 0
         backups_per_group = len(infras) / 12
         for infra in databaseinfras_by_env:
+            if not infra.databases.first():
+                continue
+
             if backups_per_group > 0:
                 if backup_number < backups_per_group:
                     backup_number += 1
