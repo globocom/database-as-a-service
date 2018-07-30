@@ -88,9 +88,22 @@ class BackupInfo(BaseModel):
         self.purge_at = datetime.now()
         self.save()
 
+    @classmethod
+    def create(cls, instance, group, volume):
+        snapshot = cls()
+        snapshot.start_at = datetime.now()
+        snapshot.type = Snapshot.SNAPSHOPT
+        snapshot.status = Snapshot.RUNNING
+        snapshot.instance = instance
+        snapshot.environment = instance.databaseinfra.environment
+        snapshot.group = group
+        snapshot.database_name = instance.databaseinfra.databases.first().name
+        snapshot.volume = volume
+        snapshot.save()
+        return snapshot
+
 
 class Snapshot(BackupInfo):
-
     snapshopt_id = models.CharField(
         verbose_name="Snapshot ID", max_length=100, null=True, blank=True
     )
@@ -102,3 +115,7 @@ class Snapshot(BackupInfo):
         return "Snapshot from {} started at {}".format(
             self.database_name, self.start_at
         )
+
+    def done(self, response):
+        self.snapshopt_id = response['identifier']
+        self.snapshot_name = response['description']
