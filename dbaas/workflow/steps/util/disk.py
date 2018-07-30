@@ -364,33 +364,6 @@ class CleanDataArbiter(CleanData):
         return self.instance.instance_type == self.instance.MONGODB_ARBITER
 
 
-class UpdateRestore(Disk):
-
-    def __unicode__(self):
-        return "Updating meta data..."
-
-    @property
-    def is_valid(self):
-        return self.restore.is_master(self.instance)
-
-    def do(self):
-        if not self.is_valid:
-            return
-
-        old_disk = self.host.active_disk
-        new_disk = self.host.nfsaas_host_attributes.last()
-
-        if old_disk != new_disk:
-            old_disk.is_active = False
-            new_disk.is_active = True
-            old_disk.save()
-            new_disk.save()
-
-    def undo(self):
-        # ToDo
-        pass
-
-
 class RemoveDeprecatedFiles(DiskCommand):
 
     def __unicode__(self):

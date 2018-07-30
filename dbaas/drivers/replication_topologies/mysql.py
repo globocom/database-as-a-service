@@ -144,7 +144,7 @@ class MySQLSingle(BaseMysql):
             )}, {
             'Old data': (
                 'workflow.steps.util.volume_provider.TakeSnapshot',
-                'workflow.steps.util.disk.UpdateRestore',
+                'workflow.steps.util.volume_provider.UpdateActiveDisk',
             )}, {
             'Enabling monitoring': (
                 'workflow.steps.util.db_monitor.EnableMonitoring',
@@ -362,7 +362,7 @@ class MySQLFoxHA(MySQLSingle):
             )}, {
             'Old data': (
                 'workflow.steps.util.volume_provider.TakeSnapshot',
-                'workflow.steps.util.disk.UpdateRestore',
+                'workflow.steps.util.volume_provider.UpdateActiveDisk',
             )}, {
             'Enabling monitoring': (
                 'workflow.steps.util.db_monitor.EnableMonitoring',
