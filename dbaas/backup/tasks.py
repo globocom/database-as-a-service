@@ -5,7 +5,7 @@ from time import sleep, strftime
 from dbaas.celery import app
 from drivers.errors import ConnectionError
 from notification.models import TaskHistory
-from physical.models import DatabaseInfra, Environment
+from physical.models import DatabaseInfra, Environment, Volume
 from system.models import Configuration
 from util.decorators import only_one
 from workflow.steps.util.volume_provider import VolumeProviderBase
@@ -339,29 +339,27 @@ def purge_unused_exports_task(self):
 
 
 def purge_unused_exports(task=None):
-    from dbaas_nfsaas.models import HostAttr
-
     success = True
-    for export in HostAttr.objects.filter(is_active=False):
-        if export.snapshots():
+    for volume in Volume.objects.filter(is_active=False):
+        if volume.backups.filter(purge_at=None).exists():
             continue
 
         if task:
-            task.add_detail('Removing: {}'.format(export), level=2)
+            task.add_detail('Removing: {}'.format(volume), level=2)
 
-        environment = export.host.instances.first().databaseinfra.environment
-
+        provider = VolumeProviderBase(volume.host.instances.first())
         try:
-            delete_export(environment, export.nfsaas_path_host)
+            provider.add_access(volume, volume.host)
+            provider.clean_up(volume)
+            provider.destroy_volume(volume)
         except Exception as e:
             success = False
-            LOG.info('Error removing {} - {}'.format(export, e))
+            LOG.info('Error removing {} - {}'.format(volume, e))
             if task:
                 task.add_detail('Error: {}'.format(e), level=4)
         else:
             if task:
                 task.add_detail('Success', level=4)
-            export.delete()
 
     return success
 
