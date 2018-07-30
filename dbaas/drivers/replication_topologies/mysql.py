@@ -143,7 +143,7 @@ class MySQLSingle(BaseMysql):
                 'workflow.steps.util.database.CheckIsUp',
             )}, {
             'Old data': (
-                'workflow.steps.util.disk.BackupRestore',
+                'workflow.steps.util.volume_provider.TakeSnapshot',
                 'workflow.steps.util.disk.UpdateRestore',
             )}, {
             'Enabling monitoring': (
@@ -361,7 +361,7 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.database.CheckIsUp',
             )}, {
             'Old data': (
-                'workflow.steps.util.disk.BackupRestore',
+                'workflow.steps.util.volume_provider.TakeSnapshot',
                 'workflow.steps.util.disk.UpdateRestore',
             )}, {
             'Enabling monitoring': (

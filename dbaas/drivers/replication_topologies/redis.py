@@ -116,7 +116,7 @@ class RedisSingle(BaseRedis):
                 'workflow.steps.util.database.CheckIsUp',
             )}, {
             'Old data': (
-                'workflow.steps.util.disk.BackupRestore',
+                'workflow.steps.util.volume_provider.TakeSnapshot',
                 'workflow.steps.util.disk.UpdateRestore',
             )}, {
             'Enabling monitoring': (
@@ -188,7 +188,7 @@ class RedisSentinel(BaseRedis):
                 'workflow.steps.util.database.SetSlaveRestore',
             )}, {
             'Old data': (
-                'workflow.steps.util.disk.BackupRestore',
+                'workflow.steps.util.volume_provider.TakeSnapshot',
                 'workflow.steps.util.disk.UpdateRestore',
             )}, {
             'Check ACL': (
@@ -348,7 +348,7 @@ class RedisCluster(BaseRedis):
                 'workflow.steps.util.database.CheckIsUp',
             )}, {
             'Old data': (
-                'workflow.steps.util.disk.BackupRestore',
+                'workflow.steps.util.volume_provider.TakeSnapshot',
                 'workflow.steps.util.disk.UpdateRestore',
             )}, {
             'Enabling monitoring': (

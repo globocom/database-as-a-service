@@ -118,7 +118,7 @@ class MongoDBSingle(BaseMongoDB):
                 'workflow.steps.util.database.CheckIsUp',
             )}, {
             'Old data': (
-                'workflow.steps.util.disk.BackupRestore',
+                'workflow.steps.util.volume_provider.TakeSnapshot',
                 'workflow.steps.util.disk.UpdateRestore',
             )}, {
             'Enabling monitoring': (
@@ -277,7 +277,7 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.util.database.CheckIfInstanceIsMasterRestore',
             )}, {
             'Old data': (
-                'workflow.steps.util.disk.BackupRestore',
+                'workflow.steps.util.volume_provider.TakeSnapshot',
                 'workflow.steps.util.disk.UpdateRestore',
             )}, {
             'Enabling monitoring': (

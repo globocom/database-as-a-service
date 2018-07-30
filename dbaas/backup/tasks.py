@@ -85,16 +85,7 @@ def make_instance_snapshot_backup(instance, error, group):
     infra = instance.databaseinfra
     database = infra.databases.first()
 
-    snapshot = Snapshot()
-    snapshot.start_at = datetime.now()
-    snapshot.type = Snapshot.SNAPSHOPT
-    snapshot.status = Snapshot.RUNNING
-    snapshot.instance = instance
-    snapshot.environment = infra.environment
-    snapshot.group = group
-    snapshot.database_name = database.name
-    snapshot.volume = provider.volume
-    snapshot.save()
+    snapshot = Snapshot.create(instance, group, provider.volume)
 
     snapshot_final_status = Snapshot.SUCCESS
     locked = None
@@ -110,8 +101,7 @@ def make_instance_snapshot_backup(instance, error, group):
             mysql_binlog_save(client, instance)
 
         response = provider.take_snapshot()
-        snapshot.snapshopt_id = response['identifier']
-        snapshot.snapshot_name = response['description']
+        snapshot.done(response)
     except Exception as e:
         errormsg = "Error creating snapshot: {}".format(e)
         error['errormsg'] = errormsg

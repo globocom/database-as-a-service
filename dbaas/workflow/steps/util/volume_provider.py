@@ -1,4 +1,6 @@
+from datetime import datetime
 from requests import post, delete, get
+from backup.models import Snapshot
 from dbaas_credentials.models import CredentialType
 from util import get_credentials_for, exec_remote_command_host
 from physical.models import Volume
@@ -255,3 +257,32 @@ class AddAccessRestoredVolume(AddAccess):
     @property
     def volume(self):
         return self.latest_disk
+
+
+class TakeSnapshot(VolumeProviderBase):
+
+    def __unicode__(self):
+        return "Doing backup of old data..."
+
+    @property
+    def is_valid(self):
+        return self.restore.is_master(self.instance)
+
+    @property
+    def group(self):
+        return self.restore.new_group
+
+    def do(self):
+        if not self.is_valid:
+            return
+
+        snapshot = Snapshot.create(self.instance, self.group, self.volume)
+        response = self.take_snapshot()
+        snapshot.done(response)
+        snapshot.status = Snapshot.SUCCESS
+        snapshot.end_at = datetime.now()
+        snapshot.save()
+
+    def undo(self):
+        # ToDo
+        pass
