@@ -111,7 +111,6 @@ class MongoDBSingle(BaseMongoDB):
                 'workflow.steps.util.volume_provider.AddAccessRestoredVolume',
                 'workflow.steps.util.disk.UnmountOldestExportRestore',
                 'workflow.steps.util.volume_provider.MountDataVolumeRestored',
-                'workflow.steps.util.disk.ConfigureFstabRestore',
                 'workflow.steps.util.plan.ConfigureRestore',
             )}, {
             'Starting database': (
@@ -264,7 +263,6 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.util.volume_provider.AddAccessRestoredVolume',
                 'workflow.steps.util.disk.UnmountOldestExportRestore',
                 'workflow.steps.util.volume_provider.MountDataVolumeRestored',
-                'workflow.steps.util.disk.ConfigureFstabRestore',
                 'workflow.steps.util.disk.CleanData',
                 'workflow.steps.util.disk.CleanDataArbiter',
                 'workflow.steps.util.plan.ConfigureRestore',

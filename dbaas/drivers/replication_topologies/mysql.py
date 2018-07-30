@@ -136,7 +136,6 @@ class MySQLSingle(BaseMysql):
                 'workflow.steps.util.volume_provider.AddAccessRestoredVolume',
                 'workflow.steps.util.disk.UnmountOldestExportRestore',
                 'workflow.steps.util.volume_provider.MountDataVolumeRestored',
-                'workflow.steps.util.disk.ConfigureFstabRestore',
                 'workflow.steps.util.plan.ConfigureRestore',
             )}, {
             'Starting database': (
@@ -342,7 +341,6 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.mysql.AddDiskPermissionsRestoredDiskMySQL',
                 'workflow.steps.util.mysql.UnmountOldestExportRestoreMySQL',
                 'workflow.steps.util.mysql.MountNewerExportRestoreMySQL',
-                'workflow.steps.util.mysql.ConfigureFstabRestoreMySQL',
                 'workflow.steps.util.disk.RemoveDeprecatedFiles',
                 'workflow.steps.util.plan.ConfigureRestore',
             )}, {
