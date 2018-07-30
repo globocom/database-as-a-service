@@ -114,17 +114,6 @@ class DiskMountCommand(DiskCommand):
         return {message: script}
 
 
-class MountNewerExport(NewerDisk, DiskMountCommand):
-
-    @property
-    def path_mount(self):
-        return self.NEW_DIRECTORY
-
-    @property
-    def export_remote_path(self):
-        return self.newer_export.nfsaas_path
-
-
 class CopyDataBetweenExports(DiskCommand):
 
     def __unicode__(self):
@@ -178,13 +167,6 @@ class UnmountNewerExportMigration(
     pass
 
 
-class MountingNewerExport(MountNewerExport):
-
-    @property
-    def path_mount(self):
-        return self.OLD_DIRECTORY
-
-
 class DisableOldestExport(NewerDisk):
 
     def __unicode__(self):
@@ -196,39 +178,6 @@ class DisableOldestExport(NewerDisk):
                 continue
             export.is_active = False
             export.save()
-
-
-class ConfigureFstab(NewerDisk, DiskCommand):
-
-    def __unicode__(self):
-        return "Configuring fstab..."
-
-    def add_clone_script(self, scripts):
-        error = 'Could not copy fstab'.format(self.OLD_DIRECTORY)
-        script = 'cp /etc/fstab /etc/fstab.bkp'.format(self.OLD_DIRECTORY)
-        scripts[error] = script
-
-    def add_remove_script(self, scripts):
-        error = 'Could not remove {} from fstab'.format(self.OLD_DIRECTORY)
-        script = 'sed \'/\{}/d\' /etc/fstab.bkp > /etc/fstab'.format(
-            self.OLD_DIRECTORY
-        )
-        scripts[error] = script
-
-    def add_configure_script(self, scripts):
-        error = 'Could not configure {} in fstab'.format(self.OLD_DIRECTORY)
-        script = 'echo "{}   {} nfs defaults,bg,intr,nolock 0 0" >> /etc/fstab'.format(
-            self.newer_export.nfsaas_path, self.OLD_DIRECTORY
-        )
-        scripts[error] = script
-
-    @property
-    def scripts(self):
-        scripts = OrderedDict()
-        self.add_clone_script(scripts)
-        self.add_remove_script(scripts)
-        self.add_configure_script(scripts)
-        return scripts
 
 
 class FilePermissions(NewerDisk, DiskCommand):
@@ -429,28 +378,6 @@ class UnmountOldestExportRestore(UnmountOldestExport):
     @property
     def is_valid(self):
         return self.restore.is_master(self.instance)
-
-    def undo(self):
-        # ToDo
-        pass
-
-
-class MountNewerExportRestore(MountNewerExport):
-
-    @property
-    def path_mount(self):
-        return self.OLD_DIRECTORY
-
-    @property
-    def is_valid(self):
-        return self.restore.is_master(self.instance)
-
-    def undo(self):
-        # ToDo
-        pass
-
-
-class ConfigureFstabRestore(MountNewerExportRestore, ConfigureFstab):
 
     def undo(self):
         # ToDo
