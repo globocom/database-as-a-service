@@ -91,6 +91,15 @@ class VolumeProviderBase(BaseInstanceStep):
             raise IndexError(response.content, response)
         return response.json()
 
+    def add_access(self, volume, host):
+        "/<string:provider_name>/<string:env>/access/<string:identifier>"
+        url = "{}access/{}".format(self.base_url, volume.identifier)
+        data = {"to_address": host.address,}
+        response = post(url, json=data)
+        if not response.ok:
+            raise IndexError(response.content, response)
+        return response.json()
+
     def do(self):
         raise NotImplementedError
 
@@ -202,3 +211,37 @@ class RestoreSnapshot(VolumeProviderBase):
             return
 
         self.destroy_volume(self.latest_disk)
+
+
+class AddAccess(VolumeProviderBase):
+
+    @property
+    def disk_time(self):
+        raise NotImplementedError
+
+    @property
+    def volume(self):
+        raise NotImplementedError
+
+    def __unicode__(self):
+        return "Adding permission to {} disk ...".format(self.disk_time)
+
+    def do(self):
+        if not self.is_valid:
+            return
+        self.add_access(self.volume, self.host)
+
+
+class AddAccessRestoredVolume(AddAccess):
+
+    @property
+    def disk_time(self):
+        return "restored"
+
+    @property
+    def is_valid(self):
+        return self.restore.is_master(self.instance)
+
+    @property
+    def volume(self):
+        return self.latest_disk

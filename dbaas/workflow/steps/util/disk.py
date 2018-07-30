@@ -424,20 +424,6 @@ class RestoreSnapshot(Disk):
         delete_export(self.environment, self.latest_disk)
 
 
-class AddDiskPermissionsRestoredDisk(AddDiskPermissions):
-
-    @property
-    def disk_time(self):
-        return "restored"
-
-    @property
-    def is_valid(self):
-        return self.restore.is_master(self.instance)
-
-    def disk_path(self):
-        return self.latest_disk.nfsaas_path_host
-
-
 class UnmountOldestExportRestore(UnmountOldestExport):
 
     @property

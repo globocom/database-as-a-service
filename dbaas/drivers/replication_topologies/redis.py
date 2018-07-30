@@ -106,7 +106,7 @@ class RedisSingle(BaseRedis):
                 'workflow.steps.util.database.CheckIsDown',
             )}, {
             'Configuring': (
-                'workflow.steps.util.disk.AddDiskPermissionsRestoredDisk',
+                'workflow.steps.util.volume_provider.AddAccessRestoredVolume',
                 'workflow.steps.util.disk.UnmountOldestExportRestore',
                 'workflow.steps.util.disk.MountNewerExportRestore',
                 'workflow.steps.util.disk.ConfigureFstabRestore',
@@ -173,7 +173,7 @@ class RedisSentinel(BaseRedis):
                 'workflow.steps.util.database.CheckIsDown',
             )}, {
             'Configuring': (
-                'workflow.steps.util.disk.AddDiskPermissionsRestoredDisk',
+                'workflow.steps.util.volume_provider.AddAccessRestoredVolume',
                 'workflow.steps.util.disk.UnmountOldestExportRestore',
                 'workflow.steps.util.disk.MountNewerExportRestore',
                 'workflow.steps.util.disk.ConfigureFstabRestore',
@@ -337,7 +337,7 @@ class RedisCluster(BaseRedis):
                 'workflow.steps.redis.cluster.SaveNodeConfig'
             )}, {
             'Configuring': (
-                'workflow.steps.util.disk.AddDiskPermissionsRestoredDisk',
+                'workflow.steps.util.volume_provider.AddAccessRestoredVolume',
                 'workflow.steps.util.disk.UnmountOldestExportRestore',
                 'workflow.steps.util.disk.MountNewerExportRestore',
                 'workflow.steps.util.disk.ConfigureFstabRestore',
