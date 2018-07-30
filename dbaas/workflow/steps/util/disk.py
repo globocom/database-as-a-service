@@ -1,12 +1,8 @@
 # -*- coding: utf-8 -*-
 import logging
-from collections import OrderedDict
-from dbaas_nfsaas.models import HostAttr
 from util import exec_remote_command_host
 from base import BaseInstanceStep, BaseInstanceStepMigration
-from nfsaas_utils import create_disk, delete_disk, create_access, \
-    restore_snapshot, restore_wait_for_finished, delete_export
-from restore_snapshot import make_host_backup
+from nfsaas_utils import create_disk, delete_disk, create_access
 
 LOG = logging.getLogger(__name__)
 
@@ -327,52 +323,6 @@ class DiskUpdateHost(Disk):
             export.save()
 
 
-class RestoreSnapshot(Disk):
-
-    def __unicode__(self):
-        if not self.snapshot:
-            return "Skipping restoring (No snapshot for this instance)..."
-
-        return "Restoring {}...".format(self.snapshot)
-
-    @property
-    def disk_host(self):
-        return self.restore.master_for(self.instance).hostname
-
-    def do(self):
-        snapshot = self.snapshot
-        if not snapshot:
-            return
-
-        disk = HostAttr.objects.get(nfsaas_path=snapshot.export_path)
-        restore_job = restore_snapshot(
-            self.environment, disk.nfsaas_export_id, snapshot.snapshopt_id
-        )
-        job_result = restore_wait_for_finished(
-            self.environment, restore_job['job']
-        )
-
-        if 'id' not in job_result:
-            raise EnvironmentError(
-                'Error while restoring snapshot - {}'.format(job_result)
-            )
-
-        disk = self.latest_disk
-        disk.nfsaas_export_id = job_result['id']
-        disk.nfsaas_path_host = job_result['path']
-        disk.nfsaas_path = job_result['full_path']
-        disk.is_active = False
-        disk.id = None
-        disk.host = self.disk_host
-        disk.save()
-
-    def undo(self):
-        if not self.restore.is_master(self.instance):
-            return
-
-        delete_export(self.environment, self.latest_disk)
-
-
 class UnmountOldestExportRestore(UnmountOldestExport):
 
     @property
@@ -412,39 +362,6 @@ class CleanDataArbiter(CleanData):
     @property
     def is_valid(self):
         return self.instance.instance_type == self.instance.MONGODB_ARBITER
-
-
-class BackupRestore(Disk):
-
-    def __unicode__(self):
-        return "Doing backup of old data..."
-
-    @property
-    def is_valid(self):
-        return self.restore.is_master(self.instance)
-
-    @property
-    def disk(self):
-        return self.host.active_disk.nfsaas_export_id
-
-    @property
-    def group(self):
-        return self.restore.new_group
-
-    def do(self):
-        if not self.is_valid:
-            return
-
-        if not make_host_backup(self.database, self.instance, self.disk, self.group):
-            raise EnvironmentError(
-                "Could not do backup of current database data in {}".format(
-                    self.instance
-                )
-            )
-
-    def undo(self):
-        # ToDo
-        pass
 
 
 class UpdateRestore(Disk):
