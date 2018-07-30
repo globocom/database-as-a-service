@@ -263,7 +263,7 @@ def exec_remote_command_host(host, command, output=None, retry=False):
     )
 
 
-def check_ssh(host, retries=30, wait=30, interval=40):
+def check_ssh(host, retries=30, wait=30, interval=40, timeout=None):
     server = host.address
     username = host.user
     password = host.password
@@ -281,7 +281,7 @@ def check_ssh(host, retries=30, wait=30, interval=40):
             LOG.info("Login attempt number %i on %s " % (attempt + 1, server))
 
             ssh.connect(server, port=22, username=username,
-                        password=password, timeout=None, allow_agent=True,
+                        password=password, timeout=timeout, allow_agent=True,
                         look_for_keys=True, compress=False)
             return True
 
