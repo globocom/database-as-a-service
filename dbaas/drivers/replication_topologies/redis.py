@@ -108,7 +108,7 @@ class RedisSingle(BaseRedis):
             'Configuring': (
                 'workflow.steps.util.volume_provider.AddAccessRestoredVolume',
                 'workflow.steps.util.disk.UnmountOldestExportRestore',
-                'workflow.steps.util.disk.MountNewerExportRestore',
+                'workflow.steps.util.volume_provider.MountDataVolumeRestored',
                 'workflow.steps.util.disk.ConfigureFstabRestore',
                 'workflow.steps.util.plan.ConfigureRestore',
             )}, {
@@ -175,7 +175,7 @@ class RedisSentinel(BaseRedis):
             'Configuring': (
                 'workflow.steps.util.volume_provider.AddAccessRestoredVolume',
                 'workflow.steps.util.disk.UnmountOldestExportRestore',
-                'workflow.steps.util.disk.MountNewerExportRestore',
+                'workflow.steps.util.volume_provider.MountDataVolumeRestored',
                 'workflow.steps.util.disk.ConfigureFstabRestore',
                 'workflow.steps.util.disk.CleanData',
                 'workflow.steps.util.disk.RemoveDeprecatedFiles',
@@ -339,7 +339,7 @@ class RedisCluster(BaseRedis):
             'Configuring': (
                 'workflow.steps.util.volume_provider.AddAccessRestoredVolume',
                 'workflow.steps.util.disk.UnmountOldestExportRestore',
-                'workflow.steps.util.disk.MountNewerExportRestore',
+                'workflow.steps.util.volume_provider.MountDataVolumeRestored',
                 'workflow.steps.util.disk.ConfigureFstabRestore',
                 'workflow.steps.util.disk.CleanData',
                 'workflow.steps.util.disk.RemoveDeprecatedFiles',
