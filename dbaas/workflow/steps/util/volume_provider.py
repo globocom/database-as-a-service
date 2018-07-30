@@ -159,6 +159,13 @@ class MountDataVolume(VolumeProviderBase):
         pass
 
 
+class MountDataVolumeRestored(MountDataVolume):
+
+    @property
+    def volume(self):
+        return self.latest_disk
+
+
 class ResizeVolume(VolumeProviderBase):
     def __unicode__(self):
         return "Resizing data volume..."
