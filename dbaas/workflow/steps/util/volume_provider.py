@@ -108,6 +108,14 @@ class VolumeProviderBase(BaseInstanceStep):
             raise IndexError(response.content, response)
         return response.json()['command']
 
+    def clean_up(self, volume):
+        url = "{}commands/{}/cleanup".format(self.base_url, volume.identifier)
+        response = get(url)
+        if not response.ok:
+            raise IndexError(response.content, response)
+        command = response.json()['command']
+        self.run_script(command)
+
     def do(self):
         raise NotImplementedError
 
