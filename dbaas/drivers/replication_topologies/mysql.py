@@ -133,7 +133,7 @@ class MySQLSingle(BaseMysql):
                 'workflow.steps.util.database.CheckIsDown',
             )}, {
             'Configuring': (
-                'workflow.steps.util.disk.AddDiskPermissionsRestoredDisk',
+                'workflow.steps.util.volume_provider.AddAccessRestoredVolume',
                 'workflow.steps.util.disk.UnmountOldestExportRestore',
                 'workflow.steps.util.disk.MountNewerExportRestore',
                 'workflow.steps.util.disk.ConfigureFstabRestore',
