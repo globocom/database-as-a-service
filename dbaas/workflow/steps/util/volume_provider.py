@@ -139,12 +139,6 @@ class NewVolume(VolumeProviderBase):
         if not self.host.database_instance():
             return
 
-        volume = self.volume
-        if volume:
-            script = "rm -rf /data/*"
-            self.run_script(script)
-            self.destroy_volume(volume)
-
         for volume in self.host.volumes.all():
             self.clean_up(volume)
             self.destroy_volume(volume)
@@ -228,7 +222,7 @@ class RestoreSnapshot(VolumeProviderBase):
         volume.save()
 
     def undo(self):
-        if not self.restore.is_master(self.instance):
+        if not self.snapshot:
             return
 
         self.destroy_volume(self.latest_disk)
