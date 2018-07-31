@@ -98,10 +98,10 @@ class HostSerializer(serializers.ModelSerializer):
         return map(
             lambda d: {
                 'active': d.is_active,
-                'total': d.nfsaas_size_kb,
-                'used': d.nfsaas_used_size_kb,
-                'export_id': d.nfsaas_export_id
-            }, host.nfsaas_host_attributes.all())
+                'total': d.total_size_kb,
+                'used': d.used_size_kb,
+                'export_id': d.identifier
+            }, host.volumes.all())
 
     def get_offering(self, host):
         offering = host.offering
