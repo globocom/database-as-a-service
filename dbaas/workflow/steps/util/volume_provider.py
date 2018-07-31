@@ -129,14 +129,14 @@ class NewVolume(VolumeProviderBase):
         return "Creating Volume..."
 
     def do(self):
-        if not self.host.database_instance():
+        if not self.instance.is_database:
             return
         self.create_volume(
             self.infra.name, self.disk_offering.size_kb, self.host.address
         )
 
     def undo(self):
-        if not self.host.database_instance():
+        if not self.instance.is_database:
             return
 
         for volume in self.host.volumes.all():
@@ -154,7 +154,7 @@ class MountDataVolume(VolumeProviderBase):
         return "/data"
 
     def do(self):
-        if not self.host.database_instance():
+        if not self.instance.is_database:
             return
 
         script = self.get_mount_command(self.volume)
@@ -176,7 +176,7 @@ class ResizeVolume(VolumeProviderBase):
         return "Resizing data volume..."
 
     def do(self):
-        if not self.host.database_instance():
+        if not self.instance.is_database:
             return
 
         url = "{}resize/{}".format(self.base_url, self.volume.identifier)
@@ -296,14 +296,7 @@ class UpdateActiveDisk(VolumeProviderBase):
     def __unicode__(self):
         return "Updating meta data..."
 
-    @property
-    def is_valid(self):
-        return self.restore.is_master(self.instance)
-
     def do(self):
-        if not self.is_valid:
-            return
-
         old_disk = self.volume
         new_disk = self.latest_disk
         if old_disk != new_disk:
