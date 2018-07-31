@@ -297,6 +297,9 @@ class UpdateActiveDisk(VolumeProviderBase):
         return "Updating meta data..."
 
     def do(self):
+        if not self.instance.is_database:
+            return
+
         old_disk = self.volume
         new_disk = self.latest_disk
         if old_disk != new_disk:
