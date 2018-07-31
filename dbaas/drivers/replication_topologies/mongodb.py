@@ -136,6 +136,7 @@ class MongoDBReplicaset(BaseMongoDB):
     def get_upgrade_steps_extra(self):
         return (
             'workflow.steps.mongodb.upgrade.vm.ChangeBinaryTo32',
+            'workflow.steps.util.volume_provider.MountDataVolume',
             'workflow.steps.util.plan.InitializationForUpgrade',
             'workflow.steps.util.plan.Configure',
         )

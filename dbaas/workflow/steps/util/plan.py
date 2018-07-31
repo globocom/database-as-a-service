@@ -40,8 +40,6 @@ class PlanStep(BaseInstanceStep):
 
         variables['configuration'] = self.get_configuration()
         variables['GRAYLOG_ENDPOINT'] = self.get_graylog_config()
-        if self.host_nfs:
-            variables['EXPORTPATH'] = self.host_nfs.nfsaas_path
 
         variables.update(self.get_variables_specifics())
         return variables

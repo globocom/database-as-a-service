@@ -90,6 +90,7 @@ class BaseTopology(object):
 
     def get_upgrade_steps_extra(self):
         return (
+            'workflow.steps.util.volume_provider.MountDataVolume',
             'workflow.steps.util.plan.InitializationForUpgrade',
             'workflow.steps.util.plan.ConfigureForUpgrade',
         )
@@ -228,6 +229,7 @@ class BaseTopology(object):
             ),
         }] + [{
             'Start Database': (
+                'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.Initialization',
                 'workflow.steps.util.plan.Configure',
                 'workflow.steps.util.database.Start',
