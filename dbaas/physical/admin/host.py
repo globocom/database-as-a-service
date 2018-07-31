@@ -11,16 +11,20 @@ class VolumeInline(admin.TabularInline):
     max_num = 0
     template = 'admin/physical/shared/inline_form.html'
 
+    def get_readonly_fields(self, request, obj=None):
+        if obj:
+            return self.readonly_fields + (
+                'identifier', 'total_size_kb', 'used_size_kb', 'is_active'
+            )
+        return self.readonly_fields
+
     def has_delete_permission(self, request, obj=None):
         return False
 
 
 class HostAdmin(services_admin.DjangoServicesAdmin):
     service_class = HostService
-    search_fields = (
-        "hostname", "nfsaas_host_attributes__nfsaas_path",
-        "address", "os_description"
-    )
+    search_fields = ("hostname", "identifier", "address", "os_description")
     list_display = (
         "hostname", "address", "offering", "os_description", "monitor_url_html"
     )
