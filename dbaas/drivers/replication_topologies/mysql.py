@@ -414,6 +414,7 @@ class MySQLFoxHA(MySQLSingle):
             ),
         }] + [{
             'Start Database': (
+                'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.Initialization',
                 'workflow.steps.util.plan.Configure',
                 'workflow.steps.util.database.Stop',

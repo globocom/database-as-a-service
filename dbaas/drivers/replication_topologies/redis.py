@@ -29,6 +29,7 @@ class BaseRedis(BaseTopology):
 
     def get_upgrade_steps_extra(self):
         return (
+            'workflow.steps.util.volume_provider.MountDataVolume',
             'workflow.steps.util.plan.InitializationForUpgrade',
             'workflow.steps.util.plan.ConfigureForUpgrade',
         )
