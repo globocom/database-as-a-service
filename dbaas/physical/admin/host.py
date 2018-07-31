@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
+from django.utils.safestring import mark_safe
 from django.contrib import admin
 from django_services import admin as services_admin
+from workflow.steps.util.volume_provider import VolumeProviderBase
 from physical.models import Volume
 from ..service.host import HostService
 
@@ -14,9 +16,16 @@ class VolumeInline(admin.TabularInline):
     def get_readonly_fields(self, request, obj=None):
         if obj:
             return self.readonly_fields + (
-                'identifier', 'total_size_kb', 'used_size_kb', 'is_active'
+                'identifier', 'total_size_kb', 'used_size_kb', 'is_active',
+                'path'
             )
         return self.readonly_fields
+
+    def path(self, obj):
+        if not obj.identifier:
+            return
+        provider = VolumeProviderBase(obj.host.instances.first())
+        return mark_safe(provider.get_path(obj))
 
     def has_delete_permission(self, request, obj=None):
         return False
