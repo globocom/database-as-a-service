@@ -1,7 +1,18 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
+from django.contrib import admin
 from django_services import admin as services_admin
+from physical.models import Volume
 from ..service.host import HostService
+
+
+class VolumeInline(admin.TabularInline):
+    model = Volume
+    max_num = 0
+    template = 'admin/physical/shared/inline_form.html'
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 class HostAdmin(services_admin.DjangoServicesAdmin):
@@ -15,6 +26,7 @@ class HostAdmin(services_admin.DjangoServicesAdmin):
     )
     readonly_fields = ("offering", "identifier")
     save_on_top = True
+    inlines = [VolumeInline]
 
     def monitor_url_html(self, host):
         return "<a href='{0}' target='_blank'>{0}</a>".format(host.monitor_url)
