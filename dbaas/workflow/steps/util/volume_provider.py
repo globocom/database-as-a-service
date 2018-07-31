@@ -61,6 +61,13 @@ class VolumeProviderBase(BaseInstanceStep):
             raise IndexError(response.content, response)
         volume.delete()
 
+    def get_path(self, volume):
+        url = "{}volume/{}".format(self.base_url, volume.identifier)
+        response = get(url)
+        if not response.ok:
+            raise IndexError(response.content, response)
+        return response.json()['path']
+
     def run_script(self, script):
         output = {}
         return_code = exec_remote_command_host(self.host, script, output)
