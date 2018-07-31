@@ -13,12 +13,11 @@ class Disk(BaseInstanceStep):
 
     @property
     def is_valid(self):
-        return bool(self.instance.hostname.nfsaas_host_attributes.first())
+        return bool(self.instance.hostname.volumes.first())
 
     @property
     def has_active(self):
-        disks = self.host.nfsaas_host_attributes.filter(is_active=True)
-        return len(disks) > 0
+        return self.host.volumes.filter(is_active=True).exists()
 
 
 class CreateExport(Disk):
@@ -66,7 +65,7 @@ class NewerDisk(Disk):
 
     @property
     def newer_export(self):
-        return self.host.nfsaas_host_attributes.last()
+        return self.host.volumes.last()
 
 
 class DiskCommand(Disk):
@@ -169,7 +168,7 @@ class DisableOldestExport(NewerDisk):
         return "Disabling oldest export..."
 
     def do(self):
-        for export in self.host.nfsaas_host_attributes.all():
+        for export in self.host.volumes.all():
             if export == self.newer_export:
                 continue
             export.is_active = False
@@ -263,8 +262,8 @@ class AddDiskPermissionsOldest(AddDiskPermissions):
         return "Oldest"
 
     def disk_path(self):
-        disk = self.host.nfsaas_host_attributes.get(is_active=True)
-        return disk.nfsaas_path_host
+        disk = self.host.volumes.get(is_active=True)
+        return disk.identifier
 
     @property
     def to_host(self):
@@ -280,7 +279,7 @@ class MountOldestExportMigration(DiskMountCommand, BaseInstanceStepMigration):
     @property
     def export_remote_path(self):
         base_host = BaseInstanceStep(self.instance).host
-        return base_host.nfsaas_host_attributes.get(is_active=True).nfsaas_path
+        return base_host.volumes.get(is_active=True).nfsaas_path
 
 
 class CopyDataBetweenExportsMigration(CopyDataBetweenExports):
@@ -307,7 +306,7 @@ class CopyDataBetweenExportsMigration(CopyDataBetweenExports):
 class DisableOldestExportMigration(DisableOldestExport):
 
     def do(self):
-        for export in self.host.future_host.nfsaas_host_attributes.all():
+        for export in self.host.future_host.volumes.all():
             export.is_active = False
             export.save()
 
@@ -318,7 +317,7 @@ class DiskUpdateHost(Disk):
         return "Moving oldest disks to new host..."
 
     def do(self):
-        for export in self.host.future_host.nfsaas_host_attributes.all():
+        for export in self.host.future_host.volumes.all():
             export.host = self.host
             export.save()
 
