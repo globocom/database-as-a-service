@@ -140,13 +140,14 @@ class NewVolume(VolumeProviderBase):
             return
 
         volume = self.volume
-        if not volume:
-            return
+        if volume:
+            script = "rm -rf /data/*"
+            self.run_script(script)
+            self.destroy_volume(volume)
 
-        script = "rm -rf /data/*"
-        self.run_script(script)
-
-        self.destroy_volume(volume)
+        for volume in self.host.volumes.all():
+            self.clean_up(volume)
+            self.destroy_volume(volume)
 
 
 class MountDataVolume(VolumeProviderBase):
