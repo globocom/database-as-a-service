@@ -43,9 +43,9 @@ class PropertiesTestCase(TestCase):
         )
 
         offering = factory.OfferingFactory(
-            environment=cls.databaseinfra.environment,
             memory_size_mb=9
         )
+        offering.environments.add(cls.databaseinfra.environment)
         plan = cls.databaseinfra.plan
         plan.provider = 1
         plan.stronger_offering = offering

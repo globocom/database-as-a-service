@@ -22,6 +22,8 @@ class DiskOfferingTestCase(TestCase):
 
     def create_basic_disks(self):
         for disk_offering in DiskOffering.objects.all():
+            for plan in disk_offering.plans.all():
+                plan.databaseinfras.all().delete()
             disk_offering.plans.all().delete()
             disk_offering.delete()
         cache.clear()
