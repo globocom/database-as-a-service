@@ -50,6 +50,16 @@ class MySQL(BaseDriver):
             uri = "%s/%s" % (uri, database.name)
         return uri
 
+    def get_dns_port(self, instance=None):
+        """
+        endpoint is on the form HOST:PORT
+        """
+        if instance:
+            return instance.address, instance.port
+
+        endpoint = self.databaseinfra.endpoint_dns.split(':')
+        return endpoint[0], int(endpoint[1])
+
     def __get_admin_connection(self, instance=None):
         """
         endpoint is on the form HOST:PORT
