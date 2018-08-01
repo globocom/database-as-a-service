@@ -33,7 +33,10 @@ class VolumeInline(admin.TabularInline):
 
 class HostAdmin(services_admin.DjangoServicesAdmin):
     service_class = HostService
-    search_fields = ("hostname", "identifier", "address", "os_description")
+    search_fields = (
+        "hostname", "identifier", "address", "os_description",
+        "volumes__identifier"
+    )
     list_display = (
         "hostname", "address", "offering", "os_description", "monitor_url_html"
     )
