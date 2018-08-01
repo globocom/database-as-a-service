@@ -343,7 +343,6 @@ def purge_unused_exports(task=None):
     for volume in Volume.objects.filter(is_active=False):
         if volume.backups.filter(purge_at=None).exists():
             continue
-
         if task:
             task.add_detail('Removing: {}'.format(volume), level=2)
 
