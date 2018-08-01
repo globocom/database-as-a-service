@@ -5,12 +5,10 @@ import mock
 from django.test import TestCase
 from django.core.cache import cache
 from django.contrib.admin.sites import AdminSite
-
 from logical.tests import factory as factory_logical
 from physical.admin.databaseinfra import DatabaseInfraAdmin
-from physical.models import (DatabaseInfra, Plan, Instance, Host, Parameter,
-                             DatabaseInfraParameter)
-from dbaas_nfsaas.models import HostAttr
+from physical.models import DatabaseInfra, Plan, Instance, Host, Parameter,\
+    DatabaseInfraParameter, Volume
 from physical.tests import factory
 from drivers.fake import FakeDriver
 from mock import patch
@@ -38,10 +36,7 @@ class PropertiesTestCase(TestCase):
             databaseinfra=cls.databaseinfra,
             hostname=cls.hostname
         )
-        cls.nfaas_host_attr = factory.NFSaaSHostAttr(
-            host=cls.hostname
-        )
-
+        cls.volume = factory.VolumeFactory(host=cls.hostname)
         offering = factory.OfferingFactory(
             environment=cls.databaseinfra.environment,
             memory_size_mb=9
@@ -57,7 +52,7 @@ class PropertiesTestCase(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        HostAttr.objects.all().delete()
+        Volume.objects.all().delete()
         Instance.objects.all().delete()
         Host.objects.all().delete()
         DatabaseInfra.objects.all().delete()
@@ -71,30 +66,30 @@ class PropertiesTestCase(TestCase):
             case: If this property convert to gb from kb
         '''
 
-        self.nfaas_host_attr.nfsaas_used_size_kb = 2.5 * self.KB2GB_FACTOR  # 5GB
-        self.nfaas_host_attr.save()
+        self.volume.used_size_kb = 2.5 * self.KB2GB_FACTOR  # 5GB
+        self.volume.save()
 
         self.assertEqual(self.databaseinfra.disk_used_size_in_gb, 2.5)
 
-    def test_disk_used_size_in_gb_when_nfsaas_is_null(self):
+    def test_disk_used_size_in_gb_when_volume_is_null(self):
         '''
             Test property: disk_used_size_in_gb
             case: When nfsaas_used_size_kb is NULL the property must return None
         '''
 
-        self.nfaas_host_attr.nfsaas_used_size_kb = None
-        self.nfaas_host_attr.save()
+        self.volume.used_size_kb = None
+        self.volume.save()
 
         self.assertEqual(self.databaseinfra.disk_used_size_in_gb, None)
 
-    def test_disk_used_size_in_gb_when_nfsaas_is_0(self):
+    def test_disk_used_size_in_gb_when_volume_is_0(self):
         '''
             Test property: disk_used_size_in_gb
             case: When nfsaas_used_size_kb is 0 the property must return 0
         '''
 
-        self.nfaas_host_attr.nfsaas_used_size_kb = 0
-        self.nfaas_host_attr.save()
+        self.volume.used_size_kb = 0
+        self.volume.save()
 
         self.assertEqual(self.databaseinfra.disk_used_size_in_gb, 0)
 
