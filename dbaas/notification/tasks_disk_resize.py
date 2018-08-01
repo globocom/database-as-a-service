@@ -162,7 +162,7 @@ def update_disk(database, address, total_size, used_size, task):
         )
         if not volume:
             raise EnvironmentError(
-                'Instance {} do not have NFSaaS disk'.format(address)
+                'Instance {} do not have disk'.format(address)
             )
     except ObjectDoesNotExist:
         task.add_detail(

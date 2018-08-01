@@ -71,9 +71,8 @@ class CapacityBaseTestCase(TestCase):
             name='test_db_1',
             databaseinfra=cls.databaseinfra,
         )
-        cls.nfsaas_host_attr = factory_physical.NFSaaSHostAttr(
-            host=cls.hostname,
-            nfsaas_used_size_kb=cls.database.used_size_in_kb
+        cls.volume = factory_physical.VolumeFactory(
+            host=cls.hostname, used_size_kb=cls.database.used_size_in_kb
         )
 
     @staticmethod
@@ -114,7 +113,6 @@ class CapacityBaseTestCase(TestCase):
             except (OperationalError, DatabaseDoesNotExist):
                 pass
 
-        cls.remove_field('nfsaas_host_attr')
         cls.remove_field('instance')
         cls.remove_field('hostname')
         cls.remove_field('databaseinfra', 'databases')
@@ -146,9 +144,9 @@ class DiskCapacityTestCase(CapacityBaseTestCase):
         self.plan.save()
         self.engine_type.is_in_memory = is_in_memory
         self.engine_type.save()
-        self.nfsaas_host_attr.nfsaas_size_kb = total_disk_size * self.KB2GB_FACTOR
-        self.nfsaas_host_attr.nfsaas_used_size_kb = used_disk_size * self.KB2GB_FACTOR if used_disk_size is not None else None
-        self.nfsaas_host_attr.save()
+        self.volume.total_size_kb = total_disk_size * self.KB2GB_FACTOR
+        self.volume.used_size_kb = used_disk_size * self.KB2GB_FACTOR if used_disk_size is not None else None
+        self.volume.save()
         self.database.plan.has_persistence = has_persistence
         self.database.plan.save()
         self.database.used_size_in_bytes = used_database_size * self.BYTE2GB_FACTOR  # 2.5GB
@@ -196,11 +194,12 @@ class DiskCapacityTestCase(CapacityBaseTestCase):
         self.assertIn('0.00%', other_bar.attrib.get('style', ''))
         self.assertIn('0.00%', free_bar.attrib.get('style', ''))
 
-    def test_nfsaas_used_is_null(self):
+    def test_volume_used_is_null(self):
         self._change_fields(
             is_in_memory=False,
             used_disk_size=None,
-            used_database_size=0)
+            used_database_size=0
+        )
         rendered_progress_bar = self._render_templatetag('disk')
 
         self.assertEqual('', rendered_progress_bar)
@@ -294,9 +293,9 @@ class MemoryCapacityTestCase(CapacityBaseTestCase):
         self.assertIn('25.50%', free_bar.attrib.get('style', ''))
 
     def test_0_percent(self):
-        self.nfsaas_host_attr.nfsaas_size_kb = 10 * self.KB2GB_FACTOR  # 10GB
-        self.nfsaas_host_attr.nfsaas_used_size_kb = 0
-        self.nfsaas_host_attr.save()
+        self.volume.total_size_kb = 10 * self.KB2GB_FACTOR  # 10GB
+        self.volume.used_size_kb = 0
+        self.volume.save()
         self.instance.used_size_in_bytes = 0
         self.instance.total_size_in_bytes = 10 * self.BYTE2GB_FACTOR
         self.instance.save()
@@ -360,9 +359,9 @@ class MemoryCapacityMultiMasterTestCase(CapacityBaseTestCase):
         self._validate_bar(bars[2], '10.00%', '90.00%')
 
     def test_0_percent(self):
-        self.nfsaas_host_attr.nfsaas_size_kb = 10 * self.KB2GB_FACTOR  # 10GB
-        self.nfsaas_host_attr.nfsaas_used_size_kb = 0
-        self.nfsaas_host_attr.save()
+        self.volume.total_size_kb = 10 * self.KB2GB_FACTOR  # 10GB
+        self.volume.used_size_kb = 0
+        self.volume.save()
         master_1, master_2, master_3 = self.instances[:3]
         self._change_master(master_1, total_size_in_gb=10, used_size_in_gb=0)
         self._change_master(master_2, total_size_in_gb=10, used_size_in_gb=0)

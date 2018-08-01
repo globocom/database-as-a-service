@@ -1,6 +1,6 @@
 from datetime import datetime
 from unittest import TestCase
-from mock import patch
+from mock import patch, MagicMock
 from notification.tests.factory import TaskHistoryFactory
 from physical.tests.factory import InstanceFactory, VolumeFactory
 from physical.models import Volume
@@ -79,9 +79,9 @@ class PurgeUnusedExports(TestCase):
         clean_up.assert_called_once_with(self.export)
         destroy.assert_called_once_with(self.export)
 
-    @patch('backup.tasks.VolumeProviderBase.destroy_volume', new=None)
-    @patch('backup.tasks.VolumeProviderBase.clean_up', new=None)
-    @patch('backup.tasks.VolumeProviderBase.add_access', new=None)
+    @patch('backup.tasks.VolumeProviderBase.destroy_volume', new=MagicMock())
+    @patch('backup.tasks.VolumeProviderBase.clean_up', new=MagicMock())
+    @patch('backup.tasks.VolumeProviderBase.add_access', new=MagicMock())
     def test_task_with_success(self):
         task = TaskHistoryFactory()
         self.assertIsNone(task.details)
