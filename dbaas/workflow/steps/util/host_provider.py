@@ -239,30 +239,6 @@ class ReinstallTemplate(HostProviderStep):
             raise EnvironmentError('Could not reinstall VM')
 
 
-class IsStopped(HostProviderStep):
-
-    CHECK_ATTEMPTS = 10
-    CHECK_SECONDS = 5
-
-    def __unicode__(self):
-        return "Waiting for VM be stopped..."
-
-    def check_ssh(self, working=True):
-        for _ in range(self.CHECK_ATTEMPTS):
-            host_ready = check_ssh(
-                self.host, wait=5, interval=10, retries=1, timeout=30
-            )
-            if not working:
-                return True
-            sleep(self.CHECK_SECONDS)
-        raise EnvironmentError('VM is not stopped')
-
-    def do(self):
-        self.check_ssh(working=False)
-
-    def undo(self):
-        self.check_ssh()
-
 class WaitingBeReady(HostProviderStep):
 
     def __unicode__(self):

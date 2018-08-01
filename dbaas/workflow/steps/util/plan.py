@@ -32,7 +32,8 @@ class PlanStep(BaseInstanceStep):
             'ENGINE': self.plan.engine.engine_type.name,
             'MOVE_DATA': bool(self.upgrade) or bool(self.reinstall_vm),
             'DRIVER_NAME': self.infra.get_driver().topology_name(),
-            'DISK_SIZE_IN_GB': self.disk_offering.size_gb(),
+            # TODO: Remove that when VP is ready
+            'DISK_SIZE_IN_GB': self.disk_offering.size_gb()if self.disk_offering else 8,
             'ENVIRONMENT': self.environment,
             'HAS_PERSISTENCE': self.infra.plan.has_persistence,
             'IS_READ_ONLY': self.instance.read_only,
