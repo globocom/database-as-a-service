@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 import factory
-from dbaas_nfsaas.models import HostAttr
 from physical import models
 
 
@@ -136,13 +135,11 @@ class DatabaseInfraParameterFactory(factory.DjangoModelFactory):
     value = ''
 
 
-class NFSaaSHostAttr(factory.DjangoModelFactory):
-    FACTORY_FOR = HostAttr
+class VolumeFactory(factory.DjangoModelFactory):
+    FACTORY_FOR = models.Volume
 
     host = factory.SubFactory(HostFactory)
-    nfsaas_export_id = factory.Sequence(lambda n: n)
-    nfsaas_path = factory.Sequence(lambda n: 'vol/testing-{0}'.format(n))
-    nfsaas_path_host = factory.Sequence(lambda n: 'testing-{0}'.format(n))
+    identifier = factory.Sequence(lambda n: n)
     is_active = True
-    nfsaas_size_kb = 1000
-    nfsaas_used_size_kb = 10
+    total_size_kb = 100
+    used_size_kb = 10
