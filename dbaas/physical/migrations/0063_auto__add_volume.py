@@ -16,6 +16,7 @@ class Migration(SchemaMigration):
             ('host', self.gf('django.db.models.fields.related.ForeignKey')(related_name=u'volumes', to=orm['physical.Host'])),
             ('identifier', self.gf('django.db.models.fields.CharField')(max_length=255)),
             ('is_active', self.gf('django.db.models.fields.BooleanField')(default=True)),
+            ('total_size_kb', self.gf('django.db.models.fields.IntegerField')(null=True, blank=True)),
             ('used_size_kb', self.gf('django.db.models.fields.IntegerField')(null=True, blank=True)),
         ))
         db.send_create_signal(u'physical', ['Volume'])
@@ -27,27 +28,6 @@ class Migration(SchemaMigration):
 
 
     models = {
-        u'dbaas_cloudstack.cloudstackoffering': {
-            'Meta': {'object_name': 'CloudStackOffering'},
-            'cpus': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
-            'created_at': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
-            'equivalent_offering': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['dbaas_cloudstack.CloudStackOffering']", 'null': 'True', 'on_delete': 'models.SET_NULL', 'blank': 'True'}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'memory_size_mb': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
-            'name': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
-            'region': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "u'cs_offering_region'", 'null': 'True', 'to': u"orm['dbaas_cloudstack.CloudStackRegion']"}),
-            'serviceofferingid': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
-            'updated_at': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
-            'weaker': ('django.db.models.fields.BooleanField', [], {'default': 'False'})
-        },
-        u'dbaas_cloudstack.cloudstackregion': {
-            'Meta': {'object_name': 'CloudStackRegion'},
-            'created_at': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
-            'environment': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "u'cs_environment_region'", 'to': u"orm['physical.Environment']"}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'name': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
-            'updated_at': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'})
-        },
         u'physical.databaseinfra': {
             'Meta': {'object_name': 'DatabaseInfra'},
             'capacity': ('django.db.models.fields.PositiveIntegerField', [], {'default': '1'}),
@@ -130,7 +110,7 @@ class Migration(SchemaMigration):
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'identifier': ('django.db.models.fields.CharField', [], {'default': "u''", 'max_length': '255'}),
             'monitor_url': ('django.db.models.fields.URLField', [], {'max_length': '500', 'null': 'True', 'blank': 'True'}),
-            'offering': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['dbaas_cloudstack.CloudStackOffering']", 'null': 'True'}),
+            'offering': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['physical.Offering']", 'null': 'True'}),
             'os_description': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True', 'blank': 'True'}),
             'password': ('django.db.models.fields.CharField', [], {'max_length': '406', 'null': 'True', 'blank': 'True'}),
             'updated_at': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
@@ -154,6 +134,16 @@ class Migration(SchemaMigration):
             'total_size_in_bytes': ('django.db.models.fields.FloatField', [], {'null': 'True', 'blank': 'True'}),
             'updated_at': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
             'used_size_in_bytes': ('django.db.models.fields.FloatField', [], {'null': 'True', 'blank': 'True'})
+        },
+        u'physical.offering': {
+            'Meta': {'object_name': 'Offering'},
+            'cpus': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
+            'created_at': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
+            'environments': ('django.db.models.fields.related.ManyToManyField', [], {'related_name': "u'offerings'", 'symmetrical': 'False', 'to': u"orm['physical.Environment']"}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'memory_size_mb': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
+            'name': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
+            'updated_at': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'})
         },
         u'physical.parameter': {
             'Meta': {'ordering': "(u'engine_type__name', u'name')", 'unique_together': "((u'name', u'engine_type'),)", 'object_name': 'Parameter'},
@@ -185,7 +175,9 @@ class Migration(SchemaMigration):
             'name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '100'}),
             'provider': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
             'replication_topology': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "u'replication_topology'", 'null': 'True', 'to': u"orm['physical.ReplicationTopology']"}),
-            'updated_at': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'})
+            'stronger_offering': ('django.db.models.fields.related.ForeignKey', [], {'blank': 'True', 'related_name': "u'main_offerings'", 'null': 'True', 'to': u"orm['physical.Offering']"}),
+            'updated_at': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
+            'weaker_offering': ('django.db.models.fields.related.ForeignKey', [], {'blank': 'True', 'related_name': "u'weaker_offerings'", 'null': 'True', 'to': u"orm['physical.Offering']"})
         },
         u'physical.planattribute': {
             'Meta': {'object_name': 'PlanAttribute'},
@@ -242,6 +234,7 @@ class Migration(SchemaMigration):
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'identifier': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             'is_active': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
+            'total_size_kb': ('django.db.models.fields.IntegerField', [], {'null': 'True', 'blank': 'True'}),
             'updated_at': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
             'used_size_kb': ('django.db.models.fields.IntegerField', [], {'null': 'True', 'blank': 'True'})
         }
