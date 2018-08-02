@@ -4,7 +4,7 @@ from rest_framework import viewsets, serializers, permissions
 from rest_framework import filters
 from django.core.exceptions import ObjectDoesNotExist
 from util import get_credentials_for
-from dbaas_credentials.models import CredentialType
+from dbaas_credentials.models import CredentialType, Credential
 
 from physical.models import Host
 
@@ -12,12 +12,10 @@ from physical.models import Host
 class HostSerializer(serializers.ModelSerializer):
     team_name = serializers.SerializerMethodField('get_team_name')
     env_name = serializers.SerializerMethodField('get_env_name')
-    region_name = serializers.SerializerMethodField('get_region_name')
     offering = serializers.SerializerMethodField('get_offering')
     disks = serializers.SerializerMethodField('get_disks')
     project_id = serializers.SerializerMethodField('get_project_id')
     database = serializers.SerializerMethodField('get_database_metadata')
-    identifier = serializers.SerializerMethodField('get_vm_id')
 
     class Meta:
         model = Host
@@ -28,19 +26,12 @@ class HostSerializer(serializers.ModelSerializer):
             'created_at',
             'team_name',
             'env_name',
-            'region_name',
             'hostname',
-            'identifier',
             'offering',
             'disks',
             'project_id',
             'database'
         )
-
-    def get_vm_id(self, host):
-        host_attr = host.cs_host_attributes.first()
-
-        return host_attr and host_attr.vm_id
 
     def get_database(self, host):
         first_instance = host.instances.first()
@@ -82,17 +73,13 @@ class HostSerializer(serializers.ModelSerializer):
     def get_project_id(self, host):
         env = self.get_env(host)
 
-        credential = get_credentials_for(
-            env, CredentialType.CLOUDSTACK)
+        try:
+            credential = get_credentials_for(
+                env, CredentialType.CLOUDSTACK)
+        except IndexError:
+            return None
 
         return credential and credential.project
-
-    def get_region_name(self, host):
-        env = self.get_env(host)
-        try:
-            return env and env.cs_environment_region.first().name
-        except ObjectDoesNotExist:
-            return
 
     def get_disks(self, host):
         return map(
@@ -142,8 +129,20 @@ class HostAPI(viewsets.ReadOnlyModelViewSet):
             if not first_instance:
                 return False
             return first_instance and first_instance.databaseinfra.databases.exists()
-
-        hosts = Host.objects.all()
+        params = self.request.GET.dict()
+        filter_params = {}
+        for k, v in params.iteritems():
+            if k == 'cloudstack_hosts_only':
+                cs_envs = Credential.objects.filter(
+                    integration_type__type=CredentialType.HOST_PROVIDER,
+                    project='cloudstack'
+                ).values_list(
+                    'environments', flat=True
+                )
+                filter_params['instances__databaseinfra__environment__in'] = cs_envs
+            elif k.split('__')[0] in self.filter_fields:
+                filter_params[k] = v
+        hosts = self.model.objects.filter(**filter_params).distinct()
         filtered_hosts = filter(lambda h: has_database(h), hosts)
         host_ids = map(lambda h: h.id, filtered_hosts)
 
