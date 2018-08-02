@@ -122,7 +122,7 @@ class ServiceAppBind(APIView):
             return response
 
         database = response
-        endpoint_only, ports = database.infra.get_driver().get_dns_port()
+        hosts, ports = database.infra.get_driver().get_dns_port()
 
         if database.databaseinfra.engine.name == 'redis':
             redis_password = database.databaseinfra.password
@@ -133,8 +133,8 @@ class ServiceAppBind(APIView):
             env_vars = {
                 "DBAAS_REDIS_PASSWORD": redis_password,
                 "DBAAS_REDIS_ENDPOINT": endpoint,
-                "DBAAS_SENTINEL_ENDPOINT_ONLY": endpoint_only,
-                "DBAAS_SENTINEL_PORT": ports
+                "DBAAS_REDIS_HOST": hosts,
+                "DBAAS_REDIS_PORT": ports
             }
 
             if 'redis_sentinel' in database.infra.get_driver().topology_name():
@@ -143,7 +143,7 @@ class ServiceAppBind(APIView):
                     "DBAAS_SENTINEL_ENDPOINT": endpoint,
                     "DBAAS_SENTINEL_ENDPOINT_SIMPLE": database.get_endpoint_dns_simple(),
                     "DBAAS_SENTINEL_SERVICE_NAME": database.databaseinfra.name,
-                    "DBAAS_SENTINEL_ENDPOINT_ONLY": endpoint_only,
+                    "DBAAS_SENTINEL_HOSTS": hosts,
                     "DBAAS_SENTINEL_PORT": ports
                 }
 
@@ -175,7 +175,7 @@ class ServiceAppBind(APIView):
                 "DBAAS_{}USER".format(kind): credential.user,
                 "DBAAS_{}PASSWORD".format(kind): credential.password,
                 "DBAAS_{}ENDPOINT".format(kind): endpoint,
-                "DBAAS_{}ENDPOINT_ONLY".format(kind): endpoint_only,
+                "DBAAS_{}HOSTS".format(kind): hosts,
                 "DBAAS_{}PORT".format(kind): ports
             }
 
