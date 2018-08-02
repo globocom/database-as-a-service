@@ -508,6 +508,7 @@ class RedisSentinel(Redis):
             'HOSTADDRESS': redis_address,
             'PORT': redis_port,
             'ONLY_SENTINEL': only_sentinel,
+            'HAS_FAAS_DISK': host.nfsaas_host_attributes.exists()
         }
 
     def master_parameters(self, instance, master):
