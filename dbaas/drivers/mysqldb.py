@@ -13,7 +13,8 @@ from physical.models import Instance
 from drivers import BaseDriver, DatabaseInfraStatus, DatabaseStatus
 from drivers.errors import AuthenticationError, ConnectionError, GenericDriverError, \
     DatabaseAlreadyExists, InvalidCredential, DatabaseDoesNotExist, \
-    CredentialAlreadyExists, ReplicationNotRunningError
+    CredentialAlreadyExists, ReplicationNotRunningError, \
+    CredentialDoesNotExists
 
 
 LOG = logging.getLogger(__name__)
@@ -402,6 +403,28 @@ class MySQL(BaseDriver):
         )
         return credential.user, credential.password, ''
 
+    def set_user_require_ssl(self, credential):
+        LOG.info("settint user {} to require SSL".format(credential.user))
+
+        if credential.user not in self.list_users():
+            raise CredentialDoesNotExists()
+
+        query = "GRANT USAGE ON *.* TO '{}'@'%' REQUIRE SSL".format(
+            credential.user)
+
+        self.__query(query)
+
+    def set_user_not_require_ssl(self, credential):
+        LOG.info("settint user {} to NOT require SSL".format(credential.user))
+
+        if credential.user not in self.list_users():
+            raise CredentialDoesNotExists()
+
+        query = "GRANT USAGE ON *.* TO '{}'@'%' REQUIRE NONE".format(
+            credential.user)
+
+        self.__query(query)
+
 
 class MySQLFOXHA(MySQL):
     @classmethod
@@ -422,3 +445,57 @@ class MySQLFOXHA(MySQL):
         base['IPMASTER'] = hosts.pop().address
 
         return base
+
+    def set_replication_user_require_ssl(self, instance=None):
+        LOG.info("settint replication user to require SSL")
+
+        replica_credential = get_credentials_for(
+            self.databaseinfra.environment, CredentialType.MYSQL_REPLICA
+        )
+
+        query = "GRANT USAGE ON *.* TO '{}'@'%' REQUIRE SSL".format(
+            replica_credential.user)
+
+        self.query(query, instance)
+
+    def set_replication_user_not_require_ssl(self, instance=None):
+        LOG.info("settint replication user to NOT require SSL")
+
+        replica_credential = get_credentials_for(
+            self.databaseinfra.environment, CredentialType.MYSQL_REPLICA
+        )
+
+        query = "GRANT USAGE ON *.* TO '{}'@'%' REQUIRE NONE".format(
+            replica_credential.user)
+
+        self.query(query, instance)
+
+
+    def set_replication_require_ssl(self, instance=None, ca_path=None):
+        LOG.info("settint replication to require SSL")
+
+        query ="stop slave;"
+        self.query(query, instance)
+
+        query = "CHANGE MASTER TO MASTER_SSL=1, MASTER_SSL_CA = '{}'"
+        query = query.format(ca_path)
+        self.query(query, instance)
+
+        query = "start slave;"
+        self.query(query, instance)
+
+
+    def set_replication_not_require_ssl(self, instance=None, ca_path=None):
+        LOG.info("settint replication to NOT require SSL")
+
+        query ="stop slave;"
+        self.query(query, instance)
+
+        query = "CHANGE MASTER TO MASTER_SSL=0, MASTER_SSL_CA = ''"
+        query = query.format(ca_path)
+        self.query(query, instance)
+
+        query = "start slave;"
+        self.query(query, instance)
+
+
