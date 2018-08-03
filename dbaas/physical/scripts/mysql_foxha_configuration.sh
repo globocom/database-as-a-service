@@ -31,10 +31,16 @@ socket                          = /var/lib/mysql/mysql.sock
 no_auto_rehash
 
 [mysqld]
+{% if SSL_CONFIGURED %}
+ssl                             = ON
+ssl-ca                          = {{ INFRA_SSL_CA }}
+ssl-cert                        = {{ INFRA_SSL_CERT }}
+ssl-key                         = {{ INFRA_SSL_KEY }}
+{% endif %}
 
-binlog_format                    = {{ configuration.binlog_format.value }}
-performance_schema               = {{ configuration.performance_schema.value }}
-transaction_isolation            = {{ configuration.transaction_isolation.value }}
+binlog_format                   = {{ configuration.binlog_format.value }}
+performance_schema              = {{ configuration.performance_schema.value }}
+transaction_isolation           = {{ configuration.transaction_isolation.value }}
 
 port                            = 3306
 socket                          = /var/lib/mysql/mysql.sock
