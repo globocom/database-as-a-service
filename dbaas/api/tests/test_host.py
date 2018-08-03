@@ -1,3 +1,4 @@
+from mock import MagicMock
 from django.test import TestCase
 from physical.models import Host
 from physical.tests.factory import InstanceFactory, HostFactory
@@ -8,6 +9,7 @@ from api.host import HostAPI
 class HostTestCase(TestCase):
     def setUp(self):
         self.host_api = HostAPI()
+        self.host_api.request = MagicMock()
         self.instance = InstanceFactory.create()
 
         self.instance.databaseinfra.databases.add(
