@@ -553,6 +553,9 @@ class DatabaseInfra(BaseModel):
         verbose_name=_("Last VM created"),
         blank=True, null=True,
         help_text=_("Number of the last VM created."))
+    ssl_configured = models.BooleanField(
+        verbose_name=_("SSL is Configured"),
+        default=False)
 
     def __unicode__(self):
         return self.name
