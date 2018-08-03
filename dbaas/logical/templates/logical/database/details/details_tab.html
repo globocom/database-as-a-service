@@ -10,7 +10,12 @@
 <fieldset class="module aligned ">
   <div class="control-group">
     <div class="control-label"><label>Status:</label></div>
-    <div class="controls">{{ database.status_html }}</div>
+    <div class="controls" id="status-tag">
+      {{ database.status_html }}
+      <button class="btn btn-primary" id="id_status"> <a href="#" type="button" class="icon-refresh" type="submit" value="Refresh" title="Status"></a> refresh </button>
+    </div>
+
+
   </div>
   <div class="control-group">
     <div class="control-label"><label>Logs:</label></div>
@@ -158,6 +163,7 @@
 <script>
   var team_select = document.getElementById("id_team");
   var team_contact = document.getElementById("id_contact");
+  var database_id = '{{ database.id }}';
 
   jQuery(document).ready(function($) {
     $(".bar .database-bar, .bar .other-bar, .bar .free-bar").popover({
@@ -186,8 +192,22 @@
       }
     });
 
-    $('#id_team').change();
-  })
+    $("#id_status").on("click", function() {
+      jQuery.ajax({
+          "dataType": "json", "url": "/logical/status/" + database_id, "type": "GET",
+      }).done(function(response) {
+        if (response.error) {
+              alert(response.error);
+          } else {
+              var output = response['html']
+              jQuery('#status-tag span').replaceWith(output)
+          }
+        }).fail(function() {
+          alert("invalid server response");
+      });
+    });
+  });
+
 </script>
 
 {% endblock %}
