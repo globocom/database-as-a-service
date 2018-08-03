@@ -343,6 +343,24 @@ class BaseDriver(object):
     def build_new_infra_auth(self):
         raise NotImplemented
 
+    def set_user_require_ssl(self, credential):
+        raise NotImplementedError()
+
+    def set_user_not_require_ssl(self, credential):
+        raise NotImplementedError()
+
+    def set_replication_user_require_ssl(self, instance=None):
+        raise NotImplementedError()
+
+    def set_replication_user_not_require_ssl(self, instance=None):
+        raise NotImplementedError()
+
+    def set_replication_require_ssl(self, instance=None, ca_path=None):
+        raise NotImplementedError()
+
+    def set_replication_not_require_ssl(self, instance=None, ca_path=None):
+        raise NotImplementedError()
+
 
 class DatabaseStatus(object):
 
