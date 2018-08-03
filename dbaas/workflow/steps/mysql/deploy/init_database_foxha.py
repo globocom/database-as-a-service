@@ -19,8 +19,7 @@ class InitDatabaseFoxHA(BaseStep):
 
     def do(self, workflow_dict):
         try:
-            cloud_stack = workflow_dict['plan'].cs_plan_attributes.first()
-            offering = cloud_stack.get_stronger_offering()
+            offering = workflow_dict['plan'].stronger_offering
             configuration = configuration_factory(
                 workflow_dict['databaseinfra'], offering.memory_size_mb
             )

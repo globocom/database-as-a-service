@@ -452,18 +452,17 @@ class Database(BaseModel):
 
         return database_status
 
-    def get_cloudstack_service_offering(self):
+    def get_offering_name(self):
         LOG.info("Get offering")
         try:
-            offer_name = self.databaseinfra.cs_dbinfra_offering.get(
-            ).offering.name
+            offer_name = self.infra.offering.name
         except Exception as e:
             LOG.info("Oops...{}".format(e))
             offer_name = None
 
         return offer_name
 
-    offering = property(get_cloudstack_service_offering)
+    offering = property(get_offering_name)
 
     @property
     def total_size(self):
@@ -535,12 +534,12 @@ class Database(BaseModel):
         )
 
     @classmethod
-    def resize(cls, database, cloudstackpack, user):
+    def resize(cls, database, offering, user):
         from notification.tasks import TaskRegister
 
         TaskRegister.database_resize(
             database=database, user=user,
-            cloudstack_pack=cloudstackpack
+            offering=offering
         )
 
 #    @classmethod
@@ -585,17 +584,17 @@ class Database(BaseModel):
             return True
         return False
 
-    def get_cloudstack_service_offering_id(self):
+    def get_offering_id(self):
         LOG.info("Get offering")
         try:
-            offer_id = self.infra.plan.cloudstack_attr.get_stronger_offering().serviceofferingid
+            offer_id = self.infra.plan.stronger_offering.id
         except Exception as e:
             LOG.info("Oops...{}".format(e))
             offer_id = None
 
         return offer_id
 
-    offering_id = property(get_cloudstack_service_offering_id)
+    offering_id = property(get_offering_id)
 
     def is_being_used_elsewhere(self, skip_tasks=None):
         tasks = TaskHistory.objects.filter(
@@ -621,13 +620,8 @@ class Database(BaseModel):
 
         return False
 
-    def has_cloudstack_offerings(self):
-        from dbaas_cloudstack.models import CloudStackPack
-
-        offerings = CloudStackPack.objects.filter(
-            offering__region__environment=self.environment,
-            engine_type__name=self.engine_type
-        ).exclude(offering__serviceofferingid=self.offering_id)
+    def has_offerings(self):
+        offerings = self.environment.offerings.exclude(id=self.offering_id)
 
         return bool(offerings)
 
@@ -763,7 +757,7 @@ class Database(BaseModel):
         error = None
         if self.is_in_quarantine:
             error = "Database in quarantine and cannot be resized."
-        elif not self.has_cloudstack_offerings:
+        elif not self.has_offerings:
             error = "There is no offerings for this database."
         elif self.is_being_used_elsewhere(['notification.tasks.resize_database', 'notification.tasks.resize_database_rollback']):
             error = "Database cannot be resized because" \
@@ -776,7 +770,7 @@ class Database(BaseModel):
         error = None
         if self.is_in_quarantine:
             error = "Database in quarantine and cannot be resized."
-        elif not self.has_cloudstack_offerings:
+        elif not self.has_offerings:
             error = "There is no offerings for this database."
         elif self.is_dead:
             error = "Database is dead and cannot be resized."

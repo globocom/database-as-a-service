@@ -147,10 +147,10 @@ class DatabaseResizeCallTestCase(TestCase, TaskCallBaseTestCase):
     call_params = {
         'database': MagicMock(),
         'user': 'user',
-        'cloudstack_pack': 'cloudstack_pack'
+        'offering': 'offering'
     }
     create_fields_to_validate = ['task_name', 'arguments', 'database', 'user']
-    delay_fields_to_validate = ['database', 'user', 'task', 'cloudstackpack']
+    delay_fields_to_validate = ['database', 'user', 'task', 'offering']
 
 
 class DatabaseResizeRetryCallTestCase(TestCase, TaskCallBaseTestCase):
@@ -160,14 +160,14 @@ class DatabaseResizeRetryCallTestCase(TestCase, TaskCallBaseTestCase):
     call_params = {
         'database': MagicMock(),
         'user': 'user',
-        'cloudstack_pack': 'cloudstack_pack',
-        'original_cloudstackpack': 'original_cloudstackpack',
+        'offering': 'offering',
+        'original_offering': 'original_offering',
         'since_step': 'since_step'
     }
     create_fields_to_validate = ['task_name', 'arguments', 'database', 'user']
     delay_fields_to_validate = [
-        'database', 'user', 'task', 'cloudstackpack',
-        'original_cloudstackpack', 'since_step'
+        'database', 'user', 'task', 'offering',
+        'original_offering', 'since_step'
     ]
 
 
