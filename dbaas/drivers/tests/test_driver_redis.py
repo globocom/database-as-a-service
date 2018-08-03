@@ -12,8 +12,8 @@ from drivers.tests.base import (BaseRedisDriverTestCase, FakeDriverClient,
                                 BaseSingleInstanceUpdateSizesTest,
                                 BaseHAInstanceUpdateSizesTest)
 from physical.models import Instance
-from physical.tests.factory import (DatabaseInfraParameterFactory, CloudStackOfferingFactory,
-                                    DatabaseInfraOfferingFactory, PlanAttrFactory)
+from physical.tests.factory import (DatabaseInfraParameterFactory,
+                                    OfferingFactory)
 
 
 LOG = logging.getLogger(__name__)
@@ -23,17 +23,12 @@ class RedisDriverPropertiesTestCase(BaseRedisDriverTestCase):
 
     def setUp(self):
         super(RedisDriverPropertiesTestCase, self).setUp()
-        cs_offering = CloudStackOfferingFactory(memory_size_mb=9)
-        DatabaseInfraOfferingFactory(
-            databaseinfra=self.databaseinfra,
-            offering=cs_offering
-        )
-        PlanAttrFactory.create(plan=self.databaseinfra.plan)
-        self.databaseinfra.plan.provider = 1
-        self.databaseinfra.plan.save()
-        offering = self.databaseinfra.offering
-        offering.memory_size_mb = 9
-        offering.save()
+        offering = OfferingFactory(memory_size_mb=9)
+        plan = self.databaseinfra.plan
+        plan.provider = 1
+        plan.stronger_offering = offering
+        plan.weaker_offering = offering
+        plan.save()
 
     def test_maxmemory_from_parameter(self):
         '''

@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 from util import build_context_script, exec_remote_command_host, \
     get_credentials_for
-from dbaas_cloudstack.models import HostAttr, PlanAttr
-from dbaas_cloudstack.models import CloudStackPack
 from dbaas_credentials.models import CredentialType
 from dbaas_nfsaas.models import HostAttr as HostAttrNfsaas
 from base import BaseInstanceStep, BaseInstanceStepMigration
 from physical.configurations import configuration_factory
+from physical.models import Offering
 import logging
 
 LOG = logging.getLogger(__name__)
@@ -17,25 +16,6 @@ class PlanStep(BaseInstanceStep):
     def __init__(self, instance):
         super(PlanStep, self).__init__(instance)
         self._pack = None
-
-    @property
-    def pack(self):
-        if not self._pack:
-            offering = self.instance.offering
-            self._pack = CloudStackPack.objects.get(
-                offering__serviceofferingid=offering.serviceofferingid,
-                offering__region__environment=self.environment,
-                engine_type__name=self.infra.engine_name
-            )
-        return self._pack
-
-    @property
-    def cs_plan(self):
-        return PlanAttr.objects.get(plan=self.plan)
-
-    @property
-    def host_cs(self):
-        return HostAttr.objects.get(host=self.host)
 
     @property
     def host_nfs(self):
@@ -53,7 +33,8 @@ class PlanStep(BaseInstanceStep):
             'ENGINE': self.plan.engine.engine_type.name,
             'MOVE_DATA': bool(self.upgrade) or bool(self.reinstall_vm),
             'DRIVER_NAME': self.infra.get_driver().topology_name(),
-            'DISK_SIZE_IN_GB': self.disk_offering.size_gb(),
+            # TODO: Remove that when VP is ready
+            'DISK_SIZE_IN_GB': self.disk_offering.size_gb()if self.disk_offering else 8,
             'ENVIRONMENT': self.environment,
             'HAS_PERSISTENCE': self.infra.plan.has_persistence,
             'IS_READ_ONLY': self.instance.read_only,
@@ -90,9 +71,12 @@ class PlanStep(BaseInstanceStep):
     @property
     def offering(self):
         if self.resize:
-            return self.resize.target_offer.offering
+            return self.resize.target_offer
 
-        return self.pack.offering
+        try:
+            return self.infra.offering
+        except Offering.DoesNotExist:
+            return self.instance.offering
 
     def get_configuration(self):
         try:

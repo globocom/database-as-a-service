@@ -29,7 +29,7 @@ class Provider(object):
 
     @property
     def environment(self):
-        return self.instance.databaseinfra.environment
+        return self.infra.environment
 
     @property
     def host(self):
@@ -37,23 +37,20 @@ class Provider(object):
 
     @property
     def engine(self):
-        return self.instance.databaseinfra.engine.full_name_for_host_provider
+        return self.infra.engine.full_name_for_host_provider
 
     @property
     def credential(self):
         # TODO Remove hard coded "Cloudstack"
         if not self._credential:
             self._credential = get_credentials_for(
-                self.environment, CredentialType.HOST_PROVIDER,
-                project="cloudstack"
+                self.environment, CredentialType.HOST_PROVIDER
             )
 
         return self._credential
 
     @property
     def vm_credential(self):
-        # TODO Lembrar de colocar o project pra quando tiver um provider
-        # diferente
         if not self._vm_credential:
             self._vm_credential = get_credentials_for(
                 self.environment, CredentialType.VM,
@@ -137,7 +134,7 @@ class Provider(object):
             "group": infra.name
         }
 
-        response = post(url, json=data)
+        response = post(url, json=data, timeout=600)
         if response.status_code != 201:
             raise IndexError(response.content, response)
 
@@ -168,8 +165,6 @@ class Provider(object):
 
 class HostProviderStep(BaseInstanceStep):
 
-    # TODO: Coloquei como parâmetro default, pq na hora de apagar ele nao passa
-    # o host, poderá ficar assim ?
     def __init__(self, instance=None):
         super(HostProviderStep, self).__init__(instance)
         self.driver = self.instance and self.infra.get_driver()
@@ -260,20 +255,25 @@ class ChangeOffering(HostProviderStep):
     def __init__(self, instance):
         super(ChangeOffering, self).__init__(instance)
 
-        target_offer = self.resize.target_offer
-        self.target_offering_id = target_offer.offering.serviceofferingid
+        self.target_offering = self.resize.target_offer
 
+#    def get_offering_id(self, offering):
+#        host_provider_cli = HostProviderClient(self.infra.environment)
+#        return host_provider_cli.get_offering_id(
+#            offering.cpus, offering.memory
+#        )
+#
     def __unicode__(self):
         return "Resizing VM..."
 
     def do(self):
-        success = self.provider.new_offering(self.resize.target_offer.offering)
+        success = self.provider.new_offering(self.target_offering)
         if not success:
             raise Exception("Could not change offering")
 
     def undo(self):
-        offer = self.resize.source_offer
-        self.target_offering_id = offer.offering.serviceofferingid
+        self.target_offering = self.resize.source_offer
+        # self.target_offering_id = self.get_offering_id(self.resize.source_offer)
         self.do()
 
 
@@ -287,6 +287,10 @@ class CreateVirtualMachine(HostProviderStep):
         self.instance.address = host.address
         self.instance.read_only = self.is_readonly_instance
         self.instance.save()
+
+    def delete_instance(self):
+        if self.instance.id:
+            self.instance.delete()
 
     def update_databaseinfra_last_vm_created(self):
         last_vm_created = self.infra.last_vm_created
@@ -303,21 +307,22 @@ class CreateVirtualMachine(HostProviderStep):
         return bool(self.database)
 
     @property
+    def is_readonly_instance(self):
+        return bool(self.database)
+
+    @property
     def vm_name(self):
         return self.instance.vm_name
 
     @property
     def stronger_offering(self):
-        plan = self.infra.plan
-        return plan.cloudstack_attr.get_stronger_offering()
+        return self.plan.stronger_offering
 
     @property
     def weaker_offering(self):
-        plan = self.infra.plan
-        return plan.cloudstack_attr.get_weaker_offering()
+        return self.plan.weaker_offering
 
     def do(self):
-        # TODO: Remove cloudstack dependencies
         if self.instance.is_database:
             offering = (self.infra.offering if self.is_readonly_instance
                         else self.stronger_offering)
@@ -350,4 +355,3 @@ class CreateVirtualMachine(HostProviderStep):
         self.delete_instance()
         if host.id:
             host.delete()
-

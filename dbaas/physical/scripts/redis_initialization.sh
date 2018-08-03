@@ -57,7 +57,7 @@ mountdatadisk_sentinel()
 }
 
 
-{% if ONLY_SENTINEL %}
+{% if ONLY_SENTINEL or not HAS_FAAS_DISK %}
     mountdatadisk_sentinel
 {% else %}
     mountdatadisk

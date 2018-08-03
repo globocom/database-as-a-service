@@ -17,7 +17,7 @@ class InstanceTestCase(TestCase):
         self.factory = RequestFactory()
         self.databaseinfra = DatabaseInfraFactory()
         self.hostname = HostFactory()
-        self.new_instance = InstanceFactory(address="new_instance.localinstance",
+        self.new_instance = InstanceFactory(address="new_instance.localinstance.fake_address",
                                             port=123,
                                             is_active=True,
                                             instance_type=Instance.MONGODB,
