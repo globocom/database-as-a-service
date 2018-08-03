@@ -121,7 +121,8 @@ class VolumeProviderBase(BaseInstanceStep):
         if not response.ok:
             raise IndexError(response.content, response)
         command = response.json()['command']
-        self.run_script(command)
+        if command:
+            self.run_script(command)
 
     def do(self):
         raise NotImplementedError
