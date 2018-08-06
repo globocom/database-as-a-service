@@ -1,8 +1,9 @@
 from backup.tasks import mysql_binlog_save
 from workflow.steps.mysql.util import get_replication_information_from_file, \
     change_master_to, start_slave
-from disk import RestoreSnapshot, AddDiskPermissionsRestoredDisk, \
-    UnmountOldestExportRestore, MountNewerExportRestore, ConfigureFstabRestore
+from disk import UnmountOldestExportRestore
+from volume_provider import AddAccessRestoredVolume, MountDataVolumeRestored, \
+    RestoreSnapshot
 from zabbix import ZabbixStep
 from base import BaseInstanceStep
 
@@ -92,7 +93,7 @@ class DiskRestoreMySQL(MySQLStep):
 
 
 class AddDiskPermissionsRestoredDiskMySQL(
-    DiskRestoreMySQL, AddDiskPermissionsRestoredDisk
+    DiskRestoreMySQL, AddAccessRestoredVolume
 ):
     pass
 
@@ -103,11 +104,7 @@ class UnmountOldestExportRestoreMySQL(
     pass
 
 
-class MountNewerExportRestoreMySQL(DiskRestoreMySQL, MountNewerExportRestore):
-    pass
-
-
-class ConfigureFstabRestoreMySQL(DiskRestoreMySQL, ConfigureFstabRestore):
+class MountNewerExportRestoreMySQL(DiskRestoreMySQL, MountDataVolumeRestored):
     pass
 
 

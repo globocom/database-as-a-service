@@ -119,36 +119,36 @@ class DatabaseTestCase(TestCase):
         self.assertEqual(
             [mock.call(), mock.call(force_refresh=True)], get_info.call_args_list)
 
-    def test_can_update_nfsaas_used_disk_size(self):
+    def test_can_update_volume_used_disk_size(self):
         database = factory.DatabaseFactory()
         database.databaseinfra = self.databaseinfra
 
-        nfsaas_host = physical_factory.NFSaaSHostAttr()
-        nfsaas_host.host = self.instance.hostname
-        nfsaas_host.save()
+        volume = physical_factory.VolumeFactory()
+        volume.host = self.instance.hostname
+        volume.save()
 
-        old_used_size = nfsaas_host.nfsaas_used_size_kb
-        nfsaas_host = database.update_host_disk_used_size(
+        old_used_size = volume.used_size_kb
+        volume = database.update_host_disk_used_size(
             host_address=self.instance.address, used_size_kb=300
         )
-        self.assertNotEqual(nfsaas_host.nfsaas_used_size_kb, old_used_size)
-        self.assertEqual(nfsaas_host.nfsaas_used_size_kb, 300)
+        self.assertNotEqual(volume.used_size_kb, old_used_size)
+        self.assertEqual(volume.used_size_kb, 300)
 
-        old_used_size = nfsaas_host.nfsaas_used_size_kb
-        nfsaas_host = database.update_host_disk_used_size(
+        old_used_size = volume.used_size_kb
+        volume = database.update_host_disk_used_size(
             host_address=self.instance.address, used_size_kb=500
         )
-        self.assertNotEqual(nfsaas_host.nfsaas_used_size_kb, old_used_size)
-        self.assertEqual(nfsaas_host.nfsaas_used_size_kb, 500)
+        self.assertNotEqual(volume.used_size_kb, old_used_size)
+        self.assertEqual(volume.used_size_kb, 500)
 
-    def test_cannot_update_nfsaas_used_disk_size_host_not_nfsaas(self):
+    def test_cannot_update_volume_used_disk_size_host_not_volume(self):
         database = factory.DatabaseFactory()
         database.databaseinfra = self.databaseinfra
 
-        nfsaas_host = database.update_host_disk_used_size(
+        volume = database.update_host_disk_used_size(
             host_address=self.instance.address, used_size_kb=300
         )
-        self.assertIsNone(nfsaas_host)
+        self.assertIsNone(volume)
 
     def test_can_clone(self):
         database = factory.DatabaseFactory()

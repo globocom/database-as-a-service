@@ -16,7 +16,7 @@ from util.providers import make_infra, clone_infra, destroy_infra, \
     get_database_upgrade_setting, get_resize_settings, \
     get_database_change_parameter_setting, \
     get_reinstallvm_steps_setting, \
-    get_database_change_parameter_retry_steps_count, get_deploy_instances
+    get_database_change_parameter_retry_steps_count
 from simple_audit.models import AuditRequest
 from system.models import Configuration
 from notification.models import TaskHistory
@@ -27,8 +27,6 @@ from maintenance.models import (DatabaseUpgrade, DatabaseResize,
 from maintenance.tasks import restore_database
 from maintenance.models import DatabaseCreate
 from util.providers import get_deploy_settings, get_deploy_instances
-from maintenance.tasks_create_database import get_instances_for
-
 
 
 LOG = get_task_logger(__name__)
@@ -565,19 +563,6 @@ def purge_task_history(self):
         task_history.update_status_for(TaskHistory.STATUS_ERROR, details=e)
 
 
-
-def disable_zabbix_alarms(database):
-    LOG.info("{} alarms will be disabled!".format(database))
-    zabbix_provider = handle_zabbix_alarms(database)
-    zabbix_provider.disable_alarms()
-
-
-def enable_zabbix_alarms(database):
-    LOG.info("{} alarms will be enabled!".format(database))
-    zabbix_provider = handle_zabbix_alarms(database)
-    zabbix_provider.enable_alarms()
-
-
 def create_zabbix_alarms(database):
     LOG.info("{} alarms will be created!".format(database))
     zabbix_provider = handle_zabbix_alarms(database)
@@ -714,8 +699,7 @@ def upgrade_mongodb_24_to_30(self, database, user, task_history=None):
 
 @app.task(bind=True)
 def database_disk_resize(self, database, disk_offering, task_history, user):
-    from dbaas_nfsaas.models import HostAttr
-    from workflow.steps.util.nfsaas_utils import resize_disk
+    from workflow.steps.util.volume_provider import ResizeVolume
 
     AuditRequest.new_request("database_disk_resize", user, "localhost")
 
@@ -739,28 +723,24 @@ def database_disk_resize(self, database, disk_offering, task_history, user):
             details='\nLoading Disk offering'
         )
 
+        databaseinfra.disk_offering = disk_offering
+        databaseinfra.save()
+
         for instance in databaseinfra.get_driver().get_database_instances():
-            if not HostAttr.objects.filter(host_id=instance.hostname_id).exists():
-                continue
 
             task_history.update_details(
                 persist=True,
                 details='\nChanging instance {} to '
                         'NFS {}'.format(instance, disk_offering)
             )
-            if resize_disk(
-                    environment=database.environment,
-                    host=instance.hostname,
-                    disk_offering=disk_offering):
-                resized.append(instance)
+            ResizeVolume(instance).do()
+            resized.append(instance)
 
         task_history.update_details(
             persist=True,
             details='\nUpdate DBaaS metadata from {} to '
                     '{}'.format(databaseinfra.disk_offering, disk_offering)
         )
-        databaseinfra.disk_offering = disk_offering
-        databaseinfra.save()
 
         task_history.update_status_for(
             status=TaskHistory.STATUS_SUCCESS,
@@ -786,11 +766,8 @@ def database_disk_resize(self, database, disk_offering, task_history, user):
                 persist=True,
                 details='\nUndo NFS change for instance {}'.format(instance)
             )
-            resize_disk(
-                environment=database.environment,
-                host=instance.hostname,
-                disk_offering=old_disk_offering
-            )
+            ResizeVolume(instance).do()
+            resized.append(instance)
 
         task_history.update_status_for(TaskHistory.STATUS_ERROR, details=error)
         database.finish_task()
@@ -1427,8 +1404,6 @@ class TaskRegister(object):
 
     @classmethod
     def restore_snapshot(cls, database, user, snapshot, retry_from=None):
-        from backup.tasks import restore_snapshot
-
         task_params = {
             'task_name': "restore_snapshot",
             'arguments': "Restoring {} to an older version.".format(
@@ -1439,22 +1414,10 @@ class TaskRegister(object):
 
         task = cls.create_task(task_params)
 
-        try:
-            get_deploy_instances(
-                database.plan.replication_topology.class_path
-            )
-        except NotImplementedError:
-            restore_snapshot.delay(
-                database=database,
-                task_history=task,
-                snapshot=snapshot,
-                user=user
-            )
-        else:
-            restore_database.delay(
-                database=database, task=task, snapshot=snapshot, user=user,
-                retry_from=retry_from
-            )
+        restore_database.delay(
+            database=database, task=task, snapshot=snapshot, user=user,
+            retry_from=retry_from
+        )
 
     @classmethod
     def database_upgrade(cls, database, user, since_step=None):
