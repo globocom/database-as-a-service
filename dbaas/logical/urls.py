@@ -1,6 +1,6 @@
 from django.conf.urls import patterns, url
 from .views import CredentialView
-from .views import get_status
+from .views import refresh_status
 
 
 
@@ -9,6 +9,6 @@ urlpatterns = patterns('',
                            CredentialView.as_view(),
                            name="credential-detail"),
                        url(r"^status/(?P<database_id>\d*)$",
-                           get_status,
+                           refresh_status,
                            name="logical_database_refresh_status"),
                        )
