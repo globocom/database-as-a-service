@@ -11,7 +11,6 @@ class BaseMongoDB(BaseTopology):
             'workflow.steps.util.deploy.create_dns.CreateDns',
             'workflow.steps.util.deploy.create_nfs.CreateNfs',
             'workflow.steps.mongodb.deploy.init_database.InitDatabaseMongoDB',
-            'workflow.steps.util.deploy.config_backup_log.ConfigBackupLog',
             'workflow.steps.util.deploy.check_database_connection.CheckDatabaseConnection',
             'workflow.steps.util.deploy.check_dns.CheckDns',
             'workflow.steps.util.deploy.start_monit.StartMonit',
@@ -66,13 +65,14 @@ class MongoDBSingle(BaseMongoDB):
                 'workflow.steps.util.dns.CreateDNS',
             )}, {
             'Creating disk': (
-                'workflow.steps.util.disk.CreateExport',
+                'workflow.steps.util.volume_provider.NewVolume',
             )}, {
             'Waiting VMs': (
                 'workflow.steps.util.vm.WaitingBeReady',
                 'workflow.steps.util.vm.UpdateOSDescription'
             )}, {
             'Configuring database': (
+                'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.InitializationForNewInfra',
                 'workflow.steps.util.plan.ConfigureForNewInfra',
                 'workflow.steps.util.database.Start',
@@ -101,17 +101,16 @@ class MongoDBSingle(BaseMongoDB):
                 'workflow.steps.util.db_monitor.DisableMonitoring',
             )}, {
             'Restoring': (
-                'workflow.steps.util.disk.RestoreSnapshot',
+                'workflow.steps.util.volume_provider.RestoreSnapshot',
             )}, {
             'Stopping datbase': (
                 'workflow.steps.util.database.Stop',
                 'workflow.steps.util.database.CheckIsDown',
             )}, {
             'Configuring': (
-                'workflow.steps.util.disk.AddDiskPermissionsRestoredDisk',
+                'workflow.steps.util.volume_provider.AddAccessRestoredVolume',
                 'workflow.steps.util.disk.UnmountOldestExportRestore',
-                'workflow.steps.util.disk.MountNewerExportRestore',
-                'workflow.steps.util.disk.ConfigureFstabRestore',
+                'workflow.steps.util.volume_provider.MountDataVolumeRestored',
                 'workflow.steps.util.plan.ConfigureRestore',
             )}, {
             'Starting database': (
@@ -119,8 +118,8 @@ class MongoDBSingle(BaseMongoDB):
                 'workflow.steps.util.database.CheckIsUp',
             )}, {
             'Old data': (
-                'workflow.steps.util.disk.BackupRestore',
-                'workflow.steps.util.disk.UpdateRestore',
+                'workflow.steps.util.volume_provider.TakeSnapshot',
+                'workflow.steps.util.volume_provider.UpdateActiveDisk',
             )}, {
             'Enabling monitoring': (
                 'workflow.steps.util.db_monitor.EnableMonitoring',
@@ -137,6 +136,7 @@ class MongoDBReplicaset(BaseMongoDB):
     def get_upgrade_steps_extra(self):
         return (
             'workflow.steps.mongodb.upgrade.vm.ChangeBinaryTo32',
+            'workflow.steps.util.volume_provider.MountDataVolume',
             'workflow.steps.util.plan.InitializationForUpgrade',
             'workflow.steps.util.plan.Configure',
         )
@@ -161,6 +161,7 @@ class MongoDBReplicaset(BaseMongoDB):
 
     def get_add_database_instances_middle_steps(self):
         return (
+            'workflow.steps.util.volume_provider.MountDataVolume',
             'workflow.steps.util.plan.Initialization',
             'workflow.steps.util.plan.Configure',
             'workflow.steps.util.database.Start',
@@ -214,13 +215,14 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.util.dns.CreateDNS',
             )}, {
             'Creating disk': (
-                'workflow.steps.util.disk.CreateExport',
+                'workflow.steps.util.volume_provider.NewVolume',
             )}, {
             'Waiting VMs': (
                 'workflow.steps.util.vm.WaitingBeReady',
                 'workflow.steps.util.vm.UpdateOSDescription'
             )}, {
             'Configuring database': (
+                'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.InitializationForNewInfra',
                 'workflow.steps.util.plan.ConfigureForNewInfra',
                 'workflow.steps.util.database.Start',
@@ -252,17 +254,16 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.util.db_monitor.DisableMonitoring',
             )}, {
             'Restoring': (
-                'workflow.steps.util.disk.RestoreSnapshot',
+                'workflow.steps.util.volume_provider.RestoreSnapshot',
             )}, {
             'Stopping datbase': (
                 'workflow.steps.util.database.Stop',
                 'workflow.steps.util.database.CheckIsDown',
             )}, {
             'Configuring': (
-                'workflow.steps.util.disk.AddDiskPermissionsRestoredDisk',
+                'workflow.steps.util.volume_provider.AddAccessRestoredVolume',
                 'workflow.steps.util.disk.UnmountOldestExportRestore',
-                'workflow.steps.util.disk.MountNewerExportRestore',
-                'workflow.steps.util.disk.ConfigureFstabRestore',
+                'workflow.steps.util.volume_provider.MountDataVolumeRestored',
                 'workflow.steps.util.disk.CleanData',
                 'workflow.steps.util.disk.CleanDataArbiter',
                 'workflow.steps.util.plan.ConfigureRestore',
@@ -277,8 +278,8 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.util.database.CheckIfInstanceIsMasterRestore',
             )}, {
             'Old data': (
-                'workflow.steps.util.disk.BackupRestore',
-                'workflow.steps.util.disk.UpdateRestore',
+                'workflow.steps.util.volume_provider.TakeSnapshot',
+                'workflow.steps.util.volume_provider.UpdateActiveDisk',
             )}, {
             'Enabling monitoring': (
                 'workflow.steps.util.db_monitor.EnableMonitoring',

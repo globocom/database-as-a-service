@@ -406,11 +406,6 @@ def get_dict_lines(my_dict={}):
     return final_str
 
 
-def scape_nfsaas_export_path(export_path):
-    splited_path = export_path.split('/')
-    return str().join([slice + '\/' for slice in splited_path])[:-2]
-
-
 def get_replication_topology_instance(class_path):
     topology_class = import_by_path(class_path)
     return topology_class()

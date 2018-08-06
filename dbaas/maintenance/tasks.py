@@ -128,6 +128,7 @@ def region_migration_start(self, infra, instances, since_step=None):
             'workflow.steps.util.disk.MigrationCreateExport',
         )}, {
         'Configuring new infra': (
+            'workflow.steps.util.volume_provider.MountDataVolume',
             'workflow.steps.util.plan.InitializationMigration',
             'workflow.steps.util.plan.ConfigureMigration',
         )}, {

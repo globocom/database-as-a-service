@@ -664,16 +664,16 @@ class Database(BaseModel):
         if not instance:
             raise ObjectDoesNotExist()
 
-        nfsaas_host = instance.hostname.nfsaas_host_attributes.last()
-        if not nfsaas_host:
+        volume = instance.hostname.volumes.last()
+        if not volume:
             return None
 
         if total_size_kb:
-            nfsaas_host.nfsaas_size_kb = total_size_kb
+            volume.total_size_kb = total_size_kb
 
-        nfsaas_host.nfsaas_used_size_kb = used_size_kb
-        nfsaas_host.save()
-        return nfsaas_host
+        volume.used_size_kb = used_size_kb
+        volume.save()
+        return volume
 
     def can_be_cloned(self, database_view_button=False):
         if not self.plan.has_persistence:

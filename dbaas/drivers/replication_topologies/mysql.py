@@ -19,7 +19,6 @@ class BaseMysql(BaseTopology):
             'workflow.steps.mysql.deploy.create_dns.CreateDns',
             'workflow.steps.util.deploy.create_nfs.CreateNfs',
             'workflow.steps.mysql.deploy.init_database.InitDatabase',
-            'workflow.steps.util.deploy.config_backup_log.ConfigBackupLog',
             'workflow.steps.util.deploy.check_database_connection.CheckDatabaseConnection',
             'workflow.steps.util.deploy.check_dns.CheckDns',
             'workflow.steps.util.deploy.start_monit.StartMonit',
@@ -71,13 +70,14 @@ class MySQLSingle(BaseMysql):
                 'workflow.steps.util.dns.CreateDNS',
             )}, {
             'Creating disk': (
-                'workflow.steps.util.disk.CreateExport',
+                'workflow.steps.util.volume_provider.NewVolume',
             )}, {
             'Waiting VMs': (
                 'workflow.steps.util.vm.WaitingBeReady',
                 'workflow.steps.util.vm.UpdateOSDescription'
             )}, {
             'Configuring database': (
+                'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.infra.UpdateEndpoint',
                 'workflow.steps.util.plan.InitializationForNewInfra',
                 'workflow.steps.util.plan.ConfigureForNewInfra',
@@ -126,17 +126,16 @@ class MySQLSingle(BaseMysql):
                 'workflow.steps.util.db_monitor.DisableMonitoring',
             )}, {
             'Restoring': (
-                'workflow.steps.util.disk.RestoreSnapshot',
+                'workflow.steps.util.volume_provider.RestoreSnapshot',
             )}, {
             'Stopping datbase': (
                 'workflow.steps.util.database.Stop',
                 'workflow.steps.util.database.CheckIsDown',
             )}, {
             'Configuring': (
-                'workflow.steps.util.disk.AddDiskPermissionsRestoredDisk',
+                'workflow.steps.util.volume_provider.AddAccessRestoredVolume',
                 'workflow.steps.util.disk.UnmountOldestExportRestore',
-                'workflow.steps.util.disk.MountNewerExportRestore',
-                'workflow.steps.util.disk.ConfigureFstabRestore',
+                'workflow.steps.util.volume_provider.MountDataVolumeRestored',
                 'workflow.steps.util.plan.ConfigureRestore',
             )}, {
             'Starting database': (
@@ -144,8 +143,8 @@ class MySQLSingle(BaseMysql):
                 'workflow.steps.util.database.CheckIsUp',
             )}, {
             'Old data': (
-                'workflow.steps.util.disk.BackupRestore',
-                'workflow.steps.util.disk.UpdateRestore',
+                'workflow.steps.util.volume_provider.TakeSnapshot',
+                'workflow.steps.util.volume_provider.UpdateActiveDisk',
             )}, {
             'Enabling monitoring': (
                 'workflow.steps.util.db_monitor.EnableMonitoring',
@@ -170,7 +169,6 @@ class MySQLFoxHA(MySQLSingle):
             'workflow.steps.mysql.deploy.run_pupet_setup.RunPuppetSetup',
             'workflow.steps.mysql.deploy.config_fox.ConfigFox',
             'workflow.steps.mysql.deploy.check_replication.CheckReplicationFoxHA',
-            'workflow.steps.util.deploy.config_backup_log.ConfigBackupLog',
             'workflow.steps.util.deploy.check_database_connection.CheckDatabaseConnection',
             'workflow.steps.util.deploy.check_dns.CheckDns',
             'workflow.steps.util.deploy.start_monit.StartMonit',
@@ -265,7 +263,7 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.dns.CreateDNS',
             )}, {
             'Creating disk': (
-                'workflow.steps.util.disk.CreateExport',
+                'workflow.steps.util.volume_provider.NewVolume',
             )}, {
             'Waiting VMs': (
                 'workflow.steps.util.vm.WaitingBeReady',
@@ -291,6 +289,7 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.puppet.CheckStatus',
             )}, {
             'Configuring database': (
+                'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.InitializationForNewInfra',
                 'workflow.steps.util.plan.ConfigureForNewInfra',
                 'workflow.steps.util.database.Start',
@@ -342,7 +341,6 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.mysql.AddDiskPermissionsRestoredDiskMySQL',
                 'workflow.steps.util.mysql.UnmountOldestExportRestoreMySQL',
                 'workflow.steps.util.mysql.MountNewerExportRestoreMySQL',
-                'workflow.steps.util.mysql.ConfigureFstabRestoreMySQL',
                 'workflow.steps.util.disk.RemoveDeprecatedFiles',
                 'workflow.steps.util.plan.ConfigureRestore',
             )}, {
@@ -363,8 +361,8 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.database.CheckIsUp',
             )}, {
             'Old data': (
-                'workflow.steps.util.disk.BackupRestore',
-                'workflow.steps.util.disk.UpdateRestore',
+                'workflow.steps.util.volume_provider.TakeSnapshot',
+                'workflow.steps.util.volume_provider.UpdateActiveDisk',
             )}, {
             'Enabling monitoring': (
                 'workflow.steps.util.db_monitor.EnableMonitoring',
@@ -416,6 +414,7 @@ class MySQLFoxHA(MySQLSingle):
             ),
         }] + [{
             'Start Database': (
+                'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.Initialization',
                 'workflow.steps.util.plan.Configure',
                 'workflow.steps.util.database.Stop',

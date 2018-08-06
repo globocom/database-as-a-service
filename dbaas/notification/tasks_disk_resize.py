@@ -99,14 +99,15 @@ def zabbix_collect_used_disk(task):
                         problems += 1
                         status = TaskHistory.STATUS_WARNING
                         task.add_detail(
-                            message='Zabbix metrics not updated', level=4
+                            message='Error: Zabbix metrics not updated',
+                            level=4
                         )
 
                 size_metadata = database.databaseinfra.disk_offering.size_kb
                 if has_difference_between(size_metadata, current_size):
                     problems += 1
                     task.add_detail(
-                        message='Disk size different in metadata: {}kb'.format(
+                        message='Error: Disk size different: {}kb'.format(
                             size_metadata
                         ),
                         level=4
@@ -126,7 +127,7 @@ def zabbix_collect_used_disk(task):
                         problems += 1
                         status = TaskHistory.STATUS_WARNING
                         task.add_detail(
-                            message='Could not do resize. {}'.format(e),
+                            message='Error: Could not do resize. {}'.format(e),
                             level=4
                         )
                     else:
@@ -154,14 +155,14 @@ def zabbix_collect_used_disk(task):
 
 def update_disk(database, address, total_size, used_size, task):
     try:
-        nfsaas_host = database.update_host_disk_used_size(
+        volume = database.update_host_disk_used_size(
             host_address=address,
             used_size_kb=used_size,
             total_size_kb=total_size
         )
-        if not nfsaas_host:
+        if not volume:
             raise EnvironmentError(
-                'Instance {} do not have NFSaaS disk'.format(address)
+                'Instance {} do not have disk'.format(address)
             )
     except ObjectDoesNotExist:
         task.add_detail(
@@ -177,9 +178,8 @@ def update_disk(database, address, total_size, used_size, task):
         return False
 
     task.add_detail(
-        message='Used disk size updated. NFS: {}'.format(
-            nfsaas_host.nfsaas_path_host
-        ), level=3
+        message='Used disk size updated. NFS: {}'.format(volume.identifier),
+        level=3
     )
     return True
 
