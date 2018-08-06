@@ -141,18 +141,16 @@ def user_tasks(user):
     return '{}?{}'.format(url, filter)
 
 
-def get_status(request, database_id):
-    # return "42"
+def refresh_status(request, database_id):
     try:
         database = Database.objects.get(id=database_id)
     except (ObjectDoesNotExist, ValueError):
         return
-    else:
-        database.update_status()
-        output = json.dumps({'html': database.status_html}, indent=4)
-        return HttpResponse(output, content_type="application/json")
-    # output = json.dumps({'id': 45}, indent=4)
-    # return HttpResponse(output, content_type="application/json")
+    for instance in database.infra.instances.all():
+        instance.update_status()
+    database.update_status()
+    output = json.dumps({'html': database.status_html}, indent=4)
+    return HttpResponse(output, content_type="application/json")
 
 
 @database_view('details')
