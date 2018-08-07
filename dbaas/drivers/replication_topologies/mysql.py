@@ -447,3 +447,42 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.database.CheckIsUp',
             ),
         }] + self.get_upgrade_steps_final()
+
+    def get_configure_ssl_steps(self):
+        return [{
+            'Disable monitoring and alarms': (
+                'workflow.steps.util.zabbix.DisableAlarms',
+                'workflow.steps.util.db_monitor.DisableMonitoring',
+            ),
+        }] + [{
+            'Configure SSL': (
+                'workflow.steps.util.ssl.UpdateOpenSSlLib',
+                'workflow.steps.util.ssl.CreateSSLFolder',
+                'workflow.steps.util.ssl.CreateSSLConfForInfraEndPoint',
+                'workflow.steps.util.ssl.CreateSSLConfForInstanceIP',
+                'workflow.steps.util.ssl.RequestSSLForInfra',
+                'workflow.steps.util.ssl.RequestSSLForInstance',
+                'workflow.steps.util.ssl.CreateJsonRequestFileInfra',
+                'workflow.steps.util.ssl.CreateJsonRequestFileInstance',
+                'workflow.steps.util.ssl.CreateCertificateInfra',
+                'workflow.steps.util.ssl.CreateCertificateInstance',
+                'workflow.steps.util.ssl.SetSSLFilesAccessMySQL',
+                'workflow.steps.util.ssl.SetInfraConfiguredSSL',
+                'workflow.steps.util.plan.Configure',
+            ),
+        }] + [{
+            'Restart Database': (
+                'workflow.steps.util.vm.ChangeMaster',
+                'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.Start',
+            ),
+        }] + [{
+            'Configure Replication Uuser': (
+                'workflow.steps.util.ssl.SetReplicationUserRequireSSL',
+            ),
+        }] + [{
+            'Enabling monitoring and alarms': (
+                'workflow.steps.util.db_monitor.EnableMonitoring',
+                'workflow.steps.util.zabbix.EnableAlarms',
+            ),
+        }]
