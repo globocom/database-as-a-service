@@ -181,6 +181,7 @@ class Database(BaseModel):
             ("view_database", "Can view databases"),
             ("upgrade_mongo24_to_30", "Can upgrade mongoDB version from 2.4 to 3.0"),
             ("upgrade_database", "Can upgrade databases"),
+            ("configure_ssl", "Can configure SSL"),
         )
         unique_together = (
             ('name', 'environment'),
@@ -578,6 +579,13 @@ class Database(BaseModel):
     def get_reinstallvm_retry_url(self):
         return "/admin/logical/database/{}/reinstallvm_retry/".format(self.id)
 
+    def get_configure_ssl_url(self):
+        return "/admin/logical/database/{}/configure_ssl/".format(self.id)
+
+    def get_configure_ssl_retry_url(self):
+        return "/admin/logical/database/{}/configure_ssl_retry/".format(self.id)
+
+
     def is_mongodb_24(self):
         engine = self.engine
         if engine.name == 'mongodb' and engine.version.startswith('2.4'):
@@ -821,6 +829,31 @@ class Database(BaseModel):
             return False, error
         return True, None
 
+    def can_do_configure_ssl_retry(self):
+        error = None
+        if self.is_in_quarantine:
+            error = "Database in quarantine and cannot have SSL cofigured."
+        elif self.is_being_used_elsewhere(['notification.tasks.configure_ssl_database']): ###XXXXXXXX
+            error = "Database cannot have SSL cofigured because " \
+                    "it is in use by another task."
+        if error:
+            return False, error
+        return True, None
+
+    def can_do_configure_ssl(self):
+        can_do_configure_ssl, error = self.can_do_configure_ssl_retry()
+
+        if can_do_configure_ssl:
+            if self.is_dead:
+                error = "Database is dead and cannot have SSL cofigured."
+            elif self.is_being_used_elsewhere():
+                error = "Database cannot have SSL cofigured because " \
+                        "it is in use by another task."
+
+        if error:
+            return False, error
+        return True, None
+
     def destroy(self, user):
         if not self.is_in_quarantine:
             self.delete()
@@ -878,6 +911,9 @@ class Credential(BaseModel):
     password = EncryptedCharField(
         verbose_name=_("User password"), max_length=255)
     database = models.ForeignKey(Database, related_name="credentials")
+    force_ssl = models.BooleanField(
+        verbose_name="Force user ", default=False
+    )
 
     def __unicode__(self):
         return u"%s" % self.user
@@ -904,6 +940,16 @@ class Credential(BaseModel):
         self.password = make_db_random_password()
         self.driver.update_user(self)
         self.save()
+
+    def swap_force_ssl(self):
+        if self.force_ssl:
+            self.force_ssl = False
+            self.driver.set_user_not_require_ssl()
+            self.save()
+        else:
+            self.force_ssl = True
+            self.driver.set_user_require_ssl()
+            self.save()
 
     @classmethod
     def create_new_credential(cls, user, database):
