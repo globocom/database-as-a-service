@@ -606,6 +606,51 @@ def database_upgrade_retry(request, context, database):
     )
 
 
+@database_view("")
+def database_configure_ssl(request, context, database):
+    can_do_configure_ssl, error = database.can_do_configure_ssl()
+    if not can_do_configure_ssl:
+        messages.add_message(request, messages.ERROR, error)
+    else:
+
+        TaskRegister.database_configure_ssl(
+            database=database,
+            user=request.user
+        )
+    return HttpResponseRedirect(
+        reverse('admin:logical_database_resizes', kwargs={'id': database.id})
+    )
+
+
+@database_view("")
+def database_configure_ssl_retry(request, context, database):
+    can_do_configure_ssl, error = database.can_do_configure_ssl_retry()
+    if can_do_configure_ssl:
+        configure_ssl = database.configure_ssl.filter()
+        last_configure_ssl = configure_ssl.last()
+        if not last_configure_ssl:
+            error = "Database does not have configure SSL task!"
+        elif not last_configure_ssl.is_status_error:
+            error = "Cannot do retry, last configure SSL status is '{}'!".format(
+                last_configure_ssl.get_status_display()
+            )
+        else:
+            since_step = last_configure_ssl.current_step
+
+    if error:
+        messages.add_message(request, messages.ERROR, error)
+    else:
+
+        TaskRegister.database_configure_ssl(
+            database=database,
+            user=request.user,
+            since_step=since_step
+        )
+    return HttpResponseRedirect(
+        reverse('admin:logical_database_resizes', kwargs={'id': database.id})
+    )
+
+
 @database_view('resizes/upgrade')
 def database_resizes(request, context, database):
     if request.method == 'POST':
@@ -646,6 +691,9 @@ def database_resizes(request, context, database):
     context['last_upgrade'] = database.upgrades.filter(
         source_plan=database.infra.plan
     ).last()
+    context['can_setup_ssl'] = \
+        (not database.infra.ssl_configured) and \
+        request.user.has_perm(constants.PERM_CONFIGURE_SSL)
 
     return render_to_response(
         "logical/database/details/resizes_tab.html",
