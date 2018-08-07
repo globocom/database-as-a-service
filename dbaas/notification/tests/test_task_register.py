@@ -306,11 +306,11 @@ class RestoreSnapshotCallTestCase(TestCase, TaskCallBaseTestCase):
             self.database.delete()
 
     method_to_call = 'restore_snapshot'
-    delay_to_mock = 'backup.tasks.restore_snapshot.delay'
+    delay_to_mock = 'maintenance.tasks.restore_database.delay'
     call_params = {
         'database': MagicMock(),
         'user': 'user',
         'snapshot': 'snapshot'
     }
     create_fields_to_validate = ['task_name', 'arguments', 'database', 'user']
-    delay_fields_to_validate = ['database', 'task_history', 'snapshot', 'user']
+    delay_fields_to_validate = ['database', 'task', 'snapshot', 'user']

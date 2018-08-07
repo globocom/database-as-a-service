@@ -101,7 +101,7 @@ class DetailedProgressBarNode(template.Node):
         for instance in self.master_instances:
             self.instance = instance
             try:
-                self.host_attr = instance.hostname.nfsaas_host_attributes.filter(is_active=True).first()
+                self.volume = instance.hostname.volumes.filter(is_active=True).first()
                 html += self.render_bar()
             except Exception, e:
                 LOG.error(
@@ -114,12 +114,12 @@ class DetailedProgressBarNode(template.Node):
 
     @property
     def total_disk_in_gb(self):
-        return self.normalize_number(self.host_attr.nfsaas_size_kb * MB_FACTOR)
+        return self.normalize_number(self.volume.total_size_kb * MB_FACTOR)
 
     @property
     def used_disk_in_gb(self):
-        if self.host_attr.nfsaas_used_size_kb is not None:
-            total_disk_in_gb = (self.host_attr.nfsaas_used_size_kb) * MB_FACTOR
+        if self.volume.used_size_kb is not None:
+            total_disk_in_gb = (self.volume.used_size_kb) * MB_FACTOR
             return self.normalize_number(total_disk_in_gb)
         return
 

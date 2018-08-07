@@ -87,13 +87,15 @@ class BindNewInstance(ACLStep):
         from util import get_credentials_for
         from dbaas_credentials.models import CredentialType
         try:
-            credential = get_credentials_for(self.environment, CredentialType.ACLAPI)
+            get_credentials_for(self.environment, CredentialType.ACLAPI)
         except IndexError:
             return False
         else:
             return True
 
     def do(self):
+        if not self.database:
+            return
         for database_bind in self.database.acl_binds.all():
             if helpers.bind_address(database_bind=database_bind,
                                     acl_client=self.acl_client,
@@ -112,6 +114,8 @@ class BindNewInstance(ACLStep):
                 ).update(bind_status=ERROR)
 
     def undo(self):
+        if not self.database:
+            return
         for database_bind in self.database.acl_binds.all():
             infra_instances_binds = DatabaseInfraInstanceBind.objects.filter(
                 databaseinfra=self.infra,

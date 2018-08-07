@@ -2,10 +2,9 @@
 from util import build_context_script, exec_remote_command_host, \
     get_credentials_for
 from dbaas_credentials.models import CredentialType
-from dbaas_nfsaas.models import HostAttr as HostAttrNfsaas
 from base import BaseInstanceStep, BaseInstanceStepMigration
 from physical.configurations import configuration_factory
-from physical.models import Offering
+from physical.models import Offering, Volume
 import logging
 
 LOG = logging.getLogger(__name__)
@@ -20,8 +19,8 @@ class PlanStep(BaseInstanceStep):
     @property
     def host_nfs(self):
         try:
-            return HostAttrNfsaas.objects.get(host=self.host, is_active=True)
-        except HostAttrNfsaas.DoesNotExist:
+            return Volume.objects.get(host=self.host, is_active=True)
+        except Volume.DoesNotExist:
             return None
 
     @property
@@ -55,8 +54,6 @@ class PlanStep(BaseInstanceStep):
 
         variables['configuration'] = self.get_configuration()
         variables['GRAYLOG_ENDPOINT'] = self.get_graylog_config()
-        if self.host_nfs:
-            variables['EXPORTPATH'] = self.host_nfs.nfsaas_path
 
         variables.update(self.get_variables_specifics())
         return variables
@@ -142,10 +139,10 @@ class PlanStepRestore(PlanStep):
     @property
     def host_nfs(self):
         try:
-            return HostAttrNfsaas.objects.filter(
+            return Volume.objects.filter(
                 host=self.host, is_active=False
             ).last()
-        except HostAttrNfsaas.DoesNotExist:
+        except Volume.DoesNotExist:
             return None
 
     def get_variables_specifics(self):
