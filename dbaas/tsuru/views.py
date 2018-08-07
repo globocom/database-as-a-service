@@ -123,6 +123,7 @@ class ServiceAppBind(APIView):
 
         database = response
         hosts, ports = database.infra.get_driver().get_dns_port()
+        ports = str(ports)
 
         if database.databaseinfra.engine.name == 'redis':
             redis_password = database.databaseinfra.password
