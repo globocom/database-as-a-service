@@ -112,10 +112,22 @@
 
             $("#create_new_password").popover({trigger: "hover", placement: "right", content: "Generate new password"});
 
+            $("#swap_force_ssl").popover({trigger: "hover", placement: "right", content: "Swap SSL Mode"});
+
             $("#reset_psw_modal-" + credential.pk + " .modal-footer").on("click.reset-password", ".btn-reset-password", function(e) {
               credential.reset_password(function() {
                     $("#reset_psw_modal-" + credential.pk).modal('toggle');
                     credential.show_password(true);
+                    return false;
+              });
+              return false;
+            });
+
+
+            $("#swap_force_ssl_modal-" + credential.pk + " .modal-footer").on("click.reset-password", ".btn-reset-password", function(e) {
+              credential.reset_password(function() {
+                    $("#swap_force_ssl_modal-" + credential.pk).modal('toggle');
+                    //credential.show_password(true);
                     return false;
               });
               return false;
