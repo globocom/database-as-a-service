@@ -58,7 +58,7 @@
                     callback(credential);
                 }
             });
-        
+
         };
 
         /**
@@ -112,10 +112,11 @@
 
             $("#create_new_password").popover({trigger: "hover", placement: "right", content: "Generate new password"});
 
-            $("#reset_psw_modal .modal-footer").on("click.reset-password", ".btn-reset-password", function(e) {
+            $("#reset_psw_modal-" + credential.pk + " .modal-footer").on("click.reset-password", ".btn-reset-password", function(e) {
               credential.reset_password(function() {
-                    $("#reset_psw_modal").modal('toggle');
+                    $("#reset_psw_modal-" + credential.pk).modal('toggle');
                     credential.show_password(true);
+                    return false;
               });
               return false;
             });
