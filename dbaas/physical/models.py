@@ -274,6 +274,9 @@ class ReplicationTopology(BaseModel):
     can_reinstall_vm = models.BooleanField(
         verbose_name="Can Reinstall VM", default=True
     )
+    can_setup_ssl = models.BooleanField(
+        verbose_name="Can Setup SSL", default=False
+    )
     script = models.ForeignKey(
         Script, related_name='replication_topologies', null=True, blank=True
     )
