@@ -226,16 +226,21 @@ class MySQL(BaseDriver):
         self.__query("CREATE DATABASE %s" % database.name)
 
     def create_user(self, credential, roles=["ALL PRIVILEGES"]):
-        LOG.info("creating user %s to %s" %
-                 (credential.user, credential.database))
-        # the first release allow every host to connect to the database
-        # 2 steps required to get the user create error
+        LOG.info("creating user {} to {}".format(
+            credential.user, credential.database))
+
         if credential.user in self.list_users():
             raise CredentialAlreadyExists()
-        self.__query("CREATE USER '%s'@'%%' IDENTIFIED BY '%s'" %
-                     (credential.user, credential.password))
-        self.__query("GRANT %s ON %s.* TO '%s'@'%%'" %
-                     (','.join(roles), credential.database, credential.user))
+        query = "CREATE USER '{}'@'%' IDENTIFIED BY '{}'".format(
+            credential.user, credential.password)
+        self.__query(query)
+
+        query = "GRANT {} ON {}.* TO '{}'@'%'".format(
+            ','.join(roles), credential.database, credential.user)
+        self.__query(query)
+
+        if credential.force_ssl:
+            self.set_user_require_ssl(credential)
 
     def remove_database(self, database):
         LOG.info("removing database %s" % (database.name))
