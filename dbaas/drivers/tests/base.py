@@ -68,9 +68,9 @@ class BaseDriverTest(object):
             engine__engine_type__name=self.engine_name, user=self.db_user
         )
         hostname = factory_physical.HostFactory()
-        self.nfsaas_host_attr = factory_physical.NFSaaSHostAttr(
+        self.volume = factory_physical.VolumeFactory(
             host=hostname,
-            nfsaas_used_size_kb=float(40.0/1024.0)
+            used_size_kb=float(40.0/1024.0)
         )
         self.instances = self.instance_helper.create_instances_by_quant(
             infra=self.databaseinfra, port=self.port, qt=self.instances_quantity,

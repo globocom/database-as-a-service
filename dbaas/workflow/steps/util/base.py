@@ -81,7 +81,7 @@ class BaseInstanceStep(object):
 
     @property
     def latest_disk(self):
-        return self.instance.hostname.nfsaas_host_attributes.last()
+        return self.instance.hostname.volumes.last()
 
     @property
     def resize(self):
