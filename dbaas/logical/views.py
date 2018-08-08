@@ -146,10 +146,14 @@ def refresh_status(request, database_id):
         database = Database.objects.get(id=database_id)
     except (ObjectDoesNotExist, ValueError):
         return
+    instances_status = []
     for instance in database.infra.instances.all():
         instance.update_status()
+        instances_status.append({"id": instance.hostname.id,
+                                 "html": instance.status_html()})
     database.update_status()
-    output = json.dumps({'html': database.status_html}, indent=4)
+    output = json.dumps({'database_status': database.status_html,
+                         'instances_status': instances_status}, indent=4)
     return HttpResponse(output, content_type="application/json")
 
 
