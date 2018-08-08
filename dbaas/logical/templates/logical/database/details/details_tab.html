@@ -12,7 +12,7 @@
     <div class="control-label"><label>Status:</label></div>
     <div class="controls" id="status-tag">
       {{ database.status_html }}
-      <a type="button" class="btn btn-primary" type="submit" value="Refresh" title="Status" id="id_status">
+      <a type="button" class="btn btn-primary refresh-status" type="submit" value="Refresh" title="Status" id="id_status">
         <i class="icon-refresh icon-white"></i>
       </a>
     </div>
@@ -203,7 +203,7 @@
         if (response.error) {
               alert(response.error);
           } else {
-              var output = response['html']
+              var output = response['database_status']
               jQuery('#status-tag span').replaceWith(output)
           }
         }).fail(function() {
