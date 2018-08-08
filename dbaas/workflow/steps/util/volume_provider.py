@@ -170,8 +170,12 @@ class MountDataVolume(VolumeProviderBase):
     def directory(self):
         return "/data"
 
+    @property
+    def is_valid(self):
+        return self.instance.is_database
+
     def do(self):
-        if not self.instance.is_database:
+        if not self.is_valid:
             return
 
         script = self.get_mount_command(self.volume)
@@ -182,6 +186,12 @@ class MountDataVolume(VolumeProviderBase):
 
 
 class MountDataVolumeRestored(MountDataVolume):
+
+    @property
+    def is_valid(self):
+        if not super(MountDataVolumeRestored, self).is_valid:
+            return False
+        return self.restore.is_master(self.instance)
 
     @property
     def volume(self):
