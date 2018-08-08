@@ -198,7 +198,7 @@
           } else {
             var output = response['instances_status'];
             output.forEach(function (instance){
-             jQuery('#host-status-' + instance.id + ' label').replaceWith(instance.html);
+             $('#host-status-' + instance.id + ' label').replaceWith(instance.html);
             })
           }
         }).fail(function() {

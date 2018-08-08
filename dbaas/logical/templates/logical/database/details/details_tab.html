@@ -16,10 +16,6 @@
         Update status
       </a>
     </div>
-
-  <!---->
-
-
   </div>
   <div class="control-group">
     <div class="control-label"><label>Logs:</label></div>
@@ -204,7 +200,7 @@
               alert(response.error);
           } else {
               var output = response['database_status']
-              jQuery('#status-tag span').replaceWith(output)
+              $('#status-tag span').replaceWith(output)
           }
         }).fail(function() {
           alert("invalid server response");
