@@ -122,7 +122,7 @@ class Provider(object):
 
         return True
 
-    def create_host(self, infra, offering, name):
+    def create_host(self, infra, offering, name, team_name):
         url = "{}/{}/{}/host/new".format(
             self.credential.endpoint, self.provider, self.environment
         )
@@ -131,7 +131,8 @@ class Provider(object):
             "name": name,
             "cpu": offering.cpus,
             "memory": offering.memory_size_mb,
-            "group": infra.name
+            "group": infra.name,
+            "team_name": team_name
         }
 
         response = post(url, json=data, timeout=600)
@@ -332,7 +333,11 @@ class CreateVirtualMachine(HostProviderStep):
         try:
             pair = self.infra.instances.get(dns=self.instance.dns)
         except Instance.DoesNotExist:
-            host = self.provider.create_host(self.infra, offering, self.vm_name)
+            host = self.provider.create_host(
+                self.infra, offering,
+                self.vm_name,
+                self.create.team.name
+            }
             self.update_databaseinfra_last_vm_created()
         else:
             host = pair.hostname
