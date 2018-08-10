@@ -337,7 +337,7 @@ class CreateVirtualMachine(HostProviderStep):
                 self.infra, offering,
                 self.vm_name,
                 self.create.team.name
-            }
+            )
             self.update_databaseinfra_last_vm_created()
         else:
             host = pair.hostname
