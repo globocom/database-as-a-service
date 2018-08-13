@@ -134,7 +134,7 @@ class MySQLSingle(BaseMysql):
             )}, {
             'Configuring': (
                 'workflow.steps.util.volume_provider.AddAccessRestoredVolume',
-                'workflow.steps.util.disk.UnmountOldestExportRestore',
+                'workflow.steps.util.volume_provider.UnmountActiveVolume',
                 'workflow.steps.util.volume_provider.MountDataVolumeRestored',
                 'workflow.steps.util.plan.ConfigureRestore',
             )}, {
