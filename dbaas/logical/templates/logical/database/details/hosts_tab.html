@@ -184,29 +184,33 @@
     })
 
 
-    $(".reinstallvm").on("click", function(event){
+    $(".reinstallvm").on("click", function(){
       var $reinstallVM = $(event.target)
       $("#confirm_reinstall_vm_button").attr("href", $reinstallVM.attr("data-host-id")+"/reinstallvm/");
     })
 
-    $("#id_status").on("click", function() {
-      jQuery.ajax({
-          "dataType": "json", "url": "/logical/status/" + database_id, "type": "GET",
-      }).done(function(response) {
-        if (response.error) {
-              alert(response.error);
-          } else {
-            var output = response['instances_status'];
-            output.forEach(function (instance){
-             $('#host-status-' + instance.id + ' label').replaceWith(instance.html);
-            })
-          }
-        }).fail(function() {
-          alert("invalid server response");
+    var func_refresh = function (){
+      $("#id_status").on("click", function(event) {
+        $(this).off( "click")
+        jQuery.ajax({
+            "dataType": "json", "url": "/logical/status/" + database_id, "type": "GET",
+        }).done(function(response) {
+          if (response.error) {
+                alert(response.error);
+            } else {
+              var output = response['instances_status'];
+              output.forEach(function (instance){
+               $('#host-status-' + instance.id + ' label').replaceWith(instance.html);
+              });
+              func_refresh();
+            }
+          }).fail(function() {
+            alert("invalid server response");
+        });
       });
-    });
+     };
 
-
+     func_refresh();
   });
 </script>
 {% endblock %}
