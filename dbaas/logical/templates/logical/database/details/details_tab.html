@@ -192,26 +192,30 @@
       }
     });
 
-    var func_refresh = function (){
-      $("#id_status").on("click", function() {
-        $(this).off( "click")
-        jQuery.ajax({
-            "dataType": "json", "url": "/logical/status/" + database_id, "type": "GET",
-        }).done(function(response) {
-          if (response.error) {
-                alert(response.error);
-            } else {
-                var output = response['database_status']
-                $('#status-tag span').replaceWith(output);
-                func_refresh();
-            }
-          }).fail(function() {
-            alert("invalid server response");
-        });
+    already_clicked = false;
+    $("#id_status").on("click", function() {
+      if (already_clicked){
+        return;
+      }
+      already_clicked = true;
+      $("#id_status").attr('disabled','disabled');
+      jQuery.ajax({
+          "dataType": "json", "url": "/logical/status/" + database_id, "type": "GET",
+      }).done(function(response) {
+        if (response.error) {
+              alert(response.error);
+          } else {
+              var output = response['database_status']
+              $('#status-tag span').replaceWith(output);
+          }
+          already_clicked = false;
+          $("#id_status").removeAttr('disabled');
+        }).fail(function() {
+          alert("invalid server response");
+          already_clicked = false;
+          $("#id_status").removeAttr('disabled');
       });
-    };
-
-    func_refresh();
+    });
 
   });
 

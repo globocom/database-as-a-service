@@ -189,28 +189,32 @@
       $("#confirm_reinstall_vm_button").attr("href", $reinstallVM.attr("data-host-id")+"/reinstallvm/");
     })
 
-    var func_refresh = function (){
-      $("#id_status").on("click", function(event) {
-        $(this).off( "click")
-        jQuery.ajax({
-            "dataType": "json", "url": "/logical/status/" + database_id, "type": "GET",
-        }).done(function(response) {
-          if (response.error) {
-                alert(response.error);
-            } else {
-              var output = response['instances_status'];
-              output.forEach(function (instance){
-               $('#host-status-' + instance.id + ' label').replaceWith(instance.html);
-              });
-              func_refresh();
-            }
-          }).fail(function() {
-            alert("invalid server response");
-        });
+    already_clicked = false;
+    $("#id_status").on("click", function() {
+      if (already_clicked){
+        return;
+      }
+      already_clicked = true;
+      $("#id_status").attr('disabled','disabled');
+      jQuery.ajax({
+          "dataType": "json", "url": "/logical/status/" + database_id, "type": "GET",
+      }).done(function(response) {
+        if (response.error) {
+              alert(response.error);
+          } else {
+            var output = response['instances_status'];
+            output.forEach(function (instance){
+             $('#host-status-' + instance.id + ' label').replaceWith(instance.html);
+            });
+          }
+          already_clicked = false;
+          $("#id_status").removeAttr('disabled');
+        }).fail(function() {
+          alert("invalid server response");
+          already_clicked = false;
+          $("#id_status").removeAttr('disabled');
       });
-     };
-
-     func_refresh();
+    });
   });
 </script>
 {% endblock %}
