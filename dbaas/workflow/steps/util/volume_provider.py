@@ -94,7 +94,9 @@ class VolumeProviderBase(BaseInstanceStep):
         return response.json()
 
     def restore_snapshot(self, snapshot):
-        url = "{}snapshot/{}/restore".format(self.base_url, snapshot.snapshopt_id)
+        url = "{}snapshot/{}/restore".format(
+            self.base_url, snapshot.snapshopt_id
+        )
         response = post(url)
         if not response.ok:
             raise IndexError(response.content, response)
@@ -102,7 +104,7 @@ class VolumeProviderBase(BaseInstanceStep):
 
     def add_access(self, volume, host):
         url = "{}access/{}".format(self.base_url, volume.identifier)
-        data = {"to_address": host.address,}
+        data = {"to_address": host.address}
         response = post(url, json=data)
         if not response.ok:
             raise IndexError(response.content, response)
@@ -115,13 +117,21 @@ class VolumeProviderBase(BaseInstanceStep):
             raise IndexError(response.content, response)
         return response.json()['command']
 
+    def get_umount_command(self, volume):
+        url = "{}commands/{}/umount".format(self.base_url, volume.identifier)
+        response = get(url)
+        if not response.ok:
+            raise IndexError(response.content, response)
+        return response.json()['command']
+
     def clean_up(self, volume):
         url = "{}commands/{}/cleanup".format(self.base_url, volume.identifier)
         response = get(url)
         if not response.ok:
             raise IndexError(response.content, response)
         command = response.json()['command']
-        self.run_script(command)
+        if command:
+            self.run_script(command)
 
     def do(self):
         raise NotImplementedError
@@ -160,8 +170,12 @@ class MountDataVolume(VolumeProviderBase):
     def directory(self):
         return "/data"
 
+    @property
+    def is_valid(self):
+        return self.instance.is_database
+
     def do(self):
-        if not self.instance.is_database:
+        if not self.is_valid:
             return
 
         script = self.get_mount_command(self.volume)
@@ -174,8 +188,39 @@ class MountDataVolume(VolumeProviderBase):
 class MountDataVolumeRestored(MountDataVolume):
 
     @property
+    def is_valid(self):
+        if not super(MountDataVolumeRestored, self).is_valid:
+            return False
+        return self.restore.is_master(self.instance)
+
+    @property
     def volume(self):
         return self.latest_disk
+
+
+class UnmountActiveVolume(VolumeProviderBase):
+
+    def __unicode__(self):
+        return "Umounting {} volume...".format(self.directory)
+
+    @property
+    def directory(self):
+        return "/data"
+
+    @property
+    def is_valid(self):
+        return self.restore.is_master(self.instance)
+
+    def do(self):
+        if not self.is_valid:
+            return
+
+        script = self.get_umount_command(self.volume)
+        if script:
+            self.run_script(script)
+
+    def undo(self):
+        pass
 
 
 class ResizeVolume(VolumeProviderBase):
@@ -270,7 +315,6 @@ class AddAccessRestoredVolume(AddAccess):
 
 
 class TakeSnapshot(VolumeProviderBase):
-
     def __unicode__(self):
         return "Doing backup of old data..."
 
@@ -294,7 +338,6 @@ class TakeSnapshot(VolumeProviderBase):
         snapshot.save()
 
     def undo(self):
-        # ToDo
         pass
 
 
