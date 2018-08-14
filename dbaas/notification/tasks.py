@@ -740,8 +740,9 @@ def database_disk_resize(self, database, disk_offering, task_history, user):
 
         task_history.update_details(
             persist=True,
-            details='\nUpdate DBaaS metadata from {} to '
-                    '{}'.format(databaseinfra.disk_offering, disk_offering)
+            details='\nUpdate DBaaS metadata from {} to {}'.format(
+                old_disk_offering, disk_offering
+            )
         )
 
         task_history.update_status_for(

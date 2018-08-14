@@ -111,7 +111,7 @@ class BaseInstanceStep(object):
 
     @property
     def create(self):
-        create = self.database.databases_create.last()
+        create = self.infra.databases_create.last()
         if create and create.is_running:
             return create
 
