@@ -90,20 +90,6 @@
     </div>
   {% endif %}
 
-  {% if can_setup_ssl and database.databaseinfra.plan.replication_topology.can_setup_ssl %}
-    <div class="control-group">
-      <div class="control-label"><label>SSL:</label></div>
-      <div class="controls">
-        {% if last_configure_ssl and last_configure_ssl.is_status_error %}
-          <a href="{{ database.get_configure_ssl_retry_url }}" class="btn btn-warning" title="Retry configure SSL" onclick="return confirm('Are you sure?')">Retry configure SSL on {{ database.name }} database</a>
-          <p><a href="{% url 'admin:maintenance_configure_ssl_change' last_configure_ssl.id %}" target='_blank'>Last configure SSL</a> has an <b>error</b>, please check the <a href="{% url 'admin:notification_taskhistory_change' last_configure_ssl.task.id %}" target='_blank'>task</a> and retry the configure SSL clicking in button above</p>
-        {% else %}
-          <a href="{{ database.get_configure_ssl_url }}" class="btn btn-primary" title="Configire SSL" onclick="return confirm('Are you sure?')">Configure SSL on {{ database.name }} database</a>
-        {% endif %}
-      </div>
-    </div>
-  {% endif %}
-
   <div class="control-group">
     <div class="control-label"><label>Help:</label></div>
     <div class="controls">
