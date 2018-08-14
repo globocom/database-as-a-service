@@ -941,14 +941,21 @@ class Credential(BaseModel):
         self.driver.update_user(self)
         self.save()
 
+    @property
+    def ssl_swap_label(self):
+        if self.force_ssl:
+            return "Disable SSL"
+        else:
+            return "Enable SSL"
+
     def swap_force_ssl(self):
         if self.force_ssl:
             self.force_ssl = False
-            self.driver.set_user_not_require_ssl()
+            self.driver.set_user_not_require_ssl(self)
             self.save()
         else:
             self.force_ssl = True
-            self.driver.set_user_require_ssl()
+            self.driver.set_user_require_ssl(self)
             self.save()
 
     @classmethod
