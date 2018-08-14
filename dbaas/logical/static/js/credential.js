@@ -61,6 +61,25 @@
 
         };
 
+
+        /**
+        * Reset credential password
+        */
+        Credential.prototype.swap_ssl_mode = function(callback) {
+            var credential = this;
+            $.ajax({
+                "url": "/logical/credentialssl/" + this.pk,
+                "type": "PUT",
+            }).done(function(data) {
+                $(".swap-ssl-class", credential.$row).text(data.credential.ssl_swap_label);
+                if (callback) {
+                    callback(credential);
+                }
+            });
+
+        };
+
+
         /**
         * Remove a credential from server and the page.
         */
@@ -110,10 +129,7 @@
                 credential.show_password();
             });
 
-            $("#create_new_password").popover({trigger: "hover", placement: "right", content: "Generate new password"});
-
-            $("#swap_force_ssl").popover({trigger: "hover", placement: "right", content: "Swap SSL Mode"});
-
+            $("#create_new_password-" + credential.pk).popover({trigger: "hover", placement: "right", content: "Generate new password"});
             $("#reset_psw_modal-" + credential.pk + " .modal-footer").on("click.reset-password", ".btn-reset-password", function(e) {
               credential.reset_password(function() {
                     $("#reset_psw_modal-" + credential.pk).modal('toggle');
@@ -123,11 +139,10 @@
               return false;
             });
 
-
-            $("#swap_force_ssl_modal-" + credential.pk + " .modal-footer").on("click.reset-password", ".btn-reset-password", function(e) {
-              credential.reset_password(function() {
+            $("#swap_ssl_mode-" + credential.pk).popover({trigger: "hover", placement: "right", content: "Swap SSL Mode"});
+            $("#swap_force_ssl_modal-" + credential.pk + " .modal-footer").on("click.swap-ssl", ".btn-swap-force-ssl", function(e) {
+              credential.swap_ssl_mode(function() {
                     $("#swap_force_ssl_modal-" + credential.pk).modal('toggle');
-                    //credential.show_password(true);
                     return false;
               });
               return false;
@@ -138,6 +153,7 @@
                 credential.delete();
                 return false;
             });
+
         };
 
         ///////// ADD BUTTON is the only function isolated
