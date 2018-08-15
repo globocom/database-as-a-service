@@ -387,29 +387,6 @@ class SetInfraConfiguredSSL(SSL):
         infra.save()
 
 
-class SetAppUsersRequireSSL(SSL):
-    def __unicode__(self):
-        return "Setting app users to require SSL..."
-
-    def do(self):
-        if not self.is_valid: return
-
-        database = self.database
-        driver = self.infra.get_driver()
-
-        for credential in database.credentials.all():
-            driver.set_user_require_ssl(credential)
-
-    def undo(self):
-        if not self.is_valid: return
-
-        database = self.database
-        driver = self.infra.get_driver()
-
-        for credential in database.credentials.all():
-            driver.set_user_not_require_ssl(credential)
-
-
 class SetReplicationUserRequireSSL(SSL):
     def __unicode__(self):
         return "Setting replication user to require SSL..."
