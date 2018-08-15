@@ -175,6 +175,9 @@ def destroy_database(self, database, task_history=None, user=None):
         topology_path = database_create.plan.replication_topology.class_path
         steps = get_deploy_settings(topology_path)
 
+        if database.plan.replication_topology.can_setup_ssl:
+            steps += get_database_configure_ssl_setting(topology_path)
+
         # instances = get_instances_for(infra, topology_path)
         instances = map(
             lambda host: host.instances.order_by('instance_type').first(),
