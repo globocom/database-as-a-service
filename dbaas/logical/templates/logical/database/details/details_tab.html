@@ -202,6 +202,10 @@
       $("#id_status").attr('disabled','disabled');
       jQuery.ajax({
           "dataType": "json", "url": "/logical/status/" + database_id, "type": "GET",
+          complete: function () {
+            running_update = false;
+            $("#id_status").removeAttr('disabled');
+          },
       }).done(function(response) {
         if (response.error) {
               alert(response.error);
@@ -209,12 +213,8 @@
               var output = response['database_status']
               $('#status-tag span').replaceWith(output);
           }
-          running_update = false;
-          $("#id_status").removeAttr('disabled');
         }).fail(function() {
           alert("invalid server response");
-          running_update = false;
-          $("#id_status").removeAttr('disabled');
       });
     });
 
