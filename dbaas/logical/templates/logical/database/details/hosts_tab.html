@@ -184,17 +184,17 @@
     })
 
 
-    $(".reinstallvm").on("click", function(){
+    $(".reinstallvm").on("click", function(event){
       var $reinstallVM = $(event.target)
       $("#confirm_reinstall_vm_button").attr("href", $reinstallVM.attr("data-host-id")+"/reinstallvm/");
     })
 
-    already_clicked = false;
+    running_update = false;
     $("#id_status").on("click", function() {
-      if (already_clicked){
+      if (running_update){
         return;
       }
-      already_clicked = true;
+      running_update = true;
       $("#id_status").attr('disabled','disabled');
       jQuery.ajax({
           "dataType": "json", "url": "/logical/status/" + database_id, "type": "GET",
@@ -207,11 +207,11 @@
              $('#host-status-' + instance.id + ' label').replaceWith(instance.html);
             });
           }
-          already_clicked = false;
+          running_update = false;
           $("#id_status").removeAttr('disabled');
         }).fail(function() {
           alert("invalid server response");
-          already_clicked = false;
+          running_update = false;
           $("#id_status").removeAttr('disabled');
       });
     });
