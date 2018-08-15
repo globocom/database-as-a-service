@@ -3,7 +3,7 @@ from __future__ import absolute_import, unicode_literals
 import json
 from collections import OrderedDict
 from django.contrib import messages
-from django.core.exceptions import ValidationError, PermissionDenied, ObjectDoesNotExist
+from django.core.exceptions import ValidationError, PermissionDenied
 from django.core.urlresolvers import reverse
 from django.shortcuts import get_object_or_404, render_to_response
 from django.views.generic.detail import BaseDetailView
@@ -144,7 +144,7 @@ def user_tasks(user):
 def refresh_status(request, database_id):
     try:
         database = Database.objects.get(id=database_id)
-    except (ObjectDoesNotExist, ValueError):
+    except (database.DoesNotExist, ValueError):
         return
     instances_status = []
     for instance in database.infra.instances.all():
@@ -153,7 +153,7 @@ def refresh_status(request, database_id):
                                  "html": instance.status_html()})
     database.update_status()
     output = json.dumps({'database_status': database.status_html,
-                         'instances_status': instances_status}, indent=4)
+                         'instances_status': instances_status})
     return HttpResponse(output, content_type="application/json")
 
 
