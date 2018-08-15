@@ -3,7 +3,6 @@ from .views import CredentialView
 from .views import refresh_status
 
 
-
 urlpatterns = patterns('',
                        url(r"^credential/(?P<pk>\d*)$",
                            CredentialView.as_view(),
