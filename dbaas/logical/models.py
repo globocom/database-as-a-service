@@ -833,7 +833,7 @@ class Database(BaseModel):
         error = None
         if self.is_in_quarantine:
             error = "Database in quarantine and cannot have SSL cofigured."
-        elif self.is_being_used_elsewhere(['notification.tasks.configure_ssl_database']): ###XXXXXXXX
+        elif self.is_being_used_elsewhere(['notification.tasks.configure_ssl_database']):
             error = "Database cannot have SSL cofigured because " \
                     "it is in use by another task."
         if error:
@@ -911,9 +911,7 @@ class Credential(BaseModel):
     password = EncryptedCharField(
         verbose_name=_("User password"), max_length=255)
     database = models.ForeignKey(Database, related_name="credentials")
-    force_ssl = models.BooleanField(
-        verbose_name="Force user ", default=False
-    )
+    force_ssl = models.BooleanField(default=False)
 
     def __unicode__(self):
         return u"%s" % self.user
