@@ -94,8 +94,6 @@ def create_database(
     database_create.save()
 
     steps = get_deploy_settings(topology_path)
-    if plan.replication_topology.can_setup_ssl:
-        steps += get_database_configure_ssl_setting(topology_path)
 
     since_step = None
     if retry_from:
@@ -119,9 +117,6 @@ def create_database(
 def rollback_create(maintenance, task, user=None, instances=None):
     topology_path = maintenance.plan.replication_topology.class_path
     steps = get_deploy_settings(topology_path)
-
-    if maintenance.plan.replication_topology.can_setup_ssl:
-        steps += get_database_configure_ssl_setting(topology_path)
 
     if instances is None:
         instances = get_instances_for(maintenance.infra, topology_path)
