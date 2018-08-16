@@ -485,7 +485,6 @@ class MySQLFOXHA(MySQL):
 
         self.query(query, instance)
 
-
     def set_replication_require_ssl(self, instance=None, ca_path=None):
         LOG.info("settint replication to require SSL")
 
@@ -499,7 +498,6 @@ class MySQLFOXHA(MySQL):
         query = "start slave;"
         self.query(query, instance)
 
-
     def set_replication_not_require_ssl(self, instance=None, ca_path=None):
         LOG.info("settint replication to NOT require SSL")
 
@@ -512,5 +510,3 @@ class MySQLFOXHA(MySQL):
 
         query = "start slave;"
         self.query(query, instance)
-
-
