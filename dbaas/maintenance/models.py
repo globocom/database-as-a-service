@@ -54,6 +54,7 @@ class Maintenance(BaseModel):
     )
     created_by = models.CharField(max_length=255, null=True, blank=True)
     revoked_by = models.CharField(max_length=255, null=True, blank=True)
+    disable_alarms = models.BooleanField(default=False)
 
     def __unicode__(self):
         return "%s" % self.description
