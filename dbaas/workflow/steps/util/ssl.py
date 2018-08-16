@@ -109,7 +109,11 @@ class SSL(BaseInstanceStep):
 
     @property
     def is_valid(self):
-        return str(self.certificate_allowed).lower() == 'true'
+        return (
+            str(self.certificate_allowed).lower() == 'true' and
+            self.plan.replication_topology.can_setup_ssl
+            )
+
 
     def do(self):
         raise NotImplementedError
