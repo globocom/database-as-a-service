@@ -7,6 +7,8 @@ from util import exec_remote_command_host, get_worker_name, \
     build_context_script, get_dict_lines
 from registered_functions.functools import get_function
 from workflow.steps.util.dns import ChangeTTLTo5Minutes, ChangeTTLTo3Hours
+from workflow.steps.util.db_monitor import DisableMonitoring, EnableMonitoring
+from workflow.steps.util.zabbix import DisableAlarms, EnableAlarms
 from workflow.workflow import steps_for_instances
 
 LOG = logging.getLogger(__name__)
@@ -29,7 +31,6 @@ def execute_scheduled_maintenance(self, maintenance_id):
         self.request.id, self.request.task,
         self.request.kwargs, str(self.request.args)
     ))
-
     task_history.update_details(
         persist=True, details="Executing Maintenance: {}".format(maintenance)
     )
@@ -38,7 +39,6 @@ def execute_scheduled_maintenance(self, maintenance_id):
         hm.status = hm.RUNNING
         hm.started_at = datetime.now()
         hm.save()
-
         if hm.host is None:
             hm.status = hm.UNAVAILABLEHOST
             hm.finished_at = datetime.now()
@@ -47,6 +47,9 @@ def execute_scheduled_maintenance(self, maintenance_id):
 
         host = hm.host
         update_task = "\nRunning Maintenance on {}".format(host)
+
+        if maintenance.disable_alarms:
+            disable_alarms(hm.host)
 
         param_dict = {}
         params = models.MaintenanceParameters.objects.filter(
@@ -85,6 +88,9 @@ def execute_scheduled_maintenance(self, maintenance_id):
             else:
                 hm.status = hm.ERROR
 
+        if maintenance.disable_alarms:
+            enable_alarms(hm.host)
+
         update_task += "...status: {}".format(hm.status)
 
         task_history.update_details(persist=True, details=update_task)
@@ -100,6 +106,18 @@ def execute_scheduled_maintenance(self, maintenance_id):
         TaskHistory.STATUS_SUCCESS, details='Maintenance executed succesfully'
     )
     LOG.info("Maintenance: {} has FINISHED".format(maintenance))
+
+
+def disable_alarms(host):
+    for instance in host.instances.all():
+        DisableMonitoring(instance).do()
+        DisableAlarms(instance).do()
+
+
+def enable_alarms(host):
+    for instance in host.instances.all():
+        EnableMonitoring(instance).do()
+        EnableAlarms(instance).do()
 
 
 def region_migration_prepare(infra):
