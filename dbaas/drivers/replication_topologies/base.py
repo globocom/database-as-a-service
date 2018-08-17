@@ -244,6 +244,37 @@ class BaseTopology(object):
             ),
         }]
 
+    def get_configure_ssl_steps(self):
+        return [{
+            'Disable monitoring and alarms': (
+                'workflow.steps.util.zabbix.DisableAlarms',
+                'workflow.steps.util.db_monitor.DisableMonitoring',
+            ),
+        }] + [{
+            'Configure SSL': (
+                'workflow.steps.util.ssl.UpdateOpenSSlLib',
+                'workflow.steps.util.ssl.CreateSSLFolder',
+                'workflow.steps.util.ssl.CreateSSLConfForInfraEndPoint',
+                'workflow.steps.util.ssl.RequestSSLForInfra',
+                'workflow.steps.util.ssl.CreateJsonRequestFileInfra',
+                'workflow.steps.util.ssl.CreateCertificateInfra',
+                'workflow.steps.util.ssl.SetSSLFilesAccessMySQL',
+                'workflow.steps.util.ssl.SetInfraConfiguredSSL',
+                'workflow.steps.util.plan.Configure',
+            ),
+        }] + [{
+            'Restart Database': (
+                'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.Start',
+            ),
+        }] + [{
+            'Enabling monitoring and alarms': (
+                'workflow.steps.util.db_monitor.EnableMonitoring',
+                'workflow.steps.util.zabbix.EnableAlarms',
+            ),
+        }]
+
+
     @property
     def driver_name(self):
         raise NotImplementedError

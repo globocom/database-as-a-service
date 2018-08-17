@@ -76,17 +76,29 @@ class MySQLSingle(BaseMysql):
                 'workflow.steps.util.vm.WaitingBeReady',
                 'workflow.steps.util.vm.UpdateOSDescription'
             )}, {
+            'Check DNS': (
+                'workflow.steps.util.dns.CheckIsReady',
+            )}, {
             'Configuring database': (
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.infra.UpdateEndpoint',
                 'workflow.steps.util.plan.InitializationForNewInfra',
+            )}, {
+            'Configure SSL': (
+                'workflow.steps.util.ssl.UpdateOpenSSlLib',
+                'workflow.steps.util.ssl.CreateSSLFolder',
+                'workflow.steps.util.ssl.CreateSSLConfForInfraEndPoint',
+                'workflow.steps.util.ssl.RequestSSLForInfra',
+                'workflow.steps.util.ssl.CreateJsonRequestFileInfra',
+                'workflow.steps.util.ssl.CreateCertificateInfra',
+                'workflow.steps.util.ssl.SetSSLFilesAccessMySQL',
+                'workflow.steps.util.ssl.SetInfraConfiguredSSL',
+            )}, {
+            'Starting database': (
                 'workflow.steps.util.plan.ConfigureForNewInfra',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
                 'workflow.steps.util.database.StartMonit',
-            )}, {
-            'Check DNS': (
-                'workflow.steps.util.dns.CheckIsReady',
             )}, {
             'Creating Database': (
                 'workflow.steps.util.database.Create',
@@ -288,9 +300,28 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.puppet.Execute',
                 'workflow.steps.util.puppet.CheckStatus',
             )}, {
+            'Check DNS': (
+                'workflow.steps.util.dns.CheckIsReady',
+            )}, {
             'Configuring database': (
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.InitializationForNewInfra',
+            )}, {
+            'Configure SSL': (
+                'workflow.steps.util.ssl.UpdateOpenSSlLib',
+                'workflow.steps.util.ssl.CreateSSLFolder',
+                'workflow.steps.util.ssl.CreateSSLConfForInfraEndPoint',
+                'workflow.steps.util.ssl.CreateSSLConfForInstanceIP',
+                'workflow.steps.util.ssl.RequestSSLForInfra',
+                'workflow.steps.util.ssl.RequestSSLForInstance',
+                'workflow.steps.util.ssl.CreateJsonRequestFileInfra',
+                'workflow.steps.util.ssl.CreateJsonRequestFileInstance',
+                'workflow.steps.util.ssl.CreateCertificateInfra',
+                'workflow.steps.util.ssl.CreateCertificateInstance',
+                'workflow.steps.util.ssl.SetSSLFilesAccessMySQL',
+                'workflow.steps.util.ssl.SetInfraConfiguredSSL',
+            )}, {
+            'Starting database': (
                 'workflow.steps.util.plan.ConfigureForNewInfra',
                 'workflow.steps.util.database.Start',
             )}, {
@@ -307,8 +338,8 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.fox.Start',
                 'workflow.steps.util.fox.IsReplicationOk'
             )}, {
-            'Check DNS': (
-                'workflow.steps.util.dns.CheckIsReady',
+            'Configure Replication User': (
+                'workflow.steps.util.ssl.SetReplicationUserRequireSSL',
             )}, {
             'Creating Database': (
                 'workflow.steps.util.database.Create',
@@ -446,3 +477,43 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.database.CheckIsUp',
             ),
         }] + self.get_upgrade_steps_final()
+
+    def get_configure_ssl_steps(self):
+        return [{
+            'Disable monitoring and alarms': (
+                'workflow.steps.util.zabbix.DisableAlarms',
+                'workflow.steps.util.db_monitor.DisableMonitoring',
+            ),
+        }] + [{
+            'Configure SSL': (
+                'workflow.steps.util.ssl.UpdateOpenSSlLib',
+                'workflow.steps.util.ssl.CreateSSLFolder',
+                'workflow.steps.util.ssl.CreateSSLConfForInfraEndPoint',
+                'workflow.steps.util.ssl.CreateSSLConfForInstanceIP',
+                'workflow.steps.util.ssl.RequestSSLForInfra',
+                'workflow.steps.util.ssl.RequestSSLForInstance',
+                'workflow.steps.util.ssl.CreateJsonRequestFileInfra',
+                'workflow.steps.util.ssl.CreateJsonRequestFileInstance',
+                'workflow.steps.util.ssl.CreateCertificateInfra',
+                'workflow.steps.util.ssl.CreateCertificateInstance',
+                'workflow.steps.util.ssl.SetSSLFilesAccessMySQL',
+                'workflow.steps.util.ssl.SetInfraConfiguredSSL',
+                'workflow.steps.util.plan.Configure',
+            ),
+        }] + [{
+            'Restart Database': (
+                'workflow.steps.util.vm.ChangeMaster',
+                'workflow.steps.util.database.CheckIfSwitchMaster',
+                'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.Start',
+            ),
+        }] + [{
+            'Configure Replication User': (
+                'workflow.steps.util.ssl.SetReplicationUserRequireSSL',
+            ),
+        }] + [{
+            'Enabling monitoring and alarms': (
+                'workflow.steps.util.db_monitor.EnableMonitoring',
+                'workflow.steps.util.zabbix.EnableAlarms',
+            ),
+        }]

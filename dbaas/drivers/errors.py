@@ -38,6 +38,10 @@ class CredentialAlreadyExists(InternalException):
     pass
 
 
+class CredentialDoesNotExists(InternalException):
+    pass
+
+
 class InvalidCredential(InternalException):
     pass
 
