@@ -594,6 +594,19 @@ class DatabaseRestoreInstancePair(BaseModel):
     class Meta:
         unique_together = (('master', 'slave', 'restore'), )
 
+class DatabaseConfigureSSL(DatabaseMaintenanceTask):
+    database = models.ForeignKey(
+        Database, verbose_name="Database",
+        null=False, unique=False, related_name="configure_ssl"
+    )
+    task = models.ForeignKey(
+        TaskHistory, verbose_name="Task History",
+        null=False, unique=False, related_name="database_configure_ssl"
+    )
+
+    def __unicode__(self):
+        return "{} Configure SSL".format(self.database.name)
+
 
 simple_audit.register(Maintenance)
 simple_audit.register(HostMaintenance)
@@ -601,6 +614,7 @@ simple_audit.register(MaintenanceParameters)
 simple_audit.register(DatabaseUpgrade)
 simple_audit.register(DatabaseResize)
 simple_audit.register(DatabaseChangeParameter)
+simple_audit.register(DatabaseConfigureSSL)
 
 
 #########
