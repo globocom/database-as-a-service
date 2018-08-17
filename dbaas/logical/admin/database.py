@@ -32,7 +32,8 @@ from logical.views import database_details, database_hosts, \
     database_resize_rollback, database_make_backup, \
     database_change_parameters, database_change_parameters_retry, \
     database_switch_write, database_reinstall_vm, database_reinstall_vm_retry,\
-    DatabaseParameters
+    DatabaseParameters, database_configure_ssl_retry, database_configure_ssl
+
 from logical.forms import DatabaseForm
 from logical.service.database import DatabaseService
 
@@ -613,6 +614,16 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 r'^/?(?P<id>\d+)/reinstallvm_retry/$',
                 self.admin_site.admin_view(database_reinstall_vm_retry),
                 name="logical_database_reinstallvm_retry"
+            ),
+            url(
+                r'^/?(?P<id>\d+)/configure_ssl/$',
+                self.admin_site.admin_view(database_configure_ssl),
+                name="logical_database_configure_ssl"
+            ),
+            url(
+                r'^/?(?P<id>\d+)/configure_ssl_retry/$',
+                self.admin_site.admin_view(database_configure_ssl_retry),
+                name="logical_database_configure_ssl_retry"
             ),
 
 
