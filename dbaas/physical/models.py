@@ -274,6 +274,9 @@ class ReplicationTopology(BaseModel):
     can_reinstall_vm = models.BooleanField(
         verbose_name="Can Reinstall VM", default=True
     )
+    can_setup_ssl = models.BooleanField(
+        verbose_name="Can Setup SSL", default=False
+    )
     script = models.ForeignKey(
         Script, related_name='replication_topologies', null=True, blank=True
     )
@@ -579,6 +582,9 @@ class DatabaseInfra(BaseModel):
         verbose_name=_("Last VM created"),
         blank=True, null=True,
         help_text=_("Number of the last VM created."))
+    ssl_configured = models.BooleanField(
+        verbose_name=_("SSL is Configured"),
+        default=False)
 
     def __unicode__(self):
         return self.name
