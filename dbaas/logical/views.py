@@ -144,7 +144,7 @@ def user_tasks(user):
 def refresh_status(request, database_id):
     try:
         database = Database.objects.get(id=database_id)
-    except (database.DoesNotExist, ValueError):
+    except (Database.DoesNotExist, ValueError):
         return
     instances_status = []
     for instance in database.infra.instances.all():
