@@ -244,19 +244,13 @@ def steps_for_instances(
                 try:
                     step_class = import_by_path(step)
                     step_instance = step_class(instance)
-
-                    can_run = step_instance.can_run
-
-                    if not can_run:
-                        task.update_details("SKIPED!", persist=True)
-                        continue
                     str_step_instance = str(step_instance)
                     if undo:
                         str_step_instance = 'Rollback ' + str_step_instance
 
                     task.add_step(step_current, steps_total, str_step_instance)
 
-                    if step_current < since_step:
+                    if step_current < since_step or not step_instance.can_run:
                         task.update_details("SKIPPED!", persist=True)
                         continue
 

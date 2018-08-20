@@ -26,9 +26,11 @@ from logical.forms.database import DatabaseDetailsForm
 from logical.models import Credential, Database, Project
 from logical.validators import (check_is_database_enabled, check_is_database_dead,
                                 ParameterValidator)
+import logging
 
+LOG = logging.getLogger(__name__)
 
-class CredentialView(BaseDetailView):
+class CredentialBase(BaseDetailView):
     model = Credential
 
     def check_permission(self, request, perm, obj):
@@ -38,9 +40,18 @@ class CredentialView(BaseDetailView):
     def as_json(self, obj):
         if isinstance(obj, Credential):
             obj = {
-                "credential": {"user": obj.user, "password": obj.password, "pk": obj.pk}}
+                "credential": {
+                    "user": obj.user,
+                    "password": obj.password,
+                    "pk": obj.pk,
+                    "ssl_swap_label": obj.ssl_swap_label,
+                }
+            }
         output = json.dumps(obj, indent=4)
         return HttpResponse(output, content_type="application/json")
+
+
+class CredentialView(CredentialBase):
 
     @method_decorator(csrf_exempt)
     def post(self, request, *args, **kwargs):
@@ -77,6 +88,19 @@ class CredentialView(BaseDetailView):
         self.check_permission(request, "logical.delete_credential", credential)
 
         credential.delete()
+        return self.as_json(credential)
+
+
+class CredentialSSLView(CredentialBase):
+
+    @method_decorator(csrf_exempt)
+    def put(self, request, *args, **kwargs):
+        credential = self.get_object()
+
+        # check permission
+        self.check_permission(request, "logical.change_credential", credential)
+
+        credential.swap_force_ssl()
         return self.as_json(credential)
 
 
@@ -191,11 +215,72 @@ def database_details(request, context, database):
 
 
 @database_view('credentials')
-def database_credentials(request, context, database=None):
+def database_credentials(request, context, database):
+
+    if request.method == 'POST':
+        if 'setup_ssl' in request.POST:
+            database_configure_ssl(request, context, database)
+        elif 'retry_setup_ssl' in request.POST:
+            database_configure_ssl_retry(request, context, database)
+
+    context['can_setup_ssl'] = \
+        (not database.infra.ssl_configured) and \
+        database.infra.plan.replication_topology.can_setup_ssl and \
+        request.user.has_perm(constants.PERM_CONFIGURE_SSL)
+
+    last_configure_ssl = database.configure_ssl.last()
+    context['last_configure_ssl'] = last_configure_ssl
+
     return render_to_response(
-        "logical/database/details/credentials_tab.html", context
+        "logical/database/details/credentials_tab.html",
+        context, RequestContext(request)
     )
 
+
+def database_configure_ssl(request, context, database):
+
+    can_do_configure_ssl, error = database.can_do_configure_ssl()
+
+    if not can_do_configure_ssl:
+        messages.add_message(request, messages.ERROR, error)
+    else:
+        TaskRegister.database_configure_ssl(
+            database=database,
+            user=request.user
+        )
+
+    return HttpResponseRedirect(
+        reverse('admin:logical_database_credentials', kwargs={'id': database.id})
+    )
+
+
+def database_configure_ssl_retry(request, context, database):
+
+    can_do_configure_ssl, error = database.can_do_configure_ssl_retry()
+
+    if can_do_configure_ssl:
+        last_configure_ssl = database.configure_ssl.last()
+        if not last_configure_ssl:
+            error = "Database does not have configure SSL task!"
+        elif not last_configure_ssl.is_status_error:
+            error = "Cannot do retry, last configure SSL status is '{}'!".format(
+                last_configure_ssl.get_status_display()
+            )
+        else:
+            since_step = last_configure_ssl.current_step
+
+    if error:
+        messages.add_message(request, messages.ERROR, error)
+    else:
+        TaskRegister.database_configure_ssl(
+            database=database,
+            user=request.user,
+            since_step=since_step
+        )
+
+    return HttpResponseRedirect(
+        reverse('admin:logical_database_credentials', kwargs={'id': database.id})
+    )
 
 class DatabaseParameters(TemplateView):
 

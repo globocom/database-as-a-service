@@ -16,14 +16,16 @@ from util.providers import make_infra, clone_infra, destroy_infra, \
     get_database_upgrade_setting, get_resize_settings, \
     get_database_change_parameter_setting, \
     get_reinstallvm_steps_setting, \
-    get_database_change_parameter_retry_steps_count
+    get_database_change_parameter_retry_steps_count, get_deploy_instances, \
+    get_database_configure_ssl_setting
 from simple_audit.models import AuditRequest
 from system.models import Configuration
 from notification.models import TaskHistory
 from workflow.workflow import (steps_for_instances, rollback_for_instances_full,
                                total_of_steps)
 from maintenance.models import (DatabaseUpgrade, DatabaseResize,
-                                DatabaseChangeParameter, DatabaseReinstallVM)
+                                DatabaseChangeParameter, DatabaseReinstallVM,
+                                DatabaseConfigureSSL)
 from maintenance.tasks import restore_database
 from maintenance.models import DatabaseCreate
 from util.providers import get_deploy_settings, get_deploy_instances
@@ -738,8 +740,9 @@ def database_disk_resize(self, database, disk_offering, task_history, user):
 
         task_history.update_details(
             persist=True,
-            details='\nUpdate DBaaS metadata from {} to '
-                    '{}'.format(databaseinfra.disk_offering, disk_offering)
+            details='\nUpdate DBaaS metadata from {} to {}'.format(
+                old_disk_offering, disk_offering
+            )
         )
 
         task_history.update_status_for(
@@ -1135,6 +1138,38 @@ def switch_write_database(self, database, instance, user, task):
     else:
         task.update_status_for(TaskHistory.STATUS_ERROR, 'Done')
         database.finish_task()
+
+@app.task(bind=True)
+def configure_ssl_database(self, database, user, task, since_step=0):
+    worker_name = get_worker_name()
+    task = TaskHistory.register(self.request, user, task, worker_name)
+
+    infra = database.infra
+
+    class_path = infra.plan.replication_topology.class_path
+    steps = get_database_configure_ssl_setting(class_path)
+
+    database_configure_ssl = DatabaseConfigureSSL()
+    database_configure_ssl.database = database
+    database_configure_ssl.task = task
+    database_configure_ssl.save()
+
+    instances = list(infra.get_driver().get_database_instances())
+
+    success = steps_for_instances(
+        steps, instances, task,
+        database_configure_ssl.update_step, since_step
+    )
+
+    if success:
+        database_configure_ssl.set_success()
+        task.update_status_for(TaskHistory.STATUS_SUCCESS, 'Done')
+    else:
+        database_configure_ssl.set_error()
+        task.update_status_for(
+            TaskHistory.STATUS_ERROR,
+            'Could not do have SSL configured.\nConfigure SSL doesn\'t have rollback'
+        )
 
 
 class TaskRegister(object):
@@ -1545,5 +1580,32 @@ class TaskRegister(object):
         }
 
         return cls.create_task(task_params)
+
+    @classmethod
+    def database_configure_ssl(cls, database, user, since_step=None):
+
+        task_params = {
+            'task_name': 'configure_ssl_database',
+            'arguments': 'Configure SSL database {}'.format(database),
+            'database': database,
+            'user': user
+        }
+
+        if since_step:
+            task_params['task_name'] = 'configure_ssl_database_retry'
+            task_params['arguments'] = 'Retrying configure SSL database {}'.format(database)
+
+        task = cls.create_task(task_params)
+
+        delay_params = {
+            'database': database,
+            'task': task,
+            'user': user
+        }
+
+        delay_params.update(**{'since_step': since_step} if since_step else {})
+
+        configure_ssl_database.delay(**delay_params)
+
 
     # ============  END TASKS   ============

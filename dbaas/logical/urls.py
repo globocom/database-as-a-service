@@ -1,6 +1,6 @@
 from django.conf.urls import patterns, url
-from .views import CredentialView
 from .views import refresh_status
+from .views import CredentialView, CredentialSSLView
 
 
 urlpatterns = patterns('',
@@ -10,4 +10,7 @@ urlpatterns = patterns('',
                        url(r"^status/(?P<database_id>\d*)$",
                            refresh_status,
                            name="logical_database_refresh_status"),
+                       url(r"^credentialssl/(?P<pk>\d*)$",
+                           CredentialSSLView.as_view(),
+                           name="credentialssl-detail"),
                        )
