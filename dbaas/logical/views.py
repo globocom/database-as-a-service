@@ -165,6 +165,22 @@ def user_tasks(user):
     return '{}?{}'.format(url, filter)
 
 
+def refresh_status(request, database_id):
+    try:
+        database = Database.objects.get(id=database_id)
+    except (Database.DoesNotExist, ValueError):
+        return
+    instances_status = []
+    for instance in database.infra.instances.all():
+        instance.update_status()
+        instances_status.append({"id": instance.hostname.id,
+                                 "html": instance.status_html()})
+    database.update_status()
+    output = json.dumps({'database_status': database.status_html,
+                         'instances_status': instances_status})
+    return HttpResponse(output, content_type="application/json")
+
+
 @database_view('details')
 def database_details(request, context, database):
     if request.method == 'POST':

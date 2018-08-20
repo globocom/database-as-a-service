@@ -121,3 +121,7 @@ p.error_message {
 {
   background-image:linear-gradient(to bottom,#fff,#15a5a5);
 }
+
+.btn.btn-primary.refresh-status{
+  margin-left: 10px;
+}

@@ -18,6 +18,8 @@
 
 {% block tab %}
 <fieldset class="module aligned ">
+  <div class="control-group">
+  </div>
   <div class="panel-heading">
     <h3 class="panel-title">
       Core hosts
@@ -39,7 +41,7 @@
       {% for host in instances_core %}
         <tr>
         <td {% if host.padding %} class="padding-host" {% endif %}>
-        <div class="control-label"><label>
+        <div class="control-label" id="host-status-{{host.id}}"><label>
         {{ host.status }}</label></div>
         <div class="controls">
           <p class="readonly" id="host_name_n{{ forloop.counter }}">
@@ -90,7 +92,7 @@
     {% if instances_read_only %}
       <div class="panel-body">
         {% for host in instances_read_only %}
-          <div class="control-label"><label>{{ host.status }}</label></div>
+          <div class="control-label" id="host-status-{{host.id}}"><label>{{ host.status}}</label></div>
           <div class="controls">
             <p>
               {% if is_dba %}
@@ -135,6 +137,13 @@
     </div>
   {% endif %}
 </fieldset>
+<div class="form-actions navbar navbar-fixed-bottom">
+  <div class="control-group">
+       <a type="button" class="btn btn-primary refresh-status" type="submit" value="Refresh" title="Status" id="id_status">
+         Update status
+       </a>
+  </div>
+</div>
 {% endblock %}
 
 {% block database_button_save %}
@@ -154,6 +163,8 @@
 
 <script type="text/javascript" src="{% static 'js/hosts.js' %}"></script>
 <script>
+  var database_id = '{{ database.id }}';
+
   django.jQuery(document).ready(function($) {
     $("#id_add_read_qtd").on("change", function() {
       btn = document.getElementById("add_read_only_btn");
@@ -178,7 +189,32 @@
       $("#confirm_reinstall_vm_button").attr("href", $reinstallVM.attr("data-host-id")+"/reinstallvm/");
     })
 
-
+    running_update = false;
+    $("#id_status").on("click", function() {
+      if (running_update){
+        return;
+      }
+      running_update = true;
+      $("#id_status").attr('disabled','disabled');
+      jQuery.ajax({
+          "dataType": "json", "url": "/logical/status/" + database_id, "type": "GET",
+          complete: function () {
+            running_update = false;
+            $("#id_status").removeAttr('disabled');
+          },
+      }).done(function(response) {
+        if (response.error) {
+              alert(response.error);
+          } else {
+            var output = response['instances_status'];
+            output.forEach(function (instance){
+             $('#host-status-' + instance.id + ' label').replaceWith(instance.html);
+            });
+          }
+        }).fail(function() {
+          alert("invalid server response");
+      });
+    });
   });
 </script>
 {% endblock %}
