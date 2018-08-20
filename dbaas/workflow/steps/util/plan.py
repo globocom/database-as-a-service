@@ -37,7 +37,20 @@ class PlanStep(BaseInstanceStep):
             'ENVIRONMENT': self.environment,
             'HAS_PERSISTENCE': self.infra.plan.has_persistence,
             'IS_READ_ONLY': self.instance.read_only,
+            'SSL_CONFIGURED': self.infra.ssl_configured,
         }
+
+        if self.infra.ssl_configured:
+            from workflow.steps.util.ssl import InfraSSLBaseName
+            from workflow.steps.util.ssl import InstanceSSLBaseName
+            infra_ssl = InfraSSLBaseName(self.instance)
+            instance_ssl = InstanceSSLBaseName(self.instance)
+            variables['INFRA_SSL_CA'] = infra_ssl.ca_file_path
+            variables['INFRA_SSL_CERT'] = infra_ssl.cert_file_path
+            variables['INFRA_SSL_KEY'] = infra_ssl.key_file_path
+            variables['INSTANCE_SSL_CA'] = instance_ssl.ca_file_path
+            variables['INSTANCE_SSL_CERT'] = instance_ssl.cert_file_path
+            variables['INSTANCE_SSL_KEY'] = instance_ssl.key_file_path
 
         variables['configuration'] = self.get_configuration()
         variables['GRAYLOG_ENDPOINT'] = self.get_graylog_config()

@@ -108,7 +108,7 @@ class RedisSingle(BaseRedis):
             )}, {
             'Configuring': (
                 'workflow.steps.util.volume_provider.AddAccessRestoredVolume',
-                'workflow.steps.util.disk.UnmountOldestExportRestore',
+                'workflow.steps.util.volume_provider.UnmountActiveVolume',
                 'workflow.steps.util.volume_provider.MountDataVolumeRestored',
                 'workflow.steps.util.plan.ConfigureRestore',
             )}, {
@@ -174,7 +174,7 @@ class RedisSentinel(BaseRedis):
             )}, {
             'Configuring': (
                 'workflow.steps.util.volume_provider.AddAccessRestoredVolume',
-                'workflow.steps.util.disk.UnmountOldestExportRestore',
+                'workflow.steps.util.volume_provider.UnmountActiveVolume',
                 'workflow.steps.util.volume_provider.MountDataVolumeRestored',
                 'workflow.steps.util.disk.CleanData',
                 'workflow.steps.util.disk.RemoveDeprecatedFiles',
@@ -318,9 +318,6 @@ class RedisCluster(BaseRedis):
             )
         }]
 
-    def get_destroy_steps(self):
-        return super(RedisCluster, self).get_destroy_steps()
-
     def get_restore_snapshot_steps(self):
         return [{
             'Disable monitoring': (
@@ -337,7 +334,7 @@ class RedisCluster(BaseRedis):
             )}, {
             'Configuring': (
                 'workflow.steps.util.volume_provider.AddAccessRestoredVolume',
-                'workflow.steps.util.disk.UnmountOldestExportRestore',
+                'workflow.steps.util.volume_provider.UnmountActiveVolume',
                 'workflow.steps.util.volume_provider.MountDataVolumeRestored',
                 'workflow.steps.util.disk.CleanData',
                 'workflow.steps.util.disk.RemoveDeprecatedFiles',

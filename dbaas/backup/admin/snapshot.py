@@ -18,7 +18,7 @@ class SnapshotAdmin(admin.ModelAdmin):
 
     list_display = ("database_name", "instance", "start_at",
                     "end_at", "purge_at", "type", "status", "environment")
-    search_fields = ("database_name", "instance__dns", 'volume')
+    search_fields = ("database_name", "instance__dns", 'volume__identifier')
     readonly_fields = (
         "database_name", "instance", "start_at", "end_at", "purge_at", "type",
         "status", "snapshopt_id", "snapshot_name", "size", "environment",
