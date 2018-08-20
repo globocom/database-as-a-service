@@ -5,8 +5,10 @@ import logging
 from notification.models import TaskHistory
 from util import exec_remote_command_host, get_worker_name, \
     build_context_script, get_dict_lines
-from registered_functions.functools import _get_function
+from registered_functions.functools import get_function
 from workflow.steps.util.dns import ChangeTTLTo5Minutes, ChangeTTLTo3Hours
+from workflow.steps.util.db_monitor import DisableMonitoring, EnableMonitoring
+from workflow.steps.util.zabbix import DisableAlarms, EnableAlarms
 from workflow.workflow import steps_for_instances
 
 LOG = logging.getLogger(__name__)
@@ -16,27 +18,27 @@ LOG = logging.getLogger(__name__)
 def execute_scheduled_maintenance(self, maintenance_id):
     LOG.debug("Maintenance id: {}".format(maintenance_id))
     maintenance = models.Maintenance.objects.get(id=maintenance_id)
-
-    models.Maintenance.objects.filter(id=maintenance_id,
-                                      ).update(status=maintenance.RUNNING, started_at=datetime.now())
+    models.Maintenance.objects.filter(id=maintenance_id).update(
+        status=maintenance.RUNNING, started_at=datetime.now()
+    )
     LOG.info("Maintenance {} is RUNNING".format(maintenance,))
 
     worker_name = get_worker_name()
     task_history = TaskHistory.register(
-        request=self.request, worker_name=worker_name)
-
-    LOG.info("id: %s | task: %s | kwargs: %s | args: %s" % (
-        self.request.id, self.request.task, self.request.kwargs, str(self.request.args)))
-
-    task_history.update_details(persist=True,
-                                details="Executing Maintenance: {}".format(maintenance))
-
+        request=self.request, worker_name=worker_name
+    )
+    LOG.info("id: {} | task: {} | kwargs: {} | args: {}".format(
+        self.request.id, self.request.task,
+        self.request.kwargs, str(self.request.args)
+    ))
+    task_history.update_details(
+        persist=True, details="Executing Maintenance: {}".format(maintenance)
+    )
     for hm in models.HostMaintenance.objects.filter(maintenance=maintenance):
         main_output = {}
         hm.status = hm.RUNNING
         hm.started_at = datetime.now()
         hm.save()
-
         if hm.host is None:
             hm.status = hm.UNAVAILABLEHOST
             hm.finished_at = datetime.now()
@@ -46,9 +48,15 @@ def execute_scheduled_maintenance(self, maintenance_id):
         host = hm.host
         update_task = "\nRunning Maintenance on {}".format(host)
 
+        if maintenance.disable_alarms:
+            disable_alarms(hm.host)
+
         param_dict = {}
-        for param in models.MaintenanceParameters.objects.filter(maintenance=maintenance):
-            param_function = _get_function(param.function_name)
+        params = models.MaintenanceParameters.objects.filter(
+            maintenance=maintenance
+        )
+        for param in params:
+            param_function = get_function(param.function_name)
             param_dict[param.parameter_name] = param_function(host.id)
 
         main_script = build_context_script(param_dict, maintenance.main_script)
@@ -80,22 +88,36 @@ def execute_scheduled_maintenance(self, maintenance_id):
             else:
                 hm.status = hm.ERROR
 
+        if maintenance.disable_alarms:
+            enable_alarms(hm.host)
+
         update_task += "...status: {}".format(hm.status)
 
-        task_history.update_details(persist=True,
-                                    details=update_task)
+        task_history.update_details(persist=True, details=update_task)
 
         hm.main_log = get_dict_lines(main_output)
         hm.finished_at = datetime.now()
         hm.save()
 
-    models.Maintenance.objects.filter(id=maintenance_id,
-                                      ).update(status=maintenance.FINISHED, finished_at=datetime.now())
+    models.Maintenance.objects.filter(id=maintenance_id).update(
+        status=maintenance.FINISHED, finished_at=datetime.now()
+    )
+    task_history.update_status_for(
+        TaskHistory.STATUS_SUCCESS, details='Maintenance executed succesfully'
+    )
+    LOG.info("Maintenance: {} has FINISHED".format(maintenance))
 
-    task_history.update_status_for(TaskHistory.STATUS_SUCCESS,
-                                   details='Maintenance executed succesfully')
 
-    LOG.info("Maintenance: {} has FINISHED".format(maintenance,))
+def disable_alarms(host):
+    for instance in host.instances.all():
+        DisableMonitoring(instance).do()
+        DisableAlarms(instance).do()
+
+
+def enable_alarms(host):
+    for instance in host.instances.all():
+        EnableMonitoring(instance).do()
+        EnableAlarms(instance).do()
 
 
 def region_migration_prepare(infra):
