@@ -9,7 +9,8 @@ from datetime import datetime
 from account.models import Team
 from backup.models import BackupGroup
 from logical.models import Database, Project
-from physical.models import Host, Plan, Environment, DatabaseInfra, Instance, Offering
+from physical.models import Host, Plan, Environment, DatabaseInfra, Instance, \
+    Offering
 from notification.models import TaskHistory
 from util.models import BaseModel
 from django.db.models.signals import post_save
@@ -38,31 +39,22 @@ class Maintenance(BaseModel):
         (REVOKED, 'Revoked')
     )
 
-    description = models.CharField(verbose_name=_("Description"),
-                                   null=False, blank=False, max_length=500,)
-    scheduled_for = models.DateTimeField(verbose_name=_("Schedule for"),
-                                         unique=True,)
-    main_script = models.TextField(verbose_name=_("Main Script"),
-                                   null=False, blank=False)
-    rollback_script = models.TextField(verbose_name=_("Rollback Script"),
-                                       null=True, blank=True)
-    maximum_workers = models.PositiveSmallIntegerField(verbose_name=_("Maximum workers"),
-                                                       null=False, default=1)
-    celery_task_id = models.CharField(verbose_name=_("Celery task Id"),
-                                      null=True, blank=True, max_length=50,)
+    description = models.CharField(null=False, blank=False, max_length=500)
+    scheduled_for = models.DateTimeField(unique=True)
+    main_script = models.TextField(null=False, blank=False)
+    rollback_script = models.TextField(null=True, blank=True)
+    maximum_workers = models.PositiveSmallIntegerField(null=False, default=1)
+    celery_task_id = models.CharField(null=True, blank=True, max_length=50)
     status = models.IntegerField(choices=MAINTENANCE_STATUS, default=WAITING)
-    affected_hosts = models.IntegerField(
-        verbose_name=_("Affected hosts"), default=0)
-    started_at = models.DateTimeField(
-        verbose_name=_("Started at"), null=True, blank=True)
-    finished_at = models.DateTimeField(
-        verbose_name=_("Finished at"), null=True, blank=True)
-    hostsid = models.CommaSeparatedIntegerField(verbose_name=_("Hosts id"),
-                                                null=False, blank=False, max_length=10000)
-    created_by = models.CharField(
-        verbose_name=_("Created by"), max_length=255, null=True, blank=True)
-    revoked_by = models.CharField(
-        verbose_name=_("Revoked by"), max_length=255, null=True, blank=True)
+    affected_hosts = models.IntegerField(default=0)
+    started_at = models.DateTimeField(null=True, blank=True)
+    finished_at = models.DateTimeField(null=True, blank=True)
+    hostsid = models.CommaSeparatedIntegerField(
+        verbose_name="Hosts id", null=False, blank=False, max_length=10000
+    )
+    created_by = models.CharField(max_length=255, null=True, blank=True)
+    revoked_by = models.CharField(max_length=255, null=True, blank=True)
+    disable_alarms = models.BooleanField(default=False)
 
     def __unicode__(self):
         return "%s" % self.description
@@ -77,7 +69,6 @@ class Maintenance(BaseModel):
         total_hosts = 0
 
         try:
-
             hostsid_list = self.hostsid.split(',')
             hosts = Host.objects.filter(pk__in=hostsid_list)
             for host in hosts:
@@ -118,8 +109,9 @@ class Maintenance(BaseModel):
             self.revoked_by = request.user.username
             self.save()
 
-            HostMaintenance.objects.filter(maintenance=self,
-                                           ).update(status=HostMaintenance.REVOKED)
+            HostMaintenance.objects.filter(maintenance=self).update(
+                status=HostMaintenance.REVOKED
+            )
             return True
 
         return False
@@ -206,12 +198,14 @@ class HostMaintenance(BaseModel):
 
 
 class MaintenanceParameters(BaseModel):
-    parameter_name = models.CharField(verbose_name=_(" Parameter name"),
-                                      null=False, blank=False, max_length=100,)
-    function_name = models.CharField(verbose_name=_(" Function name"),
-                                     null=False, blank=False, max_length=100, choices=(_get_registered_functions()))
-    maintenance = models.ForeignKey(Maintenance,
-                                    related_name="maintenance_params",)
+    parameter_name = models.CharField(null=False, blank=False, max_length=100)
+    function_name = models.CharField(
+        null=False, blank=False, max_length=100,
+        choices=(_get_registered_functions())
+    )
+    maintenance = models.ForeignKey(
+        Maintenance, related_name="maintenance_params"
+    )
 
     def __unicode__(self):
         return "{} - {}".format(self.parameter_name, self.function_name)
@@ -551,7 +545,6 @@ class DatabaseRestore(DatabaseMaintenanceTask):
             if pairs.slave not in instances:
                 instances.append(pairs.slave)
 
-
         for instance in self.database.infra.instances.all():
             if instance.instance_type == instance.MONGODB_ARBITER:
                 instances.append(instance)
@@ -655,11 +648,16 @@ def maintenance_post_save(sender, **kwargs):
 
         if maintenance.save_host_maintenance():
             if maintenance.scheduled_for > datetime.now():
-                task = execute_scheduled_maintenance.apply_async(args=[maintenance.id],
-                                                                 eta=maintenance.scheduled_for.replace(tzinfo=tz.tzlocal()).astimezone(tz.tzutc()))
+                task = execute_scheduled_maintenance.apply_async(
+                    args=[maintenance.id],
+                    eta=maintenance.scheduled_for.replace(
+                        tzinfo=tz.tzlocal()
+                    ).astimezone(tz.tzutc())
+                )
             else:
-                task = execute_scheduled_maintenance.apply_async(args=[maintenance.id],
-                                                                 countdown=5)
+                task = execute_scheduled_maintenance.apply_async(
+                    args=[maintenance.id], countdown=5
+                )
 
             maintenance.celery_task_id = task.task_id
             maintenance.save()

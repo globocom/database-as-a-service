@@ -23,7 +23,7 @@ def _get_registered_functions():
     return sorted(function_list, key=_get_key)
 
 
-def _get_function(func_name):
+def get_function(func_name):
     current_module = sys.modules[__name__]
     func_list = list((func for func in current_module.__dict__.itervalues()
                       if _is_mod_function(current_module, func) and func.__name__ == func_name))
