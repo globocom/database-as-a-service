@@ -4,6 +4,7 @@ from dbaas_dnsapi.provider import DNSAPIProvider
 from dbaas_dnsapi.utils import add_dns_record
 from util import get_credentials_for, check_nslookup
 from base import BaseInstanceStep
+from dbaas_networkapi.models import Vip
 
 
 class DNSStep(BaseInstanceStep):
@@ -142,11 +143,28 @@ class RegisterDNSVip(DNSStep):
     def is_valid(self):
         return self.instance == self.infra.instances.first()
 
+    @property
+    def vip(self):
+        return Vip.objects.get(databaseinfra=self.infra)
+
     def do(self):
         if not self.is_valid:
             return
 
-        self.provider.create_database_dns(self.infra)
+        self.provider.create_database_dns_for_ip(
+            databaseinfra=self.infra,
+            ip=self.vip.vip_ip
+        )
+
+
+    def undo(self):
+        if not self.is_valid:
+            return
+
+        self.provider.remove_databases_dns_for_ip(
+            databaseinfra=self.infra,
+            ip=self.vip.vip_ip
+        )
 
 
 class CreateDNSSentinel(CreateDNS):
