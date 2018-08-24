@@ -160,20 +160,30 @@
         $(document).on("click.add-credential", "#add-credential", function(e) {
             $("tbody", "#table-credentials").append(
                 "<tr class='credential'><td colspan='3'>" +
-                "<input type='text' placeholder='type username' maxlength='16' name='user' value='' />" +
+                "<input type='text' placeholder='type username' maxlength='16' id='user''name='user' value='' />" +
+
+                "<select class='span' id='role' required>"+
+                "<option disabled value='' selected hidden>Select your option</option>"+
+                "<option value='Read-Only' selected='selected'>Read-Only</option>"+
+                "<option value='Read-Write' selected='selected'>Read-Write</option>"+
+                "<option value='Owner' selected='selected'>Owner</option>"+
+                "</select>"+
+
                 "<a href='#' class='save-new-credential btn btn-primary'>Save</a>" +
-                "</td></tr>");
+                "</td></tr></div>");
         });
 
         $(document).on("click.save-new-credential", ".save-new-credential", function(e) {
             var $insert_row = $(e.target).parent().parent(),
-                username = $("input", $insert_row).val();
+                username = $("#user").val();
+                role = $("#role").val()
 
-            CredentialManager.create(username, $insert_row, function(credential) {
+            CredentialManager.create(username, role, $insert_row, function
+            (credential) {
                 $insert_row.remove();
 
                 // show password
-                credential.show_password();
+                gcredential.show_password();
             });
             return false;
         });
@@ -214,12 +224,13 @@
             /**
             * Create a new credential on server and put on page
             */
-            create: function(username, $row, callback) {
+            create: function(username, role, $row, callback) {
                 var self = this;
                 $.ajax({
                     "url": "/logical/credential/",
                     "type": "POST",
-                    "data": { "username": username, "database_id": get_database_id() },
+                    "data": { "username": username, "database_id":
+                    get_database_id(), "role": role },
                 }).done(function(data) {
                     if (data.error) {
                         show_error_message($row, data.error);
