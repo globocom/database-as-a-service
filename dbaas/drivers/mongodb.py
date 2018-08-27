@@ -29,6 +29,12 @@ class MongoDB(BaseDriver):
 
     RESERVED_DATABASES_NAME = ['admin', 'config', 'local']
 
+    roles = {
+        "Owner": ["readWrite", "dbAdmin"],
+        "Read-Write": ["readWrite"],
+        "Read-Only": ["read"]
+    }
+
     def get_replica_name(self):
         """ Get replica name from databaseinfra. Use cache """
         if not self.databaseinfra.pk:
@@ -271,7 +277,8 @@ class MongoDB(BaseDriver):
     def create_user(self, credential, roles=["readWrite", "dbAdmin"]):
         with self.pymongo(database=credential.database) as mongo_database:
             mongo_database.add_user(
-                credential.user, password=credential.password, roles=roles)
+                credential.user, password=credential.password,
+                roles=self.roles[credential.privileges])# roles=roles)
 
     def update_user(self, credential):
         self.create_user(credential)
