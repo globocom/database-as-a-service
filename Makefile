@@ -60,6 +60,7 @@ reset_data: db_reset # drop and create database and insert sample data
 
 run_migrate: # run all migrations
 	@cd dbaas && python manage.py syncdb --migrate --noinput --no-initial-data
+	@cd dbaas && python manage.py update_permissions
 
 test: # run tests
 	@cd dbaas && python manage.py test --settings=dbaas.settings_test --traceback $(filter-out $@,$(MAKECMDGOALS))
@@ -110,4 +111,3 @@ graph_models: # generate graph models
 
 dev_mode:
 	@sed -i "" -e "/check_nslookup(/s/^/#/" dbaas/workflow/steps/util/deploy/check_dns.py
-
