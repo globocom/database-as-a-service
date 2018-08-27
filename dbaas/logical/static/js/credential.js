@@ -162,7 +162,7 @@
                 "<tr class='credential'><td colspan='3'>" +
                 "<input type='text' placeholder='type username' maxlength='16' id='user''name='user' value='' />" +
 
-                "<select class='span' id='role' required>"+
+                "<select class='span' id='privileges' required>"+
                 "<option disabled value='' selected hidden>Select your option</option>"+
                 "<option value='Read-Only' selected='selected'>Read-Only</option>"+
                 "<option value='Read-Write' selected='selected'>Read-Write</option>"+
@@ -176,15 +176,16 @@
         $(document).on("click.save-new-credential", ".save-new-credential", function(e) {
             var $insert_row = $(e.target).parent().parent(),
                 username = $("#user").val();
-                role = $("#role").val()
+                privileges = $("#privileges").val()
 
-            CredentialManager.create(username, role, $insert_row, function
+            CredentialManager.create(username, privileges, $insert_row, function
             (credential) {
                 $insert_row.remove();
 
                 // show password
                 credential.show_password();
                 window.location.href = '';
+
             });
             return false;
         });
@@ -225,13 +226,13 @@
             /**
             * Create a new credential on server and put on page
             */
-            create: function(username, role, $row, callback) {
+            create: function(username, privileges, $row, callback) {
                 var self = this;
                 $.ajax({
                     "url": "/logical/credential/",
                     "type": "POST",
                     "data": { "username": username, "database_id":
-                    get_database_id(), "role": role },
+                    get_database_id(), "privileges": privileges },
                 }).done(function(data) {
                     if (data.error) {
                         show_error_message($row, data.error);
