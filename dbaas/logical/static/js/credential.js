@@ -174,6 +174,7 @@
 
                 // show password
                 credential.show_password();
+                window.location.href = '';
             });
             return false;
         });
