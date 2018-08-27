@@ -3,6 +3,7 @@ from logging import getLogger
 from datetime import datetime, date, timedelta
 from time import sleep, strftime
 from dbaas.celery import app
+from dbaas_credentials.models import CredentialType
 from drivers.errors import ConnectionError
 from notification.models import TaskHistory
 from physical.models import DatabaseInfra, Environment, Volume
@@ -10,7 +11,7 @@ from system.models import Configuration
 from util.decorators import only_one
 from workflow.steps.util.volume_provider import VolumeProviderBase
 from models import Snapshot, BackupGroup
-from util import exec_remote_command_host, get_worker_name
+from util import exec_remote_command_host, get_worker_name, get_credentials_for
 
 
 LOG = getLogger(__name__)
@@ -288,19 +289,10 @@ def remove_database_old_backups(self):
         request=self.request, worker_name=worker_name, user=None
     )
 
-    backup_retention_days = Configuration.get_by_name_as_int(
-        'backup_retention_days'
-    )
-    LOG.info("Removing backups older than {} days".format(
-        backup_retention_days
-    ))
-    backup_time_dt = date.today() - timedelta(days=backup_retention_days)
-    snapshots = Snapshot.objects.filter(
-        start_at__lte=backup_time_dt,
-        purge_at__isnull=True,
-        instance__isnull=False,
-        snapshopt_id__isnull=False
-    )
+    snapshots = []
+    for env in Environment.objects.all():
+        snapshots += get_snapshots_by_env(env)
+
     msgs = []
     status = TaskHistory.STATUS_SUCCESS
     if len(snapshots) == 0:
@@ -312,13 +304,32 @@ def remove_database_old_backups(self):
             msg = "Backup {} removed".format(snapshot)
             LOG.info(msg)
         except Exception as e:
-            msg = "Error removing backup %s. Error: %s" % (snapshot, str(e))
+            msg = "Error removing backup {}. Error: {}".format(snapshot, e)
             status = TaskHistory.STATUS_ERROR
             LOG.error(msg)
         msgs.append(msg)
-
     task_history.update_status_for(status, details="\n".join(msgs))
     return
+
+
+def get_snapshots_by_env(env):
+    credential = get_credentials_for(env, CredentialType.VOLUME_PROVIDER)
+    retention_days = credential.get_parameter_by_name('retention_days')
+    if retention_days:
+        retention_days = int(retention_days)
+    else:
+        retention_days = Configuration.get_by_name_as_int(
+            'backup_retention_days'
+        )
+
+    backup_time_dt = date.today() - timedelta(days=retention_days)
+    return Snapshot.objects.filter(
+        start_at__lte=backup_time_dt,
+        purge_at__isnull=True,
+        instance__isnull=False,
+        snapshopt_id__isnull=False,
+        instance__databaseinfra__environment=env
+    )
 
 
 @app.task(bind=True)
