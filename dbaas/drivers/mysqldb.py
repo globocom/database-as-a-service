@@ -36,6 +36,13 @@ class MySQL(BaseDriver):
     default_port = 3306
     RESERVED_DATABASES_NAME = ['admin', 'test', 'mysql', 'information_schema']
 
+    roles = {
+        "Owner": ["ALL PRIVILEGES"],
+        "Read-Write": ["SELECT", "EXECUTE", "UPDATE", "DELETE", "INSERT"],
+        "Read-Only": ["SELECT", "EXECUTE"]
+    }
+
+
     def get_connection(self, database=None):
         # my_instance = self.databaseinfra.instances.all()[0]
         uri = "mysql://<user>:<password>@%s" % (self.databaseinfra.endpoint)
@@ -235,7 +242,7 @@ class MySQL(BaseDriver):
         LOG.info("creating database %s" % database.name)
         self.__query("CREATE DATABASE %s" % database.name)
 
-    def create_user(self, credential, roles=["ALL PRIVILEGES"]):
+    def create_user(self, credential, role=["ALL PRIVILEGES"]):
         LOG.info("creating user {} to {}".format(
             credential.user, credential.database))
 
@@ -246,7 +253,7 @@ class MySQL(BaseDriver):
         self.__query(query)
 
         query = "GRANT {} ON {}.* TO '{}'@'%'".format(
-            ','.join(roles), credential.database, credential.user)
+            ','.join(self.roles[credential.privileges]), credential.database, credential.user)
         self.__query(query)
 
         if credential.force_ssl:
