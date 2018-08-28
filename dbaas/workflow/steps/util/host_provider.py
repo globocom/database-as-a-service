@@ -41,7 +41,6 @@ class Provider(object):
 
     @property
     def credential(self):
-        # TODO Remove hard coded "Cloudstack"
         if not self._credential:
             self._credential = get_credentials_for(
                 self.environment, CredentialType.HOST_PROVIDER
@@ -62,6 +61,11 @@ class Provider(object):
     def provider(self):
         return self.credential.project
 
+    def post(self, url, **kw):
+        auth = (self.credential.user, self.credential.password,)
+        kw.update(**{'auth': auth} if self.credential.user else {})
+        return post(url, **kw)
+
     def start(self):
         url = "{}/{}/{}/host/start".format(
             self.credential.endpoint, self.provider, self.environment
@@ -70,7 +74,7 @@ class Provider(object):
             "host_id": self.instance.hostname.identifier
         }
 
-        response = post(url, json=data)
+        response = self.post(url, json=data)
         if not response.ok:
             raise IndexError(response.content, response)
 
@@ -84,7 +88,7 @@ class Provider(object):
             "host_id": self.instance.hostname.identifier
         }
 
-        response = post(url, json=data)
+        response = self.post(url, json=data)
         if not response.ok:
             raise IndexError(response.content, response)
 
@@ -99,7 +103,7 @@ class Provider(object):
             **{'engine': engine.full_name_for_host_provider} if engine else {}
         )
 
-        response = post(url, json=data)
+        response = self.post(url, json=data)
         if response.status_code != 200:
             raise IndexError(response.content, response)
 
@@ -116,7 +120,7 @@ class Provider(object):
             'memory': offering.memory_size_mb
         }
 
-        response = post(url, json=data)
+        response = self.post(url, json=data)
         if response.status_code != 200:
             raise IndexError(response.content, response)
 
@@ -135,7 +139,7 @@ class Provider(object):
             "team_name": team_name
         }
 
-        response = post(url, json=data, timeout=600)
+        response = self.post(url, json=data, timeout=600)
         if response.status_code != 201:
             raise IndexError(response.content, response)
 
