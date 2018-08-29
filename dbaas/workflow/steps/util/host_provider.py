@@ -312,10 +312,6 @@ class CreateVirtualMachine(HostProviderStep):
         return bool(self.database)
 
     @property
-    def is_readonly_instance(self):
-        return bool(self.database)
-
-    @property
     def vm_name(self):
         return self.instance.vm_name
 
@@ -340,7 +336,7 @@ class CreateVirtualMachine(HostProviderStep):
             host = self.provider.create_host(
                 self.infra, offering,
                 self.vm_name,
-                self.create.team.name
+                self.database.team.name if self.is_readonly_instance else self.create.team.name
             )
             self.update_databaseinfra_last_vm_created()
         else:
