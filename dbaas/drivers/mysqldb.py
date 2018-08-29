@@ -242,7 +242,7 @@ class MySQL(BaseDriver):
         LOG.info("creating database %s" % database.name)
         self.__query("CREATE DATABASE %s" % database.name)
 
-    def create_user(self, credential, role=["ALL PRIVILEGES"]):
+    def create_user(self, credential):
         LOG.info("creating user {} to {}".format(
             credential.user, credential.database))
 

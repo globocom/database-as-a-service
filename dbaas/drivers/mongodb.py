@@ -274,11 +274,11 @@ class MongoDB(BaseDriver):
 
         return databaseinfra_status
 
-    def create_user(self, credential, roles=["readWrite", "dbAdmin"]):
+    def create_user(self, credential):
         with self.pymongo(database=credential.database) as mongo_database:
             mongo_database.add_user(
                 credential.user, password=credential.password,
-                roles=self.roles[credential.privileges])# roles=roles)
+                roles=self.roles[credential.privileges])
 
     def update_user(self, credential):
         self.create_user(credential)

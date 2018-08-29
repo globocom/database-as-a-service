@@ -65,7 +65,6 @@ class CredentialView(CredentialBase):
 
             # check permission
             self.check_permission(request, "logical.add_credential", database)
-
             credential = Credential.create_new_credential(username, database,
                                                           privileges)
             return self.as_json(credential)
