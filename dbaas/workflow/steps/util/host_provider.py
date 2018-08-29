@@ -7,9 +7,32 @@ from util import check_ssh, get_credentials_for
 from base import BaseInstanceStep
 
 
-
 CHANGE_MASTER_ATTEMPS = 4
 CHANGE_MASTER_SECONDS = 15
+
+
+class HostProviderStartVMExeption(Exception):
+    pass
+
+
+class HostProviderStopVMExeption(Exception):
+    pass
+
+
+class HostProviderNewVersionExeption(Exception):
+    pass
+
+
+class HostProviderChangeOfferingExeption(Exception):
+    pass
+
+
+class HostProviderCreateVMExeption(Exception):
+    pass
+
+
+class HostProviderDestroyVMExeption(Exception):
+    pass
 
 
 class Provider(object):
@@ -61,10 +84,10 @@ class Provider(object):
     def provider(self):
         return self.credential.project
 
-    def post(self, url, **kw):
+    def _request(self, action, url, **kw):
         auth = (self.credential.user, self.credential.password,)
         kw.update(**{'auth': auth} if self.credential.user else {})
-        return post(url, **kw)
+        return action(url, **kw)
 
     def start(self):
         url = "{}/{}/{}/host/start".format(
@@ -74,9 +97,9 @@ class Provider(object):
             "host_id": self.instance.hostname.identifier
         }
 
-        response = self.post(url, json=data)
+        response = self._request(post, url, json=data)
         if not response.ok:
-            raise IndexError(response.content, response)
+            raise HostProviderStartVMExeption(response.content, response)
 
         return True
 
@@ -88,9 +111,9 @@ class Provider(object):
             "host_id": self.instance.hostname.identifier
         }
 
-        response = self.post(url, json=data)
+        response = self._request(post, url, json=data)
         if not response.ok:
-            raise IndexError(response.content, response)
+            raise HostProviderStopVMExeption(response.content, response)
 
         return True
 
@@ -103,9 +126,9 @@ class Provider(object):
             **{'engine': engine.full_name_for_host_provider} if engine else {}
         )
 
-        response = self.post(url, json=data)
+        response = self._request(post, url, json=data)
         if response.status_code != 200:
-            raise IndexError(response.content, response)
+            raise HostProviderNewVersionExeption(response.content, response)
 
         return True
 
@@ -120,9 +143,12 @@ class Provider(object):
             'memory': offering.memory_size_mb
         }
 
-        response = self.post(url, json=data)
+        response = self._request(post, url, json=data)
         if response.status_code != 200:
-            raise IndexError(response.content, response)
+            raise HostProviderChangeOfferingExeption(
+                response.content,
+                response
+            )
 
         return True
 
@@ -139,9 +165,9 @@ class Provider(object):
             "team_name": team_name
         }
 
-        response = self.post(url, json=data, timeout=600)
+        response = self._request(post, url, json=data, timeout=600)
         if response.status_code != 201:
-            raise IndexError(response.content, response)
+            raise HostProviderCreateVMExeption(response.content, response)
 
         content = response.json()
 
@@ -163,9 +189,9 @@ class Provider(object):
             self.instance.hostname.identifier
         )
 
-        response = delete(url)
+        response = self._request(delete, url)
         if not response.ok:
-            raise IndexError(response.content, response)
+            raise HostProviderDestroyVMExeption(response.content, response)
 
 
 class HostProviderStep(BaseInstanceStep):
@@ -278,7 +304,6 @@ class ChangeOffering(HostProviderStep):
 
     def undo(self):
         self.target_offering = self.resize.source_offer
-        # self.target_offering_id = self.get_offering_id(self.resize.source_offer)
         self.do()
 
 
@@ -303,13 +328,15 @@ class CreateVirtualMachine(HostProviderStep):
         self.infra.last_vm_created = last_vm_created
         self.infra.save()
 
-    def delete_instance(self):
-        if self.instance.id:
-            self.instance.delete()
-
     @property
     def is_readonly_instance(self):
         return bool(self.database)
+
+    @property
+    def team_name(self):
+        if self.is_readonly_instance:
+            return self.database.team.vm_name
+        return self.create.team.name
 
     @property
     def vm_name(self):
@@ -336,7 +363,7 @@ class CreateVirtualMachine(HostProviderStep):
             host = self.provider.create_host(
                 self.infra, offering,
                 self.vm_name,
-                self.database.team.name if self.is_readonly_instance else self.create.team.name
+                self.team_name
             )
             self.update_databaseinfra_last_vm_created()
         else:
