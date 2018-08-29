@@ -335,7 +335,7 @@ class CreateVirtualMachine(HostProviderStep):
     @property
     def team_name(self):
         if self.is_readonly_instance:
-            return self.database.team.vm_name
+            return self.database.team.name
         return self.create.team.name
 
     @property
