@@ -163,10 +163,9 @@
                 "<input type='text' placeholder='type username' maxlength='16' id='user''name='user' value='' />" +
 
                 "<select class='span' id='privileges' required>"+
-                "<option disabled value='' selected hidden>Select your option</option>"+
-                "<option value='Read-Only' selected='selected'>Read-Only</option>"+
-                "<option value='Read-Write' selected='selected'>Read-Write</option>"+
                 "<option value='Owner' selected='selected'>Owner</option>"+
+                "<option value='Read-Write' selected='selected'>Read-Write</option>"+
+                "<option value='Read-Only' selected='selected'>Read-Only</option>"+
                 "</select>"+
 
                 "<a href='#' class='save-new-credential btn btn-primary'>Save</a>" +
