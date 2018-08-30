@@ -216,7 +216,6 @@
 
                 var html_row = $("#credential-template").mustache(credential_json);
                 $("tbody", "#table-credentials").append(html_row);
-
                 // request new DOM element already attached
                 var credential = this.get(credential_json.credential.pk);
                 initialize_listeners(credential);
