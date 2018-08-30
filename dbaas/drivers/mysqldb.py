@@ -36,7 +36,7 @@ class MySQL(BaseDriver):
     default_port = 3306
     RESERVED_DATABASES_NAME = ['admin', 'test', 'mysql', 'information_schema']
 
-    roles = {
+    USER_ROLES = {
         "Owner": ["ALL PRIVILEGES"],
         "Read-Write": ["SELECT", "EXECUTE", "UPDATE", "DELETE", "INSERT"],
         "Read-Only": ["SELECT", "EXECUTE"]
@@ -253,7 +253,7 @@ class MySQL(BaseDriver):
         self.__query(query)
 
         query = "GRANT {} ON {}.* TO '{}'@'%'".format(
-            ','.join(self.roles[credential.privileges]), credential.database, credential.user)
+            ','.join(self.USER_ROLES[credential.privileges]), credential.database, credential.user)
         self.__query(query)
 
         if credential.force_ssl:

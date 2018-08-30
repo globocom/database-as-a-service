@@ -29,7 +29,7 @@ class MongoDB(BaseDriver):
 
     RESERVED_DATABASES_NAME = ['admin', 'config', 'local']
 
-    roles = {
+    USER_ROLES = {
         "Owner": ["readWrite", "dbAdmin"],
         "Read-Write": ["readWrite"],
         "Read-Only": ["read"]
@@ -278,7 +278,7 @@ class MongoDB(BaseDriver):
         with self.pymongo(database=credential.database) as mongo_database:
             mongo_database.add_user(
                 credential.user, password=credential.password,
-                roles=self.roles[credential.privileges])
+                roles=self.USER_ROLES[credential.privileges])
 
     def update_user(self, credential):
         self.create_user(credential)
