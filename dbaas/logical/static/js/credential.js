@@ -160,21 +160,30 @@
         $(document).on("click.add-credential", "#add-credential", function(e) {
             $("tbody", "#table-credentials").append(
                 "<tr class='credential'><td colspan='3'>" +
-                "<input type='text' placeholder='type username' maxlength='16' id='user''name='user' value='' />" +
-
-                "<select class='span' id='privileges' required>"+
+                "<input type='text' placeholder='type username' maxlength='16' id='user' name='user' value='' />" +
+                "<select class='span roles' id='privileges' required>"+
                 "<option value='Owner' selected='selected'>Owner</option>"+
-                "<option value='Read-Write' selected='selected'>Read-Write</option>"+
-                "<option value='Read-Only' selected='selected'>Read-Only</option>"+
+                "<option value='Read-Write' >Read-Write</option>"+
+                "<option value='Read-Only'>Read-Only</option>"+
                 "</select>"+
 
                 "<a href='#' class='save-new-credential btn btn-primary'>Save</a>" +
+                "<a href='#' class='icon-info-sign' id='role-info'"+
+                "data-toggle='popover' title='Roles info' " +
+                "data-content='<li><b>Owner:</b> This user can do all</li>"+
+                "<li><b>Read-Write:</b> This user can do select, execute, update, delete, insert</li>" +
+                "<li><b>Read-Only:</b> This user can do select, execute</li>'" +
+                "</a>"+
                 "</td></tr></div>");
         });
 
+        $(document).on('click', function () {
+          $('#role-info').popover()
+        })
+
         $(document).on("click.save-new-credential", ".save-new-credential", function(e) {
             var $insert_row = $(e.target).parent().parent(),
-                username = $("#user").val();
+                username = $("#user").val(),
                 privileges = $("#privileges").val()
 
             CredentialManager.create(username, privileges, $insert_row, function
