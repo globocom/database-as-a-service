@@ -126,7 +126,11 @@ p.error_message {
   margin-left: 10px;
 }
 
-.icon-info-sign{
-  margin-left: 10px;
+.span.roles {
+  margin-left: 5px;
+}
+
+.input.user{
+  margin-left: 5px;
 }
 

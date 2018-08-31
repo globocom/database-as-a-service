@@ -160,19 +160,19 @@
         $(document).on("click.add-credential", "#add-credential", function(e) {
             $("tbody", "#table-credentials").append(
                 "<tr class='credential'><td colspan='3'>" +
-                "<input type='text' placeholder='type username' maxlength='16' id='user-roles' name='user' value='' />" +
+                "<a href='#' class='icon-info-sign' id='role-info'"+
+                "data-toggle='popover' title='Roles info' " +
+                "data-content='<li><b>Owner:</b> This user can do all</li>"+
+                "<li><b>Read-Write:</b> This user can do select, execute, update, delete, insert</li>" +
+                "<li><b>Read-Only:</b> This user can do select, execute</li>' >"+
+                "</a>"+
                 "<select class='span roles' id='user-privileges' required>"+
                 "<option value='Owner' selected='selected'>Owner</option>"+
                 "<option value='Read-Write' >Read-Write</option>"+
                 "<option value='Read-Only'>Read-Only</option>"+
                 "</select>"+
+                "<input type='text' class='input user' placeholder='type username' maxlength='16' id='user-roles' name='user' value='' />" +
                 "<a href='#' class='save-new-credential btn btn-primary'>Save</a>" +
-                "<a href='#' class='icon-info-sign' id='role-info'"+
-                "data-toggle='popover' title='Roles info' " +
-                "data-content='<li><b>Owner:</b> This user can do all</li>"+
-                "<li><b>Read-Write:</b> This user can do select, execute, update, delete, insert</li>" +
-                "<li><b>Read-Only:</b> This user can do select, execute</li>'" +
-                "</a>"+
                 "</td></tr></div>");
         });
 
