@@ -913,14 +913,18 @@ class Credential(BaseModel):
     database = models.ForeignKey(Database, related_name="credentials")
     force_ssl = models.BooleanField(default=False)
 
+    OWNER = 'Owner'
+    READ_WRITE = 'Read-Write'
+    READ_ONLY = 'Read-Only'
+
     PRIVILEGES_CHOICES = {
-        ('Owner', 'Owner'),
-        ('Read-Write', 'Read-Write'),
-        ('Read-Only', 'Read-Only'),
+        (OWNER, 'Owner'),
+        (READ_WRITE, 'Read-Write'),
+        (READ_ONLY, 'Read-Only'),
     }
 
     privileges = models.CharField(max_length=10, choices=PRIVILEGES_CHOICES,
-                                  default='Owner')
+                                  default=OWNER)
 
     def __unicode__(self):
         return u"%s" % self.user

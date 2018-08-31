@@ -8,6 +8,7 @@ import _mysql_exceptions
 from contextlib import contextmanager
 from dbaas_credentials.models import CredentialType
 from util import make_db_random_password, get_credentials_for
+from logical.models import Credential
 from system.models import Configuration
 from physical.models import Instance
 from drivers import BaseDriver, DatabaseInfraStatus, DatabaseStatus
@@ -37,9 +38,9 @@ class MySQL(BaseDriver):
     RESERVED_DATABASES_NAME = ['admin', 'test', 'mysql', 'information_schema']
 
     USER_ROLES = {
-        "Owner": ["ALL PRIVILEGES"],
-        "Read-Write": ["SELECT", "EXECUTE", "UPDATE", "DELETE", "INSERT"],
-        "Read-Only": ["SELECT", "EXECUTE"]
+        Credential.OWNER: ["ALL PRIVILEGES"],
+        Credential.READ_WRITE: ["SELECT", "EXECUTE", "UPDATE", "DELETE", "INSERT"],
+        Credential.READ_ONLY: ["SELECT", "EXECUTE"]
     }
 
 

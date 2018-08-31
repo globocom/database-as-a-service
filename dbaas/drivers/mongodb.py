@@ -12,6 +12,7 @@ from . import DatabaseInfraStatus
 from . import DatabaseStatus
 from .errors import ConnectionError, AuthenticationError, \
     ReplicationNoPrimary, ReplicationNoInstances
+from logical.models import Credential
 from physical.models import Instance
 from util import make_db_random_password, get_credentials_for
 from system.models import Configuration
@@ -30,9 +31,9 @@ class MongoDB(BaseDriver):
     RESERVED_DATABASES_NAME = ['admin', 'config', 'local']
 
     USER_ROLES = {
-        "Owner": ["readWrite", "dbAdmin"],
-        "Read-Write": ["readWrite"],
-        "Read-Only": ["read"]
+        Credential.OWNER: ["readWrite", "dbAdmin"],
+        Credential.READ_WRITE: ["readWrite"],
+        Credential.READ_ONLY: ["read"]
     }
 
     def get_replica_name(self):
