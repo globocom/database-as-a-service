@@ -913,6 +913,19 @@ class Credential(BaseModel):
     database = models.ForeignKey(Database, related_name="credentials")
     force_ssl = models.BooleanField(default=False)
 
+    OWNER = 'Owner'
+    READ_WRITE = 'Read-Write'
+    READ_ONLY = 'Read-Only'
+
+    PRIVILEGES_CHOICES = {
+        (OWNER, 'Owner'),
+        (READ_WRITE, 'Read-Write'),
+        (READ_ONLY, 'Read-Only'),
+    }
+
+    privileges = models.CharField(max_length=10, choices=PRIVILEGES_CHOICES,
+                                  default=OWNER)
+
     def __unicode__(self):
         return u"%s" % self.user
 
@@ -957,12 +970,13 @@ class Credential(BaseModel):
             self.save()
 
     @classmethod
-    def create_new_credential(cls, user, database):
+    def create_new_credential(cls, user, database, privileges="Owner"):
         credential = Credential()
         credential.database = database
         credential.user = user[:cls.USER_MAXIMUM_LENGTH_NAME]
         credential.user = slugify(credential.user)
         credential.password = make_db_random_password()
+        credential.privileges = privileges
         credential.full_clean()
         credential.driver.create_user(credential)
         credential.save()
