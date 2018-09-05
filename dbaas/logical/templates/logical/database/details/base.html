@@ -8,7 +8,6 @@
 {% block extrastyle %}
   {{ block.super }}
   <link rel="stylesheet" type="text/css" href="{% static 'css/database_admin.css' %}" />
-  <link rel="stylesheet" type="text/css" href="{% static 'css/bootstrap2-toggle.min.css' %}" />
   <style type="text/css">
     .readonly {
       padding-top: 5px
@@ -108,7 +107,6 @@
   {{ block.super }}
   <script src="{% static "admin/js/jquery.js" %}">
   <script type="text/javascript" src="{% static "admin/js/bootstrap.min.js" %}"></script>
-  <script type="text/javascript" src="{% static "js/bootstrap2-toggle.min.js" %}"></script>
 
   <script type="text/javascript">
     spin = document.getElementById("running_label");
