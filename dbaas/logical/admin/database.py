@@ -58,8 +58,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     )
     list_display_basic = [
         "name_html", "team_admin_page", "engine_html", "environment",
-        "offering_html", "friendly_status", "created_dt_format",
-        "ssl_configured"
+        "offering_html", "friendly_status", "created_dt_format"
     ]
     list_display_advanced = list_display_basic + ["quarantine_dt_format"]
     list_filter_basic = [
@@ -145,11 +144,6 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         )
     name_html.short_description = _("name")
     name_html.admin_order_field = "name"
-
-    def ssl_configured(self, database):
-        return database.databaseinfra.ssl_configured
-
-    ssl_configured.short_description = "SSL Configured"
 
     def engine_type(self, database):
         return database.engine_type
