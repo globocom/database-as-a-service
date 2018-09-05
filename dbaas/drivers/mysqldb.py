@@ -8,6 +8,7 @@ import _mysql_exceptions
 from contextlib import contextmanager
 from dbaas_credentials.models import CredentialType
 from util import make_db_random_password, get_credentials_for
+from logical.models import Credential
 from system.models import Configuration
 from physical.models import Instance
 from drivers import BaseDriver, DatabaseInfraStatus, DatabaseStatus
@@ -35,6 +36,13 @@ class MySQL(BaseDriver):
 
     default_port = 3306
     RESERVED_DATABASES_NAME = ['admin', 'test', 'mysql', 'information_schema']
+
+    USER_ROLES = {
+        Credential.OWNER: ["ALL PRIVILEGES"],
+        Credential.READ_WRITE: ["SELECT", "EXECUTE", "UPDATE", "DELETE", "INSERT"],
+        Credential.READ_ONLY: ["SELECT", "EXECUTE"]
+    }
+
 
     def get_connection(self, database=None):
         # my_instance = self.databaseinfra.instances.all()[0]
@@ -235,7 +243,7 @@ class MySQL(BaseDriver):
         LOG.info("creating database %s" % database.name)
         self.__query("CREATE DATABASE %s" % database.name)
 
-    def create_user(self, credential, roles=["ALL PRIVILEGES"]):
+    def create_user(self, credential):
         LOG.info("creating user {} to {}".format(
             credential.user, credential.database))
 
@@ -246,7 +254,7 @@ class MySQL(BaseDriver):
         self.__query(query)
 
         query = "GRANT {} ON {}.* TO '{}'@'%'".format(
-            ','.join(roles), credential.database, credential.user)
+            ','.join(self.USER_ROLES[credential.privileges]), credential.database, credential.user)
         self.__query(query)
 
         if credential.force_ssl:
