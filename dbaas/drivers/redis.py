@@ -231,9 +231,6 @@ class Redis(BaseDriver):
 
         return False
 
-    def create_user(self, credential, roles=["readWrite", "dbAdmin"]):
-        pass
-
     def update_user(self, credential):
         pass
 

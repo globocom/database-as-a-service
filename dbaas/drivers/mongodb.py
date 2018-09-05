@@ -12,6 +12,7 @@ from . import DatabaseInfraStatus
 from . import DatabaseStatus
 from .errors import ConnectionError, AuthenticationError, \
     ReplicationNoPrimary, ReplicationNoInstances
+from logical.models import Credential
 from physical.models import Instance
 from util import make_db_random_password, get_credentials_for
 from system.models import Configuration
@@ -28,6 +29,12 @@ class MongoDB(BaseDriver):
     default_port = 27017
 
     RESERVED_DATABASES_NAME = ['admin', 'config', 'local']
+
+    USER_ROLES = {
+        Credential.OWNER: ["readWrite", "dbAdmin"],
+        Credential.READ_WRITE: ["readWrite"],
+        Credential.READ_ONLY: ["read"]
+    }
 
     def get_replica_name(self):
         """ Get replica name from databaseinfra. Use cache """
@@ -268,10 +275,11 @@ class MongoDB(BaseDriver):
 
         return databaseinfra_status
 
-    def create_user(self, credential, roles=["readWrite", "dbAdmin"]):
+    def create_user(self, credential):
         with self.pymongo(database=credential.database) as mongo_database:
             mongo_database.add_user(
-                credential.user, password=credential.password, roles=roles)
+                credential.user, password=credential.password,
+                roles=self.USER_ROLES[credential.privileges])
 
     def update_user(self, credential):
         self.create_user(credential)
