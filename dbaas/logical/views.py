@@ -46,6 +46,7 @@ class CredentialBase(BaseDetailView):
                     "pk": obj.pk,
                     "ssl_swap_label": obj.ssl_swap_label,
                     "force_sll": obj.force_ssl,
+                    "privileges": obj.privileges,
                 }
             }
         output = json.dumps(obj, indent=4)
@@ -58,13 +59,16 @@ class CredentialView(CredentialBase):
     def post(self, request, *args, **kwargs):
         username = request.POST.get("username", None)
         database_id = request.POST.get("database_id", None)
+        privileges = request.POST.get("privileges", None)
+
         try:
             database = get_object_or_404(Database, pk=database_id)
 
             # check permission
             self.check_permission(request, "logical.add_credential", database)
-
-            credential = Credential.create_new_credential(username, database)
+            credential = Credential.create_new_credential(
+                username, database, privileges
+            )
             return self.as_json(credential)
         except CredentialAlreadyExists:
             return self.as_json({"error": "credential already exists"})

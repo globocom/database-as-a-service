@@ -133,7 +133,7 @@ class BaseDriver(object):
             return (instance.total_size_in_bytes or 0) * GB_FACTOR
         return 0
 
-    def create_user(self, credential, roles=None):
+    def create_user(self, credential):
         raise NotImplementedError()
 
     def update_user(self, credential):
