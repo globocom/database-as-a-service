@@ -69,10 +69,10 @@ class ChangeMaster(VmStep):
             return
 
         master = self.driver.get_master_instance()
-        if type(master) == list and self.instance not in master:
-            return
-
-        if self.instance != master:
+        if isinstance(master, list):
+            if self.instance not in master:
+                return
+        elif self.instance != master:
             return
 
         if not self.driver.check_instance_is_master(self.instance):
