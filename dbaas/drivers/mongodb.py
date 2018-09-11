@@ -36,6 +36,10 @@ class MongoDB(BaseDriver):
         Credential.READ_ONLY: ["read"]
     }
 
+    @property
+    def ports(self):
+        return (27017,)
+
     def get_replica_name(self):
         """ Get replica name from databaseinfra. Use cache """
         if not self.databaseinfra.pk:
@@ -512,6 +516,10 @@ class MongoDB(BaseDriver):
 
 
 class MongoDBReplicaSet(MongoDB):
+
+    @property
+    def ports(self):
+        return (27017,)
 
     @property
     def database_key(self):
