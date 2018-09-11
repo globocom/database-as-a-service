@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import requests
 from base import BaseInstanceStep
 from dbaas_aclapi.tasks import replicate_acl_for
 from dbaas_aclapi.acl_base_client import AclClient
@@ -7,10 +8,15 @@ from dbaas_aclapi.models import DatabaseInfraInstanceBind
 from dbaas_aclapi.models import ERROR
 from dbaas_credentials.models import CredentialType
 from util import get_credentials_for
+from workflow.steps.util.base import ACLFromHellClient
 
 import logging
 
 LOG = logging.getLogger(__name__)
+
+
+class CantSetACLError(Exception):
+    pass
 
 
 class ACLStep(BaseInstanceStep):
@@ -83,19 +89,35 @@ class BindNewInstance(ACLStep):
         self.instance_address_list = [self.instance.address]
 
     @property
-    def can_run(self):
-        from util import get_credentials_for
-        from dbaas_credentials.models import CredentialType
-        try:
-            get_credentials_for(self.environment, CredentialType.ACLAPI)
-        except IndexError:
-            return False
-        else:
-            return True
+    def acl_from_hell_client(self):
+        return ACLFromHellClient(self.environment)
+
+    def get_rule(self):
+        resp = self.acl_from_hell_client.get_rule(self.database)
+
+        if resp.ok:
+            return resp.json()
+
+        return None
+
+    def add_acl_for(self, database):
+        tsuru_rules = self.get_rule()
+        if tsuru_rules:
+            rule = tsuru_rules[0]
+            app_name = rule.get('Source', {}).get('TsuruApp', {}).get('AppName')
+            if app_name:
+                return self.acl_from_hell_client.add_acl(database, app_name, self.host.hostname)
+
+        return None
 
     def do(self):
         if not self.database:
             return
+
+        resp = self.add_acl_for(self.database)
+        if resp and not resp.ok:
+            raise CantSetACLError(resp.content)
+
         for database_bind in self.database.acl_binds.all():
             if helpers.bind_address(database_bind=database_bind,
                                     acl_client=self.acl_client,
