@@ -43,6 +43,9 @@ class MySQL(BaseDriver):
         Credential.READ_ONLY: ["SELECT", "EXECUTE"]
     }
 
+    @property
+    def ports(self):
+        return (3306,)
 
     def get_connection(self, database=None):
         # my_instance = self.databaseinfra.instances.all()[0]
@@ -450,6 +453,11 @@ class MySQL(BaseDriver):
 
 
 class MySQLFOXHA(MySQL):
+
+    @property
+    def ports(self):
+        return (3306,)
+
     @classmethod
     def topology_name(cls):
         return ['mysql_foxha']

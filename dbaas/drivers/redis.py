@@ -26,6 +26,10 @@ class Redis(BaseDriver):
     default_port = 6379
 
     @property
+    def ports(self):
+        return (6379,)
+
+    @property
     def instances_filtered(self):
         return self.databaseinfra.instances.filter(
             instance_type=Instance.REDIS, is_active=True
@@ -355,6 +359,10 @@ class Redis(BaseDriver):
 class RedisSentinel(Redis):
 
     @property
+    def ports(self):
+        return (6379, 26379)
+
+    @property
     def instances_filtered(self):
         return self.databaseinfra.instances.filter(
             instance_type=Instance.REDIS_SENTINEL, is_active=True
@@ -544,6 +552,10 @@ class RedisSentinel(Redis):
 
 
 class RedisCluster(Redis):
+
+    @property
+    def ports(self):
+        return (6379, 16379)
 
     @property
     def uri_instance_type(self):
