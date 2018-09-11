@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import re
 import logging
+import requests
 from slugify import slugify
 from dbaas.middleware import UserMiddleware
 from util import get_credentials_for
@@ -30,6 +31,7 @@ from networkapiclient import Ip, Network
 from networkapiclient.exception import IpNaoExisteError
 from logical.validators import database_name_evironment_constraint
 from system import models
+from workflow.steps.util.base import ACLFromHellClient
 
 
 LOG = logging.getLogger(__name__)
@@ -112,19 +114,44 @@ class ServiceAppBind(APIView):
     renderer_classes = (JSONRenderer, JSONPRenderer)
     model = Database
 
+    def add_acl_for_hosts(self, database, app_name):
+
+        infra = database.infra
+        hosts = infra.hosts
+
+        acl_from_hell_client = ACLFromHellClient(database.environment)
+        for host in hosts:
+
+            resp = acl_from_hell_client.add_acl(
+                database,
+                app_name,
+                host.hostname
+            )
+            if not resp.ok:
+                msg = "Error for {} on {}.".format(
+                    database.name, database.environment.name
+                )
+                return log_and_response(
+                    msg=msg, e=resp.content,
+                    http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+
+        return None
+
     def post(self, request, database_name, format=None):
         env = get_url_env(request)
         data = request.DATA
-        LOG.debug("Request DATA {}".format(data))
+        LOG.debug("Tsuru Bind App POST Request DATA {}".format(data))
 
         response = check_database_status(database_name, env)
-        if type(response) != Database:
+        if not isinstance(response, self.model):
             return response
 
         database = response
+        self.add_acl_for_hosts(database, data['app-name'][0])
+
         hosts, ports = database.infra.get_driver().get_dns_port()
         ports = str(ports)
-
         if database.databaseinfra.engine.name == 'redis':
             redis_password = database.databaseinfra.password
             endpoint = database.get_endpoint_dns().replace(
@@ -155,6 +182,7 @@ class ServiceAppBind(APIView):
                 msg = "Database {} in env {} does not have credentials.".format(
                     database_name, env
                 )
+
                 return log_and_response(
                     msg=msg, e=e,
                     http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -182,15 +210,64 @@ class ServiceAppBind(APIView):
 
         return Response(env_vars, status.HTTP_201_CREATED)
 
+    # def remove_acl_for_hosts(self, database, app_name):
+    #
+    #     env = database.environment
+    #     credential = self.get_credential(env)
+    #
+    #     params = {
+    #         'metadata.owner': 'dbaas',
+    #         'metadata.service-name': credential.project,
+    #         'metadata.instance-name': database.name,
+    #         'source.tsuruapp.appname': app_name
+    #     }
+    #
+    #     LOG.debug("Tsuru Unbind App get rule for {} params:{}".format(
+    #         database.name, params))
+    #
+    #     resp = requests.get(
+    #         credential.endpoint,
+    #         params=params,
+    #         auth=(credential.user, credential.password)
+    #     )
+    #
+    #     if not resp.ok:
+    #         msg = "Rule not found for {}.".format(
+    #             database.name)
+    #         LOG.debug(msg)
+    #         return log_and_response(
+    #             msg=msg, e=resp.content,
+    #             http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
+    #         )
+    #
+    #     rules = resp.json()
+    #     for rule in rules:
+    #         rule_id = rule.get('RuleID')
+    #         host = rule.get('Destination', {}).get('ExternalDNS', {}).get('Name')
+    #         if rule_id:
+    #             LOG.debug('Tsuru Unbind App removing rule for {}'.format(host))
+    #             resp = requests.delete(
+    #                 '{}/{}'.format(credential.endpoint, rule_id),
+    #                 auth=(credential.user, credential.password)
+    #             )
+    #             if not resp.ok:
+    #                 msg = "Error on delete rule {} for {}.".format(
+    #                     rule_id, host)
+    #                 LOG.debug(msg)
+    #     return None
+
     def delete(self, request, database_name, format=None):
         env = get_url_env(request)
         data = request.DATA
-        LOG.debug("Request DATA {}".format(data))
+        LOG.debug("Tsuru Unbind App DELETE Request DATA {}".format(data))
 
         response = check_database_status(database_name, env)
-        if type(response) != Database:
+        if not isinstance(response, Database):
             return response
 
+        database = response
+        acl_from_hell_client = ACLFromHellClient(database.environment)
+        acl_from_hell_client.remove_acl(database, data['app-name'][0])
         return Response(status.HTTP_204_NO_CONTENT)
 
 
@@ -250,7 +327,8 @@ class ServiceUnitBind(APIView):
             transaction.commit()
             transaction.set_autocommit(True)
 
-        if created:
+        can_bind_unit = bool(int(models.Configuration.get_by_name('can_tsuru_bind_unit')))
+        if created and can_bind_unit:
             bind_address_on_database.delay(
                 database_bind=database_bind,
                 user=request.user
@@ -316,7 +394,8 @@ class ServiceUnitBind(APIView):
             transaction.commit()
             transaction.set_autocommit(True)
 
-        if database_bind and database_bind.binds_requested == 0:
+        can_bind_unit = bool(models.Configuration.get_by_name_as_int('can_tsuru_bind_unit'))
+        if database_bind and database_bind.binds_requested == 0 and can_bind_unit:
             unbind_address_on_database.delay(
                 database_bind=database_bind, user=request.user
             )
@@ -517,6 +596,17 @@ def check_database_status(database_name, env):
         return log_and_response(
             msg=msg, http_status=status.HTTP_412_PRECONDITION_FAILED)
 
+    task = TaskHistory.objects.filter(
+        arguments__contains="Database: {}, Environment: {}".format(
+            database_name, env
+        ), task_status="ERROR")
+
+    LOG.info("Task {}".format(task))
+    if task:
+        msg = "A error ocurred creating database {} in env {}. Check error on task history in https://dbaas.globoi.com".format(
+            database_name, env)
+        return log_and_response(
+            msg=msg, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     try:
         database = get_database(database_name, env)
     except IndexError as e:
