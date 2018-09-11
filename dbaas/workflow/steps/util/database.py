@@ -269,13 +269,16 @@ class CheckIfSwitchMaster(DatabaseStep):
         return "Checking if master was switched..."
 
     def do(self):
-
         if not self.infra.plan.is_ha:
             return
 
+        master = None
         for _ in range(CHECK_ATTEMPTS):
             master = self.driver.get_master_instance()
-            if master and master != self.instance:
+            if isinstance(master, list):
+                if self.instance not in master:
+                    return
+            elif master != self.instance:
                 return
             sleep(CHECK_SECONDS)
 
