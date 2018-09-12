@@ -188,6 +188,10 @@
           $('#role-info').popover()
         })
 
+        $(document).on('click', function () {
+          $('#ssl-info').popover()
+        })
+
         $(document).on("click.save-new-credential", ".save-new-credential", function(e) {
             var $insert_row = $(e.target).parent().parent(),
                 username = $("#user-roles").val(),
