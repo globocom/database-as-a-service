@@ -39,7 +39,13 @@ def slugify(string):
 
 
 def make_db_random_password():
-    return User.objects.make_random_password()
+    return User.objects.make_random_password(length=32,
+                                             allowed_chars=(
+                                                 'abcdefghijklmnopqrstuvwxyz'
+                                                 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+                                                 '0123456789'
+                                                 '!#$%&()*+,-./:;<=>?@[]^_{|}~'
+                                             ))
 
 
 def as_json(f):
