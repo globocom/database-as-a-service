@@ -45,7 +45,7 @@ class CredentialBase(BaseDetailView):
                     "password": obj.password,
                     "pk": obj.pk,
                     "ssl_swap_label": obj.ssl_swap_label,
-                    "force_sll": obj.force_ssl,
+                    "force_ssl": obj.force_ssl,
                     "privileges": obj.privileges,
                 }
             }
