@@ -3,33 +3,25 @@ import re
 import logging
 import requests
 from slugify import slugify
-from dbaas.middleware import UserMiddleware
-from util import get_credentials_for
-from util.decorators import REDIS_CLIENT
-from util import simple_health_check
-from logical.models import Database
-from physical.models import Plan, Environment
-from account.models import AccountUser, Team
-from notification.models import TaskHistory
-from notification.tasks import TaskRegister
-from dbaas_aclapi.tasks import bind_address_on_database
-from dbaas_aclapi.tasks import unbind_address_on_database
-from dbaas_aclapi.models import DatabaseBind
-from dbaas_aclapi.models import DESTROYING, CREATED, CREATING
 from dbaas_credentials.models import CredentialType
 from django.core.exceptions import MultipleObjectsReturned
-from django.db import transaction
-from django.db import IntegrityError
 from django.db.models import Q
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.renderers import JSONRenderer, JSONPRenderer
 from rest_framework.response import Response
-import requests
 from networkapiclient import Ip, Network
-from networkapiclient.exception import IpNaoExisteError
 from logical.validators import database_name_evironment_constraint
+from logical.models import Database
+from dbaas.middleware import UserMiddleware
+from util import get_credentials_for
+from util.decorators import REDIS_CLIENT
+from util import simple_health_check
+from physical.models import Plan, Environment
+from account.models import AccountUser, Team
+from notification.models import TaskHistory
+from notification.tasks import TaskRegister
 from system import models
 from workflow.steps.util.base import ACLFromHellClient
 
@@ -210,52 +202,6 @@ class ServiceAppBind(APIView):
 
         return Response(env_vars, status.HTTP_201_CREATED)
 
-    # def remove_acl_for_hosts(self, database, app_name):
-    #
-    #     env = database.environment
-    #     credential = self.get_credential(env)
-    #
-    #     params = {
-    #         'metadata.owner': 'dbaas',
-    #         'metadata.service-name': credential.project,
-    #         'metadata.instance-name': database.name,
-    #         'source.tsuruapp.appname': app_name
-    #     }
-    #
-    #     LOG.debug("Tsuru Unbind App get rule for {} params:{}".format(
-    #         database.name, params))
-    #
-    #     resp = requests.get(
-    #         credential.endpoint,
-    #         params=params,
-    #         auth=(credential.user, credential.password)
-    #     )
-    #
-    #     if not resp.ok:
-    #         msg = "Rule not found for {}.".format(
-    #             database.name)
-    #         LOG.debug(msg)
-    #         return log_and_response(
-    #             msg=msg, e=resp.content,
-    #             http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
-    #         )
-    #
-    #     rules = resp.json()
-    #     for rule in rules:
-    #         rule_id = rule.get('RuleID')
-    #         host = rule.get('Destination', {}).get('ExternalDNS', {}).get('Name')
-    #         if rule_id:
-    #             LOG.debug('Tsuru Unbind App removing rule for {}'.format(host))
-    #             resp = requests.delete(
-    #                 '{}/{}'.format(credential.endpoint, rule_id),
-    #                 auth=(credential.user, credential.password)
-    #             )
-    #             if not resp.ok:
-    #                 msg = "Error on delete rule {} for {}.".format(
-    #                     rule_id, host)
-    #                 LOG.debug(msg)
-    #     return None
-
     def delete(self, request, database_name, format=None):
         env = get_url_env(request)
         data = request.DATA
@@ -276,130 +222,9 @@ class ServiceUnitBind(APIView):
     model = Database
 
     def post(self, request, database_name, format=None):
-        env = get_url_env(request)
-
-        database = check_database_status(database_name, env)
-        if type(database) != Database:
-            return database
-
-        data = request.DATA
-        LOG.debug("Request DATA {}".format(data))
-
-        unit_network = check_acl_service_and_get_unit_network(database, data)
-        if type(unit_network) == Response:
-            return unit_network
-
-        created = False
-        transaction.set_autocommit(False)
-        database_bind = DatabaseBind(
-            database=database, bind_address=unit_network, binds_requested=1
-        )
-
-        try:
-            database_bind.save()
-            created = True
-        except IntegrityError as e:
-            LOG.info("IntegrityError: {}".format(e))
-
-            try:
-                db_bind = DatabaseBind.objects.get(database=database,
-                                                   bind_address=unit_network)
-
-                bind = DatabaseBind.objects.select_for_update().filter(
-                    id=db_bind.id)[0]
-                if bind.bind_status in [CREATED, CREATING]:
-                    bind.binds_requested += 1
-                    bind.save()
-                else:
-                    raise Exception("Binds are beeing destroyed!")
-            except Exception as e:
-                LOG.debug("DatabaseBind is under destruction! {}".format(e))
-                msg = "We are destroying your binds to {}. Please wait.".format(
-                    database_name
-                )
-                return log_and_response(
-                    msg=msg, e=e,
-                    http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
-                )
-
-        finally:
-            LOG.debug("Finishing transaction!")
-            transaction.commit()
-            transaction.set_autocommit(True)
-
-        can_bind_unit = bool(int(models.Configuration.get_by_name('can_tsuru_bind_unit')))
-        if created and can_bind_unit:
-            bind_address_on_database.delay(
-                database_bind=database_bind,
-                user=request.user
-            )
-
         return Response(None, status.HTTP_201_CREATED)
 
     def delete(self, request, database_name, format=None):
-        env = get_url_env(request)
-        data = request.DATA
-        LOG.debug("Request DATA {}".format(data))
-
-        response = check_database_status(database_name, env)
-        if type(response) != Database:
-            return response
-        database = response
-
-        unit_network = check_acl_service_and_get_unit_network(
-            database, data, ignore_ip_error=True)
-        if type(unit_network) == Response:
-            return unit_network
-
-        transaction.set_autocommit(False)
-
-        try:
-            db_bind = DatabaseBind.objects.get(
-                database=database, bind_address=unit_network
-            )
-
-            database_bind = DatabaseBind.objects.select_for_update().filter(
-                id=db_bind.id
-            )[0]
-
-            if database_bind.bind_status == CREATING:
-                raise Exception(
-                    "Bind for {} has not yet been created!".format(
-                        unit_network
-                    )
-                )
-
-            if database_bind.bind_status != DESTROYING:
-                if database_bind.binds_requested > 0:
-                    database_bind.binds_requested -= 1
-
-                if database_bind.binds_requested == 0:
-                    database_bind.bind_status = DESTROYING
-
-                database_bind.save()
-        except (IndexError, ObjectDoesNotExist) as e:
-            database_bind = None
-            msg = "DatabaseBind does not exist: {}"
-            LOG.info(msg.format(e))
-        except IpNaoExisteError as e:
-            msg = "IpNaoExisteError: {}"
-            LOG.info(msg.format(e))
-        except Exception as e:
-            msg = "Bind for {} has not yet been created!".format(unit_network)
-            return log_and_response(
-                msg=msg, e=e, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-        finally:
-            LOG.debug("Finishing transaction!")
-            transaction.commit()
-            transaction.set_autocommit(True)
-
-        can_bind_unit = bool(models.Configuration.get_by_name_as_int('can_tsuru_bind_unit'))
-        if database_bind and database_bind.binds_requested == 0 and can_bind_unit:
-            unbind_address_on_database.delay(
-                database_bind=database_bind, user=request.user
-            )
-
         return Response(status.HTTP_204_NO_CONTENT)
 
 
