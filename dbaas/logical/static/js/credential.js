@@ -72,7 +72,7 @@
                 "type": "PUT",
             }).done(function(data) {
                 $(".swap-ssl-class", credential.$row).text(data.credential.ssl_swap_label);
-                if (data.credential.force_sll){
+                if (data.credential.force_ssl){
                     $(".swap-ssl-class", credential.$row).attr("checked", "checked");
                 }
                 else {
