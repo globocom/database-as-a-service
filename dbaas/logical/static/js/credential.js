@@ -72,6 +72,14 @@
                 "type": "PUT",
             }).done(function(data) {
                 $(".swap-ssl-class", credential.$row).text(data.credential.ssl_swap_label);
+                if (data.credential.force_ssl){
+                    $(".swap-ssl-class", credential.$row).attr("checked", "checked");
+                }
+                else {
+                    $(".swap-ssl-class", credential.$row).removeAttr("checked")
+                    ;
+                }
+
                 if (callback) {
                     callback(credential);
                 }
@@ -178,6 +186,10 @@
 
         $(document).on('click', function () {
           $('#role-info').popover()
+        })
+
+        $(document).on('click', function () {
+          $('#ssl-info').popover()
         })
 
         $(document).on("click.save-new-credential", ".save-new-credential", function(e) {
