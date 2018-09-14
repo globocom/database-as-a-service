@@ -622,7 +622,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 name="logical_database_configure_ssl"
             ),
             url(
-                r'^/?(?P<id>\d+)/configure_ssl_retry/$',
+                r'^/\d+/configure_ssl_retry/$',
                 self.admin_site.admin_view(database_configure_ssl_retry),
                 name="logical_database_configure_ssl_retry"
             ),
