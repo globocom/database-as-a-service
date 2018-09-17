@@ -131,12 +131,12 @@
 
             $(".copy-password", $row).on('click', function(e) {
               var link = $(this).attr('data-content');
-              var tempInput = document.createElement("input");
-              tempInput.value = link;
-              document.body.appendChild(tempInput);
+              var tmp_input = document.createElement("input");
+              tmp_input.value = link;
+              document.body.appendChild(tmp_input);
+              tmp_input.select();
               document.execCommand("copy");
-              console.log("Copied the text:", tempInput.value);
-              document.body.removeChild(tempInput);
+              document.body.removeChild(tmp_input);
             });
 
             $(".show-password", $row).popover({"trigger": "manual", "placement": "left"})
@@ -150,7 +150,7 @@
               credential.reset_password(function() {
                     $("#reset_psw_modal-" + credential.pk).modal('toggle');
                     credential.show_password(true);
-                     window.location.href = '';
+                    window.location.href = '';
                     return false;
               });
               return false;
