@@ -129,6 +129,16 @@
             // put all listeners
             var $row = credential.$row;
 
+            $(".copy-password", $row).on('click', function(e) {
+              var link = $(this).attr('data-content');
+              var tempInput = document.createElement("input");
+              tempInput.value = link;
+              document.body.appendChild(tempInput);
+              document.execCommand("copy");
+              console.log("Copied the text:", tempInput.value);
+              document.body.removeChild(tempInput);
+            });
+
             $(".show-password", $row).popover({"trigger": "manual", "placement": "left"})
             .on('click', function(e) {
                 e.preventDefault();
