@@ -54,6 +54,7 @@
                 "type": "PUT",
             }).done(function(data) {
                 $(".show-password", credential.$row).attr("data-content", data.credential.password);
+                $(".copy-password", credential.$row).attr("data-content", data.credential.password);
                 if (callback) {
                     callback(credential);
                 }
@@ -150,7 +151,6 @@
               credential.reset_password(function() {
                     $("#reset_psw_modal-" + credential.pk).modal('toggle');
                     credential.show_password(true);
-                    window.location.href = '';
                     return false;
               });
               return false;
