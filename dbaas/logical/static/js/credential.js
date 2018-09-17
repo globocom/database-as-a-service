@@ -150,6 +150,7 @@
               credential.reset_password(function() {
                     $("#reset_psw_modal-" + credential.pk).modal('toggle');
                     credential.show_password(true);
+                     window.location.href = '';
                     return false;
               });
               return false;
