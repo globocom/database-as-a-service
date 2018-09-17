@@ -134,3 +134,7 @@ p.error_message {
   margin-left: 5px;
 }
 
+.popover{
+    width:auto;
+}
+
