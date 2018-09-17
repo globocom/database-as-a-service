@@ -24,7 +24,7 @@ LOG = logging.getLogger(__name__)
 # have questions about this variable
 DEFAULT_OUTPUT_BUFFER_SIZE = 16384
 PROCESS_TIMEOUT = 4 * 60 * 60  # 4 horas
-CHARACTERS = 'abcdefghijklmnopqrstuvwxyz'
+PASSWORD_CHARACTERS = 'abcdefghijklmnopqrstuvwxyz'
 
 
 class AlarmException(Exception):
@@ -40,15 +40,15 @@ def slugify(string):
 
 
 def make_db_random_password():
-    return User.objects.make_random_password(length=32,
-                                             allowed_chars=(
-                                                 '{}{}{}{}'.format(
-                                                     CHARACTERS,
-                                                     CHARACTERS.upper(),
-                                                     '0123456789',
-                                                     '#*+,-./=?^_{}'
-                                                 )
-                                             ))
+    return User.objects.make_random_password(
+        length=32,
+        allowed_chars=('{}{}{}{}'.format(
+            PASSWORD_CHARACTERS,
+            PASSWORD_CHARACTERS.upper(),
+            '0123456789',
+            '#*+,-./=?^_{}'
+        )
+    ))
     #These characters probably will not work in the passwork:
     # !, (, ), >, <, :, $, &, @, ~, |, %, ;, [, ]
 
