@@ -115,7 +115,7 @@ class Provider(object):
 
         return True
 
-    def create_host(self, infra, offering, name, team_name):
+    def create_host(self, infra, offering, name, team_name, zone=None):
         url = "{}/{}/{}/host/new".format(
             self.credential.endpoint, self.provider, self.environment
         )
@@ -127,6 +127,8 @@ class Provider(object):
             "group": infra.name,
             "team_name": team_name
         }
+        if zone:
+            data['zone'] = zone
 
         response = post(url, json=data, timeout=600)
         if response.status_code != 201:
@@ -313,12 +315,16 @@ class CreateVirtualMachine(HostProviderStep):
             return self.database.team.name
         return self.create.team.name
 
+    @property
+    def zone(self):
+        return None
+
     def do(self):
         try:
             pair = self.infra.instances.get(dns=self.instance.dns)
         except Instance.DoesNotExist:
             host = self.provider.create_host(
-                self.infra, self.offering, self.vm_name, self.team
+                self.infra, self.offering, self.vm_name, self.team, self.zone
             )
             self.update_databaseinfra_last_vm_created()
         else:
@@ -340,3 +346,14 @@ class CreateVirtualMachine(HostProviderStep):
         self.delete_instance()
         if host.id:
             host.delete()
+
+
+class CreateVirtualMachineNewZone(CreateVirtualMachine):
+
+    @property
+    def has_database(self):
+        return False
+
+    @property
+    def zone(self):
+        return 'CMAH08BE'
