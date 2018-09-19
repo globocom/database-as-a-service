@@ -7,7 +7,6 @@ from util import check_ssh, get_credentials_for
 from base import BaseInstanceStep
 
 
-
 CHANGE_MASTER_ATTEMPS = 4
 CHANGE_MASTER_SECONDS = 15
 
@@ -41,7 +40,6 @@ class Provider(object):
 
     @property
     def credential(self):
-        # TODO Remove hard coded "Cloudstack"
         if not self._credential:
             self._credential = get_credentials_for(
                 self.environment, CredentialType.HOST_PROVIDER
@@ -69,7 +67,6 @@ class Provider(object):
         data = {
             "host_id": self.instance.hostname.identifier
         }
-
         response = post(url, json=data)
         if not response.ok:
             raise IndexError(response.content, response)
@@ -83,7 +80,6 @@ class Provider(object):
         data = {
             "host_id": self.instance.hostname.identifier
         }
-
         response = post(url, json=data)
         if not response.ok:
             raise IndexError(response.content, response)
@@ -98,7 +94,6 @@ class Provider(object):
         data.update(
             **{'engine': engine.full_name_for_host_provider} if engine else {}
         )
-
         response = post(url, json=data)
         if response.status_code != 200:
             raise IndexError(response.content, response)
@@ -109,13 +104,11 @@ class Provider(object):
         url = "{}/{}/{}/host/resize".format(
             self.credential.endpoint, self.provider, self.environment
         )
-
         data = {
             "host_id": self.host.identifier,
             "cpus": offering.cpus,
             'memory': offering.memory_size_mb
         }
-
         response = post(url, json=data)
         if response.status_code != 200:
             raise IndexError(response.content, response)
@@ -153,12 +146,11 @@ class Provider(object):
 
         return host
 
-    def destroy_host(self, host):
+    def destroy_host(self):
         url = "{}/{}/{}/host/{}".format(
             self.credential.endpoint, self.provider, self.environment,
             self.instance.hostname.identifier
         )
-
         response = delete(url)
         if not response.ok:
             raise IndexError(response.content, response)
@@ -255,15 +247,8 @@ class ChangeOffering(HostProviderStep):
 
     def __init__(self, instance):
         super(ChangeOffering, self).__init__(instance)
-
         self.target_offering = self.resize.target_offer
 
-#    def get_offering_id(self, offering):
-#        host_provider_cli = HostProviderClient(self.infra.environment)
-#        return host_provider_cli.get_offering_id(
-#            offering.cpus, offering.memory
-#        )
-#
     def __unicode__(self):
         return "Resizing VM..."
 
@@ -274,7 +259,6 @@ class ChangeOffering(HostProviderStep):
 
     def undo(self):
         self.target_offering = self.resize.source_offer
-        # self.target_offering_id = self.get_offering_id(self.resize.source_offer)
         self.do()
 
 
@@ -286,7 +270,7 @@ class CreateVirtualMachine(HostProviderStep):
     def create_instance(self, host):
         self.instance.hostname = host
         self.instance.address = host.address
-        self.instance.read_only = self.is_readonly_instance
+        self.instance.read_only = self.has_database
         self.instance.save()
 
     def delete_instance(self):
@@ -298,14 +282,6 @@ class CreateVirtualMachine(HostProviderStep):
         last_vm_created += 1
         self.infra.last_vm_created = last_vm_created
         self.infra.save()
-
-    def delete_instance(self):
-        if self.instance.id:
-            self.instance.delete()
-
-    @property
-    def is_readonly_instance(self):
-        return bool(self.database)
 
     @property
     def vm_name(self):
@@ -319,20 +295,30 @@ class CreateVirtualMachine(HostProviderStep):
     def weaker_offering(self):
         return self.plan.weaker_offering
 
-    def do(self):
-        if self.instance.is_database:
-            offering = (self.infra.offering if self.is_readonly_instance
-                        else self.stronger_offering)
-        else:
-            offering = self.weaker_offering
+    @property
+    def database_offering(self):
+        if self.has_database:
+            return self.infra.offering
+        return self.stronger_offering
 
+    @property
+    def offering(self):
+        if self.instance.is_database:
+            return self.database_offering
+        return self.weaker_offering
+
+    @property
+    def team(self):
+        if self.has_database:
+            return self.database.team.name
+        return self.create.team.name
+
+    def do(self):
         try:
             pair = self.infra.instances.get(dns=self.instance.dns)
         except Instance.DoesNotExist:
             host = self.provider.create_host(
-                self.infra, offering,
-                self.vm_name,
-                self.database.team.name if self.is_readonly_instance else self.create.team.name
+                self.infra, self.offering, self.vm_name, self.team
             )
             self.update_databaseinfra_last_vm_created()
         else:
@@ -348,9 +334,7 @@ class CreateVirtualMachine(HostProviderStep):
             return
 
         try:
-            self.provider.destroy_host(
-                Host.objects.get(id=host.id)
-            )
+            self.provider.destroy_host()
         except (Host.DoesNotExist, IndexError):
             pass
         self.delete_instance()

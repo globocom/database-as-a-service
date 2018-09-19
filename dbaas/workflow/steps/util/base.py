@@ -115,6 +115,10 @@ class BaseInstanceStep(object):
         if create and create.is_running:
             return create
 
+    @property
+    def has_database(self):
+        return bool(self.database)
+
     def do(self):
         raise NotImplementedError
 
