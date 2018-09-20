@@ -277,7 +277,7 @@ def steps_for_instances(
                             task.add_step(
                                 step_current, steps_total, str_step_instance
                             )
-                            time.sleep(5)
+                            time.sleep(3 * retry)
                     else:
                         task.update_details("SUCCESS!", persist=True)
                         break
