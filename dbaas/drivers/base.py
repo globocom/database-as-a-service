@@ -34,10 +34,10 @@ class BaseDriver(object):
 
     def _masters_size_in_bytes(self, field_lookup):
         masters = self.get_master_instance()
+        if not masters:
+            return 0
         masters = [masters] if not isinstance(masters, Iterable) else masters
-        return sum(map(
-            lambda m: getattr(m, field_lookup) or 0, masters
-        ))
+        return sum(map(lambda m: getattr(m, field_lookup) or 0, masters))
 
     @property
     def replication_topology(self):
