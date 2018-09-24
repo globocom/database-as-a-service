@@ -40,7 +40,8 @@ class ZabbixStep(BaseInstanceStep):
         return self.provider
 
     def __del__(self):
-        self.zabbix_provider.logout()
+        if self.provider:
+            self.zabbix_provider.logout()
 
     def do(self):
         raise NotImplementedError
