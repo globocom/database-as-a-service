@@ -217,7 +217,7 @@ def steps_for_instances(
     if undo:
         list_of_groups_of_steps.reverse()
 
-    max_step_retry = Configuration.get_by_name_as_int('max_step_retry', 1)
+    step_max_retry = Configuration.get_by_name_as_int('max_step_retry', 0) + 1
 
     for count, group_of_steps in enumerate(list_of_groups_of_steps, start=1):
         task.add_detail('Starting group of steps {} of {} - {}'.format(
@@ -254,14 +254,14 @@ def steps_for_instances(
                     task.add_detail(full_stack())
                     return False
 
-                for retry in range(max_step_retry):
+                for retry in range(1, 1 + step_max_retry):
                     try:
                         if undo:
                             step_instance.undo()
                         else:
                             step_instance.do()
                     except Exception as e:
-                        if retry == max_step_retry - 1:
+                        if retry == step_max_retry:
                             task.update_details("FAILED!", persist=True)
                             task.add_detail(str(e))
                             task.add_detail(full_stack())
@@ -269,15 +269,15 @@ def steps_for_instances(
                         else:
                             task.update_details(
                                 "FAILED! Retrying ({}/{})...".format(
-                                    retry + 1, max_step_retry - 1
+                                    retry, step_max_retry - 1
                                 )
                             )
                             LOG.debug(str(e))
                             LOG.debug(full_stack())
+                            time.sleep(3 * retry)
                             task.add_step(
                                 step_current, steps_total, str_step_instance
                             )
-                            time.sleep(3 * retry)
                     else:
                         task.update_details("SUCCESS!", persist=True)
                         break
