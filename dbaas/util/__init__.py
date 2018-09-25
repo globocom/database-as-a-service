@@ -46,11 +46,10 @@ def make_db_random_password():
             PASSWORD_CHARACTERS,
             PASSWORD_CHARACTERS.upper(),
             '0123456789',
-            '#*+,-./=?^_{}'
-        )
-    ))
-    #These characters probably will not work in the passwork:
-    # !, (, ), >, <, :, $, &, @, ~, |, %, ;, [, ]
+            '#*+,-.=?^_{}'
+        ))
+    )
+
 
 def as_json(f):
     def wrapper(request, *args, **kw):
