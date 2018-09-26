@@ -104,6 +104,12 @@ class BaseInstanceStep(object):
             return upgrade
 
     @property
+    def host_migrate(self):
+        migrate = self.host.migrate.last()
+        if migrate and migrate.is_running:
+            return migrate
+
+    @property
     def reinstall_vm(self):
         reinstall_vm = self.database.reinstall_vm.last()
         if reinstall_vm and reinstall_vm.is_running:
