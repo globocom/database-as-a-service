@@ -132,6 +132,24 @@ class BaseInstanceStep(object):
         raise NotImplementedError
 
 
+class BaseInstanceStepMigrate(BaseInstanceStep):
+
+    @property
+    def host(self):
+        host = super(BaseInstanceStepMigrate, self).host
+        return host.future_host if host else None
+
+    @property
+    def host(self):
+        return self.host_migrate.environment
+
+    def do(self):
+        raise NotImplementedError
+
+    def undo(self):
+        raise NotImplementedError
+
+
 class BaseInstanceStepMigration(BaseInstanceStep):
 
     @property

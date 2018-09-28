@@ -1,11 +1,8 @@
 # -*- coding: utf-8 -*-
 from time import sleep
-from django.core.exceptions import ObjectDoesNotExist
 from dbaas_credentials.models import CredentialType
-from physical.models import Environment, Instance
 from util import exec_remote_command_host, check_ssh, get_credentials_for
-from base import BaseInstanceStep, BaseInstanceStepMigration
-from workflow.steps.util.base import HostProviderClient
+from base import BaseInstanceStep, BaseInstanceStepMigrate
 
 CHANGE_MASTER_ATTEMPS = 30
 CHANGE_MASTER_SECONDS = 15
@@ -46,7 +43,7 @@ class WaitingBeReady(VmStep):
             raise EnvironmentError('VM is not ready')
 
 
-class MigrationWaitingBeReady(WaitingBeReady, BaseInstanceStepMigration):
+class WaitingBeReadyMigrate(WaitingBeReady, BaseInstanceStepMigrate):
     pass
 
 
@@ -57,6 +54,10 @@ class UpdateOSDescription(VmStep):
 
     def do(self):
         self.host.update_os_description()
+
+
+class UpdateOSDescriptionMigrate(UpdateOSDescription, BaseInstanceStepMigrate):
+    pass
 
 
 class ChangeMaster(VmStep):
