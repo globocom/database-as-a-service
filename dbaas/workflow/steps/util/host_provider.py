@@ -3,8 +3,9 @@ from django.core.exceptions import ObjectDoesNotExist
 from requests import post, delete
 from dbaas_credentials.models import CredentialType
 from physical.models import Host, Instance
-from util import check_ssh, get_credentials_for
+from util import get_credentials_for
 from base import BaseInstanceStep
+from vm import WaitingBeReady
 
 
 CHANGE_MASTER_ATTEMPS = 4
@@ -233,17 +234,6 @@ class ReinstallTemplate(HostProviderStep):
         reinstall = self.provider.new_version()
         if not reinstall:
             raise EnvironmentError('Could not reinstall VM')
-
-
-class WaitingBeReady(HostProviderStep):
-
-    def __unicode__(self):
-        return "Waiting for VM be ready..."
-
-    def do(self):
-        host_ready = check_ssh(self.host, wait=5, interval=10)
-        if not host_ready:
-            raise EnvironmentError('VM is not ready')
 
 
 class ChangeOffering(HostProviderStep):
