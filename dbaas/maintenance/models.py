@@ -625,6 +625,10 @@ class HostMigrate(DatabaseMaintenanceTask):
     def __unicode__(self):
         return "Migrate {} to {}".format(self.host, self.zone)
 
+    @property
+    def disable_retry_filter(self):
+        return {'host': self.host}
+
 
 simple_audit.register(Maintenance)
 simple_audit.register(HostMaintenance)
