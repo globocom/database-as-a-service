@@ -259,7 +259,10 @@ def database_configure_ssl(request, context, database):
     )
 
 
-def database_configure_ssl_retry(request, context, database):
+def database_configure_ssl_retry(request, context=None, database=None, id=None):
+
+    if database is None:
+        database = Database.objects.get(id=id)
 
     can_do_configure_ssl, error = database.can_do_configure_ssl_retry()
 
