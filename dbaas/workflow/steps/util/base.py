@@ -149,6 +149,12 @@ class BaseInstanceStepMigration(BaseInstanceStep):
         plan = super(BaseInstanceStepMigration, self).plan
         return plan.migrate_plan
 
+    def do(self):
+        raise NotImplementedError
+
+    def undo(self):
+        raise NotImplementedError
+
 
 class HostProviderClient(object):
     credential_type = CredentialType.HOST_PROVIDER
@@ -165,14 +171,15 @@ class HostProviderClient(object):
             )
         return self._credential
 
-
     def get_vm_by_host(self, host):
         api_host_url = '/{}/{}/host/{}'.format(
             self.credential.project,
             self.env.name,
             host.identifier
         )
-        resp = requests.get('{}{}'.format(self.credential.endpoint, api_host_url))
+        resp = requests.get('{}{}'.format(
+            self.credential.endpoint, api_host_url)
+        )
         if resp.ok:
             vm = resp.json()
             return namedtuple('VMProperties', vm.keys())(*vm.values())
@@ -184,8 +191,9 @@ class HostProviderClient(object):
             cpus,
             memory
         )
-
-        resp = requests.get('{}{}'.format(self.credential.endpoint, api_host_url))
+        resp = requests.get('{}{}'.format(
+            self.credential.endpoint, api_host_url)
+        )
         if resp.ok:
             data = resp.json()
             return data.get('offering_id')
