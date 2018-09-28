@@ -408,6 +408,7 @@ def update_database_status(self):
         worker_name = get_worker_name()
         task_history = TaskHistory.register(
             request=self.request, user=None, worker_name=worker_name)
+        task_history.relevance = TaskHistory.RELEVANCE_WARNING
         databases = Database.objects.all()
         msgs = []
         for database in databases:
@@ -481,6 +482,7 @@ def update_infra_instances_sizes(self):
         worker_name = get_worker_name()
         task_history = TaskHistory.register(
             request=self.request, user=None, worker_name=worker_name)
+        task_history.relevance = TaskHistory.RELEVANCE_WARNING
         databases = Database.objects.all()
         msgs = []
         for database in databases:
@@ -505,6 +507,7 @@ def update_instances_status(self):
     worker_name = get_worker_name()
     task_history = TaskHistory.register(
         request=self.request, user=None, worker_name=worker_name)
+    task_history.relevance = TaskHistory.RELEVANCE_WARNING
 
     try:
         infras = DatabaseInfra.objects.all()
@@ -786,6 +789,7 @@ def update_disk_used_size(self):
     task = TaskHistory.register(
         request=self.request, user=None, worker_name=worker_name
     )
+    task.relevance = TaskHistory.RELEVANCE_WARNING
     task.add_detail(message='Collecting disk used space from Zabbix')
 
     from .tasks_disk_resize import zabbix_collect_used_disk

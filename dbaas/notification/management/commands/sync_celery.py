@@ -37,6 +37,7 @@ class Command(BaseCommand):
         self.task = TaskHistory()
         self.task.task_id = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
         self.task.task_name = "sync_celery_tasks"
+        self.task.relevance = TaskHistory.RELEVANCE_WARNING
         self.task.task_status = TaskHistory.STATUS_RUNNING
         self.task.context = {'hostname': socket.gethostname()}
         self.task.save()
