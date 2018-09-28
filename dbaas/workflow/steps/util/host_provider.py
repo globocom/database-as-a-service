@@ -13,10 +13,11 @@ CHANGE_MASTER_SECONDS = 15
 
 class Provider(object):
 
-    def __init__(self, instance):
+    def __init__(self, instance, environment):
         self.instance = instance
         self._credential = None
         self._vm_credential = None
+        self._environment = environment
 
     @property
     def infra(self):
@@ -28,7 +29,7 @@ class Provider(object):
 
     @property
     def environment(self):
-        return self.infra.environment
+        return self._environment
 
     @property
     def host(self):
@@ -148,10 +149,10 @@ class Provider(object):
 
         return host
 
-    def destroy_host(self):
+    def destroy_host(self, host):
         url = "{}/{}/{}/host/{}".format(
             self.credential.endpoint, self.provider, self.environment,
-            self.instance.hostname.identifier
+            host.identifier
         )
         response = delete(url)
         if not response.ok:
@@ -169,7 +170,7 @@ class HostProviderStep(BaseInstanceStep):
     @property
     def provider(self):
         if not self._provider:
-            self._provider = Provider(self.instance)
+            self._provider = Provider(self.instance, self.environment)
         return self._provider
 
     def do(self):
@@ -340,7 +341,7 @@ class CreateVirtualMachine(HostProviderStep):
             return
 
         try:
-            self.provider.destroy_host()
+            self.provider.destroy_host(self.host)
         except (Host.DoesNotExist, IndexError):
             pass
         self.delete_instance()
@@ -351,9 +352,37 @@ class CreateVirtualMachine(HostProviderStep):
 class CreateVirtualMachineNewZone(CreateVirtualMachine):
 
     @property
-    def has_database(self):
-        return False
+    def environment(self):
+        return self.host_migrate.environment
 
     @property
     def zone(self):
-        return 'CMAH08BE'
+        return self.host_migrate.zone
+
+    @property
+    def vm_name(self):
+        return self.host.hostname.split('.')[0]
+
+    def do(self):
+        if self.host.future_host:
+            return
+
+        host = self.provider.create_host(
+            self.infra, self.offering, self.vm_name, self.team, self.zone
+        )
+        self.host.future_host = host
+        self.host.save()
+
+    def undo(self):
+        try:
+            host = self.instance.hostname.future_host
+        except ObjectDoesNotExist:
+            return
+
+        try:
+            self.provider.destroy_host(self.host.future_host)
+        except (Host.DoesNotExist, IndexError):
+            pass
+
+        if host.id:
+            host.delete()
