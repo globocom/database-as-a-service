@@ -493,6 +493,9 @@ class RedisSentinel(Redis):
 
     def parameters_redis(self, host):
         redis = host.database_instance()
+        if redis and host.future_host:
+            redis.address = host.future_host.address
+
         redis_address = ''
         redis_port = ''
         only_sentinel = True
@@ -516,6 +519,9 @@ class RedisSentinel(Redis):
 
     def parameters_sentinel(self, host):
         sentinel = host.non_database_instance()
+        if sentinel and host.future_host:
+            sentinel.address = host.future_host.address
+
         sentinel_address = ''
         sentinel_port = ''
         if sentinel:
