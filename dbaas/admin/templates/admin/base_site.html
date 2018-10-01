@@ -1,6 +1,6 @@
 {% extends "admin/base.html" %}
 {% load i18n %}
-{% load admin_static %}
+{% load admin_static system_config %}
 
 {% block title %}{{ title }} | DBaaS{% endblock %}
 
@@ -10,6 +10,10 @@
 
 {% block branding %}
     <a href="{% url 'admin:index' %}" class="brand" id="site-name">DBaaS</a>
+    {% get_configuration 'docs_url' 'config_docs_url' %}
+    {% if config_docs_url %}
+      <a href="{{ config_docs_url }}" target="_blank" class="brand" id="site-docs">Docs</a>
+    {% endif %}
 {% endblock %}
 
 {% block nav-global %}{% endblock %}
