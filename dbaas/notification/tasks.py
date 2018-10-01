@@ -538,6 +538,7 @@ def purge_task_history(self):
         worker_name = get_worker_name()
         task_history = TaskHistory.register(
             request=self.request, user=None, worker_name=worker_name)
+        task_history.relevance = TaskHistory.RELEVANCE_WARNING
 
         now = datetime.datetime.now()
         retention_days = Configuration.get_by_name_as_int(
