@@ -56,14 +56,20 @@ class BaseInstanceStep(object):
     @property
     def host(self):
         try:
-            return self.instance.hostname
+            host = self.instance.hostname
         except ObjectDoesNotExist:
             LOG.info(
                 'Instance {} does not have hostname'.format(self.instance))
             return
 
+        if self.host_migrate:
+            return host.future_host
+        return host
+
     @property
     def environment(self):
+        if self.host_migrate:
+            return self.host_migrate.environment
         return self.infra.environment
 
     @property
@@ -105,7 +111,7 @@ class BaseInstanceStep(object):
 
     @property
     def host_migrate(self):
-        migrate = self.host.migrate.last()
+        migrate = self.instance.hostname.migrate.last()
         if migrate and migrate.is_running:
             return migrate
 
@@ -124,24 +130,6 @@ class BaseInstanceStep(object):
     @property
     def has_database(self):
         return bool(self.database)
-
-    def do(self):
-        raise NotImplementedError
-
-    def undo(self):
-        raise NotImplementedError
-
-
-class BaseInstanceStepMigrate(BaseInstanceStep):
-
-    @property
-    def host(self):
-        host = super(BaseInstanceStepMigrate, self).host
-        return host.future_host if host else None
-
-    @property
-    def host(self):
-        return self.host_migrate.environment
 
     def do(self):
         raise NotImplementedError

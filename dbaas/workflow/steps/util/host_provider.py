@@ -339,7 +339,7 @@ class CreateVirtualMachine(HostProviderStep):
             host.delete()
 
 
-class CreateVirtualMachineNewZone(CreateVirtualMachine):
+class CreateVirtualMachineMigrate(CreateVirtualMachine):
 
     @property
     def environment(self):
@@ -348,6 +348,10 @@ class CreateVirtualMachineNewZone(CreateVirtualMachine):
     @property
     def zone(self):
         return self.host_migrate.zone
+
+    @property
+    def host(self):
+        return self.instance.hostname
 
     @property
     def vm_name(self):
