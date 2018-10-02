@@ -37,6 +37,21 @@
     };
 
     Database.prototype = {
+        update_modal_message: function() {
+            var environment_id = $("#id_environment").val() || "";
+            if (environment_id) {
+              $.ajax({
+                  type: "GET",
+                  dataType: "json",
+                  url: "/logical/" + environment_id + "/credential_parameter_by_name/add_database_modal_msg"
+              }).done(function (response) {
+                  var msg = response.msg;
+                  if (msg) {
+                    $("label[for=id_database_name] .modal_message").text(msg)
+                  }
+              });
+            }
+        },
         update_components: function() {
             this.filter_plans();
         },
@@ -118,6 +133,7 @@
         $("#id_environment").on("change", function() {
             database.update_engines(engines);
             database.update_components();
+            database.update_modal_message();
         });
         $("#id_environment").change();
 
