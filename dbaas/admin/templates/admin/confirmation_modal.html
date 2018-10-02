@@ -15,7 +15,7 @@
         <div role="form">
           <div class="form-group">
             <label for="id_database_name">
-              <div class="modal_message">{{ confirmation_message }}</div>
+              <div class="modal_message">{{ confirmation_message }}<br><br><div ><b class="bold_red modal_extra_message" ></b></div></div>
             </label>
           </div>
         </div>
@@ -23,8 +23,8 @@
 
       <div class="modal-footer">
         <button type="button" class="btn btn-default" data-dismiss="modal">No</button>
-        <{{ tag_type|default:"button" }} type= "{{ button_type|default:"button" }}" 
-          class="btn-accept-modal active {{ button_class|default:"btn btn-primary" }}" 
+        <{{ tag_type|default:"button" }} type= "{{ button_type|default:"button" }}"
+          class="btn-accept-modal active {{ button_class|default:"btn btn-primary" }}"
           name="{{ button_name|default:"" }}"
           value="{{ button_value|default:"" }}"
           {{ dismiss_option|default:"" }}
@@ -34,4 +34,3 @@
     </div>
   </div>
 </div>
-
