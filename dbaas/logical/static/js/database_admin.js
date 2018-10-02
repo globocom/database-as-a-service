@@ -45,10 +45,8 @@
                   dataType: "json",
                   url: "/logical/" + environment_id + "/credential_parameter_by_name/add_database_modal_msg"
               }).done(function (response) {
-                  var msg = response.msg;
-                  if (msg) {
-                    $("label[for=id_database_name] .modal_message").text(msg)
-                  }
+                  var msg = response.msg || "";
+                  $("label[for=id_database_name] .modal_message .modal_extra_message").text(msg).css({'color': 'red'});
               });
             }
         },
