@@ -330,9 +330,8 @@ class Database(BaseModel):
             self.save()
             if self.credentials.exists():
                 for credential in self.credentials.all():
-                    new_password = make_db_random_password()
                     new_credential = Credential.objects.get(pk=credential.id)
-                    new_credential.password = new_password
+                    new_credential.password = new_credential.make_random_password()
                     new_credential.save()
 
                     instance = factory_for(self.databaseinfra)
@@ -946,9 +945,14 @@ class Credential(BaseModel):
     def driver(self):
         return self.database.databaseinfra.get_driver()
 
+    def make_random_password(self):
+        return make_db_random_password(
+            **{'password_especial_characters': ''} if self.database.infra.engine.is_redis else {}
+        )
+
     def reset_password(self):
         """ Reset credential password to a new random password """
-        self.password = make_db_random_password()
+        self.password = self.make_random_password()
         self.driver.update_user(self)
         self.save()
 
@@ -975,7 +979,7 @@ class Credential(BaseModel):
         credential.database = database
         credential.user = user[:cls.USER_MAXIMUM_LENGTH_NAME]
         credential.user = slugify(credential.user)
-        credential.password = make_db_random_password()
+        credential.password = credential.make_random_password()
         credential.privileges = privileges
         credential.full_clean()
         credential.driver.create_user(credential)

@@ -349,7 +349,7 @@ class Redis(BaseDriver):
         return ['redis_single']
 
     def build_new_infra_auth(self):
-        return '', make_db_random_password(), ''
+        return '', make_db_random_password(password_especial_characters=''), ''
 
 
 class RedisSentinel(Redis):
