@@ -59,36 +59,26 @@ class ChangeEndpoint(DNSStep):
         return "Changing DNS endpoint..."
 
     def do(self):
-        for instance in self.host.instances.all():
-            old_instance = instance.future_instance
+        origin_host = self.host_migrate.host
+        for instance in origin_host.instances.all():
             DNSAPIProvider.update_database_dns_content(
-                self.infra, old_instance.dns,
-                old_instance.address, instance.address
+                self.infra, instance.dns,
+                origin_host.address, self.host.address
             )
 
-            instance.dns = old_instance.dns
-            old_instance.dns = old_instance.address
-            old_instance.save()
-            instance.save()
-
-            if self.instance.id == instance.id:
-                self.instance.dns = instance.dns
-
-        old_host = self.host.future_host
         DNSAPIProvider.update_database_dns_content(
-            self.infra, old_host.hostname,
-            old_host.address, self.host.address
+            self.infra, origin_host.hostname,
+            origin_host.address, self.host.address
         )
 
-        self.host.hostname = old_host.hostname
-        old_host.hostname = old_host.address
-
-        old_host.save()
+        self.host.hostname = origin_host.hostname
+        origin_host.hostname = origin_host.address
+        origin_host.save()
         self.host.save()
 
-        if self.infra.endpoint and old_host.address in self.infra.endpoint:
+        if self.infra.endpoint and origin_host.address in self.infra.endpoint:
             self.infra.endpoint = self.infra.endpoint.replace(
-                old_host.address, self.host.address
+                origin_host.address, self.host.address
             )
             self.infra.save()
 
@@ -156,7 +146,6 @@ class RegisterDNSVip(DNSStep):
             ip=self.vip.vip_ip
         )
 
-
     def undo(self):
         if not self.is_valid:
             return
@@ -190,6 +179,8 @@ class CheckIsReady(DNSStep):
         if str(check_dns).lower() != 'true':
             return
 
-        for dns in DatabaseInfraDNSList.objects.filter(databaseinfra=self.infra.id):
+        for dns in DatabaseInfraDNSList.objects.filter(
+                databaseinfra=self.infra.id
+        ):
             if not check_nslookup(dns.dns, self.credentials.project):
                 raise EnvironmentError("DNS {} is not ready".format(dns.dns))
