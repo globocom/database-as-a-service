@@ -25,6 +25,7 @@ class TaskSerializer(serializers.ModelSerializer):
             'task_name',
             'database',
             'rollback',
+            'relevance',
         )
 
     def had_rollback(self, task):
@@ -112,7 +113,8 @@ class TaskAPI(viewsets.ReadOnlyModelViewSet):
         'object_id',
         'updated_at',
         'created_at',
-        'user'
+        'user',
+        'relevance'
     )
     ordering_fields = ('created_at', 'updated_at', 'id')
     ordering = ('-created_at',)
