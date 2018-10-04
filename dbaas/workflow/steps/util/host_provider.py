@@ -258,7 +258,7 @@ class ChangeOffering(HostProviderStep):
 class CreateVirtualMachine(HostProviderStep):
 
     def __unicode__(self):
-        return "Creating virtualmachine..."
+        return "Creating virtual machine..."
 
     def create_instance(self, host):
         self.instance.hostname = host
@@ -380,3 +380,36 @@ class CreateVirtualMachineMigrate(CreateVirtualMachine):
 
         if host.id:
             host.delete()
+
+
+class DestroyVirtualMachineMigrate(HostProviderStep):
+
+    def __unicode__(self):
+        return "Destroying virtual machine..."
+
+    def do(self):
+        host = self.instance.hostname
+        self.provider.destroy_host(host)
+        for instance in host.instances.all():
+            instance.hostname = self.host
+            instance.address = self.host.address
+            instance.save()
+        self.host_migrate.host = self.host
+        self.host_migrate.save()
+        host.delete()
+
+    def undo(self):
+        host = self.provider.create_host(
+            self.infra, self.offering, self.vm_name, self.team
+        )
+        host.future_host = self.host
+        host.save()
+        for instance in self.host.instances.all():
+            instance.address = self.host.address
+            instance.hostname = self.host
+            instance.save()
+        self.instance.hostname = host
+        self.instance.address = host.address
+        self.instance.save()
+        self.host_migrate.host = host
+        self.host_migrate.save()
