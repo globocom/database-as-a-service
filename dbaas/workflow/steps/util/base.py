@@ -111,7 +111,7 @@ class BaseInstanceStep(object):
 
     @property
     def host_migrate(self):
-        if not self.instance.hostname:
+        if not self.instance.hostname_id:
             return
 
         migrate = self.instance.hostname.migrate.last()
