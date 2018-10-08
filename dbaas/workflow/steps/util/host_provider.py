@@ -399,17 +399,4 @@ class DestroyVirtualMachineMigrate(HostProviderStep):
         host.delete()
 
     def undo(self):
-        host = self.provider.create_host(
-            self.infra, self.offering, self.vm_name, self.team
-        )
-        host.future_host = self.host
-        host.save()
-        for instance in self.host.instances.all():
-            instance.address = self.host.address
-            instance.hostname = self.host
-            instance.save()
-        self.instance.hostname = host
-        self.instance.address = host.address
-        self.instance.save()
-        self.host_migrate.host = host
-        self.host_migrate.save()
+        raise NotImplementedError
