@@ -255,6 +255,44 @@ class RedisSentinel(BaseRedis):
             )
         }]
 
+    def get_host_migrate_steps(self):
+        return [{
+            'Changing master': (
+                'workflow.steps.util.vm.ChangeMaster',
+                'workflow.steps.util.database.CheckIfSwitchMaster',
+            )}, {
+            'Creating new infra': (
+                'workflow.steps.util.host_provider.CreateVirtualMachineMigrate',
+                'workflow.steps.util.volume_provider.NewVolume',
+                'workflow.steps.util.vm.WaitingBeReady',
+                'workflow.steps.util.vm.UpdateOSDescription',
+                'workflow.steps.util.volume_provider.MountDataVolume',
+            )}, {
+            'Configuring new host': (
+                'workflow.steps.util.plan.Initialization',
+                'workflow.steps.util.plan.Configure',
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.CheckIsUp',
+            )}, {
+            'Configuring sentinel': (
+                'workflow.steps.redis.upgrade.sentinel.ResetAllSentinel',
+                'workflow.steps.util.database.SetSlave',
+            )}, {
+            'Checking access': (
+                'workflow.steps.util.vm.CheckAccessToMaster',
+                'workflow.steps.util.vm.CheckAccessFromMaster',
+                'workflow.steps.util.acl.ReplicateAclsMigrate',
+            )}, {
+            'Configuring DNS': (
+                'workflow.steps.util.dns.ChangeEndpoint',
+                'workflow.steps.util.dns.CheckIsReady',
+            )}, {
+            'Cleaning up': (
+                'workflow.steps.util.disk.ChangeSnapshotOwner',
+                'workflow.steps.util.host_provider.DestroyVirtualMachineMigrate',
+            )
+        }]
+
 
 class RedisNoPersistence(RedisSingle):
     pass
