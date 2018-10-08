@@ -62,7 +62,7 @@ class BaseInstanceStep(object):
                 'Instance {} does not have hostname'.format(self.instance))
             return
 
-        if self.host_migrate:
+        if self.host_migrate and host.future_host:
             return host.future_host
         return host
 
