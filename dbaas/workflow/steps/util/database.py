@@ -278,7 +278,7 @@ class CheckIfSwitchMaster(DatabaseStep):
             if isinstance(master, list):
                 if self.instance not in master:
                     return
-            elif master != self.instance:
+            elif master and (master != self.instance):
                 return
             sleep(CHECK_SECONDS)
 
