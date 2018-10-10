@@ -44,43 +44,52 @@ class ChangeTTL(DNSStep):
 
 
 class ChangeTTLTo5Minutes(ChangeTTL):
-
     minutes = 5
 
 
 class ChangeTTLTo3Hours(ChangeTTL):
-
     minutes = 180
 
 
 class ChangeEndpoint(DNSStep):
 
+    @property
+    def instances(self):
+        return self.host_migrate.host.instances.all()
+
     def __unicode__(self):
         return "Changing DNS endpoint..."
 
-    def do(self):
-        origin_host = self.host_migrate.host
-        for instance in origin_host.instances.all():
+    def update_host_dns(self, origin_host, destiny_host):
+        for instance in self.instances:
             DNSAPIProvider.update_database_dns_content(
                 self.infra, instance.dns,
-                origin_host.address, self.host.address
+                origin_host.address, destiny_host.address
             )
 
         DNSAPIProvider.update_database_dns_content(
             self.infra, origin_host.hostname,
-            origin_host.address, self.host.address
+            origin_host.address, destiny_host.address
         )
 
-        self.host.hostname = origin_host.hostname
+        destiny_host.hostname = origin_host.hostname
         origin_host.hostname = origin_host.address
         origin_host.save()
-        self.host.save()
+        destiny_host.save()
 
         if self.infra.endpoint and origin_host.address in self.infra.endpoint:
             self.infra.endpoint = self.infra.endpoint.replace(
-                origin_host.address, self.host.address
+                origin_host.address, destiny_host.address
             )
             self.infra.save()
+
+
+    def do(self):
+        self.update_host_dns(self.host_migrate.host, self.host)
+
+    def undo(self):
+        self.update_host_dns(self.host, self.host_migrate.host)
+        CheckIsReady(self.instance).do()
 
 
 class CreateDNS(DNSStep):
@@ -180,7 +189,7 @@ class CheckIsReady(DNSStep):
             return
 
         for dns in DatabaseInfraDNSList.objects.filter(
-                databaseinfra=self.infra.id
+            databaseinfra=self.infra.id
         ):
             if not check_nslookup(dns.dns, self.credentials.project):
                 raise EnvironmentError("DNS {} is not ready".format(dns.dns))
