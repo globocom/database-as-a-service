@@ -19,9 +19,11 @@ def node_zone_migrate(host, zone, new_environment, task, since_step=None):
     host_migrate.save()
 
     steps = get_steps(host)
-    if steps_for_instances(
+    result = steps_for_instances(
         steps, [instance], task, host_migrate.update_step, since_step
-    ):
+    )
+    host_migrate = HostMigrate.objects.get(id=host_migrate.id)
+    if result:
         host_migrate.set_success()
         task.set_status_success('Node migrated with success')
     else:
@@ -38,9 +40,11 @@ def rollback_node_zone_migrate(migrate, task):
     migrate.save()
 
     steps = get_steps(migrate.host)
-    if rollback_for_instances_full(
+    result = rollback_for_instances_full(
         steps, [instance], task, migrate.get_current_step, migrate.update_step
-    ):
+    )
+    migrate = HostMigrate.objects.get(id=migrate.id)
+    if result:
         migrate.set_rollback()
         task.set_status_success('Rollback executed with success')
     else:
