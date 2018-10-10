@@ -127,7 +127,7 @@
     $("#id_disk_offering").change()
 
     $("#id_vm_offering").on("change", function() {
-      status_resize("vm_resize_btn", '{{ current_vm_offering.serviceofferingid }}', $(this).val())
+      status_resize("vm_resize_btn", '{{ current_vm_offering.id }}', $(this).val())
     });
     $("#id_vm_offering").change()
 
