@@ -394,8 +394,10 @@ class DestroyVirtualMachineMigrate(HostProviderStep):
             instance.hostname = self.host
             instance.address = self.host.address
             instance.save()
-        self.host_migrate.host = self.host
-        self.host_migrate.save()
+
+        migrate = self.host_migrate
+        migrate.host = self.host
+        migrate.save()
         host.delete()
 
     def undo(self):
