@@ -97,6 +97,19 @@
             <p>
               {% if is_dba %}
                 <a target="_blank" href="{% url 'admin:physical_host_change' host.id %}">{{ host.description }}</a>
+                {% if last_reinstall_vm and last_reinstall_vm.is_status_error %}
+                  {% if host.id == last_reinstall_vm.instance.hostname.id %}
+                  <span>
+                      <a class="action_button btn btn-danger" href="{{ database.get_reinstallvm_retry_url }}" title="Go to reinstal VM page">Retry Reinstall VM</a>
+                  </span>
+                  {% endif %}
+                {% else %}
+                <td>
+                  <a class="action_button btn btn-danger reinstallvm" data-toggle="modal" id="reinstall_vm_btn"
+                    data-target="#reinstall_vm_modal" data-host-id="{{host.id}}" title="Reinstall VM template and reconfigure the instance database."
+                  >Reinstall VM</i></a>
+                </td>
+                {% endif %}
               {% else %}
                 {{ host.description }}
               {% endif %}

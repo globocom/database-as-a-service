@@ -147,6 +147,11 @@ class HostProviderClient(object):
         self.env = env
         self._credential = None
 
+    def _request(self, action, url, **kw):
+        auth = (self.credential.user, self.credential.password,)
+        kw.update(**{'auth': auth} if self.credential.user else {})
+        return action(url, **kw)
+
     @property
     def credential(self):
         if not self._credential:
@@ -155,14 +160,16 @@ class HostProviderClient(object):
             )
         return self._credential
 
-
     def get_vm_by_host(self, host):
         api_host_url = '/{}/{}/host/{}'.format(
             self.credential.project,
             self.env.name,
             host.identifier
         )
-        resp = requests.get('{}{}'.format(self.credential.endpoint, api_host_url))
+        resp = self._request(
+            requests.get,
+            '{}{}'.format(self.credential.endpoint, api_host_url)
+        )
         if resp.ok:
             vm = resp.json()
             return namedtuple('VMProperties', vm.keys())(*vm.values())
@@ -175,7 +182,10 @@ class HostProviderClient(object):
             memory
         )
 
-        resp = requests.get('{}{}'.format(self.credential.endpoint, api_host_url))
+        resp = self._request(
+            requests.get,
+            '{}{}'.format(self.credential.endpoint, api_host_url)
+        )
         if resp.ok:
             data = resp.json()
             return data.get('offering_id')
