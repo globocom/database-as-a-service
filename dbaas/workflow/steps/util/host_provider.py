@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from django.core.exceptions import ObjectDoesNotExist
-from requests import post, delete
+from requests import post, delete, get
 from dbaas_credentials.models import CredentialType
 from physical.models import Host, Instance
 from util import get_credentials_for
@@ -158,6 +158,26 @@ class Provider(object):
         response = delete(url)
         if not response.ok:
             raise IndexError(response.content, response)
+
+    def list_zones(self):
+        url = "{}/{}/{}/zones".format(
+            self.credential.endpoint, self.provider, self.environment
+        )
+        response = get(url)
+        if response.status_code != 200:
+            raise IndexError(response.content, response)
+        data = response.json()
+        return data['zones']
+
+    def host_info(self, host):
+        url = "{}/{}/{}/host/{}".format(
+            self.credential.endpoint, self.provider, self.environment,
+            host.identifier
+        )
+        response = get(url)
+        if response.status_code != 200:
+            raise IndexError(response.content, response)
+        return response.json()
 
 
 class HostProviderStep(BaseInstanceStep):
