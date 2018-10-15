@@ -6,9 +6,19 @@ from notification.models import TaskHistory
 from logical.models import Database, DatabaseHistory
 
 
+RELEVANCE_DICT = {
+        0: "CRITICAL",
+        1: "ERROR",
+        2: "WARNING",
+        3: "INFO",
+        4: "DEBUG"
+    }
+
+
 class TaskSerializer(serializers.ModelSerializer):
     database = serializers.SerializerMethodField('get_database')
     rollback = serializers.SerializerMethodField('had_rollback')
+    relevance = serializers.SerializerMethodField('get_relevance')
 
     class Meta:
         model = TaskHistory
@@ -27,6 +37,9 @@ class TaskSerializer(serializers.ModelSerializer):
             'rollback',
             'relevance',
         )
+
+    def get_relevance(self, task):
+        return RELEVANCE_DICT[task.relevance]
 
     def had_rollback(self, task):
         if not task.details:
