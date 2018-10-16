@@ -461,6 +461,57 @@ class DatabaseCreate(DatabaseMaintenanceTask):
         super(DatabaseCreate, self).save(*args, **kwargs)
 
 
+class DatabaseDestroy(DatabaseMaintenanceTask):
+    task = models.ForeignKey(
+        TaskHistory, verbose_name="Task History",
+        null=False, unique=False, related_name="databases_destroy"
+    )
+    database = models.ForeignKey(
+        Database, related_name='databases_destroy', null=True, blank=True,
+        on_delete=models.SET_NULL
+    )
+    infra = models.ForeignKey(DatabaseInfra, related_name='databases_destroy')
+    plan = models.ForeignKey(
+        Plan, null=True, blank=True,
+        related_name='databases_destroy', on_delete=models.SET_NULL
+    )
+    plan_name = models.CharField(
+        verbose_name="Plan", max_length=100, null=True, blank=True
+    )
+    environment = models.ForeignKey(
+        Environment, related_name='databases_destroy'
+    )
+    team = models.ForeignKey(Team, related_name='databases_destroy')
+    project = models.ForeignKey(
+        Project, related_name='databases_destroy', null=True, blank=True
+    )
+    name = models.CharField(max_length=200)
+    description = models.TextField()
+    subscribe_to_email_events = models.BooleanField(default=True)
+    is_protected = models.BooleanField(default=False)
+    user = models.CharField(max_length=200)
+
+    def __unicode__(self):
+        return "Destroying {}".format(self.name)
+
+    @property
+    def disable_retry_filter(self):
+        return {'infra': self.infra}
+
+    def update_step(self, step):
+        if self.id:
+            maintenance = self.__class__.objects.get(id=self.id)
+            self.database = maintenance.database
+
+        super(DatabaseDestroy, self).update_step(step)
+
+    def save(self, *args, **kwargs):
+        if self.plan:
+            self.plan_name = self.plan.name
+
+        super(DatabaseDestroy, self).save(*args, **kwargs)
+
+
 class DatabaseRestore(DatabaseMaintenanceTask):
     database = models.ForeignKey(
         Database, verbose_name="Database", related_name="database_restore"
