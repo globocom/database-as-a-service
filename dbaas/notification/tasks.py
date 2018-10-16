@@ -27,7 +27,7 @@ from maintenance.models import (DatabaseUpgrade, DatabaseResize,
                                 DatabaseChangeParameter, DatabaseReinstallVM,
                                 DatabaseConfigureSSL)
 from maintenance.tasks import restore_database
-from maintenance.models import DatabaseCreate
+from maintenance.models import DatabaseCreate, DatabaseDestroy
 from util.providers import get_deploy_settings, get_deploy_instances
 
 
@@ -157,36 +157,34 @@ def destroy_database(self, database, task_history=None, user=None):
 
         infra = database.databaseinfra
 
-        # destroy_infra(databaseinfra=databaseinfra, task=task_history)
-        database_create = DatabaseCreate()
-        database_create.task = task_history
-        database_create.name = database.name
-        database_create.plan = database.plan
-        database_create.environment = database.environment
-        database_create.team = database.team
-        database_create.project = database.project
-        database_create.description = database.description
-        database_create.is_protected = database.is_protected
-        database_create.user = user.username if user else task.user
-        database_create.infra = database.infra
-        database_create.database = infra.databases.first()
-        database_create.save()
+        database_destroy = DatabaseDestroy()
+        database_destroy.task = task_history
+        database_destroy.name = database.name
+        database_destroy.plan = database.plan
+        database_destroy.environment = database.environment
+        database_destroy.team = database.team
+        database_destroy.project = database.project
+        database_destroy.description = database.description
+        database_destroy.is_protected = database.is_protected
+        database_destroy.user = user.username if user else task_history.user
+        database_destroy.infra = database.infra
+        database_destroy.database = infra.databases.first()
+        database_destroy.save()
 
-        topology_path = database_create.plan.replication_topology.class_path
+        topology_path = database_destroy.plan.replication_topology.class_path
         steps = get_deploy_settings(topology_path)
 
-        # instances = get_instances_for(infra, topology_path)
-        instances = map(
-            lambda host: host.instances.order_by('instance_type').first(),
-            infra.hosts
-        )
-        database_create.current_step = total_of_steps(steps, instances)
+        instances = [
+            host.instances.order_by('instance_type').first() for host in infra.hosts
+        ]
+        database_destroy.current_step = total_of_steps(steps, instances)
 
-        database_create.save()
+        database_destroy.save()
 
         from maintenance.tasks_create_database import rollback_create
-        rollback_create(database_create, task_history, user, instances=instances)
-
+        rollback_create(database_destroy, task_history, user, instances=instances)
+        if task_history.task_status == TaskHistory.STATUS_ERROR:
+            return
         task_history.update_status_for(
             TaskHistory.STATUS_SUCCESS, details='Database destroyed successfully')
         return
@@ -1388,12 +1386,13 @@ class TaskRegister(object):
             )
 
     @classmethod
-    def database_create_rollback(cls, rollback_from, user):
+    def database_create_rollback(cls, rollback_from, user, extra_task_params=None):
         task_params = {
             'task_name': "create_database",
             'arguments': "Database name: {}".format(rollback_from.name),
             'database_name': rollback_from.name
         }
+        task_params.update(extra_task_params if extra_task_params else {})
         if user:
             task_params['user'] = user
         task = cls.create_task(task_params)
@@ -1401,6 +1400,14 @@ class TaskRegister(object):
         from maintenance.tasks import rollback_create_database
         return rollback_create_database.delay(
             rollback_from=rollback_from, task=task, user=user
+        )
+
+    @classmethod
+    def database_destroy_retry(cls, rollback_from, user):
+        return cls.database_create_rollback(
+            rollback_from,
+            user,
+            extra_task_params={'task_name': 'destroy_database'}
         )
 
     @classmethod
