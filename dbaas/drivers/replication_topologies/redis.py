@@ -274,20 +274,26 @@ class RedisSentinel(BaseRedis):
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
             )}, {
-            'Configuring sentinel': (
-                'workflow.steps.redis.upgrade.sentinel.ResetAllSentinel',
-                'workflow.steps.util.database.SetSlave',
-            )}, {
             'Checking access': (
                 'workflow.steps.util.vm.CheckAccessToMaster',
                 'workflow.steps.util.vm.CheckAccessFromMaster',
                 'workflow.steps.util.acl.ReplicateAclsMigrate',
             )}, {
+            'Configuring sentinel': (
+                'workflow.steps.redis.upgrade.sentinel.ResetAllSentinel',
+                'workflow.steps.util.database.SetSlave',
+                'workflow.steps.util.database.WaitForReplication',
+            )}, {
             'Configuring DNS': (
                 'workflow.steps.util.dns.ChangeEndpoint',
                 'workflow.steps.util.dns.CheckIsReady',
             )}, {
+            'Configure Monitors': (
+                'workflow.steps.util.zabbix.DestroyAlarms',
+                'workflow.steps.util.zabbix.CreateAlarms',
+            )}, {
             'Cleaning up': (
+                'workflow.steps.util.disk.ChangeSnapshotOwner',
                 'workflow.steps.util.disk.ChangeSnapshotOwner',
                 'workflow.steps.util.host_provider.DestroyVirtualMachineMigrate',
             )
