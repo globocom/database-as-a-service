@@ -649,6 +649,17 @@ class Database(BaseModel):
             return False
 
     @property
+    def can_migrate(self):
+        from util.providers import get_host_migrate_steps
+        class_path = self.plan.replication_topology.class_path
+        try:
+            get_host_migrate_steps(class_path)
+        except NotImplementedError:
+            return False
+        else:
+            return True
+
+    @property
     def is_dead(self):
         if self.status != Database.ALIVE:
             return True
@@ -810,6 +821,19 @@ class Database(BaseModel):
         elif self.is_being_used_elsewhere():
             error = "Database cannot have the parameters changed because" \
                     " it is in use by another task."
+
+        if error:
+            return False, error
+        return True, None
+
+    def can_do_host_migrate(self):
+        error = None
+        if self.is_in_quarantine:
+            error = "Database in quarantine and cannot have host migrate."
+        elif self.is_dead:
+            error = "Database is dead and cannot migrate host"
+        elif self.is_being_used_elsewhere():
+            error = "Database cannot migrate host it is in use by another task."
 
         if error:
             return False, error
