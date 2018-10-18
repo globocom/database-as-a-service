@@ -1240,8 +1240,6 @@ def database_migrate(request, context, database):
         )
         return database_details(request, database.id)
 
-    from workflow.steps.util.host_provider import Provider
-
     if request.POST:
         host = get_object_or_404(Host, pk=request.POST.get('host_id'))
         can_migrate, error = database.can_do_host_migrate()
@@ -1253,6 +1251,7 @@ def database_migrate(request, context, database):
             messages.add_message(request, messages.ERROR, error)
         return
 
+    from workflow.steps.util.host_provider import Provider
     hosts = set()
     zones = set()
     instances = database.infra.instances.all().order_by('shard', 'id')
@@ -1271,9 +1270,12 @@ def database_migrate(request, context, database):
         else:
             host.current_zone = host_info['zone']
         hosts.add(host)
+    context['hosts'] = sorted(hosts, key=lambda host: host.hostname)
+    context['zones'] = sorted(zones)
 
-    context['hosts'] = hosts
-    context['zones'] = zones
+    from maintenance.models import HostMigrate
+    migrates = HostMigrate.objects.filter(host__in=hosts)
+    context["last_host_migrate"] = migrates.last()
     return render_to_response(
         "logical/database/details/migrate_tab.html", context,
         RequestContext(request)
