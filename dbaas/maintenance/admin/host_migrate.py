@@ -70,9 +70,7 @@ class HostMigrateAdmin(DatabaseMaintenanceTaskAdmin):
             retry_from.host, retry_from.zone, retry_from.environment,
             request.user, retry_from.current_step
         )
-        url = reverse('admin:notification_taskhistory_changelist')
-        filter = "user={}".format(request.user.username)
-        return HttpResponseRedirect('{}?{}'.format(url, filter))
+        return self.redirect_to_database(retry_from)
 
     def rollback_view(self, request, host_migrate_id):
         rollback_from = get_object_or_404(HostMigrate, pk=host_migrate_id)
@@ -82,9 +80,7 @@ class HostMigrateAdmin(DatabaseMaintenanceTaskAdmin):
         if not success:
             return redirect
         TaskRegister.host_migrate_rollback(rollback_from, request.user)
-        url = reverse('admin:notification_taskhistory_changelist')
-        filter = "user={}".format(request.user.username)
-        return HttpResponseRedirect('{}?{}'.format(url, filter))
+        return self.redirect_to_database(rollback_from)
 
     def check_status(self, request, host_migrate, operation):
         success = True
@@ -108,5 +104,12 @@ class HostMigrateAdmin(DatabaseMaintenanceTaskAdmin):
             reverse(
                 'admin:maintenance_hostmigrate_change', args=(host_migrate.id,)
             )
+        )
+
+    def redirect_to_database(self, maintenance):
+        infra = maintenance.host.instances.first().databaseinfra
+        database = infra.databases.first()
+        return HttpResponseRedirect(reverse(
+            'admin:logical_database_migrate', kwargs={'id': database.id})
         )
 

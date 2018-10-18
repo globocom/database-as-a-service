@@ -28,16 +28,27 @@
           <div class="controls">
             <tr>
               <td>{{ host.hostname }}</td>
-              <td><select id="migrate_zone_{{host.id}}" data-host-id="{{host.id}}" data-current-zone="{{host.current_zone}}" class="host-zone" name="migrate_zone">
-                {% for zone in zones %}
-                  {% if host.current_zone == zone %}
-                    <option value="{{zone}}" selected="selected">*{{zone}}</option>
+              <td>
+                {%if last_host_migrate and last_host_migrate.is_status_error %}
+                  {%if last_host_migrate.host == host %}
+                    <a class="resize_button btn btn-danger" href="{% url 'admin:host_migrate_rollback' last_host_migrate.id %}" title="Rollback for host migrate">Rollback</a>
+                    <a class="resize_button btn btn-warning" href="{% url 'admin:host_migrate_retry' last_host_migrate.id %}" title="Retry for host migrate">Retry</a>
+                    <p><a href="{% url 'admin:maintenance_hostmigrate_change' last_host_migrate.id %}" target='_blank'>Last host migrate</a> has an <b>error</b>, please check the <a href="{% url 'admin:notification_taskhistory_change' last_host_migrate.task.id %}" target='_blank'>task</a> and do rollback or retry of migrate by clicking in one of above buttons</p>
                   {% else %}
-                    <option value="{{zone}}">{{zone}}</option>
+                    {{host.current_zone}}
                   {% endif %}
-                {% endfor %}
-                </select>
-                <button data-toggle="modal" id="migrate_host_btn_{{host.id}}" class="resize_button btn host-zone-btn" data-host-name="{{host}}" data-host-id="{{host.id}}" data-target="#migrate_host_modal">Migrate Host</button>
+                {% else %}
+                  <select id="migrate_zone_{{host.id}}" data-host-id="{{host.id}}" data-current-zone="{{host.current_zone}}" class="host-zone" name="migrate_zone">
+                  {% for zone in zones %}
+                    {% if host.current_zone == zone %}
+                      <option value="{{zone}}" selected="selected">*{{zone}}</option>
+                    {% else %}
+                      <option value="{{zone}}">{{zone}}</option>
+                    {% endif %}
+                  {% endfor %}
+                  </select>
+                  <button data-toggle="modal" id="migrate_host_btn_{{host.id}}" class="resize_button btn host-zone-btn" data-host-name="{{host}}" data-host-id="{{host.id}}" data-target="#migrate_host_modal">Migrate Host</button>
+                {% endif %}
               </td>
             </div>
           </tr>
