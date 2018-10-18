@@ -294,7 +294,6 @@ class RedisSentinel(BaseRedis):
             )}, {
             'Cleaning up': (
                 'workflow.steps.util.disk.ChangeSnapshotOwner',
-                'workflow.steps.util.disk.ChangeSnapshotOwner',
                 'workflow.steps.util.host_provider.DestroyVirtualMachineMigrate',
             )
         }]
