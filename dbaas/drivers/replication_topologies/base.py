@@ -67,7 +67,7 @@ class BaseTopology(object):
     def get_upgrade_steps(self):
         return [{
             self.get_upgrade_steps_initial_description(): (
-                'workflow.steps.util.zabbix.DestroyAlarms',
+                'workflow.steps.util.zabbix.DisableAlarms',
                 'workflow.steps.util.db_monitor.DisableMonitoring',
             ),
         }] + [{
@@ -98,7 +98,7 @@ class BaseTopology(object):
         return [{
             self.get_upgrade_steps_final_description(): (
                 'workflow.steps.util.db_monitor.EnableMonitoring',
-                'workflow.steps.util.zabbix.CreateAlarmsForUpgrade',
+                'workflow.steps.util.zabbix.EnableAlarms',
             ),
         }]
 
