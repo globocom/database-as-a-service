@@ -111,7 +111,6 @@ class CredentialSSLView(CredentialBase):
 
 def check_permission(request, id, tab):
     is_dba = request.user.team_set.filter(role__name="role_dba")
-
     database = Database.objects.get(id=id)
     if not is_dba:
         can_access = True
@@ -127,6 +126,10 @@ def check_permission(request, id, tab):
                 'This database is in quarantine, please contact your DBA'
             )
             can_access = False
+        elif tab == "migrate":
+            messages.add_message(
+                request, messages.ERROR, 'Only DBA can do migrate')
+            can_access = False
 
         if not can_access:
             return HttpResponseRedirect(
@@ -139,7 +142,6 @@ def check_permission(request, id, tab):
         'user': request.user,
         'is_dba': is_dba
     }
-
     return context
 
 
@@ -147,8 +149,9 @@ def database_view(tab):
     def database_decorator(func):
         def func_wrapper(request, id):
             context = check_permission(request, id, tab)
-
-            return func(request, context, context['database'])
+            if isinstance(context, dict):
+                return func(request, context, context['database'])
+            return context
         return func_wrapper
     return database_decorator
 
@@ -1196,7 +1199,6 @@ def database_reinstall_vm(request, database_id, host_id):
 
 @database_view("")
 def database_reinstall_vm_retry(request, context, database):
-
     last_reinstall_vm = database.reinstall_vm.last()
     can_reinstall_vm = True
 
@@ -1227,4 +1229,52 @@ def database_reinstall_vm_retry(request, context, database):
 
     return HttpResponseRedirect(
         reverse('admin:logical_database_hosts', kwargs={'id': database.id})
+    )
+
+
+@database_view('migrate')
+def database_migrate(request, context, database):
+    if not database.can_migrate:
+        messages.add_message(
+            request, messages.ERROR, "This database cannot be migrated"
+        )
+        return database_details(request, database.id)
+
+    from workflow.steps.util.host_provider import Provider
+
+    if request.POST:
+        host = get_object_or_404(Host, pk=request.POST.get('host_id'))
+        can_migrate, error = database.can_do_host_migrate()
+        if can_migrate:
+            environment = database.infra.environment
+            zone = request.POST["new_zone"]
+            TaskRegister.host_migrate(host, zone, environment, request.user)
+        else:
+            messages.add_message(request, messages.ERROR, error)
+        return
+
+    hosts = set()
+    zones = set()
+    instances = database.infra.instances.all().order_by('shard', 'id')
+    for instance in instances:
+        host = instance.hostname
+        if host in hosts:
+            continue
+
+        hp = Provider(instance, database.infra.environment)
+        for zone in hp.list_zones():
+            zones.add(zone)
+        try:
+            host_info = hp.host_info(host)
+        except Exception as e:
+            LOG.error("Could get host info {} - {}".format(host, e))
+        else:
+            host.current_zone = host_info['zone']
+        hosts.add(host)
+
+    context['hosts'] = hosts
+    context['zones'] = zones
+    return render_to_response(
+        "logical/database/details/migrate_tab.html", context,
+        RequestContext(request)
     )
