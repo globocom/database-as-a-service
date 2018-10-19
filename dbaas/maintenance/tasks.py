@@ -240,7 +240,7 @@ def restore_database(self, database, task, snapshot, user, retry_from=None):
 
 
 @app.task(bind=True)
-def rollback_create_database(self, rollback_from, task, user):
+def create_database_rollback(self, rollback_from, task, user):
     task = TaskHistory.register(
         request=self.request, task_history=task, user=user,
         worker_name=get_worker_name()
