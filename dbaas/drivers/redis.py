@@ -84,7 +84,6 @@ class Redis(BaseDriver):
     def __get_admin_single_connection(self, instance=None):
         if not instance:
             instance = self.instances_filtered.first()
-
         return instance.address, instance.port
 
     def get_dns_port(self):
@@ -332,6 +331,8 @@ class Redis(BaseDriver):
     def parameters_redis(self, host):
         redis = host.database_instance()
         redis_address = redis.address
+        if host.future_host:
+            redis_address = host.future_host.address
         redis_port = redis.port
         only_sentinel = False
 
@@ -493,9 +494,6 @@ class RedisSentinel(Redis):
 
     def parameters_redis(self, host):
         redis = host.database_instance()
-        if redis and host.future_host:
-            redis.address = host.future_host.address
-
         redis_address = ''
         redis_port = ''
         only_sentinel = True
@@ -503,6 +501,9 @@ class RedisSentinel(Redis):
             redis_address = redis.address
             redis_port = redis.port
             only_sentinel = False
+
+        if redis and host.future_host:
+            redis_address = host.future_host.address
 
         return {
             'HOSTADDRESS': redis_address,
