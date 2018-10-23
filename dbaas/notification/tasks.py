@@ -1082,7 +1082,6 @@ def resize_database_rollback(self, from_resize, user, task):
     steps = get_resize_settings(class_path)
 
     instances = list(infra.get_driver().get_database_instances())
-    instances.reverse()
 
     from_resize.id = None
     from_resize.task = task
