@@ -11,27 +11,39 @@ CHANGE_MASTER_ATTEMPS = 4
 CHANGE_MASTER_SECONDS = 15
 
 
-class HostProviderStartVMExeption(Exception):
+class HostProviderException(Exception):
     pass
 
 
-class HostProviderStopVMExeption(Exception):
+class HostProviderStartVMException(HostProviderException):
     pass
 
 
-class HostProviderNewVersionExeption(Exception):
+class HostProviderStopVMException(HostProviderException):
     pass
 
 
-class HostProviderChangeOfferingExeption(Exception):
+class HostProviderNewVersionException(HostProviderException):
     pass
 
 
-class HostProviderCreateVMExeption(Exception):
+class HostProviderChangeOfferingException(HostProviderException):
     pass
 
 
-class HostProviderDestroyVMExeption(Exception):
+class HostProviderCreateVMException(HostProviderException):
+    pass
+
+
+class HostProviderDestroyVMException(HostProviderException):
+    pass
+
+
+class HostProviderListZoneException(HostProviderException):
+    pass
+
+
+class HostProviderInfoException(HostProviderException):
     pass
 
 
@@ -99,7 +111,7 @@ class Provider(object):
         }
         response = self._request(post, url, json=data)
         if not response.ok:
-            raise HostProviderStartVMExeption(response.content, response)
+            raise HostProviderStartVMException(response.content, response)
         return True
 
     def stop(self):
@@ -111,7 +123,7 @@ class Provider(object):
         }
         response = self._request(post, url, json=data)
         if not response.ok:
-            raise HostProviderStopVMExeption(response.content, response)
+            raise HostProviderStopVMException(response.content, response)
         return True
 
     def new_version(self, engine=None):
@@ -124,7 +136,7 @@ class Provider(object):
         )
         response = self._request(post, url, json=data)
         if response.status_code != 200:
-            raise HostProviderNewVersionExeption(response.content, response)
+            raise HostProviderNewVersionException(response.content, response)
         return True
 
     def new_offering(self, offering):
@@ -138,7 +150,7 @@ class Provider(object):
         }
         response = self._request(post, url, json=data)
         if response.status_code != 200:
-            raise HostProviderChangeOfferingExeption(
+            raise HostProviderChangeOfferingException(
                 response.content,
                 response
             )
@@ -161,7 +173,7 @@ class Provider(object):
 
         response = self._request(post, url, json=data, timeout=600)
         if response.status_code != 201:
-            raise HostProviderCreateVMExeption(response.content, response)
+            raise HostProviderCreateVMException(response.content, response)
 
         content = response.json()
 
@@ -184,7 +196,7 @@ class Provider(object):
         )
         response = self._request(delete, url)
         if not response.ok:
-            raise HostProviderDestroyVMExeption(response.content, response)
+            raise HostProviderDestroyVMException(response.content, response)
 
     def list_zones(self):
         url = "{}/{}/{}/zones".format(
@@ -192,7 +204,7 @@ class Provider(object):
         )
         response = get(url)
         if not response.ok:
-            raise IndexError(response.content, response)
+            raise HostProviderListZoneException(response.content, response)
         data = response.json()
         return data['zones']
 
@@ -203,7 +215,7 @@ class Provider(object):
         )
         response = get(url)
         if not response.ok:
-            raise IndexError(response.content, response)
+            raise HostProviderInfoException(response.content, response)
         return response.json()
 
 
