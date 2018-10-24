@@ -263,7 +263,7 @@ def node_zone_migrate(
 
 
 @app.task(bind=True)
-def rollback_node_zone_migrate(self, migrate, task):
+def node_zone_migrate_rollback(self, migrate, task):
     task = TaskHistory.register(
         request=self.request, task_history=task, user=task.user,
         worker_name=get_worker_name()
