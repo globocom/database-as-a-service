@@ -133,7 +133,7 @@ class CheckAccessToMaster(VmStep):
 
     @property
     def master(self):
-        return self.driver.get_master_instance().hostname
+        return self.driver.get_master_for(self.instance).hostname
 
     @staticmethod
     def check_access(origin, destiny, port):

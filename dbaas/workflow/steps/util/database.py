@@ -23,6 +23,10 @@ class DatabaseStep(BaseInstanceStep):
         if self.host_migrate:
             self.instance.address = self.host.address
 
+    def __del__(self):
+        if self.host_migrate:
+            self.instance.address = self.instance.hostname.address
+
     def do(self):
         raise NotImplementedError
 
