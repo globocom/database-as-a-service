@@ -7,9 +7,32 @@ from util import get_credentials_for
 from base import BaseInstanceStep
 from vm import WaitingBeReady
 
-
 CHANGE_MASTER_ATTEMPS = 4
 CHANGE_MASTER_SECONDS = 15
+
+
+class HostProviderStartVMExeption(Exception):
+    pass
+
+
+class HostProviderStopVMExeption(Exception):
+    pass
+
+
+class HostProviderNewVersionExeption(Exception):
+    pass
+
+
+class HostProviderChangeOfferingExeption(Exception):
+    pass
+
+
+class HostProviderCreateVMExeption(Exception):
+    pass
+
+
+class HostProviderDestroyVMExeption(Exception):
+    pass
 
 
 class Provider(object):
@@ -62,6 +85,11 @@ class Provider(object):
     def provider(self):
         return self.credential.project
 
+    def _request(self, action, url, **kw):
+        auth = (self.credential.user, self.credential.password,)
+        kw.update(**{'auth': auth} if self.credential.user else {})
+        return action(url, **kw)
+
     def start(self):
         url = "{}/{}/{}/host/start".format(
             self.credential.endpoint, self.provider, self.environment
@@ -69,10 +97,9 @@ class Provider(object):
         data = {
             "host_id": self.instance.hostname.identifier
         }
-        response = post(url, json=data)
+        response = self._request(post, url, json=data)
         if not response.ok:
-            raise IndexError(response.content, response)
-
+            raise HostProviderStartVMExeption(response.content, response)
         return True
 
     def stop(self):
@@ -82,10 +109,9 @@ class Provider(object):
         data = {
             "host_id": self.instance.hostname.identifier
         }
-        response = post(url, json=data)
+        response = self._request(post, url, json=data)
         if not response.ok:
-            raise IndexError(response.content, response)
-
+            raise HostProviderStopVMExeption(response.content, response)
         return True
 
     def new_version(self, engine=None):
@@ -96,10 +122,9 @@ class Provider(object):
         data.update(
             **{'engine': engine.full_name_for_host_provider} if engine else {}
         )
-        response = post(url, json=data)
-        if not response.ok:
-            raise IndexError(response.content, response)
-
+        response = self._request(post, url, json=data)
+        if response.status_code != 200:
+            raise HostProviderNewVersionExeption(response.content, response)
         return True
 
     def new_offering(self, offering):
@@ -111,10 +136,12 @@ class Provider(object):
             "cpus": offering.cpus,
             'memory': offering.memory_size_mb
         }
-        response = post(url, json=data)
-        if not response.ok:
-            raise IndexError(response.content, response)
-
+        response = self._request(post, url, json=data)
+        if response.status_code != 200:
+            raise HostProviderChangeOfferingExeption(
+                response.content,
+                response
+            )
         return True
 
     def create_host(self, infra, offering, name, team_name, zone=None):
@@ -132,9 +159,9 @@ class Provider(object):
         if zone:
             data['zone'] = zone
 
-        response = post(url, json=data, timeout=600)
+        response = self._request(post, url, json=data, timeout=600)
         if response.status_code != 201:
-            raise IndexError(response.content, response)
+            raise HostProviderCreateVMExeption(response.content, response)
 
         content = response.json()
 
@@ -155,9 +182,9 @@ class Provider(object):
             self.credential.endpoint, self.provider, self.environment,
             host.identifier
         )
-        response = delete(url)
+        response = self._request(delete, url)
         if not response.ok:
-            raise IndexError(response.content, response)
+            raise HostProviderDestroyVMExeption(response.content, response)
 
     def list_zones(self):
         url = "{}/{}/{}/zones".format(

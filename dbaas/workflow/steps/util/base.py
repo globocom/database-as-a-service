@@ -172,6 +172,11 @@ class HostProviderClient(object):
         self.env = env
         self._credential = None
 
+    def _request(self, action, url, **kw):
+        auth = (self.credential.user, self.credential.password,)
+        kw.update(**{'auth': auth} if self.credential.user else {})
+        return action(url, **kw)
+
     @property
     def credential(self):
         if not self._credential:
@@ -186,8 +191,9 @@ class HostProviderClient(object):
             self.env.name,
             host.identifier
         )
-        resp = requests.get('{}{}'.format(
-            self.credential.endpoint, api_host_url)
+        resp = self._request(
+            requests.get,
+            '{}{}'.format(self.credential.endpoint, api_host_url)
         )
         if resp.ok:
             vm = resp.json()
@@ -200,9 +206,10 @@ class HostProviderClient(object):
             cpus,
             memory
         )
-        resp = requests.get('{}{}'.format(
-            self.credential.endpoint, api_host_url)
-        )
+        resp = self._request(
+            requests.get,
+            '{}{}'.format(self.credential.endpoint, api_host_url
+        ))
         if resp.ok:
             data = resp.json()
             return data.get('offering_id')
