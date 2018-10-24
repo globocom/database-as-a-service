@@ -723,3 +723,13 @@ class RedisCluster(Redis):
     @classmethod
     def topology_name(cls):
         return ['redis_cluster']
+
+    def get_node_id(self, instance, address, port):
+        name = "{}:{}".format(address, port)
+        with self.redis(instance=instance) as client:
+            nodes = client.execute_command("CLUSTER NODES")
+
+        for node in nodes.keys():
+            if name in node:
+                return nodes[node]['node_id']
+        raise EnvironmentError('Node {} not in {}'.format(name, nodes))
