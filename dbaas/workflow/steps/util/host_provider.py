@@ -97,7 +97,7 @@ class Provider(object):
             **{'engine': engine.full_name_for_host_provider} if engine else {}
         )
         response = post(url, json=data)
-        if response.status_code != 200:
+        if not response.ok:
             raise IndexError(response.content, response)
 
         return True
@@ -112,7 +112,7 @@ class Provider(object):
             'memory': offering.memory_size_mb
         }
         response = post(url, json=data)
-        if response.status_code != 200:
+        if not response.ok:
             raise IndexError(response.content, response)
 
         return True
@@ -164,7 +164,7 @@ class Provider(object):
             self.credential.endpoint, self.provider, self.environment
         )
         response = get(url)
-        if response.status_code != 200:
+        if not response.ok:
             raise IndexError(response.content, response)
         data = response.json()
         return data['zones']
@@ -175,7 +175,7 @@ class Provider(object):
             host.identifier
         )
         response = get(url)
-        if response.status_code != 200:
+        if not response.ok:
             raise IndexError(response.content, response)
         return response.json()
 

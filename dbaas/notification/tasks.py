@@ -26,7 +26,8 @@ from workflow.workflow import (steps_for_instances, rollback_for_instances_full,
 from maintenance.models import (DatabaseUpgrade, DatabaseResize,
                                 DatabaseChangeParameter, DatabaseReinstallVM,
                                 DatabaseConfigureSSL)
-from maintenance.tasks import restore_database, node_zone_migrate, rollback_node_zone_migrate
+from maintenance.tasks import restore_database, node_zone_migrate, \
+    node_zone_migrate_rollback
 from maintenance.models import DatabaseCreate
 
 

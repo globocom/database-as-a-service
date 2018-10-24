@@ -649,7 +649,7 @@ class Database(BaseModel):
             return False
 
     @property
-    def can_migrate(self):
+    def is_host_migrate_available(self):
         from util.providers import get_host_migrate_steps
         class_path = self.plan.replication_topology.class_path
         try:
@@ -826,7 +826,7 @@ class Database(BaseModel):
             return False, error
         return True, None
 
-    def can_do_host_migrate(self):
+    def can_migrate_host(self):
         error = None
         if self.is_in_quarantine:
             error = "Database in quarantine and cannot have host migrate."

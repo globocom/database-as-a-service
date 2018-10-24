@@ -1234,7 +1234,7 @@ def database_reinstall_vm_retry(request, context, database):
 
 @database_view('migrate')
 def database_migrate(request, context, database):
-    if not database.can_migrate:
+    if not database.is_host_migrate_available:
         messages.add_message(
             request, messages.ERROR, "This database cannot be migrated"
         )
@@ -1242,7 +1242,7 @@ def database_migrate(request, context, database):
 
     if request.POST:
         host = get_object_or_404(Host, pk=request.POST.get('host_id'))
-        can_migrate, error = database.can_do_host_migrate()
+        can_migrate, error = database.can_migrate_host()
         if can_migrate:
             environment = database.infra.environment
             zone = request.POST["new_zone"]
