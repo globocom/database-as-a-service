@@ -65,7 +65,7 @@ class ConfigureGroup(OnlyFirstInstance):
         )
 
     def undo(self):
-        if self.is_valid:
+        if not self.is_valid:
             return
 
         self.provider.delete_group(self.infra.name)
