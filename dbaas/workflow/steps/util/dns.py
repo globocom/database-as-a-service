@@ -156,9 +156,8 @@ class RegisterDNSVip(DNSStep):
             ip=self.vip.vip_ip
         )
 
-
     def undo(self):
-        if not self.is_valid:
+        if self.is_valid:
             return
 
         self.provider.remove_databases_dns_for_ip(
