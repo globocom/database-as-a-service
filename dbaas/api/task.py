@@ -30,7 +30,7 @@ class TaskSerializer(serializers.ModelSerializer):
         )
 
     def get_relevance(self, task):
-        return TaskHistory.RELEVANCE_CHOICES[task.relevance]
+        return task.get_relevance_display()
 
     def had_rollback(self, task):
         if not task.details:
