@@ -6,13 +6,13 @@ from notification.models import TaskHistory
 from logical.models import Database, DatabaseHistory
 
 
-RELEVANCE_DICT = {
-        0: "CRITICAL",
-        1: "ERROR",
-        2: "WARNING",
-        3: "INFO",
-        4: "DEBUG"
-    }
+# RELEVANCE_DICT = {
+#         0: "CRITICAL",
+#         1: "ERROR",
+#         2: "WARNING",
+#         3: "INFO",
+#         4: "DEBUG"
+#     }
 
 
 class TaskSerializer(serializers.ModelSerializer):
@@ -39,7 +39,8 @@ class TaskSerializer(serializers.ModelSerializer):
         )
 
     def get_relevance(self, task):
-        return RELEVANCE_DICT[task.relevance]
+        return TaskHistory.RELEVANCE_CHOICES[task.relevance][1]
+        # return RELEVANCE_DICT[task.relevance]
 
     def had_rollback(self, task):
         if not task.details:
