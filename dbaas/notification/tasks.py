@@ -1082,7 +1082,6 @@ def resize_database_rollback(self, from_resize, user, task):
     steps = get_resize_settings(class_path)
 
     instances = list(infra.get_driver().get_database_instances())
-    instances.reverse()
 
     from_resize.id = None
     from_resize.task = task
@@ -1398,8 +1397,8 @@ class TaskRegister(object):
             task_params['user'] = user
         task = cls.create_task(task_params)
 
-        from maintenance.tasks import rollback_create_database
-        return rollback_create_database.delay(
+        from maintenance.tasks import create_database_rollback
+        return create_database_rollback.delay(
             rollback_from=rollback_from, task=task, user=user
         )
 
