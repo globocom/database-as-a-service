@@ -336,7 +336,7 @@ def rollback_for_instances(group_of_steps, instances, task, from_step):
 
 def databases_for(instances):
     databases = set()
-    for instance in instances:
+    for instance in instances or []:
         database = instance.databaseinfra.databases.first()
         if database:
             databases.add(database)
@@ -393,16 +393,18 @@ def rollback_for_instances_full(
 ):
     task.add_detail('\nSTARTING ROLLBACK\n')
 
+    instances = instances or []
     current_step = step_current_method()
     steps_total = total_of_steps(groups, instances)
-    since_step = steps_total - current_step
+    since_step = (steps_total - current_step) + 1
 
+    instances.reverse()
     result = steps_for_instances(
         groups, instances, task, step_counter_method, since_step, True
     )
 
     executed_steps = step_current_method()
-    missing_undo_steps = steps_total - executed_steps
+    missing_undo_steps = steps_total - (executed_steps - 1)
     step_counter_method(missing_undo_steps)
 
     return result
