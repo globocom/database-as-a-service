@@ -166,25 +166,25 @@ List all credentials. In list operation, passwords are not shown.
 
 Response:
 
-{
-    "_links": {
-        "count": 10, 
-        "self": "http://localhost:8000/api/credential/", 
-        "previous": null, 
-        "next": null
-    }, 
-    "credential": [
-        {
-            "_links": {
-                "self": "http://localhost:8000/api/credential/1/"
-            }, 
-            "id": 1, 
-            "user": "u_test_database2", 
-            "database": "http://localhost:8000/api/database/1/"
-        },
-        ...
-    ]
-}
+    {
+        "_links": {
+            "count": 10, 
+            "self": "http://localhost:8000/api/credential/", 
+            "previous": null, 
+            "next": null
+        }, 
+        "credential": [
+            {
+                "_links": {
+                    "self": "http://localhost:8000/api/credential/1/"
+                }, 
+                "id": 1, 
+                "user": "u_test_database2", 
+                "database": "http://localhost:8000/api/database/1/"
+            },
+            ...
+        ]
+    }
 
 ### GET /api/credential/*some_id*
 Get the password from credential.
