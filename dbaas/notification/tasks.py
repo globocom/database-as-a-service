@@ -1666,7 +1666,7 @@ class TaskRegister(object):
         if user:
             task_params['user'] = user
         task = cls.create_task(task_params)
-        return rollback_node_zone_migrate.delay(migrate, task)
+        return node_zone_migrate_rollback.delay(migrate, task)
 
 
     # ============  END TASKS   ============

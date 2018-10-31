@@ -40,7 +40,14 @@ class BaseClusterStep(PlanStep):
 
     @property
     def cluster_del_node_command(self):
-        return '{{ CLUSTER_COMMAND }} del-node --password {{ PASSWORD }} {{ CLUSTER_ADDRESS }} {{ NODE_ID }}'
+        commands = [
+            '{{ CLUSTER_COMMAND }} del-node --password {{ PASSWORD }} {{ CLUSTER_ADDRESS }} {{ NODE_ID }}',
+            'rm -f /data/data/redis.aof',
+            'rm -f /data/data/dump.rdb',
+            'rm -f /data/redis.conf',
+            '/etc/init.d/redis start'
+        ]
+        return ' && '.join(commands)
 
     @property
     def node_config_file(self):
@@ -212,13 +219,17 @@ class AddSlaveNode(BaseClusterStep):
     def __unicode__(self):
         return "Add node..."
 
+    def __init__(self, instance):
+        super(AddSlaveNode, self).__init__(instance)
+        self.new_host_address = self.host.address
+
     def get_variables_specifics(self):
         return {
             'MASTER_ID': self.driver.get_node_id(
                 self.instance, self.master.address, self.instance.port
             ),
             'NEW_NODE_ADDRESS': '{}:{}'.format(
-                self.host.address, self.instance.port
+                self.new_host_address, self.instance.port
             ),
             'CLUSTER_ADDRESS': '{}:{}'.format(
                 self.master.address, self.instance.port
@@ -231,11 +242,22 @@ class AddSlaveNode(BaseClusterStep):
             '[OK] New node added correctly.', output['stdout']
         )
 
+    def undo(self):
+        remove = RemoveNode(self.instance)
+        remove.new_host_address = self.host.address
+        remove.run_script_host = self.host
+        remove.do()
+
 
 class RemoveNode(BaseClusterStep):
 
     def __unicode__(self):
         return "Remove node..."
+
+    def __init__(self, instance):
+        super(RemoveNode, self).__init__(instance)
+        self.remove_address = self.instance.address
+        self.run_script_host = self.instance.hostname
 
     def get_variables_specifics(self):
         return {
@@ -243,7 +265,7 @@ class RemoveNode(BaseClusterStep):
                 self.master.address, self.instance.port
             ),
             'NODE_ID': self.driver.get_node_id(
-                self.instance, self.instance.address, self.instance.port
+                self.instance, self.remove_address, self.instance.port
             ),
         }
 
@@ -252,3 +274,8 @@ class RemoveNode(BaseClusterStep):
         self.check_response(
             'SHUTDOWN the node', output['stdout']
         )
+
+    def undo(self):
+        add = AddSlaveNode(self.instance)
+        add.new_host = self.instance.hostname
+        add.do()
