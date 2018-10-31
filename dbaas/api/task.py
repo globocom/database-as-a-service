@@ -9,6 +9,7 @@ from logical.models import Database, DatabaseHistory
 class TaskSerializer(serializers.ModelSerializer):
     database = serializers.SerializerMethodField('get_database')
     rollback = serializers.SerializerMethodField('had_rollback')
+    relevance = serializers.SerializerMethodField('get_relevance')
 
     class Meta:
         model = TaskHistory
@@ -25,7 +26,11 @@ class TaskSerializer(serializers.ModelSerializer):
             'task_name',
             'database',
             'rollback',
+            'relevance',
         )
+
+    def get_relevance(self, task):
+        return task.get_relevance_display()
 
     def had_rollback(self, task):
         if not task.details:
@@ -112,7 +117,8 @@ class TaskAPI(viewsets.ReadOnlyModelViewSet):
         'object_id',
         'updated_at',
         'created_at',
-        'user'
+        'user',
+        'relevance'
     )
     ordering_fields = ('created_at', 'updated_at', 'id')
     ordering = ('-created_at',)

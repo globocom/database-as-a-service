@@ -27,6 +27,7 @@ def execute_scheduled_maintenance(self, maintenance_id):
     task_history = TaskHistory.register(
         request=self.request, worker_name=worker_name
     )
+    task_history.relevance = TaskHistory.RELEVANCE_CRITICAL
     LOG.info("id: {} | task: {} | kwargs: {} | args: {}".format(
         self.request.id, self.request.task,
         self.request.kwargs, str(self.request.args)
