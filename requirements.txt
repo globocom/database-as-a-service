@@ -36,7 +36,7 @@ logilab-common==0.60.0
 paramiko==2.1.1
 pyasn1==0.1.7
 pycrypto==2.6
-pymongo==3.4.0
+pymongo==3.7.2
 python-gnupg==0.3.6
 python-keyczar==0.71c
 python-ldap==2.3.13
