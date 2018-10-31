@@ -26,8 +26,22 @@ class TaskHistory(BaseModel):
     STATUS_WARNING = 'WARNING'
     STATUS_WAITING = 'WAITING'
 
+    RELEVANCE_CRITICAL = 0
+    RELEVANCE_ERROR = 1
+    RELEVANCE_WARNING = 2
+    RELEVANCE_INFO = 3
+    RELEVANCE_DEBUG = 4
+
     _STATUS = [STATUS_RUNNING, STATUS_SUCCESS,
                STATUS_ERROR, STATUS_WARNING, STATUS_WAITING]
+
+    RELEVANCE_CHOICES = (
+        (RELEVANCE_CRITICAL, 'CRITICAL'),
+        (RELEVANCE_ERROR, 'ERROR'),
+        (RELEVANCE_WARNING, 'WARNING'),
+        (RELEVANCE_INFO, 'INFO'),
+        (RELEVANCE_DEBUG, 'DEBUG')
+    )
 
     task_id = models.CharField(
         _('Task ID'), max_length=200, null=True, blank=True, editable=False
@@ -43,6 +57,9 @@ class TaskHistory(BaseModel):
     )
     task_status = models.CharField(
         _('Task Status'), max_length=100, default=STATUS_WAITING, db_index=True
+    )
+    relevance = models.IntegerField(
+        max_length=1, choices=RELEVANCE_CHOICES, default=RELEVANCE_CRITICAL
     )
     context = models.TextField(null=True, blank=True)
     details = models.TextField(

@@ -222,9 +222,12 @@ class Database(BaseModel):
         else:
             return True
 
-    def __clean_task_rollback(self, task_name):
+    @staticmethod
+    def __clean_task(task_name):
         if task_name.endswith('_rollback'):
             return task_name.rsplit('_rollback', 1)[0]
+        if task_name.endswith('_retry'):
+            return task_name.rsplit('_retry', 1)[0]
         return task_name
 
     def update_task(self, task):
@@ -237,8 +240,8 @@ class Database(BaseModel):
                 database=self
             ).first()
 
-            task_name = self.__clean_task_rollback(task.task_name)
-            lock_task_name = self.__clean_task_rollback(lock.task.task_name)
+            task_name = self.__clean_task(task.task_name)
+            lock_task_name = self.__clean_task(lock.task.task_name)
 
             if lock_task_name != task_name or not lock.task.is_status_error:
                 return False

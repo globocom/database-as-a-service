@@ -27,6 +27,7 @@ def execute_scheduled_maintenance(self, maintenance_id):
     task_history = TaskHistory.register(
         request=self.request, worker_name=worker_name
     )
+    task_history.relevance = TaskHistory.RELEVANCE_CRITICAL
     LOG.info("id: {} | task: {} | kwargs: {} | args: {}".format(
         self.request.id, self.request.task,
         self.request.kwargs, str(self.request.args)
@@ -240,7 +241,7 @@ def restore_database(self, database, task, snapshot, user, retry_from=None):
 
 
 @app.task(bind=True)
-def rollback_create_database(self, rollback_from, task, user):
+def create_database_rollback(self, rollback_from, task, user):
     task = TaskHistory.register(
         request=self.request, task_history=task, user=user,
         worker_name=get_worker_name()

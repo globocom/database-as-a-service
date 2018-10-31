@@ -132,7 +132,7 @@ class RedisSentinel(BaseRedis):
     def get_upgrade_steps_final(self):
         return [{
             'Resetting Sentinel': (
-                'workflow.steps.redis.upgrade.sentinel.Reset',
+                'workflow.steps.redis.upgrade.sentinel.ResetAllSentinel',
                 'workflow.steps.util.database.SetSlave',
             ),
         }] + super(RedisSentinel, self).get_upgrade_steps_final()

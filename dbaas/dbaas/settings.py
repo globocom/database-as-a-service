@@ -480,7 +480,7 @@ LOGGING = {
     },
     'root': {
         'handlers': ['console', 'syslog'],
-        'level': 'DEBUG',
+        'level': os.getenv('DBAAS_ROOT_LOG_LEVEL', 'DEBUG'),
     }
 }
 
