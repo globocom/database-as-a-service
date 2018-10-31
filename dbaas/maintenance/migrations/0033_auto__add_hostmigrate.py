@@ -8,10 +8,28 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        pass
+        # Adding model 'HostMigrate'
+        db.create_table(u'maintenance_hostmigrate', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('created_at', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
+            ('updated_at', self.gf('django.db.models.fields.DateTimeField')(auto_now=True, blank=True)),
+            ('current_step', self.gf('django.db.models.fields.PositiveSmallIntegerField')(default=0)),
+            ('status', self.gf('django.db.models.fields.IntegerField')(default=0)),
+            ('started_at', self.gf('django.db.models.fields.DateTimeField')(null=True, blank=True)),
+            ('finished_at', self.gf('django.db.models.fields.DateTimeField')(null=True, blank=True)),
+            ('can_do_retry', self.gf('django.db.models.fields.BooleanField')(default=True)),
+            ('task', self.gf('django.db.models.fields.related.ForeignKey')(related_name=u'host_migrate', to=orm['notification.TaskHistory'])),
+            ('host', self.gf('django.db.models.fields.related.ForeignKey')(related_name=u'migrate', to=orm['physical.Host'])),
+            ('environment', self.gf('django.db.models.fields.related.ForeignKey')(related_name=u'host_migrate', to=orm['physical.Environment'])),
+            ('zone', self.gf('django.db.models.fields.CharField')(max_length=50)),
+        ))
+        db.send_create_signal(u'maintenance', ['HostMigrate'])
+
 
     def backwards(self, orm):
-        pass
+        # Deleting model 'HostMigrate'
+        db.delete_table(u'maintenance_hostmigrate')
+
 
     models = {
         u'account.team': {
@@ -149,6 +167,30 @@ class Migration(SchemaMigration):
             'updated_at': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
             'user': ('django.db.models.fields.CharField', [], {'max_length': '200'})
         },
+        u'maintenance.databasedestroy': {
+            'Meta': {'object_name': 'DatabaseDestroy'},
+            'can_do_retry': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
+            'created_at': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
+            'current_step': ('django.db.models.fields.PositiveSmallIntegerField', [], {'default': '0'}),
+            'database': ('django.db.models.fields.related.ForeignKey', [], {'blank': 'True', 'related_name': "u'databases_destroy'", 'null': 'True', 'on_delete': 'models.SET_NULL', 'to': u"orm['logical.Database']"}),
+            'description': ('django.db.models.fields.TextField', [], {}),
+            'environment': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "u'databases_destroy'", 'to': u"orm['physical.Environment']"}),
+            'finished_at': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'blank': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'infra': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "u'databases_destroy'", 'to': u"orm['physical.DatabaseInfra']"}),
+            'is_protected': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'name': ('django.db.models.fields.CharField', [], {'max_length': '200'}),
+            'plan': ('django.db.models.fields.related.ForeignKey', [], {'blank': 'True', 'related_name': "u'databases_destroy'", 'null': 'True', 'on_delete': 'models.SET_NULL', 'to': u"orm['physical.Plan']"}),
+            'plan_name': ('django.db.models.fields.CharField', [], {'max_length': '100', 'null': 'True', 'blank': 'True'}),
+            'project': ('django.db.models.fields.related.ForeignKey', [], {'blank': 'True', 'related_name': "u'databases_destroy'", 'null': 'True', 'to': u"orm['logical.Project']"}),
+            'started_at': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'blank': 'True'}),
+            'status': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
+            'subscribe_to_email_events': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
+            'task': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "u'databases_destroy'", 'to': u"orm['notification.TaskHistory']"}),
+            'team': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "u'databases_destroy'", 'to': u"orm['account.Team']"}),
+            'updated_at': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
+            'user': ('django.db.models.fields.CharField', [], {'max_length': '200'})
+        },
         u'maintenance.databasereinstallvm': {
             'Meta': {'object_name': 'DatabaseReinstallVM'},
             'can_do_retry': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
@@ -235,6 +277,21 @@ class Migration(SchemaMigration):
             'status': ('django.db.models.fields.IntegerField', [], {'default': '4'}),
             'updated_at': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'})
         },
+        u'maintenance.hostmigrate': {
+            'Meta': {'object_name': 'HostMigrate'},
+            'can_do_retry': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
+            'created_at': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
+            'current_step': ('django.db.models.fields.PositiveSmallIntegerField', [], {'default': '0'}),
+            'environment': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "u'host_migrate'", 'to': u"orm['physical.Environment']"}),
+            'finished_at': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'blank': 'True'}),
+            'host': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "u'migrate'", 'to': u"orm['physical.Host']"}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'started_at': ('django.db.models.fields.DateTimeField', [], {'null': 'True', 'blank': 'True'}),
+            'status': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
+            'task': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "u'host_migrate'", 'to': u"orm['notification.TaskHistory']"}),
+            'updated_at': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
+            'zone': ('django.db.models.fields.CharField', [], {'max_length': '50'})
+        },
         u'maintenance.maintenance': {
             'Meta': {'object_name': 'Maintenance'},
             'affected_hosts': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
@@ -276,6 +333,7 @@ class Migration(SchemaMigration):
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'object_class': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True', 'blank': 'True'}),
             'object_id': ('django.db.models.fields.IntegerField', [], {'null': 'True', 'blank': 'True'}),
+            'relevance': ('django.db.models.fields.IntegerField', [], {'default': '0', 'max_length': '1'}),
             'task_id': ('django.db.models.fields.CharField', [], {'max_length': '200', 'null': 'True', 'blank': 'True'}),
             'task_name': ('django.db.models.fields.CharField', [], {'max_length': '200', 'null': 'True', 'blank': 'True'}),
             'task_status': ('django.db.models.fields.CharField', [], {'default': "u'WAITING'", 'max_length': '100', 'db_index': 'True'}),
