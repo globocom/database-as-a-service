@@ -211,6 +211,9 @@ class Script(BaseModel):
         max_length=300, help_text="File path", null=True, blank=True
     )
 
+    metric_collector = models.CharField(
+        max_length=300, help_text="File path", null=True, blank=True)
+
     def _get_content(self, file_name):
         path = file_name
         if not os.path.exists(path):
@@ -236,6 +239,9 @@ class Script(BaseModel):
     def start_replication_template(self):
         return self._get_content(self.start_replication)
 
+    @property
+    def metric_collector_template(self):
+        return self._get_content(self.metric_collector)
 
 class ReplicationTopology(BaseModel):
 
