@@ -351,6 +351,17 @@ class Redis(BaseDriver):
     def build_new_infra_auth(self):
         return '', make_db_random_password(), ''
 
+    def create_metric_collector_user(self, username, password):
+        pass
+
+    def remove_metric_collector_user(self, username):
+        pass
+
+    def get_metric_collector_user(self, username):
+        return ""
+
+    def get_metric_collector_password(self, password):
+        return self.databaseinfra.password
 
 class RedisSentinel(Redis):
 
