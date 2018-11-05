@@ -3,7 +3,6 @@ from util import build_context_script, exec_remote_command_host, \
     get_credentials_for
 from dbaas_credentials.models import CredentialType
 from base import BaseInstanceStep, BaseInstanceStepMigration
-from metric_collector import ConfigureTelegraf
 from physical.configurations import configuration_factory
 from physical.models import Offering, Volume
 import logging
@@ -190,8 +189,6 @@ class Configure(PlanStep):
     def do(self):
         if self.is_valid:
             self.run_script(self.plan.script.configuration_template)
-            config_telegraf = ConfigureTelegraf(self.instance)
-            config_telegraf.exec_script_template()
 
 
 class StartReplication(PlanStep):
