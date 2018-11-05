@@ -17,7 +17,7 @@ class Foreman(BaseInstanceStep):
     @property
     def fqdn(self):
         output = {}
-        script = 'hostname'
+        script = 'hostname -f'
         exec_remote_command_host(self.host, script, output)
         return output['stdout'][0].strip()
 
