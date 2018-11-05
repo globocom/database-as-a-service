@@ -271,6 +271,8 @@ class RemoveNode(BaseClusterStep):
         )
 
     def undo(self):
-        add = AddSlaveNode(self.instance)
-        add.new_host = self.instance.hostname
+        instance = self.instance
+        instance.address = self.host.address
+        add = AddSlaveNode(instance)
+        add.new_host_address = self.instance.hostname.address
         add.do()
