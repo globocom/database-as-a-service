@@ -27,7 +27,7 @@ from maintenance.models import (DatabaseUpgrade, DatabaseResize,
                                 DatabaseChangeParameter, DatabaseReinstallVM,
                                 DatabaseConfigureSSL)
 from maintenance.tasks import restore_database
-from maintenance.models import DatabaseCreate
+from maintenance.models import DatabaseCreate, DatabaseDestroy
 from util.providers import get_deploy_settings, get_deploy_instances
 
 
@@ -157,36 +157,34 @@ def destroy_database(self, database, task_history=None, user=None):
 
         infra = database.databaseinfra
 
-        # destroy_infra(databaseinfra=databaseinfra, task=task_history)
-        database_create = DatabaseCreate()
-        database_create.task = task_history
-        database_create.name = database.name
-        database_create.plan = database.plan
-        database_create.environment = database.environment
-        database_create.team = database.team
-        database_create.project = database.project
-        database_create.description = database.description
-        database_create.is_protected = database.is_protected
-        database_create.user = user.username if user else task.user
-        database_create.infra = database.infra
-        database_create.database = infra.databases.first()
-        database_create.save()
+        database_destroy = DatabaseDestroy()
+        database_destroy.task = task_history
+        database_destroy.name = database.name
+        database_destroy.plan = database.plan
+        database_destroy.environment = database.environment
+        database_destroy.team = database.team
+        database_destroy.project = database.project
+        database_destroy.description = database.description
+        database_destroy.is_protected = database.is_protected
+        database_destroy.user = user.username if user else task_history.user
+        database_destroy.infra = database.infra
+        database_destroy.database = infra.databases.first()
+        database_destroy.save()
 
-        topology_path = database_create.plan.replication_topology.class_path
+        topology_path = database_destroy.plan.replication_topology.class_path
         steps = get_deploy_settings(topology_path)
 
-        # instances = get_instances_for(infra, topology_path)
-        instances = map(
-            lambda host: host.instances.order_by('instance_type').first(),
-            infra.hosts
-        )
-        database_create.current_step = total_of_steps(steps, instances)
+        instances = [
+            host.instances.order_by('instance_type').first() for host in infra.hosts
+        ]
+        database_destroy.current_step = total_of_steps(steps, instances)
 
-        database_create.save()
+        database_destroy.save()
 
         from maintenance.tasks_create_database import rollback_create
-        rollback_create(database_create, task_history, user, instances=instances)
-
+        rollback_create(database_destroy, task_history, user, instances=instances)
+        if task_history.task_status == TaskHistory.STATUS_ERROR:
+            return
         task_history.update_status_for(
             TaskHistory.STATUS_SUCCESS, details='Database destroyed successfully')
         return
@@ -408,6 +406,7 @@ def update_database_status(self):
         worker_name = get_worker_name()
         task_history = TaskHistory.register(
             request=self.request, user=None, worker_name=worker_name)
+        task_history.relevance = TaskHistory.RELEVANCE_WARNING
         databases = Database.objects.all()
         msgs = []
         for database in databases:
@@ -481,6 +480,7 @@ def update_infra_instances_sizes(self):
         worker_name = get_worker_name()
         task_history = TaskHistory.register(
             request=self.request, user=None, worker_name=worker_name)
+        task_history.relevance = TaskHistory.RELEVANCE_WARNING
         databases = Database.objects.all()
         msgs = []
         for database in databases:
@@ -505,6 +505,7 @@ def update_instances_status(self):
     worker_name = get_worker_name()
     task_history = TaskHistory.register(
         request=self.request, user=None, worker_name=worker_name)
+    task_history.relevance = TaskHistory.RELEVANCE_WARNING
 
     try:
         infras = DatabaseInfra.objects.all()
@@ -535,6 +536,7 @@ def purge_task_history(self):
         worker_name = get_worker_name()
         task_history = TaskHistory.register(
             request=self.request, user=None, worker_name=worker_name)
+        task_history.relevance = TaskHistory.RELEVANCE_WARNING
 
         now = datetime.datetime.now()
         retention_days = Configuration.get_by_name_as_int(
@@ -552,7 +554,7 @@ def purge_task_history(self):
                 'notification.tasks.update_instances_status',
                 'notification.tasks.update_infra_instances_sizes',
                 'sync_celery_tasks',
-                'purge_unused_exports_task',
+                'purge_unused_exports',
                 'system.tasks.set_celery_healthcheck_last_update'
             ],
             ended_at__lt=n_days_before,
@@ -786,6 +788,7 @@ def update_disk_used_size(self):
     task = TaskHistory.register(
         request=self.request, user=None, worker_name=worker_name
     )
+    task.relevance = TaskHistory.RELEVANCE_WARNING
     task.add_detail(message='Collecting disk used space from Zabbix')
 
     from .tasks_disk_resize import zabbix_collect_used_disk
@@ -1082,7 +1085,6 @@ def resize_database_rollback(self, from_resize, user, task):
     steps = get_resize_settings(class_path)
 
     instances = list(infra.get_driver().get_database_instances())
-    instances.reverse()
 
     from_resize.id = None
     from_resize.task = task
@@ -1212,7 +1214,8 @@ class TaskRegister(object):
         task_params = {
             'task_name': 'database_disk_resize' if task_name is None else task_name,
             'arguments': 'Database name: {}'.format(database.name),
-            'database': database
+            'database': database,
+            'relevance': TaskHistory.RELEVANCE_CRITICAL
         }
 
         task_params.update(**{'user': user} if register_user else {})
@@ -1244,7 +1247,8 @@ class TaskRegister(object):
             'task_name': 'resize_database',
             'arguments': 'Database name: {}'.format(database.name),
             'user': user,
-            'database': database
+            'database': database,
+            'relevance': TaskHistory.RELEVANCE_CRITICAL
         }
 
         task = cls.create_task(task_params)
@@ -1267,7 +1271,8 @@ class TaskRegister(object):
             'task_name': 'resize_database_retry',
             'arguments': "Retrying resize database {}".format(database),
             'user': user,
-            'database': database
+            'database': database,
+            'relevance': TaskHistory.RELEVANCE_CRITICAL
         }
 
         task = cls.create_task(task_params)
@@ -1288,7 +1293,8 @@ class TaskRegister(object):
             'task_name': 'resize_database_rollback',
             'arguments': "Rollback resize database {}".format(from_resize.database),
             'user': user,
-            'database': from_resize.database
+            'database': from_resize.database,
+            'relevance': TaskHistory.RELEVANCE_CRITICAL
         }
 
         task = cls.create_task(task_params)
@@ -1300,7 +1306,8 @@ class TaskRegister(object):
             'task_name': 'add_database_instances',
             'arguments': "Adding instances on database {}".format(database),
             'user': user,
-            'database': database
+            'database': database,
+            'relevance': TaskHistory.RELEVANCE_CRITICAL
         }
 
         task = cls.create_task(task_params)
@@ -1319,7 +1326,8 @@ class TaskRegister(object):
             'arguments': "Removing instance {} on database {}".format(
                 instance, database),
             'user': user,
-            'database': database
+            'database': database,
+            'relevance': TaskHistory.RELEVANCE_CRITICAL
         }
 
         task = cls.create_task(task_params)
@@ -1337,6 +1345,7 @@ class TaskRegister(object):
         task_params = {
             'task_name': 'analyze_databases',
             'arguments': "Waiting to start",
+            'relevance': TaskHistory.RELEVANCE_WARNING
         }
         task = cls.create_task(task_params)
         analyze_databases.delay(task_history=task)
@@ -1349,7 +1358,8 @@ class TaskRegister(object):
             'task_name': 'clone_database',
             'arguments': 'Database name: {}'.format(origin_database.name),
             'user': user,
-            'database': origin_database
+            'database': origin_database,
+            'relevance': TaskHistory.RELEVANCE_CRITICAL
         }
         task = cls.create_task(task_params)
 
@@ -1365,7 +1375,8 @@ class TaskRegister(object):
         task_params = {
             'task_name': "create_database",
             'arguments': "Database name: {}".format(name),
-            'database_name': name
+            'database_name': name,
+            'relevance': TaskHistory.RELEVANCE_CRITICAL
         }
         task_params.update(**{'user': user} if register_user else {})
         task = cls.create_task(task_params)
@@ -1388,19 +1399,29 @@ class TaskRegister(object):
             )
 
     @classmethod
-    def database_create_rollback(cls, rollback_from, user):
+    def database_create_rollback(cls, rollback_from, user, extra_task_params=None):
         task_params = {
             'task_name': "create_database",
             'arguments': "Database name: {}".format(rollback_from.name),
-            'database_name': rollback_from.name
+            'database_name': rollback_from.name,
+            'relevance': TaskHistory.RELEVANCE_CRITICAL
         }
+        task_params.update(extra_task_params if extra_task_params else {})
         if user:
             task_params['user'] = user
         task = cls.create_task(task_params)
 
-        from maintenance.tasks import rollback_create_database
-        return rollback_create_database.delay(
+        from maintenance.tasks import create_database_rollback
+        return create_database_rollback.delay(
             rollback_from=rollback_from, task=task, user=user
+        )
+
+    @classmethod
+    def database_destroy_retry(cls, rollback_from, user):
+        return cls.database_create_rollback(
+            rollback_from,
+            user,
+            extra_task_params={'task_name': 'destroy_database'}
         )
 
     @classmethod
@@ -1412,6 +1433,7 @@ class TaskRegister(object):
             'arguments': "Making backup of {}".format(database),
             'database': database,
             'user': user,
+            'relevance': TaskHistory.RELEVANCE_CRITICAL
         }
 
         task = cls.create_task(task_params)
@@ -1429,6 +1451,7 @@ class TaskRegister(object):
             'task_name': "remove_database_backup",
             'arguments': "Remove backup of {}".format(database),
             'user': user,
+            'relevance': TaskHistory.RELEVANCE_WARNING
         }
 
         task = cls.create_task(task_params)
@@ -1445,7 +1468,8 @@ class TaskRegister(object):
             'arguments': "Restoring {} to an older version.".format(
                           database.name),
             'database': database,
-            'user': user
+            'user': user,
+            'relevance': TaskHistory.RELEVANCE_CRITICAL
         }
 
         task = cls.create_task(task_params)
@@ -1462,7 +1486,8 @@ class TaskRegister(object):
             'task_name': 'upgrade_database',
             'arguments': 'Upgrading database {}'.format(database),
             'database': database,
-            'user': user
+            'user': user,
+            'relevance': TaskHistory.RELEVANCE_CRITICAL
         }
 
         if since_step:
@@ -1508,7 +1533,8 @@ class TaskRegister(object):
             'arguments': 'Reinstall VM for database {} and instance {}'.format(database, instance),
             'database': database,
             'instance': instance,
-            'user': user
+            'user': user,
+            'relevance': TaskHistory.RELEVANCE_CRITICAL
         }
 
         if since_step:
@@ -1534,7 +1560,8 @@ class TaskRegister(object):
             'task_name': 'change_parameters',
             'arguments': 'Changing parameters of database {}'.format(database),
             'database': database,
-            'user': user
+            'user': user,
+            'relevance': TaskHistory.RELEVANCE_CRITICAL
         }
 
         if since_step:
@@ -1560,7 +1587,8 @@ class TaskRegister(object):
             'arguments': "Switching write instance {} on database {}".format(
                 instance, database),
             'user': user,
-            'database': database
+            'database': database,
+            'relevance': TaskHistory.RELEVANCE_CRITICAL
         }
 
         task = cls.create_task(task_params)
@@ -1577,7 +1605,8 @@ class TaskRegister(object):
         task_params = {
             'task_name': "purge_unused_exports",
             'arguments': "Removing unused exports",
-            'user': user
+            'user': user,
+            'relevance': TaskHistory.RELEVANCE_WARNING
         }
 
         return cls.create_task(task_params)
@@ -1589,7 +1618,8 @@ class TaskRegister(object):
             'task_name': 'configure_ssl_database',
             'arguments': 'Configure SSL database {}'.format(database),
             'database': database,
-            'user': user
+            'user': user,
+            'relevance': TaskHistory.RELEVANCE_CRITICAL
         }
 
         if since_step:
