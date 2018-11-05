@@ -202,7 +202,7 @@ class Provider(object):
         url = "{}/{}/{}/zones".format(
             self.credential.endpoint, self.provider, self.environment
         )
-        response = get(url)
+        response = self._request(get, url)
         if not response.ok:
             raise HostProviderListZoneException(response.content, response)
         data = response.json()
@@ -213,7 +213,7 @@ class Provider(object):
             self.credential.endpoint, self.provider, self.environment,
             host.identifier
         )
-        response = get(url)
+        response = self._request(get, url)
         if not response.ok:
             raise HostProviderInfoException(response.content, response)
         return response.json()
