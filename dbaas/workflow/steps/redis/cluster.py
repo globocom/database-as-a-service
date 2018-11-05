@@ -44,7 +44,7 @@ class BaseClusterStep(PlanStep):
             '{{ CLUSTER_COMMAND }} del-node --password {{ PASSWORD }} {{ CLUSTER_ADDRESS }} {{ NODE_ID }}',
             'rm -f /data/data/redis.aof',
             'rm -f /data/data/dump.rdb',
-            'rm -f /data/redis.conf',
+            'rm -f /data/{}'.format(self.node_config_file),
             '/etc/init.d/redis start'
         ]
         return ' && '.join(commands)
@@ -123,11 +123,6 @@ class CheckClusterStatus(BaseClusterStep):
             '[OK] All nodes agree about slots configuration.', output['stdout']
         )
         self.check_response('[OK] All 16384 slots covered.', output['stdout'])
-
-        output = self.run_script(self.cluster_info_command)
-        self.check_response(
-            '[OK] 0 keys in {} masters.'.format(self.masters), output['stdout']
-        )
 
 
 class SaveNodeConfig(BaseClusterStep):
