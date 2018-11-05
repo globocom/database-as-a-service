@@ -154,6 +154,7 @@ def region_migration_start(self, infra, instances, since_step=None):
             'workflow.steps.util.volume_provider.MountDataVolume',
             'workflow.steps.util.plan.InitializationMigration',
             'workflow.steps.util.plan.ConfigureMigration',
+            'workflow.steps.util.metric_collector.ConfigureTelegraf',
         )}, {
         'Preparing new environment': (
             'workflow.steps.util.disk.AddDiskPermissionsOldest',
@@ -170,6 +171,7 @@ def region_migration_start(self, infra, instances, since_step=None):
         'Starting new infra': (
             'workflow.steps.util.database.Start',
             'workflow.steps.util.database.CheckIsUp',
+            'workflow.steps.util.metric_collector.RestartTelegraf',
         )}, {
         'Enabling access': (
             'workflow.steps.util.dns.ChangeEndpoint',
