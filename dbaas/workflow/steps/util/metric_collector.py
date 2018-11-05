@@ -70,9 +70,6 @@ class ConfigureTelegraf(MetricsCollector):
         return "Configuring Telegraf..."
 
     def do(self):
-        self.exec_script_template()
-
-    def exec_script_template(self):
         if not self.is_valid: return
         template_script = self.plan.script.metric_collector_template
         script = build_context_script(self.script_variables, template_script)
@@ -89,18 +86,13 @@ class InstallTelegraf(MetricsCollector):
         self.exec_script(script)
 
 
-class StartTelegraf(MetricsCollector):
+class RestartTelegraf(MetricsCollector):
     def __unicode__(self):
-        return "Starting Telegraf..."
+        return "Restarting Telegraf..."
 
     def do(self):
         if not self.is_valid: return
-        script = "/etc/init.d/telegraf start"
-        self.exec_script(script)
-
-    def undo(self):
-        if not self.is_valid: return
-        script = "/etc/init.d/telegraf stop"
+        script = "/etc/init.d/telegraf restart"
         self.exec_script(script)
 
 
@@ -111,11 +103,6 @@ class StopTelegraf(MetricsCollector):
     def do(self):
         if not self.is_valid: return
         script = "/etc/init.d/telegraf stop"
-        self.exec_script(script)
-
-    def undo(self):
-        if not self.is_valid: return
-        script = "/etc/init.d/telegraf start"
         self.exec_script(script)
 
 
