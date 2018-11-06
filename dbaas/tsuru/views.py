@@ -513,7 +513,7 @@ class ServiceRemove(APIView):
                 msg=msg, e=e, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-        LOG.info('Tsuru Service Remove plan {}'.format(plan))
+        LOG.info('Tsuru Service Remove plan {} | {}'.format(database.plan.tsuru_label, plan))
 
         if database.plan.tsuru_label != plan:
             msg = "Change plan is not allowed"
