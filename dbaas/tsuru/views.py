@@ -513,7 +513,7 @@ class ServiceRemove(APIView):
                 msg=msg, e=e, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-        LOG.debug('Tsuru Service Remove plan {}'.format(plan))
+        LOG.info('Tsuru Service Remove plan {}'.format(plan))
 
         database.team = dbaas_team
         database.save()
