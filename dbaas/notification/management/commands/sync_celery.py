@@ -7,6 +7,9 @@ from django.core.management.base import BaseCommand, CommandError
 from dbaas.celery import app
 from util import full_stack
 from notification.models import TaskHistory
+from django_redis import get_redis_connection
+from django.conf import settings
+from redis import Redis
 
 
 class CeleryActivesNodeError(EnvironmentError):
@@ -37,10 +40,27 @@ class Command(BaseCommand):
         self.task = TaskHistory()
         self.task.task_id = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
         self.task.task_name = "sync_celery_tasks"
+        self.task.relevance = TaskHistory.RELEVANCE_WARNING
         self.task.task_status = TaskHistory.STATUS_RUNNING
         self.task.context = {'hostname': socket.gethostname()}
         self.task.save()
         self.task.add_detail('Syncing metadata tasks with celery tasks')
+        self.unique_tasks = [{
+            'name': 'backup.tasks.make_databases_backup',
+            'unique_key': 'makedatabasebackupkey'
+        }]
+        self._redis_conn = None
+
+
+    @property
+    def redis_conn(self):
+        if not self._redis_conn:
+            self._redis_conn = Redis(
+                host=settings.REDIS_HOST,
+                port=settings.REDIS_PORT,
+                password=settings.REDIS_PASSWORD
+            )
+        return self._redis_conn
 
     def handle(self, *args, **kwargs):
         self.task.arguments = {'args': args, 'kwargs': kwargs}
@@ -69,6 +89,19 @@ class Command(BaseCommand):
         if problems > 0:
             status = TaskHistory.STATUS_WARNING
         self.task.update_status_for(status, 'Problems: {}'.format(problems))
+
+        self.check_unique_keys()
+
+    def check_unique_keys(self):
+        for unique_task in self.unique_tasks:
+            task_running = TaskHistory.objects.filter(
+                task_status='RUNNING',
+                task_name=unique_task['name']
+            )
+            if not task_running:
+                unique_key = unique_task['unique_key']
+                if unique_key in self.redis_conn.keys():
+                    self.redis_conn.delete(unique_key)
 
     def check_tasks(self, celery_hosts):
         tasks_running = TaskHistory.objects.filter(

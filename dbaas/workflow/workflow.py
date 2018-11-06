@@ -6,6 +6,7 @@ from django.utils.module_loading import import_by_path
 from exceptions.error_codes import DBAAS_0001
 from logical.models import Database
 from physical.models import DatabaseInfra, Instance
+from system.models import Configuration
 
 LOG = logging.getLogger(__name__)
 
@@ -184,26 +185,18 @@ def stop_workflow(workflow_dict, task=None):
 
 
 def steps_for_instances_with_rollback(group_of_steps, instances, task):
-
     steps_for_instances_with_rollback.current_step = 0
     def update_step(step):
         steps_for_instances_with_rollback.current_step = step
 
-    if steps_for_instances(
-        list_of_groups_of_steps=group_of_steps,
-        instances=instances,
-        task=task,
-        step_counter_method=update_step
-    ):
+    if steps_for_instances(group_of_steps, instances, task, update_step):
         return True
 
     rollback_for_instances(
         group_of_steps, instances, task,
         steps_for_instances_with_rollback.current_step
     )
-
     unlock_databases_for(instances)
-
     return False
 
 
@@ -223,6 +216,8 @@ def steps_for_instances(
 
     if undo:
         list_of_groups_of_steps.reverse()
+
+    step_max_retry = Configuration.get_by_name_as_int('max_step_retry', 0) + 1
 
     for count, group_of_steps in enumerate(list_of_groups_of_steps, start=1):
         task.add_detail('Starting group of steps {} of {} - {}'.format(
@@ -253,26 +248,45 @@ def steps_for_instances(
                     if step_current < since_step or not step_instance.can_run:
                         task.update_details("SKIPPED!", persist=True)
                         continue
-
-                    if undo:
-                        step_instance.undo()
-                    else:
-                        step_instance.do()
-
-                    task.update_details("SUCCESS!", persist=True)
-
                 except Exception as e:
                     task.update_details("FAILED!", persist=True)
                     task.add_detail(str(e))
                     task.add_detail(full_stack())
                     return False
 
+                for retry in range(1, 1 + step_max_retry):
+                    try:
+                        if undo:
+                            step_instance.undo()
+                        else:
+                            step_instance.do()
+                    except Exception as e:
+                        if retry == step_max_retry:
+                            task.update_details("FAILED!", persist=True)
+                            task.add_detail(str(e))
+                            task.add_detail(full_stack())
+                            return False
+                        else:
+                            task.update_details(
+                                "FAILED! Retrying ({}/{})...".format(
+                                    retry, step_max_retry - 1
+                                )
+                            )
+                            LOG.debug(str(e))
+                            LOG.debug(full_stack())
+                            time.sleep(3 * retry)
+                            task.add_step(
+                                step_current, steps_total, str_step_instance
+                            )
+                    else:
+                        task.update_details("SUCCESS!", persist=True)
+                        break
+
         task.add_detail('Ending group of steps: {} of {}\n'.format(
             count, len(list_of_groups_of_steps))
         )
 
     unlock_databases(locked_databases)
-
     return True
 
 
@@ -322,7 +336,7 @@ def rollback_for_instances(group_of_steps, instances, task, from_step):
 
 def databases_for(instances):
     databases = set()
-    for instance in instances:
+    for instance in instances or []:
         database = instance.databaseinfra.databases.first()
         if database:
             databases.add(database)
@@ -379,16 +393,18 @@ def rollback_for_instances_full(
 ):
     task.add_detail('\nSTARTING ROLLBACK\n')
 
+    instances = instances or []
     current_step = step_current_method()
     steps_total = total_of_steps(groups, instances)
-    since_step = steps_total - current_step
+    since_step = (steps_total - current_step) + 1
 
+    instances.reverse()
     result = steps_for_instances(
         groups, instances, task, step_counter_method, since_step, True
     )
 
     executed_steps = step_current_method()
-    missing_undo_steps = steps_total - executed_steps
+    missing_undo_steps = steps_total - (executed_steps - 1)
     step_counter_method(missing_undo_steps)
 
     return result
