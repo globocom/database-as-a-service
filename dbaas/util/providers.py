@@ -1,5 +1,4 @@
 import logging
-import re
 from util import build_dict
 from util import slugify
 from util import get_credentials_for
@@ -221,11 +220,9 @@ def get_switch_write_instance_steps(class_path):
 def get_engine_credentials(engine, environment):
     engine = engine.lower()
 
-    if re.match(r'^mongo.*', engine):
+    if engine.startswith('mongo'):
         credential_type = CredentialType.MONGODB
-    elif re.match(r'^mysql.*', engine):
-        credential_type = CredentialType.MYSQL
-    elif re.match(r'^redis.*', engine):
+    elif engine.startswith(('mysql', 'redis')):
         credential_type = CredentialType.MYSQL
 
     return get_credentials_for(

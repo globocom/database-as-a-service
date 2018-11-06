@@ -72,6 +72,14 @@
                 "type": "PUT",
             }).done(function(data) {
                 $(".swap-ssl-class", credential.$row).text(data.credential.ssl_swap_label);
+                if (data.credential.force_ssl){
+                    $(".swap-ssl-class", credential.$row).attr("checked", "checked");
+                }
+                else {
+                    $(".swap-ssl-class", credential.$row).removeAttr("checked")
+                    ;
+                }
+
                 if (callback) {
                     callback(credential);
                 }
@@ -79,23 +87,21 @@
 
         };
 
-
-        /**
+         /**
         * Remove a credential from server and the page.
         */
         Credential.prototype.delete = function(callback) {
             var credential = this;
-            if (confirm("Are you sure?")) {
-                $.ajax({
-                    "url": "/logical/credential/" + this.pk,
-                    "type": "DELETE",
-                }).done(function(data) {
-                    credential.$row.remove();
-                    if (callback) {
-                        callback(credential);
-                    }
-                });
-            }
+            $.ajax({
+                "url": "/logical/credential/" + this.pk,
+                "type": "DELETE",
+            }).done(function(data) {
+                credential.$row.remove();
+                if (callback) {
+                    callback(credential);
+                }
+            });
+
         };
 
         /**
@@ -148,12 +154,14 @@
               return false;
             });
 
-            // Delete credential
-            $row.on("click.delete-credential", ".btn-credential-remove", function(e) {
-                credential.delete();
-                return false;
+            $("#remove_credential-" + credential.pk).popover();
+            $("#remove_credential_modal-" + credential.pk + " .modal-footer").on("click.delete-credential", ".btn-credential-remove", function(e) {
+              credential.delete(function() {
+                    $("#remove_credential_modal-" + credential.pk).modal('toggle');
+                    return false;
+              });
+              return false;
             });
-
         };
 
         ///////// ADD BUTTON is the only function isolated
@@ -178,6 +186,10 @@
 
         $(document).on('click', function () {
           $('#role-info').popover()
+        })
+
+        $(document).on('click', function () {
+          $('#ssl-info').popover()
         })
 
         $(document).on("click.save-new-credential", ".save-new-credential", function(e) {
