@@ -16,6 +16,7 @@ def set_celery_healthcheck_last_update(self):
         worker_name = get_worker_name()
         task_history = TaskHistory.register(request=self.request, user=None,
                                             worker_name=worker_name)
+        task_history.relevance = TaskHistory.RELEVANCE_WARNING
 
         LOG.info("Setting Celery healthcheck last update")
         CeleryHealthCheck.set_last_update()

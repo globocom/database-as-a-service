@@ -406,6 +406,7 @@ def update_database_status(self):
         worker_name = get_worker_name()
         task_history = TaskHistory.register(
             request=self.request, user=None, worker_name=worker_name)
+        task_history.relevance = TaskHistory.RELEVANCE_WARNING
         databases = Database.objects.all()
         msgs = []
         for database in databases:
@@ -479,6 +480,7 @@ def update_infra_instances_sizes(self):
         worker_name = get_worker_name()
         task_history = TaskHistory.register(
             request=self.request, user=None, worker_name=worker_name)
+        task_history.relevance = TaskHistory.RELEVANCE_WARNING
         databases = Database.objects.all()
         msgs = []
         for database in databases:
@@ -503,6 +505,7 @@ def update_instances_status(self):
     worker_name = get_worker_name()
     task_history = TaskHistory.register(
         request=self.request, user=None, worker_name=worker_name)
+    task_history.relevance = TaskHistory.RELEVANCE_WARNING
 
     try:
         infras = DatabaseInfra.objects.all()
@@ -533,6 +536,7 @@ def purge_task_history(self):
         worker_name = get_worker_name()
         task_history = TaskHistory.register(
             request=self.request, user=None, worker_name=worker_name)
+        task_history.relevance = TaskHistory.RELEVANCE_WARNING
 
         now = datetime.datetime.now()
         retention_days = Configuration.get_by_name_as_int(
@@ -550,7 +554,7 @@ def purge_task_history(self):
                 'notification.tasks.update_instances_status',
                 'notification.tasks.update_infra_instances_sizes',
                 'sync_celery_tasks',
-                'purge_unused_exports_task',
+                'purge_unused_exports',
                 'system.tasks.set_celery_healthcheck_last_update'
             ],
             ended_at__lt=n_days_before,
@@ -784,6 +788,7 @@ def update_disk_used_size(self):
     task = TaskHistory.register(
         request=self.request, user=None, worker_name=worker_name
     )
+    task.relevance = TaskHistory.RELEVANCE_WARNING
     task.add_detail(message='Collecting disk used space from Zabbix')
 
     from .tasks_disk_resize import zabbix_collect_used_disk
@@ -1209,7 +1214,8 @@ class TaskRegister(object):
         task_params = {
             'task_name': 'database_disk_resize' if task_name is None else task_name,
             'arguments': 'Database name: {}'.format(database.name),
-            'database': database
+            'database': database,
+            'relevance': TaskHistory.RELEVANCE_CRITICAL
         }
 
         task_params.update(**{'user': user} if register_user else {})
@@ -1241,7 +1247,8 @@ class TaskRegister(object):
             'task_name': 'resize_database',
             'arguments': 'Database name: {}'.format(database.name),
             'user': user,
-            'database': database
+            'database': database,
+            'relevance': TaskHistory.RELEVANCE_CRITICAL
         }
 
         task = cls.create_task(task_params)
@@ -1264,7 +1271,8 @@ class TaskRegister(object):
             'task_name': 'resize_database_retry',
             'arguments': "Retrying resize database {}".format(database),
             'user': user,
-            'database': database
+            'database': database,
+            'relevance': TaskHistory.RELEVANCE_CRITICAL
         }
 
         task = cls.create_task(task_params)
@@ -1285,7 +1293,8 @@ class TaskRegister(object):
             'task_name': 'resize_database_rollback',
             'arguments': "Rollback resize database {}".format(from_resize.database),
             'user': user,
-            'database': from_resize.database
+            'database': from_resize.database,
+            'relevance': TaskHistory.RELEVANCE_CRITICAL
         }
 
         task = cls.create_task(task_params)
@@ -1297,7 +1306,8 @@ class TaskRegister(object):
             'task_name': 'add_database_instances',
             'arguments': "Adding instances on database {}".format(database),
             'user': user,
-            'database': database
+            'database': database,
+            'relevance': TaskHistory.RELEVANCE_CRITICAL
         }
 
         task = cls.create_task(task_params)
@@ -1316,7 +1326,8 @@ class TaskRegister(object):
             'arguments': "Removing instance {} on database {}".format(
                 instance, database),
             'user': user,
-            'database': database
+            'database': database,
+            'relevance': TaskHistory.RELEVANCE_CRITICAL
         }
 
         task = cls.create_task(task_params)
@@ -1334,6 +1345,7 @@ class TaskRegister(object):
         task_params = {
             'task_name': 'analyze_databases',
             'arguments': "Waiting to start",
+            'relevance': TaskHistory.RELEVANCE_WARNING
         }
         task = cls.create_task(task_params)
         analyze_databases.delay(task_history=task)
@@ -1346,7 +1358,8 @@ class TaskRegister(object):
             'task_name': 'clone_database',
             'arguments': 'Database name: {}'.format(origin_database.name),
             'user': user,
-            'database': origin_database
+            'database': origin_database,
+            'relevance': TaskHistory.RELEVANCE_CRITICAL
         }
         task = cls.create_task(task_params)
 
@@ -1362,7 +1375,8 @@ class TaskRegister(object):
         task_params = {
             'task_name': "create_database",
             'arguments': "Database name: {}".format(name),
-            'database_name': name
+            'database_name': name,
+            'relevance': TaskHistory.RELEVANCE_CRITICAL
         }
         task_params.update(**{'user': user} if register_user else {})
         task = cls.create_task(task_params)
@@ -1389,7 +1403,8 @@ class TaskRegister(object):
         task_params = {
             'task_name': "create_database",
             'arguments': "Database name: {}".format(rollback_from.name),
-            'database_name': rollback_from.name
+            'database_name': rollback_from.name,
+            'relevance': TaskHistory.RELEVANCE_CRITICAL
         }
         task_params.update(extra_task_params if extra_task_params else {})
         if user:
@@ -1418,6 +1433,7 @@ class TaskRegister(object):
             'arguments': "Making backup of {}".format(database),
             'database': database,
             'user': user,
+            'relevance': TaskHistory.RELEVANCE_CRITICAL
         }
 
         task = cls.create_task(task_params)
@@ -1435,6 +1451,7 @@ class TaskRegister(object):
             'task_name': "remove_database_backup",
             'arguments': "Remove backup of {}".format(database),
             'user': user,
+            'relevance': TaskHistory.RELEVANCE_WARNING
         }
 
         task = cls.create_task(task_params)
@@ -1451,7 +1468,8 @@ class TaskRegister(object):
             'arguments': "Restoring {} to an older version.".format(
                           database.name),
             'database': database,
-            'user': user
+            'user': user,
+            'relevance': TaskHistory.RELEVANCE_CRITICAL
         }
 
         task = cls.create_task(task_params)
@@ -1468,7 +1486,8 @@ class TaskRegister(object):
             'task_name': 'upgrade_database',
             'arguments': 'Upgrading database {}'.format(database),
             'database': database,
-            'user': user
+            'user': user,
+            'relevance': TaskHistory.RELEVANCE_CRITICAL
         }
 
         if since_step:
@@ -1514,7 +1533,8 @@ class TaskRegister(object):
             'arguments': 'Reinstall VM for database {} and instance {}'.format(database, instance),
             'database': database,
             'instance': instance,
-            'user': user
+            'user': user,
+            'relevance': TaskHistory.RELEVANCE_CRITICAL
         }
 
         if since_step:
@@ -1540,7 +1560,8 @@ class TaskRegister(object):
             'task_name': 'change_parameters',
             'arguments': 'Changing parameters of database {}'.format(database),
             'database': database,
-            'user': user
+            'user': user,
+            'relevance': TaskHistory.RELEVANCE_CRITICAL
         }
 
         if since_step:
@@ -1566,7 +1587,8 @@ class TaskRegister(object):
             'arguments': "Switching write instance {} on database {}".format(
                 instance, database),
             'user': user,
-            'database': database
+            'database': database,
+            'relevance': TaskHistory.RELEVANCE_CRITICAL
         }
 
         task = cls.create_task(task_params)
@@ -1583,7 +1605,8 @@ class TaskRegister(object):
         task_params = {
             'task_name': "purge_unused_exports",
             'arguments': "Removing unused exports",
-            'user': user
+            'user': user,
+            'relevance': TaskHistory.RELEVANCE_WARNING
         }
 
         return cls.create_task(task_params)
@@ -1595,7 +1618,8 @@ class TaskRegister(object):
             'task_name': 'configure_ssl_database',
             'arguments': 'Configure SSL database {}'.format(database),
             'database': database,
-            'user': user
+            'user': user,
+            'relevance': TaskHistory.RELEVANCE_CRITICAL
         }
 
         if since_step:

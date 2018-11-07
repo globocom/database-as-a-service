@@ -11,6 +11,7 @@ from restore_snapshot import use_database_initialization_script
 
 from workflow.steps.util import test_bash_script_error
 from workflow.steps.util import monit_script
+from maintenance.models import DatabaseCreate, DatabaseDestroy
 
 LOG = logging.getLogger(__name__)
 
@@ -503,12 +504,8 @@ class Create(DatabaseStep):
     def __unicode__(self):
         return "Creating database..."
 
-    @property
-    def creating(self):
-        return self.infra.databases_create.last()
-
     def do(self):
-        creating = self.creating
+        creating = self.create
         if creating.database:
             return
 
@@ -529,8 +526,8 @@ class Create(DatabaseStep):
         database.pin_task(self.creating.task)
 
     def undo(self):
-        creating = self.creating
-        if not creating.database:
+        maintenance_task = self.create or self.destroy
+        if not maintenance_task.database:
             return
 
         database = self.database

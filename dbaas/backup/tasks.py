@@ -169,6 +169,7 @@ def make_databases_backup(self):
     task_history = TaskHistory.register(
         request=self.request, worker_name=worker_name, user=None
     )
+    task_history.relevance = TaskHistory.RELEVANCE_ERROR
 
     waiting_msg = "\nWaiting 5 minutes to start the next backup group"
     status = TaskHistory.STATUS_SUCCESS
@@ -288,6 +289,7 @@ def remove_database_old_backups(self):
     task_history = TaskHistory.register(
         request=self.request, worker_name=worker_name, user=None
     )
+    task_history.relevance = TaskHistory.RELEVANCE_WARNING
 
     snapshots = []
     for env in Environment.objects.all():
