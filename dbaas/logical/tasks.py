@@ -19,6 +19,7 @@ def purge_quarantine(self,):
 
     try:
         task_history = TaskHistory.register(request=self.request, user=user)
+        task_history.relevance = TaskHistory.RELEVANCE_WARNING
 
         LOG.info(
             "id: {} | task: {} | kwargs: {} | args: {}".format(
