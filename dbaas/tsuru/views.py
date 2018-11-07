@@ -644,10 +644,19 @@ def get_database(name, env):
 
 
 def check_acl_service_and_get_unit_network(database, data, ignore_ip_error=False):
-    acl_credential = get_credentials_for(
-        environment=database.environment,
-        credential_type=CredentialType.ACLAPI
-    )
+    try:
+        acl_credential = get_credentials_for(
+            environment=database.environment,
+            credential_type=CredentialType.ACLAPI
+        )
+    except IndexError:
+        error = 'The {} do not have integration with ACLAPI'.format(
+            database.environment
+        )
+        return log_and_response(
+            msg=None, e=error, http_status=status.HTTP_201_CREATED
+        )
+
     health_check_info = acl_credential.get_parameters_by_group('hc')
     try:
         health_check_url = acl_credential.endpoint + health_check_info['health_check_url']
