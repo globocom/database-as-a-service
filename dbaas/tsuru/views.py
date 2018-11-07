@@ -467,6 +467,65 @@ class ServiceRemove(APIView):
     renderer_classes = (JSONRenderer, JSONPRenderer)
     model = Database
 
+    def put(self, request, database_name, format=None):
+        data = request.DATA
+        user = data['user']
+        team = data['team']
+        plan = data['plan']
+        env = get_url_env(request)
+
+        UserMiddleware.set_current_user(request.user)
+        env = get_url_env(request)
+        try:
+            database = get_database(database_name, env)
+        except IndexError as e:
+            msg = "Database id provided does not exist {} in {}.".format(
+                database_name, env)
+            return log_and_response(
+                msg=msg, e=e, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        try:
+            dbaas_user = AccountUser.objects.get(email=user)
+        except ObjectDoesNotExist as e:
+            msg = "User does not exist."
+            return log_and_response(
+                msg=msg, e=e, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        except MultipleObjectsReturned as e:
+            msg = "There are multiple user for {} email.".format(user)
+            return log_and_response(
+                msg=msg, e=e, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+        try:
+            dbaas_team = Team.objects.get(name=team)
+        except ObjectDoesNotExist as e:
+            msg = "Team does not exist."
+            return log_and_response(
+                msg=msg, e=e, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+        try:
+            dbaas_user.team_set.get(name=dbaas_team.name)
+        except ObjectDoesNotExist as e:
+            msg = "The user is not on {} team.".format(dbaas_team.name)
+            return log_and_response(
+                msg=msg, e=e, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+        # LOG.info('Tsuru Service Remove plan {} | {}'.format(database.plan.tsuru_label, plan))
+        #
+        # if database.plan.tsuru_label != plan:
+        #     msg = "Change plan is not allowed"
+        #     return log_and_response(
+        #         msg=msg, e=msg, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        #     )
+
+        database.team = dbaas_team
+        database.save()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
     def delete(self, request, database_name, format=None):
         UserMiddleware.set_current_user(request.user)
         env = get_url_env(request)
@@ -585,10 +644,19 @@ def get_database(name, env):
 
 
 def check_acl_service_and_get_unit_network(database, data, ignore_ip_error=False):
-    acl_credential = get_credentials_for(
-        environment=database.environment,
-        credential_type=CredentialType.ACLAPI
-    )
+    try:
+        acl_credential = get_credentials_for(
+            environment=database.environment,
+            credential_type=CredentialType.ACLAPI
+        )
+    except IndexError:
+        error = 'The {} do not have integration with ACLAPI'.format(
+            database.environment
+        )
+        return log_and_response(
+            msg=None, e=error, http_status=status.HTTP_201_CREATED
+        )
+
     health_check_info = acl_credential.get_parameters_by_group('hc')
     try:
         health_check_url = acl_credential.endpoint + health_check_info['health_check_url']

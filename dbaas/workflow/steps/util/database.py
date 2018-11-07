@@ -510,12 +510,8 @@ class Create(DatabaseStep):
     def __unicode__(self):
         return "Creating database..."
 
-    @property
-    def creating(self):
-        return self.infra.databases_create.last()
-
     def do(self):
-        creating = self.creating
+        creating = self.create
         if creating.database:
             return
 
@@ -536,8 +532,8 @@ class Create(DatabaseStep):
         database.pin_task(self.creating.task)
 
     def undo(self):
-        creating = self.creating
-        if not creating.database:
+        maintenance_task = self.create or self.destroy
+        if not maintenance_task.database:
             return
 
         database = self.database

@@ -126,9 +126,21 @@ class BaseInstanceStep(object):
 
     @property
     def create(self):
-        create = self.infra.databases_create.last()
-        if create and create.is_running:
-            return create
+        return self._get_running_task(self.infra.databases_create)
+
+    @property
+    def destroy(self):
+        return self._get_running_task(self.infra.databases_destroy)
+
+    @property
+    def has_database(self):
+        return bool(self.database)
+
+    @staticmethod
+    def _get_running_task(manager):
+        task = manager.last()
+        if task and task.is_running:
+            return task
 
     @property
     def has_database(self):
