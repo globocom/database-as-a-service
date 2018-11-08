@@ -58,7 +58,7 @@ class DestroyAlarms(ZabbixStep):
     @property
     def hosts_in_zabbix(self):
         monitors = []
-        monitors.append(self.instance.hostname.hostname)
+        monitors.append(self.host.hostname)
 
         for instance in self.instances:
             current_dns = instance.dns

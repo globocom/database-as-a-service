@@ -1,46 +1,59 @@
 # -*- coding: utf-8 -*-
 from django.core.exceptions import ObjectDoesNotExist
-from requests import post, delete
+from requests import post, delete, get
 from dbaas_credentials.models import CredentialType
 from physical.models import Host, Instance
-from util import check_ssh, get_credentials_for
+from util import get_credentials_for
 from base import BaseInstanceStep
-
+from vm import WaitingBeReady
 
 CHANGE_MASTER_ATTEMPS = 4
 CHANGE_MASTER_SECONDS = 15
 
 
-class HostProviderStartVMExeption(Exception):
+class HostProviderException(Exception):
     pass
 
 
-class HostProviderStopVMExeption(Exception):
+class HostProviderStartVMException(HostProviderException):
     pass
 
 
-class HostProviderNewVersionExeption(Exception):
+class HostProviderStopVMException(HostProviderException):
     pass
 
 
-class HostProviderChangeOfferingExeption(Exception):
+class HostProviderNewVersionException(HostProviderException):
     pass
 
 
-class HostProviderCreateVMExeption(Exception):
+class HostProviderChangeOfferingException(HostProviderException):
     pass
 
 
-class HostProviderDestroyVMExeption(Exception):
+class HostProviderCreateVMException(HostProviderException):
+    pass
+
+
+class HostProviderDestroyVMException(HostProviderException):
+    pass
+
+
+class HostProviderListZoneException(HostProviderException):
+    pass
+
+
+class HostProviderInfoException(HostProviderException):
     pass
 
 
 class Provider(object):
 
-    def __init__(self, instance):
+    def __init__(self, instance, environment):
         self.instance = instance
         self._credential = None
         self._vm_credential = None
+        self._environment = environment
 
     @property
     def infra(self):
@@ -52,7 +65,7 @@ class Provider(object):
 
     @property
     def environment(self):
-        return self.infra.environment
+        return self._environment
 
     @property
     def host(self):
@@ -96,11 +109,9 @@ class Provider(object):
         data = {
             "host_id": self.instance.hostname.identifier
         }
-
         response = self._request(post, url, json=data)
         if not response.ok:
-            raise HostProviderStartVMExeption(response.content, response)
-
+            raise HostProviderStartVMException(response.content, response)
         return True
 
     def stop(self):
@@ -110,11 +121,9 @@ class Provider(object):
         data = {
             "host_id": self.instance.hostname.identifier
         }
-
         response = self._request(post, url, json=data)
         if not response.ok:
-            raise HostProviderStopVMExeption(response.content, response)
-
+            raise HostProviderStopVMException(response.content, response)
         return True
 
     def new_version(self, engine=None):
@@ -125,34 +134,29 @@ class Provider(object):
         data.update(
             **{'engine': engine.full_name_for_host_provider} if engine else {}
         )
-
         response = self._request(post, url, json=data)
         if response.status_code != 200:
-            raise HostProviderNewVersionExeption(response.content, response)
-
+            raise HostProviderNewVersionException(response.content, response)
         return True
 
     def new_offering(self, offering):
         url = "{}/{}/{}/host/resize".format(
             self.credential.endpoint, self.provider, self.environment
         )
-
         data = {
             "host_id": self.host.identifier,
             "cpus": offering.cpus,
             'memory': offering.memory_size_mb
         }
-
         response = self._request(post, url, json=data)
         if response.status_code != 200:
-            raise HostProviderChangeOfferingExeption(
+            raise HostProviderChangeOfferingException(
                 response.content,
                 response
             )
-
         return True
 
-    def create_host(self, infra, offering, name, team_name):
+    def create_host(self, infra, offering, name, team_name, zone=None):
         url = "{}/{}/{}/host/new".format(
             self.credential.endpoint, self.provider, self.environment
         )
@@ -164,10 +168,12 @@ class Provider(object):
             "group": infra.name,
             "team_name": team_name
         }
+        if zone:
+            data['zone'] = zone
 
         response = self._request(post, url, json=data, timeout=600)
         if response.status_code != 201:
-            raise HostProviderCreateVMExeption(response.content, response)
+            raise HostProviderCreateVMException(response.content, response)
 
         content = response.json()
 
@@ -186,12 +192,31 @@ class Provider(object):
     def destroy_host(self, host):
         url = "{}/{}/{}/host/{}".format(
             self.credential.endpoint, self.provider, self.environment,
-            self.instance.hostname.identifier
+            host.identifier
         )
-
         response = self._request(delete, url)
         if not response.ok:
-            raise HostProviderDestroyVMExeption(response.content, response)
+            raise HostProviderDestroyVMException(response.content, response)
+
+    def list_zones(self):
+        url = "{}/{}/{}/zones".format(
+            self.credential.endpoint, self.provider, self.environment
+        )
+        response = self._request(get, url)
+        if not response.ok:
+            raise HostProviderListZoneException(response.content, response)
+        data = response.json()
+        return data['zones']
+
+    def host_info(self, host):
+        url = "{}/{}/{}/host/{}".format(
+            self.credential.endpoint, self.provider, self.environment,
+            host.identifier
+        )
+        response = self._request(get, url)
+        if not response.ok:
+            raise HostProviderInfoException(response.content, response)
+        return response.json()
 
 
 class HostProviderStep(BaseInstanceStep):
@@ -205,7 +230,7 @@ class HostProviderStep(BaseInstanceStep):
     @property
     def provider(self):
         if not self._provider:
-            self._provider = Provider(self.instance)
+            self._provider = Provider(self.instance, self.environment)
         return self._provider
 
     def do(self):
@@ -270,30 +295,12 @@ class ReinstallTemplate(HostProviderStep):
             raise EnvironmentError('Could not reinstall VM')
 
 
-class WaitingBeReady(HostProviderStep):
-
-    def __unicode__(self):
-        return "Waiting for VM be ready..."
-
-    def do(self):
-        host_ready = check_ssh(self.host, wait=5, interval=10)
-        if not host_ready:
-            raise EnvironmentError('VM is not ready')
-
-
 class ChangeOffering(HostProviderStep):
 
     def __init__(self, instance):
         super(ChangeOffering, self).__init__(instance)
-
         self.target_offering = self.resize.target_offer
 
-#    def get_offering_id(self, offering):
-#        host_provider_cli = HostProviderClient(self.infra.environment)
-#        return host_provider_cli.get_offering_id(
-#            offering.cpus, offering.memory
-#        )
-#
     def __unicode__(self):
         return "Resizing VM..."
 
@@ -310,12 +317,12 @@ class ChangeOffering(HostProviderStep):
 class CreateVirtualMachine(HostProviderStep):
 
     def __unicode__(self):
-        return "Creating virtualmachine..."
+        return "Creating virtual machine..."
 
     def create_instance(self, host):
         self.instance.hostname = host
         self.instance.address = host.address
-        self.instance.read_only = self.is_readonly_instance
+        self.instance.read_only = self.has_database
         self.instance.save()
 
     def delete_instance(self):
@@ -329,16 +336,6 @@ class CreateVirtualMachine(HostProviderStep):
         self.infra.save()
 
     @property
-    def is_readonly_instance(self):
-        return bool(self.database)
-
-    @property
-    def team_name(self):
-        if self.is_readonly_instance:
-            return self.database.team.name
-        return self.create.team.name
-
-    @property
     def vm_name(self):
         return self.instance.vm_name
 
@@ -350,20 +347,34 @@ class CreateVirtualMachine(HostProviderStep):
     def weaker_offering(self):
         return self.plan.weaker_offering
 
-    def do(self):
-        if self.instance.is_database:
-            offering = (self.infra.offering if self.is_readonly_instance
-                        else self.stronger_offering)
-        else:
-            offering = self.weaker_offering
+    @property
+    def database_offering(self):
+        if self.has_database:
+            return self.infra.offering
+        return self.stronger_offering
 
+    @property
+    def offering(self):
+        if self.instance.is_database:
+            return self.database_offering
+        return self.weaker_offering
+
+    @property
+    def team(self):
+        if self.has_database:
+            return self.database.team.name
+        return self.create.team.name
+
+    @property
+    def zone(self):
+        return None
+
+    def do(self):
         try:
             pair = self.infra.instances.get(dns=self.instance.dns)
         except Instance.DoesNotExist:
             host = self.provider.create_host(
-                self.infra, offering,
-                self.vm_name,
-                self.team_name
+                self.infra, self.offering, self.vm_name, self.team, self.zone
             )
             self.update_databaseinfra_last_vm_created()
         else:
@@ -379,11 +390,74 @@ class CreateVirtualMachine(HostProviderStep):
             return
 
         try:
-            self.provider.destroy_host(
-                Host.objects.get(id=host.id)
-            )
+            self.provider.destroy_host(self.host)
         except (Host.DoesNotExist, IndexError):
             pass
         self.delete_instance()
         if host.id:
             host.delete()
+
+
+class CreateVirtualMachineMigrate(CreateVirtualMachine):
+
+    @property
+    def environment(self):
+        return self.host_migrate.environment
+
+    @property
+    def zone(self):
+        return self.host_migrate.zone
+
+    @property
+    def host(self):
+        return self.instance.hostname
+
+    @property
+    def vm_name(self):
+        return self.host.hostname.split('.')[0]
+
+    def do(self):
+        if self.host.future_host:
+            return
+
+        host = self.provider.create_host(
+            self.infra, self.offering, self.vm_name, self.team, self.zone
+        )
+        self.host.future_host = host
+        self.host.save()
+
+    def undo(self):
+        try:
+            host = self.instance.hostname.future_host
+        except ObjectDoesNotExist:
+            return
+
+        try:
+            self.provider.destroy_host(self.host.future_host)
+        except (Host.DoesNotExist, IndexError):
+            pass
+
+        if host.id:
+            host.delete()
+
+
+class DestroyVirtualMachineMigrate(HostProviderStep):
+
+    def __unicode__(self):
+        return "Destroying virtual machine..."
+
+    def do(self):
+        host = self.instance.hostname
+        self.provider.destroy_host(host)
+        for instance in host.instances.all():
+            instance.hostname = self.host
+            instance.address = self.host.address
+            instance.save()
+
+        migrate = self.host_migrate
+        migrate.host = self.host
+        migrate.save()
+        host.delete()
+
+    def undo(self):
+        raise NotImplementedError
