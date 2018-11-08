@@ -84,7 +84,6 @@ class Redis(BaseDriver):
     def __get_admin_single_connection(self, instance=None):
         if not instance:
             instance = self.instances_filtered.first()
-
         return instance.address, instance.port
 
     def get_dns_port(self):
@@ -332,6 +331,8 @@ class Redis(BaseDriver):
     def parameters_redis(self, host):
         redis = host.database_instance()
         redis_address = redis.address
+        if host.future_host:
+            redis_address = host.future_host.address
         redis_port = redis.port
         only_sentinel = False
 
@@ -501,6 +502,9 @@ class RedisSentinel(Redis):
             redis_port = redis.port
             only_sentinel = False
 
+        if redis and host.future_host:
+            redis_address = host.future_host.address
+
         return {
             'HOSTADDRESS': redis_address,
             'PORT': redis_port,
@@ -516,6 +520,9 @@ class RedisSentinel(Redis):
 
     def parameters_sentinel(self, host):
         sentinel = host.non_database_instance()
+        if sentinel and host.future_host:
+            sentinel.address = host.future_host.address
+
         sentinel_address = ''
         sentinel_port = ''
         if sentinel:
@@ -716,3 +723,13 @@ class RedisCluster(Redis):
     @classmethod
     def topology_name(cls):
         return ['redis_cluster']
+
+    def get_node_id(self, instance, address, port):
+        name = "{}:{}".format(address, port)
+        with self.redis(instance=instance) as client:
+            nodes = client.execute_command("CLUSTER NODES")
+
+        for node in nodes.keys():
+            if name in node:
+                return nodes[node]['node_id']
+        raise EnvironmentError('Node {} not in {}'.format(name, nodes))

@@ -645,6 +645,7 @@ class DatabaseRestoreInstancePair(BaseModel):
     class Meta:
         unique_together = (('master', 'slave', 'restore'), )
 
+
 class DatabaseConfigureSSL(DatabaseMaintenanceTask):
     database = models.ForeignKey(
         Database, verbose_name="Database",
@@ -659,6 +660,27 @@ class DatabaseConfigureSSL(DatabaseMaintenanceTask):
         return "{} Configure SSL".format(self.database.name)
 
 
+class HostMigrate(DatabaseMaintenanceTask):
+    task = models.ForeignKey(
+        TaskHistory, verbose_name="Task History",
+        null=False, related_name="host_migrate"
+    )
+    host = models.ForeignKey(
+        Host, null=False, related_name="migrate"
+    )
+    environment = models.ForeignKey(
+        Environment, null=False, related_name="host_migrate"
+    )
+    zone = models.CharField(max_length=50, null=False)
+
+    def __unicode__(self):
+        return "Migrate {} to {}".format(self.host, self.zone)
+
+    @property
+    def disable_retry_filter(self):
+        return {'host': self.host}
+
+
 simple_audit.register(Maintenance)
 simple_audit.register(HostMaintenance)
 simple_audit.register(MaintenanceParameters)
@@ -666,6 +688,7 @@ simple_audit.register(DatabaseUpgrade)
 simple_audit.register(DatabaseResize)
 simple_audit.register(DatabaseChangeParameter)
 simple_audit.register(DatabaseConfigureSSL)
+simple_audit.register(HostMigrate)
 
 
 #########
