@@ -527,10 +527,6 @@ class MongoDB(BaseDriver):
 class MongoDBReplicaSet(MongoDB):
 
     @property
-    def ports(self):
-        return (27017,)
-
-    @property
     def database_key(self):
         from util import get_mongodb_key_file
         return get_mongodb_key_file(self.databaseinfra)
