@@ -41,3 +41,6 @@ class ResetAllSentinel(BaseInstanceStep):
                 sentinel_instance.port,
                 self.infra.name
             )
+
+    def undo(self):
+        pass

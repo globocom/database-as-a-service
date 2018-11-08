@@ -1,0 +1,111 @@
+{% extends "logical/database/details/base.html" %}
+{% load admin_static %}
+
+
+{% block extrastyle %}
+  {{ block.super }}
+  <style type="text/css">
+    .action_button {
+        margin-left: 20px
+    }
+
+    .padding-host {
+        padding-left: 50px !important;
+    }
+  </style>
+{% endblock %}
+
+
+{% block tab %}
+<fieldset class="module aligned ">
+  <div class="control-group">
+  </div>
+  <div class="panel-body">
+    <div class="control-group">
+      <table id="table-hosts" class="table table-striped">
+        <tbody>
+        {% for host in hosts %}
+          <div class="controls">
+            <tr>
+              <td>{{ host.hostname }}</td>
+              <td>
+                {%if last_host_migrate and last_host_migrate.is_status_error %}
+                  {%if last_host_migrate.host == host %}
+                    <a class="resize_button btn btn-danger" href="{% url 'admin:host_migrate_rollback' last_host_migrate.id %}" title="Rollback for host migrate">Rollback</a>
+                    <a class="resize_button btn btn-warning" href="{% url 'admin:host_migrate_retry' last_host_migrate.id %}" title="Retry for host migrate">Retry</a>
+                    <p><a href="{% url 'admin:maintenance_hostmigrate_change' last_host_migrate.id %}" target='_blank'>Last host migrate</a> has an <b>error</b>, please check the <a href="{% url 'admin:notification_taskhistory_change' last_host_migrate.task.id %}" target='_blank'>task</a> and do rollback or retry of migrate by clicking in one of above buttons</p>
+                  {% else %}
+                    {{host.current_zone}}
+                  {% endif %}
+                {% else %}
+                  <select id="migrate_zone_{{host.id}}" data-host-id="{{host.id}}" data-current-zone="{{host.current_zone}}" class="host-zone" name="migrate_zone">
+                  {% for zone in zones %}
+                    {% if host.current_zone == zone %}
+                      <option value="{{zone}}" selected="selected">*{{zone}}</option>
+                    {% else %}
+                      <option value="{{zone}}">{{zone}}</option>
+                    {% endif %}
+                  {% endfor %}
+                  </select>
+                  <button data-toggle="modal" id="migrate_host_btn_{{host.id}}" class="resize_button btn host-zone-btn" data-host-name="{{host}}" data-host-id="{{host.id}}" data-target="#migrate_host_modal">Migrate Host</button>
+                {% endif %}
+              </td>
+            </div>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</fieldset>
+{% endblock %}
+
+{% block database_button_save %}
+
+{% include "admin/confirmation_modal.html" with tag_type="a" modal_id="migrate_host_modal" confirmation_message="Are you sure you want to migrate this host?" box_title="Migrate host" button_class="btn btn-primary" id_optional="id=migrate_host_btn_modal"%}
+
+{% endblock %}
+
+{% block js_footer %}
+{{ block.super }}
+
+<script type="text/javascript" src="{% static 'js/migrate.js' %}"></script>
+<script>
+  function status_migrate(btn_id, current_value, selected_value) {
+    var btn = document.getElementById(btn_id)
+    btn.disabled = current_value == selected_value
+    if (btn.disabled){
+      btn.className = 'resize_button btn host-zone-btn';
+    } else {
+      btn.className = 'resize_button btn btn-primary host-zone-btn';
+    }
+  }
+
+  jQuery(document).ready(function($) {
+    $(".host-zone").on("change", function() {
+      var $hostZone = $(this),
+        hostId = $hostZone.data('hostId'),
+        currentZone = $hostZone.data('currentZone');
+      status_migrate("migrate_host_btn_" + hostId, currentZone, $hostZone.val())
+    });
+    $(".host-zone").change()
+
+    var hostId;
+    var newZone;
+    $(".host-zone-btn").click(function() {
+      var $hostBtn = $(this);
+      hostId = $hostBtn.data('hostId');
+      var hostName = $hostBtn.data('hostName');
+      var $select = $("#migrate_zone_" + hostId);
+      var currentZone = $select.data('currentZone');
+      newZone = $select.find(":selected").val()
+      $("#migrate_host_modal .modal_message").empty().append('<label>Are you sure you want migrate <u>' + hostName + '</u> from <u>' + currentZone + '</u> to <u>' + newZone + '</u>?</label>');
+    });
+
+    $("#migrate_host_btn_modal").click(function() {
+      window.MigrateManager.migrate_host({{database.id}}, hostId, newZone);
+    });
+
+  })
+</script>
+{% endblock %}
