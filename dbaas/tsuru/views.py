@@ -130,6 +130,10 @@ class ServiceAppBind(APIView):
 
         return None
 
+    @staticmethod
+    def _handle_app_name(app_name):
+        return app_name[0] if isinstance(app_name, list) else app_name
+
     def post(self, request, database_name, format=None):
         env = get_url_env(request)
         data = request.DATA
@@ -140,7 +144,7 @@ class ServiceAppBind(APIView):
             return response
 
         database = response
-        self.add_acl_for_hosts(database, data['app-name'][0])
+        self.add_acl_for_hosts(database, self._handle_app_name(data['app-name']))
 
         hosts, ports = database.infra.get_driver().get_dns_port()
         ports = str(ports)
@@ -213,7 +217,7 @@ class ServiceAppBind(APIView):
 
         database = response
         acl_from_hell_client = ACLFromHellClient(database.environment)
-        acl_from_hell_client.remove_acl(database, data['app-name'][0])
+        acl_from_hell_client.remove_acl(database, self._handle_app_name(data['app-name']))
         return Response(status.HTTP_204_NO_CONTENT)
 
 
