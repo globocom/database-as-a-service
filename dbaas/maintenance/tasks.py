@@ -249,3 +249,25 @@ def create_database_rollback(self, rollback_from, task, user):
 
     from tasks_create_database import rollback_create
     rollback_create(rollback_from, task, user)
+
+
+@app.task(bind=True)
+def node_zone_migrate(
+    self, host, zone, new_environment, task, since_step=None
+):
+    task = TaskHistory.register(
+        request=self.request, task_history=task, user=task.user,
+        worker_name=get_worker_name()
+    )
+    from tasks_migrate import node_zone_migrate
+    node_zone_migrate(host, zone, new_environment, task, since_step)
+
+
+@app.task(bind=True)
+def node_zone_migrate_rollback(self, migrate, task):
+    task = TaskHistory.register(
+        request=self.request, task_history=task, user=task.user,
+        worker_name=get_worker_name()
+    )
+    from tasks_migrate import rollback_node_zone_migrate
+    rollback_node_zone_migrate(migrate, task)

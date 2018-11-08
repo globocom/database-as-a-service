@@ -6,9 +6,17 @@ from time import sleep
 
 class BaseClusterStep(PlanStep):
 
+    def __init__(self, instance):
+        super(BaseClusterStep, self).__init__(instance)
+        self.driver = self.infra.get_driver()
+
+    @property
+    def master(self):
+        return self.driver.get_master_for(self.instance).hostname
+
     @property
     def masters(self):
-        return len(self.infra.get_driver().get_master_instance())
+        return len(self.driver.get_master_instance())
 
     @property
     def cluster_command(self):
@@ -27,6 +35,21 @@ class BaseClusterStep(PlanStep):
         return '{{ CLUSTER_COMMAND }} info --password {{ PASSWORD }} {{ CLUSTER_ADDRESS }}'
 
     @property
+    def cluster_slave_node_command(self):
+        return '{{ CLUSTER_COMMAND }} add-node --password {{ PASSWORD }} --slave --master-id {{ MASTER_ID }} {{ NEW_NODE_ADDRESS }} {{ CLUSTER_ADDRESS }}'
+
+    @property
+    def cluster_del_node_command(self):
+        commands = [
+            '{{ CLUSTER_COMMAND }} del-node --password {{ PASSWORD }} {{ CLUSTER_ADDRESS }} {{ NODE_ID }}',
+            'rm -f /data/data/redis.aof',
+            'rm -f /data/data/dump.rdb',
+            'rm -f /data/{}'.format(self.node_config_file),
+            '/etc/init.d/redis start'
+        ]
+        return ' && '.join(commands)
+
+    @property
     def node_config_file(self):
         return 'nodes.conf'
 
@@ -40,6 +63,13 @@ class BaseClusterStep(PlanStep):
         variables.update(self.get_variables_specifics())
         return variables
 
+    def check_response(self, expected, response):
+        response = str(response)
+        if expected in response:
+            return True
+
+        raise AssertionError('"{}" not in {}'.format(expected, response))
+
 
 class CreateCluster(BaseClusterStep):
 
@@ -48,7 +78,7 @@ class CreateCluster(BaseClusterStep):
 
     @property
     def masters(self):
-        return len(self.infra.get_driver().get_master_instance())/2
+        return len(self.driver.get_master_instance())/2
 
     def get_variables_specifics(self):
         instances = self.infra.instances.all()
@@ -83,7 +113,7 @@ class CheckClusterStatus(BaseClusterStep):
     def get_variables_specifics(self):
         return {
             'CLUSTER_ADDRESS': '{}:{}'.format(
-                self.instance.hostname.address, self.instance.port
+                self.host.address, self.instance.port
             )
         }
 
@@ -93,18 +123,6 @@ class CheckClusterStatus(BaseClusterStep):
             '[OK] All nodes agree about slots configuration.', output['stdout']
         )
         self.check_response('[OK] All 16384 slots covered.', output['stdout'])
-
-        output = self.run_script(self.cluster_info_command)
-        self.check_response(
-            '[OK] 0 keys in {} masters.'.format(self.masters), output['stdout']
-        )
-
-    def check_response(self, expected, response):
-        response = str(response)
-        if expected in response:
-            return True
-
-        raise AssertionError('"{}" not in {}'.format(expected, response))
 
 
 class SaveNodeConfig(BaseClusterStep):
@@ -178,7 +196,7 @@ class SetInstanceShardTag(BaseClusterStep):
                     instance.save()
 
     def retrieve_cluster_nodes_info(self):
-        cluster_client = self.infra.get_driver().get_cluster_client(None)
+        cluster_client = self.driver.get_cluster_client(None)
         self.cluster_nodes = cluster_client.cluster_nodes()
 
     def do(self):
@@ -189,3 +207,72 @@ class SetInstanceShardTag(BaseClusterStep):
         self.check_cluster_status()
         self.identify_cluster_nodes_masters()
         self.update_instance_shard()
+
+
+class AddSlaveNode(BaseClusterStep):
+
+    def __unicode__(self):
+        return "Add node..."
+
+    def __init__(self, instance):
+        super(AddSlaveNode, self).__init__(instance)
+        self.new_host_address = self.host.address
+
+    def get_variables_specifics(self):
+        return {
+            'MASTER_ID': self.driver.get_node_id(
+                self.instance, self.master.address, self.instance.port
+            ),
+            'NEW_NODE_ADDRESS': '{}:{}'.format(
+                self.new_host_address, self.instance.port
+            ),
+            'CLUSTER_ADDRESS': '{}:{}'.format(
+                self.master.address, self.instance.port
+            )
+        }
+
+    def do(self):
+        output = self.run_script(self.cluster_slave_node_command)
+        self.check_response(
+            '[OK] New node added correctly.', output['stdout']
+        )
+
+    def undo(self):
+        remove = RemoveNode(self.instance)
+        remove.new_host_address = self.host.address
+        remove.run_script_host = self.host
+        remove.do()
+
+
+class RemoveNode(BaseClusterStep):
+
+    def __unicode__(self):
+        return "Remove node..."
+
+    def __init__(self, instance):
+        super(RemoveNode, self).__init__(instance)
+        self.remove_address = self.instance.address
+        self.run_script_host = self.instance.hostname
+
+    def get_variables_specifics(self):
+        return {
+            'CLUSTER_ADDRESS': '{}:{}'.format(
+                self.master.address, self.instance.port
+            ),
+            'NODE_ID': self.driver.get_node_id(
+                self.instance, self.remove_address, self.instance.port
+            ),
+        }
+
+    def do(self):
+        output = self.run_script(self.cluster_del_node_command)
+        self.check_response(
+            'SHUTDOWN the node', output['stdout']
+        )
+
+    def undo(self):
+        instance = self.instance
+        instance.address = self.host.address
+        add = AddSlaveNode(instance)
+        add.new_host_address = self.instance.hostname.address
+        add.do()
