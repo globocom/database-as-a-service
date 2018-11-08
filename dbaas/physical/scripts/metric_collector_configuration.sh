@@ -291,7 +291,7 @@ create_telegraf_config()
 ###############################################################################
 
 [[outputs.kafka]]
-  brokers =["{{KAFKA_ENDPOINT}}"]
+  brokers =[{{KAFKA_ENDPOINT}}]
   topic = "{{KAFKA_TOPIC}}"
   compression_codec = 0
   required_acks = -1
