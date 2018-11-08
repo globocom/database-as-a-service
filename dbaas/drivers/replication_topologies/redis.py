@@ -32,6 +32,7 @@ class BaseRedis(BaseTopology):
             'workflow.steps.util.volume_provider.MountDataVolume',
             'workflow.steps.util.plan.InitializationForUpgrade',
             'workflow.steps.util.plan.ConfigureForUpgrade',
+            'workflow.steps.util.metric_collector.ConfigureTelegraf',
         )
 
     def get_resize_extra_steps(self):
@@ -74,8 +75,10 @@ class RedisSingle(BaseRedis):
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.InitializationForNewInfra',
                 'workflow.steps.util.plan.ConfigureForNewInfra',
+                'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.metric_collector.RestartTelegraf',
                 'workflow.steps.util.infra.UpdateEndpoint',
             )}, {
             'Check DNS': (
@@ -111,10 +114,12 @@ class RedisSingle(BaseRedis):
                 'workflow.steps.util.volume_provider.UnmountActiveVolume',
                 'workflow.steps.util.volume_provider.MountDataVolumeRestored',
                 'workflow.steps.util.plan.ConfigureRestore',
+                'workflow.steps.util.metric_collector.ConfigureTelegraf',
             )}, {
             'Starting database': (
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.metric_collector.RestartTelegraf',
             )}, {
             'Old data': (
                 'workflow.steps.util.volume_provider.TakeSnapshot',
@@ -151,7 +156,9 @@ class RedisSentinel(BaseRedis):
             'workflow.steps.util.volume_provider.MountDataVolume',
             'workflow.steps.util.plan.Initialization',
             'workflow.steps.util.plan.Configure',
+            'workflow.steps.util.metric_collector.ConfigureTelegraf',
             'workflow.steps.util.database.Start',
+            'workflow.steps.util.metric_collector.RestartTelegraf',
             'workflow.steps.redis.horizontal_elasticity.database.AddInstanceToRedisCluster',
         )
 
@@ -179,10 +186,12 @@ class RedisSentinel(BaseRedis):
                 'workflow.steps.util.disk.CleanData',
                 'workflow.steps.util.disk.RemoveDeprecatedFiles',
                 'workflow.steps.util.plan.ConfigureRestore',
+                'workflow.steps.util.metric_collector.ConfigureTelegraf',
             )}, {
             'Starting database': (
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.metric_collector.RestartTelegraf',
             )}, {
             'Configuring sentinel': (
                 'workflow.steps.redis.upgrade.sentinel.ResetAllSentinel',
@@ -231,10 +240,12 @@ class RedisSentinel(BaseRedis):
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.InitializationForNewInfraSentinel',
                 'workflow.steps.util.plan.ConfigureForNewInfraSentinel',
+                'workflow.steps.util.metric_collector.ConfigureTelegraf',
             )}, {
             'Starting database': (
                 'workflow.steps.util.database.StartSentinel',
                 'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.metric_collector.RestartTelegraf',
             )}, {
             'Configuring sentinel': (
                 'workflow.steps.redis.upgrade.sentinel.Reset',
@@ -338,8 +349,10 @@ class RedisCluster(BaseRedis):
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.InitializationForNewInfra',
                 'workflow.steps.util.plan.ConfigureForNewInfra',
+                'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.metric_collector.RestartTelegraf',
             )}, {
             'Configuring Cluster': (
                 'workflow.steps.redis.cluster.CreateCluster',
@@ -382,11 +395,13 @@ class RedisCluster(BaseRedis):
                 'workflow.steps.util.disk.CleanData',
                 'workflow.steps.util.disk.RemoveDeprecatedFiles',
                 'workflow.steps.util.plan.ConfigureRestore',
+                'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 'workflow.steps.redis.cluster.RestoreNodeConfig'
             )}, {
             'Starting database': (
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.metric_collector.RestartTelegraf',
             )}, {
             'Old data': (
                 'workflow.steps.util.volume_provider.TakeSnapshot',

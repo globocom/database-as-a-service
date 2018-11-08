@@ -510,6 +510,15 @@ class MongoDB(BaseDriver):
         )
         return credential.user, credential.password, None
 
+    def create_metric_collector_user(self, username, password):
+        client = self.get_client(None)
+        client.admin.add_user(username, password=password,
+                        roles=['clusterMonitor'])
+
+    def remove_metric_collector_user(self, username):
+        client = self.get_client(None)
+        client.admin.remove_user(username)
+
 
 class MongoDBReplicaSet(MongoDB):
 

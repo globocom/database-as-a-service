@@ -37,13 +37,13 @@ class SSL(BaseInstanceStep):
 
     def __init__(self, instance):
         super(SSL, self).__init__(instance)
-        self.credentials = get_credentials_for(
+        self.credential = get_credentials_for(
             self.environment, CredentialType.PKI)
-        self.certificate_allowed = self.credentials.get_parameter_by_name(
+        self.certificate_allowed = self.credential.get_parameter_by_name(
             'certificate_allowed')
-        self.master_ssl_ca = self.credentials.get_parameter_by_name(
+        self.master_ssl_ca = self.credential.get_parameter_by_name(
             'master_ssl_ca')
-        self.certificate_type = self.credentials.get_parameter_by_name(
+        self.certificate_type = self.credential.get_parameter_by_name(
             'certificate_type')
         self.ssl_files = SSLFiles()
 
@@ -328,7 +328,7 @@ class CreateCertificate(SSL):
         script = 'curl -d @{json} -H "X-Pki: 42" -H "Content-type: '
         script += 'application/json" {endpoint}'
         script = script.format(
-            json=self.json_file_path, endpoint=self.credentials.endpoint)
+            json=self.json_file_path, endpoint=self.credential.endpoint)
         return script
 
     def save_certificate_file(self, certificate, filepath):
