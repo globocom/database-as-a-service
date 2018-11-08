@@ -467,10 +467,6 @@ class MySQL(BaseDriver):
 
 class MySQLFOXHA(MySQL):
 
-    @property
-    def ports(self):
-        return (3306,)
-
     @classmethod
     def topology_name(cls):
         return ['mysql_foxha']
