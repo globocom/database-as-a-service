@@ -1,18 +1,14 @@
 # -*- coding: utf-8 -*-
 from time import sleep
-from django.core.exceptions import ObjectDoesNotExist
 from dbaas_credentials.models import CredentialType
-from physical.models import Environment, Instance
 from util import exec_remote_command_host, check_ssh, get_credentials_for
-from base import BaseInstanceStep, BaseInstanceStepMigration
-from workflow.steps.util.base import HostProviderClient
+from base import BaseInstanceStep
 
 CHANGE_MASTER_ATTEMPS = 30
 CHANGE_MASTER_SECONDS = 15
 
 
 class VmStep(BaseInstanceStep):
-
 
     def __init__(self, instance):
         super(VmStep, self).__init__(instance)
@@ -44,10 +40,6 @@ class WaitingBeReady(VmStep):
         host_ready = check_ssh(self.host, wait=5, interval=10)
         if not host_ready:
             raise EnvironmentError('VM is not ready')
-
-
-class MigrationWaitingBeReady(WaitingBeReady, BaseInstanceStepMigration):
-    pass
 
 
 class UpdateOSDescription(VmStep):
@@ -132,3 +124,41 @@ class CheckHostNameAndReboot(CheckHostName):
         if not self.is_hostname_valid:
             script = '/sbin/reboot -f > /dev/null 2>&1 &'
             exec_remote_command_host(self.host, script)
+
+
+class CheckAccessToMaster(VmStep):
+
+    def __unicode__(self):
+        return "Checking access to master..."
+
+    @property
+    def master(self):
+        return self.driver.get_master_for(self.instance).hostname
+
+    @staticmethod
+    def check_access(origin, destiny, port):
+        if origin == destiny:
+            return
+
+        output = {}
+        script = "(echo >/dev/tcp/{}/{}) &>/dev/null && exit 0 || exit 1"
+        script = script.format(destiny.address, port)
+        return_code = exec_remote_command_host(origin, script, output)
+        if return_code != 0:
+            raise EnvironmentError(
+                'Could not connect from {} to {}:{} - Error: {}'.format(
+                    origin.address, destiny.address, port, str(output)
+                )
+            )
+
+    def do(self):
+        self.check_access(self.host, self.master, self.driver.default_port)
+
+
+class CheckAccessFromMaster(CheckAccessToMaster):
+
+    def __unicode__(self):
+        return "Checking access from master..."
+
+    def do(self):
+        self.check_access(self.master, self.host, self.driver.default_port)

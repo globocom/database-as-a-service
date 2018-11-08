@@ -17,7 +17,7 @@ from util.providers import make_infra, clone_infra, destroy_infra, \
     get_database_change_parameter_setting, \
     get_reinstallvm_steps_setting, \
     get_database_change_parameter_retry_steps_count, get_deploy_instances, \
-    get_database_configure_ssl_setting
+    get_database_configure_ssl_setting, get_deploy_settings
 from simple_audit.models import AuditRequest
 from system.models import Configuration
 from notification.models import TaskHistory
@@ -26,8 +26,9 @@ from workflow.workflow import (steps_for_instances, rollback_for_instances_full,
 from maintenance.models import (DatabaseUpgrade, DatabaseResize,
                                 DatabaseChangeParameter, DatabaseReinstallVM,
                                 DatabaseConfigureSSL)
-from maintenance.tasks import restore_database
-from maintenance.models import DatabaseCreate, DatabaseDestroy
+from maintenance.tasks import restore_database, node_zone_migrate, \
+    node_zone_migrate_rollback
+from maintenance.models import DatabaseDestroy
 from util.providers import get_deploy_settings, get_deploy_instances
 
 
@@ -1637,6 +1638,35 @@ class TaskRegister(object):
         delay_params.update(**{'since_step': since_step} if since_step else {})
 
         configure_ssl_database.delay(**delay_params)
+
+    @classmethod
+    def host_migrate(cls, host, zone, new_environment, user, since_step=None):
+        task_params = {
+            'task_name': "host_migrate",
+            'arguments': "Host: {}, Zone: {}, New Environment: {}".format(
+                host, zone, new_environment
+            ),
+        }
+        if user:
+            task_params['user'] = user
+        task = cls.create_task(task_params)
+        return node_zone_migrate.delay(
+            host=host, zone=zone, new_environment=new_environment, task=task,
+            since_step=since_step
+        )
+
+    @classmethod
+    def host_migrate_rollback(cls, migrate, user):
+        task_params = {
+            'task_name': "host_migrate",
+            'arguments': "Host: {}, Zone: {}, New Environment: {}".format(
+                migrate.host, migrate.zone, migrate.environment
+            ),
+        }
+        if user:
+            task_params['user'] = user
+        task = cls.create_task(task_params)
+        return node_zone_migrate_rollback.delay(migrate, task)
 
 
     # ============  END TASKS   ============

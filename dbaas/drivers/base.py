@@ -365,6 +365,18 @@ class BaseDriver(object):
     def set_replication_not_require_ssl(self, instance=None, ca_path=None):
         raise NotImplementedError()
 
+    def create_metric_collector_user(self, username, password):
+        raise NotImplementedError
+
+    def remove_metric_collector_user(self, username):
+        raise NotImplementedError
+
+    def get_metric_collector_user(self, username):
+        return username
+
+    def get_metric_collector_password(self, password):
+        return password
+
 
 class DatabaseStatus(object):
 
