@@ -84,6 +84,7 @@ class BaseTopology(object):
             ) + self.get_upgrade_steps_extra() + (
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.metric_collector.RestartTelegraf',
             ),
         }] + self.get_upgrade_steps_final()
 
@@ -92,6 +93,7 @@ class BaseTopology(object):
             'workflow.steps.util.volume_provider.MountDataVolume',
             'workflow.steps.util.plan.InitializationForUpgrade',
             'workflow.steps.util.plan.ConfigureForUpgrade',
+            'workflow.steps.util.metric_collector.ConfigureTelegraf',
         )
 
     def get_upgrade_steps_final(self):
@@ -231,8 +233,10 @@ class BaseTopology(object):
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.Initialization',
                 'workflow.steps.util.plan.Configure',
+                'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.metric_collector.RestartTelegraf',
             ),
         }] + self.get_reinstallvm_steps_final()
 
@@ -274,6 +278,8 @@ class BaseTopology(object):
             ),
         }]
 
+    def get_host_migrate_steps(self):
+        raise NotImplementedError
 
     @property
     def driver_name(self):

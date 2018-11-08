@@ -157,6 +157,7 @@ class NewVolume(VolumeProviderBase):
             return
 
         for volume in self.host.volumes.all():
+            self.add_access(volume, self.host)
             self.clean_up(volume)
             self.destroy_volume(volume)
 
