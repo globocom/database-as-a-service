@@ -26,7 +26,7 @@ class Foreman(BaseInstanceStep):
         output = {}
         script = 'nslookup {}'.format(self.host.address)
         exec_remote_command_host(self.host, script, output)
-        ret = output['stdout'][3]
+        ret = ''.join(output['stdout'])
         if 'name = ' not in ret:
             return None
         return ret.split('name = ')[1].split('.\n')[0]

@@ -448,6 +448,19 @@ class MySQL(BaseDriver):
 
         self.__query(query)
 
+    def create_metric_collector_user(self, username, password):
+        host = '127.0.0.1'
+        grants = "SELECT, PROCESS, REPLICATION CLIENT, SHOW VIEW"
+        query = "GRANT {} ON *.* TO '{}'@'{}' IDENTIFIED BY '{}'".format(
+            grants, username, host, password)
+        self.__query(query)
+
+    def remove_metric_collector_user(self, username):
+        host = '127.0.0.1'
+        drop_user_cmd = "DROP USER '{}'@'{}'".format(username, host)
+        self.__query(drop_user_cmd)
+
+
 
 class MySQLFOXHA(MySQL):
     @classmethod

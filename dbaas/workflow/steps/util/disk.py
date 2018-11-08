@@ -118,3 +118,24 @@ class RemoveDeprecatedFiles(DiskCommand):
     def scripts(self):
         driver = self.infra.get_driver()
         return {'Remove Deprecated': driver.remove_deprectaed_files()}
+
+
+class ChangeSnapshotOwner(Disk):
+    def __unicode__(self):
+        return "Change snapshots owner..."
+
+    def do(self):
+        for volume in self.instance.hostname.volumes.all():
+            volume.is_active = False
+            volume.host = self.host
+            volume.save()
+
+    def undo(self):
+        volume = None
+        for volume in self.host.volumes.filter(is_active=False):
+            volume.host = self.instance.hostname
+            volume.save()
+
+        if volume:
+            volume.is_active = True
+            volume.save()

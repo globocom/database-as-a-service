@@ -217,6 +217,10 @@ def get_switch_write_instance_steps(class_path):
     return get_replication_topology_instance(class_path).get_switch_write_instance_steps()
 
 
+def get_host_migrate_steps(class_path):
+    return get_replication_topology_instance(class_path).get_host_migrate_steps()
+
+
 def get_engine_credentials(engine, environment):
     engine = engine.lower()
 
