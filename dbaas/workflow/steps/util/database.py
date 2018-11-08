@@ -7,11 +7,7 @@ from logical.models import Database
 from util import build_context_script, exec_remote_command_host
 from workflow.steps.mongodb.util import build_change_oplogsize_script
 from workflow.steps.util.base import BaseInstanceStep
-from restore_snapshot import use_database_initialization_script
-
-from workflow.steps.util import test_bash_script_error
-from workflow.steps.util import monit_script
-from maintenance.models import DatabaseCreate, DatabaseDestroy
+from workflow.steps.util import test_bash_script_error, monit_script
 
 LOG = logging.getLogger(__name__)
 
@@ -23,8 +19,13 @@ class DatabaseStep(BaseInstanceStep):
 
     def __init__(self, instance):
         super(DatabaseStep, self).__init__(instance)
-
         self.driver = self.infra.get_driver()
+        if self.host_migrate:
+            self.instance.address = self.host.address
+
+    def __del__(self):
+        if self.host_migrate:
+            self.instance.address = self.instance.hostname.address
 
     def do(self):
         raise NotImplementedError
@@ -33,9 +34,14 @@ class DatabaseStep(BaseInstanceStep):
         pass
 
     def _execute_init_script(self, command):
-        return use_database_initialization_script(
-            self.infra, self.host, command
-        )
+        base_host = self.instance.hostname if self.host_migrate else self.host
+        script = self.driver.initialization_script_path(base_host)
+        script = script.format(option=command)
+        script += ' > /dev/null'
+
+        output = {}
+        return_code = exec_remote_command_host(self.host, script, output)
+        return return_code, output
 
     def start_database(self):
         return self._execute_init_script('start')

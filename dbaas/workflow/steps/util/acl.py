@@ -61,11 +61,11 @@ class ReplicateAcls2NewInstance(ACLStep):
         )
 
 
-class ReplicateAclsMigration(ReplicateAcls2NewInstance):
+class ReplicateAclsMigrate(ReplicateAcls2NewInstance):
 
     @property
     def source_instance(self):
-        return self.host.future_host
+        return self.host_migrate.host
 
     @property
     def destination_instance(self):

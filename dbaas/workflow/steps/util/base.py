@@ -56,14 +56,20 @@ class BaseInstanceStep(object):
     @property
     def host(self):
         try:
-            return self.instance.hostname
+            host = self.instance.hostname
         except ObjectDoesNotExist:
             LOG.info(
                 'Instance {} does not have hostname'.format(self.instance))
             return
 
+        if self.host_migrate and host.future_host:
+            return host.future_host
+        return host
+
     @property
     def environment(self):
+        if self.host_migrate:
+            return self.host_migrate.environment
         return self.infra.environment
 
     @property
@@ -104,6 +110,15 @@ class BaseInstanceStep(object):
             return upgrade
 
     @property
+    def host_migrate(self):
+        if not self.instance.hostname_id:
+            return
+
+        migrate = self.instance.hostname.migrate.last()
+        if migrate and migrate.is_running:
+            return migrate
+
+    @property
     def reinstall_vm(self):
         reinstall_vm = self.database.reinstall_vm.last()
         if reinstall_vm and reinstall_vm.is_running:
@@ -126,6 +141,10 @@ class BaseInstanceStep(object):
         task = manager.last()
         if task and task.is_running:
             return task
+
+    @property
+    def has_database(self):
+        return bool(self.database)
 
     def do(self):
         raise NotImplementedError
@@ -150,6 +169,12 @@ class BaseInstanceStepMigration(BaseInstanceStep):
     def plan(self):
         plan = super(BaseInstanceStepMigration, self).plan
         return plan.migrate_plan
+
+    def do(self):
+        raise NotImplementedError
+
+    def undo(self):
+        raise NotImplementedError
 
 
 class HostProviderClient(object):
@@ -193,11 +218,10 @@ class HostProviderClient(object):
             cpus,
             memory
         )
-
         resp = self._request(
             requests.get,
-            '{}{}'.format(self.credential.endpoint, api_host_url)
-        )
+            '{}{}'.format(self.credential.endpoint, api_host_url
+        ))
         if resp.ok:
             data = resp.json()
             return data.get('offering_id')

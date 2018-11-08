@@ -32,6 +32,7 @@ class BaseRedis(BaseTopology):
             'workflow.steps.util.volume_provider.MountDataVolume',
             'workflow.steps.util.plan.InitializationForUpgrade',
             'workflow.steps.util.plan.ConfigureForUpgrade',
+            'workflow.steps.util.metric_collector.ConfigureTelegraf',
         )
 
     def get_resize_extra_steps(self):
@@ -74,8 +75,10 @@ class RedisSingle(BaseRedis):
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.InitializationForNewInfra',
                 'workflow.steps.util.plan.ConfigureForNewInfra',
+                'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.metric_collector.RestartTelegraf',
                 'workflow.steps.util.infra.UpdateEndpoint',
             )}, {
             'Check DNS': (
@@ -111,10 +114,12 @@ class RedisSingle(BaseRedis):
                 'workflow.steps.util.volume_provider.UnmountActiveVolume',
                 'workflow.steps.util.volume_provider.MountDataVolumeRestored',
                 'workflow.steps.util.plan.ConfigureRestore',
+                'workflow.steps.util.metric_collector.ConfigureTelegraf',
             )}, {
             'Starting database': (
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.metric_collector.RestartTelegraf',
             )}, {
             'Old data': (
                 'workflow.steps.util.volume_provider.TakeSnapshot',
@@ -151,7 +156,9 @@ class RedisSentinel(BaseRedis):
             'workflow.steps.util.volume_provider.MountDataVolume',
             'workflow.steps.util.plan.Initialization',
             'workflow.steps.util.plan.Configure',
+            'workflow.steps.util.metric_collector.ConfigureTelegraf',
             'workflow.steps.util.database.Start',
+            'workflow.steps.util.metric_collector.RestartTelegraf',
             'workflow.steps.redis.horizontal_elasticity.database.AddInstanceToRedisCluster',
         )
 
@@ -179,10 +186,12 @@ class RedisSentinel(BaseRedis):
                 'workflow.steps.util.disk.CleanData',
                 'workflow.steps.util.disk.RemoveDeprecatedFiles',
                 'workflow.steps.util.plan.ConfigureRestore',
+                'workflow.steps.util.metric_collector.ConfigureTelegraf',
             )}, {
             'Starting database': (
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.metric_collector.RestartTelegraf',
             )}, {
             'Configuring sentinel': (
                 'workflow.steps.redis.upgrade.sentinel.ResetAllSentinel',
@@ -231,10 +240,12 @@ class RedisSentinel(BaseRedis):
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.InitializationForNewInfraSentinel',
                 'workflow.steps.util.plan.ConfigureForNewInfraSentinel',
+                'workflow.steps.util.metric_collector.ConfigureTelegraf',
             )}, {
             'Starting database': (
                 'workflow.steps.util.database.StartSentinel',
                 'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.metric_collector.RestartTelegraf',
             )}, {
             'Configuring sentinel': (
                 'workflow.steps.redis.upgrade.sentinel.Reset',
@@ -252,6 +263,49 @@ class RedisSentinel(BaseRedis):
             'Creating monitoring and alarms': (
                 'workflow.steps.util.sentinel.CreateAlarmsNewInfra',
                 'workflow.steps.util.db_monitor.CreateInfraMonitoring',
+            )
+        }]
+
+    def get_host_migrate_steps(self):
+        return [{
+            'Changing master': (
+                'workflow.steps.util.vm.ChangeMaster',
+                'workflow.steps.util.database.CheckIfSwitchMaster',
+            )}, {
+            'Creating new infra': (
+                'workflow.steps.util.host_provider.CreateVirtualMachineMigrate',
+                'workflow.steps.util.volume_provider.NewVolume',
+                'workflow.steps.util.vm.WaitingBeReady',
+                'workflow.steps.util.vm.UpdateOSDescription',
+                'workflow.steps.util.volume_provider.MountDataVolume',
+            )}, {
+            'Configuring new host': (
+                'workflow.steps.util.plan.Initialization',
+                'workflow.steps.util.plan.Configure',
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.CheckIsUp',
+            )}, {
+            'Checking access': (
+                'workflow.steps.util.vm.CheckAccessToMaster',
+                'workflow.steps.util.vm.CheckAccessFromMaster',
+                'workflow.steps.util.acl.ReplicateAclsMigrate',
+            )}, {
+            'Configuring sentinel': (
+                'workflow.steps.redis.upgrade.sentinel.ResetAllSentinel',
+                'workflow.steps.util.database.SetSlave',
+                'workflow.steps.util.database.WaitForReplication',
+            )}, {
+            'Configuring DNS': (
+                'workflow.steps.util.dns.ChangeEndpoint',
+                'workflow.steps.util.dns.CheckIsReady',
+            )}, {
+            'Configure Monitors': (
+                'workflow.steps.util.zabbix.DestroyAlarms',
+                'workflow.steps.util.zabbix.CreateAlarms',
+            )}, {
+            'Cleaning up': (
+                'workflow.steps.util.disk.ChangeSnapshotOwner',
+                'workflow.steps.util.host_provider.DestroyVirtualMachineMigrate',
             )
         }]
 
@@ -295,8 +349,10 @@ class RedisCluster(BaseRedis):
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.InitializationForNewInfra',
                 'workflow.steps.util.plan.ConfigureForNewInfra',
+                'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.metric_collector.RestartTelegraf',
             )}, {
             'Configuring Cluster': (
                 'workflow.steps.redis.cluster.CreateCluster',
@@ -339,11 +395,13 @@ class RedisCluster(BaseRedis):
                 'workflow.steps.util.disk.CleanData',
                 'workflow.steps.util.disk.RemoveDeprecatedFiles',
                 'workflow.steps.util.plan.ConfigureRestore',
+                'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 'workflow.steps.redis.cluster.RestoreNodeConfig'
             )}, {
             'Starting database': (
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.metric_collector.RestartTelegraf',
             )}, {
             'Old data': (
                 'workflow.steps.util.volume_provider.TakeSnapshot',
@@ -352,6 +410,49 @@ class RedisCluster(BaseRedis):
             'Enabling monitoring': (
                 'workflow.steps.util.db_monitor.EnableMonitoring',
                 'workflow.steps.util.zabbix.EnableAlarms',
+            )
+        }]
+
+    def get_host_migrate_steps(self):
+        return [{
+            'Changing master': (
+                'workflow.steps.util.vm.ChangeMaster',
+                'workflow.steps.util.database.CheckIfSwitchMaster',
+            )}, {
+            'Creating new infra': (
+                'workflow.steps.util.host_provider.CreateVirtualMachineMigrate',
+                'workflow.steps.util.volume_provider.NewVolume',
+                'workflow.steps.util.vm.WaitingBeReady',
+                'workflow.steps.util.vm.UpdateOSDescription',
+                'workflow.steps.util.volume_provider.MountDataVolume',
+            )}, {
+            'Configuring new host': (
+                'workflow.steps.util.plan.Initialization',
+                'workflow.steps.util.plan.Configure',
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.CheckIsUp',
+            )}, {
+            'Checking access': (
+                'workflow.steps.util.vm.CheckAccessToMaster',
+                'workflow.steps.util.vm.CheckAccessFromMaster',
+                'workflow.steps.util.acl.ReplicateAclsMigrate',
+            )}, {
+            'Configuring Cluster': (
+                'workflow.steps.redis.cluster.AddSlaveNode',
+                'workflow.steps.redis.cluster.RemoveNode',
+                'workflow.steps.redis.cluster.CheckClusterStatus',
+            )}, {
+            'Configuring DNS': (
+                'workflow.steps.util.dns.ChangeEndpoint',
+                'workflow.steps.util.dns.CheckIsReady',
+            )}, {
+            'Configure Monitors': (
+                'workflow.steps.util.zabbix.DestroyAlarms',
+                'workflow.steps.util.zabbix.CreateAlarms',
+            )}, {
+            'Cleaning up': (
+                'workflow.steps.util.disk.ChangeSnapshotOwner',
+                'workflow.steps.util.host_provider.DestroyVirtualMachineMigrate',
             )
         }]
 
