@@ -40,6 +40,10 @@ class BaseDriver(object):
         return sum(map(lambda m: getattr(m, field_lookup) or 0, masters))
 
     @property
+    def ports(self):
+        raise NotImplementedError()
+
+    @property
     def replication_topology(self):
         return self.databaseinfra.plan.replication_topology
 
