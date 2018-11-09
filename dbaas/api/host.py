@@ -30,7 +30,8 @@ class HostSerializer(serializers.ModelSerializer):
             'offering',
             'disks',
             'project_id',
-            'database'
+            'database',
+            'identifier'
         )
 
     def get_database(self, host):

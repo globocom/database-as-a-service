@@ -36,6 +36,10 @@ class MongoDB(BaseDriver):
         Credential.READ_ONLY: ["read"]
     }
 
+    @property
+    def ports(self):
+        return (27017,)
+
     def get_replica_name(self):
         """ Get replica name from databaseinfra. Use cache """
         if not self.databaseinfra.pk:
@@ -509,6 +513,15 @@ class MongoDB(BaseDriver):
             credential_type=CredentialType.MONGODB
         )
         return credential.user, credential.password, None
+
+    def create_metric_collector_user(self, username, password):
+        client = self.get_client(None)
+        client.admin.add_user(username, password=password,
+                        roles=['clusterMonitor'])
+
+    def remove_metric_collector_user(self, username):
+        client = self.get_client(None)
+        client.admin.remove_user(username)
 
 
 class MongoDBReplicaSet(MongoDB):

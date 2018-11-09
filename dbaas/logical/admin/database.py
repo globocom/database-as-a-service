@@ -32,7 +32,8 @@ from logical.views import database_details, database_hosts, \
     database_resize_rollback, database_make_backup, \
     database_change_parameters, database_change_parameters_retry, \
     database_switch_write, database_reinstall_vm, database_reinstall_vm_retry,\
-    DatabaseParameters, database_configure_ssl_retry, database_configure_ssl
+    DatabaseParameters, database_configure_ssl_retry, database_configure_ssl, \
+    database_migrate
 
 from logical.forms import DatabaseForm
 from logical.service.database import DatabaseService
@@ -617,6 +618,11 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 name="logical_database_reinstallvm_retry"
             ),
             url(
+                r'^/?(?P<id>\d+)/migrate/$',
+                self.admin_site.admin_view(database_migrate),
+                name="logical_database_migrate"
+            ),
+            url(
                 r'^/?(?P<id>\d+)/configure_ssl/$',
                 self.admin_site.admin_view(database_configure_ssl),
                 name="logical_database_configure_ssl"
@@ -627,8 +633,5 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 name="logical_database_configure_ssl_retry"
             ),
 
-
-
         )
-
         return my_urls + urls

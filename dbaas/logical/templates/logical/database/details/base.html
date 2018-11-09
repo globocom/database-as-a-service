@@ -62,6 +62,9 @@
         {% if database.can_modify_parameters and database.plan.replication_topology.can_change_parameters %}
           <li role="presentation" {% if current_tab == 'parameters' %} class="active" {% endif %}><a href="{% url 'admin:logical_database_parameters' database.id %}">Parameters</a></li>
         {% endif %}
+        {% if database.is_host_migrate_available and is_dba %}
+          <li role="presentation" {% if current_tab == 'migrate' %} class="active" {% endif %}><a href="{% url 'admin:logical_database_migrate' database.id %}">Migrate</a></li>
+        {% endif %}
         <li role="presentation" {% if current_tab == 'destroy' %} class="active" {% endif %}><a href="{% url 'admin:logical_database_destroy' database.id %}">Destroy</a></li>
       </ul>
     {% endblock %}

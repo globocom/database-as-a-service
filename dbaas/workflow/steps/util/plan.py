@@ -15,6 +15,7 @@ class PlanStep(BaseInstanceStep):
     def __init__(self, instance):
         super(PlanStep, self).__init__(instance)
         self._pack = None
+        self.run_script_host = self.host
 
     @property
     def host_nfs(self):
@@ -99,7 +100,9 @@ class PlanStep(BaseInstanceStep):
         script = build_context_script(self.script_variables, plan_script)
 
         output = {}
-        return_code = exec_remote_command_host(self.host, script, output)
+        return_code = exec_remote_command_host(
+            self.run_script_host, script, output
+        )
         if return_code != 0:
             raise EnvironmentError(
                 'Could not execute script {}: {}'.format(
