@@ -529,7 +529,7 @@ class Create(DatabaseStep):
         creating.database = database
         creating.save()
 
-        database.pin_task(self.creating.task)
+        database.pin_task(self.create.task)
 
     def undo(self):
         maintenance_task = self.create or self.destroy
