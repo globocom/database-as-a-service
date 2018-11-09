@@ -83,6 +83,7 @@ class MySQLSingle(BaseMysql):
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.infra.UpdateEndpoint',
                 'workflow.steps.util.plan.InitializationForNewInfra',
+                'workflow.steps.util.metric_collector.ConfigureTelegraf',
             )}, {
             'Configure SSL': (
                 'workflow.steps.util.ssl.UpdateOpenSSlLib',
@@ -98,6 +99,7 @@ class MySQLSingle(BaseMysql):
                 'workflow.steps.util.plan.ConfigureForNewInfra',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.metric_collector.RestartTelegraf',
                 'workflow.steps.util.database.StartMonit',
             )}, {
             'Creating Database': (
@@ -149,10 +151,12 @@ class MySQLSingle(BaseMysql):
                 'workflow.steps.util.volume_provider.UnmountActiveVolume',
                 'workflow.steps.util.volume_provider.MountDataVolumeRestored',
                 'workflow.steps.util.plan.ConfigureRestore',
+                'workflow.steps.util.metric_collector.ConfigureTelegraf',
             )}, {
             'Starting database': (
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.metric_collector.RestartTelegraf',
             )}, {
             'Old data': (
                 'workflow.steps.util.volume_provider.TakeSnapshot',
@@ -323,7 +327,9 @@ class MySQLFoxHA(MySQLSingle):
             )}, {
             'Starting database': (
                 'workflow.steps.util.plan.ConfigureForNewInfra',
+                'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 'workflow.steps.util.database.Start',
+                'workflow.steps.util.metric_collector.RestartTelegraf',
             )}, {
             'Check database': (
                 'workflow.steps.util.plan.StartReplicationNewInfra',
@@ -374,10 +380,12 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.mysql.MountNewerExportRestoreMySQL',
                 'workflow.steps.util.disk.RemoveDeprecatedFiles',
                 'workflow.steps.util.plan.ConfigureRestore',
+                'workflow.steps.util.metric_collector.ConfigureTelegraf',
             )}, {
             'Starting database': (
                 'workflow.steps.util.database.Stop',
                 'workflow.steps.util.database.Start',
+                'workflow.steps.util.metric_collector.RestartTelegraf',
             )}, {
             'Configuring replication': (
                 'workflow.steps.util.mysql.SetMasterRestore',
@@ -448,9 +456,11 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.Initialization',
                 'workflow.steps.util.plan.Configure',
+                'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 'workflow.steps.util.database.Stop',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.metric_collector.RestartTelegraf',
             ),
         }] + self.get_reinstallvm_steps_final()
 
@@ -499,6 +509,7 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.ssl.SetSSLFilesAccessMySQL',
                 'workflow.steps.util.ssl.SetInfraConfiguredSSL',
                 'workflow.steps.util.plan.Configure',
+                'workflow.steps.util.metric_collector.ConfigureTelegraf',
             ),
         }] + [{
             'Restart Database': (
@@ -506,6 +517,7 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.database.CheckIfSwitchMaster',
                 'workflow.steps.util.database.Stop',
                 'workflow.steps.util.database.Start',
+                'workflow.steps.util.metric_collector.RestartTelegraf',
             ),
         }] + [{
             'Configure Replication User': (
