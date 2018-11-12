@@ -174,7 +174,7 @@ class MongoDBReplicaset(BaseMongoDB):
             'workflow.steps.util.plan.Configure',
             'workflow.steps.util.metric_collector.ConfigureTelegraf',
             'workflow.steps.util.database.Start',
-            'workflow.steps.mongodb.horizontal_elasticity.database.AddInstanceToReplicaSet',
+            'workflow.steps.mongodb.database.AddInstanceToReplicaSet',
             'workflow.steps.util.metric_collector.RestartTelegraf',
         )
 
