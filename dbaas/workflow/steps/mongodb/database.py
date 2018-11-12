@@ -22,7 +22,6 @@ class AddInstanceToReplicaSet(DatabaseStep):
         return variables
 
     def do(self):
-
         script = test_bash_script_error()
         script += build_add_read_only_replica_set_member_script(
             mongodb_version=self.infra.engine.version)
