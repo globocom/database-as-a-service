@@ -283,7 +283,7 @@ class ACLFromHellClient(object):
 
     def _need_add_acl_for_vip(self, database, app_name):
         infra = database.infra
-        if not infra.vip_databaseinfra.exists():
+        if infra.vip_databaseinfra.exists():
             vip_dns = infra.endpoint_dns
             resp = self.acl_from_hell_client.get_rule(
                 database,
