@@ -71,15 +71,14 @@ def build_create_data_dir_script():
         """
 
 
-def build_add_read_only_replica_set_member_script(mongodb_version):
-    replica_id_string = ''
-    if mongodb_version < '3.0.0':
-        replica_id_string = '"_id": {{REPLICA_ID}}, '
+def build_add_replica_set_member_script(mongodb_version, readonly):
+    readonly_params = ',"priority": 0, "votes": 0' if readonly else ''
+    replica_id_string = '"_id": {{REPLICA_ID}}, ' if mongodb_version < '3.0.0' else ''
     return """
         echo ""; echo $(date "+%Y-%m-%d %T") "- Adding new database members"
         /usr/local/mongodb/bin/mongo --host {{CONNECT_ADMIN_URI}} <<EOF_DBAAS
         rs.add( { """ + replica_id_string + """
-            "host": "{{HOSTADDRESS}}:{{PORT}}", "priority": 0, "votes": 0 } )
+            "host": "{{HOSTADDRESS}}:{{PORT}}" """ + readonly_params + """} )
         exit
         \nEOF_DBAAS
         die_if_error "Error adding new replica set members"
@@ -88,7 +87,7 @@ def build_add_read_only_replica_set_member_script(mongodb_version):
 
 def build_remove_read_only_replica_set_member_script():
     return """
-        echo ""; echo $(date "+%Y-%m-%d %T") "- Adding new database members"
+        echo ""; echo $(date "+%Y-%m-%d %T") "- Removing new database members"
         /usr/local/mongodb/bin/mongo --host {{CONNECT_ADMIN_URI}} <<EOF_DBAAS
         rs.remove( "{{HOSTADDRESS}}:{{PORT}}")
         exit
