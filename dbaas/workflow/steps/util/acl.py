@@ -106,7 +106,17 @@ class BindNewInstance(ACLStep):
             rule = tsuru_rules[0]
             app_name = rule.get('Source', {}).get('TsuruApp', {}).get('AppName')
             if app_name:
-                return self.acl_from_hell_client.add_acl(database, app_name, self.host.hostname)
+                self.acl_from_hell_client.add_acl_for_vip_if_needed(
+                    database,
+                    app_name
+                )
+                return self.acl_from_hell_client.add_acl(
+                    database,
+                    app_name,
+                    self.host.hostname
+                )
+            else:
+                raise CantSetACLError("App name not found on data")
 
         return None
 
@@ -118,35 +128,6 @@ class BindNewInstance(ACLStep):
         if resp and not resp.ok:
             raise CantSetACLError(resp.content)
 
-        for database_bind in self.database.acl_binds.all():
-            if helpers.bind_address(database_bind=database_bind,
-                                    acl_client=self.acl_client,
-                                    instances=self.instances,
-                                    infra_attr_instances=[],
-                                    infra_vips=[]):
-                continue
-            else:
-                LOG.error("The AclApi is not working properly.")
-                database_bind.bind_status = ERROR
-                database_bind.save()
-                DatabaseInfraInstanceBind.objects.filter(
-                    databaseinfra=self.infra,
-                    bind_address=database_bind.bind_address,
-                    instance__in=self.instance_address_list
-                ).update(bind_status=ERROR)
-
     def undo(self):
         if not self.database:
             return
-        for database_bind in self.database.acl_binds.all():
-            infra_instances_binds = DatabaseInfraInstanceBind.objects.filter(
-                databaseinfra=self.infra,
-                bind_address=database_bind.bind_address,
-                instance__in=self.instance_address_list,
-            )
-            helpers.unbind_address(
-                database_bind=database_bind,
-                acl_client=self.acl_client,
-                infra_instances_binds=infra_instances_binds,
-                delete_database_bind=False
-            )
