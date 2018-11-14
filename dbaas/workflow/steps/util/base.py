@@ -294,7 +294,7 @@ class ACLFromHellClient(object):
 
     def add_acl_for_vip_if_needed(self, database, app_name):
 
-        if self._nedd_add_acl_for_vip(app_name):
+        if self._need_add_acl_for_vip(app_name):
             vip_dns = database.infra.endpoint_dns
 
             vip_resp = self.acl_from_hell_client.add_acl(
