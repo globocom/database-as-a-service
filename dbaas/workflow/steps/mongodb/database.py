@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
 from workflow.steps.util.database import DatabaseStep
 from workflow.steps.util import test_bash_script_error
-from workflow.steps.mongodb.util import build_add_read_only_replica_set_member_script
 from workflow.steps.mongodb.util import build_add_replica_set_member_script
 from workflow.steps.mongodb.util import build_remove_read_only_replica_set_member_script
-
 
 
 class DatabaseReplicaSet(DatabaseStep):
@@ -24,15 +22,15 @@ class DatabaseReplicaSet(DatabaseStep):
         return variables
 
 
-class AddInstanceReadOnlyToReplicaSet(DatabaseReplicaSet):
+class AddInstanceToReplicaSet(DatabaseReplicaSet):
 
     def __unicode__(self):
         return "Adding instance to Replica Set..."
 
     @property
     def base_script(self):
-        return build_add_read_only_replica_set_member_script(
-            mongodb_version=self.infra.engine.version
+        return build_add_replica_set_member_script(
+            self.infra.engine.version, self.instance.read_only
         )
 
     def do(self):
@@ -44,15 +42,6 @@ class AddInstanceReadOnlyToReplicaSet(DatabaseReplicaSet):
         remove = RemoveInstanceFromReplicaSet(self.instance)
         remove.host_address = self.host_address
         remove.do()
-
-
-class AddInstanceToReplicaSet(AddInstanceReadOnlyToReplicaSet):
-
-    @property
-    def base_script(self):
-        return build_add_replica_set_member_script(
-            mongodb_version=self.infra.engine.version
-        )
 
 
 class RemoveInstanceFromReplicaSet(DatabaseReplicaSet):
