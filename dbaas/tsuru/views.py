@@ -127,6 +127,7 @@ class ServiceAppBind(APIView):
                     msg=msg, e=resp.content,
                     http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
+        acl_from_hell_client.add_acl_for_vip_if_needed(database, app_name)
 
         return None
 
