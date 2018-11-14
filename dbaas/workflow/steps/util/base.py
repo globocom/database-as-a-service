@@ -281,11 +281,12 @@ class ACLFromHellClient(object):
             params=params,
         )
 
-    def _need_add_acl_for_vip(self, app_name):
-        if not self.database.infra.vip_databaseinfra.exists():
-            vip_dns = self.database.infra.endpoint_dns
+    def _need_add_acl_for_vip(self, database, app_name):
+        infra = database.infra
+        if not infra.vip_databaseinfra.exists():
+            vip_dns = infra.endpoint_dns
             resp = self.acl_from_hell_client.get_rule(
-                self.database,
+                database,
                 app_name,
                 extra_params={'destination.externaldns.name': vip_dns}
             )
@@ -294,7 +295,7 @@ class ACLFromHellClient(object):
 
     def add_acl_for_vip_if_needed(self, database, app_name):
 
-        if self._need_add_acl_for_vip(app_name):
+        if self._need_add_acl_for_vip(database, app_name):
             vip_dns = database.infra.endpoint_dns
 
             vip_resp = self.acl_from_hell_client.add_acl(
