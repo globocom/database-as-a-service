@@ -76,6 +76,7 @@
 <script type="text/javascript" src="{% static 'js/migrate.js' %}"></script>
 <script>
   function load_zones(environment_id) {
+    clean_zones()
     window.MigrateManager.zones_for_environment({{database.id}}, environment_id, parse_zones);
   }
 
@@ -96,6 +97,14 @@
     $(".host-zone").change()
   }
 
+  function clean_zones() {
+    $(".host-zone").each(function(select) {
+      var $select = $(".host-zone")[select];
+      $select.innerHTML = "";
+    })
+    $(".host-zone").change()
+  }
+
   function status_migrate(btn_id, current_value, selected_value) {
     var btn = document.getElementById(btn_id)
     btn.disabled = current_value == selected_value
@@ -111,7 +120,11 @@
       var $hostZone = $(this),
         hostId = $hostZone.data('hostId'),
         currentZone = $hostZone.data('currentZone');
-      status_migrate("migrate_host_btn_" + hostId, currentZone, $hostZone.val())
+      if (document.getElementById("migrate_environment_btn").disabled == false) {
+        status_migrate("migrate_host_btn_" + hostId, "DISABLE", "DISABLE")
+      } else {
+        status_migrate("migrate_host_btn_" + hostId, currentZone, $hostZone.val())
+      }
     });
     $(".host-zone").change()
 
