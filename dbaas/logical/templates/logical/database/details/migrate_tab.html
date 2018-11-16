@@ -100,7 +100,7 @@
   function clean_zones() {
     $(".host-zone").each(function(select) {
       var $select = $(".host-zone")[select];
-      $select.innerHTML = "";
+      $select.innerHTML = "<option value='Loading...' selected='selected'>Loading...</option>";
     })
     $(".host-zone").change()
   }
@@ -120,7 +120,12 @@
       var $hostZone = $(this),
         hostId = $hostZone.data('hostId'),
         currentZone = $hostZone.data('currentZone');
-      if (document.getElementById("migrate_environment_btn").disabled == false) {
+
+      disable = document.getElementById("migrate_environment_btn").disabled == false
+      if (!disable) {
+        disable = $hostZone.val() == "Loading..."
+      }
+      if (disable) {
         status_migrate("migrate_host_btn_" + hostId, "DISABLE", "DISABLE")
       } else {
         status_migrate("migrate_host_btn_" + hostId, currentZone, $hostZone.val())
