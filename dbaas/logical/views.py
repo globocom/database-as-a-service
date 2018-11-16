@@ -1261,11 +1261,11 @@ def database_migrate(request, context, database):
         )
         return database_details(request, database.id)
 
+    environment = database.infra.environment
     if request.POST:
         host = get_object_or_404(Host, pk=request.POST.get('host_id'))
         can_migrate, error = database.can_migrate_host()
         if can_migrate:
-            environment = database.infra.environment
             zone = request.POST["new_zone"]
             TaskRegister.host_migrate(host, zone, environment, request.user)
         else:
@@ -1281,9 +1281,7 @@ def database_migrate(request, context, database):
         if host in hosts:
             continue
 
-        hp = Provider(instance, database.infra.environment)
-        for zone in hp.list_zones():
-            zones.add(zone)
+        hp = Provider(instance, environment)
         try:
             host_info = hp.host_info(host)
         except Exception as e:
@@ -1294,10 +1292,27 @@ def database_migrate(request, context, database):
     context['hosts'] = sorted(hosts, key=lambda host: host.hostname)
     context['zones'] = sorted(zones)
 
+    context["environments"] = set()
+    for group in environment.groups.all():
+        for env in group.environments.all():
+            context["environments"].add(env)
+    context["current_environment"] = environment
+
     from maintenance.models import HostMigrate
     migrates = HostMigrate.objects.filter(host__in=hosts)
     context["last_host_migrate"] = migrates.last()
     return render_to_response(
         "logical/database/details/migrate_tab.html", context,
         RequestContext(request)
+    )
+
+
+def zones_for_environment(request, database_id, environment_id):
+    database = get_object_or_404(Database, pk=database_id)
+    environment = get_object_or_404(Environment, pk=environment_id)
+    from workflow.steps.util.host_provider import Provider
+    hp = Provider(database.infra.instances.first(), environment)
+    zones = sorted(hp.list_zones())
+    return HttpResponse(
+        json.dumps({"zones": zones}), content_type="application/json"
     )

@@ -19,6 +19,18 @@
 {% block tab %}
 <fieldset class="module aligned ">
   <div class="control-group">
+    <p>Environment
+      <select id="migrate_environment" class="environments" name="migrate_environment">
+      {% for env in environments %}
+        {% if env == current_environment %}
+          <option value="{{env.id}}" selected="selected">*{{env}}</option>
+        {% else %}
+          <option value="{{env.id}}">{{env}}</option>
+        {% endif %}
+      {% endfor %}
+      </select>
+      <button data-toggle="modal" id="migrate_environment_btn" class="resize_button btn host-zone-btn" data-origin-environment="{{host}}" data-target="#migrate_environment_modal">Migrate database environment</button>
+    </p>
   </div>
   <div class="panel-body">
     <div class="control-group">
@@ -38,15 +50,7 @@
                     {{host.current_zone}}
                   {% endif %}
                 {% else %}
-                  <select id="migrate_zone_{{host.id}}" data-host-id="{{host.id}}" data-current-zone="{{host.current_zone}}" class="host-zone" name="migrate_zone">
-                  {% for zone in zones %}
-                    {% if host.current_zone == zone %}
-                      <option value="{{zone}}" selected="selected">*{{zone}}</option>
-                    {% else %}
-                      <option value="{{zone}}">{{zone}}</option>
-                    {% endif %}
-                  {% endfor %}
-                  </select>
+                  <select id="migrate_zone_{{host.id}}" data-host-id="{{host.id}}" data-current-zone="{{host.current_zone}}" class="host-zone" name="migrate_zone"></select>
                   <button data-toggle="modal" id="migrate_host_btn_{{host.id}}" class="resize_button btn host-zone-btn" data-host-name="{{host}}" data-host-id="{{host.id}}" data-target="#migrate_host_modal">Migrate Host</button>
                 {% endif %}
               </td>
@@ -71,6 +75,27 @@
 
 <script type="text/javascript" src="{% static 'js/migrate.js' %}"></script>
 <script>
+  function load_zones(environment_id) {
+    window.MigrateManager.zones_for_environment({{database.id}}, environment_id, parse_zones);
+  }
+
+  function parse_zones(data) {
+    $(".host-zone").each(function(select) {
+      var options = ""
+      for (var zone in data["zones"]) {
+        var $select = $(".host-zone")[select];
+        var name = data["zones"][zone]["name"];
+        if ($select.dataset['currentZone'] == name) {
+          options += "<option value='" + name + "' selected='selected'>*" + name + "</option>"
+        } else {
+          options += "<option value='" + name + "'>" + name + "</option>"
+        }
+      }
+      $select.innerHTML = options;
+    })
+    $(".host-zone").change()
+  }
+
   function status_migrate(btn_id, current_value, selected_value) {
     var btn = document.getElementById(btn_id)
     btn.disabled = current_value == selected_value
@@ -106,6 +131,12 @@
       window.MigrateManager.migrate_host({{database.id}}, hostId, newZone);
     });
 
+    $("#migrate_environment").on("change", function() {
+      var $environment = $(this);
+      status_migrate("migrate_environment_btn", {{ current_environment.id }}, $environment.val())
+      load_zones($environment.val());
+    });
+    $("#migrate_environment").change()
   })
 </script>
 {% endblock %}
