@@ -294,6 +294,10 @@ class ACLFromHellClient(object):
                 app_name,
                 extra_params={'destination.externaldns.name': vip_dns}
             )
+            if resp and not resp.ok:
+                LOG.info("ACLFROMHELL Add VIP ACL for {}: {}".format(
+                    vip_dns, resp.content)
+                )
             return not (resp and resp.ok and resp.json())
         return False
 
