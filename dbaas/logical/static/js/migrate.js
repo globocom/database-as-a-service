@@ -43,6 +43,21 @@
                 }).complete(function() {
                     location.reload();
                 });
+            },
+            /**
+            * Get all environment zones
+            */
+            zones_for_environment: function(database_id, environment_id, callback) {
+                var self = this;
+                $.ajax({
+                    "url": "/admin/logical/database/" + database_id + "/zones_for_environment/" + environment_id + "/",
+                    "type": "GET",
+                }).done(function(data) {
+                    if (data.error) {
+                        alert(data.error);
+                    }
+                    callback(data);
+                });
             }
         };
     })();
