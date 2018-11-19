@@ -672,6 +672,7 @@ class DatabaseMigrate(DatabaseMaintenanceTask):
     environment = models.ForeignKey(
         Environment, null=False, related_name="database_migrate"
     )
+    origin_environment = models.ForeignKey(Environment, null=False)
 
     def update_step(self, step):
         super(DatabaseMigrate, self).update_step(step)
