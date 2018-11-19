@@ -10,6 +10,7 @@ class EnvironmentGroupAdmin(admin.ModelAdmin):
     search_fields = ('name',)
     list_display = ('name', 'group_environments')
     list_filter = ("environments",)
+    filter_horizontal = ("environments",)
 
     def group_environments(self, obj):
         return ",".join(obj.environments.values_list('name', flat=True))
