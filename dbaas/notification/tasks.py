@@ -27,7 +27,8 @@ from maintenance.models import (DatabaseUpgrade, DatabaseResize,
                                 DatabaseChangeParameter, DatabaseReinstallVM,
                                 DatabaseConfigureSSL)
 from maintenance.tasks import restore_database, node_zone_migrate, \
-    node_zone_migrate_rollback
+    node_zone_migrate_rollback, database_environment_migrate, \
+    database_environment_migrate_rollback
 from maintenance.models import DatabaseDestroy
 from util.providers import get_deploy_settings, get_deploy_instances
 
@@ -1667,6 +1668,37 @@ class TaskRegister(object):
             task_params['user'] = user
         task = cls.create_task(task_params)
         return node_zone_migrate_rollback.delay(migrate, task)
+
+    @classmethod
+    def database_migrate(
+        cls, database, new_environment, user, hosts_zones, since_step=None
+    ):
+        task_params = {
+            'task_name': "database_migrate",
+            'arguments': "Database: {}, Environment: {}".format(
+                database, new_environment
+            ),
+        }
+        if user:
+            task_params['user'] = user
+        task = cls.create_task(task_params)
+        return database_environment_migrate.delay(
+            database=database, new_environment=new_environment, task=task,
+            hosts_zones=hosts_zones, since_step=since_step
+        )
+
+    @classmethod
+    def database_migrate_rollback(cls, migrate, user):
+        task_params = {
+            'task_name': "database_migrate",
+            'arguments': "Database: {}, Environment: {}".format(
+                migrate.database, migrate.environment
+            ),
+        }
+        if user:
+            task_params['user'] = user
+        task = cls.create_task(task_params)
+        return database_environment_migrate_rollback.delay(migrate, task)
 
 
     # ============  END TASKS   ============
