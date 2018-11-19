@@ -1263,13 +1263,30 @@ def database_migrate(request, context, database):
 
     environment = database.infra.environment
     if request.POST:
-        host = get_object_or_404(Host, pk=request.POST.get('host_id'))
         can_migrate, error = database.can_migrate_host()
-        if can_migrate:
+        if not can_migrate:
+            messages.add_message(request, messages.ERROR, error)
+        elif 'host_id' in request.POST:
+            host = get_object_or_404(Host, pk=request.POST.get('host_id'))
             zone = request.POST["new_zone"]
             TaskRegister.host_migrate(host, zone, environment, request.user)
-        else:
-            messages.add_message(request, messages.ERROR, error)
+        elif 'new_environment' in request.POST:
+            environment = get_object_or_404(
+                Environment, pk=request.POST.get('new_environment')
+            )
+            hosts_zones = OrderedDict()
+            data = json.loads(request.POST.get('hosts_zones'))
+            for host_id, zone in data.items():
+                host = get_object_or_404(Host, pk=host_id)
+                hosts_zones[host] = zone
+            if not hosts_zones:
+                messages.add_message(
+                    request, messages.ERROR, "There is no host to migrate"
+                )
+            else:
+                TaskRegister.database_migrate(
+                    database, environment, request.user, hosts_zones
+                )
         return
 
     from workflow.steps.util.host_provider import Provider

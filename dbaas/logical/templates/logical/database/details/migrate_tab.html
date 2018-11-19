@@ -67,6 +67,7 @@
 {% block database_button_save %}
 
 {% include "admin/confirmation_modal.html" with tag_type="a" modal_id="migrate_host_modal" confirmation_message="Are you sure you want to migrate this host?" box_title="Migrate host" button_class="btn btn-primary" id_optional="id=migrate_host_btn_modal"%}
+{% include "admin/confirmation_modal.html" with tag_type="a" modal_id="migrate_environment_modal" confirmation_message="Are you sure you want to migrate this database?" box_title="Migrate database" button_class="btn btn-primary" id_optional="id=migrate_database_btn_modal"%}
 
 {% endblock %}
 
@@ -81,26 +82,24 @@
   }
 
   function parse_zones(data) {
-    $(".host-zone").each(function(select) {
+    $(".host-zone").each(function(id, obj) {
       var options = ""
       for (var zone in data["zones"]) {
-        var $select = $(".host-zone")[select];
         var name = data["zones"][zone]["name"];
-        if ($select.dataset['currentZone'] == name) {
+        if (obj.dataset['currentZone'] == name) {
           options += "<option value='" + name + "' selected='selected'>*" + name + "</option>"
         } else {
           options += "<option value='" + name + "'>" + name + "</option>"
         }
       }
-      $select.innerHTML = options;
+      obj.innerHTML = options;
     })
     $(".host-zone").change()
   }
 
   function clean_zones() {
-    $(".host-zone").each(function(select) {
-      var $select = $(".host-zone")[select];
-      $select.innerHTML = "<option value='Loading...' selected='selected'>Loading...</option>";
+    $(".host-zone").each(function(id, obj) {
+      obj.innerHTML = "<option value='Loading...' selected='selected'>Loading...</option>";
     })
     $(".host-zone").change()
   }
@@ -149,12 +148,26 @@
       window.MigrateManager.migrate_host({{database.id}}, hostId, newZone);
     });
 
+    $("#migrate_database_btn_modal").click(function() {
+      var hosts_zones = {}
+      $(".host-zone").each(function(id, obj) {
+        hosts_zones[obj.dataset['hostId'].toString()] = obj.value;
+      })
+      window.MigrateManager.migrate_database({{database.id}}, $("#migrate_environment").val(), hosts_zones);
+    });
+
     $("#migrate_environment").on("change", function() {
       var $environment = $(this);
       status_migrate("migrate_environment_btn", {{ current_environment.id }}, $environment.val())
       load_zones($environment.val());
     });
     $("#migrate_environment").change()
+
+    $("#migrate_environment_btn").click(function() {
+      var $select = $("#migrate_environment");
+      var newEnv = $select.find(":selected").text()
+      $("#migrate_environment_modal .modal_message").empty().append('<label>Are you sure you want migrate <u>{{ database.name }}</u> from <u>{{ current_environment }}</u> to <u>' + newEnv + '</u>?</label>');
+    });
   })
 </script>
 {% endblock %}
