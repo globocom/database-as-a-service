@@ -20,16 +20,26 @@
 <fieldset class="module aligned ">
   <div class="control-group">
     <p>Environment
-      <select id="migrate_environment" class="environments" name="migrate_environment">
-      {% for env in environments %}
-        {% if env == current_environment %}
-          <option value="{{env.id}}" selected="selected">*{{env}}</option>
-        {% else %}
-          <option value="{{env.id}}">{{env}}</option>
+      {%if last_host_migrate and last_host_migrate.is_status_error %}
+        <u>{{ current_environment }}</u>
+        {%if last_host_migrate.database_migrate %}
+          to <u>{{ last_host_migrate.database_migrate.environment }}</u>&nbsp&nbsp&nbsp
+          <a class="resize_button btn btn-danger" href="{% url 'admin:database_migrate_rollback' last_host_migrate.database_migrate.id %}" title="Rollback database migrate">Rollback</a>
+          <a class="resize_button btn btn-warning" href="{% url 'admin:database_migrate_retry' last_host_migrate.database_migrate.id %}" title="Retry database migrate">Retry</a>
+          <p><a href="{% url 'admin:maintenance_databasemigrate_change' last_host_migrate.database_migrate.id %}" target='_blank'>Last database migrate</a> has an <b>error</b>, please check the <a href="{% url 'admin:notification_taskhistory_change' last_host_migrate.task.id %}" target='_blank'>task</a> and do rollback or retry of migrate by clicking in one of above buttons</p>
         {% endif %}
-      {% endfor %}
-      </select>
-      <button data-toggle="modal" id="migrate_environment_btn" class="resize_button btn host-zone-btn" data-origin-environment="{{host}}" data-target="#migrate_environment_modal">Migrate database environment</button>
+      {% else %}
+        <select id="migrate_environment" class="environments" name="migrate_environment">
+        {% for env in environments %}
+          {% if env == current_environment %}
+            <option value="{{env.id}}" selected="selected">*{{env}}</option>
+          {% else %}
+            <option value="{{env.id}}">{{env}}</option>
+          {% endif %}
+        {% endfor %}
+        </select>
+        <button data-toggle="modal" id="migrate_environment_btn" class="resize_button btn host-zone-btn" data-origin-environment="{{host}}" data-target="#migrate_environment_modal">Migrate database environment</button>
+      {% endif %}
     </p>
   </div>
   <div class="panel-body">
@@ -42,7 +52,7 @@
               <td>{{ host.hostname }}</td>
               <td>
                 {%if last_host_migrate and last_host_migrate.is_status_error %}
-                  {%if last_host_migrate.host == host %}
+                  {%if not last_host_migrate.database_migrate and last_host_migrate.host == host %}
                     <a class="resize_button btn btn-danger" href="{% url 'admin:host_migrate_rollback' last_host_migrate.id %}" title="Rollback for host migrate">Rollback</a>
                     <a class="resize_button btn btn-warning" href="{% url 'admin:host_migrate_retry' last_host_migrate.id %}" title="Retry for host migrate">Retry</a>
                     <p><a href="{% url 'admin:maintenance_hostmigrate_change' last_host_migrate.id %}" target='_blank'>Last host migrate</a> has an <b>error</b>, please check the <a href="{% url 'admin:notification_taskhistory_change' last_host_migrate.task.id %}" target='_blank'>task</a> and do rollback or retry of migrate by clicking in one of above buttons</p>
