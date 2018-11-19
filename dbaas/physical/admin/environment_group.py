@@ -13,4 +13,3 @@ class EnvironmentGroupAdmin(admin.ModelAdmin):
 
     def group_environments(self, obj):
         return ",".join(obj.environments.values_list('name', flat=True))
-
