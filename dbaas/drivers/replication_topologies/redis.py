@@ -306,6 +306,7 @@ class RedisSentinel(BaseRedis):
             'Cleaning up': (
                 'workflow.steps.util.disk.ChangeSnapshotOwner',
                 'workflow.steps.util.host_provider.DestroyVirtualMachineMigrate',
+                'workflow.steps.redis.upgrade.sentinel.ResetAllSentinel',
             )
         }]
 
@@ -439,7 +440,6 @@ class RedisCluster(BaseRedis):
             )}, {
             'Configuring Cluster': (
                 'workflow.steps.redis.cluster.AddSlaveNode',
-                'workflow.steps.redis.cluster.RemoveNode',
                 'workflow.steps.redis.cluster.CheckClusterStatus',
             )}, {
             'Configuring DNS': (
@@ -452,6 +452,8 @@ class RedisCluster(BaseRedis):
             )}, {
             'Cleaning up': (
                 'workflow.steps.util.disk.ChangeSnapshotOwner',
+                'workflow.steps.redis.cluster.RemoveNode',
+                'workflow.steps.redis.cluster.CheckClusterStatus',
                 'workflow.steps.util.host_provider.DestroyVirtualMachineMigrate',
             )
         }]

@@ -329,7 +329,6 @@ class MongoDBReplicaset(BaseMongoDB):
             )}, {
             'Configuring ReplicaSet': (
                 'workflow.steps.mongodb.database.AddInstanceToReplicaSet',
-                'workflow.steps.mongodb.database.RemoveInstanceFromReplicaSet',
             )}, {
             'Configuring DNS': (
                 'workflow.steps.util.dns.ChangeEndpoint',
@@ -341,6 +340,7 @@ class MongoDBReplicaset(BaseMongoDB):
             )}, {
             'Cleaning up': (
                 'workflow.steps.util.disk.ChangeSnapshotOwner',
+                'workflow.steps.mongodb.database.RemoveInstanceFromReplicaSet',
                 'workflow.steps.util.host_provider.DestroyVirtualMachineMigrate',
             )
         }]
