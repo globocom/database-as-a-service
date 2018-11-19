@@ -58,6 +58,16 @@
                     }
                     callback(data);
                 });
+            },
+            migrate_database: function(database_id, new_environment_id, hosts_zones) {
+                var self = this;
+                $.ajax({
+                    "url": "/admin/logical/database/" + database_id + "/migrate/",
+                    "type": "POST",
+                    "data": { "new_environment": new_environment_id, "hosts_zones": JSON.stringify(hosts_zones)},
+                }).complete(function() {
+                    location.reload();
+                });
             }
         };
     })();
