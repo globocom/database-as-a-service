@@ -335,7 +335,11 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.util.dns.ChangeEndpoint',
                 'workflow.steps.util.dns.CheckIsReady',
             )}, {
-            'Configure Monitors': (
+            'Configuring Metric Collector': (
+                'workflow.steps.util.metric_collector.ConfigureTelegraf',
+                'workflow.steps.util.metric_collector.RestartTelegraf',
+            )}, {
+            'Configuring Monitors': (
                 'workflow.steps.util.zabbix.DestroyAlarms',
                 'workflow.steps.util.zabbix.CreateAlarms',
             )}, {
