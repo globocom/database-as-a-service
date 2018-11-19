@@ -145,7 +145,6 @@ class MongoDBReplicaset(BaseMongoDB):
             'workflow.steps.util.volume_provider.MountDataVolume',
             'workflow.steps.util.plan.ConfigureForUpgrade',
             'workflow.steps.util.plan.InitializationForUpgrade',
-            'workflow.steps.util.plan.Configure',
             'workflow.steps.util.metric_collector.ConfigureTelegraf',
         )
 
