@@ -2,7 +2,7 @@ from dbaas_credentials.models import CredentialType
 from dbaas_dnsapi.models import HOST, INSTANCE, DatabaseInfraDNSList
 from dbaas_dnsapi.provider import DNSAPIProvider
 from dbaas_dnsapi.utils import add_dns_record
-from util import get_credentials_for, check_nslookup
+from util import get_credentials_for, check_dns
 from base import BaseInstanceStep
 from dbaas_networkapi.models import Vip
 
@@ -184,12 +184,12 @@ class CheckIsReady(DNSStep):
         if self.instance.id != self.infra.instances.first().id:
             return
 
-        check_dns = self.credentials.get_parameter_by_name('check_dns')
-        if str(check_dns).lower() != 'true':
+        must_check_dns = self.credentials.get_parameter_by_name('check_dns')
+        if str(must_check_dns).lower() != 'true':
             return
 
         for dns in DatabaseInfraDNSList.objects.filter(
             databaseinfra=self.infra.id
         ):
-            if not check_nslookup(dns.dns, self.credentials.project):
+            if not check_dns(dns.dns, self.credentials.project, ip_to_check=self.host.address):
                 raise EnvironmentError("DNS {} is not ready".format(dns.dns))
