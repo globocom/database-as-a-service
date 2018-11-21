@@ -305,37 +305,44 @@ class MongoDBReplicaset(BaseMongoDB):
 
     def get_host_migrate_steps_cleaning_up(self):
         return (
-            'workflow.steps.mongodb.database.RemoveInstanceFromReplicaSet',
             'workflow.steps.util.host_provider.DestroyVirtualMachineMigrate',
+        )
+
+    def get_base_host_migrate_steps(self):
+        return (
+            'workflow.steps.util.vm.ChangeMaster',
+            'workflow.steps.util.database.CheckIfSwitchMaster',
+            'workflow.steps.util.host_provider.CreateVirtualMachineMigrate',
+            'workflow.steps.util.volume_provider.NewVolume',
+            'workflow.steps.util.vm.WaitingBeReady',
+            'workflow.steps.util.vm.UpdateOSDescription',
+            'workflow.steps.util.volume_provider.MountDataVolume',
+            'workflow.steps.util.plan.Initialization',
+            'workflow.steps.util.plan.Configure',
+            'workflow.steps.util.database.Start',
+            'workflow.steps.util.database.CheckIsUp',
+            'workflow.steps.util.vm.CheckAccessToMaster',
+            'workflow.steps.util.vm.CheckAccessFromMaster',
+            'workflow.steps.util.acl.ReplicateAclsMigrate',
+            'workflow.steps.mongodb.database.AddInstanceToReplicaSet',
+            'workflow.steps.mongodb.database.RemoveInstanceFromReplicaSet',
+            'workflow.steps.util.dns.ChangeEndpoint',
+            'workflow.steps.util.dns.CheckIsReady',
+            'workflow.steps.util.zabbix.DestroyAlarms',
+            'workflow.steps.util.zabbix.CreateAlarms',
+            'workflow.steps.util.disk.ChangeSnapshotOwner',
         )
 
     def get_host_migrate_steps(self):
         return [{
-            'Migrating': (
-                'workflow.steps.util.vm.ChangeMaster',
-                'workflow.steps.util.database.CheckIfSwitchMaster',
-                'workflow.steps.util.host_provider.CreateVirtualMachineMigrate',
-                'workflow.steps.util.volume_provider.NewVolume',
-                'workflow.steps.util.vm.WaitingBeReady',
-                'workflow.steps.util.vm.UpdateOSDescription',
-                'workflow.steps.util.volume_provider.MountDataVolume',
-                'workflow.steps.util.plan.Initialization',
-                'workflow.steps.util.plan.Configure',
-                'workflow.steps.util.database.Start',
-                'workflow.steps.util.database.CheckIsUp',
-                'workflow.steps.util.vm.CheckAccessToMaster',
-                'workflow.steps.util.vm.CheckAccessFromMaster',
-                'workflow.steps.util.acl.ReplicateAclsMigrate',
-                'workflow.steps.mongodb.database.AddInstanceToReplicaSet',
-                'workflow.steps.util.dns.ChangeEndpoint',
-                'workflow.steps.util.dns.CheckIsReady',
-                'workflow.steps.util.zabbix.DestroyAlarms',
-                'workflow.steps.util.zabbix.CreateAlarms',
-                'workflow.steps.util.disk.ChangeSnapshotOwner',
-            ) + self.get_host_migrate_steps_cleaning_up()
+            'Migrating':
+                self.get_base_host_migrate_steps() +
+                self.get_host_migrate_steps_cleaning_up()
         }]
 
     def get_database_migrate_steps(self):
-        return self.get_host_migrate_steps() + [{
+        return [{
+            'Migrating': self.get_base_host_migrate_steps()
+        }, {
             'Cleaning up': self.get_host_migrate_steps_cleaning_up()
         }]
