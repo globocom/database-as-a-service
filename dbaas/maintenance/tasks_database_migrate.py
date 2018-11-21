@@ -41,6 +41,12 @@ def database_environment_migrate(
     )
     database_migrate = DatabaseMigrate.objects.get(id=database_migrate.id)
     if result:
+        database = database_migrate.database
+        database.environment = database_migrate.environment
+        database.save()
+        infra = database.infra
+        infra.environment = database_migrate.environment
+        infra.save()
         database_migrate.set_success()
         task.set_status_success('Database migrated with success')
     else:

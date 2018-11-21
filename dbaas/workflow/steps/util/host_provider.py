@@ -446,6 +446,10 @@ class DestroyVirtualMachineMigrate(HostProviderStep):
     def __unicode__(self):
         return "Destroying virtual machine..."
 
+    @property
+    def environment(self):
+        return self.infra.environment
+
     def do(self):
         host = self.instance.hostname
         self.provider.destroy_host(host)
