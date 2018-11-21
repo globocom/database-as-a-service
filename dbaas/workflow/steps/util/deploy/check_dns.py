@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
 from util import full_stack
-from util import check_nslookup
+from util import check_dns
 from util import get_credentials_for
 from dbaas_dnsapi.models import DatabaseInfraDNSList
 from dbaas_credentials.models import CredentialType
@@ -28,7 +28,7 @@ class CheckDns(BaseStep):
 
             for dns in dns_list:
                 LOG.info("Checking dns %s on %s" % (dns.dns, dns_credentials.project))
-                check_nslookup(dns.dns, dns_credentials.project)
+                check_dns(dns.dns, dns_credentials.project)
 
             return True
         except Exception:
