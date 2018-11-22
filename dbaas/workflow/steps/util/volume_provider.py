@@ -361,3 +361,37 @@ class UpdateActiveDisk(VolumeProviderBase):
 
     def undo(self):
         pass
+
+
+class DestroyOldEnvironment(VolumeProviderBase):
+
+    def __unicode__(self):
+        return "Removing old backups and volumes..."
+
+    @property
+    def environment(self):
+        return self.infra.environment
+
+    @property
+    def host(self):
+        return self.instance.hostname
+
+    @property
+    def can_run(self):
+        if not self.instance.is_database:
+            return False
+        if not self.host_migrate.database_migrate:
+            return False
+        return super(DestroyOldEnvironment, self).can_run
+
+    def do(self):
+        from backup.tasks import remove_snapshot_backup
+        for volume in self.host.volumes.all():
+            for snapshot in volume.backups.all():
+                remove_snapshot_backup(snapshot, self)
+            self.add_access(volume, self.host)
+            self.clean_up(volume)
+            self.destroy_volume(volume)
+
+    def undo(self):
+        raise NotImplementedError
