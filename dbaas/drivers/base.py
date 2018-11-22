@@ -226,6 +226,12 @@ class BaseDriver(object):
             try:
                 if self.check_instance_is_master(instance):
                     return instance
+                if instance.hostname.future_host:
+                    original_address = instance.address
+                    instance.address = instance.hostname.future_host.address
+                    if self.check_instance_is_master(instance):
+                        instance.address = original_address
+                        return instance
             except ConnectionError:
                 continue
 
