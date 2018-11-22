@@ -305,6 +305,8 @@ class MongoDBReplicaset(BaseMongoDB):
 
     def get_host_migrate_steps_cleaning_up(self):
         return (
+            'workflow.steps.mongodb.database.RemoveInstanceFromReplicaSet',
+            'workflow.steps.util.volume_provider.DestroyOldEnvironment',
             'workflow.steps.util.host_provider.DestroyVirtualMachineMigrate',
         )
 
@@ -325,9 +327,11 @@ class MongoDBReplicaset(BaseMongoDB):
             'workflow.steps.util.vm.CheckAccessFromMaster',
             'workflow.steps.util.acl.ReplicateAclsMigrate',
             'workflow.steps.mongodb.database.AddInstanceToReplicaSet',
-            'workflow.steps.mongodb.database.RemoveInstanceFromReplicaSet',
+            'workflow.steps.mongodb.database.SetNotEligible',
             'workflow.steps.util.dns.ChangeEndpoint',
             'workflow.steps.util.dns.CheckIsReady',
+            'workflow.steps.util.metric_collector.ConfigureTelegraf',
+            'workflow.steps.util.metric_collector.RestartTelegraf',
             'workflow.steps.util.zabbix.DestroyAlarms',
             'workflow.steps.util.zabbix.CreateAlarms',
             'workflow.steps.util.disk.ChangeSnapshotOwner',
