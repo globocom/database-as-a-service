@@ -161,4 +161,4 @@ class CheckAccessFromMaster(CheckAccessToMaster):
         return "Checking access from master..."
 
     def do(self):
-        self.check_access(self.master, self.host, self.driver.default_port)
+        self.check_access(self.master, self.host, self.instance.port)
