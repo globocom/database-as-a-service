@@ -92,25 +92,29 @@
   }
 
   function parse_zones(data) {
-    var start_at = Math.floor(Math.random() * data["zones"].length);
+    size = data["zones"].length
+    var start_at = Math.floor(Math.random() * size);
     $(".host-zone").each(function(id, obj) {
-      var balance = start_at;
       var options = ""
       var selected = false;
       for (var zone in data["zones"]) {
+        if (start_at >= size) {
+          start_at = 0
+        }
         var name = data["zones"][zone]["name"];
+        var is_active = data["zones"][start_at]["is_active"];
         if (obj.dataset['currentZone'] == name) {
           options += "<option value='" + name + "' selected='selected'>*" + name + "</option>"
           selected = true;
-        } else if (balance == id && !selected) {
+        } else if (zone == start_at.toString() && !selected && is_active) {
           options += "<option value='" + name + "' selected='selected'>" + name + "</option>"
+          selected = true;
+          start_at = start_at + 1;
         } else {
           options += "<option value='" + name + "'>" + name + "</option>"
         }
-
-        balance = balance + 1;
-        if (balance > data["zones"].length - 1) {
-          balance = 0
+        if (!is_active) {
+          start_at = start_at + 1;
         }
       }
       obj.innerHTML = options;
