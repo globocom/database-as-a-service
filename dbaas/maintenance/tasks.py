@@ -242,8 +242,7 @@ def restore_database(self, database, task, snapshot, user, retry_from=None):
     restore_snapshot(database, snapshot.group, task, retry_from)
 
 
-@app.task(bind=True)
-def create_database_rollback(self, rollback_from, task, user):
+def _create_database_rollback(self, rollback_from, task, user):
     task = TaskHistory.register(
         request=self.request, task_history=task, user=user,
         worker_name=get_worker_name()
@@ -252,6 +251,13 @@ def create_database_rollback(self, rollback_from, task, user):
     from tasks_create_database import rollback_create
     rollback_create(rollback_from, task, user)
 
+@app.task(bind=True)
+def create_database_rollback(self, rollback_from, task, user):
+    _create_database_rollback(self, rollback_from, task, user)
+
+@app.task(bind=True)
+def destroy_database_retry(self, rollback_from, task, user):
+    _create_database_rollback(self, rollback_from, task, user)
 
 @app.task(bind=True)
 def node_zone_migrate(
