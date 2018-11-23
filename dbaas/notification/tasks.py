@@ -194,6 +194,12 @@ def destroy_database(self, database, task_history=None, user=None):
 
 
 @app.task(bind=True)
+def destroy_database_retry(self, rollback_from, task, user):
+    from maintenance.tasks import _create_database_rollback
+    _create_database_rollback(self, rollback_from, task, user)
+
+
+@app.task(bind=True)
 def clone_database(self, origin_database, clone_name, plan, environment, task_history=None, user=None):
     AuditRequest.new_request("clone_database", user, "localhost")
     try:
@@ -1429,7 +1435,6 @@ class TaskRegister(object):
             task_params['user'] = user
         task = cls.create_task(task_params)
 
-        from maintenance.tasks import destroy_database_retry
         return destroy_database_retry.delay(
             rollback_from=rollback_from, task=task, user=user
         )
