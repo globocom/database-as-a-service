@@ -720,6 +720,11 @@ class HostMigrate(DatabaseMaintenanceTask):
     def disable_retry_filter(self):
         return {'host': self.host}
 
+    def update_step(self, step):
+        current_data = self._meta.model.objects.get(pk=self.id)
+        self.host = current_data.host
+        super(HostMigrate, self).update_step(step)
+
 
 simple_audit.register(Maintenance)
 simple_audit.register(HostMaintenance)
