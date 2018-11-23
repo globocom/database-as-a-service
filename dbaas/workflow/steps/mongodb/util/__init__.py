@@ -114,12 +114,18 @@ def build_change_oplogsize_script(instance, oplogsize):
     """ % {'connect_string': connect_string, 'oplogsize': oplogsize}
 
 
-def build_change_priority_script():
+def build_change_priority_script(size):
+    config = ""
+    for index in range(size):
+        config += "cfg.members[{index}].priority = (cfg.members[{index}].host == \"{host_field}\" ? {priority_field} : cfg.members[{index}].priority)\n".format(
+            index=index, host_field="{{HOST_ADDRESS}}",
+            priority_field="{{PRIORITY}}"
+        )
     return """
         echo ""; echo $(date "+%Y-%m-%d %T") "- Change member priority"
         /usr/local/mongodb/bin/mongo --host {{CONNECT_ADMIN_URI}} <<EOF_DBAAS
         cfg = rs.conf()
-        cfg.members[{{INDEX}}].priority = {{PRIORITY}}
+        """ + config + """
         rs.reconfig(cfg)
         exit
         \nEOF_DBAAS

@@ -76,22 +76,17 @@ class SetNotEligible(DatabaseReplicaSet):
         self.priority = 0
 
     @property
-    def index(self):
-        all_instances = list(self.infra.instances.all())
-        return all_instances.index(self.instance)
-
-    @property
     def script_variables(self):
         variables = {
             'CONNECT_ADMIN_URI': self.driver.get_admin_connection(),
-            'INDEX': self.index,
+            'HOST_ADDRESS': "{}:{}".format(self.instance.address, self.instance.port),
             'PRIORITY': self.priority
         }
         return variables
 
     def do(self):
         script = test_bash_script_error()
-        script += build_change_priority_script()
+        script += build_change_priority_script(len(self.infra.instances.all()))
         self._execute_script(self.script_variables, script)
 
     def undo(self):
