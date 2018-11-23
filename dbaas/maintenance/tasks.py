@@ -256,10 +256,6 @@ def create_database_rollback(self, rollback_from, task, user):
     _create_database_rollback(self, rollback_from, task, user)
 
 @app.task(bind=True)
-def destroy_database_retry(self, rollback_from, task, user):
-    _create_database_rollback(self, rollback_from, task, user)
-
-@app.task(bind=True)
 def node_zone_migrate(
     self, host, zone, new_environment, task, since_step=None
 ):
