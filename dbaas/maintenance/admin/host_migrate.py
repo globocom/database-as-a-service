@@ -26,7 +26,7 @@ class HostMigrateAdmin(DatabaseMaintenanceTaskAdmin):
     readonly_fields = (
         "host", "zone", "environment", "link_task", "link_database_migrate",
         "started_at", "finished_at", "current_step", "status",
-        "maintenance_action"
+        "maintenance_action", "database_migrate"
     )
 
     def link_database_migrate(self, maintenance_task):
