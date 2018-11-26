@@ -86,19 +86,13 @@ class VolumeProviderBase(BaseInstanceStep):
             raise IndexError(response.content, response)
         return response.json()
 
-    def delete_snapshot(self, snapshot):
-        url = "{}snapshot/{}".format(self.base_url, snapshot.snapshopt_id)
+    def delete_snapshot(self, snapshot, force):
+        url = "{}snapshot/{}?force={}".format(self.base_url, snapshot.snapshopt_id,
+                                     force)
         response = delete(url)
         if not response.ok:
             raise IndexError(response.content, response)
-        return response.json()
-
-    def can_remove_snapshot(self, snapshot):
-        url = "{}snapshot/{}".format(self.base_url, snapshot.snapshopt_id)
-        response = get(url)
-        if not response.ok:
-            raise IndexError(response.content, response)
-        return response.json()['can_remove']
+        return response.json()['removed']
 
     def restore_snapshot(self, snapshot):
         url = "{}snapshot/{}/restore".format(
