@@ -27,7 +27,10 @@ class ZabbixStep(BaseInstanceStep):
 
     @property
     def instances(self):
-        return self.host.instances.all()
+        host = self.host
+        if self.host_migrate:
+            host = self.instance.hostname
+        return host.instances.all()
 
     @property
     def zabbix_provider(self):
