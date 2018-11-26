@@ -264,7 +264,7 @@ def make_databases_backup(self):
     return
 
 
-def remove_snapshot_backup(snapshot):
+def remove_snapshot_backup(snapshot, force=False):
     snapshots = snapshot.group.backups.all() if snapshot.group else [snapshot]
     for snapshot in snapshots:
 
@@ -274,8 +274,8 @@ def remove_snapshot_backup(snapshot):
         LOG.info("Removing backup for {}".format(snapshot))
 
         provider = VolumeProviderBase(snapshot.instance)
-        can_remove = provider.can_remove_snapshot(snapshot)
-        if can_remove:
+        removed = provider.delete_snapshot(snapshot, force=force)
+        if removed:
             snapshot.purge_at = datetime.now()
         snapshot.save()
 
@@ -491,7 +491,7 @@ def remove_database_backup(self, task, snapshot):
 
     task_history.add_detail('Removing {}'.format(snapshot))
     try:
-        remove_snapshot_backup(snapshot)
+        remove_snapshot_backup(snapshot, force=True)
     except Exception as e:
         task_history.add_detail('Error: {}'.format(e))
         task.set_status_error('Could not delete backup')
