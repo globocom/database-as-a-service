@@ -14,13 +14,12 @@ class ZabbixStep(BaseInstanceStep):
     @property
     def credentials(self):
         integration = CredentialType.objects.get(type=CredentialType.ZABBIX)
-        environment = self.instance.databaseinfra.environment
-        return Credential.get_credentials(environment, integration)
+        return Credential.get_credentials(self.environment, integration)
 
     @property
     def can_run(self):
         try:
-            credential = self.credentials
+            _ = self.credentials
         except IndexError:
             return False
         else:
@@ -56,10 +55,12 @@ class DestroyAlarms(ZabbixStep):
         return "Destroying Zabbix alarms..."
 
     @property
-    def hosts_in_zabbix(self):
-        monitors = []
-        monitors.append(self.host.hostname)
+    def environment(self):
+        return self.infra.environment
 
+    @property
+    def hosts_in_zabbix(self):
+        monitors = [self.host.hostname]
         for instance in self.instances:
             current_dns = instance.dns
             monitors.append(current_dns)
