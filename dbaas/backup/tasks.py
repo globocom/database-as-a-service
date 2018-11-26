@@ -274,9 +274,9 @@ def remove_snapshot_backup(snapshot):
         LOG.info("Removing backup for {}".format(snapshot))
 
         provider = VolumeProviderBase(snapshot.instance)
-        provider.delete_snapshot(snapshot)
-
-        snapshot.purge_at = datetime.now()
+        can_remove = provider.can_remove_snapshot(snapshot)
+        if can_remove:
+            snapshot.purge_at = datetime.now()
         snapshot.save()
 
     return
