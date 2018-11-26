@@ -219,9 +219,10 @@ class BaseDriver(object):
             driver_name) else None for instance in self.databaseinfra.instances.all()]
         return filter(None, instances)
 
-    def get_master_instance(self, ):
+    def get_master_instance(self, ignore_instance=None):
         instances = self.get_database_instances()
-
+        if ignore_instance:
+            instances.remove(ignore_instance)
         for instance in instances:
             try:
                 if self.check_instance_is_master(instance):
