@@ -327,6 +327,7 @@ class MongoDBReplicaset(BaseMongoDB):
             'workflow.steps.util.vm.CheckAccessFromMaster',
             'workflow.steps.util.acl.ReplicateAclsMigrate',
             'workflow.steps.mongodb.database.AddInstanceToReplicaSet',
+            'workflow.steps.util.database.WaitForReplication',
             'workflow.steps.mongodb.database.SetNotEligible',
             'workflow.steps.util.dns.ChangeEndpoint',
             'workflow.steps.util.dns.CheckIsReady',
