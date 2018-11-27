@@ -1,5 +1,5 @@
 from mock import patch, MagicMock
-from workflow.steps.util.host_provider import Provider
+from workflow.steps.util.host_provider import Provider, HostProviderStartVMException
 from physical.tests import factory as physical_factory
 from workflow.tests.test_host_provider import BaseCreateVirtualMachineTestCase
 from dbaas_credentials.tests import factory as credential_factory
@@ -51,24 +51,27 @@ class StartTestCase(BaseCreateVirtualMachineTestCase):
     @patch('workflow.steps.util.host_provider.post')
     def test_200(self, post_mock):
 
-        post_mock.status_code = 200
+        fake_response = Response()
+        fake_response.status_code = 200
+        post_mock.return_value = fake_response
         resp = self.provider.start()
 
         self.assertTrue(resp)
 
     @patch('workflow.steps.util.host_provider.post')
     def test_404(self, post_mock):
-        fake_response = MagicMock(spec=Response)
+        fake_response = Response()
         fake_response.status_code = 404
         post_mock.return_value = fake_response
-        resp = self.provider.start()
 
-        self.assertFalse(resp)
+        with self.assertRaises(HostProviderStartVMException):
+            self.provider.start()
 
     @patch('workflow.steps.util.host_provider.post')
     def test_500(self, post_mock):
 
-        post_mock.status_code = 500
-        resp = self.provider.start()
-
-        self.assertFalse(resp)
+        fake_response = Response()
+        fake_response.status_code = 500
+        post_mock.return_value = fake_response
+        with self.assertRaises(HostProviderStartVMException):
+            self.provider.start()
