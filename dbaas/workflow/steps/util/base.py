@@ -11,6 +11,10 @@ from util import get_credentials_for
 LOG = logging.getLogger(__name__)
 
 
+class CantSetACLError(Exception):
+    pass
+
+
 @python_2_unicode_compatible
 class BaseStep(object):
 
@@ -256,7 +260,7 @@ class ACLFromHellClient(object):
             **kw
         )
 
-    def get_rule(self, database, app_name=None):
+    def get_rule(self, database, app_name=None, extra_params=None):
         params = {
             'metadata.owner': 'dbaas',
             'metadata.service-name': self.credential.project,
@@ -264,6 +268,9 @@ class ACLFromHellClient(object):
         }
         if app_name:
             params.update({'source.tsuruapp.appname': app_name})
+        if extra_params:
+            params.update(extra_params)
+
 
         LOG.debug("Tsuru get rule for {} params:{}".format(
             database.name, params))
@@ -273,6 +280,42 @@ class ACLFromHellClient(object):
             self.credential.endpoint,
             params=params,
         )
+
+    @staticmethod
+    def _get_vip_dns(infra):
+        return infra.endpoint_dns.split(':')[0]
+
+    def _need_add_acl_for_vip(self, database, app_name):
+        infra = database.infra
+        if infra.vip_databaseinfra.exists():
+            vip_dns = self._get_vip_dns(infra)
+            resp = self.get_rule(
+                database,
+                app_name,
+                extra_params={'destination.externaldns.name': vip_dns}
+            )
+            if resp and not resp.ok:
+                LOG.info("ACLFROMHELL Add VIP ACL for {}: {}".format(
+                    vip_dns, resp.content)
+                )
+            return not (resp and resp.ok and resp.json())
+        return False
+
+    def add_acl_for_vip_if_needed(self, database, app_name):
+
+        if self._need_add_acl_for_vip(database, app_name):
+            vip_dns = self._get_vip_dns(database.infra)
+
+            vip_resp = self.add_acl(
+                database,
+                app_name,
+                vip_dns
+            )
+            if not vip_resp:
+                raise CantSetACLError("Cant set acl for VIP {} error: {}".format(
+                    vip_dns,
+                    vip_resp.content
+                ))
 
     def add_acl(self, database, app_name, hostname):
         infra = database.infra
@@ -304,7 +347,7 @@ class ACLFromHellClient(object):
             }
         }
 
-        LOG.debug("Tsuru Add ACL: payload for host {}:{}".format(
+        LOG.info("Tsuru Add ACL: payload for host {}:{}".format(
             hostname, payload))
         resp = self._request(
             requests.post,
@@ -315,8 +358,8 @@ class ACLFromHellClient(object):
             msg = "Error bind {} database on {} environment: {}".format(
                 database.name, self.environment, resp.content
             )
-            LOG.debug(msg)
-        LOG.debug("Tsuru Add ACL Status for host {}: {}".format(
+            LOG.info(msg)
+        LOG.info("Tsuru Add ACL Status for host {}: {}".format(
             hostname, resp.status_code
         ))
 
@@ -328,14 +371,14 @@ class ACLFromHellClient(object):
         if not resp.ok:
             msg = "Rule not found for {}.".format(
                 database.name)
-            LOG.debug(msg)
+            LOG.error(msg)
 
         rules = resp.json()
         for rule in rules:
             rule_id = rule.get('RuleID')
             host = rule.get('Destination', {}).get('ExternalDNS', {}).get('Name')
             if rule_id:
-                LOG.debug('Tsuru Unbind App removing rule for {}'.format(host))
+                LOG.info('Tsuru Unbind App removing rule for {}'.format(host))
                 resp = self._request(
                     requests.delete,
                     '{}/{}'.format(self.credential.endpoint, rule_id)
@@ -343,5 +386,5 @@ class ACLFromHellClient(object):
                 if not resp.ok:
                     msg = "Error on delete rule {} for {}.".format(
                         rule_id, host)
-                    LOG.debug(msg)
+                    LOG.error(msg)
         return None
