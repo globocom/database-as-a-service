@@ -4,7 +4,8 @@ from workflow.steps.util.host_provider import (Provider,
                                                HostProviderStopVMException,
                                                HostProviderNewVersionException,
                                                HostProviderChangeOfferingException,
-                                               HostProviderCreateVMException)
+                                               HostProviderCreateVMException,
+                                               HostProviderDestroyVMException)
 from physical.tests import factory as physical_factory
 from workflow.tests.test_host_provider import BaseCreateVirtualMachineTestCase
 from dbaas_credentials.tests import factory as credential_factory
@@ -305,3 +306,37 @@ class CreateHostTestCase(BaseProviderTestCase):
                 team_name='fake_team',
                 zone='fake_zone'
             )
+
+
+@patch('workflow.steps.util.host_provider.delete')
+class DestroyTestCase(BaseProviderTestCase):
+
+    def setUp(self):
+        super(DestroyTestCase, self).setUp()
+        self.fake_new_host = MagicMock()
+        self.fake_new_host.identifier = 'fake_identifier1'
+
+    def test_params(self, delete_mock):
+        self.provider.destroy_host(self.fake_new_host)
+        self.assertTrue(delete_mock.called)
+        post_params = delete_mock.call_args
+        self.assertEqual(
+            post_params[0][0],
+            'fake_endpoint/fake_project/fake_env/host/fake_identifier1'
+        )
+        self.assertEqual(post_params[1]['auth'], ('fake_user', 'fake_password'))
+
+    def test_200(self, post_mock):
+        post_mock.return_value = self._create_fake_response(status_code=200)
+        resp = self.provider.destroy_host(self.fake_new_host)
+        self.assertEqual(resp, None)
+
+    def test_404(self, post_mock):
+        post_mock.return_value = self._create_fake_response(status_code=404)
+        with self.assertRaises(HostProviderDestroyVMException):
+            self.provider.destroy_host(self.fake_new_host)
+
+    def test_500(self, post_mock):
+        post_mock.return_value = self._create_fake_response(status_code=500)
+        with self.assertRaises(HostProviderDestroyVMException):
+            self.provider.destroy_host(self.fake_new_host)
