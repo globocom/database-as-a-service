@@ -5,7 +5,8 @@ from workflow.steps.util.host_provider import (Provider,
                                                HostProviderNewVersionException,
                                                HostProviderChangeOfferingException,
                                                HostProviderCreateVMException,
-                                               HostProviderDestroyVMException)
+                                               HostProviderDestroyVMException,
+                                               HostProviderListZoneException)
 from physical.tests import factory as physical_factory
 from workflow.tests.test_host_provider import BaseCreateVirtualMachineTestCase
 from dbaas_credentials.tests import factory as credential_factory
@@ -326,17 +327,57 @@ class DestroyTestCase(BaseProviderTestCase):
         )
         self.assertEqual(post_params[1]['auth'], ('fake_user', 'fake_password'))
 
-    def test_200(self, post_mock):
-        post_mock.return_value = self._create_fake_response(status_code=200)
+    def test_200(self, delete_mock):
+        delete_mock.return_value = self._create_fake_response(status_code=200)
         resp = self.provider.destroy_host(self.fake_new_host)
         self.assertEqual(resp, None)
 
-    def test_404(self, post_mock):
-        post_mock.return_value = self._create_fake_response(status_code=404)
+    def test_404(self, delete_mock):
+        delete_mock.return_value = self._create_fake_response(status_code=404)
         with self.assertRaises(HostProviderDestroyVMException):
             self.provider.destroy_host(self.fake_new_host)
 
-    def test_500(self, post_mock):
-        post_mock.return_value = self._create_fake_response(status_code=500)
+    def test_500(self, delete_mock):
+        delete_mock.return_value = self._create_fake_response(status_code=500)
         with self.assertRaises(HostProviderDestroyVMException):
             self.provider.destroy_host(self.fake_new_host)
+
+
+@patch('workflow.steps.util.host_provider.get')
+class ListZonesTestCase(BaseProviderTestCase):
+
+    def test_params(self, get_mock):
+        get_mock.return_value = self._create_fake_response(
+            status_code=200,
+            json={'zones': []}
+        )
+        self.provider.list_zones()
+        self.assertTrue(get_mock.called)
+        post_params = get_mock.call_args
+        self.assertEqual(
+            post_params[0][0],
+            'fake_endpoint/fake_project/fake_env/zones'
+        )
+        self.assertEqual(post_params[1]['auth'], ('fake_user', 'fake_password'))
+
+    def test_200(self, get_mock):
+        fake_zones = {
+            'zones': ['fake_zone1', 'fake_zone2']
+        }
+        get_mock.return_value = self._create_fake_response(
+            status_code=200,
+            json=fake_zones
+        )
+        resp = self.provider.list_zones()
+
+        self.assertListEqual(resp, fake_zones['zones'])
+
+    def test_404(self, get_mock):
+        get_mock.return_value = self._create_fake_response(status_code=404)
+        with self.assertRaises(HostProviderListZoneException):
+            self.provider.list_zones()
+
+    def test_500(self, get_mock):
+        get_mock.return_value = self._create_fake_response(status_code=500)
+        with self.assertRaises(HostProviderListZoneException):
+            self.provider.list_zones()
