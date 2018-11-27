@@ -2,7 +2,8 @@ from mock import patch, MagicMock
 from workflow.steps.util.host_provider import (Provider,
                                                HostProviderStartVMException,
                                                HostProviderStopVMException,
-                                               HostProviderNewVersionException)
+                                               HostProviderNewVersionException,
+                                               HostProviderChangeOfferingException)
 from physical.tests import factory as physical_factory
 from workflow.tests.test_host_provider import BaseCreateVirtualMachineTestCase
 from dbaas_credentials.tests import factory as credential_factory
@@ -155,3 +156,42 @@ class NewVersionTestCase(BaseProviderTestCase):
         post_mock.return_value = self._create_fake_response(status_code=500)
         with self.assertRaises(HostProviderNewVersionException):
             self.provider.new_version(engine=self.infra.engine)
+
+
+@patch('workflow.steps.util.host_provider.post')
+class NewOfferingTestCase(BaseProviderTestCase):
+
+    def test_params(self, post_mock):
+        self.weaker_offering.cpus = 2
+        self.weaker_offering.memory_size_mb = 999
+        self.weaker_offering.save()
+        post_mock.return_value = self._create_fake_response(status_code=200)
+        self.provider.new_offering(offering=self.weaker_offering)
+        self.assertTrue(post_mock.called)
+        post_params = post_mock.call_args
+        self.assertEqual(
+            post_params[0][0],
+            'fake_endpoint/fake_project/fake_env/host/resize'
+        )
+        expected_json = {
+            'host_id': 'fake_identifier1',
+            'cpus': 2,
+            'memory': 999
+        }
+        self.assertDictEqual(post_params[1]['json'], expected_json)
+        self.assertEqual(post_params[1]['auth'], ('fake_user', 'fake_password'))
+
+    def test_200(self, post_mock):
+        post_mock.return_value = self._create_fake_response(status_code=200)
+        resp = self.provider.new_offering(offering=self.weaker_offering)
+        self.assertTrue(resp)
+
+    def test_404(self, post_mock):
+        post_mock.return_value = self._create_fake_response(status_code=404)
+        with self.assertRaises(HostProviderChangeOfferingException):
+            self.provider.new_offering(offering=self.weaker_offering)
+
+    def test_500(self, post_mock):
+        post_mock.return_value = self._create_fake_response(status_code=500)
+        with self.assertRaises(HostProviderChangeOfferingException):
+            self.provider.new_offering(offering=self.weaker_offering)
