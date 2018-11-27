@@ -6,7 +6,8 @@ from workflow.steps.util.host_provider import (Provider,
                                                HostProviderChangeOfferingException,
                                                HostProviderCreateVMException,
                                                HostProviderDestroyVMException,
-                                               HostProviderListZoneException)
+                                               HostProviderListZoneException,
+                                               HostProviderInfoException)
 from physical.tests import factory as physical_factory
 from workflow.tests.test_host_provider import BaseCreateVirtualMachineTestCase
 from dbaas_credentials.tests import factory as credential_factory
@@ -381,3 +382,45 @@ class ListZonesTestCase(BaseProviderTestCase):
         get_mock.return_value = self._create_fake_response(status_code=500)
         with self.assertRaises(HostProviderListZoneException):
             self.provider.list_zones()
+
+
+@patch('workflow.steps.util.host_provider.get')
+class HostInfoTestCase(BaseProviderTestCase):
+    def setUp(self):
+        super(HostInfoTestCase, self).setUp()
+        self.fake_new_host = MagicMock()
+        self.fake_new_host.identifier = 'fake_identifier1'
+        self.fake_resp = {'id': 1, 'name': 'fake_name'}
+
+    def test_params(self, get_mock):
+        get_mock.return_value = self._create_fake_response(
+            status_code=200,
+            json=self.fake_resp
+        )
+        self.provider.host_info(self.fake_new_host)
+        self.assertTrue(get_mock.called)
+        post_params = get_mock.call_args
+        self.assertEqual(
+            post_params[0][0],
+            'fake_endpoint/fake_project/fake_env/host/fake_identifier1'
+        )
+        self.assertEqual(post_params[1]['auth'], ('fake_user', 'fake_password'))
+
+    def test_200(self, get_mock):
+        get_mock.return_value = self._create_fake_response(
+            status_code=200,
+            json=self.fake_resp
+        )
+        resp = self.provider.host_info(self.fake_new_host)
+
+        self.assertDictEqual(resp, self.fake_resp)
+
+    def test_404(self, get_mock):
+        get_mock.return_value = self._create_fake_response(status_code=404)
+        with self.assertRaises(HostProviderInfoException):
+            self.provider.host_info(self.fake_new_host)
+
+    def test_500(self, get_mock):
+        get_mock.return_value = self._create_fake_response(status_code=500)
+        with self.assertRaises(HostProviderInfoException):
+            self.provider.host_info(self.fake_new_host)
