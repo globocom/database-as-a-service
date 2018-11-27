@@ -3,7 +3,8 @@ from workflow.steps.util.host_provider import (Provider,
                                                HostProviderStartVMException,
                                                HostProviderStopVMException,
                                                HostProviderNewVersionException,
-                                               HostProviderChangeOfferingException)
+                                               HostProviderChangeOfferingException,
+                                               HostProviderCreateVMException)
 from physical.tests import factory as physical_factory
 from workflow.tests.test_host_provider import BaseCreateVirtualMachineTestCase
 from dbaas_credentials.tests import factory as credential_factory
@@ -35,9 +36,11 @@ class BaseProviderTestCase(BaseCreateVirtualMachineTestCase):
         self.instance.save()
 
     @staticmethod
-    def _create_fake_response(status_code=200):
+    def _create_fake_response(status_code=200, json=None):
         fake_response = Response()
         fake_response.status_code = status_code
+        if json:
+            fake_response.json = MagicMock(return_value=json)
         return fake_response
 
 
@@ -195,3 +198,110 @@ class NewOfferingTestCase(BaseProviderTestCase):
         post_mock.return_value = self._create_fake_response(status_code=500)
         with self.assertRaises(HostProviderChangeOfferingException):
             self.provider.new_offering(offering=self.weaker_offering)
+
+
+@patch('workflow.steps.util.host_provider.post')
+class CreateHostTestCase(BaseProviderTestCase):
+
+    def setUp(self):
+        super(CreateHostTestCase, self).setUp()
+        self.vm_credential = credential_factory.CredentialFactory.create(
+            integration_type__name='VM',
+            integration_type__type=CredentialType.VM,
+            user='fake_user',
+            password='fake_password',
+        )
+        self.vm_credential.environments.add(self.env)
+        self.credential.project = 'fake_provider'
+        self.credential.save()
+        self.fake_resp = {
+            'address': 'fake_address',
+            'id': 'fake_id'
+        }
+
+    def test_params(self, post_mock):
+        self.weaker_offering.cpus = 2
+        self.weaker_offering.memory_size_mb = 999
+        self.weaker_offering.save()
+        post_mock.return_value = self._create_fake_response(
+            status_code=201,
+            json=self.fake_resp
+        )
+        self.provider.create_host(
+            infra=self.infra,
+            offering=self.weaker_offering,
+            name='fake_host01',
+            team_name='fake_team',
+            zone='fake_zone'
+        )
+        self.assertTrue(post_mock.called)
+        post_params = post_mock.call_args
+        self.assertEqual(
+            post_params[0][0],
+            'fake_endpoint/fake_provider/fake_env/host/new'
+        )
+        expected_json = {
+            'engine': 'fake_unique',
+            'name': 'fake_host01',
+            'cpu': 2,
+            'memory': 999,
+            'group': self.infra.name,
+            'team_name': 'fake_team',
+            'zone': 'fake_zone'
+        }
+        self.assertDictEqual(post_params[1]['json'], expected_json)
+        self.assertEqual(post_params[1]['auth'], ('fake_user', 'fake_password'))
+
+    def test_201(self, post_mock):
+        post_mock.return_value = self._create_fake_response(
+            status_code=201,
+            json=self.fake_resp
+        )
+        created_host = self.provider.create_host(
+            infra=self.infra,
+            offering=self.weaker_offering,
+            name='fake_host01',
+            team_name='fake_team',
+            zone='fake_zone'
+        )
+
+        self.assertEqual(created_host.address, 'fake_address')
+        self.assertEqual(created_host.hostname, 'fake_address')
+        self.assertEqual(created_host.user, 'fake_user')
+        self.assertEqual(created_host.password, 'fake_password')
+        self.assertEqual(created_host.provider, 'fake_provider')
+        self.assertEqual(created_host.identifier, 'fake_id')
+        self.assertEqual(created_host.offering.id, self.weaker_offering.id)
+
+    def test_200(self, post_mock):
+        post_mock.return_value = self._create_fake_response(status_code=200)
+        with self.assertRaises(HostProviderCreateVMException):
+            self.provider.create_host(
+                infra=self.infra,
+                offering=self.weaker_offering,
+                name='fake_host01',
+                team_name='fake_team',
+                zone='fake_zone'
+            )
+
+    def test_404(self, post_mock):
+        post_mock.return_value = self._create_fake_response(status_code=404)
+        with self.assertRaises(HostProviderCreateVMException):
+            self.provider.create_host(
+                infra=self.infra,
+                offering=self.weaker_offering,
+                name='fake_host01',
+                team_name='fake_team',
+                zone='fake_zone'
+            )
+
+    def test_500(self, post_mock):
+        post_mock.return_value = self._create_fake_response(status_code=500)
+        with self.assertRaises(HostProviderCreateVMException):
+            self.provider.create_host(
+                infra=self.infra,
+                offering=self.weaker_offering,
+                name='fake_host01',
+                team_name='fake_team',
+                zone='fake_zone'
+            )
