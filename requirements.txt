@@ -50,7 +50,7 @@ six==1.10.0
 sphinx-me==0.2.1
 urllib3==1.7.1
 wsgiref==0.1.2
-dbaas_credentials==1.1.21
+dbaas_credentials==1.1.22
 dbaas_nfsaas==0.7.10
 dbaas_zabbix==0.5.1
 dbaas_dbmonitor==0.2.8
