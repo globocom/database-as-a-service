@@ -1,7 +1,8 @@
 from mock import patch, MagicMock
 from workflow.steps.util.host_provider import (Provider,
                                                HostProviderStartVMException,
-                                               HostProviderStopVMException)
+                                               HostProviderStopVMException,
+                                               HostProviderNewVersionException)
 from physical.tests import factory as physical_factory
 from workflow.tests.test_host_provider import BaseCreateVirtualMachineTestCase
 from dbaas_credentials.tests import factory as credential_factory
@@ -42,7 +43,6 @@ class BaseProviderTestCase(BaseCreateVirtualMachineTestCase):
 @patch('workflow.steps.util.host_provider.post')
 class StartTestCase(BaseProviderTestCase):
 
-    @patch('workflow.steps.util.host_provider.post')
     def test_params(self, post_mock):
         self.provider.start()
         self.assertTrue(post_mock.called)
@@ -105,3 +105,53 @@ class StopTestCase(BaseProviderTestCase):
         post_mock.return_value = self._create_fake_response(status_code=500)
         with self.assertRaises(HostProviderStopVMException):
             self.provider.stop()
+
+
+@patch('workflow.steps.util.host_provider.post')
+class NewVersionTestCase(BaseProviderTestCase):
+
+    def test_params_with_engine(self, post_mock):
+        post_mock.return_value = self._create_fake_response(status_code=200)
+        self.provider.new_version(engine=self.infra.engine)
+        self.assertTrue(post_mock.called)
+        post_params = post_mock.call_args
+        self.assertEqual(
+            post_params[0][0],
+            'fake_endpoint/fake_project/fake_env/host/reinstall'
+        )
+        expected_json = {
+            'host_id': 'fake_identifier1',
+            'engine': self.infra.engine.full_name_for_host_provider
+        }
+        self.assertDictEqual(post_params[1]['json'], expected_json)
+        self.assertEqual(post_params[1]['auth'], ('fake_user', 'fake_password'))
+
+    def test_params_without_engine(self, post_mock):
+        post_mock.return_value = self._create_fake_response(status_code=200)
+        self.provider.new_version()
+        self.assertTrue(post_mock.called)
+        post_params = post_mock.call_args
+        self.assertEqual(
+            post_params[0][0],
+            'fake_endpoint/fake_project/fake_env/host/reinstall'
+        )
+        expected_json = {
+            'host_id': 'fake_identifier1',
+        }
+        self.assertDictEqual(post_params[1]['json'], expected_json)
+        self.assertEqual(post_params[1]['auth'], ('fake_user', 'fake_password'))
+
+    def test_200(self, post_mock):
+        post_mock.return_value = self._create_fake_response(status_code=200)
+        resp = self.provider.new_version(engine=self.infra.engine)
+        self.assertTrue(resp)
+
+    def test_404(self, post_mock):
+        post_mock.return_value = self._create_fake_response(status_code=404)
+        with self.assertRaises(HostProviderNewVersionException):
+            self.provider.new_version(engine=self.infra.engine)
+
+    def test_500(self, post_mock):
+        post_mock.return_value = self._create_fake_response(status_code=500)
+        with self.assertRaises(HostProviderNewVersionException):
+            self.provider.new_version(engine=self.infra.engine)
