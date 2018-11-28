@@ -71,3 +71,4 @@ django-all-access==0.5.1
 oauthlib==2.0.4
 requests-oauthlib==0.8.0
 python-memcached==1.58
+dnspython==1.15.0
