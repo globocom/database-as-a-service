@@ -70,7 +70,7 @@ class DatabaseMigrateAdmin(DatabaseMaintenanceTaskAdmin):
             return redirect
 
         TaskRegister.database_migrate(
-            retry_from.database, retry_from.environment,
+            retry_from.database, retry_from.environment, retry_from.offering,
             request.user, retry_from.hosts_zones, retry_from.current_step
         )
         return self.redirect_to_database(retry_from)
