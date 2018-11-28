@@ -16,6 +16,8 @@ import traceback
 import sys
 from billiard import current_process
 from django.utils.module_loading import import_by_path
+from dns.resolver import Resolver
+from dns.exception import DNSException
 
 
 LOG = logging.getLogger(__name__)
@@ -138,29 +140,31 @@ def call_script(script_name, working_dir=None, split_lines=True, args=[],
         return return_code, output
 
 
-def check_nslookup(dns_to_check, dns_server, retries=90, wait=10):
-    try:
-        LOG.info("Cheking dns...")
-        for attempt in range(0, retries):
-            LOG.info("Cheking dns... attempt number %s..." % str(attempt + 1))
+def check_dns(dns_to_check, dns_server, retries=90, wait=10, ip_to_check=None):
+    LOG.info("Cheking dns for {}...".format(dns_to_check))
+    resolver = Resolver()
+    resolver.nameservers = [dns_server]
+    LOG.info("CHECK DNS: dns to check {}".format(dns_to_check))
+    for attempt in range(0, retries):
+        LOG.info("Cheking dns for {}... attempt number {}...".format(
+            dns_to_check,
+            str(attempt + 1)
+        ))
 
-            result = subprocess.Popen("nslookup %s %s" % (
-                dns_to_check, dns_server), stdout=subprocess.PIPE, shell=True)
-            (output, err) = result.communicate()
-            indexes = [i for i, x in enumerate(output.split('\n')) if re.match(
-                r'\W*' + "Address" + r'\W*', x)]
+        try:
+            answer = resolver.query(dns_to_check)
+        except DNSException:
+            continue
+        else:
+            ips = map(str, answer)
+            LOG.info("CHECK DNS: ips {}".format(ips))
+        LOG.info("CHECK DNS: ip to check {}".format(ip_to_check))
+        if (ip_to_check and ip_to_check in ips) or (not ip_to_check and ips):
+            return True
 
-            LOG.info("Nslookup output: %s" % output)
+        sleep(wait)
 
-            if len(indexes) == 2:
-                LOG.info("%s is available!" % dns_to_check)
-                return True
-            sleep(wait)
-
-        return False
-    except Exception as e:
-        LOG.warn("We caught an exception %s" % e)
-        return None
+    return False
 
 
 def scp_file(server, username, password, localpath, remotepath, option):
