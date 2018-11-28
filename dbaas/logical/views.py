@@ -1272,6 +1272,7 @@ def database_migrate(request, context, database):
             zone = request.POST["new_zone"]
             TaskRegister.host_migrate(host, zone, environment, request.user)
         elif 'new_environment' in request.POST:
+            offering = Offering.objects.last()
             environment = get_object_or_404(
                 Environment, pk=request.POST.get('new_environment')
             )
@@ -1286,7 +1287,7 @@ def database_migrate(request, context, database):
                 )
             else:
                 TaskRegister.database_migrate(
-                    database, environment, request.user, hosts_zones
+                    database, environment, offering, request.user, hosts_zones
                 )
         return
 

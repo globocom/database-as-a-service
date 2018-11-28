@@ -279,7 +279,8 @@ def node_zone_migrate_rollback(self, migrate, task):
 
 @app.task(bind=True)
 def database_environment_migrate(
-    self, database, new_environment, task, hosts_zones, since_step=None
+    self, database, new_environment, new_offering, task, hosts_zones,
+    since_step=None
 ):
     task = TaskHistory.register(
         request=self.request, task_history=task, user=task.user,
@@ -287,7 +288,7 @@ def database_environment_migrate(
     )
     from tasks_database_migrate import database_environment_migrate
     database_environment_migrate(
-        database, new_environment, task, hosts_zones, since_step
+        database, new_environment, new_offering, task, hosts_zones, since_step
     )
 
 
