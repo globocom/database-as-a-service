@@ -20,13 +20,13 @@ class DatabaseMigrateAdmin(DatabaseMaintenanceTaskAdmin):
 
     list_display = (
         "current_step", "database", "origin_environment", "environment",
-        "friendly_status", "maintenance_action", "link_task", "started_at",
-        "finished_at"
+        "origin_offering", "offering", "friendly_status",
+        "maintenance_action", "link_task", "started_at", "finished_at"
     )
     readonly_fields = (
-        "database", "origin_environment", "environment", "link_task",
-        "started_at", "finished_at", "current_step", "status",
-        "maintenance_action"
+        "database", "origin_environment", "environment", "origin_offering",
+        "offering", "link_task", "started_at", "finished_at", "current_step",
+        "status", "maintenance_action",
     )
 
     def maintenance_action(self, maintenance_task):
