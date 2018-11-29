@@ -689,6 +689,10 @@ class RedisCluster(Redis):
             try:
                 if self.check_instance_is_master(instance):
                     masters.append(instance)
+                if instance.hostname.future_host:
+                    instance.address = instance.hostname.future_host.address
+                    if self.check_instance_is_master(instance):
+                        masters.append(instance)
             except ConnectionError:
                 continue
 
