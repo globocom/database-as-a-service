@@ -31,22 +31,23 @@ class BaseMongoDB(BaseTopology):
 class MongoDBSingle(BaseMongoDB):
 
     def get_upgrade_steps_extra(self):
-        return ('workflow.steps.mongodb.upgrade.vm.ChangeBinaryTo32',) + \
+        return ('workflow.steps.mongodb.upgrade.vm.ChangeBinaryTo36',) + \
             super(MongoDBSingle, self).get_upgrade_steps_extra() + (
-            'workflow.steps.util.plan.ConfigureOnlyDBConfigFile',
+            'workflow.steps.util.plan.ConfigureForUpgrade',
             'workflow.steps.util.database.Start',
             'workflow.steps.util.database.CheckIsUp',
+            'workflow.steps.mongodb.upgrade.database.SetFeatureCompatibilityVersion36',
             'workflow.steps.util.database.Stop',
             'workflow.steps.util.database.CheckIsDown',
-            'workflow.steps.mongodb.upgrade.vm.ChangeBinaryTo34',
+            'workflow.steps.mongodb.upgrade.vm.ChangeBinaryTo40',
             'workflow.steps.util.plan.ConfigureForUpgradeOnlyDBConfigFile',
             'workflow.steps.util.metric_collector.ConfigureTelegraf',
         )
 
     def get_upgrade_steps_final(self):
         return [{
-            'Setting feature compatibility version 3.4': (
-                'workflow.steps.mongodb.upgrade.database.SetFeatureCompatibilityVersion34',
+            'Setting feature compatibility version 4.0': (
+                'workflow.steps.mongodb.upgrade.database.SetFeatureCompatibilityVersion40',
             ),
         }] + super(MongoDBSingle, self).get_upgrade_steps_final()
 
@@ -136,25 +137,26 @@ class MongoDBSingle(BaseMongoDB):
 class MongoDBReplicaset(BaseMongoDB):
 
     def get_upgrade_steps_description(self):
-        return 'Upgrading to MongoDB 3.2'
+        return 'Upgrading to MongoDB 3.6'
 
     def get_upgrade_steps_extra(self):
         return (
-            'workflow.steps.mongodb.upgrade.vm.ChangeBinaryTo32',
+            'workflow.steps.mongodb.upgrade.vm.ChangeBinaryTo36',
             'workflow.steps.util.volume_provider.MountDataVolume',
+            'workflow.steps.util.plan.ConfigureForUpgrade',
             'workflow.steps.util.plan.InitializationForUpgrade',
-            'workflow.steps.util.plan.Configure',
             'workflow.steps.util.metric_collector.ConfigureTelegraf',
         )
 
     def get_upgrade_steps_final(self):
         return [{
-            'Upgrading to MongoDB 3.4': (
+            'Upgrading to MongoDB 4.0': (
+                'workflow.steps.mongodb.upgrade.database.SetFeatureCompatibilityVersion36',
                 'workflow.steps.util.vm.ChangeMaster',
                 'workflow.steps.util.database.CheckIfSwitchMaster',
                 'workflow.steps.util.database.Stop',
                 'workflow.steps.util.database.CheckIsDown',
-                'workflow.steps.mongodb.upgrade.vm.ChangeBinaryTo34',
+                'workflow.steps.mongodb.upgrade.vm.ChangeBinaryTo40',
                 'workflow.steps.util.plan.ConfigureForUpgradeOnlyDBConfigFile',
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 'workflow.steps.util.database.Start',
@@ -162,8 +164,8 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.util.metric_collector.RestartTelegraf',
             ),
         }] + [{
-            'Setting feature compatibility version 3.4': (
-                'workflow.steps.mongodb.upgrade.database.SetFeatureCompatibilityVersion34',
+            'Setting feature compatibility version 4.0': (
+                'workflow.steps.mongodb.upgrade.database.SetFeatureCompatibilityVersion40',
             ),
         }] + super(MongoDBReplicaset, self).get_upgrade_steps_final()
 
