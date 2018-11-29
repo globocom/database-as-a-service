@@ -43,6 +43,31 @@
                 }).complete(function() {
                     location.reload();
                 });
+            },
+            /**
+            * Get all environment zones
+            */
+            zones_for_environment: function(database_id, environment_id, callback) {
+                var self = this;
+                $.ajax({
+                    "url": "/admin/logical/database/" + database_id + "/zones_for_environment/" + environment_id + "/",
+                    "type": "GET",
+                }).done(function(data) {
+                    if (data.error) {
+                        alert(data.error);
+                    }
+                    callback(data);
+                });
+            },
+            migrate_database: function(database_id, new_environment_id, hosts_zones) {
+                var self = this;
+                $.ajax({
+                    "url": "/admin/logical/database/" + database_id + "/migrate/",
+                    "type": "POST",
+                    "data": { "new_environment": new_environment_id, "hosts_zones": JSON.stringify(hosts_zones)},
+                }).complete(function() {
+                    location.reload();
+                });
             }
         };
     })();

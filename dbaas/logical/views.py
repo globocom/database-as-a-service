@@ -27,6 +27,7 @@ from logical.forms.database import DatabaseDetailsForm
 from logical.models import Credential, Database, Project
 from logical.validators import (check_is_database_enabled, check_is_database_dead,
                                 ParameterValidator)
+from workflow.steps.util.host_provider import Provider
 
 
 LOG = logging.getLogger(__name__)
@@ -1261,18 +1262,34 @@ def database_migrate(request, context, database):
         )
         return database_details(request, database.id)
 
+    environment = database.infra.environment
     if request.POST:
-        host = get_object_or_404(Host, pk=request.POST.get('host_id'))
         can_migrate, error = database.can_migrate_host()
-        if can_migrate:
-            environment = database.infra.environment
+        if not can_migrate:
+            messages.add_message(request, messages.ERROR, error)
+        elif 'host_id' in request.POST:
+            host = get_object_or_404(Host, pk=request.POST.get('host_id'))
             zone = request.POST["new_zone"]
             TaskRegister.host_migrate(host, zone, environment, request.user)
-        else:
-            messages.add_message(request, messages.ERROR, error)
+        elif 'new_environment' in request.POST:
+            environment = get_object_or_404(
+                Environment, pk=request.POST.get('new_environment')
+            )
+            hosts_zones = OrderedDict()
+            data = json.loads(request.POST.get('hosts_zones'))
+            for host_id, zone in data.items():
+                host = get_object_or_404(Host, pk=host_id)
+                hosts_zones[host] = zone
+            if not hosts_zones:
+                messages.add_message(
+                    request, messages.ERROR, "There is no host to migrate"
+                )
+            else:
+                TaskRegister.database_migrate(
+                    database, environment, request.user, hosts_zones
+                )
         return
 
-    from workflow.steps.util.host_provider import Provider
     hosts = set()
     zones = set()
     instances = database.infra.instances.all().order_by('shard', 'id')
@@ -1281,9 +1298,7 @@ def database_migrate(request, context, database):
         if host in hosts:
             continue
 
-        hp = Provider(instance, database.infra.environment)
-        for zone in hp.list_zones():
-            zones.add(zone)
+        hp = Provider(instance, environment)
         try:
             host_info = hp.host_info(host)
         except Exception as e:
@@ -1294,10 +1309,26 @@ def database_migrate(request, context, database):
     context['hosts'] = sorted(hosts, key=lambda host: host.hostname)
     context['zones'] = sorted(zones)
 
+    context["environments"] = set()
+    for group in environment.groups.all():
+        for env in group.environments.all():
+            context["environments"].add(env)
+    context["current_environment"] = environment
+
     from maintenance.models import HostMigrate
     migrates = HostMigrate.objects.filter(host__in=hosts)
     context["last_host_migrate"] = migrates.last()
     return render_to_response(
         "logical/database/details/migrate_tab.html", context,
         RequestContext(request)
+    )
+
+
+def zones_for_environment(request, database_id, environment_id):
+    database = get_object_or_404(Database, pk=database_id)
+    environment = get_object_or_404(Environment, pk=environment_id)
+    hp = Provider(database.infra.instances.first(), environment)
+    zones = sorted(hp.list_zones())
+    return HttpResponse(
+        json.dumps({"zones": zones}), content_type="application/json"
     )
