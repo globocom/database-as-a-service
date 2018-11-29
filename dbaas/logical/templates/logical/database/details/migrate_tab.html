@@ -17,9 +17,10 @@
 
 
 {% block tab %}
-<fieldset class="module aligned ">
+<fieldset class="module aligned">
   <div class="control-group">
-    <p>Environment
+    <h4>Database environment is <span class="label label-info">{{ current_environment }}</span> with offering <span class="label label-info">{{ current_offering }}</span></h4>
+    <p>New environment
       {%if last_host_migrate and last_host_migrate.is_status_error %}
         <u>{{ current_environment }}</u>
         {%if last_host_migrate.database_migrate %}
@@ -33,14 +34,14 @@
         <select id="migrate_environment" class="environments" name="migrate_environment">
         {% for env in environments %}
           {% if env == current_environment %}
-            <option value="{{env.id}}" selected="selected">*{{env}}</option>
+            <option value="{{env.id}}" selected="selected">---------</option>
           {% else %}
             <option value="{{env.id}}">{{env}}</option>
           {% endif %}
         {% endfor %}
         </select>
         &nbsp&nbsp&nbsp
-        Offering
+        New offering
         <select id="migrate_offering" class="offerings" name="migrate_offering">
         </select>
         <button data-toggle="modal" id="migrate_environment_btn" class="resize_button btn host-zone-btn" data-origin-environment="{{host}}" data-target="#migrate_environment_modal">Migrate database environment</button>
@@ -94,14 +95,14 @@
   function load_offerings(environment_id) {
     if ({{current_environment.id}} == environment_id) {
       var offering_select = document.getElementById("migrate_offering")
-      offering_select.innerHTML = "<option value='{{ current_offering.id }}' selected='selected'>{{ current_offering }}</option>";
+      offering_select.innerHTML = "<option value='0' selected='selected'>---------</option>";
     } else {
       window.MigrateManager.offerings_for_environment(environment_id, parse_offerings);
     }
   }
 
   function parse_offerings(data) {
-    var options = "<option value=None selected='selected'>---------</option>";
+    var options = "<option value='0' selected='selected'>---------</option>";
     for (var offering in data["offerings"]) {
       var id = data["offerings"][offering]["id"];
       var name = data["offerings"][offering]["name"];
@@ -170,7 +171,7 @@
         hostId = $hostZone.data('hostId'),
         currentZone = $hostZone.data('currentZone');
 
-      disable = document.getElementById("migrate_environment_btn").disabled == false
+      disable = document.getElementById("migrate_environment").value != {{current_environment.id}}
       if (!disable) {
         disable = $hostZone.val() == "Loading..."
       }
@@ -198,6 +199,14 @@
       window.MigrateManager.migrate_host({{database.id}}, hostId, newZone);
     });
 
+    $(".host-zone-btn").click(function() {
+      var $select = $("#migrate_environment");
+      var new_env = $select.find(":selected").text()
+      var $select = $("#migrate_offering");
+      var new_offering = $select.find(":selected").text()
+      $("#migrate_environment_modal .modal_message").empty().append('<label>You are migrating from <u>{{ current_environment }}</u> with <u>{{ current_offering }}</u><br> to <u>' + new_env + '</u> with <u>' + new_offering + '</u><br><br>Are you sure you want to migrate this database?</label>');
+    });
+
     $("#migrate_database_btn_modal").click(function() {
       var hosts_zones = {}
       $(".host-zone").each(function(id, obj) {
@@ -206,13 +215,26 @@
       window.MigrateManager.migrate_database({{database.id}}, $("#migrate_environment").val(), $("#migrate_offering").val(), hosts_zones);
     });
 
+    function control_migrate_button() {
+      env = $("#migrate_environment").val()
+      status_migrate("migrate_environment_btn", {{ current_environment.id }}, env)
+      if ({{ current_environment.id }} != env) {
+        status_migrate("migrate_environment_btn", "0", $("#migrate_offering").val())
+      }
+    }
+
     $("#migrate_environment").on("change", function() {
       var $environment = $(this);
-      status_migrate("migrate_environment_btn", {{ current_environment.id }}, $environment.val())
+      control_migrate_button();
       load_offerings($environment.val())
       load_zones($environment.val());
     });
     $("#migrate_environment").change()
+
+    $("#migrate_offering").on("change", function() {
+      control_migrate_button();
+    });
+    $("#migrate_offering").change()
   })
 </script>
 {% endblock %}
