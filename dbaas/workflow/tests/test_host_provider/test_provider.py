@@ -15,6 +15,11 @@ from dbaas_credentials.models import CredentialType
 from requests.models import Response
 
 
+__all__ = ('StartTestCase', 'StopTestCase', 'NewVersionTestCase',
+           'NewOfferingTestCase', 'CreateHostTestCase', 'DestroyTestCase',
+           'ListZonesTestCase', 'HostInfoTestCase')
+
+
 class BaseProviderTestCase(BaseCreateVirtualMachineTestCase):
 
     def setUp(self):
