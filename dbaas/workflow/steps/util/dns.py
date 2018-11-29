@@ -2,7 +2,7 @@ from dbaas_credentials.models import CredentialType
 from dbaas_dnsapi.models import HOST, INSTANCE, DatabaseInfraDNSList
 from dbaas_dnsapi.provider import DNSAPIProvider
 from dbaas_dnsapi.utils import add_dns_record
-from util import get_credentials_for, check_nslookup
+from util import get_credentials_for, check_dns
 from base import BaseInstanceStep
 from dbaas_networkapi.models import Vip
 
@@ -97,17 +97,14 @@ class CreateDNS(DNSStep):
     def __unicode__(self):
         return "Creating DNS..."
 
-    @property
-    def database_sufix(self):
-        return {}
-
     def do(self):
         if self.host.hostname == self.host.address:
             self.host.hostname = add_dns_record(
                 databaseinfra=self.infra,
                 name=self.instance.vm_name,
                 ip=self.host.address,
-                type=HOST
+                type=HOST,
+                is_database=self.instance.is_database
             )
             self.host.save()
 
@@ -116,7 +113,7 @@ class CreateDNS(DNSStep):
             name=self.instance.vm_name,
             ip=self.instance.address,
             type=INSTANCE,
-            **self.database_sufix
+            is_database=self.instance.is_database
         )
 
         self.provider.create_database_dns_for_ip(
@@ -165,31 +162,24 @@ class RegisterDNSVip(DNSStep):
         )
 
 
-class CreateDNSSentinel(CreateDNS):
-
-    @property
-    def database_sufix(self):
-        base = super(CreateDNSSentinel, self).database_sufix
-        if not self.instance.is_database:
-            base['database_sufix'] = 'sentinel'
-        return base
-
-
 class CheckIsReady(DNSStep):
 
     def __unicode__(self):
         return "Waiting for DNS..."
 
-    def do(self):
-        if self.instance.id != self.infra.instances.first().id:
-            return
-
-        check_dns = self.credentials.get_parameter_by_name('check_dns')
-        if str(check_dns).lower() != 'true':
-            return
-
+    def _check_dns_for(self, instance):
         for dns in DatabaseInfraDNSList.objects.filter(
-            databaseinfra=self.infra.id
+            databaseinfra=self.infra.id,
+            dns=instance.dns
         ):
-            if not check_nslookup(dns.dns, self.credentials.project):
+            if not check_dns(dns.dns, self.credentials.project, ip_to_check=self.host.address):
                 raise EnvironmentError("DNS {} is not ready".format(dns.dns))
+
+    def do(self):
+        must_check_dns = self.credentials.get_parameter_by_name('check_dns')
+        if str(must_check_dns).lower() != 'true':
+            return
+
+        # self.host here is the future host, i want old one
+        for instance in self.instance.hostname.instances.all():
+            self._check_dns_for(instance)

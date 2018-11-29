@@ -227,7 +227,7 @@ class RedisSentinel(BaseRedis):
                 'workflow.steps.util.host_provider.CreateVirtualMachine',
             )}, {
             'Creating dns': (
-                'workflow.steps.util.dns.CreateDNSSentinel',
+                'workflow.steps.util.dns.CreateDNS',
             )}, {
             'Creating disk': (
                 'workflow.steps.util.volume_provider.NewVolume',

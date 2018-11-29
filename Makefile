@@ -110,4 +110,4 @@ graph_models: # generate graph models
 	@cd dbaas && python manage.py graph_models -g physical logical tsuru > ~/dbaas_model.dot
 
 dev_mode:
-	@sed -i "" -e "/check_nslookup(/s/^/#/" dbaas/workflow/steps/util/deploy/check_dns.py
+	@sed -i "" -e "/check_dns(/s/^/#/" dbaas/workflow/steps/util/deploy/check_dns.py
