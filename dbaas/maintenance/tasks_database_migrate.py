@@ -10,7 +10,7 @@ def get_steps(database):
 
 def build_migrate_hosts(hosts_zones, migrate):
     instances = []
-    for host, zone in hosts_zones.items():
+    for host, zone in hosts_zones.iteritems():
         instance = host.instances.first()
         host_migrate = HostMigrate()
         host_migrate.task = migrate.task

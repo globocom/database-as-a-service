@@ -27,6 +27,7 @@ from logical.forms.database import DatabaseDetailsForm
 from logical.models import Credential, Database, Project
 from logical.validators import (check_is_database_enabled, check_is_database_dead,
                                 ParameterValidator)
+from workflow.steps.util.host_provider import Provider
 
 
 LOG = logging.getLogger(__name__)
@@ -1289,7 +1290,6 @@ def database_migrate(request, context, database):
                 )
         return
 
-    from workflow.steps.util.host_provider import Provider
     hosts = set()
     zones = set()
     instances = database.infra.instances.all().order_by('shard', 'id')
@@ -1327,7 +1327,6 @@ def database_migrate(request, context, database):
 def zones_for_environment(request, database_id, environment_id):
     database = get_object_or_404(Database, pk=database_id)
     environment = get_object_or_404(Environment, pk=environment_id)
-    from workflow.steps.util.host_provider import Provider
     hp = Provider(database.infra.instances.first(), environment)
     zones = sorted(hp.list_zones())
     return HttpResponse(

@@ -92,7 +92,7 @@
   }
 
   function parse_zones(data) {
-    size = data["zones"].length
+    var size = data["zones"].length
     var start_at = Math.floor(Math.random() * size);
     $(".host-zone").each(function(id, obj) {
       var options = ""
