@@ -436,6 +436,8 @@ class SetSlave(DatabaseStep):
 
     @property
     def master(self):
+        if self.host_migrate:
+            return self.infra.get_driver().get_master_instance(self.instance)
         return self.infra.get_driver().get_master_instance()
 
     def do(self):

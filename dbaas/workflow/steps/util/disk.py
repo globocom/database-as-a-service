@@ -124,6 +124,12 @@ class ChangeSnapshotOwner(Disk):
     def __unicode__(self):
         return "Change snapshots owner..."
 
+    @property
+    def can_run(self):
+        if self.host_migrate.database_migrate:
+            return False
+        return super(ChangeSnapshotOwner, self).can_run
+
     def do(self):
         for volume in self.instance.hostname.volumes.all():
             volume.is_active = False

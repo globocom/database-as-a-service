@@ -281,6 +281,9 @@ class BaseTopology(object):
     def get_host_migrate_steps(self):
         raise NotImplementedError
 
+    def get_database_migrate_steps(self):
+        raise NotImplementedError
+
     @property
     def driver_name(self):
         raise NotImplementedError
