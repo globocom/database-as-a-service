@@ -154,13 +154,13 @@ def check_dns(dns_to_check, dns_server, retries=90, wait=10, ip_to_check=None):
         try:
             answer = resolver.query(dns_to_check)
         except DNSException:
-            continue
+            pass
         else:
             ips = map(str, answer)
             LOG.info("CHECK DNS: ips {}".format(ips))
-        LOG.info("CHECK DNS: ip to check {}".format(ip_to_check))
-        if (ip_to_check and ip_to_check in ips) or (not ip_to_check and ips):
-            return True
+            LOG.info("CHECK DNS: ip to check {}".format(ip_to_check))
+            if (ip_to_check and ip_to_check in ips) or (not ip_to_check and ips):
+                return True
 
         sleep(wait)
 
