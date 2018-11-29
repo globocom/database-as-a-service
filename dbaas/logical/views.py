@@ -1272,10 +1272,21 @@ def database_migrate(request, context, database):
             zone = request.POST["new_zone"]
             TaskRegister.host_migrate(host, zone, environment, request.user)
         elif 'new_environment' in request.POST:
-            offering = Offering.objects.last()
             environment = get_object_or_404(
                 Environment, pk=request.POST.get('new_environment')
             )
+            offering = get_object_or_404(
+                Offering, pk=request.POST.get('new_offering')
+            )
+            if environment not in offering.environments.all():
+                messages.add_message(
+                    request, messages.ERROR,
+                    "There is no offering {} to {} environment".format(
+                        offering, environment
+                    )
+                )
+                return
+
             hosts_zones = OrderedDict()
             data = json.loads(request.POST.get('hosts_zones'))
             for host_id, zone in data.items():
@@ -1315,6 +1326,7 @@ def database_migrate(request, context, database):
         for env in group.environments.all():
             context["environments"].add(env)
     context["current_environment"] = environment
+    context["current_offering"] = database.infra.offering
 
     from maintenance.models import HostMigrate
     migrates = HostMigrate.objects.filter(host__in=hosts)
