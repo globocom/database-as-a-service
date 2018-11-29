@@ -51,6 +51,17 @@ class Environment(BaseModel):
         return self.plans.filter(is_active=True)
 
 
+class EnvironmentGroup(BaseModel):
+    name = models.CharField(max_length=100, help_text="Group name")
+    environments = models.ManyToManyField(Environment, related_name='groups')
+
+    def __unicode__(self):
+        return self.name
+
+    def __str__(self):
+        return self.name
+
+
 class EngineType(BaseModel):
 
     name = models.CharField(
