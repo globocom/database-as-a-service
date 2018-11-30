@@ -25,4 +25,4 @@ def external_links(request):
 
     return {'iaas_status': iaas_status,
             'iaas_quota': iaas_quota,
-            'sofia_dashboard': sofia_dashboard}
+            'sofia_main_dashboard': sofia_dashboard}
