@@ -30,3 +30,26 @@ class AddInstanceToRedisCluster(DatabaseStep):
 
         sleep(10)
         self.start_database()
+
+
+class SetNotEligible(DatabaseStep):
+
+    def __unicode__(self):
+        return "Set instance not eligible to be master..."
+
+    def __init__(self, instance):
+        super(SetNotEligible, self).__init__(instance)
+        self.priority = 0
+
+    @property
+    def priority_field(self):
+        return "slave-priority"
+
+    def do(self):
+        self.driver.set_configuration(
+            self.instance, self.priority_field, self.priority
+        )
+
+    def undo(self):
+        self.priority = 100
+        self.do()

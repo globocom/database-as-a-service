@@ -242,8 +242,7 @@ def restore_database(self, database, task, snapshot, user, retry_from=None):
     restore_snapshot(database, snapshot.group, task, retry_from)
 
 
-@app.task(bind=True)
-def create_database_rollback(self, rollback_from, task, user):
+def _create_database_rollback(self, rollback_from, task, user):
     task = TaskHistory.register(
         request=self.request, task_history=task, user=user,
         worker_name=get_worker_name()
@@ -252,6 +251,9 @@ def create_database_rollback(self, rollback_from, task, user):
     from tasks_create_database import rollback_create
     rollback_create(rollback_from, task, user)
 
+@app.task(bind=True)
+def create_database_rollback(self, rollback_from, task, user):
+    _create_database_rollback(self, rollback_from, task, user)
 
 @app.task(bind=True)
 def node_zone_migrate(
@@ -273,3 +275,27 @@ def node_zone_migrate_rollback(self, migrate, task):
     )
     from tasks_migrate import rollback_node_zone_migrate
     rollback_node_zone_migrate(migrate, task)
+
+
+@app.task(bind=True)
+def database_environment_migrate(
+    self, database, new_environment, task, hosts_zones, since_step=None
+):
+    task = TaskHistory.register(
+        request=self.request, task_history=task, user=task.user,
+        worker_name=get_worker_name()
+    )
+    from tasks_database_migrate import database_environment_migrate
+    database_environment_migrate(
+        database, new_environment, task, hosts_zones, since_step
+    )
+
+
+@app.task(bind=True)
+def database_environment_migrate_rollback(self, migrate, task):
+    task = TaskHistory.register(
+        request=self.request, task_history=task, user=task.user,
+        worker_name=get_worker_name()
+    )
+    from tasks_database_migrate import rollback_database_environment_migrate
+    rollback_database_environment_migrate(migrate, task)
