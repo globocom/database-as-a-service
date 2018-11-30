@@ -71,14 +71,15 @@ def build_create_data_dir_script():
         """
 
 
-def build_add_replica_set_member_script(mongodb_version, readonly):
+def build_add_replica_set_member_script(mongodb_version, readonly, arbiter):
     readonly_params = ',"priority": 0, "votes": 0' if readonly else ''
+    arbiter_params = ',"arbiterOnly": true' if arbiter else ''
     replica_id_string = '"_id": {{REPLICA_ID}}, ' if mongodb_version < '3.0.0' else ''
     return """
         echo ""; echo $(date "+%Y-%m-%d %T") "- Adding new database members"
         /usr/local/mongodb/bin/mongo --host {{CONNECT_ADMIN_URI}} <<EOF_DBAAS
         rs.add( { """ + replica_id_string + """
-            "host": "{{HOSTADDRESS}}:{{PORT}}" """ + readonly_params + """} )
+            "host": "{{HOSTADDRESS}}:{{PORT}}" """ + readonly_params + arbiter_params + """} )
         exit
         \nEOF_DBAAS
         die_if_error "Error adding new replica set members"
@@ -111,3 +112,22 @@ def build_change_oplogsize_script(instance, oplogsize):
         exit
         \nEOF_DBAAS
     """ % {'connect_string': connect_string, 'oplogsize': oplogsize}
+
+
+def build_change_priority_script(size):
+    config = ""
+    for index in range(size):
+        config += "cfg.members[{index}].priority = (cfg.members[{index}].host == \"{host_field}\" ? {priority_field} : cfg.members[{index}].priority)\n".format(
+            index=index, host_field="{{HOST_ADDRESS}}",
+            priority_field="{{PRIORITY}}"
+        )
+    return """
+        echo ""; echo $(date "+%Y-%m-%d %T") "- Change member priority"
+        /usr/local/mongodb/bin/mongo --host {{CONNECT_ADMIN_URI}} <<EOF_DBAAS
+        cfg = rs.conf()
+        """ + config + """
+        rs.reconfig(cfg)
+        exit
+        \nEOF_DBAAS
+        die_if_error "Error adding new replica set members"
+    """

@@ -27,7 +27,8 @@ from maintenance.models import (DatabaseUpgrade, DatabaseResize,
                                 DatabaseChangeParameter, DatabaseReinstallVM,
                                 DatabaseConfigureSSL)
 from maintenance.tasks import restore_database, node_zone_migrate, \
-    node_zone_migrate_rollback
+    node_zone_migrate_rollback, database_environment_migrate, \
+    database_environment_migrate_rollback
 from maintenance.models import DatabaseDestroy
 from util.providers import get_deploy_settings, get_deploy_instances
 
@@ -191,6 +192,12 @@ def destroy_database(self, database, task_history=None, user=None):
         return
     finally:
         AuditRequest.cleanup_request()
+
+
+@app.task(bind=True)
+def destroy_database_retry(self, rollback_from, task, user):
+    from maintenance.tasks import _create_database_rollback
+    _create_database_rollback(self, rollback_from, task, user)
 
 
 @app.task(bind=True)
@@ -1419,11 +1426,20 @@ class TaskRegister(object):
 
     @classmethod
     def database_destroy_retry(cls, rollback_from, user):
-        return cls.database_create_rollback(
-            rollback_from,
-            user,
-            extra_task_params={'task_name': 'destroy_database'}
+        task_params = {
+            'task_name': "destroy_database_retry",
+            'arguments': "Database name: {}".format(rollback_from.name),
+            'database_name': rollback_from.name,
+            'relevance': TaskHistory.RELEVANCE_CRITICAL
+        }
+        if user:
+            task_params['user'] = user
+        task = cls.create_task(task_params)
+
+        return destroy_database_retry.delay(
+            rollback_from=rollback_from, task=task, user=user
         )
+
 
     @classmethod
     def database_backup(cls, database, user):
@@ -1667,6 +1683,37 @@ class TaskRegister(object):
             task_params['user'] = user
         task = cls.create_task(task_params)
         return node_zone_migrate_rollback.delay(migrate, task)
+
+    @classmethod
+    def database_migrate(
+        cls, database, new_environment, user, hosts_zones, since_step=None
+    ):
+        task_params = {
+            'task_name': "database_migrate",
+            'arguments': "Database: {}, Environment: {}".format(
+                database, new_environment
+            ),
+        }
+        if user:
+            task_params['user'] = user
+        task = cls.create_task(task_params)
+        return database_environment_migrate.delay(
+            database=database, new_environment=new_environment, task=task,
+            hosts_zones=hosts_zones, since_step=since_step
+        )
+
+    @classmethod
+    def database_migrate_rollback(cls, migrate, user):
+        task_params = {
+            'task_name': "database_migrate",
+            'arguments': "Database: {}, Environment: {}".format(
+                migrate.database, migrate.environment
+            ),
+        }
+        if user:
+            task_params['user'] = user
+        task = cls.create_task(task_params)
+        return database_environment_migrate_rollback.delay(migrate, task)
 
 
     # ============  END TASKS   ============

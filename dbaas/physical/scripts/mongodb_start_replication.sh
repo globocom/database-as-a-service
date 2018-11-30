@@ -12,7 +12,7 @@ die_if_error()
 setreplication()
 {
     echo ""; echo $(date "+%Y-%m-%d %T") "- Setting the database replication"
-    /usr/local/mongodb/bin/mongo localhost/admin --quiet -uadmindbaas -p{{DBPASSWORD}} <<EOF_DBAAS
+    /usr/local/mongodb/bin/mongo {{HOST01.address}}/admin --quiet -uadmindbaas -p{{DBPASSWORD}} <<EOF_DBAAS
     config = {_id: '{{REPLICASETNAME}}',
           members: [
                     {_id: 0, host: '{{HOST01.address}}:27017'},
