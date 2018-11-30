@@ -613,7 +613,8 @@ def database_metrics(request, context, database):
     context['grafana_url_sofia'] = url
 
     return render_to_response(
-        "logical/database/details/metrics_tab.html", context
+        "logical/database/details/metrics_tab.html",
+        context, RequestContext(request)
     )
 
 
@@ -927,8 +928,8 @@ def database_hosts(request, context, database):
     context['enable_host'] = range(1, enable_host+1)
 
     return render_to_response(
-        "logical/database/details/hosts_tab.html", context,
-        RequestContext(request)
+        "logical/database/details/hosts_tab.html",
+        context, RequestContext(request)
     )
 
 
@@ -1135,7 +1136,8 @@ def database_dns(request, context, database):
     context['can_add_extra_dns'] = request.user.has_perm('extra_dns.add_extradns')
 
     return render_to_response(
-        "logical/database/details/dns_tab.html", context
+        "logical/database/details/dns_tab.html",
+        context, RequestContext(request)
     )
 
 
