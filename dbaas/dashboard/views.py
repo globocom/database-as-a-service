@@ -5,6 +5,9 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator, EmptyPage, InvalidPage
 from physical.models import DatabaseInfra
 from logical.models import Database
+from util import get_credentials_for
+from dbaas_credentials.models import CredentialType
+from physical.models import Environment
 
 LOG = logging.getLogger(__name__)
 
@@ -43,3 +46,20 @@ def databaseinfra(request, infra_id):
     dbinfra = DatabaseInfra.objects.get(pk=infra_id)
     databases = Database.objects.filter(databaseinfra=dbinfra)
     return render_to_response("dashboard/databaseinfra.html", {'infra': dbinfra, 'databases': databases}, context_instance=RequestContext(request))
+
+
+@login_required
+def sofia_dashboard(request):
+
+    credential = get_credentials_for(
+        environment=Environment.objects.first(),
+        credential_type=CredentialType.GRAFANA
+    )
+
+    sofia_dashboard = "{}/{}?var-datasource={}".format(
+        credential.endpoint,
+        credential.get_parameter_by_name('sofia_dbaas_dashboard'),
+        credential.get_parameter_by_name('datasource')
+        )
+
+    return render_to_response("dashboard/sofia_dashboard.html", {'sofia_dashboard':sofia_dashboard}, context_instance=RequestContext(request))
