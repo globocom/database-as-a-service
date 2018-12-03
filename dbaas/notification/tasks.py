@@ -1686,7 +1686,8 @@ class TaskRegister(object):
 
     @classmethod
     def database_migrate(
-        cls, database, new_environment, user, hosts_zones, since_step=None
+        cls, database, new_environment, new_offering, user, hosts_zones,
+        since_step=None
     ):
         task_params = {
             'task_name': "database_migrate",
@@ -1698,7 +1699,8 @@ class TaskRegister(object):
             task_params['user'] = user
         task = cls.create_task(task_params)
         return database_environment_migrate.delay(
-            database=database, new_environment=new_environment, task=task,
+            database=database, new_environment=new_environment,
+            new_offering=new_offering, task=task,
             hosts_zones=hosts_zones, since_step=since_step
         )
 
