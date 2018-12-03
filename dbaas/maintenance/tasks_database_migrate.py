@@ -24,13 +24,15 @@ def build_migrate_hosts(hosts_zones, migrate):
 
 
 def database_environment_migrate(
-    database, new_environment, task, hosts_zones, since_step=None
+    database, new_environment, new_offering, task, hosts_zones, since_step=None
 ):
     database_migrate = DatabaseMigrate()
     database_migrate.task = task
     database_migrate.database = database
     database_migrate.environment = new_environment
     database_migrate.origin_environment = database.environment
+    database_migrate.offering = new_offering
+    database_migrate.origin_offering = database.infra.offering
     database_migrate.save()
 
     instances = build_migrate_hosts(hosts_zones, database_migrate)
