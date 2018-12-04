@@ -12,6 +12,7 @@ from .database_restore import DatabaseRestoreAdmin
 from .database_reinstall_vm import DatabaseReinstallVMAdmin
 from .database_configure_ssl import DatabaseConfigureSSLAdmin
 from .host_migrate import HostMigrateAdmin
+from .database_migrate import DatabaseMigrateAdmin
 
 
 admin.site.register(models.Maintenance, MaintenanceAdmin)
@@ -25,3 +26,4 @@ admin.site.register(models.DatabaseRestore, DatabaseRestoreAdmin)
 admin.site.register(models.DatabaseReinstallVM, DatabaseReinstallVMAdmin)
 admin.site.register(models.DatabaseConfigureSSL, DatabaseConfigureSSLAdmin)
 admin.site.register(models.HostMigrate, HostMigrateAdmin)
+admin.site.register(models.DatabaseMigrate, DatabaseMigrateAdmin)

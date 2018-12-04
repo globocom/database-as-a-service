@@ -112,6 +112,7 @@ class DatabaseInfraFactory(factory.DjangoModelFactory):
     capacity = 2
     per_database_size_mbytes = 5 * 1024 * 1024
     disk_offering = factory.SubFactory(DiskOfferingFactory)
+    last_vm_created = 0
 
     @factory.lazy_attribute
     def environment(self):

@@ -20,12 +20,30 @@ class HostMigrateAdmin(DatabaseMaintenanceTaskAdmin):
 
     list_display = (
         "current_step", "host", "zone", "environment", "friendly_status",
-        "maintenance_action", "link_task", "started_at", "finished_at"
+        "maintenance_action", "link_task", "link_database_migrate",
+        "started_at", "finished_at"
     )
     readonly_fields = (
-        "host", "zone", "environment", "link_task", "started_at",
-        "finished_at", "current_step", "status", "maintenance_action"
+        "host", "zone", "environment", "link_task", "link_database_migrate",
+        "started_at", "finished_at", "current_step", "status",
+        "maintenance_action", "database_migrate"
     )
+
+    def link_database_migrate(self, maintenance_task):
+        database_migrate = maintenance_task.database_migrate
+        if not database_migrate:
+            return 'N/A'
+        url = reverse(
+            'admin:maintenance_databasemigrate_change',
+            args=(database_migrate.id,)
+        )
+        return format_html(
+            "<a href={}>{}/{}</a>".format(
+                url, database_migrate.database.name,
+                database_migrate.environment
+            )
+        )
+    link_database_migrate.short_description = "Database Migrate"
 
     def maintenance_action(self, maintenance_task):
         if not maintenance_task.is_status_error:
