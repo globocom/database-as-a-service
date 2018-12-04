@@ -281,7 +281,7 @@ def remove_snapshot_backup(snapshot, provider=None, force=0, msgs=None):
             snapshot.save()
             msg = "Backup {} removed".format(snapshot)
             LOG.info(msg)
-            if msgs:
+            if msgs is not None:
                 msgs.append(msg)
 
     return
@@ -307,12 +307,12 @@ def remove_database_old_backups(self):
 
     for snapshot in snapshots:
         try:
-            remove_snapshot_backup(snapshot=snapshot)
+            remove_snapshot_backup(snapshot=snapshot, msgs=msgs)
         except Exception as e:
             msg = "Error removing backup {}. Error: {}".format(snapshot, e)
             status = TaskHistory.STATUS_ERROR
             LOG.error(msg)
-        msgs.append(msg)
+            msgs.append(msg)
     task_history.update_status_for(status, details="\n".join(msgs))
     return
 
