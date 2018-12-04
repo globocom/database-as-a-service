@@ -264,7 +264,7 @@ def make_databases_backup(self):
     return
 
 
-def remove_snapshot_backup(snapshot, provider=None, force=0):
+def remove_snapshot_backup(snapshot, provider=None, force=0, msgs=None):
     snapshots = snapshot.group.backups.all() if snapshot.group else [snapshot]
     for snapshot in snapshots:
 
@@ -278,7 +278,11 @@ def remove_snapshot_backup(snapshot, provider=None, force=0):
         removed = provider.delete_snapshot(snapshot, force=force)
         if removed:
             snapshot.purge_at = datetime.now()
-        snapshot.save()
+            snapshot.save()
+            msg = "Backup {} removed".format(snapshot)
+            LOG.info(msg)
+            if msgs:
+                msgs.append(msg)
 
     return
 
@@ -304,8 +308,6 @@ def remove_database_old_backups(self):
     for snapshot in snapshots:
         try:
             remove_snapshot_backup(snapshot=snapshot)
-            msg = "Backup {} removed".format(snapshot)
-            LOG.info(msg)
         except Exception as e:
             msg = "Error removing backup {}. Error: {}".format(snapshot, e)
             status = TaskHistory.STATUS_ERROR
