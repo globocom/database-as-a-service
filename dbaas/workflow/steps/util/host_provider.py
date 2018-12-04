@@ -349,6 +349,8 @@ class CreateVirtualMachine(HostProviderStep):
 
     @property
     def database_offering(self):
+        if self.host_migrate and self.host_migrate.database_migrate:
+            return self.host_migrate.database_migrate.offering
         if self.has_database:
             return self.infra.offering
         return self.stronger_offering
@@ -446,8 +448,15 @@ class DestroyVirtualMachineMigrate(HostProviderStep):
     def __unicode__(self):
         return "Destroying virtual machine..."
 
+    @property
+    def environment(self):
+        return self.infra.environment
+
     def do(self):
         host = self.instance.hostname
+        if not host.future_host:
+            return
+
         self.provider.destroy_host(host)
         for instance in host.instances.all():
             instance.hostname = self.host
@@ -455,7 +464,7 @@ class DestroyVirtualMachineMigrate(HostProviderStep):
             instance.save()
 
         migrate = self.host_migrate
-        migrate.host = self.host
+        migrate.host = host.future_host
         migrate.save()
         host.delete()
 

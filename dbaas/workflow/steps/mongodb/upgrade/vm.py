@@ -51,3 +51,22 @@ class ChangeBinaryTo34(ChangeBinaryBase):
 
     def do(self):
         self.change_binary('3.4.1')
+
+
+class ChangeBinaryTo36(ChangeBinaryBase):
+
+    def __unicode__(self):
+        return "Changing binary to 3.6..."
+
+    def do(self):
+        self.change_binary('3.6.8')
+
+
+class ChangeBinaryTo40(ChangeBinaryBase):
+
+    def __unicode__(self):
+        return "Changing binary to 4.0..."
+
+    def do(self):
+        self.change_binary('4.0.3')
+

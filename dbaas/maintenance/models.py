@@ -257,20 +257,20 @@ class DatabaseMaintenanceTask(BaseModel):
         self.current_step = step
         self.save()
 
-    def __update_final_status(self, status):
+    def update_final_status(self, status):
         self.finished_at = datetime.now()
         self.status = status
         self.save()
 
     def set_success(self):
-        self.__update_final_status(self.SUCCESS)
+        self.update_final_status(self.SUCCESS)
 
     def set_error(self):
-        self.__update_final_status(self.ERROR)
+        self.update_final_status(self.ERROR)
 
     def set_rollback(self):
         self.can_do_retry = False
-        self.__update_final_status(self.ROLLBACK)
+        self.update_final_status(self.ROLLBACK)
 
     @property
     def is_status_error(self):
@@ -660,6 +660,47 @@ class DatabaseConfigureSSL(DatabaseMaintenanceTask):
         return "{} Configure SSL".format(self.database.name)
 
 
+class DatabaseMigrate(DatabaseMaintenanceTask):
+    task = models.ForeignKey(
+        TaskHistory, verbose_name="Task History",
+        null=False, related_name="database_migrate"
+    )
+    database = models.ForeignKey(
+        Database, verbose_name="Database",
+        null=False, unique=False, related_name="database_migrate"
+    )
+    environment = models.ForeignKey(
+        Environment, null=False, related_name="database_migrate"
+    )
+    origin_environment = models.ForeignKey(Environment, null=False)
+    offering = models.ForeignKey(
+        Offering, related_name="database_migrate", null=True, blank=True
+    )
+    origin_offering = models.ForeignKey(Offering, null=True, blank=True)
+
+    def update_step(self, step):
+        super(DatabaseMigrate, self).update_step(step)
+        for host in self.hosts.all():
+            host.update_step(step)
+
+    def update_final_status(self, status):
+        super(DatabaseMigrate, self).update_final_status(status)
+        for host in self.hosts.all():
+            host.update_final_status(status)
+            host.can_do_retry = False
+            host.save()
+
+    @property
+    def hosts_zones(self):
+        hosts = {}
+        for host in self.hosts.all():
+            hosts[host.host] = host.zone
+        return hosts
+
+    def __unicode__(self):
+        return "Migrate {} to {}".format(self.database, self.environment)
+
+
 class HostMigrate(DatabaseMaintenanceTask):
     task = models.ForeignKey(
         TaskHistory, verbose_name="Task History",
@@ -672,6 +713,9 @@ class HostMigrate(DatabaseMaintenanceTask):
         Environment, null=False, related_name="host_migrate"
     )
     zone = models.CharField(max_length=50, null=False)
+    database_migrate = models.ForeignKey(
+        DatabaseMigrate, null=True, blank=True, related_name="hosts"
+    )
 
     def __unicode__(self):
         return "Migrate {} to {}".format(self.host, self.zone)
@@ -679,6 +723,11 @@ class HostMigrate(DatabaseMaintenanceTask):
     @property
     def disable_retry_filter(self):
         return {'host': self.host}
+
+    def update_step(self, step):
+        current_data = self._meta.model.objects.get(pk=self.id)
+        self.host = current_data.host
+        super(HostMigrate, self).update_step(step)
 
 
 simple_audit.register(Maintenance)
@@ -689,6 +738,7 @@ simple_audit.register(DatabaseResize)
 simple_audit.register(DatabaseChangeParameter)
 simple_audit.register(DatabaseConfigureSSL)
 simple_audit.register(HostMigrate)
+simple_audit.register(DatabaseMigrate)
 
 
 #########

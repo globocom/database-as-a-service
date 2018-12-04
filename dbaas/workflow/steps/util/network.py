@@ -53,7 +53,7 @@ class CreateVip(Network):
 
     @property
     def vip_dns(self):
-        name, domain = get_dns_name_domain(self.infra, self.infra.name, FOXHA)
+        name, domain = get_dns_name_domain(self.infra, self.infra.name, FOXHA, is_database=False)
         return '{}.{}'.format(name, domain)
 
     @property
@@ -65,7 +65,7 @@ class CreateVip(Network):
             return
 
         vip = self.provider.create_vip(self.equipments, 3306, self.vip_dns)
-        dns = add_dns_record(self.infra, self.infra.name, vip.vip_ip, FOXHA)
+        dns = add_dns_record(self.infra, self.infra.name, vip.vip_ip, FOXHA, is_database=False)
 
         self.infra.endpoint = "{}:{}".format(vip.vip_ip, 3306)
         self.infra.endpoint_dns = "{}:{}".format(dns, 3306)

@@ -17,8 +17,36 @@
 
 
 {% block tab %}
-<fieldset class="module aligned ">
+<fieldset class="module aligned">
   <div class="control-group">
+    <h4>Database environment is <span class="label label-info">{{ current_environment }}</span> with offering <span class="label label-info">{{ current_offering }}</span></h4>
+    <p>New environment
+      {%if last_host_migrate and last_host_migrate.is_status_error %}
+        <u>{{ current_environment }}</u>
+        {%if last_host_migrate.database_migrate %}
+          to <u>{{ last_host_migrate.database_migrate.environment }}</u> using offering <u>{{ last_host_migrate.database_migrate.offering }}</u>
+          &nbsp&nbsp&nbsp
+          <a class="resize_button btn btn-danger" href="{% url 'admin:database_migrate_rollback' last_host_migrate.database_migrate.id %}" title="Rollback database migrate">Rollback</a>
+          <a class="resize_button btn btn-warning" href="{% url 'admin:database_migrate_retry' last_host_migrate.database_migrate.id %}" title="Retry database migrate">Retry</a>
+          <p><a href="{% url 'admin:maintenance_databasemigrate_change' last_host_migrate.database_migrate.id %}" target='_blank'>Last database migrate</a> has an <b>error</b>, please check the <a href="{% url 'admin:notification_taskhistory_change' last_host_migrate.task.id %}" target='_blank'>task</a> and do rollback or retry of migrate by clicking in one of above buttons</p>
+        {% endif %}
+      {% else %}
+        <select id="migrate_environment" class="environments" name="migrate_environment">
+        {% for env in environments %}
+          {% if env == current_environment %}
+            <option value="{{env.id}}" selected="selected">---------</option>
+          {% else %}
+            <option value="{{env.id}}">{{env}}</option>
+          {% endif %}
+        {% endfor %}
+        </select>
+        &nbsp&nbsp&nbsp
+        New offering
+        <select id="migrate_offering" class="offerings" name="migrate_offering">
+        </select>
+        <button data-toggle="modal" id="migrate_environment_btn" class="resize_button btn host-zone-btn" data-origin-environment="{{host}}" data-target="#migrate_environment_modal">Migrate database environment</button>
+      {% endif %}
+    </p>
   </div>
   <div class="panel-body">
     <div class="control-group">
@@ -30,7 +58,7 @@
               <td>{{ host.hostname }}</td>
               <td>
                 {%if last_host_migrate and last_host_migrate.is_status_error %}
-                  {%if last_host_migrate.host == host %}
+                  {%if not last_host_migrate.database_migrate and last_host_migrate.host == host %}
                     <a class="resize_button btn btn-danger" href="{% url 'admin:host_migrate_rollback' last_host_migrate.id %}" title="Rollback for host migrate">Rollback</a>
                     <a class="resize_button btn btn-warning" href="{% url 'admin:host_migrate_retry' last_host_migrate.id %}" title="Retry for host migrate">Retry</a>
                     <p><a href="{% url 'admin:maintenance_hostmigrate_change' last_host_migrate.id %}" target='_blank'>Last host migrate</a> has an <b>error</b>, please check the <a href="{% url 'admin:notification_taskhistory_change' last_host_migrate.task.id %}" target='_blank'>task</a> and do rollback or retry of migrate by clicking in one of above buttons</p>
@@ -38,15 +66,7 @@
                     {{host.current_zone}}
                   {% endif %}
                 {% else %}
-                  <select id="migrate_zone_{{host.id}}" data-host-id="{{host.id}}" data-current-zone="{{host.current_zone}}" class="host-zone" name="migrate_zone">
-                  {% for zone in zones %}
-                    {% if host.current_zone == zone %}
-                      <option value="{{zone}}" selected="selected">*{{zone}}</option>
-                    {% else %}
-                      <option value="{{zone}}">{{zone}}</option>
-                    {% endif %}
-                  {% endfor %}
-                  </select>
+                  <select id="migrate_zone_{{host.id}}" data-host-id="{{host.id}}" data-current-zone="{{host.current_zone}}" class="host-zone" name="migrate_zone"></select>
                   <button data-toggle="modal" id="migrate_host_btn_{{host.id}}" class="resize_button btn host-zone-btn" data-host-name="{{host}}" data-host-id="{{host.id}}" data-target="#migrate_host_modal">Migrate Host</button>
                 {% endif %}
               </td>
@@ -63,6 +83,7 @@
 {% block database_button_save %}
 
 {% include "admin/confirmation_modal.html" with tag_type="a" modal_id="migrate_host_modal" confirmation_message="Are you sure you want to migrate this host?" box_title="Migrate host" button_class="btn btn-primary" id_optional="id=migrate_host_btn_modal"%}
+{% include "admin/confirmation_modal.html" with tag_type="a" modal_id="migrate_environment_modal" confirmation_message="Are you sure you want to migrate this database?" box_title="Migrate database" button_class="btn btn-primary" id_optional="id=migrate_database_btn_modal"%}
 
 {% endblock %}
 
@@ -71,6 +92,69 @@
 
 <script type="text/javascript" src="{% static 'js/migrate.js' %}"></script>
 <script>
+  function load_offerings(environment_id) {
+    if ({{current_environment.id}} == environment_id) {
+      var offering_select = document.getElementById("migrate_offering")
+      offering_select.innerHTML = "<option value='0' selected='selected'>---------</option>";
+    } else {
+      window.MigrateManager.offerings_for_environment(environment_id, parse_offerings);
+    }
+  }
+
+  function parse_offerings(data) {
+    var options = "<option value='0' selected='selected'>---------</option>";
+    for (var offering in data["offerings"]) {
+      var id = data["offerings"][offering]["id"];
+      var name = data["offerings"][offering]["name"];
+      options += "<option value='" + id + "'>" + name + "</option>";
+    }
+    var offering_select = document.getElementById("migrate_offering")
+    offering_select.innerHTML = options;
+  }
+
+  function load_zones(environment_id) {
+    clean_zones()
+    window.MigrateManager.zones_for_environment({{database.id}}, environment_id, parse_zones);
+  }
+
+  function parse_zones(data) {
+    var size = data["zones"].length
+    var start_at = Math.floor(Math.random() * size);
+    $(".host-zone").each(function(id, obj) {
+      var options = ""
+      var selected = false;
+      for (var zone in data["zones"]) {
+        if (start_at >= size) {
+          start_at = 0
+        }
+        var name = data["zones"][zone]["name"];
+        var is_active = data["zones"][start_at]["is_active"];
+        if (obj.dataset['currentZone'] == name) {
+          options += "<option value='" + name + "' selected='selected'>*" + name + "</option>"
+          selected = true;
+        } else if (zone == start_at.toString() && !selected && is_active) {
+          options += "<option value='" + name + "' selected='selected'>" + name + "</option>"
+          selected = true;
+          start_at = start_at + 1;
+        } else {
+          options += "<option value='" + name + "'>" + name + "</option>"
+        }
+        if (!is_active) {
+          start_at = start_at + 1;
+        }
+      }
+      obj.innerHTML = options;
+    })
+    $(".host-zone").change()
+  }
+
+  function clean_zones() {
+    $(".host-zone").each(function(id, obj) {
+      obj.innerHTML = "<option value='Loading...' selected='selected'>Loading...</option>";
+    })
+    $(".host-zone").change()
+  }
+
   function status_migrate(btn_id, current_value, selected_value) {
     var btn = document.getElementById(btn_id)
     btn.disabled = current_value == selected_value
@@ -86,7 +170,16 @@
       var $hostZone = $(this),
         hostId = $hostZone.data('hostId'),
         currentZone = $hostZone.data('currentZone');
-      status_migrate("migrate_host_btn_" + hostId, currentZone, $hostZone.val())
+
+      disable = document.getElementById("migrate_environment").value != {{current_environment.id}}
+      if (!disable) {
+        disable = $hostZone.val() == "Loading..."
+      }
+      if (disable) {
+        status_migrate("migrate_host_btn_" + hostId, "DISABLE", "DISABLE")
+      } else {
+        status_migrate("migrate_host_btn_" + hostId, currentZone, $hostZone.val())
+      }
     });
     $(".host-zone").change()
 
@@ -106,6 +199,42 @@
       window.MigrateManager.migrate_host({{database.id}}, hostId, newZone);
     });
 
+    $(".host-zone-btn").click(function() {
+      var $select = $("#migrate_environment");
+      var new_env = $select.find(":selected").text()
+      var $select = $("#migrate_offering");
+      var new_offering = $select.find(":selected").text()
+      $("#migrate_environment_modal .modal_message").empty().append('<label>You are migrating from <u>{{ current_environment }}</u> with <u>{{ current_offering }}</u><br> to <u>' + new_env + '</u> with <u>' + new_offering + '</u><br><br>Are you sure you want to migrate this database?</label>');
+    });
+
+    $("#migrate_database_btn_modal").click(function() {
+      var hosts_zones = {}
+      $(".host-zone").each(function(id, obj) {
+        hosts_zones[obj.dataset['hostId'].toString()] = obj.value;
+      })
+      window.MigrateManager.migrate_database({{database.id}}, $("#migrate_environment").val(), $("#migrate_offering").val(), hosts_zones);
+    });
+
+    function control_migrate_button() {
+      env = $("#migrate_environment").val()
+      status_migrate("migrate_environment_btn", {{ current_environment.id }}, env)
+      if ({{ current_environment.id }} != env) {
+        status_migrate("migrate_environment_btn", "0", $("#migrate_offering").val())
+      }
+    }
+
+    $("#migrate_environment").on("change", function() {
+      var $environment = $(this);
+      control_migrate_button();
+      load_offerings($environment.val())
+      load_zones($environment.val());
+    });
+    $("#migrate_environment").change()
+
+    $("#migrate_offering").on("change", function() {
+      control_migrate_button();
+    });
+    $("#migrate_offering").change()
   })
 </script>
 {% endblock %}

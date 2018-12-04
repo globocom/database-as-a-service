@@ -221,6 +221,10 @@ def get_host_migrate_steps(class_path):
     return get_replication_topology_instance(class_path).get_host_migrate_steps()
 
 
+def get_database_migrate_steps(class_path):
+    return get_replication_topology_instance(class_path).get_database_migrate_steps()
+
+
 def get_engine_credentials(engine, environment):
     engine = engine.lower()
 
