@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import json
 from django.http import HttpResponse
-from django.shortcuts import render_to_response
+from django.shortcuts import render_to_response, get_object_or_404
 from physical.models import Environment, Engine
 
 
@@ -16,6 +16,19 @@ def engines_by_env(self, environment_id):
 
     response_json = json.dumps({
         "engines": engines
+    })
+    return HttpResponse(response_json, content_type="application/json")
+
+
+def offerings_by_env(self, environment_id):
+    environment = get_object_or_404(Environment, pk=environment_id)
+    offerings = environment.offerings.all().order_by('cpus', 'memory_size_mb')
+    offerings_map = [
+        {"id": offering.id, "name": str(offering)}
+        for offering in offerings
+    ]
+    response_json = json.dumps({
+        "offerings": offerings_map
     })
     return HttpResponse(response_json, content_type="application/json")
 
