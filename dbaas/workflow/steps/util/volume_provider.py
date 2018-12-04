@@ -81,7 +81,13 @@ class VolumeProviderBase(BaseInstanceStep):
 
     def take_snapshot(self):
         url = "{}snapshot/{}".format(self.base_url, self.volume.identifier)
-        response = post(url)
+        data = {
+            "engine": self.engine.name,
+            "db_name": self.database.name,
+            "team_name": self.database.team.name
+        }
+        response = post(url, json=data)
+
         if not response.ok:
             raise IndexError(response.content, response)
         return response.json()
