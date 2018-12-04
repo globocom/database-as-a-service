@@ -570,6 +570,14 @@ def database_metrics(request, context, database):
         database.infra.instances.first().hostname.hostname.split('.')[0]
     )
 
+    context['source'] = request.GET.get('source', 'zabbix')
+    #context['source'] = 'sofia'
+
+    if context['source'] == 'sofia':
+        context['second_source'] = 'zabbix'
+    else:
+        context['second_source'] = 'sofia'
+
     context['hosts'] = []
     for host in Host.objects.filter(instances__databaseinfra=database.infra).distinct():
         context['hosts'].append(host.hostname.split('.')[0])
@@ -582,7 +590,7 @@ def database_metrics(request, context, database):
         hostname__hostname__contains=context['hostname']
     ).first()
 
-    context['grafana_url'] = '{}/dashboard/{}?{}={}&{}={}&{}={}&{}={}'.format(
+    context['grafana_url_zabbix'] = '{}/dashboard/{}?{}={}&{}={}&{}={}&{}={}'.format(
         credential.endpoint,
         credential.project.format(database.engine_type),
         credential.get_parameter_by_name('db_param'), instance.dns,
@@ -593,8 +601,20 @@ def database_metrics(request, context, database):
         credential.get_parameter_by_name('environment')
     )
 
+    dashboard = credential.get_parameter_by_name('sofia_dbaas_database_dashboard')
+    dashboard = dashboard.format(database.engine_type)
+    url = "{}/{}?var-host_name={}&var-datasource={}".format(
+        credential.endpoint,
+        dashboard,
+        instance.hostname.hostname.split('.')[0],
+        credential.get_parameter_by_name('datasource'),
+        )
+
+    context['grafana_url_sofia'] = url
+
     return render_to_response(
-        "logical/database/details/metrics_tab.html", context
+        "logical/database/details/metrics_tab.html",
+        context, RequestContext(request)
     )
 
 
@@ -908,8 +928,8 @@ def database_hosts(request, context, database):
     context['enable_host'] = range(1, enable_host+1)
 
     return render_to_response(
-        "logical/database/details/hosts_tab.html", context,
-        RequestContext(request)
+        "logical/database/details/hosts_tab.html",
+        context, RequestContext(request)
     )
 
 
@@ -1116,7 +1136,8 @@ def database_dns(request, context, database):
     context['can_add_extra_dns'] = request.user.has_perm('extra_dns.add_extradns')
 
     return render_to_response(
-        "logical/database/details/dns_tab.html", context
+        "logical/database/details/dns_tab.html",
+        context, RequestContext(request)
     )
 
 
@@ -1275,6 +1296,18 @@ def database_migrate(request, context, database):
             environment = get_object_or_404(
                 Environment, pk=request.POST.get('new_environment')
             )
+            offering = get_object_or_404(
+                Offering, pk=request.POST.get('new_offering')
+            )
+            if environment not in offering.environments.all():
+                messages.add_message(
+                    request, messages.ERROR,
+                    "There is no offering {} to {} environment".format(
+                        offering, environment
+                    )
+                )
+                return
+
             hosts_zones = OrderedDict()
             data = json.loads(request.POST.get('hosts_zones'))
             for host_id, zone in data.items():
@@ -1286,7 +1319,7 @@ def database_migrate(request, context, database):
                 )
             else:
                 TaskRegister.database_migrate(
-                    database, environment, request.user, hosts_zones
+                    database, environment, offering, request.user, hosts_zones
                 )
         return
 
@@ -1314,6 +1347,7 @@ def database_migrate(request, context, database):
         for env in group.environments.all():
             context["environments"].add(env)
     context["current_environment"] = environment
+    context["current_offering"] = database.infra.offering
 
     from maintenance.models import HostMigrate
     migrates = HostMigrate.objects.filter(host__in=hosts)
