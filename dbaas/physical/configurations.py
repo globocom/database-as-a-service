@@ -245,7 +245,7 @@ class ConfigurationRedis(ConfigurationBase):
     @property
     def repl_ping_slave_period(self):
         parameter_name = inspect.stack()[0][3]
-        default = 10
+        default = 1
         return self.get_parameter(parameter_name, default)
 
     @property
@@ -574,6 +574,24 @@ class ConfigurationMySQL(ConfigurationBase):
     def skip_name_resolve(self):
         parameter_name = inspect.stack()[0][3]
         default = 'ON'
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def wait_timeout(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 28800
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def interactive_timeout(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 28800
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def log_bin_trust_function_creators(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 'OFF'
         return self.get_parameter(parameter_name, default)
 
 
