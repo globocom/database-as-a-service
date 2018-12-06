@@ -156,7 +156,7 @@ class Provider(object):
             )
         return True
 
-    def create_host(self, infra, offering, name, team_name, zone=None):
+    def create_host(self, infra, offering, name, team_name, zone=None, database_name=''):
         url = "{}/{}/{}/host/new".format(
             self.credential.endpoint, self.provider, self.environment
         )
@@ -166,7 +166,8 @@ class Provider(object):
             "cpu": offering.cpus,
             "memory": offering.memory_size_mb,
             "group": infra.name,
-            "team_name": team_name
+            "team_name": team_name,
+            "database_name": database_name
         }
         if zone:
             data['zone'] = zone
@@ -372,11 +373,13 @@ class CreateVirtualMachine(HostProviderStep):
         return None
 
     def do(self):
+        task_manager = self.create or self.destroy
         try:
             pair = self.infra.instances.get(dns=self.instance.dns)
         except Instance.DoesNotExist:
             host = self.provider.create_host(
-                self.infra, self.offering, self.vm_name, self.team, self.zone
+                self.infra, self.offering, self.vm_name, self.team, self.zone,
+                database_name=self.database.name if self.database else task_manager.name
             )
             self.update_databaseinfra_last_vm_created()
         else:
