@@ -5,7 +5,7 @@ INSERT INTO physical_parameter (created_at, updated_at, engine_type_id,
 SELECT now(), now(), physical_enginetype.id,
 'wait_timeout', 1, null,
 'The number of seconds the server waits for activity on a noninteractive connection before closing it.',
-'1:31536000', 'string'
+'1:31536000', 'integer'
 from physical_enginetype where name = 'mysql' limit 1;
 
 INSERT INTO physical_parameter (created_at, updated_at, engine_type_id,
@@ -15,7 +15,7 @@ INSERT INTO physical_parameter (created_at, updated_at, engine_type_id,
 SELECT now(), now(), physical_enginetype.id,
     'interactive_timeout', 1, null,
     'The number of seconds the server waits for activity on an interactive connection before closing it.',
-    '1:31536000', 'string'
+    '1:31536000', 'integer'
 from physical_enginetype where name = 'mysql' limit 1;
 
 INSERT INTO physical_parameter (created_at, updated_at, engine_type_id,
