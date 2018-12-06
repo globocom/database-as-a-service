@@ -1,11 +1,7 @@
 # -*- coding: utf-8 -*-
-import requests
 from base import BaseInstanceStep
 from dbaas_aclapi.tasks import replicate_acl_for
 from dbaas_aclapi.acl_base_client import AclClient
-from dbaas_aclapi import helpers
-from dbaas_aclapi.models import DatabaseInfraInstanceBind
-from dbaas_aclapi.models import ERROR
 from dbaas_credentials.models import CredentialType
 from util import get_credentials_for
 from workflow.steps.util.base import ACLFromHellClient
