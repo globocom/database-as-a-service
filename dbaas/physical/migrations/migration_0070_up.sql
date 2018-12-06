@@ -1,35 +1,32 @@
-INSERT INTO physical_parameter (created_at, updated_at,
-    engine_type_id,
+INSERT INTO physical_parameter (created_at, updated_at, engine_type_id,
     name, dynamic, custom_method,
     description,
     allowed_values, parameter_type)
-VALUES ( now(), now(),
-    (select id from physical_enginetype where name = 'mysql' limit 1),
-    'wait_timeout', 1, null,
-    'The number of seconds the server waits for activity on a noninteractive connection before closing it.',
-    '1:31536000', 'string' );
+SELECT now(), now(), physical_enginetype.id,
+'wait_timeout', 1, null,
+'The number of seconds the server waits for activity on a noninteractive connection before closing it.',
+'1:31536000', 'string'
+from physical_enginetype where name = 'mysql' limit 1;
 
-INSERT INTO physical_parameter (created_at, updated_at,
-    engine_type_id,
+INSERT INTO physical_parameter (created_at, updated_at, engine_type_id,
     name, dynamic, custom_method,
     description,
     allowed_values, parameter_type)
-VALUES ( now(), now(),
-    (select id from physical_enginetype where name = 'mysql' limit 1),
+SELECT now(), now(), physical_enginetype.id,
     'interactive_timeout', 1, null,
     'The number of seconds the server waits for activity on an interactive connection before closing it.',
-    '1:31536000', 'string' );
+    '1:31536000', 'string'
+from physical_enginetype where name = 'mysql' limit 1;
 
-INSERT INTO physical_parameter (created_at, updated_at,
-    engine_type_id,
+INSERT INTO physical_parameter (created_at, updated_at, engine_type_id,
     name, dynamic, custom_method,
     description,
     allowed_values, parameter_type)
-VALUES ( now(), now(),
-    (select id from physical_enginetype where name = 'mysql' limit 1),
+SELECT now(), now(), physical_enginetype.id,
     'log_bin_trust_function_creators', 1, null,
     'It controls whether stored function creators can be trusted not to create stored functions that will cause unsafe events to be written to the binary log.',
-    '', 'boolean' );
+    '', 'boolean'
+from physical_enginetype where name = 'mysql' limit 1;
 
 INSERT INTO physical_replicationtopology_parameter (replicationtopology_id, parameter_id)
 SELECT physical_replicationtopology.id, physical_parameter.id
