@@ -60,6 +60,10 @@ sort_buffer_size                = {{ configuration.sort_buffer_size.value }}
 tmp_table_size                  = {{ configuration.tmp_table_size.value }}
 max_heap_table_size             = {{ configuration.max_heap_table_size.value }}
 
+wait_timeout                    = {{ configuration.wait_timeout.value }}
+interactive_timeout             = {{ configuration.interactive_timeout.value }}
+log_bin_trust_function_creators = {{ configuration.log_bin_trust_function_creators.value }}
+
 # Binary Logging
 log_bin                         = /data/repl/mysql-bin
 relay_log                       = /data/repl/mysql-relay
