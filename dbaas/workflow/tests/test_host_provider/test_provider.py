@@ -249,13 +249,14 @@ class CreateHostTestCase(BaseProviderTestCase):
             'fake_endpoint/fake_provider/fake_env/host/new'
         )
         expected_json = {
-            'engine': 'fake_unique',
+            'engine': u'fake_unique',
             'name': 'fake_host01',
             'cpu': 2,
             'memory': 999,
             'group': self.infra.name,
             'team_name': 'fake_team',
-            'zone': 'fake_zone'
+            'zone': 'fake_zone',
+            'database_name': ''
         }
         self.assertDictEqual(post_params[1]['json'], expected_json)
         self.assertEqual(post_params[1]['auth'], ('fake_user', 'fake_password'))
