@@ -29,6 +29,22 @@ class SwitchMasters(object):
             self.load_all_masters()
         self.start_switch()
 
+    def get_all_masters_from_zone(self):
+        instances = []
+        for infra in DatabaseInfra.objects.all():
+            if not infra.databases.exists():
+                continue
+            driver = infra.get_driver()
+            instances_masters = driver.get_master_instance()
+            if isinstance(instances_masters, Instance):
+                instances_masters = [instances_masters]
+            for instance in instances_masters:
+                hp = Provider(instance, infra.environment)
+                info = hp.host_info(instance.hostname)
+                if info["zone"] == self.zone:
+                    instances.append(instance)
+        return instances
+
     def load_all_masters(self):
         self.task.add_detail("Getting all masters...")
         for infra in DatabaseInfra.objects.all():
