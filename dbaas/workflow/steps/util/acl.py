@@ -60,6 +60,8 @@ class ReplicateAcls2NewInstance(ACLStep):
         return self.instance
 
     def do(self):
+        if self.acl_client is None:
+            return
         replicate_acl_for(
             database=self.database,
             old_ip=self.source_instance.address,
