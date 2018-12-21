@@ -35,17 +35,17 @@ class AuthRequest(object):
         kw.update(**{'auth': auth} if credential.user else {})
         return action(url, **kw)
 
-    @staticmethod
-    def get(credential, url, **kw):
-        return self._request(credential, requests.get, url, **kw)
+    @classmethod
+    def get(cls, credential, url, **kw):
+        return cls._request(credential, requests.get, url, **kw)
 
-    @staticmethod
-    def post(credential, url, **kw):
-        return self._request(credential, requests.post, url, **kw)
+    @classmethod
+    def post(cls, credential, url, **kw):
+        return cls._request(credential, requests.post, url, **kw)
 
-    @staticmethod
-    def delete(credential, url, **kw):
-        return self._request(credential, requests.delete, url, **kw)
+    @classmethod
+    def delete(cls, credential, url, **kw):
+        return cls._request(credential, requests.delete, url, **kw)
 
 
 class AlarmException(Exception):
