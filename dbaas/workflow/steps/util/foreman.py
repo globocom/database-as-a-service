@@ -1,7 +1,7 @@
 from dbaas_credentials.models import CredentialType
 from dbaas_foreman import get_foreman_provider
 from dbaas_networkapi.models import Vip
-from util import exec_remote_command_host, get_credentials_for
+from util import exec_remote_command_host, get_or_none_credentials_for
 from base import BaseInstanceStep
 
 
@@ -9,10 +9,16 @@ class Foreman(BaseInstanceStep):
 
     def __init__(self, instance):
         super(Foreman, self).__init__(instance)
-        self.credentials = get_credentials_for(
+        self.credentials = get_or_none_credentials_for(
             self.environment, CredentialType.FOREMAN
         )
-        self.provider = get_foreman_provider(self.infra, self.credentials)
+        self._provider = None
+
+    @property
+    def provider(self):
+        if self._provider is None:
+            self._provider = get_foreman_provider(self.infra, self.credentials)
+        return self._provider
 
     @property
     def fqdn(self):
@@ -31,6 +37,9 @@ class Foreman(BaseInstanceStep):
             return None
         return ret.split('name = ')[1].split('.\n')[0]
 
+    def is_valid(self):
+        return self.credentials is not None
+
     def do(self):
         raise NotImplementedError
 
@@ -44,6 +53,8 @@ class SetupDSRC(Foreman):
         return "Foreman registering DSRC class..."
 
     def do(self):
+        if not self.is_valid:
+            return
         vip = Vip.objects.get(databaseinfra=self.infra)
         self.provider.setup_database_dscp(
             self.fqdn, vip.vip_ip, vip.dscp, self.instance.port
@@ -56,6 +67,8 @@ class DeleteHost(Foreman):
         return "Foreman removing host..."
 
     def do(self):
+        if not self.is_valid:
+            return
         fqdn = self.fqdn
         hostname = self.host.hostname
         reverse_ip = self.reverse_ip
