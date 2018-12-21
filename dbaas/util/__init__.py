@@ -28,6 +28,26 @@ DEFAULT_OUTPUT_BUFFER_SIZE = 16384
 PROCESS_TIMEOUT = 4 * 60 * 60  # 4 horas
 
 
+class AuthRequest(object):
+    @staticmethod
+    def _request(credential, action, url, **kw):
+        auth = (credential.user, credential.password,)
+        kw.update(**{'auth': auth} if credential.user else {})
+        return action(url, **kw)
+
+    @staticmethod
+    def get(credential, url, **kw):
+        return self._request(credential, requests.get, url, **kw)
+
+    @staticmethod
+    def post(credential, url, **kw):
+        return self._request(credential, requests.post, url, **kw)
+
+    @staticmethod
+    def delete(credential, url, **kw):
+        return self._request(credential, requests.delete, url, **kw)
+
+
 class AlarmException(Exception):
     pass
 
