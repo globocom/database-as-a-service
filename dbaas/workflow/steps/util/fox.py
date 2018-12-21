@@ -5,6 +5,7 @@ from dbaas_foxha.provider import FoxHAProvider
 from dbaas_credentials.models import CredentialType
 from util import get_credentials_for
 from base import BaseInstanceStep
+from physical.models import Vip
 
 
 CHECK_ATTEMPTS = 20
@@ -50,7 +51,8 @@ class ConfigureGroup(OnlyFirstInstance):
 
     @property
     def vip_ip(self):
-        return get_vip_ip_from_databaseinfra(self.infra)
+        vip = Vip.get_vip_from_databaseinfra(self.infra)
+        return vip.vip_ip
 
     def do(self):
         if not self.is_valid:
