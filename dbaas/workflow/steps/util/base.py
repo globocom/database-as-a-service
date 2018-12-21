@@ -201,11 +201,11 @@ class VipProviderClient(object):
             )
         return self._credential
 
-    def get_vip(self, identifier):
+    def get_vip(self, vip_id):
         api_host_url = '/{}/{}/vip/{}'.format(
             self.credential.project,
             self.env.name,
-            identifier
+            vip_id
         )
         resp = self._request(
             requests.get,
@@ -214,6 +214,25 @@ class VipProviderClient(object):
         if resp.ok:
             vm = resp.json()
             return namedtuple('VipProperties', vm.keys())(*vm.values())
+
+    def is_vip_healthy(self, vip_id):
+        url = '{}/{}/{}/vip/healthy'.format(
+            self.credential.endpoint,
+            self.credential.project,
+            self.env.name,
+        )
+        data = {
+            'vip_id': vip_id
+        }
+        resp = self._request(
+            requests.post,
+            url,
+            json=data
+        )
+
+        if resp.ok:
+            resp = resp.json()
+            return resp.get('healthy', False)
 
 
 class HostProviderClient(object):
