@@ -181,6 +181,41 @@ class BaseInstanceStepMigration(BaseInstanceStep):
         raise NotImplementedError
 
 
+class VipProviderClient(object):
+    credential_type = CredentialType.VIP_PROVIDER
+
+    def __init__(self, env):
+        self.env = env
+        self._credential = None
+
+    def _request(self, action, url, **kw):
+        auth = (self.credential.user, self.credential.password,)
+        kw.update(**{'auth': auth} if self.credential.user else {})
+        return action(url, **kw)
+
+    @property
+    def credential(self):
+        if not self._credential:
+            self._credential = get_credentials_for(
+                self.env, self.credential_type
+            )
+        return self._credential
+
+    def get_vip(self, identifier):
+        api_host_url = '/{}/{}/vip/{}'.format(
+            self.credential.project,
+            self.env.name,
+            identifier
+        )
+        resp = self._request(
+            requests.get,
+            '{}{}'.format(self.credential.endpoint, api_host_url)
+        )
+        if resp.ok:
+            vm = resp.json()
+            return namedtuple('VipProperties', vm.keys())(*vm.values())
+
+
 class HostProviderClient(object):
     credential_type = CredentialType.HOST_PROVIDER
 
