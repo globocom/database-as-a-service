@@ -18,6 +18,7 @@ from billiard import current_process
 from django.utils.module_loading import import_by_path
 from dns.resolver import Resolver
 from dns.exception import DNSException
+import requests
 
 
 LOG = logging.getLogger(__name__)
