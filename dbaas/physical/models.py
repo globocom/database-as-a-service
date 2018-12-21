@@ -1183,6 +1183,23 @@ class TopologyParameterCustomValue(BaseModel):
         unique_together = ('topology', 'parameter')
 
 
+class Vip(BaseModel):
+    infra = models.ForeignKey(
+        DatabaseInfra, related_name="vips")
+    identifier = models.CharField(verbose_name=_("Identifier"), max_length=200)
+
+    def __unicode__(self):
+        return 'Vip of infra {}'.format(self.infra.name)
+
+    @classmethod
+    def get_vip_from_databaseinfra(cls, databaseinfra):
+        from workflow.steps.util.base import VipProviderClient
+        vip_identifier = cls.objects.get(infra=databaseinfra).identifier
+        client = VipProviderClient(databaseinfra.environment)
+        return client.get_vip(vip_identifier)
+
+
+
 ##########################################################################
 # SIGNALS
 ##########################################################################
