@@ -338,6 +338,13 @@ def get_credentials_for(environment, credential_type, **kwargs):
     )[0]
 
 
+def get_or_none_credentials_for(environment, credential_type, **kwargs):
+    try:
+        return get_credentials_for(environment, credential_type, **kwargs)
+    except IndexError:
+        return None
+
+
 def build_dict(**kwargs):
     my_dict = {}
     for name, value in kwargs.items():
