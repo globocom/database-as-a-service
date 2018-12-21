@@ -273,6 +273,7 @@ class MySQLFoxHA(MySQLSingle):
             )}, {
             'Creating VIP': (
                 'workflow.steps.util.network.CreateVip',
+                'workflow.steps.util.vip_provider.RegisterInstance',
                 'workflow.steps.util.dns.RegisterDNSVip',
             )}, {
             'Creating dns': (
@@ -290,20 +291,20 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.vm.WaitingBeReady',
                 'workflow.steps.util.vm.CheckHostName',
             )}, {
-            'Check puppet': (
-                'workflow.steps.util.puppet.WaitingBeStarted',
-                'workflow.steps.util.puppet.WaitingBeDone',
-                'workflow.steps.util.puppet.ExecuteIfProblem',
-                'workflow.steps.util.puppet.WaitingBeDone',
-                'workflow.steps.util.puppet.CheckStatus',
-            )}, {
-            'Configure foreman': (
-                'workflow.steps.util.foreman.SetupDSRC',
-            )}, {
-            'Running puppet': (
-                'workflow.steps.util.puppet.Execute',
-                'workflow.steps.util.puppet.CheckStatus',
-            )}, {
+            # 'Check puppet': (
+            #     'workflow.steps.util.puppet.WaitingBeStarted',
+            #     'workflow.steps.util.puppet.WaitingBeDone',
+            #     'workflow.steps.util.puppet.ExecuteIfProblem',
+            #     'workflow.steps.util.puppet.WaitingBeDone',
+            #     'workflow.steps.util.puppet.CheckStatus',
+            # )}, {
+            # 'Configure foreman': (
+            #     'workflow.steps.util.foreman.SetupDSRC',
+            # )}, {
+            # 'Running puppet': (
+            #     'workflow.steps.util.puppet.Execute',
+            #     'workflow.steps.util.puppet.CheckStatus',
+            # )}, {
             'Check DNS': (
                 'workflow.steps.util.dns.CheckIsReady',
             )}, {
