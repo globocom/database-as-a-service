@@ -6,7 +6,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.utils.encoding import python_2_unicode_compatible
 from collections import namedtuple
 from dbaas_credentials.models import CredentialType
-from util import get_credentials_for
+from util import get_credentials_for, AuthRequest
 
 LOG = logging.getLogger(__name__)
 
@@ -183,15 +183,11 @@ class BaseInstanceStepMigration(BaseInstanceStep):
 
 class VipProviderClient(object):
     credential_type = CredentialType.VIP_PROVIDER
+    auth_request = AuthRequest()
 
     def __init__(self, env):
         self.env = env
         self._credential = None
-
-    def _request(self, action, url, **kw):
-        auth = (self.credential.user, self.credential.password,)
-        kw.update(**{'auth': auth} if self.credential.user else {})
-        return action(url, **kw)
 
     @property
     def credential(self):
@@ -207,8 +203,8 @@ class VipProviderClient(object):
             self.env.name,
             vip_id
         )
-        resp = self._request(
-            requests.get,
+        resp = self.auth_request.get(
+            self.credential,
             '{}{}'.format(self.credential.endpoint, api_host_url)
         )
         if resp.ok:
@@ -224,8 +220,8 @@ class VipProviderClient(object):
         data = {
             'vip_id': vip_id
         }
-        resp = self._request(
-            requests.post,
+        resp = self.auth_request.post(
+            self.credential,
             url,
             json=data
         )
