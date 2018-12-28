@@ -7,7 +7,7 @@ from physical.models import Vip, Instance, Environment
 from util import get_credentials_for
 from base import BaseInstanceStep
 from vm import WaitingBeReady
-from dbaas_dnsapi.models import NLB
+from dbaas_dnsapi.models import FOXHA
 from workflow.steps.util.base import HostProviderClient
 
 
@@ -185,7 +185,7 @@ class CreateVip(VipProviderStep):
             return
 
         vip = self.provider.create_vip(self.infra, self.instance.port, self.team)
-        dns = add_dns_record(self.infra, self.infra.name, vip.vip_ip, NLB, is_database=False)
+        dns = add_dns_record(self.infra, self.infra.name, vip.vip_ip, FOXHA, is_database=False)
 
         self.infra.endpoint = "{}:{}".format(vip.vip_ip, 3306)
         self.infra.endpoint_dns = "{}:{}".format(dns, 3306)
