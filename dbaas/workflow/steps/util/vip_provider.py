@@ -238,11 +238,4 @@ class RegisterInstance(VipProviderStep):
         )
 
     def undo(self):
-        if not self.is_valid:
-            return
-        try:
-            vip = Vip.objects.get(infra=self.infra)
-        except ObjectDoesNotExist:
-            return
-        else:
-            self.provider.destroy_vip(vip.identifier)
+        pass
