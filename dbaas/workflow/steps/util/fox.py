@@ -6,6 +6,7 @@ from dbaas_credentials.models import CredentialType
 from util import get_credentials_for
 from base import BaseInstanceStep
 from physical.models import Vip
+from django.core.exceptions import ObjectDoesNotExist
 
 
 CHECK_ATTEMPTS = 20
@@ -51,8 +52,13 @@ class ConfigureGroup(OnlyFirstInstance):
 
     @property
     def vip_ip(self):
-        vip = Vip.get_vip_from_databaseinfra(self.infra)
-        return vip.vip_ip
+        try:
+            vip_ip = get_vip_ip_from_databaseinfra(self.infra)
+        except ObjectDoesNotExist:
+            vip = Vip.get_vip_from_databaseinfra(self.infra)
+            vip_ip = vip.vip_ip
+
+        return vip_ip
 
     def do(self):
         if not self.is_valid:

@@ -4,7 +4,7 @@ from dbaas_dnsapi.provider import DNSAPIProvider
 from dbaas_dnsapi.utils import add_dns_record
 from util import get_credentials_for, check_dns
 from base import BaseInstanceStep
-# from dbaas_networkapi.models import Vip
+from dbaas_networkapi.models import Vip as NetworkApiVip
 from physical.models import Vip
 from workflow.steps.util.base import VipProviderClient
 
@@ -142,30 +142,57 @@ class RegisterDNSVip(DNSStep):
         return self.instance == self.infra.instances.first()
 
     @property
+    def is_aws(self):
+        try:
+            NetworkApiVip.objects.get(databaseinfra=self.infra)
+        except NetworkApiVip.DoesNotExist:
+            return True
+        else:
+            return False
+
+    @property
     def vip_ip(self):
-        # return Vip.objects.get(databaseinfra=self.infra)
-        vip_identifier = Vip.objects.get(infra=self.infra).identifier
-        client = VipProviderClient(self.infra.environment)
-        vip = client.get_vip(vip_identifier)
-        return vip.vip_ip
+        try:
+            vip = NetworkApiVip.objects.get(databaseinfra=self.infra)
+        except NetworkApiVip.DoesNotExist:
+            vip_identifier = Vip.objects.get(infra=self.infra).identifier
+            client = VipProviderClient(self.infra.environment)
+            vip = client.get_vip(vip_identifier)
+
+        return vip and vip.vip_ip
 
     def do(self):
         if not self.is_valid:
             return
 
-        self.provider.create_database_dns_for_ip(
-            databaseinfra=self.infra,
-            ip=self.vip_ip
-        )
+        # TODO: remove that code
+        if self.is_aws:
+            self.provider.create_database_dns_for_ip(
+                databaseinfra=self.infra,
+                ip=self.vip_ip,
+                dns_type='CNAME'
+            )
+        else:
+            self.provider.create_database_dns_for_ip(
+                databaseinfra=self.infra,
+                ip=self.vip_ip,
+            )
 
     def undo(self):
         if self.is_valid:
             return
 
-        self.provider.remove_databases_dns_for_ip(
-            databaseinfra=self.infra,
-            ip=self.vip_ip
-        )
+        if self.is_aws:
+            self.provider.remove_databases_dns_for_ip(
+                databaseinfra=self.infra,
+                ip=self.vip_ip,
+                dns_type='CNAME'
+            )
+        else:
+            self.provider.remove_databases_dns_for_ip(
+                databaseinfra=self.infra,
+                ip=self.vip_ip,
+            )
 
 
 class CheckIsReady(DNSStep):
