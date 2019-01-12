@@ -94,14 +94,17 @@ class Provider(object):
         kw.update(**{'auth': auth} if self.credential.user else {})
         return action(url, **kw)
 
-    def create_vip(self, infra, port, team_name, database_name=''):
+    def create_vip(self, infra, port, team_name, equipments,
+        vip_dns, database_name=''):
         url = "{}/{}/{}/vip/new".format(
             self.credential.endpoint, self.provider, self.environment
         )
         data = {
             "group": infra.name,
-            "team_name": team_name,
             "port": port,
+            "team_name": team_name,
+            "equipments": equipments,
+            "vip_dns": vip_dns,
             "database_name": database_name
         }
 
@@ -151,12 +154,42 @@ class VipProviderStep(BaseInstanceStep):
         self.driver = self.instance and self.infra.get_driver()
         self.credentials = None
         self._provider = None
+        self.host_prov_client = HostProviderClient(self.environment)
 
     @property
     def provider(self):
         if not self._provider:
             self._provider = Provider(self.instance, self.environment)
         return self._provider
+
+    @property
+    def vm_properties(self):
+        if not (hasattr(self, '_vm_properties') and self._vm_properties):
+            self._vm_properties = self.host_prov_client.get_vm_by_host(
+                self.host)
+        return self._vm_properties
+
+    @property
+    def equipments(self):
+        equipments = []
+        for instance in self.infra.instances.all():
+            host = instance.hostname
+            vm_info = self.host_prov_client.get_vm_by_host(host)
+            equipment = {
+                'host_address': host.address,
+                'port': instance.port,
+                'identifier': vm_info.identifier
+            }
+            equipments.append(equipment)
+        return equipments
+
+    @property
+    def team(self):
+        ## TODO
+        return "dbaas"
+        if self.has_database:
+            return self.database.team.name
+        return self.create.team.name
 
     def do(self):
         raise NotImplementedError
@@ -171,20 +204,21 @@ class CreateVip(VipProviderStep):
         return "Creating vip..."
 
     @property
-    def team(self):
-        if self.has_database:
-            return self.database.team.name
-        return self.create.team.name
-
-    @property
     def is_valid(self):
         return self.instance == self.infra.instances.first()
+
+    @property
+    def vip_dns(self):
+        name, domain = get_dns_name_domain(self.infra, self.infra.name, FOXHA, is_database=False)
+        return '{}.{}'.format(name, domain)
 
     def do(self):
         if not self.is_valid:
             return
 
-        vip = self.provider.create_vip(self.infra, self.instance.port, self.team)
+        vip = self.provider.create_vip(
+            self.infra, self.instance.port, self.team,
+            self.equipments, self.vip_dns)
         dns = add_dns_record(self.infra, self.infra.name, vip.vip_ip, FOXHA, is_database=False)
 
         self.infra.endpoint = "{}:{}".format(vip.vip_ip, 3306)
@@ -192,31 +226,22 @@ class CreateVip(VipProviderStep):
         self.infra.save()
 
     def undo(self):
+        if not self.is_valid:
+            return
+
         try:
             vip = Vip.objects.get(infra=self.infra)
         except ObjectDoesNotExist:
             return
         else:
             self.provider.destroy_vip(vip.identifier)
+            vip.delete()
 
 
 class RegisterInstance(VipProviderStep):
 
     def __unicode__(self):
         return "Registering instance on vip..."
-
-    @property
-    def team(self):
-        if self.has_database:
-            return self.database.team.name
-        return self.create.team.name
-
-    @property
-    def vm_properties(self):
-        if not (hasattr(self, '_vm_properties') and self._vm_properties):
-            cli = HostProviderClient(self.environment)
-            self._vm_properties = cli.get_vm_by_host(self.host)
-        return self._vm_properties
 
     @property
     def is_valid(self):
@@ -232,7 +257,7 @@ class RegisterInstance(VipProviderStep):
             return
         self.provider.register_instance(
             self.infra,
-            self.vm_properties.zone_id,
+            self.vm_properties.zone,
             self.vm_properties.identifier,
             self.instance.port
         )

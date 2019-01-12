@@ -7,6 +7,7 @@ from base import BaseInstanceStep
 from dbaas_networkapi.models import Vip as NetworkApiVip
 from physical.models import Vip
 from workflow.steps.util.base import VipProviderClient
+import socket
 
 
 class DNSStep(BaseInstanceStep):
@@ -142,12 +143,11 @@ class RegisterDNSVip(DNSStep):
         return self.instance == self.infra.instances.first()
 
     @property
-    def is_aws(self):
+    def is_ipv4(self):
         try:
-            NetworkApiVip.objects.get(databaseinfra=self.infra)
-        except NetworkApiVip.DoesNotExist:
+            socket.inet_aton(self.vip_ip)
             return True
-        else:
+        except socket.error:
             return False
 
     @property
@@ -165,33 +165,32 @@ class RegisterDNSVip(DNSStep):
         if not self.is_valid:
             return
 
-        # TODO: remove that code
-        if self.is_aws:
+        if self.is_ipv4:
             self.provider.create_database_dns_for_ip(
                 databaseinfra=self.infra,
                 ip=self.vip_ip,
-                dns_type='CNAME'
             )
         else:
             self.provider.create_database_dns_for_ip(
                 databaseinfra=self.infra,
                 ip=self.vip_ip,
+                dns_type='CNAME'
             )
 
     def undo(self):
         if self.is_valid:
             return
 
-        if self.is_aws:
+        if self.is_ipv4:
             self.provider.remove_databases_dns_for_ip(
                 databaseinfra=self.infra,
                 ip=self.vip_ip,
-                dns_type='CNAME'
             )
         else:
             self.provider.remove_databases_dns_for_ip(
                 databaseinfra=self.infra,
                 ip=self.vip_ip,
+                dns_type='CNAME'
             )
 
 
