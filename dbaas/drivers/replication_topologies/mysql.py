@@ -355,8 +355,8 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.acl.BindNewInstance',
             )}, {
             'Creating monitoring and alarms': (
-                #'workflow.steps.util.mysql.CreateAlarmsVip',
-                #'workflow.steps.util.zabbix.CreateAlarms',
+                'workflow.steps.util.mysql.CreateAlarmsVip',
+                'workflow.steps.util.zabbix.CreateAlarms',
                 'workflow.steps.util.db_monitor.CreateInfraMonitoring',
             )
         }]
@@ -621,8 +621,8 @@ class MySQLFoxHAAWS(MySQLFoxHA):
                 'workflow.steps.util.acl.BindNewInstance',
             )}, {
             'Creating monitoring and alarms': (
-                #'workflow.steps.util.mysql.CreateAlarmsVip',
-                #'workflow.steps.util.zabbix.CreateAlarms',
+                'workflow.steps.util.mysql.CreateAlarmsVip',
+                'workflow.steps.util.zabbix.CreateAlarms',
                 'workflow.steps.util.db_monitor.CreateInfraMonitoring',
             )
         }]
