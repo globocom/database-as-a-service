@@ -4,7 +4,6 @@ from dbaas_dnsapi.provider import DNSAPIProvider
 from dbaas_dnsapi.utils import add_dns_record
 from util import get_credentials_for, check_dns
 from base import BaseInstanceStep
-from dbaas_networkapi.models import Vip as NetworkApiVip
 from physical.models import Vip
 from workflow.steps.util.base import VipProviderClient
 import socket
@@ -152,12 +151,9 @@ class RegisterDNSVip(DNSStep):
 
     @property
     def vip_ip(self):
-        try:
-            vip = NetworkApiVip.objects.get(databaseinfra=self.infra)
-        except NetworkApiVip.DoesNotExist:
-            vip_identifier = Vip.objects.get(infra=self.infra).identifier
-            client = VipProviderClient(self.infra.environment)
-            vip = client.get_vip(vip_identifier)
+        vip_identifier = Vip.objects.get(infra=self.infra).identifier
+        client = VipProviderClient(self.infra.environment)
+        vip = client.get_vip(vip_identifier)
 
         return vip and vip.vip_ip
 

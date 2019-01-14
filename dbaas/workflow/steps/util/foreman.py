@@ -1,6 +1,5 @@
 from dbaas_credentials.models import CredentialType
 from dbaas_foreman import get_foreman_provider
-from dbaas_networkapi.models import Vip as NetworkApiVip
 from physical.models import Vip
 from workflow.steps.util.base import VipProviderClient
 
@@ -59,12 +58,9 @@ class SetupDSRC(Foreman):
         if not self.is_valid:
             return
 
-        try:
-            vip = NetworkApiVip.objects.get(databaseinfra=self.infra)
-        except NetworkApiVip.DoesNotExist:
-            vip_identifier = Vip.objects.get(infra=self.infra).identifier
-            client = VipProviderClient(self.infra.environment)
-            vip = client.get_vip(vip_identifier)
+        vip_identifier = Vip.objects.get(infra=self.infra).identifier
+        client = VipProviderClient(self.infra.environment)
+        vip = client.get_vip(vip_identifier)
 
         self.provider.setup_database_dscp(
             self.fqdn, vip.vip_ip, vip.dscp, self.instance.port
