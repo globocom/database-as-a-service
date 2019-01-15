@@ -557,20 +557,6 @@ class MySQLFoxHAAWS(MySQLFoxHA):
                 'workflow.steps.util.vm.WaitingBeReady',
                 'workflow.steps.util.vm.CheckHostName',
             )}, {
-            # 'Check puppet': (
-            #     'workflow.steps.util.puppet.WaitingBeStarted',
-            #     'workflow.steps.util.puppet.WaitingBeDone',
-            #     'workflow.steps.util.puppet.ExecuteIfProblem',
-            #     'workflow.steps.util.puppet.WaitingBeDone',
-            #     'workflow.steps.util.puppet.CheckStatus',
-            # )}, {
-            # 'Configure foreman': (
-            #     'workflow.steps.util.foreman.SetupDSRC',
-            # )}, {
-            # 'Running puppet': (
-            #     'workflow.steps.util.puppet.Execute',
-            #     'workflow.steps.util.puppet.CheckStatus',
-            # )}, {
             'Check DNS': (
                 'workflow.steps.util.dns.CheckIsReady',
             )}, {
@@ -624,5 +610,9 @@ class MySQLFoxHAAWS(MySQLFoxHA):
                 'workflow.steps.util.mysql.CreateAlarmsVip',
                 'workflow.steps.util.zabbix.CreateAlarms',
                 'workflow.steps.util.db_monitor.CreateInfraMonitoring',
+            )}, {
+            'Check Vip': (
+                'workflow.steps.util.vip_provider.WaitVipReady',
             )
+
         }]
