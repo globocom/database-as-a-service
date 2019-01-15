@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 from django.core.exceptions import ObjectDoesNotExist
-from requests import post, delete, get
+from requests import post, delete
 from dbaas_credentials.models import CredentialType
 from dbaas_dnsapi.utils import get_dns_name_domain, add_dns_record
-from physical.models import Vip, Instance, Environment
+from physical.models import Vip
 from util import get_credentials_for
 from base import BaseInstanceStep
-from vm import WaitingBeReady
 from dbaas_dnsapi.models import FOXHA
 from workflow.steps.util.base import HostProviderClient
 
@@ -24,6 +23,10 @@ class HostProviderCreateVIPException(HostProviderException):
 
 
 class HostProviderRegisterVIPException(HostProviderException):
+    pass
+
+
+class HostProviderWaitVIPReadyException(HostProviderException):
     pass
 
 
@@ -136,6 +139,22 @@ class Provider(object):
         response = self._request(post, url, json=data, timeout=600)
         if not response.ok:
             raise HostProviderRegisterVIPException(response.content, response)
+
+    def wait_vip_ready(self, infra):
+        url = "{}/{}/{}/vip/healthy".format(
+            self.credential.endpoint, self.provider, self.environment
+        )
+        data = {
+            "vip_id": Vip.objects.get(infra=infra).identifier,
+        }
+
+        response = self._request(post, url, json=data, timeout=600)
+        if not response.ok:
+            raise HostProviderWaitVIPReadyException(response.content, response)
+
+        response = response.json()
+        return response['healthy']
+
 
     def destroy_vip(self, identifier):
         url = "{}/{}/{}/vip/{}".format(
@@ -261,6 +280,29 @@ class RegisterInstance(VipProviderStep):
             self.vm_properties.identifier,
             self.instance.port
         )
+
+    def undo(self):
+        pass
+
+
+class WaitVipReady(VipProviderStep):
+
+    def __unicode__(self):
+        return "Waiting vip ready..."
+
+    @property
+    def is_valid(self):
+        return self.instance == self.infra.instances.first()
+
+    def do(self):
+        if not self.is_valid:
+            return
+        vip_ready = self.provider.wait_vip_ready(
+            self.infra
+        )
+        if not vip_ready:
+            raise EnvironmentError("VIP not ready")
+
 
     def undo(self):
         pass
