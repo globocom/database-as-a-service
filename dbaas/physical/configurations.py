@@ -588,6 +588,37 @@ class ConfigurationMySQL(ConfigurationBase):
         default = 'OFF'
         return self.get_parameter(parameter_name, default)
 
+    @property
+    def audit_log_format(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 'NEW'
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def audit_log_file(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 'audit.log'
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def audit_log_rotate_on_size(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 0
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def audit_log_exclude_accounts(self):
+        parameter_name = inspect.stack()[0][3]
+        default =  ''
+        return self.get_parameter(parameter_name, default)
+
+    @property
+    def audit_log_policy(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 'NONE'
+        return self.get_parameter(parameter_name, default)
+
+
 
 class ConfigurationMongoDB(ConfigurationBase):
     __ENGINE__ = 'mongodb'
