@@ -104,6 +104,8 @@ innodb_max_purge_lag            = {{ configuration.innodb_max_purge_lag.value }}
 
 explicit_defaults_for_timestamp = {{ configuration.explicit_defaults_for_timestamp.value }}
 
+!include /etc/server_id.cnf
+
 EOF_DBAAS
 ) > /etc/my.cnf
     die_if_error "Error setting my.cnf"
