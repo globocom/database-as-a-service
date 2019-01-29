@@ -5,13 +5,30 @@ from volume_provider import AddAccessRestoredVolume, MountDataVolumeRestored, \
     RestoreSnapshot, UnmountActiveVolume
 from zabbix import ZabbixStep
 from base import BaseInstanceStep
+from workflow.steps.util import test_bash_script_error
+from util import exec_remote_command_host
 
 
 class MySQLStep(BaseInstanceStep):
 
+    def __init__(self, instance):
+        super(MySQLStep, self).__init__(instance)
+        self.driver = self.infra.get_driver()
+
     def undo(self):
         pass
 
+    def run_script(self, script):
+        output = {}
+        return_code = exec_remote_command_host(
+            self.host, script, output
+        )
+        if return_code != 0:
+            raise EnvironmentError(
+                'Could not execute script {}: {}'.format(
+                    return_code, output
+                )
+            )
 
 class SetMasterRestore(MySQLStep):
 
@@ -153,3 +170,93 @@ class DestroyAlarmsVip(ZabbixVip):
 
     def undo(self):
         CreateAlarmsVip(self.instance).do()
+
+
+class SetFilePermission(MySQLStep):
+    def __unicode__(self):
+        return "Setting file permition..."
+
+    @property
+    def script(self):
+        return test_bash_script_error() + """
+            chown mysql:mysql /data
+            die_if_error "Error executing chown mysql:mysql /data"
+            chown -R mysql:mysql /data/*
+            die_if_error "Error executing chown -R mysql:mysql /data/*"
+            """
+
+    def do(self):
+
+        self.run_script(self.script)
+
+
+class RunMySQLUpgrade(MySQLStep):
+    def __unicode__(self):
+        return "Executing mysql_upgrade..."
+
+    @property
+    def script(self):
+        return "mysql_upgrade -u{} -p{}".format(
+            self.infra.user, self.infra.password)
+
+    def do(self):
+        self.run_script(self.script)
+
+
+class AuditPlugin(MySQLStep):
+    @property
+    def audit_plugin_status(self):
+        query = """SELECT plugin_name, plugin_status
+        FROM INFORMATION_SCHEMA.PLUGINS
+        WHERE plugin_name = 'audit_log';"""
+
+        ret_query = self.driver.query(
+            query_string=query, instance=self.instance)
+        if len(ret_query) == 0:
+            return False
+        if ret_query[0]['plugin_status'] != 'ACTIVE':
+            return False
+        return True
+
+class InstallAuditPlugin(AuditPlugin):
+    def __unicode__(self):
+        return "Installing audit plugin..."
+
+    @property
+    def query(self):
+        return "INSTALL PLUGIN audit_log SONAME 'audit_log.so';"
+
+    def do(self):
+        if not self.audit_plugin_status:
+            self.driver.query(query_string=self.query, instance=self.instance)
+
+class CheckIfAuditPluginIsInstalled(AuditPlugin):
+    def __unicode__(self):
+        return "Checking if audit plugin is installed..."
+
+    def do(self):
+        if not self.audit_plugin_status:
+            raise EnvironmentError('The audit plugin is not installed.')
+
+class SkipSlaveStart(MySQLStep):
+    def __unicode__(self):
+        return "Skipping slave start parameter..."
+
+    @property
+    def script(self):
+        return "echo 'skip_slave_start = 1' >> /etc/my.cnf"
+
+    def do(self):
+        self.run_script(self.script)
+
+
+class DisableLogBin(MySQLStep):
+    def __unicode__(self):
+        return "Disable binary loggin..."
+
+    @property
+    def script(self):
+        return "sed -e 's/^log_bin/#log_bin/' -i /etc/my.cnf"
+
+    def do(self):
+        self.run_script(self.script)
