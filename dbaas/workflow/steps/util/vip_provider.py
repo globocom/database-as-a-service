@@ -276,6 +276,37 @@ class CreateVip(VipProviderStep):
             vip.delete()
 
 
+class UpdateVipReals(VipProviderStep):
+    def __unicode__(self):
+        return "Update vip reals..."
+
+    @property
+    def equipments(self):
+        equipments = []
+        for instance in self.infra.instances.all():
+            host = instance.hostname
+            if self.host_migrate and host.future_host:
+                host = host.future_host
+            vm_info = self.host_prov_client.get_vm_by_host(host)
+            equipment = {
+                'host_address': host.address,
+                'port': instance.port,
+                'identifier': vm_info.identifier
+            }
+            equipments.append(equipment)
+        return equipments
+
+    @property
+    def vip(self):
+        return Vip.objects.get(infra=self.infra)
+
+    def do(self):
+        self.update_vip_reals(
+            vip_identifier=self.vip.identifier,
+            self.equipments
+        )
+
+
 class RegisterInstance(VipProviderStep):
 
     def __unicode__(self):
