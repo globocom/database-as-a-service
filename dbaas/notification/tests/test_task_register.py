@@ -233,7 +233,7 @@ class DatabaseCloneCallTestCase(TestCase, TaskCallBaseTestCase):
 class DatabaseCreateCallTestCase(TestCase, TaskCallBaseTestCase):
 
     method_to_call = 'database_create'
-    delay_to_mock = 'notification.tasks.create_database.delay'
+    delay_to_mock = 'notification.tasks.create_database_with_retry'
     call_params = {
         'user': 'user',
         'name': 'name',
@@ -254,7 +254,7 @@ class DatabaseCreateCallTestCase(TestCase, TaskCallBaseTestCase):
 class DatabaseCreateCallWithUserTestCase(TestCase, TaskCallBaseTestCase):
 
     method_to_call = 'database_create'
-    delay_to_mock = 'notification.tasks.create_database.delay'
+    delay_to_mock = 'notification.tasks.create_database_with_retry'
     call_params = {
         'user': 'user',
         'name': 'name',
