@@ -6,8 +6,6 @@ from util import get_replication_topology_instance
 from dbaas_credentials.models import CredentialType
 from physical.models import DatabaseInfra
 from logical.models import Database
-from workflow.workflow import stop_workflow
-from workflow.workflow import start_workflow
 
 LOG = logging.getLogger(__name__)
 
