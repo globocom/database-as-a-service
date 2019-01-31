@@ -531,6 +531,70 @@ class MySQLFoxHA(MySQLSingle):
             ),
         }]
 
+    def get_host_migrate_steps_cleaning_up(self):
+        return (
+            'workflow.steps.util.volume_provider.DestroyOldEnvironment',
+            'workflow.steps.util.host_provider.DestroyVirtualMachineMigrate',
+        )
+
+    def get_base_host_migrate_steps(self):
+        return (
+            'workflow.steps.util.vm.ChangeMaster',
+            'workflow.steps.util.database.CheckIfSwitchMaster',
+            'workflow.steps.util.host_provider.CreateVirtualMachineMigrate',
+            'workflow.steps.util.volume_provider.NewVolume',
+            'workflow.steps.util.vm.WaitingBeReady',
+            'workflow.steps.util.vm.UpdateOSDescription',
+            'workflow.steps.util.volume_provider.MountDataVolume',
+            'workflow.steps.util.volume_provider.MakeDatabaseBackupMigrate',
+            'workflow.steps.util.volume_provider.AddAccessMigrate',
+            'workflow.steps.util.volume_provider.MountDataVolumeMigrate',
+            'workflow.steps.util.volume_provider.CopyFilesMigrate',
+            'workflow.steps.util.volume_provider.UmountDataVolumeMigrate',
+            'workflow.steps.util.volume_provider.RemoveAccessMigrate',
+            'workflow.steps.util.plan.Initialization',
+            'workflow.steps.util.plan.Configure',
+            'workflow.steps.util.database.Start',
+            'workflow.steps.util.database.CheckIsUp',
+            'workflow.steps.util.vm.CheckAccessToMaster',
+            'workflow.steps.util.vm.CheckAccessFromMaster',
+            'workflow.steps.util.acl.ReplicateAclsMigrate',
+            'workflow.steps.util.database.SetSlave',
+            'workflow.steps.util.database.WaitForReplication',
+            'workflow.steps.util.zabbix.DestroyAlarms',
+            'workflow.steps.util.dns.ChangeEndpoint',
+            'workflow.steps.util.dns.CheckIsReady',
+            'workflow.steps.util.ssl.UpdateOpenSSlLib',
+            'workflow.steps.util.ssl.CreateSSLFolder',
+            'workflow.steps.util.ssl.CreateSSLConfForInfraEndPoint',
+            'workflow.steps.util.ssl.CreateSSLConfForInstanceIP',
+            'workflow.steps.util.ssl.RequestSSLForInfra',
+            'workflow.steps.util.ssl.RequestSSLForInstance',
+            'workflow.steps.util.ssl.CreateJsonRequestFileInfra',
+            'workflow.steps.util.ssl.CreateJsonRequestFileInstance',
+            'workflow.steps.util.ssl.CreateCertificateInfra',
+            'workflow.steps.util.ssl.CreateCertificateInstance',
+            'workflow.steps.util.ssl.SetSSLFilesAccessMySQL',
+            'workflow.steps.util.metric_collector.ConfigureTelegraf',
+            'workflow.steps.util.metric_collector.RestartTelegraf',
+            'workflow.steps.util.zabbix.CreateAlarms',
+            'workflow.steps.util.disk.ChangeSnapshotOwner',
+        )
+
+    def get_host_migrate_steps(self):
+        return [{
+            'Migrating':
+                self.get_base_host_migrate_steps() +
+                self.get_host_migrate_steps_cleaning_up()
+        }]
+
+    def get_database_migrate_steps(self):
+        return [{
+            'Migrating': self.get_base_host_migrate_steps()
+        }, {
+            'Cleaning up': self.get_host_migrate_steps_cleaning_up()
+        }]
+
 class MySQLFoxHAAWS(MySQLFoxHA):
     def get_deploy_steps(self):
         return [{
