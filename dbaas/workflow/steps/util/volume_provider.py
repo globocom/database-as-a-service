@@ -26,6 +26,10 @@ class VolumeProviderBase(BaseInstanceStep):
         return self.host.volumes.get(is_active=True)
 
     @property
+    def volume_migrate(self):
+        return self.host_migrate.host.volumes.get(is_active=True)
+
+    @property
     def provider(self):
         return self.credential.project
 
@@ -61,12 +65,16 @@ class VolumeProviderBase(BaseInstanceStep):
             raise IndexError(response.content, response)
         volume.delete()
 
-    def get_path(self, volume):
+    def get_volume(self, volume):
         url = "{}volume/{}".format(self.base_url, volume.identifier)
         response = get(url)
         if not response.ok:
             raise IndexError(response.content, response)
-        return response.json()['path']
+        return response.json()
+
+    def get_path(self, volume):
+        vol = self.get_volume(volume)
+        return vol['path']
 
     def run_script(self, script):
         output = {}
