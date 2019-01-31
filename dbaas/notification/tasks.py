@@ -50,78 +50,6 @@ def rollback_database(dest_database):
     dest_database.delete()
 
 
-@app.task(bind=True)
-def create_database(
-    self, name, plan, environment, team, project, description,
-    subscribe_to_email_events=True, task_history=None, user=None,
-    is_protected=False
-):
-    AuditRequest.new_request("create_database", user, "localhost")
-    try:
-
-        worker_name = get_worker_name()
-        task_history = TaskHistory.register(
-            request=self.request, task_history=task_history, user=user,
-            worker_name=worker_name
-        )
-
-        LOG.info(
-            "id: %s | task: %s | kwargs: %s | args: %s" % (
-                self.request.id, self.request.task, self.request.kwargs,
-                str(self.request.args)
-            )
-        )
-
-        task_history.update_details(persist=True, details="Loading Process...")
-
-        result = make_infra(
-            plan=plan, environment=environment, name=name, team=team,
-            project=project, description=description,
-            subscribe_to_email_events=subscribe_to_email_events,
-            task=task_history, is_protected=is_protected
-        )
-
-        if result['created'] is False:
-            if 'exceptions' in result:
-                error = "\n".join(
-                    ": ".join(err) for err in result['exceptions']['error_codes']
-                )
-                traceback = "\nException Traceback\n".join(
-                    result['exceptions']['traceback']
-                )
-                error = "{}\n{}\n{}".format(error, traceback, error)
-            else:
-                error = "There is not any infra-structure to allocate this database."
-
-            task_history.update_status_for(
-                TaskHistory.STATUS_ERROR, details=error
-            )
-            return
-
-        task_history.update_dbid(db=result['database'])
-        task_history.update_status_for(
-            TaskHistory.STATUS_SUCCESS, details='Database created successfully'
-        )
-
-        return
-
-    except Exception as e:
-        traceback = full_stack()
-        LOG.error("Ops... something went wrong: %s" % e)
-        LOG.error(traceback)
-
-        if 'result' in locals() and result['created']:
-            destroy_infra(
-                databaseinfra=result['databaseinfra'], task=task_history)
-
-        task_history.update_status_for(
-            TaskHistory.STATUS_ERROR, details=traceback)
-        return
-
-    finally:
-        AuditRequest.cleanup_request()
-
-
 def create_database_with_retry(
     name, plan, environment, team, project, description, task,
     subscribe_to_email_events, is_protected, user, retry_from
@@ -599,115 +527,6 @@ def handle_zabbix_alarms(database):
                                              integration=integration)
 
     return factory_for(databaseinfra=database.databaseinfra, credentials=credentials)
-
-
-@app.task(bind=True)
-def upgrade_mongodb_24_to_30(self, database, user, task_history=None):
-
-    def upgrade_create_zabbix_alarms():
-        try:
-            create_zabbix_alarms(database)
-        except Exception as e:
-            message = "Could not create Zabbix alarms: {}".format(e)
-            task_history.update_status_for(
-                TaskHistory.STATUS_ERROR, details=message
-            )
-            LOG.error(message)
-
-    from workflow.settings import MONGODB_UPGRADE_24_TO_30_SINGLE
-    from workflow.settings import MONGODB_UPGRADE_24_TO_30_HA
-    from util import build_dict
-    from workflow.workflow import start_workflow
-
-    worker_name = get_worker_name()
-    task_history = TaskHistory.register(request=self.request, task_history=task_history,
-                                        user=user, worker_name=worker_name)
-
-    databaseinfra = database.databaseinfra
-    driver = databaseinfra.get_driver()
-
-    instances = driver.get_database_instances()
-    source_plan = databaseinfra.plan
-    target_plan = source_plan.engine_equivalent_plan
-
-    source_engine = databaseinfra.engine
-    target_engine = source_engine.engine_upgrade_option
-
-    if source_plan.is_ha:
-        steps = MONGODB_UPGRADE_24_TO_30_HA
-    else:
-        steps = MONGODB_UPGRADE_24_TO_30_SINGLE
-
-    stop_now = False
-
-    if not target_plan:
-        msg = "There is not Engine Equivalent Plan!"
-        stop_now = True
-
-    if not target_engine:
-        msg = "There is not Engine Upgrade Option!"
-        stop_now = True
-
-    if database.status != Database.ALIVE or not database.database_status.is_alive:
-        msg = "Database is not alive!"
-        stop_now = True
-
-    if database.is_being_used_elsewhere():
-        msg = "Database is being used by another task!"
-        stop_now = True
-
-    if not source_engine.version.startswith('2.4.'):
-        msg = "Database version must be 2.4!"
-        stop_now = True
-
-    if target_engine and target_engine.version != '3.0.12':
-        msg = "Target database version must be 3.0.12!"
-        stop_now = True
-
-    if stop_now:
-        task_history.update_status_for(TaskHistory.STATUS_ERROR, details=msg)
-        LOG.info("Upgrade finished")
-        return
-
-    try:
-        delete_zabbix_alarms(database)
-    except Exception as e:
-        message = "Could not delete Zabbix alarms: {}".format(e)
-        task_history.update_status_for(
-            TaskHistory.STATUS_ERROR, details=message
-        )
-        LOG.error(message)
-        return
-
-    try:
-        workflow_dict = build_dict(steps=steps,
-                                   databaseinfra=databaseinfra,
-                                   instances=instances,
-                                   source_plan=source_plan,
-                                   target_plan=target_plan,
-                                   source_engine=source_engine,
-                                   target_engine=target_engine)
-
-        start_workflow(workflow_dict=workflow_dict, task=task_history)
-
-        if workflow_dict['exceptions']['traceback']:
-            error = "\n".join(": ".join(err) for err in workflow_dict['exceptions']['error_codes'])
-            traceback = "\nException Traceback\n".join(workflow_dict['exceptions']['traceback'])
-            error = "{}\n{}\n{}".format(error, traceback, error)
-            task_history.update_status_for(TaskHistory.STATUS_ERROR, details=error)
-            LOG.info("MongoDB Upgrade finished with errors")
-            upgrade_create_zabbix_alarms()
-            return
-
-        task_history.update_status_for(
-            TaskHistory.STATUS_SUCCESS, details='MongoDB sucessfully upgraded!')
-
-        LOG.info("MongoDB Upgrade finished")
-    except Exception as e:
-        task_history.update_status_for(TaskHistory.STATUS_ERROR, details=e)
-        LOG.warning("MongoDB Upgrade finished with errors")
-
-    upgrade_create_zabbix_alarms()
 
 
 @app.task(bind=True)
@@ -1389,22 +1208,12 @@ class TaskRegister(object):
         task_params.update(**{'user': user} if register_user else {})
         task = cls.create_task(task_params)
 
-        try:
-            get_deploy_instances(plan.replication_topology.class_path)
-        except NotImplementedError:
-            return create_database.delay(
-                name=name, plan=plan, environment=environment, team=team,
-                project=project, description=description,
-                subscribe_to_email_events=subscribe_to_email_events,
-                task_history=task, user=user, is_protected=is_protected
-            )
-        else:
-            return create_database_with_retry(
-                name=name, plan=plan, environment=environment, team=team,
-                project=project, description=description, task=task,
-                subscribe_to_email_events=subscribe_to_email_events,
-                is_protected=is_protected, user=user, retry_from=retry_from
-            )
+        return create_database_with_retry(
+            name=name, plan=plan, environment=environment, team=team,
+            project=project, description=description, task=task,
+            subscribe_to_email_events=subscribe_to_email_events,
+            is_protected=is_protected, user=user, retry_from=retry_from
+        )
 
     @classmethod
     def database_create_rollback(cls, rollback_from, user, extra_task_params=None):
