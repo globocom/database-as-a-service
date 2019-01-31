@@ -12,11 +12,11 @@ from logical.models import Database
 from physical.models import Plan, DatabaseInfra, Instance
 from util import email_notifications, get_worker_name, full_stack
 from util.decorators import only_one
-from util.providers import make_infra, clone_infra, destroy_infra, \
+from util.providers import clone_infra, destroy_infra, \
     get_database_upgrade_setting, get_resize_settings, \
     get_database_change_parameter_setting, \
     get_reinstallvm_steps_setting, \
-    get_database_change_parameter_retry_steps_count, get_deploy_instances, \
+    get_database_change_parameter_retry_steps_count, \
     get_database_configure_ssl_setting, get_deploy_settings
 from simple_audit.models import AuditRequest
 from system.models import Configuration
@@ -30,7 +30,6 @@ from maintenance.tasks import restore_database, node_zone_migrate, \
     node_zone_migrate_rollback, database_environment_migrate, \
     database_environment_migrate_rollback
 from maintenance.models import DatabaseDestroy
-from util.providers import get_deploy_settings, get_deploy_instances
 
 
 LOG = get_task_logger(__name__)
@@ -1331,24 +1330,6 @@ class TaskRegister(object):
         delay_params.update(**{'since_step': since_step} if since_step else {})
 
         upgrade_database.delay(**delay_params)
-
-    @classmethod
-    def upgrade_mongodb_24_to_30(cls, database, user):
-
-        task_params = {
-            'task_name': "upgrade_mongodb_24_to_30",
-            'arguments': "Upgrading MongoDB 2.4 to 3.0",
-            'database': database,
-            'user': user
-        }
-
-        task = cls.create_task(task_params)
-
-        upgrade_mongodb_24_to_30.delay(
-            database=database,
-            task_history=task,
-            user=user
-        )
 
     @classmethod
     def database_reinstall_vm(cls, instance, user, since_step=None):
