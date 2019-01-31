@@ -109,7 +109,7 @@ class MongoDBSingle(BaseTopology):
         }]
 
 
-class MongoDBReplicaset(BaseMongoDB):
+class MongoDBReplicaset(BaseTopology):
 
     def get_upgrade_steps_description(self):
         return 'Upgrading to MongoDB 3.6'
