@@ -129,6 +129,21 @@ class Provider(object):
 
         return vip
 
+    def update_vip_reals(self, vip_indentifier, vip_reals):
+        url = "{}/{}/{}/vip/{}/reals".format(
+            self.credential.endpoint,
+            self.provider,
+            self.environment,
+            vip_indentifier
+        )
+        data = {
+            "vip_reals": vip_reals,
+        }
+
+        response = self._request(put, url, json=data, timeout=600)
+        if response.ok:
+            raise VipProviderUpdateVipRealsException(response.content, response)
+
     def register_instance(self, infra, zone_id, instance_id, port):
         url = "{}/{}/{}/vip/register_target".format(
             self.credential.endpoint, self.provider, self.environment
