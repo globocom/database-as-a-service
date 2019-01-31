@@ -247,7 +247,7 @@ class DatabaseCreateCallTestCase(TestCase, TaskCallBaseTestCase):
     create_fields_to_validate = ['task_name', 'arguments']
     delay_fields_to_validate = [
         'user', 'name', 'plan', 'environment', 'team', 'project', 'description',
-        'subscribe_to_email_events', 'task_history', 'is_protected'
+        'subscribe_to_email_events', 'task', 'is_protected'
     ]
 
 
@@ -269,7 +269,7 @@ class DatabaseCreateCallWithUserTestCase(TestCase, TaskCallBaseTestCase):
     create_fields_to_validate = ['task_name', 'arguments', 'user']
     delay_fields_to_validate = [
         'user', 'name', 'plan', 'environment', 'team', 'project', 'description',
-        'subscribe_to_email_events', 'task_history', 'is_protected'
+        'subscribe_to_email_events', 'task', 'is_protected'
     ]
 
 
