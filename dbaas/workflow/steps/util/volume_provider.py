@@ -125,16 +125,49 @@ class VolumeProviderBase(BaseInstanceStep):
             raise IndexError(response.content, response)
         return response.json()
 
-    def get_mount_command(self, volume):
+    def remove_access(self, volume, host):
+        url = "{}access/{}/{}".format(
+            self.base_url,
+            volume.identifier,
+            host.address
+        )
+        response = delete(url)
+        if not response.ok:
+            raise IndexError(response.content, response)
+        return response.json()
+
+    def get_mount_command(self, volume, data_directory="/data", fstab=True):
         url = "{}commands/{}/mount".format(self.base_url, volume.identifier)
-        response = get(url)
+        data = {
+            'with_fstab': fstab,
+            'data_directory': data_directory
+        }
+        response = post(url, json=data)
         if not response.ok:
             raise IndexError(response.content, response)
         return response.json()['command']
 
-    def get_umount_command(self, volume):
+    def get_copy_files_command(self, volume, source_dir, dest_dir):
+        snap = volume.backups.order_by('created_at').first()
+        if not snap:
+            raise Exception("No snapshot found")
+        url = "{}commands/copy_files".format(self.base_url)
+        data = {
+            'snap_identifier': snap.snapshopt_id,
+            'source_dir': source_dir,
+            'dest_dir': dest_dir
+        }
+        response = post(url, json=data)
+        if not response.ok:
+            raise IndexError(response.content, response)
+        return response.json()['command']
+
+    def get_umount_command(self, volume, data_directory="/data"):
         url = "{}commands/{}/umount".format(self.base_url, volume.identifier)
-        response = get(url)
+        data = {
+            'data_directory': data_directory
+        }
+        response = post(url, json=data)
         if not response.ok:
             raise IndexError(response.content, response)
         return response.json()['command']
@@ -153,6 +186,13 @@ class VolumeProviderBase(BaseInstanceStep):
 
     def undo(self):
         pass
+
+
+class VolumeProviderBaseMigrate(VolumeProviderBase):
+
+    @property
+    def host(self):
+        return self.host_migrate.host
 
 
 class NewVolume(VolumeProviderBase):
@@ -199,6 +239,106 @@ class MountDataVolume(VolumeProviderBase):
 
     def undo(self):
         pass
+
+
+class MountDataVolumeMigrate(MountDataVolume):
+
+    def __unicode__(self):
+        return "Mounting old volume in new instance on dir {}...".format(self.directory)
+
+    @property
+    def directory(self):
+        return "/data_migrate"
+
+    @property
+    def host_migrate_volume(self):
+        return self.host_migrate.host.volumes.get(is_active=True)
+
+    def do(self):
+        script = self.get_mount_command(
+            self.host_migrate_volume,
+            data_directory=self.directory,
+            fstab=False
+        )
+        self.run_script(script)
+
+    def undo(self):
+        script = self.get_umount_command(
+            self.host_migrate_volume,
+            data_directory=self.directory,
+        )
+        self.run_script(script)
+
+
+class UmountDataVolumeMigrate(MountDataVolumeMigrate):
+
+    def __unicode__(self):
+        return "Dismounting old volume in new instance on dir {}...".format(self.directory)
+
+    def do(self):
+        return super(UmountDataVolumeMigrate, self).undo()
+
+    def undo(self):
+        return super(UmountDataVolumeMigrate, self).do()
+
+
+class MakeDatabaseBackupMigrate(VolumeProviderBase):
+
+    def __unicode__(self):
+        return "Doing backup for copy..."
+
+    def do(self):
+        from backup.tasks import make_instance_snapshot_backup
+        from backup.models import BackupGroup
+        group = BackupGroup()
+        group.save()
+        snapshot = make_instance_snapshot_backup(
+            self.instance,
+            {},
+            group,
+            provider_class=VolumeProviderBaseMigrate
+        )
+
+        if not snapshot:
+            raise Exception('Backup was unsuccessful in {}'.format(self.instance))
+
+        snapshot.is_automatic = False
+        snapshot.save()
+
+        if snapshot.has_warning:
+            raise Exception('Backup was warning')
+
+    def undo(self):
+        pass
+
+
+class CopyFilesMigrate(VolumeProviderBase):
+
+    def __unicode__(self):
+        return "Copying data to {} from {}...".format(
+            self.source_directory,
+            self.dest_directory
+        )
+
+    @property
+    def source_directory(self):
+        return "/data_migrate"
+
+    @property
+    def dest_directory(self):
+        return "/data"
+
+    def do(self):
+        script = self.get_copy_files_command(
+            self.volume_migrate,
+            self.source_directory,
+            self.dest_directory
+        )
+        self.run_script(script)
+
+    def undo(self):
+        pass
+
 
 
 class MountDataVolumeRestored(MountDataVolume):
@@ -328,6 +468,30 @@ class AddAccessRestoredVolume(AddAccess):
     @property
     def volume(self):
         return self.latest_disk
+
+
+class AddAccessMigrate(AddAccess):
+    def __unicode__(self):
+        return "Adding permission to old disk..."
+
+    @property
+    def volume(self):
+        return self.host_migrate.host.volumes.get(is_active=True)
+
+    def undo(self):
+        self.remove_access(self.volume, self.host)
+        raise Exception("O_O")
+
+
+class RemoveAccessMigrate(AddAccessMigrate):
+    def __unicode__(self):
+        return "Removing permission to old disk..."
+
+    def do(self):
+        return super(RemoveAccessMigrate, self).undo()
+
+    def undo(self):
+        return super(RemoveAccessMigrate, self).do()
 
 
 class TakeSnapshot(VolumeProviderBase):
