@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from django.core.exceptions import ObjectDoesNotExist
-from requests import post, delete
+from requests import post, delete, put
 from dbaas_credentials.models import CredentialType
 from dbaas_dnsapi.utils import get_dns_name_domain, add_dns_record
 from physical.models import Vip
@@ -14,31 +14,35 @@ CHANGE_MASTER_ATTEMPS = 4
 CHANGE_MASTER_SECONDS = 15
 
 
-class HostProviderException(Exception):
+class VipProviderException(Exception):
     pass
 
 
-class HostProviderCreateVIPException(HostProviderException):
+class VipProviderCreateVIPException(VipProviderException):
     pass
 
 
-class HostProviderRegisterVIPException(HostProviderException):
+class VipProviderUpdateVipRealsException(VipProviderException):
     pass
 
 
-class HostProviderWaitVIPReadyException(HostProviderException):
+class VipProviderRegisterVIPException(VipProviderException):
     pass
 
 
-class HostProviderDestroyVIPException(HostProviderException):
+class VipProviderWaitVIPReadyException(VipProviderException):
     pass
 
 
-class HostProviderListZoneException(HostProviderException):
+class VipProviderDestroyVIPException(VipProviderException):
     pass
 
 
-class HostProviderInfoException(HostProviderException):
+class VipProviderListZoneException(VipProviderException):
+    pass
+
+
+class VipProviderInfoException(VipProviderException):
     pass
 
 
@@ -113,7 +117,7 @@ class Provider(object):
 
         response = self._request(post, url, json=data, timeout=600)
         if response.status_code != 201:
-            raise HostProviderCreateVIPException(response.content, response)
+            raise VipProviderCreateVIPException(response.content, response)
 
         content = response.json()
 
@@ -138,7 +142,7 @@ class Provider(object):
 
         response = self._request(post, url, json=data, timeout=600)
         if not response.ok:
-            raise HostProviderRegisterVIPException(response.content, response)
+            raise VipProviderRegisterVIPException(response.content, response)
 
     def wait_vip_ready(self, infra):
         url = "{}/{}/{}/vip/healthy".format(
@@ -150,7 +154,7 @@ class Provider(object):
 
         response = self._request(post, url, json=data, timeout=600)
         if not response.ok:
-            raise HostProviderWaitVIPReadyException(response.content, response)
+            raise VipProviderWaitVIPReadyException(response.content, response)
 
         response = response.json()
         return response['healthy']
@@ -163,7 +167,7 @@ class Provider(object):
         )
         response = self._request(delete, url)
         if not response.ok:
-            raise HostProviderDestroyVIPException(response.content, response)
+            raise VipProviderDestroyVIPException(response.content, response)
 
 
 class VipProviderStep(BaseInstanceStep):
