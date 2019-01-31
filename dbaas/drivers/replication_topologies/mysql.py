@@ -11,19 +11,6 @@ LOG = logging.getLogger(__name__)
 
 
 class BaseMysql(BaseTopology):
-    def deploy_first_steps(self):
-        return (
-            'workflow.steps.util.deploy.build_databaseinfra.BuildDatabaseInfra',
-            'workflow.steps.mysql.deploy.create_virtualmachines.CreateVirtualMachine',
-            'workflow.steps.mysql.deploy.create_secondary_ip.CreateSecondaryIp',
-            'workflow.steps.mysql.deploy.create_dns.CreateDns',
-            'workflow.steps.util.deploy.create_nfs.CreateNfs',
-            'workflow.steps.mysql.deploy.init_database.InitDatabase',
-            'workflow.steps.util.deploy.check_database_connection.CheckDatabaseConnection',
-            'workflow.steps.util.deploy.check_dns.CheckDns',
-            'workflow.steps.util.deploy.start_monit.StartMonit',
-        )
-
     def get_resize_extra_steps(self):
         return (
             'workflow.steps.util.database.CheckIsUp',
@@ -31,17 +18,6 @@ class BaseMysql(BaseTopology):
             'workflow.steps.util.agents.Start',
             'workflow.steps.util.database.WaitForReplication',
         )
-
-    def deploy_last_steps(self):
-        return (
-            'workflow.steps.util.deploy.build_database.BuildDatabase',
-            'workflow.steps.util.deploy.check_database_binds.CheckDatabaseBinds',
-        )
-
-    def get_clone_steps(self):
-        return self.deploy_first_steps() + self.deploy_last_steps() + (
-            'workflow.steps.util.clone.clone_database.CloneDatabase',
-        ) + self.monitoring_steps()
 
     def switch_master(self, driver):
         raise NotImplementedError()
@@ -170,32 +146,6 @@ class MySQLSingle(BaseMysql):
 
 
 class MySQLFoxHA(MySQLSingle):
-
-    def deploy_first_steps(self):
-        return (
-            'workflow.steps.util.deploy.build_databaseinfra.BuildDatabaseInfra',
-            'workflow.steps.mysql.deploy.create_virtualmachines_fox.CreateVirtualMachine',
-            'workflow.steps.mysql.deploy.create_vip.CreateVip',
-            'workflow.steps.mysql.deploy.create_dns_foxha.CreateDnsFoxHA',
-            'workflow.steps.util.deploy.create_nfs.CreateNfs',
-            'workflow.steps.mysql.deploy.init_database_foxha.InitDatabaseFoxHA',
-            'workflow.steps.mysql.deploy.check_pupet.CheckVMName',
-            'workflow.steps.mysql.deploy.check_pupet.CheckPuppetIsRunning',
-            'workflow.steps.mysql.deploy.config_vms_foreman.ConfigVMsForeman',
-            'workflow.steps.mysql.deploy.run_pupet_setup.RunPuppetSetup',
-            'workflow.steps.mysql.deploy.config_fox.ConfigFox',
-            'workflow.steps.mysql.deploy.check_replication.CheckReplicationFoxHA',
-            'workflow.steps.util.deploy.check_database_connection.CheckDatabaseConnection',
-            'workflow.steps.util.deploy.check_dns.CheckDns',
-            'workflow.steps.util.deploy.start_monit.StartMonit',
-        )
-
-    def deploy_last_steps(self):
-        return (
-            'workflow.steps.util.deploy.build_database.BuildDatabase',
-            'workflow.steps.util.deploy.check_database_binds.CheckDatabaseBinds',
-        )
-
     def _get_fox_provider(self, driver):
         databaseinfra = driver.databaseinfra
 
