@@ -129,7 +129,7 @@ class Provider(object):
 
         return vip
 
-    def update_vip_reals(self, vip_indentifier, vip_reals):
+    def update_vip_reals(self, vip_reals, vip_indentifier):
         url = "{}/{}/{}/vip/{}/reals".format(
             self.credential.endpoint,
             self.provider,
@@ -302,8 +302,9 @@ class UpdateVipReals(VipProviderStep):
 
     def do(self):
         self.update_vip_reals(
+            self.equipments,
             vip_identifier=self.vip.identifier,
-            self.equipments
+
         )
 
 
