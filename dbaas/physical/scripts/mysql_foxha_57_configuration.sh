@@ -17,6 +17,19 @@ createconfigdbfile()
 [mysqld_safe]
 syslog
 
+[heartbeat]
+host=heartbeat
+database=heartbeat
+user=heartbeat
+password=pulse
+
+[client]
+port                            = 3306
+socket                          = /var/lib/mysql/mysql.sock
+
+[mysql]
+no_auto_rehash
+
 [mysqld]
 {% if SSL_CONFIGURED %}
 ssl                             = ON
@@ -63,6 +76,10 @@ wait_timeout                    = {{ configuration.wait_timeout.value }}
 interactive_timeout             = {{ configuration.interactive_timeout.value }}
 log_bin_trust_function_creators = {{ configuration.log_bin_trust_function_creators.value }}
 
+# Dual Master
+read_only                       = 1
+#skip_slave_start                = 1
+
 # Binary Logging
 log_bin                         = /data/repl/mysql-bin
 relay_log                       = /data/repl/mysql-relay
@@ -70,14 +87,11 @@ sync_binlog                     = {{ configuration.sync_binlog.value }}
 expire_logs_days                = {{ configuration.expire_logs_days.value }}
 max_binlog_size                 = {{ configuration.max_binlog_size.value }}
 log_slave_updates               = {{ configuration.log_slave_updates.value }}
-log_slave_updates
-
 
 # Slow Query Logging
 slow_query_log_file             = /data/logs/mysql-slow.log
 long_query_time                 = {{ configuration.long_query_time.value }}
 slow_query_log                  = {{ configuration.slow_query_log.value }}
-
 
 # MyISAM
 key_buffer_size                 = {{ configuration.key_buffer_size.value }}
@@ -104,11 +118,31 @@ innodb_max_purge_lag            = {{ configuration.innodb_max_purge_lag.value }}
 
 explicit_defaults_for_timestamp = {{ configuration.explicit_defaults_for_timestamp.value }}
 
+# Audit
+audit_log_format                = {{ configuration.audit_log_format.value}}
+audit_log_file                  = {{ configuration.audit_log_file.value}}
+audit_log_rotate_on_size        = {{configuration.audit_log_rotate_on_size.value}}
+audit_log_exclude_accounts      = "{{configuration.audit_log_exclude_accounts.value}}"
+audit_log_policy                = {{configuration.audit_log_policy.value}}
+
 !include /etc/server_id.cnf
 
 EOF_DBAAS
 ) > /etc/my.cnf
     die_if_error "Error setting my.cnf"
+
+}
+
+createserveriddbfile()
+{
+    echo ""; echo $(date "+%Y-%m-%d %T") "- Creating the server id db file"
+
+(cat <<EOF_DBAAS
+[mysqld]
+server_id={{SERVERID}}
+EOF_DBAAS
+) >  /etc/server_id.cnf
+    die_if_error "Error setting server_id file"
 
 }
 
@@ -120,10 +154,12 @@ configure_graylog()
     /etc/init.d/rsyslog restart
 }
 
+
 {% if CONFIGFILE_ONLY %}
     createconfigdbfile
 {% else %}
     createconfigdbfile
+    createserveriddbfile
     configure_graylog
 {% endif %}
 
