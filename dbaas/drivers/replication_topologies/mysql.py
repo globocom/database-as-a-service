@@ -144,6 +144,18 @@ class MySQLSingle(BaseMysql):
             )
         }]
 
+    def get_upgrade_steps_extra(self):
+        return super(MySQLSingle, self).get_upgrade_steps_extra() + (
+            'workflow.steps.util.mysql.SetFilePermission',
+            'workflow.steps.util.plan.Configure',
+            'workflow.steps.util.database.Start',
+            'workflow.steps.util.database.CheckIsUp',
+            'workflow.steps.util.mysql.RunMySQLUpgrade',
+            'workflow.steps.util.mysql.InstallAuditPlugin',
+            'workflow.steps.util.mysql.CheckIfAuditPluginIsInstalled',
+            'workflow.steps.util.database.Stop',
+            'workflow.steps.util.plan.ConfigureForUpgrade',
+        )
 
 class MySQLFoxHA(MySQLSingle):
     def _get_fox_provider(self, driver):
@@ -360,19 +372,6 @@ class MySQLFoxHA(MySQLSingle):
             )
         }]
 
-    def get_upgrade_steps_extra(self):
-        return super(MySQLFoxHA, self).get_upgrade_steps_extra() + (
-            'workflow.steps.util.vm.CheckHostName',
-            'workflow.steps.util.puppet.WaitingBeStarted',
-            'workflow.steps.util.puppet.WaitingBeDone',
-            'workflow.steps.util.puppet.ExecuteIfProblem',
-            'workflow.steps.util.puppet.WaitingBeDone',
-            'workflow.steps.util.puppet.CheckStatus',
-            'workflow.steps.util.foreman.SetupDSRC',
-            'workflow.steps.util.puppet.Execute',
-            'workflow.steps.util.puppet.CheckStatus',
-        )
-
     def get_reinstallvm_steps(self):
         return [{
             'Disable monitoring and alarms': (
@@ -424,6 +423,7 @@ class MySQLFoxHA(MySQLSingle):
         }] + [{
             self.get_upgrade_steps_description(): (
                 'workflow.steps.util.vm.ChangeMaster',
+                'workflow.steps.util.database.CheckIfSwitchMaster',
                 'workflow.steps.util.database.Stop',
                 'workflow.steps.util.database.CheckIsDown',
                 'workflow.steps.util.foreman.DeleteHost',
@@ -433,11 +433,39 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.vm.WaitingBeReady',
                 'workflow.steps.util.vm.UpdateOSDescription',
             ) + self.get_upgrade_steps_extra() + (
-                'workflow.steps.util.database.Stop',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.metric_collector.RestartTelegraf',
             ),
         }] + self.get_upgrade_steps_final()
+
+    def get_upgrade_steps_extra(self):
+        return (
+            'workflow.steps.util.volume_provider.MountDataVolume',
+            'workflow.steps.util.plan.InitializationForUpgrade',
+            'workflow.steps.util.plan.ConfigureForUpgrade',
+            'workflow.steps.util.metric_collector.ConfigureTelegraf',
+            'workflow.steps.util.vm.CheckHostName',
+            'workflow.steps.util.puppet.WaitingBeStarted',
+            'workflow.steps.util.puppet.WaitingBeDone',
+            'workflow.steps.util.puppet.ExecuteIfProblem',
+            'workflow.steps.util.puppet.WaitingBeDone',
+            'workflow.steps.util.puppet.CheckStatus',
+            'workflow.steps.util.foreman.SetupDSRC',
+            'workflow.steps.util.puppet.Execute',
+            'workflow.steps.util.puppet.CheckStatus',
+            'workflow.steps.util.mysql.SetFilePermission',
+            'workflow.steps.util.plan.Configure',
+            'workflow.steps.util.mysql.SkipSlaveStart',
+            'workflow.steps.util.mysql.DisableLogBin',
+            'workflow.steps.util.database.Start',
+            'workflow.steps.util.database.CheckIsUp',
+            'workflow.steps.util.mysql.RunMySQLUpgrade',
+            'workflow.steps.util.mysql.InstallAuditPlugin',
+            'workflow.steps.util.mysql.CheckIfAuditPluginIsInstalled',
+            'workflow.steps.util.database.Stop',
+            'workflow.steps.util.plan.ConfigureForUpgrade',
+        )
 
     def get_configure_ssl_steps(self):
         return [{
