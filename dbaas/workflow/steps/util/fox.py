@@ -130,7 +130,7 @@ class ConfigureNodeMigrate(ConfigureNode):
 
 
     def undo(self):
-        self.provider.delete_node(self.infra.name, self.instance.address)
+        self.provider.delete_node(self.infra.name, self.host.address)
 
 
 
