@@ -260,3 +260,17 @@ class DisableLogBin(MySQLStep):
 
     def do(self):
         self.run_script(self.script)
+
+
+class SetReplicationHostMigrate(MySQLStep):
+
+    def __unicode__(self):
+        return "Set replication on host migrate..."
+
+    def do(self):
+        master_instance = self.driver.get_master_instance()
+        log_file, log_pos = get_replication_information_from_file(self.host)
+        change_master_to(master_instance, self.host.address, log_file, log_pos)
+
+    def undo(self):
+        raise Exception("There is no rollback for this step.")
