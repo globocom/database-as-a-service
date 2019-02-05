@@ -98,6 +98,42 @@ class ConfigureNode(FoxHA):
         self.provider.delete_node(self.infra.name, self.instance.address)
 
 
+class RemoveNodeMigrate(FoxHA):
+
+    def __unicode__(self):
+        return "Removing FoxHA node {}...".format(self.instance.address)
+
+    def do(self):
+        self.provider.delete_node(self.infra.name, self.instance.address)
+
+    def undo(self):
+        mode = 'read_only'
+
+        self.provider.add_node(
+            self.infra.name, self.instance.dns, self.instance.address,
+            self.instance.port, mode, 'enabled'
+        )
+
+
+class ConfigureNodeMigrate(ConfigureNode):
+
+    def __unicode__(self):
+        return "Changing FoxHA node..."
+
+    def do(self):
+        mode = 'read_only'
+
+        self.provider.add_node(
+            self.infra.name, self.instance.dns, self.host.address,
+            self.instance.port, mode, 'enabled'
+        )
+
+
+    def undo(self):
+        self.provider.delete_node(self.infra.name, self.instance.address)
+
+
+
 class Start(FoxHA):
 
     def __unicode__(self):
