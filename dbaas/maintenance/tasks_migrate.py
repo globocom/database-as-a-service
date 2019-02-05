@@ -20,7 +20,8 @@ def node_zone_migrate(host, zone, new_environment, task, since_step=None):
 
     steps = get_steps(host)
     result = steps_for_instances(
-        steps, [instance], task, host_migrate.update_step, since_step
+        steps, [instance], task, host_migrate.update_step, since_step,
+        step_manager=host_migrate
     )
     host_migrate = HostMigrate.objects.get(id=host_migrate.id)
     if result:
