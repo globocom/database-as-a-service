@@ -133,19 +133,19 @@ class Provider(object):
 
         return vip
 
-    def update_vip_reals(self, vip_reals, vip_indentifier):
+    def update_vip_reals(self, vip_reals, vip_identifier):
         url = "{}/{}/{}/vip/{}/reals".format(
             self.credential.endpoint,
             self.provider,
             self.environment,
-            vip_indentifier
+            vip_identifier
         )
         data = {
             "vip_reals": vip_reals,
         }
 
         response = self._request(put, url, json=data, timeout=600)
-        if response.ok:
+        if not response.ok:
             raise VipProviderUpdateVipRealsException(response.content, response)
 
     def add_real(self, infra, real_id, port):
@@ -299,7 +299,7 @@ class UpdateVipReals(VipProviderStep):
         equipments = []
         for instance in self.infra.instances.all():
             host = instance.hostname
-            if self.host_migrate and host.future_host:
+            if self.host_migrate and host.future_host and self.rollback is False:
                 host = host.future_host
             vm_info = self.host_prov_client.get_vm_by_host(host)
             equipment = {
@@ -314,12 +314,19 @@ class UpdateVipReals(VipProviderStep):
     def vip(self):
         return Vip.objects.get(infra=self.infra)
 
-    def do(self):
-        self.update_vip_reals(
+    def update_vip_reals(self):
+        self.provider.update_vip_reals(
             self.equipments,
             vip_identifier=self.vip.identifier,
-
         )
+
+    def do(self):
+        self.rollback = False
+        self.update_vip_reals()
+
+    def undo(self):
+        self.rollback = True
+        self.update_vip_reals()
 
 
 class AddReal(VipProviderStep):
