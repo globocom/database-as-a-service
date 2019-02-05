@@ -600,7 +600,7 @@ class MySQLFoxHA(MySQLSingle):
             'workflow.steps.util.fox.ConfigureNodeMigrate',
             'workflow.steps.util.vip_provider.UpdateVipReals',
             'workflow.steps.util.fox.Start',
-            'workflow.steps.util.fox.IsReplicationOk'
+            'workflow.steps.util.fox.IsReplicationOk',
             'workflow.steps.util.vm.CheckAccessToMaster',
             'workflow.steps.util.vm.CheckAccessFromMaster',
             'workflow.steps.util.acl.ReplicateAclsMigrate',
