@@ -7,6 +7,14 @@ from physical.models import Volume
 from base import BaseInstanceStep
 
 
+class VolumeProviderException(Exception):
+    pass
+
+
+class VolumeProviderRemoveSnapshotMigrate(VolumeProviderException):
+    pass
+
+
 class VolumeProviderBase(BaseInstanceStep):
 
     def __init__(self, instance):
@@ -147,13 +155,11 @@ class VolumeProviderBase(BaseInstanceStep):
             raise IndexError(response.content, response)
         return response.json()['command']
 
-    def get_copy_files_command(self, volume, source_dir, dest_dir):
-        snap = volume.backups.order_by('created_at').first()
-        if not snap:
-            raise Exception("No snapshot found")
+    def get_copy_files_command(self, snapshot, source_dir, dest_dir):
+        # snap = volume.backups.order_by('created_at').first()
         url = "{}commands/copy_files".format(self.base_url)
         data = {
-            'snap_identifier': snap.snapshopt_id,
+            'snap_identifier': snapshot.snapshopt_id,
             'source_dir': source_dir,
             'dest_dir': dest_dir
         }
@@ -282,7 +288,7 @@ class UmountDataVolumeMigrate(MountDataVolumeMigrate):
         return super(UmountDataVolumeMigrate, self).do()
 
 
-class MakeDatabaseBackupMigrate(VolumeProviderBase):
+class TakeSnapshotMigrate(VolumeProviderBase):
 
     def __unicode__(self):
         return "Doing backup for copy..."
@@ -304,9 +310,28 @@ class MakeDatabaseBackupMigrate(VolumeProviderBase):
 
         snapshot.is_automatic = False
         snapshot.save()
+        self.step_manager.snapshot = snapshot
+        self.step_manager.save()
 
         if snapshot.has_warning:
             raise Exception('Backup was warning')
+
+    def undo(self):
+        pass
+
+
+class RemoveSnapshotMigrate(VolumeProviderBase):
+
+    def __unicode__(self):
+        return "Removing backup used on migrate..."
+
+    def do(self):
+        from backup.tasks import remove_snapshot_backup
+        if not self.step_manager.snapshot:
+            raise VolumeProviderRemoveSnapshotMigrate(
+                'No snaoshot found on {} instance for migrate'.format(self.step_manager)
+            )
+        remove_snapshot_backup(self.step_manager.snapshot, self, force=1)
 
     def undo(self):
         pass
@@ -330,7 +355,7 @@ class CopyFilesMigrate(VolumeProviderBase):
 
     def do(self):
         script = self.get_copy_files_command(
-            self.volume_migrate,
+            self.step_manager.snapshot,
             self.source_directory,
             self.dest_directory
         )
@@ -480,7 +505,6 @@ class AddAccessMigrate(AddAccess):
 
     def undo(self):
         self.remove_access(self.volume, self.host)
-        raise Exception("O_O")
 
 
 class RemoveAccessMigrate(AddAccessMigrate):
