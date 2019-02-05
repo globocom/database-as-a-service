@@ -2,7 +2,6 @@
 from __future__ import absolute_import, unicode_literals
 import simple_audit
 import logging
-from sets import Set
 from django.db import models
 from django.contrib.auth.models import User, Group, Permission
 from django.core.exceptions import ValidationError
