@@ -47,12 +47,13 @@ class VolumeProviderBase(BaseInstanceStep):
             self.credential.endpoint, self.provider, self.environment
         )
 
-    def create_volume(self, group, size_kb, to_address):
+    def create_volume(self, group, size_kb, to_address, snapshot_id=None):
         url = self.base_url + "volume/new"
         data = {
             "group": group,
             "size_kb": size_kb,
-            "to_address": to_address
+            "to_address": to_address,
+            "snapshot_id": snapshot_id
         }
 
         response = post(url, json=data)
@@ -209,8 +210,14 @@ class NewVolume(VolumeProviderBase):
     def do(self):
         if not self.instance.is_database:
             return
+        snapshot = None
+        if self.host_migrate and self.step_manager.snapshot:
+            snapshot = self.step_manager.snapshot
         self.create_volume(
-            self.infra.name, self.disk_offering.size_kb, self.host.address
+            self.infra.name,
+            self.disk_offering.size_kb,
+            self.host.address,
+            snapshot_id=snapshot.snapshopt_id if snapshot else None
         )
 
     def undo(self):
