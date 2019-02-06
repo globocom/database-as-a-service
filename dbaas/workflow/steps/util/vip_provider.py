@@ -162,7 +162,7 @@ class Provider(object):
         if not response.ok:
             raise VipProviderAddVIPRealException(response.content, response)
 
-    def remove_real(self, infra, real_id):
+    def remove_real(self, infra, real_id, port):
         vip_id = Vip.objects.get(infra=infra).identifier
         url = "{}/{}/{}/vip/{}/reals/{}".format(
             self.credential.endpoint, self.provider, self.environment, vip_id,
@@ -381,6 +381,15 @@ class RemoveReal(VipProviderStep):
 
     def undo(self):
         pass
+
+class RemoveRealMigrate(RemoveReal):
+
+    def __unicode__(self):
+        return "Removing old real from vip..."
+
+    @property
+    def host(self):
+        return self.host_migrate.host
 
 
 class WaitVipReady(VipProviderStep):
