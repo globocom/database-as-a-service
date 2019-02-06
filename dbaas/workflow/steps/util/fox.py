@@ -153,6 +153,8 @@ class IsReplicationOk(FoxHA):
 
     def do(self):
         driver = self.infra.get_driver()
+        if self.host_migrate and self.instance.hostname.future_host:
+            self.instance.address = self.instance.hostname.future_host.address
         for _ in range(CHECK_ATTEMPTS):
             if driver.is_replication_ok(self.instance):
                 if driver.is_heartbeat_replication_ok(self.instance):
