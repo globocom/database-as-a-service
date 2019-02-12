@@ -42,6 +42,32 @@ class TeamUsersManager(models.Manager):
         return User.objects.filter(id__in=[user.id for user in Team.users_without_team()])
 
 
+class Organization(BaseModel):
+    name = models.CharField(
+        verbose_name=_('Name'),
+        help_text='Organization name',
+        max_length=100, null=False, blank=False)
+    grafana_orgid = models.CharField(
+        verbose_name=_('Grafana Org ID'),
+        help_text='Organization id used on grafana dashboard',
+        max_length=10, null=True, blank=True)
+    grafana_hostgroup = models.CharField(
+        verbose_name=_('Grafana Hostgroup'),
+        max_length=50, null=True, blank=True)
+    grafana_datasource = models.CharField(
+        verbose_name=_('Grafana Datasource'),
+        max_length=50, null=True, blank=True)
+    grafana_endpoint = models.CharField(
+        verbose_name=_('Grafana Endpoint'),
+        max_length=255, null=True, blank=True)
+    external = models.BooleanField(
+        verbose_name=_("External"), default=False,
+        help_text='Whether the organization is external')
+
+    def __unicode__(self):
+        return self.name
+
+
 class Team(BaseModel):
 
     name = models.CharField(_('name'), max_length=80, unique=True)
@@ -59,6 +85,9 @@ class Team(BaseModel):
     users = models.ManyToManyField(User)
     objects = models.Manager()  # The default manager.
     user_objects = TeamUsersManager()  # The Dahl-specific manager.
+    organization = models.ForeignKey(
+        Organization, related_name="team_organization",
+        unique=False, null=True, blank=True, on_delete=models.SET_NULL)
 
     class Meta:
         # putting permissions for account user and role in team model, because it
