@@ -13,9 +13,13 @@ filerpermission()
 {
     mkdir -p /data/data
     die_if_error "Error creating data dir"
+    mkdir -p /data/logs
+    die_if_error "Error creating logs dir"
     chown redis:redis /data
     die_if_error "Error changing datadir permission"
     chown -R redis:redis /data/data
+    die_if_error "Error changing datadir permission"
+    chown -R redis:redis /data/logs
     die_if_error "Error changing datadir permission"
     chmod g+r /data
     die_if_error "Error changing datadir permission"
