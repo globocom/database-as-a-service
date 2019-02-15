@@ -18,6 +18,7 @@ class Migration(SchemaMigration):
             ('grafana_hostgroup', self.gf('django.db.models.fields.CharField')(max_length=50, null=True, blank=True)),
             ('grafana_datasource', self.gf('django.db.models.fields.CharField')(max_length=50, null=True, blank=True)),
             ('grafana_endpoint', self.gf('django.db.models.fields.CharField')(max_length=255, null=True, blank=True)),
+            ('external', self.gf('django.db.models.fields.BooleanField')(default=False)),
         ))
         db.send_create_signal(u'account', ['Organization'])
 
@@ -39,6 +40,7 @@ class Migration(SchemaMigration):
         u'account.organization': {
             'Meta': {'object_name': 'Organization'},
             'created_at': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
+            'external': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'grafana_datasource': ('django.db.models.fields.CharField', [], {'max_length': '50', 'null': 'True', 'blank': 'True'}),
             'grafana_endpoint': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True', 'blank': 'True'}),
             'grafana_hostgroup': ('django.db.models.fields.CharField', [], {'max_length': '50', 'null': 'True', 'blank': 'True'}),
