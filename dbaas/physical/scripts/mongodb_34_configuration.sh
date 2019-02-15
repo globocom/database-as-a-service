@@ -62,7 +62,8 @@ processManagement:
 ## Log Options
 ########################################
 systemLog:
-    destination: syslog
+    destination: file
+    path: /data/logs/mongodb.log
     quiet: {{ configuration.quiet.value }}
     verbosity: {{ configuration.logLevel.value }}
 
