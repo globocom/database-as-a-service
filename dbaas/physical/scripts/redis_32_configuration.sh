@@ -144,17 +144,17 @@ loglevel {{ configuration.loglevel.value }}
 # Specify the log file name. Also 'stdout' can be used to force
 # Redis to log on the standard output. Note that if you use standard
 # output for logging but daemonize, logs will be sent to /dev/null
-# logfile /path/redis.log
+logfile /data/logs/redis.log
 
 # To enable logging to the system logger, just set 'syslog-enabled' to yes,
 # and optionally update the other syslog parameters to suit your needs.
-syslog-enabled yes
+# syslog-enabled no
 
 # Specify the syslog identity.
-syslog-ident redis
+# syslog-ident redis
 
 # Specify the syslog facility.  Must be USER or between LOCAL0-LOCAL7.
-syslog-facility local0
+# syslog-facility local0
 
 # Set the number of databases. The default database is DB 0, you can select
 # a different one on a per-connection basis using SELECT <dbid> where
@@ -795,6 +795,39 @@ EOF_DBAAS_CONFIGDBFILE
 
 }
 
+createconfigdbrsyslogfile()
+{
+    echo ""; echo $(date "+%Y-%m-%d %T") "- Creating the rsyslog config file"
+
+(cat <<EOF_DBAAS_CONFIGDBFILE
+# redis.conf 3.2 rsyslog.d configuration
+
+\$ModLoad imfile
+\$InputFileName /data/logs/redis.log
+\$InputFileTag redis:
+\$InputFileStateFile redis-log-dbaas
+
+\$InputFileSeverity info
+\$InputFileFacility local0
+\$InputRunFileMonitor
+
+\$ModLoad imfile
+\$InputFileName /data/logs/redis-sentinel.log 
+\$InputFileTag redis-sentinel:
+\$InputFileStateFile redis-sentinel-dbaas
+
+\$InputFileSeverity info
+\$InputFileFacility local0
+\$InputRunFileMonitor
+
+EOF_DBAAS_CONFIGDBFILE
+) > /etc/rsyslog.d/redis.conf
+    die_if_error "Error setting redis.conf"
+
+    chown redis:redis /etc/rsyslog.d/redis.conf
+    die_if_error "Error changing redis conf file owner"
+}
+
 create_config_http()
 {
     echo ""; echo $(date "+%Y-%m-%d %T") "- Creating http config file"
@@ -963,6 +996,11 @@ createconfigsentinelfile()
 # port <sentinel-port>
 # The port that this sentinel instance will run on
 port {{SENTINELPORT}}
+
+# Specify the log file name. Also the empty string can be used to force
+# Sentinel to log on the standard output. Note that if you use standard
+# output for logging but daemonize, logs will be sent to /dev/null
+logfile /data/logs/redis-sentinel.log
 
 # sentinel announce-ip <ip>
 # sentinel announce-port <port>
@@ -1141,13 +1179,13 @@ sentinel failover-timeout {{MASTERNAME}} 60000
 
 # To enable logging to the system logger, just set 'syslog-enabled' to yes,
 # and optionally update the other syslog parameters to suit your needs.
-syslog-enabled yes
+# syslog-enabled yes
 
 # Specify the syslog identity.
-syslog-ident sentinel
+# syslog-ident sentinel
 
 # Specify the syslog facility.  Must be USER or between LOCAL0-LOCAL7.
-syslog-facility local0
+# syslog-facility local0
 
 # By default Sentinel does not run as a daemon. Use 'yes' if you need it.
 # Note that Redis will write a pid file in /var/run/sentinel.pid when daemonized.
@@ -1192,6 +1230,7 @@ configure_graylog()
 {% else %}
 
     create_config_http
+    createconfigdbrsyslogfile
     configure_graylog
 
     {% if ONLY_SENTINEL %}
