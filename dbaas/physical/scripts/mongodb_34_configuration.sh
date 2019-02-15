@@ -109,6 +109,30 @@ EOF_DBAAS
     die_if_error "Error changing mongodb conf file owner"
 }
 
+createconfigdbrsyslogfile()
+{
+    echo ""; echo $(date "+%Y-%m-%d %T") "- Creating the rsyslog config file"
+
+(cat <<EOF_DBAAS
+#mongodb.conf 3.4 rsyslog.d configuration
+
+\$ModLoad imfile
+\$InputFileName /data/logs/mongodb.log
+\$InputFileTag mongod.27017:
+\$InputFileStateFile mongodb-log-dbaas
+
+\$InputFileSeverity info
+\$InputFileFacility local0
+\$InputRunFileMonitor
+
+EOF_DBAAS
+) > /etc/rsyslog.d/mongodb.conf
+    die_if_error "Error setting mongodb.conf"
+
+    chown mongodb:mongodb /etc/rsyslog.d/mongodb.conf
+    die_if_error "Error changing mongodb conf file owner"
+}
+
 createmongodbkeyfile()
 {
     echo ""; echo $(date "+%Y-%m-%d %T") "- Creating the mongodb key file"
@@ -145,6 +169,7 @@ configure_graylog()
     createconfigdbfile
 {% else %}
     createconfigdbfile
+    createconfigdbrsyslogfile
     createmongodbkeyfile
     configure_graylog
 {% endif %}
