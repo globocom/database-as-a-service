@@ -43,25 +43,29 @@ class TeamUsersManager(models.Manager):
 
 class Organization(BaseModel):
     name = models.CharField(
-        verbose_name=_('Name'),
-        help_text='Organization name',
+        verbose_name = 'Name',
+        help_text='Organization name.',
         max_length=100, null=False, blank=False)
     grafana_orgid = models.CharField(
-        verbose_name=_('Grafana Org ID'),
-        help_text='Organization id used on grafana dashboard',
+        verbose_name = 'Grafana Org ID',
+        help_text='External organization id. Used on grafana dashboard.',
         max_length=10, null=True, blank=True)
     grafana_hostgroup = models.CharField(
-        verbose_name=_('Grafana Hostgroup'),
+        verbose_name= 'Grafana Hostgroup',
+        help_text='External grafana Hostgroup. Used to retrinct access on metrics.',
         max_length=50, null=True, blank=True)
     grafana_datasource = models.CharField(
-        verbose_name=_('Grafana Datasource'),
+        verbose_name = 'Grafana Datasource',
+        help_text='Datasource used on external organization.',
         max_length=50, null=True, blank=True)
     grafana_endpoint = models.CharField(
-        verbose_name=_('Grafana Endpoint'),
+        verbose_name = 'Grafana Endpoint',
+        help_text='Endpoint used on external organization.',
         max_length=255, null=True, blank=True)
     external = models.BooleanField(
-        verbose_name=_("External"), default=False,
-        help_text='Whether the organization is external')
+        verbose_name = "External",
+        default=False,
+        help_text='Whether the organization is external. If checked, all fields become mandatory.')
 
     def __unicode__(self):
         return self.name
@@ -70,6 +74,22 @@ class Organization(BaseModel):
         if self.external and self.grafana_hostgroup:
             return self.grafana_hostgroup
         return None
+
+    def clean(self):
+        if self.external:
+            error = {}
+            msg_field_required = ('This field is required',)
+            if not self.grafana_orgid:
+                error['grafana_orgid'] = msg_field_required
+            if not self.grafana_hostgroup:
+                error['grafana_hostgroup'] = msg_field_required
+            if not self.grafana_datasource:
+                error['grafana_datasource'] = msg_field_required
+            if not self.grafana_endpoint:
+                error['grafana_endpoint'] = msg_field_required
+
+            if error:
+                raise ValidationError(error)
 
 
 class Team(BaseModel):
