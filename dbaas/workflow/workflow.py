@@ -76,7 +76,7 @@ def steps_for_instances_with_rollback(group_of_steps, instances, task):
 
 def steps_for_instances(
         list_of_groups_of_steps, instances, task, step_counter_method=None,
-        since_step=0, undo=False
+        since_step=0, undo=False, step_manager=None
 ):
     is_retry = since_step > 0
     success, locked_databases = lock_databases_for(instances, task, is_retry)
@@ -113,6 +113,8 @@ def steps_for_instances(
                 try:
                     step_class = import_by_path(step)
                     step_instance = step_class(instance)
+                    if step_manager:
+                        step_instance.step_manager = step_manager
                     str_step_instance = str(step_instance)
                     if undo:
                         str_step_instance = 'Rollback ' + str_step_instance

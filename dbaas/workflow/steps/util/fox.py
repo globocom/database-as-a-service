@@ -5,7 +5,6 @@ from dbaas_credentials.models import CredentialType
 from util import get_credentials_for
 from base import BaseInstanceStep
 from physical.models import Vip
-from django.core.exceptions import ObjectDoesNotExist
 
 
 CHECK_ATTEMPTS = 20
@@ -92,6 +91,42 @@ class ConfigureNode(FoxHA):
         self.provider.delete_node(self.infra.name, self.instance.address)
 
 
+class RemoveNodeMigrate(FoxHA):
+
+    def __unicode__(self):
+        return "Removing FoxHA node {}...".format(self.instance.address)
+
+    def do(self):
+        self.provider.delete_node(self.infra.name, self.instance.address)
+
+    def undo(self):
+        mode = 'read_only'
+
+        self.provider.add_node(
+            self.infra.name, self.instance.dns, self.instance.address,
+            self.instance.port, mode, 'enabled'
+        )
+
+
+class ConfigureNodeMigrate(ConfigureNode):
+
+    def __unicode__(self):
+        return "Changing FoxHA node..."
+
+    def do(self):
+        mode = 'read_only'
+
+        self.provider.add_node(
+            self.infra.name, self.instance.dns, self.host.address,
+            self.instance.port, mode, 'enabled'
+        )
+
+
+    def undo(self):
+        self.provider.delete_node(self.infra.name, self.host.address)
+
+
+
 class Start(FoxHA):
 
     def __unicode__(self):
@@ -111,6 +146,8 @@ class IsReplicationOk(FoxHA):
 
     def do(self):
         driver = self.infra.get_driver()
+        if self.host_migrate and self.instance.hostname.future_host:
+            self.instance.address = self.instance.hostname.future_host.address
         for _ in range(CHECK_ATTEMPTS):
             if driver.is_replication_ok(self.instance):
                 if driver.is_heartbeat_replication_ok(self.instance):

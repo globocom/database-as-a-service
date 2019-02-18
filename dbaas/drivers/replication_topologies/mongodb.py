@@ -306,11 +306,11 @@ class MongoDBReplicaset(BaseTopology):
             'workflow.steps.mongodb.database.AddInstanceToReplicaSet',
             'workflow.steps.util.database.WaitForReplication',
             'workflow.steps.mongodb.database.SetNotEligible',
-            'workflow.steps.util.metric_collector.ConfigureTelegraf',
-            'workflow.steps.util.metric_collector.RestartTelegraf',
             'workflow.steps.util.zabbix.DestroyAlarms',
             'workflow.steps.util.dns.ChangeEndpoint',
             'workflow.steps.util.dns.CheckIsReady',
+            'workflow.steps.util.metric_collector.ConfigureTelegraf',
+            'workflow.steps.util.metric_collector.RestartTelegraf',
             'workflow.steps.util.zabbix.CreateAlarms',
             'workflow.steps.util.disk.ChangeSnapshotOwner',
         )

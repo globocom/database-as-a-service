@@ -1446,7 +1446,8 @@ class TaskRegister(object):
         configure_ssl_database.delay(**delay_params)
 
     @classmethod
-    def host_migrate(cls, host, zone, new_environment, user, since_step=None):
+    def host_migrate(cls, host, zone, new_environment, user,
+                     since_step=None, step_manager=None):
         task_params = {
             'task_name': "host_migrate",
             'arguments': "Host: {}, Zone: {}, New Environment: {}".format(
@@ -1458,7 +1459,7 @@ class TaskRegister(object):
         task = cls.create_task(task_params)
         return node_zone_migrate.delay(
             host=host, zone=zone, new_environment=new_environment, task=task,
-            since_step=since_step
+            since_step=since_step, step_manager=step_manager
         )
 
     @classmethod
