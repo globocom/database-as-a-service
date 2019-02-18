@@ -625,8 +625,6 @@ def database_metrics(request, context, database):
 
     context['grafana_url_sofia'] = url
 
-    print "grafana_url_zabbix:", grafana_url_zabbix
-
     return render_to_response(
         "logical/database/details/metrics_tab.html",
         context, RequestContext(request)
