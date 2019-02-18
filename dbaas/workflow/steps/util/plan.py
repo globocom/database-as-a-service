@@ -118,6 +118,8 @@ class PlanStepNewInfra(PlanStep):
     @property
     def database(self):
         from logical.models import Database
+        if self.infra.databases.exists():
+            return self.infra.databases.first()
         database = Database()
         database.name = self.infra.databases_create.last().name
         return database
