@@ -80,9 +80,9 @@ def unlock_instance(driver, instance, client):
     LOG.debug('Instance {} is unlocked'.format(instance))
 
 
-def make_instance_snapshot_backup(instance, error, group):
+def make_instance_snapshot_backup(instance, error, group, provider_class=VolumeProviderBase):
     LOG.info("Make instance backup for {}".format(instance))
-    provider = VolumeProviderBase(instance)
+    provider = provider_class(instance)
     infra = instance.databaseinfra
     database = infra.databases.first()
 
