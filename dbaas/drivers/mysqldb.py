@@ -72,6 +72,19 @@ class MySQL(BaseDriver):
         endpoint = self.databaseinfra.endpoint_dns.split(':')
         return endpoint[0], int(endpoint[1])
 
+    def get_master_instance(self, ignore_instance=None):
+        instances = self.get_database_instances()
+        if ignore_instance:
+            instances.remove(ignore_instance)
+        for instance in instances:
+            try:
+                if self.check_instance_is_master(instance):
+                    return instance
+            except ConnectionError:
+                continue
+
+        return None
+
     def __get_admin_connection(self, instance=None):
         """
         endpoint is on the form HOST:PORT
