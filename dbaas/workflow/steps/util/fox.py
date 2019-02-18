@@ -52,13 +52,8 @@ class ConfigureGroup(OnlyFirstInstance):
 
     @property
     def vip_ip(self):
-        try:
-            vip_ip = get_vip_ip_from_databaseinfra(self.infra)
-        except ObjectDoesNotExist:
-            vip = Vip.get_vip_from_databaseinfra(self.infra)
-            vip_ip = vip.vip_ip
-
-        return vip_ip
+        vip = Vip.get_vip_from_databaseinfra(self.infra)
+        return vip.vip_ip
 
     def do(self):
         if not self.is_valid:
