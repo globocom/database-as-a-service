@@ -50,6 +50,8 @@ class DatabaseStep(BaseInstanceStep):
         return self._execute_init_script('stop')
 
     def __is_instance_status(self, expected):
+        if self.host_migrate and self.instance.hostname.future_host:
+            self.instance.address = self.instance.hostname.future_host.address
         for _ in range(CHECK_ATTEMPTS):
             try:
                 status = self.driver.check_status(instance=self.instance)
