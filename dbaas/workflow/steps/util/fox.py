@@ -1,12 +1,10 @@
 from time import sleep
-from dbaas_networkapi.utils import get_vip_ip_from_databaseinfra
 from dbaas_foxha.dbaas_api import DatabaseAsAServiceApi
 from dbaas_foxha.provider import FoxHAProvider
 from dbaas_credentials.models import CredentialType
 from util import get_credentials_for
 from base import BaseInstanceStep
 from physical.models import Vip
-from django.core.exceptions import ObjectDoesNotExist
 
 
 CHECK_ATTEMPTS = 20
