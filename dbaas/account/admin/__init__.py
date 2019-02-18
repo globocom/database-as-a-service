@@ -8,11 +8,11 @@ from ..models import Team, Role, AccountUser, Organization
 from .user import CustomUserAdmin
 from .role import RoleAdmin
 from .team import TeamAdmin
-#from .organization import OrganizationAdmin
+from .organization import OrganizationAdmin
 
 admin.site.unregister(User)
 admin.site.unregister(Group)
 admin.site.register(AccountUser, CustomUserAdmin)
 admin.site.register(Role, RoleAdmin)
 admin.site.register(Team, TeamAdmin)
-admin.site.register(Organization)
+admin.site.register(Organization, OrganizationAdmin)
