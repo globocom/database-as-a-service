@@ -67,6 +67,11 @@ class Organization(BaseModel):
     def __unicode__(self):
         return self.name
 
+    def get_grafana_hostgroup_external_org(self):
+        if self.external and self.grafana_hostgroup:
+            return self.grafana_hostgroup
+        return None
+
 
 class Team(BaseModel):
 
