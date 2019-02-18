@@ -148,7 +148,7 @@ class AddOrganizationHostGroup(ZabbixStep):
         if not organization:
             return
 
-        hostgroup_name = organization.grafana_hostgroup
+        hostgroup_name = organization.get_grafana_hostgroup_external_org()
         if not hostgroup_name:
             return
 
