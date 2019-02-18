@@ -7,7 +7,7 @@ from django.utils.translation import ugettext_lazy as _
 from dateutil import tz
 from datetime import datetime
 from account.models import Team
-from backup.models import BackupGroup
+from backup.models import BackupGroup, Snapshot
 from logical.models import Database, Project
 from physical.models import Host, Plan, Environment, DatabaseInfra, Instance, \
     Offering
@@ -715,6 +715,9 @@ class HostMigrate(DatabaseMaintenanceTask):
     zone = models.CharField(max_length=50, null=False)
     database_migrate = models.ForeignKey(
         DatabaseMigrate, null=True, blank=True, related_name="hosts"
+    )
+    snapshot = models.ForeignKey(
+        Snapshot, null=True, blank=True, related_name="snapshot_migrate"
     )
 
     def __unicode__(self):
