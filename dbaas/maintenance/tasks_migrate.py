@@ -9,9 +9,13 @@ def get_steps(host):
     return get_host_migrate_steps(class_path)
 
 
-def node_zone_migrate(host, zone, new_environment, task, since_step=None):
+def node_zone_migrate(host, zone, new_environment, task, since_step=None, step_manager=None):
     instance = host.instances.first()
-    host_migrate = HostMigrate()
+    if step_manager:
+        host_migrate = step_manager
+        host_migrate.id = None
+    else:
+        host_migrate = HostMigrate()
     host_migrate.task = task
     host_migrate.host = instance.hostname
     host_migrate.zone = zone
@@ -20,7 +24,8 @@ def node_zone_migrate(host, zone, new_environment, task, since_step=None):
 
     steps = get_steps(host)
     result = steps_for_instances(
-        steps, [instance], task, host_migrate.update_step, since_step
+        steps, [instance], task, host_migrate.update_step, since_step,
+        step_manager=host_migrate
     )
     host_migrate = HostMigrate.objects.get(id=host_migrate.id)
     if result:

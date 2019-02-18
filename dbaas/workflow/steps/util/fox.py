@@ -1,12 +1,10 @@
 from time import sleep
-from dbaas_networkapi.utils import get_vip_ip_from_databaseinfra
 from dbaas_foxha.dbaas_api import DatabaseAsAServiceApi
 from dbaas_foxha.provider import FoxHAProvider
 from dbaas_credentials.models import CredentialType
 from util import get_credentials_for
 from base import BaseInstanceStep
 from physical.models import Vip
-from django.core.exceptions import ObjectDoesNotExist
 
 
 CHECK_ATTEMPTS = 20
@@ -52,13 +50,8 @@ class ConfigureGroup(OnlyFirstInstance):
 
     @property
     def vip_ip(self):
-        try:
-            vip_ip = get_vip_ip_from_databaseinfra(self.infra)
-        except ObjectDoesNotExist:
-            vip = Vip.get_vip_from_databaseinfra(self.infra)
-            vip_ip = vip.vip_ip
-
-        return vip_ip
+        vip = Vip.get_vip_from_databaseinfra(self.infra)
+        return vip.vip_ip
 
     def do(self):
         if not self.is_valid:
@@ -98,6 +91,42 @@ class ConfigureNode(FoxHA):
         self.provider.delete_node(self.infra.name, self.instance.address)
 
 
+class RemoveNodeMigrate(FoxHA):
+
+    def __unicode__(self):
+        return "Removing FoxHA node {}...".format(self.instance.address)
+
+    def do(self):
+        self.provider.delete_node(self.infra.name, self.instance.address)
+
+    def undo(self):
+        mode = 'read_only'
+
+        self.provider.add_node(
+            self.infra.name, self.instance.dns, self.instance.address,
+            self.instance.port, mode, 'enabled'
+        )
+
+
+class ConfigureNodeMigrate(ConfigureNode):
+
+    def __unicode__(self):
+        return "Changing FoxHA node..."
+
+    def do(self):
+        mode = 'read_only'
+
+        self.provider.add_node(
+            self.infra.name, self.instance.dns, self.host.address,
+            self.instance.port, mode, 'enabled'
+        )
+
+
+    def undo(self):
+        self.provider.delete_node(self.infra.name, self.host.address)
+
+
+
 class Start(FoxHA):
 
     def __unicode__(self):
@@ -117,6 +146,8 @@ class IsReplicationOk(FoxHA):
 
     def do(self):
         driver = self.infra.get_driver()
+        if self.host_migrate and self.instance.hostname.future_host:
+            self.instance.address = self.instance.hostname.future_host.address
         for _ in range(CHECK_ATTEMPTS):
             if driver.is_replication_ok(self.instance):
                 if driver.is_heartbeat_replication_ok(self.instance):

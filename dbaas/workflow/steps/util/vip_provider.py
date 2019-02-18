@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from django.core.exceptions import ObjectDoesNotExist
-from requests import post, delete
+from requests import post, delete, put
 from dbaas_credentials.models import CredentialType
 from dbaas_dnsapi.utils import get_dns_name_domain, add_dns_record
 from physical.models import Vip
@@ -14,31 +14,39 @@ CHANGE_MASTER_ATTEMPS = 4
 CHANGE_MASTER_SECONDS = 15
 
 
-class HostProviderException(Exception):
+class VipProviderException(Exception):
     pass
 
 
-class HostProviderCreateVIPException(HostProviderException):
+class VipProviderCreateVIPException(VipProviderException):
     pass
 
 
-class HostProviderRegisterVIPException(HostProviderException):
+class VipProviderUpdateVipRealsException(VipProviderException):
     pass
 
 
-class HostProviderWaitVIPReadyException(HostProviderException):
+class VipProviderAddVIPRealException(VipProviderException):
     pass
 
 
-class HostProviderDestroyVIPException(HostProviderException):
+class VipProviderRemoveVIPRealException(VipProviderException):
     pass
 
 
-class HostProviderListZoneException(HostProviderException):
+class VipProviderWaitVIPReadyException(VipProviderException):
     pass
 
 
-class HostProviderInfoException(HostProviderException):
+class VipProviderDestroyVIPException(VipProviderException):
+    pass
+
+
+class VipProviderListZoneException(VipProviderException):
+    pass
+
+
+class VipProviderInfoException(VipProviderException):
     pass
 
 
@@ -113,7 +121,7 @@ class Provider(object):
 
         response = self._request(post, url, json=data, timeout=600)
         if response.status_code != 201:
-            raise HostProviderCreateVIPException(response.content, response)
+            raise VipProviderCreateVIPException(response.content, response)
 
         content = response.json()
 
@@ -125,20 +133,45 @@ class Provider(object):
 
         return vip
 
-    def register_instance(self, infra, zone_id, instance_id, port):
-        url = "{}/{}/{}/vip/register_target".format(
-            self.credential.endpoint, self.provider, self.environment
+    def update_vip_reals(self, vip_reals, vip_identifier):
+        url = "{}/{}/{}/vip/{}/reals".format(
+            self.credential.endpoint,
+            self.provider,
+            self.environment,
+            vip_identifier
         )
         data = {
-            "vip_id": Vip.objects.get(infra=infra).identifier,
+            "vip_reals": vip_reals,
+        }
+
+        response = self._request(put, url, json=data, timeout=600)
+        if not response.ok:
+            raise VipProviderUpdateVipRealsException(response.content, response)
+
+    def add_real(self, infra, real_id, port):
+        vip_id = Vip.objects.get(infra=infra).identifier
+        url = "{}/{}/{}/vip/{}/reals".format(
+            self.credential.endpoint, self.provider, self.environment, vip_id
+        )
+        data = {
             "port": port,
-            "instance_id": instance_id,
-            "zone_id": zone_id
+            "real_id": real_id,
         }
 
         response = self._request(post, url, json=data, timeout=600)
         if not response.ok:
-            raise HostProviderRegisterVIPException(response.content, response)
+            raise VipProviderAddVIPRealException(response.content, response)
+
+    def remove_real(self, infra, real_id, port):
+        vip_id = Vip.objects.get(infra=infra).identifier
+        url = "{}/{}/{}/vip/{}/reals/{}".format(
+            self.credential.endpoint, self.provider, self.environment, vip_id,
+            real_id
+        )
+
+        response = self._request(delete, url, timeout=600)
+        if not response.ok:
+            raise VipProviderRemoveVIPRealException(response.content, response)
 
     def wait_vip_ready(self, infra):
         url = "{}/{}/{}/vip/healthy".format(
@@ -150,7 +183,7 @@ class Provider(object):
 
         response = self._request(post, url, json=data, timeout=600)
         if not response.ok:
-            raise HostProviderWaitVIPReadyException(response.content, response)
+            raise VipProviderWaitVIPReadyException(response.content, response)
 
         response = response.json()
         return response['healthy']
@@ -163,7 +196,7 @@ class Provider(object):
         )
         response = self._request(delete, url)
         if not response.ok:
-            raise HostProviderDestroyVIPException(response.content, response)
+            raise VipProviderDestroyVIPException(response.content, response)
 
 
 class VipProviderStep(BaseInstanceStep):
@@ -257,10 +290,49 @@ class CreateVip(VipProviderStep):
             vip.delete()
 
 
-class RegisterInstance(VipProviderStep):
+class UpdateVipReals(VipProviderStep):
+    def __unicode__(self):
+        return "Update vip reals..."
+
+    @property
+    def equipments(self):
+        equipments = []
+        for instance in self.infra.instances.all():
+            host = instance.hostname
+            if self.host_migrate and host.future_host and self.rollback is False:
+                host = host.future_host
+            vm_info = self.host_prov_client.get_vm_by_host(host)
+            equipment = {
+                'host_address': host.address,
+                'port': instance.port,
+                'identifier': vm_info.identifier
+            }
+            equipments.append(equipment)
+        return equipments
+
+    @property
+    def vip(self):
+        return Vip.objects.get(infra=self.infra)
+
+    def update_vip_reals(self):
+        self.provider.update_vip_reals(
+            self.equipments,
+            vip_identifier=self.vip.identifier,
+        )
+
+    def do(self):
+        self.rollback = False
+        self.update_vip_reals()
+
+    def undo(self):
+        self.rollback = True
+        self.update_vip_reals()
+
+
+class AddReal(VipProviderStep):
 
     def __unicode__(self):
-        return "Registering instance on vip..."
+        return "Registering real on vip..."
 
     @property
     def is_valid(self):
@@ -274,15 +346,50 @@ class RegisterInstance(VipProviderStep):
     def do(self):
         if not self.is_valid:
             return
-        self.provider.register_instance(
+        self.provider.add_real(
             self.infra,
-            self.vm_properties.zone,
             self.vm_properties.identifier,
             self.instance.port
         )
 
     def undo(self):
         pass
+
+
+class RemoveReal(VipProviderStep):
+
+    def __unicode__(self):
+        return "Removing real from vip..."
+
+    @property
+    def is_valid(self):
+        try:
+            self.provider.credential
+        except IndexError:
+            return False
+        else:
+            return True
+
+    def do(self):
+        if not self.is_valid:
+            return
+        self.provider.remove_real(
+            self.infra,
+            self.vm_properties.identifier,
+            self.instance.port
+        )
+
+    def undo(self):
+        pass
+
+class RemoveRealMigrate(RemoveReal):
+
+    def __unicode__(self):
+        return "Removing old real from vip..."
+
+    @property
+    def host(self):
+        return self.host_migrate.host
 
 
 class WaitVipReady(VipProviderStep):
