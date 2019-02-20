@@ -26,6 +26,18 @@ class AccountUser(User):
         verbose_name_plural = _("users")
         verbose_name = _("user")
 
+    @property
+    def external(self):
+        can_be_external = False
+        for team in self.team_set.all():
+            if team.external:
+                can_be_external = True
+            else:
+                return False
+        if can_be_external:
+            return True
+        return False
+
 
 class Role(Group):
 
@@ -70,6 +82,14 @@ class Organization(BaseModel):
     def __unicode__(self):
         return self.name
 
+    @property
+    def databases(self):
+        dbs = []
+        for team in self.team_organization.all():
+            for database in team.databases.all():
+                dbs.append(database)
+        return dbs
+
     def get_grafana_hostgroup_external_org(self):
         if self.external and self.grafana_hostgroup:
             return self.grafana_hostgroup
@@ -96,9 +116,10 @@ class Team(BaseModel):
 
     name = models.CharField(_('name'), max_length=80, unique=True)
     email = models.EmailField(null=False, blank=False)
-    database_alocation_limit = models.PositiveSmallIntegerField(_('DB Alocation Limit'),
-                                                                default=2,
-                                                                help_text="This limits the number of databases that a team can create. 0 for unlimited resources.")
+    database_alocation_limit = models.PositiveSmallIntegerField(
+        _('DB Alocation Limit'),
+        default=2,
+        help_text="This limits the number of databases that a team can create. 0 for unlimited resources.")
     contacts = models.TextField(
         verbose_name=_("Emergency Contacts"), null=True, blank=True,
         help_text=_(
@@ -212,6 +233,11 @@ class Team(BaseModel):
             return self.contacts
         return 'Not defined. Please, contact the team'
 
+    @property
+    def external(self):
+        if self.organization and self.organization.external:
+            return True
+        return False
 
 def sync_ldap_groups_with_user(user=None):
     """
@@ -233,7 +259,7 @@ def sync_ldap_groups_with_user(user=None):
 
     return group
 
-simple_audit.register(Team, AccountUser, Role)
+simple_audit.register(Team, AccountUser, Role, Organization)
 
 
 ##########################################################################
@@ -275,6 +301,65 @@ def account_user_post_save(sender, **kwargs):
 @receiver(post_save, sender=User)
 def user_post_save(sender, **kwargs):
     user_post_save_wrapper(kwargs)
+
+@receiver(pre_save, sender=Team)
+def team_pre_save(sender, **kwargs):
+    from notification.tasks import TaskRegister
+
+    team = kwargs.get('instance')
+    if not team.id:
+        return
+    before_update_team = Team.objects.get(pk=team.pk)
+    if team.organization != before_update_team.organization:
+        if before_update_team.organization and \
+            before_update_team.organization.external:
+            for database in before_update_team.databases.all():
+                TaskRegister.update_database_monitoring(
+                    database=database,
+                    hostgroup=before_update_team.organization.grafana_hostgroup,
+                    action='remove')
+        if team.organization and team.organization.external:
+            for database in team.databases.all():
+                TaskRegister.update_database_monitoring(
+                    database=database,
+                    hostgroup=team.organization.grafana_hostgroup,
+                    action='add')
+
+
+@receiver(pre_save, sender=Organization)
+def organization_pre_save(sender, **kwargs):
+    from notification.tasks import TaskRegister
+
+    def add_monit(organization):
+        for database in organization.databases:
+            TaskRegister.update_database_monitoring(
+                database=database,
+                hostgroup=organization.grafana_hostgroup,
+                action='add')
+
+    def remove_monit(organization):
+        for database in organization.databases:
+            TaskRegister.update_database_monitoring(
+                database=database,
+                hostgroup=organization.grafana_hostgroup,
+                action='remove')
+
+    organization = kwargs.get('instance')
+    if not organization.id:
+        return
+    before_update_org = Organization.objects.get(pk=organization.pk)
+
+    if before_update_org.external != organization.external:
+        if before_update_org.external:
+            remove_monit(before_update_org)
+        if organization.external:
+            add_monit(organization)
+
+    if before_update_org.grafana_hostgroup != organization.grafana_hostgroup:
+        if before_update_org.external:
+            remove_monit(before_update_org)
+        if organization.external:
+            add_monit(organization)
 
 
 # def user_m2m_changed(sender, **kwargs):
