@@ -1067,17 +1067,18 @@ def database_pre_save(sender, **kwargs):
         if database.name != saved_object.name:
             raise AttributeError(_("Attribute name cannot be edited"))
 
-        if database.team.organization != saved_object.team.organization:
-            if saved_object.team.external:
-                TaskRegister.update_database_monitoring(
-                    database=database,
-                    hostgroup=saved_object.team.organization.grafana_hostgroup,
-                    action='remove')
-            if database.team.external:
-                TaskRegister.update_database_monitoring(
-                    database=database,
-                    hostgroup=database.team.organization.grafana_hostgroup,
-                    action='add')
+        if database.team and saved_object.team:
+            if database.team.organization != saved_object.team.organization:
+                if saved_object.team.external:
+                    TaskRegister.update_database_monitoring(
+                        database=database,
+                        hostgroup=saved_object.team.organization.grafana_hostgroup,
+                        action='remove')
+                if database.team.external:
+                    TaskRegister.update_database_monitoring(
+                        database=database,
+                        hostgroup=database.team.organization.grafana_hostgroup,
+                        action='add')
 
     else:
         # new database
