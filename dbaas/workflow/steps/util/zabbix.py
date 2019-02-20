@@ -138,6 +138,7 @@ class EnableAlarms(ZabbixStep):
     def undo(self):
         self.zabbix_provider.disable_alarms()
 
+'''
 class AddOrganizationHostGroup(ZabbixStep):
     def __unicode__(self):
         return "Adding Organization HostGroup on Zabbix alarms..."
@@ -156,5 +157,43 @@ class AddOrganizationHostGroup(ZabbixStep):
             self.zabbix_provider.add_hostgroup_on_host(
                  host_name=host_name,
                  hostgroup_name=hostgroup_name)
+'''
+
+class UpdateMonitoring(ZabbixStep):
+    def __init__(self, instance, hostgroup_name=None):
+        super(UpdateMonitoring, self).__init__(instance)
+        self.hostgroup_name = hostgroup_name
+
+    @property
+    def is_valid(self):
+        if self.hostgroup_name:
+            return True
+        return False
 
 
+class UpdateMonitoringAddHostgroup(UpdateMonitoring):
+    def __unicode__(self):
+        return "Adding HostGroup on Monitoring..."
+
+    def do(self):
+        if not self.is_valid:
+            return
+
+        for host_name in self.hosts_in_zabbix:
+            self.zabbix_provider.add_hostgroup_on_host(
+                 host_name=host_name,
+                 hostgroup_name=self.hostgroup_name)
+
+
+class UpdateMonitoringRemoveHostgroup(UpdateMonitoring):
+    def __unicode__(self):
+        return "Removing HostGroup on Monitoring..."
+
+    def do(self):
+        if not self.is_valid:
+            return
+
+        for host_name in self.hosts_in_zabbix:
+            self.zabbix_provider.remove_hostgroup_on_host(
+                 host_name=host_name,
+                 hostgroup_name=self.hostgroup_name)
