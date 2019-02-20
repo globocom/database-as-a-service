@@ -26,6 +26,7 @@ from logical.validators import database_name_evironment_constraint
 from notification.models import TaskHistory
 
 
+
 LOG = logging.getLogger(__name__)
 KB_FACTOR = 1.0 / 1024.0
 MB_FACTOR = 1.0 / 1024.0 / 1024.0
@@ -1047,6 +1048,8 @@ database post save signal. Creates the database in the driver and creates a new 
 
 @receiver(pre_save, sender=Database)
 def database_pre_save(sender, **kwargs):
+    from notification.tasks import TaskRegister
+
     database = kwargs.get('instance')
     if database.is_in_quarantine:
         if database.quarantine_dt is None:
@@ -1063,6 +1066,20 @@ def database_pre_save(sender, **kwargs):
         saved_object = Database.objects.get(id=database.id)
         if database.name != saved_object.name:
             raise AttributeError(_("Attribute name cannot be edited"))
+
+        if database.team and saved_object.team:
+            if database.team.organization != saved_object.team.organization:
+                if saved_object.team.external:
+                    TaskRegister.update_database_monitoring(
+                        database=database,
+                        hostgroup=saved_object.team.organization.grafana_hostgroup,
+                        action='remove')
+                if database.team.external:
+                    TaskRegister.update_database_monitoring(
+                        database=database,
+                        hostgroup=database.team.organization.grafana_hostgroup,
+                        action='add')
+
     else:
         # new database
         if database_name_evironment_constraint(
