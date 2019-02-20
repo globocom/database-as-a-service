@@ -138,26 +138,6 @@ class EnableAlarms(ZabbixStep):
     def undo(self):
         self.zabbix_provider.disable_alarms()
 
-'''
-class AddOrganizationHostGroup(ZabbixStep):
-    def __unicode__(self):
-        return "Adding Organization HostGroup on Zabbix alarms..."
-
-    def do(self):
-
-        organization = self.database.team.organization
-        if not organization:
-            return
-
-        hostgroup_name = organization.get_grafana_hostgroup_external_org()
-        if not hostgroup_name:
-            return
-
-        for host_name in self.hosts_in_zabbix:
-            self.zabbix_provider.add_hostgroup_on_host(
-                 host_name=host_name,
-                 hostgroup_name=hostgroup_name)
-'''
 
 class UpdateMonitoring(ZabbixStep):
     def __init__(self, instance, hostgroup_name=None):
