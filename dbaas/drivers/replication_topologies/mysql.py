@@ -623,6 +623,58 @@ class MySQLFoxHA(MySQLSingle):
             'workflow.steps.util.disk.ChangeSnapshotOwner',
         )
 
+    def get_base_database_migrate_steps(self):
+        return (
+            'workflow.steps.util.vm.ChangeMaster',
+            'workflow.steps.util.database.CheckIfSwitchMaster',
+            'workflow.steps.util.host_provider.CreateVirtualMachineMigrate',
+            'workflow.steps.util.volume_provider.NewVolume',
+            'workflow.steps.util.vm.WaitingBeReady',
+            'workflow.steps.util.vm.UpdateOSDescription',
+            'workflow.steps.util.volume_provider.MountDataVolume',
+            'workflow.steps.util.volume_provider.TakeSnapshotMigrate',
+            'workflow.steps.util.volume_provider.AddHostsAllowMigrate',
+            'workflow.steps.util.volume_provider.CreatePubKeyMigrate',
+            'workflow.steps.util.volume_provider.ScpFromSnapshotMigrate',
+            'workflow.steps.util.volume_provider.RemoveHostsAllowMigrate',
+            'workflow.steps.util.volume_provider.RemovePubKeyMigrate',
+            'workflow.steps.util.volume_provider.RemoveSnapshotMigrate',
+            'workflow.steps.util.disk.RemoveDeprecatedFiles',
+            'workflow.steps.util.plan.ConfigureForNewInfra',
+            'workflow.steps.util.mysql.SetFilePermission',
+            'workflow.steps.util.database.Start',
+            'workflow.steps.util.database.CheckIsUp',
+            'workflow.steps.util.database.StartMonit',
+            'workflow.steps.util.vm.CheckAccessToMaster',
+            'workflow.steps.util.vm.CheckAccessFromMaster',
+            'workflow.steps.util.acl.ReplicateAclsMigrate',
+            'workflow.steps.util.mysql.SetReplicationHostMigrate',
+            'workflow.steps.util.vip_provider.CreateVipMigrate',
+            # 'workflow.steps.util.vip_provider.UpdateVipReals',
+            # 'workflow.steps.util.fox.RemoveNodeMigrate',
+            # 'workflow.steps.util.fox.ConfigureNodeMigrate',
+            # 'workflow.steps.util.vip_provider.RemoveRealMigrate',
+            # 'workflow.steps.util.vip_provider.AddReal',
+            # 'workflow.steps.util.fox.IsReplicationOk',
+            # 'workflow.steps.util.zabbix.DestroyAlarms',
+            # 'workflow.steps.util.dns.ChangeEndpoint',
+            # 'workflow.steps.util.dns.CheckIsReady',
+            'workflow.steps.util.ssl.UpdateOpenSSlLib',
+            'workflow.steps.util.ssl.CreateSSLFolder',
+            'workflow.steps.util.ssl.CreateSSLConfForInfraEndPoint',
+            'workflow.steps.util.ssl.CreateSSLConfForInstanceIP',
+            'workflow.steps.util.ssl.RequestSSLForInfra',
+            'workflow.steps.util.ssl.RequestSSLForInstance',
+            'workflow.steps.util.ssl.CreateJsonRequestFileInfra',
+            'workflow.steps.util.ssl.CreateJsonRequestFileInstance',
+            'workflow.steps.util.ssl.CreateCertificateInfra',
+            'workflow.steps.util.ssl.CreateCertificateInstance',
+            'workflow.steps.util.ssl.SetSSLFilesAccessMySQL',
+            'workflow.steps.util.metric_collector.ConfigureTelegraf',
+            'workflow.steps.util.metric_collector.RestartTelegraf',
+            'workflow.steps.util.zabbix.CreateAlarms',
+            # 'workflow.steps.util.disk.ChangeSnapshotOwner',
+        )
     def get_host_migrate_steps(self):
         return [{
             'Migrating':
@@ -632,7 +684,9 @@ class MySQLFoxHA(MySQLSingle):
 
     def get_database_migrate_steps(self):
         return [{
-            'Migrating': self.get_base_host_migrate_steps()
+            'Migrating': self.get_base_database_migrate_steps()
+        }, {
+            'Updating Reals on VIP': ('workflow.steps.util.vip_provider.UpdateVipReals',)
         }, {
             'Cleaning up': self.get_host_migrate_steps_cleaning_up()
         }]
