@@ -614,6 +614,8 @@ def database_metrics(request, context, database):
 
     context['grafana_url_zabbix'] = grafana_url_zabbix
 
+    print "grafana_url_zabbix:", grafana_url_zabbix
+
     dashboard = credential.get_parameter_by_name('sofia_dbaas_database_dashboard')
     dashboard = dashboard.format(database.engine_type)
     url = "{}/{}?var-host_name={}&var-datasource={}".format(
