@@ -41,13 +41,70 @@ class TeamUsersManager(models.Manager):
         return User.objects.filter(id__in=[user.id for user in Team.users_without_team()])
 
 
+class Organization(BaseModel):
+    name = models.CharField(
+        verbose_name = 'Name',
+        help_text='Organization name.',
+        max_length=100, null=False, blank=False)
+    grafana_orgid = models.CharField(
+        verbose_name = 'Grafana Org ID',
+        help_text='External organization id. Used on grafana dashboard.',
+        max_length=10, null=True, blank=True)
+    grafana_hostgroup = models.CharField(
+        verbose_name= 'Grafana Hostgroup',
+        help_text='External grafana Hostgroup. Used to retrinct access on metrics.',
+        max_length=50, null=True, blank=True)
+    grafana_datasource = models.CharField(
+        verbose_name = 'Grafana Datasource',
+        help_text='Datasource used on external organization.',
+        max_length=50, null=True, blank=True)
+    grafana_endpoint = models.CharField(
+        verbose_name = 'Grafana Endpoint',
+        help_text='Endpoint used on external organization.',
+        max_length=255, null=True, blank=True)
+    external = models.BooleanField(
+        verbose_name = "External",
+        default=False,
+        help_text='Whether the organization is external. If checked, all fields become mandatory.')
+
+    def __unicode__(self):
+        return self.name
+
+    @property
+    def databases(self):
+        from logical.models import Database
+        return Database.objects.filter(team__organization=self)
+
+    def get_grafana_hostgroup_external_org(self):
+        if self.external and self.grafana_hostgroup:
+            return self.grafana_hostgroup
+        return None
+
+    def clean(self):
+        if self.external:
+            error = {}
+            msg_field_required = ('This field is required',)
+            if not self.grafana_orgid:
+                error['grafana_orgid'] = msg_field_required
+            if not self.grafana_hostgroup:
+                error['grafana_hostgroup'] = msg_field_required
+            if not self.grafana_datasource:
+                error['grafana_datasource'] = msg_field_required
+            if not self.grafana_endpoint:
+                error['grafana_endpoint'] = msg_field_required
+
+            if error:
+                raise ValidationError(error)
+
+
 class Team(BaseModel):
 
     name = models.CharField(_('name'), max_length=80, unique=True)
     email = models.EmailField(null=False, blank=False)
-    database_alocation_limit = models.PositiveSmallIntegerField(_('DB Alocation Limit'),
-                                                                default=2,
-                                                                help_text="This limits the number of databases that a team can create. 0 for unlimited resources.")
+    database_alocation_limit = models.PositiveSmallIntegerField(
+        _('DB Alocation Limit'),
+        default=2,
+        help_text="This limits the number of databases that a team can create. 0 for unlimited resources.")
     contacts = models.TextField(
         verbose_name=_("Emergency Contacts"), null=True, blank=True,
         help_text=_(
@@ -58,6 +115,9 @@ class Team(BaseModel):
     users = models.ManyToManyField(User)
     objects = models.Manager()  # The default manager.
     user_objects = TeamUsersManager()  # The Dahl-specific manager.
+    organization = models.ForeignKey(
+        Organization, related_name="team_organization",
+        unique=False, null=True, blank=True, on_delete=models.SET_NULL)
 
     class Meta:
         # putting permissions for account user and role in team model, because it
@@ -158,6 +218,11 @@ class Team(BaseModel):
             return self.contacts
         return 'Not defined. Please, contact the team'
 
+    @property
+    def external(self):
+        if self.organization and self.organization.external:
+            return True
+        return False
 
 def sync_ldap_groups_with_user(user=None):
     """
@@ -179,7 +244,7 @@ def sync_ldap_groups_with_user(user=None):
 
     return group
 
-simple_audit.register(Team, AccountUser, Role)
+simple_audit.register(Team, AccountUser, Role, Organization)
 
 
 ##########################################################################
@@ -221,6 +286,65 @@ def account_user_post_save(sender, **kwargs):
 @receiver(post_save, sender=User)
 def user_post_save(sender, **kwargs):
     user_post_save_wrapper(kwargs)
+
+@receiver(pre_save, sender=Team)
+def team_pre_save(sender, **kwargs):
+    from notification.tasks import TaskRegister
+
+    team = kwargs.get('instance')
+    if not team.id:
+        return
+    before_update_team = Team.objects.get(pk=team.pk)
+    if team.organization != before_update_team.organization:
+        if before_update_team.organization and \
+            before_update_team.organization.external:
+            for database in before_update_team.databases.all():
+                TaskRegister.update_database_monitoring(
+                    database=database,
+                    hostgroup=before_update_team.organization.grafana_hostgroup,
+                    action='remove')
+        if team.organization and team.organization.external:
+            for database in team.databases.all():
+                TaskRegister.update_database_monitoring(
+                    database=database,
+                    hostgroup=team.organization.grafana_hostgroup,
+                    action='add')
+
+
+@receiver(pre_save, sender=Organization)
+def organization_pre_save(sender, **kwargs):
+    from notification.tasks import TaskRegister
+
+    def add_monit(organization):
+        for database in organization.databases:
+            TaskRegister.update_database_monitoring(
+                database=database,
+                hostgroup=organization.grafana_hostgroup,
+                action='add')
+
+    def remove_monit(organization):
+        for database in organization.databases:
+            TaskRegister.update_database_monitoring(
+                database=database,
+                hostgroup=organization.grafana_hostgroup,
+                action='remove')
+
+    organization = kwargs.get('instance')
+    if not organization.id:
+        return
+    before_update_org = Organization.objects.get(pk=organization.pk)
+
+    if before_update_org.external != organization.external:
+        if before_update_org.external:
+            remove_monit(before_update_org)
+        if organization.external:
+            add_monit(organization)
+
+    if before_update_org.grafana_hostgroup != organization.grafana_hostgroup:
+        if before_update_org.external:
+            remove_monit(before_update_org)
+        if organization.external:
+            add_monit(organization)
 
 
 # def user_m2m_changed(sender, **kwargs):
