@@ -1182,6 +1182,39 @@ def configure_ssl_database(self, database, user, task, since_step=0):
             'Could not do have SSL configured.\nConfigure SSL doesn\'t have rollback'
         )
 
+@app.task(bind=True)
+def update_database_monitoring(self, task, database, hostgroup, action):
+    from workflow.steps.util.zabbix import UpdateMonitoringRemoveHostgroup
+    from workflow.steps.util.zabbix import UpdateMonitoringAddHostgroup
+
+    worker_name = get_worker_name()
+    task_history = TaskHistory.register(
+        request=self.request, worker_name=worker_name, task_history=task
+    )
+    detail = 'Update database monitoring, {} hostgroup '.format(action)
+    task_history.add_detail(detail)
+
+    try:
+
+        databaseinfra = database.databaseinfra
+        for instance in databaseinfra.instances.all():
+
+            detail = '{} hostgroup for {}'.format(action, instance)
+            task_history.add_detail(detail, level=2)
+
+            if action == 'add':
+                UpdateMonitoringAddHostgroup(instance, hostgroup).do()
+            elif action == 'remove':
+                UpdateMonitoringRemoveHostgroup(instance, hostgroup).do()
+
+    except Exception as e:
+        task_history.add_detail('Error: {}'.format(e))
+        task.set_status_error('Could not update monitoring')
+        return False
+
+    else:
+        task.set_status_success('Monitoring updated with success')
+        return True
 
 class TaskRegister(object):
     TASK_CLASS = TaskHistory
@@ -1718,5 +1751,30 @@ class TaskRegister(object):
         task = cls.create_task(task_params)
         return database_environment_migrate_rollback.delay(migrate, task)
 
+    @classmethod
+    def update_database_monitoring(cls, database, hostgroup, action):
+
+        if action not in ('add', 'remove'):
+            error = "{} is not a valid action.".format(action)
+            error += " Valid actions are 'add' and 'remove'"
+            LOG.error(error)
+            return
+
+        args = "Database: {}, Hostgroup: {}, Action: {}".format(
+                database, hostgroup, action)
+        task_params = {
+            'task_name': "update_database_monitoring",
+            'arguments': args,
+            'relevance': TaskHistory.RELEVANCE_ERROR
+        }
+
+        task = cls.create_task(task_params)
+
+        update_database_monitoring.delay(
+            task=task,
+            database=database,
+            hostgroup=hostgroup,
+            action=action,
+        )
 
     # ============  END TASKS   ============
