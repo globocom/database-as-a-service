@@ -26,18 +26,6 @@ class AccountUser(User):
         verbose_name_plural = _("users")
         verbose_name = _("user")
 
-    @property
-    def external(self):
-        can_be_external = False
-        for team in self.team_set.all():
-            if team.external:
-                can_be_external = True
-            else:
-                return False
-        if can_be_external:
-            return True
-        return False
-
 
 class Role(Group):
 
@@ -84,11 +72,8 @@ class Organization(BaseModel):
 
     @property
     def databases(self):
-        dbs = []
-        for team in self.team_organization.all():
-            for database in team.databases.all():
-                dbs.append(database)
-        return dbs
+        from logical.models import Database
+        return Database.objects.filter(team__organization=self)
 
     def get_grafana_hostgroup_external_org(self):
         if self.external and self.grafana_hostgroup:
