@@ -32,9 +32,9 @@ class RoleListFilter(SimpleListFilter):
 
 class TeamAdmin(admin.ModelAdmin):
 
-    list_display = ["name", "role", "database_limit", "email"]
+    list_display = ["name", "role", "database_limit", "email", "organization"]
     filter_horizontal = ['users']
-    list_filter = (RoleListFilter, )
+    list_filter = (RoleListFilter, "organization", )
     search_fields = ('name',)
     #form = TeamAdminForm
 
