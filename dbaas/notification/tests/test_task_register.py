@@ -233,7 +233,7 @@ class DatabaseCloneCallTestCase(TestCase, TaskCallBaseTestCase):
 class DatabaseCreateCallTestCase(TestCase, TaskCallBaseTestCase):
 
     method_to_call = 'database_create'
-    delay_to_mock = 'notification.tasks.create_database.delay'
+    delay_to_mock = 'notification.tasks.create_database_with_retry'
     call_params = {
         'user': 'user',
         'name': 'name',
@@ -247,14 +247,14 @@ class DatabaseCreateCallTestCase(TestCase, TaskCallBaseTestCase):
     create_fields_to_validate = ['task_name', 'arguments']
     delay_fields_to_validate = [
         'user', 'name', 'plan', 'environment', 'team', 'project', 'description',
-        'subscribe_to_email_events', 'task_history', 'is_protected'
+        'subscribe_to_email_events', 'task', 'is_protected'
     ]
 
 
 class DatabaseCreateCallWithUserTestCase(TestCase, TaskCallBaseTestCase):
 
     method_to_call = 'database_create'
-    delay_to_mock = 'notification.tasks.create_database.delay'
+    delay_to_mock = 'notification.tasks.create_database_with_retry'
     call_params = {
         'user': 'user',
         'name': 'name',
@@ -269,7 +269,7 @@ class DatabaseCreateCallWithUserTestCase(TestCase, TaskCallBaseTestCase):
     create_fields_to_validate = ['task_name', 'arguments', 'user']
     delay_fields_to_validate = [
         'user', 'name', 'plan', 'environment', 'team', 'project', 'description',
-        'subscribe_to_email_events', 'task_history', 'is_protected'
+        'subscribe_to_email_events', 'task', 'is_protected'
     ]
 
 
