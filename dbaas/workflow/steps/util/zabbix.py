@@ -41,6 +41,20 @@ class ZabbixStep(BaseInstanceStep):
             )
         return self.provider
 
+    @property
+    def hosts_in_zabbix(self):
+        monitors = [self.host.hostname]
+        for instance in self.instances:
+            current_dns = instance.dns
+            monitors.append(current_dns)
+
+            zabbix_extras = self.zabbix_provider.get_zabbix_databases_hosts()
+            for zabbix_extra in zabbix_extras:
+                if current_dns in zabbix_extra and zabbix_extra != current_dns:
+                    monitors.append(zabbix_extra)
+
+        return monitors
+
     def __del__(self):
         if self.provider:
             self.zabbix_provider.logout()
@@ -60,20 +74,6 @@ class DestroyAlarms(ZabbixStep):
     @property
     def environment(self):
         return self.infra.environment
-
-    @property
-    def hosts_in_zabbix(self):
-        monitors = [self.host.hostname]
-        for instance in self.instances:
-            current_dns = instance.dns
-            monitors.append(current_dns)
-
-            zabbix_extras = self.zabbix_provider.get_zabbix_databases_hosts()
-            for zabbix_extra in zabbix_extras:
-                if current_dns in zabbix_extra and zabbix_extra != current_dns:
-                    monitors.append(zabbix_extra)
-
-        return monitors
 
     def do(self):
         if not self.host:
@@ -137,3 +137,43 @@ class EnableAlarms(ZabbixStep):
 
     def undo(self):
         self.zabbix_provider.disable_alarms()
+
+
+class UpdateMonitoring(ZabbixStep):
+    def __init__(self, instance, hostgroup_name=None):
+        super(UpdateMonitoring, self).__init__(instance)
+        self.hostgroup_name = hostgroup_name
+
+    @property
+    def is_valid(self):
+        if self.hostgroup_name:
+            return True
+        return False
+
+
+class UpdateMonitoringAddHostgroup(UpdateMonitoring):
+    def __unicode__(self):
+        return "Adding HostGroup on Monitoring..."
+
+    def do(self):
+        if not self.is_valid:
+            return
+
+        for host_name in self.hosts_in_zabbix:
+            self.zabbix_provider.add_hostgroup_on_host(
+                 host_name=host_name,
+                 hostgroup_name=self.hostgroup_name)
+
+
+class UpdateMonitoringRemoveHostgroup(UpdateMonitoring):
+    def __unicode__(self):
+        return "Removing HostGroup on Monitoring..."
+
+    def do(self):
+        if not self.is_valid:
+            return
+
+        for host_name in self.hosts_in_zabbix:
+            self.zabbix_provider.remove_hostgroup_on_host(
+                 host_name=host_name,
+                 hostgroup_name=self.hostgroup_name)
