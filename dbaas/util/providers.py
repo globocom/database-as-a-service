@@ -6,46 +6,8 @@ from util import get_replication_topology_instance
 from dbaas_credentials.models import CredentialType
 from physical.models import DatabaseInfra
 from logical.models import Database
-from workflow.workflow import stop_workflow
-from workflow.workflow import start_workflow
 
 LOG = logging.getLogger(__name__)
-
-
-def make_infra(
-    plan, environment, name, team, project, description,
-    subscribe_to_email_events=True, task=None, is_protected=False
-):
-    if not plan.provider == plan.CLOUDSTACK:
-        dbinfra = DatabaseInfra.best_for(
-            plan=plan, environment=environment, name=name
-        )
-
-        if dbinfra:
-            database = Database.provision(databaseinfra=dbinfra, name=name)
-            database.team = team
-            database.description = description
-            database.project = project
-            database.subscribe_to_email_events = subscribe_to_email_events
-            database.save()
-
-            return build_dict(
-                databaseinfra=dbinfra, database=database, created=True
-            )
-        return build_dict(databaseinfra=None, created=False)
-
-    workflow_dict = build_dict(
-        name=slugify(name), plan=plan, environment=environment,
-        steps=get_deploy_settings(
-            plan.replication_topology.class_path
-        ), qt=get_vm_qt(plan=plan, ), dbtype=str(plan.engine_type),
-        team=team, project=project, description=description,
-        subscribe_to_email_events=subscribe_to_email_events,
-        is_protected=is_protected
-    )
-
-    start_workflow(workflow_dict=workflow_dict, task=task)
-    return workflow_dict
 
 
 def clone_infra(

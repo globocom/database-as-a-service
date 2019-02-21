@@ -209,7 +209,6 @@ INSTALLED_APPS = (
     'maintenance',
     'extra_dns',
     'dbaas_services.analyzing',
-    'dbaas_networkapi',
     'dbaas_foreman',
     'dbaas_foxha',
 )
