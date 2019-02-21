@@ -921,6 +921,9 @@ class Database(BaseModel):
 
         return format_html(status)
 
+    @property
+    def organization(self):
+        return self.team.organization
 
 class DatabaseLock(BaseModel):
     database = models.ForeignKey(
