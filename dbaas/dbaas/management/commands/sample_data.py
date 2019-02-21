@@ -2,7 +2,7 @@ from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User, Group
 from physical.models import Engine
 from physical.tests import factory
-from account.models import Role, Team
+from account.models import Role, Team, Organization
 
 
 class Command(BaseCommand):
@@ -30,7 +30,10 @@ class Command(BaseCommand):
         factory.InstanceFactory(databaseinfra=my_infradb, hostname=my_host)
 
         my_role = Role.objects.get_or_create(name="role_dba")[0]
-        my_team = Team.objects.get_or_create(name="my team", role=my_role)[0]
+        organization = Organization.objects.get_or_create(
+            name='fake_organization')[0]
+        my_team = Team.objects.get_or_create(name="my team", role=my_role,
+            organization=organization)[0]
         my_admin = User.objects.create_superuser(
             'admin', email='admin@admin.com', password='123456')
         my_team.users.add(my_admin)

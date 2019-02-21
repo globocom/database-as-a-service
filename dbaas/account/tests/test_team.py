@@ -19,6 +19,7 @@ class TeamTest(TestCase):
         team = Team()
         team.name = "Team1"
         team.role_id = factory.RoleFactory().pk
+        team.organization_id = factory.OraganizationFactory().pk
         self.assertFalse(team.save())
 
     def test_can_get_emergency_contacts_by_view(self):
