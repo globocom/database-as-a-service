@@ -571,12 +571,17 @@ def database_metrics(request, context, database):
     )
 
     context['source'] = request.GET.get('source', 'zabbix')
-    #context['source'] = 'sofia'
 
     if context['source'] == 'sofia':
         context['second_source'] = 'zabbix'
     else:
         context['second_source'] = 'sofia'
+
+    user = request.user
+    if len(user.team_set.filter(organization__external=False)) > 0:
+        context['can_show_sofia_metrics'] = True
+    else:
+        context['can_show_sofia_metrics'] = False
 
     context['hosts'] = []
     for host in Host.objects.filter(instances__databaseinfra=database.infra).distinct():

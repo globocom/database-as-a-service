@@ -9,7 +9,7 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.conf import settings
 from django.core.urlresolvers import reverse
-from account.models import Role, Team
+from account.models import Role, Team, Organization
 from physical.models import Environment
 from dbaas.tests.helpers import InstanceHelper
 
@@ -47,8 +47,10 @@ class DbaaSAPITestCase(test.APITestCase):
 
     def setUp(self):
         self.role = Role.objects.get_or_create(name="fake_role")[0]
+        self.organization = Organization.objects.get_or_create(name='fake_organization')[0]
         self.team = Team.objects.get_or_create(
-            name="fake_team", role=self.role)[0]
+            name="fake_team", role=self.role,
+            organization = self.organization)[0]
         self.superuser = User.objects.create_superuser(
             self.USERNAME, email="%s@admin.com" % self.USERNAME, password=self.PASSWORD)
         self.team.users.add(self.superuser)

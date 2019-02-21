@@ -69,19 +69,19 @@ p.error_message {
 }*/
 
 /* status */
-#result_list td:nth-child(6) {
+#result_list td:nth-child(7) {
     width: 5%;
 }
 
-#result_list td:nth-child(7) {
+#result_list td:nth-child(8) {
     width: 15%;
 }
 
-#result_list td:nth-child(8) {
+#result_list td:nth-child(9) {
     width: 10%;
 }
 
-#result_list td:nth-child(9) {
+#result_list td:nth-child(10) {
     width: 10%;
 }
 
