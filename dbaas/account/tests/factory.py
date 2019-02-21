@@ -24,6 +24,12 @@ class RoleFactory(factory.DjangoModelFactory):
     name = factory.Sequence(lambda n: 'role_{0}'.format(n))
 
 
+class OraganizationFactory(factory.DjangoModelFactory):
+    FACTORY_FOR = models.Organization
+
+    name = factory.Sequence(lambda n: 'organization_{0}'.format(n))
+
+
 class TeamFactory(factory.DjangoModelFactory):
     FACTORY_FOR = models.Team
 
@@ -32,3 +38,4 @@ class TeamFactory(factory.DjangoModelFactory):
     contacts = factory.Sequence(lambda n: '{0} - contact'.format(n))
 
     role = factory.SubFactory(RoleFactory)
+    organization = factory.SubFactory(OraganizationFactory)
