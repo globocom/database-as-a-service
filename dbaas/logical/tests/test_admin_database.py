@@ -4,7 +4,7 @@ import logging
 from django.test import TestCase
 from django.contrib.auth.models import User
 from physical.tests import factory as physical_factory
-from account.models import Team, Role
+from account.models import Team, Role, Organization
 from drivers import fake, base
 from ..forms import DatabaseForm
 from ..models import Database
@@ -27,8 +27,10 @@ class AdminCreateDatabaseTestCase(TestCase):
             address="127.0.0.1", port=27017, databaseinfra=self.databaseinfra)
         self.project = factory.ProjectFactory()
         self.role = Role.objects.get_or_create(name="fake_role")[0]
+        self.organization = Organization.objects.get_or_create(name='fake_organization')[0]
         self.team = Team.objects.get_or_create(
-            name="fake_team", role=self.role, database_alocation_limit=0)[0]
+            name="fake_team", role=self.role, database_alocation_limit=0,
+            organization=self.organization)[0]
         self.user = User.objects.create_superuser(
             self.USERNAME, email="%s@admin.com" % self.USERNAME, password=self.PASSWORD)
         self.team.users.add(self.user)

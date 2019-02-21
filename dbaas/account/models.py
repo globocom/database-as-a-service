@@ -117,7 +117,7 @@ class Team(BaseModel):
     user_objects = TeamUsersManager()  # The Dahl-specific manager.
     organization = models.ForeignKey(
         Organization, related_name="team_organization",
-        unique=False, null=True, blank=True, on_delete=models.SET_NULL)
+        unique=False, null=False, blank=False, on_delete=models.PROTECT)
 
     class Meta:
         # putting permissions for account user and role in team model, because it
