@@ -14,9 +14,6 @@ createconfigdbfile()
     echo ""; echo $(date "+%Y-%m-%d %T") "- Creating the database config file"
 
 (cat <<EOF_DBAAS
-[mysqld_safe]
-syslog
-
 [heartbeat]
 host=heartbeat
 database=heartbeat
@@ -31,6 +28,7 @@ socket                          = /var/lib/mysql/mysql.sock
 no_auto_rehash
 
 [mysqld]
+log-error                       = /data/logs/mysqld-error.log
 {% if SSL_CONFIGURED %}
 ssl                             = ON
 ssl-ca                          = {{ INFRA_SSL_CA }}
@@ -146,6 +144,39 @@ EOF_DBAAS
 
 }
 
+createconfigdbrsyslogfile()
+{
+    echo ""; echo $(date "+%Y-%m-%d %T") "- Creating the rsyslog config file"
+
+(cat <<EOF_DBAAS_CONFIGDBFILE
+# mysql.conf 5.7 rsyslog.d configuration
+
+\$ModLoad imfile
+\$InputFileName /data/logs/mysqld-error.log
+\$InputFileTag mysqld-error:
+\$InputFileStateFile mysqld-error-log-dbaas
+
+\$InputFileSeverity info
+\$InputFileFacility local0
+\$InputRunFileMonitor
+
+\$ModLoad imfile
+\$InputFileName /data/logs/mysql-slow.log 
+\$InputFileTag mysql-slow:
+\$InputFileStateFile mysql-slow-dbaas
+
+\$InputFileSeverity info
+\$InputFileFacility local0
+\$InputRunFileMonitor
+
+EOF_DBAAS_CONFIGDBFILE
+) > /etc/rsyslog.d/mysql.conf
+    die_if_error "Error setting mysql.conf"
+
+    chown mysql:mysql /etc/rsyslog.d/mysql.conf
+    die_if_error "Error changing mysql conf file owner"
+}
+
 configure_graylog()
 {
     echo "\$EscapeControlCharactersOnReceive off" >> /etc/rsyslog.d/dbaaslog.conf
@@ -159,6 +190,7 @@ configure_graylog()
     createconfigdbfile
 {% else %}
     createconfigdbfile
+    createconfigdbrsyslogfile
     createserveriddbfile
     configure_graylog
 {% endif %}
