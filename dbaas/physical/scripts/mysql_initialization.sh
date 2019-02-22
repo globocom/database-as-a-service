@@ -18,12 +18,8 @@ movedatabase()
 
 filepermission()
 {
-    mkdir -p /data/logs
-    die_if_error "Error creating logs dir"
     chown mysql:mysql /data
     die_if_error "Error changing datadir permission"
-    chown mysql:mysql /data/logs
-    die_if_error "Error changing logs dir permission"
     chmod g+r /data
     die_if_error "Error changing datadir permission"
     chmod g+x /data
