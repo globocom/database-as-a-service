@@ -12,6 +12,7 @@ from .replication_topology import ReplicationTopologyAdmin
 from .disk_offering import DiskOfferingAdmin
 from .parameter import ParameterAdmin
 from .offering import OfferingAdmin
+from .cloud import CloudAdmin
 
 
 admin.site.register(models.DatabaseInfra, DatabaseInfraAdmin)
@@ -25,4 +26,5 @@ admin.site.register(models.EnvironmentGroup, EnvironmentGroupAdmin)
 admin.site.register(models.ReplicationTopology, ReplicationTopologyAdmin)
 admin.site.register(models.DiskOffering, DiskOfferingAdmin)
 admin.site.register(models.Parameter, ParameterAdmin)
+admin.site.register(models.Cloud, CloudAdmin)
 admin.site.register(models.Script)
