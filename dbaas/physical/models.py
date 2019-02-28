@@ -44,6 +44,10 @@ class Environment(BaseModel):
         'Environment', related_name='migrate_to', blank=True, null=True
     )
 
+    cloud = models.ForeignKey(
+        'Cloud', related_name='environment_cloud',
+        unique=False, null=False, blank=False, on_delete=models.PROTECT)
+
     def __unicode__(self):
         return '%s' % (self.name)
 
@@ -1198,6 +1202,13 @@ class Vip(BaseModel):
         client = VipProviderClient(databaseinfra.environment)
         return client.get_vip(vip_identifier)
 
+
+class Cloud(BaseModel):
+    name = models.CharField(
+        verbose_name="Name", max_length=100, help_text="Cloud name")
+
+    def __unicode__(self):
+        return self.name
 
 
 ##########################################################################

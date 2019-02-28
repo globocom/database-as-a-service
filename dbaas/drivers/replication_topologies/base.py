@@ -99,6 +99,7 @@ class BaseTopology(object):
     def get_upgrade_steps_final(self):
         return [{
             self.get_upgrade_steps_final_description(): (
+                'workflow.steps.util.db_monitor.UpdateInfraVersion',
                 'workflow.steps.util.db_monitor.EnableMonitoring',
                 'workflow.steps.util.zabbix.EnableAlarms',
             ),
