@@ -1183,10 +1183,20 @@ class TopologyParameterCustomValue(BaseModel):
         unique_together = ('topology', 'parameter')
 
 
+class VipWithoutFutureVip(models.Manager):
+    def get_queryset(self):
+        return super(VipWithoutFutureVip, self).get_queryset().exclude(original_vip__isnull=False)
+
+
 class Vip(BaseModel):
+    objects = VipWithoutFutureVip()
+    original_objects = models.Manager()
     infra = models.ForeignKey(
         DatabaseInfra, related_name="vips")
     identifier = models.CharField(verbose_name=_("Identifier"), max_length=200)
+    original_vip = models.ForeignKey(
+        "Vip", null=True, blank=True, on_delete=models.SET_NULL
+    )
 
     def __unicode__(self):
         return 'Vip of infra {}'.format(self.infra.name)
