@@ -4,10 +4,17 @@ import factory
 from physical import models
 
 
+class CloudFactory(factory.DjangoModelFactory):
+    FACTORY_FOR = models.Cloud
+
+    name = factory.Sequence(lambda n: 'env-{0}'.format(n))
+
+
 class EnvironmentFactory(factory.DjangoModelFactory):
     FACTORY_FOR = models.Environment
 
     name = factory.Sequence(lambda n: 'env-{0}'.format(n))
+    cloud = factory.SubFactory(CloudFactory)
 
 
 class EngineTypeFactory(factory.DjangoModelFactory):

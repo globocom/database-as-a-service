@@ -71,3 +71,24 @@ class CreateInfraMonitoring(DBMonitorStep):
     def undo(self):
         if self.instance == self.infra.instances.all()[0]:
             DisableInfraMonitoring(self.instance).do()
+
+
+class UpdateInfraVersion(DBMonitorStep):
+    def __unicode__(self):
+        return "Update version on DB Monitor..."
+
+    @property
+    def is_valid(self):
+        if self.upgrade and self.instance == self.infra.instances.all()[0]:
+            return True
+        return False
+
+    def do(self):
+        if self.is_valid:
+            self.provider.update_dbmonitor_database_version(
+                self.infra, self.upgrade.target_plan.engine.version)
+
+    def undo(self):
+        if self.is_valid:
+            self.provider.update_dbmonitor_database_version(
+                self.infra, self.upgrade.source_plan.engine.version)
