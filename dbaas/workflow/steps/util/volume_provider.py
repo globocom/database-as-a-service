@@ -488,6 +488,45 @@ class CopyFilesMigrate(VolumeProviderBase):
         pass
 
 
+class ScpFromSnapshotMigrate(VolumeProviderBase):
+
+    def __unicode__(self):
+        return "Copying data from snapshot to new host..."
+
+    @property
+    def source_dir(self):
+        return "/data"
+
+    @property
+    def dest_dir(self):
+        return "/data"
+
+    @property
+    def environment(self):
+        return self.infra.environment
+
+    @property
+    def host(self):
+        master_instance = self.driver.get_master_instance()
+        return self.infra.instances.exclude(id=master_instance.id).first().hostname
+
+    def do(self):
+        if self.host_migrate and self.host_migrate.database_migrate:
+            snapshot = self.host_migrate.snapshot
+        else:
+            snapshot = self.step_manager.snapshot
+
+        script = self.get_scp_from_snapshot_command(
+            snapshot,
+            self.source_dir,
+            self.host_migrate.host.future_host.address,
+            self.dest_dir
+        )
+        self.run_script(script)
+
+    def undo(self):
+        pass
+
 
 class MountDataVolumeRestored(MountDataVolume):
 
@@ -625,6 +664,10 @@ class AddAccessMigrate(AddAccess):
     @property
     def volume(self):
         return self.host_migrate.host.volumes.get(is_active=True)
+
+    @property
+    def environment(self):
+        return self.infra.environment
 
     def undo(self):
         self.remove_access(self.volume, self.host)
