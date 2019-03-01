@@ -83,6 +83,17 @@ class ChangeMaster(VmStep):
         raise error
 
 
+class ChangeMasterMigrate(ChangeMaster):
+    @property
+    def is_valid(self):
+        return self.instance == self.infra.instances.first()
+
+    def do(self):
+        if not self.is_valid:
+            return
+        return super(ChangeMasterMigrate, self).do()
+
+
 class InstanceIsSlave(ChangeMaster):
 
     def __unicode__(self):
