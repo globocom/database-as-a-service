@@ -1,6 +1,7 @@
 from backup.tasks import mysql_binlog_save
 from workflow.steps.mysql.util import get_replication_information_from_file, \
-    change_master_to, start_slave
+    change_master_to, start_slave, build_uncomment_skip_slave_script,\
+    build_comment_skip_slave_script
 from volume_provider import AddAccessRestoredVolume, MountDataVolumeRestored, \
     RestoreSnapshot, UnmountActiveVolume
 from zabbix import ZabbixStep
@@ -48,6 +49,40 @@ class SetMasterRestore(MySQLStep):
         change_master_to(
             self.instance, secondary.hostname.address, log_file, log_pos
         )
+
+
+class SetReadOnlyMigrate(MySQLStep):
+    def __unicode__(self):
+        return "Change master mode to read only..."
+
+    @property
+    def is_valid(self):
+        return self.instance == self.infra.instances.last()
+
+    def _change_variable(self, field, value):
+        if not self.is_valid:
+            return
+        self.driver.set_configuration(
+            self.instance, field, value
+        )
+
+    def do(self):
+        return self._change_variable('read_only', 'ON')
+
+    def undo(self):
+        return self._change_variable('read_only', 'OFF')
+
+
+class SetReadWriteMigrate(SetReadOnlyMigrate):
+    def __unicode__(self):
+        return "Change new instance to read write..."
+
+    def do(self):
+        self.instance.address = self.host.address
+        return super(SetReadWriteMigrate, self).undo()
+
+    def undo(self):
+        return super(SetReadWriteMigrate, self).do()
 
 
 class StartSlave(MySQLStep):
