@@ -339,10 +339,42 @@ class SetReplicationHostMigrate(MySQLStep):
     def __unicode__(self):
         return "Set replication on host migrate..."
 
+    @property
+    def master_instance(self):
+        return self.driver.get_master_instance()
+
+    @property
+    def is_valid(self):
+        return True
+
     def do(self):
-        master_instance = self.driver.get_master_instance()
+        if not self.is_valid:
+            return
         log_file, log_pos = get_replication_information_from_file(self.host)
-        change_master_to(master_instance, self.host.address, log_file, log_pos)
+        change_master_to(self.master_instance, self.host.address, log_file, log_pos)
 
     def undo(self):
         raise Exception("There is no rollback for this step.")
+
+
+class SetReplicationLastInstanceMigrate(SetReplicationHostMigrate):
+    @property
+    def is_valid(self):
+        return self.instance == self.infra.instances.last()
+
+    @property
+    def host(self):
+        # database_migrate = self.host_migrate.database_migrate
+        # return database_migrate.hosts.exclude(id=self.host_migrate.id).first().host.future_host
+        return self.infra.instances.exclude(id=self.instance.id).first().hostname.future_host
+
+    @property
+    def master_instance(self):
+        self.instance.address = self.host_migrate.host.future_host.address
+        return self.instance
+
+
+class SetReplicationFirstInstanceMigrate(SetReplicationLastInstanceMigrate):
+    @property
+    def is_valid(self):
+        return self.instance == self.infra.instances.first()
