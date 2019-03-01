@@ -15,11 +15,35 @@ class VolumeProviderRemoveSnapshotMigrate(VolumeProviderException):
     pass
 
 
+class VolumeProviderScpFromSnapshotCommand(VolumeProviderException):
+    pass
+
+
+class VolumeProviderAddHostAllowCommand(VolumeProviderException):
+    pass
+
+
+class VolumeProviderCreatePubKeyCommand(VolumeProviderException):
+    pass
+
+
+class VolumeProviderRemovePubKeyCommand(VolumeProviderException):
+    pass
+
+
+class VolumeProviderRemoveHostAllowCommand(VolumeProviderException):
+    pass
+
+
 class VolumeProviderBase(BaseInstanceStep):
 
     def __init__(self, instance):
         super(VolumeProviderBase, self).__init__(instance)
         self._credential = None
+
+    @property
+    def driver(self):
+        return self.infra.get_driver()
 
     @property
     def credential(self):
