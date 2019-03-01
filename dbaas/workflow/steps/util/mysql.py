@@ -107,6 +107,43 @@ class ConfigureFoxHARestore(MySQLStep):
             driver.set_read_ip(self.instance)
 
 
+class DisableReplication(MySQLStep):
+    def __unicode__(self):
+        return "Disable replication..."
+
+    @property
+    def script(self):
+        return build_uncomment_skip_slave_script()
+
+    @property
+    def is_valid(self):
+        return self.instance == self.infra.instances.last()
+
+    def do(self):
+        if not self.is_valid:
+            return
+        script = build_uncomment_skip_slave_script()
+        self.run_script(script)
+
+    def undo(self):
+        if not self.is_valid:
+            return
+        script = build_comment_skip_slave_script()
+        self.run_script(script)
+
+
+
+class EnableReplication(DisableReplication):
+    def __unicode__(self):
+        return "Enable replication..."
+
+    def do(self):
+        return super(EnableReplication, self).undo()
+
+    def undo(self):
+        return super(EnableReplication, self).do()
+
+
 class SaveMySQLBinlog(MySQLStep):
 
     def __unicode__(self):
