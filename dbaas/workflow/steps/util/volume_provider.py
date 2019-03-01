@@ -109,9 +109,9 @@ class VolumeProviderBase(BaseInstanceStep):
         vol = self.get_volume(volume)
         return vol['path']
 
-    def run_script(self, script):
+    def run_script(self, script, host=None):
         output = {}
-        return_code = exec_remote_command_host(self.host, script, output)
+        return_code = exec_remote_command_host(host or self.host, script, output)
         if return_code != 0:
             raise EnvironmentError(
                 'Could not execute script {}: {}'.format(
