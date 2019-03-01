@@ -106,7 +106,7 @@ class Provider(object):
         return action(url, **kw)
 
     def create_vip(self, infra, port, team_name, equipments,
-        vip_dns, database_name=''):
+        vip_dns, database_name='', future_vip=False):
         url = "{}/{}/{}/vip/new".format(
             self.credential.endpoint, self.provider, self.environment
         )
@@ -125,9 +125,15 @@ class Provider(object):
 
         content = response.json()
 
+        try:
+            original_vip = Vip.objects.get(infra=infra)
+        except Vip.DoesNotExist:
+            original_vip = None
         vip = Vip()
         vip.identifier = content["identifier"]
         vip.infra = infra
+        if original_vip:
+            vip.original_vip = original_vip
         vip.save()
         vip.vip_ip = content["ip"]
 
@@ -226,6 +232,8 @@ class VipProviderStep(BaseInstanceStep):
         equipments = []
         for instance in self.infra.instances.all():
             host = instance.hostname
+            if host.future_host:
+                host = host.future_host
             vm_info = self.host_prov_client.get_vm_by_host(host)
             equipment = {
                 'host_address': host.address,
@@ -288,6 +296,42 @@ class CreateVip(VipProviderStep):
         else:
             self.provider.destroy_vip(vip.identifier)
             vip.delete()
+
+
+class CreateVipMigrate(CreateVip):
+
+    @property
+    def is_valid(self):
+        return self.instance == self.infra.instances.first()
+
+    def do(self):
+        if not self.is_valid:
+            return
+        self.provider.create_vip(
+            self.infra, self.instance.port, self.team,
+            self.equipments, self.vip_dns)
+
+
+class DestroyVipMigrate(CreateVipMigrate):
+
+    @property
+    def environment(self):
+        return self.infra.environment
+
+    def do(self):
+        if not self.is_valid:
+            return
+        vip = Vip.objects.get(infra=self.infra)
+        future_vip = Vip.original_objects.get(
+            infra=self.infra, original_vip=vip
+        )
+        self.provider.destroy_vip(vip.identifier)
+        future_vip.original_vip = None
+        future_vip.save()
+        vip.delete()
+
+    def undo(self):
+        return super(DestroyVipMigrate).do()
 
 
 class UpdateVipReals(VipProviderStep):
