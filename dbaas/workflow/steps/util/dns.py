@@ -14,6 +14,14 @@ class DNSStep(BaseInstanceStep):
     def __init__(self, instance):
         super(DNSStep, self).__init__(instance)
         self.provider = DNSAPIProvider
+        self._vip = None
+
+    def is_ipv4(self, ip):
+        try:
+            socket.inet_aton(ip)
+            return True
+        except socket.error:
+            return False
 
     @property
     def credentials(self):
