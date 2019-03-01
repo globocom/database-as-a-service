@@ -129,14 +129,22 @@ class ConfigureNodeMigrate(ConfigureNode):
     def __unicode__(self):
         return "Changing FoxHA node..."
 
+    @property
+    def is_master(self):
+        return False
+
+    @property
+    def mode(self):
+        if self.is_master:
+            return 'read_write'
+        return 'read_only'
+
     def do(self):
-        mode = 'read_only'
 
         self.provider.add_node(
             self.infra.name, self.instance.dns, self.host.address,
-            self.instance.port, mode, 'enabled'
+            self.instance.port, self.mode, 'enabled'
         )
-
 
     def undo(self):
         self.provider.delete_node(self.infra.name, self.host.address)
