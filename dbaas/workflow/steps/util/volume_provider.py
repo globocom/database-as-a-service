@@ -231,6 +231,21 @@ class VolumeProviderBase(BaseInstanceStep):
             raise IndexError(response.content, response)
         return response.json()['command']
 
+    def get_scp_from_snapshot_command(self, snapshot, source_dir, dest_ip, dest_dir):
+        url = "{}snapshots/{}/commands/scp".format(
+            self.base_url,
+            snapshot.snapshopt_id
+        )
+        data = {
+            'source_dir': source_dir,
+            'target_ip': dest_ip,
+            'target_dir': dest_dir
+        }
+        response = get(url, json=data)
+        if not response.ok:
+            raise VolumeProviderScpFromSnapshotCommand(response.content, response)
+        return response.json()['command']
+
     def get_umount_command(self, volume, data_directory="/data"):
         url = "{}commands/{}/umount".format(self.base_url, volume.identifier)
         data = {
