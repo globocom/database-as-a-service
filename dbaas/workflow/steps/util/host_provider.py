@@ -195,7 +195,7 @@ class Provider(object):
             self.credential.endpoint, self.provider, self.environment,
             host.identifier
         )
-        response = self._request(delete, url)
+        response = self._request(delete, url, timeout=600)
         if not response.ok:
             raise HostProviderDestroyVMException(response.content, response)
 
