@@ -67,6 +67,27 @@ class ConfigureGroup(OnlyFirstInstance):
         self.provider.delete_group(self.infra.name)
 
 
+class RemoveGroupMigrate(ConfigureGroup):
+
+    @property
+    def is_valid(self):
+        return self.instance == self.infra.instances.last()
+
+    def __unicode__(self):
+        return "Removing old Vip from FoxHA group..."
+
+    def do(self):
+        return super(RemoveGroupMigrate, self).undo()
+
+
+class ConfigureGroupMigrate(ConfigureGroup):
+    def __unicode__(self):
+        return "Adding new Vip FoxHA group..."
+
+    def do(self):
+        self.vip = self.future_vip
+        return super(ConfigureGroupMigrate, self).do()
+
 class ConfigureNode(FoxHA):
 
     def __unicode__(self):
