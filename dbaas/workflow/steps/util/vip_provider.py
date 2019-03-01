@@ -356,7 +356,16 @@ class UpdateVipReals(VipProviderStep):
 
     @property
     def vip(self):
-        return Vip.objects.get(infra=self.infra)
+        original_vip =  Vip.objects.get(infra=self.infra)
+        try:
+            future_vip = Vip.original_objects.get(
+                infra_id=self.infra.id,
+                original_vip=original_vip
+            )
+        except Vip.DoesNotExist:
+            return original_vip
+        else:
+            return future_vip
 
     def update_vip_reals(self):
         self.provider.update_vip_reals(
