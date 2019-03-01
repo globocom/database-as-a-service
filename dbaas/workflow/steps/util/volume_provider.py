@@ -278,6 +278,10 @@ class VolumeProviderBaseMigrate(VolumeProviderBase):
     def host(self):
         return self.host_migrate.host
 
+    @property
+    def environment(self):
+        return self.infra.environment
+
 
 class NewVolume(VolumeProviderBase):
 
@@ -288,7 +292,8 @@ class NewVolume(VolumeProviderBase):
         if not self.instance.is_database:
             return
         snapshot = None
-        if self.host_migrate and self.step_manager.snapshot:
+        if self.host_migrate and hasattr(self, 'step_manager') and self.host_migrate == self.step_manager:
+        # self.step_manager.snapshot:
             snapshot = self.step_manager.snapshot
         self.create_volume(
             self.infra.name,
@@ -344,6 +349,10 @@ class MountDataVolumeMigrate(MountDataVolume):
     def host_migrate_volume(self):
         return self.host_migrate.host.volumes.get(is_active=True)
 
+    @property
+    def environment(self):
+        return self.infra.environment
+
     def do(self):
         script = self.get_mount_command(
             self.host_migrate_volume,
@@ -374,28 +383,50 @@ class UmountDataVolumeMigrate(MountDataVolumeMigrate):
 
 class TakeSnapshotMigrate(VolumeProviderBase):
 
+    def __init__(self, *args, **kw):
+        super(TakeSnapshotMigrate, self).__init__(*args, **kw)
+        self._database_migrate = None
     def __unicode__(self):
         return "Doing backup for copy..."
+
+    @property
+    def is_database_migrate(self):
+        return self.host_migrate and self.host_migrate.database_migrate
+
+    @property
+    def database_migrate(self):
+        if self._database_migrate:
+            return self._database_migrate
+        self._database_migrate = self.host_migrate and self.host_migrate.database_migrate
+        return self._database_migrate
 
     def do(self):
         from backup.tasks import make_instance_snapshot_backup
         from backup.models import BackupGroup
-        group = BackupGroup()
-        group.save()
-        snapshot = make_instance_snapshot_backup(
-            self.instance,
-            {},
-            group,
-            provider_class=VolumeProviderBaseMigrate
-        )
+        if self.database_migrate and self.database_migrate.host_migrate_snapshot:
+            snapshot = self.database_migrate.host_migrate_snapshot
+        else:
+            group = BackupGroup()
+            group.save()
+            snapshot = make_instance_snapshot_backup(
+                self.instance,
+                {},
+                group,
+                provider_class=VolumeProviderBaseMigrate
+            )
 
-        if not snapshot:
-            raise Exception('Backup was unsuccessful in {}'.format(self.instance))
+            if not snapshot:
+                raise Exception('Backup was unsuccessful in {}'.format(self.instance))
 
-        snapshot.is_automatic = False
-        snapshot.save()
-        self.step_manager.snapshot = snapshot
-        self.step_manager.save()
+            snapshot.is_automatic = False
+            snapshot.save()
+        if self.database_migrate:
+            host_migrate = self.host_migrate
+            host_migrate.snapshot = snapshot
+            host_migrate.save()
+        else:
+            self.step_manager.snapshot = snapshot
+            self.step_manager.save()
 
         if snapshot.has_warning:
             raise Exception('Backup was warning')
@@ -409,13 +440,21 @@ class RemoveSnapshotMigrate(VolumeProviderBase):
     def __unicode__(self):
         return "Removing backup used on migrate..."
 
+    @property
+    def environment(self):
+        return self.infra.environment
+
     def do(self):
         from backup.tasks import remove_snapshot_backup
-        if not self.step_manager.snapshot:
+        if self.host_migrate and self.host_migrate.database_migrate:
+            snapshot = self.host_migrate.snapshot
+        else:
+            snapshot = self.step_manager.snapshot
+        if not snapshot:
             raise VolumeProviderRemoveSnapshotMigrate(
-                'No snaoshot found on {} instance for migrate'.format(self.step_manager)
+                'No snapshot found on {} instance for migration'.format(self.step_manager)
             )
-        remove_snapshot_backup(self.step_manager.snapshot, self, force=1)
+        remove_snapshot_backup(snapshot, self, force=1)
 
     def undo(self):
         pass
