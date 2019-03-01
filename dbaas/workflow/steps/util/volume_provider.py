@@ -684,6 +684,118 @@ class RemoveAccessMigrate(AddAccessMigrate):
         return super(RemoveAccessMigrate, self).do()
 
 
+class AddHostsAllowMigrate(VolumeProviderBase):
+
+    def __unicode__(self):
+        return "Adding network on hosts_allow file..."
+
+    @property
+    def original_host(self):
+        return self.host_migrate.host.address
+
+    def _do_hosts_allow(self, func):
+        script = func(
+            self.original_host.address,
+        )
+
+        self.run_script(script)
+
+    def add_hosts_allow(self):
+        self._do_hosts_allow(
+            self.get_add_hosts_allow_command
+        )
+
+    def remove_hosts_allow(self):
+        self._do_hosts_allow(
+            self.get_remove_hosts_allow_command
+        )
+
+    def do(self):
+        self.add_hosts_allow()
+
+    def undo(self):
+        self.remove_hosts_allow()
+
+
+class AddHostsAllowDatabaseMigrate(AddHostsAllowMigrate):
+    @property
+    def original_host(self):
+        master_instance = self.driver.get_master_instance()
+        return self.infra.instances.exclude(id=master_instance.id).first().hostname
+
+
+class CreatePubKeyMigrate(VolumeProviderBase):
+
+    def __unicode__(self):
+        return "Creating pubblic key..."
+
+    @property
+    def original_host(self):
+        master_instance = self.driver.get_master_instance()
+        return self.infra.instances.exclude(id=master_instance.id).first().hostname
+
+    def _do_pub_key(self, func):
+        script = func(
+            self.original_host.address
+        )
+
+        return self.run_script(script, host=self.original_host)
+
+    @property
+    def environment(self):
+        return self.infra.environment
+
+    def create_pub_key(self):
+        output = self._do_pub_key(
+            self.get_create_pub_key_command
+        )
+        pub_key = output['stdout'][0]
+        script = 'echo "{}" >> ~/.ssh/authorized_keys'.format(pub_key)
+        self.run_script(script)
+
+    def remove_pub_key(self):
+        self._do_pub_key(
+            self.get_remove_pub_key_command
+        )
+
+    def do(self):
+        return self.create_pub_key()
+
+    def undo(self):
+        self.remove_pub_key()
+
+
+class RemovePubKeyMigrate(CreatePubKeyMigrate):
+
+    def __unicode__(self):
+        return "Removing pubblic key..."
+
+    def do(self):
+        self.remove_pub_key()
+
+    def undo(self):
+        self.create_pub_key()
+
+
+class RemoveHostsAllowMigrate(AddHostsAllowMigrate):
+
+    def __unicode__(self):
+        return "Removing network from hosts_allow file..."
+
+    def do(self):
+        self.remove_hosts_allow()
+
+    def undo(self):
+        self.add_hosts_allow()
+
+
+class RemoveHostsAllowDatabaseMigrate(RemoveHostsAllowMigrate):
+    @property
+    def original_host(self):
+        master_instance = self.driver.get_master_instance()
+        return self.infra.instances.exclude(id=master_instance.id).first().hostname
+
+
 class TakeSnapshot(VolumeProviderBase):
     def __unicode__(self):
         return "Doing backup of old data..."
