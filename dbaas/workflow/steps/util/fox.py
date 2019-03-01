@@ -113,13 +113,13 @@ class RemoveNodeMigrate(FoxHA):
         return "Removing FoxHA node {}...".format(self.instance.address)
 
     def do(self):
-        self.provider.delete_node(self.infra.name, self.instance.address)
+        self.provider.delete_node(self.infra.name, self.self.host_migrate.host.address)
 
     def undo(self):
         mode = 'read_only'
 
         self.provider.add_node(
-            self.infra.name, self.instance.dns, self.instance.address,
+            self.infra.name, self.instance.dns, self.self.host_migrate.host.address,
             self.instance.port, mode, 'enabled'
         )
 
