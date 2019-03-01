@@ -150,6 +150,11 @@ class ConfigureNodeMigrate(ConfigureNode):
         self.provider.delete_node(self.infra.name, self.host.address)
 
 
+class ConfigureNodeDatabaseMigrate(ConfigureNodeMigrate):
+    @property
+    def is_master(self):
+        return self.instance == self.infra.instances.last()
+
 
 class Start(FoxHA):
 
@@ -165,6 +170,10 @@ class Start(FoxHA):
 
 class IsReplicationOk(FoxHA):
 
+    def __init__(self, *args, **kw):
+        super(IsReplicationOk, self).__init__(*args, **kw)
+        self.verify_heartbeat = True
+
     def __unicode__(self):
         return "Checking FoxHA status..."
 
@@ -174,7 +183,10 @@ class IsReplicationOk(FoxHA):
             self.instance.address = self.instance.hostname.future_host.address
         for _ in range(CHECK_ATTEMPTS):
             if driver.is_replication_ok(self.instance):
-                if driver.is_heartbeat_replication_ok(self.instance):
+                if self.verify_heartbeat:
+                    if driver.is_heartbeat_replication_ok(self.instance):
+                        return
+                else:
                     return
 
                 driver.stop_slave(self.instance)
@@ -184,3 +196,9 @@ class IsReplicationOk(FoxHA):
             sleep(CHECK_SECONDS)
 
         raise EnvironmentError("Maximum number of attempts check replication")
+
+
+class IsReplicationOkMigrate(IsReplicationOk):
+    def do(self):
+        self.verify_heartbeat = False
+        return super(IsReplicationOkMigrate, self).do()
