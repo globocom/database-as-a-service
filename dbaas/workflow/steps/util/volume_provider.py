@@ -158,6 +158,44 @@ class VolumeProviderBase(BaseInstanceStep):
             raise IndexError(response.content, response)
         return response.json()
 
+    def _get_command(self, url, payload, exception_class):
+        response = get(url, json=payload)
+        if not response.ok:
+            raise exception_class(response.content, response)
+        return response.json()['command']
+
+    def get_create_pub_key_command(self, host_ip):
+        url = "{}commands/create_pub_key".format(self.base_url)
+        return self._get_command(
+            url,
+            {'host_ip': host_ip},
+            VolumeProviderCreatePubKeyCommand
+        )
+
+    def get_remove_pub_key_command(self, host_ip):
+        url = "{}commands/remove_pub_key".format(self.base_url)
+        return self._get_command(
+            url,
+            {'host_ip': host_ip},
+            VolumeProviderRemovePubKeyCommand
+        )
+
+    def get_add_hosts_allow_command(self, host_ip):
+        url = "{}commands/add_hosts_allow".format(self.base_url)
+        return self._get_command(
+            url,
+            {'host_ip': host_ip},
+            VolumeProviderAddHostAllowCommand
+        )
+
+    def get_remove_hosts_allow_command(self, host_ip):
+        url = "{}commands/remove_hosts_allow".format(self.base_url)
+        return self._get_command(
+            url,
+            {'host_ip': host_ip},
+            VolumeProviderRemoveHostAllowCommand
+        )
+
     def remove_access(self, volume, host):
         url = "{}access/{}/{}".format(
             self.base_url,
