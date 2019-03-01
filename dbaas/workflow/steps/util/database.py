@@ -297,6 +297,17 @@ class CheckIfSwitchMaster(DatabaseStep):
             raise EnvironmentError('There is no master for this infra.')
 
 
+class CheckIfSwitchMasterMigrate(CheckIfSwitchMaster):
+    @property
+    def is_valid(self):
+        return self.instance == self.infra.instances.first()
+
+    def do(self):
+        if not self.is_valid:
+            return
+        return super(CheckIfSwitchMasterMigrate, self).do()
+
+
 class CheckIsUpForResizeLog(CheckIsUp):
     def do(self):
         self.instance.old_port = self.instance.port
