@@ -48,17 +48,12 @@ class ConfigureGroup(OnlyFirstInstance):
     def __unicode__(self):
         return "Configuring FoxHA group..."
 
-    @property
-    def vip_ip(self):
-        vip = Vip.get_vip_from_databaseinfra(self.infra)
-        return vip.vip_ip
-
     def do(self):
         if not self.is_valid:
             return
 
         self.provider.add_group(
-            self.infra.name, self.infra.name, self.vip_ip,
+            self.infra.name, self.infra.name, self.vip.vip_ip,
             self.mysql_fox_credentials.user,
             str(self.mysql_fox_credentials.password),
             self.mysql_replica_credentials.user,
