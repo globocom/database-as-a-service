@@ -382,6 +382,23 @@ class UpdateVipReals(VipProviderStep):
         self.update_vip_reals()
 
 
+
+class UpdateVipRealsMigrate(UpdateVipReals):
+    @property
+    def is_valid(self):
+        return self.instance == self.infra.instances.first()
+
+    def do(self):
+        if not self.is_valid:
+            return
+        return super(UpdateVipRealsMigrate, self).do()
+
+    def undo(self):
+        if not self.is_valid:
+            return
+        return super(UpdateVipRealsMigrate, self).undo()
+
+
 class AddReal(VipProviderStep):
 
     def __unicode__(self):
