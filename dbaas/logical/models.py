@@ -1072,6 +1072,9 @@ def database_pre_save(sender, **kwargs):
 
         if database.team and saved_object.team:
             if database.team.organization != saved_object.team.organization:
+                TaskRegister.update_organization_name_monitoring(
+                    database=database,
+                    organization_name=database.team.organization.name)
                 if saved_object.team.external:
                     TaskRegister.update_database_monitoring(
                         database=database,

@@ -1034,6 +1034,38 @@ def update_database_monitoring(self, task, database, hostgroup, action):
         task.set_status_success('Monitoring updated with success')
         return True
 
+
+@app.task(bind=True)
+def update_organization_name_monitoring(
+    self, task, database, organization_name):
+    from workflow.steps.util.db_monitor import UpdateInfraOrganizationName
+
+    worker_name = get_worker_name()
+    task_history = TaskHistory.register(
+        request=self.request, worker_name=worker_name, task_history=task
+    )
+    detail = 'Update organization name on monitoring'
+    task_history.add_detail(detail)
+
+    try:
+        databaseinfra = database.databaseinfra
+        for instance in databaseinfra.instances.all():
+
+            detail = 'update organization name:{} for {}'.format(
+                organization_name, instance)
+            task_history.add_detail(detail, level=2)
+            UpdateInfraOrganizationName(instance, organization_name).do()
+
+    except Exception as e:
+        task_history.add_detail('Error: {}'.format(e))
+        task.set_status_error('Could not update monitoring')
+        return False
+
+    else:
+        task.set_status_success('Monitoring updated with success')
+        return True
+
+
 class TaskRegister(object):
     TASK_CLASS = TaskHistory
 
@@ -1565,6 +1597,25 @@ class TaskRegister(object):
             database=database,
             hostgroup=hostgroup,
             action=action,
+        )
+
+    @classmethod
+    def update_organization_name_monitoring(cls, database, organization_name):
+
+        args = "Database: {}, Organization Name: {}".format(
+                database, organization_name)
+        task_params = {
+            'task_name': "update_organization_name_monitoring",
+            'arguments': args,
+            'relevance': TaskHistory.RELEVANCE_ERROR
+        }
+
+        task = cls.create_task(task_params)
+
+        update_organization_name_monitoring.delay(
+            task=task,
+            database=database,
+            organization_name=organization_name
         )
 
     # ============  END TASKS   ============

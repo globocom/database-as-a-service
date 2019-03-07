@@ -296,6 +296,12 @@ def team_pre_save(sender, **kwargs):
         return
     before_update_team = Team.objects.get(pk=team.pk)
     if team.organization != before_update_team.organization:
+
+        for database in team.databases.all():
+            TaskRegister.update_organization_name_monitoring(
+                database=database,
+                organization_name=team.organization.name)
+
         if before_update_team.organization and \
             before_update_team.organization.external:
             for database in before_update_team.databases.all():
@@ -303,6 +309,7 @@ def team_pre_save(sender, **kwargs):
                     database=database,
                     hostgroup=before_update_team.organization.grafana_hostgroup,
                     action='remove')
+
         if team.organization and team.organization.external:
             for database in team.databases.all():
                 TaskRegister.update_database_monitoring(
@@ -346,6 +353,11 @@ def organization_pre_save(sender, **kwargs):
         if organization.external:
             add_monit(organization)
 
+    if before_update_org.name != organization.name:
+        for database in organization.databases:
+            TaskRegister.update_organization_name_monitoring(
+                database=database,
+                organization_name=organization.name)
 
 # def user_m2m_changed(sender, **kwargs):
 #     """
