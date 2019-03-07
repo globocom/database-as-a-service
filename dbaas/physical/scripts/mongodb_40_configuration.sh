@@ -112,9 +112,6 @@ createconfigdbrsyslogfile()
 EOF_DBAAS
 ) > /etc/rsyslog.d/mongodb.conf
     die_if_error "Error setting mongodb.conf"
-
-    chown mongodb:mongodb /etc/rsyslog.d/mongodb.conf
-    die_if_error "Error changing mongodb conf file owner"
 }
 
 createmongodbkeyfile()
