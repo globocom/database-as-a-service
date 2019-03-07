@@ -312,7 +312,7 @@ class MongoDBReplicaset(BaseTopology):
             'workflow.steps.util.metric_collector.ConfigureTelegraf',
             'workflow.steps.util.metric_collector.RestartTelegraf',
             'workflow.steps.util.zabbix.CreateAlarms',
-            'workflow.steps.util.dbmonitor.UpdateInfraCloudDatabaseMigrate',
+            'workflow.steps.util.db_monitor.UpdateInfraCloudDatabaseMigrate',
             'workflow.steps.util.disk.ChangeSnapshotOwner',
         )
 
