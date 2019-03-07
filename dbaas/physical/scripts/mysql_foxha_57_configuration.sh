@@ -172,9 +172,6 @@ createconfigdbrsyslogfile()
 EOF_DBAAS_CONFIGDBFILE
 ) > /etc/rsyslog.d/mysql.conf
     die_if_error "Error setting mysql.conf"
-
-    chown mysql:mysql /etc/rsyslog.d/mysql.conf
-    die_if_error "Error changing mysql conf file owner"
 }
 
 configure_graylog()
