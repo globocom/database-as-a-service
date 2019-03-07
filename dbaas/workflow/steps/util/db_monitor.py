@@ -92,3 +92,33 @@ class UpdateInfraVersion(DBMonitorStep):
         if self.is_valid:
             self.provider.update_dbmonitor_database_version(
                 self.infra, self.upgrade.source_plan.engine.version)
+
+class UpdateInfraCloudDatabaseMigrate(DBMonitorStep):
+    def __unicode__(self):
+        return "Update info about cloud on DBMonitor..."
+
+    def do(self):
+        self.provider.update_database_cloud(
+            self.infra, self.environment.cloud.name)
+
+
+class UpdateInfraOrganizationName(DBMonitorStep):
+    def __unicode__(self):
+        return "Update info about organization on DBMonitor..."
+
+    def __init__(self, instance, organization_name=None):
+        super(UpdateInfraOrganizationName, self).__init__(instance)
+        self.organization_name = organization_name
+
+    @property
+    def is_valid(self):
+        if self.organization_name:
+            return True
+        return self.instance == self.infra.instances.first()
+
+    def do(self):
+        if not self.is_valid:
+            return
+
+        self.provider.update_database_organization(
+            self.infra, self.organization_name)

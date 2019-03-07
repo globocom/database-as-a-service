@@ -430,6 +430,7 @@ class RedisCluster(BaseRedis):
             'workflow.steps.util.dns.ChangeEndpoint',
             'workflow.steps.util.dns.CheckIsReady',
             'workflow.steps.util.zabbix.CreateAlarms',
+            'workflow.steps.util.dbmonitor.UpdateInfraCloudDatabaseMigrate',
             'workflow.steps.util.disk.ChangeSnapshotOwner',
         )
 
