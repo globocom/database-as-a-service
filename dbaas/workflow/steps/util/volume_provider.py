@@ -15,6 +15,10 @@ class VolumeProviderRemoveSnapshotMigrate(VolumeProviderException):
     pass
 
 
+class VolumeProviderRemoveVolumeMigrate(VolumeProviderException):
+    pass
+
+
 class VolumeProviderScpFromSnapshotCommand(VolumeProviderException):
     pass
 
