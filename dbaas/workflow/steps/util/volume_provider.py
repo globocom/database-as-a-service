@@ -330,9 +330,43 @@ class NewVolume(VolumeProviderBase):
             return
 
         for volume in self.host.volumes.all():
-            self.add_access(volume, self.host)
-            self.clean_up(volume)
-            self.destroy_volume(volume)
+            self._remove_volume(volume, self.host)
+
+
+class NewVolumeMigrate(NewVolume):
+    def __unicode__(self):
+        return "Creating second volume based on snapshot for migrate..."
+
+    @property
+    def active_volume(self):
+        return False
+
+    @property
+    def environment(self):
+        return self.infra.environment
+
+    @property
+    def host(self):
+        return self.host_migrate.host
+
+    def undo(self):
+        raise Exception("This step doesnt have roolback")
+
+
+class RemoveVolumeMigrate(NewVolumeMigrate):
+    def __unicode__(self):
+        return "Removing second volume based on snapshot for migrate..."
+
+    @property
+    def host(self):
+        master_instance = self.driver.get_master_instance()
+        return self.infra.instances.exclude(id=master_instance.id).first().hostname
+
+    def do(self):
+        vol = self.host.volumes.filter(is_active=False).last()
+        if not vol:
+            raise VolumeProviderRemoveVolumeMigrate("Any inactive volume found")
+        self._remove_volume(vol, self.host)
 
 
 class MountDataVolume(VolumeProviderBase):
