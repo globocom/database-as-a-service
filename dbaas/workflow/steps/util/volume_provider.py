@@ -426,6 +426,44 @@ class MountDataVolumeMigrate(MountDataVolume):
         self.run_script(script)
 
 
+class MountDataVolumeDatabaseMigrate(MountDataVolumeMigrate):
+    def __unicode__(self):
+        return "Mounting new volume for scp...".format(self.directory)
+
+    @property
+    def host(self):
+        return self.host_migrate.host
+
+    @property
+    def host_migrate_volume(self):
+        return self.host_migrate.host.volumes.filter(is_active=False).last()
+
+
+class MountDataVolumeOnSlaveMigrate(MountDataVolumeDatabaseMigrate):
+    @property
+    def host(self):
+        master_instance = self.driver.get_master_instance()
+        return self.infra.instances.exclude(id=master_instance.id).first().hostname
+
+
+class UmountDataVolumeDatabaseMigrate(MountDataVolumeDatabaseMigrate):
+    def __unicode__(self):
+        return "Umounting new volume for scp...".format(self.directory)
+
+    def do(self):
+        return super(UmountDataVolumeDatabaseMigrate, self).undo()
+
+    def undo(self):
+        return super(UmountDataVolumeDatabaseMigrate, self).do()
+
+
+class UmountDataVolumeOnSlaveMigrate(UmountDataVolumeDatabaseMigrate):
+    @property
+    def host(self):
+        master_instance = self.driver.get_master_instance()
+        return self.infra.instances.exclude(id=master_instance.id).first().hostname
+
+
 class UmountDataVolumeMigrate(MountDataVolumeMigrate):
 
     def __unicode__(self):
