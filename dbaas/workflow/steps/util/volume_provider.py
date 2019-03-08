@@ -623,6 +623,13 @@ class ScpFromSnapshotMigrate(VolumeProviderBase):
         pass
 
 
+class ScpFromSnapshotDatabaseMigrate(ScpFromSnapshotMigrate):
+
+    @property
+    def source_dir(self):
+        return "/data_migrate"
+
+
 class MountDataVolumeRestored(MountDataVolume):
 
     @property
