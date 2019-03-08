@@ -294,19 +294,36 @@ class NewVolume(VolumeProviderBase):
     def __unicode__(self):
         return "Creating Volume..."
 
+    @property
+    def active_volume(self):
+        return True
+
+    @property
+    def has_snapshot_on_step_manager(self):
+        return (self.host_migrate and hasattr(self, 'step_manager')
+                and self.host_migrate == self.step_manager)
+
+    def _remove_volume(self, volume, host):
+        self.add_access(volume, self.host)
+        self.clean_up(volume)
+        self.destroy_volume(volume)
+
     def do(self):
         if not self.instance.is_database:
             return
         snapshot = None
-        if self.host_migrate and hasattr(self, 'step_manager') and self.host_migrate == self.step_manager:
-        # self.step_manager.snapshot:
+        if self.has_snapshot_on_step_manager:
             snapshot = self.step_manager.snapshot
+        elif self.host_migrate:
+            snapshot = self.host_migrate.snapshot
         self.create_volume(
             self.infra.name,
             self.disk_offering.size_kb,
             self.host.address,
-            snapshot_id=snapshot.snapshopt_id if snapshot else None
+            snapshot_id=snapshot.snapshopt_id if snapshot else None,
+            is_active=self.active_volume
         )
+
 
     def undo(self):
         if not self.instance.is_database:
