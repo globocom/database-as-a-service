@@ -75,7 +75,8 @@ class VolumeProviderBase(BaseInstanceStep):
             self.credential.endpoint, self.provider, self.environment
         )
 
-    def create_volume(self, group, size_kb, to_address, snapshot_id=None):
+    def create_volume(self, group, size_kb, to_address, snapshot_id=None,
+                      is_active=True):
         url = self.base_url + "volume/new"
         data = {
             "group": group,
@@ -92,6 +93,7 @@ class VolumeProviderBase(BaseInstanceStep):
         volume.host = self.host
         volume.identifier = response.json()['identifier']
         volume.total_size_kb = self.infra.disk_offering.size_kb
+        volume.is_active = is_active
         volume.save()
         return volume
 
