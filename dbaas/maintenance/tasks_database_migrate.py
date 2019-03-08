@@ -2,6 +2,7 @@ from maintenance.models import DatabaseMigrate, HostMigrate
 from util.providers import get_database_migrate_steps
 from workflow.workflow import steps_for_instances, rollback_for_instances_full
 from copy import copy
+from datetime import datetime
 
 
 def get_steps(database):
@@ -17,6 +18,7 @@ def build_migrate_hosts(hosts_zones, migrate, step_manager=None):
             host_migrate = step_manager.hosts.get(host=instance.hostname)
             host_migrate.id = None
             host_migrate.finished_at = None
+            host_migrate.created_at = datetime.now()
         else:
             host_migrate = HostMigrate()
         host_migrate.task = migrate.task
@@ -37,6 +39,7 @@ def database_environment_migrate(
         database_migrate = copy(step_manager)
         database_migrate.id = None
         database_migrate.finished_at = None
+        database_migrate.created_at = datetime.now()
     else:
         database_migrate = DatabaseMigrate()
     database_migrate.task = task
