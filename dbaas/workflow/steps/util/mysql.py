@@ -334,6 +334,36 @@ class DisableLogBin(MySQLStep):
         self.run_script(self.script)
 
 
+class SetServerid(MySQLStep):
+    def __unicode__(self):
+        return "Set serverid to {}...".format(self.serverid)
+
+    @property
+    def serverid(self):
+        return int(self.instance.dns.split('-')[1])
+
+    @property
+    def script(self):
+        return """
+        echo ""; echo $(date "+%Y-%m-%d %T") "- Creating the server id db file"
+        \n(cat <<EOF_DBAAS
+        \n[mysqld]
+        \nserver_id={}
+        \nEOF_DBAAS
+        \n) >  /etc/server_id.cnf
+        """.format(self.serverid)
+
+    def do(self):
+        self.run_script(self.script)
+
+
+class SetServeridMigrate(SetServerid):
+    @property
+    def serverid(self):
+        serverid = super(SetServeridMigrate, self).serverid
+        return serverid + 2
+
+
 class SetReplicationHostMigrate(MySQLStep):
 
     def __unicode__(self):
