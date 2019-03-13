@@ -408,3 +408,16 @@ class SetReplicationFirstInstanceMigrate(SetReplicationLastInstanceMigrate):
     @property
     def is_valid(self):
         return self.instance == self.infra.instances.first()
+
+    def do(self):
+        if not self.is_valid:
+            return
+        instance = self.instance
+        instance.address = self.host.address
+        client = self.driver.get_client(instance)
+        client.query('show master status')
+        r = client.store_result()
+        row = r.fetch_row(maxrows=0, how=1)
+        log_file = row[0]['File']
+        log_pos = row[0]['Position']
+        change_master_to(self.master_instance, self.host.address, log_file, log_pos)
