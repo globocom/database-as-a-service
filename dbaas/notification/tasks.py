@@ -12,11 +12,11 @@ from logical.models import Database
 from physical.models import Plan, DatabaseInfra, Instance
 from util import email_notifications, get_worker_name, full_stack
 from util.decorators import only_one
-from util.providers import make_infra, clone_infra, destroy_infra, \
+from util.providers import clone_infra, destroy_infra, \
     get_database_upgrade_setting, get_resize_settings, \
     get_database_change_parameter_setting, \
     get_reinstallvm_steps_setting, \
-    get_database_change_parameter_retry_steps_count, get_deploy_instances, \
+    get_database_change_parameter_retry_steps_count, \
     get_database_configure_ssl_setting, get_deploy_settings
 from simple_audit.models import AuditRequest
 from system.models import Configuration
@@ -30,7 +30,6 @@ from maintenance.tasks import restore_database, node_zone_migrate, \
     node_zone_migrate_rollback, database_environment_migrate, \
     database_environment_migrate_rollback
 from maintenance.models import DatabaseDestroy
-from util.providers import get_deploy_settings, get_deploy_instances
 
 
 LOG = get_task_logger(__name__)
@@ -48,78 +47,6 @@ def rollback_database(dest_database):
     dest_database.is_in_quarantine = True
     dest_database.save()
     dest_database.delete()
-
-
-@app.task(bind=True)
-def create_database(
-    self, name, plan, environment, team, project, description,
-    subscribe_to_email_events=True, task_history=None, user=None,
-    is_protected=False
-):
-    AuditRequest.new_request("create_database", user, "localhost")
-    try:
-
-        worker_name = get_worker_name()
-        task_history = TaskHistory.register(
-            request=self.request, task_history=task_history, user=user,
-            worker_name=worker_name
-        )
-
-        LOG.info(
-            "id: %s | task: %s | kwargs: %s | args: %s" % (
-                self.request.id, self.request.task, self.request.kwargs,
-                str(self.request.args)
-            )
-        )
-
-        task_history.update_details(persist=True, details="Loading Process...")
-
-        result = make_infra(
-            plan=plan, environment=environment, name=name, team=team,
-            project=project, description=description,
-            subscribe_to_email_events=subscribe_to_email_events,
-            task=task_history, is_protected=is_protected
-        )
-
-        if result['created'] is False:
-            if 'exceptions' in result:
-                error = "\n".join(
-                    ": ".join(err) for err in result['exceptions']['error_codes']
-                )
-                traceback = "\nException Traceback\n".join(
-                    result['exceptions']['traceback']
-                )
-                error = "{}\n{}\n{}".format(error, traceback, error)
-            else:
-                error = "There is not any infra-structure to allocate this database."
-
-            task_history.update_status_for(
-                TaskHistory.STATUS_ERROR, details=error
-            )
-            return
-
-        task_history.update_dbid(db=result['database'])
-        task_history.update_status_for(
-            TaskHistory.STATUS_SUCCESS, details='Database created successfully'
-        )
-
-        return
-
-    except Exception as e:
-        traceback = full_stack()
-        LOG.error("Ops... something went wrong: %s" % e)
-        LOG.error(traceback)
-
-        if 'result' in locals() and result['created']:
-            destroy_infra(
-                databaseinfra=result['databaseinfra'], task=task_history)
-
-        task_history.update_status_for(
-            TaskHistory.STATUS_ERROR, details=traceback)
-        return
-
-    finally:
-        AuditRequest.cleanup_request()
 
 
 def create_database_with_retry(
@@ -602,115 +529,6 @@ def handle_zabbix_alarms(database):
 
 
 @app.task(bind=True)
-def upgrade_mongodb_24_to_30(self, database, user, task_history=None):
-
-    def upgrade_create_zabbix_alarms():
-        try:
-            create_zabbix_alarms(database)
-        except Exception as e:
-            message = "Could not create Zabbix alarms: {}".format(e)
-            task_history.update_status_for(
-                TaskHistory.STATUS_ERROR, details=message
-            )
-            LOG.error(message)
-
-    from workflow.settings import MONGODB_UPGRADE_24_TO_30_SINGLE
-    from workflow.settings import MONGODB_UPGRADE_24_TO_30_HA
-    from util import build_dict
-    from workflow.workflow import start_workflow
-
-    worker_name = get_worker_name()
-    task_history = TaskHistory.register(request=self.request, task_history=task_history,
-                                        user=user, worker_name=worker_name)
-
-    databaseinfra = database.databaseinfra
-    driver = databaseinfra.get_driver()
-
-    instances = driver.get_database_instances()
-    source_plan = databaseinfra.plan
-    target_plan = source_plan.engine_equivalent_plan
-
-    source_engine = databaseinfra.engine
-    target_engine = source_engine.engine_upgrade_option
-
-    if source_plan.is_ha:
-        steps = MONGODB_UPGRADE_24_TO_30_HA
-    else:
-        steps = MONGODB_UPGRADE_24_TO_30_SINGLE
-
-    stop_now = False
-
-    if not target_plan:
-        msg = "There is not Engine Equivalent Plan!"
-        stop_now = True
-
-    if not target_engine:
-        msg = "There is not Engine Upgrade Option!"
-        stop_now = True
-
-    if database.status != Database.ALIVE or not database.database_status.is_alive:
-        msg = "Database is not alive!"
-        stop_now = True
-
-    if database.is_being_used_elsewhere():
-        msg = "Database is being used by another task!"
-        stop_now = True
-
-    if not source_engine.version.startswith('2.4.'):
-        msg = "Database version must be 2.4!"
-        stop_now = True
-
-    if target_engine and target_engine.version != '3.0.12':
-        msg = "Target database version must be 3.0.12!"
-        stop_now = True
-
-    if stop_now:
-        task_history.update_status_for(TaskHistory.STATUS_ERROR, details=msg)
-        LOG.info("Upgrade finished")
-        return
-
-    try:
-        delete_zabbix_alarms(database)
-    except Exception as e:
-        message = "Could not delete Zabbix alarms: {}".format(e)
-        task_history.update_status_for(
-            TaskHistory.STATUS_ERROR, details=message
-        )
-        LOG.error(message)
-        return
-
-    try:
-        workflow_dict = build_dict(steps=steps,
-                                   databaseinfra=databaseinfra,
-                                   instances=instances,
-                                   source_plan=source_plan,
-                                   target_plan=target_plan,
-                                   source_engine=source_engine,
-                                   target_engine=target_engine)
-
-        start_workflow(workflow_dict=workflow_dict, task=task_history)
-
-        if workflow_dict['exceptions']['traceback']:
-            error = "\n".join(": ".join(err) for err in workflow_dict['exceptions']['error_codes'])
-            traceback = "\nException Traceback\n".join(workflow_dict['exceptions']['traceback'])
-            error = "{}\n{}\n{}".format(error, traceback, error)
-            task_history.update_status_for(TaskHistory.STATUS_ERROR, details=error)
-            LOG.info("MongoDB Upgrade finished with errors")
-            upgrade_create_zabbix_alarms()
-            return
-
-        task_history.update_status_for(
-            TaskHistory.STATUS_SUCCESS, details='MongoDB sucessfully upgraded!')
-
-        LOG.info("MongoDB Upgrade finished")
-    except Exception as e:
-        task_history.update_status_for(TaskHistory.STATUS_ERROR, details=e)
-        LOG.warning("MongoDB Upgrade finished with errors")
-
-    upgrade_create_zabbix_alarms()
-
-
-@app.task(bind=True)
 def database_disk_resize(self, database, disk_offering, task_history, user):
     from workflow.steps.util.volume_provider import ResizeVolume
 
@@ -1182,6 +1000,71 @@ def configure_ssl_database(self, database, user, task, since_step=0):
             'Could not do have SSL configured.\nConfigure SSL doesn\'t have rollback'
         )
 
+@app.task(bind=True)
+def update_database_monitoring(self, task, database, hostgroup, action):
+    from workflow.steps.util.zabbix import UpdateMonitoringRemoveHostgroup
+    from workflow.steps.util.zabbix import UpdateMonitoringAddHostgroup
+
+    worker_name = get_worker_name()
+    task_history = TaskHistory.register(
+        request=self.request, worker_name=worker_name, task_history=task
+    )
+    detail = 'Update database monitoring, {} hostgroup '.format(action)
+    task_history.add_detail(detail)
+
+    try:
+
+        databaseinfra = database.databaseinfra
+        for instance in databaseinfra.instances.all():
+
+            detail = '{} hostgroup for {}'.format(action, instance)
+            task_history.add_detail(detail, level=2)
+
+            if action == 'add':
+                UpdateMonitoringAddHostgroup(instance, hostgroup).do()
+            elif action == 'remove':
+                UpdateMonitoringRemoveHostgroup(instance, hostgroup).do()
+
+    except Exception as e:
+        task_history.add_detail('Error: {}'.format(e))
+        task.set_status_error('Could not update monitoring')
+        return False
+
+    else:
+        task.set_status_success('Monitoring updated with success')
+        return True
+
+
+@app.task(bind=True)
+def update_organization_name_monitoring(
+    self, task, database, organization_name):
+    from workflow.steps.util.db_monitor import UpdateInfraOrganizationName
+
+    worker_name = get_worker_name()
+    task_history = TaskHistory.register(
+        request=self.request, worker_name=worker_name, task_history=task
+    )
+    detail = 'Update organization name on monitoring'
+    task_history.add_detail(detail)
+
+    try:
+        databaseinfra = database.databaseinfra
+        for instance in databaseinfra.instances.all():
+
+            detail = 'update organization name:{} for {}'.format(
+                organization_name, instance)
+            task_history.add_detail(detail, level=2)
+            UpdateInfraOrganizationName(instance, organization_name).do()
+
+    except Exception as e:
+        task_history.add_detail('Error: {}'.format(e))
+        task.set_status_error('Could not update monitoring')
+        return False
+
+    else:
+        task.set_status_success('Monitoring updated with success')
+        return True
+
 
 class TaskRegister(object):
     TASK_CLASS = TaskHistory
@@ -1389,22 +1272,12 @@ class TaskRegister(object):
         task_params.update(**{'user': user} if register_user else {})
         task = cls.create_task(task_params)
 
-        try:
-            get_deploy_instances(plan.replication_topology.class_path)
-        except NotImplementedError:
-            return create_database.delay(
-                name=name, plan=plan, environment=environment, team=team,
-                project=project, description=description,
-                subscribe_to_email_events=subscribe_to_email_events,
-                task_history=task, user=user, is_protected=is_protected
-            )
-        else:
-            return create_database_with_retry(
-                name=name, plan=plan, environment=environment, team=team,
-                project=project, description=description, task=task,
-                subscribe_to_email_events=subscribe_to_email_events,
-                is_protected=is_protected, user=user, retry_from=retry_from
-            )
+        return create_database_with_retry(
+            name=name, plan=plan, environment=environment, team=team,
+            project=project, description=description, task=task,
+            subscribe_to_email_events=subscribe_to_email_events,
+            is_protected=is_protected, user=user, retry_from=retry_from
+        )
 
     @classmethod
     def database_create_rollback(cls, rollback_from, user, extra_task_params=None):
@@ -1522,24 +1395,6 @@ class TaskRegister(object):
         delay_params.update(**{'since_step': since_step} if since_step else {})
 
         upgrade_database.delay(**delay_params)
-
-    @classmethod
-    def upgrade_mongodb_24_to_30(cls, database, user):
-
-        task_params = {
-            'task_name': "upgrade_mongodb_24_to_30",
-            'arguments': "Upgrading MongoDB 2.4 to 3.0",
-            'database': database,
-            'user': user
-        }
-
-        task = cls.create_task(task_params)
-
-        upgrade_mongodb_24_to_30.delay(
-            database=database,
-            task_history=task,
-            user=user
-        )
 
     @classmethod
     def database_reinstall_vm(cls, instance, user, since_step=None):
@@ -1719,5 +1574,49 @@ class TaskRegister(object):
         task = cls.create_task(task_params)
         return database_environment_migrate_rollback.delay(migrate, task)
 
+    @classmethod
+    def update_database_monitoring(cls, database, hostgroup, action):
+
+        if action not in ('add', 'remove'):
+            error = "{} is not a valid action.".format(action)
+            error += " Valid actions are 'add' and 'remove'"
+            LOG.error(error)
+            return
+
+        args = "Database: {}, Hostgroup: {}, Action: {}".format(
+                database, hostgroup, action)
+        task_params = {
+            'task_name': "update_database_monitoring",
+            'arguments': args,
+            'relevance': TaskHistory.RELEVANCE_ERROR
+        }
+
+        task = cls.create_task(task_params)
+
+        update_database_monitoring.delay(
+            task=task,
+            database=database,
+            hostgroup=hostgroup,
+            action=action,
+        )
+
+    @classmethod
+    def update_organization_name_monitoring(cls, database, organization_name):
+
+        args = "Database: {}, Organization Name: {}".format(
+                database, organization_name)
+        task_params = {
+            'task_name': "update_organization_name_monitoring",
+            'arguments': args,
+            'relevance': TaskHistory.RELEVANCE_ERROR
+        }
+
+        task = cls.create_task(task_params)
+
+        update_organization_name_monitoring.delay(
+            task=task,
+            database=database,
+            organization_name=organization_name
+        )
 
     # ============  END TASKS   ============

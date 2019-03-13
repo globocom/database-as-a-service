@@ -5,7 +5,7 @@ from django.core.urlresolvers import reverse
 from django.test import TestCase
 from django.test.client import Client
 from django.contrib.auth.models import User, Group
-from ..models import AccountUser, Role, Team
+from ..models import AccountUser, Role, Team, Organization
 from . import factory
 
 LOG = logging.getLogger(__name__)
@@ -20,8 +20,10 @@ class AdminCreateDatabaseTestCase(TestCase):
     def setUp(self):
 
         self.role = Role.objects.get_or_create(name="fake_role")[0]
+        self.organization = Organization.objects.get_or_create(name='fake_organization')[0]
         self.team = Team.objects.get_or_create(
-            name="fake_team", role=self.role)[0]
+            name="fake_team", role=self.role,
+            organization = self.organization)[0]
         self.superuser = User.objects.create_superuser(
             self.USERNAME, email="%s@admin.com" % self.USERNAME, password=self.PASSWORD)
         self.team.users.add(self.superuser)
