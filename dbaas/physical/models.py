@@ -474,6 +474,15 @@ class Plan(BaseModel):
 #    def weaker_offering(self):
 #        return self.offerings.filter(weaker=True).first()
 
+    def get_equivalent_plan_for_env(self, env):
+        return self._meta.model.objects.filter(
+            engine=self.engine,
+            environments=env
+        ).order_by(
+            'stronger_offering__memory_size_mb',
+            'stronger_offering__cpus'
+        ).first()
+
     def __unicode__(self):
         return "%s" % (self.name)
 
