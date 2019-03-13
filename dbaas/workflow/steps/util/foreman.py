@@ -58,13 +58,15 @@ class SetupDSRC(Foreman):
         if not self.is_valid:
             return
 
-        vip_identifier = Vip.objects.get(infra=self.infra).identifier
-        client = VipProviderClient(self.infra.environment)
-        vip = client.get_vip(vip_identifier)
-
         self.provider.setup_database_dscp(
-            self.fqdn, vip.vip_ip, vip.dscp, self.instance.port
+            self.fqdn, self.vip.vip_ip, self.vip.dscp, self.instance.port
         )
+
+
+class SetupDSRCMigrate(SetupDSRC):
+    def do(self):
+        self.vip = self.future_vip
+        super(SetupDSRCMigrate, self).do()
 
 
 class DeleteHost(Foreman):
