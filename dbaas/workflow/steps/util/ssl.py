@@ -160,7 +160,7 @@ class CreateSSLFolder(SSL):
 class InstanceSSLBaseName(SSL):
     @property
     def ssl_file_basename(self):
-        return self.instance.hostname.hostname.split('.')[0]
+        return self.host.hostname.split('.')[0]
 
 
 class InfraSSLBaseName(SSL):
@@ -173,7 +173,7 @@ class InstanceSSLDNS(SSL):
     @property
     def ssl_dns(self):
         if self.certificate_type == 'IP':
-            return self.instance.address
+            return self.host.address
         else:
             return self.instance.dns
 
@@ -181,7 +181,7 @@ class InstanceSSLDNS(SSL):
 class InstanceSSLDNSIp(SSL):
     @property
     def ssl_dns(self):
-        return self.instance.address
+        return self.host.address
 
 
 class InfraSSLDNS(SSL):
@@ -415,4 +415,3 @@ class SetReplicationUserRequireSSL(SSL):
         driver = self.infra.get_driver()
         driver.set_replication_user_not_require_ssl()
         driver.set_replication_not_require_ssl(instance=self.instance)
-
