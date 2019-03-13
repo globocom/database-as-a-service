@@ -352,6 +352,12 @@ class NewVolumeMigrate(NewVolume):
     def undo(self):
         raise Exception("This step doesnt have roolback")
 
+class NewVolumeOnSlaveMigrate(NewVolumeMigrate):
+    @property
+    def host(self):
+        master_instance = self.driver.get_master_instance()
+        return self.infra.instances.exclude(id=master_instance.id).first().hostname
+
 
 class RemoveVolumeMigrate(NewVolumeMigrate):
     def __unicode__(self):
@@ -436,7 +442,7 @@ class MountDataVolumeDatabaseMigrate(MountDataVolumeMigrate):
 
     @property
     def host_migrate_volume(self):
-        return self.host_migrate.host.volumes.filter(is_active=False).last()
+        return self.host.volumes.filter(is_active=False).last()
 
 
 class MountDataVolumeOnSlaveMigrate(MountDataVolumeDatabaseMigrate):
