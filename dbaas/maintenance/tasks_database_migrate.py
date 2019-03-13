@@ -64,6 +64,9 @@ def database_environment_migrate(
         database.save()
         infra = database.infra
         infra.environment = database_migrate.environment
+        infra.plan = infra.plan.get_equivalent_plan_for_env(
+            database_migrate.environment
+        )
         infra.save()
         database_migrate.set_success()
         task.set_status_success('Database migrated with success')
