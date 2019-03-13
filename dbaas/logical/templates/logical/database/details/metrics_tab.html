@@ -27,7 +27,10 @@
 <td><ul class="nav nav-pills">
 <li><p class="navbar-text">&nbsp;</p></li>
   <li class="active" style="float:right">
+
+{% if can_show_sofia_metrics %}
 <a href="?hostname={{hostname}}&source={{second_source}}" class="btn btn-primary active" role="button" aria-pressed="true">Change data source to {{second_source}}</a>
+{% endif %}
 
 </li></ul>
 </td>

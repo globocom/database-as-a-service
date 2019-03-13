@@ -67,7 +67,7 @@ class MongoDB(BaseDriver):
             with self.pymongo() as client:
                 repl_status = client.admin.command('replSetGetStatus')
                 repl_name = repl_status.get('set', None)
-        except ConnectionError, pymongo.errors.OperationFailure:
+        except (TypeError, ConnectionError) as err:
             pass
 
         return repl_name

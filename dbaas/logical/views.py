@@ -571,12 +571,17 @@ def database_metrics(request, context, database):
     )
 
     context['source'] = request.GET.get('source', 'zabbix')
-    #context['source'] = 'sofia'
 
     if context['source'] == 'sofia':
         context['second_source'] = 'zabbix'
     else:
         context['second_source'] = 'sofia'
+
+    user = request.user
+    if len(user.team_set.filter(organization__external=False)) > 0:
+        context['can_show_sofia_metrics'] = True
+    else:
+        context['can_show_sofia_metrics'] = False
 
     context['hosts'] = []
     for host in Host.objects.filter(instances__databaseinfra=database.infra).distinct():
@@ -590,16 +595,31 @@ def database_metrics(request, context, database):
         hostname__hostname__contains=context['hostname']
     ).first()
 
-    context['grafana_url_zabbix'] = '{}/dashboard/{}?{}={}&{}={}&{}={}&{}={}'.format(
-        credential.endpoint,
+    organization  = database.team.organization
+    if organization and organization.external:
+        endpoint = organization.grafana_endpoint
+        datasource = organization.grafana_datasource
+    else:
+        endpoint = credential.endpoint
+        datasource = credential.get_parameter_by_name('environment')
+
+    grafana_url_zabbix = '{}/dashboard/{}?{}={}&{}={}&{}={}&{}={}'.format(
+        endpoint,
         credential.project.format(database.engine_type),
         credential.get_parameter_by_name('db_param'), instance.dns,
         credential.get_parameter_by_name('os_param'), instance.hostname.hostname,
         credential.get_parameter_by_name('disk_param'),
         credential.get_parameter_by_name('disk_dir'),
         credential.get_parameter_by_name('env_param'),
-        credential.get_parameter_by_name('environment')
+        datasource
     )
+
+    if organization and organization.external:
+        grafana_url_zabbix += "&orgId={}".format(organization.grafana_orgid)
+
+    context['grafana_url_zabbix'] = grafana_url_zabbix
+
+    print "grafana_url_zabbix:", grafana_url_zabbix
 
     dashboard = credential.get_parameter_by_name('sofia_dbaas_database_dashboard')
     dashboard = dashboard.format(database.engine_type)
