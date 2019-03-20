@@ -221,7 +221,6 @@ def database_details(request, context, database):
             return HttpResponseRedirect(
                 reverse('admin:logical_database_changelist')
             )
-
     engine = str(database.engine)
     topology = database.databaseinfra.plan.replication_topology
     engine = engine + " - " + topology.details if topology.details else engine
@@ -229,6 +228,8 @@ def database_details(request, context, database):
         masters_quant = len(database.driver.get_master_instance())
     except TypeError:
         masters_quant = 1
+    except:
+        masters_quant = 0
 
     context['masters_quant'] = masters_quant
     context['engine'] = engine
