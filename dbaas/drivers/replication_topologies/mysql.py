@@ -783,6 +783,7 @@ class MySQLFoxHAAWS(MySQLFoxHA):
             'workflow.steps.util.database.CheckIfSwitchMaster',
             'workflow.steps.util.host_provider.CreateVirtualMachineMigrate',
             'workflow.steps.util.volume_provider.TakeSnapshotMigrate',
+            'workflow.steps.util.volume_provider.WaitSnapshotAvailableMigrate',
             'workflow.steps.util.volume_provider.NewVolume',
             'workflow.steps.util.vm.WaitingBeReady',
             'workflow.steps.util.vm.UpdateOSDescription',
