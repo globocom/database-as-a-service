@@ -5,6 +5,7 @@ from dbaas_credentials.models import CredentialType
 from util import get_credentials_for, exec_remote_command_host
 from physical.models import Volume
 from base import BaseInstanceStep
+from time import sleep
 
 
 class VolumeProviderException(Exception):
@@ -16,6 +17,10 @@ class VolumeProviderRemoveSnapshotMigrate(VolumeProviderException):
 
 
 class VolumeProviderRemoveVolumeMigrate(VolumeProviderException):
+    pass
+
+
+class VolumeProviderGetSnapshotState(VolumeProviderException):
     pass
 
 
@@ -163,6 +168,15 @@ class VolumeProviderBase(BaseInstanceStep):
         if not response.ok:
             raise IndexError(response.content, response)
         return response.json()
+
+    def get_snapshot_state(self, snapshot):
+        url = "{}snapshot/{}/state".format(
+            self.base_url, snapshot.snapshopt_id
+        )
+        response = get(url)
+        if not response.ok:
+            raise VolumeProviderGetSnapshotState(response.content, response)
+        return response.json()['state']
 
     def _get_command(self, url, payload, exception_class):
         response = get(url, json=payload)
@@ -929,6 +943,34 @@ class TakeSnapshot(VolumeProviderBase):
 
     def undo(self):
         pass
+
+
+class WaitSnapshotAvailableMigrate(VolumeProviderBase):
+    ATTEMPTS = 60
+    DELAY = 5
+
+    def __unicode__(self):
+        return "Wait snapshot available..."
+
+    def waiting_be(self, state, snapshot):
+        for _ in range(self.ATTEMPTS):
+            snapshot_state = self.get_snapshot_state(snapshot)
+            if   snapshot_state == state:
+                return True
+            sleep(self.DELAY)
+        raise EnvironmentError("Snapshot {} is {} should be {}".format(
+            snapshot, state, snapshot_state
+        ))
+
+    @property
+    def snapshot(self):
+        if self.host_migrate and self.host_migrate.database_migrate:
+            return self.host_migrate.snapshot
+        else:
+            return self.step_manager.snapshot
+
+    def do(self):
+        self.waiting_be('available', self.snapshot)
 
 
 class UpdateActiveDisk(VolumeProviderBase):
