@@ -119,7 +119,7 @@ class RemoveNodeMigrate(FoxHA):
         mode = 'read_only'
 
         self.provider.add_node(
-            self.infra.name, self.instance.dns, self.self.host_migrate.host.address,
+            self.infra.name, self.instance.dns, self.host_migrate.host.address,
             self.instance.port, mode, 'enabled'
         )
 
