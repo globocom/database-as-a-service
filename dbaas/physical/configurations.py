@@ -618,6 +618,11 @@ class ConfigurationMySQL(ConfigurationBase):
         default = 'NONE'
         return self.get_parameter(parameter_name, default)
 
+    @property
+    def init_connect(self):
+        parameter_name = inspect.stack()[0][3]
+        default = ''
+        return self.get_parameter(parameter_name, default)
 
 
 class ConfigurationMongoDB(ConfigurationBase):

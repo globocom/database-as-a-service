@@ -415,7 +415,13 @@ class MySQL(BaseDriver):
 
     def set_configuration(self, instance, name, value):
         client = self.get_client(instance)
-        client.query("set global {} = {}".format(name, value))
+        if name == 'init_connect':
+            query = 'set global {} = "{}"'.format(name, value)
+        elif value == '':
+            query = "set global {} = ''".format(name)
+        else:
+            query = "set global {} = {}".format(name, value)
+        client.query(query)
 
     def get_database_process_name(self):
         return "mysqld"
