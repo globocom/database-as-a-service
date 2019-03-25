@@ -329,8 +329,10 @@ class Redis(BaseDriver):
     def initialization_parameters(self, instance):
         return self.parameters_redis(instance.hostname)
 
-    def configuration_parameters(self, instance):
-        return self.parameters_redis(instance.hostname)
+    def configuration_parameters(self, instance, **kw):
+        config = self.parameters_redis(instance.hostname)
+        config.update(kw)
+        return config
 
     def parameters_redis(self, host):
         redis = host.database_instance()
