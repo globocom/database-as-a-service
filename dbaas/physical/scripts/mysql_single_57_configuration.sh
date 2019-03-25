@@ -112,7 +112,7 @@ audit_log_policy                = {{configuration.audit_log_policy.value}}
 !include /etc/server_id.cnf
 
 EOF_DBAAS
-) > /etc/my.cnf
+) > {{ CONFIG_FILE_PATH|default:"/etc/my.cnf" }}
     die_if_error "Error setting my.cnf"
 
 }
