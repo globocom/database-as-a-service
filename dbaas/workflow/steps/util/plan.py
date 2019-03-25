@@ -187,15 +187,31 @@ class Configure(PlanStep):
 
     def __unicode__(self):
         return "Executing plan configure script..."
+    
+    @property
+    def extra_variables(self):
+        return{}
 
     def get_variables_specifics(self):
         driver = self.infra.get_driver()
-        return driver.configuration_parameters(self.instance)
+        return driver.configuration_parameters(self.instance, **self.extra_variables)
 
     def do(self):
         if self.is_valid:
             self.run_script(self.plan.script.configuration_template)
 
+class ConfigureDatabaseFile(Configure):
+    
+    @property
+    def extra_variables(self):
+        return {
+            'CONFIGURE_ONLY': True,
+            'CONFIG_FILE_PATH': '/tmp/database_configuration_file'
+        }
+
+    def do(self):
+        if self.is_valid:
+            self.run_script(self.plan.script.configuration_template)
 
 class StartReplication(PlanStep):
 
