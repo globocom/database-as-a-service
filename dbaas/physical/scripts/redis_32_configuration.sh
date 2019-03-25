@@ -787,10 +787,10 @@ client-output-buffer-limit pubsub {{ configuration.client_output_buffer_limit_pu
 # include /path/to/other.conf
 
 EOF_DBAAS_CONFIGDBFILE
-) > /data/redis.conf
+) > {{ CONFIG_FILE_PATH|default:"/data/redis.conf" }}
     die_if_error "Error setting redis.conf"
 
-    chown redis:redis /data/redis.conf
+    chown redis:redis {{ CONFIG_FILE_PATH|default:"/data/redis.conf" }}
     die_if_error "Error changing redis conf file owner"
 
 }
