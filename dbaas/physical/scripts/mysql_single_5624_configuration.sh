@@ -105,7 +105,7 @@ explicit_defaults_for_timestamp = {{ configuration.explicit_defaults_for_timesta
 !include /etc/server_id.cnf
 
 EOF_DBAAS
-) > /etc/my.cnf
+) > {{ CONFIG_FILE_PATH|default:"/etc/my.cnf" }}
     die_if_error "Error setting my.cnf"
 
 }
