@@ -423,8 +423,10 @@ class MySQL(BaseDriver):
     def initialization_parameters(self, instance):
         return self.parameters_mysql(instance)
 
-    def configuration_parameters(self, instance):
-        return self.parameters_mysql(instance)
+    def configuration_parameters(self, instance, **kw):
+        config = self.parameters_mysql(instance)
+        config.update(kw)
+        return config
 
     def parameters_mysql(self, instance):
         return {
