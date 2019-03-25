@@ -490,11 +490,12 @@ class MongoDB(BaseDriver):
     def initialization_parameters(self, instance):
         return {'DATABASERULE': "PRIMARY"}
 
-    def configuration_parameters(self, instance):
+    def configuration_parameters(self, instance, **kw):
         config = {}
         config.update(self.initialization_parameters(instance))
         config['REPLICASETNAME'] = self.get_replica_name()
         config['MONGODBKEY'] = instance.databaseinfra.database_key
+        config.update(kw)
         return config
 
     def configuration_parameters_for_log_resize(self, instance):
