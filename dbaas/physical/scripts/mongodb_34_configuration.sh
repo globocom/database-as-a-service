@@ -103,10 +103,10 @@ replication:
 {% endif %}
 
 EOF_DBAAS
-) > {{ CONFIG_FILE_PATH|default:"/data/mongo.conf" }}
+) > {{ CONFIG_FILE_PATH|default:"/data/mongodb.conf" }}
     die_if_error "Error setting mongodb.conf"
 
-    chown mongodb:mongodb {{ CONFIG_FILE_PATH|default:"/data/mongo.conf" }}
+    chown mongodb:mongodb {{ CONFIG_FILE_PATH|default:"/data/mongodb.conf" }}
     die_if_error "Error changing mongodb conf file owner"
 }
 
