@@ -314,6 +314,9 @@ class CreateVipMigrate(CreateVip):
 
 class DestroyVipMigrate(CreateVipMigrate):
 
+    def __unicode__(self):
+        return "Destroying old vip..."
+
     @property
     def environment(self):
         return self.infra.environment
