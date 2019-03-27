@@ -952,6 +952,10 @@ class WaitSnapshotAvailableMigrate(VolumeProviderBase):
     def __unicode__(self):
         return "Wait snapshot available..."
 
+    @property
+    def environment(self):
+        return self.infra.environment
+
     def waiting_be(self, state, snapshot):
         for _ in range(self.ATTEMPTS):
             snapshot_state = self.get_snapshot_state(snapshot)
