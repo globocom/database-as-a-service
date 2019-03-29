@@ -33,15 +33,18 @@ class DatabaseStep(BaseInstanceStep):
     def undo(self):
         pass
 
+    def run_script(self, script):
+        output = {}
+        return_code = exec_remote_command_host(self.host, script, output)
+        return return_code, output
+
     def _execute_init_script(self, command):
         base_host = self.instance.hostname if self.host_migrate else self.host
         script = self.driver.initialization_script_path(base_host)
         script = script.format(option=command)
         script += ' > /dev/null'
 
-        output = {}
-        return_code = exec_remote_command_host(self.host, script, output)
-        return return_code, output
+        return self.run_script(script)
 
     def start_database(self):
         return self._execute_init_script('start')
@@ -159,6 +162,40 @@ class Start(DatabaseStep):
 
     def undo(self):
         self.undo_klass(self.instance).do()
+
+
+class StartRsyslog(DatabaseStep):
+    action = 'start'
+
+    def __unicode__(self):
+        return "Starting rsyslog..."
+
+    def do(self):
+
+        script = "/etc/init.d/rsyslog {} > /dev/null".format(self.action)
+        return_code, output = self.run_script(script)
+        if return_code != 0:
+            raise EnvironmentError(
+                'Could not {} rsyslog {}: {}'.format(self.action, return_code, output)
+            )
+
+    def undo(self):
+        self.action = 'stop'
+        return self.do()
+
+
+class StopRsyslog(DatabaseStep):
+    action = 'stop'
+
+    def __unicode__(self):
+        return "Stopping rsyslog..."
+
+    def do(self):
+        return super(StopRsyslog, self).undo()
+
+    def undo(self):
+        self.action = 'start'
+        return super(StopRsyslog, self).do()
 
 
 class OnlyInSentinel(DatabaseStep):

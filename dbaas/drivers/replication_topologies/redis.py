@@ -84,6 +84,7 @@ class RedisSingle(BaseRedis):
             )}, {
             'Stopping datbase': (
                 'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.StopRsyslog',
                 'workflow.steps.util.database.CheckIsDown',
             )}, {
             'Configuring': (
@@ -95,6 +96,7 @@ class RedisSingle(BaseRedis):
             )}, {
             'Starting database': (
                 'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.StartRsyslog',
                 'workflow.steps.util.database.CheckIsUp',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
             )}, {
@@ -154,6 +156,7 @@ class RedisSentinel(BaseRedis):
             )}, {
             'Stopping datbase': (
                 'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.StopRsyslog',
                 'workflow.steps.util.database.CheckIsDown',
             )}, {
             'Configuring': (
@@ -167,6 +170,7 @@ class RedisSentinel(BaseRedis):
             )}, {
             'Starting database': (
                 'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.StartRsyslog',
                 'workflow.steps.util.database.CheckIsUp',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
             )}, {
@@ -369,6 +373,7 @@ class RedisCluster(BaseRedis):
             )}, {
             'Stopping datbase': (
                 'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.StopRsyslog',
                 'workflow.steps.util.database.CheckIsDown',
                 'workflow.steps.redis.cluster.SaveNodeConfig'
             )}, {
@@ -384,6 +389,7 @@ class RedisCluster(BaseRedis):
             )}, {
             'Starting database': (
                 'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.StartRsyslog',
                 'workflow.steps.util.database.CheckIsUp',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
             )}, {

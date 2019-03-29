@@ -84,6 +84,7 @@ class MongoDBSingle(BaseTopology):
             )}, {
             'Stopping datbase': (
                 'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.StopRsyslog',
                 'workflow.steps.util.database.CheckIsDown',
             )}, {
             'Configuring': (
@@ -95,6 +96,7 @@ class MongoDBSingle(BaseTopology):
             )}, {
             'Starting database': (
                 'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.StartRsyslog',
                 'workflow.steps.util.database.CheckIsUp',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
             )}, {
@@ -249,6 +251,7 @@ class MongoDBReplicaset(BaseTopology):
             )}, {
             'Stopping datbase': (
                 'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.StopRsyslog',
                 'workflow.steps.util.database.CheckIsDown',
             )}, {
             'Configuring': (
@@ -262,6 +265,7 @@ class MongoDBReplicaset(BaseTopology):
             )}, {
             'Starting database': (
                 'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.StartRsyslog',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
             )}, {
             'Check database': (
