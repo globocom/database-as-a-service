@@ -622,8 +622,11 @@ class MySQLFoxHA(MySQLSingle):
         return [{
             'Creating new hosts': self.get_base_database_migrate_steps()
         }, {
-            'Configure Replication': (
+            'Check Replication': (
                 'workflow.steps.util.fox.IsReplicationOkMigrate',
+            )
+        }, {
+            'Configure Replication': (
                 'workflow.steps.util.mysql.SetReplicationFirstInstanceMigrate',
             )
         }, {
