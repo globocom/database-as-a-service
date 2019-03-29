@@ -118,8 +118,9 @@ class MySQLSingle(BaseMysql):
             'Restoring': (
                 'workflow.steps.util.volume_provider.RestoreSnapshot',
             )}, {
-            'Stopping datbase': (
+            'Stopping database': (
                 'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.StopRsyslog',
                 'workflow.steps.util.database.CheckIsDown',
             )}, {
             'Configuring': (
@@ -131,6 +132,7 @@ class MySQLSingle(BaseMysql):
             )}, {
             'Starting database': (
                 'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.StartRsyslog',
                 'workflow.steps.util.database.CheckIsUp',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
             )}, {
@@ -335,6 +337,7 @@ class MySQLFoxHA(MySQLSingle):
             'Stopping datbase': (
                 'workflow.steps.util.mysql.SaveMySQLBinlog',
                 'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.StopRsyslog',
                 'workflow.steps.util.database.CheckIsDown',
             )}, {
             'Configuring': (
@@ -348,6 +351,7 @@ class MySQLFoxHA(MySQLSingle):
             'Starting database': (
                 'workflow.steps.util.database.Stop',
                 'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.StartRsyslog',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
             )}, {
             'Configuring replication': (
@@ -875,8 +879,11 @@ class MySQLFoxHAAWS(MySQLFoxHA):
         return [{
             'Creating new hosts': self.get_base_database_migrate_steps()
         }, {
-            'Configure Replication': (
+            'Wait Replication': (
                 'workflow.steps.util.fox.IsReplicationOkMigrate',
+            )
+        }, {
+            'Configure Replication': (
                 'workflow.steps.util.mysql.SetReplicationFirstInstanceMigrate',
             )
         }, {
