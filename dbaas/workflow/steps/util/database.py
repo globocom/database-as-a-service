@@ -164,37 +164,41 @@ class Start(DatabaseStep):
 
 
 class StartRsyslog(DatabaseStep):
-    action = 'start'
 
     def __unicode__(self):
         return "Starting rsyslog..."
 
-    def do(self):
-
-        script = "/etc/init.d/rsyslog {} > /dev/null".format(self.action)
+    def _exec_command(self, action):
+        script = "/etc/init.d/rsyslog {} > /dev/null".format(action)
         return_code, output = self.run_script(script)
         if return_code != 0:
             raise EnvironmentError(
-                'Could not {} rsyslog {}: {}'.format(self.action, return_code, output)
+                'Could not {} rsyslog {}: {}'.format(action, return_code, output)
             )
 
+    def _start(self):
+        return self._exec_command('start')
+
+    def _stop(self):
+        return self._exec_command('stop')
+
+    def do(self):
+        return self._start()
+
     def undo(self):
-        self.action = 'stop'
-        return self.do()
+        return self._stop()
 
 
 class StopRsyslog(StartRsyslog):
-    action = 'stop'
 
     def __unicode__(self):
         return "Stopping rsyslog..."
 
     def do(self):
-        return super(StopRsyslog, self).undo()
+        self._stop()
 
     def undo(self):
-        self.action = 'start'
-        return super(StopRsyslog, self).do()
+        self._start()
 
 
 class OnlyInSentinel(DatabaseStep):
