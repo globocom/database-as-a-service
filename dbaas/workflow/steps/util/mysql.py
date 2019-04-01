@@ -12,10 +12,6 @@ from util import exec_remote_command_host
 
 class MySQLStep(BaseInstanceStep):
 
-    def __init__(self, instance):
-        super(MySQLStep, self).__init__(instance)
-        self.driver = self.infra.get_driver()
-
     def undo(self):
         pass
 

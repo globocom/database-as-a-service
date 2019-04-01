@@ -26,10 +26,18 @@ class BaseInstanceStep(object):
     def __init__(self, instance):
         self.instance = instance
         self._vip = None
+        self._driver = None
 
     @property
     def infra(self):
         return self.instance.databaseinfra
+
+    @property
+    def driver(self):
+        if self._driver is None:
+            self._driver = self.infra.get_driver()
+
+        return self._driver
 
     @property
     def database(self):

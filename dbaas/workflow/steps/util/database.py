@@ -19,7 +19,6 @@ class DatabaseStep(BaseInstanceStep):
 
     def __init__(self, instance):
         super(DatabaseStep, self).__init__(instance)
-        self.driver = self.infra.get_driver()
         if self.host_migrate:
             self.instance.address = self.host.address
 

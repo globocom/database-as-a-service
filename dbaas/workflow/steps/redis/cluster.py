@@ -6,10 +6,6 @@ from time import sleep
 
 class BaseClusterStep(PlanStep):
 
-    def __init__(self, instance):
-        super(BaseClusterStep, self).__init__(instance)
-        self.driver = self.infra.get_driver()
-
     @property
     def master(self):
         return self.driver.get_master_for(self.instance).hostname

@@ -12,7 +12,6 @@ class VmStep(BaseInstanceStep):
 
     def __init__(self, instance):
         super(VmStep, self).__init__(instance)
-        self.driver = self.infra.get_driver()
         self.credentials = None
         self.provider = None
 
