@@ -224,7 +224,6 @@ class HostProviderStep(BaseInstanceStep):
 
     def __init__(self, instance=None):
         super(HostProviderStep, self).__init__(instance)
-        self.driver = self.instance and self.infra.get_driver()
         self.credentials = None
         self._provider = None
 
