@@ -209,7 +209,6 @@ class VipProviderStep(BaseInstanceStep):
 
     def __init__(self, instance=None):
         super(VipProviderStep, self).__init__(instance)
-        self.driver = self.instance and self.infra.get_driver()
         self.credentials = None
         self._provider = None
         self.host_prov_client = HostProviderClient(self.environment)
