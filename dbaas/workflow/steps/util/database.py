@@ -183,7 +183,7 @@ class StartRsyslog(DatabaseStep):
         return self.do()
 
 
-class StopRsyslog(DatabaseStep):
+class StopRsyslog(StartRsyslog):
     action = 'stop'
 
     def __unicode__(self):
