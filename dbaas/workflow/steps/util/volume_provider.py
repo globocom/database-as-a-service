@@ -318,8 +318,6 @@ class NewVolume(VolumeProviderBase):
                 and self.host_migrate == self.step_manager)
 
     def _remove_volume(self, volume, host):
-        self.add_access(volume, self.host)
-        self.clean_up(volume)
         self.destroy_volume(volume)
 
     def do(self):
@@ -1024,8 +1022,6 @@ class DestroyOldEnvironment(VolumeProviderBase):
         for volume in self.host.volumes.all():
             for snapshot in volume.backups.all():
                 remove_snapshot_backup(snapshot, self)
-            self.add_access(volume, self.host)
-            self.clean_up(volume)
             self.destroy_volume(volume)
 
     def undo(self):
