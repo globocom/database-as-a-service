@@ -65,8 +65,10 @@ class SetupDSRC(Foreman):
 
 class SetupDSRCMigrate(SetupDSRC):
     def do(self):
-        self.vip = self.future_vip
-        super(SetupDSRCMigrate, self).do()
+        vip = self.future_vip
+        self.provider.setup_database_dscp(
+            self.fqdn, vip.vip_ip, vip.dscp, self.instance.port
+        )
 
 
 class DeleteHost(Foreman):
