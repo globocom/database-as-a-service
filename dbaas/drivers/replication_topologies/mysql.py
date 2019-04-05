@@ -144,6 +144,33 @@ class MySQLSingle(BaseMysql):
             )
         }]
 
+    def get_filer_migrate_steps(self):
+        return [{
+            'Migrating': (
+                'workflow.steps.util.zabbix.DisableAlarms',
+                'workflow.steps.util.db_monitor.DisableMonitoring',
+                'workflow.steps.util.volume_provider.NewInactiveVolume',
+                'workflow.steps.util.metric_collector.StopTelegraf',
+                'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.CheckIsDown',
+                'workflow.steps.util.volume_provider.AddAccessNewVolume',
+                'workflow.steps.util.volume_provider.MountDataLatestVolume',
+                'workflow.steps.util.volume_provider.CopyFiles',
+                'workflow.steps.util.volume_provider.UnmountDataLatestVolume',
+                'workflow.steps.util.volume_provider.UnmountDataVolume',
+                'workflow.steps.util.volume_provider.MountDataNewVolume',
+                'workflow.steps.util.mysql.SetFilePermission',
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.metric_collector.RestartTelegraf',
+                'workflow.steps.util.volume_provider.TakeSnapshotOldDisk',
+                'workflow.steps.util.volume_provider.UpdateActiveDisk',
+                'workflow.steps.util.db_monitor.EnableMonitoring',
+                'workflow.steps.util.zabbix.EnableAlarms',
+            )}
+        ]
+
+
     def get_upgrade_steps_extra(self):
         return super(MySQLSingle, self).get_upgrade_steps_extra() + (
             'workflow.steps.util.mysql.SetFilePermission',
