@@ -47,7 +47,7 @@ class VolumeProviderBase(BaseInstanceStep):
             self.credential.endpoint, self.provider, self.environment
         )
 
-    def create_volume(self, group, size_kb, to_address, snapshot_id=None):
+    def create_volume(self, group, size_kb, to_address, snapshot_id=None, is_active=True):
         url = self.base_url + "volume/new"
         data = {
             "group": group,
@@ -64,6 +64,7 @@ class VolumeProviderBase(BaseInstanceStep):
         volume.host = self.host
         volume.identifier = response.json()['identifier']
         volume.total_size_kb = self.infra.disk_offering.size_kb
+        volume.is_active = is_active
         volume.save()
         return volume
 
@@ -203,6 +204,7 @@ class VolumeProviderBaseMigrate(VolumeProviderBase):
 
 
 class NewVolume(VolumeProviderBase):
+    is_active = True
 
     def __unicode__(self):
         return "Creating Volume..."
@@ -217,7 +219,8 @@ class NewVolume(VolumeProviderBase):
             self.infra.name,
             self.disk_offering.size_kb,
             self.host.address,
-            snapshot_id=snapshot.snapshopt_id if snapshot else None
+            snapshot_id=snapshot.snapshopt_id if snapshot else None,
+            is_active=self.is_active
         )
 
     def undo(self):
@@ -228,6 +231,15 @@ class NewVolume(VolumeProviderBase):
             self.add_access(volume, self.host)
             self.clean_up(volume)
             self.destroy_volume(volume)
+
+
+class NewInactiveVolume(NewVolume):
+    def __unicode__(self):
+        return "Creating Inactive Volume..."
+
+    def do(self):
+        self.is_active = False
+        return super(NewInactiveVolume, self).do()
 
 
 class MountDataVolume(VolumeProviderBase):
@@ -252,6 +264,53 @@ class MountDataVolume(VolumeProviderBase):
 
     def undo(self):
         pass
+
+
+class MountDataNewVolume(MountDataVolume):
+    @property
+    def is_valid(self):
+        return True
+
+    @property
+    def volume(self):
+        return self.latest_disk
+
+
+class MountDataLatestVolume(MountDataVolume):
+
+    def __unicode__(self):
+        return "Mounting new volume on {} for copy...".format(self.directory)
+
+    @property
+    def directory(self):
+        return "/data_latest_volume"
+
+    def do(self):
+        script = self.get_mount_command(
+            self.latest_disk,
+            data_directory=self.directory,
+            fstab=False
+        )
+        self.run_script(script)
+
+    def undo(self):
+        script = self.get_umount_command(
+            self.latest_disk,
+            data_directory=self.directory,
+        )
+        self.run_script(script)
+
+
+class UnmountDataLatestVolume(MountDataLatestVolume):
+
+    def __unicode__(self):
+        return "Umounting new volume on {} for copy...".format(self.directory)
+
+    def do(self):
+        return super(UnmountDataLatestVolume, self).undo()
+
+    def undo(self):
+        return super(UnmountDataLatestVolume, self).do()
 
 
 class MountDataVolumeMigrate(MountDataVolume):
@@ -372,6 +431,29 @@ class CopyFilesMigrate(VolumeProviderBase):
         pass
 
 
+class CopyFiles(VolumeProviderBase):
+
+    def __unicode__(self):
+        return "Copying data to {} from {}...".format(
+            self.source_directory,
+            self.dest_directory
+        )
+
+    @property
+    def source_directory(self):
+        return "/data"
+
+    @property
+    def dest_directory(self):
+        return "/data_latest_volume"
+
+    def do(self):
+        script = "cp -rp {}/* {}".format(self.source_directory, self.dest_directory)
+        self.run_script(script)
+
+    def undo(self):
+        pass
+
 
 class MountDataVolumeRestored(MountDataVolume):
 
@@ -409,6 +491,12 @@ class UnmountActiveVolume(VolumeProviderBase):
 
     def undo(self):
         pass
+
+
+class UnmountDataVolume(UnmountActiveVolume):
+    @property
+    def is_valid(self):
+        return True
 
 
 class ResizeVolume(VolumeProviderBase):
@@ -502,6 +590,21 @@ class AddAccessRestoredVolume(AddAccess):
         return self.latest_disk
 
 
+class AddAccessNewVolume(AddAccess):
+
+    @property
+    def disk_time(self):
+        return "new"
+
+    @property
+    def is_valid(self):
+        return True
+
+    @property
+    def volume(self):
+        return self.latest_disk
+
+
 class AddAccessMigrate(AddAccess):
     def __unicode__(self):
         return "Adding permission to old disk..."
@@ -550,6 +653,19 @@ class TakeSnapshot(VolumeProviderBase):
 
     def undo(self):
         pass
+
+
+class TakeSnapshotOldDisk(TakeSnapshot):
+        @property
+        def is_valid(self):
+            return True
+
+        @property
+        def group(self):
+            from backup.models import BackupGroup
+            group = BackupGroup()
+            group.save()
+            return group
 
 
 class UpdateActiveDisk(VolumeProviderBase):
