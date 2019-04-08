@@ -455,6 +455,33 @@ class CopyFiles(VolumeProviderBase):
         pass
 
 
+class CopyPermissions(VolumeProviderBase):
+
+    def __unicode__(self):
+        return "Copying permissions from {} to {}...".format(
+            self.source_directory,
+            self.dest_directory
+        )
+
+    @property
+    def source_directory(self):
+        return "/data"
+
+    @property
+    def dest_directory(self):
+        return "/data_latest_volume"
+
+    def do(self):
+        script = ('stat -c "%a" {0} | xargs -I{{}} chmod {{}} {1}'
+                  ' && stat -c "%U:%G" {0} | xargs -I{{}} chown {{}} {1}').format(
+                    self.source_directory, self.dest_directory
+        )
+        self.run_script(script)
+
+    def undo(self):
+        pass
+
+
 class MountDataVolumeRestored(MountDataVolume):
 
     @property
