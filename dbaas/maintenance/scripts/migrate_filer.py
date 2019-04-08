@@ -79,10 +79,12 @@ class FilerMigrate(object):
             self.migrate_filer_disk_for_database(database)
 
     def _get_instances(self, infra):
-        return [
-            host.database_instance() or host.non_database_instance()
-            for host in infra.hosts
-        ]
+        instances = []
+        for host in infra.hosts:
+            database_instance = host.database_instance()
+            if database_instance:
+                instances.append(database_instance)
+        return instances
 
     def register_task(self, database):
         task_history = TaskHistory()
