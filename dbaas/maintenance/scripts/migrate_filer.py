@@ -41,6 +41,7 @@ class FilerMigrate(object):
         self.task.add_detail("Loaded\n", level=2)
 
     def migrate_filer_disk_for_database(self, database):
+        infra = database.infra
         task_history = TaskHistory()
         task_history.task_id = datetime.now().strftime("%Y%m%d%H%M%S")
         task_history.task_name = "migrate_filer_disk_for_database"
@@ -66,33 +67,16 @@ class FilerMigrate(object):
             "Migrating disk for database {}...".format(database.name),
             level=2
         )
-        task.set_status_success('Migrate filer finished woth success')
+        class_path = infra.plan.replication_topology.class_path
+        steps = get_filer_migrate_steps(class_path)
+        if not steps_for_instances(steps, self._get_instances(infra), task):
+            task.set_status_error('Could not migrate filer')
+            return
+        task.set_status_success('Migrate filer finished with success')
 
     def start_migration(self):
         for database in self.databases:
             self.migrate_filer_disk_for_database(database)
-            continue
-            infra = database.infra
-            if database.is_being_used_elsewhere():
-                task.add_detail(
-                    "ERROR-{}-Being used to another task".format(database.name),
-                    level=2
-                )
-                task.set_status_error(
-                    'Database is being used by another task'
-                )
-                return
-
-            task.add_detail(
-                "Migrating disk for database {}...".format(database.name),
-                level=2
-            )
-            class_path = infra.plan.replication_topology.class_path
-            steps = get_filer_migrate_steps(class_path)
-            if not steps_for_instances(steps, self._get_instances(infra), self.task):
-                task.set_status_error('Could not migrate filer')
-                continue
-        # task.set_status_success('Migrate filer finished with success')
 
     def _get_instances(self, infra):
         return [
