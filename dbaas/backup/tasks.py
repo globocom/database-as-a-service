@@ -53,7 +53,7 @@ def mysql_binlog_save(client, instance):
         datadir = row[0]['Value']
 
         output = {}
-        command = 'echo "master=%s;position=%s" > %smysql_binlog_master_file_pos' % (
+        command = 'echo "master=%s;position=%s" > %smysql_binlog_master_file_pos && sync' % (
             binlog_file, binlog_pos, datadir
         )
 
