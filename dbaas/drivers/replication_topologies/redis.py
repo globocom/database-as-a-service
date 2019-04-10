@@ -191,8 +191,6 @@ class RedisSentinel(BaseRedis):
                 'workflow.steps.util.database.CheckIsUp',
                 'workflow.steps.util.database.WaitForReplication',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
-                'workflow.steps.redis.upgrade.sentinel.ResetAllSentinel',
-                # 'workflow.steps.util.database.SetSlaveRestore', Esse precisa ?
                 'workflow.steps.util.volume_provider.TakeSnapshotOldDisk',
                 'workflow.steps.util.volume_provider.UpdateActiveDisk',
                 'workflow.steps.util.db_monitor.EnableMonitoring',
@@ -426,7 +424,6 @@ class RedisCluster(BaseRedis):
                 'workflow.steps.util.metric_collector.StopTelegraf',
                 'workflow.steps.util.database.Stop',
                 'workflow.steps.util.database.CheckIsDown',
-                # 'workflow.steps.redis.cluster.SaveNodeConfig' Acho que nao precisa
                 'workflow.steps.util.volume_provider.AddAccessNewVolume',
                 'workflow.steps.util.volume_provider.MountDataLatestVolume',
                 'workflow.steps.util.volume_provider.CopyPermissions',
@@ -434,12 +431,10 @@ class RedisCluster(BaseRedis):
                 'workflow.steps.util.volume_provider.UnmountDataLatestVolume',
                 'workflow.steps.util.volume_provider.UnmountDataVolume',
                 'workflow.steps.util.volume_provider.MountDataNewVolume',
-                # 'workflow.steps.redis.cluster.RestoreNodeConfig' Acho que nao precisa
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
                 'workflow.steps.util.database.WaitForReplication',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
-                # 'workflow.steps.util.database.SetSlaveRestore', Esse precisa ?
                 'workflow.steps.util.volume_provider.TakeSnapshotOldDisk',
                 'workflow.steps.util.volume_provider.UpdateActiveDisk',
                 'workflow.steps.util.db_monitor.EnableMonitoring',
