@@ -685,6 +685,7 @@ class MySQLFoxHA(MySQLSingle):
             'Zabbix': (
                 'workflow.steps.util.zabbix.DestroyAlarms',
                 'workflow.steps.util.zabbix.CreateAlarms',
+                'workflow.steps.util.db_monitor.UpdateInfraCloudDatabaseMigrate',
                 'workflow.steps.util.disk.ChangeSnapshotOwner',
             )
         }, {
