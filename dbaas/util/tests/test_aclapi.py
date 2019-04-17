@@ -186,7 +186,7 @@ class MakePayloadTestCase(BaseACLTestCase):
 
 
 @patch('util.aclapi.AddACLAccess.credential',
-        new=PropertyMock(return_value=FAKE_CREDENTIAL('fake_endpoint', 'user', 'pass')))
+        new=PropertyMock(return_value=FAKE_CREDENTIAL('fake_endpoint/', 'user', 'pass')))
 @patch('util.aclapi.requests.put')
 class ExecuteTestCase(BaseACLTestCase):
 
