@@ -1111,7 +1111,6 @@ class WaitSnapshotAvailableMigrate(VolumeProviderBase):
 
     def do(self):
         self.waiting_be('available', self.snapshot)
->>>>>>> master
 
 
 class UpdateActiveDisk(VolumeProviderBase):
