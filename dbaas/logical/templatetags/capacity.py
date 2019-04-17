@@ -95,9 +95,16 @@ class DetailedProgressBarNode(template.Node):
         obj = context.get(self.obj_name)
         if obj is None:
             return ''
-        self._init_vars(obj)
-
+        try:
+            self._init_vars(obj)
+        except Exception, e:
+            LOG.error(
+                'Could not render bar for database {}. error: {}'.format(
+                    self.database.id, e)
+            )
+            return mark_safe('<div>Could not render bar</div>')
         html = ''
+
         for instance in self.master_instances:
             self.instance = instance
             try:
