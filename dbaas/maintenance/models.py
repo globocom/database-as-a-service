@@ -678,6 +678,13 @@ class DatabaseMigrate(DatabaseMaintenanceTask):
     )
     origin_offering = models.ForeignKey(Offering, null=True, blank=True)
 
+    @property
+    def host_migrate_snapshot(self):
+        for host_migrate in self.hosts.all():
+            if host_migrate.snapshot:
+                return host_migrate.snapshot
+        return
+
     def update_step(self, step):
         super(DatabaseMigrate, self).update_step(step)
         for host in self.hosts.all():

@@ -478,6 +478,15 @@ class Plan(BaseModel):
 #    def weaker_offering(self):
 #        return self.offerings.filter(weaker=True).first()
 
+    def get_equivalent_plan_for_env(self, env):
+        return self._meta.model.objects.filter(
+            engine=self.engine,
+            environments=env
+        ).order_by(
+            'stronger_offering__memory_size_mb',
+            'stronger_offering__cpus'
+        ).first()
+
     def __unicode__(self):
         return "%s" % (self.name)
 
@@ -1187,10 +1196,20 @@ class TopologyParameterCustomValue(BaseModel):
         unique_together = ('topology', 'parameter')
 
 
+class VipWithoutFutureVip(models.Manager):
+    def get_queryset(self):
+        return super(VipWithoutFutureVip, self).get_queryset().exclude(original_vip__isnull=False)
+
+
 class Vip(BaseModel):
+    objects = VipWithoutFutureVip()
+    original_objects = models.Manager()
     infra = models.ForeignKey(
         DatabaseInfra, related_name="vips")
     identifier = models.CharField(verbose_name=_("Identifier"), max_length=200)
+    original_vip = models.ForeignKey(
+        "Vip", null=True, blank=True, on_delete=models.SET_NULL
+    )
 
     def __unicode__(self):
         return 'Vip of infra {}'.format(self.infra.name)

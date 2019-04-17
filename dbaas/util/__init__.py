@@ -288,6 +288,18 @@ def exec_remote_command_host(host, command, output=None, retry=False):
     )
 
 
+def run_script(self, script, host):
+    output = {}
+    return_code = exec_remote_command_host(host, script, output)
+    if return_code != 0:
+        raise EnvironmentError(
+            'Could not execute script {}: {}'.format(
+                return_code, output
+            )
+        )
+    return output
+
+
 def check_ssh(host, retries=30, wait=30, interval=40, timeout=None):
     server = host.address
     username = host.user
