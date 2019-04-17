@@ -80,12 +80,8 @@ class VolumeProviderBase(BaseInstanceStep):
             self.credential.endpoint, self.provider, self.environment
         )
 
-<<<<<<< HEAD
-    def create_volume(self, group, size_kb, to_address, snapshot_id=None, is_active=True):
-=======
     def create_volume(self, group, size_kb, to_address, snapshot_id=None,
                       is_active=True):
->>>>>>> master
         url = self.base_url + "volume/new"
         data = {
             "group": group,
