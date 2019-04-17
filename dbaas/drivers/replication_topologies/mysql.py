@@ -668,6 +668,8 @@ class MySQLFoxHA(MySQLSingle):
             'workflow.steps.util.vm.CheckAccessToMaster',
             'workflow.steps.util.vm.CheckAccessFromMaster',
             'workflow.steps.util.acl.ReplicateAclsMigrate',
+            'workflow.steps.util.zabbix.DisableAlarms',
+            'workflow.steps.util.db_monitor.DisableMonitoring',
             'workflow.steps.util.mysql.SetReadOnlyMigrate',
 
         )
