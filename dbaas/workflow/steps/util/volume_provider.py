@@ -657,7 +657,6 @@ class CopyFilesMigrate(VolumeProviderBase):
         pass
 
 
-<<<<<<< HEAD
 class CopyFiles(VolumeProviderBase):
 
     def __unicode__(self):
@@ -701,8 +700,11 @@ class CopyPermissions(VolumeProviderBase):
     def do(self):
         script = ('stat -c "%a" {0} | xargs -I{{}} chmod {{}} {1}'
                   ' && stat -c "%U:%G" {0} | xargs -I{{}} chown {{}} {1}').format(
-                    self.source_directory, self.dest_directory
-=======
+                    self.source_directory, self.dest_directory)
+        self.run_script(script)
+
+
+
 class ScpFromSnapshotMigrate(VolumeProviderBase):
 
     def __unicode__(self):
@@ -736,15 +738,12 @@ class ScpFromSnapshotMigrate(VolumeProviderBase):
             self.source_dir,
             self.host_migrate.host.future_host.address,
             self.dest_dir
->>>>>>> master
         )
         self.run_script(script)
 
     def undo(self):
         pass
 
-<<<<<<< HEAD
-=======
 
 class ScpFromSnapshotDatabaseMigrate(ScpFromSnapshotMigrate):
 
@@ -752,7 +751,6 @@ class ScpFromSnapshotDatabaseMigrate(ScpFromSnapshotMigrate):
     def source_dir(self):
         return "/data_migrate"
 
->>>>>>> master
 
 class MountDataVolumeRestored(MountDataVolume):
 
