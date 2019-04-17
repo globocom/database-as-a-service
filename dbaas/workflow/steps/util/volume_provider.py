@@ -1068,7 +1068,6 @@ class TakeSnapshot(VolumeProviderBase):
         pass
 
 
-<<<<<<< HEAD
 class TakeSnapshotOldDisk(TakeSnapshot):
         @property
         def is_valid(self):
@@ -1080,7 +1079,8 @@ class TakeSnapshotOldDisk(TakeSnapshot):
             group = BackupGroup()
             group.save()
             return group
-=======
+
+
 class WaitSnapshotAvailableMigrate(VolumeProviderBase):
     ATTEMPTS = 60
     DELAY = 5
