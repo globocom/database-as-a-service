@@ -391,9 +391,9 @@ class NewInactiveVolume(NewVolume):
     def __unicode__(self):
         return "Creating Inactive Volume..."
 
-    def do(self):
-        self.active_volume = False
-        return super(NewInactiveVolume, self).do()
+    @property
+    def active_volume(self):
+        return False
 
 
 class MountDataVolume(VolumeProviderBase):
