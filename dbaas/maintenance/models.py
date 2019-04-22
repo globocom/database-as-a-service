@@ -740,6 +740,21 @@ class HostMigrate(DatabaseMaintenanceTask):
         super(HostMigrate, self).update_step(step)
 
 
+class FilerMigrate(DatabaseMaintenanceTask):
+    task = models.ForeignKey(
+        TaskHistory, verbose_name="Task History",
+        null=False, related_name="filer_migrate"
+    )
+    original_export_id = models.CharField(max_length=200, null=False)
+    database = models.ForeignKey(
+        Database, verbose_name="Database",
+        null=False, unique=False, related_name="filer_migrate"
+    )
+
+    def __unicode__(self):
+        return "Migrate filer"
+
+
 simple_audit.register(Maintenance)
 simple_audit.register(HostMaintenance)
 simple_audit.register(MaintenanceParameters)
