@@ -129,7 +129,7 @@ class FilerMigrate(object):
         task_history.task_id = datetime.now().strftime("%Y%m%d%H%M%S")
         task_history.task_name = self.TASK_NAME
         task_history.relevance = TaskHistory.RELEVANCE_WARNING
-        task_history.task_status = TaskHistory.STATUS_WAITING
+        task_history.task_status = TaskHistory.STATUS_RUNNING
         task_history.context = {'hostname': gethostname()}
         task_history.user = 'admin'
         task_history.db_id = database.id
