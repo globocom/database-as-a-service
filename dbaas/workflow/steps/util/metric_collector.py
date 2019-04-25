@@ -35,7 +35,7 @@ class MetricsCollector(BaseInstanceStep):
             self.instance.MYSQL, self.instance.MONGODB, self.instance.REDIS)
         variables = {
             'HOSTNAME': self.host.hostname.split('.')[0],
-            'HOSTADDRESS': self.instance.address,
+            'HOSTADDRESS': self.host.address,
             'PORT': self.instance.port,
             'USER': user,
             'PASSWORD': password,
