@@ -17,7 +17,6 @@ class MetricsCollector(BaseInstanceStep):
             'collector_allowed')
         self.kafka_topic = self.credential.get_parameter_by_name(
             'kafka_topic')
-        self.driver = self.infra.get_driver()
 
     @property
     def is_valid(self):

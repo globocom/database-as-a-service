@@ -7,25 +7,14 @@ from django.utils.encoding import python_2_unicode_compatible
 from collections import namedtuple
 from dbaas_credentials.models import CredentialType
 from util import get_credentials_for, AuthRequest
+from physical.models import Vip
+
 
 LOG = logging.getLogger(__name__)
 
 
 class CantSetACLError(Exception):
     pass
-
-
-@python_2_unicode_compatible
-class BaseStep(object):
-
-    def __str__(self):
-        return "I am a step"
-
-    def do(self, workflow_dict):
-        raise NotImplementedError
-
-    def undo(self, workflow_dict):
-        raise NotImplementedError
 
 
 @python_2_unicode_compatible
@@ -36,10 +25,19 @@ class BaseInstanceStep(object):
 
     def __init__(self, instance):
         self.instance = instance
+        self._vip = None
+        self._driver = None
 
     @property
     def infra(self):
         return self.instance.databaseinfra
+
+    @property
+    def driver(self):
+        if self._driver is None:
+            self._driver = self.infra.get_driver()
+
+        return self._driver
 
     @property
     def database(self):
@@ -146,9 +144,30 @@ class BaseInstanceStep(object):
         if task and task.is_running:
             return task
 
+    def _get_vip(self, vip_identifier, env):
+        client = VipProviderClient(env)
+        return client.get_vip(vip_identifier)
+
     @property
-    def has_database(self):
-        return bool(self.database)
+    def vip(self):
+        if self._vip:
+            return self._vip
+        vip_identifier = Vip.objects.get(infra=self.infra).identifier
+        self._vip = self._get_vip(vip_identifier, self.infra.environment)
+        return self._vip
+
+    @vip.setter
+    def vip(self, vip):
+        self._vip = vip
+
+    @property
+    def future_vip(self):
+        original_vip = Vip.objects.get(infra=self.infra)
+        future_vip_identifier = Vip.original_objects.get(
+            infra=self.infra,
+            original_vip=original_vip
+        ).identifier
+        return self._get_vip(future_vip_identifier, self.environment)
 
     def do(self):
         raise NotImplementedError

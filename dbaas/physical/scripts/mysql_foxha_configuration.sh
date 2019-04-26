@@ -116,6 +116,9 @@ innodb_max_purge_lag            = {{ configuration.innodb_max_purge_lag.value }}
 
 explicit_defaults_for_timestamp = {{ configuration.explicit_defaults_for_timestamp.value }}
 
+# init
+init_connect                    = "{{configuration.init_connect.value|safe}}"
+
 !include /etc/server_id.cnf
 
 EOF_DBAAS

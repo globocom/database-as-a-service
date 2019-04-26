@@ -4,29 +4,6 @@ from physical.models import Instance
 
 
 class BaseRedis(BaseTopology):
-    def deploy_first_steps(self):
-        return (
-            'workflow.steps.redis.deploy.build_databaseinfra.BuildDatabaseInfra',
-            'workflow.steps.redis.deploy.create_virtualmachines.CreateVirtualMachine',
-            'workflow.steps.redis.deploy.create_dns.CreateDns',
-            'workflow.steps.util.deploy.create_nfs.CreateNfs',
-            'workflow.steps.redis.deploy.init_database.InitDatabaseRedis',
-            'workflow.steps.util.deploy.check_database_connection.CheckDatabaseConnection',
-            'workflow.steps.util.deploy.check_dns.CheckDns',
-            'workflow.steps.util.deploy.start_monit.StartMonit',
-        )
-
-    def deploy_last_steps(self):
-        return (
-            'workflow.steps.util.deploy.build_database.BuildDatabase',
-            'workflow.steps.util.deploy.check_database_binds.CheckDatabaseBinds',
-        )
-
-    def get_clone_steps(self):
-        return self.deploy_first_steps() + self.deploy_last_steps() + (
-            'workflow.steps.redis.clone.clone_database.CloneDatabase',
-        ) + self.monitoring_steps()
-
     def get_upgrade_steps_extra(self):
         return (
             'workflow.steps.util.volume_provider.MountDataVolume',
@@ -107,6 +84,7 @@ class RedisSingle(BaseRedis):
             )}, {
             'Stopping datbase': (
                 'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.StopRsyslog',
                 'workflow.steps.util.database.CheckIsDown',
             )}, {
             'Configuring': (
@@ -118,6 +96,7 @@ class RedisSingle(BaseRedis):
             )}, {
             'Starting database': (
                 'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.StartRsyslog',
                 'workflow.steps.util.database.CheckIsUp',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
             )}, {
@@ -177,6 +156,7 @@ class RedisSentinel(BaseRedis):
             )}, {
             'Stopping datbase': (
                 'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.StopRsyslog',
                 'workflow.steps.util.database.CheckIsDown',
             )}, {
             'Configuring': (
@@ -190,6 +170,7 @@ class RedisSentinel(BaseRedis):
             )}, {
             'Starting database': (
                 'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.StartRsyslog',
                 'workflow.steps.util.database.CheckIsUp',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
             )}, {
@@ -392,6 +373,7 @@ class RedisCluster(BaseRedis):
             )}, {
             'Stopping datbase': (
                 'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.StopRsyslog',
                 'workflow.steps.util.database.CheckIsDown',
                 'workflow.steps.redis.cluster.SaveNodeConfig'
             )}, {
@@ -407,6 +389,7 @@ class RedisCluster(BaseRedis):
             )}, {
             'Starting database': (
                 'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.StartRsyslog',
                 'workflow.steps.util.database.CheckIsUp',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
             )}, {
@@ -453,6 +436,7 @@ class RedisCluster(BaseRedis):
             'workflow.steps.util.dns.ChangeEndpoint',
             'workflow.steps.util.dns.CheckIsReady',
             'workflow.steps.util.zabbix.CreateAlarms',
+            'workflow.steps.util.db_monitor.UpdateInfraCloudDatabaseMigrate',
             'workflow.steps.util.disk.ChangeSnapshotOwner',
         )
 

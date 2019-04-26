@@ -3,32 +3,7 @@ from physical.models import Instance
 from base import BaseTopology, InstanceDeploy
 
 
-class BaseMongoDB(BaseTopology):
-    def deploy_first_steps(self):
-        return (
-            'workflow.steps.util.deploy.build_databaseinfra.BuildDatabaseInfra',
-            'workflow.steps.mongodb.deploy.create_virtualmachines.CreateVirtualMachine',
-            'workflow.steps.util.deploy.create_dns.CreateDns',
-            'workflow.steps.util.deploy.create_nfs.CreateNfs',
-            'workflow.steps.mongodb.deploy.init_database.InitDatabaseMongoDB',
-            'workflow.steps.util.deploy.check_database_connection.CheckDatabaseConnection',
-            'workflow.steps.util.deploy.check_dns.CheckDns',
-            'workflow.steps.util.deploy.start_monit.StartMonit',
-        )
-
-    def deploy_last_steps(self):
-        return (
-            'workflow.steps.util.deploy.build_database.BuildDatabase',
-            'workflow.steps.util.deploy.check_database_binds.CheckDatabaseBinds',
-        )
-
-    def get_clone_steps(self):
-        return self.deploy_first_steps() + self.deploy_last_steps() + (
-            'workflow.steps.util.clone.clone_database.CloneDatabase',
-        ) + self.monitoring_steps()
-
-
-class MongoDBSingle(BaseMongoDB):
+class MongoDBSingle(BaseTopology):
 
     def get_upgrade_steps_extra(self):
         return ('workflow.steps.mongodb.upgrade.vm.ChangeBinaryTo36',) + \
@@ -109,6 +84,7 @@ class MongoDBSingle(BaseMongoDB):
             )}, {
             'Stopping datbase': (
                 'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.StopRsyslog',
                 'workflow.steps.util.database.CheckIsDown',
             )}, {
             'Configuring': (
@@ -120,6 +96,7 @@ class MongoDBSingle(BaseMongoDB):
             )}, {
             'Starting database': (
                 'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.StartRsyslog',
                 'workflow.steps.util.database.CheckIsUp',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
             )}, {
@@ -134,7 +111,7 @@ class MongoDBSingle(BaseMongoDB):
         }]
 
 
-class MongoDBReplicaset(BaseMongoDB):
+class MongoDBReplicaset(BaseTopology):
 
     def get_upgrade_steps_description(self):
         return 'Upgrading to MongoDB 3.6'
@@ -274,6 +251,7 @@ class MongoDBReplicaset(BaseMongoDB):
             )}, {
             'Stopping datbase': (
                 'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.StopRsyslog',
                 'workflow.steps.util.database.CheckIsDown',
             )}, {
             'Configuring': (
@@ -287,6 +265,7 @@ class MongoDBReplicaset(BaseMongoDB):
             )}, {
             'Starting database': (
                 'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.StartRsyslog',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
             )}, {
             'Check database': (
@@ -324,11 +303,11 @@ class MongoDBReplicaset(BaseMongoDB):
             'workflow.steps.util.plan.Initialization',
             'workflow.steps.util.plan.Configure',
             'workflow.steps.util.database.Start',
-            'workflow.steps.util.database.CheckIsUp',
             'workflow.steps.util.vm.CheckAccessToMaster',
             'workflow.steps.util.vm.CheckAccessFromMaster',
             'workflow.steps.util.acl.ReplicateAclsMigrate',
             'workflow.steps.mongodb.database.AddInstanceToReplicaSet',
+            'workflow.steps.util.database.CheckIsUp',
             'workflow.steps.util.database.WaitForReplication',
             'workflow.steps.mongodb.database.SetNotEligible',
             'workflow.steps.util.zabbix.DestroyAlarms',
@@ -337,6 +316,7 @@ class MongoDBReplicaset(BaseMongoDB):
             'workflow.steps.util.metric_collector.ConfigureTelegraf',
             'workflow.steps.util.metric_collector.RestartTelegraf',
             'workflow.steps.util.zabbix.CreateAlarms',
+            'workflow.steps.util.db_monitor.UpdateInfraCloudDatabaseMigrate',
             'workflow.steps.util.disk.ChangeSnapshotOwner',
         )
 

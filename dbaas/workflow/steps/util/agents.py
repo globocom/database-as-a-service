@@ -7,11 +7,7 @@ LOG = logging.getLogger(__name__)
 
 
 class AgentsStep(BaseInstanceStep):
-
-    def __init__(self, instance):
-        super(AgentsStep, self).__init__(instance)
-        self.driver = self.infra.get_driver()
-
+    pass
 
 class Start(AgentsStep):
 

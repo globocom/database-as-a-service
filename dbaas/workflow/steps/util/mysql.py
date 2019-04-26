@@ -1,6 +1,7 @@
 from backup.tasks import mysql_binlog_save
 from workflow.steps.mysql.util import get_replication_information_from_file, \
-    change_master_to, start_slave
+    change_master_to, start_slave, build_uncomment_skip_slave_script,\
+    build_comment_skip_slave_script
 from volume_provider import AddAccessRestoredVolume, MountDataVolumeRestored, \
     RestoreSnapshot, UnmountActiveVolume
 from zabbix import ZabbixStep
@@ -10,10 +11,6 @@ from util import exec_remote_command_host
 
 
 class MySQLStep(BaseInstanceStep):
-
-    def __init__(self, instance):
-        super(MySQLStep, self).__init__(instance)
-        self.driver = self.infra.get_driver()
 
     def undo(self):
         pass
@@ -50,6 +47,40 @@ class SetMasterRestore(MySQLStep):
         )
 
 
+class SetReadOnlyMigrate(MySQLStep):
+    def __unicode__(self):
+        return "Change master mode to read only..."
+
+    @property
+    def is_valid(self):
+        return self.instance == self.infra.instances.last()
+
+    def _change_variable(self, field, value):
+        if not self.is_valid:
+            return
+        self.driver.set_configuration(
+            self.instance, field, value
+        )
+
+    def do(self):
+        return self._change_variable('read_only', 'ON')
+
+    def undo(self):
+        return self._change_variable('read_only', 'OFF')
+
+
+class SetReadWriteMigrate(SetReadOnlyMigrate):
+    def __unicode__(self):
+        return "Change new instance to read write..."
+
+    def do(self):
+        self.instance.address = self.host.address
+        return super(SetReadWriteMigrate, self).undo()
+
+    def undo(self):
+        return super(SetReadWriteMigrate, self).do()
+
+
 class StartSlave(MySQLStep):
 
     def __unicode__(self):
@@ -70,6 +101,43 @@ class ConfigureFoxHARestore(MySQLStep):
             driver.set_master(self.instance)
         else:
             driver.set_read_ip(self.instance)
+
+
+class DisableReplication(MySQLStep):
+    def __unicode__(self):
+        return "Disable replication..."
+
+    @property
+    def script(self):
+        return build_uncomment_skip_slave_script()
+
+    @property
+    def is_valid(self):
+        return self.instance == self.infra.instances.last()
+
+    def do(self):
+        if not self.is_valid:
+            return
+        script = build_uncomment_skip_slave_script()
+        self.run_script(script)
+
+    def undo(self):
+        if not self.is_valid:
+            return
+        script = build_comment_skip_slave_script()
+        self.run_script(script)
+
+
+
+class EnableReplication(DisableReplication):
+    def __unicode__(self):
+        return "Enable replication..."
+
+    def do(self):
+        return super(EnableReplication, self).undo()
+
+    def undo(self):
+        return super(EnableReplication, self).do()
 
 
 class SaveMySQLBinlog(MySQLStep):
@@ -262,15 +330,90 @@ class DisableLogBin(MySQLStep):
         self.run_script(self.script)
 
 
+class SetServerid(MySQLStep):
+    def __unicode__(self):
+        return "Set serverid to {}...".format(self.serverid)
+
+    @property
+    def serverid(self):
+        return int(self.instance.dns.split('-')[1])
+
+    @property
+    def script(self):
+        return """
+        echo ""; echo $(date "+%Y-%m-%d %T") "- Creating the server id db file"
+        \n(cat <<EOF_DBAAS
+        \n[mysqld]
+        \nserver_id={}
+        \nEOF_DBAAS
+        \n) >  /etc/server_id.cnf
+        """.format(self.serverid)
+
+    def do(self):
+        self.run_script(self.script)
+
+
+class SetServeridMigrate(SetServerid):
+    @property
+    def serverid(self):
+        serverid = super(SetServeridMigrate, self).serverid
+        return serverid + 2
+
+
 class SetReplicationHostMigrate(MySQLStep):
 
     def __unicode__(self):
         return "Set replication on host migrate..."
 
+    @property
+    def master_instance(self):
+        return self.driver.get_master_instance()
+
+    @property
+    def is_valid(self):
+        return True
+
     def do(self):
-        master_instance = self.driver.get_master_instance()
+        if not self.is_valid:
+            return
         log_file, log_pos = get_replication_information_from_file(self.host)
-        change_master_to(master_instance, self.host.address, log_file, log_pos)
+        change_master_to(self.master_instance, self.host.address, log_file, log_pos)
 
     def undo(self):
         raise Exception("There is no rollback for this step.")
+
+
+class SetReplicationLastInstanceMigrate(SetReplicationHostMigrate):
+    @property
+    def is_valid(self):
+        return self.instance == self.infra.instances.last()
+
+    @property
+    def host(self):
+        # database_migrate = self.host_migrate.database_migrate
+        # return database_migrate.hosts.exclude(id=self.host_migrate.id).first().host.future_host
+        return self.infra.instances.exclude(id=self.instance.id).first().hostname.future_host
+
+    @property
+    def master_instance(self):
+        self.instance.address = self.host_migrate.host.future_host.address
+        return self.instance
+
+
+class SetReplicationFirstInstanceMigrate(SetReplicationLastInstanceMigrate):
+    @property
+    def is_valid(self):
+        return self.instance == self.infra.instances.first()
+
+    def do(self):
+        if not self.is_valid:
+            return
+        instance = self.instance
+        instance.address = self.host.address
+        client = self.driver.get_client(instance)
+        client.query('show master status')
+        r = client.store_result()
+        row = r.fetch_row(maxrows=0, how=1)
+        log_file = row[0]['File']
+        log_pos = row[0]['Position']
+        change_master_to(self.master_instance, self.host.address, log_file, log_pos)
