@@ -165,7 +165,6 @@ class MongoDB(BaseDriver):
 
             socket_timeout_in_miliseconds = Configuration.get_by_name_as_int(
                 'mongo_socket_timeout', default=MONGO_SOCKET_TIMEOUT) * 1000
-            )
 
             client = pymongo.MongoClient(
                 connection_address, connectTimeoutMS=connection_timeout_in_miliseconds, serverSelectionTimeoutMS=server_selection_timeout_in_seconds,
