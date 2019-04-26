@@ -71,7 +71,7 @@ class DatabaseMigrateAdmin(DatabaseMaintenanceTaskAdmin):
 
         TaskRegister.database_migrate(
             retry_from.database, retry_from.environment, retry_from.offering,
-            request.user, retry_from.hosts_zones, retry_from.current_step
+            request.user, retry_from.hosts_zones, retry_from.current_step, step_manager=retry_from
         )
         return self.redirect_to_database(retry_from)
 
@@ -113,4 +113,3 @@ class DatabaseMigrateAdmin(DatabaseMaintenanceTaskAdmin):
         return HttpResponseRedirect(reverse(
             'admin:logical_database_migrate', kwargs={'id': maintenance.database.id})
         )
-

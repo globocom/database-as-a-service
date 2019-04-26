@@ -48,17 +48,12 @@ class ConfigureGroup(OnlyFirstInstance):
     def __unicode__(self):
         return "Configuring FoxHA group..."
 
-    @property
-    def vip_ip(self):
-        vip = Vip.get_vip_from_databaseinfra(self.infra)
-        return vip.vip_ip
-
     def do(self):
         if not self.is_valid:
             return
 
         self.provider.add_group(
-            self.infra.name, self.infra.name, self.vip_ip,
+            self.infra.name, self.infra.name, self.vip.vip_ip,
             self.mysql_fox_credentials.user,
             str(self.mysql_fox_credentials.password),
             self.mysql_replica_credentials.user,
@@ -71,6 +66,27 @@ class ConfigureGroup(OnlyFirstInstance):
 
         self.provider.delete_group(self.infra.name)
 
+
+class RemoveGroupMigrate(ConfigureGroup):
+
+    @property
+    def is_valid(self):
+        return self.instance == self.infra.instances.last()
+
+    def __unicode__(self):
+        return "Removing old Vip from FoxHA group..."
+
+    def do(self):
+        return super(RemoveGroupMigrate, self).undo()
+
+
+class ConfigureGroupMigrate(ConfigureGroup):
+    def __unicode__(self):
+        return "Adding new Vip FoxHA group..."
+
+    def do(self):
+        self.vip = self.future_vip
+        return super(ConfigureGroupMigrate, self).do()
 
 class ConfigureNode(FoxHA):
 
@@ -97,13 +113,13 @@ class RemoveNodeMigrate(FoxHA):
         return "Removing FoxHA node {}...".format(self.instance.address)
 
     def do(self):
-        self.provider.delete_node(self.infra.name, self.instance.address)
+        self.provider.delete_node(self.infra.name, self.host_migrate.host.address)
 
     def undo(self):
         mode = 'read_only'
 
         self.provider.add_node(
-            self.infra.name, self.instance.dns, self.instance.address,
+            self.infra.name, self.instance.dns, self.host_migrate.host.address,
             self.instance.port, mode, 'enabled'
         )
 
@@ -113,18 +129,31 @@ class ConfigureNodeMigrate(ConfigureNode):
     def __unicode__(self):
         return "Changing FoxHA node..."
 
+    @property
+    def is_master(self):
+        return False
+
+    @property
+    def mode(self):
+        if self.is_master:
+            return 'read_write'
+        return 'read_only'
+
     def do(self):
-        mode = 'read_only'
 
         self.provider.add_node(
             self.infra.name, self.instance.dns, self.host.address,
-            self.instance.port, mode, 'enabled'
+            self.instance.port, self.mode, 'enabled'
         )
-
 
     def undo(self):
         self.provider.delete_node(self.infra.name, self.host.address)
 
+
+class ConfigureNodeDatabaseMigrate(ConfigureNodeMigrate):
+    @property
+    def is_master(self):
+        return self.instance == self.infra.instances.last()
 
 
 class Start(FoxHA):
@@ -141,6 +170,10 @@ class Start(FoxHA):
 
 class IsReplicationOk(FoxHA):
 
+    def __init__(self, *args, **kw):
+        super(IsReplicationOk, self).__init__(*args, **kw)
+        self.verify_heartbeat = True
+
     def __unicode__(self):
         return "Checking FoxHA status..."
 
@@ -150,7 +183,10 @@ class IsReplicationOk(FoxHA):
             self.instance.address = self.instance.hostname.future_host.address
         for _ in range(CHECK_ATTEMPTS):
             if driver.is_replication_ok(self.instance):
-                if driver.is_heartbeat_replication_ok(self.instance):
+                if self.verify_heartbeat:
+                    if driver.is_heartbeat_replication_ok(self.instance):
+                        return
+                else:
                     return
 
                 driver.stop_slave(self.instance)
@@ -160,3 +196,9 @@ class IsReplicationOk(FoxHA):
             sleep(CHECK_SECONDS)
 
         raise EnvironmentError("Maximum number of attempts check replication")
+
+
+class IsReplicationOkMigrate(IsReplicationOk):
+    def do(self):
+        self.verify_heartbeat = False
+        return super(IsReplicationOkMigrate, self).do()
