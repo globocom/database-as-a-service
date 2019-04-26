@@ -19,7 +19,6 @@ class DatabaseStep(BaseInstanceStep):
 
     def __init__(self, instance):
         super(DatabaseStep, self).__init__(instance)
-        self.driver = self.infra.get_driver()
         if self.host_migrate:
             self.instance.address = self.host.address
 
@@ -33,15 +32,18 @@ class DatabaseStep(BaseInstanceStep):
     def undo(self):
         pass
 
+    def run_script(self, script):
+        output = {}
+        return_code = exec_remote_command_host(self.host, script, output)
+        return return_code, output
+
     def _execute_init_script(self, command):
         base_host = self.instance.hostname if self.host_migrate else self.host
         script = self.driver.initialization_script_path(base_host)
         script = script.format(option=command)
         script += ' > /dev/null'
 
-        output = {}
-        return_code = exec_remote_command_host(self.host, script, output)
-        return return_code, output
+        return self.run_script(script)
 
     def start_database(self):
         return self._execute_init_script('start')
@@ -159,6 +161,44 @@ class Start(DatabaseStep):
 
     def undo(self):
         self.undo_klass(self.instance).do()
+
+
+class StartRsyslog(DatabaseStep):
+
+    def __unicode__(self):
+        return "Starting rsyslog..."
+
+    def _exec_command(self, action):
+        script = "/etc/init.d/rsyslog {} > /dev/null".format(action)
+        return_code, output = self.run_script(script)
+        if return_code != 0:
+            raise EnvironmentError(
+                'Could not {} rsyslog {}: {}'.format(action, return_code, output)
+            )
+
+    def _start(self):
+        return self._exec_command('start')
+
+    def _stop(self):
+        return self._exec_command('stop')
+
+    def do(self):
+        return self._start()
+
+    def undo(self):
+        return self._stop()
+
+
+class StopRsyslog(StartRsyslog):
+
+    def __unicode__(self):
+        return "Stopping rsyslog..."
+
+    def do(self):
+        self._stop()
+
+    def undo(self):
+        self._start()
 
 
 class OnlyInSentinel(DatabaseStep):
@@ -295,6 +335,17 @@ class CheckIfSwitchMaster(DatabaseStep):
             raise EnvironmentError('The instance is still master.')
         else:
             raise EnvironmentError('There is no master for this infra.')
+
+
+class CheckIfSwitchMasterMigrate(CheckIfSwitchMaster):
+    @property
+    def is_valid(self):
+        return self.instance == self.infra.instances.first()
+
+    def do(self):
+        if not self.is_valid:
+            return
+        return super(CheckIfSwitchMasterMigrate, self).do()
 
 
 class CheckIsUpForResizeLog(CheckIsUp):

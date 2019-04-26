@@ -12,7 +12,6 @@ class VmStep(BaseInstanceStep):
 
     def __init__(self, instance):
         super(VmStep, self).__init__(instance)
-        self.driver = self.infra.get_driver()
         self.credentials = None
         self.provider = None
 
@@ -81,6 +80,17 @@ class ChangeMaster(VmStep):
                 return
 
         raise error
+
+
+class ChangeMasterMigrate(ChangeMaster):
+    @property
+    def is_valid(self):
+        return self.instance == self.infra.instances.first()
+
+    def do(self):
+        if not self.is_valid:
+            return
+        return super(ChangeMasterMigrate, self).do()
 
 
 class InstanceIsSlave(ChangeMaster):

@@ -118,8 +118,9 @@ class MySQLSingle(BaseMysql):
             'Restoring': (
                 'workflow.steps.util.volume_provider.RestoreSnapshot',
             )}, {
-            'Stopping datbase': (
+            'Stopping database': (
                 'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.StopRsyslog',
                 'workflow.steps.util.database.CheckIsDown',
             )}, {
             'Configuring': (
@@ -131,6 +132,7 @@ class MySQLSingle(BaseMysql):
             )}, {
             'Starting database': (
                 'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.StartRsyslog',
                 'workflow.steps.util.database.CheckIsUp',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
             )}, {
@@ -335,6 +337,7 @@ class MySQLFoxHA(MySQLSingle):
             'Stopping datbase': (
                 'workflow.steps.util.mysql.SaveMySQLBinlog',
                 'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.StopRsyslog',
                 'workflow.steps.util.database.CheckIsDown',
             )}, {
             'Configuring': (
@@ -348,6 +351,7 @@ class MySQLFoxHA(MySQLSingle):
             'Starting database': (
                 'workflow.steps.util.database.Stop',
                 'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.StartRsyslog',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
             )}, {
             'Configuring replication': (
@@ -525,6 +529,7 @@ class MySQLFoxHA(MySQLSingle):
             'workflow.steps.util.vm.UpdateOSDescription',
             'workflow.steps.util.volume_provider.MountDataVolume',
             'workflow.steps.util.volume_provider.TakeSnapshotMigrate',
+            'workflow.steps.util.volume_provider.WaitSnapshotAvailableMigrate',
             'workflow.steps.util.volume_provider.AddAccessMigrate',
             'workflow.steps.util.volume_provider.MountDataVolumeMigrate',
             'workflow.steps.util.volume_provider.CopyFilesMigrate',
@@ -573,6 +578,39 @@ class MySQLFoxHA(MySQLSingle):
             'workflow.steps.util.disk.ChangeSnapshotOwner',
         )
 
+    def get_base_database_migrate_steps(self):
+        return (
+            'workflow.steps.util.vm.ChangeMasterMigrate',
+            'workflow.steps.util.database.CheckIfSwitchMasterMigrate',
+            'workflow.steps.util.host_provider.CreateVirtualMachineMigrate',
+            'workflow.steps.util.volume_provider.NewVolume',
+            'workflow.steps.util.vm.WaitingBeReady',
+            'workflow.steps.util.vm.UpdateOSDescription',
+            'workflow.steps.util.volume_provider.MountDataVolume',
+            'workflow.steps.util.volume_provider.TakeSnapshotMigrate',
+            'workflow.steps.util.volume_provider.WaitSnapshotAvailableMigrate',
+            'workflow.steps.util.volume_provider.AddHostsAllowDatabaseMigrate',
+            'workflow.steps.util.volume_provider.CreatePubKeyMigrate',
+            'workflow.steps.util.volume_provider.NewVolumeMigrate',
+            'workflow.steps.util.volume_provider.ScpFromSnapshotMigrate',
+            'workflow.steps.util.volume_provider.RemoveHostsAllowDatabaseMigrate',
+            'workflow.steps.util.volume_provider.RemovePubKeyMigrate',
+            'workflow.steps.util.disk.RemoveDeprecatedFiles',
+            'workflow.steps.util.plan.ConfigureForNewInfra',
+            'workflow.steps.util.mysql.SetServeridMigrate',
+            'workflow.steps.util.mysql.SetFilePermission',
+            'workflow.steps.util.mysql.DisableReplication',
+            'workflow.steps.util.database.Start',
+            'workflow.steps.util.database.CheckIsUp',
+            'workflow.steps.util.mysql.SetReplicationLastInstanceMigrate',
+            'workflow.steps.util.mysql.EnableReplication',
+            'workflow.steps.util.database.StartMonit',
+            'workflow.steps.util.vm.CheckAccessToMaster',
+            'workflow.steps.util.vm.CheckAccessFromMaster',
+            'workflow.steps.util.acl.ReplicateAclsMigrate',
+            'workflow.steps.util.mysql.SetReadOnlyMigrate',
+
+        )
     def get_host_migrate_steps(self):
         return [{
             'Migrating':
@@ -582,9 +620,79 @@ class MySQLFoxHA(MySQLSingle):
 
     def get_database_migrate_steps(self):
         return [{
-            'Migrating': self.get_base_host_migrate_steps()
+            'Creating new hosts': self.get_base_database_migrate_steps()
         }, {
-            'Cleaning up': self.get_host_migrate_steps_cleaning_up()
+            'Check Replication': (
+                'workflow.steps.util.fox.IsReplicationOkMigrate',
+            )
+        }, {
+            'Configure Replication': (
+                'workflow.steps.util.mysql.SetReplicationFirstInstanceMigrate',
+            )
+        }, {
+            'VIP': (
+                'workflow.steps.util.vip_provider.CreateVipMigrate',
+                'workflow.steps.util.vip_provider.UpdateVipRealsMigrate',
+            )
+        }, {
+            'Change Endpoint': (
+                'workflow.steps.util.dns.ChangeEndpoint',
+                'workflow.steps.util.dns.UnregisterDNSVipMigrate',
+                'workflow.steps.util.dns.RegisterDNSVipMigrate',
+                'workflow.steps.util.dns.ChangeVipEndpoint',
+                'workflow.steps.util.dns.CheckIsReady',
+            )
+        }, {
+            'Set serverid': (
+                'workflow.steps.util.mysql.SetServerid',
+                'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.CheckIsDown',
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.CheckIsUp',
+            )
+        }, {
+            'Set Instance Read Write': (
+                'workflow.steps.util.mysql.SetReadWriteMigrate',
+            )
+        }, {
+            'Remove Old FOX': (
+                'workflow.steps.util.fox.RemoveNodeMigrate',
+                'workflow.steps.util.fox.RemoveGroupMigrate',
+            )
+        }, {
+            'Create new FOX': (
+                'workflow.steps.util.fox.ConfigureGroupMigrate',
+                'workflow.steps.util.fox.ConfigureNodeDatabaseMigrate',
+            )
+        }, {
+            'SSL': (
+                'workflow.steps.util.ssl.UpdateOpenSSlLib',
+                'workflow.steps.util.ssl.CreateSSLFolder',
+                'workflow.steps.util.ssl.CreateSSLConfForInfraEndPoint',
+                'workflow.steps.util.ssl.CreateSSLConfForInstanceIP',
+                'workflow.steps.util.ssl.RequestSSLForInfra',
+                'workflow.steps.util.ssl.RequestSSLForInstance',
+                'workflow.steps.util.ssl.CreateJsonRequestFileInfra',
+                'workflow.steps.util.ssl.CreateJsonRequestFileInstance',
+                'workflow.steps.util.ssl.CreateCertificateInfra',
+                'workflow.steps.util.ssl.CreateCertificateInstance',
+                'workflow.steps.util.ssl.SetSSLFilesAccessMySQL',)
+        }, {
+            'Telegraf': (
+                'workflow.steps.util.metric_collector.ConfigureTelegraf',
+                'workflow.steps.util.metric_collector.RestartTelegraf',)
+        }, {
+            'Zabbix': (
+                'workflow.steps.util.zabbix.DestroyAlarms',
+                'workflow.steps.util.zabbix.CreateAlarms',
+                'workflow.steps.util.db_monitor.UpdateInfraCloudDatabaseMigrate',
+                'workflow.steps.util.disk.ChangeSnapshotOwner',
+            )
+        }, {
+            'Cleaning up': (
+                'workflow.steps.util.volume_provider.RemoveSnapshotMigrate',
+                'workflow.steps.util.vip_provider.DestroyVipMigrate',
+                ) + self.get_host_migrate_steps_cleaning_up()
         }]
 
 class MySQLFoxHAAWS(MySQLFoxHA):
@@ -685,6 +793,7 @@ class MySQLFoxHAAWS(MySQLFoxHA):
             'workflow.steps.util.database.CheckIfSwitchMaster',
             'workflow.steps.util.host_provider.CreateVirtualMachineMigrate',
             'workflow.steps.util.volume_provider.TakeSnapshotMigrate',
+            'workflow.steps.util.volume_provider.WaitSnapshotAvailableMigrate',
             'workflow.steps.util.volume_provider.NewVolume',
             'workflow.steps.util.vm.WaitingBeReady',
             'workflow.steps.util.vm.UpdateOSDescription',
@@ -733,9 +842,126 @@ class MySQLFoxHAAWS(MySQLFoxHA):
                 self.get_host_migrate_steps_cleaning_up()
         }]
 
+    def get_base_database_migrate_steps(self):
+        return (
+            'workflow.steps.util.vm.ChangeMasterMigrate',
+            'workflow.steps.util.database.CheckIfSwitchMasterMigrate',
+            'workflow.steps.util.host_provider.CreateVirtualMachineMigrate',
+            'workflow.steps.util.volume_provider.NewVolume',
+            'workflow.steps.util.vm.WaitingBeReady',
+            'workflow.steps.util.vm.UpdateOSDescription',
+            'workflow.steps.util.volume_provider.MountDataVolume',
+            'workflow.steps.util.volume_provider.TakeSnapshotMigrate',
+            'workflow.steps.util.volume_provider.WaitSnapshotAvailableMigrate',
+            'workflow.steps.util.volume_provider.AddHostsAllowDatabaseMigrate',
+            'workflow.steps.util.volume_provider.CreatePubKeyMigrate',
+            'workflow.steps.util.volume_provider.NewVolumeOnSlaveMigrate',
+            'workflow.steps.util.volume_provider.MountDataVolumeOnSlaveMigrate',
+            'workflow.steps.util.volume_provider.ScpFromSnapshotDatabaseMigrate',
+            'workflow.steps.util.volume_provider.UmountDataVolumeOnSlaveMigrate',
+            'workflow.steps.util.volume_provider.RemoveVolumeMigrate',
+            'workflow.steps.util.volume_provider.RemoveHostsAllowDatabaseMigrate',
+            'workflow.steps.util.volume_provider.RemovePubKeyMigrate',
+            'workflow.steps.util.disk.RemoveDeprecatedFiles',
+            'workflow.steps.util.plan.ConfigureForNewInfra',
+            'workflow.steps.util.mysql.SetServeridMigrate',
+            'workflow.steps.util.mysql.SetFilePermission',
+            'workflow.steps.util.mysql.DisableReplication',
+            'workflow.steps.util.database.Start',
+            'workflow.steps.util.database.CheckIsUp',
+            'workflow.steps.util.mysql.SetReplicationLastInstanceMigrate',
+            'workflow.steps.util.mysql.EnableReplication',
+            'workflow.steps.util.database.StartMonit',
+            'workflow.steps.util.vm.CheckAccessToMaster',
+            'workflow.steps.util.vm.CheckAccessFromMaster',
+            'workflow.steps.util.acl.ReplicateAclsMigrate',
+            'workflow.steps.util.mysql.SetReadOnlyMigrate',
+
+        )
+
     def get_database_migrate_steps(self):
         return [{
-            'Migrating': self.get_base_host_migrate_steps()
+            'Creating new hosts': self.get_base_database_migrate_steps()
         }, {
-            'Cleaning up': self.get_host_migrate_steps_cleaning_up()
+            'Wait Replication': (
+                'workflow.steps.util.fox.IsReplicationOkMigrate',
+            )
+        }, {
+            'Configure Replication': (
+                'workflow.steps.util.mysql.SetReplicationFirstInstanceMigrate',
+            )
+        }, {
+            'VIP': (
+                'workflow.steps.util.vip_provider.CreateVipMigrate',
+                'workflow.steps.util.vip_provider.UpdateVipRealsMigrate',
+            )
+        }, {
+            'Configure VIP': (
+                'workflow.steps.util.puppet.WaitingBeStarted',
+                'workflow.steps.util.puppet.WaitingBeDone',
+                'workflow.steps.util.puppet.ExecuteIfProblem',
+                'workflow.steps.util.puppet.WaitingBeDone',
+                'workflow.steps.util.puppet.CheckStatus',
+                'workflow.steps.util.foreman.SetupDSRCMigrate',
+                'workflow.steps.util.puppet.Execute',
+                'workflow.steps.util.puppet.CheckStatus'
+            )
+        }, {
+            'Change Endpoint': (
+                'workflow.steps.util.dns.ChangeEndpoint',
+                'workflow.steps.util.dns.UnregisterDNSVipMigrate',
+                'workflow.steps.util.dns.RegisterDNSVipMigrate',
+                'workflow.steps.util.dns.ChangeVipEndpoint',
+                'workflow.steps.util.dns.CheckIsReady',
+            )
+        }, {
+            'Set serverid': (
+                'workflow.steps.util.mysql.SetServerid',
+                'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.CheckIsDown',
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.CheckIsUp',
+            )
+        }, {
+            'Set Instance Read Write': (
+                'workflow.steps.util.mysql.SetReadWriteMigrate',
+            )
+        }, {
+            'Remove Old FOX': (
+                'workflow.steps.util.fox.RemoveNodeMigrate',
+                'workflow.steps.util.fox.RemoveGroupMigrate',
+            )
+        }, {
+            'Create new FOX': (
+                'workflow.steps.util.fox.ConfigureGroupMigrate',
+                'workflow.steps.util.fox.ConfigureNodeDatabaseMigrate',
+            )
+        }, {
+            'SSL': (
+                'workflow.steps.util.ssl.UpdateOpenSSlLib',
+                'workflow.steps.util.ssl.CreateSSLFolder',
+                'workflow.steps.util.ssl.CreateSSLConfForInfraEndPoint',
+                'workflow.steps.util.ssl.CreateSSLConfForInstanceIP',
+                'workflow.steps.util.ssl.RequestSSLForInfra',
+                'workflow.steps.util.ssl.RequestSSLForInstance',
+                'workflow.steps.util.ssl.CreateJsonRequestFileInfra',
+                'workflow.steps.util.ssl.CreateJsonRequestFileInstance',
+                'workflow.steps.util.ssl.CreateCertificateInfra',
+                'workflow.steps.util.ssl.CreateCertificateInstance',
+                'workflow.steps.util.ssl.SetSSLFilesAccessMySQL',)
+        }, {
+            'Telegraf': (
+                'workflow.steps.util.metric_collector.ConfigureTelegraf',
+                'workflow.steps.util.metric_collector.RestartTelegraf',)
+        }, {
+            'Zabbix': (
+                'workflow.steps.util.zabbix.DestroyAlarms',
+                'workflow.steps.util.zabbix.CreateAlarms',
+                'workflow.steps.util.disk.ChangeSnapshotOwner',
+            )
+        }, {
+            'Cleaning up': (
+                'workflow.steps.util.volume_provider.RemoveSnapshotMigrate',
+                'workflow.steps.util.vip_provider.DestroyVipMigrate',
+                ) + self.get_host_migrate_steps_cleaning_up()
         }]

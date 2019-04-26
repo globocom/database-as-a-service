@@ -1,6 +1,8 @@
 from maintenance.models import DatabaseMigrate, HostMigrate
 from util.providers import get_database_migrate_steps
 from workflow.workflow import steps_for_instances, rollback_for_instances_full
+from copy import copy
+from datetime import datetime
 
 
 def get_steps(database):
@@ -8,11 +10,17 @@ def get_steps(database):
     return get_database_migrate_steps(class_path)
 
 
-def build_migrate_hosts(hosts_zones, migrate):
+def build_migrate_hosts(hosts_zones, migrate, step_manager=None):
     instances = []
     for host, zone in hosts_zones.iteritems():
         instance = host.instances.first()
-        host_migrate = HostMigrate()
+        if step_manager:
+            host_migrate = step_manager.hosts.get(host=instance.hostname)
+            host_migrate.id = None
+            host_migrate.finished_at = None
+            host_migrate.created_at = datetime.now()
+        else:
+            host_migrate = HostMigrate()
         host_migrate.task = migrate.task
         host_migrate.host = instance.hostname
         host_migrate.zone = zone
@@ -24,9 +32,16 @@ def build_migrate_hosts(hosts_zones, migrate):
 
 
 def database_environment_migrate(
-    database, new_environment, new_offering, task, hosts_zones, since_step=None
+    database, new_environment, new_offering, task, hosts_zones, since_step=None,
+    step_manager=None
 ):
-    database_migrate = DatabaseMigrate()
+    if step_manager:
+        database_migrate = copy(step_manager)
+        database_migrate.id = None
+        database_migrate.finished_at = None
+        database_migrate.created_at = datetime.now()
+    else:
+        database_migrate = DatabaseMigrate()
     database_migrate.task = task
     database_migrate.database = database
     database_migrate.environment = new_environment
@@ -35,11 +50,12 @@ def database_environment_migrate(
     database_migrate.origin_offering = database.infra.offering
     database_migrate.save()
 
-    instances = build_migrate_hosts(hosts_zones, database_migrate)
+    instances = build_migrate_hosts(hosts_zones, database_migrate, step_manager=step_manager)
     instances = sorted(instances, key=lambda k: k.dns)
     steps = get_steps(database)
     result = steps_for_instances(
-        steps, instances, task, database_migrate.update_step, since_step
+        steps, instances, task, database_migrate.update_step, since_step,
+        step_manager=step_manager
     )
     database_migrate = DatabaseMigrate.objects.get(id=database_migrate.id)
     if result:
@@ -48,6 +64,9 @@ def database_environment_migrate(
         database.save()
         infra = database.infra
         infra.environment = database_migrate.environment
+        infra.plan = infra.plan.get_equivalent_plan_for_env(
+            database_migrate.environment
+        )
         infra.save()
         database_migrate.set_success()
         task.set_status_success('Database migrated with success')
