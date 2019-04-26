@@ -109,6 +109,9 @@ audit_log_rotate_on_size        = {{configuration.audit_log_rotate_on_size.value
 audit_log_exclude_accounts      = "{{configuration.audit_log_exclude_accounts.value}}"
 audit_log_policy                = {{configuration.audit_log_policy.value}}
 
+# init
+init_connect                    = "{{configuration.init_connect.value|safe}}"
+
 !include /etc/server_id.cnf
 
 EOF_DBAAS

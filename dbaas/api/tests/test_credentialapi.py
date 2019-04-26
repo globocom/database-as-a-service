@@ -6,7 +6,7 @@ from logical.models import Credential
 from logical.tests import factory
 from django.core.urlresolvers import reverse
 from . import DbaaSAPITestCase, BasicTestsMixin
-from account.models import Role, Team
+from account.models import Role, Team, Organization
 
 LOG = logging.getLogger(__name__)
 
@@ -57,8 +57,11 @@ class CredentialAPITestCase(DbaaSAPITestCase, BasicTestsMixin):
 
         # create new team
         self.role = Role.objects.get_or_create(name="other_role")[0]
+        self.organization = Organization.objects.get_or_create(
+            name='fake_organization')[0]
         obj.database.team = Team.objects.get_or_create(
-            name="other_team", role=self.role)[0]
+            name="other_team", role=self.role,
+            organization=self.organization)[0]
         obj.database.save()
 
         url = "%s" % self.url_list()

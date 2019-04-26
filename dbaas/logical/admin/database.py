@@ -55,20 +55,24 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     service_class = DatabaseService
     search_fields = (
         "name", "databaseinfra__name", "team__name", "project__name",
-        "environment__name", "databaseinfra__engine__engine_type__name"
+        "environment__name", "databaseinfra__engine__engine_type__name",
+        "team__organization__name",
     )
     list_display_basic = [
-        "name_html", "team_admin_page", "engine_html", "environment",
+        "name_html", "organization_admin_page", "team_admin_page",
+        "engine_html", "environment",
         "offering_html", "friendly_status", "created_dt_format"
     ]
     list_display_advanced = list_display_basic + ["quarantine_dt_format"]
     list_filter_basic = [
         "project", "databaseinfra__environment", "databaseinfra__engine",
         "databaseinfra__plan", "databaseinfra__engine__engine_type", "status",
-        "databaseinfra__plan__has_persistence", "databaseinfra__plan__replication_topology__name",
+        "databaseinfra__plan__has_persistence",
+        "databaseinfra__plan__replication_topology__name",
         "databaseinfra__ssl_configured"
     ]
-    list_filter_advanced = list_filter_basic + ["is_in_quarantine", "team"]
+    list_filter_advanced = list_filter_basic + ["is_in_quarantine",
+        "team", "team__organization"]
     add_form_template = "logical/database/database_add_form.html"
     delete_button_name = "Delete"
     fieldsets_add = (
@@ -120,6 +124,18 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         return team_name
 
     team_admin_page.short_description = "Team"
+
+    def organization_admin_page(self, database):
+        organization_name = database.team.organization.name
+        if self.list_filter == self.list_filter_advanced:
+            url = reverse('admin:account_organization_change',
+                          args=(database.team.organization.id,))
+            organization_name = """<a href="{}"> {} </a> """.format(
+                url, organization_name)
+            return format_html(organization_name)
+        return organization_name
+
+    organization_admin_page.short_description = "Organization"
 
     def description_html(self, database):
 

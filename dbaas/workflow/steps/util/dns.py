@@ -1,11 +1,9 @@
 from dbaas_credentials.models import CredentialType
-from dbaas_dnsapi.models import HOST, INSTANCE, DatabaseInfraDNSList
+from dbaas_dnsapi.models import HOST, INSTANCE, FOXHA, DatabaseInfraDNSList
 from dbaas_dnsapi.provider import DNSAPIProvider
 from dbaas_dnsapi.utils import add_dns_record
 from util import get_credentials_for, check_dns
 from base import BaseInstanceStep
-from physical.models import Vip
-from workflow.steps.util.base import VipProviderClient
 import socket
 
 
@@ -14,6 +12,14 @@ class DNSStep(BaseInstanceStep):
     def __init__(self, instance):
         super(DNSStep, self).__init__(instance)
         self.provider = DNSAPIProvider
+        self._vip = None
+
+    def is_ipv4(self, ip):
+        try:
+            socket.inet_aton(ip)
+            return True
+        except socket.error:
+            return False
 
     @property
     def credentials(self):
@@ -94,6 +100,29 @@ class ChangeEndpoint(DNSStep):
         CheckIsReady(self.instance).do()
 
 
+
+class ChangeVipEndpoint(DNSStep):
+
+    def __unicode__(self):
+        return "Changing VIP DNS endpoint..."
+
+    @property
+    def is_valid(self):
+        return self.instance == self.infra.instances.first()
+
+    def do(self):
+        if not self.is_valid:
+            return
+
+        self.infra.endpoint = self.infra.endpoint.replace(
+            self.vip.vip_ip, self.future_vip.vip_ip
+        )
+        self.infra.save()
+
+    def undo(self):
+        raise Exception("This step doesnt have rollback")
+
+
 class CreateDNS(DNSStep):
 
     def __unicode__(self):
@@ -134,6 +163,12 @@ class CreateDNS(DNSStep):
 
 class RegisterDNSVip(DNSStep):
 
+    def __init__(self, *args, **kw):
+        super(RegisterDNSVip, self).__init__(*args, **kw)
+        self._infra = None
+        self.do_export = True
+        self._env = None
+
     def __unicode__(self):
         return "Registry dns for VIP..."
 
@@ -141,53 +176,60 @@ class RegisterDNSVip(DNSStep):
     def is_valid(self):
         return self.instance == self.infra.instances.first()
 
-    @property
-    def is_ipv4(self):
-        try:
-            socket.inet_aton(self.vip_ip)
-            return True
-        except socket.error:
-            return False
+    def _do_database_dns_for_ip(self, func):
+        if not self.is_valid:
+            return
+        return func(
+            databaseinfra=self._infra or self.infra,
+            ip=self.vip.vip_ip,
+            do_export=self.do_export,
+            env=self._env or self.infra.environment,
+            **{'dns_type': 'CNAME'} if not self.is_ipv4(self.vip.vip_ip) else {}
+        )
 
-    @property
-    def vip_ip(self):
-        vip_identifier = Vip.objects.get(infra=self.infra).identifier
-        client = VipProviderClient(self.infra.environment)
-        vip = client.get_vip(vip_identifier)
+    def do(self):
+        self._do_database_dns_for_ip(
+            self.provider.create_database_dns_for_ip
+        )
 
-        return vip and vip.vip_ip
+    def undo(self):
+        self._do_database_dns_for_ip(
+            self.provider.remove_databases_dns_for_ip
+        )
+
+
+class RegisterDNSVipMigrate(RegisterDNSVip):
+    def __unicode__(self):
+        return "Registry dns for VIP of new environment..."
 
     def do(self):
         if not self.is_valid:
             return
-
-        if self.is_ipv4:
-            self.provider.create_database_dns_for_ip(
-                databaseinfra=self.infra,
-                ip=self.vip_ip,
-            )
-        else:
-            self.provider.create_database_dns_for_ip(
-                databaseinfra=self.infra,
-                ip=self.vip_ip,
-                dns_type='CNAME'
-            )
+        self.vip = self.future_vip
+        self._env = self.environment
+        dns = add_dns_record(
+            self.infra,
+            self.infra.name,
+            self.vip.vip_ip,
+            FOXHA,
+            is_database=False
+        )
+        assert self.infra.endpoint_dns == "{}:3306".format(dns)
+        return super(RegisterDNSVipMigrate, self).do()
 
     def undo(self):
-        if self.is_valid:
-            return
+        raise Exception("This step doesnt have rollback")
 
-        if self.is_ipv4:
-            self.provider.remove_databases_dns_for_ip(
-                databaseinfra=self.infra,
-                ip=self.vip_ip,
-            )
-        else:
-            self.provider.remove_databases_dns_for_ip(
-                databaseinfra=self.infra,
-                ip=self.vip_ip,
-                dns_type='CNAME'
-            )
+
+class UnregisterDNSVipMigrate(RegisterDNSVip):
+    def __unicode__(self):
+        return "Unregistry dns for VIP of old environment..."
+    def do(self):
+        self.do_export = False
+        return super(UnregisterDNSVipMigrate, self).undo()
+
+    def undo(self):
+        raise Exception("This step doesnt have rollback")
 
 
 class CheckIsReady(DNSStep):
@@ -195,19 +237,34 @@ class CheckIsReady(DNSStep):
     def __unicode__(self):
         return "Waiting for DNS..."
 
-    def _check_dns_for(self, instance):
+    def _check_dns_for(self, dns_to_check, ip_to_check):
         for dns in DatabaseInfraDNSList.objects.filter(
             databaseinfra=self.infra.id,
-            dns=instance.dns
+            dns=dns_to_check
         ):
-            if not check_dns(dns.dns, self.credentials.project, ip_to_check=self.host.address):
+            if not check_dns(dns.dns, self.credentials.project, ip_to_check=ip_to_check):
                 raise EnvironmentError("DNS {} is not ready".format(dns.dns))
 
-    def do(self):
+    @property
+    def must_check(self):
         must_check_dns = self.credentials.get_parameter_by_name('check_dns')
-        if str(must_check_dns).lower() != 'true':
+        return str(must_check_dns).lower() == 'true'
+
+    def do(self):
+        if not self.must_check:
             return
 
-        # self.host here is the future host, i want old one
         for instance in self.instance.hostname.instances.all():
-            self._check_dns_for(instance)
+            self._check_dns_for(instance.dns, self.host.address)
+
+
+class CheckVipIsReady(CheckIsReady):
+
+    def __unicode__(self):
+        return "Waiting for VIP DNS..."
+
+
+    def do(self):
+        if not self.must_check:
+            return
+        self._check_dns_for(self.infra.endpoint_dns.split(":")[0], self.future_vip.vip_ip)

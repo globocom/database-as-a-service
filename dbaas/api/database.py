@@ -28,17 +28,20 @@ class DatabaseSerializer(serializers.HyperlinkedModelSerializer):
         source='team', view_name='team-detail', queryset=Team.objects
     )
     endpoint = serializers.Field(source='endpoint')
+    infra_endpoint = serializers.Field(source='databaseinfra.endpoint')
     quarantine_dt = serializers.Field(source='quarantine_dt')
-    total_size_in_bytes = serializers.Field(source='total_size')
+    # total_size_in_bytes = serializers.Field(source='total_size')
+    total_size_in_bytes = serializers.SerializerMethodField('get_total_size')
     credentials = CredentialSerializer(many=True, read_only=True)
     status = serializers.Field(source='status')
-    used_size_in_bytes = serializers.Field(source='used_size_in_bytes')
+    # used_size_in_bytes = serializers.Field(source='used_size_in_bytes')
+    used_size_in_bytes = serializers.SerializerMethodField('get_used_size_in_bytes')
     engine = serializers.CharField(source='infra.engine', read_only=True)
 
     class Meta:
         model = models.Database
         fields = (
-            'url', 'id', 'name', 'endpoint', 'plan', 'environment',
+            'url', 'id', 'name', 'infra_endpoint', 'endpoint', 'plan', 'environment',
             'project', 'team', 'quarantine_dt', 'total_size_in_bytes',
             'credentials', 'description', 'status',
             'used_size_in_bytes', 'subscribe_to_email_events',
@@ -57,6 +60,23 @@ class DatabaseSerializer(serializers.HyperlinkedModelSerializer):
             self.fields['environment'].read_only = not creating
             self.fields['name'].read_only = not creating
             self.fields['credentials'].read_only = True
+
+    def _get_or_none_if_error(self, database, prop_name):
+        try:
+            val = getattr(database, prop_name)
+        except Exception, e:
+            LOG.error("Error get {} of database with id {}, error: {}".format(
+                prop_name, database.id, e
+            ))
+            return
+
+        return val
+
+    def get_total_size(self, database):
+        return self._get_or_none_if_error(database, 'total_size')
+
+    def get_used_size_in_bytes(self, database):
+        return self._get_or_none_if_error(database, 'used_size_in_bytes')
 
 
 class DatabaseAPI(viewsets.ModelViewSet):
