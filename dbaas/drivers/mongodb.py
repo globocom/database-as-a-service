@@ -23,6 +23,7 @@ LOG = logging.getLogger(__name__)
 CLONE_DATABASE_SCRIPT_NAME = "mongodb_clone.sh"
 MONGO_CONNECTION_DEFAULT_TIMEOUT = 5
 MONGO_SERVER_SELECTION_DEFAULT_TIMEOUT = 5
+MONGO_SOCKET_TIMEOUT = 5
 
 
 class MongoDB(BaseDriver):
@@ -162,8 +163,13 @@ class MongoDB(BaseDriver):
             server_selection_timeout_in_seconds = Configuration.get_by_name_as_int(
                 'mongo_server_selection_timeout', default=MONGO_SERVER_SELECTION_DEFAULT_TIMEOUT)
 
+            socket_timeout_in_miliseconds = Configuration.get_by_name_as_int(
+                'mongo_socket_timeout', default=MONGO_SOCKET_TIMEOUT) * 1000
+            )
+
             client = pymongo.MongoClient(
-                connection_address, connectTimeoutMS=connection_timeout_in_miliseconds, serverSelectionTimeoutMS=server_selection_timeout_in_seconds)
+                connection_address, connectTimeoutMS=connection_timeout_in_miliseconds, serverSelectionTimeoutMS=server_selection_timeout_in_seconds,
+                 socketTimeoutMS=socket_timeout_in_miliseconds)
             if (not instance) or (instance and instance.instance_type != instance.MONGODB_ARBITER):
                 if self.databaseinfra.user and self.databaseinfra.password:
                     LOG.debug('Authenticating databaseinfra %s',
