@@ -161,7 +161,7 @@ class MongoDB(BaseDriver):
                 'mongo_connect_timeout', default=MONGO_CONNECTION_DEFAULT_TIMEOUT) * 1000
             
             server_selection_timeout_in_seconds = Configuration.get_by_name_as_int(
-                'mongo_server_selection_timeout', default=MONGO_SERVER_SELECTION_DEFAULT_TIMEOUT)
+                'mongo_server_selection_timeout', default=MONGO_SERVER_SELECTION_DEFAULT_TIMEOUT) * 1000
 
             socket_timeout_in_miliseconds = Configuration.get_by_name_as_int(
                 'mongo_socket_timeout', default=MONGO_SOCKET_TIMEOUT) * 1000
