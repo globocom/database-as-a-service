@@ -19,6 +19,7 @@ LOG = logging.getLogger(__name__)
 
 CLONE_DATABASE_SCRIPT_NAME = "redis_clone.py"
 REDIS_CONNECTION_DEFAULT_TIMEOUT = 5
+REDIS_CONNECTION_SOCKET_TIMEOUT = 3
 
 
 class Redis(BaseDriver):
@@ -48,6 +49,13 @@ class Redis(BaseDriver):
         return Configuration.get_by_name_as_int(
             'redis_connect_timeout',
             default=REDIS_CONNECTION_DEFAULT_TIMEOUT
+        )
+
+    @property
+    def connection_socket_timeout_in_seconds(self):
+        return Configuration.get_by_name_as_int(
+            'redis_socket_connect_timeout',
+            default=REDIS_CONNECTION_SOCKET_TIMEOUT
         )
 
     def concatenate_instances(self):
@@ -103,7 +111,8 @@ class Redis(BaseDriver):
         client = redis.StrictRedis(
             host=address, port=int(port),
             password=self.databaseinfra.password,
-            socket_timeout=self.connection_timeout_in_seconds
+            socket_timeout=self.connection_timeout_in_seconds,
+            socket_connect_timeout=self.connection_socket_timeout_in_seconds
         )
 
         LOG.debug('Successfully connected to redis single infra {}'.format(
@@ -403,6 +412,7 @@ class RedisSentinel(Redis):
         client = sentinel.master_for(
             self.databaseinfra.name,
             socket_timeout=self.connection_timeout_in_seconds,
+            socket_connect_timeout=self.connection_socket_timeout_in_seconds,
             password=self.databaseinfra.password
         )
 
@@ -415,7 +425,7 @@ class RedisSentinel(Redis):
     def get_sentinel_client(self, instance=None):
         sentinels = self.__get_admin_sentinel_connection(instance)
         sentinel = Sentinel(
-            sentinels, socket_timeout=self.connection_timeout_in_seconds
+            sentinels, socket_timeout=self.connection_timeout_in_seconds, socket_connect_timeout=self.connection_socket_timeout_in_seconds
         )
         return sentinel
 
@@ -601,6 +611,7 @@ class RedisCluster(Redis):
                 host=instance.address, port=instance.port,
                 password=self.databaseinfra.password,
                 socket_timeout=self.connection_timeout_in_seconds,
+                socket_connect_timeout=self.connection_socket_timeout_in_seconds,
             )
 
         return StrictRedisCluster(
@@ -610,6 +621,7 @@ class RedisCluster(Redis):
             ],
             password=self.databaseinfra.password,
             socket_timeout=self.connection_timeout_in_seconds,
+            socket_connect_timeout=self.connection_socket_timeout_in_seconds,
         )
 
     def get_replication_info(self, instance):
