@@ -35,7 +35,6 @@ class DbaasBackend(ModelBackend):
         return interface or local
 
 #    def authenticate(self, username, password):
-#        import ipdb; ipdb.set_trace()
 #        if not settings.DBAAS_OAUTH2_LOGIN_ENABLE:
 #            return None
 #        url = '{}/api/2.0/signin'.format(settings.DBAAS_AUTH_API_URL)

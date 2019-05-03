@@ -289,6 +289,9 @@ class BaseTopology(object):
     def driver_name(self):
         raise NotImplementedError
 
+    def get_filer_migrate_steps(self):
+        raise NotImplementedError
+
 
 class FakeTestTopology(BaseTopology):
 

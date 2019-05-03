@@ -387,6 +387,15 @@ class RemoveVolumeMigrate(NewVolumeMigrate):
         self._remove_volume(vol, self.host)
 
 
+class NewInactiveVolume(NewVolume):
+    def __unicode__(self):
+        return "Creating Inactive Volume..."
+
+    @property
+    def active_volume(self):
+        return False
+
+
 class MountDataVolume(VolumeProviderBase):
 
     def __unicode__(self):
@@ -409,6 +418,53 @@ class MountDataVolume(VolumeProviderBase):
 
     def undo(self):
         pass
+
+
+class MountDataNewVolume(MountDataVolume):
+    @property
+    def is_valid(self):
+        return True
+
+    @property
+    def volume(self):
+        return self.latest_disk
+
+
+class MountDataLatestVolume(MountDataVolume):
+
+    def __unicode__(self):
+        return "Mounting new volume on {} for copy...".format(self.directory)
+
+    @property
+    def directory(self):
+        return "/data_latest_volume"
+
+    def do(self):
+        script = self.get_mount_command(
+            self.latest_disk,
+            data_directory=self.directory,
+            fstab=False
+        )
+        self.run_script(script)
+
+    def undo(self):
+        script = self.get_umount_command(
+            self.latest_disk,
+            data_directory=self.directory,
+        )
+        self.run_script(script)
+
+
+class UnmountDataLatestVolume(MountDataLatestVolume):
+
+    def __unicode__(self):
+        return "Umounting new volume on {} for copy...".format(self.directory)
+
+    def do(self):
+        return super(UnmountDataLatestVolume, self).undo()
+
+    def undo(self):
+        return super(UnmountDataLatestVolume, self).do()
 
 
 class MountDataVolumeMigrate(MountDataVolume):
@@ -601,6 +657,54 @@ class CopyFilesMigrate(VolumeProviderBase):
         pass
 
 
+class CopyFiles(VolumeProviderBase):
+
+    def __unicode__(self):
+        return "Copying data to {} from {}...".format(
+            self.source_directory,
+            self.dest_directory
+        )
+
+    @property
+    def source_directory(self):
+        return "/data"
+
+    @property
+    def dest_directory(self):
+        return "/data_latest_volume"
+
+    def do(self):
+        script = "cp -rp {}/* {}".format(self.source_directory, self.dest_directory)
+        self.run_script(script)
+
+    def undo(self):
+        pass
+
+
+class CopyPermissions(VolumeProviderBase):
+
+    def __unicode__(self):
+        return "Copying permissions from {} to {}...".format(
+            self.source_directory,
+            self.dest_directory
+        )
+
+    @property
+    def source_directory(self):
+        return "/data"
+
+    @property
+    def dest_directory(self):
+        return "/data_latest_volume"
+
+    def do(self):
+        script = ('stat -c "%a" {0} | xargs -I{{}} chmod {{}} {1}'
+                  ' && stat -c "%U:%G" {0} | xargs -I{{}} chown {{}} {1}').format(
+                    self.source_directory, self.dest_directory)
+        self.run_script(script)
+
+
+
 class ScpFromSnapshotMigrate(VolumeProviderBase):
 
     def __unicode__(self):
@@ -684,6 +788,12 @@ class UnmountActiveVolume(VolumeProviderBase):
 
     def undo(self):
         pass
+
+
+class UnmountDataVolume(UnmountActiveVolume):
+    @property
+    def is_valid(self):
+        return True
 
 
 class ResizeVolume(VolumeProviderBase):
@@ -771,6 +881,21 @@ class AddAccessRestoredVolume(AddAccess):
     @property
     def is_valid(self):
         return self.restore.is_master(self.instance)
+
+    @property
+    def volume(self):
+        return self.latest_disk
+
+
+class AddAccessNewVolume(AddAccess):
+
+    @property
+    def disk_time(self):
+        return "new"
+
+    @property
+    def is_valid(self):
+        return True
 
     @property
     def volume(self):
@@ -941,6 +1066,19 @@ class TakeSnapshot(VolumeProviderBase):
 
     def undo(self):
         pass
+
+
+class TakeSnapshotOldDisk(TakeSnapshot):
+        @property
+        def is_valid(self):
+            return True
+
+        @property
+        def group(self):
+            from backup.models import BackupGroup
+            group = BackupGroup()
+            group.save()
+            return group
 
 
 class WaitSnapshotAvailableMigrate(VolumeProviderBase):
