@@ -43,12 +43,13 @@ class DatabaseRestoreAPI(viewsets.ReadOnlyModelViewSet):
     ordering = ('-created_at',)
     datetime_fields = ('created_at')
 
-    # def get_queryset(self):
-    #     params = self.request.GET.dict()
-    #     filter_params = {}
-    #     for k, v in params.iteritems():
-    #         if k == 'exclude_system_tasks':
-    #             filter_params['task_name__in'] = self.chg_tasks_names
-    #         elif k.split('__')[0] in self.filter_fields:
-    #             filter_params[k] = v
-    #     return self.model.objects.filter(**filter_params)
+    def get_queryset(self):
+        queryset = self.model.objects.all()
+        params = self.request.GET.dict()
+        valid_params = {}
+        for field in params.keys():
+            if field.split('__')[0] in self.filter_fields:
+                valid_params[field] = params[field]
+        if params:
+            return queryset.filter(**valid_params)
+        return queryset
