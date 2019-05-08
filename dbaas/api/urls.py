@@ -17,6 +17,7 @@ from .user import UserAPI
 from .host import HostAPI
 from .snapshot import SnapshotAPI
 from .database_history import DatabaseHistoryAPI
+from .database_restore import DatabaseRestoreAPI
 
 
 router = DefaultRouter()
@@ -36,6 +37,7 @@ router.register(r'credential', CredentialAPI)
 router.register(r'extra_dns', ExtraDnsAPI)
 router.register(r'task', TaskAPI, base_name="task")
 router.register(r'database_history', DatabaseHistoryAPI)
+router.register(r'database_restore', DatabaseRestoreAPI)
 
 if settings.CLOUD_STACK_ENABLED:
     from .integration_type import CredentialTypeAPI
