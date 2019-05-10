@@ -133,6 +133,8 @@ class FilerMigrate(object):
         task_history.context = {'hostname': gethostname()}
         task_history.user = 'admin'
         task_history.db_id = database.id
+        task_history.object_class = "logical_database"
+        task_history.object_id = database.id
         task_history.database_name = database.name
         task_history.arguments = 'Database_name: {}'.format(database.name)
         task_history.save()
