@@ -48,6 +48,10 @@ Setup your local environment
 Install the required python packages.
 
     make pip
+    
+Run migrations to mysql database
+
+    make run_migrate
 
 Install redis and start celery
 
