@@ -159,7 +159,7 @@ class MongoDB(BaseDriver):
             # mongo uses timeout in mili seconds
             connection_timeout_in_miliseconds = Configuration.get_by_name_as_int(
                 'mongo_connect_timeout', default=MONGO_CONNECTION_DEFAULT_TIMEOUT) * 1000
-            
+
             server_selection_timeout_in_seconds = Configuration.get_by_name_as_int(
                 'mongo_server_selection_timeout', default=MONGO_SERVER_SELECTION_DEFAULT_TIMEOUT) * 1000
 
@@ -187,6 +187,9 @@ class MongoDB(BaseDriver):
         client.fsync(lock=True)
 
     def unlock_database(self, client):
+        """ This method unlocks a database instance for writing purposes.
+        MongoDB is going to throw an exception when trying to unlock an already
+        locked database. """
         client.unlock()
 
     @contextmanager
