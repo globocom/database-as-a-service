@@ -75,10 +75,14 @@ def lock_instance(driver, instance, client):
 
 
 def unlock_instance(driver, instance, client):
-    LOG.debug('Unlocking instance {}'.format(instance))
-    driver.unlock_database(client)
-    LOG.debug('Instance {} is unlocked'.format(instance))
-
+    try:
+        LOG.debug('Unlocking instance {}'.format(instance))
+        driver.unlock_database(client)
+        LOG.debug('Instance {} is unlocked'.format(instance))
+        return True
+    except Exception as e:
+        LOG.warning('Could not unlock {} - {}'.format(instance, e))
+        return False
 
 def make_instance_snapshot_backup(instance, error, group, provider_class=VolumeProviderBase):
     LOG.info("Make instance backup for {}".format(instance))
@@ -109,8 +113,7 @@ def make_instance_snapshot_backup(instance, error, group, provider_class=VolumeP
         set_backup_error(infra, snapshot, errormsg)
         return snapshot
     finally:
-        if locked:
-            unlock_instance(driver, instance, client)
+        unlock_instance(driver, instance, client)
 
     output = {}
     command = "du -sb /data/.snapshot/%s | awk '{print $1}'" % (
