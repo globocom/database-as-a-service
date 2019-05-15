@@ -103,5 +103,5 @@ Documentation
 [Drivers](./doc/drivers.md)
 -------------------------------------------
 
-[Changelog](./doc/changelog.md)
+[Troubleshooting](./doc/troubleshooting.md)
 -------------------------------------------
