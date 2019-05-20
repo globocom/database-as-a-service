@@ -486,7 +486,7 @@ class MySQLFoxHA(MySQLSingle):
     def get_upgrade_steps(self):
         return [{
             self.get_upgrade_steps_initial_description(): (
-                'workflow.steps.util.zabbix.DestroyAlarms',
+                'workflow.steps.util.zabbix.DisableAlarms',
                 'workflow.steps.util.db_monitor.DisableMonitoring',
             ),
         }] + [{
