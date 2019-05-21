@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 from rest_framework import serializers
-from maintenance.models import DatabaseRestore
+from maintenance.models import DatabaseChangeParameter
 from api.maintenance_base import MaintennanceBaseApi
 
 
-class DatabaseRestoreSerializer(serializers.ModelSerializer):
+class DatabaseChangeParameterSerializer(serializers.ModelSerializer):
     class Meta:
-        model = DatabaseRestore
+        model = DatabaseChangeParameter
         fields = (
             'id',
             'current_step',
@@ -19,14 +19,14 @@ class DatabaseRestoreSerializer(serializers.ModelSerializer):
         )
 
 
-class DatabaseRestoreAPI(MaintennanceBaseApi):
+class DatabaseChangeParameterAPI(MaintennanceBaseApi):
 
     """
     Task API
     """
 
-    model = DatabaseRestore
-    serializer_class = DatabaseRestoreSerializer
+    model = DatabaseChangeParameter
+    serializer_class = DatabaseChangeParameterSerializer
     filter_fields = (
         'status',
         'can_do_retry',
