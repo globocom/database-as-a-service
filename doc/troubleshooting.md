@@ -4,7 +4,17 @@
 
 The purpose of this guide is to serve as a troubleshooting knowledge base
 for DBaaS, helping the team to better communicate and avoiding that the 
-same problem is rediscovered and solved multiple times by different developers. 
+same problem is rediscovered and solved multiple times by different developers.
+
+## EnvironmentError: mysql_config not found
+
+You might get this error for two reasons:
+
+1. You need to install mysql on your computer. 
+
+2. After the installation, you didn't create the environment variable for mysql. 
+
+    ```export PATH=$PATH:/usr/local/mysql/bin``` 
 
 ## Clang failed to find 'x11/xlib.h'
 
