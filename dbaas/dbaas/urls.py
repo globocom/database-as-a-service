@@ -16,7 +16,7 @@ urlpatterns = patterns(
     url(r'^$', RedirectView.as_view(url='/admin'), name='home'),
     url(r'^admin/', include(admin.site.urls)),
     url(r'^dashboard/', include('dashboard.urls')),
-    url(r'^([^/]+)/tsuru/', include('tsuru.urls')),
+    url(r'^([^/]+)/tsuru/', include('tsuru.urls', namespace='tsuru')),
     url(r'^logical/', include('logical.urls')),
     url(r'^account/', include('account.urls')),
     url(r'^system/', include('system.urls')),
