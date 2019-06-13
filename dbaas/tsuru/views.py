@@ -24,7 +24,8 @@ from notification.models import TaskHistory
 from notification.tasks import TaskRegister
 from system import models
 from workflow.steps.util.base import ACLFromHellClient
-
+from maintenance.models import DatabaseCreate
+from django.http import Http404
 
 LOG = logging.getLogger(__name__)
 
@@ -136,6 +137,7 @@ class ServiceAppBind(APIView):
         return app_name[0] if isinstance(app_name, list) else app_name
 
     def post(self, request, database_name, format=None):
+        """This method binds a App to a database through tsuru."""
         env = get_url_env(request)
         data = request.DATA
         LOG.debug("Tsuru Bind App POST Request DATA {}".format(data))
@@ -208,6 +210,7 @@ class ServiceAppBind(APIView):
         return Response(env_vars, status.HTTP_201_CREATED)
 
     def delete(self, request, database_name, format=None):
+        """This method unbinds a App to a database through tsuru."""
         env = get_url_env(request)
         data = request.DATA
         LOG.debug("Tsuru Unbind App DELETE Request DATA {}".format(data))
@@ -217,9 +220,10 @@ class ServiceAppBind(APIView):
             return response
 
         database = response
+
         acl_from_hell_client = ACLFromHellClient(database.environment)
         acl_from_hell_client.remove_acl(database, self._handle_app_name(data['app-name']))
-        return Response(status.HTTP_204_NO_CONTENT)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class ServiceUnitBind(APIView):
@@ -471,31 +475,47 @@ def log_and_response(msg, http_status, e="Conditional Error."):
     LOG.warn("Error: {}".format(e))
     return Response(msg, http_status)
 
+def last_database_create(database_name, env):
+    """This function returns the most recent DatabaseCreate's task.
+
+    Parameters:
+    database_name (str): Name of the database
+    env (str): It represents the database environment (prod or dev)
+
+    Returns:
+    DatabaseCreate: DatabaseCreate object
+    """
+    return DatabaseCreate.objects.filter(name=database_name, environment__name=env).last()
 
 def check_database_status(database_name, env):
-    task = TaskHistory.objects.filter(
-        arguments__contains="Database: {}, Environment: {}".format(
-            database_name, env
-        ), task_status="RUNNING")
+    """This function looks for a DatabaseCreate task and returns a http response
+    or the Database itself depeding on the context. If the DatabaseCreate task is
+    still running of failed, a http response is returned, otherwise this functions tries
+    to retrieve the Database with the get_database function.
 
-    LOG.info("Task {}".format(task))
-    if task:
-        msg = "Database {} in env {} is beeing created.".format(
-            database_name, env)
-        return log_and_response(
-            msg=msg, http_status=status.HTTP_412_PRECONDITION_FAILED)
+    Parameters:
+    database_name (str): Name of the database
+    env (str): It represents the database environment (prod or dev)
 
-    task = TaskHistory.objects.filter(
-        arguments__contains="Database: {}, Environment: {}".format(
-            database_name, env
-        ), task_status="ERROR")
+    Returns:
+    Database or Response: Database or Rest Framework Response object
+    """
+    database_create = last_database_create(database_name, env)
 
-    LOG.info("Task {}".format(task))
-    if task:
-        msg = "A error ocurred creating database {} in env {}. Check error on task history in https://dbaas.globoi.com".format(
-            database_name, env)
-        return log_and_response(
-            msg=msg, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    LOG.info("Task {}".format(getattr(database_create, 'task', 'No tasks found')))
+
+    if database_create:
+        if database_create.is_running:
+            msg = "Database {} in env {} is beeing created.".format(
+                database_name, env)
+            return log_and_response(
+                msg=msg, http_status=status.HTTP_412_PRECONDITION_FAILED)
+
+        elif database_create.is_status_error:
+            msg = "A error ocurred creating database {} in env {}. Check error on task history in https://dbaas.globoi.com".format(
+                database_name, env)
+            return log_and_response(
+                msg=msg, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     try:
         database = get_database(database_name, env)
     except IndexError as e:
