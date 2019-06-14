@@ -997,7 +997,7 @@ port {{SENTINELPORT}}
 # Specify the log file name. Also the empty string can be used to force
 # Sentinel to log on the standard output. Note that if you use standard
 # output for logging but daemonize, logs will be sent to /dev/null
-logfile /data/logs/redis-sentinel.log
+logfile "/data/logs/redis-sentinel.log"
 
 # sentinel announce-ip <ip>
 # sentinel announce-port <port>
@@ -1026,7 +1026,7 @@ logfile /data/logs/redis-sentinel.log
 # For Redis Sentinel to chdir to /tmp at startup is the simplest thing
 # for the process to don't interferer with administrative tasks such as
 # unmounting filesystems.
-dir /tmp
+dir "/tmp"
 
 # sentinel monitor <master-name> <ip> <redis-port> <quorum>
 #
@@ -1190,15 +1190,15 @@ daemonize yes
 
 # When running daemonized, Sentinel writes a pid file in /var/run/sentinel.pid by
 # default. You can specify a custom pid file location here.
-pidfile /data/sentinel.pid
+pidfile "/data/sentinel.pid"
 
-protected-mode "no"
+protected-mode no
 
 EOF_DBAAS_CONFIGSENTINELFILE
-) > /data/sentinel.conf
+) > {{ CONFIG_FILE_PATH|default:"/data/sentinel.conf" }}
     die_if_error "Error setting redis.conf"
 
-    chown redis:redis /data/sentinel.conf
+    chown redis:redis {{ CONFIG_FILE_PATH|default:"/data/sentinel.conf" }}
     die_if_error "Error changing sentinel conf permission"
 
 }
