@@ -511,7 +511,7 @@ class RedisSentinel(Redis):
         if return_code != 0:
             raise Exception(str(output))
 
-    def configuration_parameters(self, instance):
+    def configuration_parameters(self, instance, **kw):
         variables = {}
 
         master = self.get_master_instance()
@@ -520,6 +520,7 @@ class RedisSentinel(Redis):
 
         variables.update(self.parameters_redis(instance.hostname))
         variables.update(self.parameters_sentinel(instance.hostname))
+        variables.update(kw)
 
         return variables
 
@@ -543,11 +544,12 @@ class RedisSentinel(Redis):
         }
 
     def master_parameters(self, instance, master):
+        
         return {
             'SENTINELMASTER': master.address,
             'SENTINELMASTERPORT': master.port,
             'MASTERNAME': instance.databaseinfra.name
-        }
+        } 
 
     def parameters_sentinel(self, host):
         sentinel = host.non_database_instance()
