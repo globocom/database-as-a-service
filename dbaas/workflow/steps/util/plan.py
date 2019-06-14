@@ -98,7 +98,6 @@ class PlanStep(BaseInstanceStep):
 
     def run_script(self, plan_script):
         script = build_context_script(self.script_variables, plan_script)
-
         output = {}
         return_code = exec_remote_command_host(
             self.run_script_host, script, output
@@ -190,7 +189,7 @@ class Configure(PlanStep):
     
     @property
     def extra_variables(self):
-        return{}
+        return {}
 
     def get_variables_specifics(self):
         driver = self.infra.get_driver()
@@ -200,18 +199,16 @@ class Configure(PlanStep):
         if self.is_valid:
             self.run_script(self.plan.script.configuration_template)
 
+
 class ConfigureDatabaseFile(Configure):
     
     @property
     def extra_variables(self):
         return {
-            'CONFIGURE_ONLY': True,
+            'CONFIGFILE_ONLY': True,
             'CONFIG_FILE_PATH': '/tmp/database_configuration_file'
         }
 
-    def do(self):
-        if self.is_valid:
-            self.run_script(self.plan.script.configuration_template)
 
 class StartReplication(PlanStep):
 
@@ -272,6 +269,16 @@ class InitializationForNewInfraSentinel(
 
 class ConfigureForNewInfraSentinel(PlanStepNewInfraSentinel, Configure):
     pass
+
+
+class ConfigureSentinelFile(ConfigureForNewInfraSentinel):
+
+    @property
+    def extra_variables(self):
+        return {
+            'ONLY_SENTINEL': True,
+            'CONFIG_FILE_PATH': '/tmp/sentinel_configuration_file'
+        }
 
 
 class ConfigureForResizeLog(Configure):
