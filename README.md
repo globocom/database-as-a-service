@@ -49,6 +49,19 @@ Install the required python packages.
 
     make pip
     
+Database setup for migrations
+
+1. Connect to the local database.
+    
+        mysql -u root -p <GENERATED-PASSWORD>
+2. Change root password to an empty string.     
+    
+        ALTER USER 'root'@'localhost' IDENTIFIED BY '';
+
+3. Create ```dbaas``` database.
+    
+        CREATE DATABASE dbaas;
+    
 Run migrations to mysql database
 
     make run_migrate
