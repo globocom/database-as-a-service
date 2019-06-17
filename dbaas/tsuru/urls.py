@@ -15,5 +15,5 @@ urlpatterns = patterns('tsuru.views',
                        url(r'^resources/(?P<database_name>\w+)/bind$',
                            ServiceUnitBind.as_view()),
                        url(r'^resources/(?P<database_name>\w+)/bind-app$',
-                           ServiceAppBind.as_view()),
+                           ServiceAppBind.as_view(), name='service-app-bind'),
                        )
