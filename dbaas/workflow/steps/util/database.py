@@ -457,6 +457,21 @@ class ResizeOpLogSize(DatabaseStep):
         self.instance.port = self.instance.old_port
 
 
+class ResizeOpLogSize40(DatabaseStep):
+
+    def __unicode__(self):
+        return "Changing oplog Size..."
+
+    def do(self):
+        from physical.models import DatabaseInfraParameter
+        oplogsize = DatabaseInfraParameter.objects.get(
+            databaseinfra=self.infra,
+            parameter__name='oplogSize')
+        client = self.driver.get_client(self.instance)
+        client.admin.command(
+            {'replSetResizeOplog': 1, 'size': int(oplogsize.value)})
+
+
 class ValidateOplogSizeValue(DatabaseStep):
 
     def __unicode__(self):
