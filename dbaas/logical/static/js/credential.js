@@ -180,7 +180,7 @@
                 "<option value='Read-Only'>Read-Only</option>"+
                 "</select>"+
                 "<input type='text' class='input user' placeholder='type username' maxlength='16' id='user-roles' name='user' value='' />" +
-                "<a href='#' class='save-new-credential btn btn-primary'>Save</a>" +
+                "<button href='#' class='save-new-credential btn btn-primary'>Save</button>" +
                 "</td></tr></div>");
         });
 
