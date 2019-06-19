@@ -60,7 +60,10 @@ systemLog:
 ## Net Options
 ########################################
 net:
-   bindIp: {{HOSTADDRESS}}
+    bindIp: {{HOSTADDRESS}}
+{% if PORT %}
+    port: {{ PORT }}
+{% endif %}
 
 ########################################
 ## Security
