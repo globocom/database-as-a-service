@@ -623,3 +623,15 @@ class CheckIfInstanceIsMasterRestore(DatabaseStep):
             sleep(CHECK_SECONDS)
 
         raise EnvironmentError('The instance is not master.')
+
+
+class CreateExtraDNS(DatabaseStep):
+    def __unicode__(self):
+        return "Creating extra DNS..."
+
+    def do(self):
+        pass
+
+    def undo(self):
+        from extra_dns.models import ExtraDns
+        ExtraDns.objects.filter(database=self.database).delete()
