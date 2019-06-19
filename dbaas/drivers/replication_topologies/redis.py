@@ -70,6 +70,9 @@ class RedisSingle(BaseRedis):
             'Creating monitoring and alarms': (
                 'workflow.steps.util.zabbix.CreateAlarms',
                 'workflow.steps.util.db_monitor.CreateInfraMonitoring',
+            )}, {
+            'Create Extra DNS': (
+                'workflow.steps.util.database.CreateExtraDNS',
             )
         }]
 
@@ -303,6 +306,9 @@ class RedisSentinel(BaseRedis):
             'Creating monitoring and alarms': (
                 'workflow.steps.util.sentinel.CreateAlarmsNewInfra',
                 'workflow.steps.util.db_monitor.CreateInfraMonitoring',
+            )}, {
+            'Create Extra DNS': (
+                'workflow.steps.util.database.CreateExtraDNS',
             )
         }]
 
@@ -418,6 +424,9 @@ class RedisCluster(BaseRedis):
             'Creating monitoring and alarms': (
                 'workflow.steps.util.zabbix.CreateAlarms',
                 'workflow.steps.util.db_monitor.CreateInfraMonitoring',
+            )}, {
+            'Create Extra DNS': (
+                'workflow.steps.util.database.CreateExtraDNS',
             )
         }]
 
