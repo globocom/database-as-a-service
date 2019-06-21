@@ -391,3 +391,18 @@ class MongoDBReplicaset(BaseTopology):
         }, {
             'Cleaning up': self.get_host_migrate_steps_cleaning_up()
         }]
+
+
+class MongoDBReplicaset40(MongoDBReplicaset):
+
+    def get_resize_oplog_steps(self):
+        return [{
+            'Resize oplog': (
+                'workflow.steps.util.database.ValidateOplogSizeValue',
+                'workflow.steps.util.database.ResizeOpLogSize40',
+                'workflow.steps.util.plan.ConfigureOnlyDBConfigFile',
+            )
+        }] + self.get_change_parameter_steps_final()
+
+    def get_resize_oplog_steps_and_retry_steps_back(self):
+        return self.get_resize_oplog_steps(), 0
