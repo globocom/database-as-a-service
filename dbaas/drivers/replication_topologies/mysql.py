@@ -87,6 +87,9 @@ class MySQLSingle(BaseMysql):
             'Creating monitoring and alarms': (
                 'workflow.steps.util.zabbix.CreateAlarms',
                 'workflow.steps.util.db_monitor.CreateInfraMonitoring',
+            )}, {
+            'Create Extra DNS': (
+                'workflow.steps.util.database.CreateExtraDNS',
             )
         }]
 
@@ -351,6 +354,9 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.mysql.CreateAlarmsVip',
                 'workflow.steps.util.zabbix.CreateAlarms',
                 'workflow.steps.util.db_monitor.CreateInfraMonitoring',
+            )}, {
+            'Create Extra DNS': (
+                'workflow.steps.util.database.CreateExtraDNS',
             )
         }]
 
@@ -844,6 +850,9 @@ class MySQLFoxHAAWS(MySQLFoxHA):
             )}, {
             'Check Vip': (
                 'workflow.steps.util.vip_provider.WaitVipReady',
+            )}, {
+            'Create Extra DNS': (
+                'workflow.steps.util.database.CreateExtraDNS',
             )
 
         }]
