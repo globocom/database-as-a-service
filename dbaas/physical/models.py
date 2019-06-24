@@ -1097,6 +1097,7 @@ class DatabaseInfraParameter(BaseModel):
 
         obj.value = value
         obj.applied_on_database = False
+        obj.reset_default_value = False
         obj.save()
         return True
 
