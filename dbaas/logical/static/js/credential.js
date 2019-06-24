@@ -53,7 +53,7 @@
                 "url": "/logical/credential/" + this.pk,
                 "type": "PUT",
             }).done(function(data) {
-                $(".show-password", credential.$row).attr("data-content", data.credential.password);
+                $(".copy-password", credential.$row).attr("data-content", data.credential.password);
                 if (callback) {
                     callback(credential);
                 }
@@ -105,41 +105,27 @@
         };
 
         /**
-        * Show credential password. If password is shown, it will be hidden. Use
-        * force_show to always show.
-        */
-        Credential.prototype.show_password = function(force_show) {
-            // hide all others passwords
-            var credential = this, operation = "toggle";
-            if (force_show) operation = "show";
-
-            $(".show-password", "#table-credentials").each(function(i, el) {
-                if ($(el).parents(".credential").attr("data-credential-pk") === credential.pk) {
-                    $(".show-password", credential.$row).popover(operation);
-                } else {
-                    $(el).popover("hide");
-                }
-            });
-        };
-
-        /**
         * Put the listeners on credential
         */
         var initialize_listeners = function(credential) {
             // put all listeners
             var $row = credential.$row;
 
-            $(".show-password", $row).popover({"trigger": "manual", "placement": "left"})
-            .on('click', function(e) {
-                e.preventDefault();
-                credential.show_password();
+            $(".copy-password", $row).on('click', function(e) {
+              var link = $(this).attr('data-content');
+              var tmp_input = document.createElement("input");
+              tmp_input.value = link;
+              document.body.appendChild(tmp_input);
+              tmp_input.select();
+              document.execCommand("copy");
+              document.body.removeChild(tmp_input);
+              return false;
             });
 
             $("#create_new_password-" + credential.pk).popover({trigger: "hover", placement: "right", content: "Generate new password"});
             $("#reset_psw_modal-" + credential.pk + " .modal-footer").on("click.reset-password", ".btn-reset-password", function(e) {
               credential.reset_password(function() {
                     $("#reset_psw_modal-" + credential.pk).modal('toggle');
-                    credential.show_password(true);
                     return false;
               });
               return false;
@@ -180,7 +166,7 @@
                 "<option value='Read-Only'>Read-Only</option>"+
                 "</select>"+
                 "<input type='text' class='input user' placeholder='type username' maxlength='16' id='user-roles' name='user' value='' />" +
-                "<a href='#' class='save-new-credential btn btn-primary'>Save</a>" +
+                "<button href='#' class='save-new-credential btn btn-primary'>Save</button>" +
                 "</td></tr></div>");
         });
 
