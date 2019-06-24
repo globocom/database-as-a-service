@@ -15,14 +15,14 @@
         <div role="form">
           <div class="form-group">
             {% include body_text %}
-            <input autocomplete="off" class="vTextField" id="id_{{ input_name }}" maxlength="300" name="{{ input_name }}" type="text"/>
+            <input autocomplete="off" class="vTextField confirm_{{ input_name }}" id="id_{{ input_name }}" maxlength="300" name="{{ input_name }}" type="text"/>
           </div>
         </div>
       </div>
 
       <div class="modal-footer">
         <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-        <input type="submit" value="{{ submit_button_value }}" name="{{ submit_button_name }}" id="{{ submit_button_id }}" class="btn btn-accept-modal active"/>
+        <input type="submit" value="{{ submit_button_value }}" name="{{ submit_button_name }}" id="{{ submit_button_id }}" class="btn btn-accept-modal active {{ class }}"/>
       </div>
     </div>
   </div>

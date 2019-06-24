@@ -457,6 +457,21 @@ class ResizeOpLogSize(DatabaseStep):
         self.instance.port = self.instance.old_port
 
 
+class ResizeOpLogSize40(DatabaseStep):
+
+    def __unicode__(self):
+        return "Changing oplog Size..."
+
+    def do(self):
+        from physical.models import DatabaseInfraParameter
+        oplogsize = DatabaseInfraParameter.objects.get(
+            databaseinfra=self.infra,
+            parameter__name='oplogSize')
+        client = self.driver.get_client(self.instance)
+        client.admin.command(
+            {'replSetResizeOplog': 1, 'size': int(oplogsize.value)})
+
+
 class ValidateOplogSizeValue(DatabaseStep):
 
     def __unicode__(self):
@@ -468,13 +483,15 @@ class ValidateOplogSizeValue(DatabaseStep):
             databaseinfra=self.infra,
             parameter__name='oplogSize')
         oplogsize = oplog.value
-        error = 'BadValue oplogSize {}. Must be integer and greater than 0.'.format(oplogsize)
+        error = 'BadValue oplogSize {}. Must be integer.'.format(oplogsize)
         try:
             oplogsize = int(oplogsize)
         except ValueError:
             raise EnvironmentError(error)
 
-        if oplogsize <= 0:
+        if oplogsize < 990:
+            error = 'BadValue oplogSize {}. Must be greater than 990.'.format(
+                oplogsize)
             raise EnvironmentError(error)
 
 
@@ -623,3 +640,15 @@ class CheckIfInstanceIsMasterRestore(DatabaseStep):
             sleep(CHECK_SECONDS)
 
         raise EnvironmentError('The instance is not master.')
+
+
+class CreateExtraDNS(DatabaseStep):
+    def __unicode__(self):
+        return "Creating extra DNS..."
+
+    def do(self):
+        pass
+
+    def undo(self):
+        from extra_dns.models import ExtraDns
+        ExtraDns.objects.filter(database=self.database).delete()
