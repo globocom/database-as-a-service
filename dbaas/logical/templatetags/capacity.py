@@ -143,6 +143,8 @@ class DetailedProgressBarNode(template.Node):
             return None
         else:
             used_other_in_gb = self.used_disk_in_gb - self.used_database_in_gb
+            if used_other_in_gb < 0:
+                used_other_in_gb = 0
             return self.normalize_number(used_other_in_gb)
 
     @property
