@@ -20,6 +20,13 @@ class Migration(SchemaMigration):
 
 
     models = {
+        u'physical.cloud': {
+            'Meta': {'object_name': 'Cloud'},
+            'created_at': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'name': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
+            'updated_at': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'})
+        },
         u'physical.databaseinfra': {
             'Meta': {'object_name': 'DatabaseInfra'},
             'capacity': ('django.db.models.fields.PositiveIntegerField', [], {'default': '1'}),
@@ -87,6 +94,7 @@ class Migration(SchemaMigration):
         },
         u'physical.environment': {
             'Meta': {'object_name': 'Environment'},
+            'cloud': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "u'environment_cloud'", 'on_delete': 'models.PROTECT', 'to': u"orm['physical.Cloud']"}),
             'created_at': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'migrate_environment': ('django.db.models.fields.related.ForeignKey', [], {'blank': 'True', 'related_name': "u'migrate_to'", 'null': 'True', 'to': u"orm['physical.Environment']"}),
