@@ -44,8 +44,9 @@ app = Celery('dbaas')
 
 app.config_from_object(celeryconfig)
 app.autodiscover_tasks(lambda: settings.INSTALLED_APPS)
+app.task_acks_late = True
 
 
-@app.task(bind=True)
+@app.task(acks_late=True, bind=True)
 def debug_task(self):
     LOG.debug('Request: {0!r}'.format(self.request))

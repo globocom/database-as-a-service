@@ -11,7 +11,7 @@ import logging
 LOG = logging.getLogger(__name__)
 
 
-@app.task(bind=True)
+@app.task(acks_late=True, bind=True)
 @only_one(key="purgequarantinekey", timeout=1000)
 def purge_quarantine(self,):
     user = AccountUser.objects.get(username='admin')

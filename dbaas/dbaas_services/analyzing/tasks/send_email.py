@@ -14,7 +14,7 @@ from dbaas_services.analyzing.models import AnalyzeRepository
 LOG = logging.getLogger(__name__)
 
 
-@app.task(bind=True)
+@app.task(acks_late=True, bind=True)
 @only_one(key="analyzing_notification_key", timeout=180)
 def database_notification(self):
     LOG.info("retrieving all teams and sending database notification")

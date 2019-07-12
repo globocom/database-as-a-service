@@ -164,7 +164,7 @@ def make_instance_snapshot_backup(instance, error, group, provider_class=VolumeP
     return snapshot
 
 
-@app.task(bind=True)
+@app.task(acks_late=True, bind=True)
 @only_one(key="makedatabasebackupkey")
 def make_databases_backup(self):
     LOG.info("Making databases backups")
@@ -290,7 +290,7 @@ def remove_snapshot_backup(snapshot, provider=None, force=0, msgs=None):
     return
 
 
-@app.task(bind=True)
+@app.task(acks_late=True, bind=True)
 @only_one(key="removedatabaseoldbackupkey")
 def remove_database_old_backups(self):
     worker_name = get_worker_name()
@@ -340,7 +340,7 @@ def get_snapshots_by_env(env):
     )
 
 
-@app.task(bind=True)
+@app.task(acks_late=True, bind=True)
 @only_one(key="purge_unused_exports")
 def purge_unused_exports_task(self):
     from notification.tasks import TaskRegister
@@ -441,7 +441,7 @@ def _create_database_backup(instance, task, group):
     return snapshot
 
 
-@app.task(bind=True)
+@app.task(acks_late=True, bind=True)
 def make_database_backup(self, database, task):
     worker_name = get_worker_name()
     task_history = TaskHistory.register(
@@ -488,7 +488,7 @@ def make_database_backup(self, database, task):
     return True
 
 
-@app.task(bind=True)
+@app.task(acks_late=True, bind=True)
 def remove_database_backup(self, task, snapshot):
     worker_name = get_worker_name()
     task_history = TaskHistory.register(

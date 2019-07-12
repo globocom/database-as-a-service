@@ -62,7 +62,7 @@ def create_database_with_retry(
     )
 
 
-@app.task(bind=True)
+@app.task(acks_late=True, bind=True)
 def destroy_database(self, database, task_history=None, user=None):
     # register History
     AuditRequest.new_request("destroy_database", user, "localhost")
@@ -121,13 +121,13 @@ def destroy_database(self, database, task_history=None, user=None):
         AuditRequest.cleanup_request()
 
 
-@app.task(bind=True)
+@app.task(acks_late=True, bind=True)
 def destroy_database_retry(self, rollback_from, task, user):
     from maintenance.tasks import _create_database_rollback
     _create_database_rollback(self, rollback_from, task, user)
 
 
-@app.task(bind=True)
+@app.task(acks_late=True, bind=True)
 def clone_database(self, origin_database, clone_name, plan, environment, task_history=None, user=None):
     AuditRequest.new_request("clone_database", user, "localhost")
     try:
@@ -298,7 +298,7 @@ def database_notification_for_team(team=None):
     return msgs
 
 
-@app.task(bind=True)
+@app.task(acks_late=True, bind=True)
 @only_one(key="db_notification_key", timeout=180)
 def database_notification(self):
     """
@@ -333,7 +333,7 @@ def database_notification(self):
     return
 
 
-@app.task(bind=True)
+@app.task(acks_late=True, bind=True)
 @only_one(key="get_databases_status")
 def update_database_status(self):
     LOG.info("Retrieving all databases")
@@ -372,7 +372,7 @@ def update_database_status(self):
     return
 
 
-@app.task(bind=True)
+@app.task(acks_late=True, bind=True)
 @only_one(key="get_databases_used_size")
 def update_database_used_size_old(self):
     LOG.info("Retrieving all databases")
@@ -403,7 +403,7 @@ def update_database_used_size_old(self):
     return
 
 
-@app.task(bind=True)
+@app.task(acks_late=True, bind=True)
 @only_one(key="update_infra_instances_sizes")
 def update_infra_instances_sizes(self):
     """
@@ -433,7 +433,7 @@ def update_infra_instances_sizes(self):
     return
 
 
-@app.task(bind=True)
+@app.task(acks_late=True, bind=True)
 @only_one(key="get_instances_status")
 def update_instances_status(self):
     LOG.info("Retrieving all databaseinfras")
@@ -464,7 +464,7 @@ def update_instances_status(self):
     return
 
 
-@app.task(bind=True)
+@app.task(acks_late=True, bind=True)
 @only_one(key="purge_task_history", timeout=600)
 def purge_task_history(self):
     try:
@@ -528,7 +528,7 @@ def handle_zabbix_alarms(database):
     return factory_for(databaseinfra=database.databaseinfra, credentials=credentials)
 
 
-@app.task(bind=True)
+@app.task(acks_late=True, bind=True)
 def database_disk_resize(self, database, disk_offering, task_history, user):
     from workflow.steps.util.volume_provider import ResizeVolume
 
@@ -607,7 +607,7 @@ def database_disk_resize(self, database, disk_offering, task_history, user):
         AuditRequest.cleanup_request()
 
 
-@app.task(bind=True)
+@app.task(acks_late=True, bind=True)
 @only_one(key="disk_auto_resize", timeout=600)
 def update_disk_used_size(self):
     worker_name = get_worker_name()
@@ -621,7 +621,7 @@ def update_disk_used_size(self):
     zabbix_collect_used_disk(task=task)
 
 
-@app.task(bind=True)
+@app.task(acks_late=True, bind=True)
 def upgrade_database(self, database, user, task, since_step=0):
     worker_name = get_worker_name()
     task = TaskHistory.register(self.request, user, task, worker_name)
@@ -670,7 +670,7 @@ def upgrade_database(self, database, user, task, since_step=0):
         )
 
 
-@app.task(bind=True)
+@app.task(acks_late=True, bind=True)
 def reinstall_vm_database(self, database, instance, user, task, since_step=0):
     worker_name = get_worker_name()
     task = TaskHistory.register(self.request, user, task, worker_name)
@@ -704,7 +704,7 @@ def reinstall_vm_database(self, database, instance, user, task, since_step=0):
         )
 
 
-@app.task(bind=True)
+@app.task(acks_late=True, bind=True)
 def change_parameters_database(self, database, user, task, since_step=0):
     worker_name = get_worker_name()
     task = TaskHistory.register(self.request, user, task, worker_name)
@@ -775,7 +775,7 @@ def change_parameters_database(self, database, user, task, since_step=0):
         )
 
 
-@app.task(bind=True)
+@app.task(acks_late=True, bind=True)
 def add_instances_to_database(self, database, user, task, number_of_instances=1):
     from workflow.workflow import steps_for_instances_with_rollback
     from util.providers import get_add_database_instances_steps
@@ -820,7 +820,7 @@ def add_instances_to_database(self, database, user, task, number_of_instances=1)
         task.update_status_for(TaskHistory.STATUS_ERROR, 'Done')
 
 
-@app.task(bind=True)
+@app.task(acks_late=True, bind=True)
 def remove_readonly_instance(self, instance, user, task):
     from workflow.workflow import steps_for_instances
     from util.providers import get_remove_readonly_instance_steps
@@ -854,7 +854,7 @@ def remove_readonly_instance(self, instance, user, task):
         task.update_status_for(TaskHistory.STATUS_ERROR, 'Done')
 
 
-@app.task(bind=True)
+@app.task(acks_late=True, bind=True)
 def resize_database(self, database, user, task, offering, original_offering=None, since_step=0):
 
     self.request.kwargs['database'] = database
@@ -899,7 +899,7 @@ def resize_database(self, database, user, task, offering, original_offering=None
         )
 
 
-@app.task(bind=True)
+@app.task(acks_late=True, bind=True)
 def resize_database_rollback(self, from_resize, user, task):
     self.request.kwargs['database'] = from_resize.database
     self.request.kwargs['target_offer'] = from_resize.target_offer
@@ -936,7 +936,7 @@ def resize_database_rollback(self, from_resize, user, task):
 
 
 
-@app.task(bind=True)
+@app.task(acks_late=True, bind=True)
 def switch_write_database(self, database, instance, user, task):
     from workflow.workflow import steps_for_instances
     from util.providers import get_switch_write_instance_steps
@@ -968,7 +968,7 @@ def switch_write_database(self, database, instance, user, task):
         task.update_status_for(TaskHistory.STATUS_ERROR, 'Done')
         database.finish_task()
 
-@app.task(bind=True)
+@app.task(acks_late=True, bind=True)
 def configure_ssl_database(self, database, user, task, since_step=0):
     worker_name = get_worker_name()
     task = TaskHistory.register(self.request, user, task, worker_name)
@@ -1000,7 +1000,7 @@ def configure_ssl_database(self, database, user, task, since_step=0):
             'Could not do have SSL configured.\nConfigure SSL doesn\'t have rollback'
         )
 
-@app.task(bind=True)
+@app.task(acks_late=True, bind=True)
 def update_database_monitoring(self, task, database, hostgroup, action):
     from workflow.steps.util.zabbix import UpdateMonitoringRemoveHostgroup
     from workflow.steps.util.zabbix import UpdateMonitoringAddHostgroup
@@ -1035,7 +1035,7 @@ def update_database_monitoring(self, task, database, hostgroup, action):
         return True
 
 
-@app.task(bind=True)
+@app.task(acks_late=True, bind=True)
 def update_organization_name_monitoring(
     self, task, database, organization_name):
     from workflow.steps.util.db_monitor import UpdateInfraOrganizationName

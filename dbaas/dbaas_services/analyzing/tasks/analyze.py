@@ -17,7 +17,7 @@ from dbaas_services.analyzing.actions import database_can_be_resized
 LOG = logging.getLogger(__name__)
 
 
-@app.task(bind=True)
+@app.task(acks_late=True, bind=True)
 @only_one(key="analyze_databases_service_task", timeout=6000)
 def analyze_databases(self, task_history=None):
     endpoint, healh_check_route, healh_check_string = get_analyzing_credentials()

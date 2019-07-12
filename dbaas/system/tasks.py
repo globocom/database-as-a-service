@@ -9,7 +9,7 @@ import logging
 LOG = logging.getLogger(__name__)
 
 
-@app.task(bind=True)
+@app.task(acks_late=True, bind=True)
 @only_one(key="celery_healthcheck_last_update", timeout=20)
 def set_celery_healthcheck_last_update(self):
     try:

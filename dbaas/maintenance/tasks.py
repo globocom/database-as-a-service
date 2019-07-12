@@ -14,7 +14,7 @@ from workflow.workflow import steps_for_instances
 LOG = logging.getLogger(__name__)
 
 
-@app.task(bind=True)
+@app.task(acks_late=True, bind=True)
 def execute_scheduled_maintenance(self, maintenance_id):
     LOG.debug("Maintenance id: {}".format(maintenance_id))
     maintenance = models.Maintenance.objects.get(id=maintenance_id)
@@ -131,7 +131,7 @@ def region_migration_finish(infra):
     ChangeTTLTo3Hours(instance).do()
 
 
-@app.task(bind=True)
+@app.task(acks_late=True, bind=True)
 def region_migration_start(self, infra, instances, since_step=None):
     steps = [{
         'Disable monitoring and alarms': (
@@ -210,7 +210,7 @@ def region_migration_start(self, infra, instances, since_step=None):
     database.save()
 
 
-@app.task(bind=True)
+@app.task(acks_late=True, bind=True)
 def create_database(
     self, name, plan, environment, team, project, description, task,
     subscribe_to_email_events=True, is_protected=False, user=None,
@@ -228,7 +228,7 @@ def create_database(
     )
 
 
-@app.task(bind=True)
+@app.task(acks_late=True, bind=True)
 def restore_database(self, database, task, snapshot, user, retry_from=None):
     task = TaskHistory.register(
         request=self.request, task_history=task, user=user,
@@ -251,11 +251,11 @@ def _create_database_rollback(self, rollback_from, task, user):
     from tasks_create_database import rollback_create
     rollback_create(rollback_from, task, user)
 
-@app.task(bind=True)
+@app.task(acks_late=True, bind=True)
 def create_database_rollback(self, rollback_from, task, user):
     _create_database_rollback(self, rollback_from, task, user)
 
-@app.task(bind=True)
+@app.task(acks_late=True, bind=True)
 def node_zone_migrate(
     self, host, zone, new_environment, task, since_step=None, step_manager=None
 ):
@@ -267,7 +267,7 @@ def node_zone_migrate(
     node_zone_migrate(host, zone, new_environment, task, since_step, step_manager=step_manager)
 
 
-@app.task(bind=True)
+@app.task(acks_late=True, bind=True)
 def node_zone_migrate_rollback(self, migrate, task):
     task = TaskHistory.register(
         request=self.request, task_history=task, user=task.user,
@@ -277,7 +277,7 @@ def node_zone_migrate_rollback(self, migrate, task):
     rollback_node_zone_migrate(migrate, task)
 
 
-@app.task(bind=True)
+@app.task(acks_late=True, bind=True)
 def database_environment_migrate(
     self, database, new_environment, new_offering, task, hosts_zones,
     since_step=None, step_manager=None
@@ -293,7 +293,7 @@ def database_environment_migrate(
     )
 
 
-@app.task(bind=True)
+@app.task(acks_late=True, bind=True)
 def database_environment_migrate_rollback(self, migrate, task):
     task = TaskHistory.register(
         request=self.request, task_history=task, user=task.user,
