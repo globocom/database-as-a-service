@@ -216,10 +216,7 @@ class CreateAlarmsVip(ZabbixVip):
         if not self.is_valid:
             return
 
-        extra = self.zabbix_provider.get_database_monitors_extra_parameters()
-        self.zabbix_provider._create_database_monitors(
-            host=self.vip_instance_dns, dbtype='mysql', alarm='yes', **extra
-        )
+        self.zabbix_provider.create_mysqlvip_monitor(self.vip_instance_dns)
 
     def undo(self):
         DestroyAlarmsVip(self.instance).do()
