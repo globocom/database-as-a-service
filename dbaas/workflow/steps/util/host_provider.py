@@ -436,6 +436,9 @@ class CreateVirtualMachineMigrate(CreateVirtualMachine):
         except ObjectDoesNotExist:
             return
 
+        if not host:
+            return
+
         try:
             self.provider.destroy_host(self.host.future_host)
         except (Host.DoesNotExist, IndexError):
