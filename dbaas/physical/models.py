@@ -615,6 +615,11 @@ class DatabaseInfra(BaseModel):
     ssl_configured = models.BooleanField(
         verbose_name=_("SSL is Configured"),
         default=False)
+    backup_hour = models.IntegerField(
+        verbose_name=_("Backup hour"),
+        blank=False, 
+        null=False,
+        help_text=_("The hour of backup."))
 
     def __unicode__(self):
         return self.name
