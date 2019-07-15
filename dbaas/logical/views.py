@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
+import datetime
 import json
 from collections import OrderedDict
 import logging
@@ -1123,9 +1124,15 @@ def database_backup(request, context, database):
             _restore_database(request, database)
         elif 'snapshot_delete' in request.POST:
             _delete_snapshot(request, database)
-        elif 'backup_path' in request.POST:
+        elif 'backup_path' in request.POST or 'backup_hour' in request.POST:
             database.backup_path = request.POST['backup_path']
+            database.infra.backup_hour = request.POST['backup_hour']
             database.save()
+            database.infra.save()
+
+    context['backup_hours'] = [(hour, datetime.time(hour, 0, 0).strftime(format="%H:%M")) for hour in range(24)]
+    context['current_backup_hour'] = int(database.infra.backup_hour)
+
 
     groups = []
     context['snapshots'] = []
