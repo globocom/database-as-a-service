@@ -176,6 +176,12 @@ class EnginePatch(BaseModel):
         max_length=200,
     )
 
+    def __str__(self):
+        return self.patch_version
+
+    def __unicode__(self):
+        return self.patch_version
+
 
 class Parameter(BaseModel):
     engine_type = models.ForeignKey(
