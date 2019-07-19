@@ -1,7 +1,16 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 from django_services import admin
+from django.contrib import admin as django_admin
 from ..service.engine import EngineService
+from ..models import EnginePatch
+from ..forms.engine_patch import EnginePatchFormset
+
+
+class EnginePatchInline(django_admin.TabularInline):
+    formset = EnginePatchFormset
+    model = EnginePatch
+    extra = 0
 
 
 class EngineAdmin(admin.DjangoServicesAdmin):
@@ -11,6 +20,7 @@ class EngineAdmin(admin.DjangoServicesAdmin):
     list_filter = ("engine_type",)
     save_on_top = True
     ordering = ('engine_type__name', )
+    inlines = [EnginePatchInline]
 
     def get_queryset(self, request):
         qs = super(EngineAdmin, self).get_queryset(request)

@@ -180,7 +180,7 @@ class EnginePatch(BaseModel):
         return self.patch_version
 
     def __unicode__(self):
-        return self.patch_version
+        return ''
 
 
 class Parameter(BaseModel):
