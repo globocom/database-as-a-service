@@ -120,6 +120,14 @@ class Engine(BaseModel):
         verbose_name=_("Read name"), blank=True, null=True, default='',
         help_text="Ex: Slave or Secondary", max_length=100,
     )
+    major_version = models.CharField(
+        verbose_name=_("Engine major version"), max_length=100,
+        blank=True, null=True, default='',
+    )
+    minor_version = models.CharField(
+        verbose_name=_("Engine minor version"), max_length=100,
+        blank=True, null=True, default='',
+    )
 
     class Meta:
         unique_together = (
@@ -148,6 +156,25 @@ class Engine(BaseModel):
     @property
     def is_redis(self):
         return self.name == 'redis'
+
+
+class EnginePatch(BaseModel):
+    engine = models.ForeignKey(
+        Engine, verbose_name=_("Engine"),
+        related_name='patchs'
+    )
+    patch_version = models.CharField(
+        verbose_name=_("Engine patch version"), max_length=100,
+    )
+    is_initial_patch = models.BooleanField(
+        verbose_name=_("Is initial patch"),
+        default=False
+    )
+    patch_path = models.CharField(
+        verbose_name=_("Path of installation file"),
+        blank=True, null=True, default='',
+        max_length=200,
+    )
 
 
 class Parameter(BaseModel):
@@ -617,9 +644,12 @@ class DatabaseInfra(BaseModel):
         default=False)
     backup_hour = models.IntegerField(
         verbose_name=_("Backup hour"),
-        blank=False, 
+        blank=False,
         null=False,
         help_text=_("The hour of backup."))
+    engine_patch = models.ForeignKey(
+        EnginePatch, related_name="databaseinfras",
+        on_delete=models.PROTECT, null=True)
 
     def __unicode__(self):
         return self.name
