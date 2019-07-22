@@ -15,9 +15,9 @@ class EnginePatchForm(forms.ModelForm):
 class EnginePatchFormset(BaseInlineFormSet):
 
     def clean(self):
-        """This method validates duplicated initial_patch given for an
-        EnginePatch formset. ValidationError is not triggered when an objects
-        is being deleted.
+        """This method validate whether there is a duplicated is_initial_patch
+        or not and if a engine patch is not provided. ValidationError is not
+        triggered when an object is being deleted.
         """
         super(EnginePatchFormset, self).clean()
 
@@ -27,12 +27,15 @@ class EnginePatchFormset(BaseInlineFormSet):
             if cleaned_data and cleaned_data.get('is_initial_patch'):
                 if not cleaned_data.get('DELETE'):
                     count += 1
+
         if count == 0:
             raise forms.ValidationError(
-                'You must select at least one initial_patch'
+                'You must select at least one initial engine patch'
             )
         if count > 1:
-            raise forms.ValidationError('You must have only one initial_patch')
+            raise forms.ValidationError(
+                'You must have only one initial engine patch'
+            )
 
 
 engine_patch_formset = inlineformset_factory(
