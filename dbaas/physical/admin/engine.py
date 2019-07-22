@@ -16,8 +16,10 @@ class EnginePatchInline(django_admin.TabularInline):
 class EngineAdmin(admin.DjangoServicesAdmin):
     service_class = EngineService
     search_fields = ("engine_type__name",)
-    list_display = ("engine_type", "version", "created_at", "has_users")
-    list_filter = ("engine_type",)
+    readonly_fields = ("version2", "full_inicial_version")
+    list_display = ("engine_type", "version", "is_active",
+        "version2", "full_inicial_version")
+    list_filter = ("engine_type", "is_active")
     save_on_top = True
     ordering = ('engine_type__name', )
     inlines = [EnginePatchInline]
