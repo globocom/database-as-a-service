@@ -105,6 +105,31 @@ class BaseTopology(object):
             ),
         }]
 
+
+    def get_upgrade_patch_steps(self):
+        return [{
+            'Disable monitoring and alarms': (
+                #'workflow.steps.util.zabbix.DisableAlarms',
+                #'workflow.steps.util.db_monitor.DisableMonitoring',
+            ),
+        }] + [{
+            'Upgrading database': (
+                #'workflow.steps.util.vm.ChangeMaster',
+                #'workflow.steps.util.database.CheckIfSwitchMaster',
+                #'workflow.steps.util.database.Stop',
+                #'workflow.steps.util.database.CheckIsDown',
+                #'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.CheckIsUp',
+            ),
+        }] + [{
+            'Enabling monitoring and alarms': (
+                #'workflow.steps.util.db_monitor.UpdateInfraVersion',
+                #'workflow.steps.util.db_monitor.EnableMonitoring',
+                #'workflow.steps.util.zabbix.EnableAlarms',
+            ),
+        }]
+
+
     def get_add_database_instances_first_steps(self):
         return (
             'workflow.steps.util.host_provider.CreateVirtualMachine',
