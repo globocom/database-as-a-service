@@ -577,6 +577,12 @@ class Database(BaseModel):
     def get_upgrade_retry_url(self):
         return "/admin/logical/database/{}/upgrade_retry/".format(self.id)
 
+    def get_upgrade_patch_url(self):
+        return "/admin/logical/database/{}/upgrade_patch/".format(self.id)
+
+    def get_upgrade_patch_retry_url(self):
+        return "/admin/logical/database/{}/upgrade_patch_retry/".format(self.id)
+
     def get_change_parameters_retry_url(self):
         return "/admin/logical/database/{}/change_parameters_retry/".format(self.id)
 
