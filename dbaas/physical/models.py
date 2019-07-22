@@ -207,7 +207,7 @@ class EnginePatch(BaseModel):
         return self.patch_version
 
     def __unicode__(self):
-        return ''
+        return self.patch_version
 
 
 class Parameter(BaseModel):
