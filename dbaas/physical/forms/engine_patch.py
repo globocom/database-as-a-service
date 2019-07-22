@@ -1,7 +1,15 @@
 from django import forms
+from django.forms.models import inlineformset_factory
 from django.forms.models import BaseInlineFormSet
 
-from ..models import EnginePatch
+from ..models import EnginePatch, Engine
+
+
+class EnginePatchForm(forms.ModelForm):
+
+    class Meta:
+        model = EnginePatch
+        fields = ('patch_version', 'is_initial_patch', 'patch_path')
 
 
 class EnginePatchFormset(BaseInlineFormSet):
@@ -19,9 +27,17 @@ class EnginePatchFormset(BaseInlineFormSet):
             if cleaned_data and cleaned_data.get('is_initial_patch'):
                 if not cleaned_data.get('DELETE'):
                     count += 1
+        if count == 0:
+            raise forms.ValidationError(
+                'You must select at least one initial_patch'
+            )
         if count > 1:
             raise forms.ValidationError('You must have only one initial_patch')
 
-    class Meta:
-        model = EnginePatch
-        fields = ('patch_version', 'is_initial_patch', 'patch_path')
+
+engine_patch_formset = inlineformset_factory(
+    Engine,
+    EnginePatch,
+    form=EnginePatchForm,
+    formset=EnginePatchFormset
+)
