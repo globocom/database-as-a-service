@@ -7,10 +7,12 @@ from ..models import EnginePatch
 from ..forms.engine_patch import engine_patch_formset
 
 
-class EnginePatchInline(django_admin.TabularInline):
+class EnginePatchInline(django_admin.StackedInline):
     formset = engine_patch_formset
     model = EnginePatch
     extra = 0
+
+    verbose_name = "Patch Version"
 
 
 class EngineAdmin(admin.DjangoServicesAdmin):
