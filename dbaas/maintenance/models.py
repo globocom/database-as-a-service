@@ -9,8 +9,9 @@ from datetime import datetime
 from account.models import Team
 from backup.models import BackupGroup, Snapshot
 from logical.models import Database, Project
-from physical.models import Host, Plan, Environment, DatabaseInfra, Instance, \
-    Offering
+from physical.models import (
+    Host, Plan, Environment, DatabaseInfra, Instance,
+    Offering, EnginePatch)
 from notification.models import TaskHistory
 from util.models import BaseModel
 from django.db.models.signals import post_save
@@ -338,6 +339,46 @@ class DatabaseUpgrade(DatabaseMaintenanceTask):
 
         super(DatabaseUpgrade, self).save(*args, **kwargs)
 
+
+class DatabaseUpgradePatch(DatabaseMaintenanceTask):
+    database = models.ForeignKey(
+        Database, verbose_name="Database",
+        null=False, unique=False, related_name="minorupgrades"
+    )
+    task = models.ForeignKey(
+        TaskHistory, verbose_name="Task History",
+        null=False, unique=False, related_name="database_minor_upgrades"
+    )
+    source_patch = models.ForeignKey(
+        EnginePatch, verbose_name="Source",
+        null=True, blank=True, unique=False,
+        related_name="database_minor_upgrades_source",
+        on_delete=models.SET_NULL
+    )
+    source_patch_full_version = models.CharField(
+        verbose_name="Source", max_length=50, null=True, blank=True
+    )
+    target_patch = models.ForeignKey(
+        EnginePatch, verbose_name="Target",
+        null=True, blank=True, unique=False,
+        related_name="database_minor_upgrades_target",
+        on_delete=models.SET_NULL
+    )
+    target_patch_full_version = models.CharField(
+        verbose_name="Target", max_length=50, null=True, blank=True
+    )
+
+    def __unicode__(self):
+        return "{} upgrade release".format(self.database.name)
+
+    def save(self, *args, **kwargs):
+        if self.source_patch:
+            self.source_patch_full_version = self.source_patch.full_version
+
+        if self.target_patch:
+            self.target_patch_full_version = self.target_patch.full_version
+
+        super(DatabaseUpgradePatch, self).save(*args, **kwargs)
 
 class DatabaseReinstallVM(DatabaseMaintenanceTask):
     database = models.ForeignKey(
@@ -764,6 +805,7 @@ simple_audit.register(DatabaseChangeParameter)
 simple_audit.register(DatabaseConfigureSSL)
 simple_audit.register(HostMigrate)
 simple_audit.register(DatabaseMigrate)
+simple_audit.register(DatabaseUpgradePatch)
 
 
 #########
