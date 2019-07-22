@@ -18,7 +18,10 @@ from dbaas_credentials.models import CredentialType
 from dbaas import constants
 from account.models import Team
 from drivers.errors import CredentialAlreadyExists
-from physical.models import Host, DiskOffering, Environment, Plan, Offering
+from physical.models import (
+    Host, DiskOffering, Environment, Plan, Offering,
+    EnginePatch,
+    )
 from util import get_credentials_for
 from notification.tasks import TaskRegister
 from system.models import Configuration
@@ -777,6 +780,56 @@ def database_upgrade_retry(request, context, database):
         reverse('admin:logical_database_resizes', kwargs={'id': database.id})
     )
 
+@database_view("")
+def database_upgrade_patch(request, context, database):
+    can_do_upgrade, error = database.can_do_upgrade_patch()
+
+    if not can_do_upgrade:
+        messages.add_message(request, messages.ERROR, error)
+    else:
+
+        target_patch = EnginePatch.objects.get(
+            id=request.POST.get('target_patch')
+        )
+
+        TaskRegister.database_upgrade_patch(
+            database=database,
+            patch=target_patch,
+            user=request.user
+        )
+
+    return HttpResponseRedirect(
+        reverse('admin:logical_database_resizes', kwargs={'id': database.id})
+    )
+
+@database_view("")
+def database_upgrade_patch_retry(request, context, database):
+    can_do_upgrade, error = database.can_do_upgrade_patch_retry()
+    if can_do_upgrade:
+        upgrades = database.upgrades_patch.all()
+        last_upgrade = upgrades.last()
+        if not last_upgrade:
+            error = "Database does not have upgrades"
+        elif not last_upgrade.is_status_error:
+            error = "Cannot do retry, last upgrade status is '{}'!".format(
+                last_upgrade.get_status_display()
+            )
+        else:
+            since_step = last_upgrade.current_step
+
+    if error:
+        messages.add_message(request, messages.ERROR, error)
+    else:
+
+        TaskRegister.database_upgrade_patch(
+            database=database,
+            patch=last_upgrade.target_patch,
+            user=request.user,
+            since_step=since_step
+        )
+    return HttpResponseRedirect(
+        reverse('admin:logical_database_resizes', kwargs={'id': database.id})
+    )
 
 @database_view('resizes/upgrade')
 def database_resizes(request, context, database):
