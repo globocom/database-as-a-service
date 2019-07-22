@@ -29,6 +29,7 @@ from logical.views import database_details, database_hosts, \
     database_credentials, database_resizes, database_backup, database_dns, \
     database_metrics, database_destroy, database_delete_host, \
     database_upgrade, database_upgrade_retry, database_resize_retry, \
+    database_upgrade_patch, database_upgrade_patch_retry, \
     database_resize_rollback, database_make_backup, \
     database_change_parameters, database_change_parameters_retry, \
     database_switch_write, database_reinstall_vm, database_reinstall_vm_retry,\
@@ -61,7 +62,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     list_display_basic = [
         "name_html", "organization_admin_page", "team_admin_page",
         "engine_html", "environment",
-        "offering_html", "friendly_status", "created_dt_format"
+        "offering_html", "friendly_status", "created_dt_format",
+        "database_path"
     ]
     list_display_advanced = list_display_basic + ["quarantine_dt_format"]
     list_filter_basic = [
@@ -136,6 +138,11 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         return organization_name
 
     organization_admin_page.short_description = "Organization"
+
+    def database_path(self, database):
+        return database.infra.engine_patch.full_version
+
+    database_path.short_description = "Patch"
 
     def description_html(self, database):
 
@@ -542,6 +549,19 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 self.admin_site.admin_view(database_upgrade_retry),
                 name="upgrade_retry"
             ),
+
+            url(
+                r'^/?(?P<id>\d+)/upgrade_patch/$',
+                self.admin_site.admin_view(database_upgrade_patch),
+                name="upgrade_patch"
+            ),
+
+            url(
+                r'^/?(?P<id>\d+)/upgrade_patch_retry/$',
+                self.admin_site.admin_view(database_upgrade_patch_retry),
+                name="upgrade_patch_retry"
+            ),
+
             url(
                 r'^/?(?P<id>\d+)/resize_retry/$',
                 self.admin_site.admin_view(database_resize_retry),
