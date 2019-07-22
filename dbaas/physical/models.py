@@ -165,6 +165,10 @@ class Engine(BaseModel):
             self.minor_version,
             patch.patch_version)
 
+    @property
+    def default_engine_patch(self):
+        return self.patchs.get(is_initial_patch=True)
+
     def __unicode__(self):
         return self.full_name
 
