@@ -153,6 +153,18 @@ class Engine(BaseModel):
     def full_name_for_host_provider(self):
         return self.full_name.replace(".", "_")
 
+    @property
+    def version2(self):
+        return "{}.{}".format(self.major_version, self.minor_version)
+
+    @property
+    def full_inicial_version(self):
+        patch = self.patchs.get(is_initial_patch=True)
+        return "{}.{}.{}".format(
+            self.major_version,
+            self.minor_version,
+            patch.patch_version)
+
     def __unicode__(self):
         return self.full_name
 
@@ -178,6 +190,14 @@ class EnginePatch(BaseModel):
         blank=True, null=True, default='',
         max_length=200,
     )
+
+    @property
+    def full_version(self):
+        return "{}.{}.{}".format(
+            self.engine.major_version,
+            self.engine.minor_version,
+            self.patch_version
+        )
 
     def __str__(self):
         return self.patch_version
