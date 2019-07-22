@@ -122,7 +122,7 @@ class MongoDBSingle(BaseTopology):
                 'workflow.steps.util.metric_collector.StopTelegraf',
                 'workflow.steps.util.database.Stop',
                 'workflow.steps.util.database.StopRsyslog',
-                'workflow.steps.util.database.CheckIsDown',
+                'workflow.stps.util.database.CheckIsDown',
                 'workflow.steps.util.volume_provider.AddAccessNewVolume',
                 'workflow.steps.util.volume_provider.MountDataLatestVolume',
                 'workflow.steps.util.volume_provider.CopyPermissions',
@@ -140,6 +140,12 @@ class MongoDBSingle(BaseTopology):
                 'workflow.steps.util.zabbix.EnableAlarms',
             )}
         ]
+
+    def get_change_binaries_steps(self):
+        return (
+            'workflow.steps.util.database_upgrade_patch.MongoDBCHGBinStep',
+        )
+
 
 class MongoDBReplicaset(BaseTopology):
 
