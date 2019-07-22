@@ -4,11 +4,11 @@ from django_services import admin
 from django.contrib import admin as django_admin
 from ..service.engine import EngineService
 from ..models import EnginePatch
-from ..forms.engine_patch import EnginePatchFormset
+from ..forms.engine_patch import engine_patch_formset
 
 
 class EnginePatchInline(django_admin.TabularInline):
-    formset = EnginePatchFormset
+    formset = engine_patch_formset
     model = EnginePatch
     extra = 0
 
