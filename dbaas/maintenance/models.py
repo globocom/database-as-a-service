@@ -343,11 +343,11 @@ class DatabaseUpgrade(DatabaseMaintenanceTask):
 class DatabaseUpgradePatch(DatabaseMaintenanceTask):
     database = models.ForeignKey(
         Database, verbose_name="Database",
-        null=False, unique=False, related_name="minorupgrades"
+        null=False, unique=False, related_name="upgrades_patch"
     )
     task = models.ForeignKey(
         TaskHistory, verbose_name="Task History",
-        null=False, unique=False, related_name="database_minor_upgrades"
+        null=False, unique=False, related_name="database_upgrades_patch"
     )
     source_patch = models.ForeignKey(
         EnginePatch, verbose_name="Source",
@@ -356,7 +356,7 @@ class DatabaseUpgradePatch(DatabaseMaintenanceTask):
         on_delete=models.SET_NULL
     )
     source_patch_full_version = models.CharField(
-        verbose_name="Source", max_length=50, null=True, blank=True
+        verbose_name="Source Patch", max_length=50, null=True, blank=True
     )
     target_patch = models.ForeignKey(
         EnginePatch, verbose_name="Target",
@@ -365,7 +365,7 @@ class DatabaseUpgradePatch(DatabaseMaintenanceTask):
         on_delete=models.SET_NULL
     )
     target_patch_full_version = models.CharField(
-        verbose_name="Target", max_length=50, null=True, blank=True
+        verbose_name="Target Patch", max_length=50, null=True, blank=True
     )
 
     def __unicode__(self):
