@@ -128,6 +128,9 @@ class Engine(BaseModel):
         verbose_name=_("Engine minor version"), max_length=100,
         blank=True, null=True, default='',
     )
+    is_active = models.BooleanField(
+        verbose_name=_("Is engine active"), default=True
+    )
 
     class Meta:
         unique_together = (
