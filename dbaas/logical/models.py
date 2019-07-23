@@ -787,7 +787,8 @@ class Database(BaseModel):
         if self.is_in_quarantine:
             error = "Database in quarantine and cannot be upgraded."
         elif self.is_being_used_elsewhere(
-            ['notification.tasks.upgrade_database_patch']):
+            ['notification.tasks.upgrade_database_patch']
+        ):
             error = "Database cannot be upgraded because " \
                     "it is in use by another task."
 
