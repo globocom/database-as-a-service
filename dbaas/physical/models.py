@@ -174,16 +174,16 @@ class Engine(BaseModel):
     def is_redis(self):
         return self.name == 'redis'
 
-    def available_patchs(self, last_upgrade_patch):
-        available_patchs = self.patchs.exclude(
+    def available_patches(self, last_upgrade_patch):
+        available_patches = self.patchs.exclude(
             is_initial_patch=True
         )
 
         if last_upgrade_patch and last_upgrade_patch.engine == self:
-            available_patchs = available_patchs.filter(
+            available_patches = available_patches.filter(
                 patch_version__gt=last_upgrade_patch.patch_version
             )
-        return available_patchs
+        return available_patches
 
 
 class EnginePatch(BaseModel):
