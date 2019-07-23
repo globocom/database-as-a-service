@@ -120,13 +120,11 @@ class Engine(BaseModel):
         verbose_name=_("Read name"), blank=True, null=True, default='',
         help_text="Ex: Slave or Secondary", max_length=100,
     )
-    major_version = models.CharField(
-        verbose_name=_("Engine major version"), max_length=100,
-        blank=True, null=True, default='',
+    major_version = models.PositiveIntegerField(
+        verbose_name=_("Engine major version"), blank=True, null=True
     )
-    minor_version = models.CharField(
-        verbose_name=_("Engine minor version"), max_length=100,
-        blank=True, null=True, default='',
+    minor_version = models.PositiveIntegerField(
+        verbose_name=_("Engine minor version"), blank=True, null=True
     )
     is_active = models.BooleanField(
         verbose_name=_("Is engine active"), default=True
@@ -177,9 +175,11 @@ class Engine(BaseModel):
         return self.name == 'redis'
 
     def available_patchs(self, last_upgrade_patch):
-        available_patchs = self.patchs.exclude(is_initial_patch=True)
+        available_patchs = self.patchs.exclude(
+            is_initial_patch=True
+        )
 
-        if last_upgrade_patch:
+        if last_upgrade_patch and last_upgrade_patch.target_patch.engine == self:
             available_patchs = available_patchs.filter(
                 patch_version__gt=last_upgrade_patch.target_patch.patch_version
             )
@@ -191,8 +191,8 @@ class EnginePatch(BaseModel):
         Engine, verbose_name=_("Engine"),
         related_name='patchs'
     )
-    patch_version = models.CharField(
-        verbose_name=_("Engine patch version"), max_length=100,
+    patch_version = models.PositiveIntegerField(
+        verbose_name=_("Engine patch version")
     )
     is_initial_patch = models.BooleanField(
         verbose_name=_("Is initial patch"),
