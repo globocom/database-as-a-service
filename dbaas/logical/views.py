@@ -24,6 +24,7 @@ from physical.models import (
     )
 from util import get_credentials_for
 from notification.tasks import TaskRegister
+from notification.models import TaskHistory
 from system.models import Configuration
 from logical.errors import DisabledDatabase
 from logical.forms.database import DatabaseDetailsForm
@@ -780,16 +781,16 @@ def database_upgrade_retry(request, context, database):
         reverse('admin:logical_database_resizes', kwargs={'id': database.id})
     )
 
-@database_view("")
-def database_upgrade_patch(request, context, database):
+
+def _upgrade_patch(request, database, target_patch):
     can_do_upgrade, error = database.can_do_upgrade_patch()
 
     if not can_do_upgrade:
         messages.add_message(request, messages.ERROR, error)
     else:
 
-        target_patch = EnginePatch.objects.get(
-            id=request.POST.get('target_patch')
+        target_patch = database.available_patchs.get(
+            id=target_patch
         )
 
         TaskRegister.database_upgrade_patch(
@@ -798,9 +799,6 @@ def database_upgrade_patch(request, context, database):
             user=request.user
         )
 
-    return HttpResponseRedirect(
-        reverse('admin:logical_database_resizes', kwargs={'id': database.id})
-    )
 
 @database_view("")
 def database_upgrade_patch_retry(request, context, database):
@@ -838,6 +836,11 @@ def database_resizes(request, context, database):
             _disk_resize(request, database)
         elif 'vm_resize' in request.POST and request.POST.get('vm_offering'):
             _vm_resize(request, database)
+        elif (
+            'upgrade_patch' in request.POST and
+            request.POST.get('target_patch')
+        ):
+            _upgrade_patch(request, database, request.POST.get('target_patch'))
         else:
             disk_auto_resize = request.POST.get('disk_auto_resize', False)
             database.disk_auto_resize = disk_auto_resize
@@ -871,6 +874,13 @@ def database_resizes(request, context, database):
     context['last_upgrade'] = database.upgrades.filter(
         source_plan=database.infra.plan
     ).last()
+
+    last_upgrade_patch = database.upgrades_patch.filter(
+        task__task_status=TaskHistory.STATUS_SUCCESS
+    ).last()
+    context['available_patchs'] = list(database.engine.available_patchs(
+        last_upgrade_patch
+    ))
 
     return render_to_response(
         "logical/database/details/resizes_tab.html",
