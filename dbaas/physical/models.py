@@ -176,6 +176,15 @@ class Engine(BaseModel):
     def is_redis(self):
         return self.name == 'redis'
 
+    def available_patchs(self, last_upgrade_patch):
+        available_patchs = self.patchs.exclude(is_initial_patch=True)
+
+        if last_upgrade_patch:
+            available_patchs = available_patchs.filter(
+                patch_version__gt=last_upgrade_patch.target_patch.patch_version
+            )
+        return available_patchs
+
 
 class EnginePatch(BaseModel):
     engine = models.ForeignKey(
