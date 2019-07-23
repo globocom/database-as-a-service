@@ -29,7 +29,6 @@ from logical.views import database_details, database_hosts, \
     database_credentials, database_resizes, database_backup, database_dns, \
     database_metrics, database_destroy, database_delete_host, \
     database_upgrade, database_upgrade_retry, database_resize_retry, \
-    database_upgrade_patch, database_upgrade_patch_retry, \
     database_resize_rollback, database_make_backup, \
     database_change_parameters, database_change_parameters_retry, \
     database_switch_write, database_reinstall_vm, database_reinstall_vm_retry,\
@@ -548,18 +547,6 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 r'^/?(?P<id>\d+)/upgrade_retry/$',
                 self.admin_site.admin_view(database_upgrade_retry),
                 name="upgrade_retry"
-            ),
-
-            url(
-                r'^/?(?P<id>\d+)/upgrade_patch/$',
-                self.admin_site.admin_view(database_upgrade_patch),
-                name="upgrade_patch"
-            ),
-
-            url(
-                r'^/?(?P<id>\d+)/upgrade_patch_retry/$',
-                self.admin_site.admin_view(database_upgrade_patch_retry),
-                name="upgrade_patch_retry"
             ),
 
             url(
