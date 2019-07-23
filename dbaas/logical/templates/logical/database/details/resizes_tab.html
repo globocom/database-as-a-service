@@ -90,12 +90,12 @@
     </div>
   {% endif %}
 
-  {% if available_patchs %}
+  {% if available_patches %}
   <div class="control-group">
     <div class="control-label"><label>Patch upgrade:</label></div>
     <div class="controls">
       <select id="id_target_patch" name="target_patch">
-        {% for engine_patch in available_patchs %}
+        {% for engine_patch in available_patches %}
           <option value="{{engine_patch.id}}">{{engine_patch.patch_version}}</option>
         {% endfor %}
       </select>
