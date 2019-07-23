@@ -179,9 +179,9 @@ class Engine(BaseModel):
             is_initial_patch=True
         )
 
-        if last_upgrade_patch and last_upgrade_patch.target_patch.engine == self:
+        if last_upgrade_patch and last_upgrade_patch.engine == self:
             available_patchs = available_patchs.filter(
-                patch_version__gt=last_upgrade_patch.target_patch.patch_version
+                patch_version__gt=last_upgrade_patch.patch_version
             )
         return available_patchs
 

@@ -788,12 +788,8 @@ def _upgrade_patch(request, database, target_patch):
     if not can_do_upgrade:
         messages.add_message(request, messages.ERROR, error)
     else:
-        last_upgrade_patch = database.upgrades_patch.filter(
-            task__task_status=TaskHistory.STATUS_SUCCESS
-        ).last()
-
         target_patch = database.engine.available_patchs(
-            last_upgrade_patch
+            database.infra.engine_patch
         ).get(
             id=target_patch
         )
@@ -880,11 +876,8 @@ def database_resizes(request, context, database):
         source_plan=database.infra.plan
     ).last()
 
-    last_upgrade_patch = database.upgrades_patch.filter(
-        task__task_status=TaskHistory.STATUS_SUCCESS
-    ).last()
     context['available_patchs'] = list(database.engine.available_patchs(
-        last_upgrade_patch
+            database.infra.engine_patch
     ))
 
     return render_to_response(
