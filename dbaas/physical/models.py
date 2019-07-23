@@ -204,10 +204,10 @@ class EnginePatch(BaseModel):
         )
 
     def __str__(self):
-        return self.patch_version
+        return self.full_version
 
     def __unicode__(self):
-        return self.patch_version
+        return self.full_version
 
 
 class Parameter(BaseModel):
