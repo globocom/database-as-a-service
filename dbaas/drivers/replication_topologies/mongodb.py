@@ -141,7 +141,7 @@ class MongoDBSingle(BaseTopology):
             )}
         ]
 
-    def get_change_binaries_steps(self):
+    def get_change_binaries_upgrade_patch_steps(self):
         return (
             'workflow.steps.util.database_upgrade_patch.MongoDBCHGBinStep',
         )
@@ -403,6 +403,11 @@ class MongoDBReplicaset(BaseTopology):
         }, {
             'Cleaning up': self.get_host_migrate_steps_cleaning_up()
         }]
+
+    def get_change_binaries_upgrade_patch_steps(self):
+        return (
+            'workflow.steps.util.database_upgrade_patch.MongoDBCHGBinStep',
+        )
 
 
 class MongoDBReplicaset40(MongoDBReplicaset):
