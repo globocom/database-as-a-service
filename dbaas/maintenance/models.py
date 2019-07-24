@@ -20,6 +20,7 @@ from django.dispatch import receiver
 from celery.task import control
 from maintenance.tasks import execute_scheduled_maintenance
 from .registered_functions.functools import _get_registered_functions
+from .managers import DatabaseMaintenanceTaskManager
 
 
 LOG = logging.getLogger(__name__)
@@ -246,6 +247,7 @@ class DatabaseMaintenanceTask(BaseModel):
     can_do_retry = models.BooleanField(
         verbose_name=_("Can Do Retry"), default=True
     )
+    objects = DatabaseMaintenanceTaskManager()
 
     def get_current_step(self):
         return self.current_step
