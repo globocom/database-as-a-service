@@ -507,6 +507,8 @@ class MongoDB(BaseDriver):
         config.update(self.initialization_parameters(instance))
         config['REPLICASETNAME'] = self.get_replica_name()
         config['MONGODBKEY'] = instance.databaseinfra.database_key
+        if instance.hostname.future_host:
+            config['HOSTADDRESS'] = instance.hostname.future_host.address
         config.update(kw)
         return config
 
