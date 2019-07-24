@@ -32,6 +32,7 @@ from logical.models import Credential, Database, Project
 from logical.validators import (check_is_database_enabled, check_is_database_dead,
                                 ParameterValidator)
 from workflow.steps.util.host_provider import Provider
+from maintenance.models import DatabaseUpgradePatch, DatabaseUpgrade
 
 
 LOG = logging.getLogger(__name__)
@@ -801,8 +802,7 @@ def _upgrade_patch(request, database, target_patch):
         )
 
 
-@database_view("")
-def database_upgrade_patch_retry(request, context, database):
+def _upgrade_patch_retry(request, database):
     can_do_upgrade, error = database.can_do_upgrade_patch_retry()
     if can_do_upgrade:
         upgrades = database.upgrades_patch.all()
@@ -814,6 +814,7 @@ def database_upgrade_patch_retry(request, context, database):
                 last_upgrade.get_status_display()
             )
         else:
+            print(last_upgrade.current_step)
             since_step = last_upgrade.current_step
 
     if error:
@@ -826,9 +827,6 @@ def database_upgrade_patch_retry(request, context, database):
             user=request.user,
             since_step=since_step
         )
-    return HttpResponseRedirect(
-        reverse('admin:logical_database_resizes', kwargs={'id': database.id})
-    )
 
 @database_view('resizes/upgrade')
 def database_resizes(request, context, database):
@@ -842,6 +840,8 @@ def database_resizes(request, context, database):
             request.POST.get('target_patch')
         ):
             _upgrade_patch(request, database, request.POST.get('target_patch'))
+        elif ('upgrade_patch_retry' in request.POST):
+            _upgrade_patch_retry(request, database)
         else:
             disk_auto_resize = request.POST.get('disk_auto_resize', False)
             database.disk_auto_resize = disk_auto_resize
@@ -876,6 +876,9 @@ def database_resizes(request, context, database):
         source_plan=database.infra.plan
     ).last()
 
+    context['retry_patch'] = DatabaseUpgradePatch.objects.need_retry(
+        database=database
+    )
     context['available_patches'] = list(database.engine.available_patches(
             database.infra.engine_patch
     ))
