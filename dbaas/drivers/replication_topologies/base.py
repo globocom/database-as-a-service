@@ -106,7 +106,7 @@ class BaseTopology(object):
         }]
 
 
-    def get_change_binaries_steps(self):
+    def get_change_binaries_upgrade_patch_steps(self):
         return ()
 
     def get_upgrade_patch_steps(self):
@@ -121,7 +121,7 @@ class BaseTopology(object):
                 'workflow.steps.util.database.CheckIfSwitchMaster',
                 'workflow.steps.util.database.Stop',
                 'workflow.steps.util.database.CheckIsDown',
-                ) + self.get_change_binaries_steps() + (
+                ) + self.get_change_binaries_upgrade_patch_steps() + (
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
             ),
@@ -264,6 +264,7 @@ class BaseTopology(object):
                 'workflow.steps.util.plan.Initialization',
                 'workflow.steps.util.plan.Configure',
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
+                ) + self.get_change_binaries_upgrade_patch_steps() + (
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
