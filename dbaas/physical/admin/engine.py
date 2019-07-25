@@ -4,11 +4,12 @@ from django_services import admin
 from django.contrib import admin as django_admin
 from ..service.engine import EngineService
 from ..models import EnginePatch
-from ..forms.engine_patch import engine_patch_formset
+from ..forms.engine_patch import engine_patch_formset, EnginePatchForm
 
 
 class EnginePatchInline(django_admin.StackedInline):
     formset = engine_patch_formset
+    form = EnginePatchForm
     model = EnginePatch
     extra = 0
 
