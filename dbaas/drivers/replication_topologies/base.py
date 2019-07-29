@@ -101,7 +101,8 @@ class BaseTopology(object):
             self.get_upgrade_steps_final_description(): (
                 'workflow.steps.util.db_monitor.UpdateInfraVersion',
                 'workflow.steps.util.db_monitor.EnableMonitoring',
-                'workflow.steps.util.zabbix.EnableAlarms',
+                'workflow.steps.util.zabbix.DestroyAlarms',
+                'workflow.steps.util.zabbix.CreateAlarms',
             ),
         }]
 
