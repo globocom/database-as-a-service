@@ -148,8 +148,12 @@ class Engine(BaseModel):
         return "{}_{}".format(self.name, self.version)
 
     @property
+    def full_name_initial_version(self):
+        return "{}_{}".format(self.name, self.full_inicial_version)
+
+    @property
     def full_name_for_host_provider(self):
-        return self.full_name.replace(".", "_")
+        return self.full_name_initial_version.replace(".", "_")
 
     @property
     def version2(self):

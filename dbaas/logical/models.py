@@ -26,7 +26,6 @@ from logical.validators import database_name_evironment_constraint
 from notification.models import TaskHistory
 
 
-
 LOG = logging.getLogger(__name__)
 KB_FACTOR = 1.0 / 1024.0
 MB_FACTOR = 1.0 / 1024.0 / 1024.0
