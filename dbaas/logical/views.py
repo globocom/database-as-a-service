@@ -814,7 +814,6 @@ def _upgrade_patch_retry(request, database):
                 last_upgrade.get_status_display()
             )
         else:
-            print(last_upgrade.current_step)
             since_step = last_upgrade.current_step
 
     if error:
