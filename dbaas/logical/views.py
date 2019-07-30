@@ -226,7 +226,10 @@ def database_details(request, context, database):
             return HttpResponseRedirect(
                 reverse('admin:logical_database_changelist')
             )
-    engine = str(database.engine)
+    engine = '{}_{}'.format(
+        database.engine.name,
+        database.databaseinfra.engine_patch.full_version
+    )
     topology = database.databaseinfra.plan.replication_topology
     engine = engine + " - " + topology.details if topology.details else engine
     try:
