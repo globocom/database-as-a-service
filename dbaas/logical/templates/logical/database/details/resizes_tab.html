@@ -84,7 +84,7 @@
           <a href="{{ database.get_upgrade_retry_url }}" class="btn btn-warning" title="Retry upgrade" onclick="return confirm('Are you sure?')">Retry upgrade {{ database.infra.engine_name }} {{ database.infra.plan.engine.version}} to {{ database.infra.plan.engine_equivalent_plan.engine.version }}</a>
           <p><a href="{% url 'admin:maintenance_databaseupgrade_change' last_upgrade.id %}" target='_blank'>Last upgrade</a> has an <b>error</b>, please check the <a href="{% url 'admin:notification_taskhistory_change' last_upgrade.task.id %}" target='_blank'>task</a> and retry the database upgrade clicking in button above</p>
         {% else %}
-          <a href="{{ database.get_upgrade_url }}" class="btn btn-primary" title="Start upgrade" onclick="return confirm('Are you sure?')">Upgrade {{ database.infra.engine_name }} {{database.infra.plan.engine.version }} to {{ database.infra.plan.engine_equivalent_plan.engine.version }}</a>
+          <a href="{{ database.get_upgrade_url }}" class="btn btn-primary" title="Start upgrade" onclick="return confirm('Are you sure?')">Upgrade {{ database.infra.engine_name }} {{database.infra.engine_patch.full_version }} to {{ database.infra.plan.engine_equivalent_plan.engine.version }}</a>
         {% endif %}
       </div>
     </div>
