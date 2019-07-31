@@ -23,6 +23,7 @@ class DatabaseUpgradePatchStep(BaseInstanceStep):
     def __unicode__(self):
         return "Changing database binaries..."
 
+    @property
     def is_valid(self):
 
         if self.source_patch == self.target_patch:
