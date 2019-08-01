@@ -122,7 +122,7 @@ class MongoDBSingle(BaseTopology):
                 'workflow.steps.util.metric_collector.StopTelegraf',
                 'workflow.steps.util.database.Stop',
                 'workflow.steps.util.database.StopRsyslog',
-                'workflow.stps.util.database.CheckIsDown',
+                'workflow.steps.util.database.CheckIsDown',
                 'workflow.steps.util.volume_provider.AddAccessNewVolume',
                 'workflow.steps.util.volume_provider.MountDataLatestVolume',
                 'workflow.steps.util.volume_provider.CopyPermissions',
