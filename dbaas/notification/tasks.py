@@ -17,7 +17,8 @@ from util.providers import clone_infra, destroy_infra, \
     get_database_change_parameter_setting, \
     get_reinstallvm_steps_setting, \
     get_database_change_parameter_retry_steps_count, \
-    get_database_configure_ssl_setting, get_deploy_settings
+    get_database_configure_ssl_setting, get_deploy_settings, \
+    get_database_upgrade_patch_setting
 from simple_audit.models import AuditRequest
 from system.models import Configuration
 from notification.models import TaskHistory
@@ -25,7 +26,7 @@ from workflow.workflow import (steps_for_instances, rollback_for_instances_full,
                                total_of_steps)
 from maintenance.models import (DatabaseUpgrade, DatabaseResize,
                                 DatabaseChangeParameter, DatabaseReinstallVM,
-                                DatabaseConfigureSSL)
+                                DatabaseConfigureSSL, DatabaseUpgradePatch)
 from maintenance.tasks import restore_database, node_zone_migrate, \
     node_zone_migrate_rollback, database_environment_migrate, \
     database_environment_migrate_rollback
@@ -658,6 +659,7 @@ def upgrade_database(self, database, user, task, since_step=0):
     if success:
         infra.plan = target_plan
         infra.engine = target_plan.engine
+        infra.engine_patch = target_plan.engine.default_engine_patch
         infra.save()
 
         database_upgrade.set_success()
@@ -669,6 +671,53 @@ def upgrade_database(self, database, user, task, since_step=0):
             'Could not do upgrade.\nUpgrade doesn\'t have rollback'
         )
 
+
+@app.task(bind=True)
+def upgrade_database_patch(self, database, patch, user, task, since_step=0):
+    worker_name = get_worker_name()
+    task = TaskHistory.register(self.request, user, task, worker_name)
+
+    infra = database.infra
+    source_patch = infra.engine_patch
+    target_patch = patch
+
+    class_path = infra.plan.replication_topology.class_path
+    steps = get_database_upgrade_patch_setting(class_path)
+
+    database_upgrade_patch = DatabaseUpgradePatch()
+    database_upgrade_patch.database = database
+    database_upgrade_patch.source_patch = source_patch
+    database_upgrade_patch.target_patch = target_patch
+    database_upgrade_patch.task = task
+    database_upgrade_patch.save()
+
+    hosts = []
+    for instance in database.infra.instances.all():
+        if instance.hostname not in hosts:
+            hosts.append(instance.hostname)
+
+    instances = []
+    for host in hosts:
+        instances.append(host.instances.all()[0])
+    instances = instances
+
+    success = steps_for_instances(
+        steps, instances, task,
+        database_upgrade_patch.update_step, since_step
+    )
+
+    if success:
+        infra.engine_patch = target_patch
+        infra.save()
+
+        database_upgrade_patch.set_success()
+        task.update_status_for(TaskHistory.STATUS_SUCCESS, 'Done')
+    else:
+        database_upgrade_patch.set_error()
+        task.update_status_for(
+            TaskHistory.STATUS_ERROR,
+            'Could not do upgrade patch.\nUpgrade patch doesn\'t have rollback'
+        )
 
 @app.task(bind=True)
 def reinstall_vm_database(self, database, instance, user, task, since_step=0):
@@ -1395,6 +1444,35 @@ class TaskRegister(object):
         delay_params.update(**{'since_step': since_step} if since_step else {})
 
         upgrade_database.delay(**delay_params)
+
+    @classmethod
+    def database_upgrade_patch(cls, database, patch, user, since_step=None):
+
+        task_params = {
+            'task_name': 'upgrade_database_patch',
+            'arguments': 'Upgrading database patch {}'.format(database),
+            'database': database,
+            'user': user,
+            'patch': patch,
+            'relevance': TaskHistory.RELEVANCE_CRITICAL
+        }
+
+        if since_step:
+            task_params['task_name'] = 'upgrade_database_patch_retry'
+            task_params['arguments'] = 'Retrying upgrade database patch {}'.format(database)
+
+        task = cls.create_task(task_params)
+
+        delay_params = {
+            'database': database,
+            'patch': patch,
+            'task': task,
+            'user': user
+        }
+
+        delay_params.update(**{'since_step': since_step} if since_step else {})
+
+        upgrade_database_patch.delay(**delay_params)
 
     @classmethod
     def database_reinstall_vm(cls, instance, user, since_step=None):

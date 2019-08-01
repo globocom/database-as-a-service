@@ -8,7 +8,7 @@ from ..models import DatabaseInfra
 # from ..forms import DatabaseForm
 from . import factory
 
-LOG = logging.getLogger(__name__)
+# LOG = logging.getLogger(__name__)
 
 
 class AdminCreateDatabaseInfraTestCase(TestCase):
@@ -19,6 +19,7 @@ class AdminCreateDatabaseInfraTestCase(TestCase):
 
     def setUp(self):
         self.engine = factory.EngineFactory()
+        self.engine_patch = factory.EnginePatchFactory()
         self.plan = factory.PlanFactory(engine_type=self.engine.engine_type)
         self.disk_offering = factory.DiskOfferingFactory()
         self.environment = self.plan.environments.all()[0]
@@ -47,6 +48,8 @@ class AdminCreateDatabaseInfraTestCase(TestCase):
             "disk_offering": self.disk_offering.pk,
             "environment": self.environment.pk,
             "capacity": 1,
+            "backup_hour": 0,
+            "engine_patch": self.engine_patch.pk,
             "per_database_size_mbytes": 10,
             "instances-TOTAL_FORMS": NUM_INSTANCES,
             "instances-INITIAL_FORMS": 0,
@@ -85,7 +88,7 @@ class AdminCreateDatabaseInfraTestCase(TestCase):
 
         response = self.client.post(
             "/admin/physical/databaseinfra/add/", params)
-        self.assertEqual(response.status_code, 302, response.content)
+        self.assertEqual(response.status_code, 302)
         # self.assertTrue(fake.database_created(self.databaseinfra.name, databaseinfra_name))
 
         databaseinfra = DatabaseInfra.objects.get(name=databaseinfra_name)

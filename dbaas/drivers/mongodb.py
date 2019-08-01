@@ -106,31 +106,17 @@ class MongoDB(BaseDriver):
 
         return uri
 
-    def get_admin_connection(self,):
-        if self.databaseinfra.engine.version >= '3.4.0':
-            uri = "mongodb://{user}:{password}@{instances}/admin".format(
-                user=self.databaseinfra.user,
-                password=self.databaseinfra.password,
-                instances=self.__concatenate_instances()
-            )
+    def get_admin_connection(self):
+        uri = "mongodb://{user}:{password}@{instances}/admin".format(
+            user=self.databaseinfra.user,
+            password=self.databaseinfra.password,
+            instances=self.__concatenate_instances()
+        )
 
-            if (len(self.databaseinfra.instances.all()) > 1):
-                repl_name = self.get_replica_name()
-                if repl_name:
-                    uri = "%s?replicaSet=%s" % (uri, repl_name)
-        else:
-            uri = "{instances}".format(instances=self.__concatenate_instances())
-
-            if (len(self.databaseinfra.instances.all()) > 1):
-                repl_name = self.get_replica_name()
-                if repl_name:
-                    uri = "{repl_name}/{uri}".format(
-                        repl_name=repl_name, uri=uri)
-            uri = " {uri} admin -u{user} -p{password}".format(
-                uri=uri,
-                user=self.databaseinfra.user,
-                password=self.databaseinfra.password
-            )
+        if (len(self.databaseinfra.instances.all()) > 1):
+            repl_name = self.get_replica_name()
+            if repl_name:
+                uri = "%s?replicaSet=%s" % (uri, repl_name)
 
         return uri
 
@@ -507,6 +493,8 @@ class MongoDB(BaseDriver):
         config.update(self.initialization_parameters(instance))
         config['REPLICASETNAME'] = self.get_replica_name()
         config['MONGODBKEY'] = instance.databaseinfra.database_key
+        if instance.hostname.future_host:
+            config['HOSTADDRESS'] = instance.hostname.future_host.address
         config.update(kw)
         return config
 

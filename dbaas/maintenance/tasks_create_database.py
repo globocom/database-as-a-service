@@ -25,6 +25,8 @@ def get_or_create_infra(base_name, plan, environment, retry_from=None):
         infra.environment = environment
         infra.capacity = 1
         infra.per_database_size_mbytes = plan.max_db_size
+        infra.backup_hour = 0
+        infra.engine_patch = plan.engine.default_engine_patch
         infra.save()
 
         driver = infra.get_driver()
