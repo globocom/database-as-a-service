@@ -69,6 +69,31 @@
       <p class="help-block">When marked, the disk will be resized automatically.</p>
     </div>
   </div>
+  {% if available_patches %}
+  <div class="control-group">
+    <div class="control-label"><label>Patch upgrade:</label></div>
+    <div class="controls">
+      {% if retry_patch %}
+      <select id="id_target_patch_retry" name="target_patch_retry" disabled="true">
+        {% for engine_patch in available_patches %}
+          {% if engine_patch == retry_patch.target_patch %}
+          <option value="{{engine_patch.id}}" selected>{{engine_patch.patch_version}}</option>
+          {% endif %}
+        {% endfor %}
+      </select>
+      <button data-toggle="modal" class="btn btn-warning" id="upgrade_patch_retry_btn" data-target="#upgrade_patch_retry">Retry</button>
+      {% else %}
+      <select id="id_target_patch" name="target_patch">
+        {% for engine_patch in available_patches %}
+          <option value="{{engine_patch.id}}">{{engine_patch.full_version}}</option>
+        {% endfor %}
+      </select>
+      <button data-toggle="modal" class="btn btn-primary" id="upgrade_patch_btn" data-target="#upgrade_patch">Upgrade Patch</button>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
   {% if upgrade_mongo_24_to_30 and database.databaseinfra.plan.replication_topology.can_upgrade_db %}
     <div class="control-group">
       <div class="control-label"><label>Engine upgrade:</label></div>
@@ -88,31 +113,6 @@
         {% endif %}
       </div>
     </div>
-  {% endif %}
-
-  {% if available_patches %}
-  <div class="control-group">
-    <div class="control-label"><label>Patch upgrade:</label></div>
-    <div class="controls">
-      {% if retry_patch %}
-      <select id="id_target_patch_retry" name="target_patch_retry" disabled="true">
-        {% for engine_patch in available_patches %}
-          {% if engine_patch == retry_patch.target_patch %}
-          <option value="{{engine_patch.id}}" selected>{{engine_patch.patch_version}}</option>
-          {% endif %}
-        {% endfor %}
-      </select>
-      <button data-toggle="modal" class="btn btn-warning" id="upgrade_patch_retry_btn" data-target="#upgrade_patch_retry">Retry</button>
-      {% else %}
-      <select id="id_target_patch" name="target_patch">
-        {% for engine_patch in available_patches %}
-          <option value="{{engine_patch.id}}">{{engine_patch.patch_version}}</option>
-        {% endfor %}
-      </select>
-      <button data-toggle="modal" class="btn btn-primary" id="upgrade_patch_btn" data-target="#upgrade_patch">Upgrade Patch</button>
-      {% endif %}
-    </div>
-  </div>
   {% endif %}
 
   <div class="control-group">
