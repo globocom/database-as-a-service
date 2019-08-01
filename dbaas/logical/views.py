@@ -18,9 +18,13 @@ from dbaas_credentials.models import CredentialType
 from dbaas import constants
 from account.models import Team
 from drivers.errors import CredentialAlreadyExists
-from physical.models import Host, DiskOffering, Environment, Plan, Offering
+from physical.models import (
+    Host, DiskOffering, Environment, Plan, Offering,
+    EnginePatch,
+    )
 from util import get_credentials_for
 from notification.tasks import TaskRegister
+from notification.models import TaskHistory
 from system.models import Configuration
 from logical.errors import DisabledDatabase
 from logical.forms.database import DatabaseDetailsForm
@@ -28,6 +32,7 @@ from logical.models import Credential, Database, Project
 from logical.validators import (check_is_database_enabled, check_is_database_dead,
                                 ParameterValidator)
 from workflow.steps.util.host_provider import Provider
+from maintenance.models import DatabaseUpgradePatch, DatabaseUpgrade
 
 
 LOG = logging.getLogger(__name__)
@@ -221,7 +226,10 @@ def database_details(request, context, database):
             return HttpResponseRedirect(
                 reverse('admin:logical_database_changelist')
             )
-    engine = str(database.engine)
+    engine = '{}_{}'.format(
+        database.engine.name,
+        database.databaseinfra.engine_patch.full_version
+    )
     topology = database.databaseinfra.plan.replication_topology
     engine = engine + " - " + topology.details if topology.details else engine
     try:
@@ -778,6 +786,50 @@ def database_upgrade_retry(request, context, database):
     )
 
 
+def _upgrade_patch(request, database, target_patch):
+    can_do_upgrade, error = database.can_do_upgrade_patch()
+
+    if not can_do_upgrade:
+        messages.add_message(request, messages.ERROR, error)
+    else:
+        target_patch = database.engine.available_patches(
+            database.infra.engine_patch
+        ).get(
+            id=target_patch
+        )
+
+        TaskRegister.database_upgrade_patch(
+            database=database,
+            patch=target_patch,
+            user=request.user
+        )
+
+
+def _upgrade_patch_retry(request, database):
+    can_do_upgrade, error = database.can_do_upgrade_patch_retry()
+    if can_do_upgrade:
+        upgrades = database.upgrades_patch.all()
+        last_upgrade = upgrades.last()
+        if not last_upgrade:
+            error = "Database does not have upgrades"
+        elif not last_upgrade.is_status_error:
+            error = "Cannot do retry, last upgrade status is '{}'!".format(
+                last_upgrade.get_status_display()
+            )
+        else:
+            since_step = last_upgrade.current_step
+
+    if error:
+        messages.add_message(request, messages.ERROR, error)
+    else:
+
+        TaskRegister.database_upgrade_patch(
+            database=database,
+            patch=last_upgrade.target_patch,
+            user=request.user,
+            since_step=since_step
+        )
+
 @database_view('resizes/upgrade')
 def database_resizes(request, context, database):
     if request.method == 'POST':
@@ -785,6 +837,13 @@ def database_resizes(request, context, database):
             _disk_resize(request, database)
         elif 'vm_resize' in request.POST and request.POST.get('vm_offering'):
             _vm_resize(request, database)
+        elif (
+            'upgrade_patch' in request.POST and
+            request.POST.get('target_patch')
+        ):
+            _upgrade_patch(request, database, request.POST.get('target_patch'))
+        elif ('upgrade_patch_retry' in request.POST):
+            _upgrade_patch_retry(request, database)
         else:
             disk_auto_resize = request.POST.get('disk_auto_resize', False)
             database.disk_auto_resize = disk_auto_resize
@@ -818,6 +877,13 @@ def database_resizes(request, context, database):
     context['last_upgrade'] = database.upgrades.filter(
         source_plan=database.infra.plan
     ).last()
+
+    context['retry_patch'] = DatabaseUpgradePatch.objects.need_retry(
+        database=database
+    )
+    context['available_patches'] = list(database.engine.available_patches(
+            database.infra.engine_patch
+    ))
 
     return render_to_response(
         "logical/database/details/resizes_tab.html",

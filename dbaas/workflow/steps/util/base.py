@@ -112,6 +112,12 @@ class BaseInstanceStep(object):
             return upgrade
 
     @property
+    def upgrade_patch(self):
+        upgrade_patch = self.database.upgrades_patch.last()
+        if upgrade_patch and upgrade_patch.is_running:
+            return upgrade_patch
+
+    @property
     def host_migrate(self):
         if not self.instance.hostname_id:
             return

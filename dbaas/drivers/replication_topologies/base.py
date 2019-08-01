@@ -101,9 +101,39 @@ class BaseTopology(object):
             self.get_upgrade_steps_final_description(): (
                 'workflow.steps.util.db_monitor.UpdateInfraVersion',
                 'workflow.steps.util.db_monitor.EnableMonitoring',
+                'workflow.steps.util.zabbix.DestroyAlarms',
+                'workflow.steps.util.zabbix.CreateAlarms',
+            ),
+        }]
+
+
+    def get_change_binaries_upgrade_patch_steps(self):
+        return ()
+
+    def get_upgrade_patch_steps(self):
+        return [{
+            'Disable monitoring and alarms': (
+                'workflow.steps.util.zabbix.DisableAlarms',
+                'workflow.steps.util.db_monitor.DisableMonitoring',
+            ),
+        }] + [{
+            'Upgrading database': (
+                'workflow.steps.util.vm.ChangeMaster',
+                'workflow.steps.util.database.CheckIfSwitchMaster',
+                'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.CheckIsDown',
+                ) + self.get_change_binaries_upgrade_patch_steps() + (
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.CheckIsUp',
+            ),
+        }] + [{
+            'Enabling monitoring and alarms': (
+                'workflow.steps.util.db_monitor.UpdateInfraVersion',
+                'workflow.steps.util.db_monitor.EnableMonitoring',
                 'workflow.steps.util.zabbix.EnableAlarms',
             ),
         }]
+
 
     def get_add_database_instances_first_steps(self):
         return (
@@ -235,6 +265,7 @@ class BaseTopology(object):
                 'workflow.steps.util.plan.Initialization',
                 'workflow.steps.util.plan.Configure',
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
+                ) + self.get_change_binaries_upgrade_patch_steps() + (
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
                 'workflow.steps.util.metric_collector.RestartTelegraf',

@@ -135,6 +135,8 @@ def get_restore_snapshot_settings(class_path):
 def get_database_upgrade_setting(class_path):
     return get_replication_topology_instance(class_path).get_upgrade_steps()
 
+def get_database_upgrade_patch_setting(class_path):
+    return get_replication_topology_instance(class_path).get_upgrade_patch_steps()
 
 def get_reinstallvm_steps_setting(class_path):
     return get_replication_topology_instance(class_path).get_reinstallvm_steps()
