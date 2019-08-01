@@ -8,6 +8,7 @@ from functools import partial
 from bson.json_util import loads
 from django.utils.translation import ugettext_lazy as _
 from django_services import admin
+from django.contrib.admin import SimpleListFilter
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.http import HttpResponseRedirect
@@ -25,6 +26,7 @@ from notification.tasks import TaskRegister
 from system.models import Configuration
 from util.html import show_info_popup
 from logical.models import Database
+from physical.models import Engine
 from logical.views import database_details, database_hosts, \
     database_credentials, database_resizes, database_backup, database_dns, \
     database_metrics, database_destroy, database_delete_host, \
@@ -41,8 +43,41 @@ from logical.service.database import DatabaseService
 LOG = logging.getLogger(__name__)
 
 
-class DatabaseAdmin(admin.DjangoServicesAdmin):
+class RelatedEngineFilter(SimpleListFilter):
+    # Human-readable title which will be displayed in the
+    # right admin sidebar just above the filter options.
+    title = _('engine')
 
+    # Parameter for the filter that will be used in the URL query.
+    parameter_name = 'engine'
+
+    def lookups(self, request, model_admin):
+        """
+        Returns a list of tuples. The first element in each
+        tuple is the coded value for the option that will
+        appear in the URL query. The second element is the
+        human-readable name for the option that will appear
+        in the right sidebar.
+        """
+        engines = Engine.objects.filter(is_active=True)
+
+        return [(
+            engine.id, _("{}_{}".format(engine.name, engine.version2))
+        ) for engine in engines]
+
+    def queryset(self, request, queryset):
+        """
+        Returns the filtered queryset based on the value
+        provided in the query string and retrievable via
+        `self.value()`.
+        """
+        # Compare the requested value (either engine id or None)
+        if self.value():
+            return queryset.filter(databaseinfra__engine__id=self.value())
+        return queryset
+
+
+class DatabaseAdmin(admin.DjangoServicesAdmin):
     """
     the form used by this view is returned by the method get_form
     """
@@ -65,7 +100,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     ]
     list_display_advanced = list_display_basic + ["quarantine_dt_format"]
     list_filter_basic = [
-        "project", "databaseinfra__environment", "databaseinfra__engine",
+        "project", "databaseinfra__environment",
+        RelatedEngineFilter,
         "databaseinfra__plan", "databaseinfra__engine__engine_type", "status",
         "databaseinfra__plan__has_persistence",
         "databaseinfra__plan__replication_topology__name",
@@ -167,7 +203,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     engine_type.admin_order_field = 'name'
 
     def engine_html(self, database):
-        engine_info = str(database.engine)
+        engine_info = str(database.databaseinfra.engine_patch.full_version)
 
         topology = database.databaseinfra.plan.replication_topology
         if topology.details:
@@ -542,6 +578,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 self.admin_site.admin_view(database_upgrade_retry),
                 name="upgrade_retry"
             ),
+
             url(
                 r'^/?(?P<id>\d+)/resize_retry/$',
                 self.admin_site.admin_view(database_resize_retry),

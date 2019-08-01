@@ -26,7 +26,6 @@ from logical.validators import database_name_evironment_constraint
 from notification.models import TaskHistory
 
 
-
 LOG = logging.getLogger(__name__)
 KB_FACTOR = 1.0 / 1024.0
 MB_FACTOR = 1.0 / 1024.0 / 1024.0
@@ -577,6 +576,12 @@ class Database(BaseModel):
     def get_upgrade_retry_url(self):
         return "/admin/logical/database/{}/upgrade_retry/".format(self.id)
 
+    def get_upgrade_patch_url(self):
+        return "/admin/logical/database/{}/upgrade_patch/".format(self.id)
+
+    def get_upgrade_patch_retry_url(self):
+        return "/admin/logical/database/{}/upgrade_patch_retry/".format(self.id)
+
     def get_change_parameters_retry_url(self):
         return "/admin/logical/database/{}/change_parameters_retry/".format(self.id)
 
@@ -775,6 +780,35 @@ class Database(BaseModel):
         if error:
             return False, error
         return True, None
+
+    def can_do_upgrade_patch_retry(self):
+        error = None
+        if self.is_in_quarantine:
+            error = "Database in quarantine and cannot be upgraded."
+        elif self.is_being_used_elsewhere(
+            ['notification.tasks.upgrade_database_patch']
+        ):
+            error = "Database cannot be upgraded because " \
+                    "it is in use by another task."
+
+        if error:
+            return False, error
+        return True, None
+
+    def can_do_upgrade_patch(self):
+        can_do_upgrade, error = self.can_do_upgrade_patch_retry()
+
+        if can_do_upgrade:
+            if self.is_dead:
+                error = "Database is dead and cannot be upgraded."
+            elif self.is_being_used_elsewhere():
+                error = "Database cannot be upgraded because " \
+                        "it is in use by another task."
+
+        if error:
+            return False, error
+        return True, None
+
 
     def can_do_resize_retry(self):
         error = None

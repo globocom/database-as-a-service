@@ -67,6 +67,14 @@ class ArgumentsToUpgradeDatabase(ArgumentsTo):
             ),
         ]
 
+class ArgumentsToUpgradeDatabasePatch(ArgumentsTo):
+    KEY = 'notification.tasks.upgrade_database_patch'
+
+    def build(self):
+        return [
+            self.get_database_arg(),
+            "New patch: {}".format(self.args['patch']),
+        ]
 
 class ArgumentsToReinstallVM(ArgumentsTo):
     KEY = 'notification.tasks.reinstall_vm'

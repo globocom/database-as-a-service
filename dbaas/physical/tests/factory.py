@@ -31,6 +31,10 @@ class EngineFactory(factory.DjangoModelFactory):
     version = 'unique'
     engine_type = factory.SubFactory(EngineTypeFactory)
 
+class EnginePatchFactory(factory.DjangoModelFactory):
+    FACTORY_FOR = models.EnginePatch
+    engine = factory.SubFactory(EngineFactory)
+    patch_version = '1'
 
 class HostFactory(factory.DjangoModelFactory):
     FACTORY_FOR = models.Host
@@ -120,6 +124,8 @@ class DatabaseInfraFactory(factory.DjangoModelFactory):
     per_database_size_mbytes = 5 * 1024 * 1024
     disk_offering = factory.SubFactory(DiskOfferingFactory)
     last_vm_created = 0
+    backup_hour = 0
+    engine_patch = factory.SubFactory(EnginePatchFactory)
 
     @factory.lazy_attribute
     def environment(self):
