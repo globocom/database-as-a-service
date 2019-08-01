@@ -141,6 +141,12 @@ class MongoDBSingle(BaseTopology):
             )}
         ]
 
+    def get_change_binaries_upgrade_patch_steps(self):
+        return (
+            'workflow.steps.util.database_upgrade_patch.MongoDBCHGBinStep',
+        )
+
+
 class MongoDBReplicaset(BaseTopology):
 
     def get_upgrade_steps_description(self):
@@ -366,6 +372,7 @@ class MongoDBReplicaset(BaseTopology):
             'workflow.steps.util.volume_provider.MountDataVolume',
             'workflow.steps.util.plan.Initialization',
             'workflow.steps.util.plan.Configure',
+            ) + self.get_change_binaries_upgrade_patch_steps() + (
             'workflow.steps.util.database.Start',
             'workflow.steps.util.vm.CheckAccessToMaster',
             'workflow.steps.util.vm.CheckAccessFromMaster',
@@ -397,6 +404,11 @@ class MongoDBReplicaset(BaseTopology):
         }, {
             'Cleaning up': self.get_host_migrate_steps_cleaning_up()
         }]
+
+    def get_change_binaries_upgrade_patch_steps(self):
+        return (
+            'workflow.steps.util.database_upgrade_patch.MongoDBCHGBinStep',
+        )
 
 
 class MongoDBReplicaset40(MongoDBReplicaset):

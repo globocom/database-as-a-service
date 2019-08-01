@@ -483,6 +483,7 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.plan.Configure',
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 'workflow.steps.util.database.Stop',
+                ) + self.get_change_binaries_upgrade_patch_steps() + (
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
@@ -618,6 +619,7 @@ class MySQLFoxHA(MySQLSingle):
             'workflow.steps.util.puppet.CheckStatus',
             'workflow.steps.util.plan.ConfigureForNewInfra',
             'workflow.steps.util.mysql.SetFilePermission',
+            ) + self.get_change_binaries_upgrade_patch_steps() + (
             'workflow.steps.util.database.Start',
             'workflow.steps.util.database.CheckIsUp',
             'workflow.steps.util.database.StartMonit',
@@ -878,6 +880,7 @@ class MySQLFoxHAAWS(MySQLFoxHA):
             'workflow.steps.util.disk.RemoveDeprecatedFiles',
             'workflow.steps.util.plan.ConfigureForNewInfra',
             'workflow.steps.util.mysql.SetFilePermission',
+            ) + self.get_change_binaries_upgrade_patch_steps() + (
             'workflow.steps.util.database.Start',
             'workflow.steps.util.database.CheckIsUp',
             'workflow.steps.util.database.StartMonit',

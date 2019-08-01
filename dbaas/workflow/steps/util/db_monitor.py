@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
+import logging
 from dbaas_dbmonitor.provider import DBMonitorProvider
 from workflow.steps.util.base import BaseInstanceStep
+
+LOG = logging.getLogger(__name__)
 
 
 class DBMonitorStep(BaseInstanceStep):
@@ -79,19 +82,35 @@ class UpdateInfraVersion(DBMonitorStep):
 
     @property
     def is_valid(self):
-        if self.upgrade and self.instance == self.infra.instances.all()[0]:
+        if ((self.upgrade or self.upgrade_patch) and
+                self.instance == self.infra.instances.all()[0]):
             return True
         return False
+
+    @property
+    def target_version(self):
+        if self.upgrade:
+            return self.upgrade.target_plan.engine.full_inicial_version
+        elif self.upgrade_patch:
+            return self.upgrade_patch.target_patch_full_version
+
+    @property
+    def source_version(self):
+        if self.upgrade:
+            return self.upgrade.source_plan.engine.full_inicial_version
+        elif self.upgrade_patch:
+            return self.upgrade_patch.source_patch_full_version
 
     def do(self):
         if self.is_valid:
             self.provider.update_dbmonitor_database_version(
-                self.infra, self.upgrade.target_plan.engine.version)
+                self.infra, self.target_version)
 
     def undo(self):
         if self.is_valid:
             self.provider.update_dbmonitor_database_version(
-                self.infra, self.upgrade.source_plan.engine.version)
+                self.infra, self.source_version)
+
 
 class UpdateInfraCloudDatabaseMigrate(DBMonitorStep):
     def __unicode__(self):

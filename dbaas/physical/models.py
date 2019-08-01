@@ -120,6 +120,15 @@ class Engine(BaseModel):
         verbose_name=_("Read name"), blank=True, null=True, default='',
         help_text="Ex: Slave or Secondary", max_length=100,
     )
+    major_version = models.PositiveIntegerField(
+        verbose_name=_("Engine major version"), blank=True, null=True
+    )
+    minor_version = models.PositiveIntegerField(
+        verbose_name=_("Engine minor version"), blank=True, null=True
+    )
+    is_active = models.BooleanField(
+        verbose_name=_("Is engine active"), default=True
+    )
 
     class Meta:
         unique_together = (
@@ -139,8 +148,28 @@ class Engine(BaseModel):
         return "{}_{}".format(self.name, self.version)
 
     @property
+    def full_name_initial_version(self):
+        return "{}_{}".format(self.name, self.full_inicial_version)
+
+    @property
     def full_name_for_host_provider(self):
-        return self.full_name.replace(".", "_")
+        return self.full_name_initial_version.replace(".", "_")
+
+    @property
+    def version2(self):
+        return "{}.{}".format(self.major_version, self.minor_version)
+
+    @property
+    def full_inicial_version(self):
+        patch = self.patchs.get(is_initial_patch=True)
+        return "{}.{}.{}".format(
+            self.major_version,
+            self.minor_version,
+            patch.patch_version)
+
+    @property
+    def default_engine_patch(self):
+        return self.patchs.get(is_initial_patch=True)
 
     def __unicode__(self):
         return self.full_name
@@ -148,6 +177,50 @@ class Engine(BaseModel):
     @property
     def is_redis(self):
         return self.name == 'redis'
+
+    def available_patches(self, last_upgrade_patch):
+        available_patches = self.patchs.exclude(
+            is_initial_patch=True
+        )
+
+        if last_upgrade_patch and last_upgrade_patch.engine == self:
+            available_patches = available_patches.filter(
+                patch_version__gt=last_upgrade_patch.patch_version
+            )
+        return available_patches
+
+
+class EnginePatch(BaseModel):
+    engine = models.ForeignKey(
+        Engine, verbose_name=_("Engine"),
+        related_name='patchs'
+    )
+    patch_version = models.PositiveIntegerField(
+        verbose_name=_("Engine patch version")
+    )
+    is_initial_patch = models.BooleanField(
+        verbose_name=_("Is initial patch"),
+        default=False
+    )
+    patch_path = models.CharField(
+        verbose_name=_("Path of installation file"),
+        blank=True, null=True, default='',
+        max_length=200,
+    )
+
+    @property
+    def full_version(self):
+        return "{}.{}.{}".format(
+            self.engine.major_version,
+            self.engine.minor_version,
+            self.patch_version
+        )
+
+    def __str__(self):
+        return self.full_version
+
+    def __unicode__(self):
+        return self.full_version
 
 
 class Parameter(BaseModel):
@@ -617,9 +690,12 @@ class DatabaseInfra(BaseModel):
         default=False)
     backup_hour = models.IntegerField(
         verbose_name=_("Backup hour"),
-        blank=False, 
+        blank=False,
         null=False,
         help_text=_("The hour of backup."))
+    engine_patch = models.ForeignKey(
+        EnginePatch, related_name="databaseinfras",
+        on_delete=models.PROTECT, null=True)
 
     def __unicode__(self):
         return self.name
