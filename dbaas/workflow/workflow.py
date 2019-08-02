@@ -131,6 +131,7 @@ def steps_for_instances(
                     return False
 
                 for retry in range(1, 1 + step_max_retry):
+                    step_instance.attempt = retry
                     try:
                         if undo:
                             step_instance.undo()
