@@ -97,3 +97,18 @@ class RedisCHGBinStep(DatabaseUpgradePatchStep):
         """.format(patch_path=patch_path, dir_name=dir_name)
 
         self.execute_script(script)
+
+
+class MySQLCHGBinStep(DatabaseUpgradePatchStep):
+
+    def do(self):
+        if not self.is_valid:
+            return
+
+        patch_path = self.target_patch.patch_path
+        dir_name = os.path.splitext(os.path.basename(patch_path))[0]
+
+        script = """yum -y localinstall --nogpgcheck /mnt/software/db/mysql/{dir_name}/*.rpm
+        """.format(patch_path=patch_path, dir_name=dir_name)
+
+        self.execute_script(script)
