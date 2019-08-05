@@ -2,6 +2,9 @@
 from workflow.steps.util.base import BaseInstanceStep
 from util import exec_remote_command_host
 import os
+import logging
+
+LOG = logging.getLogger(__name__)
 
 
 class CantUpgradePatch(Exception):
@@ -85,14 +88,16 @@ class RedisCHGBinStep(DatabaseUpgradePatchStep):
             return
 
         patch_path = self.target_patch.patch_path
-        dir_name = os.path.splitext(os.path.basename(patch_path))[0]
+        path, file_name = os.path.split(patch_path)
+        dir_name = file_name.rsplit('.', 2)[0]
 
         script = """cd /usr/local/
         tar -xvf {patch_path}
         rm -f redis
         ln -s {dir_name} redis
-        cd /redis && make
+        cd redis && make
         cp /mnt/software/db/redis/redis-trib-gcom.rb /usr/local/redis/src/redis-trib-gcom.rb
+        cd ..
         chown -R redis:redis redis/
         """.format(patch_path=patch_path, dir_name=dir_name)
 
@@ -108,7 +113,10 @@ class MySQLCHGBinStep(DatabaseUpgradePatchStep):
         patch_path = self.target_patch.patch_path
         dir_name = os.path.splitext(os.path.basename(patch_path))[0]
 
-        script = """yum -y localinstall --nogpgcheck /mnt/software/db/mysql/{dir_name}/*.rpm
+        script = """cd /tmp/
+        unzip {patch_path}
+        cd {dir_name}
+        yum -y localinstall --nogpgcheck *.rpm
         """.format(patch_path=patch_path, dir_name=dir_name)
 
         self.execute_script(script)
