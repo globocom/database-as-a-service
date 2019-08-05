@@ -177,14 +177,12 @@
 
     $("#upgrade_patch_btn").click(function() {
       var new_patch_version = $("#id_target_patch").find(":selected").text().trim();
-      var new_patch_full_version = "{{ database.databaseinfra.engine_patch.engine.version2 }}." + new_patch_version;
-      $("#upgrade_patch .modal_message").text('Are you sure you want to upgrade database from <{{ database.databaseinfra.engine_patch.full_version }}> to <' + new_patch_full_version + '>?')
+      $("#upgrade_patch .modal_message").text('Are you sure you want to upgrade database from <{{ database.databaseinfra.engine_patch.full_version }}> to <' + new_patch_version + '>?')
     });
 
     $("#upgrade_patch_retry_btn").click(function() {
       var new_patch_version = $("#id_target_patch_retry").find(":selected").text().trim();
-      var new_patch_full_version = "{{ database.databaseinfra.engine_patch.engine.version2 }}." + new_patch_version;
-      $("#upgrade_patch_retry .modal_message").text('Are you sure you want to retry to upgrade database from <{{ database.databaseinfra.engine_patch.full_version }}> to <' + new_patch_full_version + '>?')
+      $("#upgrade_patch_retry .modal_message").text('Are you sure you want to retry to upgrade database from <{{ database.databaseinfra.engine_patch.full_version }}> to <' + new_patch_version + '>?')
     });
 
   })
