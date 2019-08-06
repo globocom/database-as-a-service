@@ -77,7 +77,7 @@
       <select id="id_target_patch_retry" name="target_patch_retry" disabled="true">
         {% for engine_patch in available_patches %}
           {% if engine_patch == retry_patch.target_patch %}
-          <option value="{{engine_patch.id}}" selected>{{engine_patch.patch_version}}</option>
+          <option value="{{engine_patch.id}}" selected>{{engine_patch.full_version}}</option>
           {% endif %}
         {% endfor %}
       </select>
