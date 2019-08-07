@@ -51,13 +51,13 @@ def rollback_database(dest_database):
 
 
 def create_database_with_retry(
-    name, plan, environment, team, project, description, task,
+    name, plan, environment, team, backup_hour, project, description, task,
     subscribe_to_email_events, is_protected, user, retry_from
 ):
     from maintenance.tasks import create_database
     return create_database.delay(
         name=name, plan=plan, environment=environment, team=team,
-        project=project, description=description, task=task,
+        backup_hour=backup_hour, project=project, description=description, task=task,
         subscribe_to_email_events=subscribe_to_email_events,
         is_protected=is_protected, user=user, retry_from=retry_from
     )
@@ -93,6 +93,7 @@ def destroy_database(self, database, task_history=None, user=None):
         database_destroy.plan = database.plan
         database_destroy.environment = database.environment
         database_destroy.team = database.team
+        database_destroy.backup_hour = database.backup_hour
         database_destroy.project = database.project
         database_destroy.description = database.description
         database_destroy.is_protected = database.is_protected
@@ -1309,7 +1310,7 @@ class TaskRegister(object):
         )
 
     @classmethod
-    def database_create(cls, user, name, plan, environment, team, project,
+    def database_create(cls, user, name, plan, environment, team, backup_hour, project,
                         description, subscribe_to_email_events=True,
                         register_user=True, is_protected=False, retry_from=None):
         task_params = {
@@ -1323,7 +1324,7 @@ class TaskRegister(object):
 
         return create_database_with_retry(
             name=name, plan=plan, environment=environment, team=team,
-            project=project, description=description, task=task,
+            backup_hour=backup_hour, project=project, description=description, task=task,
             subscribe_to_email_events=subscribe_to_email_events,
             is_protected=is_protected, user=user, retry_from=retry_from
         )
