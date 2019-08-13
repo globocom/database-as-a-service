@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from physical.models import Instance
-from base import BaseTopology, InstanceDeploy
+from .base import BaseTopology, InstanceDeploy
 
 
 class MongoDBSingle(BaseTopology):
