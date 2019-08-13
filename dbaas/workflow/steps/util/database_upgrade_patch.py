@@ -111,12 +111,9 @@ class MySQLCHGBinStep(DatabaseUpgradePatchStep):
             return
 
         patch_path = self.target_patch.patch_path
-        dir_name = os.path.splitext(os.path.basename(patch_path))[0]
 
-        script = """cd /tmp/
-        unzip {patch_path}
-        cd {dir_name}
+        script = """cd {patch_path}
         yum -y localinstall --nogpgcheck *.rpm
-        """.format(patch_path=patch_path, dir_name=dir_name)
+        """.format(patch_path=patch_path)
 
         self.execute_script(script)
