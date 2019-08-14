@@ -269,6 +269,11 @@ class RunMySQLUpgrade(MySQLStep):
 
 
 class RunMySQLUpgradePatch(MySQLStep):
+    """This class represents a MySQLStep and is going to be executed while
+    upgrading patches. The main difference between this class and
+    RunMySQLUpgrade is the extra parameter '--upgrade-system-tables'. This
+    parameter makes sure upgrades are only performed on system schemas."""
+
     def __unicode__(self):
         return "Executing mysql_upgrade for patch..."
 

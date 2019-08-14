@@ -111,6 +111,9 @@ class BaseTopology(object):
         return ()
 
     def after_starting_database_steps(self):
+        """This hook is supposed to be executed right after starting up a
+        database. This method can be implemtend by subclasses interested in
+        doing actions right after start up."""
         return ()
 
     def get_upgrade_patch_steps(self):

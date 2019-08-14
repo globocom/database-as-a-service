@@ -40,6 +40,10 @@ class BaseMysql(BaseTopology):
         )
 
     def after_starting_database_steps(self):
+        """ We decided BaseMysql should aways execute mysql_upgrade after
+        upgrading patches, as it does not cause damage on the database. For the
+        moment, this method is valid to all of its subclasses."""
+
         return (
             'workflow.steps.util.mysql.RunMySQLUpgradePatch',
         )
