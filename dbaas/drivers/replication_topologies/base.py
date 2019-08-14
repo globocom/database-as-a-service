@@ -110,6 +110,9 @@ class BaseTopology(object):
     def get_change_binaries_upgrade_patch_steps(self):
         return ()
 
+    def after_starting_database_steps(self):
+        return ()
+
     def get_upgrade_patch_steps(self):
         return [{
             'Disable monitoring and alarms': (
@@ -124,8 +127,8 @@ class BaseTopology(object):
                 'workflow.steps.util.database.CheckIsDown',
                 ) + self.get_change_binaries_upgrade_patch_steps() + (
                 'workflow.steps.util.database.Start',
-                'workflow.steps.util.database.CheckIsUp',
-            ),
+                ) + self.after_starting_database_steps() + (
+                'workflow.steps.util.database.CheckIsUp',)
         }] + [{
             'Enabling monitoring and alarms': (
                 'workflow.steps.util.db_monitor.UpdateInfraVersion',

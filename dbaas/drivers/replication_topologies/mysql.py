@@ -39,6 +39,11 @@ class BaseMysql(BaseTopology):
             'workflow.steps.util.database_upgrade_patch.MySQLCHGBinStep',
         )
 
+    def after_starting_database_steps(self):
+        return (
+            'workflow.steps.util.mysql.RunMySQLUpgradePatch',
+        )
+
 
 class MySQLSingle(BaseMysql):
 

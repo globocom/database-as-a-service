@@ -268,6 +268,19 @@ class RunMySQLUpgrade(MySQLStep):
         self.run_script(self.script)
 
 
+class RunMySQLUpgradePatch(MySQLStep):
+    def __unicode__(self):
+        return "Executing mysql_upgrade for patch..."
+
+    @property
+    def script(self):
+        return "mysql_upgrade -u{} -p{} --upgrade-system-tables".format(
+            self.infra.user, self.infra.password
+        )
+
+    def do(self):
+        self.run_script(self.script)
+
 class AuditPlugin(MySQLStep):
     @property
     def audit_plugin_status(self):
