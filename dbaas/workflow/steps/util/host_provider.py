@@ -291,7 +291,7 @@ class ReinstallTemplate(HostProviderStep):
         return "Reinstalling template to VM..."
 
     def do(self):
-        reinstall = self.provider.new_version()
+        reinstall = self.provider.new_version(self.engine)
         if not reinstall:
             raise EnvironmentError('Could not reinstall VM')
 
