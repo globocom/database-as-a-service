@@ -34,6 +34,11 @@ class BaseMysql(BaseTopology):
     def get_database_agents(self):
         return ['monit']
 
+    def get_change_binaries_upgrade_patch_steps(self):
+        return (
+            'workflow.steps.util.database_upgrade_patch.MySQLCHGBinStep',
+        )
+
 
 class MySQLSingle(BaseMysql):
 
