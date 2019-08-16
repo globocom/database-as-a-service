@@ -264,7 +264,7 @@ class Redis(BaseDriver):
     def check_instance_is_eligible_for_backup(self, instance):
         return True
 
-    def check_instance_is_master(self, instance):
+    def check_instance_is_master(self, instance, ignore_timeout=False):
         return True
 
     def initialization_script_path(self, host=None):
@@ -463,7 +463,7 @@ class RedisSentinel(Redis):
                     self.databaseinfra, str(e)
                 ))
 
-    def check_instance_is_master(self, instance):
+    def check_instance_is_master(self, instance, ignore_timeout=False):
         if instance.instance_type == Instance.REDIS_SENTINEL:
             return False
 
@@ -647,7 +647,7 @@ class RedisCluster(Redis):
             else:
                 return info['role'] == 'slave'
 
-    def check_instance_is_master(self, instance):
+    def check_instance_is_master(self, instance, ignore_timeout=False):
         with self.redis(instance=instance) as client:
             try:
                 info = client.info()
@@ -699,7 +699,7 @@ class RedisCluster(Redis):
         if return_code != 0:
             raise Exception(str(output))
 
-    def get_master_instance(self):
+    def get_master_instance(self, ignore_timeout=False):
         masters = []
         for instance in self.get_database_instances():
             try:

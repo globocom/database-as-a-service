@@ -72,7 +72,7 @@ class MySQL(BaseDriver):
         endpoint = self.databaseinfra.endpoint_dns.split(':')
         return endpoint[0], int(endpoint[1])
 
-    def get_master_instance(self, ignore_instance=None):
+    def get_master_instance(self, ignore_instance=False):
         instances = self.get_database_instances()
         if ignore_instance:
             instances.remove(ignore_instance)
@@ -330,7 +330,7 @@ class MySQL(BaseDriver):
         else:
             return False
 
-    def check_instance_is_master(self, instance):
+    def check_instance_is_master(self, instance, ignore_timeout=False):
         return self.replication_topology_driver.check_instance_is_master(
             driver=self, instance=instance
         )

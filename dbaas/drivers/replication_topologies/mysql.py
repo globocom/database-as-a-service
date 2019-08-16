@@ -22,7 +22,7 @@ class BaseMysql(BaseTopology):
     def switch_master(self, driver):
         raise NotImplementedError()
 
-    def check_instance_is_master(self, driver, instance):
+    def check_instance_is_master(self, driver, instance, ignore_timeout=False):
         raise NotImplementedError
 
     def set_master(self, driver, instance):
@@ -96,7 +96,7 @@ class MySQLSingle(BaseMysql):
     def switch_master(self, driver):
         return True
 
-    def check_instance_is_master(self, driver, instance):
+    def check_instance_is_master(self, driver, instance, ignore_timeout=False):
         return True
 
     def set_master(self, driver, instance):
@@ -207,7 +207,7 @@ class MySQLFoxHA(MySQLSingle):
             group_name=driver.databaseinfra.name
         )
 
-    def check_instance_is_master(self, driver, instance):
+    def check_instance_is_master(self, driver, instance, ignore_timeout=False):
         fox_node_is_master = self._get_fox_provider(driver).node_is_master(
             group_name=driver.databaseinfra.name,
             node_ip=instance.address

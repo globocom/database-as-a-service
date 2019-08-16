@@ -137,20 +137,34 @@ class MongoDB(BaseDriver):
             return "mongodb://%s:%s" % (instance.address, instance.port)
         return "mongodb://%s" % self.__concatenate_instances()
 
-    def __mongo_client__(self, instance):
+    def __mongo_client__(self, instance, connectTimeoutMS=None, serverSelectionTimeoutMS=None, socketTimeoutMS=None, ignore_timeout=False):
         connection_address = self.__get_admin_connection(instance)
         if not self.databaseinfra and instance:
             self.databaseinfra = instance.databaseinfra
         try:
             # mongo uses timeout in mili seconds
-            connection_timeout_in_miliseconds = Configuration.get_by_name_as_int(
-                'mongo_connect_timeout', default=MONGO_CONNECTION_DEFAULT_TIMEOUT) * 1000
+            if ignore_timeout:
+                connection_timeout_in_miliseconds = connectTimeoutMS
+                server_selection_timeout_in_seconds = serverSelectionTimeoutMS
+                socket_timeout_in_miliseconds = socketTimeoutMS
+            else:
+                if connectTimeoutMS is None:
+                    connection_timeout_in_miliseconds = Configuration.get_by_name_as_int(
+                        'mongo_connect_timeout', default=MONGO_CONNECTION_DEFAULT_TIMEOUT) * 1000
+                else:
+                    connection_timeout_in_miliseconds = connectTimeoutMS
 
-            server_selection_timeout_in_seconds = Configuration.get_by_name_as_int(
-                'mongo_server_selection_timeout', default=MONGO_SERVER_SELECTION_DEFAULT_TIMEOUT) * 1000
+                if serverSelectionTimeoutMS is None:
+                    server_selection_timeout_in_seconds = Configuration.get_by_name_as_int(
+                        'mongo_server_selection_timeout', default=MONGO_SERVER_SELECTION_DEFAULT_TIMEOUT) * 1000
+                else:
+                    server_selection_timeout_in_seconds = serverSelectionTimeoutMS
 
-            socket_timeout_in_miliseconds = Configuration.get_by_name_as_int(
-                'mongo_socket_timeout', default=MONGO_SOCKET_TIMEOUT) * 1000
+                if socketTimeoutMS is None:
+                    socket_timeout_in_miliseconds = Configuration.get_by_name_as_int(
+                        'mongo_socket_timeout', default=MONGO_SOCKET_TIMEOUT) * 1000
+                else:
+                    socket_timeout_in_miliseconds = socketTimeoutMS
 
             client = pymongo.MongoClient(
                 connection_address, connectTimeoutMS=connection_timeout_in_miliseconds, serverSelectionTimeoutMS=server_selection_timeout_in_seconds,
@@ -167,7 +181,7 @@ class MongoDB(BaseDriver):
                 message='Invalid address: ' % connection_address)
 
     def get_client(self, instance):
-        return self.__mongo_client__(instance)
+        return self.__mongo_client__(instance, connectTimeoutMS=None, serverSelectionTimeoutMS=None, socketTimeoutMS=None, ignore_timeout=False)
 
     def lock_database(self, client):
         client.fsync(lock=True)
@@ -179,10 +193,10 @@ class MongoDB(BaseDriver):
         client.unlock()
 
     @contextmanager
-    def pymongo(self, instance=None, database=None):
+    def pymongo(self, instance=None, database=None, connectTimeoutMS=None, serverSelectionTimeoutMS=None, socketTimeoutMS=None, ignore_timeout=False):
         client = None
         try:
-            client = self.__mongo_client__(instance)
+            client = self.__mongo_client__(instance, connectTimeoutMS=None, serverSelectionTimeoutMS=None, socketTimeoutMS=None, ignore_timeout=False)
 
             if database is None:
                 return_value = client
@@ -329,24 +343,39 @@ class MongoDB(BaseDriver):
                 raise ConnectionError(
                     'Error connection to databaseinfra %s: %s' % (self.databaseinfra, e.message))
 
-    def check_instance_is_master(self, instance):
+    def check_instance_is_master(self, instance, ignore_timeout=False):
+        import ipdb; ipdb.set_trace()
+        print(ignore_timeout)
         if instance.instance_type == instance.MONGODB_ARBITER:
             return False
 
         if self.databaseinfra.instances.count() == 1:
             return True
 
-        with self.pymongo(instance=instance) as client:
-            try:
-                ismaster = client.admin.command('isMaster')
-                if ismaster['ismaster']:
-                    return True
-                else:
-                    return False
+        if ignore_timeout:
+            with self.pymongo(instance=instance, connectTimeoutMS=1000, serverSelectionTimeoutMS=1000, socketTimeoutMS=1000, ignore_timeout=True) as client:
+                try:
+                    ismaster = client.admin.command('isMaster')
+                    if ismaster['ismaster']:
+                        return True
+                    else:
+                        return False
 
-            except pymongo.errors.PyMongoError, e:
-                raise ConnectionError(
-                    'Error connection to databaseinfra %s: %s' % (self.databaseinfra, e.message))
+                except pymongo.errors.PyMongoError, e:
+                    raise ConnectionError(
+                        'Error connection to databaseinfra %s: %s' % (self.databaseinfra, e.message))
+        else:
+            with self.pymongo(instance=instance, connectTimeoutMS=None, serverSelectionTimeoutMS=None, socketTimeoutMS=None, ignore_timeout=False) as client:
+                try:
+                    ismaster = client.admin.command('isMaster')
+                    if ismaster['ismaster']:
+                        return True
+                    else:
+                        return False
+
+                except pymongo.errors.PyMongoError, e:
+                    raise ConnectionError(
+                        'Error connection to databaseinfra %s: %s' % (self.databaseinfra, e.message))
 
     def get_replication_info(self, instance):
         if self.check_instance_is_master(instance=instance):
