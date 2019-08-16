@@ -183,7 +183,7 @@ class BaseDriver(object):
     def check_instance_is_eligible_for_backup(self, instance):
         raise NotImplementedError()
 
-    def check_instance_is_master(self, instance):
+    def check_instance_is_master(self, instance, ignore_timeout=False):
         raise NotImplementedError()
 
     def initialization_script_path(self, host=None):
@@ -219,18 +219,26 @@ class BaseDriver(object):
             driver_name) else None for instance in self.databaseinfra.instances.all()]
         return filter(None, instances)
 
-    def get_master_instance(self, ignore_instance=None):
+    def get_master_instance(self, ignore_instance=None, ignore_timeout=False):
         instances = self.get_database_instances()
         if ignore_instance:
             instances.remove(ignore_instance)
         for instance in instances:
             try:
-                if self.check_instance_is_master(instance):
-                    return instance
-                if instance.hostname.future_host:
-                    instance.address = instance.hostname.future_host.address
-                    if self.check_instance_is_master(instance):
+                if ignore_timeout:
+                    if self.check_instance_is_master(instance, ignore_timeout=True):
                         return instance
+                    if instance.hostname.future_host:
+                        instance.address = instance.hostname.future_host.address
+                        if self.check_instance_is_master(instance, ignore_timeout=True):
+                            return instance
+                else:
+                    if self.check_instance_is_master(instance, ignore_timeout=False):
+                        return instance
+                    if instance.hostname.future_host:
+                        instance.address = instance.hostname.future_host.address
+                        if self.check_instance_is_master(instance, ignore_timeout=False):
+                            return instance
             except ConnectionError:
                 continue
 
@@ -280,7 +288,7 @@ class BaseDriver(object):
                 LOG.info("Switch master returned ok...")
 
                 check_is_master_attempts_count = check_is_master_attempts
-                while self.check_instance_is_master(instance):
+                while self.check_instance_is_master(instance, ignore_timeout=False):
                     if check_is_master_attempts_count == 0:
                         break
                     check_is_master_attempts_count -= 1
