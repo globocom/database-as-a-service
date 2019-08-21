@@ -10,13 +10,14 @@ CI = os.getenv('CI', '0') == '1'
 
 # Include base path in system path for Python old.
 syspath = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
-if not syspath in sys.path:
+if syspath not in sys.path:
     sys.path.insert(0, syspath)
 
 
 def LOCAL_FILES(path):
     new_path = os.path.abspath(os.path.join(__file__, path))
     return new_path
+
 
 try:
     from dbaas.version import RELEASE
@@ -161,7 +162,8 @@ ROOT_URLCONF = 'dbaas.urls'
 WSGI_APPLICATION = 'dbaas.wsgi.application'
 
 TEMPLATE_DIRS = (
-    # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
+    # Put strings here, like "/home/html/django_templates"
+    #  or "C:/www/django/templates".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
     os.path.join(SITE_ROOT, 'templates')
@@ -283,13 +285,17 @@ SESSION_COOKIE_AGE = 86400 * 30  # 30 Days
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # Expire session when browser is closed
 SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
 SESSION_CACHE_ALIAS = "default"
-AUTO_LOGOUT_DELAY = 720 # 12 hours
+AUTO_LOGOUT_DELAY = 720  # 12 hours
 
 DBAAS_CACHE_LOCATION = os.getenv('DBAAS_CACHE_LOCATION')
 CACHES = {
     'default': {
-        'BACKEND': os.getenv('DBAAS_CACHE_BACKEND', 'django.core.cache.backends.locmem.LocMemCache'),
-        'LOCATION': DBAAS_CACHE_LOCATION.split(';') if DBAAS_CACHE_LOCATION else 'unique',
+        'BACKEND': os.getenv(
+            'DBAAS_CACHE_BACKEND',
+            'django.core.cache.backends.locmem.LocMemCache'
+        ),
+        'LOCATION': (DBAAS_CACHE_LOCATION.split(';') if DBAAS_CACHE_LOCATION
+                     else 'unique'),
         'TIMEOUT': int(os.getenv('DBAAS_CACHE_TIMEOUT', '60')),
     },
     "notification": {
@@ -306,10 +312,21 @@ CACHES = {
 
 TEST_DISCOVER_ROOT = os.path.abspath(os.path.join(__file__, '../..'))
 TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
-NOSE_ARGS = ['--verbosity=0', '--no-byte-compile', '--debug-log=error_test.log', '--nologcapture']
+NOSE_ARGS = [
+    '--verbosity=0',
+    '--no-byte-compile',
+    '--debug-log=error_test.log',
+    '--nologcapture'
+]
 if CI:
-    NOSE_ARGS += ['--with-coverage', '--cover-package=application',
-                  '--with-xunit', '--xunit-file=test-report.xml', '--cover-xml', '--cover-xml-file=coverage.xml']
+    NOSE_ARGS += [
+        '--with-coverage',
+        '--cover-package=application',
+        '--with-xunit',
+        '--xunit-file=test-report.xml',
+        '--cover-xml',
+        '--cover-xml-file=coverage.xml'
+    ]
 
 # AUTHENTICATION_BACKENDS = (
 #   'django_auth_ldap.backend.LDAPBackend',
@@ -351,12 +368,15 @@ if LDAP_ENABLED:
     AUTH_LDAP_BIND_DN = os.getenv('AUTH_LDAP_BIND_DN', '')
     AUTH_LDAP_BIND_PASSWORD = os.getenv('AUTH_LDAP_BIND_PASSWORD', '')
     AUTH_LDAP_USER_SEARCH_STR = os.getenv('AUTH_LDAP_USER_SEARCH', '')
-    AUTH_LDAP_USER_SEARCH = LDAPSearch(AUTH_LDAP_USER_SEARCH_STR,
-                                       ldap.SCOPE_SUBTREE, "(&(uid=%(user)s)(!(nsaccountlock=TRUE)))")
+    AUTH_LDAP_USER_SEARCH = LDAPSearch(
+        AUTH_LDAP_USER_SEARCH_STR,
+        ldap.SCOPE_SUBTREE, "(&(uid=%(user)s)(!(nsaccountlock=TRUE)))"
+    )
     AUTH_LDAP_GROUP_SEARCH_STR = os.getenv('AUTH_LDAP_GROUP_SEARCH', '')
-    AUTH_LDAP_GROUP_SEARCH = LDAPSearch(AUTH_LDAP_GROUP_SEARCH_STR,
-                                        ldap.SCOPE_SUBTREE, "(objectClass=groupOfNames)"
-                                        )
+    AUTH_LDAP_GROUP_SEARCH = LDAPSearch(
+        AUTH_LDAP_GROUP_SEARCH_STR,
+        ldap.SCOPE_SUBTREE, "(objectClass=groupOfNames)"
+    )
     AUTH_LDAP_GROUP_TYPE = GroupOfNamesType()
     AUTH_LDAP_ALWAYS_UPDATE_USER = True
 
@@ -455,7 +475,8 @@ LOGGING = {
         },
         'sentry': {
             'level': 'ERROR',
-            'class': 'raven.contrib.django.raven_compat.handlers.SentryHandler',
+            'class': ('raven.contrib.django.raven_compat.handlers'
+                      '.SentryHandler'),
         }
     },
     'loggers': {
@@ -511,15 +532,27 @@ CLOUD_STACK_ENABLED = os.getenv('CLOUD_STACK_ENABLED', '0') == '1'
 NFSAAS_ENABLED = os.getenv('CLOUD_STACK_ENABLED', '0') == '1'
 
 
+def simple_audit_auth():
+    __import__(
+        'rest_framework.authentication',
+        fromlist=['BasicAuthentication']
+    ).BasicAuthentication()
+
+
 # Simple Audit configuration
 DJANGO_SIMPLE_AUDIT_ACTIVATED = True
 DJANGO_SIMPLE_AUDIT_M2M_FIELDS = True
-DJANGO_SIMPLE_AUDIT_AUTHENTICATOR = lambda: __import__('rest_framework.authentication', fromlist=['BasicAuthentication']).BasicAuthentication()
+DJANGO_SIMPLE_AUDIT_AUTHENTICATOR = simple_audit_auth
 
-DBAAS_OAUTH2_LOGIN_ENABLE = bool(int(os.getenv('DBAAS_OAUTH2_LOGIN_ENABLE', 0)))
+DBAAS_OAUTH2_LOGIN_ENABLE = bool(
+    int(os.getenv('DBAAS_OAUTH2_LOGIN_ENABLE', 0))
+)
 DBAAS_AUTH_API_URL = os.getenv('DBAAS_AUTH_API_URL')
 
 if DBAAS_OAUTH2_LOGIN_ENABLE:
     INSTALLED_APPS += ('allaccess', 'backstage_oauth2',)
-    AUTHENTICATION_BACKENDS.insert(1, 'allaccess.backends.AuthorizedServiceBackend')
+    AUTHENTICATION_BACKENDS.insert(
+        1,
+        'allaccess.backends.AuthorizedServiceBackend'
+    )
     AUTHENTICATION_BACKENDS.insert(2, 'django_auth_ldap.backend.LDAPBackend')

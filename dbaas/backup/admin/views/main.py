@@ -14,7 +14,8 @@ from django.utils.http import urlencode
 from django.contrib.admin import FieldListFilter
 from django.contrib.admin.options import IncorrectLookupParameters
 from django.contrib.admin.util import (quote, get_fields_from_path,
-                                       lookup_needs_distinct, prepare_lookup_value)
+                                       lookup_needs_distinct,
+                                       prepare_lookup_value)
 
 # Changelist settings
 ALL_VAR = 'all'
@@ -36,8 +37,9 @@ EMPTY_CHANGELIST_VALUE = ugettext_lazy('(None)')
 class ChangeList(object):
 
     def __init__(self, request, model, list_display, list_display_links,
-                 list_filter, date_hierarchy, search_fields, list_select_related,
-                 list_per_page, list_max_show_all, list_editable, model_admin):
+                 list_filter, date_hierarchy, search_fields,
+                 list_select_related, list_per_page, list_max_show_all,
+                 list_editable, model_admin):
         self.model = model
         self.opts = model._meta
         self.lookup_opts = self.opts
@@ -119,13 +121,18 @@ class ChangeList(object):
                         # This is simply a field name, so use the default
                         # FieldListFilter class that has been registered for
                         # the type of the given field.
-                        field, field_list_filter_class = list_filter, FieldListFilter.create
+                        field, field_list_filter_class = (
+                            list_filter,
+                            FieldListFilter.create
+                        )
                     if not isinstance(field, models.Field):
                         field_path = field
                         field = get_fields_from_path(
                             self.model, field_path)[-1]
-                    spec = field_list_filter_class(field, request, lookup_params,
-                                                   self.model, self.model_admin, field_path=field_path)
+                    spec = field_list_filter_class(
+                        field, request, lookup_params,
+                        self.model, self.model_admin, field_path=field_path
+                    )
                     # Check if we need to use distinct()
                     use_distinct = (use_distinct or
                                     lookup_needs_distinct(self.lookup_opts,
@@ -144,7 +151,8 @@ class ChangeList(object):
                 lookup_params[key] = prepare_lookup_value(key, value)
                 use_distinct = (use_distinct or
                                 lookup_needs_distinct(self.lookup_opts, key))
-            return filter_specs, bool(filter_specs), lookup_params, use_distinct
+            return (filter_specs, bool(filter_specs),
+                    lookup_params, use_distinct)
         except FieldDoesNotExist as e:
             raise IncorrectLookupParameters(e)
 
@@ -276,8 +284,8 @@ class ChangeList(object):
         Returns a SortedDict of ordering field column numbers and asc/desc
         """
 
-        # We must cope with more than one column having the same underlying sort
-        # field, so we base things on column numbers.
+        # We must cope with more than one column having the same underlying
+        # sort field, so we base things on column numbers.
         ordering = self._get_default_ordering()
         ordering_fields = SortedDict()
         if ORDER_VAR not in self.params:
