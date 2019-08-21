@@ -11,7 +11,8 @@ class UsedAndTotalValidator(object):
         assert a == b, "{} NOT EQUAL {}".format(a, b)
 
     @classmethod
-    def instances_sizes(cls, instances=None, expected_used_size=40, expected_total_size=90):
+    def instances_sizes(cls, instances=None, expected_used_size=40,
+                        expected_total_size=90):
         for instance in instances:
             cls.assertEqual(instance.used_size_in_bytes, expected_used_size)
             cls.assertEqual(instance.total_size_in_bytes, expected_total_size)
@@ -46,7 +47,8 @@ class InstanceHelper(object):
                                'id', flat=True)[quantity_of_masters:])
 
     @staticmethod
-    def create_instances_by_quant(infra, port=3306, qt=1, total_size_in_bytes=50,
+    def create_instances_by_quant(infra, port=3306, qt=1,
+                                  total_size_in_bytes=50,
                                   used_size_in_bytes=25, instance_type=1,
                                   base_address='127', hostname=None):
         """
@@ -56,7 +58,10 @@ class InstanceHelper(object):
             extra_params = dict(**{'hostname': hostname} if hostname else {})
             return InstanceFactory(
                 databaseinfra=infra,
-                address='{0}.7{1}.{2}.{2}'.format(base_address, infra.id, n), port=port,
+                address='{0}.7{1}.{2}.{2}'.format(
+                    base_address, infra.id, n
+                ),
+                port=port,
                 instance_type=instance_type,
                 total_size_in_bytes=total_size_in_bytes,
                 used_size_in_bytes=used_size_in_bytes,

@@ -1,5 +1,4 @@
 from system.models import Configuration
-from django.template import Context
 from util import get_credentials_for
 from dbaas_credentials.models import CredentialType
 from physical.models import Environment

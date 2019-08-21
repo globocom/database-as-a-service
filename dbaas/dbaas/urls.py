@@ -62,7 +62,8 @@ if settings.DBAAS_OAUTH2_LOGIN_ENABLE:
                         self.request,
                         extra_context={
                             'ldap_permission_error': 1,
-                            'ldap_error_msg': 'Only superusers or DBA Role users can login with LDAP'
+                            'ldap_error_msg': ('Only superusers or DBA Role '
+                                               'users can login with LDAP')
                         },
                         **kw
                     )
