@@ -533,7 +533,7 @@ NFSAAS_ENABLED = os.getenv('CLOUD_STACK_ENABLED', '0') == '1'
 
 
 def simple_audit_auth():
-    __import__(
+    return __import__(
         'rest_framework.authentication',
         fromlist=['BasicAuthentication']
     ).BasicAuthentication()
