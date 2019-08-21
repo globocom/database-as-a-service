@@ -542,7 +542,7 @@ def simple_audit_auth():
 # Simple Audit configuration
 DJANGO_SIMPLE_AUDIT_ACTIVATED = True
 DJANGO_SIMPLE_AUDIT_M2M_FIELDS = True
-DJANGO_SIMPLE_AUDIT_AUTHENTICATOR = lambda: __import__('rest_framework.authentication', fromlist=['BasicAuthentication']).BasicAuthentication()
+DJANGO_SIMPLE_AUDIT_AUTHENTICATOR = simple_audit_auth
 
 DBAAS_OAUTH2_LOGIN_ENABLE = bool(
     int(os.getenv('DBAAS_OAUTH2_LOGIN_ENABLE', 0))
