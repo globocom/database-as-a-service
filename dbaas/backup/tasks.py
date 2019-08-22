@@ -53,7 +53,8 @@ def mysql_binlog_save(client, instance):
         datadir = row[0]['Value']
 
         output = {}
-        command = 'echo "master=%s;position=%s" > %smysql_binlog_master_file_pos && sync' % (
+        command = ('echo "master=%s;position=%s" > '
+                   '%smysql_binlog_master_file_pos && sync') % (
             binlog_file, binlog_pos, datadir
         )
 
@@ -84,7 +85,9 @@ def unlock_instance(driver, instance, client):
         LOG.warning('Could not unlock {} - {}'.format(instance, e))
         return False
 
-def make_instance_snapshot_backup(instance, error, group, provider_class=VolumeProviderBase):
+
+def make_instance_snapshot_backup(instance, error, group,
+                                  provider_class=VolumeProviderBase):
     LOG.info("Make instance backup for {}".format(instance))
     provider = provider_class(instance)
     infra = instance.databaseinfra
