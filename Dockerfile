@@ -4,11 +4,11 @@ ADD . /code
 WORKDIR /code
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-	libsasl2-dev \ 
-	python-dev \ 
-	libldap2-dev \ 
+	libsasl2-dev \
+	python-dev \
+	libldap2-dev \
 	libssl-dev \
-	mysql-client \
+	mariadb-client \
  && rm -rf /var/lib/apt/lists/*
 
 RUN pip install --upgrade pip \
