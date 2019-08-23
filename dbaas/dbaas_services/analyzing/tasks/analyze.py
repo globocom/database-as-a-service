@@ -20,7 +20,8 @@ LOG = logging.getLogger(__name__)
 @app.task(bind=True)
 @only_one(key="analyze_databases_service_task", timeout=6000)
 def analyze_databases(self, task_history=None):
-    endpoint, healh_check_route, healh_check_string = get_analyzing_credentials()
+    (endpoint, healh_check_route,
+     healh_check_string) = get_analyzing_credentials()
     user = User.objects.get(username='admin')
     worker_name = get_worker_name()
     task_history = TaskHistory.register(
@@ -37,7 +38,8 @@ def analyze_databases(self, task_history=None):
             databases = Database.objects.filter(is_in_quarantine=False)
             today = datetime.now()
             for database in databases:
-                database_name, engine, instances, environment_name, databaseinfra_name = setup_database_info(database)
+                (database_name, engine, instances, environment_name,
+                 databaseinfra_name) = setup_database_info(database)
                 for execution_plan in ExecutionPlan.objects.all():
                     if not database_can_be_resized(database, execution_plan):
                         continue
@@ -55,7 +57,8 @@ def analyze_databases(self, task_history=None):
                         if result['status'] == 'success':
                             task_history.update_details(
                                 persist=True,
-                                details="\nDatabase {} {} was analysed.".format(
+                                details=("\nDatabase {} {} was "
+                                         "analysed.").format(
                                     database, execution_plan.plan_name
                                 )
                             )
@@ -74,7 +77,8 @@ def analyze_databases(self, task_history=None):
                     except Exception:
                         task_history.update_details(
                             persist=True,
-                            details="\nDatabase {} {} could not be analysed.".format(
+                            details=("\nDatabase {} {} could not be "
+                                     "analysed.").format(
                                 database, execution_plan.plan_name
                             )
                         )
@@ -99,31 +103,39 @@ def analyze_databases(self, task_history=None):
 def get_analyzing_credentials():
     from dbaas_credentials.models import CredentialType
     from dbaas_credentials.models import Credential
-    credential = Credential.objects.get(integration_type__type=CredentialType.DBAAS_SERVICES_ANALYZING)
+    credential = Credential.objects.get(
+        integration_type__type=CredentialType.DBAAS_SERVICES_ANALYZING
+    )
 
-    return credential.endpoint, credential.get_parameter_by_name('healh_check_route'), credential.get_parameter_by_name('healh_check_string')
+    return (credential.endpoint,
+            credential.get_parameter_by_name('healh_check_route'),
+            credential.get_parameter_by_name('healh_check_string'))
 
 
 def insert_analyze_repository_record(date_time, database_name, instance,
-                                     engine, databaseinfra_name, environment_name,
-                                     execution_plan):
+                                     engine, databaseinfra_name,
+                                     environment_name, execution_plan):
     try:
         get_analyzing_objects = AnalyzeRepository.objects.get
         LOG.info(date_time)
-        repo_instance = get_analyzing_objects(analyzed_at=date_time,
-                                              database_name=database_name,
-                                              instance_name=instance,
-                                              engine_name=engine,
-                                              databaseinfra_name=databaseinfra_name,
-                                              environment_name=environment_name,)
+        repo_instance = get_analyzing_objects(
+            analyzed_at=date_time,
+            database_name=database_name,
+            instance_name=instance,
+            engine_name=engine,
+            databaseinfra_name=databaseinfra_name,
+            environment_name=environment_name,
+        )
     except AnalyzeRepository.DoesNotExist as e:
         LOG.info(e)
-        repo_instance = AnalyzeRepository(analyzed_at=date_time,
-                                          database_name=database_name,
-                                          instance_name=instance,
-                                          engine_name=engine,
-                                          databaseinfra_name=databaseinfra_name,
-                                          environment_name=environment_name)
+        repo_instance = AnalyzeRepository(
+            analyzed_at=date_time,
+            database_name=database_name,
+            instance_name=instance,
+            engine_name=engine,
+            databaseinfra_name=databaseinfra_name,
+            environment_name=environment_name
+        )
 
     setattr(repo_instance, execution_plan.alarm_repository_attr, True)
     setattr(repo_instance, execution_plan.threshold_repository_attr,
@@ -141,4 +153,6 @@ def setup_database_info(database):
         if db_instance.dns != db_instance.address:
             instances.append(db_instance.dns.split('.')[0])
 
-    return database.name, database.engine_type, instances, database.environment.name, database.databaseinfra
+    return (database.name, database.engine_type,
+            instances, database.environment.name,
+            database.databaseinfra)
