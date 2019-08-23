@@ -1,4 +1,3 @@
-from django.contrib import admin
 from django.contrib.flatpages.models import FlatPage
 
 # Note: we are renaming the original Admin and Form as we import them!
