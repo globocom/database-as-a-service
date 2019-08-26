@@ -23,6 +23,11 @@ class BaseRedis(BaseTopology):
     def add_database_instances_last_steps(self):
         return ()
 
+    def get_change_binaries_upgrade_patch_steps(self):
+        return (
+            'workflow.steps.util.database_upgrade_patch.RedisCHGBinStep',
+        )
+
 
 class RedisSingle(BaseRedis):
 

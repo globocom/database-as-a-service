@@ -23,7 +23,8 @@ def submit_row_extended_save_continue(context, add_confirmation=False):
         'show_save_as_new': not is_popup and change and save_as,
         'show_save_and_add_another': context['has_add_permission'] and
         not is_popup and (not save_as or context['add']),
-        'show_save_and_continue': not is_popup and context['has_change_permission'],
+        'show_save_and_continue': (not is_popup and
+                                   context['has_change_permission']),
         'is_popup': is_popup,
         'show_save': True,
         'delete_button_name': delete_button_name,
