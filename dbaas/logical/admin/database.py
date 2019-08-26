@@ -203,7 +203,10 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     engine_type.admin_order_field = 'name'
 
     def engine_html(self, database):
-        engine_info = str(database.databaseinfra.engine_patch.full_version)
+        engine_info = '{}_{}'.format(
+            database.engine.name,
+            database.databaseinfra.engine_patch.full_version
+        )
 
         topology = database.databaseinfra.plan.replication_topology
         if topology.details:

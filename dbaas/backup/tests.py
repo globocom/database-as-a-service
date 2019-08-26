@@ -32,4 +32,3 @@ class MakeDatabaseBackup(TestCase):
     def test_is_backup_disable_not_configured(self):
         self.param_backup_available.delete()
         self.assertFalse(self.admin.is_backup_available)
-

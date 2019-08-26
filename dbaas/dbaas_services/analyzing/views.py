@@ -11,7 +11,10 @@ import models
 
 class SubUsedResourceReport(ListView):
     def get(self, request, *args, **kwargs):
-        reports = models.AnalyzeRepository.objects.all().order_by('-analyzed_at').values('analyzed_at').distinct()
+        reports = (models.AnalyzeRepository.objects.all()
+                   .order_by('-analyzed_at')
+                   .values('analyzed_at')
+                   .distinct())
 
         report_links = (report['analyzed_at'] for report in reports)
         return render(request, 'reports/index.html', {'reports': report_links})
