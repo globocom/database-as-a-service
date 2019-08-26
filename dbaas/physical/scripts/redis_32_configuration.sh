@@ -823,6 +823,8 @@ createconfigdbrsyslogfile()
 EOF_DBAAS_CONFIGDBFILE
 ) > /etc/rsyslog.d/redis.conf
     die_if_error "Error setting redis.conf"
+    chown redis:redis /etc/rsyslog.d/redis.conf
+    die_if_error "Error changing redis conf file owner"
 }
 
 create_config_http()
@@ -997,6 +999,7 @@ port {{SENTINELPORT}}
 # Specify the log file name. Also the empty string can be used to force
 # Sentinel to log on the standard output. Note that if you use standard
 # output for logging but daemonize, logs will be sent to /dev/null
+<<<<<<< Updated upstream
 logfile "/data/logs/redis-sentinel.log"
 
 # sentinel announce-ip <ip>
