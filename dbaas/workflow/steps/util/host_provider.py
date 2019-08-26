@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from time import sleep
 from django.core.exceptions import ObjectDoesNotExist
 from requests import post, delete, get
 from dbaas_credentials.models import CredentialType
@@ -290,7 +291,7 @@ class ReinstallTemplate(HostProviderStep):
         return "Reinstalling template to VM..."
 
     def do(self):
-        reinstall = self.provider.new_version()
+        reinstall = self.provider.new_version(self.engine)
         if not reinstall:
             raise EnvironmentError('Could not reinstall VM')
 
@@ -423,6 +424,9 @@ class CreateVirtualMachineMigrate(CreateVirtualMachine):
     def do(self):
         if self.host.future_host:
             return
+
+        if self.attempt and self.attempt > 1:
+            sleep(240)
 
         host = self.provider.create_host(
             self.infra, self.offering, self.vm_name, self.team, self.zone

@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import User
 from physical.models import Engine
 from physical.tests import factory
 from account.models import Role, Team, Organization
@@ -20,7 +20,10 @@ class Command(BaseCommand):
         my_host = factory.HostFactory(hostname='localhost')
         my_env = factory.EnvironmentFactory(name='laboratory')
         my_plan = factory.PlanFactory(
-            name='small', engine_type=my_engine.engine_type, environments=[my_env])
+            name='small',
+            engine_type=my_engine.engine_type,
+            environments=[my_env]
+        )
         my_infradb = factory.DatabaseInfraFactory(
             name='local_infra',
             plan=my_plan,
@@ -32,7 +35,8 @@ class Command(BaseCommand):
         my_role = Role.objects.get_or_create(name="role_dba")[0]
         organization = Organization.objects.get_or_create(
             name='fake_organization')[0]
-        my_team = Team.objects.get_or_create(name="my team", role=my_role,
+        my_team = Team.objects.get_or_create(
+            name="my team", role=my_role,
             organization=organization)[0]
         my_admin = User.objects.create_superuser(
             'admin', email='admin@admin.com', password='123456')

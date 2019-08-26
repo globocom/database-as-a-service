@@ -90,7 +90,9 @@ class TeamListFilter(SimpleListFilter):
         if self.value() == '-1':
             return queryset.exclude(id__in=self._get_users(Team.objects.all()))
         elif self.value():
-            return queryset.filter(id__in=self._get_users(Team.objects.filter(id=self.value())))
+            return queryset.filter(
+                id__in=self._get_users(Team.objects.filter(id=self.value()))
+            )
         return queryset
 
 
@@ -194,7 +196,8 @@ class CustomUserAdmin(UserAdmin):
             extra_context = {}
         username_field = self.model._meta.get_field(self.model.USERNAME_FIELD)
         username_field.max_length = 100
-        username_field.help_text = "Required. 100 characters or fewer. Letters, digits and @/./+/-/_ only."
+        username_field.help_text = ("Required. 100 characters or fewer. "
+                                    "Letters, digits and @/./+/-/_ only.")
         username_field.validators[1] = validate_user_length
         defaults = {
             'auto_populated_fields': (),
@@ -209,7 +212,8 @@ class CustomUserAdmin(UserAdmin):
     # def change_view(self, request, form_url='', extra_context=None):
         username_field = self.model._meta.get_field(self.model.USERNAME_FIELD)
         username_field.max_length = 100
-        username_field.help_text = "Required. 100 characters or fewer. Letters, digits and @/./+/-/_ only."
+        username_field.help_text = ("Required. 100 characters or fewer. "
+                                    "Letters, digits and @/./+/-/_ only.")
         username_field.validators[1] = validate_user_length
 
     @csrf_protect_m
@@ -225,22 +229,33 @@ class CustomUserAdmin(UserAdmin):
             raise PermissionDenied
 
         if obj is None:
-            raise Http404(_('%(name)s object with primary key %(key)r does not exist.') % {
-                          'name': force_text(opts.verbose_name), 'key': escape(object_id)})
+            raise Http404(
+                _(('%(name)s object with primary key %(key)r '
+                   'does not exist.')) % {
+                          'name': force_text(opts.verbose_name),
+                          'key': escape(object_id)
+                })
 
         if request.method == 'POST' and "_saveasnew" in request.POST:
-            return self.add_view(request, form_url=reverse('admin:%s_%s_add' %
-                                                           (opts.app_label,
-                                                            opts.model_name),
-                                                           current_app=self.admin_site.name))
+            return self.add_view(
+                request,
+                form_url=reverse(
+                    'admin:%s_%s_add' % (
+                        opts.app_label,
+                        opts.model_name),
+                    current_app=self.admin_site.name)
+                )
 
         ModelForm = self.get_form(request, obj)
         formsets = []
         inline_instances = self.get_inline_instances(request, obj)
         if request.method == 'POST':
-            username_field = self.model._meta.get_field(self.model.USERNAME_FIELD)
+            username_field = self.model._meta.get_field(
+                self.model.USERNAME_FIELD
+            )
             username_field.max_length = 100
-            username_field.help_text = "Required. 100 characters or fewer. Letters, digits and @/./+/-/_ only."
+            username_field.help_text = ("Required. 100 characters or fewer. "
+                                        "Letters, digits and @/./+/-/_ only.")
             username_field.validators[1] = validate_user_length
             form = ModelForm(request.POST, request.FILES, instance=obj)
             if form.is_valid():
@@ -250,7 +265,8 @@ class CustomUserAdmin(UserAdmin):
                 form_validated = False
                 new_object = obj
             prefixes = {}
-            for FormSet, inline in zip(self.get_formsets(request, new_object), inline_instances):
+            for FormSet, inline in zip(self.get_formsets(request, new_object),
+                                       inline_instances):
                 prefix = FormSet.get_default_prefix()
                 prefixes[prefix] = prefixes.get(prefix, 0) + 1
                 if prefixes[prefix] != 1 or not prefix:
@@ -272,7 +288,8 @@ class CustomUserAdmin(UserAdmin):
         else:
             form = ModelForm(instance=obj)
             prefixes = {}
-            for FormSet, inline in zip(self.get_formsets(request, obj), inline_instances):
+            for FormSet, inline in zip(self.get_formsets(request, obj),
+                                       inline_instances):
                 prefix = FormSet.get_default_prefix()
                 prefixes[prefix] = prefixes.get(prefix, 0) + 1
                 if prefixes[prefix] != 1 or not prefix:
@@ -293,8 +310,10 @@ class CustomUserAdmin(UserAdmin):
             fieldsets = list(inline.get_fieldsets(request, obj))
             readonly = list(inline.get_readonly_fields(request, obj))
             prepopulated = dict(inline.get_prepopulated_fields(request, obj))
-            inline_admin_formset = helpers.InlineAdminFormSet(inline, formset,
-                                                              fieldsets, prepopulated, readonly, model_admin=self)
+            inline_admin_formset = helpers.InlineAdminFormSet(
+                inline, formset,
+                fieldsets, prepopulated, readonly, model_admin=self
+            )
             inline_admin_formsets.append(inline_admin_formset)
             media = media + inline_admin_formset.media
 
@@ -311,4 +330,6 @@ class CustomUserAdmin(UserAdmin):
             'preserved_filters': self.get_preserved_filters(request),
         }
         context.update(extra_context or {})
-        return self.render_change_form(request, context, change=True, obj=obj, form_url=form_url)
+        return self.render_change_form(
+            request, context, change=True, obj=obj, form_url=form_url
+        )

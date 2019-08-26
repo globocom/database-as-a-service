@@ -349,7 +349,7 @@ create_mysql_telegraf_config()
 [[inputs.mysql]]
   servers = ["\$DBUSER:\$DBPASS@tcp(\$LOCALHOST:\$PORT)/?tls=false"]
   taginclude = ["host"]
-  fieldpass = ["bytes_received", "bytes_sent", "com_commit", "com_delete", "com_insert", "com_select", "com_update", "qcache_free_blocks", "qcache_free_memory", "qcache_hits", "qcache_inserts", "qcache_not_cached", "qcache_queries_in_cache", "qcache_total_blocks", "table_locks_immediate", "table_locks_waited", "table_open_cache_hits", "table_open_cache_misses", "table_open_cache_overflows", "threads_connected", "threads_running"]
+  fieldpass = ["bytes_received", "bytes_sent", "com_commit", "com_delete", "com_insert", "com_select", "com_update", "qcache_free_blocks", "qcache_free_memory", "qcache_hits", "qcache_inserts", "qcache_not_cached", "qcache_queries_in_cache", "qcache_total_blocks", "table_locks_immediate", "table_locks_waited", "table_open_cache_hits", "table_open_cache_misses", "table_open_cache_overflows", "threads_connected", "threads_running", "slave_slave_io_running", "slave_slave_sql_running", "slave_seconds_behind_master"]
 
   ## Selects the metric output format.
   ##
