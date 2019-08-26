@@ -36,8 +36,13 @@ def database_notification(self):
         worker_name = get_worker_name()
         task_history = TaskHistory.register(
             request=self.request, user=None, worker_name=worker_name)
-        task_history.update_status_for(TaskHistory.STATUS_SUCCESS, details="\n".join(
-            str(key) + ': ' + ', '.join(value) for key, value in msgs.items()))
+        task_history.update_status_for(
+            TaskHistory.STATUS_SUCCESS,
+            details="\n".join(
+                (str(key) + ': ' + ', '.join(value)
+                 for key, value in msgs.items())
+            )
+        )
     except Exception as e:
         task_history.update_status_for(TaskHistory.STATUS_ERROR, details=e)
 
@@ -50,14 +55,17 @@ def analyzing_notification_for_team(team=None):
     databases = Database.objects.filter(team=team, is_in_quarantine=False)
     msgs = []
     for database in databases:
-        analyzing_repositories = AnalyzeRepository.objects.filter(analyzed_at__startswith=date.today(),
-                                                                  database_name=database.name,
-                                                                  databaseinfra_name=database.databaseinfra.name).values('volume_alarm',
-                                                                                                                         'cpu_alarm',
-                                                                                                                         'memory_alarm',
-                                                                                                                         'cpu_threshold',
-                                                                                                                         'memory_threshold',
-                                                                                                                         'volume_threshold').annotate()
+        analyzing_repositories = AnalyzeRepository.objects.filter(
+            analyzed_at__startswith=date.today(),
+            database_name=database.name,
+            databaseinfra_name=database.databaseinfra.name).values(
+                'volume_alarm',
+                'cpu_alarm',
+                'memory_alarm',
+                'cpu_threshold',
+                'memory_threshold',
+                'volume_threshold'
+            ).annotate()
         if not analyzing_repositories:
             continue
         else:

@@ -9,7 +9,11 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
 
-        names = filter(lambda s: s, map(lambda s: s.strip(), args[0].split(',')))
+        names = filter(
+            lambda s: s, map(
+                lambda s: s.strip(), args[0].split(',')
+            )
+        )
         dbs = Database.objects.filter(databaseinfra__name__in=names)
         if not dbs:
             return "Nenhum banco encontrado"
