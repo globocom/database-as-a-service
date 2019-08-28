@@ -207,6 +207,9 @@ class EnginePatch(BaseModel):
         blank=True, null=True, default='',
         max_length=200,
     )
+    required_disk_size_gb = models.FloatField(
+        verbose_name=_("Disco necessário (GB)"),
+    )
 
     @property
     def full_version(self):
