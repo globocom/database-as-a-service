@@ -17,7 +17,6 @@ class EnginePatchForm(forms.ModelForm):
 
         is_initial_patch = self.cleaned_data.get('is_initial_patch')
         patch_path = self.cleaned_data.get('patch_path')
-        required_disk_size_gb = self.cleaned_data.get('required_disk_size_gb')
         is_delete = self.cleaned_data.get('DELETE')
 
         if not is_initial_patch:
