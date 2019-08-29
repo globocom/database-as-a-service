@@ -462,6 +462,9 @@ class MySQLFoxHA(MySQLSingle):
         ]
 
     def get_reinstallvm_steps(self):
+        """This method returns steps to reinstall a VM. When a reinstall is
+        executed the current patch needs to be re-applied as the original
+        template does not contain the patch version."""
         return [{
             'Disable monitoring and alarms': (
                 'workflow.steps.util.zabbix.DisableAlarms',
