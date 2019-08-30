@@ -369,9 +369,6 @@ class DatabaseUpgradePatch(DatabaseMaintenanceTask):
     target_patch_full_version = models.CharField(
         verbose_name="Target Patch", max_length=50, null=True, blank=True
     )
-    root_size_gb = models.FloatField(
-        verbose_name=_("Disco RFS (GB)"), null=True, blank=True
-    )
 
     def __unicode__(self):
         return "{} upgrade release".format(self.database.name)
