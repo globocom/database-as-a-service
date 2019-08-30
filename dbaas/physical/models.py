@@ -928,6 +928,9 @@ class Host(BaseModel):
         verbose_name=_("Identifier"),
         max_length=255, default=''
     )
+    root_size_gb = models.FloatField(
+        verbose_name=_("Disco RFS (GB)"), blank=True, null=True
+    )
 
     def __unicode__(self):
         return self.hostname
