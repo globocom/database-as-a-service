@@ -4,9 +4,10 @@ from django.core.exceptions import ObjectDoesNotExist
 from requests import post, delete, get
 from dbaas_credentials.models import CredentialType
 from physical.models import Host, Instance
-from util import get_credentials_for
+from util import get_credentials_for, exec_remote_command_host
 from base import BaseInstanceStep
 from vm import WaitingBeReady
+
 
 CHANGE_MASTER_ATTEMPS = 4
 CHANGE_MASTER_SECONDS = 15
@@ -45,6 +46,10 @@ class HostProviderListZoneException(HostProviderException):
 
 
 class HostProviderInfoException(HostProviderException):
+    pass
+
+
+class HostProviderResizeException(HostProviderException):
     pass
 
 
@@ -157,6 +162,23 @@ class Provider(object):
             )
         return True
 
+    def resize_root_volume(self, size):
+        """It does a request to resize volume endpoint of the host provider."""
+        url = "{}/{}/{}/volume/resize".format(
+            self.credential.endpoint, self.provider, self.environment
+        )
+        data = {
+            "identifier": self.host.identifier,
+            "size": size
+        }
+        response = self._request(post, url, json=data)
+        if response.status_code != 200:
+            raise HostProviderResizeException(
+                response.content,
+                response
+            )
+        return True
+
     def create_host(self, infra, offering, name, team_name, zone=None, database_name=''):
         url = "{}/{}/{}/host/new".format(
             self.credential.endpoint, self.provider, self.environment
@@ -228,6 +250,15 @@ class HostProviderStep(BaseInstanceStep):
         self.credentials = None
         self._provider = None
 
+    def execute_script(self, script):
+        output = {}
+        return_code = exec_remote_command_host(self.host, script, output)
+        if return_code != 0:
+            error = 'Could not execute script {}: {}'.format(
+                return_code, output)
+            raise EnvironmentError(error)
+        return output
+
     @property
     def provider(self):
         if not self._provider:
@@ -268,6 +299,48 @@ class Start(HostProviderStep):
 
     def undo(self):
         Stop(self.instance).do()
+
+
+class StartVmAfterResizing(HostProviderStep):
+
+    def __init__(self, instance):
+        super(StartVmAfterResizing, self).__init__(instance)
+        self.start_step = Start(instance)
+
+    def __unicode__(self):
+        return str(self.start_step)
+
+    def is_valid(self):
+        return ResizeRootVolume(self.instance).check_needs_resize()
+
+    def do(self):
+        if self.is_valid():
+            self.start_step.do()
+
+    def undo(self):
+        if self.is_valid():
+            self.start_step.undo()
+
+
+class StopVmBeforeResizing(HostProviderStep):
+
+    def __init__(self, instance):
+        super(StopVmBeforeResizing, self).__init__(instance)
+        self.stop_step = Stop(instance)
+
+    def __unicode__(self):
+        return str(self.stop_step)
+
+    def is_valid(self):
+        return ResizeRootVolume(self.instance).check_needs_resize()
+
+    def do(self):
+        if self.is_valid():
+            self.stop_step.do()
+
+    def undo(self):
+        if self.is_valid():
+            self.stop_step.undo()
 
 
 class InstallNewTemplate(HostProviderStep):
@@ -479,3 +552,50 @@ class DestroyVirtualMachineMigrate(HostProviderStep):
 
     def undo(self):
         raise NotImplementedError
+
+
+class UpdateRootVolumeSize(HostProviderStep):
+
+    def get_root_volume_size(self):
+        """This methods executes a script in the host that returns disk size in
+        KB. This size is then converted to GB.
+        """
+        script = """echo $(($(free | grep Swap | awk '{print $2}')\
+        + $(df -l --total | tail -n1 | awk '{print $2}')))
+        """
+        output = self.execute_script(script)
+        disk_size_kb = float(output['stdout'][0])
+        disk_size_gb = (disk_size_kb / 1024.0) / 1024.0
+
+        return disk_size_gb
+
+    def __unicode__(self):
+        return "Updating Host root volume size..."
+
+    def do(self):
+        root_size_gb = self.get_root_volume_size()
+        self.host.root_size_gb = round(root_size_gb, 2)
+        self.host.save()
+
+
+class ResizeRootVolume(HostProviderStep):
+
+    def __unicode__(self):
+        return "Resizing virtual machine root volume..."
+
+    def check_needs_resize(self):
+        """This methods compares DatabaseUpgradePatch.root_size_gb to
+        target_patch.required_disk_size_gb.
+        """
+        engine_patch = self.database.upgrade_patch_target
+        self.required_disk_size_gb = engine_patch.required_disk_size_gb
+        disk_size_gb = self.host.root_size_gb
+
+        if disk_size_gb < self.required_disk_size_gb:
+            return True
+
+        return False
+
+    def do(self):
+        if self.check_needs_resize():
+            self.provider.resize_root_volume(self.required_disk_size_gb)
