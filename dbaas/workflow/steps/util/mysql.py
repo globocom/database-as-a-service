@@ -270,16 +270,17 @@ class RunMySQLUpgrade(MySQLStep):
 
 class RunMySQLUpgradePatch(MySQLStep):
     """This class represents a MySQLStep and is going to be executed while
-    upgrading patches. The main difference between this class and
-    RunMySQLUpgrade is the extra parameter '--upgrade-system-tables'. This
-    parameter makes sure upgrades are only performed on system schemas."""
+    upgrading patches. The main differences between this class and
+    RunMySQLUpgrade are the extra parameters '--upgrade-system-tables' and
+    '--force'. Those parameters make sure upgrades are only performed on system
+    schemas and databases already upgraded wont crash."""
 
     def __unicode__(self):
         return "Executing mysql_upgrade for patch..."
 
     @property
     def script(self):
-        return "mysql_upgrade -u{} -p{} --upgrade-system-tables".format(
+        return "mysql_upgrade -u{} -p{} --upgrade-system-tables --force".format(
             self.infra.user, self.infra.password
         )
 
