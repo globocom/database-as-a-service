@@ -959,6 +959,14 @@ class Database(BaseModel):
     def organization(self):
         return self.team.organization
 
+    @property
+    def upgrade_patch_target(self):
+        upgrade = self.upgrades_patch.last()
+        if upgrade and upgrade.is_running:
+            return upgrade.target_patch
+        else:
+            return self.infra.engine_patch
+
 class DatabaseLock(BaseModel):
     database = models.ForeignKey(
         Database, related_name="lock", unique=True
