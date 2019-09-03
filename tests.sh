@@ -1,6 +1,6 @@
 #!/bin/bash
 echo -n 'waiting mysql start'
-while ! /etc/init.d/mysql -h $DBAAS_DATABASE_HOST -uroot -p$DBAAS_DATABASE_PASSWORD -e "SHOW DATABASES"
+while ! /usr/local/mysql/bin/mysql -h $DBAAS_DATABASE_HOST -uroot -p$DBAAS_DATABASE_PASSWORD -e "SHOW DATABASES"
 do
   echo -n .
   sleep 1
@@ -9,7 +9,7 @@ done
 echo 'MYSQL STARTED!!!!'
 
 # Create DATABASE
-echo "create database IF NOT EXISTS dbaas;" | /etc/init.d/mysql -h $DBAAS_DATABASE_HOST -uroot -p$DBAAS_DATABASE_PASSWORD
+echo "create database IF NOT EXISTS dbaas;" | /usr/local/mysql/bin/mysql -h $DBAAS_DATABASE_HOST -uroot -p$DBAAS_DATABASE_PASSWORD
 
 # Create user on mongo
 python add_user_admin_on_mongo.py
