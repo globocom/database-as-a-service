@@ -22,6 +22,7 @@ before_install:
   - docker images
   - docker ps
   - sudo /etc/init.d/mysql stop
+  - ln -s /etc/init.d/mysql /usr/local/bin/mysql
 
 script:
   - docker-compose run test
