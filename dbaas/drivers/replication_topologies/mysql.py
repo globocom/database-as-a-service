@@ -494,6 +494,14 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.puppet.CheckStatus',
             ),
         }] + [{
+            'Resize Root Volume': (
+                'workflow.steps.util.host_provider.UpdateRootVolumeSize',
+                'workflow.steps.util.host_provider.StopVmBeforeResizing',
+                'workflow.steps.util.host_provider.ResizeRootVolume',
+                'workflow.steps.util.host_provider.StartVmAfterResizing',
+                'workflow.steps.util.vm.WaitingBeReady',
+            ),
+        }] + [{
             'Start Database': (
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.Initialization',
@@ -502,6 +510,7 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.database.Stop',
                 ) + self.get_change_binaries_upgrade_patch_steps() + (
                 'workflow.steps.util.database.Start',
+                ) + self.after_starting_database_steps() + (
                 'workflow.steps.util.database.CheckIsUp',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
             ),
@@ -636,6 +645,7 @@ class MySQLFoxHA(MySQLSingle):
             'workflow.steps.util.disk.RemoveDeprecatedFiles',
             'workflow.steps.util.plan.ConfigureForNewInfra',
             'workflow.steps.util.mysql.SetFilePermission',
+            ) + self.get_resize_root_volume_steps() + (
             ) + self.get_change_binaries_upgrade_patch_steps() + (
             'workflow.steps.util.database.Start',
             'workflow.steps.util.database.CheckIsUp',

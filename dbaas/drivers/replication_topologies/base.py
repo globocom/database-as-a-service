@@ -112,7 +112,7 @@ class BaseTopology(object):
 
     def after_starting_database_steps(self):
         """This hook is supposed to be executed right after starting up a
-        database. This method can be implemtend by subclasses interested in
+        database. This method can be implemented by subclasses interested in
         doing actions right after start up."""
         return ()
 
@@ -128,6 +128,11 @@ class BaseTopology(object):
                 'workflow.steps.util.database.CheckIfSwitchMaster',
                 'workflow.steps.util.database.Stop',
                 'workflow.steps.util.database.CheckIsDown',
+                'workflow.steps.util.host_provider.UpdateRootVolumeSize',
+                'workflow.steps.util.host_provider.StopVmBeforeResizing',
+                'workflow.steps.util.host_provider.ResizeRootVolume',
+                'workflow.steps.util.host_provider.StartVmAfterResizing',
+                'workflow.steps.util.vm.WaitingBeReady',
                 ) + self.get_change_binaries_upgrade_patch_steps() + (
                 'workflow.steps.util.database.Start',
                 ) + self.after_starting_database_steps() + (
@@ -266,6 +271,14 @@ class BaseTopology(object):
                 'workflow.steps.util.vm.UpdateOSDescription',
             ),
         }] + [{
+            'Resize Root Volume': (
+                'workflow.steps.util.host_provider.UpdateRootVolumeSize',
+                'workflow.steps.util.host_provider.StopVmBeforeResizing',
+                'workflow.steps.util.host_provider.ResizeRootVolume',
+                'workflow.steps.util.host_provider.StartVmAfterResizing',
+                'workflow.steps.util.vm.WaitingBeReady',
+            ),
+        }] + [{
             'Start Database': (
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.Initialization',
@@ -273,6 +286,7 @@ class BaseTopology(object):
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 ) + self.get_change_binaries_upgrade_patch_steps() + (
                 'workflow.steps.util.database.Start',
+                ) + self.after_starting_database_steps() + (
                 'workflow.steps.util.database.CheckIsUp',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
             ),
@@ -315,6 +329,15 @@ class BaseTopology(object):
                 'workflow.steps.util.zabbix.EnableAlarms',
             ),
         }]
+
+    def get_resize_root_volume_steps(self):
+        return (
+            'workflow.steps.util.host_provider.UpdateRootVolumeSize',
+            'workflow.steps.util.host_provider.StopVmBeforeResizing',
+            'workflow.steps.util.host_provider.ResizeRootVolume',
+            'workflow.steps.util.host_provider.StartVmAfterResizing',
+            'workflow.steps.util.vm.WaitingBeReady',
+        )
 
     def get_host_migrate_steps(self):
         raise NotImplementedError

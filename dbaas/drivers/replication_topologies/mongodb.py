@@ -372,6 +372,7 @@ class MongoDBReplicaset(BaseTopology):
             'workflow.steps.util.volume_provider.MountDataVolume',
             'workflow.steps.util.plan.Initialization',
             'workflow.steps.util.plan.Configure',
+            ) + self.get_resize_root_volume_steps() + (
             ) + self.get_change_binaries_upgrade_patch_steps() + (
             'workflow.steps.util.database.Start',
             'workflow.steps.util.vm.CheckAccessToMaster',
