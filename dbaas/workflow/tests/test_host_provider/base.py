@@ -44,5 +44,8 @@ class BaseCreateVirtualMachineTestCase(TestCase):
         )
         self.instance = self._create_instance()
         self.infra = self.instance.databaseinfra
+        self.infra.engine_patch.is_initial_patch = True
+
+        self.infra.engine_patch.save()
 
         self.host_provider = CreateVirtualMachine(self.instance)
