@@ -6,6 +6,7 @@ do
   sleep 1
 done
 
+ps -ef | grep mysql
 echo 'MYSQL STARTED!!!!'
 
 # Create DATABASE
