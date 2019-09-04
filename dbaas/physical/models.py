@@ -178,14 +178,17 @@ class Engine(BaseModel):
     def is_redis(self):
         return self.name == 'redis'
 
-    def available_patches(self, last_upgrade_patch):
+    def available_patches(self, database):
+        host = database.infra.hosts[0]
+        engine_patch = database.infra.engine_patch
         available_patches = self.patchs.exclude(
             is_initial_patch=True
         )
 
-        if last_upgrade_patch and last_upgrade_patch.engine == self:
+        if engine_patch and engine_patch.engine == self:
             available_patches = available_patches.filter(
-                patch_version__gt=last_upgrade_patch.patch_version
+                patch_version__gt=engine_patch.patch_version,
+                required_disk_size_gb__lte=host.root_size_gb
             )
         return available_patches
 
