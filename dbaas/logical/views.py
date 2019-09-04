@@ -793,7 +793,7 @@ def _upgrade_patch(request, database, target_patch):
         messages.add_message(request, messages.ERROR, error)
     else:
         target_patch = database.engine.available_patches(
-            database.infra.engine_patch
+            database
         ).get(
             id=target_patch
         )
@@ -881,9 +881,9 @@ def database_resizes(request, context, database):
     context['retry_patch'] = DatabaseUpgradePatch.objects.need_retry(
         database=database
     )
-    context['available_patches'] = list(database.engine.available_patches(
-            database.infra.engine_patch
-    ))
+    context['available_patches'] = list(
+        database.engine.available_patches(database)
+    )
 
     return render_to_response(
         "logical/database/details/resizes_tab.html",
