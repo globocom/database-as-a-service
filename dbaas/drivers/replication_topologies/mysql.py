@@ -95,6 +95,9 @@ class MySQLSingle(BaseMysql):
             )}, {
             'Create Extra DNS': (
                 'workflow.steps.util.database.CreateExtraDNS',
+            )}, {
+            'Update Host Disk Size': (
+                'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
             )
         }]
 
@@ -362,6 +365,9 @@ class MySQLFoxHA(MySQLSingle):
             )}, {
             'Create Extra DNS': (
                 'workflow.steps.util.database.CreateExtraDNS',
+            )}, {
+            'Update Host Disk Size': (
+                'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
             )
         }]
 
@@ -860,8 +866,10 @@ class MySQLFoxHAAWS(MySQLFoxHA):
             )}, {
             'Create Extra DNS': (
                 'workflow.steps.util.database.CreateExtraDNS',
+            )}, {
+            'Update Host Disk Size': (
+                'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
             )
-
         }]
 
     def get_host_migrate_steps_cleaning_up(self):
