@@ -73,6 +73,9 @@ class MongoDBSingle(BaseTopology):
             )}, {
             'Create Extra DNS': (
                 'workflow.steps.util.database.CreateExtraDNS',
+            )}, {
+            'Update Host Disk Size': (
+                'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
             )
         }]
 
@@ -307,6 +310,9 @@ class MongoDBReplicaset(BaseTopology):
             )}, {
             'Create Extra DNS': (
                 'workflow.steps.util.database.CreateExtraDNS',
+            )}, {
+            'Update Host Disk Size': (
+                'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
             )
         }]
 
