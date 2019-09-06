@@ -805,6 +805,14 @@ def _upgrade_patch(request, database, target_patch):
         )
 
 
+@database_view("")
+def database_upgrade_patch_retry(request, context, database):
+    _upgrade_patch_retry(request, database)
+    return HttpResponseRedirect(
+        reverse('admin:logical_database_resizes', kwargs={'id': database.id})
+    )
+
+
 def _upgrade_patch_retry(request, database):
     can_do_upgrade, error = database.can_do_upgrade_patch_retry()
     if can_do_upgrade:
