@@ -213,7 +213,7 @@ def region_migration_start(self, infra, instances, since_step=None):
 @app.task(bind=True)
 def create_database(
     self, name, plan, environment, team, project, description, task,
-    subscribe_to_email_events=True, is_protected=False, user=None,
+    backup_hour, subscribe_to_email_events=True, is_protected=False, user=None,
     retry_from=None
 ):
     task = TaskHistory.register(
@@ -224,7 +224,7 @@ def create_database(
     from tasks_create_database import create_database
     create_database(
         name, plan, environment, team, project, description, task,
-        subscribe_to_email_events, is_protected, user, retry_from
+        backup_hour, subscribe_to_email_events, is_protected, user, retry_from
     )
 
 
@@ -251,9 +251,11 @@ def _create_database_rollback(self, rollback_from, task, user):
     from tasks_create_database import rollback_create
     rollback_create(rollback_from, task, user)
 
+
 @app.task(bind=True)
 def create_database_rollback(self, rollback_from, task, user):
     _create_database_rollback(self, rollback_from, task, user)
+
 
 @app.task(bind=True)
 def node_zone_migrate(

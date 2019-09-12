@@ -25,7 +25,7 @@ def get_or_create_infra(base_name, plan, environment, backup_hour, retry_from=No
         infra.environment = environment
         infra.capacity = 1
         infra.per_database_size_mbytes = plan.max_db_size
-        infra.backup_hour = 2
+        infra.backup_hour = backup_hour
         infra.engine_patch = plan.engine.default_engine_patch
         infra.save()
 
@@ -69,8 +69,8 @@ def get_instances_for(infra, topology_path):
 
 
 def create_database(
-    name, plan, environment, team, backup_hour, project, description, task,
-    subscribe_to_email_events=True, is_protected=False, user=None,
+    name, plan, environment, team, project, description, task,
+    backup_hour, subscribe_to_email_events=True, is_protected=False, user=None,
     retry_from=None
 ):
     topology_path = plan.replication_topology.class_path
