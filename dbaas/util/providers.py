@@ -11,12 +11,14 @@ LOG = logging.getLogger(__name__)
 
 
 def clone_infra(
-        plan, environment, name, team, project, description,
+        plan, environment, name, team, backup_hour, project, description,
         subscribe_to_email_events, task=None, clone=None
 ):
     if not plan.provider == plan.CLOUDSTACK:
         infra = DatabaseInfra.best_for(
-            plan=plan, environment=environment, name=name)
+            plan=plan, environment=environment,
+            name=name, backup_hour=backup_hour
+            )
 
         if infra:
             database = Database.provision(databaseinfra=infra, name=name)
@@ -45,6 +47,7 @@ def clone_infra(
         qt=get_vm_qt(plan=plan),
         dbtype=str(plan.engine_type),
         team=team,
+        backup_hour=backup_hour,
         project=project,
         description=description,
         clone=clone,
@@ -77,6 +80,7 @@ def destroy_infra(databaseinfra, task=None):
     workflow_dict = build_dict(
         plan=databaseinfra.plan,
         environment=databaseinfra.environment,
+        backup_hour=databaseinfra.backup_hour,
         steps=get_destroy_settings(
             databaseinfra.plan.replication_topology.class_path
         ),
@@ -135,8 +139,10 @@ def get_restore_snapshot_settings(class_path):
 def get_database_upgrade_setting(class_path):
     return get_replication_topology_instance(class_path).get_upgrade_steps()
 
+
 def get_database_upgrade_patch_setting(class_path):
     return get_replication_topology_instance(class_path).get_upgrade_patch_steps()
+
 
 def get_reinstallvm_steps_setting(class_path):
     return get_replication_topology_instance(class_path).get_reinstallvm_steps()

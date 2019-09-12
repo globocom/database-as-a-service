@@ -57,8 +57,8 @@ def create_database_with_retry(
     from maintenance.tasks import create_database
     return create_database.delay(
         name=name, plan=plan, environment=environment, team=team,
-        backup_hour=backup_hour, project=project, description=description, task=task,
-        subscribe_to_email_events=subscribe_to_email_events,
+        backup_hour=backup_hour, project=project, description=description,
+        task=task, subscribe_to_email_events=subscribe_to_email_events,
         is_protected=is_protected, user=user, retry_from=retry_from
     )
 
@@ -93,7 +93,6 @@ def destroy_database(self, database, task_history=None, user=None):
         database_destroy.plan = database.plan
         database_destroy.environment = database.environment
         database_destroy.team = database.team
-        database_destroy.backup_hour = database.backup_hour
         database_destroy.project = database.project
         database_destroy.description = database.description
         database_destroy.is_protected = database.is_protected
@@ -145,9 +144,10 @@ def clone_database(self, origin_database, clone_name, plan, environment, task_hi
         task_history.update_details(persist=True, details="Loading Process...")
         result = clone_infra(
             plan=plan, environment=environment, name=clone_name,
-            team=origin_database.team, project=origin_database.project,
-            description=origin_database.description, task=task_history,
-            clone=origin_database,
+            team=origin_database.team, backup_hour=backup_hour,
+            project=origin_database.project,
+            description=origin_database.description,
+            task=task_history, clone=origin_database,
             subscribe_to_email_events=origin_database.subscribe_to_email_events
         )
 
@@ -720,6 +720,7 @@ def upgrade_database_patch(self, database, patch, user, task, since_step=0):
             'Could not do upgrade patch.\nUpgrade patch doesn\'t have rollback'
         )
 
+
 @app.task(bind=True)
 def reinstall_vm_database(self, database, instance, user, task, since_step=0):
     worker_name = get_worker_name()
@@ -736,7 +737,7 @@ def reinstall_vm_database(self, database, instance, user, task, since_step=0):
     database_reinstallvm.task = task
     database_reinstallvm.save()
 
-    instances = [instance,]
+    instances = [instance, ]
 
     success = steps_for_instances(
         steps, instances, task,
@@ -985,7 +986,6 @@ def resize_database_rollback(self, from_resize, user, task):
         )
 
 
-
 @app.task(bind=True)
 def switch_write_database(self, database, instance, user, task):
     from workflow.workflow import steps_for_instances
@@ -1017,6 +1017,7 @@ def switch_write_database(self, database, instance, user, task):
     else:
         task.update_status_for(TaskHistory.STATUS_ERROR, 'Done')
         database.finish_task()
+
 
 @app.task(bind=True)
 def configure_ssl_database(self, database, user, task, since_step=0):
@@ -1310,9 +1311,10 @@ class TaskRegister(object):
         )
 
     @classmethod
-    def database_create(cls, user, name, plan, environment, team, backup_hour, project,
-                        description, subscribe_to_email_events=True,
-                        register_user=True, is_protected=False, retry_from=None):
+    def database_create(cls, user, name, plan, environment, team, backup_hour,
+                        project, description, subscribe_to_email_events=True,
+                        register_user=True, is_protected=False,
+                        retry_from=None):
         task_params = {
             'task_name': "create_database",
             'arguments': "Database name: {}".format(name),
@@ -1324,8 +1326,8 @@ class TaskRegister(object):
 
         return create_database_with_retry(
             name=name, plan=plan, environment=environment, team=team,
-            backup_hour=backup_hour, project=project, description=description, task=task,
-            subscribe_to_email_events=subscribe_to_email_events,
+            backup_hour=backup_hour, project=project, description=description,
+            task=task, subscribe_to_email_events=subscribe_to_email_events,
             is_protected=is_protected, user=user, retry_from=retry_from
         )
 
@@ -1362,7 +1364,6 @@ class TaskRegister(object):
         return destroy_database_retry.delay(
             rollback_from=rollback_from, task=task, user=user
         )
-
 
     @classmethod
     def database_backup(cls, database, user):
