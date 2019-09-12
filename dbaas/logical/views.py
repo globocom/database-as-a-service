@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
+import datetime
 import json
 from collections import OrderedDict
 import logging
@@ -321,6 +322,7 @@ def database_configure_ssl_retry(request, context=None, database=None, id=None):
         reverse('admin:logical_database_credentials', kwargs={'id': database.id})
     )
 
+
 class DatabaseParameters(TemplateView):
 
     PROTECTED = 1
@@ -604,7 +606,7 @@ def database_metrics(request, context, database):
         hostname__hostname__contains=context['hostname']
     ).first()
 
-    organization  = database.team.organization
+    organization = database.team.organization
     if organization and organization.external:
         endpoint = organization.grafana_endpoint
         datasource = organization.grafana_datasource
@@ -616,7 +618,8 @@ def database_metrics(request, context, database):
         endpoint,
         credential.project.format(database.engine_type),
         credential.get_parameter_by_name('db_param'), instance.dns,
-        credential.get_parameter_by_name('os_param'), instance.hostname.hostname,
+        credential.get_parameter_by_name('os_param'),
+        instance.hostname.hostname,
         credential.get_parameter_by_name('disk_param'),
         credential.get_parameter_by_name('disk_dir'),
         credential.get_parameter_by_name('env_param'),
@@ -750,7 +753,7 @@ def database_upgrade(request, context, database):
             user=request.user
         )
     return HttpResponseRedirect(
-        reverse('admin:logical_database_resizes', kwargs={'id': database.id})
+        reverse('admin:logical_database_maintenance', kwargs={'id': database.id})
     )
 
 
@@ -782,7 +785,7 @@ def database_upgrade_retry(request, context, database):
             since_step=since_step
         )
     return HttpResponseRedirect(
-        reverse('admin:logical_database_resizes', kwargs={'id': database.id})
+        reverse('admin:logical_database_maintenance', kwargs={'id': database.id})
     )
 
 
@@ -830,20 +833,14 @@ def _upgrade_patch_retry(request, database):
             since_step=since_step
         )
 
-@database_view('resizes/upgrade')
+
+@database_view('resizes')
 def database_resizes(request, context, database):
     if request.method == 'POST':
         if 'disk_resize' in request.POST and request.POST.get('disk_offering'):
             _disk_resize(request, database)
         elif 'vm_resize' in request.POST and request.POST.get('vm_offering'):
             _vm_resize(request, database)
-        elif (
-            'upgrade_patch' in request.POST and
-            request.POST.get('target_patch')
-        ):
-            _upgrade_patch(request, database, request.POST.get('target_patch'))
-        elif ('upgrade_patch_retry' in request.POST):
-            _upgrade_patch_retry(request, database)
         else:
             disk_auto_resize = request.POST.get('disk_auto_resize', False)
             database.disk_auto_resize = disk_auto_resize
@@ -868,6 +865,25 @@ def database_resizes(request, context, database):
     if database.infra.disk_offering not in context['disk_offerings']:
         context['disk_offerings'].insert(0, database.infra.disk_offering)
 
+    return render_to_response(
+        "logical/database/details/resizes_tab.html",
+        context, RequestContext(request)
+    )
+
+
+@database_view('maintenance')
+def database_maintenance(request, context, database):
+    if request.method == 'POST':
+        if (
+            'upgrade_patch' in request.POST and
+            request.POST.get('target_patch')
+        ):
+            _upgrade_patch(request, database, request.POST.get('target_patch'))
+        elif ('upgrade_patch_retry' in request.POST):
+            _upgrade_patch_retry(request, database)
+        else:
+            database.save()
+
     context['upgrade_mongo_24_to_30'] = \
         database.is_mongodb_24() and \
         request.user.has_perm(constants.PERM_UPGRADE_MONGO24_TO_30)
@@ -885,8 +901,10 @@ def database_resizes(request, context, database):
             database.infra.engine_patch
     ))
 
+    context['maintenance_hours'] = [(hour, datetime.time(hour, 0).strftime(format="%H:%M")) for hour in range(24)]
+
     return render_to_response(
-        "logical/database/details/resizes_tab.html",
+        "logical/database/details/maintenance_tab.html",
         context, RequestContext(request)
     )
 
