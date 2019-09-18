@@ -1070,6 +1070,35 @@ class AddAccessMigrate(AddAccess):
         self.remove_access(self.volume, self.host)
 
 
+class AddAccessRecreateSlave(AddAccess):
+    def __unicode__(self):
+        return "Adding permission to old disk..."
+
+    @property
+    def volume(self):
+        master_instance = self.infra.get_driver().get_master_instance()
+        return master_instance.hostname.volumes.get(is_active=True)
+
+    def do(self):
+        if not self.is_valid:
+            return
+        self.add_access(self.volume, self.host, 'read-only')
+
+    def undo(self):
+        self.remove_access(self.volume, self.host)
+
+
+class RemoveAccessRecreateSlave(AddAccessRecreateSlave):
+    def __unicode__(self):
+        return "Removing permission to old master disk..."
+
+    def do(self):
+        super(RemoveAccessRecreateSlave, self).undo()
+
+    def undo(self):
+        super(RemoveAccessRecreateSlave, self).do()
+
+
 class RemoveAccessMigrate(AddAccessMigrate):
     def __unicode__(self):
         return "Removing permission to old disk..."
