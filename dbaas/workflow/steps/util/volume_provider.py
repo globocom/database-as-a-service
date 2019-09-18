@@ -768,6 +768,42 @@ class CopyFilesMigrate(VolumeProviderBase):
         pass
 
 
+class CopyDataFromSnapShot(CopyFilesMigrate):
+
+    def __unicode__(self):
+        return "Copying data to snapshot to {}...".format(
+            self.dest_directory
+        )
+
+    @property
+    def source_directory(self):
+        return "/data_recreate_slave"
+
+    @property
+    def dest_directory(self):
+        return "/data/data"
+
+    @property
+    def snap_dir(self):
+        return "data/"
+
+
+class CopyReplFromSnapShot(CopyDataFromSnapShot):
+
+    def __unicode__(self):
+        return "Copying repl to snapshot to {}...".format(
+            self.dest_directory
+        )
+
+    @property
+    def dest_directory(self):
+        return "/data/repl"
+
+    @property
+    def snap_dir(self):
+        return "repl/"
+
+
 class CopyFiles(VolumeProviderBase):
 
     def __unicode__(self):
