@@ -912,6 +912,12 @@ class DatabaseInfra(BaseModel):
                 hosts.append(instance.hostname)
         return hosts
 
+    def recreate_slave_steps(self):
+        topology = (self.plan.replication_topology
+                    .get_replication_topology_instance())
+
+        return topology.get_recreate_slave_steps()
+
 
 class Host(BaseModel):
     hostname = models.CharField(
