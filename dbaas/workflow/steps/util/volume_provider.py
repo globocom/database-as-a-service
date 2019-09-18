@@ -249,13 +249,15 @@ class VolumeProviderBase(BaseInstanceStep):
             raise IndexError(response.content, response)
         return response.json()['command']
 
-    def get_copy_files_command(self, snapshot, source_dir, dest_dir):
+    def get_copy_files_command(self, snapshot, source_dir, dest_dir,
+                               snap_dir=''):
         # snap = volume.backups.order_by('created_at').first()
         url = "{}commands/copy_files".format(self.base_url)
         data = {
             'snap_identifier': snapshot.snapshopt_id,
             'source_dir': source_dir,
-            'dest_dir': dest_dir
+            'dest_dir': dest_dir,
+            'snap_dir': snap_dir
         }
         response = post(url, json=data)
         if not response.ok:
@@ -676,11 +678,16 @@ class CopyFilesMigrate(VolumeProviderBase):
     def dest_directory(self):
         return "/data"
 
+    @property
+    def snap_dir(self):
+        return ""
+
     def do(self):
         script = self.get_copy_files_command(
             self.step_manager.snapshot,
             self.source_directory,
-            self.dest_directory
+            self.dest_directory,
+            self.snap_dir
         )
         self.run_script(script)
 
