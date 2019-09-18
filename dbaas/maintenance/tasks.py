@@ -251,20 +251,66 @@ def _create_database_rollback(self, rollback_from, task, user):
     from tasks_create_database import rollback_create
     rollback_create(rollback_from, task, user)
 
+
 @app.task(bind=True)
 def create_database_rollback(self, rollback_from, task, user):
     _create_database_rollback(self, rollback_from, task, user)
 
+
 @app.task(bind=True)
-def node_zone_migrate(
-    self, host, zone, new_environment, task, since_step=None, step_manager=None
-):
+def node_zone_migrate(self, host, zone, new_environment, task,
+                      since_step=None, step_manager=None):
     task = TaskHistory.register(
         request=self.request, task_history=task, user=task.user,
         worker_name=get_worker_name()
     )
     from tasks_migrate import node_zone_migrate
-    node_zone_migrate(host, zone, new_environment, task, since_step, step_manager=step_manager)
+    node_zone_migrate(
+        host, zone, new_environment, task,
+        since_step, step_manager=step_manager
+    )
+
+
+@app.task(bind=True)
+def recreate_slave(self, host, task, since_step=None, step_manager=None):
+    from maintenance.models import RecreateSlave
+    task = TaskHistory.register(
+        request=self.request, task_history=task, user=task.user,
+        worker_name=get_worker_name()
+    )
+    instance = host.instances.first()
+    if step_manager:
+        step_manager = step_manager
+        step_manager.id = None
+        step_manager.started_at = None
+        since_step = step_manager.current_step
+    else:
+        retry_from = RecreateSlave.objects.filter(
+            can_do_retry=True,
+            host=host,
+            status=RecreateSlave.ERROR
+        ).last()
+        step_manager = RecreateSlave()
+        if retry_from:
+            step_manager.current_step = retry_from.current_step
+            step_manager.snapshot = retry_from.snapshot
+            since_step = retry_from.current_step
+    step_manager.host = instance.hostname
+    step_manager.task = task
+    step_manager.save()
+
+    steps = host.instances.first().databaseinfra.recreate_slave_steps()
+    result = steps_for_instances(
+        steps, [instance], task, step_manager.update_step, since_step,
+        step_manager=step_manager
+    )
+    step_manager = RecreateSlave.objects.get(id=step_manager.id)
+    if result:
+        step_manager.set_success()
+        task.set_status_success('Node migrated with success')
+    else:
+        step_manager.set_error()
+        task.set_status_error('Could not migrate host')
 
 
 @app.task(bind=True)
