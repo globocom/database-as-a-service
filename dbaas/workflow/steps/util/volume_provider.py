@@ -264,7 +264,8 @@ class VolumeProviderBase(BaseInstanceStep):
             raise IndexError(response.content, response)
         return response.json()['command']
 
-    def get_scp_from_snapshot_command(self, snapshot, source_dir, dest_ip, dest_dir):
+    def get_scp_from_snapshot_command(self, snapshot, source_dir, dest_ip,
+                                      dest_dir):
         url = "{}snapshots/{}/commands/scp".format(
             self.base_url,
             snapshot.snapshopt_id
@@ -597,13 +598,19 @@ class TakeSnapshotMigrate(VolumeProviderBase):
     def database_migrate(self):
         if self._database_migrate:
             return self._database_migrate
-        self._database_migrate = self.host_migrate and self.host_migrate.database_migrate
+        self._database_migrate = (self.host_migrate and
+                                  self.host_migrate.database_migrate)
         return self._database_migrate
+
+    @property
+    def provider_class(self):
+        return VolumeProviderBaseMigrate
 
     def do(self):
         from backup.tasks import make_instance_snapshot_backup
         from backup.models import BackupGroup
-        if self.database_migrate and self.database_migrate.host_migrate_snapshot:
+        if (self.database_migrate
+                and self.database_migrate.host_migrate_snapshot):
             snapshot = self.database_migrate.host_migrate_snapshot
         else:
             group = BackupGroup()
@@ -612,11 +619,13 @@ class TakeSnapshotMigrate(VolumeProviderBase):
                 self.instance,
                 {},
                 group,
-                provider_class=VolumeProviderBaseMigrate
+                provider_class=self.provider_class
             )
 
             if not snapshot:
-                raise Exception('Backup was unsuccessful in {}'.format(self.instance))
+                raise Exception('Backup was unsuccessful in {}'.format(
+                    self.instance)
+                )
 
             snapshot.is_automatic = False
             snapshot.save()
