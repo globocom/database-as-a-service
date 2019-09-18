@@ -1123,6 +1123,10 @@ class Instance(BaseModel):
             return False
 
     @property
+    def is_slave(self):
+        return not self.is_current_write
+
+    @property
     def is_current_write(self):
         try:
             driver = self.databaseinfra.get_driver()
