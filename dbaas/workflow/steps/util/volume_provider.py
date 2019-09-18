@@ -122,7 +122,11 @@ class VolumeProviderBase(BaseInstanceStep):
 
     def run_script(self, script, host=None):
         output = {}
-        return_code = exec_remote_command_host(host or self.host, script, output)
+        return_code = exec_remote_command_host(
+            host or self.host,
+            script,
+            output
+        )
         if return_code != 0:
             raise EnvironmentError(
                 'Could not execute script {}: {}'.format(
@@ -145,8 +149,11 @@ class VolumeProviderBase(BaseInstanceStep):
         return response.json()
 
     def delete_snapshot(self, snapshot, force):
-        url = "{}snapshot/{}?force={}".format(self.base_url, snapshot.snapshopt_id,
-                                     force)
+        url = "{}snapshot/{}?force={}".format(
+            self.base_url,
+            snapshot.snapshopt_id,
+            force
+        )
         response = delete(url)
         if not response.ok:
             raise IndexError(response.content, response)
@@ -161,9 +168,13 @@ class VolumeProviderBase(BaseInstanceStep):
             raise IndexError(response.content, response)
         return response.json()
 
-    def add_access(self, volume, host):
+    def add_access(self, volume, host, access_type=None):
         url = "{}access/{}".format(self.base_url, volume.identifier)
-        data = {"to_address": host.address}
+        data = {
+            "to_address": host.address
+        }
+        if access_type:
+            data['access_type'] = access_type
         response = post(url, json=data)
         if not response.ok:
             raise IndexError(response.content, response)
@@ -263,7 +274,10 @@ class VolumeProviderBase(BaseInstanceStep):
         }
         response = get(url, json=data)
         if not response.ok:
-            raise VolumeProviderScpFromSnapshotCommand(response.content, response)
+            raise VolumeProviderScpFromSnapshotCommand(
+                response.content,
+                response
+            )
         return response.json()['command']
 
     def get_umount_command(self, volume, data_directory="/data"):
@@ -336,7 +350,6 @@ class NewVolume(VolumeProviderBase):
             is_active=self.active_volume
         )
 
-
     def undo(self):
         if not self.instance.is_database:
             return
@@ -364,11 +377,14 @@ class NewVolumeMigrate(NewVolume):
     def undo(self):
         raise Exception("This step doesnt have roolback")
 
+
 class NewVolumeOnSlaveMigrate(NewVolumeMigrate):
     @property
     def host(self):
         master_instance = self.driver.get_master_instance()
-        return self.infra.instances.exclude(id=master_instance.id).first().hostname
+        return self.infra.instances.exclude(
+            id=master_instance.id
+        ).first().hostname
 
 
 class RemoveVolumeMigrate(NewVolumeMigrate):
@@ -378,12 +394,16 @@ class RemoveVolumeMigrate(NewVolumeMigrate):
     @property
     def host(self):
         master_instance = self.driver.get_master_instance()
-        return self.infra.instances.exclude(id=master_instance.id).first().hostname
+        return self.infra.instances.exclude(
+            id=master_instance.id
+        ).first().hostname
 
     def do(self):
         vol = self.host.volumes.filter(is_active=False).last()
         if not vol:
-            raise VolumeProviderRemoveVolumeMigrate("Any inactive volume found")
+            raise VolumeProviderRemoveVolumeMigrate(
+                "Any inactive volume found"
+            )
         self._remove_volume(vol, self.host)
 
 
@@ -470,7 +490,9 @@ class UnmountDataLatestVolume(MountDataLatestVolume):
 class MountDataVolumeMigrate(MountDataVolume):
 
     def __unicode__(self):
-        return "Mounting old volume in new instance on dir {}...".format(self.directory)
+        return "Mounting old volume in new instance on dir {}...".format(
+            self.directory
+        )
 
     @property
     def directory(self):
@@ -517,7 +539,9 @@ class MountDataVolumeOnSlaveMigrate(MountDataVolumeDatabaseMigrate):
     @property
     def host(self):
         master_instance = self.driver.get_master_instance()
-        return self.infra.instances.exclude(id=master_instance.id).first().hostname
+        return self.infra.instances.exclude(
+            id=master_instance.id
+        ).first().hostname
 
 
 class UmountDataVolumeDatabaseMigrate(MountDataVolumeDatabaseMigrate):
@@ -535,13 +559,17 @@ class UmountDataVolumeOnSlaveMigrate(UmountDataVolumeDatabaseMigrate):
     @property
     def host(self):
         master_instance = self.driver.get_master_instance()
-        return self.infra.instances.exclude(id=master_instance.id).first().hostname
+        return self.infra.instances.exclude(
+            id=master_instance.id
+        ).first().hostname
 
 
 class UmountDataVolumeMigrate(MountDataVolumeMigrate):
 
     def __unicode__(self):
-        return "Dismounting old volume in new instance on dir {}...".format(self.directory)
+        return "Dismounting old volume in new instance on dir {}...".format(
+            self.directory
+        )
 
     def do(self):
         return super(UmountDataVolumeMigrate, self).undo()
@@ -555,6 +583,7 @@ class TakeSnapshotMigrate(VolumeProviderBase):
     def __init__(self, *args, **kw):
         super(TakeSnapshotMigrate, self).__init__(*args, **kw)
         self._database_migrate = None
+
     def __unicode__(self):
         return "Doing backup for copy..."
 
@@ -621,7 +650,9 @@ class RemoveSnapshotMigrate(VolumeProviderBase):
             snapshot = self.step_manager.snapshot
         if not snapshot:
             raise VolumeProviderRemoveSnapshotMigrate(
-                'No snapshot found on {} instance for migration'.format(self.step_manager)
+                'No snapshot found on {} instance for migration'.format(
+                    self.step_manager
+                )
             )
         remove_snapshot_backup(snapshot, self, force=1)
 
@@ -674,7 +705,10 @@ class CopyFiles(VolumeProviderBase):
         return "/data_latest_volume"
 
     def do(self):
-        script = "cp -rp {}/* {}".format(self.source_directory, self.dest_directory)
+        script = "cp -rp {}/* {}".format(
+            self.source_directory,
+            self.dest_directory
+        )
         self.run_script(script)
 
     def undo(self):
@@ -699,10 +733,10 @@ class CopyPermissions(VolumeProviderBase):
 
     def do(self):
         script = ('stat -c "%a" {0} | xargs -I{{}} chmod {{}} {1}'
-                  ' && stat -c "%U:%G" {0} | xargs -I{{}} chown {{}} {1}').format(
+                  ' && stat -c "%U:%G" {0} '
+                  '| xargs -I{{}} chown {{}} {1}').format(
                     self.source_directory, self.dest_directory)
         self.run_script(script)
-
 
 
 class ScpFromSnapshotMigrate(VolumeProviderBase):
@@ -725,7 +759,9 @@ class ScpFromSnapshotMigrate(VolumeProviderBase):
     @property
     def host(self):
         master_instance = self.driver.get_master_instance()
-        return self.infra.instances.exclude(id=master_instance.id).first().hostname
+        return self.infra.instances.exclude(
+            id=master_instance.id
+        ).first().hostname
 
     def do(self):
         if self.host_migrate and self.host_migrate.database_migrate:
@@ -966,7 +1002,9 @@ class AddHostsAllowDatabaseMigrate(AddHostsAllowMigrate):
     @property
     def original_host(self):
         master_instance = self.driver.get_master_instance()
-        return self.infra.instances.exclude(id=master_instance.id).first().hostname
+        return self.infra.instances.exclude(
+            id=master_instance.id
+        ).first().hostname
 
 
 class CreatePubKeyMigrate(VolumeProviderBase):
@@ -977,7 +1015,9 @@ class CreatePubKeyMigrate(VolumeProviderBase):
     @property
     def original_host(self):
         master_instance = self.driver.get_master_instance()
-        return self.infra.instances.exclude(id=master_instance.id).first().hostname
+        return self.infra.instances.exclude(
+            id=master_instance.id
+        ).first().hostname
 
     def _do_pub_key(self, func):
         script = func(
@@ -1038,7 +1078,9 @@ class RemoveHostsAllowDatabaseMigrate(RemoveHostsAllowMigrate):
     @property
     def original_host(self):
         master_instance = self.driver.get_master_instance()
-        return self.infra.instances.exclude(id=master_instance.id).first().hostname
+        return self.infra.instances.exclude(
+            id=master_instance.id
+        ).first().hostname
 
 
 class TakeSnapshot(VolumeProviderBase):
@@ -1069,16 +1111,17 @@ class TakeSnapshot(VolumeProviderBase):
 
 
 class TakeSnapshotOldDisk(TakeSnapshot):
-        @property
-        def is_valid(self):
-            return True
 
-        @property
-        def group(self):
-            from backup.models import BackupGroup
-            group = BackupGroup()
-            group.save()
-            return group
+    @property
+    def is_valid(self):
+        return True
+
+    @property
+    def group(self):
+        from backup.models import BackupGroup
+        group = BackupGroup()
+        group.save()
+        return group
 
 
 class WaitSnapshotAvailableMigrate(VolumeProviderBase):
@@ -1095,7 +1138,7 @@ class WaitSnapshotAvailableMigrate(VolumeProviderBase):
     def waiting_be(self, state, snapshot):
         for _ in range(self.ATTEMPTS):
             snapshot_state = self.get_snapshot_state(snapshot)
-            if   snapshot_state == state:
+            if snapshot_state == state:
                 return True
             sleep(self.DELAY)
         raise EnvironmentError("Snapshot {} is {} should be {}".format(
