@@ -675,6 +675,39 @@ class TakeSnapshotMigrate(VolumeProviderBase):
         pass
 
 
+class TakeSnapshotFromMaster(TakeSnapshotMigrate):
+    def __unicode__(self):
+        return "Doing backup from master..."
+
+    @property
+    def provider_class(self):
+        return VolumeProviderBase
+
+    @property
+    def host(self):
+        return self.instance.hostname
+
+    @property
+    def group(self):
+        from backup.models import BackupGroup
+        group = BackupGroup()
+        group.save()
+        return group
+
+    def do(self):
+        driver = self.infra.get_driver()
+        self.instance = driver.get_master_instance()
+        super(TakeSnapshotFromMaster, self).do()
+        # snapshot = Snapshot.create(self.instance, self.group, self.volume)
+        # response = self.take_snapshot()
+        # snapshot.done(response)
+        # snapshot.status = Snapshot.SUCCESS
+        # snapshot.end_at = datetime.now()
+        # snapshot.save()
+        # self.step_manager.snapshot = snapshot
+        # self.step_manager.save()
+
+
 class RemoveSnapshotMigrate(VolumeProviderBase):
 
     def __unicode__(self):
