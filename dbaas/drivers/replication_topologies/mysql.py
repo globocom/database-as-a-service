@@ -596,6 +596,46 @@ class MySQLFoxHA(MySQLSingle):
             'workflow.steps.util.host_provider.DestroyVirtualMachineMigrate',
         )
 
+    def get_recreate_slave_steps(self):
+        return [{
+            'Recreate Slave': (
+                'workflow.steps.util.database.CheckIfSwitchMaster',
+                'workflow.steps.util.zabbix.DisableAlarms',
+                'workflow.steps.util.db_monitor.DisableMonitoring',
+                'workflow.steps.util.volume_provider.TakeSnapshotFromMaster',
+                ('workflow.steps.util.volume_provider'
+                 '.WaitSnapshotAvailableMigrate'),
+                'workflow.steps.util.agents.Stop',
+                'workflow.steps.util.database.StopSlave',
+                'workflow.steps.util.database.Stop',
+                'workflow.steps.util.disk.CleanDataRecreateSlave',
+                'workflow.steps.util.disk.CleanReplRecreateSlave',
+                'workflow.steps.util.volume_provider.AddAccessRecreateSlave',
+                ('workflow.steps.util.volume_provider'
+                 '.MountDataVolumeRecreateSlave'),
+                'workflow.steps.util.volume_provider.CopyDataFromSnapShot',
+                'workflow.steps.util.volume_provider.CopyReplFromSnapShot',
+                ('workflow.steps.util.volume_provider'
+                 '.UmountDataVolumeRecreateSlave'),
+                ('workflow.steps.util.volume_provider'
+                 '.RemoveAccessRecreateSlave'),
+                'workflow.steps.util.volume_provider.RemoveSnapshotMigrate',
+                'workflow.steps.util.disk.RemoveDeprecatedFiles',
+                'workflow.steps.util.mysql.SetFilePermission',
+                'workflow.steps.util.mysql.DisableReplicationRecreateSlave',
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.mysql.SetMasterRecreateSlave',
+                'workflow.steps.util.mysql.EnableReplicationRecreateSlave',
+                'workflow.steps.util.database.StartSlave',
+                'workflow.steps.util.agents.Start',
+                'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.fox.IsReplicationOk',
+                'workflow.steps.util.metric_collector.RestartTelegraf',
+                'workflow.steps.util.db_monitor.EnableMonitoring',
+                'workflow.steps.util.zabbix.EnableAlarms',
+            )
+        }]
+
     def get_base_host_migrate_steps(self):
         return (
             'workflow.steps.util.vm.ChangeMaster',
