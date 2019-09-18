@@ -18,6 +18,7 @@ from drivers import DatabaseInfraStatus
 from system.models import Configuration
 from physical.errors import NoDiskOfferingGreaterError, NoDiskOfferingLesserError
 from django.db.models import Q
+from django.utils.module_loading import import_by_path
 
 
 LOG = logging.getLogger(__name__)
@@ -380,6 +381,11 @@ class ReplicationTopology(BaseModel):
         related_name='replication_topologies',
         blank=True
     )
+
+    def get_replication_topology_instance(self):
+        topology_class = import_by_path(self.class_path)
+        return topology_class()
+
 
 
 class DiskOffering(BaseModel):
