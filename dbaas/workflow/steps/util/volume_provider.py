@@ -525,6 +525,37 @@ class MountDataVolumeMigrate(MountDataVolume):
         self.run_script(script)
 
 
+class MountDataVolumeRecreateSlave(MountDataVolumeMigrate):
+
+    def __unicode__(self):
+        return "Mounting master volume in slave instance on dir {}...".format(
+            self.directory
+        )
+
+    @property
+    def directory(self):
+        return "/data_recreate_slave"
+
+    @property
+    def host_migrate_volume(self):
+        master_instance = self.infra.get_driver().get_master_instance()
+        return master_instance.hostname.volumes.get(is_active=True)
+
+
+class UmountDataVolumeRecreateSlave(MountDataVolumeRecreateSlave):
+
+    def __unicode__(self):
+        return "Umounting master volume in slave instance on dir {}...".format(
+            self.directory
+        )
+
+    def do(self):
+        super(UmountDataVolumeRecreateSlave, self).undo()
+
+    def undo(self):
+        super(UmountDataVolumeRecreateSlave, self).do()
+
+
 class MountDataVolumeDatabaseMigrate(MountDataVolumeMigrate):
     def __unicode__(self):
         return "Mounting new volume for scp...".format(self.directory)
