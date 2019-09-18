@@ -95,6 +95,9 @@ class MySQLSingle(BaseMysql):
             )}, {
             'Create Extra DNS': (
                 'workflow.steps.util.database.CreateExtraDNS',
+            )}, {
+            'Update Host Disk Size': (
+                'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
             )
         }]
 
@@ -362,6 +365,9 @@ class MySQLFoxHA(MySQLSingle):
             )}, {
             'Create Extra DNS': (
                 'workflow.steps.util.database.CreateExtraDNS',
+            )}, {
+            'Update Host Disk Size': (
+                'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
             )
         }]
 
@@ -643,6 +649,7 @@ class MySQLFoxHA(MySQLSingle):
             'workflow.steps.util.host_provider.CreateVirtualMachineMigrate',
             'workflow.steps.util.vm.WaitingBeReady',
             'workflow.steps.util.vm.UpdateOSDescription',
+            'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
             'workflow.steps.util.puppet.WaitingBeStarted',
             'workflow.steps.util.puppet.WaitingBeDone',
             'workflow.steps.util.puppet.ExecuteIfProblem',
@@ -704,6 +711,7 @@ class MySQLFoxHA(MySQLSingle):
             'workflow.steps.util.volume_provider.NewVolume',
             'workflow.steps.util.vm.WaitingBeReady',
             'workflow.steps.util.vm.UpdateOSDescription',
+            'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
             'workflow.steps.util.volume_provider.MountDataVolume',
             'workflow.steps.util.volume_provider.TakeSnapshotMigrate',
             'workflow.steps.util.volume_provider.WaitSnapshotAvailableMigrate',
@@ -900,8 +908,10 @@ class MySQLFoxHAAWS(MySQLFoxHA):
             )}, {
             'Create Extra DNS': (
                 'workflow.steps.util.database.CreateExtraDNS',
+            )}, {
+            'Update Host Disk Size': (
+                'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
             )
-
         }]
 
     def get_host_migrate_steps_cleaning_up(self):
@@ -920,6 +930,7 @@ class MySQLFoxHAAWS(MySQLFoxHA):
             'workflow.steps.util.volume_provider.NewVolume',
             'workflow.steps.util.vm.WaitingBeReady',
             'workflow.steps.util.vm.UpdateOSDescription',
+            'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
             'workflow.steps.util.volume_provider.MountDataVolume',
             'workflow.steps.util.volume_provider.RemoveSnapshotMigrate',
             'workflow.steps.util.disk.RemoveDeprecatedFiles',
@@ -974,6 +985,7 @@ class MySQLFoxHAAWS(MySQLFoxHA):
             'workflow.steps.util.volume_provider.NewVolume',
             'workflow.steps.util.vm.WaitingBeReady',
             'workflow.steps.util.vm.UpdateOSDescription',
+            'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
             'workflow.steps.util.volume_provider.MountDataVolume',
             'workflow.steps.util.volume_provider.TakeSnapshotMigrate',
             'workflow.steps.util.volume_provider.WaitSnapshotAvailableMigrate',
