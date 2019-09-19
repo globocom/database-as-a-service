@@ -10,7 +10,7 @@ services:
             - MYSQL_PASSWORD=123
             - MYSQL_DATABASE=dbaas
         ports:
-            - "3306:3306"
+            - "3307:3306"
 
     mysqldb56:
         image: mysql:5.6
@@ -20,7 +20,7 @@ services:
             - MYSQL_PASSWORD=123
             - MYSQL_DATABASE=dbaas
         ports:
-            - "3306:3306"
+            - "3307:3306"
 
     mysqldb57:
         image: mysql:5.7
@@ -30,7 +30,7 @@ services:
             - MYSQL_PASSWORD=123
             - MYSQL_DATABASE=dbaas
         ports:
-            - "3306:3306"
+            - "3307:3306"
 
     mongodb:
         image: mongo:3.4
