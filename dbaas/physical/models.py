@@ -379,6 +379,9 @@ class ReplicationTopology(BaseModel):
     can_setup_ssl = models.BooleanField(
         verbose_name="Can Setup SSL", default=False
     )
+    can_recreate_slave = models.BooleanField(
+        verbose_name="Can Recreate Slave", default=False
+    )
     script = models.ForeignKey(
         Script, related_name='replication_topologies', null=True, blank=True
     )
@@ -392,7 +395,6 @@ class ReplicationTopology(BaseModel):
     def get_replication_topology_instance(self):
         topology_class = import_by_path(self.class_path)
         return topology_class()
-
 
 
 class DiskOffering(BaseModel):
