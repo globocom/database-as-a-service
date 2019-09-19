@@ -70,22 +70,24 @@
                 </td>
                 {% endif %}
               {% endif %}
-              {% if database.databaseinfra.plan.replication_topology.can_switch_master and host.switch_database and database.infra.plan.is_ha %}
-                <td class="action-red-button">
-                </td>
-              {% else %}
-                {% if last_recreat_slave and last_recreat_slave.is_status_error %}
-                  {% if host.id == last_recreat_slave.host.id %}
-                    <td>
-                        <a class="action_button btn btn-danger" href="{% url 'admin:maintenance_recreateslave_change' last_recreat_slave.id %}retry" title="Go to recreate slave page">Retry Recreate Slave</a>
+              {% if database.databaseinfra.plan.replication_topology.can_recreate_slave and database.infra.plan.is_ha %}
+                {% if host.switch_database  %}
+                  <td class="action-red-button">
+                  </td>
+                {% else %}
+                  {% if last_recreat_slave and last_recreat_slave.is_status_error %}
+                    {% if host.id == last_recreat_slave.host.id %}
+                      <td>
+                          <a class="action_button btn btn-danger" href="{% url 'admin:maintenance_recreateslave_change' last_recreat_slave.id %}retry" title="Go to recreate slave page">Retry Recreate Slave</a>
+                      </td>
+                    {% endif %}
+                  {% else %}
+                    <td class="action-red-button">
+                      <a class="action_button btn btn-danger recreate-slave" data-toggle="modal" id="recreate_vm_btn"
+                        data-target="#recreate_vm_modal" data-host-id="{{host.id}}" title="Recreate Slave."
+                      >Recreate Slave</a>
                     </td>
                   {% endif %}
-                {% else %}
-                  <td class="action-red-button">
-                    <a class="action_button btn btn-danger recreate-slave" data-toggle="modal" id="recreate_vm_btn"
-                      data-target="#recreate_vm_modal" data-host-id="{{host.id}}" title="Recreate Slave."
-                    >Recreate Slave</a>
-                  </td>
                 {% endif %}
               {% endif %}
 
