@@ -14,6 +14,7 @@ from .database_configure_ssl import DatabaseConfigureSSLAdmin
 from .host_migrate import HostMigrateAdmin
 from .database_migrate import DatabaseMigrateAdmin
 from .database_upgrade_patch import DatabaseUpgradePatchAdmin
+from .recreate_slave import RecreateSlaveAdmin
 
 
 admin.site.register(models.Maintenance, MaintenanceAdmin)
@@ -29,3 +30,4 @@ admin.site.register(models.DatabaseConfigureSSL, DatabaseConfigureSSLAdmin)
 admin.site.register(models.HostMigrate, HostMigrateAdmin)
 admin.site.register(models.DatabaseMigrate, DatabaseMigrateAdmin)
 admin.site.register(models.DatabaseUpgradePatch, DatabaseUpgradePatchAdmin)
+admin.site.register(models.RecreateSlave, RecreateSlaveAdmin)

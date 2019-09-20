@@ -4,7 +4,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from requests import post, delete, get
 from dbaas_credentials.models import CredentialType
 from physical.models import Host, Instance
-from util import get_credentials_for
+from util import get_credentials_for, exec_remote_command_host
 from base import BaseInstanceStep
 from vm import WaitingBeReady
 
@@ -233,6 +233,15 @@ class HostProviderStep(BaseInstanceStep):
         if not self._provider:
             self._provider = Provider(self.instance, self.environment)
         return self._provider
+
+    def execute_script(self, script):
+        output = {}
+        return_code = exec_remote_command_host(self.host, script, output)
+        if return_code != 0:
+            error = 'Could not execute script {}: {}'.format(
+                return_code, output)
+            raise EnvironmentError(error)
+        return output
 
     def do(self):
         raise NotImplementedError
@@ -479,3 +488,27 @@ class DestroyVirtualMachineMigrate(HostProviderStep):
 
     def undo(self):
         raise NotImplementedError
+
+
+class UpdateHostRootVolumeSize(HostProviderStep):
+
+    def get_root_volume_size(self):
+        """This methods executes a script in the host that returns disk size in
+        KB. This size is then converted to GB.
+        """
+        script = """echo $(($(free | grep Swap | awk '{print $2}')\
+        + $(df -l --total | tail -n1 | awk '{print $2}')))
+        """
+        output = self.execute_script(script)
+        disk_size_kb = float(output['stdout'][0])
+        disk_size_gb = (disk_size_kb / 1024.0) / 1024.0
+
+        return disk_size_gb
+
+    def __unicode__(self):
+        return "Updating Host root volume size..."
+
+    def do(self):
+        root_size_gb = self.get_root_volume_size()
+        self.host.root_size_gb = round(root_size_gb, 2)
+        self.host.save()
