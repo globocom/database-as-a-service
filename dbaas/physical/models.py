@@ -704,6 +704,12 @@ class DatabaseInfra(BaseModel):
     engine_patch = models.ForeignKey(
         EnginePatch, related_name="databaseinfras",
         on_delete=models.PROTECT, null=True)
+    maintenance_hour = models.IntegerField(
+        default=0,
+        blank=False,
+        null=False,
+        help_text=_("The hour of maintenance.")
+    )
 
     def __unicode__(self):
         return self.name
