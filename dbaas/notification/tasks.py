@@ -51,14 +51,16 @@ def rollback_database(dest_database):
 
 
 def create_database_with_retry(
-    name, plan, environment, team, backup_hour, project, description, task,
-    subscribe_to_email_events, is_protected, user, retry_from
+    name, plan, environment, team, project, description,
+    task, backup_hour, maintenance_hour, subscribe_to_email_events,
+    is_protected, user, retry_from
 ):
     from maintenance.tasks import create_database
     return create_database.delay(
         name=name, plan=plan, environment=environment, team=team,
-        backup_hour=backup_hour, project=project, description=description,
-        task=task, subscribe_to_email_events=subscribe_to_email_events,
+        project=project, description=description, task=task,
+        backup_hour=backup_hour, maintenance_hour=maintenance_hour,
+        subscribe_to_email_events=subscribe_to_email_events,
         is_protected=is_protected, user=user, retry_from=retry_from
     )
 
@@ -112,11 +114,13 @@ def destroy_database(self, database, task_history=None, user=None):
         database_destroy.save()
 
         from maintenance.tasks_create_database import rollback_create
-        rollback_create(database_destroy, task_history, user, instances=instances)
+        rollback_create(database_destroy, task_history, user,
+                        instances=instances)
         if task_history.task_status == TaskHistory.STATUS_ERROR:
             return
         task_history.update_status_for(
-            TaskHistory.STATUS_SUCCESS, details='Database destroyed successfully')
+            TaskHistory.STATUS_SUCCESS,
+            details='Database destroyed successfully')
         return
     finally:
         AuditRequest.cleanup_request()
@@ -145,9 +149,9 @@ def clone_database(self, origin_database, clone_name, plan, environment, task_hi
         result = clone_infra(
             plan=plan, environment=environment, name=clone_name,
             team=origin_database.team, backup_hour=backup_hour,
-            project=origin_database.project,
-            description=origin_database.description,
-            task=task_history, clone=origin_database,
+            maintenance_hour=maintenance_hour, project=origin_database.project,
+            description=origin_database.description, task=task_history,
+            clone=origin_database,
             subscribe_to_email_events=origin_database.subscribe_to_email_events
         )
 
@@ -1311,10 +1315,10 @@ class TaskRegister(object):
         )
 
     @classmethod
-    def database_create(cls, user, name, plan, environment, team, backup_hour,
-                        project, description, subscribe_to_email_events=True,
-                        register_user=True, is_protected=False,
-                        retry_from=None):
+    def database_create(cls, user, name, plan, environment, team, project,
+                        description, backup_hour, maintenance_hour,
+                        subscribe_to_email_events=True, register_user=True,
+                        is_protected=False, retry_from=None):
         task_params = {
             'task_name': "create_database",
             'arguments': "Database name: {}".format(name),
@@ -1326,8 +1330,9 @@ class TaskRegister(object):
 
         return create_database_with_retry(
             name=name, plan=plan, environment=environment, team=team,
-            backup_hour=backup_hour, project=project, description=description,
-            task=task, subscribe_to_email_events=subscribe_to_email_events,
+            project=project, description=description, task=task,
+            backup_hour=backup_hour, maintenance_hour=maintenance_hour,
+            subscribe_to_email_events=subscribe_to_email_events,
             is_protected=is_protected, user=user, retry_from=retry_from
         )
 
