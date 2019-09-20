@@ -27,6 +27,7 @@ class MySQLStep(BaseInstanceStep):
                 )
             )
 
+
 class SetMasterRestore(MySQLStep):
 
     def __unicode__(self):
@@ -44,6 +45,25 @@ class SetMasterRestore(MySQLStep):
 
         change_master_to(
             self.instance, secondary.hostname.address, log_file, log_pos
+        )
+
+
+class SetMasterRecreateSlave(MySQLStep):
+
+    def do(self):
+        log_file, log_pos = get_replication_information_from_file(
+            self.instance.hostname
+        )
+        master_instance = self.driver.get_master_instance()
+        change_master_to(
+            self.instance,
+            master_instance.hostname.address,
+            log_file, log_pos
+        )
+        change_master_to(
+            master_instance,
+            self.instance.hostname.address,
+            log_file, log_pos
         )
 
 
@@ -128,6 +148,12 @@ class DisableReplication(MySQLStep):
         self.run_script(script)
 
 
+class DisableReplicationRecreateSlave(DisableReplication):
+
+    @property
+    def is_valid(self):
+        return True
+
 
 class EnableReplication(DisableReplication):
     def __unicode__(self):
@@ -138,6 +164,13 @@ class EnableReplication(DisableReplication):
 
     def undo(self):
         return super(EnableReplication, self).do()
+
+
+class EnableReplicationRecreateSlave(EnableReplication):
+
+    @property
+    def is_valid(self):
+        return True
 
 
 class SaveMySQLBinlog(MySQLStep):
@@ -378,6 +411,20 @@ class SetReplicationHostMigrate(MySQLStep):
 
     def undo(self):
         raise Exception("There is no rollback for this step.")
+
+
+class SetReplicationRecreateSlave(SetReplicationHostMigrate):
+
+    def __unicode__(self):
+        return "Set replication on slave instance..."
+
+    def do(self):
+        if not self.is_valid:
+            return
+        master_instance = self.master_instance
+        master_host = master_instance.hostname
+        log_file, log_pos = get_replication_information_from_file(master_host)
+        change_master_to(self.instance, master_host.address, log_file, log_pos)
 
 
 class SetReplicationLastInstanceMigrate(SetReplicationHostMigrate):
