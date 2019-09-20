@@ -999,7 +999,6 @@ port {{SENTINELPORT}}
 # Specify the log file name. Also the empty string can be used to force
 # Sentinel to log on the standard output. Note that if you use standard
 # output for logging but daemonize, logs will be sent to /dev/null
-<<<<<<< Updated upstream
 logfile "/data/logs/redis-sentinel.log"
 
 # sentinel announce-ip <ip>
