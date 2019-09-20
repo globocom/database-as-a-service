@@ -108,27 +108,6 @@
       </div>
     </div>
   </div>
-  <div class="panel-heading">
-    <h3 class="panel-title">Backup</h3>
-  </div>
-  <div class="panel-body">
-    <div class="control-group">
-      <div class="control-label"><label>Start Hour:</label></div>
-      <div class="controls">
-        <select id="id_backup_hour" name="backup_hour"> 
-          {% for backup_hour in backup_hours %}
-            {% if backup_hour.0 == current_backup_hour %}
-              <option value="{{ backup_hour.0 }}" selected="selected">*  
-            {% else %}
-              <option value="{{ backup_hour.0 }}">
-            {% endif %}
-              {{ backup_hour.1 }}
-              </option>
-          {% endfor %}
-        </select>
-      </div>
-    </div>
-  </div>
 </fieldset>
 
 

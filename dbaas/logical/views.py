@@ -889,8 +889,9 @@ def database_maintenance(request, context, database):
             _upgrade_patch(request, database, request.POST.get('target_patch'))
         elif ('upgrade_patch_retry' in request.POST):
             _upgrade_patch_retry(request, database)
-        elif ('maintenance_hour' in request.POST):
+        elif ('maintenance_hour' in request.POST or 'backup_hour' in request.POST):
             database.infra.maintenance_hour = request.POST['maintenance_hour']
+            database.infra.backup_hour = request.POST['backup_hour']
             database.infra.save()
         else:
             database.save()
@@ -914,6 +915,8 @@ def database_maintenance(request, context, database):
 
     context['maintenance_hours'] = [(hour, datetime.time(hour, 0).strftime(format="%H:%M")) for hour in range(24)]
     context['current_maintenance_hour'] = int(database.infra.maintenance_hour)
+    context['backup_hours'] = [(hour, datetime.time(hour, 0).strftime(format="%H:%M")) for hour in range(24)]
+    context['current_backup_hour'] = int(database.infra.backup_hour)
 
     return render_to_response(
         "logical/database/details/maintenance_tab.html",
@@ -1240,15 +1243,9 @@ def database_backup(request, context, database):
             _restore_database(request, database)
         elif 'snapshot_delete' in request.POST:
             _delete_snapshot(request, database)
-        elif 'backup_path' in request.POST or 'backup_hour' in request.POST:
+        elif 'backup_path' in request.POST:
             database.backup_path = request.POST['backup_path']
-            database.infra.backup_hour = request.POST['backup_hour']
             database.save()
-            database.infra.save()
-
-    context['backup_hours'] = [(hour, datetime.time(hour, 0, 0).strftime(format="%H:%M")) for hour in range(24)]
-    context['current_backup_hour'] = int(database.infra.backup_hour)
-
 
     groups = []
     context['snapshots'] = []
