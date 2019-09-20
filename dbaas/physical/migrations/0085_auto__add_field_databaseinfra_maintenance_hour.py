@@ -219,6 +219,7 @@ class Migration(SchemaMigration):
             'Meta': {'object_name': 'ReplicationTopology'},
             'can_change_parameters': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'can_clone_db': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
+            'can_recreate_slave': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'can_reinstall_vm': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'can_resize_vm': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'can_setup_ssl': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
