@@ -249,7 +249,7 @@ class CreateHostTestCase(BaseProviderTestCase):
             'fake_endpoint/fake_provider/fake_env/host/new'
         )
         expected_json = {
-            'engine': u'fake_unique',
+            'engine': u'fake_1_2_1',
             'name': 'fake_host01',
             'cpu': 2,
             'memory': 999,

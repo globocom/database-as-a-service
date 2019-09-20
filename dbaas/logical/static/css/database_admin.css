@@ -134,3 +134,10 @@ p.error_message {
   margin-left: 5px;
 }
 
+.action-red-button {
+  width: 130px;
+}
+
+a.recreate-slave {
+  margin-left: 0;
+}

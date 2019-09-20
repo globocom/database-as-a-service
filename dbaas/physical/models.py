@@ -18,6 +18,7 @@ from drivers import DatabaseInfraStatus
 from system.models import Configuration
 from physical.errors import NoDiskOfferingGreaterError, NoDiskOfferingLesserError
 from django.db.models import Q
+from django.utils.module_loading import import_by_path
 
 
 LOG = logging.getLogger(__name__)
@@ -178,14 +179,17 @@ class Engine(BaseModel):
     def is_redis(self):
         return self.name == 'redis'
 
-    def available_patches(self, last_upgrade_patch):
+    def available_patches(self, database):
+        host = database.infra.hosts[0]
+        engine_patch = database.infra.engine_patch
         available_patches = self.patchs.exclude(
             is_initial_patch=True
         )
 
-        if last_upgrade_patch and last_upgrade_patch.engine == self:
+        if engine_patch and engine_patch.engine == self:
             available_patches = available_patches.filter(
-                patch_version__gt=last_upgrade_patch.patch_version
+                patch_version__gt=engine_patch.patch_version,
+                required_disk_size_gb__lte=host.root_size_gb
             )
         return available_patches
 
@@ -206,6 +210,10 @@ class EnginePatch(BaseModel):
         verbose_name=_("Path of installation file"),
         blank=True, null=True, default='',
         max_length=200,
+    )
+    required_disk_size_gb = models.FloatField(
+        verbose_name=_("Required Disk Size (GB)"),
+        null=True, blank=True
     )
 
     @property
@@ -371,6 +379,9 @@ class ReplicationTopology(BaseModel):
     can_setup_ssl = models.BooleanField(
         verbose_name="Can Setup SSL", default=False
     )
+    can_recreate_slave = models.BooleanField(
+        verbose_name="Can Recreate Slave", default=False
+    )
     script = models.ForeignKey(
         Script, related_name='replication_topologies', null=True, blank=True
     )
@@ -380,6 +391,10 @@ class ReplicationTopology(BaseModel):
         related_name='replication_topologies',
         blank=True
     )
+
+    def get_replication_topology_instance(self):
+        topology_class = import_by_path(self.class_path)
+        return topology_class()
 
 
 class DiskOffering(BaseModel):
@@ -906,6 +921,12 @@ class DatabaseInfra(BaseModel):
                 hosts.append(instance.hostname)
         return hosts
 
+    def recreate_slave_steps(self):
+        topology = (self.plan.replication_topology
+                    .get_replication_topology_instance())
+
+        return topology.get_recreate_slave_steps()
+
 
 class Host(BaseModel):
     hostname = models.CharField(
@@ -924,6 +945,9 @@ class Host(BaseModel):
     identifier = models.CharField(
         verbose_name=_("Identifier"),
         max_length=255, default=''
+    )
+    root_size_gb = models.FloatField(
+        verbose_name=_("RFS Size (GB)"), null=True, blank=True
     )
 
     def __unicode__(self):
@@ -1109,6 +1133,10 @@ class Instance(BaseModel):
             return status
         except:
             return False
+
+    @property
+    def is_slave(self):
+        return not self.is_current_write
 
     @property
     def is_current_write(self):
