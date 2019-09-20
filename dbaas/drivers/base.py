@@ -303,7 +303,9 @@ class BaseDriver(object):
         raise NotImplementedError()
 
     def get_default_instance_type(self):
-        """ Returns default instance type"""
+        """ This method Returns default instance type. It must be implemented
+        for every new type added to Instance Model, even subclasses of existent
+        types."""
         raise NotImplementedError()
 
     @property

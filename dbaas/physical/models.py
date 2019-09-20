@@ -1002,6 +1002,7 @@ class Instance(BaseModel):
     MONGODB_ARBITER = 3
     REDIS = 4
     REDIS_SENTINEL = 5
+    MYSQL_PERCONA = 6
 
     DATABASE_TYPE = (
         (NONE, 'None'),
@@ -1010,6 +1011,7 @@ class Instance(BaseModel):
         (MONGODB_ARBITER, 'Arbiter'),
         (REDIS, 'Redis'),
         (REDIS_SENTINEL, 'Sentinel'),
+        (MYSQL_PERCONA, 'MySQLPercona'),
     )
 
     dns = models.CharField(verbose_name=_("Instance dns"), max_length=200)
@@ -1045,7 +1047,9 @@ class Instance(BaseModel):
 
     @property
     def is_database(self):
-        return self.instance_type in (self.MYSQL, self.MONGODB, self.REDIS)
+        return self.instance_type in (
+            self.MYSQL, self.MONGODB, self.REDIS, self.MYSQL_PERCONA
+        )
 
     @property
     def offering(self):

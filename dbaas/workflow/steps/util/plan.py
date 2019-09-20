@@ -186,7 +186,7 @@ class Configure(PlanStep):
 
     def __unicode__(self):
         return "Executing plan configure script..."
-    
+
     @property
     def extra_variables(self):
         return {}
@@ -201,7 +201,7 @@ class Configure(PlanStep):
 
 
 class ConfigureDatabaseFile(Configure):
-    
+
     @property
     def extra_variables(self):
         return {
