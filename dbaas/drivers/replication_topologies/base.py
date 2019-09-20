@@ -2,6 +2,9 @@
 class BaseTopology(object):
 
     def deploy_instances(self):
+        """ This method returns deploy instances to an infra. It must be
+        implemented for every new type added to Instance Model, even subclasses
+        of the existent ones."""
         raise NotImplementedError
 
     def deploy_first_steps(self):
@@ -333,6 +336,6 @@ class FakeTestTopology(BaseTopology):
 
 class InstanceDeploy():
 
-    def __init__(self, instance_type , port):
+    def __init__(self, instance_type, port):
         self.instance_type = instance_type
         self.port = port

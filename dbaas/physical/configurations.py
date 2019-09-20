@@ -668,3 +668,6 @@ class ConfigurationMongoDB(ConfigurationBase):
         default = round(cache_mb / 1024.0, 2)
         return self.get_parameter(parameter_name, default)
 
+
+class ConfigurationMySQLPercona(ConfigurationMySQL):
+    __ENGINE__ = 'mysql_percona'
