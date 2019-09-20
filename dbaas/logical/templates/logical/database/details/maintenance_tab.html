@@ -16,9 +16,6 @@
 
 {% block tab %}
 <fieldset class="module aligned ">
-    <div class="panel-heading">
-        <h3 class="panel-title">Engine Upgrade</h3>
-    </div>
   {% if available_patches %}
   <div class="control-group">
     <div class="control-label"><label>Patch upgrade:</label></div>
@@ -48,7 +45,7 @@
     <div class="control-group">
       <div class="control-label"><label>Engine upgrade:</label></div>
       <div class="controls">
-        <a href="{{ database.get_mongodb_engine_version_upgrade_url }}" class="btn btn-primary" title="Start engine upgrade" onclick="return confirm('Are you sure?')">Upgrade MongoDB 2.4 to 3.0</a>
+        <a href="{{ database.get_mongodb_engine_version_upgrade_url }}" id="upgrade_btn" class="btn btn-primary" title="Start engine upgrade" onclick="return confirm('Are you sure?')">Upgrade MongoDB 2.4 to 3.0</a>
       </div>
     </div>
   {% elif can_do_upgrade and database.databaseinfra.plan.replication_topology.can_upgrade_db %}
@@ -56,10 +53,10 @@
       <div class="control-label"><label>Engine upgrade:</label></div>
       <div class="controls">
         {% if last_upgrade and last_upgrade.is_status_error %}
-          <a href="{{ database.get_upgrade_retry_url }}" class="btn btn-warning" title="Retry upgrade" onclick="return confirm('Are you sure?')">Retry upgrade {{ database.infra.engine_name }} {{ database.infra.plan.engine.version}} to {{ database.infra.plan.engine_equivalent_plan.engine.version }}</a>
+          <a href="{{ database.get_upgrade_retry_url }}" id="upgrade_btn" class="btn btn-warning" title="Retry upgrade" onclick="return confirm('Are you sure?')">Retry upgrade {{ database.infra.engine_name }} {{ database.infra.plan.engine.version}} to {{ database.infra.plan.engine_equivalent_plan.engine.version }}</a>
           <p><a href="{% url 'admin:maintenance_databaseupgrade_change' last_upgrade.id %}" target='_blank'>Last upgrade</a> has an <b>error</b>, please check the <a href="{% url 'admin:notification_taskhistory_change' last_upgrade.task.id %}" target='_blank'>task</a> and retry the database upgrade clicking in button above</p>
         {% else %}
-          <a href="{{ database.get_upgrade_url }}" class="btn btn-primary" title="Start upgrade" onclick="return confirm('Are you sure?')">Upgrade {{ database.infra.engine_name }} {{database.infra.engine_patch.full_version }} to {{ database.infra.plan.engine_equivalent_plan.engine.version }}</a>
+          <a href="{{ database.get_upgrade_url }}" id="upgrade_btn" class="btn btn-primary" title="Start upgrade" onclick="return confirm('Are you sure?')">Upgrade {{ database.infra.engine_name }} {{database.infra.engine_patch.full_version }} to {{ database.infra.plan.engine_equivalent_plan.engine.version }}</a>
         {% endif %}
       </div>
     </div>
@@ -67,7 +64,7 @@
   <div class="panel-heading">
       <h3 class="panel-title">Maintenance</h3>
   </div>
-  <div class="pnel-body">
+  <div class="panel-body">
     <div class="control-group">
         <div class="control-label"><label>Start Hour:</label></div>
         <div class="controls">
@@ -98,16 +95,6 @@
 {{ block.super }}
 
 <script>
-  function status_resize(btn_id, current_value, selected_value) {
-    btn = document.getElementById(btn_id)
-    btn.disabled = current_value == selected_value
-    if (btn.disabled){
-      btn.className = 'resize_button btn';
-    } else {
-      btn.className = 'resize_button btn btn-primary';
-    }
-  }
-
   jQuery(document).ready(function($) {
     $("#upgrade_patch_btn").click(function() {
       var new_patch_version = $("#id_target_patch").find(":selected").text().trim();
