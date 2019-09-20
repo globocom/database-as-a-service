@@ -29,14 +29,14 @@ class DatabaseForm(models.ModelForm):
         empty_label=None
     )
     backup_hour = forms.ChoiceField(choices=BACKUP_HOUR_CHOICES, help_text="The recommended hour for backup.")
-    maintenance_hour = forms.ChoiceField(choices=BACKUP_HOUR_CHOICES, help_text="Select the best hour for maintenance.")
+    maintenance_hour = forms.ChoiceField(choices=MAINTENANCE_HOUR_CHOICES, help_text="Select the best hour for maintenance.")
 
     class Meta:
         model = Database
         fields = [
             'name', 'description', 'project', 'environment', 'engine', 'team',
-            'subscribe_to_email_events', 'backup_hour', 'is_in_quarantine',
-            'plan'
+            'subscribe_to_email_events', 'backup_hour', 'maintenance_hour',
+            'is_in_quarantine', 'plan',
         ]
 
     def __init__(self, *args, **kwargs):
