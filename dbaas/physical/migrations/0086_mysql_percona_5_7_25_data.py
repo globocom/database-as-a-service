@@ -40,6 +40,7 @@ REPLICATION_TOPOLOGIES_MYSQL_PERCONA = [
         "can_change_parameters": True,
         "can_reinstall_vm": True,
         "can_setup_ssl": True,
+        "can_recreate_slave": False,
         "script": "MySQL 5.7",
         "parameter": []
     },
@@ -56,6 +57,7 @@ REPLICATION_TOPOLOGIES_MYSQL_PERCONA = [
         "can_change_parameters": True,
         "can_reinstall_vm": True,
         "can_setup_ssl": True,
+        "can_recreate_slave": False,
         "script": "MySQL FoxHA 5.7",
         "parameter": []
     },
@@ -72,6 +74,7 @@ REPLICATION_TOPOLOGIES_MYSQL_PERCONA = [
         "can_change_parameters": True,
         "can_reinstall_vm": False,
         "can_setup_ssl": True,
+        "can_recreate_slave": False,
         "script": "MySQL FoxHA 5.7",
         "parameter": []
     }
@@ -205,6 +208,7 @@ class Migration(DataMigration):
         replication_topology.can_change_parameters = rep_top['can_change_parameters']
         replication_topology.can_reinstall_vm = rep_top['can_reinstall_vm']
         replication_topology.can_setup_ssl = rep_top['can_setup_ssl']
+        replication_topology.can_recreate_slave = rep_top['can_recreate_slave']
         replication_topology.script = orm.Script.objects.filter(name=rep_top['script']).first()
         replication_topology.save()
 
@@ -277,6 +281,7 @@ class Migration(DataMigration):
             'environment': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "u'databaseinfras'", 'on_delete': 'models.PROTECT', 'to': u"orm['physical.Environment']"}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'last_vm_created': ('django.db.models.fields.IntegerField', [], {'null': 'True', 'blank': 'True'}),
+            'maintenance_hour': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
             'name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '100'}),
             'name_prefix': ('django.db.models.fields.CharField', [], {'max_length': '10', 'null': 'True', 'blank': 'True'}),
             'name_stamp': ('django.db.models.fields.CharField', [], {'max_length': '20', 'null': 'True', 'blank': 'True'}),
@@ -454,6 +459,7 @@ class Migration(DataMigration):
             'Meta': {'object_name': 'ReplicationTopology'},
             'can_change_parameters': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'can_clone_db': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
+            'can_recreate_slave': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'can_reinstall_vm': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'can_resize_vm': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'can_setup_ssl': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
