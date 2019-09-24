@@ -103,11 +103,14 @@ update_permissions:
 	@cd dbaas && python manage.py update_permissions
 
 generate_migration:
-	$(eval model = $(if $(model),$(model),$(error Modo de uso: make generate_migration model=NOME_DO_MODEL)))
-	@cd dbaas && python manage.py schemamigration ${model} --auto
+	$(eval app = $(if $(app),$(app),$(error Modo de uso: make generate_migration app=NOME_DA_APP)))
+	@cd dbaas && python manage.py schemamigration ${app} --auto
 
 graph_models: # generate graph models
 	@cd dbaas && python manage.py graph_models -g physical logical tsuru > ~/dbaas_model.dot
 
 dev_mode:
 	@sed -i "" -e "/check_dns(/s/^/#/" dbaas/workflow/steps/util/deploy/check_dns.py
+
+migrate: 
+	@cd dbaas && python manage.py migrate $(filter-out $@,$(MAKECMDGOALS))

@@ -597,7 +597,6 @@ class Database(BaseModel):
     def get_configure_ssl_retry_url(self):
         return "/admin/logical/database/{}/configure_ssl_retry/".format(self.id)
 
-
     def is_mongodb_24(self):
         engine = self.engine
         if engine.name == 'mongodb' and engine.version.startswith('2.4'):
@@ -812,7 +811,6 @@ class Database(BaseModel):
             return False, error
         return True, None
 
-
     def can_do_resize_retry(self):
         error = None
         if self.is_in_quarantine:
@@ -961,6 +959,7 @@ class Database(BaseModel):
     @property
     def organization(self):
         return self.team.organization
+
 
 class DatabaseLock(BaseModel):
     database = models.ForeignKey(
