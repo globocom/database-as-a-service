@@ -10,7 +10,7 @@ BASE_MODEL = {
 }
 
 ENGINE_TYPE_MYSQL_PERCONA = {
-    'name': 'mysql_percona2',
+    'name': 'mysql_percona',
     'is_in_memory': False
 }
 
@@ -28,7 +28,7 @@ ENGINE_MYSQL_PERCONA = {
 
 REPLICATION_TOPOLOGIES_MYSQL_PERCONA = [
     {
-        "name": "MySQL Percona Single 5.7.25_2",
+        "name": "MySQL Percona Single 5.7.25",
         "engine": None,
         "class_path": "drivers.replication_topologies.mysql_percona.MySQLPerconaSingle",
         "details": "HA: No",
@@ -44,7 +44,7 @@ REPLICATION_TOPOLOGIES_MYSQL_PERCONA = [
         "parameter": []
     },
     {
-        "name": "MySQL Percona FoxHA 5.7.25_2",
+        "name": "MySQL Percona FoxHA 5.7.25",
         "engine": None,
         "class_path": "drivers.replication_topologies.mysql_percona.MySQLPerconaFoxHA",
         "details": "HA: FoxHA",
@@ -60,7 +60,7 @@ REPLICATION_TOPOLOGIES_MYSQL_PERCONA = [
         "parameter": []
     },
     {
-        "name": "AWS MySQL Percona FoxHA 5.7.25_2",
+        "name": "AWS MySQL Percona FoxHA 5.7.25",
         "engine": None,
         "class_path": "drivers.replication_topologies.mysql_percona.MySQLPerconaFoxHAAWS",
         "details": "MySQLPerconaFoxHAAWS",
@@ -79,7 +79,7 @@ REPLICATION_TOPOLOGIES_MYSQL_PERCONA = [
 
 PLANS_MYSQL_PERCONA = [
     {
-        "name": "MySQL Percona Single 5.7.25_2",
+        "name": "MySQL Percona Single 5.7.25",
         "description": "",
         "is_active": True,
         "is_ha": False,
@@ -100,7 +100,7 @@ PLANS_MYSQL_PERCONA = [
         }
     },
     {
-        "name": "MySQL Percona FOXHA Small - 5.7.25_2",
+        "name": "MySQL Percona FOXHA Small - 5.7.25",
         "description": "",
         "is_active": True,
         "is_ha": True,
@@ -121,7 +121,7 @@ PLANS_MYSQL_PERCONA = [
         }
     },
     {
-        "name": "MySQL Percona FOXHA Small - 5.7.25 - aws-prod_2",
+        "name": "MySQL Percona FOXHA Small - 5.7.25 - aws-prod",
         "description": "",
         "is_active": True,
         "is_ha": True,
