@@ -210,7 +210,7 @@ class Migration(DataMigration):
 
         replication_topology.engine.add(self.engine)
 
-        mysql_parameters = orm.Parameter.objects.filter(name__contains='mysql').all()
+        mysql_parameters = orm.Parameter.objects.filter(engine_type__name__contains='mysql').all()
         replication_topology.parameter.add(*mysql_parameters)
 
         return replication_topology
@@ -226,6 +226,7 @@ class Migration(DataMigration):
         plan.engine = self.engine
         plan.replication_topology = current_rep_top
         plan.has_persistence = plan_data['has_persistence']
+        plan.provider = plan_data['provider']
         plan.max_db_size = plan_data['max_db_size']
         plan.engine_equivalent_plan = plan_data['engine_equivalent_plan']
         plan.disk_offering = orm.DiskOffering.objects.filter(name=plan_data['disk_offering']).first()
@@ -233,15 +234,6 @@ class Migration(DataMigration):
         plan.stronger_offering = orm.Offering.objects.filter(name=plan_data['stronger_offering']).first()
         plan.weaker_offering = orm.Offering.objects.filter(name=plan_data['weaker_offering']).first()
         plan.save()
-
-        # print(orm['dbaas_dnsapi.PlanAttr'])
-        # plan_attr_dns = orm['dbaas_dnsapi.PlanAttr']()
-        # plan_attr_dns.created_at = BASE_MODEL['created_at']
-        # plan_attr_dns.updated_at = BASE_MODEL['updated_at']
-        # plan_attr_dns.dbaas_plan = plan
-        # plan_attr_dns.dnsapi_vm_domain = plan_data['dns_plan']['dnsapi_vm_domain']
-        # plan_attr_dns.dnsapi_database_domain = plan_data['dns_plan']['dnsapi_database_domain']
-        # plan_attr_dns.save()
 
         environment = orm.Environment.objects.filter(name=plan_data['environments']).first()
         plan.environments.add(environment)
