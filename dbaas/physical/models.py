@@ -18,6 +18,7 @@ from drivers import DatabaseInfraStatus
 from system.models import Configuration
 from physical.errors import NoDiskOfferingGreaterError, NoDiskOfferingLesserError
 from django.db.models import Q
+from django.utils.module_loading import import_by_path
 
 
 LOG = logging.getLogger(__name__)
@@ -378,6 +379,9 @@ class ReplicationTopology(BaseModel):
     can_setup_ssl = models.BooleanField(
         verbose_name="Can Setup SSL", default=False
     )
+    can_recreate_slave = models.BooleanField(
+        verbose_name="Can Recreate Slave", default=False
+    )
     script = models.ForeignKey(
         Script, related_name='replication_topologies', null=True, blank=True
     )
@@ -387,6 +391,10 @@ class ReplicationTopology(BaseModel):
         related_name='replication_topologies',
         blank=True
     )
+
+    def get_replication_topology_instance(self):
+        topology_class = import_by_path(self.class_path)
+        return topology_class()
 
 
 class DiskOffering(BaseModel):
@@ -913,6 +921,12 @@ class DatabaseInfra(BaseModel):
                 hosts.append(instance.hostname)
         return hosts
 
+    def recreate_slave_steps(self):
+        topology = (self.plan.replication_topology
+                    .get_replication_topology_instance())
+
+        return topology.get_recreate_slave_steps()
+
 
 class Host(BaseModel):
     hostname = models.CharField(
@@ -1123,6 +1137,10 @@ class Instance(BaseModel):
             return status
         except:
             return False
+
+    @property
+    def is_slave(self):
+        return not self.is_current_write
 
     @property
     def is_current_write(self):

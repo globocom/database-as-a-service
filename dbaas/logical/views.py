@@ -940,9 +940,26 @@ def _add_read_only_instances(request, database):
 
 @database_view('hosts')
 def database_hosts(request, context, database):
+    from maintenance.models import RecreateSlave
     if request.method == 'POST':
         if 'add_read_only' in request.POST:
             _add_read_only_instances(request, database)
+            reverse(
+                'admin:logical_database_hosts',
+                kwargs={'id': database.id}
+            )
+        if 'recreate_slave' in request.POST:
+            host_id = request.POST.get('host_id')
+            host = database.infra.instances.filter(
+                hostname__id=host_id
+            ).first().hostname
+            TaskRegister.recreate_slave(host, request.user)
+            return HttpResponseRedirect(
+                reverse(
+                    'admin:logical_database_hosts',
+                    kwargs={'id': database.id}
+                )
+            )
 
     hosts = OrderedDict()
     instances = database.infra.instances.all().order_by('shard', 'id')
@@ -976,7 +993,11 @@ def database_hosts(request, context, database):
     context['core_attribute'] = database.engine.write_node_description
     context['read_only_attribute'] = database.engine.read_node_description
     context['last_reinstall_vm'] = database.reinstall_vm.last()
-
+    context['last_recreat_slave'] = RecreateSlave.objects.filter(
+        host__in=database.infra.hosts,
+        can_do_retry=True,
+        status=RecreateSlave.ERROR
+    ).last()
     context['instances_core'] = []
     context['instances_read_only'] = []
     for host, instances in hosts.items():
