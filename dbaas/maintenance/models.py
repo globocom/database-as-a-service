@@ -382,6 +382,7 @@ class DatabaseUpgradePatch(DatabaseMaintenanceTask):
 
         super(DatabaseUpgradePatch, self).save(*args, **kwargs)
 
+
 class DatabaseReinstallVM(DatabaseMaintenanceTask):
     database = models.ForeignKey(
         Database, verbose_name="Database",
@@ -781,6 +782,31 @@ class HostMigrate(DatabaseMaintenanceTask):
         current_data = self._meta.model.objects.get(pk=self.id)
         self.host = current_data.host
         super(HostMigrate, self).update_step(step)
+
+
+class RecreateSlave(DatabaseMaintenanceTask):
+    task = models.ForeignKey(
+        TaskHistory, verbose_name="Task History",
+        null=False, related_name="recreate_slave"
+    )
+    host = models.ForeignKey(
+        Host, null=False, related_name="recreate_slave"
+    )
+    snapshot = models.ForeignKey(
+        Snapshot, null=True, blank=True, related_name="snapshot_recreate_slave"
+    )
+
+    def __unicode__(self):
+        return "Recreate slave {}".format(self.host)
+
+    @property
+    def disable_retry_filter(self):
+        return {'host': self.host}
+
+    def update_step(self, step):
+        current_data = self._meta.model.objects.get(pk=self.id)
+        self.host = current_data.host
+        super(RecreateSlave, self).update_step(step)
 
 
 class FilerMigrate(DatabaseMaintenanceTask):
