@@ -1,5 +1,6 @@
 from __future__ import print_function
 import requests
+import copy
 from dbaas_credentials.models import CredentialType
 from util import get_credentials_for
 
@@ -57,11 +58,26 @@ class AddACLAccess(object):
             - source: 1.1.1.1/27 destination: 11.11.11.11/20 ip
             - source: 2.2.2.2/27 destination: 10.10.10.10/20 ip
             - source: 2.2.2.2/27 destination: 11.11.11.11/20 ip
+
+        Ex. U can do between networks
+        >>> from util.aclapi import AddACLAccess
+        >>> networks = ["1.1.1.1/27", "2.2.2.2/27", "10.10.10.10/20"]
+        >>> cli = AddACLAccess(env, networks=networks)
+        >>> cli.execute_between_networks()
+        Here we add 4 acls:
+            - source: 1.1.1.1/27 destination: 2.2.2.2/27 ip
+            - source: 1.1.1.1/27 destination: 10.10.10.10/20 ip
+            - source: 2.2.2.2/27 destination: 1.1.1.1/27 ip
+            - source: 2.2.2.2/27 destination: 10.10.10.10/20 ip
+            - source: 10.10.10.10/20 destination: 1.1.1.1/27 ip
+            - source: 10.10.10.10/20 destination: 2.2.2.2/27 ip
     """
-    def __init__(self, env, sources, destinations, default_port=None, description=None):
+    def __init__(self, env, sources=None, destinations=None,
+                 default_port=None, description=None, networks=None):
         self.env = env
         self.sources = sources
         self.destinations = destinations
+        self.networks = networks
         self.default_port = default_port
         self._credential = None
         self.description = description
@@ -133,4 +149,14 @@ class AddACLAccess(object):
             if resp.ok:
                 print("SUCCESS!!\n\n\n")
             else:
-                print("FAIL Status: {} Error: {}!!\n\n\n".format(resp.status_code, resp.content))
+                print("FAIL Status: {} Error: {}!!\n\n\n".format(
+                    resp.status_code, resp.content
+                ))
+
+    def execute_between_networks(self):
+        for source in self.networks:
+            destination = copy.copy(self.networks)
+            destination.remove(source)
+            self.sources = [source]
+            self.destinations = destination
+            self.execute()
