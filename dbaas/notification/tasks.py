@@ -52,14 +52,14 @@ def rollback_database(dest_database):
 
 def create_database_with_retry(
     name, plan, environment, team, project, description,
-    task, backup_hour, maintenance_hour, subscribe_to_email_events,
-    is_protected, user, retry_from
+    task, backup_hour, subscribe_to_email_events, is_protected,
+    user, retry_from
 ):
     from maintenance.tasks import create_database
     return create_database.delay(
         name=name, plan=plan, environment=environment, team=team,
         project=project, description=description, task=task,
-        backup_hour=backup_hour, maintenance_hour=maintenance_hour,
+        backup_hour=backup_hour,
         subscribe_to_email_events=subscribe_to_email_events,
         is_protected=is_protected, user=user, retry_from=retry_from
     )
@@ -149,7 +149,7 @@ def clone_database(self, origin_database, clone_name, plan, environment, task_hi
         result = clone_infra(
             plan=plan, environment=environment, name=clone_name,
             team=origin_database.team, backup_hour=backup_hour,
-            maintenance_hour=maintenance_hour, project=origin_database.project,
+            project=origin_database.project,
             description=origin_database.description, task=task_history,
             clone=origin_database,
             subscribe_to_email_events=origin_database.subscribe_to_email_events
@@ -1315,8 +1315,8 @@ class TaskRegister(object):
         )
 
     @classmethod
-    def database_create(cls, user, name, plan, environment, team, project,
-                        description, backup_hour, maintenance_hour,
+    def database_create(cls, user, name, plan, environment, team,
+                        project, description, backup_hour,
                         subscribe_to_email_events=True, register_user=True,
                         is_protected=False, retry_from=None):
         task_params = {
@@ -1331,7 +1331,7 @@ class TaskRegister(object):
         return create_database_with_retry(
             name=name, plan=plan, environment=environment, team=team,
             project=project, description=description, task=task,
-            backup_hour=backup_hour, maintenance_hour=maintenance_hour,
+            backup_hour=backup_hour,
             subscribe_to_email_events=subscribe_to_email_events,
             is_protected=is_protected, user=user, retry_from=retry_from
         )
