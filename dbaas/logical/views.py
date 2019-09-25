@@ -889,8 +889,7 @@ def database_maintenance(request, context, database):
             _upgrade_patch(request, database, request.POST.get('target_patch'))
         elif ('upgrade_patch_retry' in request.POST):
             _upgrade_patch_retry(request, database)
-        elif ('maintenance_hour' in request.POST or 'backup_hour' in request.POST):
-            database.infra.maintenance_hour = request.POST['maintenance_hour']
+        elif ('backup_hour' in request.POST):
             database.infra.backup_hour = request.POST['backup_hour']
             database.infra.save()
         else:
@@ -913,8 +912,6 @@ def database_maintenance(request, context, database):
         database.engine.available_patches(database)
     )
 
-    context['maintenance_hours'] = [(hour, datetime.time(hour, 0).strftime(format="%H:%M")) for hour in range(24)]
-    context['current_maintenance_hour'] = int(database.infra.maintenance_hour)
     context['backup_hours'] = [(hour, datetime.time(hour, 0).strftime(format="%H:%M")) for hour in range(24)]
     context['current_backup_hour'] = int(database.infra.backup_hour)
 
