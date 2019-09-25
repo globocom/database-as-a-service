@@ -19,7 +19,6 @@ LOG = logging.getLogger(__name__)
 class DatabaseForm(models.ModelForm):
 
     BACKUP_HOUR_CHOICES = [(hour, datetime.time(hour, 0).strftime(format='%H:%M')) for hour in range(24)]
-    MAINTENANCE_HOUR_CHOICES = [(hour, datetime.time(hour, 0).strftime(format='%H:%M')) for hour in range(24)]
 
     environment = forms.ModelChoiceField(queryset=Environment.objects)
     engine = forms.ModelChoiceField(queryset=Engine.objects)
