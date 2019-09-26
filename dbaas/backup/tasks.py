@@ -168,6 +168,26 @@ def make_instance_snapshot_backup(instance, error, group,
 
 
 @app.task(bind=True)
+@only_one(key="updatesslkey")
+def update_ssl(self):
+    from account.models import User
+    from notification.tasks import TaskRegister
+    from logical.models import Database
+    LOG.info("Making databases backups")
+    worker_name = get_worker_name()
+    user = User.objects.get(username="admin")
+    task_history = TaskHistory.register(
+        request=self.request, worker_name=worker_name, user=None
+    )
+    task_history.relevance = TaskHistory.RELEVANCE_ERROR
+    for db in Database.objects.filter(
+        databaseinfra__ssl_expire_at__gte=(datetime.date.now() -
+                                           timedelta(days=30))
+    ):
+        TaskRegister.update_ssl(db, user)
+
+
+@app.task(bind=True)
 @only_one(key="makedatabasebackupkey")
 def make_databases_backup(self):
     LOG.info("Making databases backups")
