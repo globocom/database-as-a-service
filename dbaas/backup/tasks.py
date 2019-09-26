@@ -173,7 +173,7 @@ def update_ssl(self):
     from account.models import User
     from notification.tasks import TaskRegister
     from logical.models import Database
-    LOG.info("Making databases backups")
+    LOG.info("Updating ssl certificates")
     worker_name = get_worker_name()
     user = User.objects.get(username="admin")
     task_history = TaskHistory.register(
