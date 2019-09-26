@@ -824,6 +824,20 @@ class FilerMigrate(DatabaseMaintenanceTask):
         return "Migrate filer"
 
 
+class UpdateSsl(DatabaseMaintenanceTask):
+    task = models.ForeignKey(
+        TaskHistory, verbose_name="Task History",
+        null=False, related_name="update_ssl_manager"
+    )
+    database = models.ForeignKey(
+        Database, verbose_name="Database",
+        null=False, unique=False, related_name="update_ssl_manager"
+    )
+
+    def __unicode__(self):
+        return "Update SSL for {}".format(self.database)
+
+
 simple_audit.register(Maintenance)
 simple_audit.register(HostMaintenance)
 simple_audit.register(MaintenanceParameters)
