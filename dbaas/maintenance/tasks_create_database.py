@@ -70,7 +70,7 @@ def get_instances_for(infra, topology_path):
 
 
 def create_database(
-    name, plan, environment, team, project, description, task, 
+    name, plan, environment, team, project, description, task,
     backup_hour, subscribe_to_email_events=True, is_protected=False,
     user=None, retry_from=None
 ):

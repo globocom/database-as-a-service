@@ -2,6 +2,7 @@
 from __future__ import absolute_import, unicode_literals
 import logging
 import datetime
+import random
 from django.utils.translation import ugettext_lazy as _
 from django.forms import models
 from django import forms
@@ -40,9 +41,7 @@ class DatabaseForm(models.ModelForm):
     def __init__(self, *args, **kwargs):
         super(DatabaseForm, self).__init__(*args, **kwargs)
         self.fields['is_in_quarantine'].widget = forms.HiddenInput()
-        self.fields['backup_hour'].initial = Configuration.get_by_name_as_int(
-            'backup_hour'
-        )
+        self.fields['backup_hour'].initial = random.randint(0, 6)
 
     def _validate_description(self, cleaned_data):
         if 'description' in cleaned_data:
