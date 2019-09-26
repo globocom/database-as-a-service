@@ -308,10 +308,51 @@ def recreate_slave(self, host, task, since_step=None, step_manager=None):
     step_manager = RecreateSlave.objects.get(id=step_manager.id)
     if result:
         step_manager.set_success()
-        task.set_status_success('Node migrated with success')
+        task.set_status_success('Slave recreated with success')
     else:
         step_manager.set_error()
-        task.set_status_error('Could not migrate host')
+        task.set_status_error('Could not recreate slave')
+
+
+@app.task(bind=True)
+def update_ssl(self, database, task, since_step=None, step_manager=None):
+    from maintenance.models import UpdateSsl
+    task = TaskHistory.register(
+        request=self.request, task_history=task, user=task.user,
+        worker_name=get_worker_name()
+    )
+    if step_manager:
+        step_manager = step_manager
+        step_manager.id = None
+        step_manager.started_at = None
+        since_step = step_manager.current_step
+    else:
+        retry_from = UpdateSsl.objects.filter(
+            can_do_retry=True,
+            database=database,
+            status=UpdateSsl.ERROR
+        ).last()
+        step_manager = UpdateSsl()
+        if retry_from:
+            step_manager.current_step = retry_from.current_step
+            since_step = retry_from.current_step
+    step_manager.database = database
+    step_manager.task = task
+    step_manager.save()
+
+    steps = database.databaseinfra.update_ssl_steps()
+    instances = database.infra.get_driver().get_database_instances()
+    result = steps_for_instances(
+        steps, instances, task, step_manager.update_step, since_step,
+        step_manager=step_manager
+    )
+    step_manager = UpdateSsl.objects.get(id=step_manager.id)
+    if result:
+        step_manager.set_success()
+        task.set_status_success('SSL Update with success')
+    else:
+        step_manager.set_error()
+        task.set_status_error('Could not update SSL')
 
 
 @app.task(bind=True)

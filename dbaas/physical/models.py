@@ -718,6 +718,11 @@ class DatabaseInfra(BaseModel):
         null=False,
         help_text=_("The hour of maintenance.")
     )
+    ssl_expire_at = models.DateField(
+        verbose_name=_("ssl_expire_at"),
+        auto_now_add=False,
+        blank=True,
+        null=True)
 
     def __unicode__(self):
         return self.name
@@ -934,11 +939,16 @@ class DatabaseInfra(BaseModel):
                 hosts.append(instance.hostname)
         return hosts
 
-    def recreate_slave_steps(self):
-        topology = (self.plan.replication_topology
-                    .get_replication_topology_instance())
+    @property
+    def topology(self):
+        return (self.plan.replication_topology
+                .get_replication_topology_instance())
 
-        return topology.get_recreate_slave_steps()
+    def recreate_slave_steps(self):
+        return self.topology.get_recreate_slave_steps()
+
+    def update_ssl_steps(self):
+        return self.topology.get_update_ssl_steps()
 
 
 class Host(BaseModel):
