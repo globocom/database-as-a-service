@@ -588,6 +588,9 @@ class Database(BaseModel):
     def get_reinstallvm_retry_url(self):
         return "/admin/logical/database/{}/reinstallvm_retry/".format(self.id)
 
+    def get_recreateslave_retry_url(self):
+        return "/admin/logical/database/{}/recreateslave_retry/".format(self.id)
+
     def get_configure_ssl_url(self):
         return "/admin/logical/database/{}/configure_ssl/".format(self.id)
 

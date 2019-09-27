@@ -29,7 +29,7 @@ from maintenance.models import (DatabaseUpgrade, DatabaseResize,
                                 DatabaseConfigureSSL, DatabaseUpgradePatch)
 from maintenance.tasks import restore_database, node_zone_migrate, \
     node_zone_migrate_rollback, database_environment_migrate, \
-    database_environment_migrate_rollback
+    database_environment_migrate_rollback, recreate_slave, update_ssl
 from maintenance.models import DatabaseDestroy
 
 
@@ -984,7 +984,6 @@ def resize_database_rollback(self, from_resize, user, task):
         )
 
 
-
 @app.task(bind=True)
 def switch_write_database(self, database, instance, user, task):
     from workflow.workflow import steps_for_instances
@@ -1603,6 +1602,42 @@ class TaskRegister(object):
         return node_zone_migrate.delay(
             host=host, zone=zone, new_environment=new_environment, task=task,
             since_step=since_step, step_manager=step_manager
+        )
+
+    @classmethod
+    def recreate_slave(cls, host, user,
+                       since_step=None, step_manager=None):
+        task_params = {
+            'task_name': "recreate_slave",
+            'arguments': "Host: {}".format(
+                host
+            ),
+        }
+        if user:
+            task_params['user'] = user
+        task = cls.create_task(task_params)
+        return recreate_slave.delay(
+            host=host, task=task,
+            since_step=since_step,
+            step_manager=step_manager
+        )
+
+    @classmethod
+    def update_ssl(cls, database, user,
+                   since_step=None, step_manager=None):
+        task_params = {
+            'task_name': "recreate_slave",
+            'arguments': "Database: {}".format(
+                database
+            ),
+        }
+        if user:
+            task_params['user'] = user
+        task = cls.create_task(task_params)
+        return update_ssl.delay(
+            database=database, task=task,
+            since_step=since_step,
+            step_manager=step_manager
         )
 
     @classmethod
