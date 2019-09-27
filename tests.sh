@@ -17,6 +17,8 @@
 # Create user on mongo
 python add_user_admin_on_mongo.py
 
+sleep(60)
+
 # Run tests
 make test
 # bash
