@@ -7,6 +7,7 @@ python:
 
 services:
     - docker
+    - mysql
 
 env:
   DOCKER_COMPOSE_VERSION: 1.11.2
