@@ -282,7 +282,7 @@ class MySQLFoxHA(MySQLSingle):
         )
 
     def get_database_agents(self):
-        agents = ['httpd', '/etc/init.d/pt-heartbeat']
+        agents = ['httpd', 'pt-heartbeat']
         return super(MySQLFoxHA, self).get_database_agents() + agents
 
     def add_database_instances_first_steps(self):
@@ -695,6 +695,7 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.mysql.SetMasterRecreateSlave',
                 'workflow.steps.util.mysql.EnableReplicationRecreateSlave',
                 'workflow.steps.util.database.StartSlave',
+                'workflow.steps.util.agents.Stop',
                 'workflow.steps.util.agents.Start',
                 'workflow.steps.util.database.CheckIsUp',
                 'workflow.steps.util.fox.IsReplicationOk',
