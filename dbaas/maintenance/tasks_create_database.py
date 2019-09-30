@@ -7,7 +7,8 @@ from workflow.workflow import steps_for_instances, rollback_for_instances_full
 from models import DatabaseCreate
 
 
-def get_or_create_infra(base_name, plan, environment, retry_from=None):
+def get_or_create_infra(base_name, plan, environment, backup_hour,
+                        retry_from=None):
     if retry_from:
         infra = retry_from.infra
         base_name['infra'] = infra.name
@@ -25,7 +26,7 @@ def get_or_create_infra(base_name, plan, environment, retry_from=None):
         infra.environment = environment
         infra.capacity = 1
         infra.per_database_size_mbytes = plan.max_db_size
-        infra.backup_hour = 0
+        infra.backup_hour = backup_hour
         infra.engine_patch = plan.engine.default_engine_patch
         infra.save()
 
@@ -70,14 +71,15 @@ def get_instances_for(infra, topology_path):
 
 def create_database(
     name, plan, environment, team, project, description, task,
-    subscribe_to_email_events=True, is_protected=False, user=None,
-    retry_from=None
+    backup_hour, subscribe_to_email_events=True, is_protected=False,
+    user=None, retry_from=None
 ):
     topology_path = plan.replication_topology.class_path
 
     name = slugify(name)
     base_name = gen_infra_names(name, 0)
-    infra = get_or_create_infra(base_name, plan, environment, retry_from)
+    infra = get_or_create_infra(base_name, plan, environment, backup_hour,
+                                retry_from)
     instances = get_instances_for(infra, topology_path)
 
     database_create = DatabaseCreate()
