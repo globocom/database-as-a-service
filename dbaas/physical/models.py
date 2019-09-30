@@ -1006,6 +1006,10 @@ class Host(BaseModel):
                 return instance
         return None
 
+    @property
+    def is_database(self):
+        return self.database_instance() is not None
+
 
 class Volume(BaseModel):
     host = models.ForeignKey(Host, related_name="volumes")

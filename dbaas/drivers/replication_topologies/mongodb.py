@@ -360,6 +360,36 @@ class MongoDBReplicaset(BaseTopology):
             )
         }]
 
+    def get_recreate_slave_steps(self):
+        return [{
+            'Recreate Slave': (
+                'workflow.steps.util.database.CheckIfSwitchMaster',
+                'workflow.steps.util.zabbix.DisableAlarms',
+                'workflow.steps.util.db_monitor.DisableMonitoring',
+                'workflow.steps.util.volume_provider.TakeSnapshotFromMaster',
+                ('workflow.steps.util.volume_provider'
+                 '.WaitSnapshotAvailableMigrate'),
+                'workflow.steps.util.database.Stop',
+                'workflow.steps.util.disk.CleanDataRecreateSlave',
+                'workflow.steps.util.volume_provider.AddAccessRecreateSlave',
+                ('workflow.steps.util.volume_provider'
+                 '.MountDataVolumeRecreateSlave'),
+                'workflow.steps.util.volume_provider.CopyDataFromSnapShot',
+                ('workflow.steps.util.volume_provider'
+                 '.UmountDataVolumeRecreateSlave'),
+                ('workflow.steps.util.volume_provider'
+                 '.RemoveAccessRecreateSlave'),
+                'workflow.steps.util.volume_provider.RemoveSnapshotMigrate',
+                'workflow.steps.util.disk.RemoveDeprecatedFiles',
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.database.WaitForReplication',
+                'workflow.steps.util.metric_collector.RestartTelegraf',
+                'workflow.steps.util.db_monitor.EnableMonitoring',
+                'workflow.steps.util.zabbix.EnableAlarms',
+            )
+        }]
+
     def get_host_migrate_steps_cleaning_up(self):
         return (
             'workflow.steps.mongodb.database.RemoveInstanceFromReplicaSet',
