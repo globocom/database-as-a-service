@@ -93,28 +93,6 @@
     </div>
   </div>
   {% endif %}
-
-  {% if upgrade_mongo_24_to_30 and database.databaseinfra.plan.replication_topology.can_upgrade_db %}
-    <div class="control-group">
-      <div class="control-label"><label>Engine upgrade:</label></div>
-      <div class="controls">
-        <a href="{{ database.get_mongodb_engine_version_upgrade_url }}" class="btn btn-primary" title="Start engine upgrade" onclick="return confirm('Are you sure?')">Upgrade MongoDB 2.4 to 3.0</a>
-      </div>
-    </div>
-  {% elif can_do_upgrade and database.databaseinfra.plan.replication_topology.can_upgrade_db %}
-    <div class="control-group">
-      <div class="control-label"><label>Engine upgrade:</label></div>
-      <div class="controls">
-        {% if last_upgrade and last_upgrade.is_status_error %}
-          <a href="{{ database.get_upgrade_retry_url }}" class="btn btn-warning" title="Retry upgrade" onclick="return confirm('Are you sure?')">Retry upgrade {{ database.infra.engine_name }} {{ database.infra.plan.engine.version}} to {{ database.infra.plan.engine_equivalent_plan.engine.version }}</a>
-          <p><a href="{% url 'admin:maintenance_databaseupgrade_change' last_upgrade.id %}" target='_blank'>Last upgrade</a> has an <b>error</b>, please check the <a href="{% url 'admin:notification_taskhistory_change' last_upgrade.task.id %}" target='_blank'>task</a> and retry the database upgrade clicking in button above</p>
-        {% else %}
-          <a href="{{ database.get_upgrade_url }}" class="btn btn-primary" title="Start upgrade" onclick="return confirm('Are you sure?')">Upgrade {{ database.infra.engine_name }} {{database.infra.engine_patch.full_version }} to {{ database.infra.plan.engine_equivalent_plan.engine.version }}</a>
-        {% endif %}
-      </div>
-    </div>
-  {% endif %}
-
   <div class="control-group">
     <div class="control-label"><label>Help:</label></div>
     <div class="controls">
@@ -126,10 +104,6 @@
 {% include "admin/confirmation_modal_input.html" with modal_id="resize_vm" title="Resize VM" body_text="logical/modal/vm_offering_body.html" input_name="resize_vm_yes" submit_button_value="Resize" submit_button_name="vm_resize" submit_button_id="id_resize_vm_btn_modal" %}
 
 {% include "admin/confirmation_modal.html" with modal_id="resize_disk" confirmation_message="Are you sure you want to resize the disk?" box_title="Resizing the disk" button_type="submit" button_value="Resize" button_name="disk_resize" id_optional="id=id_resize_disk_btn_modal" %}
-
-{% include "admin/confirmation_modal.html" with modal_id="upgrade_patch" confirmation_message="Are you sure you want to upgrade patch?" box_title="Upgrading the patch" button_type="submit" button_value="Upgrade" button_name="upgrade_patch" id_optional="id=id_upgrade_patch_btn_modal" %}
-
-{% include "admin/confirmation_modal.html" with modal_id="upgrade_patch_retry" confirmation_message="Are you sure you want to retry upgrade patch?" box_title="Retring to upgrade the patch" button_type="submit" button_value="Upgrade Retry" button_name="upgrade_patch_retry" id_optional="id=id_upgrade_patch_retry_btn_modal" %}
 
 {% endblock %}
 
@@ -173,16 +147,6 @@
     $("#disk_resize_btn").click(function() {
       var $new_disk_size = $("#id_disk_offering").find(":selected").text().trim()
       $("#resize_disk .modal_message").text('Are you sure you want to resize your disk from <{{ database.databaseinfra.disk_offering.name  }}> to <' + $new_disk_size + '>?')
-    });
-
-    $("#upgrade_patch_btn").click(function() {
-      var new_patch_version = $("#id_target_patch").find(":selected").text().trim();
-      $("#upgrade_patch .modal_message").text('Are you sure you want to upgrade database from <{{ database.databaseinfra.engine_patch.full_version }}> to <' + new_patch_version + '>?')
-    });
-
-    $("#upgrade_patch_retry_btn").click(function() {
-      var new_patch_version = $("#id_target_patch_retry").find(":selected").text().trim();
-      $("#upgrade_patch_retry .modal_message").text('Are you sure you want to retry to upgrade database from <{{ database.databaseinfra.engine_patch.full_version }}> to <' + new_patch_version + '>?')
     });
 
   })
