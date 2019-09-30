@@ -275,6 +275,33 @@ class RequestSSLForInfra(RequestSSL, InfraSSLBaseName):
     pass
 
 
+class UpdateSSLForInfra(RequestSSLForInfra):
+
+    def request_ssl_certificate(self):
+        script = "cd {ssl_path}\n"
+        script += "openssl req -new -out {csr}"
+        script += "-sha256 -key {key} -config {conf}"
+
+        script = script.format(
+            ssl_path=self.ssl_path, csr=self.csr_file,
+            key=self.key_file, conf=self.conf_file)
+
+        self.exec_script(script)
+
+
+class UpdateSSLForInstance(RequestSSLForInstance):
+    def request_ssl_certificate(self):
+        script = "cd {ssl_path}\n"
+        script += "openssl req -new -out {csr}"
+        script += "-sha256 -key {key} -config {conf}"
+
+        script = script.format(
+            ssl_path=self.ssl_path, csr=self.csr_file,
+            key=self.key_file, conf=self.conf_file)
+
+        self.exec_script(script)
+
+
 class CreateJsonRequestFile(SSL):
 
     def __unicode__(self):
