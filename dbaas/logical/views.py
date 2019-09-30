@@ -913,7 +913,11 @@ def database_maintenance(request, context, database):
         database.engine.available_patches(database)
     )
 
-    context['maintenance_hours'] = [(hour, datetime.time(hour, 0).strftime(format="%H:%M")) for hour in range(24)]
+    context['maintenance_hours'] = [(hour,
+                                    datetime.time(hour, 0).strftime('%H:%M - ' +
+                                                                    str((
+                                                                        datetime.datetime.combine(datetime.date.today(), datetime.time(hour)) +
+                                                                        datetime.timedelta(hours=1)).strftime('%H:%M')))) for hour in range(24)]
     context['current_maintenance_hour'] = int(database.infra.maintenance_hour)
     context['backup_hours'] = [(hour, datetime.time(hour, 0).strftime(format="%H:%M")) for hour in range(24)]
     context['current_backup_hour'] = int(database.infra.backup_hour)
