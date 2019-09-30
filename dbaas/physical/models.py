@@ -339,6 +339,7 @@ class Script(BaseModel):
     def metric_collector_template(self):
         return self._get_content(self.metric_collector)
 
+
 class ReplicationTopology(BaseModel):
 
     class Meta:
@@ -707,10 +708,16 @@ class DatabaseInfra(BaseModel):
         verbose_name=_("Backup hour"),
         blank=False,
         null=False,
-        help_text=_("The hour of backup."))
+        help_text=_("Value default"))
     engine_patch = models.ForeignKey(
         EnginePatch, related_name="databaseinfras",
         on_delete=models.PROTECT, null=True)
+    maintenance_hour = models.IntegerField(
+        default=0,
+        blank=False,
+        null=False,
+        help_text=_("The hour of maintenance.")
+    )
     ssl_expire_at = models.DateField(
         verbose_name=_("ssl_expire_at"),
         auto_now_add=False,
@@ -728,6 +735,12 @@ class DatabaseInfra(BaseModel):
     def clean(self, *args, **kwargs):
         if (not self.environment_id or not self.plan_id) or not self.plan.environments.filter(pk=self.environment_id).exists():
             raise ValidationError({'engine': _("Invalid environment")})
+
+    @property
+    def configure_backup_hour(self):
+        return Configuration.get_by_name_as_int(
+            'backup_hour'
+        )
 
     @property
     def offering(self):
@@ -1026,6 +1039,7 @@ class Instance(BaseModel):
     MONGODB_ARBITER = 3
     REDIS = 4
     REDIS_SENTINEL = 5
+    MYSQL_PERCONA = 6
 
     DATABASE_TYPE = (
         (NONE, 'None'),
@@ -1034,6 +1048,7 @@ class Instance(BaseModel):
         (MONGODB_ARBITER, 'Arbiter'),
         (REDIS, 'Redis'),
         (REDIS_SENTINEL, 'Sentinel'),
+        (MYSQL_PERCONA, 'MySQLPercona'),
     )
 
     dns = models.CharField(verbose_name=_("Instance dns"), max_length=200)
@@ -1069,7 +1084,9 @@ class Instance(BaseModel):
 
     @property
     def is_database(self):
-        return self.instance_type in (self.MYSQL, self.MONGODB, self.REDIS)
+        return self.instance_type in (
+            self.MYSQL, self.MONGODB, self.REDIS, self.MYSQL_PERCONA
+        )
 
     @property
     def offering(self):

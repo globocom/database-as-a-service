@@ -1,23 +1,263 @@
 # -*- coding: utf-8 -*-
 from south.utils import datetime_utils as datetime
 from south.db import db
-from south.v2 import SchemaMigration
+from south.v2 import DataMigration
 from django.db import models
 
+BASE_MODEL = {
+    'created_at': datetime.datetime.now(),
+    'updated_at': datetime.datetime.now()
+}
 
-class Migration(SchemaMigration):
+ENGINE_TYPE_MYSQL_PERCONA = {
+    'name': 'mysql_percona',
+    'is_in_memory': False
+}
+
+ENGINE_MYSQL_PERCONA = {
+    'engine_type': ENGINE_TYPE_MYSQL_PERCONA['name'],
+    'version': '5.7.25', 'path': '', 'template_name': '',
+    'user_data_script': '', 'engine_upgrade_option': None,
+    'has_users': True, 'write_node_description': 'Master',
+    'read_node_description': 'Slave',
+    'major_version': 5,
+    'minor_version': 7,
+    'is_active': True,
+    'initial_patch': 25
+}
+
+REPLICATION_TOPOLOGIES_MYSQL_PERCONA = [
+    {
+        "name": "MySQL Percona Single 5.7.25",
+        "engine": None,
+        "class_path": "drivers.replication_topologies.mysql_percona.MySQLPerconaSingle",
+        "details": "HA: No",
+        "has_horizontal_scalability": False,
+        "can_resize_vm": True,
+        "can_clone_db": True,
+        "can_switch_master": True,
+        "can_upgrade_db": True,
+        "can_change_parameters": True,
+        "can_reinstall_vm": True,
+        "can_setup_ssl": True,
+        "can_recreate_slave": False,
+        "script": "MySQL 5.7",
+        "parameter": []
+    },
+    {
+        "name": "MySQL Percona FoxHA 5.7.25",
+        "engine": None,
+        "class_path": "drivers.replication_topologies.mysql_percona.MySQLPerconaFoxHA",
+        "details": "HA: FoxHA",
+        "has_horizontal_scalability": False,
+        "can_resize_vm": True,
+        "can_clone_db": True,
+        "can_switch_master": True,
+        "can_upgrade_db": True,
+        "can_change_parameters": True,
+        "can_reinstall_vm": True,
+        "can_setup_ssl": True,
+        "can_recreate_slave": False,
+        "script": "MySQL FoxHA 5.7",
+        "parameter": []
+    },
+    {
+        "name": "AWS MySQL Percona FoxHA 5.7.25",
+        "engine": None,
+        "class_path": "drivers.replication_topologies.mysql_percona.MySQLPerconaFoxHAAWS",
+        "details": "MySQLPerconaFoxHAAWS",
+        "has_horizontal_scalability": False,
+        "can_resize_vm": True,
+        "can_clone_db": True,
+        "can_switch_master": True,
+        "can_upgrade_db": True,
+        "can_change_parameters": True,
+        "can_reinstall_vm": False,
+        "can_setup_ssl": True,
+        "can_recreate_slave": False,
+        "script": "MySQL FoxHA 5.7",
+        "parameter": []
+    }
+]
+
+PLANS_MYSQL_PERCONA = [
+    {
+        "name": "MySQL Percona Single 5.7.25",
+        "description": "",
+        "is_active": True,
+        "is_ha": False,
+        "engine": None,
+        "replication_topology": None,
+        "has_persistence": True,
+        "environments": "dev",
+        "provider": 1,
+        "max_db_size": 500,
+        "engine_equivalent_plan": None,
+        "disk_offering": "Small",
+        "migrate_plan": None,
+        "stronger_offering": "c1m1 (1 CPU + 1 GB)",
+        "weaker_offering": None,
+        "dns_plan": {
+            "dnsapi_vm_domain": "globoi.com",
+            "dnsapi_database_domain": "mysql.globoi.com"
+        }
+    },
+    {
+        "name": "MySQL Percona FOXHA Small - 5.7.25",
+        "description": "",
+        "is_active": True,
+        "is_ha": True,
+        "engine": None,
+        "replication_topology": None,
+        "has_persistence": True,
+        "environments": "prod",
+        "provider": 1,
+        "max_db_size": 512,
+        "engine_equivalent_plan": None,
+        "disk_offering": "Small",
+        "migrate_plan": None,
+        "stronger_offering": "c1m1 (1 CPU + 1 GB)",
+        "weaker_offering": "c1m0.5 (1 CPU + 0.5 GB)",
+        "dns_plan": {
+            "dnsapi_vm_domain": "globoi.com",
+            "dnsapi_database_domain": "mysql.globoi.com"
+        }
+    },
+    {
+        "name": "MySQL Percona FOXHA Small - 5.7.25 - aws-prod",
+        "description": "",
+        "is_active": True,
+        "is_ha": True,
+        "engine": None,
+        "replication_topology": None,
+        "has_persistence": True,
+        "environments": 'aws-prod',
+        "provider": 1,
+        "max_db_size": 500,
+        "engine_equivalent_plan": None,
+        "disk_offering": "Small",
+        "migrate_plan": None,
+        "stronger_offering": "c1m0.5 (1 CPU + 0.5 GB)",
+        "weaker_offering": "c1m10.5 (1 CPU + 0.5 GB)",
+        "dns_plan": {
+            "dnsapi_vm_domain": "globoi.com",
+            "dnsapi_database_domain": "mysql.globoi.com"
+        }
+    }
+]
+
+
+
+class Migration(DataMigration):
+
+    def create_engine_type(self, orm):
+        engine_type = orm.EngineType()
+        engine_type.created_at = BASE_MODEL['created_at']
+        engine_type.updated_at = BASE_MODEL['updated_at']
+        engine_type.name = ENGINE_TYPE_MYSQL_PERCONA['name']
+        engine_type.is_in_memory = ENGINE_TYPE_MYSQL_PERCONA['is_in_memory']
+        engine_type.save()
+
+        return engine_type
+
+    def create_engine(self, orm):
+        engine = orm.Engine()
+        engine.created_at = BASE_MODEL['created_at']
+        engine.updated_at = BASE_MODEL['updated_at']
+        engine.engine_type = self.engine_type
+        engine.version = ENGINE_MYSQL_PERCONA['version']
+        engine.path = ENGINE_MYSQL_PERCONA['path']
+        engine.template_name = ENGINE_MYSQL_PERCONA['template_name']
+        engine.user_data_script = ENGINE_MYSQL_PERCONA['user_data_script']
+        engine.engine_upgrade_option = ENGINE_MYSQL_PERCONA['engine_upgrade_option']
+        engine.has_users = ENGINE_MYSQL_PERCONA['has_users']
+        engine.write_node_description = ENGINE_MYSQL_PERCONA['write_node_description']
+        engine.read_node_description = ENGINE_MYSQL_PERCONA['read_node_description']
+        engine.major_version = ENGINE_MYSQL_PERCONA['major_version']
+        engine.minor_version = ENGINE_MYSQL_PERCONA['minor_version']
+        engine.is_active = ENGINE_MYSQL_PERCONA['is_active']
+        engine.save()
+
+        self.create_initial_engine_patch(
+            orm, engine, ENGINE_MYSQL_PERCONA['initial_patch']
+        )
+
+        return engine
+
+    def create_initial_engine_patch(self, orm, engine, initial_patch):
+        engine_patch = orm.EnginePatch()
+        engine_patch.created_at = BASE_MODEL['created_at']
+        engine_patch.updated_at = BASE_MODEL['updated_at']
+        engine_patch.engine = engine
+        engine_patch.patch_version = initial_patch
+        engine_patch.is_initial_patch = True
+        engine_patch.save()
+
+    def create_replication_topology(self, orm, rep_top):
+        replication_topology = orm.ReplicationTopology()
+        replication_topology.created_at = BASE_MODEL['created_at']
+        replication_topology.updated_at = BASE_MODEL['updated_at']
+        replication_topology.name = rep_top['name']
+        replication_topology.class_path = rep_top['class_path']
+        replication_topology.details = rep_top['details']
+        replication_topology.has_horizontal_scalability = rep_top['has_horizontal_scalability']
+        replication_topology.can_resize_vm = rep_top['can_resize_vm']
+        replication_topology.can_clone_db = rep_top['can_clone_db']
+        replication_topology.can_switch_master = rep_top['can_switch_master']
+        replication_topology.can_upgrade_db = rep_top['can_upgrade_db']
+        replication_topology.can_change_parameters = rep_top['can_change_parameters']
+        replication_topology.can_reinstall_vm = rep_top['can_reinstall_vm']
+        replication_topology.can_setup_ssl = rep_top['can_setup_ssl']
+        replication_topology.can_recreate_slave = rep_top['can_recreate_slave']
+        replication_topology.script = orm.Script.objects.filter(name=rep_top['script']).first()
+        replication_topology.save()
+
+        replication_topology.engine.add(self.engine)
+
+        mysql_parameters = orm.Parameter.objects.filter(engine_type__name__contains='mysql').all()
+        replication_topology.parameter.add(*mysql_parameters)
+
+        return replication_topology
+
+    def create_plan(self, orm, current_rep_top, plan_data):
+        plan = orm.Plan()
+        plan.created_at = BASE_MODEL['created_at']
+        plan.updated_at = BASE_MODEL['updated_at']
+        plan.name = plan_data['name']
+        plan.description = plan_data['description']
+        plan.is_active = plan_data['is_active']
+        plan.is_ha = plan_data['is_ha']
+        plan.engine = self.engine
+        plan.replication_topology = current_rep_top
+        plan.has_persistence = plan_data['has_persistence']
+        plan.provider = plan_data['provider']
+        plan.max_db_size = plan_data['max_db_size']
+        plan.engine_equivalent_plan = plan_data['engine_equivalent_plan']
+        plan.disk_offering = orm.DiskOffering.objects.filter(name=plan_data['disk_offering']).first()
+        plan.migrate_plan = plan_data['migrate_plan']
+        plan.stronger_offering = orm.Offering.objects.filter(name=plan_data['stronger_offering']).first()
+        plan.weaker_offering = orm.Offering.objects.filter(name=plan_data['weaker_offering']).first()
+        plan.save()
+
+        environment = orm.Environment.objects.filter(name=plan_data['environments']).first()
+        plan.environments.add(environment)
+
+        return plan
 
     def forwards(self, orm):
-        # Adding field 'DatabaseInfra.ssl_expire_at'
-        db.add_column(u'physical_databaseinfra', 'ssl_expire_at',
-                      self.gf('django.db.models.fields.DateField')(null=True, blank=True),
-                      keep_default=False)
+        "Write your forwards methods here."
+        # Note: Don't use "from appname.models import ModelName".
+        # Use orm.ModelName to refer to models in this application,
+        # and orm['appname.ModelName'] for models in other applications.
+        self.engine_type = self.create_engine_type(orm)
+        self.engine = self.create_engine(orm)
 
+        for index, rep_top in enumerate(REPLICATION_TOPOLOGIES_MYSQL_PERCONA):
+            current_rep_top = self.create_replication_topology(orm, rep_top)
+            self.create_plan(orm, current_rep_top, PLANS_MYSQL_PERCONA[index])
 
     def backwards(self, orm):
-        # Deleting field 'DatabaseInfra.ssl_expire_at'
-        db.delete_column(u'physical_databaseinfra', 'ssl_expire_at')
-
+        "Write your backwards methods here."
 
     models = {
         u'physical.cloud': {
@@ -41,6 +281,7 @@ class Migration(SchemaMigration):
             'environment': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "u'databaseinfras'", 'on_delete': 'models.PROTECT', 'to': u"orm['physical.Environment']"}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'last_vm_created': ('django.db.models.fields.IntegerField', [], {'null': 'True', 'blank': 'True'}),
+            'maintenance_hour': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
             'name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '100'}),
             'name_prefix': ('django.db.models.fields.CharField', [], {'max_length': '10', 'null': 'True', 'blank': 'True'}),
             'name_stamp': ('django.db.models.fields.CharField', [], {'max_length': '20', 'null': 'True', 'blank': 'True'}),
@@ -48,7 +289,6 @@ class Migration(SchemaMigration):
             'per_database_size_mbytes': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
             'plan': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "u'databaseinfras'", 'on_delete': 'models.PROTECT', 'to': u"orm['physical.Plan']"}),
             'ssl_configured': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'ssl_expire_at': ('django.db.models.fields.DateField', [], {'null': 'True', 'blank': 'True'}),
             'updated_at': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
             'user': ('django.db.models.fields.CharField', [], {'max_length': '100', 'blank': 'True'})
         },
@@ -280,3 +520,4 @@ class Migration(SchemaMigration):
     }
 
     complete_apps = ['physical']
+    symmetrical = True
