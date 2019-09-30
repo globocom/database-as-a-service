@@ -26,9 +26,10 @@ class EngineTypeFactory(factory.DjangoModelFactory):
 
 class EngineFactory(factory.DjangoModelFactory):
     FACTORY_FOR = models.Engine
-    FACTORY_DJANGO_GET_OR_CREATE = ('version', 'engine_type',)
+    FACTORY_DJANGO_GET_OR_CREATE = ('engine_type',)
 
-    version = 'unique'
+    major_version = 1
+    minor_version = 2
     engine_type = factory.SubFactory(EngineTypeFactory)
 
 class EnginePatchFactory(factory.DjangoModelFactory):

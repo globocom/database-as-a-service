@@ -17,21 +17,31 @@ class EnginePatchForm(forms.ModelForm):
 
         is_initial_patch = self.cleaned_data.get('is_initial_patch')
         patch_path = self.cleaned_data.get('patch_path')
+        required_disk_size_gb = self.cleaned_data.get('required_disk_size_gb')
         is_delete = self.cleaned_data.get('DELETE')
 
-        if not is_initial_patch:
-            if not patch_path and not is_delete:
-                if 'patch_path' not in self._errors:
-                    self._errors['patch_path'] = ErrorList()
-                self._errors['patch_path'].append(
-                    'Only an initial patch can have blank path!'
-                )
+        if not is_initial_patch and not is_delete:
+            self.validate_empty_field(
+                'patch_path', patch_path
+            )
+            self.validate_empty_field(
+                'required_disk_size_gb', required_disk_size_gb
+            )
 
         return self.cleaned_data
 
+    def validate_empty_field(self, field_name, field_value):
+        if not field_value:
+            if field_name not in self._errors:
+                self._errors[field_name] = ErrorList()
+            self._errors[field_name].append(
+                'Only an initial patch can have blank {}!'.format(field_name)
+            )
+
     class Meta:
         model = EnginePatch
-        fields = ('patch_version', 'is_initial_patch', 'patch_path')
+        fields = ('patch_version', 'is_initial_patch',
+                  'patch_path', 'required_disk_size_gb')
 
 
 class EnginePatchFormset(BaseInlineFormSet):

@@ -63,13 +63,34 @@
                   </td>
                   {% endif %}
                 {% else %}
-                <td>
+                <td class="action-red-button">
                   <a class="action_button btn btn-danger reinstallvm" data-toggle="modal" id="reinstall_vm_btn"
                     data-target="#reinstall_vm_modal" data-host-id="{{host.id}}" title="Reinstall VM template and reconfigure the instance database."
-                  >Reinstall VM</i></a>
+                  >Reinstall VM</a>
                 </td>
                 {% endif %}
               {% endif %}
+              {% if database.databaseinfra.plan.replication_topology.can_recreate_slave and database.infra.plan.is_ha %}
+                {% if host.switch_database  %}
+                  <td class="action-red-button">
+                  </td>
+                {% else %}
+                  {% if last_recreat_slave and last_recreat_slave.is_status_error %}
+                    {% if host.id == last_recreat_slave.host.id %}
+                      <td>
+                          <a class="action_button btn btn-danger" href="{% url 'admin:maintenance_recreateslave_change' last_recreat_slave.id %}retry" title="Go to recreate slave page">Retry Recreate Slave</a>
+                      </td>
+                    {% endif %}
+                  {% else %}
+                    <td class="action-red-button">
+                      <a class="action_button btn btn-danger recreate-slave" data-toggle="modal" id="recreate_vm_btn"
+                        data-target="#recreate_vm_modal" data-host-id="{{host.id}}" title="Recreate Slave."
+                      >Recreate Slave</a>
+                    </td>
+                  {% endif %}
+                {% endif %}
+              {% endif %}
+
             {% else %}
               {{ host.description }}
               </td>
@@ -104,11 +125,21 @@
                   </span>
                   {% endif %}
                 {% else %}
-                <td>
+                <td class="action-red-button">
                   <a class="action_button btn btn-danger reinstallvm" data-toggle="modal" id="reinstall_vm_btn"
                     data-target="#reinstall_vm_modal" data-host-id="{{host.id}}" title="Reinstall VM template and reconfigure the instance database."
-                  >Reinstall VM</i></a>
+                  >Reinstall VM</a>
                 </td>
+                {% if database.infra.plan.is_ha %}
+                  <td class="action-red-button">
+                  </td>
+                {% else %}
+                  <td class="action-red-button">
+                    <a class="action_button btn btn-danger recreate-slave" data-toggle="modal" id="recreate_vm_btn"
+                      data-target="#recreate_vm_modal" data-host-id="{{host.id}}" title="Recreate Slave."
+                    >Recreate Slave</a>
+                  </td>
+                {% endif %}
                 {% endif %}
               {% else %}
                 {{ host.description }}
@@ -169,6 +200,9 @@
     {% include "admin/confirmation_modal.html" with tag_type="a" modal_id="reinstall_vm_modal" confirmation_message="The reinstall vm process <font color='red'><b>will stop the database</b></font> and, consequently, it will be <font color='red'><b>unavailable</b></font> until the the end of the process.<br>Please click <u><b>yes</b></u> to confirm." box_title="Reinstall VM" button_class="btn btn-primary btn-reset-password" id_optional="id=confirm_reinstall_vm_button" %}
 {% endif %}
 
+{% if database.infra.plan.is_ha %}
+    {% include "admin/generic_confirmation_modal_input.html" with modal_id="recreate_vm_modal" unique_modal_name="ht_recreate_slave" modal_title="Recreate Slave" modal_body_text="The slave" modal_body_text_red="will be stoped" input_name="recreate_slave_input" submit_button_name="recreate_slave" submit_button_value="recreate" submit_button_id="confirm_recreate_vm_button" user_must_type="recreate" on_click_selector=".recreate-slave" payload_data_name="host_id" get_from_data='host-id' %}
+{% endif %}
 {% endblock %}
 
 {% block js_footer %}

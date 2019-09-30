@@ -82,7 +82,9 @@ class CopyDataBetweenExportsMigration(CopyDataBetweenExports):
 
 class CleanData(DiskCommand):
     def __unicode__(self):
-        return "Removing data from slaves..."
+        if not self.is_valid:
+            return "Skipped because the instance is master"
+        return "Removing data from slave..."
 
     @property
     def is_valid(self):
@@ -97,6 +99,22 @@ class CleanData(DiskCommand):
         message = 'Could not remove data from {}'.format(self.OLD_DIRECTORY)
         script = 'rm -rf {}'.format(self.directory)
         return {message: script}
+
+
+class CleanDataRecreateSlave(CleanData):
+    @property
+    def is_valid(self):
+        return self.instance.is_slave
+
+
+class CleanReplRecreateSlave(CleanData):
+    @property
+    def is_valid(self):
+        return self.instance.is_slave
+
+    @property
+    def directory(self):
+        return '{}/repl/*'.format(self.OLD_DIRECTORY)
 
 
 class CleanDataArbiter(CleanData):

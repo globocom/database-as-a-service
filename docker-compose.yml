@@ -4,39 +4,44 @@ services:
 
     mysqldb55:
         image: mysql:5.5
+        container_name: mysql55
         environment:
             - MYSQL_ROOT_PASSWORD=123
             - MYSQL_USER=rute
             - MYSQL_PASSWORD=123
             - MYSQL_DATABASE=dbaas
         ports:
-            - "3306:3306"
+            - "3307:3306"
 
     mysqldb56:
         image: mysql:5.6
+        container_name: mysql56
         environment:
             - MYSQL_ROOT_PASSWORD=123
             - MYSQL_USER=rute
             - MYSQL_PASSWORD=123
             - MYSQL_DATABASE=dbaas
         ports:
-            - "3306:3306"
+            - "3307:3306"
 
     mysqldb57:
         image: mysql:5.7
+        container_name: mysql57
         environment:
             - MYSQL_ROOT_PASSWORD=123
             - MYSQL_USER=rute
             - MYSQL_PASSWORD=123
             - MYSQL_DATABASE=dbaas
         ports:
-            - "3306:3306"
+            - "3307:3306"
 
     mongodb:
         image: mongo:3.4
+        container_name: mongo34
 
     redisdb:
         image: redis:3.2
+        container_name: redis32
 
     test:
         image: dbaas_test

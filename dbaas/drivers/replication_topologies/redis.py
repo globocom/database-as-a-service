@@ -78,6 +78,9 @@ class RedisSingle(BaseRedis):
             )}, {
             'Create Extra DNS': (
                 'workflow.steps.util.database.CreateExtraDNS',
+            )}, {
+            'Update Host Disk Size': (
+                'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
             )
         }]
 
@@ -314,6 +317,9 @@ class RedisSentinel(BaseRedis):
             )}, {
             'Create Extra DNS': (
                 'workflow.steps.util.database.CreateExtraDNS',
+            )}, {
+            'Update Host Disk Size': (
+                'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
             )
         }]
 
@@ -332,6 +338,7 @@ class RedisSentinel(BaseRedis):
             'workflow.steps.util.volume_provider.NewVolume',
             'workflow.steps.util.vm.WaitingBeReady',
             'workflow.steps.util.vm.UpdateOSDescription',
+            'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
             'workflow.steps.util.volume_provider.MountDataVolume',
             'workflow.steps.util.plan.Initialization',
             'workflow.steps.util.plan.Configure',
@@ -433,6 +440,9 @@ class RedisCluster(BaseRedis):
             )}, {
             'Create Extra DNS': (
                 'workflow.steps.util.database.CreateExtraDNS',
+            )}, {
+            'Update Host Disk Size': (
+                'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
             )
         }]
 
@@ -524,6 +534,7 @@ class RedisCluster(BaseRedis):
             'workflow.steps.util.volume_provider.NewVolume',
             'workflow.steps.util.vm.WaitingBeReady',
             'workflow.steps.util.vm.UpdateOSDescription',
+            'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
             'workflow.steps.util.volume_provider.MountDataVolume',
             'workflow.steps.util.plan.Initialization',
             'workflow.steps.util.plan.Configure',
