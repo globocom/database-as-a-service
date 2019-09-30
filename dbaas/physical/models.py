@@ -1152,7 +1152,7 @@ class Instance(BaseModel):
     def is_current_write(self):
         try:
             driver = self.databaseinfra.get_driver()
-            return driver.check_instance_is_master(instance=self)
+            return driver.check_instance_is_master(instance=self, default_timeout=True)
         except:
             return False
 
