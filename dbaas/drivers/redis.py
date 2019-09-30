@@ -102,7 +102,7 @@ class Redis(BaseDriver):
         instance = self.databaseinfra.instances.first()
         return instance.dns, instance.port
 
-    def __redis_client__(self, instance):
+    def __redis_client__(self, instance, default_timeout=False):
         LOG.debug('Connecting to redis single infra {}'.format(
             self.databaseinfra
         ))
@@ -111,8 +111,8 @@ class Redis(BaseDriver):
         client = redis.StrictRedis(
             host=address, port=int(port),
             password=self.databaseinfra.password,
-            socket_timeout=self.connection_timeout_in_seconds,
-            socket_connect_timeout=self.connection_socket_timeout_in_seconds
+            socket_timeout=REDIS_CONNECTION_DEFAULT_TIMEOUT if default_timeout else self.connection_timeout_in_seconds,
+            socket_connect_timeout= REDIS_CONNECTION_SOCKET_TIMEOUT if default_timeout else self.connection_socket_timeout_in_seconds
         )
 
         LOG.debug('Successfully connected to redis single infra {}'.format(
@@ -122,7 +122,7 @@ class Redis(BaseDriver):
         return client
 
     def get_client(self, instance):
-        return self.__redis_client__(instance)
+        return self.__redis_client__(instance, default_timeout=False)
 
     def lock_database(self, client):
         pass
@@ -131,9 +131,9 @@ class Redis(BaseDriver):
         pass
 
     @contextmanager
-    def redis(self, instance=None, database=None):
+    def redis(self, instance=None, database=None, default_timeout=False):
         try:
-            client = self.__redis_client__(instance)
+            client = self.__redis_client__(instance, default_timeout=default_timeout)
             return_value = client
             yield return_value
         except Exception as e:
@@ -264,7 +264,7 @@ class Redis(BaseDriver):
     def check_instance_is_eligible_for_backup(self, instance):
         return True
 
-    def check_instance_is_master(self, instance):
+    def check_instance_is_master(self, instance, default_timeout=False):
         return True
 
     def initialization_script_path(self, host=None):
@@ -404,24 +404,23 @@ class RedisSentinel(Redis):
         port = self.instances_filtered.first().port
         return dns, port
 
-    def __redis_client__(self, instance):
+    def __redis_client__(self, instance, default_timeout=False):
         if instance and instance.instance_type == Instance.REDIS:
-            return super(RedisSentinel, self).__redis_client__(instance)
+            return super(RedisSentinel, self).__redis_client__(instance, default_timeout=False)
 
         LOG.debug('Connecting to redis infra {}'.format(self.databaseinfra))
 
         sentinel = self.get_sentinel_client(instance)
         client = sentinel.master_for(
             self.databaseinfra.name,
-            socket_timeout=self.connection_timeout_in_seconds,
-            socket_connect_timeout=self.connection_socket_timeout_in_seconds,
+            socket_timeout=REDIS_CONNECTION_DEFAULT_TIMEOUT if default_timeout else self.connection_timeout_in_seconds,
+            socket_connect_timeout=REDIS_CONNECTION_SOCKET_TIMEOUT if default_timeout else self.connection_socket_timeout_in_seconds,
             password=self.databaseinfra.password
         )
 
         LOG.debug('Successfully connected to redis infra {}'.format(
             self.databaseinfra
         ))
-
         return client
 
     def get_sentinel_client(self, instance=None):
@@ -443,7 +442,7 @@ class RedisSentinel(Redis):
         return sentinels
 
     def get_replication_info(self, instance):
-        if self.check_instance_is_master(instance=instance):
+        if self.check_instance_is_master(instance=instance, default_timeout=False):
             return 0
 
         with self.redis(instance=instance) as client:
@@ -463,11 +462,11 @@ class RedisSentinel(Redis):
                     self.databaseinfra, str(e)
                 ))
 
-    def check_instance_is_master(self, instance):
+    def check_instance_is_master(self, instance, default_timeout=False):
         if instance.instance_type == Instance.REDIS_SENTINEL:
             return False
 
-        with self.redis(instance=instance) as client:
+        with self.redis(instance=instance, default_timeout=default_timeout) as client:
             try:
                 info = client.info()
                 return info['role'] != 'slave'
@@ -598,10 +597,10 @@ class RedisCluster(Redis):
         port = self.instances_filtered.first().port
         return dns, port
 
-    def __redis_client__(self, instance):
+    def __redis_client__(self, instance, default_timeout=False):
         LOG.debug('Connecting to redis infra {}'.format(self.databaseinfra))
 
-        cluster = self.get_cluster_client(instance)
+        cluster = self.get_cluster_client(instance, default_timeout=default_timeout)
 
         LOG.debug('Successfully connected to redis infra {}'.format(
             self.databaseinfra
@@ -609,13 +608,13 @@ class RedisCluster(Redis):
 
         return cluster
 
-    def get_cluster_client(self, instance):
+    def get_cluster_client(self, instance, default_timeout=False):
         if instance:
             return redis.StrictRedis(
                 host=instance.address, port=instance.port,
                 password=self.databaseinfra.password,
-                socket_timeout=self.connection_timeout_in_seconds,
-                socket_connect_timeout=self.connection_socket_timeout_in_seconds,
+                socket_timeout=REDIS_CONNECTION_DEFAULT_TIMEOUT if default_timeout else self.connection_timeout_in_seconds,
+                socket_connect_timeout=REDIS_CONNECTION_SOCKET_TIMEOUT if default_timeout else self.connection_socket_timeout_in_seconds,
             )
 
         return StrictRedisCluster(
@@ -624,12 +623,12 @@ class RedisCluster(Redis):
                 for instance in self.instances_filtered
             ],
             password=self.databaseinfra.password,
-            socket_timeout=self.connection_timeout_in_seconds,
-            socket_connect_timeout=self.connection_socket_timeout_in_seconds,
+            socket_timeout=REDIS_CONNECTION_DEFAULT_TIMEOUT if default_timeout else self.connection_timeout_in_seconds,
+            socket_connect_timeout=REDIS_CONNECTION_SOCKET_TIMEOUT if default_timeout else self.connection_socket_timeout_in_seconds,
         )
 
     def get_replication_info(self, instance):
-        if self.check_instance_is_master(instance=instance):
+        if self.check_instance_is_master(instance=instance, default_timeout=False):
             return 0
 
         with self.redis(instance=instance) as client:
@@ -647,8 +646,8 @@ class RedisCluster(Redis):
             else:
                 return info['role'] == 'slave'
 
-    def check_instance_is_master(self, instance):
-        with self.redis(instance=instance) as client:
+    def check_instance_is_master(self, instance, default_timeout=False):
+        with self.redis(instance=instance, default_timeout=default_timeout) as client:
             try:
                 info = client.info()
             except Exception as e:
@@ -703,11 +702,11 @@ class RedisCluster(Redis):
         masters = []
         for instance in self.get_database_instances():
             try:
-                if self.check_instance_is_master(instance):
+                if self.check_instance_is_master(instance, default_timeout=False):
                     masters.append(instance)
                 if instance.hostname.future_host:
                     instance.address = instance.hostname.future_host.address
-                    if self.check_instance_is_master(instance):
+                    if self.check_instance_is_master(instance, default_timeout=False):
                         masters.append(instance)
             except ConnectionError:
                 continue
