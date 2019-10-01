@@ -110,11 +110,8 @@ class MySQLSingle(BaseMysql):
         }] + [{
             'Configure SSL': (
                 'workflow.steps.util.ssl.UpdateSSLForInfra',
-                'workflow.steps.util.ssl.UpdateSSLForInstance',
                 'workflow.steps.util.ssl.CreateJsonRequestFileInfra',
-                'workflow.steps.util.ssl.CreateJsonRequestFileInstance',
                 'workflow.steps.util.ssl.CreateCertificateInfra',
-                'workflow.steps.util.ssl.CreateCertificateInstance',
                 'workflow.steps.util.ssl.SetSSLFilesAccessMySQL',
             ),
         }] + [{
