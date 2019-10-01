@@ -234,7 +234,7 @@ def database_details(request, context, database):
     topology = database.databaseinfra.plan.replication_topology
     engine = engine + " - " + topology.details if topology.details else engine
     try:
-        masters_quant = len(database.driver.get_master_instance())
+        masters_quant = len(database.driver.get_master_instance(default_timeout=True))
     except TypeError:
         masters_quant = 1
     except:
@@ -889,8 +889,7 @@ def database_maintenance(request, context, database):
             _upgrade_patch(request, database, request.POST.get('target_patch'))
         elif ('upgrade_patch_retry' in request.POST):
             _upgrade_patch_retry(request, database)
-        elif ('maintenance_hour' in request.POST or 'backup_hour' in request.POST):
-            database.infra.maintenance_hour = request.POST['maintenance_hour']
+        elif ('backup_hour' in request.POST):
             database.infra.backup_hour = request.POST['backup_hour']
             database.infra.save()
         else:

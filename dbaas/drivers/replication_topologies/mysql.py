@@ -22,7 +22,7 @@ class BaseMysql(BaseTopology):
     def switch_master(self, driver):
         raise NotImplementedError()
 
-    def check_instance_is_master(self, driver, instance):
+    def check_instance_is_master(self, driver, instance, default_timeout=False):
         raise NotImplementedError
 
     def set_master(self, driver, instance):
@@ -101,10 +101,38 @@ class MySQLSingle(BaseMysql):
             )
         }]
 
+    def get_update_ssl_steps(self):
+        return [{
+            'Disable monitoring and alarms': (
+                'workflow.steps.util.zabbix.DisableAlarms',
+                'workflow.steps.util.db_monitor.DisableMonitoring',
+            ),
+        }] + [{
+            'Configure SSL': (
+                'workflow.steps.util.ssl.UpdateSSLForInfra',
+                'workflow.steps.util.ssl.CreateJsonRequestFileInfra',
+                'workflow.steps.util.ssl.CreateCertificateInfra',
+                'workflow.steps.util.ssl.SetSSLFilesAccessMySQL',
+            ),
+        }] + [{
+            'Restart Database': (
+                'workflow.steps.util.vm.ChangeMaster',
+                'workflow.steps.util.database.CheckIfSwitchMaster',
+                'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.metric_collector.RestartTelegraf',
+            ),
+        }] + [{
+            'Enabling monitoring and alarms': (
+                'workflow.steps.util.db_monitor.EnableMonitoring',
+                'workflow.steps.util.zabbix.EnableAlarms',
+            ),
+        }]
+
     def switch_master(self, driver):
         return True
 
-    def check_instance_is_master(self, driver, instance):
+    def check_instance_is_master(self, driver, instance, default_timeout=False):
         return True
 
     def set_master(self, driver, instance):
@@ -215,7 +243,7 @@ class MySQLFoxHA(MySQLSingle):
             group_name=driver.databaseinfra.name
         )
 
-    def check_instance_is_master(self, driver, instance):
+    def check_instance_is_master(self, driver, instance, default_timeout=False):
         fox_node_is_master = self._get_fox_provider(driver).node_is_master(
             group_name=driver.databaseinfra.name,
             node_ip=instance.address
@@ -588,6 +616,37 @@ class MySQLFoxHA(MySQLSingle):
         }] + [{
             'Configure Replication User': (
                 'workflow.steps.util.ssl.SetReplicationUserRequireSSL',
+            ),
+        }] + [{
+            'Enabling monitoring and alarms': (
+                'workflow.steps.util.db_monitor.EnableMonitoring',
+                'workflow.steps.util.zabbix.EnableAlarms',
+            ),
+        }]
+
+    def get_update_ssl_steps(self):
+        return [{
+            'Disable monitoring and alarms': (
+                'workflow.steps.util.zabbix.DisableAlarms',
+                'workflow.steps.util.db_monitor.DisableMonitoring',
+            ),
+        }] + [{
+            'Configure SSL': (
+                'workflow.steps.util.ssl.UpdateSSLForInfra',
+                'workflow.steps.util.ssl.UpdateSSLForInstance',
+                'workflow.steps.util.ssl.CreateJsonRequestFileInfra',
+                'workflow.steps.util.ssl.CreateJsonRequestFileInstance',
+                'workflow.steps.util.ssl.CreateCertificateInfra',
+                'workflow.steps.util.ssl.CreateCertificateInstance',
+                'workflow.steps.util.ssl.SetSSLFilesAccessMySQL',
+            ),
+        }] + [{
+            'Restart Database': (
+                'workflow.steps.util.vm.ChangeMaster',
+                'workflow.steps.util.database.CheckIfSwitchMaster',
+                'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.metric_collector.RestartTelegraf',
             ),
         }] + [{
             'Enabling monitoring and alarms': (
