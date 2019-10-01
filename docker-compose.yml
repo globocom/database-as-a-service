@@ -4,6 +4,7 @@ services:
 
     mysqldb55:
         image: mysql:5.5
+        container_name: mysql55
         environment:
             - MYSQL_ROOT_PASSWORD=123
             - MYSQL_USER=rute
@@ -14,6 +15,7 @@ services:
 
     mysqldb56:
         image: mysql:5.6
+        container_name: mysql56
         environment:
             - MYSQL_ROOT_PASSWORD=123
             - MYSQL_USER=rute
@@ -24,6 +26,7 @@ services:
 
     mysqldb57:
         image: mysql:5.7
+        container_name: mysql57
         environment:
             - MYSQL_ROOT_PASSWORD=123
             - MYSQL_USER=rute
@@ -34,9 +37,11 @@ services:
 
     mongodb:
         image: mongo:3.4
+        container_name: mongo34
 
     redisdb:
         image: redis:3.2
+        container_name: redis32
 
     test:
         image: dbaas_test

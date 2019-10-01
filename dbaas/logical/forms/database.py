@@ -26,7 +26,6 @@ class DatabaseForm(models.ModelForm):
                                                                 str((
                                                                     datetime.datetime.combine(datetime.date.today(), datetime.time(hour)) +
                                                                     datetime.timedelta(hours=1)).strftime('%H:%M')))) for hour in range(24)]
-
     environment = forms.ModelChoiceField(queryset=Environment.objects)
     engine = forms.ModelChoiceField(queryset=Engine.objects)
     plan = AdvancedModelChoiceField(
@@ -43,6 +42,7 @@ class DatabaseForm(models.ModelForm):
             'name', 'description', 'project', 'environment', 'engine', 'team',
             'subscribe_to_email_events', 'backup_hour', 'maintenance_window',
             'is_in_quarantine', 'plan',
+
         ]
 
     def __init__(self, *args, **kwargs):
