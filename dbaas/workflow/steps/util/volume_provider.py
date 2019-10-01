@@ -578,6 +578,29 @@ class MountDataVolumeOnSlaveMigrate(MountDataVolumeDatabaseMigrate):
         ).first().hostname
 
 
+class MountDataVolumeOnSlaveFirstNode(VolumeProviderBase):
+    """This class executes volume mounting on the slave instance. This Step is
+    only going to be executed during the first iteration."""
+
+    def __init__(self, instance):
+        super(MountDataVolumeOnSlaveFirstNode, self).__init__(instance)
+        self.mount_step = MountDataVolumeOnSlaveMigrate(instance)
+
+    def __unicode__(self):
+        return str(self.mount_step)
+
+    def is_first(self):
+        return self.instace == self.infra.instances.first()
+
+    def do(self):
+        if self.is_first():
+            self.mount_step.do()
+
+    def undo(self):
+        if self.is_first():
+            self.mount_step.undo()
+
+
 class UmountDataVolumeDatabaseMigrate(MountDataVolumeDatabaseMigrate):
     def __unicode__(self):
         return "Umounting new volume for scp...".format(self.directory)
@@ -596,6 +619,29 @@ class UmountDataVolumeOnSlaveMigrate(UmountDataVolumeDatabaseMigrate):
         return self.infra.instances.exclude(
             id=master_instance.id
         ).first().hostname
+
+
+class UmountDataVolumeOnSlaveLastNode(VolumeProviderBase):
+    """This class executes volume unmounting on the slave instance. This Step
+    is only going to be executed during the last iteration."""
+
+    def __init__(self, instance):
+        super(UmountDataVolumeOnSlaveLastNode, self).__init__(instance)
+        self.umount_step = UmountDataVolumeOnSlaveMigrate(instance)
+
+    def __unicode__(self):
+        return str(self.umount_step)
+
+    def is_last(self):
+        return self.instace == self.infra.instances.last()
+
+    def do(self):
+        if self.is_last():
+            self.umount_step.do()
+
+    def undo(self):
+        if self.is_last():
+            self.umount_step.undo()
 
 
 class UmountDataVolumeMigrate(MountDataVolumeMigrate):
