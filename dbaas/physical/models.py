@@ -723,6 +723,12 @@ class DatabaseInfra(BaseModel):
         null=False,
         help_text=_("The hour of maintenance.")
     )
+    maintenance_day = models.IntegerField(
+        default=0,
+        blank=False,
+        null=False,
+        help_text=_("Day of the week for maintenance.")
+    )
 
     def __unicode__(self):
         return self.name

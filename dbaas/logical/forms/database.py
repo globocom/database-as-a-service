@@ -19,6 +19,15 @@ LOG = logging.getLogger(__name__)
 
 class DatabaseForm(models.ModelForm):
 
+    DAYS_OF_THE_WEEK = [
+        (0, 'Sunday'),
+        (1, 'Monday'),
+        (2, 'Tuesday'),
+        (3, 'Wednesday'),
+        (4, 'Thursday'),
+        (5, 'Friday'),
+        (6, 'Saturday')
+    ]
     BACKUP_HOUR_CHOICES = [(hour,
                             datetime.time(hour, 0).strftime(format='%H:%M')) for hour in range(24)]
     MAINTENANCE_HOUR_CHOICES = [(hour,
@@ -35,6 +44,7 @@ class DatabaseForm(models.ModelForm):
     )
     backup_hour = forms.ChoiceField(choices=BACKUP_HOUR_CHOICES, help_text='The recommended hour for backup.')
     maintenance_window = forms.ChoiceField(choices=MAINTENANCE_HOUR_CHOICES, help_text="Select the maintenance window.")
+    maintenance_day = forms.ChoiceField(choices=DAYS_OF_THE_WEEK)
 
     class Meta:
         model = Database
