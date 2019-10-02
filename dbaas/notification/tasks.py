@@ -1607,16 +1607,19 @@ class TaskRegister(object):
     @classmethod
     def recreate_slave(cls, host, user,
                        since_step=None, step_manager=None):
+        db = Database.objects.get(databaseinfra__instances__hostname=host)
         task_params = {
             'task_name': "recreate_slave",
-            'arguments': "Host: {}".format(
-                host
+            'arguments': "Database: {}, Host: {}".format(
+                db.name, host
             ),
+            'database': db
         }
         if user:
             task_params['user'] = user
         task = cls.create_task(task_params)
         return recreate_slave.delay(
+            database=db,
             host=host, task=task,
             since_step=since_step,
             step_manager=step_manager
