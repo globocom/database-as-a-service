@@ -1,6 +1,7 @@
 from django.conf.urls import patterns, url
 from .views import refresh_status
-from .views import CredentialView, CredentialSSLView, credential_parameter_by_name
+from .views import (CredentialView, CredentialSSLView,
+                    credential_parameter_by_name)
 
 
 urlpatterns = patterns(
