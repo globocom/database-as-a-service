@@ -390,6 +390,29 @@ class NewVolumeOnSlaveMigrate(NewVolumeMigrate):
         ).first().hostname
 
 
+class NewVolumeOnSlaveMigrateFirstNode(VolumeProviderBase):
+    """This class creates a new volume. This Step is only going to be executed
+    during the first iteration."""
+
+    def __init__(self, instance):
+        super(NewVolumeOnSlaveMigrateFirstNode, self).__init__(instance)
+        self.new_volume_step = NewVolumeOnSlaveMigrate(instance)
+
+    def __unicode__(self):
+        return str(self.new_volume_step)
+
+    def is_first(self):
+        return self.instance == self.infra.instances.first()
+
+    def do(self):
+        if self.is_first():
+            self.new_volume_step.do()
+
+    def undo(self):
+        if self.is_first():
+            self.new_volume_step.undo()
+
+
 class RemoveVolumeMigrate(NewVolumeMigrate):
     def __unicode__(self):
         return "Removing second volume based on snapshot for migrate..."
@@ -408,6 +431,29 @@ class RemoveVolumeMigrate(NewVolumeMigrate):
                 "Any inactive volume found"
             )
         self._remove_volume(vol, self.host)
+
+
+class RemoveVolumeMigrateLastNode(VolumeProviderBase):
+    """This class removes the last inactive volume. This Step is only going to
+    be executed during the last iteration."""
+
+    def __init__(self, instance):
+        super(RemoveVolumeMigrateLastNode, self).__init__(instance)
+        self.remove_volume_step = RemoveVolumeMigrate(instance)
+
+    def __unicode__(self):
+        return str(self.remove_volume_step)
+
+    def is_last(self):
+        return self.instance == self.infra.instances.last()
+
+    def do(self):
+        if self.is_last():
+            self.remove_volume_step.do()
+
+    def undo(self):
+        if self.is_last():
+            self.remove_volume_step.undo()
 
 
 class NewInactiveVolume(NewVolume):
@@ -590,7 +636,7 @@ class MountDataVolumeOnSlaveFirstNode(VolumeProviderBase):
         return str(self.mount_step)
 
     def is_first(self):
-        return self.instace == self.infra.instances.first()
+        return self.instance == self.infra.instances.first()
 
     def do(self):
         if self.is_first():
@@ -633,7 +679,7 @@ class UmountDataVolumeOnSlaveLastNode(VolumeProviderBase):
         return str(self.umount_step)
 
     def is_last(self):
-        return self.instace == self.infra.instances.last()
+        return self.instance == self.infra.instances.last()
 
     def do(self):
         if self.is_last():
