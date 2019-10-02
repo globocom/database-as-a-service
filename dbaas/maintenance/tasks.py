@@ -272,7 +272,8 @@ def node_zone_migrate(self, host, zone, new_environment, task,
 
 
 @app.task(bind=True)
-def recreate_slave(self, host, task, since_step=None, step_manager=None):
+def recreate_slave(self, database, host, task, since_step=None,
+                   step_manager=None):
     from maintenance.models import RecreateSlave
     task = TaskHistory.register(
         request=self.request, task_history=task, user=task.user,
