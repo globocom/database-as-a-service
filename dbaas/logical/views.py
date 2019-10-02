@@ -1053,7 +1053,8 @@ def database_hosts(request, context, database):
 
         host_data = {
             'id': host.id, 'status': status, 'description': full_description,
-            'switch_database': switch_database, 'padding': padding
+            'switch_database': switch_database, 'padding': padding,
+            'is_database': host.is_database
         }
 
         if is_read_only:
