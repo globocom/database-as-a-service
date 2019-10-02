@@ -83,7 +83,7 @@
                     {% endif %}
                   {% else %}
                     <td class="action-red-button">
-                      <a class="action_button btn btn-danger recreate-slave" data-toggle="modal" id="recreate_vm_btn"
+                      <a {% if not host.is_database %} style="display:none;" {% endif %}class="action_button btn btn-danger recreate-slave {{ host }}" data-toggle="modal" id="recreate_vm_btn"
                         data-target="#recreate_vm_modal" data-host-id="{{host.id}}" title="Recreate Slave."
                       >Recreate Slave</a>
                     </td>
@@ -130,16 +130,11 @@
                     data-target="#reinstall_vm_modal" data-host-id="{{host.id}}" title="Reinstall VM template and reconfigure the instance database."
                   >Reinstall VM</a>
                 </td>
-                {% if database.infra.plan.is_ha %}
-                  <td class="action-red-button">
-                  </td>
-                {% else %}
-                  <td class="action-red-button">
-                    <a class="action_button btn btn-danger recreate-slave" data-toggle="modal" id="recreate_vm_btn"
-                      data-target="#recreate_vm_modal" data-host-id="{{host.id}}" title="Recreate Slave."
-                    >Recreate Slave</a>
-                  </td>
-                {% endif %}
+                <td class="action-red-button">
+                  <a style="margin-left: 5px;" class="action_button btn btn-danger recreate-slave" data-toggle="modal" id="recreate_vm_btn"
+                    data-target="#recreate_vm_modal" data-host-id="{{host.id}}" title="Recreate Slave."
+                  >Recreate Slave</a>
+                </td>
                 {% endif %}
               {% else %}
                 {{ host.description }}
