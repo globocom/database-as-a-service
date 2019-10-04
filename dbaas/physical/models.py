@@ -712,6 +712,11 @@ class DatabaseInfra(BaseModel):
     engine_patch = models.ForeignKey(
         EnginePatch, related_name="databaseinfras",
         on_delete=models.PROTECT, null=True)
+    ssl_expire_at = models.DateField(
+        verbose_name=_("ssl_expire_at"),
+        auto_now_add=False,
+        blank=True,
+        null=True)
     maintenance_hour = models.IntegerField(
         default=0,
         blank=False,
@@ -723,6 +728,7 @@ class DatabaseInfra(BaseModel):
         auto_now_add=False,
         blank=True,
         null=True)
+
 
     def __unicode__(self):
         return self.name
@@ -1173,7 +1179,7 @@ class Instance(BaseModel):
     def is_current_write(self):
         try:
             driver = self.databaseinfra.get_driver()
-            return driver.check_instance_is_master(instance=self)
+            return driver.check_instance_is_master(instance=self, default_timeout=True)
         except:
             return False
 

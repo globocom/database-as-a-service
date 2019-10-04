@@ -49,6 +49,7 @@ class Migration(SchemaMigration):
             'per_database_size_mbytes': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
             'plan': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "u'databaseinfras'", 'on_delete': 'models.PROTECT', 'to': u"orm['physical.Plan']"}),
             'ssl_configured': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
+            'ssl_expire_at': ('django.db.models.fields.DateField', [], {'null': 'True', 'blank': 'True'}),
             'updated_at': ('django.db.models.fields.DateTimeField', [], {'auto_now': 'True', 'blank': 'True'}),
             'user': ('django.db.models.fields.CharField', [], {'max_length': '100', 'blank': 'True'})
         },

@@ -22,7 +22,7 @@ class BaseMysql(BaseTopology):
     def switch_master(self, driver):
         raise NotImplementedError()
 
-    def check_instance_is_master(self, driver, instance):
+    def check_instance_is_master(self, driver, instance, default_timeout=False):
         raise NotImplementedError
 
     def set_master(self, driver, instance):
@@ -110,11 +110,8 @@ class MySQLSingle(BaseMysql):
         }] + [{
             'Configure SSL': (
                 'workflow.steps.util.ssl.UpdateSSLForInfra',
-                'workflow.steps.util.ssl.UpdateSSLForInstance',
                 'workflow.steps.util.ssl.CreateJsonRequestFileInfra',
-                'workflow.steps.util.ssl.CreateJsonRequestFileInstance',
                 'workflow.steps.util.ssl.CreateCertificateInfra',
-                'workflow.steps.util.ssl.CreateCertificateInstance',
                 'workflow.steps.util.ssl.SetSSLFilesAccessMySQL',
             ),
         }] + [{
@@ -135,7 +132,7 @@ class MySQLSingle(BaseMysql):
     def switch_master(self, driver):
         return True
 
-    def check_instance_is_master(self, driver, instance):
+    def check_instance_is_master(self, driver, instance, default_timeout=False):
         return True
 
     def set_master(self, driver, instance):
@@ -246,7 +243,7 @@ class MySQLFoxHA(MySQLSingle):
             group_name=driver.databaseinfra.name
         )
 
-    def check_instance_is_master(self, driver, instance):
+    def check_instance_is_master(self, driver, instance, default_timeout=False):
         fox_node_is_master = self._get_fox_provider(driver).node_is_master(
             group_name=driver.databaseinfra.name,
             node_ip=instance.address
