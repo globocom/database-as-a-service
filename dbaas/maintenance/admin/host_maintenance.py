@@ -4,7 +4,6 @@ from django_services import admin
 from ..service.host_maintenance import HostMaintenanceService
 from ..forms import HostMaintenanceForm
 from .. import models
-from django.contrib import admin
 import logging
 from django.utils.html import format_html
 
@@ -16,7 +15,9 @@ class HostMaintenanceAdmin(admin.ModelAdmin):
     service_class = HostMaintenanceService
     search_fields = ("maintenance__description", "hostname", "status")
     list_display = (
-        "maintenance", "hostname", "started_at", "finished_at", "friendly_status")
+        "maintenance", "hostname", "started_at", "finished_at",
+        "friendly_status"
+    )
     list_filter = ["status"]
     fields = ("maintenance", "hostname", "status", "started_at",
               "finished_at", "main_log", "rollback_log")
@@ -41,7 +42,8 @@ class HostMaintenanceAdmin(admin.ModelAdmin):
             return format_html(html_rejected.format("Rollback"))
         elif host_maintenance.status == models.HostMaintenance.ROLLBACK_ERROR:
             return format_html(html_rejected.format("Rollback Error"))
-        elif host_maintenance.status == models.HostMaintenance.ROLLBACK_SUCCESS:
+        elif (host_maintenance.status
+              == models.HostMaintenance.ROLLBACK_SUCCESS):
             return format_html(html_rejected.format("Rollback Succes"))
         elif host_maintenance.status == models.HostMaintenance.WAITING:
             return format_html(html_waiting)
@@ -51,7 +53,8 @@ class HostMaintenanceAdmin(admin.ModelAdmin):
             return format_html(html_revoked.format("Revoked"))
         elif host_maintenance.status == models.HostMaintenance.UNAVAILABLEHOST:
             return format_html(html_revoked.format("Unavailable Host"))
-        elif host_maintenance.status == models.HostMaintenance.UNAVAILABLECSHOSTATTR:
+        elif (host_maintenance.status
+              == models.HostMaintenance.UNAVAILABLECSHOSTATTR):
             return format_html(html_revoked.format("Unavailable CsHost"))
 
     friendly_status.short_description = "Status"
