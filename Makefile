@@ -114,3 +114,7 @@ dev_mode:
 
 migrate: 
 	@cd dbaas && python manage.py migrate $(filter-out $@,$(MAKECMDGOALS))
+
+%:
+	@:
+	
