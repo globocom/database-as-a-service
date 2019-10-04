@@ -72,7 +72,7 @@ class MySQL(BaseDriver):
         endpoint = self.databaseinfra.endpoint_dns.split(':')
         return endpoint[0], int(endpoint[1])
 
-    def get_master_instance(self, ignore_instance=None):
+    def get_master_instance(self, ignore_instance=None, default_timeout=False):
         instances = self.get_database_instances()
         if ignore_instance:
             instances.remove(ignore_instance)
@@ -95,15 +95,18 @@ class MySQL(BaseDriver):
         endpoint = self.databaseinfra.endpoint.split(':')
         return endpoint[0], int(endpoint[1])
 
-    def __mysql_client__(self, instance, database='mysql'):
+    def __mysql_client__(self, instance, database='mysql', default_timeout=False):
         connection_address, connection_port = self.__get_admin_connection(
             instance)
         try:
             LOG.debug(
                 'Connecting to mysql databaseinfra %s', self.databaseinfra)
             # mysql uses timeout in seconds
-            connection_timeout_in_seconds = Configuration.get_by_name_as_int(
-                'mysql_connect_timeout', default=MYSQL_CONNECTION_DEFAULT_TIMEOUT)
+            if default_timeout:
+                connection_timeout_in_seconds = MYSQL_CONNECTION_DEFAULT_TIMEOUT
+            else:
+                connection_timeout_in_seconds = Configuration.get_by_name_as_int(
+                    'mysql_connect_timeout', default=MYSQL_CONNECTION_DEFAULT_TIMEOUT)
 
             client = mysqldb.connect(host=connection_address, port=int(connection_port),
                                      user=self.databaseinfra.user, passwd=self.databaseinfra.password,
@@ -330,7 +333,7 @@ class MySQL(BaseDriver):
         else:
             return False
 
-    def check_instance_is_master(self, instance):
+    def check_instance_is_master(self, instance, default_timeout=False):
         return self.replication_topology_driver.check_instance_is_master(
             driver=self, instance=instance
         )

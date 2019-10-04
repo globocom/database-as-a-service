@@ -316,7 +316,8 @@ NOSE_ARGS = [
     '--verbosity=0',
     '--no-byte-compile',
     '--debug-log=error_test.log',
-    '--nologcapture'
+    '--nologcapture',
+    '-s'
 ]
 if CI:
     NOSE_ARGS += [

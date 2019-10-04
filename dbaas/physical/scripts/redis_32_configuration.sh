@@ -823,6 +823,8 @@ createconfigdbrsyslogfile()
 EOF_DBAAS_CONFIGDBFILE
 ) > /etc/rsyslog.d/redis.conf
     die_if_error "Error setting redis.conf"
+    chown redis:redis /etc/rsyslog.d/redis.conf
+    die_if_error "Error changing redis conf file owner"
 }
 
 create_config_http()

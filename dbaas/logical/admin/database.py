@@ -28,10 +28,11 @@ from util.html import show_info_popup
 from logical.models import Database
 from physical.models import Engine
 from logical.views import database_details, database_hosts, \
-    database_credentials, database_resizes, database_backup, database_dns, \
-    database_metrics, database_destroy, database_delete_host, \
-    database_upgrade, database_upgrade_retry, database_upgrade_patch_retry,\
-    database_resize_retry, database_resize_rollback, database_make_backup, \
+    database_credentials, database_resizes, database_maintenance, \
+    database_backup, database_dns, database_metrics, database_destroy, \
+    database_delete_host, database_upgrade, database_upgrade_retry, \
+    database_upgrade_patch_retry, database_resize_retry, \
+    database_resize_rollback, database_make_backup, \
     database_change_parameters, database_change_parameters_retry, \
     database_switch_write, database_reinstall_vm, database_reinstall_vm_retry,\
     DatabaseParameters, database_configure_ssl_retry, database_configure_ssl, \
@@ -91,7 +92,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     search_fields = (
         "name", "databaseinfra__name", "team__name", "project__name",
         "environment__name", "databaseinfra__engine__engine_type__name",
-        "team__organization__name",
+        "team__organization__name", "databaseinfra__backup_hour",
     )
     list_display_basic = [
         "name_html", "organization_admin_page", "team_admin_page",
@@ -107,16 +108,17 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         "databaseinfra__plan__replication_topology__name",
         "databaseinfra__ssl_configured"
     ]
-    list_filter_advanced = list_filter_basic + ["is_in_quarantine",
-        "team", "team__organization"]
+    list_filter_advanced = list_filter_basic + [
+        "is_in_quarantine", "team", "team__organization"
+    ]
     add_form_template = "logical/database/database_add_form.html"
     delete_button_name = "Delete"
     fieldsets_add = (
         (None, {
             'fields': (
                 'name', 'description', 'project', 'environment', 'engine',
-                'team', 'team_contact', 'subscribe_to_email_events', 'plan',
-                'is_in_quarantine',
+                'team', 'team_contact', 'subscribe_to_email_events',
+                'backup_hour', 'plan', 'is_in_quarantine',
             )
         }
         ),
@@ -174,7 +176,6 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     organization_admin_page.short_description = "Organization"
 
     def description_html(self, database):
-
         html = []
         html.append("<ul>")
         html.append("<li>Engine Type: %s</li>" % database.engine_type)
@@ -376,11 +377,16 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 if not form.is_valid():
                     return super(DatabaseAdmin, self).add_view(request, form_url, extra_context=extra_context)
 
-                database_creation_message = "call create_database - name={}, plan={}, environment={}, team={}, project={}, description={}, user={}, subscribe_to_email_events {}".format(
-                    form.cleaned_data['name'], form.cleaned_data['plan'],
-                    form.cleaned_data['environment'], form.cleaned_data['team'],
-                    form.cleaned_data['project'], form.cleaned_data['description'],
-                    request.user, form.cleaned_data['subscribe_to_email_events']
+                database_creation_message = "call create_database - name={}, plan={}, environment={}, team={}, project={}, description={}, backup_hour={}, user={}, subscribe_to_email_events {}".format(
+                    form.cleaned_data['name'],
+                    form.cleaned_data['plan'],
+                    form.cleaned_data['environment'],
+                    form.cleaned_data['team'],
+                    form.cleaned_data['project'],
+                    form.cleaned_data['description'],
+                    form.cleaned_data['backup_hour'],
+                    request.user,
+                    form.cleaned_data['subscribe_to_email_events'],
                 )
                 LOG.debug(database_creation_message)
 
@@ -391,6 +397,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                     team=form.cleaned_data['team'],
                     project=form.cleaned_data['project'],
                     description=form.cleaned_data['description'],
+                    backup_hour=form.cleaned_data['backup_hour'],
                     subscribe_to_email_events=form.cleaned_data['subscribe_to_email_events'],
                     user=request.user
                 )
@@ -628,6 +635,11 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 r'^/?(?P<id>\d+)/resizes/$',
                 self.admin_site.admin_view(database_resizes),
                 name="logical_database_resizes"
+            ),
+            url(
+                r'^/?(?P<id>\d+)/maintenance/$',
+                self.admin_site.admin_view(database_maintenance),
+                name="logical_database_maintenance"
             ),
             url(
                 r'^/?(?P<id>\d+)/backup/$',
