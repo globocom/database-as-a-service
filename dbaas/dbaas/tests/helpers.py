@@ -36,7 +36,7 @@ class InstanceHelper(object):
             instance.save()
 
     @staticmethod
-    def check_instance_is_master(instance):
+    def check_instance_is_master(instance, default_timeout=False):
         """
             Method for mock the real check_instance_is_master.
         """
