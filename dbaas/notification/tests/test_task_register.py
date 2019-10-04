@@ -243,6 +243,7 @@ class DatabaseCreateCallTestCase(TestCase, TaskCallBaseTestCase):
         'project': 'project',
         'description': 'description',
         'subscribe_to_email_events': 'subscribe_to_email_events',
+        'backup_hour': 'backup_hour',
     }
     create_fields_to_validate = ['task_name', 'arguments']
     delay_fields_to_validate = [
@@ -264,7 +265,8 @@ class DatabaseCreateCallWithUserTestCase(TestCase, TaskCallBaseTestCase):
         'project': 'project',
         'description': 'description',
         'subscribe_to_email_events': 'subscribe_to_email_events',
-        'register_user': True
+        'register_user': True,
+        'backup_hour': 'backup_hour',
     }
     create_fields_to_validate = ['task_name', 'arguments', 'user']
     delay_fields_to_validate = [

@@ -717,18 +717,6 @@ class DatabaseInfra(BaseModel):
         auto_now_add=False,
         blank=True,
         null=True)
-    maintenance_hour = models.IntegerField(
-        default=0,
-        blank=False,
-        null=False,
-        help_text=_("The hour of maintenance.")
-    )
-    ssl_expire_at = models.DateField(
-        verbose_name=_("ssl_expire_at"),
-        auto_now_add=False,
-        blank=True,
-        null=True)
-
 
     def __unicode__(self):
         return self.name
