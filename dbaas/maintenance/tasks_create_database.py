@@ -26,7 +26,7 @@ def get_or_create_infra(base_name, plan, environment, backup_hour,
         infra.environment = environment
         infra.capacity = 1
         infra.per_database_size_mbytes = plan.max_db_size
-        infra.backup_hour = backup_hour
+        infra.backup_hour = backup_hour or infra.configure_backup_hour
         infra.engine_patch = plan.engine.default_engine_patch
         infra.save()
 
