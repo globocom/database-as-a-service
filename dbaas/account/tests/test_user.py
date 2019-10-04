@@ -4,37 +4,57 @@ from django.test import TestCase
 from ..models import Team, Role, User, Organization
 from ..admin.user import TeamListFilter, UserAdmin
 
+
 class UserTest(TestCase):
 
-    DEV_NAME="Dev_User"
-    DBA_NAME="DBA_User"
-    WITHOUT_TEAM_NAME="New_User"
-    PASSWORD="12345"
+    DEV_NAME = "Dev_User"
+    DBA_NAME = "DBA_User"
+    WITHOUT_TEAM_NAME = "New_User"
+    PASSWORD = "12345"
 
     def setUp(self):
         self.role = Role.objects.get_or_create(name="fake_role")[0]
         self.organization = Organization.objects.get_or_create(
             name='fake_organization')[0]
 
-        self.team_dba = Team.objects.get_or_create(name="team_dba",
-            role=self.role, organization=self.organization)[0]
-        self.team_dev = Team.objects.get_or_create(name="team_dev",
-            role=self.role, organization=self.organization)[0]
-        self.team_ops = Team.objects.get_or_create(name="team_ops",
-            role=self.role, organization=self.organization)[0]
-        self.team_bkp = Team.objects.get_or_create(name="team_bkp",
-            role=self.role, organization=self.organization)[0]
+        self.team_dba = Team.objects.get_or_create(
+            name="team_dba",
+            role=self.role,
+            organization=self.organization
+        )[0]
+        self.team_dev = Team.objects.get_or_create(
+            name="team_dev",
+            role=self.role,
+            organization=self.organization
+        )[0]
+        self.team_ops = Team.objects.get_or_create(
+            name="team_ops",
+            role=self.role,
+            organization=self.organization
+        )[0]
+        self.team_bkp = Team.objects.get_or_create(
+            name="team_bkp",
+            role=self.role,
+            organization=self.organization
+        )[0]
 
         self.user_dev = User.objects.create_superuser(
-            self.DEV_NAME, email="%s@admin.com" % self.DEV_NAME, password=self.PASSWORD)
+            self.DEV_NAME,
+            email="%s@admin.com" % self.DEV_NAME, password=self.PASSWORD
+        )
         self.team_dev.users.add(self.user_dev)
 
         self.user_dba = User.objects.create_superuser(
-            self.DBA_NAME, email="%s@admin.com" % self.DBA_NAME, password=self.PASSWORD)
+            self.DBA_NAME,
+            email="%s@admin.com" % self.DBA_NAME, password=self.PASSWORD
+        )
         self.team_dba.users.add(self.user_dba)
 
         self.user_without_team = User.objects.create_superuser(
-            self.WITHOUT_TEAM_NAME, email="%s@admin.com" % self.WITHOUT_TEAM_NAME, password=self.PASSWORD)
+            self.WITHOUT_TEAM_NAME,
+            email="%s@admin.com" % self.WITHOUT_TEAM_NAME,
+            password=self.PASSWORD
+        )
 
     def _build_team_filter(self, id=None):
         params = {}
