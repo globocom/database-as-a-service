@@ -36,11 +36,16 @@ class DatabaseMigrateAdmin(DatabaseMaintenanceTaskAdmin):
         if not maintenance_task.can_do_retry:
             return 'N/A'
 
-        url_retry = "/admin/maintenance/databasemigrate/{}/retry/".format(maintenance_task.id)
-        html_retry = "<a title='Retry' class='btn btn-info' href='{}'>Retry</a>".format(url_retry)
+        url_retry = "/admin/maintenance/databasemigrate/{}/retry/".format(
+            maintenance_task.id
+        )
+        html_retry = ("<a title='Retry' class='btn btn-info' "
+                      "href='{}'>Retry</a>").format(url_retry)
 
-        url_rollback = "/admin/maintenance/databasemigrate/{}/rollback/".format(maintenance_task.id)
-        html_rollback = "<a title='Rollback' class='btn btn-danger' href='{}'>Rollback</a>".format(url_rollback)
+        url_rollback = ("/admin/maintenance/databasemigrate/{}"
+                        "/rollback/").format(maintenance_task.id)
+        html_rollback = ("<a title='Rollback' class='btn btn-danger' "
+                         "href='{}'>Rollback</a>").format(url_rollback)
 
         spaces = '&nbsp' * 3
         html_content = '{}{}{}'.format(html_retry, spaces, html_rollback)
@@ -71,12 +76,15 @@ class DatabaseMigrateAdmin(DatabaseMaintenanceTaskAdmin):
 
         TaskRegister.database_migrate(
             retry_from.database, retry_from.environment, retry_from.offering,
-            request.user, retry_from.hosts_zones, retry_from.current_step, step_manager=retry_from
+            request.user, retry_from.hosts_zones, retry_from.current_step,
+            step_manager=retry_from
         )
         return self.redirect_to_database(retry_from)
 
     def rollback_view(self, request, database_migrate_id):
-        rollback_from = get_object_or_404(DatabaseMigrate, pk=database_migrate_id)
+        rollback_from = get_object_or_404(
+            DatabaseMigrate, pk=database_migrate_id
+        )
         success, redirect = self.check_status(
             request, rollback_from, 'rollback'
         )
@@ -105,11 +113,15 @@ class DatabaseMigrateAdmin(DatabaseMaintenanceTaskAdmin):
 
         return success, HttpResponseRedirect(
             reverse(
-                'admin:maintenance_databasemigrate_change', args=(database_migrate.id,)
+                'admin:maintenance_databasemigrate_change', args=(
+                    database_migrate.id,
+                )
             )
         )
 
     def redirect_to_database(self, maintenance):
         return HttpResponseRedirect(reverse(
-            'admin:logical_database_migrate', kwargs={'id': maintenance.database.id})
+            'admin:logical_database_migrate', kwargs={
+                'id': maintenance.database.id
+            })
         )

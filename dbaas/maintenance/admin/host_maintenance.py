@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
-from django_services import admin
+# from django_services import admin
 from ..service.host_maintenance import HostMaintenanceService
 from ..forms import HostMaintenanceForm
 from .. import models
+from django.contrib import admin
 import logging
 from django.utils.html import format_html
 
