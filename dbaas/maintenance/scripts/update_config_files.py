@@ -1,8 +1,8 @@
 from datetime import datetime
 from notification.models import TaskHistory
-from workflow.workflow import steps_for_instances
 from workflow.steps.util.plan import ConfigureOnlyDBConfigFile
 from socket import gethostname
+
 
 class UpdateConfigFiles(object):
     def __init__(self, infras):

@@ -207,8 +207,8 @@ class Team(BaseModel):
     def environments_in_use_for(self):
         from logical.models import Database
 
-        envs = Database.objects.filter(
-            team=self).values_list('environment_id', flat=True
+        envs = Database.objects.filter(team=self).values_list(
+            'environment_id', flat=True
         )
 
         return envs
