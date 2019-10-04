@@ -50,6 +50,7 @@ class AdminCreateDatabaseTestCase(TestCase):
             "environment": self.environment.pk,
             "engine": self.databaseinfra.engine.pk,
             "description": self.description,
+            "backup_hour": self.databaseinfra.backup_hour,
         }
         response = self.client.post("/admin/logical/database/add/", params)
         self.assertContains(
@@ -63,7 +64,8 @@ class AdminCreateDatabaseTestCase(TestCase):
             "plan": self.plan.pk,
             "environment": self.environment.pk,
             "engine": self.databaseinfra.engine.pk,
-            "team": self.team.pk
+            "team": self.team.pk,
+            "backup_hour": self.databaseinfra.backup_hour,
         }
         response = self.client.post("/admin/logical/database/add/", params)
         self.assertContains(
@@ -81,6 +83,7 @@ class AdminCreateDatabaseTestCase(TestCase):
             "engine": self.databaseinfra.engine.pk,
             "team": self.team.pk,
             "description": self.description,
+            "backup_hour": self.databaseinfra.backup_hour,
         }
         response = self.client.post("/admin/logical/database/add/", params)
         self.assertContains(
@@ -106,6 +109,7 @@ class AdminCreateDatabaseTestCase(TestCase):
             "engine": self.databaseinfra.engine.pk,
             "team": self.team.pk,
             "description": self.description,
+            "backup_hour": self.databaseinfra.backup_hour,
         }
         response = self.client.post("/admin/logical/database/add/", params)
         self.assertEqual(response.status_code, 302, response.content)
