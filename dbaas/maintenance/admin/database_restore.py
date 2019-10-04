@@ -34,8 +34,11 @@ class DatabaseRestoreAdmin(DatabaseMaintenanceTaskAdmin):
         if not maintenance.can_do_retry:
             return 'N/A'
 
-        url = "/admin/maintenance/databaserestore/{}/retry/".format(maintenance.id)
-        html = "<a title='Retry' class='btn btn-info' href='{}'>Retry</a>".format(url)
+        url = "/admin/maintenance/databaserestore/{}/retry/".format(
+            maintenance.id
+        )
+        html = ("<a title='Retry' class='btn btn-info' "
+                "href='{}'>Retry</a>").format(url)
         return format_html(html)
 
     def get_urls(self):

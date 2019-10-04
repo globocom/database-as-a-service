@@ -13,7 +13,8 @@ from ..models import DatabaseDestroy
 
 class DatabaseDestroyAdmin(DatabaseMaintenanceTaskAdmin):
 
-    search_fields = ["name", "infra__name", "user", "task__id", "task__task_id"]
+    search_fields = ["name", "infra__name", "user", "task__id",
+                     "task__task_id"]
     list_filter = ["plan", "team", "status", "project"]
 
     list_display = (
@@ -35,8 +36,11 @@ class DatabaseDestroyAdmin(DatabaseMaintenanceTaskAdmin):
         if not maintenance_task.can_do_retry:
             return 'N/A'
 
-        url_retry = "/admin/maintenance/databasedestroy/{}/retry/".format(maintenance_task.id)
-        html_retry = "<a title='Retry' class='btn btn-info' href='{}'>Retry</a>".format(url_retry)
+        url_retry = "/admin/maintenance/databasedestroy/{}/retry/".format(
+            maintenance_task.id
+        )
+        html_retry = ("<a title='Retry' class='btn btn-info' "
+                      "href='{}'>Retry</a>").format(url_retry)
 
         return format_html(html_retry)
 
@@ -67,7 +71,9 @@ class DatabaseDestroyAdmin(DatabaseMaintenanceTaskAdmin):
 
         task_history_url = reverse('admin:notification_taskhistory_changelist')
         query_string = "user={}".format(request.user.username)
-        return HttpResponseRedirect('{}?{}'.format(task_history_url, query_string))
+        return HttpResponseRedirect('{}?{}'.format(
+            task_history_url, query_string)
+        )
 
     @staticmethod
     def check_status(request, destroy_id, operation):

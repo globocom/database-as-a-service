@@ -25,10 +25,12 @@ class DatabaseResizeAdmin(DatabaseMaintenanceTaskAdmin):
             return 'N/A'
 
         url_retry = maintenance.database.get_resize_retry_url()
-        html_retry = "<a title='Retry' class='btn btn-warning' href='{}'>Retry</a>".format(url_retry)
+        html_retry = ("<a title='Retry' class='btn btn-warning' "
+                      "href='{}'>Retry</a>").format(url_retry)
 
         url_rollback = maintenance.database.get_resize_rollback_url()
-        html_rollback = "<a title='Rollback' class='btn btn-danger' href='{}'>Rollback</a>".format(url_rollback)
+        html_rollback = ("<a title='Rollback' class='btn btn-danger' "
+                         "href='{}'>Rollback</a>").format(url_rollback)
 
         spaces = '&nbsp' * 3
         html_content = '{}{}{}'.format(html_rollback, spaces, html_retry)
