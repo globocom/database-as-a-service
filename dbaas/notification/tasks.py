@@ -1634,7 +1634,7 @@ class TaskRegister(object):
     def update_ssl(cls, database, user,
                    since_step=None, step_manager=None):
         task_params = {
-            'task_name': "recreate_slave",
+            'task_name': "update_ssl",
             'arguments': "Database: {}".format(
                 database
             ),
