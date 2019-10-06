@@ -48,20 +48,20 @@ Setup your local environment
 Install the required python packages.
 
     make pip
-    
+
 Database setup for migrations
 
 1. Connect to the local database.
-    
+
         mysql -u root -p <GENERATED-PASSWORD>
-2. Change root password to an empty string.     
-    
+2. Change root password to an empty string.
+
         ALTER USER 'root'@'localhost' IDENTIFIED BY '';
 
 3. Create ```dbaas``` database.
-    
+
         CREATE DATABASE dbaas;
-    
+
 Run migrations to mysql database
 
     make run_migrate
@@ -80,11 +80,11 @@ some minimum operational data on DB.
 
     make reset_data
 
-## Running all tests on local enviroment
+## Running all tests on local environment
 
     make pip && make test
 
-## Running all test with docker( To run this the and docker-compose must be avaliable)
+## Running all test with docker( To run this the and docker-compose must be available)
 
     make docker_build && make test_with_docker
 
