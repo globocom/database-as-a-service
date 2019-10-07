@@ -631,6 +631,10 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.db_monitor.DisableMonitoring',
             ),
         }] + [{
+            'Disable SSL': (
+                'workflow.steps.util.ssl.UnSetReplicationUserRequireSSL',
+            ),
+        }] + [{
             'Configure SSL': (
                 'workflow.steps.util.ssl.UpdateSSLForInfra',
                 'workflow.steps.util.ssl.UpdateSSLForInstance',
@@ -647,6 +651,10 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.database.Stop',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
+            ),
+        }] + [{
+            'Enable SSL': (
+                'workflow.steps.util.ssl.SetReplicationUserRequireSSL',
             ),
         }] + [{
             'Enabling monitoring and alarms': (
