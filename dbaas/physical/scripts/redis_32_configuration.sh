@@ -823,6 +823,10 @@ createconfigdbrsyslogfile()
 EOF_DBAAS_CONFIGDBFILE
 ) > /etc/rsyslog.d/redis.conf
     die_if_error "Error setting redis.conf"
+<<<<<<< Updated upstream
+=======
+
+>>>>>>> Stashed changes
     chown redis:redis /etc/rsyslog.d/redis.conf
     die_if_error "Error changing redis conf file owner"
 }
