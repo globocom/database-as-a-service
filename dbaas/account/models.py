@@ -6,7 +6,8 @@ from django.db import models
 from django.contrib.auth.models import User, Group, Permission
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
-from django.db.models.signals import pre_save, post_save, pre_delete, m2m_changed
+from django.db.models.signals import (pre_save, post_save, pre_delete,
+                                      m2m_changed)
 from django.dispatch import receiver
 from django_extensions.db.fields.encrypted import EncryptedCharField
 
@@ -38,34 +39,39 @@ class TeamUsersManager(models.Manager):
     """manager for returning """
 
     def get_query_set(self):
-        return User.objects.filter(id__in=[user.id for user in Team.users_without_team()])
+        return User.objects.filter(
+            id__in=[user.id for user in Team.users_without_team()]
+        )
 
 
 class Organization(BaseModel):
     name = models.CharField(
-        verbose_name = 'Name',
+        verbose_name='Name',
         help_text='Organization name.',
         max_length=100, null=False, blank=False)
     grafana_orgid = models.CharField(
-        verbose_name = 'Grafana Org ID',
+        verbose_name='Grafana Org ID',
         help_text='External organization id. Used on grafana dashboard.',
         max_length=10, null=True, blank=True)
     grafana_hostgroup = models.CharField(
-        verbose_name= 'Grafana Hostgroup',
-        help_text='External grafana Hostgroup. Used to retrinct access on metrics.',
+        verbose_name='Grafana Hostgroup',
+        help_text=('External grafana Hostgroup. Used to retrinct '
+                   'access on metrics.'),
         max_length=50, null=True, blank=True)
     grafana_datasource = models.CharField(
-        verbose_name = 'Grafana Datasource',
+        verbose_name='Grafana Datasource',
         help_text='Datasource used on external organization.',
         max_length=50, null=True, blank=True)
     grafana_endpoint = models.CharField(
-        verbose_name = 'Grafana Endpoint',
+        verbose_name='Grafana Endpoint',
         help_text='Endpoint used on external organization.',
         max_length=255, null=True, blank=True)
     external = models.BooleanField(
-        verbose_name = "External",
+        verbose_name="External",
         default=False,
-        help_text='Whether the organization is external. If checked, all fields become mandatory.')
+        help_text=('Whether the organization is external. If checked, '
+                   'all fields become mandatory.')
+    )
 
     def __unicode__(self):
         return self.name
@@ -104,11 +110,14 @@ class Team(BaseModel):
     database_alocation_limit = models.PositiveSmallIntegerField(
         _('DB Alocation Limit'),
         default=2,
-        help_text="This limits the number of databases that a team can create. 0 for unlimited resources.")
+        help_text=("This limits the number of databases that a team can "
+                   "create. 0 for unlimited resources.")
+    )
     contacts = models.TextField(
         verbose_name=_("Emergency Contacts"), null=True, blank=True,
         help_text=_(
-            "People to be reached in case of a critical incident. Eg.: 99999999 - Jhon Doe."
+            ("People to be reached in case of a critical incident. "
+             "Eg.: 99999999 - Jhon Doe.")
         )
     )
     role = models.ForeignKey(Role)
@@ -120,8 +129,8 @@ class Team(BaseModel):
         unique=False, null=False, blank=False, on_delete=models.PROTECT)
 
     class Meta:
-        # putting permissions for account user and role in team model, because it
-        # clashes with the proxied classes permissions
+        # putting permissions for account user and role in team model,
+        # because it clashes with the proxied classes permissions
         permissions = (
             ("change_accountuser", "Can change account user"),
             ("add_accountuser", "Can add account user"),
@@ -154,7 +163,10 @@ class Team(BaseModel):
             permissions = Permission.objects.select_related().filter(
                 group__pk__in=role_pks)
 
-            return set(["%s.%s" % (p.content_type.app_label, p.codename) for p in permissions])
+            return set(
+                ["%s.%s" % (p.content_type.app_label, p.codename)
+                 for p in permissions]
+            )
 
     @classmethod
     def users_without_team(cls):
@@ -185,22 +197,19 @@ class Team(BaseModel):
         return users
 
     def databases_in_use_for(self, environment):
-        #from physical.models import DatabaseInfra
         from logical.models import Database
 
-        #infras = DatabaseInfra.objects.filter(environment=environment)
         dbs = Database.objects.filter(
             team=self, environment=environment)
 
         return dbs
 
     def environments_in_use_for(self):
-        #from physical.models import DatabaseInfra
         from logical.models import Database
 
-        #infras = DatabaseInfra.objects.filter(environment=environment)
-        envs = Database.objects.filter(
-            team=self).values_list('environment_id',flat=True)
+        envs = Database.objects.filter(team=self).values_list(
+            'environment_id', flat=True
+        )
 
         return envs
 
@@ -209,7 +218,9 @@ class Team(BaseModel):
             return len(self.databases_in_use_for(environment))
         except Exception, e:
             LOG.warning(
-                "could not count databases in use for team %s, reason: %s" % (self, e))
+                ("could not count databases in use for team %s, "
+                 "reason: %s" % (self, e))
+            )
             return 0
 
     @property
@@ -224,6 +235,7 @@ class Team(BaseModel):
             return True
         return False
 
+
 def sync_ldap_groups_with_user(user=None):
     """
     Sync ldap groups (aka team) with the user
@@ -233,7 +245,9 @@ def sync_ldap_groups_with_user(user=None):
     groups = Group.objects.filter(name__in=ldap_groups).exclude(
         user__username=user.username).order_by("name")
     LOG.info(
-        "LDAP's team created in the system and not set to user %s: %s" % (user, groups))
+        ("LDAP's team created in the system and not set to "
+         "user %s: %s" % (user, groups))
+    )
     group = None
     if groups:
         group = groups[0]
@@ -243,6 +257,7 @@ def sync_ldap_groups_with_user(user=None):
     LOG.debug("User %s groups: %s after" % (user, user.groups.all()))
 
     return group
+
 
 simple_audit.register(Team, AccountUser, Role, Organization)
 
@@ -287,6 +302,7 @@ def account_user_post_save(sender, **kwargs):
 def user_post_save(sender, **kwargs):
     user_post_save_wrapper(kwargs)
 
+
 @receiver(pre_save, sender=Team)
 def team_pre_save(sender, **kwargs):
     from notification.tasks import TaskRegister
@@ -302,12 +318,14 @@ def team_pre_save(sender, **kwargs):
                 database=database,
                 organization_name=team.organization.name)
 
-        if before_update_team.organization and \
-            before_update_team.organization.external:
+        if (before_update_team.organization and
+                before_update_team.organization.external):
+
             for database in before_update_team.databases.all():
                 TaskRegister.update_database_monitoring(
                     database=database,
-                    hostgroup=before_update_team.organization.grafana_hostgroup,
+                    hostgroup=(before_update_team
+                               .organization.grafana_hostgroup),
                     action='remove')
 
         if team.organization and team.organization.external:
@@ -358,21 +376,3 @@ def organization_pre_save(sender, **kwargs):
             TaskRegister.update_organization_name_monitoring(
                 database=database,
                 organization_name=organization.name)
-
-# def user_m2m_changed(sender, **kwargs):
-#     """
-#     Using m2m signal to sync user.groups relation in the db with the ones in the LDAP. The action post_clear
-#     must be used in order to accomplish this. (https://docs.djangoproject.com/en/1.5/ref/signals/)
-#     Remember, remember: only the groups that exists in ldap AND in the database will be synced.
-#     You can however, add a group to user that is not created in ldap.
-#     """
-#     # LOG.debug("m2m_changed kwargs: %s" % kwargs)
-#     user = kwargs.get('instance')
-#     action = kwargs.get('action')
-#     if action == 'post_clear':
-#         LOG.info("user %s m2m_changed post_clear signal" % user)
-#         #sync_ldap_groups_with_user(user=user)
-#
-#
-# m2m_changed.connect(user_m2m_changed, sender=User.groups.through)
-# m2m_changed.connect(user_m2m_changed, sender=AccountUser.groups.through)

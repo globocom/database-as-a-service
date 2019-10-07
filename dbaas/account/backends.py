@@ -82,9 +82,6 @@ class DbaasBackend(ModelBackend):
         return user_obj._perm_cache
 
     def has_perm(self, user_obj, perm, obj=None):
-        #LOG.debug("validating perm %s for user %s on object (%s) %s" % (perm, user_obj, type(obj).__name__, obj))
-        # We are using django_services in admin, but it does not provide any support to
-        # object level permission
         if not user_obj.is_active:
             return False
 
@@ -98,7 +95,14 @@ class DbaasBackend(ModelBackend):
 
             # check specific permissions
             if type(obj) == Database:
-                return Database.objects.filter(pk=obj.pk).filter(is_in_quarantine=False, team__in=[team.id for team in Team.objects.filter(users=user_obj)]).exists()
+                return Database.objects.filter(pk=obj.pk).filter(
+                    is_in_quarantine=False,
+                    team__in=[
+                        team.id for team in Team.objects.filter(
+                            users=user_obj
+                        )
+                    ]
+                ).exists()
             elif type(obj) == Credential:
                 return self.has_perm(user_obj, perm, obj=obj.database)
             return True
@@ -108,7 +112,9 @@ class DbaasBackend(ModelBackend):
         import ldap
 
         if not settings.LDAP_ENABLED:
-            return super(DbaasBackend, self).change_password(username, old_password, new_password)
+            return super(DbaasBackend, self).change_password(
+                username, old_password, new_password
+            )
         else:
             conn = None
             server = settings.AUTH_LDAP_SERVER_URI
