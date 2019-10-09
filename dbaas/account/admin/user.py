@@ -108,14 +108,16 @@ class CustomUserAdmin(UserAdmin):
     fieldsets_basic = (
         (None, {'fields': ('username', 'password')}),
         (_('Personal info'), {
-         'fields': ('first_name', 'last_name', 'email', 'is_active', 'is_staff')}),
+         'fields': ('first_name', 'last_name', 'email', 'is_active',
+                    'is_staff')}),
         (_('Important dates'), {'fields': ('last_login', 'date_joined')}),
     )
 
     fieldsets_advanced = (
         (None, {'fields': ('username', 'password')}),
         (_('Personal info'), {'fields': (
-            'first_name', 'last_name', 'email', 'is_active', 'is_staff', 'is_superuser')}),
+            'first_name', 'last_name', 'email', 'is_active', 'is_staff',
+            'is_superuser')}),
         (_('Important dates'), {'fields': ('last_login', 'date_joined')}),
     )
 
