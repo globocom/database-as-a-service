@@ -7,7 +7,8 @@ from ..models import DatabaseResize
 from .factory import DatabaseResizeFactory
 
 
-SEARCH_FIELDS = ("database__name", "source_offer__name", "target_offer__name", "task__id", "task__task_id")
+SEARCH_FIELDS = ("database__name", "source_offer__name", "target_offer__name",
+                 "task__id", "task__task_id")
 LIST_FILTER = [
     "database__team", "status",
 ]
