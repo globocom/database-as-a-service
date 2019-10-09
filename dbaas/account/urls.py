@@ -9,30 +9,26 @@ urlpatterns = patterns(
 )
 
 if settings.LDAP_ENABLED:
-    urlpatterns += patterns('',
+    urlpatterns += patterns(
+        '',
+        url(r'^password_reset/done/',
+            'django.contrib.auth.views.password_reset_done', {
+                'template_name': 'ldap/password_reset_done.html'
+            }, 'account_password_reset_done'),
 
-                            url(r'^password_reset/done/',
-                                'django.contrib.auth.views.password_reset_done', {
-                                    'template_name': 'ldap/password_reset_done.html'
-                                }, 'account_password_reset_done'),
-
-                            url(r'^password_reset/', 'django.contrib.auth.views.password_reset', {
-                                'template_name': 'ldap/password_reset.html',
-                                'post_reset_redirect': '/account/password_reset/done/',
-                                'email_template_name': 'ldap/password_reset_email.html'
-                            }, 'account_password_reset'),
-
-
-
-                            url(r'^reset/(?P<uidb36>[0-9A-Za-z]+)-(?P<token>.+)/',
-                                'django.contrib.auth.views.password_reset_confirm', {
-                                    'template_name': 'ldap/password_reset_confirm.html',
-                                    'post_reset_redirect': '/account/reset/done/',
-                                    'set_password_form': ChangePasswordForm
-                                }, 'account_reset'),
-
-                            url(r'^reset/done/',
-                                'django.contrib.auth.views.password_reset_complete', {
-                                    'template_name': 'ldap/password_reset_complete.html'
-                                }, 'account_reset_done'),
-                            )
+        url(r'^password_reset/', 'django.contrib.auth.views.password_reset', {
+            'template_name': 'ldap/password_reset.html',
+            'post_reset_redirect': '/account/password_reset/done/',
+            'email_template_name': 'ldap/password_reset_email.html'
+        }, 'account_password_reset'),
+        url(r'^reset/(?P<uidb36>[0-9A-Za-z]+)-(?P<token>.+)/',
+            'django.contrib.auth.views.password_reset_confirm', {
+                'template_name': 'ldap/password_reset_confirm.html',
+                'post_reset_redirect': '/account/reset/done/',
+                'set_password_form': ChangePasswordForm
+            }, 'account_reset'),
+        url(r'^reset/done/',
+            'django.contrib.auth.views.password_reset_complete', {
+                'template_name': 'ldap/password_reset_complete.html'
+            }, 'account_reset_done'),
+    )
