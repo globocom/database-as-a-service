@@ -22,7 +22,9 @@ admin.site.register(models.Maintenance, MaintenanceAdmin)
 admin.site.register(models.HostMaintenance, HostMaintenanceAdmin)
 admin.site.register(models.DatabaseUpgrade, DatabaseUpgradeAdmin)
 admin.site.register(models.DatabaseResize, DatabaseResizeAdmin)
-admin.site.register(models.DatabaseChangeParameter, DatabaseChangeParameterAdmin)
+admin.site.register(
+    models.DatabaseChangeParameter, DatabaseChangeParameterAdmin
+)
 admin.site.register(models.DatabaseCreate, DatabaseCreateAdmin)
 admin.site.register(models.DatabaseDestroy, DatabaseDestroyAdmin)
 admin.site.register(models.DatabaseRestore, DatabaseRestoreAdmin)

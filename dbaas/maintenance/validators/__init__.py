@@ -16,8 +16,9 @@ def validate_hosts_ids(hosts_ids):
     if hosts_ids_set != hosts_ids:
         raise ValidationError(u'Some ids are repeated')
 
-    real_hosts = Counter(models.Host.objects.filter(id__in=hosts_ids,
-                                                    ).values_list('id', flat=True))
+    real_hosts = Counter(models.Host.objects.filter(
+        id__in=hosts_ids,
+    ).values_list('id', flat=True))
 
     diff = real_hosts - hosts_ids
     diff2 = hosts_ids - real_hosts

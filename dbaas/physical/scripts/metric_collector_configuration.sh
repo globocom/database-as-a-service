@@ -427,7 +427,7 @@ create_mongodb_telegraf_config()
   servers = ["mongodb://\$DBUSER:\$DBPASS@\$HOST:\$PORT"]
   gather_perdb_stats = true
   taginclude = ["host", "db_name"]
-  fieldpass = ["commands_per_sec", "connections_available", "connections_current", "deletes_per_sec", "flushes_per_sec", "getmores_per_sec", "inserts_per_sec", "queries_per_sec", "resident_megabytes", "updates_per_sec", "vsize_megabytes", "avg_obj_size", "collections", "data_size", "index_size", "indexes", "num_extents", "objects", "ok", "storage_size", "type"]
+  fieldpass = ["commands_per_sec", "connections_available", "connections_current", "deletes_per_sec", "flushes_per_sec", "getmores_per_sec", "inserts_per_sec", "queries_per_sec", "resident_megabytes", "updates_per_sec", "vsize_megabytes", "avg_obj_size", "collections", "data_size", "index_size", "indexes", "num_extents", "objects", "ok", "storage_size", "type", "repl_lag"]
 EOF_METRIC_DBAAS
 ) >> /etc/telegraf/telegraf.conf
     die_if_error "Error setting telegraf config file"
@@ -468,4 +468,3 @@ EOF_METRIC_DBAAS
 {% if REDIS %}
   create_redis_telegraf_config
 {% endif %}
-
