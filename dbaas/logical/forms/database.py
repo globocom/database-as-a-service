@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 import logging
+import datetime
+import random
 from django.utils.translation import ugettext_lazy as _
 from django.forms import models
 from django import forms
@@ -10,11 +12,15 @@ from physical.models import Plan, Environment, Engine
 from logical.forms.fields import AdvancedModelChoiceField
 from logical.models import Database, Project
 from logical.validators import database_name_evironment_constraint
+from system.models import Configuration
 
 LOG = logging.getLogger(__name__)
 
 
 class DatabaseForm(models.ModelForm):
+
+    BACKUP_HOUR_CHOICES = [(hour, datetime.time(hour, 0).strftime(format='%H:%M')) for hour in range(24)]
+
     environment = forms.ModelChoiceField(queryset=Environment.objects)
     engine = forms.ModelChoiceField(queryset=Engine.objects)
     plan = AdvancedModelChoiceField(
@@ -22,17 +28,20 @@ class DatabaseForm(models.ModelForm):
         required=False, widget=forms.RadioSelect,
         empty_label=None
     )
+    backup_hour = forms.ChoiceField(choices=BACKUP_HOUR_CHOICES, help_text="The recommended hour for backup.")
 
     class Meta:
         model = Database
         fields = [
             'name', 'description', 'project', 'environment', 'engine', 'team',
-            'subscribe_to_email_events', 'is_in_quarantine', 'plan'
+            'subscribe_to_email_events', 'backup_hour', 'is_in_quarantine',
+            'plan',
         ]
 
     def __init__(self, *args, **kwargs):
         super(DatabaseForm, self).__init__(*args, **kwargs)
         self.fields['is_in_quarantine'].widget = forms.HiddenInput()
+        self.fields['backup_hour'].initial = random.randint(0, 6)
 
     def _validate_description(self, cleaned_data):
         if 'description' in cleaned_data:

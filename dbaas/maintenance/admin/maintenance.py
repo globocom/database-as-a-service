@@ -23,7 +23,8 @@ class MaintenanceParametersInline(django_admin.TabularInline):
         maintenance = obj
         self.max_num = None
         if maintenance and maintenance.status != models.Maintenance.REJECTED:
-            self.change_form_template = "admin/maintenance/maintenance/custom_change_form.html"
+            self.change_form_template = ("admin/maintenance/maintenance/"
+                                         "custom_change_form.html")
         else:
             self.change_form_template = None
 
@@ -38,9 +39,9 @@ class MaintenanceAdmin(admin.DjangoServicesAdmin):
     service_class = MaintenanceService
     search_fields = ("scheduled_for", "description", "maximum_workers",
                      "status")
-    list_display = ("description", "scheduled_for", "started_at", "finished_at",
-                    "maximum_workers", "affected_hosts_html", "created_by",
-                    "friendly_status")
+    list_display = ("description", "scheduled_for", "started_at",
+                    "finished_at", "maximum_workers", "affected_hosts_html",
+                    "created_by", "friendly_status")
     list_filter = ["scheduled_for", "maximum_workers", "status"]
     fields = (
         "description", "scheduled_for", "started_at", "finished_at",
@@ -63,14 +64,20 @@ class MaintenanceAdmin(admin.DjangoServicesAdmin):
             workers = celery_inpsect.ping().keys()
         except Exception, e:
             LOG.warn("All celery workers are down! {} :(".format(e))
-            messages.add_message(request, messages.ERROR,
-                                 "Maintenance can't be revoked because all celery workers are down!",)
+            messages.add_message(
+                request, messages.ERROR,
+                ("Maintenance can't be revoked because all celery "
+                 "workers are down!"),
+            )
             return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
         if workers and workers != celery_workers:
             LOG.warn("At least one celery worker is down! :(")
-            messages.add_message(request, messages.ERROR,
-                                 "Maintenance can't be revoked because at least one celery worker is down!",)
+            messages.add_message(
+                request, messages.ERROR,
+                ("Maintenance can't be revoked because at least one celery "
+                 "worker is down!"),
+            )
             return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
         maintenance = models.Maintenance.objects.get(id=id)
@@ -85,7 +92,9 @@ class MaintenanceAdmin(admin.DjangoServicesAdmin):
             messages.add_message(request, messages.ERROR,
                                  "Maintenance can't be revoked!",)
 
-        return HttpResponseRedirect(reverse('admin:maintenance_maintenance_changelist'))
+        return HttpResponseRedirect(
+            reverse('admin:maintenance_maintenance_changelist')
+        )
 
     buttons = [
         {'url': 'revoke_maintenance',
@@ -97,26 +106,34 @@ class MaintenanceAdmin(admin.DjangoServicesAdmin):
 
     def change_view(self, request, object_id, form_url='', extra_context={}):
         extra_context['buttons'] = self.buttons
-        return super(MaintenanceAdmin, self).change_view(request, object_id, form_url, extra_context=extra_context)
+        return super(MaintenanceAdmin, self).change_view(
+            request, object_id, form_url, extra_context=extra_context
+        )
 
     def get_urls(self):
         from django.conf.urls import url
         urls = super(MaintenanceAdmin, self).get_urls()
         my_urls = list(
-            (url(r'^(.+)/%(url)s/$' % b, self.admin_site.admin_view(b['func'])) for b in self.buttons))
+            (url(r'^(.+)/%(url)s/$' % b, self.admin_site.admin_view(
+                b['func'])) for b in self.buttons)
+            )
         return my_urls + urls
 
     def get_readonly_fields(self, request, obj=None):
         maintenance = obj
         if maintenance and maintenance.status != models.Maintenance.REJECTED:
-            self.change_form_template = "admin/maintenance/maintenance/custom_change_form.html"
+            self.change_form_template = ("admin/maintenance/maintenance"
+                                         "/custom_change_form.html")
         else:
             self.change_form_template = None
 
         if maintenance and maintenance.celery_task_id:
             return self.fields
 
-        return ('status', 'celery_task_id', 'affected_hosts', 'started_at', 'finished_at', 'created_by', 'revoked_by')
+        return (
+            'status', 'celery_task_id', 'affected_hosts', 'started_at',
+            'finished_at', 'created_by', 'revoked_by'
+        )
 
     def friendly_status(self, maintenance):
         html_finished = '<span class="label label-info">Finished</span>'

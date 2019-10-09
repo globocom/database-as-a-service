@@ -339,6 +339,7 @@ class Script(BaseModel):
     def metric_collector_template(self):
         return self._get_content(self.metric_collector)
 
+
 class ReplicationTopology(BaseModel):
 
     class Meta:
@@ -707,10 +708,15 @@ class DatabaseInfra(BaseModel):
         verbose_name=_("Backup hour"),
         blank=False,
         null=False,
-        help_text=_("The hour of backup."))
+        help_text=_("Value default"))
     engine_patch = models.ForeignKey(
         EnginePatch, related_name="databaseinfras",
         on_delete=models.PROTECT, null=True)
+    ssl_expire_at = models.DateField(
+        verbose_name=_("ssl_expire_at"),
+        auto_now_add=False,
+        blank=True,
+        null=True)
 
     def __unicode__(self):
         return self.name
@@ -723,6 +729,12 @@ class DatabaseInfra(BaseModel):
     def clean(self, *args, **kwargs):
         if (not self.environment_id or not self.plan_id) or not self.plan.environments.filter(pk=self.environment_id).exists():
             raise ValidationError({'engine': _("Invalid environment")})
+
+    @property
+    def configure_backup_hour(self):
+        return Configuration.get_by_name_as_int(
+            'backup_hour'
+        )
 
     @property
     def offering(self):
@@ -921,11 +933,16 @@ class DatabaseInfra(BaseModel):
                 hosts.append(instance.hostname)
         return hosts
 
-    def recreate_slave_steps(self):
-        topology = (self.plan.replication_topology
-                    .get_replication_topology_instance())
+    @property
+    def topology(self):
+        return (self.plan.replication_topology
+                .get_replication_topology_instance())
 
-        return topology.get_recreate_slave_steps()
+    def recreate_slave_steps(self):
+        return self.topology.get_recreate_slave_steps()
+
+    def update_ssl_steps(self):
+        return self.topology.get_update_ssl_steps()
 
 
 class Host(BaseModel):
@@ -982,6 +999,10 @@ class Host(BaseModel):
             if not instance.is_database:
                 return instance
         return None
+
+    @property
+    def is_database(self):
+        return self.database_instance() is not None
 
 
 class Volume(BaseModel):
@@ -1146,7 +1167,7 @@ class Instance(BaseModel):
     def is_current_write(self):
         try:
             driver = self.databaseinfra.get_driver()
-            return driver.check_instance_is_master(instance=self)
+            return driver.check_instance_is_master(instance=self, default_timeout=True)
         except:
             return False
 

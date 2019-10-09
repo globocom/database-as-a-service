@@ -70,25 +70,33 @@ class DatabaseChangeParameterTestCase(TestCase):
 
     def test_friendly_status_waiting(self):
         self.database_change_parameter.status = DatabaseChangeParameter.WAITING
-        status_html = self.admin.friendly_status(self.database_change_parameter)
+        status_html = self.admin.friendly_status(
+            self.database_change_parameter
+        )
         self.assertIn('label-warning', status_html)
         self.assertIn('Waiting', status_html)
 
     def test_friendly_status_running(self):
         self.database_change_parameter.status = DatabaseChangeParameter.RUNNING
-        status_html = self.admin.friendly_status(self.database_change_parameter)
+        status_html = self.admin.friendly_status(
+            self.database_change_parameter
+        )
         self.assertIn('label-success', status_html)
         self.assertIn('Running', status_html)
 
     def test_friendly_status_error(self):
         self.database_change_parameter.status = DatabaseChangeParameter.ERROR
-        status_html = self.admin.friendly_status(self.database_change_parameter)
+        status_html = self.admin.friendly_status(
+            self.database_change_parameter
+        )
         self.assertIn('label-important', status_html)
         self.assertIn('Error', status_html)
 
     def test_friendly_status_success(self):
         self.database_change_parameter.status = DatabaseChangeParameter.SUCCESS
-        status_html = self.admin.friendly_status(self.database_change_parameter)
+        status_html = self.admin.friendly_status(
+            self.database_change_parameter
+        )
         self.assertIn('label-info', status_html)
         self.assertIn('Success', status_html)
 
@@ -103,7 +111,8 @@ class DatabaseChangeParameterTestCase(TestCase):
 
     def test_maintenance_action(self):
         self.database_change_parameter.status = DatabaseChangeParameter.ERROR
-        url = self.database_change_parameter.database.get_change_parameters_retry_url()
+        url = (self.database_change_parameter.database
+               .get_change_parameters_retry_url())
 
         button = self.admin.maintenance_action(self.database_change_parameter)
         self.assertIn(url, button)
@@ -130,6 +139,7 @@ class DatabaseChangeParameterTestCase(TestCase):
         self.database_change_parameter.status = DatabaseChangeParameter.ERROR
         self.database_change_parameter.can_do_retry = True
 
-        url = self.database_change_parameter.database.get_change_parameters_retry_url()
+        url = (self.database_change_parameter
+               .database.get_change_parameters_retry_url())
         button = self.admin.maintenance_action(self.database_change_parameter)
         self.assertIn(url, button)

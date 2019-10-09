@@ -22,7 +22,7 @@ class BaseMysql(BaseTopology):
     def switch_master(self, driver):
         raise NotImplementedError()
 
-    def check_instance_is_master(self, driver, instance):
+    def check_instance_is_master(self, driver, instance, default_timeout=False):
         raise NotImplementedError
 
     def set_master(self, driver, instance):
@@ -101,10 +101,38 @@ class MySQLSingle(BaseMysql):
             )
         }]
 
+    def get_update_ssl_steps(self):
+        return [{
+            'Disable monitoring and alarms': (
+                'workflow.steps.util.zabbix.DisableAlarms',
+                'workflow.steps.util.db_monitor.DisableMonitoring',
+            ),
+        }] + [{
+            'Configure SSL': (
+                'workflow.steps.util.ssl.UpdateSSLForInfra',
+                'workflow.steps.util.ssl.CreateJsonRequestFileInfra',
+                'workflow.steps.util.ssl.CreateCertificateInfra',
+                'workflow.steps.util.ssl.SetSSLFilesAccessMySQL',
+            ),
+        }] + [{
+            'Restart Database': (
+                'workflow.steps.util.vm.ChangeMaster',
+                'workflow.steps.util.database.CheckIfSwitchMaster',
+                'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.metric_collector.RestartTelegraf',
+            ),
+        }] + [{
+            'Enabling monitoring and alarms': (
+                'workflow.steps.util.db_monitor.EnableMonitoring',
+                'workflow.steps.util.zabbix.EnableAlarms',
+            ),
+        }]
+
     def switch_master(self, driver):
         return True
 
-    def check_instance_is_master(self, driver, instance):
+    def check_instance_is_master(self, driver, instance, default_timeout=False):
         return True
 
     def set_master(self, driver, instance):
@@ -140,6 +168,14 @@ class MySQLSingle(BaseMysql):
                 'workflow.steps.util.volume_provider.MountDataVolumeRestored',
                 'workflow.steps.util.plan.ConfigureRestore',
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
+            )}, {
+            'Configure SSL': (
+                'workflow.steps.util.disk.CleanSSLDir',
+                'workflow.steps.util.ssl.RequestSSLForInfra',
+                'workflow.steps.util.ssl.CreateSSLConfForInfraEndPoint',
+                'workflow.steps.util.ssl.CreateJsonRequestFileInfra',
+                'workflow.steps.util.ssl.CreateCertificateInfra',
+                'workflow.steps.util.ssl.SetSSLFilesAccessMySQL',
             )}, {
             'Starting database': (
                 'workflow.steps.util.database.Start',
@@ -215,7 +251,7 @@ class MySQLFoxHA(MySQLSingle):
             group_name=driver.databaseinfra.name
         )
 
-    def check_instance_is_master(self, driver, instance):
+    def check_instance_is_master(self, driver, instance, default_timeout=False):
         fox_node_is_master = self._get_fox_provider(driver).node_is_master(
             group_name=driver.databaseinfra.name,
             node_ip=instance.address
@@ -251,7 +287,7 @@ class MySQLFoxHA(MySQLSingle):
         )
 
     def get_database_agents(self):
-        agents = ['httpd', '/etc/init.d/pt-heartbeat']
+        agents = ['httpd', 'pt-heartbeat']
         return super(MySQLFoxHA, self).get_database_agents() + agents
 
     def add_database_instances_first_steps(self):
@@ -393,6 +429,18 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.disk.RemoveDeprecatedFiles',
                 'workflow.steps.util.plan.ConfigureRestore',
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
+            )}, {
+            'Configure SSL': (
+                'workflow.steps.util.disk.CleanSSLDir',
+                'workflow.steps.util.ssl.CreateSSLConfForInfraEndPoint',
+                'workflow.steps.util.ssl.CreateSSLConfForInstanceIP',
+                'workflow.steps.util.ssl.RequestSSLForInfra',
+                'workflow.steps.util.ssl.RequestSSLForInstance',
+                'workflow.steps.util.ssl.CreateJsonRequestFileInfra',
+                'workflow.steps.util.ssl.CreateJsonRequestFileInstance',
+                'workflow.steps.util.ssl.CreateCertificateInfra',
+                'workflow.steps.util.ssl.CreateCertificateInstance',
+                'workflow.steps.util.ssl.SetSSLFilesAccessMySQL',
             )}, {
             'Starting database': (
                 'workflow.steps.util.database.Stop',
@@ -596,6 +644,45 @@ class MySQLFoxHA(MySQLSingle):
             ),
         }]
 
+    def get_update_ssl_steps(self):
+        return [{
+            'Disable monitoring and alarms': (
+                'workflow.steps.util.zabbix.DisableAlarms',
+                'workflow.steps.util.db_monitor.DisableMonitoring',
+            ),
+        }] + [{
+            'Disable SSL': (
+                'workflow.steps.util.ssl.UnSetReplicationUserRequireSSL',
+            ),
+        }] + [{
+            'Configure SSL': (
+                'workflow.steps.util.ssl.UpdateSSLForInfra',
+                'workflow.steps.util.ssl.UpdateSSLForInstance',
+                'workflow.steps.util.ssl.CreateJsonRequestFileInfra',
+                'workflow.steps.util.ssl.CreateJsonRequestFileInstance',
+                'workflow.steps.util.ssl.CreateCertificateInfra',
+                'workflow.steps.util.ssl.CreateCertificateInstance',
+                'workflow.steps.util.ssl.SetSSLFilesAccessMySQL',
+            ),
+        }] + [{
+            'Restart Database': (
+                'workflow.steps.util.vm.ChangeMaster',
+                'workflow.steps.util.database.CheckIfSwitchMaster',
+                'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.metric_collector.RestartTelegraf',
+            ),
+        }] + [{
+            'Enable SSL': (
+                'workflow.steps.util.ssl.SetReplicationUserRequireSSL',
+            ),
+        }] + [{
+            'Enabling monitoring and alarms': (
+                'workflow.steps.util.db_monitor.EnableMonitoring',
+                'workflow.steps.util.zabbix.EnableAlarms',
+            ),
+        }]
+
     def get_host_migrate_steps_cleaning_up(self):
         return (
             'workflow.steps.util.volume_provider.DestroyOldEnvironment',
@@ -633,6 +720,7 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.mysql.SetMasterRecreateSlave',
                 'workflow.steps.util.mysql.EnableReplicationRecreateSlave',
                 'workflow.steps.util.database.StartSlave',
+                'workflow.steps.util.agents.Stop',
                 'workflow.steps.util.agents.Start',
                 'workflow.steps.util.database.CheckIsUp',
                 'workflow.steps.util.fox.IsReplicationOk',
