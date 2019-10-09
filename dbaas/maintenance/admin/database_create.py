@@ -13,7 +13,8 @@ from notification.tasks import TaskRegister
 
 class DatabaseCreateAdmin(DatabaseMaintenanceTaskAdmin):
 
-    search_fields = ["name", "infra__name", "user", "task__id", "task__task_id"]
+    search_fields = ["name", "infra__name", "user", "task__id",
+                     "task__task_id"]
     list_filter = ["plan", "team", "status", "project"]
 
     list_display = (
@@ -35,11 +36,17 @@ class DatabaseCreateAdmin(DatabaseMaintenanceTaskAdmin):
         if not maintenance_task.can_do_retry:
             return 'N/A'
 
-        url_retry = "/admin/maintenance/databasecreate/{}/retry/".format(maintenance_task.id)
-        html_retry = "<a title='Retry' class='btn btn-info' href='{}'>Retry</a>".format(url_retry)
+        url_retry = "/admin/maintenance/databasecreate/{}/retry/".format(
+            maintenance_task.id
+        )
+        html_retry = ("<a title='Retry' class='btn btn-info' "
+                      "href='{}'>Retry</a>").format(url_retry)
 
-        url_rollback = "/admin/maintenance/databasecreate/{}/rollback/".format(maintenance_task.id)
-        html_rollback = "<a title='Rollback' class='btn btn-danger' href='{}'>Rollback</a>".format(url_rollback)
+        url_rollback = "/admin/maintenance/databasecreate/{}/rollback/".format(
+            maintenance_task.id
+        )
+        html_rollback = ("<a title='Rollback' class='btn btn-danger' "
+                         "href='{}'>Rollback</a>").format(url_rollback)
 
         spaces = '&nbsp' * 3
         html_content = '{}{}{}'.format(html_retry, spaces, html_rollback)
@@ -77,6 +84,7 @@ class DatabaseCreateAdmin(DatabaseMaintenanceTaskAdmin):
             team=retry_from.team,
             project=retry_from.project,
             description=retry_from.description,
+            backup_hour=retry_from.infra.backup_hour,
             subscribe_to_email_events=retry_from.subscribe_to_email_events,
             is_protected=retry_from.is_protected,
             user=request.user,

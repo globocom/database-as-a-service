@@ -275,6 +275,33 @@ class RequestSSLForInfra(RequestSSL, InfraSSLBaseName):
     pass
 
 
+class UpdateSSLForInfra(RequestSSLForInfra):
+
+    def request_ssl_certificate(self):
+        script = "cd {ssl_path}\n"
+        script += "openssl req -new -out {csr}"
+        script += "-sha256 -key {key} -config {conf}"
+
+        script = script.format(
+            ssl_path=self.ssl_path, csr=self.csr_file,
+            key=self.key_file, conf=self.conf_file)
+
+        self.exec_script(script)
+
+
+class UpdateSSLForInstance(RequestSSLForInstance):
+    def request_ssl_certificate(self):
+        script = "cd {ssl_path}\n"
+        script += "openssl req -new -out {csr}"
+        script += "-sha256 -key {key} -config {conf}"
+
+        script = script.format(
+            ssl_path=self.ssl_path, csr=self.csr_file,
+            key=self.key_file, conf=self.conf_file)
+
+        self.exec_script(script)
+
+
 class CreateJsonRequestFile(SSL):
 
     def __unicode__(self):
@@ -402,7 +429,8 @@ class SetReplicationUserRequireSSL(SSL):
         return super(SetReplicationUserRequireSSL, self).is_valid
 
     def do(self):
-        if not self.is_valid: return
+        if not self.is_valid:
+            return
 
         driver = self.infra.get_driver()
         driver.set_replication_require_ssl(
@@ -410,8 +438,20 @@ class SetReplicationUserRequireSSL(SSL):
         driver.set_replication_user_require_ssl()
 
     def undo(self):
-        if not self.is_valid: return
+        if not self.is_valid:
+            return
 
         driver = self.infra.get_driver()
         driver.set_replication_user_not_require_ssl()
         driver.set_replication_not_require_ssl(instance=self.instance)
+
+
+class UnSetReplicationUserRequireSSL(SetReplicationUserRequireSSL):
+    def __unicode__(self):
+        return "Removing replication user to require SSL..."
+
+    def do(self):
+        super(UnSetReplicationUserRequireSSL, self).undo()
+
+    def undo(self):
+        super(UnSetReplicationUserRequireSSL, self).do()

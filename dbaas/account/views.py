@@ -29,7 +29,11 @@ def profile(request, user_id=None):
     except Exception, e:
         LOG.warning("Ops... %s" % e)
 
-    return render_to_response("account/profile.html", locals(), context_instance=RequestContext(request))
+    return render_to_response(
+        "account/profile.html",
+        locals(),
+        context_instance=RequestContext(request)
+    )
 
 
 def emergency_contacts(team_id):

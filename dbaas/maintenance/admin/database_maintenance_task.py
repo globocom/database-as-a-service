@@ -55,7 +55,8 @@ class DatabaseMaintenanceTaskAdmin(admin.ModelAdmin):
 
     def link_task(self, maintenance_task):
         url = reverse(
-            'admin:notification_taskhistory_change', args=[maintenance_task.task.id]
+            'admin:notification_taskhistory_change',
+            args=[maintenance_task.task.id]
         )
         return format_html(
             "<a href={}>{}</a>".format(url, maintenance_task.task.id)
