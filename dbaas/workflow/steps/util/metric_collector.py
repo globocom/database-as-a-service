@@ -7,6 +7,7 @@ import logging
 
 LOG = logging.getLogger(__name__)
 
+
 class MetricsCollector(BaseInstanceStep):
 
     def __init__(self, instance):
@@ -69,7 +70,8 @@ class ConfigureTelegraf(MetricsCollector):
         return "Configuring Telegraf..."
 
     def do(self):
-        if not self.is_valid: return
+        if not self.is_valid:
+            return
         template_script = self.plan.script.metric_collector_template
         script = build_context_script(self.script_variables, template_script)
         return self.exec_script(script)
@@ -80,7 +82,8 @@ class InstallTelegraf(MetricsCollector):
         return "Installing Telegraf..."
 
     def do(self):
-        if not self.is_valid: return
+        if not self.is_valid:
+            return
         script = "yum install telegraf -y"
         self.exec_script(script)
 
@@ -90,7 +93,8 @@ class RestartTelegraf(MetricsCollector):
         return "Restarting Telegraf..."
 
     def do(self):
-        if not self.is_valid: return
+        if not self.is_valid:
+            return
         script = "/etc/init.d/telegraf restart"
         self.exec_script(script)
 
@@ -100,7 +104,8 @@ class StopTelegraf(MetricsCollector):
         return "Stopping Telegraf..."
 
     def do(self):
-        if not self.is_valid: return
+        if not self.is_valid:
+            return
         script = "/etc/init.d/telegraf stop"
         self.exec_script(script)
 
@@ -110,14 +115,16 @@ class CreateMetricCollectorDatabaseUser(MetricsCollector):
         return "Creating metric collector database user..."
 
     def do(self):
-        if not self.is_valid: return
+        if not self.is_valid:
+            return
         if self.driver.check_instance_is_master(self.instance):
             self.driver.create_metric_collector_user(
                 username=self.credential.user,
                 password=self.credential.password)
 
     def undo(self):
-        if not self.is_valid: return
+        if not self.is_valid:
+            return
         if self.driver.check_instance_is_master(self.instance):
             self.driver.remove_metric_collector_user(
                 username=self.credential.user)
