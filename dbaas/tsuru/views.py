@@ -256,14 +256,14 @@ class ServiceAdd(APIView):
         except Exception as e:
             msg = "A description must be provided."
             return log_and_response(
-                msg=msg, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                msg=msg, http_status=status.HTTP_400_BAD_REQUEST
             )
 
         name_regexp = re.compile('^[a-z][a-z0-9_]+$')
         if name_regexp.match(name) is None:
             msg = "Your database name must match /^[a-z][a-z0-9_]+$/ ."
             return log_and_response(
-                msg=msg, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                msg=msg, http_status=status.HTTP_400_BAD_REQUEST
             )
 
         try:
@@ -272,16 +272,16 @@ class ServiceAdd(APIView):
                 name, env
             )
             return log_and_response(
-                msg=msg, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                msg=msg, http_status=status.HTTP_400_BAD_REQUEST
             )
 
         except ObjectDoesNotExist:
             pass
 
         if database_name_evironment_constraint(name, env):
-            msg = "{} already exists in production!".format(name)
+            msg = "{} already exists in env {}!".format(name, env)
             return log_and_response(
-                msg=msg, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                msg=msg, http_status=status.HTTP_400_BAD_REQUEST
             )
 
         try:
@@ -289,7 +289,7 @@ class ServiceAdd(APIView):
         except ObjectDoesNotExist as e:
             msg = "User does not exist."
             return log_and_response(
-                msg=msg, e=e, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                msg=msg, e=e, http_status=status.HTTP_400_BAD_REQUEST
             )
         except MultipleObjectsReturned as e:
             msg = "There are multiple user for {} email.".format(user)
@@ -302,7 +302,7 @@ class ServiceAdd(APIView):
         except ObjectDoesNotExist as e:
             msg = "Team does not exist."
             return log_and_response(
-                msg=msg, e=e, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                msg=msg, e=e, http_status=status.HTTP_400_BAD_REQUEST
             )
 
         try:
@@ -310,7 +310,7 @@ class ServiceAdd(APIView):
         except ObjectDoesNotExist as e:
             msg = "The user is not on {} team.".format(dbaas_team.name)
             return log_and_response(
-                msg=msg, e=e, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                msg=msg, e=e, http_status=status.HTTP_400_BAD_REQUEST
             )
 
         try:
@@ -318,7 +318,7 @@ class ServiceAdd(APIView):
         except(ObjectDoesNotExist) as e:
             msg = "Environment does not exist."
             return log_and_response(
-                msg=msg, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                msg=msg, http_status=status.HTTP_400_BAD_REQUEST
             )
 
         databases_used_by_team = dbaas_team.count_databases_in_use(
@@ -331,13 +331,13 @@ class ServiceAdd(APIView):
                 database_alocation_limit, dbaas_team
             )
             return log_and_response(
-                msg=msg, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                msg=msg, http_status=status.HTTP_400_BAD_REQUEST
             )
 
         if 'plan' not in data:
             msg = "Plan was not found"
             return log_and_response(
-                msg=msg, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                msg=msg, http_status=status.HTTP_400_BAD_REQUEST
             )
 
         plan = data['plan']
@@ -346,7 +346,6 @@ class ServiceAdd(APIView):
         ).extra(
             where=['is_active=True', 'provider={}'.format(Plan.CLOUDSTACK)]
         )
-
         plans = get_plans_dict(hard_plans)
         plan = [splan for splan in plans if splan['name'] == plan]
         LOG.info("Plan: {}".format(plan))
@@ -356,7 +355,7 @@ class ServiceAdd(APIView):
         else:
             msg = "Plan was not found"
             return log_and_response(
-                msg=msg, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                msg=msg, http_status=status.HTTP_400_BAD_REQUEST
             )
 
         if dbaas_environment not in dbaas_plan.environments.all():
