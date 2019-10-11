@@ -68,14 +68,14 @@
     <div class="control-group">
         <div class="control-label"><label>Window:</label></div>
         <div class="controls">
-            <select id="id_maintenance_hour"name="maintenance_hour">
-                {% for maintenance_hour in maintenance_hours %}
-                    {% if maintenance_hour.0 == current_maintenance_hour %}
-                        <option value="{{ maintenance_hour.0 }}" selected="selected">*
+            <select id="id_maintenance_window"name="maintenance_window">
+                {% for maintenance_window in maintenance_windows %}
+                    {% if maintenance_window.0 == current_maintenance_window %}
+                        <option value="{{ maintenance_window.0 }}" selected="selected">*
                     {% else %}
-                        <option value="{{ maintenance_hour.0 }}">
+                        <option value="{{ maintenance_window.0 }}">
                     {% endif %}
-                        {{ maintenance_hour.1 }}
+                        {{ maintenance_window.1 }}
                         </option>
                 {% endfor %}
             </select>
