@@ -244,11 +244,12 @@ class DatabaseCreateCallTestCase(TestCase, TaskCallBaseTestCase):
         'description': 'description',
         'subscribe_to_email_events': 'subscribe_to_email_events',
         'backup_hour': 'backup_hour',
+        'maintenance_window': 'maintenance_window',
     }
     create_fields_to_validate = ['task_name', 'arguments']
     delay_fields_to_validate = [
-        'user', 'name', 'plan', 'environment', 'team', 'project', 'description',
-        'subscribe_to_email_events', 'task', 'is_protected'
+        'user', 'name', 'plan', 'environment', 'team', 'project',
+        'description', 'subscribe_to_email_events', 'task', 'is_protected'
     ]
 
 
@@ -267,11 +268,12 @@ class DatabaseCreateCallWithUserTestCase(TestCase, TaskCallBaseTestCase):
         'subscribe_to_email_events': 'subscribe_to_email_events',
         'register_user': True,
         'backup_hour': 'backup_hour',
+        'maintenance_window': 'maintenance_window',
     }
     create_fields_to_validate = ['task_name', 'arguments', 'user']
     delay_fields_to_validate = [
-        'user', 'name', 'plan', 'environment', 'team', 'project', 'description',
-        'subscribe_to_email_events', 'task', 'is_protected'
+        'user', 'name', 'plan', 'environment', 'team', 'project',
+        'description', 'subscribe_to_email_events', 'task', 'is_protected'
     ]
 
 
