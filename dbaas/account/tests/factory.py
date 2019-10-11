@@ -11,6 +11,7 @@ class AccountUserFactory(factory.DjangoModelFactory):
     username = factory.Sequence(lambda n: 'user_{0}'.format(n))
     email = factory.Sequence(lambda n: 'user_{0}@email.test.com'.format(n))
 
+
 class UserFactory(factory.DjangoModelFactory):
     FACTORY_FOR = User
 

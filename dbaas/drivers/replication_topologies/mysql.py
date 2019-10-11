@@ -169,6 +169,14 @@ class MySQLSingle(BaseMysql):
                 'workflow.steps.util.plan.ConfigureRestore',
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
             )}, {
+            'Configure SSL': (
+                'workflow.steps.util.disk.CleanSSLDir',
+                'workflow.steps.util.ssl.RequestSSLForInfra',
+                'workflow.steps.util.ssl.CreateSSLConfForInfraEndPoint',
+                'workflow.steps.util.ssl.CreateJsonRequestFileInfra',
+                'workflow.steps.util.ssl.CreateCertificateInfra',
+                'workflow.steps.util.ssl.SetSSLFilesAccessMySQL',
+            )}, {
             'Starting database': (
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.StartRsyslog',
@@ -279,7 +287,7 @@ class MySQLFoxHA(MySQLSingle):
         )
 
     def get_database_agents(self):
-        agents = ['httpd', '/etc/init.d/pt-heartbeat']
+        agents = ['httpd', 'pt-heartbeat']
         return super(MySQLFoxHA, self).get_database_agents() + agents
 
     def add_database_instances_first_steps(self):
@@ -421,6 +429,18 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.disk.RemoveDeprecatedFiles',
                 'workflow.steps.util.plan.ConfigureRestore',
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
+            )}, {
+            'Configure SSL': (
+                'workflow.steps.util.disk.CleanSSLDir',
+                'workflow.steps.util.ssl.CreateSSLConfForInfraEndPoint',
+                'workflow.steps.util.ssl.CreateSSLConfForInstanceIP',
+                'workflow.steps.util.ssl.RequestSSLForInfra',
+                'workflow.steps.util.ssl.RequestSSLForInstance',
+                'workflow.steps.util.ssl.CreateJsonRequestFileInfra',
+                'workflow.steps.util.ssl.CreateJsonRequestFileInstance',
+                'workflow.steps.util.ssl.CreateCertificateInfra',
+                'workflow.steps.util.ssl.CreateCertificateInstance',
+                'workflow.steps.util.ssl.SetSSLFilesAccessMySQL',
             )}, {
             'Starting database': (
                 'workflow.steps.util.database.Stop',
@@ -631,6 +651,10 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.db_monitor.DisableMonitoring',
             ),
         }] + [{
+            'Disable SSL': (
+                'workflow.steps.util.ssl.UnSetReplicationUserRequireSSL',
+            ),
+        }] + [{
             'Configure SSL': (
                 'workflow.steps.util.ssl.UpdateSSLForInfra',
                 'workflow.steps.util.ssl.UpdateSSLForInstance',
@@ -647,6 +671,10 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.database.Stop',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
+            ),
+        }] + [{
+            'Enable SSL': (
+                'workflow.steps.util.ssl.SetReplicationUserRequireSSL',
             ),
         }] + [{
             'Enabling monitoring and alarms': (
@@ -692,6 +720,7 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.mysql.SetMasterRecreateSlave',
                 'workflow.steps.util.mysql.EnableReplicationRecreateSlave',
                 'workflow.steps.util.database.StartSlave',
+                'workflow.steps.util.agents.Stop',
                 'workflow.steps.util.agents.Start',
                 'workflow.steps.util.database.CheckIsUp',
                 'workflow.steps.util.fox.IsReplicationOk',
@@ -1050,11 +1079,11 @@ class MySQLFoxHAAWS(MySQLFoxHA):
             'workflow.steps.util.volume_provider.WaitSnapshotAvailableMigrate',
             'workflow.steps.util.volume_provider.AddHostsAllowDatabaseMigrate',
             'workflow.steps.util.volume_provider.CreatePubKeyMigrate',
-            'workflow.steps.util.volume_provider.NewVolumeOnSlaveMigrate',
-            'workflow.steps.util.volume_provider.MountDataVolumeOnSlaveMigrate',
+            'workflow.steps.util.volume_provider.NewVolumeOnSlaveMigrateFirstNode',
+            'workflow.steps.util.volume_provider.MountDataVolumeOnSlaveFirstNode',
             'workflow.steps.util.volume_provider.ScpFromSnapshotDatabaseMigrate',
-            'workflow.steps.util.volume_provider.UmountDataVolumeOnSlaveMigrate',
-            'workflow.steps.util.volume_provider.RemoveVolumeMigrate',
+            'workflow.steps.util.volume_provider.UmountDataVolumeOnSlaveLastNode',
+            'workflow.steps.util.volume_provider.RemoveVolumeMigrateLastNode',
             'workflow.steps.util.volume_provider.RemoveHostsAllowDatabaseMigrate',
             'workflow.steps.util.volume_provider.RemovePubKeyMigrate',
             'workflow.steps.util.disk.RemoveDeprecatedFiles',

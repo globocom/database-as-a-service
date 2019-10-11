@@ -66,7 +66,7 @@ class DetailedProgressBarNode(template.Node):
         self.bars = []
 
     def _get_master_instances(self):
-        masters = self.database.driver.get_master_instance(default_timeout=True)
+        masters = self.database.driver.get_master_instance()
         if not isinstance(masters, Iterable):
             masters = [masters]
 

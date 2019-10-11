@@ -33,12 +33,10 @@ def find_ldap_groups_from_user(username=None):
         LOG.debug("searching ldap groups for username %s" % username)
         try:
             conn = get_ldap_connection()
-            # searchFilter = "username=%s" % username
-            # user_result = conn.search_s(user_search, ldap.SCOPE_SUBTREE, search_filter,
-            #                         None)
-            # LOG.debug(user_result)
             group_result = conn.search_s(
-                group_search, ldap.SCOPE_SUBTREE, "memberUid=%s" % username, None)
+                group_search, ldap.SCOPE_SUBTREE,
+                "memberUid=%s" % username, None
+            )
 
             for entry in group_result:
                 group_name = entry[0].split(',')[0].split('=')[1].strip()

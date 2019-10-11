@@ -7,9 +7,11 @@ from .database_maintenance_task import DatabaseMaintenanceTaskAdmin
 class DatabaseConfigureSSLAdmin(DatabaseMaintenanceTaskAdmin):
 
     def maintenance_action(self, maintenance_task):
-        if not maintenance_task.is_status_error or not maintenance_task.can_do_retry:
+        if (not maintenance_task.is_status_error or
+                not maintenance_task.can_do_retry):
             return 'N/A'
 
         url = maintenance_task.database.get_configure_ssl_retry_url()
-        html = "<a title='Retry' class='btn btn-info' href='{}'>Retry</a>".format(url)
+        html = ("<a title='Retry' class='btn btn-info' "
+                "href='{}'>Retry</a>").format(url)
         return format_html(html)
