@@ -21,8 +21,8 @@ class DatabaseForm(models.ModelForm):
 
     BACKUP_HOUR_CHOICES = [(hour,
                             datetime.time(hour, 0).strftime(format='%H:%M')) for hour in range(24)]
-    MAINTENANCE_HOUR_CHOICES = [(hour,
-                                datetime.time(hour, 0).strftime('%H:%M - ' +
+    MAINTENANCE_WINDOW_CHOICES = [(hour,
+                                    datetime.time(hour, 0).strftime('%H:%M - ' +
                                                                 str((
                                                                     datetime.datetime.combine(datetime.date.today(), datetime.time(hour)) +
                                                                     datetime.timedelta(hours=1)).strftime('%H:%M')))) for hour in range(24)]
@@ -37,12 +37,16 @@ class DatabaseForm(models.ModelForm):
                     choices=BACKUP_HOUR_CHOICES,
                     help_text='This field must not be the same as the'
                     ' maintenance window.')
+    maintenance_window = forms.ChoiceField(
+        choices=MAINTENANCE_WINDOW_CHOICES,
+        help_text='This field must not be the same as the'
+        ' backup hour.')
 
     class Meta:
         model = Database
         fields = [
             'name', 'description', 'project', 'environment', 'engine', 'team',
-            'subscribe_to_email_events', 'backup_hour',
+            'subscribe_to_email_events', 'backup_hour', 'maintenance_window',
             'is_in_quarantine', 'plan',
 
         ]
@@ -51,6 +55,7 @@ class DatabaseForm(models.ModelForm):
         super(DatabaseForm, self).__init__(*args, **kwargs)
         self.fields['is_in_quarantine'].widget = forms.HiddenInput()
         self.fields['backup_hour'].initial = random.randint(0, 6)
+        self.fields['maintenance_window'].initial = random.randint(0, 5)
 
     def _validate_description(self, cleaned_data):
         if 'description' in cleaned_data:
