@@ -717,6 +717,12 @@ class DatabaseInfra(BaseModel):
         auto_now_add=False,
         blank=True,
         null=True)
+    maintenance_window = models.IntegerField(
+        default=0,
+        blank=False,
+        null=False,
+        help_text=_("Window of maintenance")
+    )
 
     def __unicode__(self):
         return self.name
