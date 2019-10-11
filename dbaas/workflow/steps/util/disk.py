@@ -101,6 +101,25 @@ class CleanData(DiskCommand):
         return {message: script}
 
 
+class CleanSSLDir(CleanData):
+
+    @property
+    def is_valid(self):
+        return True
+
+    @property
+    def directory(self):
+        return '/data/ssl/*'
+
+    @property
+    def scripts(self):
+        message = 'Could not remove data from {}'.format(self.OLD_DIRECTORY)
+        script = '[ -d /data/ssl ] && rm -rf {} || mkdir -p /data/ssl'.format(
+            self.directory
+        )
+        return {message: script}
+
+
 class CleanDataRecreateSlave(CleanData):
     @property
     def is_valid(self):

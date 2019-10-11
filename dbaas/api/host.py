@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 from rest_framework import viewsets, serializers, permissions
+from rest_framework.decorators import action
+from rest_framework.response import Response
 from rest_framework import filters
-from django.core.exceptions import ObjectDoesNotExist
 from util import get_credentials_for
 from dbaas_credentials.models import CredentialType, Credential
+from notification.tasks import TaskRegister
 
 from physical.models import Host
 
@@ -36,7 +38,8 @@ class HostSerializer(serializers.ModelSerializer):
 
     def get_database(self, host):
         first_instance = host.instances.first()
-        database = first_instance and first_instance.databaseinfra.databases.first()
+        database = (first_instance
+                    and first_instance.databaseinfra.databases.first())
 
         return database
 
@@ -129,7 +132,8 @@ class HostAPI(viewsets.ReadOnlyModelViewSet):
             first_instance = host.instances.first()
             if not first_instance:
                 return False
-            return first_instance and first_instance.databaseinfra.databases.exists()
+            return (first_instance
+                    and first_instance.databaseinfra.databases.exists())
         params = self.request.GET.dict()
         filter_params = {}
         for k, v in params.iteritems():
@@ -140,7 +144,9 @@ class HostAPI(viewsets.ReadOnlyModelViewSet):
                 ).values_list(
                     'environments', flat=True
                 )
-                filter_params['instances__databaseinfra__environment__in'] = cs_envs
+                filter_params[
+                    'instances__databaseinfra__environment__in'
+                ] = cs_envs
             elif k.split('__')[0] in self.filter_fields:
                 filter_params[k] = v
         hosts = self.model.objects.filter(**filter_params).distinct()
@@ -148,3 +154,44 @@ class HostAPI(viewsets.ReadOnlyModelViewSet):
         host_ids = map(lambda h: h.id, filtered_hosts)
 
         return hosts.filter(id__in=host_ids)
+
+    def _render_error(self, msg, status):
+        return Response(
+            {'error_msg': msg},
+            status=status
+        )
+
+    @action(methods=['post'])
+    def recreate_slave(self, request, pk=None):
+        host = self.get_object()
+        if not host.is_database:
+            return self._render_error(
+                "The host must be Database instance",
+                422
+            )
+        serializer = self.get_serializer()
+        database = serializer.get_database(host)
+        if database.is_being_used_elsewhere():
+            return self._render_error(
+                "Database {} is being used for another task".format(database),
+                422
+            )
+        if not (database.databaseinfra.plan.replication_topology
+                .can_recreate_slave):
+            return self._render_error(
+                "This topology cant recreate slave",
+                422
+            )
+        instance = host.database_instance()
+        driver = instance.databaseinfra.get_driver()
+        if driver.check_instance_is_master(instance):
+            return self._render_error(
+                "Host is master. The host must be Slave",
+                422
+            )
+            raise Exception()
+        TaskRegister.recreate_slave(host=host, user=request.user)
+        return Response(
+            {'hostname': host.hostname, 'id': host.id},
+            status=204
+        )

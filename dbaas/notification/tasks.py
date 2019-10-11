@@ -1316,7 +1316,7 @@ class TaskRegister(object):
 
     @classmethod
     def database_create(cls, user, name, plan, environment, team,
-                        project, description, backup_hour,
+                        project, description, backup_hour=2,
                         subscribe_to_email_events=True, register_user=True,
                         is_protected=False, retry_from=None):
         task_params = {
@@ -1615,16 +1615,19 @@ class TaskRegister(object):
     @classmethod
     def recreate_slave(cls, host, user,
                        since_step=None, step_manager=None):
+        db = Database.objects.get(databaseinfra__instances__hostname=host)
         task_params = {
             'task_name': "recreate_slave",
-            'arguments': "Host: {}".format(
-                host
+            'arguments': "Database: {}, Host: {}".format(
+                db.name, host
             ),
+            'database': db
         }
         if user:
             task_params['user'] = user
         task = cls.create_task(task_params)
         return recreate_slave.delay(
+            database=db,
             host=host, task=task,
             since_step=since_step,
             step_manager=step_manager
@@ -1634,7 +1637,7 @@ class TaskRegister(object):
     def update_ssl(cls, database, user,
                    since_step=None, step_manager=None):
         task_params = {
-            'task_name': "recreate_slave",
+            'task_name': "update_ssl",
             'arguments': "Database: {}".format(
                 database
             ),
