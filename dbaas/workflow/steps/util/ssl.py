@@ -429,7 +429,8 @@ class SetReplicationUserRequireSSL(SSL):
         return super(SetReplicationUserRequireSSL, self).is_valid
 
     def do(self):
-        if not self.is_valid: return
+        if not self.is_valid:
+            return
 
         driver = self.infra.get_driver()
         driver.set_replication_require_ssl(
@@ -437,8 +438,20 @@ class SetReplicationUserRequireSSL(SSL):
         driver.set_replication_user_require_ssl()
 
     def undo(self):
-        if not self.is_valid: return
+        if not self.is_valid:
+            return
 
         driver = self.infra.get_driver()
         driver.set_replication_user_not_require_ssl()
         driver.set_replication_not_require_ssl(instance=self.instance)
+
+
+class UnSetReplicationUserRequireSSL(SetReplicationUserRequireSSL):
+    def __unicode__(self):
+        return "Removing replication user to require SSL..."
+
+    def do(self):
+        super(UnSetReplicationUserRequireSSL, self).undo()
+
+    def undo(self):
+        super(UnSetReplicationUserRequireSSL, self).do()

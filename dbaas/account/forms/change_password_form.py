@@ -32,9 +32,10 @@ class ChangePasswordForm(forms.Form):
                     self.error_messages['password_mismatch'])
             else:
                 ret = DbaasBackend.change_password(
-                    self.user.username, old_password=None, new_password=self.cleaned_data['new_password1'])
-                print type(ret)
-                print dir(ret)
+                    self.user.username,
+                    old_password=None,
+                    new_password=self.cleaned_data['new_password1']
+                )
                 if isinstance(ret, ldap.CONSTRAINT_VIOLATION):
                     raise forms.ValidationError('Password recently used')
 

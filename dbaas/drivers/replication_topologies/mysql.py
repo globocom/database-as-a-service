@@ -169,6 +169,14 @@ class MySQLSingle(BaseMysql):
                 'workflow.steps.util.plan.ConfigureRestore',
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
             )}, {
+            'Configure SSL': (
+                'workflow.steps.util.disk.CleanSSLDir',
+                'workflow.steps.util.ssl.RequestSSLForInfra',
+                'workflow.steps.util.ssl.CreateSSLConfForInfraEndPoint',
+                'workflow.steps.util.ssl.CreateJsonRequestFileInfra',
+                'workflow.steps.util.ssl.CreateCertificateInfra',
+                'workflow.steps.util.ssl.SetSSLFilesAccessMySQL',
+            )}, {
             'Starting database': (
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.StartRsyslog',
@@ -422,6 +430,18 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.plan.ConfigureRestore',
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
             )}, {
+            'Configure SSL': (
+                'workflow.steps.util.disk.CleanSSLDir',
+                'workflow.steps.util.ssl.CreateSSLConfForInfraEndPoint',
+                'workflow.steps.util.ssl.CreateSSLConfForInstanceIP',
+                'workflow.steps.util.ssl.RequestSSLForInfra',
+                'workflow.steps.util.ssl.RequestSSLForInstance',
+                'workflow.steps.util.ssl.CreateJsonRequestFileInfra',
+                'workflow.steps.util.ssl.CreateJsonRequestFileInstance',
+                'workflow.steps.util.ssl.CreateCertificateInfra',
+                'workflow.steps.util.ssl.CreateCertificateInstance',
+                'workflow.steps.util.ssl.SetSSLFilesAccessMySQL',
+            )}, {
             'Starting database': (
                 'workflow.steps.util.database.Stop',
                 'workflow.steps.util.database.StopRsyslog',
@@ -631,6 +651,10 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.db_monitor.DisableMonitoring',
             ),
         }] + [{
+            'Disable SSL': (
+                'workflow.steps.util.ssl.UnSetReplicationUserRequireSSL',
+            ),
+        }] + [{
             'Configure SSL': (
                 'workflow.steps.util.ssl.UpdateSSLForInfra',
                 'workflow.steps.util.ssl.UpdateSSLForInstance',
@@ -647,6 +671,10 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.database.Stop',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
+            ),
+        }] + [{
+            'Enable SSL': (
+                'workflow.steps.util.ssl.SetReplicationUserRequireSSL',
             ),
         }] + [{
             'Enabling monitoring and alarms': (
