@@ -53,6 +53,7 @@ class HostSerializer(serializers.ModelSerializer):
             'engine': str(database.engine),
             'name': database.name,
             'id': database.id,
+            'is_locked': bool(database.current_locked_task),
             'infra': {
                 'id': database.infra.id,
                 'name': database.infra.name
