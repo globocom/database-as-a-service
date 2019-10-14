@@ -25,7 +25,6 @@ from notification.tasks import TaskRegister
 from system import models
 from workflow.steps.util.base import ACLFromHellClient
 from maintenance.models import DatabaseCreate
-from django.http import Http404
 
 LOG = logging.getLogger(__name__)
 
@@ -59,8 +58,10 @@ class GetServiceStatus(APIView):
             database_status = database.status
         except IndexError as e:
             database_status = 0
-            LOG.warn("There is not a database with this {} name on {}. {}".format(
-                database_name, env, e)
+            LOG.warn(
+                "There is not a database with this {} name on {}. {}".format(
+                    database_name, env, e
+                )
             )
 
         LOG.info("Status = {}".format(database_status))
@@ -147,7 +148,10 @@ class ServiceAppBind(APIView):
             return response
 
         database = response
-        self.add_acl_for_hosts(database, self._handle_app_name(data['app-name']))
+        self.add_acl_for_hosts(
+            database,
+            self._handle_app_name(data['app-name'])
+        )
 
         hosts, ports = database.infra.get_driver().get_dns_port()
         ports = str(ports)
@@ -168,7 +172,7 @@ class ServiceAppBind(APIView):
                 env_vars = {
                     "DBAAS_SENTINEL_PASSWORD": redis_password,
                     "DBAAS_SENTINEL_ENDPOINT": endpoint,
-                    "DBAAS_SENTINEL_ENDPOINT_SIMPLE": database.get_endpoint_dns_simple(),
+                    "DBAAS_SENTINEL_ENDPOINT_SIMPLE": database.get_endpoint_dns_simple(),  # noqa
                     "DBAAS_SENTINEL_SERVICE_NAME": database.databaseinfra.name,
                     "DBAAS_SENTINEL_HOSTS": hosts,
                     "DBAAS_SENTINEL_PORT": ports
@@ -178,7 +182,8 @@ class ServiceAppBind(APIView):
             try:
                 credential = database.credentials.all()[0]
             except IndexError as e:
-                msg = "Database {} in env {} does not have credentials.".format(
+                msg = ("Database {} in env {} does not have "
+                       "credentials.").format(
                     database_name, env
                 )
 
@@ -222,7 +227,10 @@ class ServiceAppBind(APIView):
         database = response
 
         acl_from_hell_client = ACLFromHellClient(database.environment)
-        acl_from_hell_client.remove_acl(database, self._handle_app_name(data['app-name']))
+        acl_from_hell_client.remove_acl(
+            database,
+            self._handle_app_name(data['app-name'])
+        )
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -256,14 +264,14 @@ class ServiceAdd(APIView):
         except Exception as e:
             msg = "A description must be provided."
             return log_and_response(
-                msg=msg, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                msg=msg, http_status=status.HTTP_400_BAD_REQUEST
             )
 
         name_regexp = re.compile('^[a-z][a-z0-9_]+$')
         if name_regexp.match(name) is None:
             msg = "Your database name must match /^[a-z][a-z0-9_]+$/ ."
             return log_and_response(
-                msg=msg, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                msg=msg, http_status=status.HTTP_400_BAD_REQUEST
             )
 
         try:
@@ -272,16 +280,16 @@ class ServiceAdd(APIView):
                 name, env
             )
             return log_and_response(
-                msg=msg, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                msg=msg, http_status=status.HTTP_400_BAD_REQUEST
             )
 
         except ObjectDoesNotExist:
             pass
 
         if database_name_evironment_constraint(name, env):
-            msg = "{} already exists in production!".format(name)
+            msg = "{} already exists in env {}!".format(name, env)
             return log_and_response(
-                msg=msg, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                msg=msg, http_status=status.HTTP_400_BAD_REQUEST
             )
 
         try:
@@ -289,7 +297,7 @@ class ServiceAdd(APIView):
         except ObjectDoesNotExist as e:
             msg = "User does not exist."
             return log_and_response(
-                msg=msg, e=e, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                msg=msg, e=e, http_status=status.HTTP_400_BAD_REQUEST
             )
         except MultipleObjectsReturned as e:
             msg = "There are multiple user for {} email.".format(user)
@@ -302,7 +310,7 @@ class ServiceAdd(APIView):
         except ObjectDoesNotExist as e:
             msg = "Team does not exist."
             return log_and_response(
-                msg=msg, e=e, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                msg=msg, e=e, http_status=status.HTTP_400_BAD_REQUEST
             )
 
         try:
@@ -310,7 +318,7 @@ class ServiceAdd(APIView):
         except ObjectDoesNotExist as e:
             msg = "The user is not on {} team.".format(dbaas_team.name)
             return log_and_response(
-                msg=msg, e=e, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                msg=msg, e=e, http_status=status.HTTP_400_BAD_REQUEST
             )
 
         try:
@@ -318,7 +326,7 @@ class ServiceAdd(APIView):
         except(ObjectDoesNotExist) as e:
             msg = "Environment does not exist."
             return log_and_response(
-                msg=msg, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                msg=msg, http_status=status.HTTP_400_BAD_REQUEST
             )
 
         databases_used_by_team = dbaas_team.count_databases_in_use(
@@ -327,17 +335,18 @@ class ServiceAdd(APIView):
         database_alocation_limit = dbaas_team.database_alocation_limit
 
         if databases_used_by_team >= database_alocation_limit:
-            msg = "The database alocation limit of {} has been exceeded for the selected team: {}".format(
+            msg = ("The database alocation limit of {} has been exceeded for "
+                   "the selected team: {}").format(
                 database_alocation_limit, dbaas_team
             )
             return log_and_response(
-                msg=msg, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                msg=msg, http_status=status.HTTP_400_BAD_REQUEST
             )
 
         if 'plan' not in data:
             msg = "Plan was not found"
             return log_and_response(
-                msg=msg, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                msg=msg, http_status=status.HTTP_400_BAD_REQUEST
             )
 
         plan = data['plan']
@@ -346,7 +355,6 @@ class ServiceAdd(APIView):
         ).extra(
             where=['is_active=True', 'provider={}'.format(Plan.CLOUDSTACK)]
         )
-
         plans = get_plans_dict(hard_plans)
         plan = [splan for splan in plans if splan['name'] == plan]
         LOG.info("Plan: {}".format(plan))
@@ -356,7 +364,7 @@ class ServiceAdd(APIView):
         else:
             msg = "Plan was not found"
             return log_and_response(
-                msg=msg, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                msg=msg, http_status=status.HTTP_400_BAD_REQUEST
             )
 
         if dbaas_environment not in dbaas_plan.environments.all():
@@ -384,7 +392,7 @@ class ServiceRemove(APIView):
         data = request.DATA
         user = data['user']
         team = data['team']
-        plan = data['plan']
+        data['plan']
         env = get_url_env(request)
 
         UserMiddleware.set_current_user(request.user)
@@ -395,7 +403,8 @@ class ServiceRemove(APIView):
             msg = "Database id provided does not exist {} in {}.".format(
                 database_name, env)
             return log_and_response(
-                msg=msg, e=e, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                msg=msg, e=e, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
         try:
             dbaas_user = AccountUser.objects.get(email=user)
@@ -426,14 +435,6 @@ class ServiceRemove(APIView):
                 msg=msg, e=e, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-        # LOG.info('Tsuru Service Remove plan {} | {}'.format(database.plan.tsuru_label, plan))
-        #
-        # if database.plan.tsuru_label != plan:
-        #     msg = "Change plan is not allowed"
-        #     return log_and_response(
-        #         msg=msg, e=msg, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        #     )
-
         database.team = dbaas_team
         database.save()
 
@@ -448,7 +449,8 @@ class ServiceRemove(APIView):
             msg = "Database id provided does not exist {} in {}.".format(
                 database_name, env)
             return log_and_response(
-                msg=msg, e=e, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                msg=msg, e=e, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
         database.delete()
         return Response(status.HTTP_204_NO_CONTENT)
@@ -475,6 +477,7 @@ def log_and_response(msg, http_status, e="Conditional Error."):
     LOG.warn("Error: {}".format(e))
     return Response(msg, http_status)
 
+
 def last_database_create(database_name, env):
     """This function returns the most recent DatabaseCreate's task.
 
@@ -485,13 +488,18 @@ def last_database_create(database_name, env):
     Returns:
     DatabaseCreate: DatabaseCreate object
     """
-    return DatabaseCreate.objects.filter(name=database_name, environment__name=env).last()
+    return DatabaseCreate.objects.filter(
+        name=database_name,
+        environment__name=env
+    ).last()
+
 
 def check_database_status(database_name, env):
-    """This function looks for a DatabaseCreate task and returns a http response
-    or the Database itself depeding on the context. If the DatabaseCreate task is
-    still running of failed, a http response is returned, otherwise this functions tries
-    to retrieve the Database with the get_database function.
+    """This function looks for a DatabaseCreate task and returns a http
+    response or the Database itself depeding on the context. If the
+    DatabaseCreate task is still running of failed, a http response is
+    returned, otherwise this functions tries to retrieve the Database with
+    the get_database function.
 
     Parameters:
     database_name (str): Name of the database
@@ -502,7 +510,9 @@ def check_database_status(database_name, env):
     """
     database_create = last_database_create(database_name, env)
 
-    LOG.info("Task {}".format(getattr(database_create, 'task', 'No tasks found')))
+    LOG.info(
+        "Task {}".format(getattr(database_create, 'task', 'No tasks found'))
+    )
 
     if database_create:
         if database_create.is_running:
@@ -512,7 +522,8 @@ def check_database_status(database_name, env):
                 msg=msg, http_status=status.HTTP_412_PRECONDITION_FAILED)
 
         elif database_create.is_status_error:
-            msg = "A error ocurred creating database {} in env {}. Check error on task history in https://dbaas.globoi.com".format(
+            msg = ("A error ocurred creating database {} in env {}. Check "
+                   "error on task history in https://dbaas.globoi.com").format(
                 database_name, env)
             return log_and_response(
                 msg=msg, http_status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -566,7 +577,10 @@ def get_network_from_ip(ip, database_environment):
     network = network_client.get_network_ipv4(net_ip['networkipv4'])
     network = network['network']
 
-    return network['oct1'] + '.' + network['oct2'] + '.' + network['oct3'] + '.' + network['oct4'] + '/' + network['block']
+    return '{}.{}.{}.{}/{}'.format(
+        network['oct1'], network['oct2'], network['oct3'],
+        network['oct4'], network['block']
+    )
 
 
 def get_database(name, env):
@@ -583,7 +597,8 @@ def get_database(name, env):
     return database
 
 
-def check_acl_service_and_get_unit_network(database, data, ignore_ip_error=False):
+def check_acl_service_and_get_unit_network(database, data,
+                                           ignore_ip_error=False):
     try:
         acl_credential = get_credentials_for(
             environment=database.environment,
@@ -599,7 +614,8 @@ def check_acl_service_and_get_unit_network(database, data, ignore_ip_error=False
 
     health_check_info = acl_credential.get_parameters_by_group('hc')
     try:
-        health_check_url = acl_credential.endpoint + health_check_info['health_check_url']
+        health_check_url = (acl_credential.endpoint
+                            + health_check_info['health_check_url'])
         simple_hc = simple_health_check.SimpleHealthCheck(
             health_check_url=health_check_url,
             service_key=health_check_info['key_name'],
@@ -618,7 +634,8 @@ def check_acl_service_and_get_unit_network(database, data, ignore_ip_error=False
         simple_hc.check_service()
     except simple_health_check.HealthCheckError as e:
         LOG.warn(e)
-        msg = "We are experiencing errors with the acl api, please try again later."
+        msg = ("We are experiencing errors with the acl api, please try again "
+               "later.")
         return log_and_response(
             msg=msg, e=e,
             http_status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -632,7 +649,8 @@ def check_acl_service_and_get_unit_network(database, data, ignore_ip_error=False
         )
     except Exception as e:
         LOG.warn(e)
-        msg = "We are experiencing errors with the network api, please try get network again later"
+        msg = ("We are experiencing errors with the network api, please try "
+               "get network again later")
         if not ignore_ip_error:
             return log_and_response(
                 msg=msg, e=e,
