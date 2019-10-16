@@ -4,11 +4,13 @@ from rest_framework import viewsets, serializers, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import filters
+from rest_framework.views import APIView
 from util import get_credentials_for
 from dbaas_credentials.models import CredentialType, Credential
 from notification.tasks import TaskRegister
 
 from physical.models import Host
+
 
 
 class HostSerializer(serializers.ModelSerializer):
@@ -194,4 +196,37 @@ class HostAPI(viewsets.ReadOnlyModelViewSet):
         return Response(
             {'hostname': host.hostname, 'id': host.id},
             status=204
+        )
+
+
+class CheckIsSlaveAPIView(APIView):
+    """
+    View to check whether a host is slave or not
+
+    * Requires being authenticated or with read-only permission.
+    """
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+
+    def check_is_slave(self, host):
+        db_instance = host.database_instance()
+        return db_instance.is_slave
+
+    def get(self, request, hostname, format=None):
+        host = Host.objects.filter(hostname=hostname).first()
+        if not host:
+            return Response(
+                {'error_msg': "The hostname was not found!"},
+                status=404
+            )
+
+        if not host.is_database:
+            return Response(
+                {'error_msg': "The host must be Database instance"},
+                status=422
+            )
+
+        is_slave = self.check_is_slave(host)
+        return Response(
+            {'result': is_slave},
+            status=200
         )
