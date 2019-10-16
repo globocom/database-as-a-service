@@ -14,7 +14,7 @@ from .extra_dns import ExtraDnsAPI
 from .task import TaskAPI
 from .team import TeamAPI
 from .user import UserAPI
-from .host import HostAPI
+from .host import HostAPI, CheckIsSlaveAPIView
 from .snapshot import SnapshotAPI
 from .database_history import DatabaseHistoryAPI
 from .database_restore import DatabaseRestoreAPI
@@ -57,3 +57,12 @@ router.register(r'team', TeamAPI)
 router.register(r'user', UserAPI)
 router.register(r'snapshot', SnapshotAPI)
 urlpatterns += router.urls
+
+# is_slave url
+urlpatterns += [
+    url(
+        r'^host/(?P<hostname>[-\w.]+)/is_slave/$',
+        CheckIsSlaveAPIView.as_view(),
+        name='is_slave'
+    )
+]
