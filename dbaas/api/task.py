@@ -117,6 +117,7 @@ class TaskAPI(viewsets.ReadOnlyModelViewSet):
     filter_fields = (
         'task_id',
         'task_status',
+        'task_name',
         'object_class',
         'object_id',
         'updated_at',
