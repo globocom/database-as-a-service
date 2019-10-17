@@ -109,6 +109,7 @@ class TaskAPI(viewsets.ReadOnlyModelViewSet):
         'migrate_filer_disk_for_database',
         'maintenance.tasks.node_zone_migrate',
         'maintenance.tasks.database_environment_migrate',
+        'maintenance.tasks.recreate_slave',
     ]
     model = TaskHistory
     serializer_class = TaskSerializer
@@ -117,6 +118,7 @@ class TaskAPI(viewsets.ReadOnlyModelViewSet):
     filter_fields = (
         'task_id',
         'task_status',
+        'task_name',
         'object_class',
         'object_id',
         'updated_at',
