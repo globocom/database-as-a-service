@@ -84,7 +84,7 @@ some minimum operational data on DB.
 
     make pip && make test
 
-## Running all test with docker( To run this the and docker-compose must be avaliable)
+## Running all test with docker( To run this the docker-compose must be avaliable)
 
     make docker_build && make test_with_docker
 
