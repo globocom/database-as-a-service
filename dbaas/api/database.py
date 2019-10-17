@@ -37,15 +37,17 @@ class DatabaseSerializer(serializers.HyperlinkedModelSerializer):
     # used_size_in_bytes = serializers.Field(source='used_size_in_bytes')
     used_size_in_bytes = serializers.SerializerMethodField('get_used_size_in_bytes')
     engine = serializers.CharField(source='infra.engine', read_only=True)
+    is_locked = serializers.SerializerMethodField('get_is_locked')
 
     class Meta:
         model = models.Database
         fields = (
-            'url', 'id', 'name', 'infra_endpoint', 'endpoint', 'plan', 'environment',
-            'project', 'team', 'quarantine_dt', 'total_size_in_bytes',
-            'credentials', 'description', 'status',
+            'url', 'id', 'name', 'infra_endpoint', 'endpoint', 'plan',
+            'environment', 'project', 'team', 'quarantine_dt',
+            'total_size_in_bytes', 'credentials', 'description', 'status',
             'used_size_in_bytes', 'subscribe_to_email_events',
-            'created_at', 'engine', 'replication_topology_id'
+            'created_at', 'engine', 'replication_topology_id',
+            'is_locked'
         )
         read_only = ('credentials', 'status', 'used_size_in_bytes')
 
@@ -77,6 +79,9 @@ class DatabaseSerializer(serializers.HyperlinkedModelSerializer):
 
     def get_used_size_in_bytes(self, database):
         return self._get_or_none_if_error(database, 'used_size_in_bytes')
+
+    def get_is_locked(self, database):
+        return bool(database.current_locked_task)
 
 
 class DatabaseAPI(viewsets.ModelViewSet):
