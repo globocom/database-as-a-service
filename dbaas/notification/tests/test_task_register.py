@@ -245,6 +245,7 @@ class DatabaseCreateCallTestCase(TestCase, TaskCallBaseTestCase):
         'subscribe_to_email_events': 'subscribe_to_email_events',
         'backup_hour': 'backup_hour',
         'maintenance_window': 'maintenance_window',
+        'maintenance_day': 'maintenance_day',
     }
     create_fields_to_validate = ['task_name', 'arguments']
     delay_fields_to_validate = [
@@ -269,6 +270,7 @@ class DatabaseCreateCallWithUserTestCase(TestCase, TaskCallBaseTestCase):
         'register_user': True,
         'backup_hour': 'backup_hour',
         'maintenance_window': 'maintenance_window',
+        'maintenance_day': 'maintenance_day',
     }
     create_fields_to_validate = ['task_name', 'arguments', 'user']
     delay_fields_to_validate = [
