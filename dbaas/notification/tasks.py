@@ -52,14 +52,15 @@ def rollback_database(dest_database):
 
 def create_database_with_retry(
     name, plan, environment, team, project, description,
-    task, backup_hour, maintenance_window, subscribe_to_email_events,
-    is_protected, user, retry_from
+    task, backup_hour, maintenance_window, maintenance_day,
+    subscribe_to_email_events, is_protected, user, retry_from
 ):
     from maintenance.tasks import create_database
     return create_database.delay(
         name=name, plan=plan, environment=environment, team=team,
         project=project, description=description, task=task,
         backup_hour=backup_hour, maintenance_window=maintenance_window,
+        maintenance_day=maintenance_day,
         subscribe_to_email_events=subscribe_to_email_events,
         is_protected=is_protected, user=user, retry_from=retry_from
     )
@@ -150,6 +151,7 @@ def clone_database(self, origin_database, clone_name, plan, environment, task_hi
             plan=plan, environment=environment, name=clone_name,
             team=origin_database.team, backup_hour=backup_hour,
             maintenance_window=maintenance_window,
+            maintenance_day=maintenance_day,
             project=origin_database.project,
             description=origin_database.description, task=task_history,
             clone=origin_database,
@@ -1318,7 +1320,7 @@ class TaskRegister(object):
     @classmethod
     def database_create(cls, user, name, plan, environment, team,
                         project, description, backup_hour=2,
-                        maintenance_window=0,
+                        maintenance_window=0, maintenance_day=0,
                         subscribe_to_email_events=True, register_user=True,
                         is_protected=False, retry_from=None):
         task_params = {
@@ -1334,6 +1336,7 @@ class TaskRegister(object):
             name=name, plan=plan, environment=environment, team=team,
             project=project, description=description, task=task,
             backup_hour=backup_hour, maintenance_window=maintenance_window,
+            maintenance_day=maintenance_day,
             subscribe_to_email_events=subscribe_to_email_events,
             is_protected=is_protected, user=user, retry_from=retry_from
         )

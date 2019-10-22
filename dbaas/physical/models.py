@@ -723,6 +723,12 @@ class DatabaseInfra(BaseModel):
         null=False,
         help_text=_("Window of maintenance")
     )
+    maintenance_day = models.IntegerField(
+        default=0,
+        blank=False,
+        null=False,
+        help_text=_("Maintenance day")
+    )
 
     def __unicode__(self):
         return self.name
@@ -740,6 +746,18 @@ class DatabaseInfra(BaseModel):
     def configure_backup_hour(self):
         return Configuration.get_by_name_as_int(
             'backup_hour'
+        )
+
+    @property
+    def configure_maintenance_window(self):
+        return Configuration.get_by_name_as_int(
+            'maintenance_window'
+        )
+
+    @property
+    def configure_maintenance_day(self):
+        return Configuration.get_by_name_as_int(
+            'maintenance_day'
         )
 
     @property

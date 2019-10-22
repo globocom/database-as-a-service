@@ -8,7 +8,7 @@ from models import DatabaseCreate
 
 
 def get_or_create_infra(base_name, plan, environment, backup_hour,
-                        maintenance_window, retry_from=None):
+                        maintenance_window, maintenance_day, retry_from=None):
     if retry_from:
         infra = retry_from.infra
         base_name['infra'] = infra.name
@@ -28,6 +28,7 @@ def get_or_create_infra(base_name, plan, environment, backup_hour,
         infra.per_database_size_mbytes = plan.max_db_size
         infra.backup_hour = backup_hour or infra.configure_backup_hour
         infra.maintenance_window = maintenance_window or infra.configure_maintenance_window
+        infra.maintenance_day = maintenance_day or infra.configure_maintenance_day
         infra.engine_patch = plan.engine.default_engine_patch
         infra.save()
 
@@ -72,15 +73,17 @@ def get_instances_for(infra, topology_path):
 
 def create_database(
     name, plan, environment, team, project, description, task,
-    backup_hour, maintenance_window, subscribe_to_email_events=True,
-    is_protected=False, user=None, retry_from=None
+    backup_hour, maintenance_window, maintenance_day,
+    subscribe_to_email_events=True, is_protected=False,
+    user=None, retry_from=None
 ):
     topology_path = plan.replication_topology.class_path
 
     name = slugify(name)
     base_name = gen_infra_names(name, 0)
     infra = get_or_create_infra(base_name, plan, environment, backup_hour,
-                                maintenance_window, retry_from)
+                                maintenance_window, maintenance_day,
+                                retry_from)
     instances = get_instances_for(infra, topology_path)
 
     database_create = DatabaseCreate()

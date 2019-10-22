@@ -86,6 +86,7 @@ class DatabaseCreateAdmin(DatabaseMaintenanceTaskAdmin):
             description=retry_from.description,
             backup_hour=retry_from.infra.backup_hour,
             maintenance_window=retry_from.infra.maintenance_window,
+            maintenance_day=retry_from.infra.maintenance_day,
             subscribe_to_email_events=retry_from.subscribe_to_email_events,
             is_protected=retry_from.is_protected,
             user=request.user,
