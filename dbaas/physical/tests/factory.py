@@ -32,10 +32,12 @@ class EngineFactory(factory.DjangoModelFactory):
     minor_version = 2
     engine_type = factory.SubFactory(EngineTypeFactory)
 
+
 class EnginePatchFactory(factory.DjangoModelFactory):
     FACTORY_FOR = models.EnginePatch
     engine = factory.SubFactory(EngineFactory)
     patch_version = '1'
+
 
 class HostFactory(factory.DjangoModelFactory):
     FACTORY_FOR = models.Host
@@ -127,6 +129,7 @@ class DatabaseInfraFactory(factory.DjangoModelFactory):
     last_vm_created = 0
     backup_hour = 0
     maintenance_window = 0
+    maintenance_day = 0
     engine_patch = factory.SubFactory(EnginePatchFactory)
 
     @factory.lazy_attribute

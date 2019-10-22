@@ -52,6 +52,7 @@ class AdminCreateDatabaseTestCase(TestCase):
             "description": self.description,
             "backup_hour": self.databaseinfra.backup_hour,
             "maintenance_window": self.databaseinfra.maintenance_window,
+            "maintenance_day": self.databaseinfra.maintenance_day,
         }
         response = self.client.post("/admin/logical/database/add/", params)
         self.assertContains(
@@ -68,6 +69,7 @@ class AdminCreateDatabaseTestCase(TestCase):
             "team": self.team.pk,
             "backup_hour": self.databaseinfra.backup_hour,
             "maintenance_window": self.databaseinfra.maintenance_window,
+            "maintenance_day": self.databaseinfra.maintenance_day,
         }
         response = self.client.post("/admin/logical/database/add/", params)
         self.assertContains(
@@ -87,6 +89,7 @@ class AdminCreateDatabaseTestCase(TestCase):
             "description": self.description,
             "backup_hour": self.databaseinfra.backup_hour,
             "maintenance_window": self.databaseinfra.maintenance_window,
+            "maintenance_day": self.databaseinfra.maintenance_day,
         }
         response = self.client.post("/admin/logical/database/add/", params)
         self.assertContains(
@@ -114,6 +117,7 @@ class AdminCreateDatabaseTestCase(TestCase):
             "description": self.description,
             "backup_hour": self.databaseinfra.backup_hour,
             "maintenance_window": self.databaseinfra.maintenance_window,
+            "maintenance_day": self.databaseinfra.maintenance_day,
         }
         response = self.client.post("/admin/logical/database/add/", params)
         self.assertEqual(response.status_code, 302, response.content)
