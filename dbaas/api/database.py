@@ -126,6 +126,7 @@ class DatabaseAPI(viewsets.ModelViewSet):
                 project=data['project'], description=data['description'],
                 backup_hour=data.get('backup_hour'),
                 maintenance_window=data.get('maintenance_window'),
+                maintenance_day=data.get('maintenance_day'),
                 subscribe_to_email_events=data['subscribe_to_email_events'],
                 user=request.user,
                 register_user=False

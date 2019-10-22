@@ -93,7 +93,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         "name", "databaseinfra__name", "team__name", "project__name",
         "environment__name", "databaseinfra__engine__engine_type__name",
         "team__organization__name", "databaseinfra__backup_hour",
-        "databaseinfra__maintenance_window",
+        "databaseinfra__maintenance_window", "databaseinfra__maintenance_day",
     )
     list_display_basic = [
         "name_html", "organization_admin_page", "team_admin_page",
@@ -119,8 +119,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             'fields': (
                 'name', 'description', 'project', 'environment', 'engine',
                 'team', 'team_contact', 'subscribe_to_email_events',
-                'backup_hour', 'maintenance_window', 'plan',
-                'is_in_quarantine',
+                'backup_hour', 'maintenance_window', 'maintenance_day',
+                'plan', 'is_in_quarantine',
             )
         }
         ),
@@ -379,7 +379,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 if not form.is_valid():
                     return super(DatabaseAdmin, self).add_view(request, form_url, extra_context=extra_context)
 
-                database_creation_message = "call create_database - name={}, plan={}, environment={}, team={}, project={}, description={}, backup_hour={}, maintenance_window={}, user={}, subscribe_to_email_events {}".format(
+                database_creation_message = "call create_database - name={}, plan={}, environment={}, team={}, project={}, description={}, backup_hour={}, maintenance_window={}, maintenance_day={}, user={}, subscribe_to_email_events {}".format(
                     form.cleaned_data['name'],
                     form.cleaned_data['plan'],
                     form.cleaned_data['environment'],
@@ -388,6 +388,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                     form.cleaned_data['description'],
                     form.cleaned_data['backup_hour'],
                     form.cleaned_data['maintenance_window'],
+                    form.cleaned_data['maintenance_day'],
                     request.user,
                     form.cleaned_data['subscribe_to_email_events'],
                 )
@@ -402,6 +403,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                     description=form.cleaned_data['description'],
                     backup_hour=form.cleaned_data['backup_hour'],
                     maintenance_window=form.cleaned_data['maintenance_window'],
+                    maintenance_day=form.cleaned_data['maintenance_day'],
                     subscribe_to_email_events=form.cleaned_data['subscribe_to_email_events'],
                     user=request.user
                 )

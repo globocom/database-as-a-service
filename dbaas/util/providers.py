@@ -12,14 +12,15 @@ LOG = logging.getLogger(__name__)
 
 def clone_infra(
         plan, environment, name, team, backup_hour, maintenance_window,
-        project, description, subscribe_to_email_events, task=None,
-        clone=None
+        maintenance_day, project, description, subscribe_to_email_events,
+        task=None, clone=None
 ):
     if not plan.provider == plan.CLOUDSTACK:
         infra = DatabaseInfra.best_for(
             plan=plan, environment=environment,
             name=name, backup_hour=backup_hour,
             maintenance_window=maintenance_window,
+            maintenance_day=maintenance_day,
             )
 
         if infra:
@@ -51,6 +52,7 @@ def clone_infra(
         team=team,
         backup_hour=backup_hour,
         maintenance_window=maintenance_window,
+        maintenance_day=maintenance_day,
         project=project,
         description=description,
         clone=clone,
@@ -85,6 +87,7 @@ def destroy_infra(databaseinfra, task=None):
         environment=databaseinfra.environment,
         backup_hour=databaseinfra.backup_hour,
         maintenance_window=databaseinfra.maintenance_window,
+        maintenance_day=databaseinfra.maintenance_day,
         steps=get_destroy_settings(
             databaseinfra.plan.replication_topology.class_path
         ),

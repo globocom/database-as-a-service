@@ -3,6 +3,7 @@ from __future__ import absolute_import, unicode_literals
 import datetime
 import json
 from collections import OrderedDict
+from operator import itemgetter
 import logging
 from django.contrib import messages
 from django.core.exceptions import ValidationError, PermissionDenied
@@ -889,12 +890,26 @@ def database_maintenance(request, context, database):
             _upgrade_patch(request, database, request.POST.get('target_patch'))
         elif ('upgrade_patch_retry' in request.POST):
             _upgrade_patch_retry(request, database)
-        elif ('backup_hour' or 'maintenance_window' in request.POST):
-            database.infra.backup_hour = request.POST['backup_hour']
-            database.infra.maintenance_window = request.POST['maintenance_window']
-            database.infra.save()
+        elif ('backup_hour' or 'maintenance_window' or 'maintenance_day' in request.POST):
+            if request.POST.get('backup_hour') == request.POST.get('maintenance_window'):
+                messages.add_message(request, messages.ERROR, 'Backup hour must not be equal to maintenance window.')
+            else:
+                database.infra.backup_hour = request.POST['backup_hour']
+                database.infra.maintenance_window = request.POST['maintenance_window']
+                database.infra.maintenance_day = request.POST['maintenance_day']
+                database.infra.save()
         else:
             database.save()
+
+    WEEKDAYS = [
+        (0, 'Sunday'),
+        (1, 'Monday'),
+        (2, 'Tuesday'),
+        (3, 'Wednesday'),
+        (4, 'Thursday'),
+        (5, 'Friday'),
+        (6, 'Saturday')
+    ]
 
     context['upgrade_mongo_24_to_30'] = \
         database.is_mongodb_24() and \
@@ -922,6 +937,8 @@ def database_maintenance(request, context, database):
     context['backup_hours'] = \
         [(hour, datetime.time(hour, 0).strftime(format="%H:%M")) for hour in range(24)]
     context['current_backup_hour'] = int(database.infra.backup_hour)
+    context['maintenance_days'] = WEEKDAYS
+    context['current_maintenance_day'] = int(database.infra.maintenance_day)
 
     return render_to_response(
         "logical/database/details/maintenance_tab.html",
