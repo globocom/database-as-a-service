@@ -228,6 +228,6 @@ class CheckIsSlaveAPIView(APIView):
 
         is_slave = self.check_is_slave(host)
         return Response(
-            {'result': is_slave},
+            {'is_slave': is_slave, 'hostname': host.hostname},
             status=200
         )
