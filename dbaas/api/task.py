@@ -2,8 +2,10 @@
 from __future__ import absolute_import, unicode_literals
 from rest_framework import viewsets, serializers, permissions
 from rest_framework import filters
+import django_filters
 from notification.models import TaskHistory
 from logical.models import Database, DatabaseHistory
+from django.db import models as django_models
 
 
 class TaskSerializer(serializers.ModelSerializer):
@@ -85,6 +87,20 @@ class TaskSerializer(serializers.ModelSerializer):
         return None
 
 
+class EventFilter(filters.FilterSet):
+    class Meta:
+        model = TaskHistory
+        fields = {
+            'updated_at': ('lte', 'gte')
+        }
+
+    filter_overrides = {
+        django_models.DateTimeField: {
+            'filter_class': django_filters.DateTimeFilter
+        },
+    }
+
+
 class TaskAPI(viewsets.ReadOnlyModelViewSet):
 
     """
@@ -115,6 +131,7 @@ class TaskAPI(viewsets.ReadOnlyModelViewSet):
     serializer_class = TaskSerializer
     permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
     filter_backends = (filters.OrderingFilter,)
+    filter_class = EventFilter
     filter_fields = (
         'task_id',
         'task_status',
