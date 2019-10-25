@@ -137,7 +137,14 @@ class UpdateOpenSSlLib(SSL):
 
     def do(self):
         if not self.is_valid: return
-        script = "yum update -y openssl"
+        script = """yum update -y openssl
+        local err=$?
+        if [ "$err" != "0" ];
+        then
+            yum clean all
+            yum update -y openssl
+        fi
+        """
         self.exec_script(script)
 
 
