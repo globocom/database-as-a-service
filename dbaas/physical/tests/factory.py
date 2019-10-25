@@ -128,7 +128,7 @@ class DatabaseInfraFactory(factory.DjangoModelFactory):
     disk_offering = factory.SubFactory(DiskOfferingFactory)
     last_vm_created = 0
     backup_hour = 0
-    maintenance_window = 0
+    maintenance_window = 1
     maintenance_day = 0
     engine_patch = factory.SubFactory(EnginePatchFactory)
 
