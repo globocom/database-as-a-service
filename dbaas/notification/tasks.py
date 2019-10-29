@@ -1320,7 +1320,7 @@ class TaskRegister(object):
     @classmethod
     def database_create(cls, user, name, plan, environment, team,
                         project, description, backup_hour=2,
-                        maintenance_window=0, maintenance_day=0,
+                        maintenance_window=1, maintenance_day=1,
                         subscribe_to_email_events=True, register_user=True,
                         is_protected=False, retry_from=None):
         task_params = {
