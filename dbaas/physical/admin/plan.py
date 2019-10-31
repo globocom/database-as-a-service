@@ -7,6 +7,7 @@ from ..models import PlanAttribute, Engine
 from dbaas_dnsapi.models import PlanAttr as PlanAttrDNSAPI
 from .. import forms
 from physical import models
+import copy
 
 
 class PlanAttributeInline(admin.TabularInline):
@@ -51,7 +52,42 @@ class PlanAdmin(services_admin.DjangoServicesAdmin):
 
     add_form_template = "admin/physical/plan/add_form.html"
     change_form_template = "admin/physical/plan/change_form.html"
-    actions = [action_activate_plans, action_deactivate_plans]
+    actions = [action_activate_plans, action_deactivate_plans, 'copy_plans']
+
+    def copy_plans(self, request, queryset):
+        for obj in queryset:
+            plan_copy = copy.copy(obj)
+            plan_copy.id = None
+            plan_copy.name = "(Copy) {}".format(plan_copy.name)
+            plan_copy.save()
+
+            # copy M2M relationship: environments
+            for environment in obj.environments.all():
+                plan_copy.environments.add(environment)
+
+            # copy FK relationship: plan_attributes
+            for plan_attribute in obj.plan_attributes.all():
+                plan_attribute_copy = copy.copy(plan_attribute)
+                plan_attribute_copy.id = None
+                plan_attribute_copy.plan = plan_copy
+                plan_attribute_copy.save()
+
+            # copy FK relationship: dnsapi_plan_attributes
+            for dns_plan in obj.dnsapi_plan_attributes.all():
+                dns_plan_copy = copy.copy(dns_plan)
+                dns_plan_copy.id = None
+                dns_plan_copy.dbaas_plan = plan_copy
+                dns_plan_copy.save()
+
+            plan_copy.save()
+
+        rows_copied = queryset.count()
+        if rows_copied == 1:
+            message_bit = "1 plan was"
+        else:
+            message_bit = "{} plans were".format(rows_copied)
+        self.message_user(request, "%s successfully copied." % message_bit)
+    copy_plans.short_description = "Copy selected plans"
 
     def change_view(self, request, object_id, form_url='', extra_context=None):
         extra_context = self.add_extra_context(extra_context)
