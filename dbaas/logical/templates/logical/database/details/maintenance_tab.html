@@ -62,11 +62,50 @@
     </div>
   {% endif %}
   <div class="panel-heading">
+      <h3 class="panel-title">Maintenance</h3>
+  </div>
+  <div class="panel-body">
+    <div class="control-group">
+        <div class="control-label"><label>Window:</label></div>
+        <div class="controls">
+            <select id="id_maintenance_window"name="maintenance_window">
+                {% for maintenance_window in maintenance_windows %}
+                    {% if maintenance_window.0 == current_maintenance_window %}
+                        <option value="{{ maintenance_window.0 }}" selected="selected">*
+                    {% else %}
+                        <option value="{{ maintenance_window.0 }}">
+                    {% endif %}
+                        {{ maintenance_window.1 }}
+                        </option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+  </div>
+  <div class="panel-body">
+    <div class="control-group">
+      <div class="control-label"><label>Day: </label></div>
+      <div class="controls">
+        <select id="id_maintenance_day" name="maintenance_day">
+          {% for maintenance_day in maintenance_days %}
+            {% if maintenance_day.0 == current_maintenance_day %}
+              <option value="{{ maintenance_day.0 }}" selected="selected">*
+            {% else %}
+              <option value="{{ maintenance_day.0 }}">
+            {% endif %}
+              {{ maintenance_day.1 }}
+              </option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+  </div>
+  <div class="panel-heading">
     <h3 class="panel-title">Backup</h3>
   </div>
   <div class="panel-body">
     <div class="control-group">
-      <div class="control-label"><label>Start Hour:</label></div>
+      <div class="control-label"><label>Start:</label></div>
       <div class="controls">
         <select id="id_backup_hour" name="backup_hour">
           {% for backup_hour in backup_hours %}
