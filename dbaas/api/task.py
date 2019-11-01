@@ -2,8 +2,10 @@
 from __future__ import absolute_import, unicode_literals
 from rest_framework import viewsets, serializers, permissions
 from rest_framework import filters
+import django_filters
 from notification.models import TaskHistory
 from logical.models import Database, DatabaseHistory
+from django.db import models as django_models
 
 
 class TaskSerializer(serializers.ModelSerializer):
@@ -25,8 +27,10 @@ class TaskSerializer(serializers.ModelSerializer):
             'created_at',
             'task_name',
             'database',
+
             'rollback',
             'relevance',
+            'ended_at',
         )
 
     def get_relevance(self, task):
@@ -124,11 +128,13 @@ class TaskAPI(viewsets.ReadOnlyModelViewSet):
         'updated_at',
         'created_at',
         'user',
-        'relevance'
+        'relevance',
+        'ended_at',
+        'database_name'
     )
     ordering_fields = ('created_at', 'updated_at', 'id')
     ordering = ('-created_at',)
-    datetime_fields = ('created_at', 'updated_at')
+    datetime_fields = ('created_at', 'updated_at', 'ended_at')
 
     def get_queryset(self):
         params = self.request.GET.dict()
