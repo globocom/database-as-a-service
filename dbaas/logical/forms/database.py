@@ -19,8 +19,23 @@ LOG = logging.getLogger(__name__)
 
 class DatabaseForm(models.ModelForm):
 
-    BACKUP_HOUR_CHOICES = [(hour, datetime.time(hour, 0).strftime(format='%H:%M')) for hour in range(24)]
+    WEEKDAYS = [
+        (0, 'Sunday'),
+        (1, 'Monday'),
+        (2, 'Tuesday'),
+        (3, 'Wednesday'),
+        (4, 'Thursday'),
+        (5, 'Friday'),
+        (6, 'Saturday')
+    ]
 
+    BACKUP_HOUR_CHOICES = [(hour,
+                            datetime.time(hour, 0).strftime(format='%H:%M')) for hour in range(24)]
+    MAINTENANCE_WINDOW_CHOICES = [(hour,
+                                    datetime.time(hour, 0).strftime('%H:%M - ' +
+                                                                    str((
+                                                                    datetime.datetime.combine(datetime.date.today(), datetime.time(hour)) +
+                                                                    datetime.timedelta(hours=1)).strftime('%H:%M')))) for hour in range(24)]
     environment = forms.ModelChoiceField(queryset=Environment.objects)
     engine = forms.ModelChoiceField(queryset=Engine.objects)
     plan = AdvancedModelChoiceField(
@@ -28,20 +43,31 @@ class DatabaseForm(models.ModelForm):
         required=False, widget=forms.RadioSelect,
         empty_label=None
     )
-    backup_hour = forms.ChoiceField(choices=BACKUP_HOUR_CHOICES, help_text="The recommended hour for backup.")
+    backup_hour = forms.ChoiceField(
+                    choices=BACKUP_HOUR_CHOICES,
+                    help_text='This field must not be the same as the'
+                    ' maintenance window.')
+    maintenance_window = forms.ChoiceField(
+        choices=MAINTENANCE_WINDOW_CHOICES,
+        help_text='This field must not be the same as the'
+        ' backup hour.')
+    maintenance_day = forms.ChoiceField(
+        choices=WEEKDAYS)
 
     class Meta:
         model = Database
         fields = [
             'name', 'description', 'project', 'environment', 'engine', 'team',
-            'subscribe_to_email_events', 'backup_hour', 'is_in_quarantine',
-            'plan',
+            'subscribe_to_email_events', 'backup_hour', 'maintenance_window',
+            'maintenance_day', 'is_in_quarantine', 'plan',
+
         ]
 
     def __init__(self, *args, **kwargs):
         super(DatabaseForm, self).__init__(*args, **kwargs)
         self.fields['is_in_quarantine'].widget = forms.HiddenInput()
         self.fields['backup_hour'].initial = random.randint(0, 6)
+        self.fields['maintenance_window'].initial = random.randint(0, 5)
 
     def _validate_description(self, cleaned_data):
         if 'description' in cleaned_data:
@@ -91,6 +117,13 @@ class DatabaseForm(models.ModelForm):
             raise forms.ValidationError(
                 _("%s is a reserved database name" % cleaned_data['name']))
 
+    def _validate_backup_hour(self, cleaned_data):
+        backup_hour = cleaned_data['backup_hour']
+        maintenance_window = cleaned_data['maintenance_window']
+        
+        if backup_hour == maintenance_window:
+            raise forms.ValidationError("Backup hour must not be equal to maintenance window.")
+        
     def clean(self):
         cleaned_data = super(DatabaseForm, self).clean()
 
@@ -107,6 +140,7 @@ class DatabaseForm(models.ModelForm):
         self._validate_project(cleaned_data)
         self._validate_description(cleaned_data)
         self._validate_team(cleaned_data)
+        self._validate_backup_hour(cleaned_data)
 
         if 'environment' in cleaned_data:
             environment = cleaned_data.get('environment', None)

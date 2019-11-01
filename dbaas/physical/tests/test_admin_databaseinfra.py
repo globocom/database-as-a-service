@@ -49,6 +49,8 @@ class AdminCreateDatabaseInfraTestCase(TestCase):
             "environment": self.environment.pk,
             "capacity": 1,
             "backup_hour": 0,
+            "maintenance_window": 0,
+            "maintenance_day": 0,
             "engine_patch": self.engine_patch.pk,
             "per_database_size_mbytes": 10,
             "instances-TOTAL_FORMS": NUM_INSTANCES,
