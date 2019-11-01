@@ -36,8 +36,19 @@ processname="redis-server"
 # Source function library.
 . /etc/rc.d/init.d/functions
 
+disable_transparent_hugepages()
+{
+  if [ -f /sys/kernel/mm/transparent_hugepage/enabled ]; then
+    echo never > /sys/kernel/mm/transparent_hugepage/enabled
+  fi
+  if [ -f /sys/kernel/mm/transparent_hugepage/defrag ]; then
+    echo never > /sys/kernel/mm/transparent_hugepage/defrag
+  fi
+}
+
 case "\$1" in
     start)
+        disable_transparent_hugepages
         if [ -f \$PIDFILE ]
         then
                 PID=\$(cat \$PIDFILE)
@@ -812,7 +823,7 @@ createconfigdbrsyslogfile()
 \$InputRunFileMonitor
 
 \$ModLoad imfile
-\$InputFileName /data/logs/redis-sentinel.log 
+\$InputFileName /data/logs/redis-sentinel.log
 \$InputFileTag redis-sentinel:
 \$InputFileStateFile redis-sentinel-dbaas
 
