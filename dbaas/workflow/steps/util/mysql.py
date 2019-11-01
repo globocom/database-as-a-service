@@ -50,6 +50,9 @@ class SetMasterRestore(MySQLStep):
 
 class SetMasterRecreateSlave(MySQLStep):
 
+    def __unicode__(self):
+        return "Set master position on recreate slave..."
+
     def do(self):
         log_file, log_pos = get_replication_information_from_file(
             self.instance.hostname
