@@ -27,8 +27,10 @@ class TaskSerializer(serializers.ModelSerializer):
             'created_at',
             'task_name',
             'database',
+
             'rollback',
             'relevance',
+            'ended_at',
         )
 
     def get_relevance(self, task):
@@ -87,20 +89,6 @@ class TaskSerializer(serializers.ModelSerializer):
         return None
 
 
-class EventFilter(filters.FilterSet):
-    class Meta:
-        model = TaskHistory
-        fields = {
-            'updated_at': ('lte', 'gte')
-        }
-
-    filter_overrides = {
-        django_models.DateTimeField: {
-            'filter_class': django_filters.DateTimeFilter
-        },
-    }
-
-
 class TaskAPI(viewsets.ReadOnlyModelViewSet):
 
     """
@@ -131,7 +119,6 @@ class TaskAPI(viewsets.ReadOnlyModelViewSet):
     serializer_class = TaskSerializer
     permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
     filter_backends = (filters.OrderingFilter,)
-    filter_class = EventFilter
     filter_fields = (
         'task_id',
         'task_status',
@@ -141,11 +128,13 @@ class TaskAPI(viewsets.ReadOnlyModelViewSet):
         'updated_at',
         'created_at',
         'user',
-        'relevance'
+        'relevance',
+        'ended_at',
+        'database_name'
     )
     ordering_fields = ('created_at', 'updated_at', 'id')
     ordering = ('-created_at',)
-    datetime_fields = ('created_at', 'updated_at')
+    datetime_fields = ('created_at', 'updated_at', 'ended_at')
 
     def get_queryset(self):
         params = self.request.GET.dict()
