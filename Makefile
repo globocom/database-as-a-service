@@ -65,6 +65,9 @@ run_migrate: # run all migrations
 test: # run tests
 	@cd dbaas && python manage.py test --settings=dbaas.settings_test --traceback $(filter-out $@,$(MAKECMDGOALS))
 
+unit_test: # run tests
+	@cd dbaas && REUSE_DB=1 python manage.py test --settings=dbaas.settings_test --traceback $(filter-out $@,$(MAKECMDGOALS))
+
 docker_build:
 	docker build -t dbaas_test .
 
@@ -112,9 +115,8 @@ graph_models: # generate graph models
 dev_mode:
 	@sed -i "" -e "/check_dns(/s/^/#/" dbaas/workflow/steps/util/deploy/check_dns.py
 
-migrate: 
+migrate:
 	@cd dbaas && python manage.py migrate $(filter-out $@,$(MAKECMDGOALS))
 
 %:
 	@:
-	
