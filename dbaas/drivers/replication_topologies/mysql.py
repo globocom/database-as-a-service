@@ -699,8 +699,8 @@ class MySQLFoxHA(MySQLSingle):
                 ('workflow.steps.util.volume_provider'
                  '.WaitSnapshotAvailableMigrate'),
                 'workflow.steps.util.agents.Stop',
-                'workflow.steps.util.database.StopSlave',
-                'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.StopSlaveIfRunning',
+                'workflow.steps.util.database.StopIfRunning',
                 'workflow.steps.util.disk.CleanDataRecreateSlave',
                 'workflow.steps.util.disk.CleanReplRecreateSlave',
                 'workflow.steps.util.volume_provider.AddAccessRecreateSlave',
