@@ -8,6 +8,17 @@ CHANGE_MASTER_ATTEMPS = 30
 CHANGE_MASTER_SECONDS = 15
 
 
+class HostStatus(object):
+    @staticmethod
+    def is_up(host_obj, attempts=2, wait=5, interval=10):
+        return check_ssh(
+            host_obj,
+            retries=attempts,
+            wait=wait,
+            interval=interval
+        )
+
+
 class VmStep(BaseInstanceStep):
 
     def __init__(self, instance):
