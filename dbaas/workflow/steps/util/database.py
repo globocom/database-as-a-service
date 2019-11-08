@@ -17,8 +17,6 @@ CHECK_ATTEMPTS = 30
 
 class DatabaseStep(BaseInstanceStep):
 
-    skip_msg = "SKIPPED! because database is stopped..."
-
     def __init__(self, instance):
         super(DatabaseStep, self).__init__(instance)
         if self.host_migrate:
@@ -288,11 +286,6 @@ class StopSlave(DatabaseStep):
 
 
 class StopSlaveIfRunning(StopSlave):
-    def __unicode__(self):
-        original_unicode = super(StopSlaveIfRunning, self).__unicode__()
-        if not self.is_valid:
-            return '{}{}'.format(original_unicode, self.skip_msg)
-        return original_unicode
 
     @property
     def is_valid(self):
