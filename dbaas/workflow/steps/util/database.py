@@ -4,7 +4,7 @@ from datetime import datetime
 from time import sleep
 from drivers.errors import ReplicationNotRunningError
 from logical.models import Database
-from util import build_context_script, exec_remote_command_host
+from util import build_context_script, exec_remote_command_host, check_ssh
 from workflow.steps.mongodb.util import build_change_oplogsize_script
 from workflow.steps.util.base import BaseInstanceStep
 from workflow.steps.util import test_bash_script_error, monit_script
@@ -68,6 +68,14 @@ class DatabaseStep(BaseInstanceStep):
             else:
                 sleep(CHECK_SECONDS)
         return False
+
+    def vm_is_up(self, attempts=2, wait=5, interval=10):
+        return check_ssh(
+            self.host,
+            retries=attempts,
+            wait=wait,
+            interval=interval
+        )
 
     def is_up(self, attempts=None):
         return self.__is_instance_status(True, attempts=attempts)
@@ -142,16 +150,20 @@ class Stop(DatabaseStep):
 
 
 class StopIfRunning(Stop):
-    def __unicode__(self):
-        original_unicode = super(StopIfRunning, self).__unicode__()
-        if not self.is_valid:
-            return '{}{}'.format(original_unicode, self.skip_msg)
-        return original_unicode
 
     @property
     def is_valid(self):
         is_valid = super(StopIfRunning, self).is_valid
         return is_valid and self.is_up(attempts=3)
+
+
+class StopIfRunningAndVMUp(StopIfRunning):
+
+    @property
+    def is_valid(self):
+        if self.vm_is_up():
+            return super(StopIfRunningAndVMUp, self).is_valid
+        return False
 
 
 class Start(DatabaseStep):
@@ -413,6 +425,23 @@ class CheckIsDown(DatabaseStep):
             raise EnvironmentError(
                 '{} is running on server'.format(process_name)
             )
+
+
+class CheckIsDownIfVMUp(CheckIsDown):
+    def __unicode__(self):
+        original_unicode = super(StopIfRunning, self).__unicode__()
+        if not self.is_valid:
+            return '{}{}'.format(original_unicode, self.skip_msg)
+        return original_unicode
+
+    @property
+    def is_valid(self):
+        return self.vm_is_up()
+
+    def do(self):
+        if not self.is_valid:
+            return
+        super(CheckIsDownIfVMUp, self).do()
 
 
 class DatabaseChangedParameters(DatabaseStep):

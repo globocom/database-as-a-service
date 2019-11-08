@@ -1,14 +1,12 @@
-from unittest import TestCase
 from mock import PropertyMock, MagicMock, patch
 
-from workflow.steps.util.database import StopIfRunning, StopSlaveIfRunning
-from physical.tests.factory import InstanceFactory
+from workflow.steps.util.database import (StopIfRunning, StopSlaveIfRunning,
+                                          StopIfRunningAndVMUp)
+from workflow.steps.tests.base import StepBaseTestCase
 
 
-class StopIfRunningTestCase(TestCase):
-    def setUp(self):
-        self.instance = InstanceFactory.build()
-        self.step = StopIfRunning(self.instance)
+class StopIfRunningTestCase(StepBaseTestCase):
+    step_class = StopIfRunning
 
     @patch('workflow.steps.util.database.StopIfRunning.host',
            new=PropertyMock(return_value=None))
@@ -31,31 +29,40 @@ class StopIfRunningTestCase(TestCase):
     def test_is_valid(self):
         self.assertTrue(self.step.is_valid)
 
-    @patch('workflow.steps.util.database.StopIfRunning.host',
-           new=PropertyMock(return_value=MagicMock()))
-    @patch('workflow.steps.util.database.StopIfRunning.is_up',
-           new=MagicMock(return_value=True))
-    def test_unicode_valid(self):
-        self.assertEqual(
-            str(self.step),
-            'Stopping database...'
-        )
+
+class StopIfRunningAndVMUpTestCase(StepBaseTestCase):
+    step_class = StopIfRunningAndVMUp
 
     @patch('workflow.steps.util.database.StopIfRunning.host',
            new=PropertyMock(return_value=MagicMock()))
     @patch('workflow.steps.util.database.StopIfRunning.is_up',
            new=MagicMock(return_value=False))
-    def test_unicode_not_valid(self):
-        self.assertEqual(
-            str(self.step),
-            'Stopping database...SKIPPED! because database is stopped...'
-        )
+    @patch('workflow.steps.util.database.StopIfRunning.vm_is_up',
+           new=MagicMock(return_value=False))
+    def test_vm_down(self):
+        self.assertFalse(self.step.is_valid)
+
+    @patch('workflow.steps.util.database.StopIfRunning.host',
+           new=PropertyMock(return_value=MagicMock()))
+    @patch('workflow.steps.util.database.StopIfRunning.is_up',
+           new=MagicMock(return_value=False))
+    @patch('workflow.steps.util.database.StopIfRunning.vm_is_up',
+           new=MagicMock(return_value=True))
+    def test_vm_up_but_db_down(self):
+        self.assertFalse(self.step.is_valid)
+
+    @patch('workflow.steps.util.database.StopIfRunning.host',
+           new=PropertyMock(return_value=MagicMock()))
+    @patch('workflow.steps.util.database.StopIfRunning.is_up',
+           new=MagicMock(return_value=True))
+    @patch('workflow.steps.util.database.StopIfRunning.vm_is_up',
+           new=MagicMock(return_value=True))
+    def test_is_valid(self):
+        self.assertTrue(self.step.is_valid)
 
 
-class StopSlaveIfRunningTestCase(TestCase):
-    def setUp(self):
-        self.instance = InstanceFactory.build()
-        self.step = StopSlaveIfRunning(self.instance)
+class StopSlaveIfRunningTestCase(StepBaseTestCase):
+    step_class = StopSlaveIfRunning
 
     @patch('workflow.steps.util.database.StopSlaveIfRunning.is_up',
            new=MagicMock(return_value=False))
@@ -66,19 +73,3 @@ class StopSlaveIfRunningTestCase(TestCase):
            new=MagicMock(return_value=True))
     def test_db_is_up(self):
         self.assertTrue(self.step.is_valid)
-
-    @patch('workflow.steps.util.database.StopSlaveIfRunning.is_up',
-           new=MagicMock(return_value=True))
-    def test_unicode_is_valid(self):
-        self.assertEqual(
-            str(self.step),
-            'Stopping slave...'
-        )
-
-    @patch('workflow.steps.util.database.StopSlaveIfRunning.is_up',
-           new=MagicMock(return_value=False))
-    def test_unicode_not_valid(self):
-        self.assertEqual(
-            str(self.step),
-            'Stopping slave...SKIPPED! because database is stopped...'
-        )
