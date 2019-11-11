@@ -27,7 +27,7 @@ class TaskSerializer(serializers.ModelSerializer):
             'created_at',
             'task_name',
             'database',
-
+            'database_name',
             'rollback',
             'relevance',
             'ended_at',
