@@ -4,7 +4,7 @@ from datetime import datetime
 from time import sleep
 from drivers.errors import ReplicationNotRunningError
 from logical.models import Database
-from util import build_context_script, exec_remote_command_host
+from util import build_context_script, exec_remote_command_host, check_ssh
 from workflow.steps.mongodb.util import build_change_oplogsize_script
 from workflow.steps.util.base import BaseInstanceStep
 from workflow.steps.util import test_bash_script_error, monit_script
@@ -16,6 +16,8 @@ CHECK_ATTEMPTS = 30
 
 
 class DatabaseStep(BaseInstanceStep):
+
+    skip_msg = "SKIPPED! because database is stopped..."
 
     def __init__(self, instance):
         super(DatabaseStep, self).__init__(instance)
@@ -51,10 +53,10 @@ class DatabaseStep(BaseInstanceStep):
     def stop_database(self):
         return self._execute_init_script('stop')
 
-    def __is_instance_status(self, expected):
+    def __is_instance_status(self, expected, attempts=None):
         if self.host_migrate and self.instance.hostname.future_host:
             self.instance.address = self.instance.hostname.future_host.address
-        for _ in range(CHECK_ATTEMPTS):
+        for _ in range(attempts or CHECK_ATTEMPTS):
             try:
                 status = self.driver.check_status(instance=self.instance)
             except Exception as e:
@@ -67,13 +69,19 @@ class DatabaseStep(BaseInstanceStep):
                 sleep(CHECK_SECONDS)
         return False
 
-    @property
-    def is_up(self):
-        return self.__is_instance_status(True)
+    def vm_is_up(self, attempts=2, wait=5, interval=10):
+        return check_ssh(
+            self.host,
+            retries=attempts,
+            wait=wait,
+            interval=interval
+        )
 
-    @property
-    def is_down(self):
-        return self.__is_instance_status(False)
+    def is_up(self, attempts=None):
+        return self.__is_instance_status(True, attempts=attempts)
+
+    def is_down(self, attempts=None):
+        return self.__is_instance_status(False, attempts=attempts)
 
     def _execute_script(self, script_variables, script):
         final_script = build_context_script(
@@ -111,6 +119,7 @@ class DatabaseStep(BaseInstanceStep):
 
         return True
 
+
 class Stop(DatabaseStep):
 
     def __unicode__(self):
@@ -140,6 +149,23 @@ class Stop(DatabaseStep):
         self.undo_klass(self.instance).do()
 
 
+class StopIfRunning(Stop):
+
+    @property
+    def is_valid(self):
+        is_valid = super(StopIfRunning, self).is_valid
+        return is_valid and self.is_up(attempts=3)
+
+
+class StopIfRunningAndVMUp(StopIfRunning):
+
+    @property
+    def is_valid(self):
+        if self.vm_is_up():
+            return super(StopIfRunningAndVMUp, self).is_valid
+        return False
+
+
 class Start(DatabaseStep):
 
     def __unicode__(self):
@@ -154,7 +180,7 @@ class Start(DatabaseStep):
             return
 
         return_code, output = self.start_database()
-        if return_code != 0 and not self.is_up:
+        if return_code != 0 and not self.is_up():
             raise EnvironmentError(
                 'Could not start database {}: {}'.format(return_code, output)
             )
@@ -261,6 +287,23 @@ class StopSlave(DatabaseStep):
         StartSlave(self.instance).do()
 
 
+class StopSlaveIfRunning(StopSlave):
+    def __unicode__(self):
+        original_unicode = super(StopSlaveIfRunning, self).__unicode__()
+        if not self.is_valid:
+            return '{}{}'.format(original_unicode, self.skip_msg)
+        return original_unicode
+
+    @property
+    def is_valid(self):
+        return self.is_up(attempts=3)
+
+    def do(self):
+        if not self.is_valid:
+            return
+        super(StopSlaveIfRunning, self).do()
+
+
 class WaitForReplication(DatabaseStep):
 
     def __unicode__(self):
@@ -309,7 +352,7 @@ class CheckIsUp(DatabaseStep):
         if not self.instance.is_database:
             return
 
-        if not self.is_up:
+        if not self.is_up():
             raise EnvironmentError('Database is down, should be up')
 
 
@@ -382,6 +425,23 @@ class CheckIsDown(DatabaseStep):
             raise EnvironmentError(
                 '{} is running on server'.format(process_name)
             )
+
+
+class CheckIsDownIfVMUp(CheckIsDown):
+    def __unicode__(self):
+        original_unicode = super(StopIfRunning, self).__unicode__()
+        if not self.is_valid:
+            return '{}{}'.format(original_unicode, self.skip_msg)
+        return original_unicode
+
+    @property
+    def is_valid(self):
+        return self.vm_is_up()
+
+    def do(self):
+        if not self.is_valid:
+            return
+        super(CheckIsDownIfVMUp, self).do()
 
 
 class DatabaseChangedParameters(DatabaseStep):
