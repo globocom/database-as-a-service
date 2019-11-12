@@ -44,11 +44,13 @@ class Foreman(BaseInstanceStep):
 
     @property
     def reverse_ip(self):
-        return subprocess.check_output(
-            ("nslookup {} | grep 'name' | "
-             "awk '/name = / {{print $4}}' | xargs basename -s .".format(
-                self.host.address)),
-            shell=True)
+        if self.host_status.is_up(self.host):
+            return subprocess.check_output(
+                ("nslookup {} | grep 'name' | "
+                 "awk '/name = / {{print $4}}' | xargs basename -s .".format(
+                    self.host.address)),
+                shell=True)
+        return self.fqdn
 
     def is_valid(self):
         return self.credentials is not None
