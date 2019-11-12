@@ -45,11 +45,14 @@ class Foreman(BaseInstanceStep):
     @property
     def reverse_ip(self):
         if self.host_status.is_up(self.host):
-            return subprocess.check_output(
+            reverse_ip = subprocess.check_output(
                 ("nslookup {} | grep 'name' | "
-                 "awk '/name = / {{print $4}}' | xargs basename -s .".format(
+                 "awk '/name = / {{print $4}}'".format(
                     self.host.address)),
                 shell=True)
+            if reverse_ip.endswith('.'):
+                return reverse_ip[:-1]
+            return reverse_ip
         return self.fqdn
 
     def is_valid(self):
