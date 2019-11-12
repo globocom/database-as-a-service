@@ -2,10 +2,15 @@ import subprocess
 
 from dbaas_credentials.models import CredentialType
 from dbaas_foreman import get_foreman_provider
+
+from util import exec_command_on_host, get_or_none_credentials_for
+from base import BaseInstanceStep
+from workflow.steps.util.base import HostProviderClient
 from workflow.steps.util.vm import HostStatus
 
-from util import exec_remote_command_host, get_or_none_credentials_for
-from base import BaseInstanceStep
+
+class FqdnNotFoundExepition(Exception):
+    pass
 
 
 class Foreman(BaseInstanceStep):
@@ -18,6 +23,7 @@ class Foreman(BaseInstanceStep):
             self.environment, CredentialType.FOREMAN
         )
         self._provider = None
+        self.host_prov_client = HostProviderClient(self.environment)
 
     @property
     def provider(self):
@@ -27,10 +33,14 @@ class Foreman(BaseInstanceStep):
 
     @property
     def fqdn(self):
-        output = {}
-        script = 'hostname -f'
-        exec_remote_command_host(self.host, script, output)
-        return output['stdout'][0].strip()
+        if self.host_status.is_up(self.host):
+            script = 'hostname -f'
+            output, exit_code = exec_command_on_host(self.host, script)
+            return output['stdout'][0].strip()
+        vm_properties = self.host_prov_client.get_vm_by_host(self.host)
+        if vm_properties and vm_properties.fqdn:
+            return vm_properties.fqdn
+        raise FqdnNotFoundExepition("Fqdn is not found")
 
     @property
     def reverse_ip(self):
@@ -80,11 +90,8 @@ class DeleteHost(Foreman):
     def do(self):
         if not self.is_valid:
             return
+        fqdn = self.fqdn
         reverse_ip = self.reverse_ip
-        if self.host_status.is_up(self.host):
-            fqdn = self.fqdn
-        else:
-            fqdn = reverse_ip
         hostname = self.host.hostname
         self.provider.delete_host(fqdn)
         self.provider.delete_host(hostname)
