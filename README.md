@@ -119,3 +119,7 @@ Documentation
 
 [Troubleshooting](./doc/troubleshooting.md)
 -------------------------------------------
+
+## License
+
+This project is licensed under the BSD 3-Clause "New" or "Revised" License - read [LICENSE](LICENSE) file for details.
