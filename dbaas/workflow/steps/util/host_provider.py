@@ -1,12 +1,15 @@
 # -*- coding: utf-8 -*-
 from time import sleep
-from django.core.exceptions import ObjectDoesNotExist
 from requests import post, delete, get
+
+from django.core.exceptions import ObjectDoesNotExist
+
 from dbaas_credentials.models import CredentialType
 from physical.models import Host, Instance
 from util import get_credentials_for, exec_remote_command_host
 from base import BaseInstanceStep
 from vm import WaitingBeReady
+from workflow.steps.util.vm import HostStatus
 
 CHANGE_MASTER_ATTEMPS = 4
 CHANGE_MASTER_SECONDS = 15
@@ -263,6 +266,12 @@ class Stop(HostProviderStep):
     def undo(self):
         Start(self.instance).do()
         WaitingBeReady(self.instance).do()
+
+
+class StopIfRunning(Stop):
+    def do(self):
+        if HostStatus.is_up(self.host):
+            super(StopIfRunning, self).do()
 
 
 class Start(HostProviderStep):
