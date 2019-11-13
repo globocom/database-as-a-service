@@ -288,6 +288,14 @@ def exec_remote_command_host(host, command, output=None, retry=False):
     )
 
 
+def exec_command_on_host(host, command, retry=False):
+    output = {}
+
+    exit_code = exec_remote_command_host(host, command, output, retry)
+
+    return output, exit_code
+
+
 def run_script(self, script, host):
     output = {}
     return_code = exec_remote_command_host(host, script, output)

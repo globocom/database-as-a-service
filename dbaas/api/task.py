@@ -2,8 +2,10 @@
 from __future__ import absolute_import, unicode_literals
 from rest_framework import viewsets, serializers, permissions
 from rest_framework import filters
+import django_filters
 from notification.models import TaskHistory
 from logical.models import Database, DatabaseHistory
+from django.db import models as django_models
 
 
 class TaskSerializer(serializers.ModelSerializer):
@@ -25,8 +27,10 @@ class TaskSerializer(serializers.ModelSerializer):
             'created_at',
             'task_name',
             'database',
+            'database_name',
             'rollback',
             'relevance',
+            'ended_at',
         )
 
     def get_relevance(self, task):
@@ -109,6 +113,7 @@ class TaskAPI(viewsets.ReadOnlyModelViewSet):
         'migrate_filer_disk_for_database',
         'maintenance.tasks.node_zone_migrate',
         'maintenance.tasks.database_environment_migrate',
+        'maintenance.tasks.recreate_slave',
     ]
     model = TaskHistory
     serializer_class = TaskSerializer
@@ -117,16 +122,19 @@ class TaskAPI(viewsets.ReadOnlyModelViewSet):
     filter_fields = (
         'task_id',
         'task_status',
+        'task_name',
         'object_class',
         'object_id',
         'updated_at',
         'created_at',
         'user',
-        'relevance'
+        'relevance',
+        'ended_at',
+        'database_name'
     )
     ordering_fields = ('created_at', 'updated_at', 'id')
     ordering = ('-created_at',)
-    datetime_fields = ('created_at', 'updated_at')
+    datetime_fields = ('created_at', 'updated_at', 'ended_at')
 
     def get_queryset(self):
         params = self.request.GET.dict()
