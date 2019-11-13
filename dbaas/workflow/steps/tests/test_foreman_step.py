@@ -1,4 +1,4 @@
-from mock import MagicMock, patch
+from mock import MagicMock, patch, PropertyMock
 from collections import namedtuple
 
 from workflow.steps.util.foreman import DeleteHost, FqdnNotFoundExepition
@@ -8,6 +8,44 @@ from workflow.steps.tests.base import StepBaseTestCase
 FAKE_VM_PROPERTIES = namedtuple('FakeVmProperties', 'id fqdn')(
     'fake_id', 'fake_fqdn.globoi.com'
 )
+
+
+class ReverseIpTestCase(StepBaseTestCase):
+    step_class = DeleteHost
+
+    @patch('workflow.steps.util.foreman.HostStatus.is_up',
+           new=MagicMock(return_value=True))
+    @patch('workflow.steps.util.foreman.subprocess.check_output',
+           return_value=('fake_reverse_ip.globoi.com.'))
+    def test_call_subprocess_if_vm_is_up(self, check_output_mock):
+        self.step.reverse_ip
+        self.assertTrue(check_output_mock.called)
+
+    @patch('workflow.steps.util.foreman.HostStatus.is_up',
+           new=MagicMock(return_value=True))
+    @patch('workflow.steps.util.foreman.subprocess.check_output',
+           return_value=('fake_reverse_ip.globoi.com.'))
+    def test_remove_dot_from_reverse_ip_when_vm_up(self, check_output_mock):
+        reverse_ip = self.step.reverse_ip
+        self.assertEqual(reverse_ip, 'fake_reverse_ip.globoi.com')
+
+    @patch('workflow.steps.util.foreman.HostStatus.is_up',
+           new=MagicMock(return_value=True))
+    @patch('workflow.steps.util.foreman.subprocess.check_output',
+           return_value=('fake_reverse_ip.globoi.com'))
+    def test_do_nothing_when_reverse_ip_dont_have_dot(self, check_output_mock):
+        reverse_ip = self.step.reverse_ip
+        self.assertEqual(reverse_ip, 'fake_reverse_ip.globoi.com')
+
+    @patch('workflow.steps.util.foreman.HostStatus.is_up',
+           new=MagicMock(return_value=False))
+    @patch('workflow.steps.util.foreman.subprocess.check_output')
+    @patch.object(DeleteHost, 'fqdn', new_callable=PropertyMock)
+    def test_call_fqdn_property_when_vm_is_down(self, fqdn_mock,
+                                                check_output_mock):
+        self.step.reverse_ip
+        self.assertTrue(fqdn_mock.called)
+        self.assertFalse(check_output_mock.called)
 
 
 class DeleteHostFQDNTestCase(StepBaseTestCase):
