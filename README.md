@@ -80,9 +80,10 @@ some minimum operational data on DB.
 
     make reset_data
 
-## Running all tests on local enviroment
+## Running all tests on local environment
 
     make pip && make test
+
 
 ## Running all test with docker( To run this the docker-compose must be avaliable)
 
