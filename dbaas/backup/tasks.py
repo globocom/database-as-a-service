@@ -205,7 +205,12 @@ def make_databases_backup(self):
     if not env_names_order:
         env_names_order = [env.name for env in environments]
 
-    infras = DatabaseInfra.objects.filter(plan__has_persistence=True)
+    current_maintenance_window = datetime.now().hour
+    infras = DatabaseInfra.objects.filter(
+        plan__has_persistence=True,
+        maintenance_window=current_maintenance_window
+    )
+
     for env_name in env_names_order:
         try:
             env = environments.get(name=env_name)
