@@ -114,7 +114,6 @@ class SSL(BaseInstanceStep):
             self.plan.replication_topology.can_setup_ssl
             )
 
-
     def do(self):
         raise NotImplementedError
 
@@ -136,7 +135,8 @@ class UpdateOpenSSlLib(SSL):
         return "Updating OpenSSL Lib..."
 
     def do(self):
-        if not self.is_valid: return
+        if not self.is_valid:
+            return
         script = """yum update -y openssl
         local err=$?
         if [ "$err" != "0" ];
@@ -154,14 +154,22 @@ class CreateSSLFolder(SSL):
         return "Creating SSL Folder..."
 
     def do(self):
-        if not self.is_valid: return
+        if not self.is_valid:
+            return
         script = "mkdir -p {}".format(self.ssl_path)
         self.exec_script(script)
 
     def undo(self):
-        if not self.is_valid: return
+        if not self.is_valid:
+            return
         script = "rm -rf {}".format(self.ssl_path)
         self.exec_script(script)
+
+
+class CreateSSLFolderRollbackIfRunning(CreateSSLFolder):
+    def undo(self):
+        if self.vm_is_up(attempts=2):
+            super(SetReplicationUserRequireSSLRollbackIfRunning, self).undo()
 
 
 class InstanceSSLBaseName(SSL):
@@ -231,7 +239,8 @@ EOF_SSL
         self.exec_script(script)
 
     def do(self):
-        if not self.is_valid: return
+        if not self.is_valid:
+            return
         self.create_ssl_config_file()
 
 
@@ -270,7 +279,8 @@ class RequestSSL(SSL):
         self.exec_script(script)
 
     def do(self):
-        if not self.is_valid: return
+        if not self.is_valid:
+            return
         self.request_ssl_certificate()
 
 
@@ -338,10 +348,10 @@ EOF_SSL
         self.exec_script(script)
 
     def do(self):
-        if not self.is_valid: return
+        if not self.is_valid:
+            return
         csr_content = self.read_csr_file()
         self.create_json_request(csr_content)
-
 
 
 class CreateJsonRequestFileInstance(CreateJsonRequestFile,
@@ -370,7 +380,8 @@ class CreateCertificate(SSL):
         self.exec_script(script)
 
     def do(self):
-        if not self.is_valid: return
+        if not self.is_valid:
+            return
         script = self.create_certificate_script()
         output = self.exec_script(script)
         certificates = json.loads(output['stdout'][0])
@@ -404,7 +415,8 @@ class SetSSLFilesAccessMySQL(SSL):
         self.exec_script(script)
 
     def do(self):
-        if not self.is_valid: return
+        if not self.is_valid:
+            return
         self.sll_file_access_script()
 
 
@@ -413,13 +425,15 @@ class SetInfraConfiguredSSL(SSL):
         return "Setting infra as SSL configured..."
 
     def do(self):
-        if not self.is_valid: return
+        if not self.is_valid:
+            return
         infra = self.infra
         infra.ssl_configured = True
         infra.save()
 
     def undo(self):
-        if not self.is_valid: return
+        if not self.is_valid:
+            return
         infra = self.infra
         infra.ssl_configured = False
         infra.save()
@@ -451,6 +465,12 @@ class SetReplicationUserRequireSSL(SSL):
         driver = self.infra.get_driver()
         driver.set_replication_user_not_require_ssl()
         driver.set_replication_not_require_ssl(instance=self.instance)
+
+
+class SetReplicationUserRequireSSLRollbackIfRunning(SetReplicationUserRequireSSL):  # noqa
+    def undo(self):
+        if self.database_is_up(attempts=2):
+            super(SetReplicationUserRequireSSLRollbackIfRunning, self).undo()
 
 
 class UnSetReplicationUserRequireSSL(SetReplicationUserRequireSSL):
