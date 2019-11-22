@@ -1,17 +1,12 @@
 sudo: required
-
 language: python
-
 python:
     - "2.7"
-
 services:
     - docker
     - mysql
-
 env:
   DOCKER_COMPOSE_VERSION: 1.11.2
-
 before_install:
   - make docker_build
   - sudo rm /usr/local/bin/docker-compose
@@ -24,9 +19,7 @@ before_install:
   - docker ps
   - sudo /etc/init.d/mysql stop
   - sudo ln -s /usr/local/mysql/bin/mysql /usr/local/bin/mysql
-
 script:
   - docker-compose run test
-
 notifications:
     email: false

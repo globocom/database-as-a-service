@@ -10,11 +10,11 @@ This is an implementation of a database as a service api written in python + dja
 
 Below: Screenshot from the admin user.
 
-image 1: Listing databases and their summary informations
+**image 1:** Listing databases and their summary informations.
 
 ![Listing databases and their summary informations](doc/img/manage_dbs.png "Listing databases and their summary informations")
 
-image 2: example database view and all its credentials
+**image 2:** example database view and all its credentials.
 
 ![alt text](doc/img/manage_one_db.png "exampledb database view and all its credentials")
 
@@ -45,11 +45,11 @@ Setup your local environment
     workon dbaas
 
 
-Install the required python packages.
+Install the required python packages by:
 
     make pip
     
-Database setup for migrations
+Database setup for migrations:
 
 1. Connect to the local database.
     
@@ -62,11 +62,11 @@ Database setup for migrations
     
         CREATE DATABASE dbaas;
     
-Run migrations to mysql database
+Run migrations to mysql database:
 
     make run_migrate
 
-Install redis and start celery
+Install redis and start celery:
 
     make run_celery
 
@@ -80,11 +80,12 @@ some minimum operational data on DB.
 
     make reset_data
 
-## Running all tests on local enviroment
+## Running all tests on local environment
 
     make pip && make test
 
-## Running all test with docker( To run this the and docker-compose must be avaliable)
+
+## Running all test with docker( To run this the docker-compose must be avaliable)
 
     make docker_build && make test_with_docker
 
@@ -96,7 +97,7 @@ In your browser open the URL: http://localhost:8000/admin/
 
 ### Running celery
 
-To run celery locally use the following command
+To run celery locally use the following command:
 
     cd {APP DIR}
     make run_celery
@@ -118,3 +119,7 @@ Documentation
 
 [Troubleshooting](./doc/troubleshooting.md)
 -------------------------------------------
+
+## License
+
+This project is licensed under the BSD 3-Clause "New" or "Revised" License - read [LICENSE](LICENSE) file for details.

@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 import logging
 from util import get_credentials_for
+
 from dbaas_credentials.models import CredentialType
 from dbaas_foxha.provider import FoxHAProvider
 from dbaas_foxha.dbaas_api import DatabaseAsAServiceApi
+
 from base import BaseTopology, InstanceDeploy
 from physical.models import Instance
 
@@ -22,7 +24,8 @@ class BaseMysql(BaseTopology):
     def switch_master(self, driver):
         raise NotImplementedError()
 
-    def check_instance_is_master(self, driver, instance, default_timeout=False):
+    def check_instance_is_master(self, driver, instance,
+                                 default_timeout=False):
         raise NotImplementedError
 
     def set_master(self, driver, instance):
@@ -68,7 +71,7 @@ class MySQLSingle(BaseMysql):
             )}, {
             'Configure SSL': (
                 'workflow.steps.util.ssl.UpdateOpenSSlLib',
-                'workflow.steps.util.ssl.CreateSSLFolder',
+                'workflow.steps.util.ssl.CreateSSLFolderRollbackIfRunning',
                 'workflow.steps.util.ssl.CreateSSLConfForInfraEndPoint',
                 'workflow.steps.util.ssl.RequestSSLForInfra',
                 'workflow.steps.util.ssl.CreateJsonRequestFileInfra',
@@ -132,7 +135,8 @@ class MySQLSingle(BaseMysql):
     def switch_master(self, driver):
         return True
 
-    def check_instance_is_master(self, driver, instance, default_timeout=False):
+    def check_instance_is_master(self, driver, instance,
+                                 default_timeout=False):
         return True
 
     def set_master(self, driver, instance):
@@ -221,7 +225,6 @@ class MySQLSingle(BaseMysql):
             )}
         ]
 
-
     def get_upgrade_steps_extra(self):
         return super(MySQLSingle, self).get_upgrade_steps_extra() + (
             'workflow.steps.util.mysql.SetFilePermission',
@@ -234,6 +237,7 @@ class MySQLSingle(BaseMysql):
             'workflow.steps.util.database.Stop',
             'workflow.steps.util.plan.ConfigureForUpgrade',
         )
+
 
 class MySQLFoxHA(MySQLSingle):
     def _get_fox_provider(self, driver):
@@ -251,7 +255,8 @@ class MySQLFoxHA(MySQLSingle):
             group_name=driver.databaseinfra.name
         )
 
-    def check_instance_is_master(self, driver, instance, default_timeout=False):
+    def check_instance_is_master(self, driver, instance,
+                                 default_timeout=False):
         fox_node_is_master = self._get_fox_provider(driver).node_is_master(
             group_name=driver.databaseinfra.name,
             node_ip=instance.address
@@ -265,7 +270,7 @@ class MySQLFoxHA(MySQLSingle):
         try:
             instance_result = driver.query(query, instance)
             master_result = driver.query(query)
-        except Exception, e:
+        except Exception as e:
             LOG.warning("Ops... %s" % e)
             return False
 
@@ -312,7 +317,6 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.host_provider.CreateVirtualMachine',
             )}, {
             'Creating VIP': (
-                #'workflow.steps.util.network.CreateVip',
                 'workflow.steps.util.vip_provider.CreateVip',
                 'workflow.steps.util.dns.RegisterDNSVip',
             )}, {
@@ -354,7 +358,7 @@ class MySQLFoxHA(MySQLSingle):
             )}, {
             'Configure SSL': (
                 'workflow.steps.util.ssl.UpdateOpenSSlLib',
-                'workflow.steps.util.ssl.CreateSSLFolder',
+                'workflow.steps.util.ssl.CreateSSLFolderRollbackIfRunning',
                 'workflow.steps.util.ssl.CreateSSLConfForInfraEndPoint',
                 'workflow.steps.util.ssl.CreateSSLConfForInstanceIP',
                 'workflow.steps.util.ssl.RequestSSLForInfra',
@@ -386,7 +390,8 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.fox.IsReplicationOk'
             )}, {
             'Configure Replication User': (
-                'workflow.steps.util.ssl.SetReplicationUserRequireSSL',
+                ('workflow.steps.util.ssl'
+                 '.SetReplicationUserRequireSSLRollbackIfRunning'),
             )}, {
             'Creating Database': (
                 'workflow.steps.util.database.Create',
@@ -423,7 +428,8 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.database.CheckIsDown',
             )}, {
             'Configuring': (
-                'workflow.steps.util.mysql.AddDiskPermissionsRestoredDiskMySQL',
+                ('workflow.steps.util.mysql'
+                 '.AddDiskPermissionsRestoredDiskMySQL'),
                 'workflow.steps.util.mysql.UnmountOldestExportRestoreMySQL',
                 'workflow.steps.util.mysql.MountNewerExportRestoreMySQL',
                 'workflow.steps.util.disk.RemoveDeprecatedFiles',
@@ -807,7 +813,8 @@ class MySQLFoxHA(MySQLSingle):
             'workflow.steps.util.volume_provider.CreatePubKeyMigrate',
             'workflow.steps.util.volume_provider.NewVolumeMigrate',
             'workflow.steps.util.volume_provider.ScpFromSnapshotMigrate',
-            'workflow.steps.util.volume_provider.RemoveHostsAllowDatabaseMigrate',
+            ('workflow.steps.util.volume_provider'
+             '.RemoveHostsAllowDatabaseMigrate'),
             'workflow.steps.util.volume_provider.RemovePubKeyMigrate',
             'workflow.steps.util.disk.RemoveDeprecatedFiles',
             'workflow.steps.util.plan.ConfigureForNewInfra',
@@ -827,6 +834,7 @@ class MySQLFoxHA(MySQLSingle):
             'workflow.steps.util.mysql.SetReadOnlyMigrate',
 
         )
+
     def get_host_migrate_steps(self):
         return [{
             'Migrating':
@@ -901,7 +909,8 @@ class MySQLFoxHA(MySQLSingle):
             'Zabbix': (
                 'workflow.steps.util.zabbix.DestroyAlarms',
                 'workflow.steps.util.zabbix.CreateAlarms',
-                'workflow.steps.util.db_monitor.UpdateInfraCloudDatabaseMigrate',
+                ('workflow.steps.util.db_monitor'
+                 '.UpdateInfraCloudDatabaseMigrate'),
                 'workflow.steps.util.disk.ChangeSnapshotOwner',
             )
         }, {
@@ -910,6 +919,7 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.vip_provider.DestroyVipMigrate',
                 ) + self.get_host_migrate_steps_cleaning_up()
         }]
+
 
 class MySQLFoxHAAWS(MySQLFoxHA):
     def get_deploy_steps(self):
@@ -946,7 +956,7 @@ class MySQLFoxHAAWS(MySQLFoxHA):
             )}, {
             'Configure SSL': (
                 'workflow.steps.util.ssl.UpdateOpenSSlLib',
-                'workflow.steps.util.ssl.CreateSSLFolder',
+                'workflow.steps.util.ssl.CreateSSLFolderRollbackIfRunning',
                 'workflow.steps.util.ssl.CreateSSLConfForInfraEndPoint',
                 'workflow.steps.util.ssl.CreateSSLConfForInstanceIP',
                 'workflow.steps.util.ssl.RequestSSLForInfra',
@@ -978,7 +988,8 @@ class MySQLFoxHAAWS(MySQLFoxHA):
                 'workflow.steps.util.fox.IsReplicationOk'
             )}, {
             'Configure Replication User': (
-                'workflow.steps.util.ssl.SetReplicationUserRequireSSL',
+                ('workflow.steps.util.ssl'
+                 '.SetReplicationUserRequireSSLRollbackIfRunning'),
             )}, {
             'Creating Database': (
                 'workflow.steps.util.database.Create',
@@ -1079,12 +1090,17 @@ class MySQLFoxHAAWS(MySQLFoxHA):
             'workflow.steps.util.volume_provider.WaitSnapshotAvailableMigrate',
             'workflow.steps.util.volume_provider.AddHostsAllowDatabaseMigrate',
             'workflow.steps.util.volume_provider.CreatePubKeyMigrate',
-            'workflow.steps.util.volume_provider.NewVolumeOnSlaveMigrateFirstNode',
-            'workflow.steps.util.volume_provider.MountDataVolumeOnSlaveFirstNode',
-            'workflow.steps.util.volume_provider.ScpFromSnapshotDatabaseMigrate',
-            'workflow.steps.util.volume_provider.UmountDataVolumeOnSlaveLastNode',
+            ('workflow.steps.util.volume_provider.'
+             'NewVolumeOnSlaveMigrateFirstNode'),
+            ('workflow.steps.util.volume_provider'
+             '.MountDataVolumeOnSlaveFirstNode'),
+            ('workflow.steps.util.volume_provider'
+             '.ScpFromSnapshotDatabaseMigrate'),
+            ('workflow.steps.util.volume_provider'
+             '.UmountDataVolumeOnSlaveLastNode'),
             'workflow.steps.util.volume_provider.RemoveVolumeMigrateLastNode',
-            'workflow.steps.util.volume_provider.RemoveHostsAllowDatabaseMigrate',
+            ('workflow.steps.util.volume_provider'
+             '.RemoveHostsAllowDatabaseMigrate'),
             'workflow.steps.util.volume_provider.RemovePubKeyMigrate',
             'workflow.steps.util.disk.RemoveDeprecatedFiles',
             'workflow.steps.util.plan.ConfigureForNewInfra',

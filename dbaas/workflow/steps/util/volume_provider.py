@@ -1385,7 +1385,7 @@ class WaitSnapshotAvailableMigrate(VolumeProviderBase):
     @property
     def snapshot(self):
         if self.host_migrate and self.host_migrate.database_migrate:
-            return self.host_migrate.snapshot
+            return self.host_migrate.database_migrate.host_migrate_snapshot
         else:
             return self.step_manager.snapshot
 
