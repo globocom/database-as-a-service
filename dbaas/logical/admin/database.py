@@ -424,7 +424,6 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
 
     def delete_view(self, request, object_id, extra_context=None):
         database = Database.objects.get(id=object_id)
-
         can_be_deleted, error = database.can_be_deleted()
         if not can_be_deleted:
             self.message_user(request, error, level=messages.ERROR)
