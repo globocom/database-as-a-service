@@ -2,7 +2,9 @@
 from __future__ import absolute_import, unicode_literals
 import logging
 from collections import Iterable
+
 from django.utils.translation import ugettext_lazy as _
+
 from .errors import ConnectionError
 
 
@@ -83,11 +85,27 @@ class BaseDriver(object):
     def get_user(self):
         return self.databaseinfra.user
 
+    def _pass_if_connection_error(self, func, *func_args, **func_kwargs):
+        try:
+            func(*func_args, **func_kwargs)
+        except ConnectionError:
+            pass
+
+    def try_remove_database(self, database):
+        self._pass_if_connection_error(self.remove_database, database)
+
+    def try_remove_user(self, credential):
+        self._pass_if_connection_error(self.remove_user, credential)
+
+    def try_update_user(self, credential):
+        self._pass_if_connection_error(self.update_user, credential)
+
     def get_password(self):
         return self.databaseinfra.password
 
     def check_status(self):
-        """ Check if databaseinfra is working. If not working, raises subclass of GenericDriverError """
+        """ Check if databaseinfra is working. If not working, raises subclass
+            of GenericDriverError """
         raise NotImplementedError()
 
     def info(self):
@@ -113,8 +131,11 @@ class BaseDriver(object):
 
         for instance in self.get_database_instances():
             if instance.is_alive:
-                instance.used_size_in_bytes = self.get_used_size_from_instance(instance)
-                instance.total_size_in_bytes = self.get_total_size_from_instance(instance)
+                instance.used_size_in_bytes = self.get_used_size_from_instance(
+                    instance
+                )
+                instance.total_size_in_bytes = (
+                    self.get_total_size_from_instance(instance))
                 instance.save()
                 updated_instances.append("{} - OK\n".format(instance.dns))
             else:
@@ -193,7 +214,10 @@ class BaseDriver(object):
         raise NotImplementedError()
 
     def remove_deprectaed_files(self,):
-        return str().join(["\nrm -f " + self.data_dir() + file for file in self.deprecated_files()])
+        return str().join(
+            ["\nrm -f " + self.data_dir() + file
+             for file in self.deprecated_files()]
+        )
 
     def data_dir(self, ):
         raise NotImplementedError()
@@ -209,14 +233,18 @@ class BaseDriver(object):
 
     def get_database_instances(self, ):
         driver_name = self.name.upper()
-        instances = [instance if instance.instance_type == instance.__getattribute__(
-            driver_name) else None for instance in self.databaseinfra.instances.all()]
+        instances = [instance
+                     if instance.instance_type == instance.__getattribute__(
+                        driver_name) else None
+                     for instance in self.databaseinfra.instances.all()]
         return filter(None, instances)
 
     def get_non_database_instances(self, ):
         driver_name = self.name.upper()
-        instances = [instance if instance.instance_type != instance.__getattribute__(
-            driver_name) else None for instance in self.databaseinfra.instances.all()]
+        instances = [instance
+                     if instance.instance_type != instance.__getattribute__(
+                        driver_name) else None
+                     for instance in self.databaseinfra.instances.all()]
         return filter(None, instances)
 
     def get_master_instance(self, ignore_instance=None, default_timeout=False):
@@ -225,11 +253,13 @@ class BaseDriver(object):
             instances.remove(ignore_instance)
         for instance in instances:
             try:
-                if self.check_instance_is_master(instance, default_timeout=default_timeout):
+                if self.check_instance_is_master(
+                        instance, default_timeout=default_timeout):
                     return instance
                 if instance.hostname.future_host:
                     instance.address = instance.hostname.future_host.address
-                    if self.check_instance_is_master(instance, default_timeout=default_timeout):
+                    if self.check_instance_is_master(
+                            instance, default_timeout=default_timeout):
                         return instance
             except ConnectionError:
                 continue
@@ -272,7 +302,8 @@ class BaseDriver(object):
     def stop_agents(self, host):
         self.agents_command(host, "stop")
 
-    def check_replication_and_switch(self, instance, attempts=100, check_is_master_attempts=5):
+    def check_replication_and_switch(self, instance, attempts=100,
+                                     check_is_master_attempts=5):
         from time import sleep
         for attempt in range(0, attempts):
             if self.is_replication_ok(instance):
@@ -280,7 +311,8 @@ class BaseDriver(object):
                 LOG.info("Switch master returned ok...")
 
                 check_is_master_attempts_count = check_is_master_attempts
-                while self.check_instance_is_master(instance, default_timeout=False):
+                while self.check_instance_is_master(instance,
+                                                    default_timeout=False):
                     if check_is_master_attempts_count == 0:
                         break
                     check_is_master_attempts_count -= 1
@@ -292,7 +324,9 @@ class BaseDriver(object):
 
             LOG.info("Waiting 10s to check replication...")
             sleep(10)
-        raise Exception("Could not switch master because of replication's delay")
+        raise Exception(
+            "Could not switch master because of replication's delay"
+        )
 
     def get_database_agents(self):
         """ Returns database agents list"""
