@@ -2,15 +2,21 @@
 from __future__ import unicode_literals
 import logging
 import requests
+from collections import namedtuple
+from time import sleep
+
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.encoding import python_2_unicode_compatible
-from collections import namedtuple
+
 from dbaas_credentials.models import CredentialType
 from util import get_credentials_for, AuthRequest
 from physical.models import Vip
+from util import check_ssh
 
 
 LOG = logging.getLogger(__name__)
+CHECK_SECONDS = 10
+CHECK_ATTEMPTS = 30
 
 
 class CantSetACLError(Exception):
@@ -174,6 +180,36 @@ class BaseInstanceStep(object):
             original_vip=original_vip
         ).identifier
         return self._get_vip(future_vip_identifier, self.environment)
+
+    def __is_instance_status(self, expected, attempts=None):
+        if self.host_migrate and self.instance.hostname.future_host:
+            self.instance.address = self.instance.hostname.future_host.address
+        for _ in range(attempts or CHECK_ATTEMPTS):
+            try:
+                status = self.driver.check_status(instance=self.instance)
+            except Exception as e:
+                LOG.debug('{} is down - {}'.format(self.instance, e))
+                status = False
+
+            if status == expected:
+                return True
+            else:
+                sleep(CHECK_SECONDS)
+        return False
+
+    def vm_is_up(self, attempts=2, wait=5, interval=10):
+        return check_ssh(
+            self.host,
+            retries=attempts,
+            wait=wait,
+            interval=interval
+        )
+
+    def database_is_up(self, attempts=None):
+        return self.__is_instance_status(True, attempts=attempts)
+
+    def database_is_down(self, attempts=None):
+        return self.__is_instance_status(False, attempts=attempts)
 
     def do(self):
         raise NotImplementedError
