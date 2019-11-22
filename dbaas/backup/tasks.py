@@ -205,11 +205,26 @@ def make_databases_backup(self):
     if not env_names_order:
         env_names_order = [env.name for env in environments]
 
-    current_maintenance_window = datetime.now().hour
-    infras = DatabaseInfra.objects.filter(
+    current_time = datetime.now()
+    current_hour = current_time.hour
+
+    infras_with_backup_today = DatabaseInfra.objects.filter(
+        instances__backup_instance__status=2,
+        backup_hour__lt=current_hour,
+        instances__backup_instance__end_at__year=current_time.year,
+        instances__backup_instance__end_at__month=current_time.month,
+        instances__backup_instance__end_at__day=current_time.day).distinct()
+
+    infras_pending_backup = DatabaseInfra.objects.filter(
+        backup_hour__lt=current_hour
+    ).exclude(pk__in=[infra.pk for infra in infras_with_backup_today])
+
+    infras_current_hour = DatabaseInfra.objects.filter(
         plan__has_persistence=True,
-        maintenance_window=current_maintenance_window
+        backup_hour=current_time.hour
     )
+
+    infras = infras_current_hour | infras_pending_backup
 
     for env_name in env_names_order:
         try:
