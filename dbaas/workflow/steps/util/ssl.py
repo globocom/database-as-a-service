@@ -169,7 +169,7 @@ class CreateSSLFolder(SSL):
 class CreateSSLFolderRollbackIfRunning(CreateSSLFolder):
     def undo(self):
         if self.vm_is_up(attempts=2):
-            super(SetReplicationUserRequireSSLRollbackIfRunning, self).undo()
+            super(CreateSSLFolderRollbackIfRunning, self).undo()
 
 
 class InstanceSSLBaseName(SSL):
