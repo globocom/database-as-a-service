@@ -78,6 +78,7 @@ class MySQLSingle(BaseMysql):
                 'workflow.steps.util.ssl.CreateCertificateInfra',
                 'workflow.steps.util.ssl.SetSSLFilesAccessMySQL',
                 'workflow.steps.util.ssl.SetInfraConfiguredSSL',
+                'workflow.steps.util.ssl.UpdateExpireAtDate',
             )}, {
             'Starting database': (
                 'workflow.steps.util.plan.ConfigureForNewInfra',
@@ -116,6 +117,7 @@ class MySQLSingle(BaseMysql):
                 'workflow.steps.util.ssl.CreateJsonRequestFileInfra',
                 'workflow.steps.util.ssl.CreateCertificateInfra',
                 'workflow.steps.util.ssl.SetSSLFilesAccessMySQL',
+                'workflow.steps.util.ssl.UpdateExpireAtDate',
             ),
         }] + [{
             'Restart Database': (
@@ -174,12 +176,15 @@ class MySQLSingle(BaseMysql):
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
             )}, {
             'Configure SSL': (
-                'workflow.steps.util.disk.CleanSSLDir',
-                'workflow.steps.util.ssl.RequestSSLForInfra',
-                'workflow.steps.util.ssl.CreateSSLConfForInfraEndPoint',
-                'workflow.steps.util.ssl.CreateJsonRequestFileInfra',
-                'workflow.steps.util.ssl.CreateCertificateInfra',
-                'workflow.steps.util.ssl.SetSSLFilesAccessMySQL',
+                'workflow.steps.util.disk.CleanSSLDirIfConfigured',
+                'workflow.steps.util.ssl.RequestSSLForInfraIfConfigured',
+                ('workflow.steps.util.ssl'
+                 '.CreateSSLConfForInfraEndPointIfConfigured'),
+                ('workflow.steps.util.ssl'
+                 '.CreateJsonRequestFileInfraIfConfigured'),
+                'workflow.steps.util.ssl.CreateCertificateInfraIfConfigured',
+                'workflow.steps.util.ssl.SetSSLFilesAccessMySQLIfConfigured',
+                'workflow.steps.util.ssl.UpdateExpireAtDate',
             )}, {
             'Starting database': (
                 'workflow.steps.util.database.Start',
@@ -369,6 +374,7 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.ssl.CreateCertificateInstance',
                 'workflow.steps.util.ssl.SetSSLFilesAccessMySQL',
                 'workflow.steps.util.ssl.SetInfraConfiguredSSL',
+                'workflow.steps.util.ssl.UpdateExpireAtDate',
             )}, {
             'Starting database': (
                 'workflow.steps.util.plan.ConfigureForNewInfra',
@@ -438,15 +444,21 @@ class MySQLFoxHA(MySQLSingle):
             )}, {
             'Configure SSL': (
                 'workflow.steps.util.disk.CleanSSLDir',
-                'workflow.steps.util.ssl.CreateSSLConfForInfraEndPoint',
-                'workflow.steps.util.ssl.CreateSSLConfForInstanceIP',
-                'workflow.steps.util.ssl.RequestSSLForInfra',
-                'workflow.steps.util.ssl.RequestSSLForInstance',
-                'workflow.steps.util.ssl.CreateJsonRequestFileInfra',
-                'workflow.steps.util.ssl.CreateJsonRequestFileInstance',
-                'workflow.steps.util.ssl.CreateCertificateInfra',
-                'workflow.steps.util.ssl.CreateCertificateInstance',
-                'workflow.steps.util.ssl.SetSSLFilesAccessMySQL',
+                ('workflow.steps.util.ssl'
+                 '.CreateSSLConfForInfraEndPointIfConfigured'),
+                ('workflow.steps.util.ssl'
+                 '.CreateSSLConfForInstanceIPIfConfigured'),
+                'workflow.steps.util.ssl.RequestSSLForInfraIfConfigured',
+                'workflow.steps.util.ssl.RequestSSLForInstanceIfConfigured',
+                ('workflow.steps.util.ssl'
+                 '.CreateJsonRequestFileInfraIfConfigured'),
+                ('workflow.steps.util.ssl'
+                 '.CreateJsonRequestFileInstanceIfConfigured'),
+                'workflow.steps.util.ssl.CreateCertificateInfraIfConfigured',
+                ('workflow.steps.util.ssl'
+                 '.CreateCertificateInstanceIfConfigured'),
+                'workflow.steps.util.ssl.SetSSLFilesAccessMySQLIfConfigured',
+                'workflow.steps.util.ssl.UpdateExpireAtDate',
             )}, {
             'Starting database': (
                 'workflow.steps.util.database.Stop',
@@ -630,6 +642,7 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.ssl.SetInfraConfiguredSSL',
                 'workflow.steps.util.plan.Configure',
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
+                'workflow.steps.util.ssl.UpdateExpireAtDate',
             ),
         }] + [{
             'Restart Database': (
@@ -669,6 +682,7 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.ssl.CreateCertificateInfra',
                 'workflow.steps.util.ssl.CreateCertificateInstance',
                 'workflow.steps.util.ssl.SetSSLFilesAccessMySQL',
+                'workflow.steps.util.ssl.UpdateExpireAtDate',
             ),
         }] + [{
             'Restart Database': (
@@ -780,17 +794,20 @@ class MySQLFoxHA(MySQLSingle):
             'workflow.steps.util.zabbix.DestroyAlarms',
             'workflow.steps.util.dns.ChangeEndpoint',
             'workflow.steps.util.dns.CheckIsReady',
-            'workflow.steps.util.ssl.UpdateOpenSSlLib',
-            'workflow.steps.util.ssl.CreateSSLFolder',
-            'workflow.steps.util.ssl.CreateSSLConfForInfraEndPoint',
-            'workflow.steps.util.ssl.CreateSSLConfForInstanceIP',
-            'workflow.steps.util.ssl.RequestSSLForInfra',
-            'workflow.steps.util.ssl.RequestSSLForInstance',
-            'workflow.steps.util.ssl.CreateJsonRequestFileInfra',
-            'workflow.steps.util.ssl.CreateJsonRequestFileInstance',
-            'workflow.steps.util.ssl.CreateCertificateInfra',
-            'workflow.steps.util.ssl.CreateCertificateInstance',
-            'workflow.steps.util.ssl.SetSSLFilesAccessMySQL',
+            'workflow.steps.util.ssl.UpdateOpenSSlLibIfConfigured',
+            'workflow.steps.util.ssl.CreateSSLFolderIfConfigured',
+            ('workflow.steps.util.ssl'
+             '.CreateSSLConfForInfraEndPointIfConfigured'),
+            'workflow.steps.util.ssl.CreateSSLConfForInstanceIPIfConfigured',
+            'workflow.steps.util.ssl.RequestSSLForInfraIfConfigured',
+            'workflow.steps.util.ssl.RequestSSLForInstanceIfConfigured',
+            'workflow.steps.util.ssl.CreateJsonRequestFileInfraIfConfigured',
+            ('workflow.steps.util.ssl'
+             '.CreateJsonRequestFileInstanceIfConfigured'),
+            'workflow.steps.util.ssl.CreateCertificateInfraIfConfigured',
+            'workflow.steps.util.ssl.CreateCertificateInstanceIfConfigured',
+            'workflow.steps.util.ssl.SetSSLFilesAccessMySQLIfConfigured',
+            'workflow.steps.util.ssl.UpdateExpireAtDate',
             'workflow.steps.util.metric_collector.ConfigureTelegraf',
             'workflow.steps.util.metric_collector.RestartTelegraf',
             'workflow.steps.util.zabbix.CreateAlarms',
@@ -890,17 +907,24 @@ class MySQLFoxHA(MySQLSingle):
             )
         }, {
             'SSL': (
-                'workflow.steps.util.ssl.UpdateOpenSSlLib',
-                'workflow.steps.util.ssl.CreateSSLFolder',
-                'workflow.steps.util.ssl.CreateSSLConfForInfraEndPoint',
-                'workflow.steps.util.ssl.CreateSSLConfForInstanceIP',
-                'workflow.steps.util.ssl.RequestSSLForInfra',
-                'workflow.steps.util.ssl.RequestSSLForInstance',
-                'workflow.steps.util.ssl.CreateJsonRequestFileInfra',
-                'workflow.steps.util.ssl.CreateJsonRequestFileInstance',
-                'workflow.steps.util.ssl.CreateCertificateInfra',
-                'workflow.steps.util.ssl.CreateCertificateInstance',
-                'workflow.steps.util.ssl.SetSSLFilesAccessMySQL',)
+                'workflow.steps.util.ssl.UpdateOpenSSlLibIfConfigured',
+                'workflow.steps.util.ssl.CreateSSLFolderIfConfigured',
+                ('workflow.steps.util.ssl'
+                 '.CreateSSLConfForInfraEndPointIfConfigured'),
+                ('workflow.steps.util.ssl'
+                 '.CreateSSLConfForInstanceIPIfConfigured'),
+                'workflow.steps.util.ssl.RequestSSLForInfraIfConfigured',
+                'workflow.steps.util.ssl.RequestSSLForInstanceIfConfigured',
+                ('workflow.steps.util.ssl'
+                 '.CreateJsonRequestFileInfraIfConfigured'),
+                ('workflow.steps.util.ssl'
+                 '.CreateJsonRequestFileInstanceIfConfigured'),
+                'workflow.steps.util.ssl.CreateCertificateInfraIfConfigured',
+                ('workflow.steps.util.ssl'
+                 '.CreateCertificateInstanceIfConfigured'),
+                'workflow.steps.util.ssl.SetSSLFilesAccessMySQLIfConfigured',
+                'workflow.steps.util.ssl.UpdateExpireAtDate',
+            )
         }, {
             'Telegraf': (
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
@@ -967,6 +991,7 @@ class MySQLFoxHAAWS(MySQLFoxHA):
                 'workflow.steps.util.ssl.CreateCertificateInstance',
                 'workflow.steps.util.ssl.SetSSLFilesAccessMySQL',
                 'workflow.steps.util.ssl.SetInfraConfiguredSSL',
+                'workflow.steps.util.ssl.UpdateExpireAtDate',
             )}, {
             'Starting database': (
                 'workflow.steps.util.plan.ConfigureForNewInfra',
@@ -1051,17 +1076,20 @@ class MySQLFoxHAAWS(MySQLFoxHA):
             'workflow.steps.util.zabbix.DestroyAlarms',
             'workflow.steps.util.dns.ChangeEndpoint',
             'workflow.steps.util.dns.CheckIsReady',
-            'workflow.steps.util.ssl.UpdateOpenSSlLib',
-            'workflow.steps.util.ssl.CreateSSLFolder',
-            'workflow.steps.util.ssl.CreateSSLConfForInfraEndPoint',
-            'workflow.steps.util.ssl.CreateSSLConfForInstanceIP',
-            'workflow.steps.util.ssl.RequestSSLForInfra',
-            'workflow.steps.util.ssl.RequestSSLForInstance',
-            'workflow.steps.util.ssl.CreateJsonRequestFileInfra',
-            'workflow.steps.util.ssl.CreateJsonRequestFileInstance',
-            'workflow.steps.util.ssl.CreateCertificateInfra',
-            'workflow.steps.util.ssl.CreateCertificateInstance',
-            'workflow.steps.util.ssl.SetSSLFilesAccessMySQL',
+            'workflow.steps.util.ssl.UpdateOpenSSlLibIfConfigured',
+            'workflow.steps.util.ssl.CreateSSLFolderIfConfigured',
+            ('workflow.steps.util.ssl'
+             '.CreateSSLConfForInfraEndPointIfConfigured'),
+            'workflow.steps.util.ssl.CreateSSLConfForInstanceIPIfConfigured',
+            'workflow.steps.util.ssl.RequestSSLForInfraIfConfigured',
+            'workflow.steps.util.ssl.RequestSSLForInstanceIfConfigured',
+            'workflow.steps.util.ssl.CreateJsonRequestFileInfraIfConfigured',
+            ('workflow.steps.util.ssl'
+             '.CreateJsonRequestFileInstanceIfConfigured'),
+            'workflow.steps.util.ssl.CreateCertificateInfraIfConfigured',
+            'workflow.steps.util.ssl.CreateCertificateInstanceIfConfigured',
+            'workflow.steps.util.ssl.SetSSLFilesAccessMySQLIfConfigured',
+            'workflow.steps.util.ssl.UpdateExpireAtDate',
             'workflow.steps.util.metric_collector.ConfigureTelegraf',
             'workflow.steps.util.metric_collector.RestartTelegraf',
             'workflow.steps.util.zabbix.CreateAlarms',
@@ -1090,8 +1118,13 @@ class MySQLFoxHAAWS(MySQLFoxHA):
             'workflow.steps.util.volume_provider.WaitSnapshotAvailableMigrate',
             'workflow.steps.util.volume_provider.AddHostsAllowDatabaseMigrate',
             'workflow.steps.util.volume_provider.CreatePubKeyMigrate',
+<<<<<<< HEAD
             ('workflow.steps.util.volume_provider.'
              'NewVolumeOnSlaveMigrateFirstNode'),
+=======
+            ('workflow.steps.util.volume_provider'
+             '.NewVolumeOnSlaveMigrateFirstNode'),
+>>>>>>> elesbom-update-ssl-field
             ('workflow.steps.util.volume_provider'
              '.MountDataVolumeOnSlaveFirstNode'),
             ('workflow.steps.util.volume_provider'
@@ -1178,17 +1211,24 @@ class MySQLFoxHAAWS(MySQLFoxHA):
             )
         }, {
             'SSL': (
-                'workflow.steps.util.ssl.UpdateOpenSSlLib',
-                'workflow.steps.util.ssl.CreateSSLFolder',
-                'workflow.steps.util.ssl.CreateSSLConfForInfraEndPoint',
-                'workflow.steps.util.ssl.CreateSSLConfForInstanceIP',
-                'workflow.steps.util.ssl.RequestSSLForInfra',
-                'workflow.steps.util.ssl.RequestSSLForInstance',
-                'workflow.steps.util.ssl.CreateJsonRequestFileInfra',
-                'workflow.steps.util.ssl.CreateJsonRequestFileInstance',
-                'workflow.steps.util.ssl.CreateCertificateInfra',
-                'workflow.steps.util.ssl.CreateCertificateInstance',
-                'workflow.steps.util.ssl.SetSSLFilesAccessMySQL',)
+                'workflow.steps.util.ssl.UpdateOpenSSlLibIfConfigured',
+                'workflow.steps.util.ssl.CreateSSLFolderIfConfigured',
+                ('workflow.steps.util.ssl'
+                 '.CreateSSLConfForInfraEndPointIfConfigured'),
+                ('workflow.steps.util.ssl'
+                 '.CreateSSLConfForInstanceIPIfConfigured'),
+                'workflow.steps.util.ssl.RequestSSLForInfraIfConfigured',
+                'workflow.steps.util.ssl.RequestSSLForInstanceIfConfigured',
+                ('workflow.steps.util.ssl'
+                 '.CreateJsonRequestFileInfraIfConfigured'),
+                ('workflow.steps.util.ssl'
+                 '.CreateJsonRequestFileInstanceIfConfigured'),
+                'workflow.steps.util.ssl.CreateCertificateInfraIfConfigured',
+                ('workflow.steps.util.ssl'
+                 '.CreateCertificateInstanceIfConfigured'),
+                'workflow.steps.util.ssl.SetSSLFilesAccessMySQLIfConfigured',
+                'workflow.steps.util.ssl.UpdateExpireAtDate',
+            )
         }, {
             'Telegraf': (
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
