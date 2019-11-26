@@ -114,7 +114,6 @@ class SSL(BaseInstanceStep):
             self.plan.replication_topology.can_setup_ssl
             )
 
-
     def do(self):
         raise NotImplementedError
 
@@ -130,13 +129,20 @@ class SSL(BaseInstanceStep):
         return output
 
 
+class IfConguredSSLValidator(SSL):
+    @property
+    def is_valid(self):
+        return self.infra.ssl_configured
+
+
 class UpdateOpenSSlLib(SSL):
 
     def __unicode__(self):
         return "Updating OpenSSL Lib..."
 
     def do(self):
-        if not self.is_valid: return
+        if not self.is_valid:
+            return
         script = """yum update -y openssl
         local err=$?
         if [ "$err" != "0" ];
@@ -148,20 +154,30 @@ class UpdateOpenSSlLib(SSL):
         self.exec_script(script)
 
 
+class UpdateOpenSSlLibIfConfigured(UpdateOpenSSlLib, IfConguredSSLValidator):
+    pass
+
+
 class CreateSSLFolder(SSL):
 
     def __unicode__(self):
         return "Creating SSL Folder..."
 
     def do(self):
-        if not self.is_valid: return
+        if not self.is_valid:
+            return
         script = "mkdir -p {}".format(self.ssl_path)
         self.exec_script(script)
 
     def undo(self):
-        if not self.is_valid: return
+        if not self.is_valid:
+            return
         script = "rm -rf {}".format(self.ssl_path)
         self.exec_script(script)
+
+
+class CreateSSLFolderIfConfigured(CreateSSLFolder, IfConguredSSLValidator):
+    pass
 
 
 class InstanceSSLBaseName(SSL):
@@ -231,7 +247,8 @@ EOF_SSL
         self.exec_script(script)
 
     def do(self):
-        if not self.is_valid: return
+        if not self.is_valid:
+            return
         self.create_ssl_config_file()
 
 
@@ -253,6 +270,16 @@ class CreateSSLConfForInfraEndPoint(CreateSSLConfigFile,
     pass
 
 
+class CreateSSLConfForInfraEndPointIfConfigured(CreateSSLConfForInfraEndPoint,
+                                                IfConguredSSLValidator):
+    pass
+
+
+class CreateSSLConfForInstanceIPIfConfigured(CreateSSLConfForInstanceIP,
+                                             IfConguredSSLValidator):
+    pass
+
+
 class RequestSSL(SSL):
 
     def __unicode__(self):
@@ -270,7 +297,8 @@ class RequestSSL(SSL):
         self.exec_script(script)
 
     def do(self):
-        if not self.is_valid: return
+        if not self.is_valid:
+            return
         self.request_ssl_certificate()
 
 
@@ -278,7 +306,17 @@ class RequestSSLForInstance(RequestSSL, InstanceSSLBaseName):
     pass
 
 
+class RequestSSLForInstanceIfConfigured(RequestSSLForInstance,
+                                        IfConguredSSLValidator):
+    pass
+
+
 class RequestSSLForInfra(RequestSSL, InfraSSLBaseName):
+    pass
+
+
+class RequestSSLForInfraIfConfigured(RequestSSLForInfra,
+                                     IfConguredSSLValidator):
     pass
 
 
@@ -338,10 +376,10 @@ EOF_SSL
         self.exec_script(script)
 
     def do(self):
-        if not self.is_valid: return
+        if not self.is_valid:
+            return
         csr_content = self.read_csr_file()
         self.create_json_request(csr_content)
-
 
 
 class CreateJsonRequestFileInstance(CreateJsonRequestFile,
@@ -349,7 +387,17 @@ class CreateJsonRequestFileInstance(CreateJsonRequestFile,
     pass
 
 
+class CreateJsonRequestFileInstanceIfConfigured(CreateJsonRequestFileInstance,
+                                                IfConguredSSLValidator):
+    pass
+
+
 class CreateJsonRequestFileInfra(CreateJsonRequestFile, InfraSSLBaseName):
+    pass
+
+
+class CreateJsonRequestFileInfraIfConfigured(CreateJsonRequestFileInfra,
+                                             IfConguredSSLValidator):
     pass
 
 
@@ -370,7 +418,8 @@ class CreateCertificate(SSL):
         self.exec_script(script)
 
     def do(self):
-        if not self.is_valid: return
+        if not self.is_valid:
+            return
         script = self.create_certificate_script()
         output = self.exec_script(script)
         certificates = json.loads(output['stdout'][0])
@@ -386,7 +435,17 @@ class CreateCertificateInstance(CreateCertificate, InstanceSSLBaseName):
     pass
 
 
+class CreateCertificateInstanceIfConfigured(CreateCertificateInstance,
+                                            IfConguredSSLValidator):
+    pass
+
+
 class CreateCertificateInfra(CreateCertificate, InfraSSLBaseName):
+    pass
+
+
+class CreateCertificateInfraIfConfigured(CreateCertificateInfra,
+                                         IfConguredSSLValidator):
     pass
 
 
@@ -404,8 +463,14 @@ class SetSSLFilesAccessMySQL(SSL):
         self.exec_script(script)
 
     def do(self):
-        if not self.is_valid: return
+        if not self.is_valid:
+            return
         self.sll_file_access_script()
+
+
+class SetSSLFilesAccessMySQLIfConfigured(SetSSLFilesAccessMySQL,
+                                         IfConguredSSLValidator):
+    pass
 
 
 class SetInfraConfiguredSSL(SSL):
@@ -413,16 +478,48 @@ class SetInfraConfiguredSSL(SSL):
         return "Setting infra as SSL configured..."
 
     def do(self):
-        if not self.is_valid: return
+        if not self.is_valid:
+            return
         infra = self.infra
         infra.ssl_configured = True
         infra.save()
 
     def undo(self):
-        if not self.is_valid: return
+        if not self.is_valid:
+            return
         infra = self.infra
         infra.ssl_configured = False
         infra.save()
+
+
+class UpdateExpireAtDate(SSL):
+    def __unicode__(self):
+        return "Updating expire_at date..."
+
+    @property
+    def is_valid(self):
+        return self.infra.ssl_configured
+
+    def do(self):
+        if not self.is_valid:
+            return
+        output = self.exec_script(
+            ('date --date="$(openssl x509 -in /data/ssl/{}-cert.pem '
+             '-noout -enddate | cut -d= -f 2)" --iso-8601'.format(
+                self.infra.name))
+        )
+        try:
+            expire_at = output['stdout'][0]
+        except (IndexError, KeyError) as err:
+            raise Exception("Error get expire SSL date. {}".format(err))
+        host = self.host
+        host.ssl_expire_at = expire_at.strip()
+        host.save()
+
+    def undo(self):
+        host = self.host
+        host.ssl_expire_at = None
+        host.save()
 
 
 class SetReplicationUserRequireSSL(SSL):
