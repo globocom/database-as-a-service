@@ -734,11 +734,6 @@ class DatabaseInfra(BaseModel):
     engine_patch = models.ForeignKey(
         EnginePatch, related_name="databaseinfras",
         on_delete=models.PROTECT, null=True)
-    ssl_expire_at = models.DateField(
-        verbose_name=_("ssl_expire_at"),
-        auto_now_add=False,
-        blank=True,
-        null=True)
     maintenance_window = models.IntegerField(
         default=0,
         blank=False,
@@ -1023,6 +1018,11 @@ class Host(BaseModel):
     root_size_gb = models.FloatField(
         verbose_name=_("RFS Size (GB)"), null=True, blank=True
     )
+    ssl_expire_at = models.DateField(
+        verbose_name=_("ssl_expire_at"),
+        auto_now_add=False,
+        blank=True,
+        null=True)
 
     def __unicode__(self):
         return self.hostname
