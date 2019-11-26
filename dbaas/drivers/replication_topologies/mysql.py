@@ -1118,13 +1118,8 @@ class MySQLFoxHAAWS(MySQLFoxHA):
             'workflow.steps.util.volume_provider.WaitSnapshotAvailableMigrate',
             'workflow.steps.util.volume_provider.AddHostsAllowDatabaseMigrate',
             'workflow.steps.util.volume_provider.CreatePubKeyMigrate',
-<<<<<<< HEAD
-            ('workflow.steps.util.volume_provider.'
-             'NewVolumeOnSlaveMigrateFirstNode'),
-=======
             ('workflow.steps.util.volume_provider'
              '.NewVolumeOnSlaveMigrateFirstNode'),
->>>>>>> elesbom-update-ssl-field
             ('workflow.steps.util.volume_provider'
              '.MountDataVolumeOnSlaveFirstNode'),
             ('workflow.steps.util.volume_provider'
