@@ -414,6 +414,12 @@ class MongoDBReplicaset(BaseTopology):
             'workflow.steps.util.plan.Initialization',
             'workflow.steps.util.plan.Configure',
             ) + self.get_change_binaries_upgrade_patch_steps() + (
+            'workflow.steps.util.database.Start',
+            'workflow.steps.util.vm.CheckAccessToMaster',
+            'workflow.steps.util.vm.CheckAccessFromMaster',
+            'workflow.steps.util.acl.ReplicateAclsMigrate',
+            'workflow.steps.mongodb.database.AddInstanceToReplicaSet',
+            'workflow.steps.util.database.Stop',
             'workflow.steps.util.volume_provider.TakeSnapshotFromMaster',
             ('workflow.steps.util.volume_provider'
              '.WaitSnapshotAvailableMigrate'),
@@ -429,10 +435,6 @@ class MongoDBReplicaset(BaseTopology):
             'workflow.steps.util.volume_provider.RemoveSnapshotMigrate',
             'workflow.steps.util.disk.RemoveDeprecatedFiles',
             'workflow.steps.util.database.Start',
-            'workflow.steps.util.vm.CheckAccessToMaster',
-            'workflow.steps.util.vm.CheckAccessFromMaster',
-            'workflow.steps.util.acl.ReplicateAclsMigrate',
-            'workflow.steps.mongodb.database.AddInstanceToReplicaSet',
             'workflow.steps.util.database.CheckIsUp',
             'workflow.steps.util.database.WaitForReplication',
             'workflow.steps.mongodb.database.SetNotEligible',
