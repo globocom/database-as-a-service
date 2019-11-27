@@ -61,6 +61,8 @@ wait_timeout                    = {{ configuration.wait_timeout.value }}
 interactive_timeout             = {{ configuration.interactive_timeout.value }}
 log_bin_trust_function_creators = {{ configuration.log_bin_trust_function_creators.value }}
 
+sql_mode                        = {{ configuration.sql_mode.value }}
+
 # Binary Logging
 log_bin                         = /data/repl/mysql-bin
 relay_log                       = /data/repl/mysql-relay
@@ -137,7 +139,7 @@ createconfigdbrsyslogfile()
 \$InputRunFileMonitor
 
 \$ModLoad imfile
-\$InputFileName /data/logs/mysql-slow.log 
+\$InputFileName /data/logs/mysql-slow.log
 \$InputFileTag mysql-slow:
 \$InputFileStateFile mysql-slow-dbaas
 
