@@ -414,6 +414,10 @@ class MongoDBReplicaset(BaseTopology):
             'workflow.steps.util.plan.Initialization',
             'workflow.steps.util.plan.Configure',
             ) + self.get_change_binaries_upgrade_patch_steps() + (
+<<<<<<< HEAD
+=======
+            'workflow.steps.util.database.Stop',
+>>>>>>> elesbom-update-ssl-field
             'workflow.steps.util.database.Start',
             'workflow.steps.util.vm.CheckAccessToMaster',
             'workflow.steps.util.vm.CheckAccessFromMaster',
