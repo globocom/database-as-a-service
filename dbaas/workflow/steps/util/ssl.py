@@ -129,6 +129,12 @@ class SSL(BaseInstanceStep):
         return output
 
 
+class IfConguredSSLValidator(SSL):
+    @property
+    def is_valid(self):
+        return self.infra.ssl_configured
+
+
 class UpdateOpenSSlLib(SSL):
 
     def __unicode__(self):
@@ -146,6 +152,10 @@ class UpdateOpenSSlLib(SSL):
         fi
         """
         self.exec_script(script)
+
+
+class UpdateOpenSSlLibIfConfigured(UpdateOpenSSlLib, IfConguredSSLValidator):
+    pass
 
 
 class CreateSSLFolder(SSL):
@@ -170,6 +180,10 @@ class CreateSSLFolderRollbackIfRunning(CreateSSLFolder):
     def undo(self):
         if self.vm_is_up(attempts=2):
             super(CreateSSLFolderRollbackIfRunning, self).undo()
+
+
+class CreateSSLFolderIfConfigured(CreateSSLFolder, IfConguredSSLValidator):
+    pass
 
 
 class InstanceSSLBaseName(SSL):
@@ -262,6 +276,16 @@ class CreateSSLConfForInfraEndPoint(CreateSSLConfigFile,
     pass
 
 
+class CreateSSLConfForInfraEndPointIfConfigured(CreateSSLConfForInfraEndPoint,
+                                                IfConguredSSLValidator):
+    pass
+
+
+class CreateSSLConfForInstanceIPIfConfigured(CreateSSLConfForInstanceIP,
+                                             IfConguredSSLValidator):
+    pass
+
+
 class RequestSSL(SSL):
 
     def __unicode__(self):
@@ -288,7 +312,17 @@ class RequestSSLForInstance(RequestSSL, InstanceSSLBaseName):
     pass
 
 
+class RequestSSLForInstanceIfConfigured(RequestSSLForInstance,
+                                        IfConguredSSLValidator):
+    pass
+
+
 class RequestSSLForInfra(RequestSSL, InfraSSLBaseName):
+    pass
+
+
+class RequestSSLForInfraIfConfigured(RequestSSLForInfra,
+                                     IfConguredSSLValidator):
     pass
 
 
@@ -359,7 +393,17 @@ class CreateJsonRequestFileInstance(CreateJsonRequestFile,
     pass
 
 
+class CreateJsonRequestFileInstanceIfConfigured(CreateJsonRequestFileInstance,
+                                                IfConguredSSLValidator):
+    pass
+
+
 class CreateJsonRequestFileInfra(CreateJsonRequestFile, InfraSSLBaseName):
+    pass
+
+
+class CreateJsonRequestFileInfraIfConfigured(CreateJsonRequestFileInfra,
+                                             IfConguredSSLValidator):
     pass
 
 
@@ -397,7 +441,17 @@ class CreateCertificateInstance(CreateCertificate, InstanceSSLBaseName):
     pass
 
 
+class CreateCertificateInstanceIfConfigured(CreateCertificateInstance,
+                                            IfConguredSSLValidator):
+    pass
+
+
 class CreateCertificateInfra(CreateCertificate, InfraSSLBaseName):
+    pass
+
+
+class CreateCertificateInfraIfConfigured(CreateCertificateInfra,
+                                         IfConguredSSLValidator):
     pass
 
 
@@ -420,6 +474,11 @@ class SetSSLFilesAccessMySQL(SSL):
         self.sll_file_access_script()
 
 
+class SetSSLFilesAccessMySQLIfConfigured(SetSSLFilesAccessMySQL,
+                                         IfConguredSSLValidator):
+    pass
+
+
 class SetInfraConfiguredSSL(SSL):
     def __unicode__(self):
         return "Setting infra as SSL configured..."
@@ -437,6 +496,36 @@ class SetInfraConfiguredSSL(SSL):
         infra = self.infra
         infra.ssl_configured = False
         infra.save()
+
+
+class UpdateExpireAtDate(SSL):
+    def __unicode__(self):
+        return "Updating expire_at date..."
+
+    @property
+    def is_valid(self):
+        return self.infra.ssl_configured
+
+    def do(self):
+        if not self.is_valid:
+            return
+        output = self.exec_script(
+            ('date --date="$(openssl x509 -in /data/ssl/{}-cert.pem '
+             '-noout -enddate | cut -d= -f 2)" --iso-8601'.format(
+                self.infra.name))
+        )
+        try:
+            expire_at = output['stdout'][0]
+        except (IndexError, KeyError) as err:
+            raise Exception("Error get expire SSL date. {}".format(err))
+        host = self.host
+        host.ssl_expire_at = expire_at.strip()
+        host.save()
+
+    def undo(self):
+        host = self.host
+        host.ssl_expire_at = None
+        host.save()
 
 
 class SetReplicationUserRequireSSL(SSL):
