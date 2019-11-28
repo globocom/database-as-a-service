@@ -320,8 +320,10 @@ class Database(BaseModel):
                     environment=self.environment.name,
                     created_at=self.created_at
                 )
-            except Exception, err:
-                LOG.error('Erro ao criar o database history para "o database {}: {}'.format(self.id, err))
+            except Exception as err:
+                LOG.error(
+                    ('Error on creating database history for '
+                     '"database {}: {}'.format(self.id, err)))
 
             super(Database, self).delete(*args, **kwargs)
 
