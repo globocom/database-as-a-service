@@ -110,6 +110,9 @@ class Snapshot(BackupInfo):
     snapshot_name = models.CharField(
         verbose_name="Snapshot Name", max_length=200, null=True, blank=True
     )
+    volume_path = models.CharField(
+        verbose_name="Volume Path", max_length=255, null=True, blank=True
+    )
 
     def __unicode__(self):
         return "Snapshot from {} started at {}".format(
