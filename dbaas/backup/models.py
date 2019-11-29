@@ -122,3 +122,4 @@ class Snapshot(BackupInfo):
     def done(self, response):
         self.snapshopt_id = response['identifier']
         self.snapshot_name = response['description']
+        self.volume_path = response['volume_path']
