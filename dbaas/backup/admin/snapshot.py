@@ -21,8 +21,8 @@ class SnapshotAdmin(admin.ModelAdmin):
     search_fields = ("database_name", "instance__dns", 'volume__identifier')
     readonly_fields = (
         "database_name", "instance", "start_at", "end_at", "purge_at", "type",
-        "status", "snapshopt_id", "snapshot_name", "size", "environment",
-        "error", "is_automatic", "group", 'volume'
+        "status", "snapshopt_id", "volume_path", "snapshot_name", "size",
+        "environment", "error", "is_automatic", "group", 'volume'
     )
     ordering = ["-start_at"]
 
