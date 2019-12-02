@@ -1,15 +1,19 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
+import logging
+
 from rest_framework import viewsets, serializers, status
 from rest_framework.response import Response
+from django.contrib.sites.models import Site
+
 from dbaas.middleware import UserMiddleware
 from logical import models
+from logical.forms import DatabaseForm
 from physical.models import Plan, Environment
 from account.models import Team
 from .credential import CredentialSerializer
-from django.contrib.sites.models import Site
 from notification.tasks import TaskRegister
-import logging
+
 
 LOG = logging.getLogger(__name__)
 
@@ -19,7 +23,9 @@ class DatabaseSerializer(serializers.HyperlinkedModelSerializer):
         source='plan', view_name='plan-detail',
         queryset=Plan.objects.filter(is_active=True)
     )
-    replication_topology_id = serializers.Field(source='databaseinfra.plan.replication_topology.id')
+    replication_topology_id = serializers.Field(
+        source='databaseinfra.plan.replication_topology.id'
+    )
     environment = serializers.HyperlinkedRelatedField(
         source='environment', view_name='environment-detail',
         queryset=Environment.objects
@@ -35,7 +41,9 @@ class DatabaseSerializer(serializers.HyperlinkedModelSerializer):
     credentials = CredentialSerializer(many=True, read_only=True)
     status = serializers.Field(source='status')
     # used_size_in_bytes = serializers.Field(source='used_size_in_bytes')
-    used_size_in_bytes = serializers.SerializerMethodField('get_used_size_in_bytes')
+    used_size_in_bytes = serializers.SerializerMethodField(
+        'get_used_size_in_bytes'
+    )
     engine = serializers.CharField(source='infra.engine', read_only=True)
     is_locked = serializers.SerializerMethodField('get_is_locked')
 
@@ -66,7 +74,7 @@ class DatabaseSerializer(serializers.HyperlinkedModelSerializer):
     def _get_or_none_if_error(self, database, prop_name):
         try:
             val = getattr(database, prop_name)
-        except Exception, e:
+        except Exception as e:
             LOG.error("Error get {} of database with id {}, error: {}".format(
                 prop_name, database.id, e
             ))
@@ -125,12 +133,18 @@ class DatabaseAPI(viewsets.ModelViewSet):
             self.pre_save(serializer.object)
             data = serializer.restore_fields(request.DATA, request.FILES)
 
+            backup_hour, maintenance_hour = (
+                DatabaseForm.randomize_backup_and_maintenance_hour()
+            )
+            LOG.error("{}".format(data))
             result = TaskRegister.database_create(
                 name=data['name'], plan=data['plan'],
                 environment=data['environment'], team=data['team'],
                 project=data['project'], description=data['description'],
-                backup_hour=data.get('backup_hour'),
-                maintenance_window=data.get('maintenance_window'),
+                backup_hour=data.get('backup_hour', backup_hour),
+                maintenance_window=data.get(
+                    'maintenance_window', maintenance_hour
+                ),
                 maintenance_day=data.get('maintenance_day'),
                 subscribe_to_email_events=data['subscribe_to_email_events'],
                 user=request.user,

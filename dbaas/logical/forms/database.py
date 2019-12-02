@@ -73,14 +73,21 @@ class DatabaseForm(models.ModelForm):
     def __init__(self, *args, **kwargs):
         super(DatabaseForm, self).__init__(*args, **kwargs)
         self.fields['is_in_quarantine'].widget = forms.HiddenInput()
-        random_backup_hour = random.randint(0, 6)
-        self.fields['backup_hour'].initial = random_backup_hour
-        maintenance_choices = range(6)
-        if random_backup_hour < 6:
-            maintenance_choices.remove(random_backup_hour)
-        self.fields['maintenance_window'].initial = random.choice(
-            maintenance_choices
+        backup_hour, maintenance_hour = (
+            self.randomize_backup_and_maintenance_hour()
         )
+        self.fields['backup_hour'].initial = backup_hour
+        self.fields['maintenance_window'].initial = maintenance_hour
+
+    @staticmethod
+    def randomize_backup_and_maintenance_hour():
+        backup_hour = random.randint(0, 6)
+        maintenance_choices = range(6)
+        if backup_hour < 6:
+            maintenance_choices.remove(backup_hour)
+        maintenance_hour = random.choice(maintenance_choices)
+
+        return backup_hour, maintenance_hour
 
     def _validate_description(self, cleaned_data):
         if 'description' in cleaned_data:
