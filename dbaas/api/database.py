@@ -136,7 +136,7 @@ class DatabaseAPI(viewsets.ModelViewSet):
             backup_hour, maintenance_hour = (
                 DatabaseForm.randomize_backup_and_maintenance_hour()
             )
-            LOG.error("{}".format(data))
+            LOG.error("TSURUDATA {}".format(data))
             result = TaskRegister.database_create(
                 name=data['name'], plan=data['plan'],
                 environment=data['environment'], team=data['team'],
