@@ -589,6 +589,12 @@ class ConfigurationMySQL(ConfigurationBase):
         return self.get_parameter(parameter_name, default)
 
     @property
+    def sql_mode(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 'modes'
+        return self.get_parameter(parameter_name, default)
+
+    @property
     def audit_log_format(self):
         parameter_name = inspect.stack()[0][3]
         default = 'NEW'
