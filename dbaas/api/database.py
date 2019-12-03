@@ -133,7 +133,7 @@ class DatabaseAPI(viewsets.ModelViewSet):
             self.pre_save(serializer.object)
             data = serializer.restore_fields(request.DATA, request.FILES)
 
-            backup_hour, maintenance_hour = (
+            backup_hour, maintenance_hour, maintenance_day = (
                 DatabaseForm.randomize_backup_and_maintenance_hour()
             )
             LOG.error("TSURUDATA {}".format(data))
@@ -145,7 +145,7 @@ class DatabaseAPI(viewsets.ModelViewSet):
                 maintenance_window=data.get(
                     'maintenance_window', maintenance_hour
                 ),
-                maintenance_day=data.get('maintenance_day'),
+                maintenance_day=data.get('maintenance_day', maintenance_day),
                 subscribe_to_email_events=data['subscribe_to_email_events'],
                 user=request.user,
                 register_user=False
