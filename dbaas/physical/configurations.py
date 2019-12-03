@@ -591,7 +591,7 @@ class ConfigurationMySQL(ConfigurationBase):
     @property
     def sql_mode(self):
         parameter_name = inspect.stack()[0][3]
-        default = 'modes'
+        default = 'default'
         return self.get_parameter(parameter_name, default)
 
     @property
