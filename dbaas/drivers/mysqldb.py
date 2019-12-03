@@ -420,6 +420,8 @@ class MySQL(BaseDriver):
         client = self.get_client(instance)
         if name == 'init_connect':
             query = 'set global {} = "{}"'.format(name, value)
+        elif name == 'sql_mode' and value.lower() != 'default':
+            query = "set global {} = '{}'".format(name, value)
         elif value == '':
             query = "set global {} = ''".format(name)
         else:
