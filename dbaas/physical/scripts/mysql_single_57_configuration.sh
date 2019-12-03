@@ -61,7 +61,9 @@ wait_timeout                    = {{ configuration.wait_timeout.value }}
 interactive_timeout             = {{ configuration.interactive_timeout.value }}
 log_bin_trust_function_creators = {{ configuration.log_bin_trust_function_creators.value }}
 
+{% if configuration.sql_mode.value != 'default' %}
 sql_mode                        = {{ configuration.sql_mode.value }}
+{% endif %}
 
 # Binary Logging
 log_bin                         = /data/repl/mysql-bin
