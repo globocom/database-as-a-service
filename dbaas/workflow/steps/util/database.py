@@ -155,6 +155,11 @@ class StopIfRunning(Stop):
         return is_valid and self.is_up(attempts=3)
 
 
+class StopWithoutUndo(Stop):
+    def undo(self):
+        pass
+
+
 class StopIfRunningAndVMUp(StopIfRunning):
 
     @property
@@ -171,7 +176,7 @@ class Start(DatabaseStep):
 
     @property
     def undo_klass(self):
-        return Stop
+        return StopIfRunning
 
     def do(self):
         if not self.is_valid:

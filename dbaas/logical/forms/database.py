@@ -3,16 +3,17 @@ from __future__ import absolute_import, unicode_literals
 import logging
 import datetime
 import random
+
 from django.utils.translation import ugettext_lazy as _
 from django.forms import models
 from django import forms
+
 from util import get_replication_topology_instance
 from drivers.factory import DriverFactory
 from physical.models import Plan, Environment, Engine
 from logical.forms.fields import AdvancedModelChoiceField
-from logical.models import Database, Project
+from logical.models import Database
 from logical.validators import database_name_evironment_constraint
-from system.models import Configuration
 
 LOG = logging.getLogger(__name__)
 
@@ -29,13 +30,19 @@ class DatabaseForm(models.ModelForm):
         (6, 'Saturday')
     ]
 
-    BACKUP_HOUR_CHOICES = [(hour,
-                            datetime.time(hour, 0).strftime(format='%H:%M')) for hour in range(24)]
-    MAINTENANCE_WINDOW_CHOICES = [(hour,
-                                    datetime.time(hour, 0).strftime('%H:%M - ' +
-                                                                    str((
-                                                                    datetime.datetime.combine(datetime.date.today(), datetime.time(hour)) +
-                                                                    datetime.timedelta(hours=1)).strftime('%H:%M')))) for hour in range(24)]
+    BACKUP_HOUR_CHOICES = [
+        (hour, datetime.time(hour, 0).strftime(format='%H:%M'))
+        for hour in range(24)
+    ]
+    MAINTENANCE_WINDOW_CHOICES = [
+        (hour,
+         datetime.time(hour, 0).strftime('%H:%M - ' + str(
+            (datetime.datetime.combine(
+                datetime.date.today(),
+                datetime.time(hour)
+            ) + datetime.timedelta(hours=1)
+            ).strftime('%H:%M')))) for hour in range(24)
+    ]
     environment = forms.ModelChoiceField(queryset=Environment.objects)
     engine = forms.ModelChoiceField(queryset=Engine.objects)
     plan = AdvancedModelChoiceField(
@@ -66,8 +73,23 @@ class DatabaseForm(models.ModelForm):
     def __init__(self, *args, **kwargs):
         super(DatabaseForm, self).__init__(*args, **kwargs)
         self.fields['is_in_quarantine'].widget = forms.HiddenInput()
-        self.fields['backup_hour'].initial = random.randint(0, 6)
-        self.fields['maintenance_window'].initial = random.randint(0, 5)
+        backup_hour, maintenance_hour, maintenance_day = (
+            self.randomize_backup_and_maintenance_hour()
+        )
+        self.fields['backup_hour'].initial = backup_hour
+        self.fields['maintenance_window'].initial = maintenance_hour
+        self.fields['maintenance_day'].initial = maintenance_day
+
+    @staticmethod
+    def randomize_backup_and_maintenance_hour():
+        backup_hour = random.randint(0, 6)
+        maintenance_choices = range(6)
+        if backup_hour < 6:
+            maintenance_choices.remove(backup_hour)
+        maintenance_hour = random.choice(maintenance_choices)
+        maintenance_day = random.randint(1, 7)
+
+        return backup_hour, maintenance_hour, maintenance_day
 
     def _validate_description(self, cleaned_data):
         if 'description' in cleaned_data:
@@ -96,11 +118,18 @@ class DatabaseForm(models.ModelForm):
             database_alocation_limit = team.database_alocation_limit
             LOG.debug("dbs: %s | type: %s" % (dbs, type(dbs)))
 
-            if (database_alocation_limit != 0 and len(dbs) >= database_alocation_limit):
-                LOG.warning("The database alocation limit of %s has been exceeded for the selected team %s => %s" % (
-                    database_alocation_limit, team, list(dbs)))
+            if (database_alocation_limit != 0
+                    and len(dbs) >= database_alocation_limit):
+                LOG.warning(
+                    ("The database alocation limit of {} has been exceeded "
+                     "for the selected team {} => {}").format(
+                        database_alocation_limit, team, list(dbs))
+                )
                 self._errors["team"] = self.error_class(
-                    [_("The database alocation limit of %s has been exceeded for the selected team: %s") % (database_alocation_limit, list(dbs))])
+                    [_(("The database alocation limit of {} has been "
+                        "exceeded for the selected team: {}")).format(
+                            database_alocation_limit, list(dbs))]
+                )
 
     def _validate_name(self, cleaned_data):
         if len(cleaned_data['name']) > 40:
@@ -120,10 +149,12 @@ class DatabaseForm(models.ModelForm):
     def _validate_backup_hour(self, cleaned_data):
         backup_hour = cleaned_data['backup_hour']
         maintenance_window = cleaned_data['maintenance_window']
-        
+
         if backup_hour == maintenance_window:
-            raise forms.ValidationError("Backup hour must not be equal to maintenance window.")
-        
+            raise forms.ValidationError(
+                "Backup hour must not be equal to maintenance window."
+            )
+
     def clean(self):
         cleaned_data = super(DatabaseForm, self).clean()
 
@@ -153,11 +184,13 @@ class DatabaseForm(models.ModelForm):
                     name=database_name, environment__name=environment
             ):
                 self._errors["name"] = self.error_class(
-                    [_("this name already exists in the selected environment")])
+                    [_(("this name already exists in the selected "
+                        "environment"))])
                 del cleaned_data["name"]
 
         self._validate_team_resources(cleaned_data)
-        if database_name_evironment_constraint(database_name, environment.name):
+        if database_name_evironment_constraint(
+                database_name, environment.name):
             raise forms.ValidationError(
                 _('%s already exists in production!') % database_name
             )

@@ -16,7 +16,8 @@ from slugify import slugify
 from util.models import BaseModel
 from drivers import DatabaseInfraStatus
 from system.models import Configuration
-from physical.errors import NoDiskOfferingGreaterError, NoDiskOfferingLesserError
+from physical.errors import (NoDiskOfferingGreaterError,
+                             NoDiskOfferingLesserError)
 from django.db.models import Q
 from django.utils.module_loading import import_by_path
 
@@ -25,9 +26,13 @@ LOG = logging.getLogger(__name__)
 
 
 class Offering(BaseModel):
-    name = models.CharField(verbose_name=_("Name"), max_length=100, help_text="Offering name")
+    name = models.CharField(
+        verbose_name=_("Name"), max_length=100, help_text="Offering name"
+    )
     cpus = models.IntegerField(verbose_name=_("Number of CPUs"), default=0,)
-    memory_size_mb = models.IntegerField(verbose_name=_("Memory (MB)"), default=0,)
+    memory_size_mb = models.IntegerField(
+        verbose_name=_("Memory (MB)"), default=0,
+    )
     environments = models.ManyToManyField(
         'Environment', verbose_name=_("Environments"), related_name='offerings'
     )
@@ -106,7 +111,8 @@ class Engine(BaseModel):
     )
     user_data_script = models.TextField(
         verbose_name=_("User data script"), blank=True, null=True,
-        help_text="Script that will be sent as an user-data to provision the virtual machine"
+        help_text=("Script that will be sent as an user-data to provision the "
+                   "virtual machine")
     )
     engine_upgrade_option = models.ForeignKey(
         "Engine", null=True, blank=True, related_name='backwards_engine',
@@ -473,7 +479,9 @@ class DiskOffering(BaseModel):
     @property
     def is_last_auto_resize_offering(self):
         try:
-            last_offering = DiskOffering.last_offering_available_for_auto_resize()
+            last_offering = (
+                DiskOffering.last_offering_available_for_auto_resize()
+            )
         except NoDiskOfferingLesserError:
             return False
         else:
@@ -516,7 +524,8 @@ class Plan(BaseModel):
     provider = models.IntegerField(choices=PROVIDER_CHOICES, default=0)
     max_db_size = models.IntegerField(
         default=0, verbose_name=_("Max database size (MB)"),
-        help_text=_("What is the maximum size of each database (MB). 0 means unlimited.")
+        help_text=_(("What is the maximum size of each database (MB). 0 "
+                     "means unlimited."))
     )
     engine_equivalent_plan = models.ForeignKey(
         "Plan", null=True, blank=True,
@@ -640,18 +649,23 @@ class DatabaseInfra(BaseModel):
         (DEAD, "Dead"),
         (ALERT, "Alert"))
 
-    name = models.CharField(verbose_name=_("DatabaseInfra Name"),
-                            max_length=100,
-                            unique=True,
-                            help_text=_("This could be the fqdn associated to the databaseinfra."))
-    user = models.CharField(verbose_name=_("DatabaseInfra User"),
-                            max_length=100,
-                            help_text=_(
-                                "Administrative user with permission to manage databases, create users and etc."),
-                            blank=True,
-                            null=False)
+    name = models.CharField(
+        verbose_name=_("DatabaseInfra Name"),
+        max_length=100,
+        unique=True,
+        help_text=_("This could be the fqdn associated to the databaseinfra."))
+    user = models.CharField(
+        verbose_name=_("DatabaseInfra User"),
+        max_length=100,
+        help_text=_(("Administrative user with permission to manage databases,"
+                     " create users and etc.")),
+        blank=True,
+        null=False
+    )
     password = EncryptedCharField(
-        verbose_name=_("DatabaseInfra Password"), max_length=255, blank=True, null=False)
+        verbose_name=_("DatabaseInfra Password"),
+        max_length=255, blank=True, null=False
+    )
     engine = models.ForeignKey(
         Engine, related_name="databaseinfras", on_delete=models.PROTECT)
     plan = models.ForeignKey(
@@ -660,23 +674,31 @@ class DatabaseInfra(BaseModel):
         Environment, related_name="databaseinfras", on_delete=models.PROTECT)
     capacity = models.PositiveIntegerField(
         default=1, help_text=_("How many databases is supported"))
-    per_database_size_mbytes = models.IntegerField(default=0,
-                                                   verbose_name=_(
-                                                       "Max database size (MB)"),
-                                                   help_text=_("What is the maximum size of each database (MB). 0 means unlimited."))
-    endpoint = models.CharField(verbose_name=_("DatabaseInfra Endpoint"),
-                                max_length=255,
-                                help_text=_(
-                                    "Usually it is in the form host:port[,host_n:port_n]. If the engine is mongodb this will be automatically generated."),
-                                blank=True,
-                                null=True)
+    per_database_size_mbytes = models.IntegerField(
+        default=0,
+        verbose_name=_("Max database size (MB)"),
+        help_text=_(("What is the maximum size of each database (MB). 0 means "
+                     "unlimited."))
+    )
+    endpoint = models.CharField(
+        verbose_name=_("DatabaseInfra Endpoint"),
+        max_length=255,
+        help_text=_(("Usually it is in the form host:port[,host_n:port_n]. "
+                     "If the engine is mongodb this will be automatically "
+                     "generated.")),
+        blank=True,
+        null=True
+    )
 
-    endpoint_dns = models.CharField(verbose_name=_("DatabaseInfra Endpoint (DNS)"),
-                                    max_length=255,
-                                    help_text=_(
-                                        "Usually it is in the form host:port[,host_n:port_n]. If the engine is mongodb this will be automatically generated."),
-                                    blank=True,
-                                    null=True)
+    endpoint_dns = models.CharField(
+        verbose_name=_("DatabaseInfra Endpoint (DNS)"),
+        max_length=255,
+        help_text=_(("Usually it is in the form host:port[,host_n:port_n]. "
+                     "If the engine is mongodb this will be automatically "
+                     "generated.")),
+        blank=True,
+        null=True
+    )
     disk_offering = models.ForeignKey(
         DiskOffering, related_name="databaseinfras",
         on_delete=models.PROTECT, null=True
@@ -712,11 +734,6 @@ class DatabaseInfra(BaseModel):
     engine_patch = models.ForeignKey(
         EnginePatch, related_name="databaseinfras",
         on_delete=models.PROTECT, null=True)
-    ssl_expire_at = models.DateField(
-        verbose_name=_("ssl_expire_at"),
-        auto_now_add=False,
-        blank=True,
-        null=True)
     maintenance_window = models.IntegerField(
         default=0,
         blank=False,
@@ -739,7 +756,10 @@ class DatabaseInfra(BaseModel):
         )
 
     def clean(self, *args, **kwargs):
-        if (not self.environment_id or not self.plan_id) or not self.plan.environments.filter(pk=self.environment_id).exists():
+        plan_exists = self.plan.environments.filter(
+            pk=self.environment_id
+        ).exists()
+        if (not self.environment_id or not self.plan_id) or not plan_exists:
             raise ValidationError({'engine': _("Invalid environment")})
 
     @property
@@ -789,7 +809,9 @@ class DatabaseInfra(BaseModel):
 
     @property
     def has_custom_parameter(self):
-        return DatabaseInfraParameter.objects.filter(databaseinfra=self).exists()
+        return DatabaseInfraParameter.objects.filter(
+            databaseinfra=self
+        ).exists()
 
     @property
     def available(self):
@@ -818,9 +840,14 @@ class DatabaseInfra(BaseModel):
     def get_active_for(cls, plan=None, environment=None):
         """Return active databaseinfras for selected plan and environment"""
         datainfras = DatabaseInfra.objects.filter(
-            plan=plan, environment=environment, instances__is_active=True).distinct()
-        LOG.debug('Total of datainfra with filter plan %s and environment %s: %s',
-                  plan, environment, len(datainfras))
+            plan=plan,
+            environment=environment,
+            instances__is_active=True
+        ).distinct()
+        LOG.debug(
+            ('Total of datainfra with filter plan {} and environment '
+             '{}: {}').format(plan, environment, len(datainfras))
+        )
         return datainfras
 
     @classmethod
@@ -867,14 +894,14 @@ class DatabaseInfra(BaseModel):
             try:
                 info = self.get_driver().info()
                 cache.set(key, info)
-            except:
+            except Exception:
                 # To make cache possible if the database hangs the connection
                 # with no reply
+                db_name = self.databases.all()[0].name
                 info = DatabaseInfraStatus(databaseinfra_model=self.__class__)
-                info.databases_status[self.databases.all()[0].name] = DatabaseInfraStatus(
+                info.databases_status[db_name] = DatabaseInfraStatus(
                     databaseinfra_model=self.__class__)
-                info.databases_status[
-                    self.databases.all()[0].name].is_alive = False
+                info.databases_status[db_name].is_alive = False
 
                 cache.set(key, info)
         return info
@@ -941,7 +968,8 @@ class DatabaseInfra(BaseModel):
         parameter_name_hyphen = parameter_name.replace('_', '-')
         try:
             dbinfraparameter = DatabaseInfraParameter.objects.get(
-                Q(parameter__name=parameter_name) | Q(parameter__name=parameter_name_hyphen),
+                Q(parameter__name=parameter_name)
+                | Q(parameter__name=parameter_name_hyphen),
                 databaseinfra=self,
             )
         except DatabaseInfraParameter.DoesNotExist:
@@ -990,6 +1018,11 @@ class Host(BaseModel):
     root_size_gb = models.FloatField(
         verbose_name=_("RFS Size (GB)"), null=True, blank=True
     )
+    ssl_expire_at = models.DateField(
+        verbose_name=_("ssl_expire_at"),
+        auto_now_add=False,
+        blank=True,
+        null=True)
 
     def __unicode__(self):
         return self.hostname
@@ -1125,7 +1158,6 @@ class Instance(BaseModel):
 
         return self.databaseinfra.plan.stronger_offering
 
-
     @property
     def is_redis(self):
         return self.instance_type == self.REDIS
@@ -1162,16 +1194,17 @@ class Instance(BaseModel):
             # validate instance connection before saving
             engine.check_status(instance=self)
             LOG.debug('Instance %s is ok', self)
-        except AuthenticationError, e:
+        except AuthenticationError as e:
             LOG.exception(e)
-            # at django 1.5, model validation throught form doesn't use field name in ValidationError.
+            # at django 1.5, model validation throught form doesn't use field
+            # name in ValidationError.
             # I put here, because I expected this problem can be solved in next
             # versions
             raise ValidationError({'user': e.message})
-        except ConnectionError, e:
+        except ConnectionError as e:
             LOG.exception(e)
             raise ValidationError({'instance': e.message})
-        except GenericDriverError, e:
+        except GenericDriverError as e:
             LOG.exception(e)
             raise ValidationError(e.message)
 
@@ -1180,7 +1213,7 @@ class Instance(BaseModel):
             status = self.databaseinfra.get_driver().check_status(
                 instance=self)
             return status
-        except:
+        except Exception:
             return False
 
     @property
@@ -1191,8 +1224,10 @@ class Instance(BaseModel):
     def is_current_write(self):
         try:
             driver = self.databaseinfra.get_driver()
-            return driver.check_instance_is_master(instance=self, default_timeout=True)
-        except:
+            return driver.check_instance_is_master(
+                instance=self, default_timeout=True
+            )
+        except Exception:
             return False
 
     def status_html(self):
@@ -1242,7 +1277,7 @@ class DatabaseInfraParameter(BaseModel):
             parameter=parameter,
             defaults={
                 'value': value,
-                'current_value': databaseinfra.get_dbaas_parameter_default_value(
+                'current_value': databaseinfra.get_dbaas_parameter_default_value(  # noqa
                     parameter_name=parameter.name
                 )
             },
@@ -1357,7 +1392,9 @@ class TopologyParameterCustomValue(BaseModel):
 
 class VipWithoutFutureVip(models.Manager):
     def get_queryset(self):
-        return super(VipWithoutFutureVip, self).get_queryset().exclude(original_vip__isnull=False)
+        return super(VipWithoutFutureVip, self).get_queryset().exclude(
+            original_vip__isnull=False
+        )
 
 
 class Vip(BaseModel):
