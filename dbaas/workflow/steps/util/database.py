@@ -171,7 +171,7 @@ class Start(DatabaseStep):
 
     @property
     def undo_klass(self):
-        return Stop
+        return StopIfRunning
 
     def do(self):
         if not self.is_valid:

@@ -177,9 +177,11 @@ class Database(BaseModel):
 
     class Meta:
         permissions = (
-            ("can_manage_quarantine_databases", "Can manage databases in quarantine"),
+            ("can_manage_quarantine_databases",
+             "Can manage databases in quarantine"),
             ("view_database", "Can view databases"),
-            ("upgrade_mongo24_to_30", "Can upgrade mongoDB version from 2.4 to 3.0"),
+            ("upgrade_mongo24_to_30",
+             "Can upgrade mongoDB version from 2.4 to 3.0"),
             ("upgrade_database", "Can upgrade databases"),
             ("configure_ssl", "Can configure SSL"),
         )
@@ -297,7 +299,7 @@ class Database(BaseModel):
             )
             for credential in self.credentials.all():
                 instance = factory_for(self.databaseinfra)
-                instance.remove_user(credential)
+                instance.try_remove_user(credential)
 
             engine = self.databaseinfra.engine
             databaseinfra = self.databaseinfra
@@ -320,8 +322,10 @@ class Database(BaseModel):
                     environment=self.environment.name,
                     created_at=self.created_at
                 )
-            except Exception, err:
-                LOG.error('Erro ao criar o database history para "o database {}: {}'.format(self.id, err))
+            except Exception as err:
+                LOG.error(
+                    ('Error on creating database history for '
+                     '"database {}: {}'.format(self.id, err)))
 
             super(Database, self).delete(*args, **kwargs)
 
@@ -339,7 +343,7 @@ class Database(BaseModel):
                     new_credential.save()
 
                     instance = factory_for(self.databaseinfra)
-                    instance.update_user(new_credential)
+                    instance.try_update_user(new_credential)
 
     def clean(self):
         if not self.pk:
@@ -450,7 +454,8 @@ class Database(BaseModel):
                 info = self.databaseinfra.get_info(force_refresh=True)
                 database_status = info.get_database_status(self.name)
         except ConnectionError as e:
-            msg = "ConnectionError calling database_status for database {}: {}".format(self, e)
+            msg = ("ConnectionError calling database_status for database {}:"
+                   "{}").format(self, e)
             LOG.error(msg)
             database_status = DatabaseStatus(self)
 
@@ -499,7 +504,9 @@ class Database(BaseModel):
     @property
     def capacity(self):
         if self.status:
-            return round((1.0 * self.used_size_in_bytes / self.total_size) if self.total_size else 0, 2)
+            return round(
+                ((1.0 * self.used_size_in_bytes / self.total_size)
+                 if self.total_size else 0, 2))
 
     @classmethod
     def purge_quarantine(self):
@@ -511,8 +518,9 @@ class Database(BaseModel):
         )
         for database in databases:
             database.delete()
-            LOG.info("The database %s was deleted, because it was set to quarentine %d days ago" % (
-                database.name, quarantine_time)
+            LOG.info(
+                ("The database %s was deleted, because it was set to "
+                 "quarentine %d days ago") % (database.name, quarantine_time)
             )
 
     @classmethod
@@ -529,7 +537,8 @@ class Database(BaseModel):
         from notification.tasks import TaskRegister
 
         LOG.info(
-            "Changing database volume with params: database {} snapshot: {}, user: {}".format(
+            ("Changing database volume with params: "
+             "database {} snapshot: {}, user: {}").format(
                 database, snapshot, user
             )
         )
@@ -568,7 +577,8 @@ class Database(BaseModel):
         return "/admin/logical/database/{}/disk_resize/".format(self.id)
 
     def get_mongodb_engine_version_upgrade_url(self):
-        return "/admin/logical/database/{}/mongodb_engine_version_upgrade/".format(self.id)
+        return ("/admin/logical/database/{}/"
+                "mongodb_engine_version_upgrade/").format(self.id)
 
     def get_upgrade_url(self):
         return "/admin/logical/database/{}/upgrade/".format(self.id)
@@ -580,22 +590,30 @@ class Database(BaseModel):
         return "/admin/logical/database/{}/upgrade_patch/".format(self.id)
 
     def get_upgrade_patch_retry_url(self):
-        return "/admin/logical/database/{}/upgrade_patch_retry/".format(self.id)
+        return "/admin/logical/database/{}/upgrade_patch_retry/".format(
+            self.id
+        )
 
     def get_change_parameters_retry_url(self):
-        return "/admin/logical/database/{}/change_parameters_retry/".format(self.id)
+        return "/admin/logical/database/{}/change_parameters_retry/".format(
+            self.id
+        )
 
     def get_reinstallvm_retry_url(self):
         return "/admin/logical/database/{}/reinstallvm_retry/".format(self.id)
 
     def get_recreateslave_retry_url(self):
-        return "/admin/logical/database/{}/recreateslave_retry/".format(self.id)
+        return "/admin/logical/database/{}/recreateslave_retry/".format(
+            self.id
+        )
 
     def get_configure_ssl_url(self):
         return "/admin/logical/database/{}/configure_ssl/".format(self.id)
 
     def get_configure_ssl_retry_url(self):
-        return "/admin/logical/database/{}/configure_ssl_retry/".format(self.id)
+        return "/admin/logical/database/{}/configure_ssl_retry/".format(
+            self.id
+        )
 
     def is_mongodb_24(self):
         engine = self.engine
@@ -687,10 +705,15 @@ class Database(BaseModel):
 
         disk_offering = DiskOffering.objects.get(id=new_disk_offering)
 
-        TaskRegister.database_disk_resize(database=database, user=user, disk_offering=disk_offering)
+        TaskRegister.database_disk_resize(
+            database=database, user=user, disk_offering=disk_offering
+        )
 
-    def update_host_disk_used_size(self, host_address, used_size_kb, total_size_kb=None):
-        instance = self.databaseinfra.instances.filter(address=host_address).first()
+    def update_host_disk_used_size(self, host_address, used_size_kb,
+                                   total_size_kb=None):
+        instance = self.databaseinfra.instances.filter(
+            address=host_address
+        ).first()
         if not instance:
             raise ObjectDoesNotExist()
 
@@ -726,7 +749,8 @@ class Database(BaseModel):
 
     def can_be_restored(self):
         if not self.restore_allowed():
-            return False, 'Restore is not allowed. Please, contact DBaaS team for more information'
+            return False, ('Restore is not allowed. Please, contact DBaaS '
+                           'team for more information')
 
         if self.is_in_quarantine:
             return False, "Database in quarantine cannot be restored"
@@ -735,7 +759,8 @@ class Database(BaseModel):
             return False, "Database is not alive and cannot be restored"
 
         if self.is_being_used_elsewhere():
-            return False, "Database is being used by another task, please check your tasks"
+            return False, ("Database is being used by another task, please "
+                           "check your tasks")
 
         return True, None
 
@@ -743,11 +768,11 @@ class Database(BaseModel):
         error = None
         if self.is_protected and not self.is_in_quarantine:
             error = "Database {} is protected and cannot be deleted"
-        elif self.is_dead:
-            error = "Database {} is not alive and cannot be deleted"
-        elif self.is_being_used_elsewhere():
-            error = "Database {} cannot be deleted because" \
-                    " it is in use by another task."
+        # elif self.is_dead:
+        #     error = "Database {} is not alive and cannot be deleted"
+        # elif self.is_being_used_elsewhere():
+        #     error = "Database {} cannot be deleted because" \
+        #             " it is in use by another task."
 
         if error:
             return False, error.format(self.name)
@@ -759,7 +784,8 @@ class Database(BaseModel):
             error = "MongoDB 2.4 cannot be upgraded by this task."
         elif self.is_in_quarantine:
             error = "Database in quarantine and cannot be upgraded."
-        elif self.is_being_used_elsewhere(['notification.tasks.upgrade_database']):
+        elif self.is_being_used_elsewhere([('notification.tasks'
+                                            '.upgrade_database')]):
             error = "Database cannot be upgraded because " \
                     "it is in use by another task."
         elif not self.infra.plan.engine_equivalent_plan:
@@ -843,8 +869,10 @@ class Database(BaseModel):
     def can_do_change_parameters_retry(self):
         error = None
         if self.is_in_quarantine:
-            error = "Database in quarantine and cannot have the parameters changed."
-        elif self.is_being_used_elsewhere(['notification.tasks.change_parameters_database']):
+            error = ("Database in quarantine and cannot have the parameters "
+                     "changed.")
+        elif self.is_being_used_elsewhere([('notification.tasks'
+                                            '.change_parameters_database')]):
             error = "Database cannot have the parameters changed because" \
                     " it is in use by another task."
         if error:
@@ -854,7 +882,8 @@ class Database(BaseModel):
     def can_do_change_parameters(self):
         error = None
         if self.is_in_quarantine:
-            error = "Database in quarantine and cannot have the parameters changed."
+            error = ("Database in quarantine and cannot have the parameters "
+                     "changed.")
         elif self.is_dead:
             error = "Database is dead and cannot be resized."
         elif self.is_being_used_elsewhere():
@@ -872,7 +901,8 @@ class Database(BaseModel):
         elif self.is_dead:
             error = "Database is dead and cannot migrate host"
         elif self.is_being_used_elsewhere():
-            error = "Database cannot migrate host it is in use by another task."
+            error = ("Database cannot migrate host it is in use "
+                     "by another task.")
 
         if error:
             return False, error
@@ -896,7 +926,8 @@ class Database(BaseModel):
         error = None
         if self.is_in_quarantine:
             error = "Database in quarantine and cannot have SSL cofigured."
-        elif self.is_being_used_elsewhere(['notification.tasks.configure_ssl_database']):
+        elif self.is_being_used_elsewhere([('notification.tasks'
+                                            '.configure_ssl_database')]):
             error = "Database cannot have SSL cofigured because " \
                     "it is in use by another task."
         if error:
@@ -1058,6 +1089,8 @@ class Credential(BaseModel):
 #
 # SIGNALS
 #
+
+
 @receiver(pre_delete, sender=Database)
 def database_pre_delete(sender, **kwargs):
     """
@@ -1066,20 +1099,24 @@ database pre delete signal. Removes database from the engine
     database = kwargs.get("instance")
     LOG.debug("database pre-delete triggered")
     engine = factory_for(database.databaseinfra)
-    engine.remove_database(database)
+    engine.try_remove_database(database)
 
 
 @receiver(post_save, sender=Database)
 def database_post_save(sender, **kwargs):
     """
-database post save signal. Creates the database in the driver and creates a new credential.
-"""
+        Database post save signal. Creates the database in the driver and
+        creates a new credential.
+    """
     database = kwargs.get("instance")
     is_new = kwargs.get("created")
     LOG.debug("database post-save triggered")
     if is_new and database.engine_type != 'redis':
-        LOG.info("a new database (%s) were created... provision it in the engine" % (
-            database.name))
+        LOG.info(
+            ("a new database (%s) were created... "
+             "provision it in the engine" % (
+                database.name))
+            )
         engine = factory_for(database.databaseinfra)
         engine.create_database(database)
         database.automatic_create_first_credential()
@@ -1114,7 +1151,8 @@ def database_pre_save(sender, **kwargs):
                 if saved_object.team.external:
                     TaskRegister.update_database_monitoring(
                         database=database,
-                        hostgroup=saved_object.team.organization.grafana_hostgroup,
+                        hostgroup=(saved_object.team.organization
+                                   .grafana_hostgroup),
                         action='remove')
                 if database.team.external:
                     TaskRegister.update_database_monitoring(
@@ -1155,7 +1193,8 @@ def project_pre_save(sender, **kwargs):
 
 class NoDatabaseInfraCapacity(Exception):
 
-    """ There isn't databaseinfra capable to support a new database with this plan """
+    """ There isn't databaseinfra capable to support a new database
+        with this plan """
     pass
 
 
