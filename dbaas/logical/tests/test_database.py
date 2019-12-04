@@ -259,14 +259,6 @@ class DatabaseTestCase(TestCase):
         self.assertTrue(can_be_deleted)
         self.assertIsNone(error)
 
-    def test_cannot_delete_dead(self):
-        database = factory.DatabaseFactory()
-        database.status = database.DEAD
-
-        can_be_deleted, error = database.can_be_deleted()
-        self.assertFalse(can_be_deleted)
-        self.assertEqual(error, ERROR_DELETE_DEAD.format(database.name))
-
     def test_can_upgrade(self):
         database = factory.DatabaseFactory()
         database.status = database.ALIVE
