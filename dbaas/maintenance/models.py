@@ -81,7 +81,7 @@ class Maintenance(BaseModel):
                 hm.save()
                 total_hosts += 1
 
-        except Exception, e:
+        except Exception as e:
             error = e.args[1]
             LOG.warn("Error: {}".format(error))
             self.status = self.REJECTED
@@ -130,7 +130,7 @@ class Maintenance(BaseModel):
         scheduled_tasks = inspect.scheduled()
         try:
             hosts = scheduled_tasks.keys()
-        except Exception, e:
+        except Exception as e:
             LOG.info("Could not retrieve celery scheduled tasks: {}".format(e))
             return False
 
@@ -147,6 +147,35 @@ class Maintenance(BaseModel):
                     return True
 
         return False
+
+
+class TaskSchedule(BaseModel):
+    SCHEDULED = 0
+    RUNNING = 1
+    FINISHED = 2
+
+    STATUS = (
+        (SCHEDULED, 'Scheduled'),
+        (RUNNING, 'Running'),
+        (FINISHED, 'Finished'),
+    )
+
+    method_path = models.CharField(null=False, blank=False, max_length=500)
+    status = models.IntegerField(choices=STATUS, default=SCHEDULED)
+    scheduled_for = models.DateTimeField(null=True, blank=True)
+    started_at = models.DateTimeField(null=True, blank=True)
+    finished_at = models.DateTimeField(null=True, blank=True)
+    database = models.ForeignKey(Database, related_name='task_schedules')
+
+    def __unicode__(self):
+        return "path: {} | scheduled_for: {}".format(
+            self.method_path, self.scheduled_for
+        )
+
+    class Meta:
+        permissions = (
+            ("view_maintenance", "Can view maintenance"),
+        )
 
 
 class HostMaintenance(BaseModel):
