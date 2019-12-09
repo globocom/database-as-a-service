@@ -4,7 +4,7 @@ INSERT INTO physical_parameter (created_at, updated_at, engine_type_id,
     allowed_values, parameter_type)
 SELECT now(), now(), physical_enginetype.id,
     'sql_mode', 1, null,
-    'Modes affect the SQL syntax MySQL supports and the data validation checks it performs. This makes it easier to use MySQL in different environments and to use MySQL together with other database servers. Use '''' to set sql_mode to empty.',
+    'Modes affect the SQL syntax MySQL supports and the data validation checks it performs. This makes it easier to use MySQL in different environments and to use MySQL together with other database servers. Use '''' (two single quotes) to set sql_mode to empty.',
     '', 'string'
 from physical_enginetype where name = 'mysql' limit 1;
 
