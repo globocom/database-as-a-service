@@ -546,6 +546,12 @@ class Plan(BaseModel):
     weaker_offering = models.ForeignKey(
         Offering, related_name='weaker_offerings', null=True, blank=True
     )
+    migrate_engine_equivalent_plan = models.ForeignKey(
+        "Plan", null=True, blank=True,
+        verbose_name=_("Engine migrate plan"),
+        on_delete=models.SET_NULL,
+        related_name='backwards_engine_plan'
+    )
 
     @property
     def engine_type(self):
