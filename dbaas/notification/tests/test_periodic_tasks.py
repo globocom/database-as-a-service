@@ -6,12 +6,12 @@ from physical.tests import factory as factory_physical
 from physical.models import Instance
 from logical.tests import factory as factory_logical
 from dbaas.tests.helpers import InstanceHelper
-from notification.periodic_tasks import check_ssl_expire_at
+from notification.tasks import check_ssl_expire_at
 from maintenance.models import TaskSchedule
 
 
-@patch('notification.periodic_tasks.get_worker_name', new=MagicMock())
-@patch('notification.periodic_tasks.TaskHistory', new=MagicMock())
+@patch('notification.tasks.get_worker_name', new=MagicMock())
+@patch('notification.tasks.TaskHistory', new=MagicMock())
 class CheckSslExpireAt(TestCase):
     instance_helper = InstanceHelper
 
@@ -45,13 +45,13 @@ class CheckSslExpireAt(TestCase):
         )
         self.one_month_later = self.today + timedelta(days=30)
 
-    @patch('notification.periodic_tasks.TaskSchedule.objects.filter')
+    @patch('notification.tasks.TaskSchedule.objects.filter')
     def test_dont_find_infras(self, filter_mock):
         self.databaseinfra.ssl_configured = False
         check_ssl_expire_at()
         self.assertFalse(filter_mock.called)
 
-    @patch('notification.periodic_tasks.TaskSchedule.objects.create')
+    @patch('notification.tasks.TaskSchedule.objects.create')
     def test_already_have_task_scheduled(self, create_mock):
         task_schedule = TaskSchedule()
         task_schedule.database = self.database
