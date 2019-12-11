@@ -2,6 +2,7 @@
 from __future__ import absolute_import, unicode_literals
 import logging
 import simple_audit
+from dateutil import rrule
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from dateutil import tz
@@ -176,6 +177,19 @@ class TaskSchedule(BaseModel):
         permissions = (
             ("view_maintenance", "Can view maintenance"),
         )
+
+    @staticmethod
+    def next_maintenance_window(start_date, maintenance_hour, weekday):
+        rule = rrule.rrule(
+            rrule.DAILY,
+            byweekday=[rrule.weekdays[weekday]],
+            dtstart=start_date
+        )
+        ruleset = rrule.rruleset()
+        ruleset.rrule(rule)
+        schedule_datetime = ruleset[0]
+        schedule_datetime = schedule_datetime.replace(hour=maintenance_hour)
+        return schedule_datetime
 
 
 class HostMaintenance(BaseModel):
