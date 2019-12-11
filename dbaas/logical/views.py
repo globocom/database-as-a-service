@@ -35,7 +35,8 @@ from logical.validators import (check_is_database_enabled,
                                 check_is_database_dead,
                                 ParameterValidator)
 from workflow.steps.util.host_provider import Provider
-from maintenance.models import DatabaseUpgradePatch, DatabaseUpgrade
+from maintenance.models import (DatabaseUpgradePatch, DatabaseUpgrade,
+                                TaskSchedule)
 
 
 LOG = logging.getLogger(__name__)
@@ -987,6 +988,10 @@ def database_maintenance(request, context, database):
     context['current_backup_hour'] = int(database.infra.backup_hour)
     context['maintenance_days'] = WEEKDAYS
     context['current_maintenance_day'] = int(database.infra.maintenance_day)
+    context['tasks_scheduled'] = TaskSchedule.objects.filter(
+        database=database,
+        status=TaskSchedule.SCHEDULED
+    )
 
     return render_to_response(
         "logical/database/details/maintenance_tab.html",
