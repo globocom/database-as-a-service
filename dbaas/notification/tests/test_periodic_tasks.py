@@ -69,3 +69,21 @@ class CheckSslExpireAt(TestCase):
         check_ssl_expire_at()
         task_schedule = TaskSchedule.objects.filter(database=self.database)
         self.assertEqual(task_schedule.count(), 1)
+
+    def test_create_task_scheduled_next_maintenance_window(self):
+        task_schedule = TaskSchedule.objects.filter(database=self.database)
+        self.hostname.ssl_expire_at = self.one_month_later
+        self.hostname.save()
+        self.databaseinfra.maintenance_window = 3
+        self.databaseinfra.maintenance_day = 3
+        self.databaseinfra.save()
+        check_ssl_expire_at()
+        task_schedule = TaskSchedule.objects.get(database=self.database)
+        self.assertEqual(
+            task_schedule.scheduled_for.weekday(),
+            self.databaseinfra.maintenance_day
+        )
+        self.assertTrue(
+            task_schedule.scheduled_for.date() >= self.one_month_later
+        )
+        self.assertEqual(task_schedule.scheduled_for.hour, 3)
