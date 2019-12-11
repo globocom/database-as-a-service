@@ -574,6 +574,10 @@ class Plan(BaseModel):
 
         return slugify("{}-{}".format(self.name, self.environment()))
 
+    @property
+    def available_plans_for_migration(self):
+        return [self.migrate_engine_equivalent_plan]
+
 #    @property
 #    def stronger_offering(self):
 #        return self.offerings.filter(weaker=False).first()
