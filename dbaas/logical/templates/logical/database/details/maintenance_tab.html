@@ -30,12 +30,12 @@
       </select>
       <button data-toggle="modal" class="btn btn-warning" id="migrate_plan_retry_btn" data-target="#migrate_plan_retry">Retry</button>
       {% else %}
-      <select id="id_target_plan_retry" name="target_patch">
+      <select id="id_migrate_plan" name="target_migrate_plan">
         {% for plan in available_plans_for_migration %}
           <option value="{{plan.id}}">{{ plan }}</option>
         {% endfor %}
       </select>
-      <button data-toggle="modal" class="btn btn-primary" id="migrate_plan_btn" data-target="#upgrade_patch">Migrate Plan</button>
+      <button data-toggle="modal" class="btn btn-primary" id="migrate_plan_btn" data-target="#migrate_plan">Migrate Plan</button>
       {% endif %}
     </div>
   </div>
