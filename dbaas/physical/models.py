@@ -576,7 +576,9 @@ class Plan(BaseModel):
 
     @property
     def available_plans_for_migration(self):
-        return [self.migrate_engine_equivalent_plan]
+        if self.migrate_engine_equivalent_plan:
+            return [self.migrate_engine_equivalent_plan]
+        return []
 
 #    @property
 #    def stronger_offering(self):
