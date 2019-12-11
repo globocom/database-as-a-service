@@ -542,9 +542,16 @@ def check_ssl_expire_at(self):
             if scheudled_tasks:
                 task.update_details("Already scheduled!\n", persist=True)
             else:
+                earliest_ssl_expire = infra.instances.earliest(
+                    'hostname__ssl_expire_at'
+                ).hostname.ssl_expire_at
                 TaskSchedule.objects.create(
                     method_path='ddd',
-                    scheduled_for=one_month_later,
+                    scheduled_for=TaskSchedule.next_maintenance_window(
+                        earliest_ssl_expire,
+                        infra.maintenance_window,
+                        infra.maintenance_day
+                    ),
                     database=database
                 )
                 task.update_details("Schedule created!\n", persist=True)
