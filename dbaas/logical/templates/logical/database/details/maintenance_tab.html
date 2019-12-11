@@ -30,7 +30,7 @@
       </select>
       <button data-toggle="modal" class="btn btn-warning" id="migrate_plan_retry_btn" data-target="#migrate_plan_retry">Retry</button>
       {% else %}
-      <select id="id_migrate_plan" name="target_migrate_plan">
+      <select id="id_target_migrate_plan" name="target_migrate_plan">
         {% for plan in available_plans_for_migration %}
           <option value="{{plan.id}}">{{ plan }}</option>
         {% endfor %}
@@ -151,6 +151,10 @@
 
 {% include "admin/confirmation_modal.html" with modal_id="upgrade_patch_retry" confirmation_message="Are you sure you want to retry upgrade patch?" box_title="Retring to upgrade the patch" button_type="submit" button_value="Upgrade Retry" button_name="upgrade_patch_retry" id_optional="id=id_upgrade_patch_retry_btn_modal" %}
 
+{% include "admin/confirmation_modal.html" with modal_id="migrate_plan" confirmation_message="Are you sure you want to migrate plan?" box_title="Migrating plan" button_type="submit" button_value="Migrate Plan" button_name="migrate_plan" id_optional="id=id_migrate_plan_btn_modal" %}
+
+{% include "admin/confirmation_modal.html" with modal_id="migrate_plan_retry" confirmation_message="Are you sure you want to retry migrating plan?" box_title="Retrying to migrate plan" button_type="submit" button_value="Migrate Plan Retry" button_name="migrate_plan_retry" id_optional="id=id_migrate_plan_retry_btn_modal" %}
+
 {% endblock %}
 
 
@@ -167,6 +171,18 @@
     $("#upgrade_patch_retry_btn").click(function() {
       var new_patch_version = $("#id_target_patch_retry").find(":selected").text().trim();
       $("#upgrade_patch_retry .modal_message").text('Are you sure you want to retry to upgrade database from <{{ database.databaseinfra.engine_patch.full_version }}> to <' + new_patch_version + '>?')
+    });
+
+
+    // Migrate plan
+    $("#migrate_plan_btn").click(function() {
+      var new_plan = $("#id_target_migrate_plan").find(":selected").text();
+      $("#migrate_plan .modal_message").text('Are you sure you want to migrate plan from <{{ database.databaseinfra.plan }}> to <' + new_plan + '>?')
+    });
+
+    $("#migrate_plan_retry_btn").click(function() {
+      var new_plan = $("#id_target_migrate_plan_retry").find(":selected").text();
+      $("#migrate_plan_retry .modal_message").text('Are you sure you want to retry migrating plan from <{{ database.databaseinfra.plan }}> to <' + new_plan + '>?')
     });
 
   })
