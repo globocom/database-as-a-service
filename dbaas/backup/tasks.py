@@ -209,17 +209,19 @@ def make_databases_backup(self):
     current_time = datetime.now()
     current_hour = current_time.hour
 
-    # Get all infra should have gotten a backup today until the current hour
+    # Get all infras with a backup today until the current hour
     infras_with_backup_today = DatabaseInfra.objects.filter(
         instances__backup_instance__status=2,
         backup_hour__lt=current_hour,
+        plan__has_persistence=True,
         instances__backup_instance__end_at__year=current_time.year,
         instances__backup_instance__end_at__month=current_time.month,
         instances__backup_instance__end_at__day=current_time.day).distinct()
 
     # Get all infras with pending backups based on infras_with_backup_today
     infras_pending_backup = DatabaseInfra.objects.filter(
-        backup_hour__lt=current_hour
+        backup_hour__lt=current_hour,
+        plan__has_persistence=True,
     ).exclude(pk__in=[infra.pk for infra in infras_with_backup_today])
 
     # Get all infras to backup on the current hour
