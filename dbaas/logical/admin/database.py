@@ -28,7 +28,7 @@ from util.html import show_info_popup
 from logical.models import Database
 from physical.models import Engine
 from logical.views import database_details, database_hosts, \
-    database_credentials, database_resizes, database_maintenance, \
+    database_credentials, database_resizes, DatabaseMaintenanceView, \
     database_backup, database_dns, database_metrics, database_destroy, \
     database_delete_host, database_upgrade, database_upgrade_retry, \
     database_upgrade_patch_retry, database_resize_retry, \
@@ -643,7 +643,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             ),
             url(
                 r'^/?(?P<id>\d+)/maintenance/$',
-                self.admin_site.admin_view(database_maintenance),
+                self.admin_site.admin_view(DatabaseMaintenanceView.as_view()),
                 name="logical_database_maintenance"
             ),
             url(

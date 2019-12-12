@@ -922,16 +922,26 @@ def database_resizes(request, context, database):
     )
 
 
-@database_view('maintenance')
-def database_maintenance(request, context, database):
-    if request.method == 'POST':
+class DatabaseMaintenanceView(TemplateView):
+    template_name = "logical/database/details/maintenance_tab.html"
+    WEEKDAYS = [
+        (0, 'Sunday'),
+        (1, 'Monday'),
+        (2, 'Tuesday'),
+        (3, 'Wednesday'),
+        (4, 'Thursday'),
+        (5, 'Friday'),
+        (6, 'Saturday')
+    ]
+
+    def post(self, request, *args, **kwargs):
         if (
             'upgrade_patch' in request.POST and
             request.POST.get('target_patch')
         ):
-            _upgrade_patch(request, database, request.POST.get('target_patch'))
+            _upgrade_patch(request, self.database, request.POST.get('target_patch'))
         elif ('upgrade_patch_retry' in request.POST):
-            _upgrade_patch_retry(request, database)
+            _upgrade_patch_retry(request, self.database)
         elif ('backup_hour'
               or 'maintenance_window'
               or 'maintenance_day'
@@ -946,58 +956,81 @@ def database_maintenance(request, context, database):
                     'Backup hour must not be equal to maintenance window.'
                 )
             else:
-                database.infra.backup_hour = backup_hour
-                database.infra.maintenance_window = maintenance_window
-                database.infra.maintenance_day = maintenance_day
-                database.infra.save()
+                self.database.infra.backup_hour = backup_hour
+                self.database.infra.maintenance_window = maintenance_window
+                self.database.infra.maintenance_day = maintenance_day
+                self.database.infra.save()
         else:
-            database.save()
+            self.database.save()
 
-    WEEKDAYS = [
-        (0, 'Sunday'),
-        (1, 'Monday'),
-        (2, 'Tuesday'),
-        (3, 'Wednesday'),
-        (4, 'Thursday'),
-        (5, 'Friday'),
-        (6, 'Saturday')
-    ]
+        context = self.get_context_data()
+        return super(DatabaseMaintenanceView, self).render_to_response(context)
 
-    context['upgrade_mongo_24_to_30'] = \
-        database.is_mongodb_24() and \
-        request.user.has_perm(constants.PERM_UPGRADE_MONGO24_TO_30)
-    context['can_do_upgrade'] = \
-        bool(database.infra.plan.engine_equivalent_plan) and \
-        request.user.has_perm(constants.PERM_UPGRADE_DATABASE)
-    context['last_upgrade'] = database.upgrades.filter(
-        source_plan=database.infra.plan
-    ).last()
+    def has_update_mongodb_30(self):
+        return (
+            self.database.is_mongodb_24() and
+            self.request.user.has_perm(constants.PERM_UPGRADE_MONGO24_TO_30)
+        )
 
-    context['retry_patch'] = DatabaseUpgradePatch.objects.need_retry(
-        database=database
-    )
-    context['available_patches'] = list(
-        database.engine.available_patches(database)
-    )
-    context['available_plans_for_migration'] = database.plan.available_plans_for_migration
+    def can_do_upgrade(self):
+        return (
+            bool(self.database.infra.plan.engine_equivalent_plan) and
+            self.request.user.has_perm(constants.PERM_UPGRADE_DATABASE)
+        )
 
-    context['maintenance_windows'] = DatabaseForm.MAINTENANCE_WINDOW_CHOICES
-    context['current_maintenance_window'] = int(
-        database.infra.maintenance_window
-    )
-    context['backup_hours'] = DatabaseForm.BACKUP_HOUR_CHOICES
-    context['current_backup_hour'] = int(database.infra.backup_hour)
-    context['maintenance_days'] = WEEKDAYS
-    context['current_maintenance_day'] = int(database.infra.maintenance_day)
-    context['tasks_scheduled'] = TaskSchedule.objects.filter(
-        database=database,
-        status=TaskSchedule.SCHEDULED
-    )
+    def get_context_data(self, **kwargs):
+        # Upgrade region
+        self.context['upgrade_mongo_24_to_30'] = self.has_update_mongodb_30()
+        self.context['can_do_upgrade'] = self.can_do_upgrade()
+        self.context['last_upgrade'] = self.database.upgrades.filter(
+            source_plan=self.database.infra.plan
+        ).last()
 
-    return render_to_response(
-        "logical/database/details/maintenance_tab.html",
-        context, RequestContext(request)
-    )
+        # Patch region
+        self.context['available_patches'] = list(
+            self.database.engine.available_patches(self.database)
+        )
+        self.context['retry_patch'] = DatabaseUpgradePatch.objects.need_retry(
+            database=self.database
+        )
+
+        # Plan migration region
+        self.context['available_plans_for_migration'] = (
+            self.database.plan.available_plans_for_migration
+        )
+        # self.context['retry_migrate_plan'] = DatabaseMigratePlan.objects.need_retry(
+        #     database=self.database
+        # )
+
+        # Maintenance region
+        self.context['maintenance_windows'] = DatabaseForm.MAINTENANCE_WINDOW_CHOICES
+        self.context['current_maintenance_window'] = int(
+            self.database.infra.maintenance_window
+        )
+        self.context['maintenance_days'] = DatabaseMaintenanceView.WEEKDAYS
+        self.context['current_maintenance_day'] = int(
+            self.database.infra.maintenance_day
+        )
+
+        # Backup region
+        self.context['backup_hours'] = DatabaseForm.BACKUP_HOUR_CHOICES
+        self.context['current_backup_hour'] = int(
+            self.database.infra.backup_hour
+        )
+
+        self.context['tasks_scheduled'] = TaskSchedule.objects.filter(
+            database=self.database,
+            status=TaskSchedule.SCHEDULED
+        )
+
+        return self.context
+
+    @database_view_class('maintenance')
+    def dispatch(self, request, *args, **kwargs):
+        self.context, self.database = args
+        return super(DatabaseMaintenanceView, self).dispatch(
+            request, *args, **kwargs
+        )
 
 
 def _add_read_only_instances(request, database):
