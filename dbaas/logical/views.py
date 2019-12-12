@@ -979,6 +979,7 @@ def database_maintenance(request, context, database):
     context['available_patches'] = list(
         database.engine.available_patches(database)
     )
+    context['available_plans_for_migration'] = database.plan.available_plans_for_migration
 
     context['maintenance_windows'] = DatabaseForm.MAINTENANCE_WINDOW_CHOICES
     context['current_maintenance_window'] = int(
