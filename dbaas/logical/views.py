@@ -934,6 +934,15 @@ class DatabaseMaintenanceView(TemplateView):
         (6, 'Saturday')
     ]
 
+    def is_upgrade_patch(self):
+        pass
+
+    def is_upgrade_patch_retry(self):
+        pass
+
+    def has_maintenance_backup_changed(self):
+        pass
+
     def post(self, request, *args, **kwargs):
         if (
             'upgrade_patch' in request.POST and
