@@ -14,6 +14,7 @@ from rest_framework.response import Response
 from networkapiclient import Ip, Network
 from logical.validators import database_name_evironment_constraint
 from logical.models import Database
+from logical.forms import DatabaseForm
 from dbaas.middleware import UserMiddleware
 from util import get_credentials_for
 from util.decorators import REDIS_CLIENT
@@ -375,10 +376,15 @@ class ServiceAdd(APIView):
                 msg=msg, http_status=status.HTTP_400_BAD_REQUEST
             )
 
+        backup_hour, maintenance_hour, maintenance_day = (
+            DatabaseForm.randomize_backup_and_maintenance_hour()
+        )
         TaskRegister.database_create(
             name=name, plan=dbaas_plan, environment=dbaas_environment,
             team=dbaas_team, project=None, description=description,
-            user=dbaas_user, is_protected=True
+            user=dbaas_user, is_protected=True, backup_hour=backup_hour,
+            maintenance_window=maintenance_hour,
+            maintenance_day=maintenance_day
         )
 
         return Response(status=status.HTTP_201_CREATED)
