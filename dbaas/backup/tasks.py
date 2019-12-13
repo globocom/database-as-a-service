@@ -197,7 +197,12 @@ def make_databases_backup(self):
     )
     task_history.relevance = TaskHistory.RELEVANCE_ERROR
 
-    waiting_msg = "\nWaiting 5 minutes to start the next backup group"
+    backup_group_interval = Configuration.get_by_name_as_int(
+        'backup_group_interval', default=1
+    )
+    waiting_msg = "\nWaiting {} minute(s) to start the next backup group".format(
+        backup_group_interval
+    )
     status = TaskHistory.STATUS_SUCCESS
     environments = Environment.objects.all()
     prod_envs = Configuration.get_by_name_as_list('prod_envs')
@@ -209,6 +214,7 @@ def make_databases_backup(self):
     current_time = datetime.now()
     current_hour = current_time.hour
 
+    # Get all infra should have gotten a backup today until the current hour
     infras_with_backup_today = DatabaseInfra.objects.filter(
         instances__backup_instance__status=2,
         backup_hour__lt=current_hour,
@@ -216,15 +222,18 @@ def make_databases_backup(self):
         instances__backup_instance__end_at__month=current_time.month,
         instances__backup_instance__end_at__day=current_time.day).distinct()
 
+    # Get all infras with pending backups based on infras_with_backup_today
     infras_pending_backup = DatabaseInfra.objects.filter(
         backup_hour__lt=current_hour
     ).exclude(pk__in=[infra.pk for infra in infras_with_backup_today])
 
+    # Get all infras to backup on the current hour
     infras_current_hour = DatabaseInfra.objects.filter(
         plan__has_persistence=True,
         backup_hour=current_time.hour
     )
 
+    # Merging pending and current infras to backup list
     infras = infras_current_hour | infras_pending_backup
 
     for env_name in env_names_order:
@@ -249,7 +258,7 @@ def make_databases_backup(self):
                 else:
                     backup_number = 0
                     task_history.update_details(waiting_msg, True)
-                    sleep(300)
+                    sleep(backup_group_interval*60)
 
             group = BackupGroup()
             group.save()
