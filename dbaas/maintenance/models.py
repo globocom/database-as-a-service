@@ -3,6 +3,7 @@ from __future__ import absolute_import, unicode_literals
 import logging
 import simple_audit
 from dateutil import rrule
+from copy import copy
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from dateutil import tz
@@ -153,12 +154,14 @@ class Maintenance(BaseModel):
 class TaskSchedule(BaseModel):
     SCHEDULED = 0
     RUNNING = 1
-    FINISHED = 2
+    SUCCESS = 2
+    ERROR = 3
 
     STATUS = (
         (SCHEDULED, 'Scheduled'),
         (RUNNING, 'Running'),
-        (FINISHED, 'Finished'),
+        (SUCCESS, 'Success'),
+        (ERROR, 'Error'),
     )
 
     method_path = models.CharField(null=False, blank=False, max_length=500)
@@ -180,9 +183,11 @@ class TaskSchedule(BaseModel):
 
     @staticmethod
     def next_maintenance_window(start_date, maintenance_hour, weekday):
+        weekdays = list(copy(rrule.weekdays))
+        weekdays.insert(0, weekdays.pop())
         rule = rrule.rrule(
             rrule.DAILY,
-            byweekday=[rrule.weekdays[weekday]],
+            byweekday=[weekdays[weekday]],
             dtstart=start_date
         )
         ruleset = rrule.rruleset()
@@ -190,6 +195,22 @@ class TaskSchedule(BaseModel):
         schedule_datetime = ruleset[0]
         schedule_datetime = schedule_datetime.replace(hour=maintenance_hour)
         return schedule_datetime
+
+    def _set_status(self, status):
+        self.status = status
+        self.save()
+
+    def set_success(self):
+        self.finished_at = datetime.now()
+        self._set_status(self.SUCCESS)
+
+    def set_error(self):
+        self.finished_at = datetime.now()
+        self._set_status(self.ERROR)
+
+    def set_running(self):
+        self.started_at = datetime.now()
+        self._set_status(self.RUNNING)
 
 
 class HostMaintenance(BaseModel):
@@ -308,11 +329,15 @@ class DatabaseMaintenanceTask(BaseModel):
         self.status = status
         self.save()
 
-    def set_success(self):
+    def set_success(self, scheduled_task=None):
         self.update_final_status(self.SUCCESS)
+        if scheduled_task:
+            scheduled_task.set_success()
 
-    def set_error(self):
+    def set_error(self, scheduled_task=None):
         self.update_final_status(self.ERROR)
+        if scheduled_task:
+            scheduled_task.set_error()
 
     def set_rollback(self):
         self.can_do_retry = False
