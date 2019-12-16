@@ -987,7 +987,6 @@ class DatabaseMaintenanceView(TemplateView):
             self.request.user.has_perm(constants.PERM_UPGRADE_DATABASE)
         )
 
-<<<<<<< HEAD
     def get_context_data(self, **kwargs):
         # Upgrade region
         self.context['upgrade_mongo_24_to_30'] = self.has_update_mongodb_30()
@@ -1003,20 +1002,10 @@ class DatabaseMaintenanceView(TemplateView):
         self.context['retry_patch'] = DatabaseUpgradePatch.objects.need_retry(
             database=self.database
         )
-=======
-    context['maintenance_windows'] = DatabaseForm.MAINTENANCE_WINDOW_CHOICES
-    context['current_maintenance_window'] = int(
-        database.infra.maintenance_window
-    )
-    context['backup_hours'] = DatabaseForm.BACKUP_HOUR_CHOICES
-    context['current_backup_hour'] = int(database.infra.backup_hour)
-    context['maintenance_days'] = WEEKDAYS
-    context['current_maintenance_day'] = int(database.infra.maintenance_day)
-    context['tasks_scheduled'] = TaskSchedule.objects.filter(
-        database=database,
-        status=TaskSchedule.SCHEDULED
-    ).order_by('-scheduled_for')
->>>>>>> Order schedule task on maintenance tab
+        self.context['tasks_scheduled'] = TaskSchedule.objects.filter(
+            database=self.database,
+            status=TaskSchedule.SCHEDULED
+        ).order_by('-scheduled_for')
 
         # Plan migration region
         self.context['available_plans_for_migration'] = (
