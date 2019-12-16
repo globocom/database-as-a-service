@@ -875,6 +875,12 @@ class DatabaseInfra(BaseModel):
             return None
         return best_datainfra
 
+    @property
+    def earliest_ssl_expire_at(self):
+        return self.instances.earliest(
+            'hostname__ssl_expire_at'
+        ).hostname.ssl_expire_at
+
     def check_instances_status(self):
         alive_instances = self.instances.filter(status=Instance.ALIVE).count()
         dead_instances = self.instances.filter(status=Instance.DEAD).count()
