@@ -81,7 +81,7 @@ class CheckSslExpireAt(TestCase):
         task_schedule = TaskSchedule.objects.get(database=self.database)
         self.assertEqual(
             task_schedule.scheduled_for.weekday(),
-            self.databaseinfra.maintenance_day
+            2
         )
         self.assertTrue(
             task_schedule.scheduled_for.date() >= self.one_month_later
