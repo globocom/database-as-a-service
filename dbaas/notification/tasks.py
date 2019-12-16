@@ -7,6 +7,7 @@ from celery.utils.log import get_task_logger
 from celery.exceptions import SoftTimeLimitExceeded
 from django.db.models import Sum, Count
 
+from account.models import User
 from dbaas.celery import app
 from account.models import Team
 from logical.models import Database
@@ -542,13 +543,10 @@ def check_ssl_expire_at(self):
             if scheudled_tasks:
                 task.update_details("Already scheduled!\n", persist=True)
             else:
-                earliest_ssl_expire = infra.instances.earliest(
-                    'hostname__ssl_expire_at'
-                ).hostname.ssl_expire_at
                 TaskSchedule.objects.create(
-                    method_path='ddd',
+                    method_path='update_ssl',
                     scheduled_for=TaskSchedule.next_maintenance_window(
-                        earliest_ssl_expire,
+                        infra.earliest_ssl_expire_at,
                         infra.maintenance_window,
                         infra.maintenance_day
                     ),
@@ -559,6 +557,26 @@ def check_ssl_expire_at(self):
     except Exception as err:
         task.update_status_for(TaskHistory.STATUS_ERROR, details=err)
         return
+
+
+@app.task(bind=True)
+def execute_scheduled_maintenance(self, task=None):
+    LOG.info("Searching Scheduled tasks")
+    user = User.objects.get(username='admin')
+    if task:
+        scheduled_tasks = [task]
+    else:
+        now = datetime.datetime.now()
+        end_date = now.replace(minute=59)
+        scheduled_tasks = TaskSchedule.objects.filter(
+            scheduled_for__lte=end_date,
+            status=TaskSchedule.SCHEDULED,
+        )
+    if scheduled_tasks:
+        LOG.info("Scheduled Tasks Found!")
+    for scheduled_task in scheduled_tasks:
+        func = getattr(TaskRegister, scheduled_task.method_path)
+        func(scheduled_task.database, user=user, scheduled_task=scheduled_task)
 
 
 def create_zabbix_alarms(database):
@@ -1689,7 +1707,7 @@ class TaskRegister(object):
 
     @classmethod
     def update_ssl(cls, database, user,
-                   since_step=None, step_manager=None):
+                   since_step=None, step_manager=None, **kw):
         task_params = {
             'task_name': "update_ssl",
             'arguments': "Database: {}".format(
@@ -1702,7 +1720,8 @@ class TaskRegister(object):
         return update_ssl.delay(
             database=database, task=task,
             since_step=since_step,
-            step_manager=step_manager
+            step_manager=step_manager,
+            **kw
         )
 
     @classmethod
