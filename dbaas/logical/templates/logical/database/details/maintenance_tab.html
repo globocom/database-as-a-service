@@ -3,6 +3,9 @@
 
 {% block extrastyle %}
   {{ block.super }}
+  <link rel="stylesheet" type="text/css" href="{% static "admin/css/bootstrap.min.css" %}" />
+
+    <link rel="stylesheet" type="text/css" href="{% static "admin/css/forms-and-widgets.css" %}" />
   <style type="text/css">
     .resize_button {
         margin-left: 20px
@@ -125,6 +128,27 @@
     </div>
   </div>
   {% if tasks_scheduled %}
+    <table border=1>
+      <thead>
+        <th>Kind</th>
+        <th>Scheduled for</th>
+        <th>Action</th>
+      </thead>
+      <tbody>
+        {% for task in tasks_scheduled %}
+          <tr>
+            <td>Update SSL certificate</td>
+            <td>
+                Date: <input type=text name="scheduled_for_date" class="vDateField" value="{{ task.scheduled_for|date:"Y-m-d" }}" /><br/>
+                Time: <input type=text name="scheduled_for_time" class="vTimeField" value="{{ task.scheduled_for|date:"H:i:s" }}" /><br/>
+            </td>
+            <td>
+              <button data-toggle="modal" id="execute_scheduled_maintenance" data-target="#execute_scheduled_maintenance" class="btn btn-primary">Execute now</button>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   {% endif %}
   <div class="panel-heading">
     <h3 class="panel-title">Backup <i>(Daily)</i></h3>
@@ -162,6 +186,15 @@
 
 {% block js_footer %}
 {{ block.super }}
+<script type="text/javascript" src="/admin/jsi18n/"></script>
+<script type="text/javascript" src="{% static "admin/js/core.js" %}"></script>
+<script type="text/javascript" src="{% static "admin/js/admin/RelatedObjectLookups.js" %}"></script>
+<script type="text/javascript" src="{% static "admin/js/jquery.js" %}"></script>
+<script type="text/javascript" src="{% static "admin/js/jquery.init.js" %}"></script>
+<script type="text/javascript" src="{% static "admin/js/calendar.js" %}"></script>
+<script type="text/javascript" src="{% static "admin/js/admin/DateTimeShortcuts.js" %}"></script>
+<script type="text/javascript" src="{% static "admin/js/inlines.js" %}"></script>
+
 
 <script>
   jQuery(document).ready(function($) {
