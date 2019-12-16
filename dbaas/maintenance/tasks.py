@@ -317,12 +317,15 @@ def recreate_slave(self, database, host, task, since_step=None,
 
 
 @app.task(bind=True)
-def update_ssl(self, database, task, since_step=None, step_manager=None):
+def update_ssl(self, database, task, since_step=None, step_manager=None,
+               scheduled_task=None):
     from maintenance.models import UpdateSsl
     task = TaskHistory.register(
         request=self.request, task_history=task, user=task.user,
         worker_name=get_worker_name()
     )
+    if scheduled_task:
+        scheduled_task.set_running()
     if step_manager:
         step_manager = step_manager
         step_manager.id = None
@@ -350,10 +353,10 @@ def update_ssl(self, database, task, since_step=None, step_manager=None):
     )
     step_manager = UpdateSsl.objects.get(id=step_manager.id)
     if result:
-        step_manager.set_success()
+        step_manager.set_success(scheduled_task)
         task.set_status_success('SSL Update with success')
     else:
-        step_manager.set_error()
+        step_manager.set_error(scheduled_task)
         task.set_status_error('Could not update SSL')
 
 
