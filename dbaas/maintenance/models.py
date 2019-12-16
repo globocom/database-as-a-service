@@ -410,6 +410,12 @@ class DatabaseUpgrade(DatabaseMaintenanceTask):
         super(DatabaseUpgrade, self).save(*args, **kwargs)
 
 
+class DatabaseMigrateEngine(DatabaseUpgrade):
+
+    def __unicode__(self):
+        return "{} migrate engine".format(self.database.name)
+
+
 class DatabaseUpgradePatch(DatabaseMaintenanceTask):
     database = models.ForeignKey(
         Database, verbose_name="Database",
