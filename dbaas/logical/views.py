@@ -935,26 +935,29 @@ class DatabaseMaintenanceView(TemplateView):
     ]
 
     def is_upgrade_patch(self):
-        pass
+        return ('upgrade_patch' in self.request.POST and
+                self.request.POST.get('target_patch'))
 
     def is_upgrade_patch_retry(self):
-        pass
+        return 'upgrade_patch_retry' in request.POST
 
-    def has_maintenance_backup_changed(self):
-        pass
+    def has_maintenance_backup_changed(self, parameters):
+        return any(key in self.request.POST for key in parameters)
 
     def post(self, request, *args, **kwargs):
-        if (
-            'upgrade_patch' in request.POST and
-            request.POST.get('target_patch')
-        ):
-            _upgrade_patch(request, self.database, request.POST.get('target_patch'))
-        elif ('upgrade_patch_retry' in request.POST):
+        if self.is_upgrade_patch():
+            _upgrade_patch(
+                request,
+                self.database,
+                request.POST.get('target_patch')
+            )
+        elif self.is_upgrade_patch_retry():
             _upgrade_patch_retry(request, self.database)
-        elif ('backup_hour'
-              or 'maintenance_window'
-              or 'maintenance_day'
-              in request.POST):
+        elif sel.has_maintenance_backup_changed([
+            'backup_hour',
+            'maintenance_window',
+            'maintenance_day'
+        ]):
             backup_hour = request.POST.get('backup_hour')
             maintenance_window = request.POST.get('maintenance_window')
             maintenance_day = request.POST['maintenance_day']
