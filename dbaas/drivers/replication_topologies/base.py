@@ -109,6 +109,30 @@ class BaseTopology(object):
             ),
         }]
 
+    def get_migrate_engines_steps(self):
+        return [{
+            self.get_upgrade_steps_initial_description(): (
+                'workflow.steps.util.zabbix.DisableAlarms',
+                'workflow.steps.util.db_monitor.DisableMonitoring',
+            ),
+        }] + [{
+            self.get_upgrade_steps_description(): (
+                'workflow.steps.util.vm.ChangeMaster',
+                'workflow.steps.util.database.CheckIfSwitchMaster',
+                'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.CheckIsDown',
+                'workflow.steps.util.host_provider.Stop',
+                'workflow.steps.util.host_provider.InstallMigrateEngineTemplate',
+                'workflow.steps.util.host_provider.Start',
+                'workflow.steps.util.vm.WaitingBeReady',
+                'workflow.steps.util.vm.UpdateOSDescription',
+            ) + self.get_upgrade_steps_extra() + (
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.metric_collector.RestartTelegraf',
+            ),
+        }] + self.get_upgrade_steps_final()
+
 
     def get_change_binaries_upgrade_patch_steps(self):
         return ()
