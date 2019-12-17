@@ -943,12 +943,26 @@ class DatabaseMaintenanceView(TemplateView):
     def has_maintenance_backup_changed(self):
         pass
 
+    def _update_schedule_task(self, payload):
+        for pos, scheduled_id in enumerate(payload.getlist('scheduled_id')):
+            task = TaskSchedule.objects.get(id=scheduled_id)
+            task_date = payload.getlist('scheduled_for_date')[pos]
+            task_time = payload.getlist('scheduled_for_time')[pos]
+            task.scheduled_for = datetime.datetime.strptime(
+                "{} {}".format(task_date, task_time),
+                "%Y-%m-%d %H:%M:%S"
+            )
+            task.save()
+
     def post(self, request, *args, **kwargs):
+        self._update_schedule_task(request.POST)
         if (
             'upgrade_patch' in request.POST and
             request.POST.get('target_patch')
         ):
-            _upgrade_patch(request, self.database, request.POST.get('target_patch'))
+            _upgrade_patch(
+                request, self.database, request.POST.get('target_patch')
+            )
         elif ('upgrade_patch_retry' in request.POST):
             _upgrade_patch_retry(request, self.database)
         elif ('backup_hour'
@@ -1667,5 +1681,4 @@ class ExecuteScheduleTaskView(RedirectView):
     def get(self, *args, **kw):
         execute_scheduled_maintenance.delay(task=self.get_object())
         self.kwargs.pop('task_id')
-        import ipdb; ipdb.set_trace()
         return super(ExecuteScheduleTaskView, self).get(*args, **self.kwargs)
