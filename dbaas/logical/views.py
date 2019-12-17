@@ -1011,9 +1011,9 @@ class DatabaseMaintenanceView(TemplateView):
         self.context['available_plans_for_migration'] = (
             self.database.plan.available_plans_for_migration
         )
-        # self.context['retry_migrate_plan'] = DatabaseMigratePlan.objects.need_retry(
-        #     database=self.database
-        # )
+        self.context['retry_migrate_plan'] = DatabaseMigratePlan.objects.need_retry(
+            database=self.database
+        )
 
         # Maintenance region
         self.context['maintenance_windows'] = DatabaseForm.MAINTENANCE_WINDOW_CHOICES
