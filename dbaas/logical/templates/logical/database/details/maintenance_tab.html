@@ -142,8 +142,9 @@
           <tr>
             <td>Update SSL certificate</td>
             <td>
-                Date: <input type=text name="scheduled_for_date" class="vDateField" value="{{ task.scheduled_for|date:"Y-m-d" }}" /><br/>
-                Time: <input type=text name="scheduled_for_time" class="vTimeField" value="{{ task.scheduled_for|date:"H:i:s" }}" /><br/>
+                <input type="hidden" name="scheduled_id" value="{{ task.id }}" />
+                Date: <input type="text" name="scheduled_for_date" class="vDateField" value="{{ task.scheduled_for|date:"Y-m-d" }}" /><br/>
+                Time: <input type="text" name="scheduled_for_time" class="vTimeField" value="{{ task.scheduled_for|date:"H:i:s" }}" /><br/>
             </td>
             <td>
               <button data-toggle="modal" data-schedule-id="{{ task.id }}" id="execute_scheduled_maintenance_btn" data-target="#execute_scheduled_maintenance" class="btn btn-primary">Execute now</button>
