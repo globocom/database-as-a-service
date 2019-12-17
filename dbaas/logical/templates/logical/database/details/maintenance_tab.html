@@ -7,6 +7,9 @@
 
     <link rel="stylesheet" type="text/css" href="{% static "admin/css/forms-and-widgets.css" %}" />
   <style type="text/css">
+    .calendarbox, .clockbox {
+      z-index: 10000;
+    }
     .resize_button {
         margin-left: 20px
     }
@@ -143,7 +146,7 @@
                 Time: <input type=text name="scheduled_for_time" class="vTimeField" value="{{ task.scheduled_for|date:"H:i:s" }}" /><br/>
             </td>
             <td>
-              <button data-toggle="modal" id="execute_scheduled_maintenance" data-target="#execute_scheduled_maintenance" class="btn btn-primary">Execute now</button>
+              <button data-toggle="modal" data-schedule-id="{{ task.id }}" id="execute_scheduled_maintenance_btn" data-target="#execute_scheduled_maintenance" class="btn btn-primary">Execute now</button>
             </td>
           </tr>
         {% endfor %}
@@ -181,6 +184,7 @@
 
 {% include "admin/confirmation_modal.html" with modal_id="migrate_plan_retry" confirmation_message="Are you sure you want to retry migrating plan?" box_title="Retrying to migrate plan" button_type="submit" button_value="Migrate Plan Retry" button_name="migrate_plan_retry" id_optional="id=id_migrate_plan_retry_btn_modal" %}
 
+{% include "admin/confirmation_modal.html" with tag_type="a" modal_id="execute_scheduled_maintenance" confirmation_message="Are you sure you want execute the task now ?" box_title="Execute Scheduled Task" button_name="execute_scheduled_maintenance" id_optional="id=id_execute_scheduled_maintenance_btn_modal" %}
 {% endblock %}
 
 
@@ -218,6 +222,11 @@
     $("#migrate_plan_retry_btn").click(function() {
       var new_plan = $("#id_target_migrate_plan_retry").find(":selected").text();
       $("#migrate_plan_retry .modal_message").text('Are you sure you want to retry migrating plan from <{{ database.databaseinfra.plan }}> to <' + new_plan + '>?')
+    });
+
+    $("#execute_scheduled_maintenance_btn").click(function(event) {
+      var scheduleId = $(event.target).data('schedule-id');
+      $("#id_execute_scheduled_maintenance_btn_modal").attr("href", "execute_schedule_task/"+scheduleId+"/");
     });
 
   })
