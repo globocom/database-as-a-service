@@ -939,7 +939,7 @@ class DatabaseMaintenanceView(TemplateView):
                 self.request.POST.get('target_patch'))
 
     def is_upgrade_patch_retry(self):
-        return 'upgrade_patch_retry' in request.POST
+        return 'upgrade_patch_retry' in self.request.POST
 
     def has_maintenance_backup_changed(self, parameters):
         return any(key in self.request.POST for key in parameters)
@@ -953,7 +953,7 @@ class DatabaseMaintenanceView(TemplateView):
             )
         elif self.is_upgrade_patch_retry():
             _upgrade_patch_retry(request, self.database)
-        elif sel.has_maintenance_backup_changed([
+        elif self.has_maintenance_backup_changed([
             'backup_hour',
             'maintenance_window',
             'maintenance_day'
