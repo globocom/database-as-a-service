@@ -36,7 +36,7 @@ from logical.validators import (check_is_database_enabled,
                                 ParameterValidator)
 from workflow.steps.util.host_provider import Provider
 from maintenance.models import (DatabaseUpgradePatch, DatabaseUpgrade,
-                                TaskSchedule)
+                                TaskSchedule, DatabaseMigrateEngine)
 
 
 LOG = logging.getLogger(__name__)
@@ -1011,7 +1011,7 @@ class DatabaseMaintenanceView(TemplateView):
         self.context['available_plans_for_migration'] = (
             self.database.plan.available_plans_for_migration
         )
-        self.context['retry_migrate_plan'] = DatabaseMigratePlan.objects.need_retry(
+        self.context['retry_migrate_plan'] = DatabaseMigrateEngine.objects.need_retry(
             database=self.database
         )
 
