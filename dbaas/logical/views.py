@@ -10,7 +10,7 @@ from django.core.exceptions import ValidationError, PermissionDenied
 from django.core.urlresolvers import reverse
 from django.shortcuts import get_object_or_404, render_to_response
 from django.views.generic.detail import BaseDetailView
-from django.views.generic import TemplateView
+from django.views.generic import TemplateView, RedirectView
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.http import HttpResponse, HttpResponseRedirect
@@ -25,7 +25,7 @@ from physical.models import (
     EnginePatch,
     )
 from util import get_credentials_for
-from notification.tasks import TaskRegister
+from notification.tasks import TaskRegister, execute_scheduled_maintenance
 from notification.models import TaskHistory
 from system.models import Configuration
 from logical.errors import DisabledDatabase
@@ -944,7 +944,19 @@ class DatabaseMaintenanceView(TemplateView):
     def has_maintenance_backup_changed(self, parameters):
         return any(key in self.request.POST for key in parameters)
 
+    def _update_schedule_task(self, payload):
+        for pos, scheduled_id in enumerate(payload.getlist('scheduled_id')):
+            task = TaskSchedule.objects.get(id=scheduled_id)
+            task_date = payload.getlist('scheduled_for_date')[pos]
+            task_time = payload.getlist('scheduled_for_time')[pos]
+            task.scheduled_for = datetime.datetime.strptime(
+                "{} {}".format(task_date, task_time),
+                "%Y-%m-%d %H:%M:%S"
+            )
+            task.save()
+
     def post(self, request, *args, **kwargs):
+        self._update_schedule_task(request.POST)
         if self.is_upgrade_patch():
             _upgrade_patch(
                 request,
@@ -1659,3 +1671,15 @@ def zones_for_environment(request, database_id, environment_id):
     return HttpResponse(
         json.dumps({"zones": zones}), content_type="application/json"
     )
+
+
+class ExecuteScheduleTaskView(RedirectView):
+    pattern_name = 'admin:logical_database_maintenance'
+
+    def get_object(self):
+        return TaskSchedule.objects.get(id=self.kwargs['task_id'])
+
+    def get(self, *args, **kw):
+        execute_scheduled_maintenance.delay(task=self.get_object())
+        self.kwargs.pop('task_id')
+        return super(ExecuteScheduleTaskView, self).get(*args, **self.kwargs)
