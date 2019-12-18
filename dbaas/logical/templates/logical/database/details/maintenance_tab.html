@@ -135,6 +135,7 @@
       <thead>
         <th>Kind</th>
         <th>Scheduled for</th>
+        <th>Expire at</th>
         <th>Action</th>
       </thead>
       <tbody>
@@ -144,11 +145,9 @@
             <td>
                 <input type="hidden" name="scheduled_id" value="{{ task.id }}" />
                 Date: <input type="text" name="scheduled_for_date" class="vDateField" value="{{ task.scheduled_for|date:"Y-m-d" }}" /><br/>
-                {% if err_msg %}
-                  <div style="color:red;">{{ err_msg }}</div>
-                {% endif %}
                 Time: <input type="text" name="scheduled_for_time" class="vTimeField" value="{{ task.scheduled_for|date:"H:i:s" }}" /><br/>
             </td>
+            <td>{{ task.database.infra.earliest_ssl_expire_at|date:"Y-m-d" }}</td>
             <td>
               <button data-toggle="modal" data-schedule-id="{{ task.id }}" id="execute_scheduled_maintenance_btn" data-target="#execute_scheduled_maintenance" class="btn btn-primary">Execute now</button>
             </td>
