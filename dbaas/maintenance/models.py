@@ -311,6 +311,11 @@ class DatabaseMaintenanceTask(BaseModel):
     can_do_retry = models.BooleanField(
         verbose_name=_("Can Do Retry"), default=True
     )
+    task_schedule = models.ForeignKey(
+        'TaskSchedule',
+        null=True, blank=True, unique=False,
+        related_name="%(app_label)s_%(class)s_related"
+    )
     objects = DatabaseMaintenanceTaskManager()
 
     def get_current_step(self):
@@ -329,15 +334,20 @@ class DatabaseMaintenanceTask(BaseModel):
         self.status = status
         self.save()
 
-    def set_success(self, scheduled_task=None):
+    def set_success(self):
         self.update_final_status(self.SUCCESS)
-        if scheduled_task:
-            scheduled_task.set_success()
+        if self.task_schedule:
+            self.task_schedule.set_success()
 
-    def set_error(self, scheduled_task=None):
+    def set_running(self):
+        self.update_final_status(self.RUNNING)
+        if self.task_schedule:
+            self.task_schedule.set_running()
+
+    def set_error(self):
         self.update_final_status(self.ERROR)
-        if scheduled_task:
-            scheduled_task.set_error()
+        if self.task_schedule:
+            self.task_schedule.set_error()
 
     def set_rollback(self):
         self.can_do_retry = False
