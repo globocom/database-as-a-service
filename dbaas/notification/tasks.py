@@ -20,7 +20,7 @@ from util.providers import clone_infra, destroy_infra, \
     get_reinstallvm_steps_setting, \
     get_database_change_parameter_retry_steps_count, \
     get_database_configure_ssl_setting, get_deploy_settings, \
-    get_database_upgrade_patch_setting
+    get_database_upgrade_patch_setting, get_engine_migrate_settings
 from simple_audit.models import AuditRequest
 from system.models import Configuration
 from notification.models import TaskHistory
@@ -29,7 +29,7 @@ from workflow.workflow import (steps_for_instances, rollback_for_instances_full,
 from maintenance.models import (DatabaseUpgrade, DatabaseResize,
                                 DatabaseChangeParameter, DatabaseReinstallVM,
                                 DatabaseConfigureSSL, DatabaseUpgradePatch,
-                                TaskSchedule)
+                                TaskSchedule, DatabaseMigrateEngine)
 from maintenance.tasks import restore_database, node_zone_migrate, \
     node_zone_migrate_rollback, database_environment_migrate, \
     database_environment_migrate_rollback, recreate_slave, update_ssl
@@ -744,6 +744,55 @@ def upgrade_database(self, database, user, task, since_step=0):
         task.update_status_for(
             TaskHistory.STATUS_ERROR,
             'Could not do upgrade.\nUpgrade doesn\'t have rollback'
+        )
+
+
+@app.task(bind=True)
+def migrate_engine(self, database, user, task, since_step=0):
+    worker_name = get_worker_name()
+    task = TaskHistory.register(self.request, user, task, worker_name)
+
+    infra = database.infra
+    source_plan = infra.plan
+    target_plan = source_plan.migrate_engine_equivalent_plan
+
+    class_path = target_plan.replication_topology.class_path
+    steps = get_engine_migrate_settings(class_path)
+
+    database_migrate_engine_obj = DatabaseMigrateEngine()
+    database_migrate_engine_obj.database = database
+    database_migrate_engine_obj.source_plan = source_plan
+    database_migrate_engine_obj.target_plan = target_plan
+    database_migrate_engine_obj.task = task
+    database_migrate_engine_obj.save()
+
+    hosts = []
+    for instance in database.infra.instances.all():
+        if instance.hostname not in hosts:
+            hosts.append(instance.hostname)
+
+    instances = []
+    for host in hosts:
+        instances.append(host.instances.all()[0])
+    instances = instances
+
+    success = steps_for_instances(
+        steps, instances, task,
+        database_migrate_engine_obj.update_step, since_step
+    )
+
+    if success:
+        infra.plan = target_plan
+        infra.engine = target_plan.engine
+        infra.save()
+
+        database_migrate_engine_obj.set_success()
+        task.update_status_for(TaskHistory.STATUS_SUCCESS, 'Done')
+    else:
+        database_migrate_engine_obj.set_error()
+        task.update_status_for(
+            TaskHistory.STATUS_ERROR,
+            'Could not do migrate.\nMigrate Engine doesn\'t have rollback'
         )
 
 
@@ -1523,6 +1572,33 @@ class TaskRegister(object):
         delay_params.update(**{'since_step': since_step} if since_step else {})
 
         upgrade_database.delay(**delay_params)
+
+    @classmethod
+    def engine_migrate(cls, database, target_plan, user, since_step=None):
+
+        task_params = {
+            'task_name': 'migrate_engine',
+            'arguments': 'Migrate engine from database {}'.format(database),
+            'database': database,
+            'user': user,
+            'relevance': TaskHistory.RELEVANCE_CRITICAL
+        }
+
+        if since_step:
+            task_params['task_name'] = 'migrate_engine_retry'
+            task_params['arguments'] = 'Retrying migrate engine from database {}'.format(database)
+
+        task = cls.create_task(task_params)
+
+        delay_params = {
+            'database': database,
+            'task': task,
+            'user': user
+        }
+
+        delay_params.update(**{'since_step': since_step} if since_step else {})
+
+        migrate_engine.delay(**delay_params)
 
     @classmethod
     def database_upgrade_patch(cls, database, patch, user, since_step=None):
