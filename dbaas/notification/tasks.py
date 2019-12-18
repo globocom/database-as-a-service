@@ -5,7 +5,7 @@ from datetime import date, timedelta
 import traceback
 from celery.utils.log import get_task_logger
 from celery.exceptions import SoftTimeLimitExceeded
-from django.db.models import Sum, Count
+from django.db.models import Sum, Count, Q
 
 from account.models import User
 from dbaas.celery import app
@@ -24,7 +24,8 @@ from util.providers import clone_infra, destroy_infra, \
 from simple_audit.models import AuditRequest
 from system.models import Configuration
 from notification.models import TaskHistory
-from workflow.workflow import (steps_for_instances, rollback_for_instances_full,
+from workflow.workflow import (steps_for_instances,
+                               rollback_for_instances_full,
                                total_of_steps)
 from maintenance.models import (DatabaseUpgrade, DatabaseResize,
                                 DatabaseChangeParameter, DatabaseReinstallVM,
@@ -518,12 +519,12 @@ def purge_task_history(self):
 @app.task(bind=True)
 def check_ssl_expire_at(self):
     LOG.info("Retrieving all SSL MySQL databases")
+    today = date.today()
     worker_name = get_worker_name()
     task = TaskHistory.register(
         request=self.request, user=None, worker_name=worker_name)
     task.relevance = TaskHistory.RELEVANCE_CRITICAL
-
-    one_month_later = date.today() + timedelta(days=30)
+    one_month_later = today + timedelta(days=30)
     try:
         infras = DatabaseInfra.objects.filter(
             ssl_configured=True,
@@ -536,8 +537,9 @@ def check_ssl_expire_at(self):
                 "Checking database {}...".format(database), persist=True
             )
             scheudled_tasks = TaskSchedule.objects.filter(
+                Q(status=TaskSchedule.SCHEDULED)
+                | Q(status=TaskSchedule.ERROR),
                 scheduled_for__lte=one_month_later,
-                status=TaskSchedule.SCHEDULED,
                 database=database
             )
             if scheudled_tasks:
@@ -546,7 +548,7 @@ def check_ssl_expire_at(self):
                 TaskSchedule.objects.create(
                     method_path='update_ssl',
                     scheduled_for=TaskSchedule.next_maintenance_window(
-                        infra.earliest_ssl_expire_at,
+                        today,
                         infra.maintenance_window,
                         infra.maintenance_day
                     ),

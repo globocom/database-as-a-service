@@ -5,6 +5,7 @@ import simple_audit
 from dateutil import rrule
 from copy import copy
 from django.db import models
+from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 from dateutil import tz
 from datetime import datetime
@@ -175,6 +176,18 @@ class TaskSchedule(BaseModel):
         return "path: {} | scheduled_for: {}".format(
             self.method_path, self.scheduled_for
         )
+
+    def is_valid(self):
+        scheduled_date = self.scheduled_for.date()
+        expire_at = self.database.infra.earliest_ssl_expire_at
+        if (scheduled_date >= expire_at):
+            msg = ('You cant schedule greater or equal then ssl expire. '
+                   'Scheduled for: {} Expire at: {}'.format(
+                        scheduled_date, expire_at)
+                   )
+            return False, msg
+
+        return True, ''
 
     class Meta:
         permissions = (
