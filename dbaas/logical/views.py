@@ -1021,8 +1021,8 @@ class DatabaseMaintenanceView(TemplateView):
             ).first()
 
             TaskRegister.engine_migrate(
-                database=database,
-                target_migrate_plan=target_migrate_plan,
+                database=self.database,
+                target_plan=target_migrate_plan,
                 user=self.request.user
             )
 
