@@ -964,6 +964,11 @@ class DatabaseMaintenanceView(TemplateView):
     def post(self, request, *args, **kwargs):
         is_valid, err_msg = self._update_schedule_task()
         if not is_valid:
+            messages.add_message(
+                request,
+                messages.ERROR,
+                err_msg
+            )
             self.context['err_msg'] = err_msg
             return self.render_to_response(self.get_context_data())
         if self.is_upgrade_patch():
