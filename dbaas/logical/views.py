@@ -944,7 +944,8 @@ class DatabaseMaintenanceView(TemplateView):
     def has_maintenance_backup_changed(self, parameters):
         return any(key in self.request.POST for key in parameters)
 
-    def _update_schedule_task(self, payload):
+    def _update_schedule_task(self):
+        payload = self.request.POST
         for pos, scheduled_id in enumerate(payload.getlist('scheduled_id')):
             task = TaskSchedule.objects.get(id=scheduled_id)
             task_date = payload.getlist('scheduled_for_date')[pos]
@@ -953,10 +954,18 @@ class DatabaseMaintenanceView(TemplateView):
                 "{} {}".format(task_date, task_time),
                 "%Y-%m-%d %H:%M:%S"
             )
+            is_valid, err_msg = task.is_valid()
+            if not is_valid:
+                return is_valid, err_msg
             task.save()
 
+        return True, ''
+
     def post(self, request, *args, **kwargs):
-        self._update_schedule_task(request.POST)
+        is_valid, err_msg = self._update_schedule_task()
+        if not is_valid:
+            self.context['err_msg'] = err_msg
+            return self.render_to_response(self.get_context_data())
         if self.is_upgrade_patch():
             _upgrade_patch(
                 request,
@@ -987,8 +996,7 @@ class DatabaseMaintenanceView(TemplateView):
         else:
             self.database.save()
 
-        context = self.get_context_data()
-        return super(DatabaseMaintenanceView, self).render_to_response(context)
+        return self.render_to_response(self.get_context_data())
 
     def has_update_mongodb_30(self):
         return (
