@@ -941,6 +941,10 @@ class DatabaseMaintenanceView(TemplateView):
     def is_upgrade_patch_retry(self):
         return 'upgrade_patch_retry' in self.request.POST
 
+    def is_plan_migration(self):
+        return ('migrate_plan' in self.request.POST and
+                self.request.POST.get('target_migrate_plan'))
+
     def has_maintenance_backup_changed(self, parameters):
         return any(key in self.request.POST for key in parameters)
 
@@ -965,6 +969,10 @@ class DatabaseMaintenanceView(TemplateView):
             )
         elif self.is_upgrade_patch_retry():
             _upgrade_patch_retry(request, self.database)
+        elif self.is_engine_migration():
+            self.migrate_plan(
+                request.POST.get('target_migrate_plan')
+            )
         elif self.has_maintenance_backup_changed([
             'backup_hour',
             'maintenance_window',
@@ -1001,6 +1009,22 @@ class DatabaseMaintenanceView(TemplateView):
             bool(self.database.infra.plan.engine_equivalent_plan) and
             self.request.user.has_perm(constants.PERM_UPGRADE_DATABASE)
         )
+
+    def migrate_plan(self, target_migrate_plan_id):
+        can_do_upgrade, error = self.database.can_do_upgrade()
+
+        if not can_do_upgrade:
+            messages.add_message(request, messages.ERROR, error)
+        else:
+            target_migrate_plan = Plan.objects.filter(
+                pk=target_migrate_plan_id
+            ).first()
+
+            TaskRegister.engine_migrate(
+                database=database,
+                target_migrate_plan=target_migrate_plan,
+                user=request.user
+            )
 
     def get_context_data(self, **kwargs):
         # Upgrade region
