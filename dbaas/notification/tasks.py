@@ -5,7 +5,7 @@ from datetime import date, timedelta
 import traceback
 from celery.utils.log import get_task_logger
 from celery.exceptions import SoftTimeLimitExceeded
-from django.db.models import Sum, Count
+from django.db.models import Sum, Count, Q
 
 from account.models import User
 from dbaas.celery import app
@@ -24,7 +24,8 @@ from util.providers import clone_infra, destroy_infra, \
 from simple_audit.models import AuditRequest
 from system.models import Configuration
 from notification.models import TaskHistory
-from workflow.workflow import (steps_for_instances, rollback_for_instances_full,
+from workflow.workflow import (steps_for_instances,
+                               rollback_for_instances_full,
                                total_of_steps)
 from maintenance.models import (DatabaseUpgrade, DatabaseResize,
                                 DatabaseChangeParameter, DatabaseReinstallVM,
@@ -536,8 +537,9 @@ def check_ssl_expire_at(self):
                 "Checking database {}...".format(database), persist=True
             )
             scheudled_tasks = TaskSchedule.objects.filter(
+                Q(status=TaskSchedule.SCHEDULED)
+                | Q(status=TaskSchedule.ERROR),
                 scheduled_for__lte=one_month_later,
-                status=TaskSchedule.SCHEDULED,
                 database=database
             )
             if scheudled_tasks:
