@@ -941,7 +941,7 @@ class DatabaseMaintenanceView(TemplateView):
     def is_upgrade_patch_retry(self):
         return 'upgrade_patch_retry' in self.request.POST
 
-    def is_plan_migration(self):
+    def is_engine_migration(self):
         return ('migrate_plan' in self.request.POST and
                 self.request.POST.get('target_migrate_plan'))
 
@@ -1011,10 +1011,10 @@ class DatabaseMaintenanceView(TemplateView):
         )
 
     def migrate_plan(self, target_migrate_plan_id):
-        can_do_upgrade, error = self.database.can_do_upgrade()
+        can_do_engine_migration, error = self.database.can_do_engine_migration()
 
-        if not can_do_upgrade:
-            messages.add_message(request, messages.ERROR, error)
+        if not can_do_engine_migration:
+            messages.add_message(self.request, messages.ERROR, error)
         else:
             target_migrate_plan = Plan.objects.filter(
                 pk=target_migrate_plan_id
@@ -1023,7 +1023,7 @@ class DatabaseMaintenanceView(TemplateView):
             TaskRegister.engine_migrate(
                 database=database,
                 target_migrate_plan=target_migrate_plan,
-                user=request.user
+                user=self.request.user
             )
 
     def get_context_data(self, **kwargs):
