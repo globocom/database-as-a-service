@@ -519,12 +519,12 @@ def purge_task_history(self):
 @app.task(bind=True)
 def check_ssl_expire_at(self):
     LOG.info("Retrieving all SSL MySQL databases")
+    today = date.today()
     worker_name = get_worker_name()
     task = TaskHistory.register(
         request=self.request, user=None, worker_name=worker_name)
     task.relevance = TaskHistory.RELEVANCE_CRITICAL
-
-    one_month_later = date.today() + timedelta(days=30)
+    one_month_later = today + timedelta(days=30)
     try:
         infras = DatabaseInfra.objects.filter(
             ssl_configured=True,
@@ -548,7 +548,7 @@ def check_ssl_expire_at(self):
                 TaskSchedule.objects.create(
                     method_path='update_ssl',
                     scheduled_for=TaskSchedule.next_maintenance_window(
-                        infra.earliest_ssl_expire_at,
+                        today,
                         infra.maintenance_window,
                         infra.maintenance_day
                     ),
