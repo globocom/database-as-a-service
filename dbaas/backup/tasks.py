@@ -197,7 +197,12 @@ def make_databases_backup(self):
     )
     task_history.relevance = TaskHistory.RELEVANCE_ERROR
 
-    waiting_msg = "\nWaiting 5 minutes to start the next backup group"
+    backup_group_interval = Configuration.get_by_name_as_int(
+        'backup_group_interval', default=1
+    )
+    waiting_msg = "\nWaiting {} minute(s) to start the next backup group".format(
+        backup_group_interval
+    )
     status = TaskHistory.STATUS_SUCCESS
     environments = Environment.objects.all()
     prod_envs = Configuration.get_by_name_as_list('prod_envs')
@@ -255,7 +260,7 @@ def make_databases_backup(self):
                 else:
                     backup_number = 0
                     task_history.update_details(waiting_msg, True)
-                    sleep(300)
+                    sleep(backup_group_interval*60)
 
             group = BackupGroup()
             group.save()
