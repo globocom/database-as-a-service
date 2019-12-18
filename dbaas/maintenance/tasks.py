@@ -324,8 +324,6 @@ def update_ssl(self, database, task, since_step=None, step_manager=None,
         request=self.request, task_history=task, user=task.user,
         worker_name=get_worker_name()
     )
-    if scheduled_task:
-        scheduled_task.set_running()
     if step_manager:
         step_manager = step_manager
         step_manager.id = None
@@ -341,8 +339,12 @@ def update_ssl(self, database, task, since_step=None, step_manager=None,
         if retry_from:
             step_manager.current_step = retry_from.current_step
             since_step = retry_from.current_step
+            step_manager.task_schedule = retry_from.task_schedule
     step_manager.database = database
     step_manager.task = task
+    if scheduled_task:
+        step_manager.task_schedule = scheduled_task
+    step_manager.set_running()
     step_manager.save()
 
     steps = database.databaseinfra.update_ssl_steps()
@@ -353,10 +355,10 @@ def update_ssl(self, database, task, since_step=None, step_manager=None,
     )
     step_manager = UpdateSsl.objects.get(id=step_manager.id)
     if result:
-        step_manager.set_success(scheduled_task)
+        step_manager.set_success()
         task.set_status_success('SSL Update with success')
     else:
-        step_manager.set_error(scheduled_task)
+        step_manager.set_error()
         task.set_status_error('Could not update SSL')
 
 
