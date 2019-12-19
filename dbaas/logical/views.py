@@ -951,6 +951,16 @@ class DatabaseMaintenanceView(TemplateView):
     def has_maintenance_backup_changed(self, parameters):
         return any(key in self.request.POST for key in parameters)
 
+    def get_or_none_retry_migrate_engine_plan(self):
+        engine_migration = DatabaseMigrateEngine.objects.need_retry(
+            database=self.database
+        )
+
+        if engine_migration:
+            return engine_migration.target_plan
+
+        return None
+
     def _update_schedule_task(self):
         payload = self.request.POST
         for pos, scheduled_id in enumerate(payload.getlist('scheduled_id')):
@@ -1094,9 +1104,10 @@ class DatabaseMaintenanceView(TemplateView):
         self.context['available_plans_for_migration'] = (
             self.database.plan.available_plans_for_migration
         )
-        self.context['retry_migrate_plan'] = DatabaseMigrateEngine.objects.need_retry(
-            database=self.database
-        ).target_plan
+
+        self.context['retry_migrate_plan'] = (
+            self.get_or_none_retry_migrate_engine_plan()
+        )
 
         # Maintenance region
         self.context['maintenance_windows'] = DatabaseForm.MAINTENANCE_WINDOW_CHOICES
