@@ -168,6 +168,14 @@ class PlanStepUpgrade(PlanStep):
         return plan.engine_equivalent_plan
 
 
+class PlanStepMigrateEngine(PlanStep):
+
+    @property
+    def plan(self):
+        plan = super(PlanStepMigrateEngine, self).plan
+        return plan.migrate_engine_equivalent_plan
+
+
 class Initialization(PlanStep):
 
     def __unicode__(self):
@@ -239,7 +247,15 @@ class InitializationForUpgrade(Initialization, PlanStepUpgrade):
     pass
 
 
+class InitializationForMigrateEngine(Initialization, PlanStepMigrateEngine):
+    pass
+
+
 class ConfigureForUpgrade(Configure, PlanStepUpgrade):
+    pass
+
+
+class ConfigureForMigrateEngine(Configure, PlanStepMigrateEngine):
     pass
 
 
