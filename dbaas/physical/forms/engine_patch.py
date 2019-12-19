@@ -41,7 +41,8 @@ class EnginePatchForm(forms.ModelForm):
     class Meta:
         model = EnginePatch
         fields = ('patch_version', 'is_initial_patch',
-                  'patch_path', 'required_disk_size_gb')
+                  'patch_path', 'required_disk_size_gb',
+                  'migrate_engine_equivalent_patch')
 
 
 class EnginePatchFormset(BaseInlineFormSet):
