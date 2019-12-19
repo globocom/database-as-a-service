@@ -818,9 +818,9 @@ class Database(BaseModel):
                                             '.migrate_engine')]):
             error = "Database engine cannot be migrated because " \
                     "it is in use by another task."
-        elif self.is_dead and not retry:
+        elif not retry and self.is_dead:
             error = "Database is dead and cannot be upgraded."
-        elif self.is_being_used_elsewhere():
+        elif not retry and self.is_being_used_elsewhere():
             error = "Database engine cannot be migrated because " \
                     "it is in use by another task."
 
