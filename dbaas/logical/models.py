@@ -809,7 +809,7 @@ class Database(BaseModel):
             return False, error
         return True, None
 
-    def can_do_engine_migration(self):
+    def can_do_engine_migration(self, retry=False):
         error = None
 
         if self.is_in_quarantine:
@@ -818,7 +818,7 @@ class Database(BaseModel):
                                             '.migrate_engine')]):
             error = "Database engine cannot be migrated because " \
                     "it is in use by another task."
-        elif self.is_dead:
+        elif self.is_dead and not retry:
             error = "Database is dead and cannot be upgraded."
         elif self.is_being_used_elsewhere():
             error = "Database engine cannot be migrated because " \
