@@ -28,7 +28,7 @@
     <div class="controls">
       {% if retry_migrate_plan %}
       <select id="id_target_migrate_plan_retry" name="target_migrate_plan_retry" disabled="true">
-        {% for plan in available_migration_plans %}
+        {% for plan in available_plans_for_migration %}
           {% if plan == retry_migrate_plan %}
           <option value="{{plan.id}}" selected>{{ plan }}</option>
           {% endif %}
