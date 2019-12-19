@@ -945,6 +945,9 @@ class DatabaseMaintenanceView(TemplateView):
         return ('migrate_plan' in self.request.POST and
                 self.request.POST.get('target_migrate_plan'))
 
+    def is_engine_migration_retry(self):
+        return 'migrate_plan_retry' in self.request.POST
+
     def has_maintenance_backup_changed(self, parameters):
         return any(key in self.request.POST for key in parameters)
 
@@ -984,9 +987,11 @@ class DatabaseMaintenanceView(TemplateView):
         elif self.is_upgrade_patch_retry():
             _upgrade_patch_retry(request, self.database)
         elif self.is_engine_migration():
-            self.migrate_plan(
+            self.migrate_engine(
                 request.POST.get('target_migrate_plan')
             )
+        elif self.is_engine_migration_retry():
+            self.retry_migrate_engine()
         elif self.has_maintenance_backup_changed([
             'backup_hour',
             'maintenance_window',
@@ -1023,7 +1028,27 @@ class DatabaseMaintenanceView(TemplateView):
             self.request.user.has_perm(constants.PERM_UPGRADE_DATABASE)
         )
 
-    def migrate_plan(self, target_migrate_plan_id):
+    def retry_migrate_engine(self):
+        error = None
+        last_migration = DatabaseMigrateEngine.objcts.filter(
+            database=self.database
+        ).last()
+
+        if not last_migration:
+            error = "Database does not have engine migrations"
+        elif not last_migration.is_status_error:
+            error = "Cannot do retry, last engine migration. Status is '{}'!".format(
+                last_upgrade.get_status_display()
+            )
+        else:
+            since_step = last_migration.current_step
+
+        if error:
+            messages.add_message(request, messages.ERROR, error)
+        else:
+            self.migrate_engine(last_migration.target_plan.pk, since_step)
+
+    def migrate_engine(self, target_migrate_plan_id, since_step=None):
         can_do_engine_migration, error = self.database.can_do_engine_migration()
 
         if not can_do_engine_migration:
@@ -1036,7 +1061,8 @@ class DatabaseMaintenanceView(TemplateView):
             TaskRegister.engine_migrate(
                 database=self.database,
                 target_plan=target_migrate_plan,
-                user=self.request.user
+                user=self.request.user,
+                since_step=since_step
             )
 
     def get_context_data(self, **kwargs):
@@ -1065,7 +1091,7 @@ class DatabaseMaintenanceView(TemplateView):
         )
         self.context['retry_migrate_plan'] = DatabaseMigrateEngine.objects.need_retry(
             database=self.database
-        )
+        ).target_plan
 
         # Maintenance region
         self.context['maintenance_windows'] = DatabaseForm.MAINTENANCE_WINDOW_CHOICES
