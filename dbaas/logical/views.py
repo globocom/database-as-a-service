@@ -1030,7 +1030,7 @@ class DatabaseMaintenanceView(TemplateView):
 
     def retry_migrate_engine(self):
         error = None
-        last_migration = DatabaseMigrateEngine.objcts.filter(
+        last_migration = DatabaseMigrateEngine.objects.filter(
             database=self.database
         ).last()
 
@@ -1049,7 +1049,12 @@ class DatabaseMaintenanceView(TemplateView):
             self.migrate_engine(last_migration.target_plan.pk, since_step)
 
     def migrate_engine(self, target_migrate_plan_id, since_step=None):
-        can_do_engine_migration, error = self.database.can_do_engine_migration()
+        if since_step:
+            retry = True
+
+        can_do_engine_migration, error = self.database.can_do_engine_migration(
+            retry=retry
+        )
 
         if not can_do_engine_migration:
             messages.add_message(self.request, messages.ERROR, error)
