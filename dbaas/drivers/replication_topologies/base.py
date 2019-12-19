@@ -99,6 +99,14 @@ class BaseTopology(object):
             'workflow.steps.util.metric_collector.ConfigureTelegraf',
         )
 
+    def get_migrate_engine_steps_extra(self):
+        return (
+            'workflow.steps.util.volume_provider.MountDataVolume',
+            'workflow.steps.util.plan.InitializationForMigrateEngine',
+            'workflow.steps.util.plan.ConfigureForMigrateEngine',
+            'workflow.steps.util.metric_collector.ConfigureTelegraf',
+        )
+
     def get_upgrade_steps_final(self):
         return [{
             self.get_upgrade_steps_final_description(): (
@@ -126,7 +134,7 @@ class BaseTopology(object):
                 'workflow.steps.util.host_provider.Start',
                 'workflow.steps.util.vm.WaitingBeReady',
                 'workflow.steps.util.vm.UpdateOSDescription',
-            ) + self.get_upgrade_steps_extra() + (
+            ) + self.get_migrate_engine_steps_extra() + (
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
