@@ -6,7 +6,15 @@ from django.forms.util import ErrorList
 from ..models import EnginePatch, Engine
 
 
+class EquivalentPatchCustomChoiceField(forms.ModelChoiceField):
+
+    def label_from_instance(self, obj):
+        return "{} - {}".format(obj.engine.engine_type, obj)
+
+
 class EnginePatchForm(forms.ModelForm):
+
+    migrate_engine_equivalent_patch = EquivalentPatchCustomChoiceField(queryset=EnginePatch.objects.all())
 
     def clean(self):
         """This method validates patch_path as required field when the form is
