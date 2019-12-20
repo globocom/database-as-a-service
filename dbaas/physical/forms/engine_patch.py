@@ -54,12 +54,31 @@ class EnginePatchFormset(BaseInlineFormSet):
         """
         super(EnginePatchFormset, self).clean()
 
+        self.engine_type = None
+        if self.instance and self.instance.engine_type:
+            self.engine_type = self.instance.engine_type
+
+
         count = 0
         for form in self.forms:
             if form.cleaned_data:
-                if form.cleaned_data.get('is_initial_patch'):
-                    if not form.cleaned_data.get('DELETE'):
-                        count += 1
+                if (
+                    form.cleaned_data.get('is_initial_patch')
+                    and not form.cleaned_data.get('DELETE')
+                ):
+                    count += 1
+                elif (
+                    form.cleaned_data.get('migrate_engine_equivalent_patch')
+                    and self.engine_type
+                    and not self.has_same_engine_type(form.cleaned_data)
+                    and not form.cleaned_data.get('DELETE')
+                ):
+                    message_as_list = [
+                        'It needs to be an {} patch'.format(self.engine_type)
+                    ]
+                    form._errors["migrate_engine_equivalent_patch"] = (
+                        self.error_class(message_as_list)
+                    )
 
         if count == 0:
             raise forms.ValidationError(
@@ -69,6 +88,24 @@ class EnginePatchFormset(BaseInlineFormSet):
             raise forms.ValidationError(
                 'You must have only one initial engine patch'
             )
+
+    def has_same_engine_type(self, cleaned_data):
+        """ This method check weather the fields instance.engine_type and
+        migrate_engine_equivalent_patch.engine.engine_type matchup or not.
+        """
+        print(
+            cleaned_data.get(
+                'migrate_engine_equivalent_patch'
+            ).engine.engine_type
+        )
+        print(self.engine_type)
+        return (
+            cleaned_data.get(
+                'migrate_engine_equivalent_patch'
+            ).engine.engine_type.pk ==
+            self.engine_type.pk
+        )
+
 
 
 engine_patch_formset = inlineformset_factory(
