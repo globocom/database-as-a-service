@@ -72,24 +72,6 @@ class EnginePatchFormset(BaseInlineFormSet):
                 'You must have only one initial engine patch'
             )
 
-    def has_same_engine_type(self, cleaned_data):
-        """ This method check weather the fields instance.engine_type and
-        migrate_engine_equivalent_patch.engine.engine_type matchup or not.
-        """
-        print(
-            cleaned_data.get(
-                'migrate_engine_equivalent_patch'
-            ).engine.engine_type
-        )
-        print(self.engine_type)
-        return (
-            cleaned_data.get(
-                'migrate_engine_equivalent_patch'
-            ).engine.engine_type.pk ==
-            self.engine_type.pk
-        )
-
-
 
 engine_patch_formset = inlineformset_factory(
     Engine,
