@@ -67,18 +67,6 @@ class EnginePatchFormset(BaseInlineFormSet):
                     and not form.cleaned_data.get('DELETE')
                 ):
                     count += 1
-                elif (
-                    form.cleaned_data.get('migrate_engine_equivalent_patch')
-                    and self.engine_type
-                    and not self.has_same_engine_type(form.cleaned_data)
-                    and not form.cleaned_data.get('DELETE')
-                ):
-                    message_as_list = [
-                        'It needs to be an {} patch'.format(self.engine_type)
-                    ]
-                    form._errors["migrate_engine_equivalent_patch"] = (
-                        self.error_class(message_as_list)
-                    )
 
         if count == 0:
             raise forms.ValidationError(
