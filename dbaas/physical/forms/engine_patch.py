@@ -54,11 +54,6 @@ class EnginePatchFormset(BaseInlineFormSet):
         """
         super(EnginePatchFormset, self).clean()
 
-        self.engine_type = None
-        if self.instance and self.instance.engine_type:
-            self.engine_type = self.instance.engine_type
-
-
         count = 0
         for form in self.forms:
             if form.cleaned_data:
