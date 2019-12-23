@@ -221,12 +221,6 @@ class EnginePatch(BaseModel):
         verbose_name=_("Required Disk Size (GB)"),
         null=True, blank=True
     )
-    migrate_engine_equivalent_patch = models.ForeignKey(
-        "EnginePatch", null=True, blank=True,
-        verbose_name=_("Equivalent Engine Patch (Migration)"),
-        on_delete=models.SET_NULL,
-        related_name='backwards_engine_patch'
-    )
 
     @property
     def full_version(self):
