@@ -9,7 +9,7 @@ from ..models import EnginePatch, Engine
 class EquivalentPatchCustomChoiceField(forms.ModelChoiceField):
 
     def label_from_instance(self, obj):
-        return "{} - {}".format(obj.engine.engine_type, obj)
+        return "{} {}".format(obj.engine.engine_type, obj)
 
 
 class EnginePatchForm(forms.ModelForm):
