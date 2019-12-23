@@ -786,6 +786,7 @@ def migrate_engine(self, database, user, task, since_step=0):
     if success:
         infra.plan = target_plan
         infra.engine = target_plan.engine
+        infra.engine_patch = target_plan.engine.default_engine_patch
         infra.save()
 
         database_migrate_engine_obj.set_success()
