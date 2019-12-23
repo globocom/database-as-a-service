@@ -548,7 +548,7 @@ def check_ssl_expire_at(self):
                 TaskSchedule.objects.create(
                     method_path='update_ssl',
                     scheduled_for=TaskSchedule.next_maintenance_window(
-                        today,
+                        today + timedelta(days=7),
                         infra.maintenance_window,
                         infra.maintenance_day
                     ),
