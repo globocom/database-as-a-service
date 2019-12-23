@@ -582,10 +582,7 @@ class Plan(BaseModel):
 
     @property
     def available_plans_for_migration(self):
-        if (
-            self.migrate_engine_equivalent_plan and
-            self.engine.default_engine_patch.migrate_engine_equivalent_patch
-        ):
+        if self.migrate_engine_equivalent_plan:
             return [self.migrate_engine_equivalent_plan]
         return []
 
