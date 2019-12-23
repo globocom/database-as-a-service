@@ -1,5 +1,5 @@
 {% extends "logical/database/details/base.html" %}
-{% load admin_static %}
+{% load admin_static dbaas_tags system_config %}
 
 {% block extrastyle %}
   {{ block.super }}
@@ -130,7 +130,8 @@
       </div>
     </div>
   </div>
-  {% if tasks_scheduled %}
+  {% get_configuration "show_schedule_tasks" "show_schedule_tasks" %}
+  {% if tasks_scheduled and show_schedule_tasks %}
     <table border=1>
       <thead>
         <th>Kind</th>
@@ -139,6 +140,7 @@
         <th>Action</th>
       </thead>
       <tbody>
+        <input type="hidden" name="maintenance_changed" value="0" />
         {% for task in tasks_scheduled %}
           <tr>
             <td>Update SSL certificate</td>
@@ -188,19 +190,21 @@
 {% include "admin/confirmation_modal.html" with modal_id="migrate_plan_retry" confirmation_message="Are you sure you want to retry migrating plan?" box_title="Retrying to migrate plan" button_type="submit" button_value="Migrate Plan Retry" button_name="migrate_plan_retry" id_optional="id=id_migrate_plan_retry_btn_modal" %}
 
 {% include "admin/confirmation_modal.html" with tag_type="a" modal_id="execute_scheduled_maintenance" confirmation_message="Are you sure you want execute the task now ?" box_title="Execute Scheduled Task" button_name="execute_scheduled_maintenance" id_optional="id=id_execute_scheduled_maintenance_btn_modal" %}
-{% endblock %}
 
+{% include "admin/maintenance_confirmation_modal.html" with modal_id="save_submit_modal" confirmation_message="You have tasks scheduled. You want to put in your new maintenance window ?" box_title="Change Scheduled tasks" button_type="submit" button_value="save_and_update_task" button_no_value="Save" button_name="_save" extra_attributes=onclick_attrib%}
+
+{% endblock %}
 
 {% block js_footer %}
 {{ block.super }}
 <script type="text/javascript" src="/admin/jsi18n/"></script>
-<script type="text/javascript" src="{% static "admin/js/core.js" %}"></script>
-<script type="text/javascript" src="{% static "admin/js/admin/RelatedObjectLookups.js" %}"></script>
-<script type="text/javascript" src="{% static "admin/js/jquery.js" %}"></script>
-<script type="text/javascript" src="{% static "admin/js/jquery.init.js" %}"></script>
-<script type="text/javascript" src="{% static "admin/js/calendar.js" %}"></script>
-<script type="text/javascript" src="{% static "admin/js/admin/DateTimeShortcuts.js" %}"></script>
-<script type="text/javascript" src="{% static "admin/js/inlines.js" %}"></script>
+<script type="text/javascript" src="{% static 'admin/js/core.js' %}"></script>
+<script type="text/javascript" src="{% static 'admin/js/admin/RelatedObjectLookups.js' %}"></script>
+<script type="text/javascript" src="{% static 'admin/js/jquery.js' %}"></script>
+<script type="text/javascript" src="{% static 'admin/js/jquery.init.js' %}"></script>
+<script type="text/javascript" src="{% static 'admin/js/calendar.js' %}"></script>
+<script type="text/javascript" src="{% static 'admin/js/admin/DateTimeShortcuts.js' %}"></script>
+<script type="text/javascript" src="{% static 'admin/js/inlines.js' %}"></script>
 
 
 <script>
@@ -230,6 +234,28 @@
     $("#execute_scheduled_maintenance_btn").click(function(event) {
       var scheduleId = $(event.target).data('schedule-id');
       $("#id_execute_scheduled_maintenance_btn_modal").attr("href", "execute_schedule_task/"+scheduleId+"/");
+    });
+
+    $("#id_maintenance_day, #id_maintenance_window").on("change", function(ev){
+      var el = ev.target;
+      var selectedOption = el.options[el.selectedIndex];
+      var $scheduleIds = $('input[name="scheduled_id"]');
+      var need_modal = false;
+      $("#id_maintenance_day, #id_maintenance_window").each(function(pos, el){
+        if (!el.selectedOptions[0].text.includes('*')) {
+          need_modal = true;
+          return false;
+        }
+      });
+      if (need_modal && $scheduleIds.length > 0) {
+        $(".save-options-box #save-submit-btn").hide();
+        $(".save-options-box #save-modal-btn").show();
+        $('input[name="maintenance_changed"]').val("1");
+      } else {
+        $(".save-options-box #save-modal-btn").hide();
+        $(".save-options-box #save-submit-btn").show();
+        $('input[name="maintenance_changed"]').val("0");
+      }
     });
 
   })
