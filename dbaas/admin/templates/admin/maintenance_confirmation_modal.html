@@ -1,0 +1,9 @@
+{% extends "admin/confirmation_modal.html" %}
+
+{% block btn_no %}<{{ tag_type|default:"button" }} type="{{ button_type|default:"button" }}"
+  class="{{ button_class|default:"btn btn-default" }}"
+  name="{{ button_name|default:"" }}"
+  value="{{ button_no_value|default:"" }}"
+  {{ dismiss_option|default:"" }}
+  {{ id_no_optional|default:"" }}
+  {{ extra_attributes|default:"" }}>No</{{ tag_type|default:"button" }}>{% endblock %}

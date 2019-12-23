@@ -961,16 +961,36 @@ class DatabaseMaintenanceView(TemplateView):
 
         return None
 
+    def _schedule_task_for_next_maintenance_window(self, *args, **kw):
+        payload = self.request.POST
+        return TaskSchedule.next_maintenance_window(
+            datetime.date.today(),
+            int(payload.get('maintenance_window')),
+            int(payload.get('maintenance_day')),
+        )
+
+    def _schedule_task_with_post_data(self, pos):
+        payload = self.request.POST
+        task_date = payload.getlist('scheduled_for_date')[pos]
+        task_time = payload.getlist('scheduled_for_time')[pos]
+        return datetime.datetime.strptime(
+            "{} {}".format(task_date, task_time),
+            "%Y-%m-%d %H:%M:%S"
+        )
+
     def _update_schedule_task(self):
+        payload = self.request.POST
+        maintenance_changed = payload.get('maintenance_changed')
+        user_want_update = payload.get('_save') == 'save_and_update_task'
+        if maintenance_changed and user_want_update:
+            make_schedule_for = self._schedule_task_for_next_maintenance_window
+        else:
+            make_schedule_for = self._schedule_task_with_post_data
+
         payload = self.request.POST
         for pos, scheduled_id in enumerate(payload.getlist('scheduled_id')):
             task = TaskSchedule.objects.get(id=scheduled_id)
-            task_date = payload.getlist('scheduled_for_date')[pos]
-            task_time = payload.getlist('scheduled_for_time')[pos]
-            task.scheduled_for = datetime.datetime.strptime(
-                "{} {}".format(task_date, task_time),
-                "%Y-%m-%d %H:%M:%S"
-            )
+            task.scheduled_for = make_schedule_for(pos)
             is_valid, err_msg = task.is_valid()
             if not is_valid:
                 return is_valid, err_msg
