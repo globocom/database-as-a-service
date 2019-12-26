@@ -1079,6 +1079,8 @@ class DatabaseMaintenanceView(TemplateView):
             self.migrate_engine(last_migration.target_plan.pk, since_step)
 
     def migrate_engine(self, target_migrate_plan_id, since_step=None):
+        retry = False
+
         if since_step:
             retry = True
 
