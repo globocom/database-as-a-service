@@ -2,13 +2,19 @@
 from __future__ import absolute_import, unicode_literals
 import logging
 import simple_audit
-from dateutil import rrule
-from copy import copy
-from django.db import models
-from django.core.exceptions import ValidationError
-from django.utils.translation import ugettext_lazy as _
-from dateutil import tz
 from datetime import datetime
+
+from copy import copy
+
+from django.db import models
+from django.utils.translation import ugettext_lazy as _
+from dateutil import rrule, tz
+from django.db.models.signals import post_save
+from django.db.models.signals import pre_delete
+from django.dispatch import receiver
+from celery.task import control
+
+
 from account.models import Team
 from backup.models import BackupGroup, Snapshot
 from logical.models import Database, Project
@@ -17,13 +23,10 @@ from physical.models import (
     Offering, EnginePatch)
 from notification.models import TaskHistory
 from util.models import BaseModel
-from django.db.models.signals import post_save
-from django.db.models.signals import pre_delete
-from django.dispatch import receiver
-from celery.task import control
 from maintenance.tasks import execute_scheduled_maintenance
 from .registered_functions.functools import _get_registered_functions
 from .managers import DatabaseMaintenanceTaskManager
+from util.email_notifications import schedule_task_notification
 
 
 LOG = logging.getLogger(__name__)
@@ -945,11 +948,13 @@ simple_audit.register(DatabaseConfigureSSL)
 simple_audit.register(HostMigrate)
 simple_audit.register(DatabaseMigrate)
 simple_audit.register(DatabaseUpgradePatch)
+simple_audit.register(TaskSchedule)
 
 
-#########
-# SIGNALS#
-#########
+#########################################################
+#                       SIGNALS                         #
+#########################################################
+
 
 @receiver(pre_delete, sender=Maintenance)
 def maintenance_pre_delete(sender, **kwargs):
@@ -991,3 +996,10 @@ def maintenance_post_save(sender, **kwargs):
 
             maintenance.celery_task_id = task.task_id
             maintenance.save()
+
+
+@receiver(post_save, sender=TaskSchedule)
+def task_schedule_post_save(sender, **kwargs):
+    task = kwargs.get("instance")
+    is_new = kwargs.get("created")
+    schedule_task_notification(task.database, task, is_new)
