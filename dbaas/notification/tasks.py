@@ -789,6 +789,15 @@ def migrate_engine(self, database, user, task, since_step=0):
         infra.engine_patch = target_plan.engine.default_engine_patch
         infra.save()
 
+        instance_type = getattr(
+            Instance, target_plan.engine.engine_type.name.upper(), 0
+        )
+
+        # Setting new Instance Type for all instances
+        for instance in infra.instances.all():
+            instance.instance_type = instance_type
+            instance.save()
+
         database_migrate_engine_obj.set_success()
         task.update_status_for(TaskHistory.STATUS_SUCCESS, 'Done')
     else:
