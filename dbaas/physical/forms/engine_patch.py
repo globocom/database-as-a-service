@@ -6,6 +6,12 @@ from django.forms.util import ErrorList
 from ..models import EnginePatch, Engine
 
 
+class EquivalentPatchCustomChoiceField(forms.ModelChoiceField):
+
+    def label_from_instance(self, obj):
+        return "{} - {}".format(obj.engine.engine_type, obj)
+
+
 class EnginePatchForm(forms.ModelForm):
 
     def clean(self):
@@ -56,9 +62,11 @@ class EnginePatchFormset(BaseInlineFormSet):
         count = 0
         for form in self.forms:
             if form.cleaned_data:
-                if form.cleaned_data.get('is_initial_patch'):
-                    if not form.cleaned_data.get('DELETE'):
-                        count += 1
+                if (
+                    form.cleaned_data.get('is_initial_patch')
+                    and not form.cleaned_data.get('DELETE')
+                ):
+                    count += 1
 
         if count == 0:
             raise forms.ValidationError(

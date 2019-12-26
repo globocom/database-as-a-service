@@ -2,10 +2,19 @@
 from __future__ import absolute_import, unicode_literals
 import logging
 import simple_audit
+from datetime import datetime
+
+from copy import copy
+
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
-from dateutil import tz
-from datetime import datetime
+from dateutil import rrule, tz
+from django.db.models.signals import post_save
+from django.db.models.signals import pre_delete
+from django.dispatch import receiver
+from celery.task import control
+
+
 from account.models import Team
 from backup.models import BackupGroup, Snapshot
 from logical.models import Database, Project
@@ -14,13 +23,10 @@ from physical.models import (
     Offering, EnginePatch)
 from notification.models import TaskHistory
 from util.models import BaseModel
-from django.db.models.signals import post_save
-from django.db.models.signals import pre_delete
-from django.dispatch import receiver
-from celery.task import control
 from maintenance.tasks import execute_scheduled_maintenance
 from .registered_functions.functools import _get_registered_functions
 from .managers import DatabaseMaintenanceTaskManager
+from util.email_notifications import schedule_task_notification
 
 
 LOG = logging.getLogger(__name__)
@@ -81,7 +87,7 @@ class Maintenance(BaseModel):
                 hm.save()
                 total_hosts += 1
 
-        except Exception, e:
+        except Exception as e:
             error = e.args[1]
             LOG.warn("Error: {}".format(error))
             self.status = self.REJECTED
@@ -130,7 +136,7 @@ class Maintenance(BaseModel):
         scheduled_tasks = inspect.scheduled()
         try:
             hosts = scheduled_tasks.keys()
-        except Exception, e:
+        except Exception as e:
             LOG.info("Could not retrieve celery scheduled tasks: {}".format(e))
             return False
 
@@ -147,6 +153,80 @@ class Maintenance(BaseModel):
                     return True
 
         return False
+
+
+class TaskSchedule(BaseModel):
+    SCHEDULED = 0
+    RUNNING = 1
+    SUCCESS = 2
+    ERROR = 3
+
+    STATUS = (
+        (SCHEDULED, 'Scheduled'),
+        (RUNNING, 'Running'),
+        (SUCCESS, 'Success'),
+        (ERROR, 'Error'),
+    )
+
+    method_path = models.CharField(null=False, blank=False, max_length=500)
+    status = models.IntegerField(choices=STATUS, default=SCHEDULED)
+    scheduled_for = models.DateTimeField(null=True, blank=True)
+    started_at = models.DateTimeField(null=True, blank=True)
+    finished_at = models.DateTimeField(null=True, blank=True)
+    database = models.ForeignKey(Database, related_name='task_schedules')
+
+    def __unicode__(self):
+        return "path: {} | scheduled_for: {}".format(
+            self.method_path, self.scheduled_for
+        )
+
+    def is_valid(self):
+        scheduled_date = self.scheduled_for.date()
+        expire_at = self.database.infra.earliest_ssl_expire_at
+        if (scheduled_date >= expire_at):
+            msg = ('You cant schedule greater or equal then ssl expire. '
+                   'Scheduled for: {} Expire at: {}'.format(
+                        scheduled_date, expire_at)
+                   )
+            return False, msg
+
+        return True, ''
+
+    class Meta:
+        permissions = (
+            ("view_maintenance", "Can view maintenance"),
+        )
+
+    @staticmethod
+    def next_maintenance_window(start_date, maintenance_hour, weekday):
+        weekdays = list(copy(rrule.weekdays))
+        weekdays.insert(0, weekdays.pop())
+        rule = rrule.rrule(
+            rrule.DAILY,
+            byweekday=[weekdays[weekday]],
+            dtstart=start_date
+        )
+        ruleset = rrule.rruleset()
+        ruleset.rrule(rule)
+        schedule_datetime = ruleset[0]
+        schedule_datetime = schedule_datetime.replace(hour=maintenance_hour)
+        return schedule_datetime
+
+    def _set_status(self, status):
+        self.status = status
+        self.save()
+
+    def set_success(self):
+        self.finished_at = datetime.now()
+        self._set_status(self.SUCCESS)
+
+    def set_error(self):
+        self.finished_at = datetime.now()
+        self._set_status(self.ERROR)
+
+    def set_running(self):
+        self.started_at = datetime.now()
+        self._set_status(self.RUNNING)
 
 
 class HostMaintenance(BaseModel):
@@ -247,6 +327,11 @@ class DatabaseMaintenanceTask(BaseModel):
     can_do_retry = models.BooleanField(
         verbose_name=_("Can Do Retry"), default=True
     )
+    task_schedule = models.ForeignKey(
+        'TaskSchedule',
+        null=True, blank=True, unique=False,
+        related_name="%(app_label)s_%(class)s_related"
+    )
     objects = DatabaseMaintenanceTaskManager()
 
     def get_current_step(self):
@@ -267,9 +352,18 @@ class DatabaseMaintenanceTask(BaseModel):
 
     def set_success(self):
         self.update_final_status(self.SUCCESS)
+        if self.task_schedule:
+            self.task_schedule.set_success()
+
+    def set_running(self):
+        self.update_final_status(self.RUNNING)
+        if self.task_schedule:
+            self.task_schedule.set_running()
 
     def set_error(self):
         self.update_final_status(self.ERROR)
+        if self.task_schedule:
+            self.task_schedule.set_error()
 
     def set_rollback(self):
         self.can_do_retry = False
@@ -340,6 +434,12 @@ class DatabaseUpgrade(DatabaseMaintenanceTask):
             self.target_plan_name = self.target_plan.name
 
         super(DatabaseUpgrade, self).save(*args, **kwargs)
+
+
+class DatabaseMigrateEngine(DatabaseUpgrade):
+
+    def __unicode__(self):
+        return "{} migrate engine".format(self.database.name)
 
 
 class DatabaseUpgradePatch(DatabaseMaintenanceTask):
@@ -848,11 +948,13 @@ simple_audit.register(DatabaseConfigureSSL)
 simple_audit.register(HostMigrate)
 simple_audit.register(DatabaseMigrate)
 simple_audit.register(DatabaseUpgradePatch)
+simple_audit.register(TaskSchedule)
 
 
-#########
-# SIGNALS#
-#########
+#########################################################
+#                       SIGNALS                         #
+#########################################################
+
 
 @receiver(pre_delete, sender=Maintenance)
 def maintenance_pre_delete(sender, **kwargs):
@@ -894,3 +996,10 @@ def maintenance_post_save(sender, **kwargs):
 
             maintenance.celery_task_id = task.task_id
             maintenance.save()
+
+
+@receiver(post_save, sender=TaskSchedule)
+def task_schedule_post_save(sender, **kwargs):
+    task = kwargs.get("instance")
+    is_new = kwargs.get("created")
+    schedule_task_notification(task.database, task, is_new)

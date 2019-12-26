@@ -303,6 +303,21 @@ class InstallNewTemplate(HostProviderStep):
             raise EnvironmentError('Could not reinstall VM')
 
 
+class InstallMigrateEngineTemplate(HostProviderStep):
+
+    def __init__(self, instance):
+        super(InstallMigrateEngineTemplate, self).__init__(instance)
+        self.future_engine = self.plan.migrate_engine_equivalent_plan.engine
+
+    def __unicode__(self):
+        return "Installing new engine template to VM..."
+
+    def do(self):
+        reinstall = self.provider.new_version(self.future_engine)
+        if not reinstall:
+            raise EnvironmentError('Could not reinstall VM')
+
+
 class ReinstallTemplate(HostProviderStep):
 
     def __unicode__(self):

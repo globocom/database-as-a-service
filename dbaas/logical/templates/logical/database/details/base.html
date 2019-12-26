@@ -80,7 +80,8 @@
       <div class="form-actions navbar navbar-fixed-bottom">
         <div class="container">
           <div class="pull-left save-options-box">
-            <input type="submit" value="Save" name="_save" onclick=&quot;submitOrderForm();&quot; class="btn btn-primary"/>
+            <input type="submit" id="save-submit-btn" value="Save" name="_save" onclick=&quot;submitOrderForm();&quot; class="btn btn-primary"/>
+            <button data-toggle="modal" style="display:none;" id="save-modal-btn" data-target="#save_submit_modal" class="btn btn-primary">Save</button>
           </div>
         </div>
       </div>
@@ -133,9 +134,12 @@
           jQuery('#running_label').hide();
          }
       });
+
     }
+
     database_current_task();
     setInterval(database_current_task, 10000);
+
 
   </script>
 {% endblock %}

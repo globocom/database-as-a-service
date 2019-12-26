@@ -546,6 +546,12 @@ class Plan(BaseModel):
     weaker_offering = models.ForeignKey(
         Offering, related_name='weaker_offerings', null=True, blank=True
     )
+    migrate_engine_equivalent_plan = models.ForeignKey(
+        "Plan", null=True, blank=True,
+        verbose_name=_("Engine migrate plan"),
+        on_delete=models.SET_NULL,
+        related_name='backwards_engine_plan'
+    )
 
     @property
     def engine_type(self):
@@ -567,6 +573,12 @@ class Plan(BaseModel):
     def tsuru_label(self):
 
         return slugify("{}-{}".format(self.name, self.environment()))
+
+    @property
+    def available_plans_for_migration(self):
+        if self.migrate_engine_equivalent_plan:
+            return [self.migrate_engine_equivalent_plan]
+        return []
 
 #    @property
 #    def stronger_offering(self):
@@ -862,6 +874,12 @@ class DatabaseInfra(BaseModel):
         if best_datainfra.available <= 0:
             return None
         return best_datainfra
+
+    @property
+    def earliest_ssl_expire_at(self):
+        return self.instances.earliest(
+            'hostname__ssl_expire_at'
+        ).hostname.ssl_expire_at
 
     def check_instances_status(self):
         alive_instances = self.instances.filter(status=Instance.ALIVE).count()

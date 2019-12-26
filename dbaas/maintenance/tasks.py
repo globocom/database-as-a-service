@@ -317,7 +317,8 @@ def recreate_slave(self, database, host, task, since_step=None,
 
 
 @app.task(bind=True)
-def update_ssl(self, database, task, since_step=None, step_manager=None):
+def update_ssl(self, database, task, since_step=None, step_manager=None,
+               scheduled_task=None):
     from maintenance.models import UpdateSsl
     task = TaskHistory.register(
         request=self.request, task_history=task, user=task.user,
@@ -338,8 +339,12 @@ def update_ssl(self, database, task, since_step=None, step_manager=None):
         if retry_from:
             step_manager.current_step = retry_from.current_step
             since_step = retry_from.current_step
+            step_manager.task_schedule = retry_from.task_schedule
     step_manager.database = database
     step_manager.task = task
+    if scheduled_task:
+        step_manager.task_schedule = scheduled_task
+    step_manager.set_running()
     step_manager.save()
 
     steps = database.databaseinfra.update_ssl_steps()

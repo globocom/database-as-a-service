@@ -1,9 +1,15 @@
 {% extends "logical/database/details/base.html" %}
-{% load admin_static %}
+{% load admin_static dbaas_tags system_config %}
 
 {% block extrastyle %}
   {{ block.super }}
+  <link rel="stylesheet" type="text/css" href="{% static "admin/css/bootstrap.min.css" %}" />
+
+    <link rel="stylesheet" type="text/css" href="{% static "admin/css/forms-and-widgets.css" %}" />
   <style type="text/css">
+    .calendarbox, .clockbox {
+      z-index: 10000;
+    }
     .resize_button {
         margin-left: 20px
     }
@@ -16,6 +22,30 @@
 
 {% block tab %}
 <fieldset class="module aligned ">
+  {% if available_plans_for_migration %}
+  <div class="control-group">
+    <div class="control-label"><label>Plan migration:</label></div>
+    <div class="controls">
+      {% if retry_migrate_plan %}
+      <select id="id_target_migrate_plan_retry" name="target_migrate_plan_retry" disabled="true">
+        {% for plan in available_plans_for_migration %}
+          {% if plan == retry_migrate_plan %}
+          <option value="{{plan.id}}" selected>{{ plan }}</option>
+          {% endif %}
+        {% endfor %}
+      </select>
+      <button data-toggle="modal" class="btn btn-warning" id="migrate_plan_retry_btn" data-target="#migrate_plan_retry">Retry</button>
+      {% else %}
+      <select id="id_target_migrate_plan" name="target_migrate_plan">
+        {% for plan in available_plans_for_migration %}
+          <option value="{{plan.id}}">{{ plan }}</option>
+        {% endfor %}
+      </select>
+      <button data-toggle="modal" class="btn btn-primary" id="migrate_plan_btn" data-target="#migrate_plan">Migrate Plan</button>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
   {% if available_patches %}
   <div class="control-group">
     <div class="control-label"><label>Patch upgrade:</label></div>
@@ -100,6 +130,34 @@
       </div>
     </div>
   </div>
+  {% get_configuration "show_schedule_tasks" "show_schedule_tasks" %}
+  {% if tasks_scheduled and show_schedule_tasks %}
+    <table border=1>
+      <thead>
+        <th>Kind</th>
+        <th>Scheduled for</th>
+        <th>Expire at</th>
+        <th>Action</th>
+      </thead>
+      <tbody>
+        <input type="hidden" name="maintenance_changed" value="0" />
+        {% for task in tasks_scheduled %}
+          <tr>
+            <td>Update SSL certificate</td>
+            <td>
+                <input type="hidden" name="scheduled_id" value="{{ task.id }}" />
+                Date: <input type="text" name="scheduled_for_date" class="vDateField" value="{{ task.scheduled_for|date:"Y-m-d" }}" /><br/>
+                Time: <input type="text" name="scheduled_for_time" class="vTimeField" value="{{ task.scheduled_for|date:"H:i:s" }}" /><br/>
+            </td>
+            <td>{{ task.database.infra.earliest_ssl_expire_at|date:"Y-m-d" }}</td>
+            <td>
+              <button data-toggle="modal" data-schedule-id="{{ task.id }}" id="execute_scheduled_maintenance_btn" data-target="#execute_scheduled_maintenance" class="btn btn-primary">Execute now</button>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
   <div class="panel-heading">
     <h3 class="panel-title">Backup <i>(Daily)</i></h3>
   </div>
@@ -127,11 +185,27 @@
 
 {% include "admin/confirmation_modal.html" with modal_id="upgrade_patch_retry" confirmation_message="Are you sure you want to retry upgrade patch?" box_title="Retring to upgrade the patch" button_type="submit" button_value="Upgrade Retry" button_name="upgrade_patch_retry" id_optional="id=id_upgrade_patch_retry_btn_modal" %}
 
-{% endblock %}
+{% include "admin/confirmation_modal.html" with modal_id="migrate_plan" confirmation_message="Are you sure you want to migrate plan?" box_title="Migrating plan" button_type="submit" button_value="Migrate Plan" button_name="migrate_plan" id_optional="id=id_migrate_plan_btn_modal" %}
 
+{% include "admin/confirmation_modal.html" with modal_id="migrate_plan_retry" confirmation_message="Are you sure you want to retry migrating plan?" box_title="Retrying to migrate plan" button_type="submit" button_value="Migrate Plan Retry" button_name="migrate_plan_retry" id_optional="id=id_migrate_plan_retry_btn_modal" %}
+
+{% include "admin/confirmation_modal.html" with tag_type="a" modal_id="execute_scheduled_maintenance" confirmation_message="Are you sure you want execute the task now ?" box_title="Execute Scheduled Task" button_name="execute_scheduled_maintenance" id_optional="id=id_execute_scheduled_maintenance_btn_modal" %}
+
+{% include "admin/maintenance_confirmation_modal.html" with modal_id="save_submit_modal" confirmation_message="You have tasks scheduled. You want to put in your new maintenance window ?" box_title="Change Scheduled tasks" button_type="submit" button_value="save_and_update_task" button_no_value="Save" button_name="_save" extra_attributes=onclick_attrib%}
+
+{% endblock %}
 
 {% block js_footer %}
 {{ block.super }}
+<script type="text/javascript" src="/admin/jsi18n/"></script>
+<script type="text/javascript" src="{% static 'admin/js/core.js' %}"></script>
+<script type="text/javascript" src="{% static 'admin/js/admin/RelatedObjectLookups.js' %}"></script>
+<script type="text/javascript" src="{% static 'admin/js/jquery.js' %}"></script>
+<script type="text/javascript" src="{% static 'admin/js/jquery.init.js' %}"></script>
+<script type="text/javascript" src="{% static 'admin/js/calendar.js' %}"></script>
+<script type="text/javascript" src="{% static 'admin/js/admin/DateTimeShortcuts.js' %}"></script>
+<script type="text/javascript" src="{% static 'admin/js/inlines.js' %}"></script>
+
 
 <script>
   jQuery(document).ready(function($) {
@@ -143,6 +217,45 @@
     $("#upgrade_patch_retry_btn").click(function() {
       var new_patch_version = $("#id_target_patch_retry").find(":selected").text().trim();
       $("#upgrade_patch_retry .modal_message").text('Are you sure you want to retry to upgrade database from <{{ database.databaseinfra.engine_patch.full_version }}> to <' + new_patch_version + '>?')
+    });
+
+
+    // Migrate plan
+    $("#migrate_plan_btn").click(function() {
+      var new_plan = $("#id_target_migrate_plan").find(":selected").text();
+      $("#migrate_plan .modal_message").text('Are you sure you want to migrate plan from <{{ database.databaseinfra.plan }}> to <' + new_plan + '>?')
+    });
+
+    $("#migrate_plan_retry_btn").click(function() {
+      var new_plan = $("#id_target_migrate_plan_retry").find(":selected").text();
+      $("#migrate_plan_retry .modal_message").text('Are you sure you want to retry migrating plan from <{{ database.databaseinfra.plan }}> to <' + new_plan + '>?')
+    });
+
+    $("#execute_scheduled_maintenance_btn").click(function(event) {
+      var scheduleId = $(event.target).data('schedule-id');
+      $("#id_execute_scheduled_maintenance_btn_modal").attr("href", "execute_schedule_task/"+scheduleId+"/");
+    });
+
+    $("#id_maintenance_day, #id_maintenance_window").on("change", function(ev){
+      var el = ev.target;
+      var selectedOption = el.options[el.selectedIndex];
+      var $scheduleIds = $('input[name="scheduled_id"]');
+      var need_modal = false;
+      $("#id_maintenance_day, #id_maintenance_window").each(function(pos, el){
+        if (!el.selectedOptions[0].text.includes('*')) {
+          need_modal = true;
+          return false;
+        }
+      });
+      if (need_modal && $scheduleIds.length > 0) {
+        $(".save-options-box #save-submit-btn").hide();
+        $(".save-options-box #save-modal-btn").show();
+        $('input[name="maintenance_changed"]').val("1");
+      } else {
+        $(".save-options-box #save-modal-btn").hide();
+        $(".save-options-box #save-submit-btn").show();
+        $('input[name="maintenance_changed"]').val("0");
+      }
     });
 
   })
