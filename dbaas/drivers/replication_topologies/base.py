@@ -113,7 +113,7 @@ class BaseTopology(object):
                 'workflow.steps.util.db_monitor.UpdateInfraVersion',
                 'workflow.steps.util.db_monitor.EnableMonitoring',
                 'workflow.steps.util.zabbix.DestroyAlarms',
-                'workflow.steps.util.zabbix.CreateAlarms',
+                'workflow.steps.util.zabbix.CreateAlarmsForUpgrade',
             ),
         }]
 

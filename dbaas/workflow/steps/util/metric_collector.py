@@ -33,7 +33,8 @@ class MetricsCollector(BaseInstanceStep):
             if len(self.host.instances.all()) > 1:
                 create_telegraf_config = False
         create_default_file = self.instance.instance_type in (
-            self.instance.MYSQL, self.instance.MONGODB, self.instance.REDIS)
+            self.instance.MYSQL, self.instance.MONGODB, self.instance.REDIS,
+            self.instance.MYSQL_PERCONA)
         variables = {
             'HOSTNAME': self.host.hostname.split('.')[0],
             'HOSTADDRESS': self.host.address,
