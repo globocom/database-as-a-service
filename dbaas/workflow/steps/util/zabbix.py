@@ -115,6 +115,13 @@ class CreateAlarmsForUpgrade(CreateAlarms):
         return self.plan.engine_equivalent_plan.engine.version
 
 
+class CreateAlarmsForMigrateEngine(CreateAlarms):
+
+    @property
+    def engine_version(self):
+        return self.plan.migrate_engine_equivalent_plan.engine.version
+
+
 class DisableAlarms(ZabbixStep):
 
     def __unicode__(self):
