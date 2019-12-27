@@ -139,8 +139,17 @@ class BaseTopology(object):
                 'workflow.steps.util.database.CheckIsUp',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
             ),
-        }] + self.get_upgrade_steps_final()
+        }] + self.get_migrate_engine_steps_final()
 
+    def get_migrate_engine_steps_final(self):
+        return [{
+            self.get_upgrade_steps_final_description(): (
+                'workflow.steps.util.db_monitor.UpdateInfraVersion',
+                'workflow.steps.util.db_monitor.EnableMonitoring',
+                'workflow.steps.util.zabbix.DestroyAlarms',
+                'workflow.steps.util.zabbix.CreateAlarmsForMigrateEngine',
+            ),
+        }]
 
     def get_change_binaries_upgrade_patch_steps(self):
         return ()
