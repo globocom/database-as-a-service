@@ -183,11 +183,15 @@ class TaskSchedule(BaseModel):
     def is_valid(self):
         scheduled_date = self.scheduled_for.date()
         expire_at = self.database.infra.earliest_ssl_expire_at
+        now = datetime.now()
         if (scheduled_date >= expire_at):
             msg = ('You cant schedule greater or equal then ssl expire. '
                    'Scheduled for: {} Expire at: {}'.format(
                         scheduled_date, expire_at)
                    )
+            return False, msg
+        if (self.scheduled_for < now):
+            msg = 'You cant schedule less then now.'
             return False, msg
 
         return True, ''
@@ -196,6 +200,11 @@ class TaskSchedule(BaseModel):
         permissions = (
             ("view_maintenance", "Can view maintenance"),
         )
+
+    def save_if_changed(self):
+        saved_obj = self._meta.model.objects.get(id=self.id)
+        if self.scheduled_for != saved_obj.scheduled_for:
+            self.save()
 
     @staticmethod
     def next_maintenance_window(start_date, maintenance_hour, weekday):

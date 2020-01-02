@@ -545,7 +545,8 @@ def check_ssl_expire_at(self):
             if scheudled_tasks:
                 task.update_details("Already scheduled!\n", persist=True)
             else:
-                TaskSchedule.objects.create(
+                from django.db.models.signals import post_save
+                instance = TaskSchedule.objects.create(
                     method_path='update_ssl',
                     scheduled_for=TaskSchedule.next_maintenance_window(
                         today + timedelta(days=7),
@@ -554,6 +555,7 @@ def check_ssl_expire_at(self):
                     ),
                     database=database
                 )
+                post_save.send(TaskSchedule, instance=instance, created=True)
                 task.update_details("Schedule created!\n", persist=True)
         task.update_status_for(TaskHistory.STATUS_SUCCESS, details="\nDone")
     except Exception as err:

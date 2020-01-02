@@ -22,8 +22,8 @@ from account.models import Team
 from drivers.errors import CredentialAlreadyExists
 from physical.models import (
     Host, DiskOffering, Environment, Plan, Offering,
-    EnginePatch,
-    )
+    EnginePatch
+)
 from util import get_credentials_for
 from notification.tasks import TaskRegister, execute_scheduled_maintenance
 from notification.models import TaskHistory
@@ -653,9 +653,13 @@ def database_metrics(request, context, database):
         endpoint = credential.endpoint
         datasource = credential.get_parameter_by_name('environment')
 
+    engine_type = (
+        database.engine_type if not database.engine_type == "mysql_percona" else "mysql"
+    )
+
     grafana_url_zabbix = '{}/dashboard/{}?{}={}&{}={}&{}={}&{}={}'.format(
         endpoint,
-        credential.project.format(database.engine_type),
+        credential.project.format(engine_type),
         credential.get_parameter_by_name('db_param'), instance.dns,
         credential.get_parameter_by_name('os_param'),
         instance.hostname.hostname,
@@ -673,7 +677,8 @@ def database_metrics(request, context, database):
     print "grafana_url_zabbix:{}", grafana_url_zabbix
 
     dashboard = credential.get_parameter_by_name('sofia_dbaas_database_dashboard')
-    dashboard = dashboard.format(database.engine_type)
+
+    dashboard = dashboard.format(engine_type)
     url = "{}/{}?var-host_name={}&var-datasource={}".format(
         credential.endpoint,
         dashboard,
@@ -994,7 +999,7 @@ class DatabaseMaintenanceView(TemplateView):
             is_valid, err_msg = task.is_valid()
             if not is_valid:
                 return is_valid, err_msg
-            task.save()
+            task.save_if_changed()
 
         return True, ''
 
