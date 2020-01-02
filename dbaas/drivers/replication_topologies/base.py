@@ -341,6 +341,7 @@ class BaseTopology(object):
                 'workflow.steps.util.ssl.SetSSLFilesAccessMySQL',
                 'workflow.steps.util.ssl.SetInfraConfiguredSSL',
                 'workflow.steps.util.plan.Configure',
+                'workflow.steps.util.ssl.UpdateExpireAtDate',
             ),
         }] + [{
             'Restart Database': (
