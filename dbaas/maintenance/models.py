@@ -201,6 +201,11 @@ class TaskSchedule(BaseModel):
             ("view_maintenance", "Can view maintenance"),
         )
 
+    def save_if_changed(self):
+        saved_obj = self._meta.model.objects.get(id=self.id)
+        if self.scheduled_for != saved_obj.scheduled_for:
+            self.save()
+
     @staticmethod
     def next_maintenance_window(start_date, maintenance_hour, weekday):
         weekdays = list(copy(rrule.weekdays))
