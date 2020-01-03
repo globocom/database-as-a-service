@@ -496,7 +496,10 @@ class MongoDB(BaseDriver):
     def switch_master(self, instance=None):
         client = self.get_client(None)
         try:
-            client.admin.command('replSetStepDown', 10)
+            client.admin.command(
+                'replSetStepDown', 60,
+                secondaryCatchUpPeriodSecs=60
+            )
         except pymongo.errors.AutoReconnect:
             pass
 
