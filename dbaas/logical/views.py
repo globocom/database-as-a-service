@@ -999,7 +999,7 @@ class DatabaseMaintenanceView(TemplateView):
             is_valid, err_msg = task.is_valid()
             if not is_valid:
                 return is_valid, err_msg
-            task.save_if_changed()
+            task.save_without_signal()
 
         return True, ''
 
