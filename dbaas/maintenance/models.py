@@ -201,10 +201,10 @@ class TaskSchedule(BaseModel):
             ("view_maintenance", "Can view maintenance"),
         )
 
-    def save_if_changed(self):
-        saved_obj = self._meta.model.objects.get(id=self.id)
-        if self.scheduled_for != saved_obj.scheduled_for:
-            self.save()
+    def save_without_signal(self, *args, **kw):
+        post_save.disconnect(task_schedule_post_save, sender=self._meta.model)
+        self.save(*args, **kw)
+        post_save.connect(task_schedule_post_save, sender=self._meta.model)
 
     @staticmethod
     def next_maintenance_window(start_date, maintenance_hour, weekday):
@@ -223,7 +223,7 @@ class TaskSchedule(BaseModel):
 
     def _set_status(self, status):
         self.status = status
-        self.save()
+        self.save_without_signal()
 
     def set_success(self):
         self.finished_at = datetime.now()
