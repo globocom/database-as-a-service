@@ -768,6 +768,7 @@ def migrate_engine(self, database, user, task, since_step=0):
     database_migrate_engine_obj.source_plan = source_plan
     database_migrate_engine_obj.target_plan = target_plan
     database_migrate_engine_obj.task = task
+    database_migrate_engine_obj.current_database = database
     database_migrate_engine_obj.save()
 
     hosts = []
