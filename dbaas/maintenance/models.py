@@ -180,6 +180,11 @@ class TaskSchedule(BaseModel):
             self.method_path, self.scheduled_for
         )
 
+    @property
+    def status_label(self):
+        if self.status is not None:
+            return dict(self.STATUS)[self.status]
+
     def is_valid(self):
         scheduled_date = self.scheduled_for.date()
         expire_at = self.database.infra.earliest_ssl_expire_at
