@@ -1,0 +1,8 @@
+{% extends "admin/confirmation_modal.html" %}
+
+{% block modal_body %}
+  <div style="position:relative" id="test">
+    Date: <input type="text" name="scheduled_for_date" class="vDateField" value="{{ task.scheduled_for|date:"Y-m-d" }}" /><br/>
+    Time: <input type="text" name="scheduled_for_time" class="vTimeField" value="{{ task.scheduled_for|date:"H:i:s" }}" /><br/>
+  </div>
+{% endblock %}
