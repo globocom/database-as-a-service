@@ -1,5 +1,5 @@
 {% extends "logical/database/details/base.html" %}
-{% load admin_static dbaas_tags system_config %}
+{% load admin_static dbaas_tags system_config schedule_task_tags %}
 
 {% block extrastyle %}
   {{ block.super }}
@@ -16,6 +16,34 @@
 
     .bold_red {
       color: red;
+    }
+    tr:hover {
+        background-color: '#04c';
+    }
+    .schedule-field {
+      border: 1px solid #ccc;
+      background-color: #fff;
+      width: 40%;
+    }
+    .schedule-field table {
+      margin-bottom: 0px;
+    }
+    .automatic-task-action {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+
+    }
+    .btn.btn-primary.action-btn {
+      padding: 1px 4px;
+      margin-left: 3px;
+    }
+    .popover-inner .popover-title {
+      display: none;
+    }
+    #clockbox0 {
+      top: 173px;
+      left: 718px;
     }
   </style>
 {% endblock %}
@@ -132,31 +160,66 @@
   </div>
   {% get_configuration "show_schedule_tasks" "show_schedule_tasks" %}
   {% if tasks_scheduled and show_schedule_tasks %}
-    <table border=1>
-      <thead>
-        <th>Kind</th>
-        <th>Scheduled for</th>
-        <th>Expire at</th>
-        <th>Action</th>
-      </thead>
-      <tbody>
-        <input type="hidden" name="maintenance_changed" value="0" />
-        {% for task in tasks_scheduled %}
-          <tr>
-            <td>Update SSL certificate</td>
-            <td>
-                <input type="hidden" name="scheduled_id" value="{{ task.id }}" />
-                Date: <input type="text" name="scheduled_for_date" class="vDateField" value="{{ task.scheduled_for|date:"Y-m-d" }}" /><br/>
-                Time: <input type="text" name="scheduled_for_time" class="vTimeField" value="{{ task.scheduled_for|date:"H:i:s" }}" /><br/>
-            </td>
-            <td>{{ task.database.infra.earliest_ssl_expire_at|date:"Y-m-d" }}</td>
-            <td>
-              <button data-toggle="modal" data-schedule-id="{{ task.id }}" id="execute_scheduled_maintenance_btn" data-target="#execute_scheduled_maintenance" class="btn btn-primary">Execute now</button>
-            </td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+  <div class="panel-heading">
+      <h3 class="panel-title">Automatic tasks</h3>
+  </div>
+  <div class="tabbable"> <!-- Only required for left/right tabs -->
+    <ul class="nav nav-tabs" id="automaticTaskMenu">
+      <li class="active"><a href="#tab1" data-toggle="tab">Scheduled</a></li>
+      <li><a href="#tab2" data-toggle="tab">Already executed</a></li>
+    </ul>
+    <div class="tab-content">
+      <div class="schedule-field tab-pane fade active in" id="tab1">
+        <table class="table table-condensed table-striped">
+          <thead>
+            <th>Kind</th>
+            <th>Scheduled for</th>
+            <th>Expire at</th>
+            <th>Actions</th>
+          </thead>
+          <tbody>
+            <input type="hidden" name="maintenance_changed" value="0" />
+            {% for task in tasks_scheduled %}
+              <tr>
+                <td>Update SSL certificate</td>
+                <td>
+                    <input type="hidden" name="scheduled_id" value="{{ task.id }}" />
+                    {{ task.scheduled_for|date:"Y-m-d H:i:s" }}
+                </td>
+                <td>
+                  {{ task.database.infra.earliest_ssl_expire_at|date:"Y-m-d" }}
+                </td>
+                <td>
+                  <button data-toggle="modal" data-content="Execute now" data-schedule-id="{{ task.id }}" id="execute_scheduled_maintenance_btn" data-target="#execute_scheduled_maintenance" class="btn btn-primary action-btn"><i class="icon-play icon-white"></i></button>
+                  <button data-toggle="modal" data-content="Schedule" data-schedule-id="{{ task.id }}" id="schedule_maintenance_btn" data-target="#schedule_maintenance" class="btn btn-primary action-btn"><i class="icon-calendar icon-white"></i></button>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div class="schedule-field tab-pane fade" id="tab2">
+        <table class="table table-condensed">
+          <thead>
+            <th>Kind</th>
+            <th>Executed At</th>
+            <th>Status</th>
+          </thead>
+          <tbody>
+            {% for task in tasks_executed %}
+              <tr class="{% status_color task.status %}">
+                <td>Update SSL certificate</td>
+                <td>{{ task.finished_at|date:"Y-m-d H:i:s" }}</td>
+                <td>{{ task.status_label }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+</div>
+  <div>
+    </div>
   {% endif %}
   <div class="panel-heading">
     <h3 class="panel-title">Backup <i>(Daily)</i></h3>
@@ -193,6 +256,8 @@
 
 {% include "admin/maintenance_confirmation_modal.html" with modal_id="save_submit_modal" confirmation_message="You have tasks scheduled. You want to put in your new maintenance window ?" box_title="Change Scheduled tasks" button_type="submit" button_value="save_and_update_task" button_no_value="Save" button_name="_save" extra_attributes=onclick_attrib%}
 
+{% include "admin/schedule_maintenance.html" with modal_id="schedule_maintenance" box_title="Schedule task" button_type="submit" button_value="_save" button_name="schedule_maintenance" extra_attributes=onclick_attrib%}
+
 {% endblock %}
 
 {% block js_footer %}
@@ -202,9 +267,14 @@
 <script type="text/javascript" src="{% static 'admin/js/admin/RelatedObjectLookups.js' %}"></script>
 <script type="text/javascript" src="{% static 'admin/js/jquery.js' %}"></script>
 <script type="text/javascript" src="{% static 'admin/js/jquery.init.js' %}"></script>
+<script type="text/javascript" src="{% static 'admin/js/jquery-ui.min.js' %}"></script>
 <script type="text/javascript" src="{% static 'admin/js/calendar.js' %}"></script>
 <script type="text/javascript" src="{% static 'admin/js/admin/DateTimeShortcuts.js' %}"></script>
 <script type="text/javascript" src="{% static 'admin/js/inlines.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/tab.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/bootstrap-transition.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/bootstrap-tooltip.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/bootstrap-popover.js' %}"></script>
 
 
 <script>
@@ -257,8 +327,34 @@
         $('input[name="maintenance_changed"]').val("0");
       }
     });
+    $('#automaticTaskMenu a').click(function (e) {
+      e.preventDefault();
+      $(this).tab('show');
+    });
+    $(".btn.btn-primary.action-btn").popover({
+        'trigger': 'hover',
+        'placement': 'top',
+        'title': ''
+    });
+    function repositionDatetimePicker() {
+      var $clockBox = $("#clockbox0");
+      var $calendarBox = $("#calendarbox0");
+      $clockBox.position({
+        my: "left+100% top-18%",
+        at: "left bottom",
+        of: $('input[name="scheduled_for_time"]'),
+        collision: "fit"
+      });
+      $calendarBox.position({
+        my: "left+112% top-30%",
+        at: "left bottom",
+        of: $('input[name="scheduled_for_date"]'),
+        collision: "fit"
+      });
+    }
+    document.addEventListener('click', setTimeout.bind(null, repositionDatetimePicker, 0));
 
-  })
+  });
 </script>
 
 {% endblock %}
