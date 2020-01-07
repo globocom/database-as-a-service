@@ -11,6 +11,7 @@ from django.utils.encoding import python_2_unicode_compatible
 from dbaas_credentials.models import CredentialType
 from util import get_credentials_for, AuthRequest
 from physical.models import Vip
+from maintenance.models import DatabaseMigrateEngine
 from util import check_ssh
 
 
@@ -122,6 +123,15 @@ class BaseInstanceStep(object):
         upgrade_patch = self.database.upgrades_patch.last()
         if upgrade_patch and upgrade_patch.is_running:
             return upgrade_patch
+
+    @property
+    def engine_migration(self):
+        engine_migration = DatabaseMigrateEngine.objects.filter(
+            database=self.database
+        ).last()
+
+        if engine_migration and engine_migration.is_running:
+            return engine_migration
 
     @property
     def host_migrate(self):
