@@ -1127,6 +1127,9 @@ class DatabaseMaintenanceView(TemplateView):
             status=TaskSchedule.SCHEDULED
         ).order_by('-scheduled_for')
 
+        self.context['tasks_executed'] = TaskSchedule.objects.filter(
+            database=self.database,
+        ).exclude(status=TaskSchedule.SCHEDULED).order_by('-scheduled_for')
         # Plan migration region
         self.context['available_plans_for_migration'] = (
             self.database.plan.available_plans_for_migration
