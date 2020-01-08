@@ -10,7 +10,7 @@ from django.core.exceptions import ValidationError, PermissionDenied
 from django.core.urlresolvers import reverse
 from django.shortcuts import get_object_or_404, render_to_response
 from django.views.generic.detail import BaseDetailView
-from django.views.generic import TemplateView, RedirectView
+from django.views.generic import TemplateView, RedirectView, View
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.http import HttpResponse, HttpResponseRedirect
@@ -926,6 +926,23 @@ def database_resizes(request, context, database):
         context, RequestContext(request)
     )
 
+
+class DatabaseMigrateEngineRetry(View):
+
+    def get(self, request, *args, **kwargs):
+        return HttpResponseRedirect(
+            reverse(
+                'admin:logical_database_maintenance',
+                kwargs={'id': self.database.id}
+            )
+        )
+
+    @database_view_class('')
+    def dispatch(self, request, *args, **kwargs):
+        self.context, self.database = args
+        return super(DatabaseMigrateEngineRetry, self).dispatch(
+            request, *args, **kwargs
+        )
 
 class DatabaseMaintenanceView(TemplateView):
     template_name = "logical/database/details/maintenance_tab.html"
