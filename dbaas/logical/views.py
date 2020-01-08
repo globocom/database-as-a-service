@@ -966,40 +966,52 @@ class DatabaseMaintenanceView(TemplateView):
 
         return None
 
-    def _schedule_task_for_next_maintenance_window(self, *args, **kw):
-        payload = self.request.POST
-        return TaskSchedule.next_maintenance_window(
-            datetime.date.today(),
-            int(payload.get('maintenance_window')),
-            int(payload.get('maintenance_day')),
-        )
+    def get_object(self, schedule_id):
+        return TaskSchedule.objects.get(id=schedule_id)
 
-    def _schedule_task_with_post_data(self, pos):
+    def _update_schedule_tasks_for_next_maintenance_window(self, *args, **kw):
         payload = self.request.POST
-        task_date = payload.getlist('scheduled_for_date')[pos]
-        task_time = payload.getlist('scheduled_for_time')[pos]
-        return datetime.datetime.strptime(
+
+        for pos, scheduled_id in enumerate(payload.getlist('scheduled_id')):
+            task = self.get_object(schedule_id)
+            task.scheduled_for = TaskSchedule.next_maintenance_window(
+                datetime.date.today(),
+                int(payload.get('maintenance_window')),
+                int(payload.get('maintenance_day')),
+            )
+            is_valid, err_msg = task.is_valid()
+            if not is_valid:
+                return is_valid, err_msg
+            task.save()
+
+        return True, ''
+
+    def _change_schedule_maintenance(self):
+        payload = self.request.POST
+        task_id_for_change = payload.get('changed_schedule')
+        task = self.get_object(task_id_for_change)
+        task_date = payload.get('scheduled_for_date')
+        task_time = payload.get('scheduled_for_time')
+        task.scheduled_for = datetime.datetime.strptime(
             "{} {}".format(task_date, task_time),
             "%Y-%m-%d %H:%M:%S"
         )
+        is_valid, err_msg = task.is_valid()
+        if not is_valid:
+            return is_valid, err_msg
+        task.save()
+
+        return True, ''
 
     def _update_schedule_task(self):
         payload = self.request.POST
         maintenance_changed = payload.get('maintenance_changed')
         user_want_update = payload.get('_save') == 'save_and_update_task'
+        user_changed_schedule = payload.get('schedule_maintenance') == '_save'
         if maintenance_changed and user_want_update:
-            make_schedule_for = self._schedule_task_for_next_maintenance_window
-        else:
-            make_schedule_for = self._schedule_task_with_post_data
-
-        payload = self.request.POST
-        for pos, scheduled_id in enumerate(payload.getlist('scheduled_id')):
-            task = TaskSchedule.objects.get(id=scheduled_id)
-            task.scheduled_for = make_schedule_for(pos)
-            is_valid, err_msg = task.is_valid()
-            if not is_valid:
-                return is_valid, err_msg
-            task.save_without_signal()
+            return self._update_schedule_tasks_for_next_maintenance_window()
+        elif user_changed_schedule:
+            return self._change_schedule_maintenance()
 
         return True, ''
 
@@ -1072,9 +1084,9 @@ class DatabaseMaintenanceView(TemplateView):
         if not last_migration:
             error = "Database does not have engine migrations"
         elif not last_migration.is_status_error:
-            error = "Cannot do retry, last engine migration. Status is '{}'!".format(
-                last_upgrade.get_status_display()
-            )
+            error = ("Cannot do retry, last engine migration. "
+                     "Status is '{}'!").format(
+                        last_upgrade.get_status_display())
         else:
             since_step = last_migration.current_step
 
@@ -1129,7 +1141,7 @@ class DatabaseMaintenanceView(TemplateView):
 
         self.context['tasks_executed'] = TaskSchedule.objects.filter(
             database=self.database,
-        ).exclude(status=TaskSchedule.SCHEDULED).order_by('-scheduled_for')
+        ).exclude(status=TaskSchedule.SCHEDULED).order_by('-finished_at')
         # Plan migration region
         self.context['available_plans_for_migration'] = (
             self.database.plan.available_plans_for_migration
@@ -1140,7 +1152,9 @@ class DatabaseMaintenanceView(TemplateView):
         )
 
         # Maintenance region
-        self.context['maintenance_windows'] = DatabaseForm.MAINTENANCE_WINDOW_CHOICES
+        self.context['maintenance_windows'] = (
+            DatabaseForm.MAINTENANCE_WINDOW_CHOICES
+        )
         self.context['current_maintenance_window'] = int(
             self.database.infra.maintenance_window
         )

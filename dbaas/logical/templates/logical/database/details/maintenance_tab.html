@@ -17,9 +17,6 @@
     .bold_red {
       color: red;
     }
-    tr:hover {
-        background-color: '#04c';
-    }
     .schedule-field {
       border: 1px solid #ccc;
       background-color: #fff;
@@ -28,12 +25,6 @@
     .schedule-field table {
       margin-bottom: 0px;
     }
-    .automatic-task-action {
-      position: absolute;
-      bottom: 0;
-      right: 0;
-
-    }
     .btn.btn-primary.action-btn {
       padding: 1px 4px;
       margin-left: 3px;
@@ -41,9 +32,8 @@
     .popover-inner .popover-title {
       display: none;
     }
-    #clockbox0 {
-      top: 173px;
-      left: 718px;
+    #modal-body-schedule .icon-calendar, #modal-body-schedule .icon-time {
+      margin-top: 5px;
     }
   </style>
 {% endblock %}
@@ -184,6 +174,8 @@
                 <td>Update SSL certificate</td>
                 <td>
                     <input type="hidden" name="scheduled_id" value="{{ task.id }}" />
+                    <input type="hidden" name="scheduled_for_date_{{ task.id }}" value="{{ task.scheduled_for|date:"Y-m-d" }}" />
+                    <input type="hidden" name="scheduled_for_time_{{ task.id }}" value="{{ task.scheduled_for|date:"H:i:s" }}" />
                     {{ task.scheduled_for|date:"Y-m-d H:i:s" }}
                 </td>
                 <td>
@@ -304,6 +296,16 @@
     $("#execute_scheduled_maintenance_btn").click(function(event) {
       var scheduleId = $(event.target).data('schedule-id');
       $("#id_execute_scheduled_maintenance_btn_modal").attr("href", "execute_schedule_task/"+scheduleId+"/");
+    });
+
+    $(".btn.btn-primary.action-btn").click(function(event) {
+      var $eventTarget = $(event.target);
+      var scheduleId = $eventTarget.data('schedule-id') || $eventTarget.parent('button').data('schedule-id');
+      var scheduleDate = $('input[name="scheduled_for_date_' + scheduleId + '"]');
+      var scheduleTime = $('input[name="scheduled_for_time_' + scheduleId + '"]');
+      $("#modal_changed_schedule").val(scheduleId);
+      $("#modal_scheduled_for_date").val(scheduleDate.val());
+      $("#modal_scheduled_for_time").val(scheduleTime.val());
     });
 
     $("#id_maintenance_day, #id_maintenance_window").on("change", function(ev){
