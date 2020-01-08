@@ -771,15 +771,7 @@ def migrate_engine(self, database, user, task, since_step=0):
     database_migrate_engine_obj.current_database = database
     database_migrate_engine_obj.save()
 
-    hosts = []
-    for instance in database.infra.instances.all():
-        if instance.hostname not in hosts:
-            hosts.append(instance.hostname)
-
-    instances = []
-    for host in hosts:
-        instances.append(host.instances.all()[0])
-    instances = instances
+    instances = database.infra.instances.all()
 
     success = steps_for_instances(
         steps, instances, task,
