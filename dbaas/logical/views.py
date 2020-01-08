@@ -1073,13 +1073,13 @@ class DatabaseMaintenanceView(TemplateView):
             error = "Database does not have engine migrations"
         elif not last_migration.is_status_error:
             error = "Cannot do retry, last engine migration. Status is '{}'!".format(
-                last_upgrade.get_status_display()
+                last_migration.get_status_display()
             )
         else:
             since_step = last_migration.current_step
 
         if error:
-            messages.add_message(request, messages.ERROR, error)
+            messages.add_message(self.request, messages.ERROR, error)
         else:
             self.migrate_engine(last_migration.target_plan.pk, since_step)
 
