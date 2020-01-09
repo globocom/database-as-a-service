@@ -124,6 +124,13 @@ class BaseInstanceStep(object):
             return upgrade_patch
 
     @property
+    def engine_migration(self):
+        engine_migration = self.database.engine_migrations.last()
+
+        if engine_migration and engine_migration.is_running:
+            return engine_migration
+
+    @property
     def host_migrate(self):
         if not self.instance.hostname_id:
             return

@@ -36,7 +36,8 @@ from logical.views import database_details, database_hosts, \
     database_change_parameters, database_change_parameters_retry, \
     database_switch_write, database_reinstall_vm, database_reinstall_vm_retry,\
     DatabaseParameters, database_configure_ssl_retry, database_configure_ssl, \
-    database_migrate, zones_for_environment, ExecuteScheduleTaskView
+    database_migrate, zones_for_environment, ExecuteScheduleTaskView, \
+    DatabaseMigrateEngineRetry
 
 from logical.forms import DatabaseForm
 from logical.service.database import DatabaseService
@@ -598,6 +599,12 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 r'^/?(?P<id>\d+)/upgrade_patch_retry/$',
                 self.admin_site.admin_view(database_upgrade_patch_retry),
                 name="upgrade_patch_retry"
+            ),
+
+            url(
+                r'^/?(?P<id>\d+)/migrate_engine_retry/$',
+                self.admin_site.admin_view(DatabaseMigrateEngineRetry.as_view()),
+                name="migrate_engine_retry"
             ),
 
             url(
