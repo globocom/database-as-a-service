@@ -180,14 +180,6 @@
   {% endif %}
 </fieldset>
 
-{% include "admin/confirmation_modal.html" with modal_id="upgrade_patch" confirmation_message="Are you sure you want to upgrade patch?" box_title="Upgrading the patch" button_type="submit" button_value="Upgrade" button_name="upgrade_patch" id_optional="id=id_upgrade_patch_btn_modal" %}
-
-{% include "admin/confirmation_modal.html" with modal_id="upgrade_patch_retry" confirmation_message="Are you sure you want to retry upgrade patch?" box_title="Retring to upgrade the patch" button_type="submit" button_value="Upgrade Retry" button_name="upgrade_patch_retry" id_optional="id=id_upgrade_patch_retry_btn_modal" %}
-
-{% include "admin/confirmation_modal.html" with modal_id="migrate_plan" confirmation_message="Are you sure you want to migrate plan?" box_title="Migrating plan" button_type="submit" button_value="Migrate Plan" button_name="migrate_plan" id_optional="id=id_migrate_plan_btn_modal" %}
-
-{% include "admin/confirmation_modal.html" with modal_id="migrate_plan_retry" confirmation_message="Are you sure you want to retry migrating plan?" box_title="Retrying to migrate plan" button_type="submit" button_value="Migrate Plan Retry" button_name="migrate_plan_retry" id_optional="id=id_migrate_plan_retry_btn_modal" %}
-
 {% include "admin/confirmation_modal.html" with tag_type="a" modal_id="execute_scheduled_maintenance" confirmation_message="Are you sure you want execute the task now ?" box_title="Execute Scheduled Task" button_name="execute_scheduled_maintenance" id_optional="id=id_execute_scheduled_maintenance_btn_modal" %}
 
 {% include "admin/maintenance_confirmation_modal.html" with modal_id="save_submit_modal" confirmation_message="You have tasks scheduled. You want to put in your new maintenance window ?" box_title="Change Scheduled tasks" button_type="submit" button_value="save_and_update_task" button_no_value="Save" button_name="_save" extra_attributes=onclick_attrib%}
@@ -215,27 +207,6 @@
 
 <script>
   jQuery(document).ready(function($) {
-    $("#upgrade_patch_btn").click(function() {
-      var new_patch_version = $("#id_target_patch").find(":selected").text().trim();
-      $("#upgrade_patch .modal_message").text('Are you sure you want to upgrade database from <{{ database.databaseinfra.engine_patch.full_version }}> to <' + new_patch_version + '>?')
-    });
-
-    $("#upgrade_patch_retry_btn").click(function() {
-      var new_patch_version = $("#id_target_patch_retry").find(":selected").text().trim();
-      $("#upgrade_patch_retry .modal_message").text('Are you sure you want to retry to upgrade database from <{{ database.databaseinfra.engine_patch.full_version }}> to <' + new_patch_version + '>?')
-    });
-
-
-    // Migrate plan
-    $("#migrate_plan_btn").click(function() {
-      var new_plan = $("#id_target_migrate_plan").find(":selected").text();
-      $("#migrate_plan .modal_message").text('Are you sure you want to migrate plan from <{{ database.databaseinfra.plan }}> to <' + new_plan + '>?')
-    });
-
-    $("#migrate_plan_retry_btn").click(function() {
-      var new_plan = $("#id_target_migrate_plan_retry").find(":selected").text();
-      $("#migrate_plan_retry .modal_message").text('Are you sure you want to retry migrating plan from <{{ database.databaseinfra.plan }}> to <' + new_plan + '>?')
-    });
 
     $("#execute_scheduled_maintenance_btn").click(function(event) {
       var scheduleId = $(event.target).data('schedule-id');
