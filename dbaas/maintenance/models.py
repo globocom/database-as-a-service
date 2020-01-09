@@ -452,6 +452,11 @@ class DatabaseUpgrade(DatabaseMaintenanceTask):
 
 class DatabaseMigrateEngine(DatabaseUpgrade):
 
+    current_database = models.ForeignKey(
+        Database, verbose_name="Database",
+        null=False, unique=False, related_name="engine_migrations"
+    )
+
     def __unicode__(self):
         return "{} migrate engine".format(self.database.name)
 

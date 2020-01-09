@@ -10,7 +10,7 @@ from django.core.exceptions import ValidationError, PermissionDenied
 from django.core.urlresolvers import reverse
 from django.shortcuts import get_object_or_404, render_to_response
 from django.views.generic.detail import BaseDetailView
-from django.views.generic import TemplateView, RedirectView
+from django.views.generic import TemplateView, RedirectView, View
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.http import HttpResponse, HttpResponseRedirect
@@ -927,6 +927,23 @@ def database_resizes(request, context, database):
     )
 
 
+class DatabaseMigrateEngineRetry(View):
+
+    def get(self, request, *args, **kwargs):
+        return HttpResponseRedirect(
+            reverse(
+                'admin:logical_database_maintenance',
+                kwargs={'id': self.database.id}
+            )
+        )
+
+    @database_view_class('')
+    def dispatch(self, request, *args, **kwargs):
+        self.context, self.database = args
+        return super(DatabaseMigrateEngineRetry, self).dispatch(
+            request, *args, **kwargs
+        )
+
 class DatabaseMaintenanceView(TemplateView):
     template_name = "logical/database/details/maintenance_tab.html"
     WEEKDAYS = [
@@ -1084,14 +1101,20 @@ class DatabaseMaintenanceView(TemplateView):
         if not last_migration:
             error = "Database does not have engine migrations"
         elif not last_migration.is_status_error:
+<<<<<<< HEAD
             error = ("Cannot do retry, last engine migration. "
                      "Status is '{}'!").format(
                         last_upgrade.get_status_display())
+=======
+            error = "Cannot do retry, last engine migration. Status is '{}'!".format(
+                last_migration.get_status_display()
+            )
+>>>>>>> master
         else:
             since_step = last_migration.current_step
 
         if error:
-            messages.add_message(request, messages.ERROR, error)
+            messages.add_message(self.request, messages.ERROR, error)
         else:
             self.migrate_engine(last_migration.target_plan.pk, since_step)
 
