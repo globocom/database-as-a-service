@@ -957,33 +957,6 @@ class DatabaseMaintenanceView(TemplateView):
         (6, 'Saturday')
     ]
 
-    def is_upgrade_patch(self):
-        return ('upgrade_patch' in self.request.POST and
-                self.request.POST.get('target_patch'))
-
-    def is_upgrade_patch_retry(self):
-        return 'upgrade_patch_retry' in self.request.POST
-
-    def is_engine_migration(self):
-        return ('migrate_plan' in self.request.POST and
-                self.request.POST.get('target_migrate_plan'))
-
-    def is_engine_migration_retry(self):
-        return 'migrate_plan_retry' in self.request.POST
-
-    def has_maintenance_backup_changed(self, parameters):
-        return any(key in self.request.POST for key in parameters)
-
-    def get_or_none_retry_migrate_engine_plan(self):
-        engine_migration = DatabaseMigrateEngine.objects.need_retry(
-            database=self.database
-        )
-
-        if engine_migration:
-            return engine_migration.target_plan
-
-        return None
-
     def get_object(self, schedule_id):
         return TaskSchedule.objects.get(id=schedule_id)
 
@@ -1043,6 +1016,85 @@ class DatabaseMaintenanceView(TemplateView):
             )
             self.context['err_msg'] = err_msg
             return self.render_to_response(self.get_context_data())
+        if self.has_maintenance_backup_changed([
+            'maintenance_window',
+            'maintenance_day'
+        ]):
+            maintenance_window = request.POST.get('maintenance_window')
+            maintenance_day = request.POST['maintenance_day']
+            self.database.infra.maintenance_window = maintenance_window
+            self.database.infra.maintenance_day = maintenance_day
+            self.database.infra.save()
+        else:
+            self.database.save()
+
+        return self.render_to_response(self.get_context_data())
+
+    def get_context_data(self, **kwargs):
+        self.context['tasks_scheduled'] = TaskSchedule.objects.filter(
+            database=self.database,
+            status=TaskSchedule.SCHEDULED
+        ).order_by('-scheduled_for')
+
+        self.context['tasks_executed'] = TaskSchedule.objects.filter(
+            database=self.database,
+        ).exclude(status=TaskSchedule.SCHEDULED).order_by('-finished_at')
+
+        # Maintenance region
+        self.context['maintenance_windows'] = (
+            DatabaseForm.MAINTENANCE_WINDOW_CHOICES
+        )
+        self.context['current_maintenance_window'] = int(
+            self.database.infra.maintenance_window
+        )
+        self.context['maintenance_days'] = DatabaseMaintenanceView.WEEKDAYS
+        self.context['current_maintenance_day'] = int(
+            self.database.infra.maintenance_day
+        )
+
+        self.context['tasks_scheduled'] = TaskSchedule.objects.filter(
+            database=self.database,
+            status=TaskSchedule.SCHEDULED
+        )
+
+        return self.context
+
+    @database_view_class('maintenance')
+    def dispatch(self, request, *args, **kwargs):
+        self.context, self.database = args
+        return super(DatabaseMaintenanceView, self).dispatch(
+            request, *args, **kwargs
+        )
+
+
+class DatabaseUpgradeView(TemplateView):
+    template_name = "logical/database/details/upgrade_tab.html"
+
+    def is_upgrade_patch(self):
+        return ('upgrade_patch' in self.request.POST and
+                self.request.POST.get('target_patch'))
+
+    def is_upgrade_patch_retry(self):
+        return 'upgrade_patch_retry' in self.request.POST
+
+    def is_engine_migration(self):
+        return ('migrate_plan' in self.request.POST and
+                self.request.POST.get('target_migrate_plan'))
+
+    def is_engine_migration_retry(self):
+        return 'migrate_plan_retry' in self.request.POST
+
+    def get_or_none_retry_migrate_engine_plan(self):
+        engine_migration = DatabaseMigrateEngine.objects.need_retry(
+            database=self.database
+        )
+
+        if engine_migration:
+            return engine_migration.target_plan
+
+        return None
+
+    def post(self, request, *args, **kwargs):
         if self.is_upgrade_patch():
             _upgrade_patch(
                 request,
@@ -1057,17 +1109,6 @@ class DatabaseMaintenanceView(TemplateView):
             )
         elif self.is_engine_migration_retry():
             self.retry_migrate_engine()
-        elif self.has_maintenance_backup_changed([
-            'maintenance_window',
-            'maintenance_day'
-        ]):
-            maintenance_window = request.POST.get('maintenance_window')
-            maintenance_day = request.POST['maintenance_day']
-            self.database.infra.maintenance_window = maintenance_window
-            self.database.infra.maintenance_day = maintenance_day
-            self.database.infra.save()
-        else:
-            self.database.save()
 
         return self.render_to_response(self.get_context_data())
 
@@ -1142,14 +1183,6 @@ class DatabaseMaintenanceView(TemplateView):
         self.context['retry_patch'] = DatabaseUpgradePatch.objects.need_retry(
             database=self.database
         )
-        self.context['tasks_scheduled'] = TaskSchedule.objects.filter(
-            database=self.database,
-            status=TaskSchedule.SCHEDULED
-        ).order_by('-scheduled_for')
-
-        self.context['tasks_executed'] = TaskSchedule.objects.filter(
-            database=self.database,
-        ).exclude(status=TaskSchedule.SCHEDULED).order_by('-finished_at')
         # Plan migration region
         self.context['available_plans_for_migration'] = (
             self.database.plan.available_plans_for_migration
@@ -1159,29 +1192,22 @@ class DatabaseMaintenanceView(TemplateView):
             self.get_or_none_retry_migrate_engine_plan()
         )
 
-        # Maintenance region
-        self.context['maintenance_windows'] = (
-            DatabaseForm.MAINTENANCE_WINDOW_CHOICES
+        can_upgrade_db = (
+            self.database.databaseinfra.plan.replication_topology.can_upgrade_db  # noqa
         )
-        self.context['current_maintenance_window'] = int(
-            self.database.infra.maintenance_window
-        )
-        self.context['maintenance_days'] = DatabaseMaintenanceView.WEEKDAYS
-        self.context['current_maintenance_day'] = int(
-            self.database.infra.maintenance_day
-        )
-
-        self.context['tasks_scheduled'] = TaskSchedule.objects.filter(
-            database=self.database,
-            status=TaskSchedule.SCHEDULED
-        )
-
+        self.context['has_any_upgrade_available'] = any([
+            self.context['retry_migrate_plan'],
+            self.context['available_plans_for_migration'],
+            self.context['available_patches'],
+            self.context['upgrade_mongo_24_to_30'] and can_upgrade_db,
+            self.context['can_do_upgrade'] and can_upgrade_db,
+        ])
         return self.context
 
-    @database_view_class('maintenance')
+    @database_view_class('upgrade')
     def dispatch(self, request, *args, **kwargs):
         self.context, self.database = args
-        return super(DatabaseMaintenanceView, self).dispatch(
+        return super(DatabaseUpgradeView, self).dispatch(
             request, *args, **kwargs
         )
 

@@ -1,0 +1,141 @@
+{% extends "logical/database/details/base.html" %}
+{% load admin_static dbaas_tags system_config %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <link rel="stylesheet" type="text/css" href="{% static "admin/css/bootstrap.min.css" %}" />
+
+    <link rel="stylesheet" type="text/css" href="{% static "admin/css/forms-and-widgets.css" %}" />
+  <style type="text/css">
+    .resize_button {
+        margin-left: 20px
+    }
+
+    .bold_red {
+      color: red;
+    }
+  </style>
+{% endblock %}
+
+{% block tab %}
+<fieldset class="module aligned ">
+  {% if not has_any_upgrade_available %}
+    <p> This database dont have any upgrade to do.</p>
+  {% endif %}
+  {% if available_plans_for_migration %}
+  <div class="control-group">
+    <div class="control-label"><label>Plan migration:</label></div>
+    <div class="controls">
+      {% if retry_migrate_plan %}
+      <select id="id_target_migrate_plan_retry" name="target_migrate_plan_retry" disabled="true">
+        {% for plan in available_plans_for_migration %}
+          {% if plan == retry_migrate_plan %}
+          <option value="{{plan.id}}" selected>{{ plan }}</option>
+          {% endif %}
+        {% endfor %}
+      </select>
+      <button data-toggle="modal" class="btn btn-warning" id="migrate_plan_retry_btn" data-target="#migrate_plan_retry">Retry</button>
+      {% else %}
+      <select id="id_target_migrate_plan" name="target_migrate_plan">
+        {% for plan in available_plans_for_migration %}
+          <option value="{{plan.id}}">{{ plan }}</option>
+        {% endfor %}
+      </select>
+      <button data-toggle="modal" class="btn btn-primary" id="migrate_plan_btn" data-target="#migrate_plan">Migrate Plan</button>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+  {% if available_patches %}
+  <div class="control-group">
+    <div class="control-label"><label>Patch upgrade:</label></div>
+    <div class="controls">
+      {% if retry_patch %}
+      <select id="id_target_patch_retry" name="target_patch_retry" disabled="true">
+        {% for engine_patch in available_patches %}
+          {% if engine_patch == retry_patch.target_patch %}
+          <option value="{{engine_patch.id}}" selected>{{engine_patch.full_version}}</option>
+          {% endif %}
+        {% endfor %}
+      </select>
+      <button data-toggle="modal" class="btn btn-warning" id="upgrade_patch_retry_btn" data-target="#upgrade_patch_retry">Retry</button>
+      {% else %}
+      <select id="id_target_patch" name="target_patch">
+        {% for engine_patch in available_patches %}
+          <option value="{{engine_patch.id}}">{{engine_patch.full_version}}</option>
+        {% endfor %}
+      </select>
+      <button data-toggle="modal" class="btn btn-primary" id="upgrade_patch_btn" data-target="#upgrade_patch">Upgrade Patch</button>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if upgrade_mongo_24_to_30 and database.databaseinfra.plan.replication_topology.can_upgrade_db %}
+    <div class="control-group">
+      <div class="control-label"><label>Engine upgrade:</label></div>
+      <div class="controls">
+        <a href="{{ database.get_mongodb_engine_version_upgrade_url }}" id="upgrade_btn" class="btn btn-primary" title="Start engine upgrade" onclick="return confirm('Are you sure?')">Upgrade MongoDB 2.4 to 3.0</a>
+      </div>
+    </div>
+  {% elif can_do_upgrade and database.databaseinfra.plan.replication_topology.can_upgrade_db %}
+    <div class="control-group">
+      <div class="control-label"><label>Engine upgrade:</label></div>
+      <div class="controls">
+        {% if last_upgrade and last_upgrade.is_status_error %}
+          <a href="{{ database.get_upgrade_retry_url }}" id="upgrade_btn" class="btn btn-warning" title="Retry upgrade" onclick="return confirm('Are you sure?')">Retry upgrade {{ database.infra.engine_name }} {{ database.infra.plan.engine.version}} to {{ database.infra.plan.engine_equivalent_plan.engine.version }}</a>
+          <p><a href="{% url 'admin:maintenance_databaseupgrade_change' last_upgrade.id %}" target='_blank'>Last upgrade</a> has an <b>error</b>, please check the <a href="{% url 'admin:notification_taskhistory_change' last_upgrade.task.id %}" target='_blank'>task</a> and retry the database upgrade clicking in button above</p>
+        {% else %}
+          <a href="{{ database.get_upgrade_url }}" id="upgrade_btn" class="btn btn-primary" title="Start upgrade" onclick="return confirm('Are you sure?')">Upgrade {{ database.infra.engine_name }} {{database.infra.engine_patch.full_version }} to {{ database.infra.plan.engine_equivalent_plan.engine.version }}</a>
+        {% endif %}
+      </div>
+    </div>
+  {% endif %}
+</fieldset>
+
+{% include "admin/confirmation_modal.html" with modal_id="upgrade_patch" confirmation_message="Are you sure you want to upgrade patch?" box_title="Upgrading the patch" button_type="submit" button_value="Upgrade" button_name="upgrade_patch" id_optional="id=id_upgrade_patch_btn_modal" %}
+
+{% include "admin/confirmation_modal.html" with modal_id="upgrade_patch_retry" confirmation_message="Are you sure you want to retry upgrade patch?" box_title="Retring to upgrade the patch" button_type="submit" button_value="Upgrade Retry" button_name="upgrade_patch_retry" id_optional="id=id_upgrade_patch_retry_btn_modal" %}
+
+{% include "admin/confirmation_modal.html" with modal_id="migrate_plan" confirmation_message="Are you sure you want to migrate plan?" box_title="Migrating plan" button_type="submit" button_value="Migrate Plan" button_name="migrate_plan" id_optional="id=id_migrate_plan_btn_modal" %}
+
+{% include "admin/confirmation_modal.html" with modal_id="migrate_plan_retry" confirmation_message="Are you sure you want to retry migrating plan?" box_title="Retrying to migrate plan" button_type="submit" button_value="Migrate Plan Retry" button_name="migrate_plan_retry" id_optional="id=id_migrate_plan_retry_btn_modal" %}
+
+{% endblock %}
+
+{% block js_footer %}
+{{ block.super }}
+<script type="text/javascript" src="/admin/jsi18n/"></script>
+<script type="text/javascript" src="{% static 'admin/js/core.js' %}"></script>
+<script type="text/javascript" src="{% static 'admin/js/admin/RelatedObjectLookups.js' %}"></script>
+<script type="text/javascript" src="{% static 'admin/js/jquery.js' %}"></script>
+<script type="text/javascript" src="{% static 'admin/js/jquery.init.js' %}"></script>
+
+
+<script>
+  jQuery(document).ready(function($) {
+    $("#upgrade_patch_btn").click(function() {
+      var new_patch_version = $("#id_target_patch").find(":selected").text().trim();
+      $("#upgrade_patch .modal_message").text('Are you sure you want to upgrade database from <{{ database.databaseinfra.engine_patch.full_version }}> to <' + new_patch_version + '>?')
+    });
+
+    $("#upgrade_patch_retry_btn").click(function() {
+      var new_patch_version = $("#id_target_patch_retry").find(":selected").text().trim();
+      $("#upgrade_patch_retry .modal_message").text('Are you sure you want to retry to upgrade database from <{{ database.databaseinfra.engine_patch.full_version }}> to <' + new_patch_version + '>?')
+    });
+
+    // Migrate plan
+    $("#migrate_plan_btn").click(function() {
+      var new_plan = $("#id_target_migrate_plan").find(":selected").text();
+      $("#migrate_plan .modal_message").text('Are you sure you want to migrate plan from <{{ database.databaseinfra.plan }}> to <' + new_plan + '>?')
+    });
+
+    $("#migrate_plan_retry_btn").click(function() {
+      var new_plan = $("#id_target_migrate_plan_retry").find(":selected").text();
+      $("#migrate_plan_retry .modal_message").text('Are you sure you want to retry migrating plan from <{{ database.databaseinfra.plan }}> to <' + new_plan + '>?')
+    });
+
+  });
+</script>
+
+{% endblock %}
