@@ -1,5 +1,5 @@
 {% extends "logical/database/details/base.html" %}
-{% load admin_static dbaas_tags system_config schedule_task_tags %}
+{% load admin_static dbaas_tags system_config %}
 
 {% block extrastyle %}
   {{ block.super }}
@@ -149,7 +149,7 @@
     </div>
   </div>
   {% get_configuration "show_schedule_tasks" "show_schedule_tasks" %}
-  {% if tasks_scheduled and show_schedule_tasks %}
+  {% if show_schedule_tasks %}
   <div class="panel-heading">
       <h3 class="panel-title">Automatic tasks</h3>
   </div>
@@ -159,54 +159,19 @@
       <li><a href="#tab2" data-toggle="tab">Already executed</a></li>
     </ul>
     <div class="tab-content">
-      <div class="schedule-field tab-pane fade active in" id="tab1">
-        <table class="table table-condensed table-striped">
-          <thead>
-            <th>Kind</th>
-            <th>Scheduled for</th>
-            <th>Expire at</th>
-            <th>Actions</th>
-          </thead>
-          <tbody>
-            <input type="hidden" name="maintenance_changed" value="0" />
-            {% for task in tasks_scheduled %}
-              <tr>
-                <td>Update SSL certificate</td>
-                <td>
-                    <input type="hidden" name="scheduled_id" value="{{ task.id }}" />
-                    <input type="hidden" name="scheduled_for_date_{{ task.id }}" value="{{ task.scheduled_for|date:"Y-m-d" }}" />
-                    <input type="hidden" name="scheduled_for_time_{{ task.id }}" value="{{ task.scheduled_for|date:"H:i:s" }}" />
-                    {{ task.scheduled_for|date:"Y-m-d H:i:s" }}
-                </td>
-                <td>
-                  {{ task.database.infra.earliest_ssl_expire_at|date:"Y-m-d" }}
-                </td>
-                <td>
-                  <button data-toggle="modal" data-content="Execute now" data-schedule-id="{{ task.id }}" id="execute_scheduled_maintenance_btn" data-target="#execute_scheduled_maintenance" class="btn btn-primary action-btn"><i class="icon-play icon-white"></i></button>
-                  <button data-toggle="modal" data-content="Schedule" data-schedule-id="{{ task.id }}" id="schedule_maintenance_btn" data-target="#schedule_maintenance" class="btn btn-primary action-btn"><i class="icon-calendar icon-white"></i></button>
-                </td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+      <div class="{% if tasks_scheduled %}schedule-field {% endif %}tab-pane fade active in" id="tab1">
+        {% if tasks_scheduled %}
+          {% include "logical/database/task_schedule/scheduled_table.html" with tasks_scheduled=tasks_scheduled %}
+        {% else %}
+          <p>You don't have any scheduled tasks.</p>
+        {% endif %}
       </div>
-      <div class="schedule-field tab-pane fade" id="tab2">
-        <table class="table table-condensed">
-          <thead>
-            <th>Kind</th>
-            <th>Executed At</th>
-            <th>Status</th>
-          </thead>
-          <tbody>
-            {% for task in tasks_executed %}
-              <tr class="{% status_color task.status %}">
-                <td>Update SSL certificate</td>
-                <td>{{ task.finished_at|date:"Y-m-d H:i:s" }}</td>
-                <td>{{ task.status_label }}</td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+      <div class="{% if tasks_executed %}schedule-field {% endif %} tab-pane fade" id="tab2">
+        {% if tasks_executed %}
+          {% include "logical/database/task_schedule/already_executed_tasks_table.html" with tasks_executed=tasks_executed %}
+        {% else %}
+          <p>You don't have any executed tasks.</p>
+        {% endif %}
       </div>
     </div>
 </div>

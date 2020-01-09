@@ -1,0 +1,29 @@
+<table class="table table-condensed table-striped">
+  <thead>
+    <th>Kind</th>
+    <th>Scheduled for</th>
+    <th>Expire at</th>
+    <th>Actions</th>
+  </thead>
+  <tbody>
+    <input type="hidden" name="maintenance_changed" value="0" />
+    {% for task in tasks_scheduled %}
+      <tr>
+        <td>Update SSL certificate</td>
+        <td>
+            <input type="hidden" name="scheduled_id" value="{{ task.id }}" />
+            <input type="hidden" name="scheduled_for_date_{{ task.id }}" value="{{ task.scheduled_for|date:"Y-m-d" }}" />
+            <input type="hidden" name="scheduled_for_time_{{ task.id }}" value="{{ task.scheduled_for|date:"H:i:s" }}" />
+            {{ task.scheduled_for|date:"Y-m-d H:i:s" }}
+        </td>
+        <td>
+          {{ task.database.infra.earliest_ssl_expire_at|date:"Y-m-d" }}
+        </td>
+        <td>
+          <button data-toggle="modal" data-content="Execute now" data-schedule-id="{{ task.id }}" id="execute_scheduled_maintenance_btn" data-target="#execute_scheduled_maintenance" class="btn btn-primary action-btn"><i class="icon-play icon-white"></i></button>
+          <button data-toggle="modal" data-content="Schedule" data-schedule-id="{{ task.id }}" id="schedule_maintenance_btn" data-target="#schedule_maintenance" class="btn btn-primary action-btn"><i class="icon-calendar icon-white"></i></button>
+        </td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
