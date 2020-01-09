@@ -944,6 +944,7 @@ class DatabaseMigrateEngineRetry(View):
             request, *args, **kwargs
         )
 
+
 class DatabaseMaintenanceView(TemplateView):
     template_name = "logical/database/details/maintenance_tab.html"
     WEEKDAYS = [
@@ -1057,24 +1058,14 @@ class DatabaseMaintenanceView(TemplateView):
         elif self.is_engine_migration_retry():
             self.retry_migrate_engine()
         elif self.has_maintenance_backup_changed([
-            'backup_hour',
             'maintenance_window',
             'maintenance_day'
         ]):
-            backup_hour = request.POST.get('backup_hour')
             maintenance_window = request.POST.get('maintenance_window')
             maintenance_day = request.POST['maintenance_day']
-            if backup_hour == maintenance_window:
-                messages.add_message(
-                    request,
-                    messages.ERROR,
-                    'Backup hour must not be equal to maintenance window.'
-                )
-            else:
-                self.database.infra.backup_hour = backup_hour
-                self.database.infra.maintenance_window = maintenance_window
-                self.database.infra.maintenance_day = maintenance_day
-                self.database.infra.save()
+            self.database.infra.maintenance_window = maintenance_window
+            self.database.infra.maintenance_day = maintenance_day
+            self.database.infra.save()
         else:
             self.database.save()
 
@@ -1178,12 +1169,6 @@ class DatabaseMaintenanceView(TemplateView):
         self.context['maintenance_days'] = DatabaseMaintenanceView.WEEKDAYS
         self.context['current_maintenance_day'] = int(
             self.database.infra.maintenance_day
-        )
-
-        # Backup region
-        self.context['backup_hours'] = DatabaseForm.BACKUP_HOUR_CHOICES
-        self.context['current_backup_hour'] = int(
-            self.database.infra.backup_hour
         )
 
         self.context['tasks_scheduled'] = TaskSchedule.objects.filter(
@@ -1529,6 +1514,17 @@ def database_make_backup(request, context, database):
 @database_view('backup')
 def database_backup(request, context, database):
     if request.method == 'POST':
+        backup_hour = int(request.POST.get('backup_hour', 0))
+        maintenance_window = database.infra.maintenance_window
+        if backup_hour == maintenance_window:
+            messages.add_message(
+                request,
+                messages.ERROR,
+                'Backup hour must not be equal then maintenance window.'
+            )
+        else:
+            database.infra.backup_hour = backup_hour
+            database.infra.save()
         if 'database_clone' in request.POST:
             _clone_database(request, database)
         elif 'database_restore' in request.POST:
@@ -1555,6 +1551,11 @@ def database_backup(request, context, database):
     context['environments'] = Environment.objects.all()
     context['plans'] = Plan.objects.filter(
         engine=database.engine, is_active=True,
+    )
+    # Backup region
+    context['backup_hours'] = DatabaseForm.BACKUP_HOUR_CHOICES
+    context['current_backup_hour'] = int(
+        database.infra.backup_hour
     )
 
     return render_to_response(

@@ -178,27 +178,6 @@
   <div>
     </div>
   {% endif %}
-  <div class="panel-heading">
-    <h3 class="panel-title">Backup <i>(Daily)</i></h3>
-  </div>
-  <div class="panel-body">
-    <div class="control-group">
-      <div class="control-label"><label>Start:</label></div>
-      <div class="controls">
-        <select id="id_backup_hour" name="backup_hour">
-          {% for backup_hour in backup_hours %}
-            {% if backup_hour.0 == current_backup_hour %}
-              <option value="{{ backup_hour.0 }}" selected="selected">*
-            {% else %}
-              <option value="{{ backup_hour.0 }}">
-            {% endif %}
-              {{ backup_hour.1 }}
-              </option>
-          {% endfor %}
-        </select>
-      </div>
-    </div>
-  </div>
 </fieldset>
 
 {% include "admin/confirmation_modal.html" with modal_id="upgrade_patch" confirmation_message="Are you sure you want to upgrade patch?" box_title="Upgrading the patch" button_type="submit" button_value="Upgrade" button_name="upgrade_patch" id_optional="id=id_upgrade_patch_btn_modal" %}
