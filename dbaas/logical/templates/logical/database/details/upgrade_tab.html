@@ -27,9 +27,9 @@
     <div class="control-label"><label>Engine migration:</label></div>
     <div class="controls">
       {% if retry_migrate_plan %}
-      <button data-toggle="modal" class="btn btn-warning" id="migrate_plan_retry_btn" data-target="#migrate_plan_retry">Retry Migrating Oracle to Percona</button>
+      <button data-toggle="modal" class="btn btn-warning" id="migrate_plan_retry_btn" data-target="#migrate_plan_retry">Retry Oracle {{ database.infra.engine_patch.engine.name|title }} {{ database.infra.engine_patch.full_version }} to {{ database.infra.plan.migrate_engine_equivalent_plan.engine.name|title }} {{ database.infra.plan.migrate_engine_equivalent_plan.engine.full_inicial_version }}</button>
       {% else %}
-      <button data-toggle="modal" class="btn btn-primary" id="migrate_plan_btn" data-target="#migrate_plan">Migrate Oracle to Percona</button>
+      <button data-toggle="modal" class="btn btn-primary" id="migrate_plan_btn" data-target="#migrate_plan">Oracle {{ database.infra.engine_patch.engine.name|title }} {{ database.infra.engine_patch.full_version }} to {{ database.infra.plan.migrate_engine_equivalent_plan.engine.name|title }} {{ database.infra.plan.migrate_engine_equivalent_plan.engine.full_inicial_version }} </button>
       {% endif %}
     </div>
   </div>
@@ -114,11 +114,11 @@
 
     // Migrate plan
     $("#migrate_plan_btn").click(function() {
-      $("#migrate_plan .modal_message").text('Are you sure you want to migrate engine from <Oracle> to <Percona> ?')
+      $("#migrate_plan .modal_message").text('Are you sure you want to migrate engine from {{ database.infra.engine_patch.engine.name|title }} {{ database.infra.engine_patch.full_version }} to {{ database.infra.plan.migrate_engine_equivalent_plan.engine.name|title }} {{ database.infra.plan.migrate_engine_equivalent_plan.engine.full_inicial_version }} ?')
     });
 
     $("#migrate_plan_retry_btn").click(function() {
-      $("#migrate_plan_retry .modal_message").text('Are you sure you want to retry migrating engine from <Oracle> to <Percona> ?')
+      $("#migrate_plan_retry .modal_message").text('Are you sure you want to retry migrating engine from {{ database.infra.engine_patch.engine.name|title }} {{ database.infra.engine_patch.full_version }} to {{ database.infra.plan.migrate_engine_equivalent_plan.engine.name|title }} {{ database.infra.plan.migrate_engine_equivalent_plan.engine.full_inicial_version }} ?')
     });
 
   });
