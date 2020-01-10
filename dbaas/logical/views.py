@@ -1078,8 +1078,7 @@ class DatabaseUpgradeView(TemplateView):
         return 'upgrade_patch_retry' in self.request.POST
 
     def is_engine_migration(self):
-        return ('migrate_plan' in self.request.POST and
-                self.request.POST.get('target_migrate_plan'))
+        return 'migrate_plan' in self.request.POST
 
     def is_engine_migration_retry(self):
         return 'migrate_plan_retry' in self.request.POST
@@ -1104,9 +1103,8 @@ class DatabaseUpgradeView(TemplateView):
         elif self.is_upgrade_patch_retry():
             _upgrade_patch_retry(request, self.database)
         elif self.is_engine_migration():
-            self.migrate_engine(
-                request.POST.get('target_migrate_plan')
-            )
+            target_plan_id = self.database.infra.plan.migrate_engine_equivalent_plan.pk
+            self.migrate_engine(target_plan_id)
         elif self.is_engine_migration_retry():
             self.retry_migrate_engine()
 
