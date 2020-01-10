@@ -22,7 +22,7 @@
   {% if not has_any_upgrade_available %}
     <p> This database dont have any upgrade to do.</p>
   {% endif %}
-  {% if available_plans_for_migration %}
+  {% if available_plans_for_migration and is_dba %}
   <div class="control-group">
     <div class="control-label"><label>Engine migration:</label></div>
     <div class="controls">
