@@ -177,6 +177,6 @@ def schedule_task_notification(database, scheduled_task, is_new):
     }
 
     send_mail_template(
-        subject, template, email_from(), email_to(database.team),
+        subject, template, email_from(), set(email_to(database.team)),
         fail_silently=False, attachments=None, context=context
     )
