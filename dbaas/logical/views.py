@@ -960,6 +960,9 @@ class DatabaseMaintenanceView(TemplateView):
     def get_object(self, schedule_id):
         return TaskSchedule.objects.get(id=schedule_id)
 
+    def has_maintenance_backup_changed(self, parameters):
+        return any(key in self.request.POST for key in parameters)
+
     def _update_schedule_tasks_for_next_maintenance_window(self, *args, **kw):
         payload = self.request.POST
 
