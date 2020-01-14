@@ -209,7 +209,8 @@
   jQuery(document).ready(function($) {
 
     $("#execute_scheduled_maintenance_btn").click(function(event) {
-      var scheduleId = $(event.target).data('schedule-id');
+      var $eventTarget = $(event.target);
+      var scheduleId = $eventTarget.data('schedule-id') || $eventTarget.parent('button').data('schedule-id');
       $("#id_execute_scheduled_maintenance_btn_modal").attr("href", "execute_schedule_task/"+scheduleId+"/");
     });
 
