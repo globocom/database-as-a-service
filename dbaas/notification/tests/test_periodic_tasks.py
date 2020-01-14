@@ -122,9 +122,17 @@ class CheckSslExpireAt(TestCase):
         task_schedule = TaskSchedule.objects.filter(database=self.database)
         self.assertEqual(task_schedule.count(), 1)
 
-    @patch('notification.tasks.Configuration.get_by_name',
-           new=MagicMock(return_value='fake_env,another_env'))
-    def test_create_task_scheduled_if_configured_multiple_envs(self):
+    def _fake_get_by_name(self, conf_name):
+        if conf_name == 'schedule_send_mail':
+            return 0
+        else:
+            return self.check_ssl_envs
+
+    @patch('notification.tasks.Configuration.get_by_name')
+    def test_create_task_scheduled_if_configured_multiple_envs(
+            self, get_by_name_mock):
+        self.check_ssl_envs = 'fake_env,another_env'
+        get_by_name_mock.side_effect = self._fake_get_by_name
         environment, databaseinfra, hostname, database = self._create_database(
             env_name='another_env',
             infra_name='__test__ another_infra'
