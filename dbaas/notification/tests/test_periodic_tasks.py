@@ -35,31 +35,48 @@ class CheckSslExpireAt(TestCase):
         self.plan = factory_physical.PlanFactory(
             engine=self.engine
         )
-        self.databaseinfra = factory_physical.DatabaseInfraFactory(
-            name="__test__ mysqlinfra2",
+        self.environment, self.databaseinfra, self.hostname, self.database = (
+            self._create_database()
+        )
+        self.one_month_later = self.today + timedelta(days=30)
+
+    def _create_database(self, env_name='fake_env',
+                         infra_name='__test__ mysqlinfra2'):
+        environment = factory_physical.EnvironmentFactory(
+            name=env_name
+        )
+        databaseinfra = factory_physical.DatabaseInfraFactory(
+            name=infra_name,
             user="root", password='fake_pass',
             engine=self.engine,
             plan=self.plan,
-            ssl_configured=True
+            ssl_configured=True,
+            environment=environment
         )
-        self.hostname = factory_physical.HostFactory(
+        hostname = factory_physical.HostFactory(
             ssl_expire_at=FAKE_TODAY + timedelta(days=16)
         )
-        self.instances = self.instance_helper.create_instances_by_quant(
+        self.instance_helper.create_instances_by_quant(
             instance_type=Instance.MYSQL, qt=1,
-            infra=self.databaseinfra, hostname=self.hostname
+            infra=databaseinfra, hostname=hostname
         )
-        self.instance = self.instances[0]
-        self.database = factory_logical.DatabaseFactory(
+        database = factory_logical.DatabaseFactory(
             name='test_db_1',
-            databaseinfra=self.databaseinfra,
+            databaseinfra=databaseinfra,
         )
-        self.one_month_later = self.today + timedelta(days=30)
+        return environment, databaseinfra, hostname, database
 
     @patch('notification.tasks.TaskSchedule.objects.filter')
     def test_dont_find_infras(self, filter_mock):
         self.databaseinfra.ssl_configured = False
         self.databaseinfra.save()
+        check_ssl_expire_at()
+        self.assertFalse(filter_mock.called)
+
+    @patch('notification.tasks.Configuration.get_by_name',
+           new=MagicMock(return_value='other_env'))
+    @patch('notification.tasks.TaskSchedule.objects.filter')
+    def test_dont_find_infras_if_env_configured(self, filter_mock):
         check_ssl_expire_at()
         self.assertFalse(filter_mock.called)
 
@@ -82,6 +99,45 @@ class CheckSslExpireAt(TestCase):
         check_ssl_expire_at()
         task_schedule = TaskSchedule.objects.filter(database=self.database)
         self.assertEqual(task_schedule.count(), 1)
+
+    def test_create_task_scheduled_percona(self):
+        self.engine_type.name = 'mysql_percona'
+        self.engine_type.save()
+        task_schedule = TaskSchedule.objects.filter(database=self.database)
+        self.hostname.ssl_expire_at = self.one_month_later
+        self.hostname.save()
+        self.assertEqual(task_schedule.count(), 0)
+        check_ssl_expire_at()
+        task_schedule = TaskSchedule.objects.filter(database=self.database)
+        self.assertEqual(task_schedule.count(), 1)
+
+    @patch('notification.tasks.Configuration.get_by_name',
+           new=MagicMock(return_value='fake_env'))
+    def test_create_task_scheduled_if_configured(self):
+        task_schedule = TaskSchedule.objects.filter(database=self.database)
+        self.hostname.ssl_expire_at = self.one_month_later
+        self.hostname.save()
+        self.assertEqual(task_schedule.count(), 0)
+        check_ssl_expire_at()
+        task_schedule = TaskSchedule.objects.filter(database=self.database)
+        self.assertEqual(task_schedule.count(), 1)
+
+    @patch('notification.tasks.Configuration.get_by_name',
+           new=MagicMock(return_value='fake_env,another_env'))
+    def test_create_task_scheduled_if_configured_multiple_envs(self):
+        environment, databaseinfra, hostname, database = self._create_database(
+            env_name='another_env',
+            infra_name='__test__ another_infra'
+        )
+        task_schedule = TaskSchedule.objects.filter(database=self.database)
+        self.hostname.ssl_expire_at = self.one_month_later
+        self.hostname.save()
+        hostname.ssl_expire_at = self.one_month_later
+        hostname.save()
+        self.assertEqual(task_schedule.count(), 0)
+        check_ssl_expire_at()
+        task_schedule = TaskSchedule.objects.all()
+        self.assertEqual(task_schedule.count(), 2)
 
     @patch('notification.tasks.date')
     def test_create_task_scheduled_next_maintenance_window(self, date_mock):
