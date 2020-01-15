@@ -186,7 +186,6 @@ class Engine(BaseModel):
         return self.name == 'redis'
 
     def available_patches(self, database):
-        host = database.infra.hosts[0]
         engine_patch = database.infra.engine_patch
         available_patches = self.patchs.exclude(
             is_initial_patch=True
@@ -194,8 +193,7 @@ class Engine(BaseModel):
 
         if engine_patch and engine_patch.engine == self:
             available_patches = available_patches.filter(
-                patch_version__gt=engine_patch.patch_version,
-                required_disk_size_gb__lte=host.root_size_gb
+                patch_version__gt=engine_patch.patch_version
             )
         return available_patches
 
