@@ -1014,6 +1014,14 @@ class DatabaseInfra(BaseModel):
     def update_ssl_steps(self):
         return self.topology.get_update_ssl_steps()
 
+    def check_rfs_size(self, size):
+        """This method checks if hosts size are equal or greater than a given
+        value."""
+        for host in self.hosts:
+            if host.root_size_gb < size:
+                return False
+        return True
+
 
 class Host(BaseModel):
     hostname = models.CharField(
