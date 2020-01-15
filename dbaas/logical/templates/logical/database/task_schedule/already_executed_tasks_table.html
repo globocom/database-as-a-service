@@ -1,0 +1,17 @@
+{% load schedule_task_tags %}
+<table class="table table-condensed">
+  <thead>
+    <th>Kind</th>
+    <th>Executed At</th>
+    <th>Status</th>
+  </thead>
+  <tbody>
+    {% for task in tasks_executed %}
+      <tr class="{% status_color task.status %}">
+        <td>Update SSL certificate</td>
+        <td>{{ task.finished_at|date:"Y-m-d H:i:s" }}</td>
+        <td>{{ task.status_label }}</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
