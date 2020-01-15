@@ -25,7 +25,7 @@ django-ganalytics==0.2
 django-haystack==2.1.0
 django-services==0.0.8
 django-simple-audit==0.1.22
-djangorestframework==2.3.8
+djangorestframework==3.9.1
 django-celery==3.1.9
 ecdsa==0.11
 gunicorn==19.6.0
