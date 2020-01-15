@@ -17,6 +17,24 @@
     .bold_red {
       color: red;
     }
+    .schedule-field {
+      border: 1px solid #ccc;
+      background-color: #fff;
+      width: 40%;
+    }
+    .schedule-field table {
+      margin-bottom: 0px;
+    }
+    .btn.btn-primary.action-btn {
+      padding: 1px 4px;
+      margin-left: 3px;
+    }
+    .popover-inner .popover-title {
+      display: none;
+    }
+    #modal-body-schedule .icon-calendar, #modal-body-schedule .icon-time {
+      margin-top: 5px;
+    }
   </style>
 {% endblock %}
 
@@ -131,67 +149,42 @@
     </div>
   </div>
   {% get_configuration "show_schedule_tasks" "show_schedule_tasks" %}
-  {% if tasks_scheduled and show_schedule_tasks %}
-    <table border=1>
-      <thead>
-        <th>Kind</th>
-        <th>Scheduled for</th>
-        <th>Expire at</th>
-        <th>Action</th>
-      </thead>
-      <tbody>
-        <input type="hidden" name="maintenance_changed" value="0" />
-        {% for task in tasks_scheduled %}
-          <tr>
-            <td>Update SSL certificate</td>
-            <td>
-                <input type="hidden" name="scheduled_id" value="{{ task.id }}" />
-                Date: <input type="text" name="scheduled_for_date" class="vDateField" value="{{ task.scheduled_for|date:"Y-m-d" }}" /><br/>
-                Time: <input type="text" name="scheduled_for_time" class="vTimeField" value="{{ task.scheduled_for|date:"H:i:s" }}" /><br/>
-            </td>
-            <td>{{ task.database.infra.earliest_ssl_expire_at|date:"Y-m-d" }}</td>
-            <td>
-              <button data-toggle="modal" data-schedule-id="{{ task.id }}" id="execute_scheduled_maintenance_btn" data-target="#execute_scheduled_maintenance" class="btn btn-primary">Execute now</button>
-            </td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  {% endif %}
+  {% if show_schedule_tasks %}
   <div class="panel-heading">
-    <h3 class="panel-title">Backup <i>(Daily)</i></h3>
+      <h3 class="panel-title">Automatic tasks</h3>
   </div>
-  <div class="panel-body">
-    <div class="control-group">
-      <div class="control-label"><label>Start:</label></div>
-      <div class="controls">
-        <select id="id_backup_hour" name="backup_hour">
-          {% for backup_hour in backup_hours %}
-            {% if backup_hour.0 == current_backup_hour %}
-              <option value="{{ backup_hour.0 }}" selected="selected">*
-            {% else %}
-              <option value="{{ backup_hour.0 }}">
-            {% endif %}
-              {{ backup_hour.1 }}
-              </option>
-          {% endfor %}
-        </select>
+  <div class="tabbable"> <!-- Only required for left/right tabs -->
+    <ul class="nav nav-tabs" id="automaticTaskMenu">
+      <li class="active"><a href="#tab1" data-toggle="tab">Scheduled</a></li>
+      <li><a href="#tab2" data-toggle="tab">Already executed</a></li>
+    </ul>
+    <div class="tab-content">
+      <div class="{% if tasks_scheduled %}schedule-field {% endif %}tab-pane fade active in" id="tab1">
+        {% if tasks_scheduled %}
+          {% include "logical/database/task_schedule/scheduled_table.html" with tasks_scheduled=tasks_scheduled %}
+        {% else %}
+          <p>You don't have any scheduled tasks.</p>
+        {% endif %}
+      </div>
+      <div class="{% if tasks_executed %}schedule-field {% endif %} tab-pane fade" id="tab2">
+        {% if tasks_executed %}
+          {% include "logical/database/task_schedule/already_executed_tasks_table.html" with tasks_executed=tasks_executed %}
+        {% else %}
+          <p>You don't have any executed tasks.</p>
+        {% endif %}
       </div>
     </div>
-  </div>
+</div>
+  <div>
+    </div>
+  {% endif %}
 </fieldset>
-
-{% include "admin/confirmation_modal.html" with modal_id="upgrade_patch" confirmation_message="Are you sure you want to upgrade patch?" box_title="Upgrading the patch" button_type="submit" button_value="Upgrade" button_name="upgrade_patch" id_optional="id=id_upgrade_patch_btn_modal" %}
-
-{% include "admin/confirmation_modal.html" with modal_id="upgrade_patch_retry" confirmation_message="Are you sure you want to retry upgrade patch?" box_title="Retring to upgrade the patch" button_type="submit" button_value="Upgrade Retry" button_name="upgrade_patch_retry" id_optional="id=id_upgrade_patch_retry_btn_modal" %}
-
-{% include "admin/confirmation_modal.html" with modal_id="migrate_plan" confirmation_message="Are you sure you want to migrate plan?" box_title="Migrating plan" button_type="submit" button_value="Migrate Plan" button_name="migrate_plan" id_optional="id=id_migrate_plan_btn_modal" %}
-
-{% include "admin/confirmation_modal.html" with modal_id="migrate_plan_retry" confirmation_message="Are you sure you want to retry migrating plan?" box_title="Retrying to migrate plan" button_type="submit" button_value="Migrate Plan Retry" button_name="migrate_plan_retry" id_optional="id=id_migrate_plan_retry_btn_modal" %}
 
 {% include "admin/confirmation_modal.html" with tag_type="a" modal_id="execute_scheduled_maintenance" confirmation_message="Are you sure you want execute the task now ?" box_title="Execute Scheduled Task" button_name="execute_scheduled_maintenance" id_optional="id=id_execute_scheduled_maintenance_btn_modal" %}
 
 {% include "admin/maintenance_confirmation_modal.html" with modal_id="save_submit_modal" confirmation_message="You have tasks scheduled. You want to put in your new maintenance window ?" box_title="Change Scheduled tasks" button_type="submit" button_value="save_and_update_task" button_no_value="Save" button_name="_save" extra_attributes=onclick_attrib%}
+
+{% include "admin/schedule_maintenance.html" with modal_id="schedule_maintenance" box_title="Schedule task" button_type="submit" button_value="_save" button_name="schedule_maintenance" extra_attributes=onclick_attrib%}
 
 {% endblock %}
 
@@ -202,38 +195,32 @@
 <script type="text/javascript" src="{% static 'admin/js/admin/RelatedObjectLookups.js' %}"></script>
 <script type="text/javascript" src="{% static 'admin/js/jquery.js' %}"></script>
 <script type="text/javascript" src="{% static 'admin/js/jquery.init.js' %}"></script>
+<script type="text/javascript" src="{% static 'admin/js/jquery-ui.min.js' %}"></script>
 <script type="text/javascript" src="{% static 'admin/js/calendar.js' %}"></script>
 <script type="text/javascript" src="{% static 'admin/js/admin/DateTimeShortcuts.js' %}"></script>
 <script type="text/javascript" src="{% static 'admin/js/inlines.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/tab.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/bootstrap-transition.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/bootstrap-tooltip.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/bootstrap-popover.js' %}"></script>
 
 
 <script>
   jQuery(document).ready(function($) {
-    $("#upgrade_patch_btn").click(function() {
-      var new_patch_version = $("#id_target_patch").find(":selected").text().trim();
-      $("#upgrade_patch .modal_message").text('Are you sure you want to upgrade database from <{{ database.databaseinfra.engine_patch.full_version }}> to <' + new_patch_version + '>?')
-    });
-
-    $("#upgrade_patch_retry_btn").click(function() {
-      var new_patch_version = $("#id_target_patch_retry").find(":selected").text().trim();
-      $("#upgrade_patch_retry .modal_message").text('Are you sure you want to retry to upgrade database from <{{ database.databaseinfra.engine_patch.full_version }}> to <' + new_patch_version + '>?')
-    });
-
-
-    // Migrate plan
-    $("#migrate_plan_btn").click(function() {
-      var new_plan = $("#id_target_migrate_plan").find(":selected").text();
-      $("#migrate_plan .modal_message").text('Are you sure you want to migrate plan from <{{ database.databaseinfra.plan }}> to <' + new_plan + '>?')
-    });
-
-    $("#migrate_plan_retry_btn").click(function() {
-      var new_plan = $("#id_target_migrate_plan_retry").find(":selected").text();
-      $("#migrate_plan_retry .modal_message").text('Are you sure you want to retry migrating plan from <{{ database.databaseinfra.plan }}> to <' + new_plan + '>?')
-    });
 
     $("#execute_scheduled_maintenance_btn").click(function(event) {
       var scheduleId = $(event.target).data('schedule-id');
       $("#id_execute_scheduled_maintenance_btn_modal").attr("href", "execute_schedule_task/"+scheduleId+"/");
+    });
+
+    $(".btn.btn-primary.action-btn").click(function(event) {
+      var $eventTarget = $(event.target);
+      var scheduleId = $eventTarget.data('schedule-id') || $eventTarget.parent('button').data('schedule-id');
+      var scheduleDate = $('input[name="scheduled_for_date_' + scheduleId + '"]');
+      var scheduleTime = $('input[name="scheduled_for_time_' + scheduleId + '"]');
+      $("#modal_changed_schedule").val(scheduleId);
+      $("#modal_scheduled_for_date").val(scheduleDate.val());
+      $("#modal_scheduled_for_time").val(scheduleTime.val());
     });
 
     $("#id_maintenance_day, #id_maintenance_window").on("change", function(ev){
@@ -257,8 +244,34 @@
         $('input[name="maintenance_changed"]').val("0");
       }
     });
+    $('#automaticTaskMenu a').click(function (e) {
+      e.preventDefault();
+      $(this).tab('show');
+    });
+    $(".btn.btn-primary.action-btn").popover({
+        'trigger': 'hover',
+        'placement': 'top',
+        'title': ''
+    });
+    function repositionDatetimePicker() {
+      var $clockBox = $("#clockbox0");
+      var $calendarBox = $("#calendarbox0");
+      $clockBox.position({
+        my: "left+100% top-18%",
+        at: "left bottom",
+        of: $('input[name="scheduled_for_time"]'),
+        collision: "fit"
+      });
+      $calendarBox.position({
+        my: "left+112% top-30%",
+        at: "left bottom",
+        of: $('input[name="scheduled_for_date"]'),
+        collision: "fit"
+      });
+    }
+    document.addEventListener('click', setTimeout.bind(null, repositionDatetimePicker, 0));
 
-  })
+  });
 </script>
 
 {% endblock %}
