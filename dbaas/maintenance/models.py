@@ -27,6 +27,7 @@ from maintenance.tasks import execute_scheduled_maintenance
 from .registered_functions.functools import _get_registered_functions
 from .managers import DatabaseMaintenanceTaskManager
 from util.email_notifications import schedule_task_notification
+from system.models import Configuration
 
 
 LOG = logging.getLogger(__name__)
@@ -1021,4 +1022,8 @@ def maintenance_post_save(sender, **kwargs):
 def task_schedule_post_save(sender, **kwargs):
     task = kwargs.get("instance")
     is_new = kwargs.get("created")
-    schedule_task_notification(task.database, task, is_new)
+    send_email = bool(
+        int(Configuration.get_by_name('schedule_send_mail') or 0)
+    )
+    if send_email:
+        schedule_task_notification(task.database, task, is_new)

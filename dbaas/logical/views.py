@@ -960,6 +960,9 @@ class DatabaseMaintenanceView(TemplateView):
     def get_object(self, schedule_id):
         return TaskSchedule.objects.get(id=schedule_id)
 
+    def has_maintenance_backup_changed(self, parameters):
+        return any(key in self.request.POST for key in parameters)
+
     def _update_schedule_tasks_for_next_maintenance_window(self, *args, **kw):
         payload = self.request.POST
 
@@ -1845,6 +1848,9 @@ class ExecuteScheduleTaskView(RedirectView):
         return TaskSchedule.objects.get(id=self.kwargs['task_id'])
 
     def get(self, *args, **kw):
-        execute_scheduled_maintenance.delay(task=self.get_object())
+        execute_scheduled_maintenance.delay(
+            task=self.get_object(),
+            user=self.request.user
+        )
         self.kwargs.pop('task_id')
         return super(ExecuteScheduleTaskView, self).get(*args, **self.kwargs)
