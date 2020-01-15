@@ -569,9 +569,10 @@ def check_ssl_expire_at(self):
 
 
 @app.task(bind=True)
-def execute_scheduled_maintenance(self, task=None):
+def execute_scheduled_maintenance(self, task=None, user=None):
     LOG.info("Searching Scheduled tasks")
-    user = User.objects.get(username='admin')
+    if user is None:
+        user = User.objects.get(username='admin')
     if task:
         scheduled_tasks = [task]
     else:
