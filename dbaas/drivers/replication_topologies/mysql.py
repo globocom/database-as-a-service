@@ -176,10 +176,10 @@ class MySQLSingle(BaseMysql):
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
             )}, {
             'Configure SSL': (
-                'workflow.steps.util.disk.CleanSSLDirIfConfigured',
-                'workflow.steps.util.ssl.RequestSSLForInfraIfConfigured',
+                'workflow.steps.util.disk.CleanSSLDir',
                 ('workflow.steps.util.ssl'
                  '.CreateSSLConfForInfraEndPointIfConfigured'),
+                'workflow.steps.util.ssl.RequestSSLForInfraIfConfigured',
                 ('workflow.steps.util.ssl'
                  '.CreateJsonRequestFileInfraIfConfigured'),
                 'workflow.steps.util.ssl.CreateCertificateInfraIfConfigured',

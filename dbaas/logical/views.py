@@ -1169,6 +1169,15 @@ class DatabaseUpgradeView(TemplateView):
                 since_step=since_step
             )
 
+    def required_disk_available_patches(self, patches):
+        patches_required_disk_size = []
+        for patch in patches:
+            required_disk_size_gb = patch.required_disk_size_gb
+            if self.database.infra.check_rfs_size(required_disk_size_gb):
+                patches_required_disk_size.append(patch)
+        return patches_required_disk_size
+
+
     def get_context_data(self, **kwargs):
         # Upgrade region
         self.context['upgrade_mongo_24_to_30'] = self.has_update_mongodb_30()
@@ -1178,12 +1187,22 @@ class DatabaseUpgradeView(TemplateView):
         ).last()
 
         # Patch region
-        self.context['available_patches'] = list(
-            self.database.engine.available_patches(self.database)
+        available_patches = self.database.engine.available_patches(
+            self.database
         )
+
         self.context['retry_patch'] = DatabaseUpgradePatch.objects.need_retry(
             database=self.database
         )
+        self.context['has_patches_blocked_by_disk'] = (
+            available_patches and not self.required_disk_available_patches(
+                available_patches
+            )
+        )
+        self.context['available_patches'] = (
+            available_patches
+        )
+
         # Plan migration region
         self.context['available_plans_for_migration'] = (
             self.database.plan.available_plans_for_migration
@@ -1203,6 +1222,7 @@ class DatabaseUpgradeView(TemplateView):
             self.context['upgrade_mongo_24_to_30'] and can_upgrade_db,
             self.context['can_do_upgrade'] and can_upgrade_db,
         ])
+
         return self.context
 
     @database_view_class('upgrade')
