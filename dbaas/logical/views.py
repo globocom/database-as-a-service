@@ -1190,6 +1190,7 @@ class DatabaseUpgradeView(TemplateView):
         available_patches = self.database.engine.available_patches(
             self.database
         )
+
         self.context['retry_patch'] = DatabaseUpgradePatch.objects.need_retry(
             database=self.database
         )
@@ -1199,7 +1200,7 @@ class DatabaseUpgradeView(TemplateView):
             )
         )
         self.context['available_patches'] = (
-            self.required_disk_available_patches(available_patches)
+            available_patches
         )
 
         # Plan migration region
