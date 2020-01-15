@@ -1848,6 +1848,9 @@ class ExecuteScheduleTaskView(RedirectView):
         return TaskSchedule.objects.get(id=self.kwargs['task_id'])
 
     def get(self, *args, **kw):
-        execute_scheduled_maintenance.delay(task=self.get_object())
+        execute_scheduled_maintenance.delay(
+            task=self.get_object(),
+            user=self.request.user
+        )
         self.kwargs.pop('task_id')
         return super(ExecuteScheduleTaskView, self).get(*args, **self.kwargs)
