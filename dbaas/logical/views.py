@@ -1190,17 +1190,22 @@ class DatabaseUpgradeView(TemplateView):
         available_patches = self.database.engine.available_patches(
             self.database
         )
+        patches_required_disk_size = self.required_disk_available_patches(
+            available_patches
+        )
 
         self.context['retry_patch'] = DatabaseUpgradePatch.objects.need_retry(
             database=self.database
         )
         self.context['has_patches_blocked_by_disk'] = (
-            available_patches and not self.required_disk_available_patches(
-                available_patches
-            )
+            available_patches and not patches_required_disk_size
         )
+
+        if patches_required_disk_size:
+            available_patches = patches_required_disk_size
+
         self.context['available_patches'] = (
-            available_patches
+                available_patches
         )
 
         # Plan migration region
