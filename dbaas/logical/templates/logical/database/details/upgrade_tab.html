@@ -55,9 +55,7 @@
       </select>
       <button data-toggle="modal" class="btn btn-primary" id="upgrade_patch_btn" data-target="#upgrade_patch" {%if has_patches_blocked_by_disk %} disabled="true" {% endif %}>Upgrade Patch</button>
       {% endif %}
-    </div>
-    <div class="controls">
-      {%if has_patches_blocked_by_disk %}<p class="help-block">You need to execute "Reinstall VM" on all hosts to turn patches available.</p>{% endif %}
+      {%if has_patches_blocked_by_disk %}<p class="help-block">You need to execute "Reinstall VM" on all hosts to enable <br/> patches on this database.</p>{% endif %}
     </div>
   </div>
   {% endif %}
