@@ -127,9 +127,9 @@ class BaseTopology(object):
             self.get_upgrade_steps_description(): (
                 'workflow.steps.util.vm.ChangeMaster',
                 'workflow.steps.util.database.CheckIfSwitchMaster',
-                'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.StopIfRunning',
                 'workflow.steps.util.database.CheckIsDown',
-                'workflow.steps.util.host_provider.Stop',
+                'workflow.steps.util.host_provider.StopIfRunning',
                 'workflow.steps.util.host_provider.InstallMigrateEngineTemplate',
                 'workflow.steps.util.host_provider.Start',
                 'workflow.steps.util.vm.WaitingBeReady',
