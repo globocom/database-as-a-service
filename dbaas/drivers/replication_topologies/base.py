@@ -137,6 +137,7 @@ class BaseTopology(object):
             ) + self.get_migrate_engine_steps_extra() + (
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
             ),
         }] + self.get_migrate_engine_steps_final()
