@@ -540,6 +540,7 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.host_provider.Start',
                 'workflow.steps.util.vm.WaitingBeReady',
                 'workflow.steps.util.vm.UpdateOSDescription',
+                'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
             ),
         }] + [{
             'Configure Puppet': (
@@ -563,6 +564,7 @@ class MySQLFoxHA(MySQLSingle):
                 ) + self.get_change_binaries_upgrade_patch_steps() + (
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
+
                 'workflow.steps.util.metric_collector.RestartTelegraf',
             ),
         }] + self.get_reinstallvm_steps_final()
@@ -585,12 +587,47 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.host_provider.Start',
                 'workflow.steps.util.vm.WaitingBeReady',
                 'workflow.steps.util.vm.UpdateOSDescription',
+                'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
             ) + self.get_upgrade_steps_extra() + (
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
             ),
         }] + self.get_upgrade_steps_final()
+
+    def get_migrate_engines_steps(self):
+        return [{
+            self.get_upgrade_steps_initial_description(): (
+                'workflow.steps.util.zabbix.DisableAlarms',
+                'workflow.steps.util.db_monitor.DisableMonitoring',
+            ),
+        }] + [{
+            self.get_upgrade_steps_description(): (
+                'workflow.steps.util.vm.ChangeMaster',
+                'workflow.steps.util.database.CheckIfSwitchMaster',
+                'workflow.steps.util.database.StopIfRunning',
+                'workflow.steps.util.database.CheckIsDown',
+                'workflow.steps.util.host_provider.StopIfRunning',
+                'workflow.steps.util.host_provider.InstallMigrateEngineTemplate',
+                'workflow.steps.util.host_provider.Start',
+                'workflow.steps.util.vm.WaitingBeReady',
+                'workflow.steps.util.vm.UpdateOSDescription',
+                'workflow.steps.util.vm.CheckHostName',
+                'workflow.steps.util.puppet.WaitingBeStarted',
+                'workflow.steps.util.puppet.WaitingBeDone',
+                'workflow.steps.util.puppet.ExecuteIfProblem',
+                'workflow.steps.util.puppet.WaitingBeDone',
+                'workflow.steps.util.puppet.CheckStatus',
+                'workflow.steps.util.foreman.SetupDSRC',
+                'workflow.steps.util.puppet.Execute',
+                'workflow.steps.util.puppet.CheckStatus',
+            ) + self.get_migrate_engine_steps_extra() + (
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
+                'workflow.steps.util.metric_collector.RestartTelegraf',
+            ),
+        }] + self.get_migrate_engine_steps_final()
 
     def get_upgrade_steps_extra(self):
         return (
