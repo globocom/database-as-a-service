@@ -318,7 +318,7 @@ def recreate_slave(self, database, host, task, since_step=None,
 
 @app.task(bind=True)
 def update_ssl(self, database, task, since_step=None, step_manager=None,
-               scheduled_task=None):
+               scheduled_task=None, auto_rollback=False):
     from maintenance.models import UpdateSsl
     task = TaskHistory.register(
         request=self.request, task_history=task, user=task.user,
@@ -349,6 +349,7 @@ def update_ssl(self, database, task, since_step=None, step_manager=None,
 
     steps = database.databaseinfra.update_ssl_steps()
     instances = database.infra.get_driver().get_database_instances()
+
     result = steps_for_instances(
         steps, instances, task, step_manager.update_step, since_step,
         step_manager=step_manager
@@ -360,6 +361,31 @@ def update_ssl(self, database, task, since_step=None, step_manager=None,
     else:
         step_manager.set_error()
         task.set_status_error('Could not update SSL')
+        if auto_rollback:
+            from workflow.workflow import rollback_for_instances_full
+            new_task = task
+            new_task.id = None
+            new_task.details = ''
+            new_task.task_name += '_rollback'
+            new_task.save()
+            rollback_step_manager = step_manager
+            rollback_step_manager.id = None
+            rollback_step_manager.task_schedule = None
+            rollback_step_manager.can_do_retry = 0
+            rollback_step_manager.save()
+            result = rollback_for_instances_full(
+                steps, instances, new_task,
+                rollback_step_manager.get_current_step,
+                rollback_step_manager.update_step,
+            )
+            if result:
+                rollback_step_manager.set_success()
+                task.set_status_success('Rollback SSL Update with success')
+            else:
+                if hasattr(rollback_step_manager, 'cleanup'):
+                    rollback_step_manager.cleanup(instances)
+                rollback_step_manager.set_error()
+                task.set_status_error('Could not rollback update SSL')
 
 
 @app.task(bind=True)

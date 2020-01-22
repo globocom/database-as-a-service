@@ -1,8 +1,9 @@
+{% load schedule_task_tags %}
 <table class="table table-condensed table-striped">
   <thead>
     <th>Kind</th>
     <th>Scheduled for</th>
-    <th>Expire at</th>
+    <th>Notes</th>
     <th>Actions</th>
   </thead>
   <tbody>
@@ -17,7 +18,7 @@
             {{ task.scheduled_for|date:"Y-m-d H:i:s" }}
         </td>
         <td>
-          {{ task.database.infra.earliest_ssl_expire_at|date:"Y-m-d" }}
+          {% get_notes_for task %}
         </td>
         <td>
           <button data-toggle="modal" data-content="Execute now" data-schedule-id="{{ task.id }}" id="execute_scheduled_maintenance_btn" data-target="#execute_scheduled_maintenance" class="btn btn-primary action-btn"><i class="icon-play icon-white"></i></button>
