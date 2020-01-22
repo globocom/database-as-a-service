@@ -371,6 +371,7 @@ def update_ssl(self, database, task, since_step=None, step_manager=None,
             rollback_step_manager = step_manager
             rollback_step_manager.id = None
             rollback_step_manager.task_schedule = None
+            rollback_step_manager.can_do_retry = 0
             rollback_step_manager.save()
             result = rollback_for_instances_full(
                 steps, instances, new_task,
@@ -381,6 +382,8 @@ def update_ssl(self, database, task, since_step=None, step_manager=None,
                 rollback_step_manager.set_success()
                 task.set_status_success('Rollback SSL Update with success')
             else:
+                if hasattr(rollback_step_manager, 'cleanup'):
+                    rollback_step_manager.cleanup(instances)
                 rollback_step_manager.set_error()
                 task.set_status_error('Could not rollback update SSL')
 
