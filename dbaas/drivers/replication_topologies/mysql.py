@@ -540,6 +540,7 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.host_provider.Start',
                 'workflow.steps.util.vm.WaitingBeReady',
                 'workflow.steps.util.vm.UpdateOSDescription',
+                'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
             ),
         }] + [{
             'Configure Puppet': (
@@ -563,6 +564,7 @@ class MySQLFoxHA(MySQLSingle):
                 ) + self.get_change_binaries_upgrade_patch_steps() + (
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
+
                 'workflow.steps.util.metric_collector.RestartTelegraf',
             ),
         }] + self.get_reinstallvm_steps_final()
