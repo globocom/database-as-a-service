@@ -580,18 +580,23 @@ class UnSetReplicationUserRequireSSL(SetReplicationUserRequireSSL):
 
 
 class BackupSSLFolder(SSL):
+    source_ssl_dir = '/data/ssl'
+    backup_ssl_dir = '/data/ssl-BKP'
+
     def __unicode__(self):
         return "Doing backup of SSL folder..."
 
     def do(self):
-        script = 'cp -rp /data/ssl /data/ssl-BKP'
+        script = 'cp -rp {} {}'.format(
+            self.source_ssl_dir, self.backup_ssl_dir
+        )
         return self.run_script(script)
 
     def undo(self):
-        script = ('[ -d /data/ssl-BKP ] '
-                  '&& cp -rp /data/ssl-BKP/* /data/ssl '
-                  '&& rm -rf /data/ssl-BKP '
-                  '|| exit 0')
+        script = ('[ -d {1} ] '
+                  '&& cp -rp {1}/* {0} '
+                  '&& rm -rf {1} '
+                  '|| exit 0'.format(self.source_ssl_dir, self.backup_ssl_dir))
         return self.run_script(script)
 
 
