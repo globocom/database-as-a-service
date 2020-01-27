@@ -93,6 +93,17 @@ class ChangeMaster(VmStep):
         raise error
 
 
+class ChangeMasterRollback(ChangeMaster):
+    def __unicode__(self):
+        return "Changing master node if rollback..."
+
+    def do(self):
+        pass
+
+    def undo(self):
+        return super(ChangeMasterRollback, self).do()
+
+
 class ChangeMasterMigrate(ChangeMaster):
     @property
     def is_valid(self):
