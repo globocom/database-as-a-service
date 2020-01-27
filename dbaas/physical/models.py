@@ -186,7 +186,6 @@ class Engine(BaseModel):
         return self.name == 'redis'
 
     def available_patches(self, database):
-        host = database.infra.hosts[0]
         engine_patch = database.infra.engine_patch
         available_patches = self.patchs.exclude(
             is_initial_patch=True
@@ -194,8 +193,7 @@ class Engine(BaseModel):
 
         if engine_patch and engine_patch.engine == self:
             available_patches = available_patches.filter(
-                patch_version__gt=engine_patch.patch_version,
-                required_disk_size_gb__lte=host.root_size_gb
+                patch_version__gt=engine_patch.patch_version
             )
         return available_patches
 
@@ -1013,6 +1011,14 @@ class DatabaseInfra(BaseModel):
 
     def update_ssl_steps(self):
         return self.topology.get_update_ssl_steps()
+
+    def check_rfs_size(self, size):
+        """This method checks if hosts size are equal or greater than a given
+        value."""
+        for host in self.hosts:
+            if host.root_size_gb < size:
+                return False
+        return True
 
 
 class Host(BaseModel):
