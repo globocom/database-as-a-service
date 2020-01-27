@@ -34,7 +34,7 @@
     </div>
   </div>
   {% endif %}
-  {% if available_patches %}
+  {% if available_patches or has_patches_blocked_by_disk %}
   <div class="control-group">
     <div class="control-label"><label>Patch upgrade:</label></div>
     <div class="controls">
@@ -46,15 +46,16 @@
           {% endif %}
         {% endfor %}
       </select>
-      <button data-toggle="modal" class="btn btn-warning" id="upgrade_patch_retry_btn" data-target="#upgrade_patch_retry">Retry</button>
+      <button data-toggle="modal" class="btn btn-warning" id="upgrade_patch_retry_btn" data-target="#upgrade_patch_retry" {%if all_patches_blocked_by_disk %} disabled="true" {% endif %}>Retry</button>
       {% else %}
-      <select id="id_target_patch" name="target_patch">
+      <select id="id_target_patch" name="target_patch" {%if all_patches_blocked_by_disk %} disabled="true" {% endif %}>
         {% for engine_patch in available_patches %}
           <option value="{{engine_patch.id}}">{{engine_patch.full_version}}</option>
         {% endfor %}
       </select>
-      <button data-toggle="modal" class="btn btn-primary" id="upgrade_patch_btn" data-target="#upgrade_patch">Upgrade Patch</button>
+      <button data-toggle="modal" class="btn btn-primary" id="upgrade_patch_btn" data-target="#upgrade_patch" {%if all_patches_blocked_by_disk %} disabled="true" {% endif %}>Upgrade Patch</button>
       {% endif %}
+      {%if has_patches_blocked_by_disk %}<p class="help-block">You need to execute "Reinstall VM" on all hosts to enable <br/> patches on this database.</p>{% endif %}
     </div>
   </div>
   {% endif %}
