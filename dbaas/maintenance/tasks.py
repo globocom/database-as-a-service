@@ -367,6 +367,7 @@ def update_ssl(self, database, task, since_step=None, step_manager=None,
             new_task.id = None
             new_task.details = ''
             new_task.task_name += '_rollback'
+            new_task.task_status = new_task.STATUS_RUNNING
             new_task.save()
             rollback_step_manager = step_manager
             rollback_step_manager.id = None
