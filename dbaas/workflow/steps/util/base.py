@@ -218,6 +218,11 @@ class BaseInstanceStep(object):
     def database_is_down(self, attempts=None):
         return self.__is_instance_status(False, attempts=attempts)
 
+    def run_script(self, script, host=None):
+        from util import run_script
+
+        return run_script(self, script, host or self.host)
+
     def do(self):
         raise NotImplementedError
 
