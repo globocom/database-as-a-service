@@ -957,6 +957,17 @@ class UpdateSsl(DatabaseMaintenanceTask):
     def __unicode__(self):
         return "Update SSL for {}".format(self.database)
 
+    def cleanup(self, instances):
+        from workflow.steps.util.db_monitor import EnableMonitoring
+        from workflow.steps.util.zabbix import EnableAlarms
+        extra_steps = (EnableMonitoring, EnableAlarms,)
+        for step in extra_steps:
+            for instance in instances:
+                try:
+                    step(instance).do()
+                except Exception:
+                    pass
+
 
 simple_audit.register(Maintenance)
 simple_audit.register(HostMaintenance)

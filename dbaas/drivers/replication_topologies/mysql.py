@@ -110,6 +110,8 @@ class MySQLSingle(BaseMysql):
             'Disable monitoring and alarms': (
                 'workflow.steps.util.zabbix.DisableAlarms',
                 'workflow.steps.util.db_monitor.DisableMonitoring',
+                'workflow.steps.util.ssl.UpdateExpireAtDateRollback',
+                'workflow.steps.util.ssl.BackupSSLFolder',
             ),
         }] + [{
             'Configure SSL': (
@@ -121,9 +123,8 @@ class MySQLSingle(BaseMysql):
             ),
         }] + [{
             'Restart Database': (
-                'workflow.steps.util.vm.ChangeMaster',
-                'workflow.steps.util.database.CheckIfSwitchMaster',
                 'workflow.steps.util.database.Stop',
+                'workflow.steps.util.ssl.RestoreSSLFolder4Rollback',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
             ),
@@ -688,6 +689,8 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.database.Stop',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
+                'workflow.steps.util.database.CheckIfSwitchMasterRollback',
+                'workflow.steps.util.vm.ChangeMasterRollback',
             ),
         }] + [{
             'Configure Replication User': (
@@ -705,6 +708,8 @@ class MySQLFoxHA(MySQLSingle):
             'Disable monitoring and alarms': (
                 'workflow.steps.util.zabbix.DisableAlarms',
                 'workflow.steps.util.db_monitor.DisableMonitoring',
+                'workflow.steps.util.ssl.UpdateExpireAtDateRollback',
+                'workflow.steps.util.ssl.BackupSSLFolder',
             ),
         }] + [{
             'Disable SSL': (
@@ -726,8 +731,11 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.vm.ChangeMaster',
                 'workflow.steps.util.database.CheckIfSwitchMaster',
                 'workflow.steps.util.database.Stop',
+                'workflow.steps.util.ssl.RestoreSSLFolder4Rollback',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
+                'workflow.steps.util.database.CheckIfSwitchMasterRollback',
+                'workflow.steps.util.vm.ChangeMasterRollback',
             ),
         }] + [{
             'Enable SSL': (
