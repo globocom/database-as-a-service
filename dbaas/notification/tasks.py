@@ -3,38 +3,30 @@ from __future__ import absolute_import
 import datetime
 from datetime import date, timedelta
 import traceback
+
 from celery.utils.log import get_task_logger
-from celery.exceptions import SoftTimeLimitExceeded
 from django.db.models import Sum, Count, Q
+from simple_audit.models import AuditRequest
 
 from account.models import User
 from dbaas.celery import app
 from account.models import Team
 from logical.models import Database
-from physical.models import Plan, DatabaseInfra, Instance, Environment
-from util import email_notifications, get_worker_name, full_stack
+from physical.models import Plan, DatabaseInfra, Instance
+from util import email_notifications, get_worker_name
 from util.decorators import only_one
-from util.providers import clone_infra, destroy_infra, \
-    get_database_upgrade_setting, get_resize_settings, \
-    get_database_change_parameter_setting, \
-    get_reinstallvm_steps_setting, \
-    get_database_change_parameter_retry_steps_count, \
-    get_database_configure_ssl_setting, get_deploy_settings, \
-    get_database_upgrade_patch_setting, get_engine_migrate_settings
-from simple_audit.models import AuditRequest
+from util import providers as util_providers
 from system.models import Configuration
 from notification.models import TaskHistory
 from workflow.workflow import (steps_for_instances,
                                rollback_for_instances_full,
                                total_of_steps)
-from maintenance.models import (DatabaseUpgrade, DatabaseResize,
-                                DatabaseChangeParameter, DatabaseReinstallVM,
-                                DatabaseConfigureSSL, DatabaseUpgradePatch,
-                                TaskSchedule, DatabaseMigrateEngine)
-from maintenance.tasks import restore_database, node_zone_migrate, \
-    node_zone_migrate_rollback, database_environment_migrate, \
-    database_environment_migrate_rollback, recreate_slave, update_ssl
+from maintenance import models as maintenance_models
+from maintenance import tasks as maintenace_tasks
 from maintenance.models import DatabaseDestroy
+from util import slugify, gen_infra_names
+from maintenance.tasks_create_database import (get_or_create_infra,
+                                               get_instances_for)
 
 
 LOG = get_task_logger(__name__)
@@ -76,11 +68,15 @@ def destroy_database(self, database, task_history=None, user=None):
     AuditRequest.new_request("destroy_database", user, "localhost")
     try:
         worker_name = get_worker_name()
-        task_history = TaskHistory.register(request=self.request, task_history=task_history,
-                                            user=user, worker_name=worker_name)
+        task_history = TaskHistory.register(
+            request=self.request, task_history=task_history,
+            user=user, worker_name=worker_name
+        )
 
         LOG.info("id: %s | task: %s | kwargs: %s | args: %s" % (
-            self.request.id, self.request.task, self.request.kwargs, str(self.request.args)))
+            self.request.id, self.request.task,
+            self.request.kwargs, str(self.request.args))
+        )
 
         task_history.add_detail('Quarantine:')
         task_history.add_detail(
@@ -109,11 +105,10 @@ def destroy_database(self, database, task_history=None, user=None):
         database_destroy.save()
 
         topology_path = database_destroy.plan.replication_topology.class_path
-        steps = get_deploy_settings(topology_path)
+        steps = util_providers.get_deploy_settings(topology_path)
 
-        instances = [
-            host.instances.order_by('instance_type').first() for host in infra.hosts
-        ]
+        instances = ([host.instances.order_by('instance_type').first()
+                     for host in infra.hosts])
         database_destroy.current_step = total_of_steps(steps, instances)
 
         database_destroy.save()
@@ -138,74 +133,62 @@ def destroy_database_retry(self, rollback_from, task, user):
 
 
 @app.task(bind=True)
-def clone_database(self, origin_database, clone_name, plan, environment, task_history=None, user=None):
+def clone_database(self, origin_database, clone_name, plan, environment,
+                   task_history=None, user=None, retry_from=None):
     AuditRequest.new_request("clone_database", user, "localhost")
-    try:
-        worker_name = get_worker_name()
-        LOG.info("id: %s | task: %s | kwargs: %s | args: %s" % (
-            self.request.id, self.request.task, self.request.kwargs, str(self.request.args)))
+    worker_name = get_worker_name()
+    LOG.info("id: %s | task: %s | kwargs: %s | args: %s" % (
+        self.request.id, self.request.task,
+        self.request.kwargs, str(self.request.args))
+    )
 
-        task_history = TaskHistory.register(request=self.request, task_history=task_history,
-                                            user=user, worker_name=worker_name)
+    task = TaskHistory.register(
+        request=self.request, task_history=task_history,
+        user=user, worker_name=worker_name
+    )
 
-        LOG.info("origin_database: %s" % origin_database)
+    LOG.info("origin_database: %s" % origin_database)
 
-        task_history.update_details(persist=True, details="Loading Process...")
-        result = clone_infra(
-            plan=plan, environment=environment, name=clone_name,
-            team=origin_database.team, backup_hour=backup_hour,
-            maintenance_window=maintenance_window,
-            maintenance_day=maintenance_day,
-            project=origin_database.project,
-            description=origin_database.description, task=task_history,
-            clone=origin_database,
-            subscribe_to_email_events=origin_database.subscribe_to_email_events
+    topology_path = plan.replication_topology.class_path
+
+    name = slugify(clone_name)
+    base_name = gen_infra_names(name, 0)
+    infra = get_or_create_infra(
+        base_name, plan, environment, retry_from=retry_from
+    )
+    instances = get_instances_for(infra, topology_path)
+
+    step_manager = maintenance_models.DatabaseClone()
+    step_manager.task = task
+    step_manager.name = name
+    step_manager.plan = plan
+    step_manager.environment = environment
+    step_manager.user = user.username if user else task.user
+    step_manager.infra = infra
+    step_manager.database = infra.databases.first()
+    step_manager.origin_database = origin_database
+    step_manager.save()
+
+    steps = util_providers.get_clone_settings(topology_path)
+
+    since_step = None
+    if retry_from:
+        since_step = retry_from.current_step
+
+    if steps_for_instances(
+        steps, instances, task, step_manager.update_step,
+        since_step=since_step, step_manager=step_manager
+    ):
+        step_manager.set_success()
+        task.set_status_success('Database created')
+        step_manager.database.finish_task()
+    else:
+        step_manager.set_error()
+        task.set_status_error(
+            'Could not create database\n'
+            'Please check error message and do retry'
         )
-
-        if result['created'] is False:
-            if 'exceptions' in result:
-                error = "\n\n".join(
-                    ": ".join(err) for err in result['exceptions']['error_codes']
-                )
-                traceback = "\n\nException Traceback\n".join(
-                    result['exceptions']['traceback'])
-                error = "{}\n{}".format(error, traceback)
-            else:
-                error = "There is not any infra-structure to allocate this database."
-
-            task_history.update_status_for(
-                TaskHistory.STATUS_ERROR, details=error
-            )
-            return
-
-        task_history.update_dbid(db=result['database'])
-        task_history.update_status_for(
-            TaskHistory.STATUS_SUCCESS, details='\nDatabase cloned successfully')
-
-    except SoftTimeLimitExceeded:
-        LOG.error("task id %s - timeout exceeded" % self.request.id)
-        task_history.update_status_for(
-            TaskHistory.STATUS_ERROR, details="timeout exceeded")
-        if 'result' in locals() and result['created']:
-            destroy_infra(
-                databaseinfra=result['databaseinfra'], task=task_history)
-            return
-    except Exception as e:
-        traceback = full_stack()
-        LOG.error("Ops... something went wrong: %s" % e)
-        LOG.error(traceback)
-
-        if 'result' in locals() and result['created']:
-            destroy_infra(
-                databaseinfra=result['databaseinfra'], task=task_history)
-
-        task_history.update_status_for(
-            TaskHistory.STATUS_ERROR, details=traceback)
-
-        return
-
-    finally:
-        AuditRequest.cleanup_request()
+    AuditRequest.cleanup_request()
 
 
 @app.task
@@ -237,13 +220,15 @@ def databaseinfra_notification(self, user=None):
                 continue
 
         used = DatabaseInfra.objects.filter(
-            plan__name=infra['plan__name'], environment__name=infra['environment__name'],
+            plan__name=infra['plan__name'],
+            environment__name=infra['environment__name'],
             engine__engine_type__name=infra['engine__engine_type__name']
         ).aggregate(used=Count('databases'))
         # calculate the percentage
 
         percent = int(used['used'] * 100 / infra['capacity'])
-        if percent >= threshold_infra_notification and infra['plan__provider'] != Plan.CLOUDSTACK:
+        if (percent >= threshold_infra_notification
+                and infra['plan__provider'] != Plan.CLOUDSTACK):
             LOG.info('Plan %s in environment %s with %s%% occupied' % (
                 infra['plan__name'], infra['environment__name'], percent))
             LOG.info("Sending database infra notification...")
@@ -257,7 +242,8 @@ def databaseinfra_notification(self, user=None):
 
         task_history.update_status_for(
             TaskHistory.STATUS_SUCCESS,
-            details='Databaseinfra Notification successfully sent to dbaas admins!'
+            details=('Databaseinfra Notification successfully sent to '
+                     'dbaas admins!')
         )
     return
 
@@ -294,7 +280,8 @@ def database_notification_for_team(team=None):
 
         if not team.email:
             msgs.append(
-                "team %s has no email set and therefore no database usage notification will been sent" % team)
+                ("team %s has no email set and therefore no database "
+                 "usage notification will been sent") % team)
         else:
             if percent_usage >= threshold_database_notification:
                 LOG.info("Sending database notification...")
@@ -338,8 +325,12 @@ def database_notification(self):
         worker_name = get_worker_name()
         task_history = TaskHistory.register(
             request=self.request, user=None, worker_name=worker_name)
-        task_history.update_status_for(TaskHistory.STATUS_SUCCESS, details="\n".join(
-            str(key) + ': ' + ', '.join(value) for key, value in msgs.items()))
+        task_history.update_status_for(
+            TaskHistory.STATUS_SUCCESS, details="\n".join(
+                (str(key) + ': ' + ', '.join(value)
+                 for key, value in msgs.items())
+            )
+        )
     except Exception as e:
         task_history.update_status_for(TaskHistory.STATUS_ERROR, details=e)
 
@@ -361,7 +352,9 @@ def update_database_status(self):
             if database.database_status and database.database_status.is_alive:
                 database.status = Database.ALIVE
 
-                instances_status = database.databaseinfra.check_instances_status()
+                instances_status = (
+                    database.databaseinfra.check_instances_status()
+                )
                 if instances_status == database.databaseinfra.ALERT:
                     database.status = Database.ALERT
 
@@ -374,8 +367,11 @@ def update_database_status(self):
             msgs.append(msg)
             LOG.info(msg)
 
-        task_history.update_status_for(TaskHistory.STATUS_SUCCESS, details="\n".join(
-            value for value in msgs))
+        task_history.update_status_for(
+            TaskHistory.STATUS_SUCCESS, details="\n".join(
+                value for value in msgs
+            )
+        )
     except Exception:
         task_history.update_status_for(
             TaskHistory.STATUS_ERROR,
@@ -403,13 +399,17 @@ def update_database_used_size_old(self):
                 database.used_size_in_bytes = 0.0
 
             database.save(update_fields=['used_size_in_bytes'])
-            msg = "\nUpdating used size in bytes for database: {}, used size: {}".format(
+            msg = ("\nUpdating used size in bytes for database: {}, used "
+                   "size: {}").format(
                 database, database.used_size_in_bytes)
             msgs.append(msg)
             LOG.info(msg)
 
-        task_history.update_status_for(TaskHistory.STATUS_SUCCESS, details="\n".join(
-            value for value in msgs))
+        task_history.update_status_for(
+            TaskHistory.STATUS_SUCCESS, details="\n".join(
+                value for value in msgs
+            )
+        )
     except Exception as e:
         task_history.update_status_for(TaskHistory.STATUS_ERROR, details=e)
 
@@ -438,8 +438,11 @@ def update_infra_instances_sizes(self):
             msgs.append(msg)
             LOG.info(msg)
 
-        task_history.update_status_for(TaskHistory.STATUS_SUCCESS, details="\n".join(
-            value for value in msgs))
+        task_history.update_status_for(
+            TaskHistory.STATUS_SUCCESS, details="\n".join(
+                value for value in msgs
+            )
+        )
     except Exception as e:
         task_history.update_status_for(TaskHistory.STATUS_ERROR, details=e)
 
@@ -461,16 +464,21 @@ def update_instances_status(self):
         for databaseinfra in infras:
             LOG.info("Retrieving all instances for {}".format(databaseinfra))
 
-            for instance in Instance.objects.filter(databaseinfra=databaseinfra):
+            for instance in Instance.objects.filter(
+                    databaseinfra=databaseinfra):
                 instance.update_status()
 
-                msg = "\nUpdating instance status, instance: {}, status: {}".format(
+                msg = ("\nUpdating instance status, instance: {}, "
+                       "status: {}").format(
                     instance, instance.status)
                 msgs.append(msg)
                 LOG.info(msg)
 
-        task_history.update_status_for(TaskHistory.STATUS_SUCCESS, details="\n".join(
-            value for value in msgs))
+        task_history.update_status_for(
+            TaskHistory.STATUS_SUCCESS, details="\n".join(
+                value for value in msgs
+            )
+        )
     except Exception as e:
         task_history.update_status_for(TaskHistory.STATUS_ERROR, details=e)
 
@@ -541,9 +549,9 @@ def check_ssl_expire_at(self):
             task.update_details(
                 "Checking database {}...".format(database), persist=True
             )
-            scheudled_tasks = TaskSchedule.objects.filter(
-                Q(status=TaskSchedule.SCHEDULED)
-                | Q(status=TaskSchedule.ERROR),
+            scheudled_tasks = maintenance_models.TaskSchedule.objects.filter(
+                Q(status=maintenance_models.TaskSchedule.SCHEDULED)
+                | Q(status=maintenance_models.TaskSchedule.ERROR),
                 scheduled_for__lte=one_month_later,
                 database=database
             )
@@ -551,16 +559,19 @@ def check_ssl_expire_at(self):
                 task.update_details("Already scheduled!\n", persist=True)
             else:
                 from django.db.models.signals import post_save
-                instance = TaskSchedule.objects.create(
+                instance = maintenance_models.TaskSchedule.objects.create(
                     method_path='update_ssl',
-                    scheduled_for=TaskSchedule.next_maintenance_window(
+                    scheduled_for=maintenance_models.TaskSchedule.next_maintenance_window(  # noqa
                         today + timedelta(days=7),
                         infra.maintenance_window,
                         infra.maintenance_day
                     ),
                     database=database
                 )
-                post_save.send(TaskSchedule, instance=instance, created=True)
+                post_save.send(
+                    maintenance_models.TaskSchedule,
+                    instance=instance, created=True
+                )
                 task.update_details("Schedule created!\n", persist=True)
         task.update_status_for(TaskHistory.STATUS_SUCCESS, details="\nDone")
     except Exception as err:
@@ -578,9 +589,9 @@ def execute_scheduled_maintenance(self, task=None, user=None):
     else:
         now = datetime.datetime.now()
         end_date = now.replace(minute=59)
-        scheduled_tasks = TaskSchedule.objects.filter(
+        scheduled_tasks = maintenance_models.TaskSchedule.objects.filter(
             scheduled_for__lte=end_date,
-            status=TaskSchedule.SCHEDULED,
+            status=maintenance_models.TaskSchedule.SCHEDULED,
         )
     if scheduled_tasks:
         LOG.info("Scheduled Tasks Found!")
@@ -608,10 +619,14 @@ def handle_zabbix_alarms(database):
     from dbaas_credentials.credential import Credential
     from dbaas_credentials.models import CredentialType
     integration = CredentialType.objects.get(type=CredentialType.ZABBIX)
-    credentials = Credential.get_credentials(environment=database.databaseinfra.environment,
-                                             integration=integration)
+    credentials = Credential.get_credentials(
+        environment=database.databaseinfra.environment,
+        integration=integration
+    )
 
-    return factory_for(databaseinfra=database.databaseinfra, credentials=credentials)
+    return factory_for(
+        databaseinfra=database.databaseinfra, credentials=credentials
+    )
 
 
 @app.task(bind=True)
@@ -717,9 +732,9 @@ def upgrade_database(self, database, user, task, since_step=0):
     target_plan = source_plan.engine_equivalent_plan
 
     class_path = target_plan.replication_topology.class_path
-    steps = get_database_upgrade_setting(class_path)
+    steps = util_providers.get_database_upgrade_setting(class_path)
 
-    database_upgrade = DatabaseUpgrade()
+    database_upgrade = maintenance_models.DatabaseUpgrade()
     database_upgrade.database = database
     database_upgrade.source_plan = source_plan
     database_upgrade.target_plan = target_plan
@@ -767,9 +782,9 @@ def migrate_engine(self, database, user, task, since_step=0):
     target_plan = source_plan.migrate_engine_equivalent_plan
 
     class_path = target_plan.replication_topology.class_path
-    steps = get_engine_migrate_settings(class_path)
+    steps = util_providers.get_engine_migrate_settings(class_path)
 
-    database_migrate_engine_obj = DatabaseMigrateEngine()
+    database_migrate_engine_obj = maintenance_models.DatabaseMigrateEngine()
     database_migrate_engine_obj.database = database
     database_migrate_engine_obj.source_plan = source_plan
     database_migrate_engine_obj.target_plan = target_plan
@@ -817,9 +832,9 @@ def upgrade_database_patch(self, database, patch, user, task, since_step=0):
     target_patch = patch
 
     class_path = infra.plan.replication_topology.class_path
-    steps = get_database_upgrade_patch_setting(class_path)
+    steps = util_providers.get_database_upgrade_patch_setting(class_path)
 
-    database_upgrade_patch = DatabaseUpgradePatch()
+    database_upgrade_patch = maintenance_models.DatabaseUpgradePatch()
     database_upgrade_patch.database = database
     database_upgrade_patch.source_patch = source_patch
     database_upgrade_patch.target_patch = target_patch
@@ -863,9 +878,9 @@ def reinstall_vm_database(self, database, instance, user, task, since_step=0):
     infra = database.infra
 
     class_path = infra.plan.replication_topology.class_path
-    steps = get_reinstallvm_steps_setting(class_path)
+    steps = util_providers.get_reinstallvm_steps_setting(class_path)
 
-    database_reinstallvm = DatabaseReinstallVM()
+    database_reinstallvm = maintenance_models.DatabaseReinstallVM()
     database_reinstallvm.database = database
     database_reinstallvm.instance = instance
     database_reinstallvm.task = task
@@ -899,8 +914,10 @@ def change_parameters_database(self, database, user, task, since_step=0):
     class_path = plan.replication_topology.class_path
 
     from physical.models import DatabaseInfraParameter
-    changed_parameters = DatabaseInfraParameter.get_databaseinfra_changed_parameters(
-        databaseinfra=infra,
+    changed_parameters = (
+        DatabaseInfraParameter.get_databaseinfra_changed_parameters(
+            databaseinfra=infra,
+        )
     )
     all_dinamic = True
     custom_procedure = None
@@ -913,7 +930,7 @@ def change_parameters_database(self, database, user, task, since_step=0):
             custom_procedure = changed_parameter.parameter.custom_method
             break
 
-    steps = get_database_change_parameter_setting(
+    steps = util_providers.get_database_change_parameter_setting(
         class_path, all_dinamic, custom_procedure)
 
     LOG.info(steps)
@@ -930,19 +947,24 @@ def change_parameters_database(self, database, user, task, since_step=0):
     task.add_detail("", level=0)
 
     if since_step > 0:
-        steps_dec = get_database_change_parameter_retry_steps_count(
-            class_path, all_dinamic, custom_procedure)
+        steps_dec = (
+            util_providers.get_database_change_parameter_retry_steps_count(
+                class_path, all_dinamic, custom_procedure
+            )
+        )
         LOG.info('since_step: {}, steps_dec: {}'.format(since_step, steps_dec))
         since_step = since_step - steps_dec
         if since_step < 0:
             since_step = 0
 
-    database_change_parameter = DatabaseChangeParameter()
+    database_change_parameter = maintenance_models.DatabaseChangeParameter()
     database_change_parameter.database = database
     database_change_parameter.task = task
     database_change_parameter.save()
 
-    instances_to_change_parameters = infra.get_driver().get_database_instances()
+    instances_to_change_parameters = (
+        infra.get_driver().get_database_instances()
+    )
 
     success = steps_for_instances(
         steps, instances_to_change_parameters, task,
@@ -956,12 +978,14 @@ def change_parameters_database(self, database, user, task, since_step=0):
         database_change_parameter.set_error()
         task.update_status_for(
             TaskHistory.STATUS_ERROR,
-            'Could not do change the database parameters.\nChange parameters doesn\'t have rollback'
+            ('Could not do change the database parameters.\nChange '
+             'parameters doesn\'t have rollback')
         )
 
 
 @app.task(bind=True)
-def add_instances_to_database(self, database, user, task, number_of_instances=1):
+def add_instances_to_database(self, database, user, task,
+                              number_of_instances=1):
     from workflow.workflow import steps_for_instances_with_rollback
     from util.providers import get_add_database_instances_steps
     from util import get_vm_name
@@ -1040,7 +1064,8 @@ def remove_readonly_instance(self, instance, user, task):
 
 
 @app.task(bind=True)
-def resize_database(self, database, user, task, offering, original_offering=None, since_step=0):
+def resize_database(self, database, user, task, offering,
+                    original_offering=None, since_step=0):
 
     self.request.kwargs['database'] = database
     self.request.kwargs['offering'] = offering
@@ -1056,7 +1081,7 @@ def resize_database(self, database, user, task, offering, original_offering=None
     if not original_offering:
         original_offering = database.infra.offering
 
-    database_resize = DatabaseResize(
+    database_resize = maintenance_models.DatabaseResize(
         database=database,
         source_offer=original_offering,
         target_offer=offering,
@@ -1064,7 +1089,7 @@ def resize_database(self, database, user, task, offering, original_offering=None
     )
 
     class_path = infra.plan.replication_topology.class_path
-    steps = get_resize_settings(class_path)
+    steps = util_providers.get_resize_settings(class_path)
 
     instances_to_resize = infra.get_driver().get_database_instances()
     success = steps_for_instances(
@@ -1093,7 +1118,7 @@ def resize_database_rollback(self, from_resize, user, task):
     infra = from_resize.database.infra
 
     class_path = infra.plan.replication_topology.class_path
-    steps = get_resize_settings(class_path)
+    steps = util_providers.get_resize_settings(class_path)
 
     instances = list(infra.get_driver().get_database_instances())
 
@@ -1161,9 +1186,9 @@ def configure_ssl_database(self, database, user, task, since_step=0):
     infra = database.infra
 
     class_path = infra.plan.replication_topology.class_path
-    steps = get_database_configure_ssl_setting(class_path)
+    steps = util_providers.get_database_configure_ssl_setting(class_path)
 
-    database_configure_ssl = DatabaseConfigureSSL()
+    database_configure_ssl = maintenance_models.DatabaseConfigureSSL()
     database_configure_ssl.database = database
     database_configure_ssl.task = task
     database_configure_ssl.save()
@@ -1182,8 +1207,10 @@ def configure_ssl_database(self, database, user, task, since_step=0):
         database_configure_ssl.set_error()
         task.update_status_for(
             TaskHistory.STATUS_ERROR,
-            'Could not do have SSL configured.\nConfigure SSL doesn\'t have rollback'
+            ('Could not do have SSL configured.\nConfigure SSL doesn\'t '
+             'have rollback')
         )
+
 
 @app.task(bind=True)
 def update_database_monitoring(self, task, database, hostgroup, action):
@@ -1221,8 +1248,8 @@ def update_database_monitoring(self, task, database, hostgroup, action):
 
 
 @app.task(bind=True)
-def update_organization_name_monitoring(
-    self, task, database, organization_name):
+def update_organization_name_monitoring(self, task, database,
+                                        organization_name):
     from workflow.steps.util.db_monitor import UpdateInfraOrganizationName
 
     worker_name = get_worker_name()
@@ -1288,7 +1315,8 @@ class TaskRegister(object):
                              **kw):
 
         task_params = {
-            'task_name': 'database_disk_resize' if task_name is None else task_name,
+            'task_name': ('database_disk_resize' if task_name is None
+                          else task_name),
             'arguments': 'Database name: {}'.format(database.name),
             'database': database,
             'relevance': TaskHistory.RELEVANCE_CRITICAL
@@ -1367,7 +1395,8 @@ class TaskRegister(object):
     ):
         task_params = {
             'task_name': 'resize_database_rollback',
-            'arguments': "Rollback resize database {}".format(from_resize.database),
+            'arguments': "Rollback resize database {}".format(
+                from_resize.database),
             'user': user,
             'database': from_resize.database,
             'relevance': TaskHistory.RELEVANCE_CRITICAL
@@ -1428,7 +1457,7 @@ class TaskRegister(object):
 
     @classmethod
     def database_clone(cls, origin_database, user, clone_name,
-                       plan, environment):
+                       plan, environment, retry_from=None):
 
         task_params = {
             'task_name': 'clone_database',
@@ -1441,7 +1470,8 @@ class TaskRegister(object):
 
         clone_database.delay(
             origin_database=origin_database, user=user, clone_name=clone_name,
-            plan=plan, environment=environment, task_history=task
+            plan=plan, environment=environment, task_history=task,
+            retry_from=retry_from
         )
 
     @classmethod
@@ -1469,7 +1499,8 @@ class TaskRegister(object):
         )
 
     @classmethod
-    def database_create_rollback(cls, rollback_from, user, extra_task_params=None):
+    def database_create_rollback(cls, rollback_from, user,
+                                 extra_task_params=None):
         task_params = {
             'task_name': "create_database",
             'arguments': "Database name: {}".format(rollback_from.name),
@@ -1552,7 +1583,7 @@ class TaskRegister(object):
 
         task = cls.create_task(task_params)
 
-        restore_database.delay(
+        maintenace_tasks.restore_database.delay(
             database=database, task=task, snapshot=snapshot, user=user,
             retry_from=retry_from
         )
@@ -1570,7 +1601,9 @@ class TaskRegister(object):
 
         if since_step:
             task_params['task_name'] = 'upgrade_database_retry'
-            task_params['arguments'] = 'Retrying upgrade database {}'.format(database)
+            task_params['arguments'] = 'Retrying upgrade database {}'.format(
+                database
+            )
 
         task = cls.create_task(task_params)
 
@@ -1597,7 +1630,8 @@ class TaskRegister(object):
 
         if since_step:
             task_params['task_name'] = 'migrate_engine_retry'
-            task_params['arguments'] = 'Retrying migrate engine from database {}'.format(database)
+            task_params['arguments'] = ('Retrying migrate engine from '
+                                        'database {}').format(database)
 
         task = cls.create_task(task_params)
 
@@ -1625,7 +1659,8 @@ class TaskRegister(object):
 
         if since_step:
             task_params['task_name'] = 'upgrade_database_patch_retry'
-            task_params['arguments'] = 'Retrying upgrade database patch {}'.format(database)
+            task_params['arguments'] = ('Retrying upgrade database '
+                                        'patch {}').format(database)
 
         task = cls.create_task(task_params)
 
@@ -1646,7 +1681,8 @@ class TaskRegister(object):
         database = instance.databaseinfra.databases.first()
         task_params = {
             'task_name': 'reinstall_vm_database',
-            'arguments': 'Reinstall VM for database {} and instance {}'.format(database, instance),
+            'arguments': 'Reinstall VM for database {} and instance {}'.format(
+                database, instance),
             'database': database,
             'instance': instance,
             'user': user,
@@ -1655,7 +1691,9 @@ class TaskRegister(object):
 
         if since_step:
             task_params['task_name'] = 'reinstall_vm_database_retry'
-            task_params['arguments'] = 'Retrying reinstall VM for database {} and instance {}'.format(database, instance)
+            task_params['arguments'] = ('Retrying reinstall VM for database '
+                                        '{} and instance {}').format(
+                                            database, instance)
 
         task = cls.create_task(task_params)
 
@@ -1682,7 +1720,8 @@ class TaskRegister(object):
 
         if since_step:
             task_params['task_name'] = 'change_parameters_retry'
-            task_params['arguments'] = 'Retrying changing parameters of database {}'.format(database)
+            task_params['arguments'] = ('Retrying changing parameters of '
+                                        'database {}').format(database)
 
         task = cls.create_task(task_params)
 
@@ -1740,7 +1779,8 @@ class TaskRegister(object):
 
         if since_step:
             task_params['task_name'] = 'configure_ssl_database_retry'
-            task_params['arguments'] = 'Retrying configure SSL database {}'.format(database)
+            task_params['arguments'] = ('Retrying configure SSL database '
+                                        '{}').format(database)
 
         task = cls.create_task(task_params)
 
@@ -1766,7 +1806,7 @@ class TaskRegister(object):
         if user:
             task_params['user'] = user
         task = cls.create_task(task_params)
-        return node_zone_migrate.delay(
+        return maintenace_tasks.node_zone_migrate.delay(
             host=host, zone=zone, new_environment=new_environment, task=task,
             since_step=since_step, step_manager=step_manager
         )
@@ -1785,7 +1825,7 @@ class TaskRegister(object):
         if user:
             task_params['user'] = user
         task = cls.create_task(task_params)
-        return recreate_slave.delay(
+        return maintenace_tasks.recreate_slave.delay(
             database=db,
             host=host, task=task,
             since_step=since_step,
@@ -1804,7 +1844,7 @@ class TaskRegister(object):
         if user:
             task_params['user'] = user
         task = cls.create_task(task_params)
-        return update_ssl.delay(
+        return maintenace_tasks.update_ssl.delay(
             database=database, task=task,
             since_step=since_step,
             step_manager=step_manager,
@@ -1822,7 +1862,7 @@ class TaskRegister(object):
         if user:
             task_params['user'] = user
         task = cls.create_task(task_params)
-        return node_zone_migrate_rollback.delay(migrate, task)
+        return maintenace_tasks.node_zone_migrate_rollback.delay(migrate, task)
 
     @classmethod
     def database_migrate(
@@ -1838,7 +1878,7 @@ class TaskRegister(object):
         if user:
             task_params['user'] = user
         task = cls.create_task(task_params)
-        return database_environment_migrate.delay(
+        return maintenace_tasks.database_environment_migrate.delay(
             database=database, new_environment=new_environment,
             new_offering=new_offering, task=task,
             hosts_zones=hosts_zones, since_step=since_step,
@@ -1856,7 +1896,9 @@ class TaskRegister(object):
         if user:
             task_params['user'] = user
         task = cls.create_task(task_params)
-        return database_environment_migrate_rollback.delay(migrate, task)
+        return maintenace_tasks.database_environment_migrate_rollback.delay(
+            migrate, task
+        )
 
     @classmethod
     def update_database_monitoring(cls, database, hostgroup, action):
