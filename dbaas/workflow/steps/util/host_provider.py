@@ -399,14 +399,18 @@ class CreateVirtualMachine(HostProviderStep):
     def team(self):
         if self.has_database:
             return self.database.team.name
-        return self.create.team.name
+        elif self.create:
+            return self.create.team.name
+        elif (self.step_manager
+              and hasattr(self.step_manager, 'origin_database')):
+            return self.step_manager.origin_database.team.name
 
     @property
     def zone(self):
         return None
 
     def do(self):
-        task_manager = self.create or self.destroy
+        task_manager = self.create or self.destroy or self.step_manager
         try:
             pair = self.infra.instances.get(dns=self.instance.dns)
         except Instance.DoesNotExist:
