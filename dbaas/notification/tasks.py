@@ -180,7 +180,7 @@ def clone_database(self, origin_database, clone_name, plan, environment,
         since_step=since_step, step_manager=step_manager
     ):
         step_manager.set_success()
-        task.set_status_success('Database created')
+        task.set_status_success('Database cloned')
         step_manager.database.finish_task()
     else:
         step_manager.set_error()
