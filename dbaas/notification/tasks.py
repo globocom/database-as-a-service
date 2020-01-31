@@ -580,7 +580,8 @@ def check_ssl_expire_at(self):
 
 
 @app.task(bind=True)
-def execute_scheduled_maintenance(self, task=None, user=None):
+def execute_scheduled_maintenance(self, task=None, user=None,
+                                  auto_rollback=True):
     LOG.info("Searching Scheduled tasks")
     if user is None:
         user = User.objects.get(username='admin')
@@ -597,7 +598,12 @@ def execute_scheduled_maintenance(self, task=None, user=None):
         LOG.info("Scheduled Tasks Found!")
     for scheduled_task in scheduled_tasks:
         func = getattr(TaskRegister, scheduled_task.method_path)
-        func(scheduled_task.database, user=user, scheduled_task=scheduled_task)
+        func(
+            scheduled_task.database,
+            user=user,
+            scheduled_task=scheduled_task,
+            auto_rollback=auto_rollback
+        )
 
 
 def create_zabbix_alarms(database):
@@ -1834,7 +1840,8 @@ class TaskRegister(object):
 
     @classmethod
     def update_ssl(cls, database, user,
-                   since_step=None, step_manager=None, **kw):
+                   since_step=None, step_manager=None, auto_rollback=False,
+                   **kw):
         task_params = {
             'task_name': "update_ssl",
             'arguments': "Database: {}".format(
@@ -1848,6 +1855,7 @@ class TaskRegister(object):
             database=database, task=task,
             since_step=since_step,
             step_manager=step_manager,
+            auto_rollback=auto_rollback,
             **kw
         )
 
