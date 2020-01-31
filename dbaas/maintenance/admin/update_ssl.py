@@ -25,7 +25,7 @@ class UpdateSslAdmin(DatabaseMaintenanceTaskAdmin):
     )
     readonly_fields = (
         "database", "link_task",
-        "started_at", "finished_at", "current_step", "status",
+        "started_at", "finished_at", "status", "task_schedule",
         "maintenance_action"
     )
 

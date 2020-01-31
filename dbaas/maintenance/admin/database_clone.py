@@ -26,8 +26,8 @@ class DatabaseCloneAdmin(DatabaseMaintenanceTaskAdmin):
     readonly_fields = (
         "database", "infra", "plan", "environment",
         "name", "origin_database", "user", "link_task",
-        "started_at", "finished_at", "current_step", "status",
-        "maintenance_action"
+        "started_at", "finished_at", "status",
+        "maintenance_action", "task_schedule"
     )
 
     def maintenance_action(self, maintenance_task):

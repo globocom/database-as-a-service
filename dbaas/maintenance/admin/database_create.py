@@ -26,7 +26,7 @@ class DatabaseCreateAdmin(DatabaseMaintenanceTaskAdmin):
         "database", "infra", "plan", "plan_name", "environment", "team",
         "project", "name", "description", "subscribe_to_email_events",
         "is_protected", "user", "link_task", "started_at", "finished_at",
-        "current_step", "status", "maintenance_action"
+        "status", "maintenance_action", "task_schedule"
     )
 
     def maintenance_action(self, maintenance_task):
