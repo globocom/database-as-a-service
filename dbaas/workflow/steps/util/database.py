@@ -378,6 +378,17 @@ class CheckIfSwitchMaster(DatabaseStep):
             raise EnvironmentError('There is no master for this infra.')
 
 
+class CheckIfSwitchMasterRollback(CheckIfSwitchMaster):
+    def __unicode__(self):
+        return "Checking if master was switched if rollback..."
+
+    def do(self):
+        pass
+
+    def undo(self):
+        return super(CheckIfSwitchMasterRollback, self).do()
+
+
 class CheckIfSwitchMasterMigrate(CheckIfSwitchMaster):
     @property
     def is_valid(self):
