@@ -191,6 +191,40 @@ def clone_database(self, origin_database, clone_name, plan, environment,
     AuditRequest.cleanup_request()
 
 
+@app.task(bind=True)
+def clone_database_rollback(self, rollback_from, task, user, instances=None):
+    task = TaskHistory.register(
+        request=self.request, task_history=task, user=user,
+        worker_name=get_worker_name()
+    )
+    topology_path = rollback_from.plan.replication_topology.class_path
+    steps = util_providers.get_clone_settings(topology_path)
+
+    if instances is None:
+        instances = get_instances_for(rollback_from.infra, topology_path)
+
+    rollback_from.id = None
+    rollback_from.user = user.username if user else task.user
+    rollback_from.task = task
+    rollback_from.save()
+
+    if rollback_for_instances_full(
+        steps, instances, task, rollback_from.get_current_step,
+        rollback_from.update_step, step_manager=rollback_from
+    ):
+        rollback_from.set_rollback()
+        task.set_status_success('Rollback executed with success')
+
+        infra = rollback_from.infra
+        infra.delete()
+    else:
+        rollback_from.set_error()
+        task.set_status_error(
+            'Could not do rollback\n'
+            'Please check error message and do retry'
+        )
+
+
 @app.task
 @only_one(key="db_infra_notification_key", timeout=20)
 def databaseinfra_notification(self, user=None):
@@ -1522,6 +1556,24 @@ class TaskRegister(object):
         from maintenance.tasks import create_database_rollback
         return create_database_rollback.delay(
             rollback_from=rollback_from, task=task, user=user
+        )
+
+    @classmethod
+    def database_clone_rollback(cls, rollback_from, user,
+                                extra_task_params=None):
+        task_params = {
+            'task_name': "clone_database_rollback",
+            'arguments': "Database name: {}".format(rollback_from.name),
+            'database_name': rollback_from.name,
+            'relevance': TaskHistory.RELEVANCE_CRITICAL
+        }
+        task_params.update(extra_task_params if extra_task_params else {})
+        if user:
+            task_params['user'] = user
+        task = cls.create_task(task_params)
+
+        return clone_database_rollback.delay(
+            rollback_from=rollback_from, task=task, user=user,
         )
 
     @classmethod
