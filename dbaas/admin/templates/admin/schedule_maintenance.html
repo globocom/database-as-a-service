@@ -1,0 +1,9 @@
+{% extends "admin/confirmation_modal.html" %}
+
+{% block modal_body %}
+  <div style="position:relative" id="modal-body-schedule">
+    <input type="hidden" name="changed_schedule" id="modal_changed_schedule" />
+    Date: <input type="text" name="scheduled_for_date" id="modal_scheduled_for_date" class="vDateField" /><br/>
+    Time: <input type="text" name="scheduled_for_time" id="modal_scheduled_for_time" class="vTimeField" /><br/>
+  </div>
+{% endblock %}

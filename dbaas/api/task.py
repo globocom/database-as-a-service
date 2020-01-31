@@ -114,6 +114,7 @@ class TaskAPI(viewsets.ReadOnlyModelViewSet):
         'maintenance.tasks.node_zone_migrate',
         'maintenance.tasks.database_environment_migrate',
         'maintenance.tasks.recreate_slave',
+        'notification.tasks.migrate_engine',
     ]
     model = TaskHistory
     serializer_class = TaskSerializer

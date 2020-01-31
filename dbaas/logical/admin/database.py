@@ -37,7 +37,7 @@ from logical.views import database_details, database_hosts, \
     database_switch_write, database_reinstall_vm, database_reinstall_vm_retry,\
     DatabaseParameters, database_configure_ssl_retry, database_configure_ssl, \
     database_migrate, zones_for_environment, ExecuteScheduleTaskView, \
-    DatabaseMigrateEngineRetry
+    DatabaseMigrateEngineRetry, DatabaseUpgradeView
 
 from logical.forms import DatabaseForm
 from logical.service.database import DatabaseService
@@ -652,6 +652,11 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 r'^/?(?P<id>\d+)/maintenance/$',
                 self.admin_site.admin_view(DatabaseMaintenanceView.as_view()),
                 name="logical_database_maintenance"
+            ),
+            url(
+                r'^/?(?P<id>\d+)/upgrades/$',
+                self.admin_site.admin_view(DatabaseUpgradeView.as_view()),
+                name="logical_database_upgrade"
             ),
             url(
                 r'^/?(?P<id>\d+)/maintenance/execute_schedule_task/(?P<task_id>\d+)/$',

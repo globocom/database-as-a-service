@@ -14,9 +14,11 @@
       <div class="modal-body">
         <div role="form">
           <div class="form-group">
-            <label for="id_database_name">
-              <div class="modal_message">{{ confirmation_message }}<br><br><div ><b class="bold_red modal_extra_message" ></b></div></div>
-            </label>
+            {% block modal_body %}
+              <label for="id_database_name">
+                <div class="modal_message">{{ confirmation_message }}<br><br><div ><b class="bold_red modal_extra_message" ></b></div></div>
+              </label>
+            {% endblock %}
           </div>
         </div>
       </div>
