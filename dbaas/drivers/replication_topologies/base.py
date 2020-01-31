@@ -84,6 +84,7 @@ class BaseTopology(object):
                 'workflow.steps.util.host_provider.Start',
                 'workflow.steps.util.vm.WaitingBeReady',
                 'workflow.steps.util.vm.UpdateOSDescription',
+                'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
             ) + self.get_upgrade_steps_extra() + (
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
@@ -127,9 +128,9 @@ class BaseTopology(object):
             self.get_upgrade_steps_description(): (
                 'workflow.steps.util.vm.ChangeMaster',
                 'workflow.steps.util.database.CheckIfSwitchMaster',
-                'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.StopIfRunning',
                 'workflow.steps.util.database.CheckIsDown',
-                'workflow.steps.util.host_provider.Stop',
+                'workflow.steps.util.host_provider.StopIfRunning',
                 'workflow.steps.util.host_provider.InstallMigrateEngineTemplate',
                 'workflow.steps.util.host_provider.Start',
                 'workflow.steps.util.vm.WaitingBeReady',
@@ -137,6 +138,7 @@ class BaseTopology(object):
             ) + self.get_migrate_engine_steps_extra() + (
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
             ),
         }] + self.get_migrate_engine_steps_final()
@@ -302,6 +304,7 @@ class BaseTopology(object):
                 'workflow.steps.util.host_provider.Start',
                 'workflow.steps.util.vm.WaitingBeReady',
                 'workflow.steps.util.vm.UpdateOSDescription',
+                'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
             ),
         }] + [{
             'Start Database': (

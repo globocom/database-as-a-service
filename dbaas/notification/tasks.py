@@ -11,7 +11,7 @@ from account.models import User
 from dbaas.celery import app
 from account.models import Team
 from logical.models import Database
-from physical.models import Plan, DatabaseInfra, Instance
+from physical.models import Plan, DatabaseInfra, Instance, Environment
 from util import email_notifications, get_worker_name, full_stack
 from util.decorators import only_one
 from util.providers import clone_infra, destroy_infra, \
@@ -525,11 +525,16 @@ def check_ssl_expire_at(self):
         request=self.request, user=None, worker_name=worker_name)
     task.relevance = TaskHistory.RELEVANCE_CRITICAL
     one_month_later = today + timedelta(days=30)
+    check_ssl_envs = Configuration.get_by_name('check_ssl_envs')
+    extra_filters = {}
+    if check_ssl_envs:
+        extra_filters = {'environment__name__in': check_ssl_envs.split(',')}
     try:
         infras = DatabaseInfra.objects.filter(
             ssl_configured=True,
-            engine__engine_type__name='mysql',
-            instances__hostname__ssl_expire_at__lte=one_month_later
+            engine__engine_type__name__contains='mysql',
+            instances__hostname__ssl_expire_at__lte=one_month_later,
+            **extra_filters
         ).distinct()
         for infra in infras:
             database = infra.databases.first()
@@ -564,9 +569,11 @@ def check_ssl_expire_at(self):
 
 
 @app.task(bind=True)
-def execute_scheduled_maintenance(self, task=None):
+def execute_scheduled_maintenance(self, task=None, user=None,
+                                  auto_rollback=True):
     LOG.info("Searching Scheduled tasks")
-    user = User.objects.get(username='admin')
+    if user is None:
+        user = User.objects.get(username='admin')
     if task:
         scheduled_tasks = [task]
     else:
@@ -580,7 +587,12 @@ def execute_scheduled_maintenance(self, task=None):
         LOG.info("Scheduled Tasks Found!")
     for scheduled_task in scheduled_tasks:
         func = getattr(TaskRegister, scheduled_task.method_path)
-        func(scheduled_task.database, user=user, scheduled_task=scheduled_task)
+        func(
+            scheduled_task.database,
+            user=user,
+            scheduled_task=scheduled_task,
+            auto_rollback=auto_rollback
+        )
 
 
 def create_zabbix_alarms(database):
@@ -1787,7 +1799,8 @@ class TaskRegister(object):
 
     @classmethod
     def update_ssl(cls, database, user,
-                   since_step=None, step_manager=None, **kw):
+                   since_step=None, step_manager=None, auto_rollback=False,
+                   **kw):
         task_params = {
             'task_name': "update_ssl",
             'arguments': "Database: {}".format(
@@ -1801,6 +1814,7 @@ class TaskRegister(object):
             database=database, task=task,
             since_step=since_step,
             step_manager=step_manager,
+            auto_rollback=auto_rollback,
             **kw
         )
 

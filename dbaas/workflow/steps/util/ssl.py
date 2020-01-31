@@ -170,10 +170,7 @@ class CreateSSLFolder(SSL):
         self.exec_script(script)
 
     def undo(self):
-        if not self.is_valid:
-            return
-        script = "rm -rf {}".format(self.ssl_path)
-        self.exec_script(script)
+        pass
 
 
 class CreateSSLFolderRollbackIfRunning(CreateSSLFolder):
@@ -523,9 +520,18 @@ class UpdateExpireAtDate(SSL):
         host.save()
 
     def undo(self):
-        host = self.host
-        host.ssl_expire_at = None
-        host.save()
+        pass
+
+
+class UpdateExpireAtDateRollback(UpdateExpireAtDate):
+    def __unicode__(self):
+        return "Update expire_at date if Rollback..."
+
+    def do(self):
+        pass
+
+    def undo(self):
+        return super(UpdateExpireAtDateRollback, self).do()
 
 
 class SetReplicationUserRequireSSL(SSL):
@@ -571,3 +577,32 @@ class UnSetReplicationUserRequireSSL(SetReplicationUserRequireSSL):
 
     def undo(self):
         super(UnSetReplicationUserRequireSSL, self).do()
+
+
+class BackupSSLFolder(SSL):
+    source_ssl_dir = '/data/ssl'
+    backup_ssl_dir = '/data/ssl-BKP'
+
+    def __unicode__(self):
+        return "Doing backup of SSL folder..."
+
+    def do(self):
+        script = 'cp -rp {} {}'.format(
+            self.source_ssl_dir, self.backup_ssl_dir
+        )
+        return self.run_script(script)
+
+    def undo(self):
+        script = ('[ -d {1} ] '
+                  '&& cp -rp {1}/* {0} '
+                  '&& rm -rf {1} '
+                  '|| exit 0'.format(self.source_ssl_dir, self.backup_ssl_dir))
+        return self.run_script(script)
+
+
+class RestoreSSLFolder4Rollback(BackupSSLFolder):
+    def __unicode__(self):
+        return "Restore SSL folder if doing rollback..."
+
+    def do(self):
+        pass
