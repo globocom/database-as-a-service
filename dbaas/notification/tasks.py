@@ -1382,7 +1382,9 @@ class TaskRegister(object):
         resize_database_rollback.delay(from_resize, user, task)
 
     @classmethod
-    def database_add_instances(cls, database, user, number_of_instances):
+    def database_add_instances(
+        cls, database, user, number_of_instances, since_step=None
+    ):
         task_params = {
             'task_name': 'add_database_instances',
             'arguments': "Adding instances on database {}".format(database),
