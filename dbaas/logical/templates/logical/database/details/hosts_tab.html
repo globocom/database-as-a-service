@@ -118,18 +118,20 @@
             <p>
               {% if is_dba %}
                 <a target="_blank" href="{% url 'admin:physical_host_change' host.id %}">{{ host.description }}</a>
-                {% if last_reinstall_vm and last_reinstall_vm.is_status_error %}
-                  {% if host.id == last_reinstall_vm.instance.hostname.id %}
-                  <span>
-                      <a class="action_button btn btn-danger" href="{{ database.get_reinstallvm_retry_url }}" title="Go to reinstal VM page">Retry Reinstall VM</a>
-                  </span>
+                {% if database.databaseinfra.plan.replication_topology.can_reinstall_vm %}
+                  {% if last_reinstall_vm and last_reinstall_vm.is_status_error %}
+                    {% if host.id == last_reinstall_vm.instance.hostname.id %}
+                      <span>
+                          <a class="action_button btn btn-danger" href="{{ database.get_reinstallvm_retry_url }}" title="Go to reinstal VM page">Retry Reinstall VM</a>
+                      </span>
+                    {% endif %}
+                  {% else %}
+                    <td class="action-red-button">
+                      <a class="action_button btn btn-danger reinstallvm" data-toggle="modal" id="reinstall_vm_btn"
+                        data-target="#reinstall_vm_modal" data-host-id="{{host.id}}" title="Reinstall VM template and reconfigure the instance database."
+                      >Reinstall VM</a>
+                    </td>
                   {% endif %}
-                {% else %}
-                <td class="action-red-button">
-                  <a class="action_button btn btn-danger reinstallvm" data-toggle="modal" id="reinstall_vm_btn"
-                    data-target="#reinstall_vm_modal" data-host-id="{{host.id}}" title="Reinstall VM template and reconfigure the instance database."
-                  >Reinstall VM</a>
-                </td>
                 {% endif %}
                 {% if database.databaseinfra.plan.replication_topology.can_recreate_slave %}
                   {% if last_recreat_slave and last_recreat_slave.is_status_error %}
