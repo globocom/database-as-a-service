@@ -130,14 +130,22 @@
                     data-target="#reinstall_vm_modal" data-host-id="{{host.id}}" title="Reinstall VM template and reconfigure the instance database."
                   >Reinstall VM</a>
                 </td>
-                <td class="action-red-button">
-                  <a style="margin-left: 5px;" class="action_button btn btn-danger recreate-slave" data-toggle="modal" id="recreate_vm_btn"
-                    data-target="#recreate_vm_modal" data-host-id="{{host.id}}" title="Recreate Slave."
-                  >Recreate Slave</a>
-                </td>
                 {% endif %}
-              {% else %}
-                {{ host.description }}
+                {% if database.databaseinfra.plan.replication_topology.can_recreate_slave %}
+                  {% if last_recreat_slave and last_recreat_slave.is_status_error %}
+                    {% if host.id == last_recreat_slave.host.id %}
+                      <td>
+                          <a class="action_button btn btn-danger" href="{% url 'admin:maintenance_recreateslave_change' last_recreat_slave.id %}retry" title="Go to recreate slave page">Retry Recreate Slave</a>
+                      </td>
+                    {% endif %}
+                  {% else %}
+                  <td class="action-red-button">
+                    <a style="margin-left: 5px;" class="action_button btn btn-danger recreate-slave" data-toggle="modal" id="recreate_vm_btn"
+                      data-target="#recreate_vm_modal" data-host-id="{{host.id}}" title="Recreate Slave."
+                    >Recreate Slave</a>
+                  </td>
+                  {% endif %}
+                {% endif %}
               {% endif %}
               <a class="action_button btn btn-danger" href="{{ host.id }}/delete/" onclick="return confirm('Are you sure?')"><i class="icon-trash icon-white"></i></a>
             </p>
