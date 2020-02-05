@@ -1393,14 +1393,23 @@ class TaskRegister(object):
             'relevance': TaskHistory.RELEVANCE_CRITICAL
         }
 
+        if since_step:
+            task_params['task_name'] = 'add_database_instances_retry'
+            task_params['arguments'] = (
+                'Retrying to add instances to database {}'.format(database)
+            )
+
         task = cls.create_task(task_params)
 
-        add_instances_to_database.delay(
-            database=database,
-            user=user,
-            task=task,
-            number_of_instances=number_of_instances
-        )
+        delay_params = {
+            'database': database,
+            'task': task,
+            'user': user
+        }
+
+        delay_params.update(**{'since_step': since_step} if since_step else {})
+
+        add_instances_to_database.delay(**delay_params)
 
     @classmethod
     def database_remove_instance(cls, database, user, instance):
