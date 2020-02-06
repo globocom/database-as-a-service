@@ -1425,6 +1425,11 @@ class DatabaseHostsView(TemplateView):
             self.context['instances_read_only']
         )
         self.context['enable_host'] = range(1, enable_host+1)
+        self.context['add_read_only_retry'] = (
+            AddInstancesToDatabase.objects.need_retry(
+                database=self.database
+            )
+        )
 
         return self.context
 
