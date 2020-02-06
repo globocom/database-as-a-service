@@ -1244,7 +1244,7 @@ class DatabaseUpgradeView(TemplateView):
         )
 
 
-def _add_read_only_instances(request, database):
+def _add_read_only_instances(request, database, retry=False):
     try:
         check_is_database_dead(database.id, 'Add read-only instances')
         check_is_database_enabled(database.id, 'Add read-only instances')
@@ -1277,11 +1277,32 @@ def _add_read_only_instances(request, database):
         )
         return
 
-    TaskRegister.database_add_instances(
+    add_instances_to_database_kwargs = dict(
         database=database,
         user=request.user,
         number_of_instances=qtd_new_hosts
     )
+
+    if retry:
+        error = None
+        last_add_instances_database = AddInstancesToDatabase.objects.filter(
+            database=self.database
+        ).last()
+
+        if not last_add_instances_database:
+            error = "Database does not have add_database_instances"
+        elif not last_add_instances_database.is_status_error:
+            error = ("Cannot do retry, last add_instances_to_database. "
+                     "Status is '{}'!").format(
+                        last_add_instances_database.get_status_display())
+        else:
+            since_step = last_add_instances_database.current_step
+            add_instances_to_database_kwargs['since_step'] = since_step
+
+        if error:
+            messages.add_message(self.request, messages.ERROR, error)
+
+    TaskRegister.database_add_instances(**add_instances_to_database_kwargs)
 
 
 class DatabaseHostsView(TemplateView):
