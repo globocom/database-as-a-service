@@ -27,7 +27,7 @@ from system.models import Configuration
 from util.html import show_info_popup
 from logical.models import Database
 from physical.models import Engine
-from logical.views import database_details, database_hosts, \
+from logical.views import database_details, DatabaseHostsView, \
     database_credentials, database_resizes, DatabaseMaintenanceView, \
     database_backup, database_dns, database_metrics, database_destroy, \
     database_delete_host, database_upgrade, database_upgrade_retry, \
@@ -635,7 +635,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             ),
             url(
                 r'^/?(?P<id>\d+)/hosts/$',
-                self.admin_site.admin_view(database_hosts),
+                self.admin_site.admin_view(DatabaseHostsView.as_view()),
                 name="logical_database_hosts"
             ),
             url(
