@@ -1294,13 +1294,15 @@ class DatabaseHostsView(TemplateView):
         return 'add_read_only' in self.request.POST
 
     def post(self, request, *args, **kwargs):
-        if 'add_read_only' in self.request.POST:
+        if self.is_add_read_only():
             _add_read_only_instances(request, self.database)
             reverse(
                 'admin:logical_database_hosts',
                 kwargs={'id': self.database.id}
             )
-        if 'recreate_slave' in request.POST:
+        elif self.is_add_read_only_retry():
+            pass
+        elif 'recreate_slave' in request.POST:
             host_id = request.POST.get('host_id')
             host = self.database.infra.instances.filter(
                 hostname__id=host_id
