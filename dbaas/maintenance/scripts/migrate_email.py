@@ -39,7 +39,10 @@ def migrate_tvglobo():
 def update_username():
     from django.db.models import Q
     for user in User.objects.all().exclude(
-            Q(username='admin') | Q(username='slack_bot')):
+            Q(username='admin')
+            | Q(username='slack_bot')
+            | Q(username='tsuru-dbaas')
+            | Q(username='dbaas_app')):
         if user.email:
             user.username = user.email
             user.save()
