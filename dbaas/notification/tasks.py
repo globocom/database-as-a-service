@@ -1000,15 +1000,13 @@ def add_instances_to_database(
             sufix=infra.name_stamp,
             vm_number=last_vm_created
         )
-        new_instance = Instance.objects.get_or_create(
+        new_instance = Instance(
             databaseinfra=infra,
             dns=vm_name,
+            vm_name=vm_name,
             port=driver.get_default_database_port(),
             instance_type=driver.get_default_instance_type()
         )
-
-        new_instance.vm_name = vm_name
-        new_instance.save()
 
         instances.append(new_instance)
 
