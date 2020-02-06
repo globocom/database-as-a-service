@@ -969,7 +969,7 @@ def change_parameters_database(self, database, user, task, since_step=0):
 
 @app.task(bind=True)
 def add_instances_to_database(
-    self, database, user, task, number_of_instances=1, since_step=None
+    self, database, user, task, number_of_instances=1, since_step=0
 ):
     from util.providers import get_add_database_instances_steps
     from util import get_vm_name
@@ -1013,7 +1013,7 @@ def add_instances_to_database(
         instances.append(new_instance)
 
     success = steps_for_instances(
-        steps, instances, task
+        steps, instances, task, since_step
     )
 
     if success:
