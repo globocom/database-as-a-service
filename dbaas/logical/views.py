@@ -37,7 +37,7 @@ from logical.validators import (check_is_database_enabled,
 from workflow.steps.util.host_provider import Provider
 from maintenance.models import (
     DatabaseUpgradePatch, DatabaseUpgrade, TaskSchedule, DatabaseMigrateEngine,
-    RecreateSlave
+    RecreateSlave, AddInstancesToDatabase
 )
 
 
