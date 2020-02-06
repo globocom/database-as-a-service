@@ -1290,6 +1290,9 @@ class DatabaseHostsView(TemplateView):
     def is_add_read_only_retry(self):
         return 'add_read_only_retry' in self.request.POST
 
+    def is_add_read_only(self):
+        return 'add_read_only' in self.request.POST
+
     def post(self, request, *args, **kwargs):
         if 'add_read_only' in self.request.POST:
             _add_read_only_instances(request, self.database)
