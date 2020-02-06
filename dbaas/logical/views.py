@@ -1282,6 +1282,17 @@ def _add_read_only_instances(request, database):
     )
 
 
+class DatabaseHostsView(TemplateView):
+    template_name = "logical/database/details/hosts_tab.html"
+
+    @database_view_class('hosts')
+    def dispatch(self, request, *args, **kwargs):
+        self.context, self.database = args
+        return super(DatabaseHostsView, self).dispatch(
+            request, *args, **kwargs
+        )
+
+
 @database_view('hosts')
 def database_hosts(request, context, database):
     from maintenance.models import RecreateSlave
