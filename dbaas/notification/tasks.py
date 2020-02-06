@@ -30,7 +30,8 @@ from workflow.workflow import (steps_for_instances,
 from maintenance.models import (DatabaseUpgrade, DatabaseResize,
                                 DatabaseChangeParameter, DatabaseReinstallVM,
                                 DatabaseConfigureSSL, DatabaseUpgradePatch,
-                                TaskSchedule, DatabaseMigrateEngine)
+                                TaskSchedule, DatabaseMigrateEngine,
+                                AddInstancesToDatabase)
 from maintenance.tasks import restore_database, node_zone_migrate, \
     node_zone_migrate_rollback, database_environment_migrate, \
     database_environment_migrate_rollback, recreate_slave, update_ssl
@@ -967,7 +968,9 @@ def change_parameters_database(self, database, user, task, since_step=0):
 
 
 @app.task(bind=True)
-def add_instances_to_database(self, database, user, task, number_of_instances=1):
+def add_instances_to_database(
+    self, database, user, task, number_of_instances=1, since_step=None
+):
     from util.providers import get_add_database_instances_steps
     from util import get_vm_name
 
@@ -981,6 +984,12 @@ def add_instances_to_database(self, database, user, task, number_of_instances=1)
     class_path = plan.replication_topology.class_path
     steps = get_add_database_instances_steps(class_path)
 
+    add_instances_to_database_obj = AddInstancesToDatabase()
+    add_instances_to_database_obj.database = database
+    add_instances_to_database_obj.task = task
+    add_instances_to_database_obj.quantity = number_of_instances
+    add_instances_to_database_obj.save()
+
     instances = []
     last_vm_created = infra.last_vm_created
 
@@ -991,13 +1000,16 @@ def add_instances_to_database(self, database, user, task, number_of_instances=1)
             sufix=infra.name_stamp,
             vm_number=last_vm_created
         )
-        new_instance = Instance(
+        new_instance = Instance.objects.get_or_create(
             databaseinfra=infra,
             dns=vm_name,
             port=driver.get_default_database_port(),
             instance_type=driver.get_default_instance_type()
         )
+
         new_instance.vm_name = vm_name
+        new_instance.save()
+
         instances.append(new_instance)
 
     success = steps_for_instances(
