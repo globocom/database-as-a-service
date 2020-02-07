@@ -46,3 +46,37 @@ def update_username():
         if user.email:
             user.username = user.email
             user.save()
+
+
+def _validate(search_str, file_path):
+    arq = open(file_path)
+    for line in arq.readlines():
+        old_email, new_email = line.strip().split(',')
+        old_email = old_email.strip()
+        new_email = new_email.strip()
+        try:
+            User.objects.get(email=old_email)
+        except User.DoesNotExist:
+            continue
+        try:
+            User.objects.get(email=new_email)
+        except User.DoesNotExist:
+            print "{}|{}".format(old_email, new_email)
+    arq.close()
+
+    users = User.objects.filter(email__contains=search_str)
+    for user in users:
+        try:
+            User.objects.get(
+                email=user.email.replace(search_str, "@g.globo")
+            )
+        except User.DoesNotExist:
+            print "Nao encontrado {}".format(user.email)
+
+
+def validate_corp():
+    _validate("@corp.globo.com", '/tmp/corp.csv')
+
+
+def validate_tvglobo():
+    _validate("@tvglobo.com.br", '/tmp/tvglobo.csv')
