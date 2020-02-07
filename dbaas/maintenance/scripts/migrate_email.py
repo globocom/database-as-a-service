@@ -9,10 +9,10 @@ def _migrate(file_path):
         old_email = old_email.strip()
         new_email = new_email.strip()
         try:
-            old_user = User.objects.get(username=old_email)
+            old_user = User.objects.get(email=old_email)
         except User.DoesNotExist:
             continue
-        new_user = User.objects.filter(username=new_email)
+        new_user = User.objects.filter(email=new_email)
         if new_user:
             new_user = new_user[0]
             print new_user
