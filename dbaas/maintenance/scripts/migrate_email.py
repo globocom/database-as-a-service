@@ -14,6 +14,9 @@ def _migrate(file_path):
             continue
         new_user = User.objects.filter(username=new_email)
         if new_user:
+            new_user = new_user[0]
+            print new_user
+            map(new_user.team_set.add, old_user.team_set.all())
             continue
         new_user = deepcopy(old_user)
         new_user.id = None
