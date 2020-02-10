@@ -12,20 +12,17 @@ class DBMonitorStep(BaseInstanceStep):
         super(DBMonitorStep, self).__init__(instance)
         self.provider = DBMonitorProvider()
 
+    def _enable_monitoring(self):
+        self.provider.enabled_dbmonitor_monitoring_instance(self.instance)
+
+    def _disable_monitoring(self):
+        self.provider.disabled_dbmonitor_monitoring_instance(self.instance)
+
     def do(self):
         raise NotImplementedError
 
     def undo(self):
         pass
-
-
-class DisableMonitoring(DBMonitorStep):
-
-    def __unicode__(self):
-        return "Disabling DB Monitor..."
-
-    def do(self):
-        self.provider.disabled_dbmonitor_monitoring_instance(self.instance)
 
 
 class EnableMonitoring(DBMonitorStep):
@@ -34,7 +31,22 @@ class EnableMonitoring(DBMonitorStep):
         return "Enabling DB Monitor..."
 
     def do(self):
-        self.provider.enabled_dbmonitor_monitoring_instance(self.instance)
+        self._enable_monitoring()
+
+    def undo(self):
+        self._disable_monitoring()
+
+
+class DisableMonitoring(DBMonitorStep):
+
+    def __unicode__(self):
+        return "Disabling DB Monitor..."
+
+    def do(self):
+        self._disable_monitoring()
+
+    def undo(self):
+        self._enable_monitoring()
 
 
 class CreateMonitoring(DBMonitorStep):
