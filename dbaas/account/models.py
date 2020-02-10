@@ -275,7 +275,11 @@ def user_post_save_wrapper(kwargs={}):
         user.is_staff = True
         user.save()
         # notify new user create
-        notify_new_user_creation(user)
+        must_send_mail = Configuration.get_by_name_as_int(
+            'new_user_send_mail', 1
+        )
+        if must_send_mail:
+            notify_new_user_creation(user)
 
 
 @receiver(pre_save, sender=Role)
