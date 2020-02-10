@@ -39,6 +39,8 @@ from maintenance.models import (
     DatabaseUpgradePatch, DatabaseUpgrade, TaskSchedule, DatabaseMigrateEngine,
     RecreateSlave, AddInstancesToDatabase
 )
+from . import services
+from . import exceptions
 
 
 LOG = logging.getLogger(__name__)
@@ -1319,9 +1321,9 @@ class DatabaseHostsView(TemplateView):
 
     def post(self, request, *args, **kwargs):
         if self.is_add_read_only():
-            _add_read_only_instances(request, self.database)
+            self.add_instace_to_database(request)
         elif self.is_add_read_only_retry():
-            _add_read_only_instances(request, self.database, retry=True)
+            self.add_instace_to_database(request, retry=True)
         elif self.is_recreate_slave():
             host_id = request.POST.get('host_id')
             host = self.database.infra.instances.filter(
@@ -1335,6 +1337,19 @@ class DatabaseHostsView(TemplateView):
                 )
             )
         return self.render_to_response(self.get_context_data())
+
+    def add_instace_to_database(self, request, retry=False):
+        try:
+            service_obj = services.AddReadOnlyInstanceService(
+                request, self.database, retry=retry
+            )
+            service_obj.execute()
+        except (
+            exceptions.DatabaseIsNotHA, exceptions.DatabaseNotAvailable,
+            exceptions.ManagerInvalidStatus, exceptions.ManagerNotFound,
+            exceptions.ReadOnlyHostsLimit, exceptions.RequiredNumberOfInstances
+        ) as error:
+            messages.add_message(self.request, messages.ERROR, str(error))
 
     def get_context_data(self, **kwargs):
         hosts = OrderedDict()
@@ -1430,6 +1445,7 @@ class DatabaseHostsView(TemplateView):
                 database=self.database
             )
         )
+        print(self.context['add_read_only_retry'])
 
         return self.context
 
