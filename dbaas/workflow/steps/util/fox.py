@@ -5,6 +5,7 @@ from dbaas_credentials.models import CredentialType
 from util import get_credentials_for
 from base import BaseInstanceStep
 from physical.models import Vip
+from drivers.errors import ReplicationNotRunningError
 
 
 CHECK_ATTEMPTS = 20
@@ -175,30 +176,149 @@ class IsReplicationOk(FoxHA):
         self.verify_heartbeat = True
 
     def __unicode__(self):
-        return "Checking FoxHA status..."
+        return "Checking replication status..."
 
     def do(self):
-        driver = self.infra.get_driver()
         if self.host_migrate and self.instance.hostname.future_host:
             self.instance.address = self.instance.hostname.future_host.address
+
         for _ in range(CHECK_ATTEMPTS):
-            if driver.is_replication_ok(self.instance):
-                if self.verify_heartbeat:
-                    if driver.is_heartbeat_replication_ok(self.instance):
-                        return
-                else:
-                    return
 
-                driver.stop_slave(self.instance)
+            try:
+                repl_ok = self.driver.is_replication_ok(self.instance)
+            except ReplicationNotRunningError:
+                repl_ok = False
+                self.driver.stop_slave(self.instance)
                 sleep(1)
-                driver.start_slave(self.instance)
+                self.driver.start_slave(self.instance)
 
-            sleep(CHECK_SECONDS)
+            if not repl_ok:
+                sleep(CHECK_SECONDS)
+                continue
+
+            repl_ht_ok = True
+            if self.verify_heartbeat:
+                repl_ht_ok = self.driver.is_heartbeat_replication_ok(
+                    self.instance)
+                if not repl_ht_ok:
+                    sleep(CHECK_SECONDS)
+                    master_instance = self.driver.get_master_instance()
+                    host = master_instance.hostname
+                    self.driver.stop_agents(host)
+                    sleep(1)
+                    self.driver.start_agents(host)
+
+            if repl_ok and repl_ht_ok:
+                return
 
         raise EnvironmentError("Maximum number of attempts check replication")
+
+class IsReplicationOkRollback(IsReplicationOk):
+    def __unicode__(self):
+        return "Checking replication status if rollback..."
+
+    def do(self):
+        pass
+
+    def undo(self):
+        return super(IsReplicationOkRollback, self).do()
 
 
 class IsReplicationOkMigrate(IsReplicationOk):
     def do(self):
         self.verify_heartbeat = False
         return super(IsReplicationOkMigrate, self).do()
+
+
+class checkDatabaseAndFoxHAMaster(FoxHA):
+
+    def __unicode__(self):
+        return "Checking database and FoxHA Master..."
+
+    def do(self):
+        master_instance = self.driver.get_master_instance()
+        if not master_instance:
+            raise EnvironmentError(
+                "There is no master instance. Check FoxHA and database" \
+                " read-write instances."
+            )
+
+
+class checkDatabaseAndFoxHAMasterRollback(checkDatabaseAndFoxHAMaster):
+    def __unicode__(self):
+        return "Checking database and FoxHA Master if rollback..."
+
+    def do(self):
+        pass
+
+    def undo(self):
+        return super(checkDatabaseAndFoxHAMasterRollback, self).do()
+
+
+class checkReplicationStatus(FoxHA):
+    def __unicode__(self):
+        return "Checking replication status..."
+
+    def __init__(self, instance):
+        super(FoxHA, self).__init__(instance)
+        self.instances = self.infra.instances.all()
+
+    def get_master_instance(self):
+        master_instance = self.driver.get_master_instance()
+        if not master_instance:
+            sleep(CHECK_SECONDS)
+        master_instance = self.driver.get_master_instance()
+        if not master_instance:
+            raise EnvironmentError(
+                "There is no master instance. Check FoxHA and database" \
+                " read-write instances."
+            )
+        return master_instance
+
+    def check_replication_is_running(self, instance):
+        try:
+            self.driver.get_replication_info(instance)
+        except ReplicationNotRunningError:
+            self.driver.stop_slave(instance)
+            sleep(1)
+            self.driver.start_slave(instance)
+            sleep(1)
+            self.driver.get_replication_info(instance)
+
+    def check_replication_delay(self, instance):
+        for _ in range(CHECK_ATTEMPTS):
+            if self.driver.is_replication_ok(instance):
+                return
+            sleep(CHECK_SECONDS)
+        raise EnvironmentError("Maximum number of attempts check replication")
+
+    def check_heartbeat(self):
+        master_instance = self.get_master_instance()
+        hb_ok = self.driver.is_heartbeat_replication_ok(master_instance)
+        if not hb_ok:
+            host = master_instance.hostname
+            self.driver.stop_agents(host)
+            sleep(1)
+            self.driver.start_agents(host)
+            sleep(1)
+            hb_ok = self.driver.is_heartbeat_replication_ok(master_instance)
+            if not hb_ok:
+                raise EnvironmentError("Check heartbeat delay.")
+
+    def do(self):
+        for instance in self.instances:
+            self.check_replication_is_running(instance)
+        for instance in self.instances:
+            self.check_replication_delay(instance)
+        self.check_heartbeat()
+
+
+class checkReplicationStatusRollback(checkReplicationStatus):
+    def __unicode__(self):
+        return "Checking replication status if rollback..."
+
+    def do(self):
+        pass
+
+    def undo(self):
+        return super(checkReplicationStatusRollback, self).do()
