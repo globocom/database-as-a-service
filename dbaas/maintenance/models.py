@@ -983,7 +983,7 @@ class AddInstancesToDatabase(DatabaseMaintenanceTask):
         verbose_name="Number of Instances", null=False, unique=False
     )
     number_of_instances_before = models.PositiveIntegerField(
-        verbose_name="Number of Instances Before", null=False, unique=False
+        verbose_name="Number of Instances Before", null=True, unique=False
     )
 
     def __unicode__(self):
