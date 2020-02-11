@@ -154,7 +154,7 @@
               <select class="span1" id="id_add_read_qtd" name="add_read_qtd" disabled >
                 <option></option>
                 {% for add in enable_host %}
-                  {% if add == add_read_only_retry.quantity %}
+                  {% if add == add_read_only_retry.number_of_instances %}
                     <option value="{{add}}" selected>{{add}}</option>
                   {% endif %}
                 {% endfor %}
