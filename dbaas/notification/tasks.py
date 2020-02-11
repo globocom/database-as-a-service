@@ -1003,7 +1003,6 @@ def add_instances_to_database(
         new_instance = Instance(
             databaseinfra=infra,
             dns=vm_name,
-            vm_name=vm_name,
             port=driver.get_default_database_port(),
             instance_type=driver.get_default_instance_type()
         )
@@ -1011,7 +1010,9 @@ def add_instances_to_database(
         instances.append(new_instance)
 
     success = steps_for_instances(
-        steps, instances, task, since_step
+        steps, instances, task,
+        step_counter_method=add_instances_to_database_obj.update_step,
+        since_step=since_step
     )
 
     if success:
