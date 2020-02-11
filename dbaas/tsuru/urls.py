@@ -12,7 +12,7 @@ urlpatterns = patterns(
         GetServiceInfo.as_view()),
     url(r'^resources$', ServiceAdd.as_view(), name='service-add'),
     url(r'^resources/(?P<database_name>\w+)$',
-        ServiceRemove.as_view()),
+        ServiceRemove.as_view(), name='service-remove'),
     url(r'^resources/(?P<database_name>\w+)/bind$',
         ServiceUnitBind.as_view()),
     url(r'^resources/(?P<database_name>\w+)/bind-app$',
