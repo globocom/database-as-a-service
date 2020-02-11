@@ -5,7 +5,6 @@ from dbaas_credentials.models import CredentialType
 from util import get_credentials_for
 from base import BaseInstanceStep
 from physical.models import Vip
-from drivers.errors import ReplicationNotRunningError
 
 
 CHECK_ATTEMPTS = 20
@@ -205,77 +204,3 @@ class IsReplicationOkMigrate(IsReplicationOk):
         return super(IsReplicationOkMigrate, self).do()
 
 
-class checkAndFixReplication(FoxHA):
-    def __unicode__(self):
-        return "Check and fix replication if necessary..."
-
-    def __init__(self, instance):
-        super(FoxHA, self).__init__(instance)
-        self.instances = self.infra.instances.all()
-
-    @property
-    def is_valid(self):
-        return 'mysql' in self.engine.name.lower() and self.plan.is_ha
-
-    def get_master_instance(self):
-        master_instance = self.driver.get_master_instance()
-        if not master_instance:
-            sleep(CHECK_SECONDS)
-        master_instance = self.driver.get_master_instance()
-        if not master_instance:
-            raise EnvironmentError(
-                "There is no master instance. Check FoxHA and database" \
-                " read-write instances."
-            )
-        return master_instance
-
-    def check_replication_is_running(self, instance):
-        try:
-            self.driver.get_replication_info(instance)
-        except ReplicationNotRunningError:
-            self.driver.stop_slave(instance)
-            sleep(1)
-            self.driver.start_slave(instance)
-            sleep(1)
-            self.driver.get_replication_info(instance)
-
-    def check_replication_delay(self, instance):
-        for _ in range(CHECK_ATTEMPTS):
-            if self.driver.is_replication_ok(instance):
-                return
-            sleep(CHECK_SECONDS)
-        raise EnvironmentError("Maximum number of attempts check replication")
-
-    def check_heartbeat(self):
-        master_instance = self.get_master_instance()
-        hb_ok = self.driver.is_heartbeat_replication_ok(master_instance)
-        if not hb_ok:
-            host = master_instance.hostname
-            self.driver.stop_agents(host)
-            sleep(1)
-            self.driver.start_agents(host)
-            sleep(1)
-            hb_ok = self.driver.is_heartbeat_replication_ok(master_instance)
-            if not hb_ok:
-                raise EnvironmentError("Check heartbeat delay.")
-
-    def do(self):
-        if not self.is_valid:
-            return
-
-        for instance in self.instances:
-            self.check_replication_is_running(instance)
-        for instance in self.instances:
-            self.check_replication_delay(instance)
-        self.check_heartbeat()
-
-
-class checkAndFixReplicationRollback(checkAndFixReplication):
-    def __unicode__(self):
-        return "Checking replication status if rollback..."
-
-    def do(self):
-        pass
-
-    def undo(self):
-        return super(checkAndFixReplicationRollback, self).do()
