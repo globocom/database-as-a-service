@@ -459,7 +459,12 @@ class ServiceRemove(APIView):
             )
 
         database.delete()
-        return Response(status.HTTP_204_NO_CONTENT)
+
+        need_purge = request.QUERY_PARAMS.get('purge', 0)
+        if bool(int(need_purge)):
+            TaskRegister.database_destroy(database=database, user=request.user)
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 def get_plans_dict(hard_plans):
