@@ -979,8 +979,11 @@ class AddInstancesToDatabase(DatabaseMaintenanceTask):
         null=False, unique=False,
         related_name="add_instances_to_database_manager"
     )
-    quantity = models.PositiveIntegerField(
-        verbose_name="Quantity", null=False, unique=False
+    number_of_instances = models.PositiveIntegerField(
+        verbose_name="Number of Instances", null=False, unique=False
+    )
+    number_of_instances_before = models.PositiveIntegerField(
+        verbose_name="Number of Instances Before", null=False, unique=False
     )
 
     def __unicode__(self):
