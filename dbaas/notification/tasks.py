@@ -998,20 +998,30 @@ def add_instances_to_database(
     last_vm_created = number_of_instances_before_task
 
     for i in range(number_of_instances):
+        instance = None
         last_vm_created += 1
         vm_name = get_vm_name(
             prefix=infra.name_prefix,
             sufix=infra.name_stamp,
             vm_number=last_vm_created
         )
-        new_instance = Instance(
-            databaseinfra=infra,
-            dns=vm_name,
-            port=driver.get_default_database_port(),
-            instance_type=driver.get_default_instance_type()
-        )
 
-        instances.append(new_instance)
+        try:
+            instance = infra.instances.get(
+                Q(hostname__hostname__startswith=vm_name) |
+                Q(dns__startswith=vm_name),
+                port=driver.get_default_database_port(),
+            )
+        except Instance.DoesNotExist:
+            instance = Instance(
+                databaseinfra=infra,
+                dns=vm_name,
+                port=driver.get_default_database_port(),
+                instance_type=driver.get_default_instance_type()
+            )
+
+        instance.vm_name = instance.dns
+        instances.append(instance)
 
     success = steps_for_instances(
         steps, instances, task,
@@ -1020,9 +1030,14 @@ def add_instances_to_database(
     )
 
     if success:
+        add_instances_to_database_obj.set_success()
         task.update_status_for(TaskHistory.STATUS_SUCCESS, 'Done')
     else:
-        task.update_status_for(TaskHistory.STATUS_ERROR, 'Done')
+        add_instances_to_database_obj.set_error()
+        task.update_status_for(
+            TaskHistory.STATUS_ERROR,
+            'Could not do add instance(s) to database.'
+        )
 
 
 @app.task(bind=True)
