@@ -1445,7 +1445,6 @@ class DatabaseHostsView(TemplateView):
                 database=self.database
             )
         )
-        print(self.context['add_read_only_retry'])
 
         return self.context
 

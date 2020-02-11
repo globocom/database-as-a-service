@@ -969,7 +969,8 @@ def change_parameters_database(self, database, user, task, since_step=0):
 
 @app.task(bind=True)
 def add_instances_to_database(
-    self, database, user, task, number_of_instances=1, since_step=0
+    self, database, user, task, number_of_instances=1,
+    number_of_instances_before_task=0, since_step=0
 ):
     from util.providers import get_add_database_instances_steps
     from util import get_vm_name
@@ -987,7 +988,10 @@ def add_instances_to_database(
     add_instances_to_database_obj = AddInstancesToDatabase()
     add_instances_to_database_obj.database = database
     add_instances_to_database_obj.task = task
-    add_instances_to_database_obj.quantity = number_of_instances
+    add_instances_to_database_obj.number_of_instances = number_of_instances
+    add_instances_to_database_obj.number_of_instances_before = (
+        number_of_instances_before_task
+    )
     add_instances_to_database_obj.save()
 
     instances = []

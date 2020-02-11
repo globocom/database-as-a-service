@@ -16,6 +16,7 @@ class AddReadOnlyInstanceService:
         self.database = database
         self.manager = None
         self.number_of_instances = 0
+        self.number_of_instances_before = 0
         self.retry = retry
         self.task_params = {}
 
@@ -43,11 +44,17 @@ class AddReadOnlyInstanceService:
     def load_number_of_instances(self):
         if self.retry:
             self.number_of_instances = self.manager.quantity
+            self.number_of_instances_before = (
+                self.manager.number_of_instances_before
+            )
         else:
             if 'add_read_qtd' in self.request.POST:
                 self.number_of_instances = int(
                     self.request.POST['add_read_qtd']
                 )
+            self.number_of_instances_before = (
+                self.database.infra.last_vm_created
+            )
 
     def check_database_status(self):
         try:
@@ -98,13 +105,12 @@ class AddReadOnlyInstanceService:
         self.task_params = dict(
             database=self.database,
             user=self.request.user,
-            number_of_instances=qtd_new_hosts
+            number_of_instances=qtd_new_hosts,
+            number_of_instances_before_task=self.number_of_instances_before
         )
 
         if self.retry:
             since_step = self.manager.current_step
             self.task_params['since_step'] = since_step
-
-        print(self.task_params)
 
         TaskRegister.database_add_instances(**self.task_params)
