@@ -8,6 +8,7 @@ from logical.errors import DisabledDatabase
 from system.models import Configuration
 from notification.tasks import TaskRegister
 
+
 class AddReadOnlyInstanceService:
 
     def __init__(self, request, database, retry=False):
@@ -51,7 +52,11 @@ class AddReadOnlyInstanceService:
     def check_database_status(self):
         try:
             check_is_database_dead(self.database.id, 'Add read-only instances')
-            check_is_database_enabled(self.database.id, 'Add read-only instances')
+            check_is_database_enabled(
+                self.database.id,
+                'Add read-only instances',
+                ['notification.tasks.add_instances_to_database']
+            )
             return (True, '')
         except DisabledDatabase as err:
             return (False, err.message)
