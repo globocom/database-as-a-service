@@ -40,6 +40,7 @@ class BaseTopology(object):
     def get_resize_steps(self):
         return [{'Resizing database': (
             'workflow.steps.util.zabbix.DisableAlarms',
+            'workflow.steps.util.fox.checkAndFixReplication',
             'workflow.steps.util.vm.ChangeMaster',
             'workflow.steps.util.database.CheckIfSwitchMaster',
             'workflow.steps.util.agents.Stop',
@@ -75,6 +76,7 @@ class BaseTopology(object):
             ),
         }] + [{
             self.get_upgrade_steps_description(): (
+                'workflow.steps.util.fox.checkAndFixReplication',
                 'workflow.steps.util.vm.ChangeMaster',
                 'workflow.steps.util.database.CheckIfSwitchMaster',
                 'workflow.steps.util.database.Stop',
@@ -126,6 +128,7 @@ class BaseTopology(object):
             ),
         }] + [{
             self.get_upgrade_steps_description(): (
+                'workflow.steps.util.fox.checkAndFixReplication',
                 'workflow.steps.util.vm.ChangeMaster',
                 'workflow.steps.util.database.CheckIfSwitchMaster',
                 'workflow.steps.util.database.StopIfRunning',
@@ -164,6 +167,7 @@ class BaseTopology(object):
             ),
         }] + [{
             'Upgrading database': (
+                'workflow.steps.util.fox.checkAndFixReplication',
                 'workflow.steps.util.vm.ChangeMaster',
                 'workflow.steps.util.database.CheckIfSwitchMaster',
                 'workflow.steps.util.database.Stop',
@@ -244,6 +248,7 @@ class BaseTopology(object):
             self.get_change_parameter_steps_description(): (
                 'workflow.steps.util.zabbix.DisableAlarms',
                 'workflow.steps.util.db_monitor.DisableMonitoring',
+                'workflow.steps.util.fox.checkAndFixReplication',
                 'workflow.steps.util.vm.ChangeMaster',
                 'workflow.steps.util.database.CheckIfSwitchMaster',
                 'workflow.steps.util.database.Stop',
@@ -283,6 +288,7 @@ class BaseTopology(object):
         return [{
             self.get_switch_write_instance_steps_description():
             (
+                'workflow.steps.util.fox.checkAndFixReplication',
                 'workflow.steps.util.vm.ChangeMaster',
                 'workflow.steps.util.database.CheckIfSwitchMaster',
             )
@@ -296,6 +302,7 @@ class BaseTopology(object):
             ),
         }] + [{
             'Reinstall VM': (
+                'workflow.steps.util.fox.checkAndFixReplication',
                 'workflow.steps.util.vm.ChangeMaster',
                 'workflow.steps.util.database.CheckIfSwitchMaster',
                 'workflow.steps.util.database.Stop',

@@ -659,7 +659,7 @@ class MySQLFoxHA(MySQLSingle):
             'Migrating': (
                 'workflow.steps.util.zabbix.DisableAlarms',
                 'workflow.steps.util.db_monitor.DisableMonitoring',
-                'workflow.steps.util.fox.checkReplicationStatus',
+                'workflow.steps.util.fox.checkAndFixReplication',
                 'workflow.steps.util.vm.ChangeMaster',
                 'workflow.steps.util.database.CheckIfSwitchMaster',
                 'workflow.steps.util.volume_provider.NewInactiveVolume',
@@ -698,7 +698,7 @@ class MySQLFoxHA(MySQLSingle):
             ),
         }] + [{
             'Reinstall VM': (
-                'workflow.steps.util.fox.checkReplicationStatus',
+                'workflow.steps.util.fox.checkAndFixReplication',
                 'workflow.steps.util.vm.ChangeMaster',
                 'workflow.steps.util.database.StopIfRunning',
                 'workflow.steps.util.foreman.DeleteHost',
@@ -743,7 +743,7 @@ class MySQLFoxHA(MySQLSingle):
             ),
         }] + [{
             self.get_upgrade_steps_description(): (
-                'workflow.steps.util.fox.checkReplicationStatus',
+                'workflow.steps.util.fox.checkAndFixReplication',
                 'workflow.steps.util.vm.ChangeMaster',
                 'workflow.steps.util.database.CheckIfSwitchMaster',
                 'workflow.steps.util.database.Stop',
@@ -770,7 +770,7 @@ class MySQLFoxHA(MySQLSingle):
             ),
         }] + [{
             self.get_upgrade_steps_description(): (
-                'workflow.steps.util.fox.checkReplicationStatus',
+                'workflow.steps.util.fox.checkAndFixReplication',
                 'workflow.steps.util.vm.ChangeMaster',
                 'workflow.steps.util.database.CheckIfSwitchMaster',
                 'workflow.steps.util.database.StopIfRunning',
@@ -851,7 +851,7 @@ class MySQLFoxHA(MySQLSingle):
             ),
         }] + [{
             'Restart Database': (
-                'workflow.steps.util.fox.checkReplicationStatus',
+                'workflow.steps.util.fox.checkAndFixReplication',
                 'workflow.steps.util.vm.ChangeMaster',
                 'workflow.steps.util.database.CheckIfSwitchMaster',
                 'workflow.steps.util.database.Stop',
@@ -859,7 +859,7 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.metric_collector.RestartTelegraf',
                 'workflow.steps.util.database.CheckIfSwitchMasterRollback',
                 'workflow.steps.util.vm.ChangeMasterRollback',
-                'workflow.steps.util.fox.checkReplicationStatusRollback',
+                'workflow.steps.util.fox.checkAndFixReplicationRollback',
             ),
         }] + [{
             'Configure Replication User': (
@@ -897,7 +897,7 @@ class MySQLFoxHA(MySQLSingle):
             ),
         }] + [{
             'Restart Database': (
-                'workflow.steps.util.fox.checkReplicationStatus',
+                'workflow.steps.util.fox.checkAndFixReplication',
                 'workflow.steps.util.vm.ChangeMaster',
                 'workflow.steps.util.database.CheckIfSwitchMaster',
                 'workflow.steps.util.database.Stop',
@@ -906,7 +906,7 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.metric_collector.RestartTelegraf',
                 'workflow.steps.util.database.CheckIfSwitchMasterRollback',
                 'workflow.steps.util.vm.ChangeMasterRollback',
-                'workflow.steps.util.fox.checkReplicationStatusRollback',
+                'workflow.steps.util.fox.checkAndFixReplicationRollback',
             ),
         }] + [{
             'Enable SSL': (
@@ -968,7 +968,7 @@ class MySQLFoxHA(MySQLSingle):
 
     def get_base_host_migrate_steps(self):
         return (
-            'workflow.steps.util.fox.checkReplicationStatus',
+            'workflow.steps.util.fox.checkAndFixReplication',
             'workflow.steps.util.vm.ChangeMaster',
             'workflow.steps.util.database.CheckIfSwitchMaster',
             'workflow.steps.util.host_provider.CreateVirtualMachineMigrate',
@@ -1033,7 +1033,7 @@ class MySQLFoxHA(MySQLSingle):
 
     def get_base_database_migrate_steps(self):
         return (
-            'workflow.steps.util.fox.checkReplicationStatus',
+            'workflow.steps.util.fox.checkAndFixReplication',
             'workflow.steps.util.vm.ChangeMasterMigrate',
             'workflow.steps.util.database.CheckIfSwitchMasterMigrate',
             'workflow.steps.util.host_provider.CreateVirtualMachineMigrate',
@@ -1162,40 +1162,6 @@ class MySQLFoxHA(MySQLSingle):
                 ) + self.get_host_migrate_steps_cleaning_up()
         }]
 
-    def get_upgrade_patch_steps(self):
-        return [{
-            'Disable monitoring and alarms': (
-                'workflow.steps.util.zabbix.DisableAlarms',
-                'workflow.steps.util.db_monitor.DisableMonitoring',
-            ),
-        }] + [{
-            'Upgrading database': (
-                'workflow.steps.util.fox.checkReplicationStatus',
-                'workflow.steps.util.vm.ChangeMaster',
-                'workflow.steps.util.database.CheckIfSwitchMaster',
-                'workflow.steps.util.database.Stop',
-                'workflow.steps.util.database.CheckIsDown',
-                ) + self.get_change_binaries_upgrade_patch_steps() + (
-                'workflow.steps.util.database.Start',
-                'workflow.steps.util.database.CheckIsUp',
-            ),
-        }] + [{
-            'Enabling monitoring and alarms': (
-                'workflow.steps.util.db_monitor.UpdateInfraVersion',
-                'workflow.steps.util.db_monitor.EnableMonitoring',
-                'workflow.steps.util.zabbix.EnableAlarms',
-            ),
-        }]
-
-    def get_switch_write_instance_steps(self):
-        return [{
-            self.get_switch_write_instance_steps_description():
-            (
-                'workflow.steps.util.fox.checkReplicationStatus',
-                'workflow.steps.util.vm.ChangeMaster',
-                'workflow.steps.util.database.CheckIfSwitchMaster',
-            )
-        }]
 
 class MySQLFoxHAAWS(MySQLFoxHA):
     def get_deploy_steps(self):
@@ -1391,7 +1357,7 @@ class MySQLFoxHAAWS(MySQLFoxHA):
 
     def get_base_host_migrate_steps(self):
         return (
-            'workflow.steps.util.fox.checkReplicationStatus',
+            'workflow.steps.util.fox.checkAndFixReplication',
             'workflow.steps.util.vm.ChangeMaster',
             'workflow.steps.util.database.CheckIfSwitchMaster',
             'workflow.steps.util.host_provider.CreateVirtualMachineMigrate',
@@ -1452,7 +1418,7 @@ class MySQLFoxHAAWS(MySQLFoxHA):
 
     def get_base_database_migrate_steps(self):
         return (
-            'workflow.steps.util.fox.checkReplicationStatus',
+            'workflow.steps.util.fox.checkAndFixReplication',
             'workflow.steps.util.vm.ChangeMasterMigrate',
             'workflow.steps.util.database.CheckIfSwitchMasterMigrate',
             'workflow.steps.util.host_provider.CreateVirtualMachineMigrate',

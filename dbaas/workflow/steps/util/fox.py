@@ -176,52 +176,27 @@ class IsReplicationOk(FoxHA):
         self.verify_heartbeat = True
 
     def __unicode__(self):
-        return "Checking replication status..."
+        return "Checking FoxHA status..."
 
     def do(self):
+        driver = self.infra.get_driver()
         if self.host_migrate and self.instance.hostname.future_host:
             self.instance.address = self.instance.hostname.future_host.address
-
         for _ in range(CHECK_ATTEMPTS):
+            if driver.is_replication_ok(self.instance):
+                if self.verify_heartbeat:
+                    if driver.is_heartbeat_replication_ok(self.instance):
+                        return
+                else:
+                    return
 
-            try:
-                repl_ok = self.driver.is_replication_ok(self.instance)
-            except ReplicationNotRunningError:
-                repl_ok = False
-                self.driver.stop_slave(self.instance)
+                driver.stop_slave(self.instance)
                 sleep(1)
-                self.driver.start_slave(self.instance)
+                driver.start_slave(self.instance)
 
-            if not repl_ok:
-                sleep(CHECK_SECONDS)
-                continue
-
-            repl_ht_ok = True
-            if self.verify_heartbeat:
-                repl_ht_ok = self.driver.is_heartbeat_replication_ok(
-                    self.instance)
-                if not repl_ht_ok:
-                    sleep(CHECK_SECONDS)
-                    master_instance = self.driver.get_master_instance()
-                    host = master_instance.hostname
-                    self.driver.stop_agents(host)
-                    sleep(1)
-                    self.driver.start_agents(host)
-
-            if repl_ok and repl_ht_ok:
-                return
+            sleep(CHECK_SECONDS)
 
         raise EnvironmentError("Maximum number of attempts check replication")
-
-class IsReplicationOkRollback(IsReplicationOk):
-    def __unicode__(self):
-        return "Checking replication status if rollback..."
-
-    def do(self):
-        pass
-
-    def undo(self):
-        return super(IsReplicationOkRollback, self).do()
 
 
 class IsReplicationOkMigrate(IsReplicationOk):
@@ -230,38 +205,17 @@ class IsReplicationOkMigrate(IsReplicationOk):
         return super(IsReplicationOkMigrate, self).do()
 
 
-class checkDatabaseAndFoxHAMaster(FoxHA):
-
+class checkAndFixReplication(FoxHA):
     def __unicode__(self):
-        return "Checking database and FoxHA Master..."
-
-    def do(self):
-        master_instance = self.driver.get_master_instance()
-        if not master_instance:
-            raise EnvironmentError(
-                "There is no master instance. Check FoxHA and database" \
-                " read-write instances."
-            )
-
-
-class checkDatabaseAndFoxHAMasterRollback(checkDatabaseAndFoxHAMaster):
-    def __unicode__(self):
-        return "Checking database and FoxHA Master if rollback..."
-
-    def do(self):
-        pass
-
-    def undo(self):
-        return super(checkDatabaseAndFoxHAMasterRollback, self).do()
-
-
-class checkReplicationStatus(FoxHA):
-    def __unicode__(self):
-        return "Checking replication status..."
+        return "Check and fix replication if necessary..."
 
     def __init__(self, instance):
         super(FoxHA, self).__init__(instance)
         self.instances = self.infra.instances.all()
+
+    @property
+    def is_valid(self):
+        return 'mysql' in self.engine.name.lower() and self.plan.is_ha
 
     def get_master_instance(self):
         master_instance = self.driver.get_master_instance()
@@ -306,6 +260,9 @@ class checkReplicationStatus(FoxHA):
                 raise EnvironmentError("Check heartbeat delay.")
 
     def do(self):
+        if not self.is_valid:
+            return
+
         for instance in self.instances:
             self.check_replication_is_running(instance)
         for instance in self.instances:
@@ -313,7 +270,7 @@ class checkReplicationStatus(FoxHA):
         self.check_heartbeat()
 
 
-class checkReplicationStatusRollback(checkReplicationStatus):
+class checkAndFixReplicationRollback(checkAndFixReplication):
     def __unicode__(self):
         return "Checking replication status if rollback..."
 
@@ -321,4 +278,4 @@ class checkReplicationStatusRollback(checkReplicationStatus):
         pass
 
     def undo(self):
-        return super(checkReplicationStatusRollback, self).do()
+        return super(checkAndFixReplicationRollback, self).do()
