@@ -804,7 +804,7 @@ class MySQLFoxHA(MySQLSingle):
 
     def get_base_host_migrate_steps(self):
         return (
-            #'workflow.steps.util.fox.checkReplicationStatus',
+            'workflow.steps.util.fox.checkReplicationStatus',
             'workflow.steps.util.vm.ChangeMaster',
             'workflow.steps.util.database.CheckIfSwitchMaster',
             'workflow.steps.util.host_provider.CreateVirtualMachineMigrate',
@@ -869,7 +869,7 @@ class MySQLFoxHA(MySQLSingle):
 
     def get_base_database_migrate_steps(self):
         return (
-            #'workflow.steps.util.fox.checkReplicationStatus',
+            'workflow.steps.util.fox.checkReplicationStatus',
             'workflow.steps.util.vm.ChangeMasterMigrate',
             'workflow.steps.util.database.CheckIfSwitchMasterMigrate',
             'workflow.steps.util.host_provider.CreateVirtualMachineMigrate',
@@ -1134,7 +1134,7 @@ class MySQLFoxHAAWS(MySQLFoxHA):
 
     def get_base_host_migrate_steps(self):
         return (
-            #'workflow.steps.util.fox.checkReplicationStatus',
+            'workflow.steps.util.fox.checkReplicationStatus',
             'workflow.steps.util.vm.ChangeMaster',
             'workflow.steps.util.database.CheckIfSwitchMaster',
             'workflow.steps.util.host_provider.CreateVirtualMachineMigrate',
@@ -1195,7 +1195,7 @@ class MySQLFoxHAAWS(MySQLFoxHA):
 
     def get_base_database_migrate_steps(self):
         return (
-            #'workflow.steps.util.fox.checkReplicationStatus',
+            'workflow.steps.util.fox.checkReplicationStatus',
             'workflow.steps.util.vm.ChangeMasterMigrate',
             'workflow.steps.util.database.CheckIfSwitchMasterMigrate',
             'workflow.steps.util.host_provider.CreateVirtualMachineMigrate',
