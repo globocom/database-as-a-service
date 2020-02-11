@@ -995,7 +995,7 @@ def add_instances_to_database(
     add_instances_to_database_obj.save()
 
     instances = []
-    last_vm_created = infra.last_vm_created
+    last_vm_created = number_of_instances_before_task
 
     for i in range(number_of_instances):
         last_vm_created += 1
