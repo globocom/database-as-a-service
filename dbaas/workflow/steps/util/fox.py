@@ -215,7 +215,7 @@ class checkAndFixReplication(FoxHA):
 
     @property
     def is_valid(self):
-        return 'mysql' in self.engine.name.lower()
+        return 'mysql' in self.engine.name.lower() and self.plan.is_ha
 
     def get_master_instance(self):
         master_instance = self.driver.get_master_instance()
