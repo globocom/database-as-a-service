@@ -30,7 +30,7 @@ class AddReadOnlyInstanceService:
             self.manager = models.AddInstancesToDatabase.objects.filter(
                 database=self.database
             ).last()
-            self.number_of_instances = self.manager.quantity
+            self.number_of_instances = self.manager.number_of_instances
 
             if not self.manager:
                 error = "Database does not have add_database_instances"
@@ -43,7 +43,7 @@ class AddReadOnlyInstanceService:
 
     def load_number_of_instances(self):
         if self.retry:
-            self.number_of_instances = self.manager.quantity
+            self.number_of_instances = self.manager.number_of_instances
             self.number_of_instances_before = (
                 self.manager.number_of_instances_before
             )

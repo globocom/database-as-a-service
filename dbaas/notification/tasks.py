@@ -1398,7 +1398,8 @@ class TaskRegister(object):
 
     @classmethod
     def database_add_instances(
-        cls, database, user, number_of_instances, since_step=None
+        cls, database, user, number_of_instances,
+        number_of_instances_before_task, since_step=None
     ):
         task_params = {
             'task_name': 'add_database_instances',
@@ -1419,7 +1420,9 @@ class TaskRegister(object):
         delay_params = {
             'database': database,
             'task': task,
-            'user': user
+            'user': user,
+            'number_of_instances': number_of_instances,
+            'number_of_instances_before_task': number_of_instances_before_task
         }
 
         delay_params.update(**{'since_step': since_step} if since_step else {})
