@@ -373,7 +373,7 @@ class MongoDBReplicaset(BaseTopology):
                 'workflow.steps.util.volume_provider.TakeSnapshotFromMaster',
                 ('workflow.steps.util.volume_provider'
                  '.WaitSnapshotAvailableMigrate'),
-                'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.StopIfRunning',
                 'workflow.steps.util.disk.CleanDataRecreateSlave',
                 'workflow.steps.util.volume_provider.AddAccessRecreateSlave',
                 ('workflow.steps.util.volume_provider'
