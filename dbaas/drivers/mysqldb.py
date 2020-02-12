@@ -419,10 +419,12 @@ class MySQL(BaseDriver):
     def set_configuration(self, instance, name, value):
         client = self.get_client(instance)
         value = value.strip("'\"")
+        if value == '':
+            query = "set global {} = ''".format(name)
         if name == 'init_connect':
             query = 'set global {} = "{}"'.format(name, value)
-        elif value == '':
-            query = "set global {} = ''".format(name)
+        if name == 'audit_log_exclude_accounts':
+            query = 'set global {} = "{}"'.format(name, value)
         elif name == 'sql_mode' and value.lower() != 'default':
             query = "set global {} = '{}'".format(name, value)
         else:
