@@ -328,6 +328,7 @@ class WaitForReplication(DatabaseStep):
             return
 
         not_running = []
+        sleep(CHECK_SECONDS)
         for instance in self.driver.get_database_instances():
             try:
                 if not self.check_replication_ok(instance):
@@ -339,6 +340,7 @@ class WaitForReplication(DatabaseStep):
             self.driver.stop_slave(instance)
             sleep(CHECK_SECONDS)
             self.driver.start_slave(instance)
+            sleep(CHECK_SECONDS)
             if not self.check_replication_ok(instance):
                 raise ReplicationNotRunningError
 
