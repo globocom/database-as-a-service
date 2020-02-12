@@ -18,7 +18,7 @@ class AddReadOnlyInstanceService:
         self.number_of_instances = 0
         self.number_of_instances_before = 0
         self.retry = retry
-        self.rollback = rollback
+        self._rollback = rollback
         self.task_params = {}
 
         self.initialize()
@@ -27,7 +27,7 @@ class AddReadOnlyInstanceService:
         self.load_manager()
 
     def load_manager(self):
-        if self.retry or self.rollback:
+        if self.retry or self._rollback:
             self.manager = models.AddInstancesToDatabase.objects.filter(
                 database=self.database
             ).last()
@@ -43,7 +43,7 @@ class AddReadOnlyInstanceService:
                 raise exceptions.ManagerInvalidStatus(error)
 
     def load_number_of_instances(self):
-        if self.retry or self.rollback:
+        if self.retry or self._rollback:
             self.number_of_instances = self.manager.number_of_instances
             self.number_of_instances_before = (
                 self.manager.number_of_instances_before
