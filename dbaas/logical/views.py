@@ -1310,11 +1310,14 @@ def _add_read_only_instances(request, database, retry=False):
 class DatabaseHostsView(TemplateView):
     template_name = "logical/database/details/hosts_tab.html"
 
+    def is_add_read_only(self):
+        return 'add_read_only' in self.request.POST
+
     def is_add_read_only_retry(self):
         return 'add_read_only_retry' in self.request.POST
 
-    def is_add_read_only(self):
-        return 'add_read_only' in self.request.POST
+    def is_add_read_only_rollback(self):
+        return 'add_read_only_rollback' in self.request.POST
 
     def is_recreate_slave(self):
         return 'recreate_slave' in self.request.POST
@@ -1324,6 +1327,8 @@ class DatabaseHostsView(TemplateView):
             self.add_instace_to_database(request)
         elif self.is_add_read_only_retry():
             self.add_instace_to_database(request, retry=True)
+        elif self.is_add_read_only_rollback():
+            self.add_instace_to_database(request, rollback=True)
         elif self.is_recreate_slave():
             host_id = request.POST.get('host_id')
             host = self.database.infra.instances.filter(
@@ -1338,12 +1343,16 @@ class DatabaseHostsView(TemplateView):
             )
         return self.render_to_response(self.get_context_data())
 
-    def add_instace_to_database(self, request, retry=False):
+    def add_instace_to_database(self, request, retry=False, rollback=False):
         try:
             service_obj = services.AddReadOnlyInstanceService(
-                request, self.database, retry=retry
+                request, self.database, retry=retry, rollback=rollback
             )
-            service_obj.execute()
+
+            if rollback:
+                service_obj.rollback()
+            else:
+                service_obj.execute()
         except (
             exceptions.DatabaseIsNotHA, exceptions.DatabaseNotAvailable,
             exceptions.ManagerInvalidStatus, exceptions.ManagerNotFound,
