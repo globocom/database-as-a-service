@@ -11,13 +11,14 @@ from notification.tasks import TaskRegister
 
 class AddReadOnlyInstanceService:
 
-    def __init__(self, request, database, retry=False):
+    def __init__(self, request, database, retry=False, rollback=False):
         self.request = request
         self.database = database
         self.manager = None
         self.number_of_instances = 0
         self.number_of_instances_before = 0
         self.retry = retry
+        self.rollback = rollback
         self.task_params = {}
 
         self.initialize()
@@ -26,7 +27,7 @@ class AddReadOnlyInstanceService:
         self.load_manager()
 
     def load_manager(self):
-        if self.retry:
+        if self.retry or self.rollback:
             self.manager = models.AddInstancesToDatabase.objects.filter(
                 database=self.database
             ).last()
@@ -36,13 +37,13 @@ class AddReadOnlyInstanceService:
                 error = "Database does not have add_database_instances"
                 raise exceptions.ManagerNotFound(error)
             elif not self.manager.is_status_error:
-                error = ("Cannot do retry, last add_instances_to_database. "
+                error = ("Cannot do retry/rollback last add_instances_to_database. "
                          "Status is '{}'!").format(
                             self.manager.get_status_display())
                 raise exceptions.ManagerInvalidStatus(error)
 
     def load_number_of_instances(self):
-        if self.retry:
+        if self.retry or self.rollback:
             self.number_of_instances = self.manager.number_of_instances
             self.number_of_instances_before = (
                 self.manager.number_of_instances_before
@@ -62,7 +63,8 @@ class AddReadOnlyInstanceService:
             check_is_database_enabled(
                 self.database.id,
                 'Add read-only instances',
-                ['notification.tasks.add_instances_to_database']
+                ['notification.tasks.add_instances_to_database',
+                 'notification.tasks.add_instances_to_database_rollback']
             )
             return (True, '')
         except DisabledDatabase as err:
@@ -114,3 +116,24 @@ class AddReadOnlyInstanceService:
             self.task_params['since_step'] = since_step
 
         TaskRegister.database_add_instances(**self.task_params)
+
+    def rollback(self):
+        self.load_number_of_instances()
+
+        if not self.number_of_instances:
+            raise exceptions.RequiredNumberOfInstances(
+                'Number of instances is required'
+            )
+
+        status, message = self.check_database_status()
+        if not status:
+            raise exceptions.DatabaseNotAvailable(message)
+
+        if not self.is_ha():
+            raise exceptions.DatabaseIsNotHA(
+                'Database topology do not have horizontal scalability'
+            )
+
+        TaskRegister.database_add_instances_rollback(
+            self.manager, self.request.user
+        )
