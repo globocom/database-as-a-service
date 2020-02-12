@@ -1059,6 +1059,7 @@ def add_instances_to_database_rollback(self, manager_obj, user, task):
     manager_obj.created_at = None
     manager_obj.finished_at = None
     manager_obj.task = task
+    manager_obj.current_step -= 1
     manager_obj.save()
 
     instances = []
@@ -1099,6 +1100,7 @@ def add_instances_to_database_rollback(self, manager_obj, user, task):
         manager_obj.set_rollback()
         task.update_status_for(TaskHistory.STATUS_SUCCESS, 'Done.')
     else:
+        manager_obj.current_step += 1
         manager_obj.set_error()
         task.update_status_for(
             TaskHistory.STATUS_ERROR,
