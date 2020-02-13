@@ -576,6 +576,12 @@ class Database(BaseModel):
     def get_disk_resize_url(self):
         return "/admin/logical/database/{}/disk_resize/".format(self.id)
 
+    def get_add_instances_database_retry_url(self):
+        return "/admin/logical/database/{}/add_instances_database_retry/".format(self.id)
+
+    def get_add_instances_database_rollback_url(self):
+        return "/admin/logical/database/{}/add_instances_database_rollback/".format(self.id)
+
     def get_mongodb_engine_version_upgrade_url(self):
         return ("/admin/logical/database/{}/"
                 "mongodb_engine_version_upgrade/").format(self.id)
