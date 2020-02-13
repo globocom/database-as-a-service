@@ -84,6 +84,53 @@ class RedisSingle(BaseRedis):
             )
         }]
 
+    def get_clone_steps(self):
+        return [{
+            'Creating virtual machine': (
+                'workflow.steps.util.host_provider.CreateVirtualMachine',
+            )}, {
+            'Creating dns': (
+                'workflow.steps.util.dns.CreateDNS',
+            )}, {
+            'Creating disk': (
+                'workflow.steps.util.volume_provider.NewVolume',
+            )}, {
+            'Waiting VMs': (
+                'workflow.steps.util.vm.WaitingBeReady',
+                'workflow.steps.util.vm.UpdateOSDescription'
+            )}, {
+            'Configuring database': (
+                'workflow.steps.util.volume_provider.MountDataVolume',
+                'workflow.steps.util.plan.InitializationForNewInfra',
+                'workflow.steps.util.plan.ConfigureForNewInfra',
+                'workflow.steps.util.metric_collector.ConfigureTelegraf',
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.metric_collector.RestartTelegraf',
+                'workflow.steps.util.infra.UpdateEndpoint',
+            )}, {
+            'Check DNS': (
+                'workflow.steps.util.dns.CheckIsReady',
+            )}, {
+            'Creating Database': (
+                'workflow.steps.util.database.Clone',
+                'workflow.steps.util.clone.clone_database.CloneDatabaseData'
+            )}, {
+            'Check ACL': (
+                'workflow.steps.util.acl.BindNewInstance',
+            )}, {
+            'Creating monitoring and alarms': (
+                'workflow.steps.util.zabbix.CreateAlarms',
+                'workflow.steps.util.db_monitor.CreateInfraMonitoring',
+            )}, {
+            'Create Extra DNS': (
+                'workflow.steps.util.database.CreateExtraDNS',
+            )}, {
+            'Update Host Disk Size': (
+                'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
+            )
+        }]
+
     def get_filer_migrate_steps(self):
         return [{
             'Migrating': (
@@ -307,6 +354,58 @@ class RedisSentinel(BaseRedis):
             )}, {
             'Creating Database': (
                 'workflow.steps.util.database.Create',
+            )}, {
+            'Check ACL': (
+                'workflow.steps.util.acl.BindNewInstance',
+            )}, {
+            'Creating monitoring and alarms': (
+                'workflow.steps.util.sentinel.CreateAlarmsNewInfra',
+                'workflow.steps.util.db_monitor.CreateInfraMonitoring',
+            )}, {
+            'Create Extra DNS': (
+                'workflow.steps.util.database.CreateExtraDNS',
+            )}, {
+            'Update Host Disk Size': (
+                'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
+            )
+        }]
+
+    def get_clone_steps(self):
+        return [{
+            'Creating virtual machine': (
+                'workflow.steps.util.host_provider.CreateVirtualMachine',
+            )}, {
+            'Creating dns': (
+                'workflow.steps.util.dns.CreateDNS',
+            )}, {
+            'Creating disk': (
+                'workflow.steps.util.volume_provider.NewVolume',
+            )}, {
+            'Waiting VMs': (
+                'workflow.steps.util.vm.WaitingBeReady',
+                'workflow.steps.util.vm.UpdateOSDescription'
+            )}, {
+            'Configuring database': (
+                'workflow.steps.util.volume_provider.MountDataVolume',
+                'workflow.steps.util.plan.InitializationForNewInfraSentinel',
+                'workflow.steps.util.plan.ConfigureForNewInfraSentinel',
+                'workflow.steps.util.metric_collector.ConfigureTelegraf',
+            )}, {
+            'Starting database': (
+                'workflow.steps.util.database.StartSentinel',
+                'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.metric_collector.RestartTelegraf',
+            )}, {
+            'Configuring sentinel': (
+                'workflow.steps.redis.upgrade.sentinel.Reset',
+                'workflow.steps.util.database.SetSlave'
+            )}, {
+            'Check DNS': (
+                'workflow.steps.util.dns.CheckIsReady',
+            )}, {
+            'Creating Database': (
+                'workflow.steps.util.database.Clone',
+                'workflow.steps.util.clone.clone_database.CloneDatabaseData'
             )}, {
             'Check ACL': (
                 'workflow.steps.util.acl.BindNewInstance',

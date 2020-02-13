@@ -7,24 +7,7 @@ from ..models import DatabaseResize
 from .factory import DatabaseResizeFactory
 
 
-SEARCH_FIELDS = ("database__name", "source_offer__name", "target_offer__name",
-                 "task__id", "task__task_id")
-LIST_FILTER = [
-    "database__team", "status",
-]
-LIST_DISPLAY = (
-    "database", "database_team", "source_offer_name", "target_offer_name",
-    "current_step", "friendly_status", "maintenance_action", "link_task",
-    "started_at", "finished_at"
-)
-READONLY_FIELDS = (
-    "database", "source_offer", "source_offer_name", "target_offer",
-    "target_offer_name", "link_task", "started_at", "finished_at",
-    "current_step", "status", "maintenance_action"
-)
-EXCLUDE = ("task", "can_do_retry")
 ORDERING = ["-started_at"]
-ACTIONS = None
 LIST_SELECT_RELATED = None
 NO_ACTION = 'N/A'
 
@@ -39,30 +22,6 @@ class DatabaseResizeTestCase(TestCase):
 
     def tearDown(self):
         self.database_resize.delete()
-
-    def test_search_fields(self):
-        self.assertEqual(SEARCH_FIELDS, self.admin.search_fields)
-
-    def test_list_fields(self):
-        self.assertEqual(LIST_FILTER, self.admin.list_filter)
-
-    def test_list_display(self):
-        self.assertEqual(LIST_DISPLAY, self.admin.list_display)
-
-    def test_readonly_fields(self):
-        self.assertEqual(READONLY_FIELDS, self.admin.readonly_fields)
-
-    def test_exclude(self):
-        self.assertEqual(EXCLUDE, self.admin.exclude)
-
-    def test_ordering(self):
-        self.assertEqual(ORDERING, self.admin.ordering)
-
-    def test_actions(self):
-        self.assertEqual(ACTIONS, self.admin.actions)
-
-    def test_list_select_related(self):
-        self.assertEqual(LIST_SELECT_RELATED, self.admin.list_select_related)
 
     def test_cannot_add(self):
         self.assertFalse(self.admin.has_add_permission(None))

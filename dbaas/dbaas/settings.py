@@ -180,6 +180,7 @@ INSTALLED_APPS = (
     'account',
     'admin',
     'adminplus',
+    'djcelery_dbaas',
     'physical',
     'logical',
     'tsuru',
@@ -548,6 +549,10 @@ DJANGO_SIMPLE_AUDIT_AUTHENTICATOR = simple_audit_auth
 DBAAS_OAUTH2_LOGIN_ENABLE = bool(
     int(os.getenv('DBAAS_OAUTH2_LOGIN_ENABLE', 0))
 )
+ALLACCESS_CREATE_RANDOM_USER = bool(
+    int(os.getenv('ALLACCESS_CREATE_RANDOM_USER', 1))
+)
+
 DBAAS_AUTH_API_URL = os.getenv('DBAAS_AUTH_API_URL')
 
 if DBAAS_OAUTH2_LOGIN_ENABLE:
