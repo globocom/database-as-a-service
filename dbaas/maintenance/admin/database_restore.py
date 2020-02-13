@@ -24,7 +24,7 @@ class DatabaseRestoreAdmin(DatabaseMaintenanceTaskAdmin):
 
     readonly_fields = (
         "database", "task", "group", "new_group", "started_at", "link_task",
-        "finished_at", "current_step", "status", "maintenance_action"
+        "finished_at", "status", "maintenance_action", "task_schedule"
     )
 
     def maintenance_action(self, maintenance):

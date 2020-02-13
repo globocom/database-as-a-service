@@ -625,6 +625,45 @@ class DatabaseCreate(DatabaseMaintenanceTask):
         super(DatabaseCreate, self).save(*args, **kwargs)
 
 
+class DatabaseClone(DatabaseMaintenanceTask):
+    task = models.ForeignKey(
+        TaskHistory, verbose_name="Task History",
+        null=False, unique=False, related_name="create_clone"
+    )
+    database = models.ForeignKey(
+        Database, related_name='databases_clone', null=True, blank=True,
+        on_delete=models.SET_NULL
+    )
+    origin_database = models.ForeignKey(
+        Database, related_name='origin_databases_clone', null=True, blank=True,
+        on_delete=models.SET_NULL
+    )
+    infra = models.ForeignKey(DatabaseInfra, related_name='databases_clone')
+    plan = models.ForeignKey(
+        Plan, null=True, blank=True,
+        related_name='databases_clone', on_delete=models.SET_NULL
+    )
+    environment = models.ForeignKey(
+        Environment, related_name='databases_clone'
+    )
+    name = models.CharField(max_length=200)
+    user = models.CharField(max_length=200)
+
+    def __unicode__(self):
+        return "Cloning {}".format(self.origin_database.name)
+
+    @property
+    def disable_retry_filter(self):
+        return {'infra': self.infra}
+
+    def update_step(self, step):
+        if self.id:
+            maintenance = self.__class__.objects.get(id=self.id)
+            self.database = maintenance.database
+
+        super(DatabaseClone, self).update_step(step)
+
+
 class DatabaseDestroy(DatabaseMaintenanceTask):
     task = models.ForeignKey(
         TaskHistory, verbose_name="Task History",

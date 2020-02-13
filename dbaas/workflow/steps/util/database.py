@@ -694,6 +694,51 @@ class Create(DatabaseStep):
         LOG.info("Database destroyed....")
 
 
+class Clone(DatabaseStep):
+
+    def __unicode__(self):
+        return "Cloning database..."
+
+    def do(self):
+        if self.step_manager.database:
+            return
+
+        origin_database = self.step_manager.origin_database
+        database = Database.provision(self.step_manager.name, self.infra)
+        database.team = origin_database.team
+        database.description = origin_database.description
+        database.subscribe_to_email_events = (
+            origin_database.subscribe_to_email_events
+        )
+        database.is_protected = origin_database.is_protected
+
+        if origin_database.project:
+            database.project = origin_database.project
+
+        database.save()
+
+        self.step_manager.database = database
+        self.step_manager.save()
+
+        database.pin_task(self.step_manager.task)
+
+    def undo(self):
+        if not self.step_manager.database:
+            return
+
+        database = self.database
+        if not database.is_in_quarantine:
+            LOG.info("Putting Database in quarentine...")
+            database.is_in_quarantine = True
+            database.quarantine_dt = datetime.now().date()
+            database.subscribe_to_email_events = False
+            database.is_protected = False
+            database.save()
+
+        database.delete()
+        LOG.info("Database destroyed....")
+
+
 class CheckIfInstanceIsMasterRestore(DatabaseStep):
     def __unicode__(self):
         return "Checking if restored instance is master..."
