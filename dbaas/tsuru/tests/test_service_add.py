@@ -89,8 +89,12 @@ class ValidationTestCase(TestCase):
             '"Your database name must match /^[a-z][a-z0-9_]+$/ ."'
         )
 
+    @patch(
+        'tsuru.views.TaskHistory.objects.filter',
+    )
     @patch('tsuru.views.Database.objects.get', new=MagicMock())
-    def test_database_found(self):
+    def test_database_found(self, mock_filter):
+        mock_filter().last.return_value = []
         resp = self.client.post(
             self.url,
             {
@@ -103,6 +107,23 @@ class ValidationTestCase(TestCase):
         self._assert_resp(
             resp,
             '"There is already a database called fake_database in dev."'
+        )
+
+    @patch('tsuru.views.TaskHistory.objects.filter', new=MagicMock())
+    @patch('tsuru.views.Database.objects.get', new=MagicMock())
+    def test_database_being_deleted(self):
+        resp = self.client.post(
+            self.url,
+            {
+                'name': self.name,
+                'user': self.user,
+                'description': self.description,
+                'team': self.team
+            }
+        )
+        self._assert_resp(
+            resp,
+            '"There is a database called fake_database being deleted."'
         )
 
     @patch(
@@ -144,14 +165,14 @@ class ValidationTestCase(TestCase):
             self.url,
             {
                 'name': self.name,
-                'user': 'another_user@not_found.com',
+                'user': self.user,
                 'description': self.description,
                 'team': 'team_not_found'
             }
         )
         self._assert_resp(
             resp,
-            '"User does not exist."'
+            '"Team does not exist."'
         )
 
     def test_env_not_found(self):
