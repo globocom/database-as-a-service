@@ -179,6 +179,7 @@ class DatabaseAddInstancesCallTestCase(TestCase, TaskCallBaseTestCase):
         'database': MagicMock(),
         'user': 'user',
         'number_of_instances': 9,
+        'number_of_instances_before_task': 3,
     }
     create_fields_to_validate = ['task_name', 'arguments', 'database', 'user']
     delay_fields_to_validate = [
