@@ -410,7 +410,9 @@ class CreateVirtualMachine(HostProviderStep):
         return None
 
     def do(self):
-        task_manager = self.create or self.destroy or self.step_manager
+        task_manager = self.create or self.destroy
+        if hasattr(self, 'step_manager') and task_manager is None:
+            task_manager = self.step_manager
         try:
             pair = self.infra.instances.get(dns=self.instance.dns)
         except Instance.DoesNotExist:
