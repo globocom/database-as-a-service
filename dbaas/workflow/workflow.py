@@ -265,9 +265,8 @@ def step_header_for(task, instances, since_step=None):
         task.add_detail('Skipping until step {}\n'.format(since_step))
 
 
-def rollback_for_instances_full(
-        groups, instances, task, step_current_method, step_counter_method
-):
+def rollback_for_instances_full(groups, instances, task, step_current_method,
+                                step_counter_method, step_manager=None):
     task.add_detail('\nSTARTING ROLLBACK\n')
 
     instances = instances or []
@@ -277,7 +276,8 @@ def rollback_for_instances_full(
 
     instances.reverse()
     result = steps_for_instances(
-        groups, instances, task, step_counter_method, since_step, True
+        groups, instances, task, step_counter_method,
+        since_step, True, step_manager=step_manager
     )
 
     executed_steps = step_current_method()

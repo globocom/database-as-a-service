@@ -22,7 +22,7 @@ class DatabaseUpgradePatchAdmin(DatabaseMaintenanceTaskAdmin):
         "database", "source_patch", "source_patch_full_version",
         "target_patch", "target_patch_full_version",
         "link_task", "started_at", "finished_at",
-        "current_step", "status", "maintenance_action"
+        "status", "maintenance_action", "task_schedule"
     )
 
     def maintenance_action(self, maintenance_task):

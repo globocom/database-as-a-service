@@ -120,7 +120,9 @@ class PlanStepNewInfra(PlanStep):
         if self.infra.databases.exists():
             return self.infra.databases.first()
         database = Database()
-        database.name = self.infra.databases_create.last().name
+        step_manager = self.infra.databases_create.last()
+        database.name = (step_manager.name
+                         if step_manager else self.step_manager.name)
         return database
 
 
