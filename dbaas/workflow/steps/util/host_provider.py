@@ -410,13 +410,17 @@ class CreateVirtualMachine(HostProviderStep):
         return None
 
     def do(self):
-        task_manager = self.create or self.destroy or self.step_manager
+        task_manager = self.create or self.destroy
+        if hasattr(self, 'step_manager') and task_manager is None:
+            task_manager = self.step_manager
         try:
             pair = self.infra.instances.get(dns=self.instance.dns)
         except Instance.DoesNotExist:
             host = self.provider.create_host(
                 self.infra, self.offering, self.vm_name, self.team, self.zone,
-                database_name=self.database.name if self.database else task_manager.name
+                database_name=(self.database.name
+                               if self.database
+                               else task_manager.name)
             )
             self.update_databaseinfra_last_vm_created()
         else:
