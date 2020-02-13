@@ -37,7 +37,8 @@ from logical.views import database_details, DatabaseHostsView, \
     database_switch_write, database_reinstall_vm, database_reinstall_vm_retry,\
     DatabaseParameters, database_configure_ssl_retry, database_configure_ssl, \
     database_migrate, zones_for_environment, ExecuteScheduleTaskView, \
-    DatabaseMigrateEngineRetry, DatabaseUpgradeView
+    DatabaseMigrateEngineRetry, DatabaseUpgradeView, \
+    AddInstancesDatabaseRetryView,  AddInstancesDatabaseRollbackView
 
 from logical.forms import DatabaseForm
 from logical.service.database import DatabaseService
@@ -616,6 +617,16 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 r'^/?(?P<id>\d+)/resize_rollback/$',
                 self.admin_site.admin_view(database_resize_rollback),
                 name="resize_rollback"
+            ),
+            url(
+                r'^/?(?P<id>\d+)/add_instances_database_retry/$',
+                self.admin_site.admin_view(AddInstancesDatabaseRetryView),
+                name="add_instances_database_retry"
+            ),
+            url(
+                r'^/?(?P<id>\d+)/add_instances_database_rollback/$',
+                self.admin_site.admin_view(AddInstancesDatabaseRollbackView),
+                name="add_instances_database_rollback"
             ),
             url(
                 r'^/?(?P<id>\d+)/make_backup/$',
