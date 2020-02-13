@@ -276,10 +276,20 @@ class ServiceAdd(APIView):
             )
 
         try:
-            Database.objects.get(name=name, environment__name=env)
+            database = Database.objects.get(name=name, environment__name=env)
             msg = "There is already a database called {} in {}.".format(
                 name, env
             )
+            destroy_task = TaskHistory.objects.filter(
+                object_id=database.id,
+                task_status=TaskHistory.STATUS_RUNNING,
+                task_name="notification.tasks.destroy_database"
+            ).last()
+            if destroy_task:
+                msg = "There is a database called {} being deleted.".format(
+                    name
+                )
+
             return log_and_response(
                 msg=msg, http_status=status.HTTP_400_BAD_REQUEST
             )
