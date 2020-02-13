@@ -24,11 +24,11 @@ class DatabaseResizeAdmin(DatabaseMaintenanceTaskAdmin):
         if not maintenance.is_status_error or not maintenance.can_do_retry:
             return 'N/A'
 
-        url_retry = maintenance.database.get_resize_retry_url()
+        url_retry = maintenance.database.get_add_instances_database_retry_url()
         html_retry = ("<a title='Retry' class='btn btn-warning' "
                       "href='{}'>Retry</a>").format(url_retry)
 
-        url_rollback = maintenance.database.get_resize_rollback_url()
+        url_rollback = maintenance.database.get_add_instances_database_rollback_url()
         html_rollback = ("<a title='Rollback' class='btn btn-danger' "
                          "href='{}'>Rollback</a>").format(url_rollback)
 
