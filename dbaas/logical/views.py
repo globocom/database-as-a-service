@@ -1310,8 +1310,10 @@ def _add_read_only_instances(request, database, retry=False):
 class AddInstancesDatabaseRetryView(View):
 
     def get(self, request, *args, **kwargs):
-        services.AddReadOnlyInstanceService(request, self.database, retry=True)
-        services.execute()
+        service_obj = services.AddReadOnlyInstanceService(
+            request, self.database, retry=True
+        )
+        service_obj.execute()
         return HttpResponseRedirect(
             reverse(
                 'admin:logical_database_hosts',
@@ -1323,6 +1325,28 @@ class AddInstancesDatabaseRetryView(View):
     def dispatch(self, request, *args, **kwargs):
         self.context, self.database = args
         return super(AddInstancesDatabaseRetryView, self).dispatch(
+            request, *args, **kwargs
+        )
+
+
+class AddInstancesDatabaseRollbackView(View):
+
+    def get(self, request, *args, **kwargs):
+        service_obj = services.AddReadOnlyInstanceService(
+            request, self.database, rollback=True
+        )
+        service_obj.rollback()
+        return HttpResponseRedirect(
+            reverse(
+                'admin:logical_database_hosts',
+                kwargs={'id': self.database.id}
+            )
+        )
+
+    @database_view_class('')
+    def dispatch(self, request, *args, **kwargs):
+        self.context, self.database = args
+        return super(AddInstancesDatabaseRollbackView, self).dispatch(
             request, *args, **kwargs
         )
 
