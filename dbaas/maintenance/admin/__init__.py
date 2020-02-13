@@ -17,6 +17,8 @@ from .database_upgrade_patch import DatabaseUpgradePatchAdmin
 from .recreate_slave import RecreateSlaveAdmin
 from .update_ssl import UpdateSslAdmin
 from .migrate_engine import DatabaseMigrateEngineAdmin
+from .database_clone import DatabaseCloneAdmin
+from .add_instances_to_database import AddInstancesToDatabaseAdmin
 
 
 admin.site.register(models.Maintenance, MaintenanceAdmin)
@@ -37,3 +39,5 @@ admin.site.register(models.DatabaseUpgradePatch, DatabaseUpgradePatchAdmin)
 admin.site.register(models.DatabaseMigrateEngine, DatabaseMigrateEngineAdmin)
 admin.site.register(models.RecreateSlave, RecreateSlaveAdmin)
 admin.site.register(models.UpdateSsl, UpdateSslAdmin)
+admin.site.register(models.DatabaseClone, DatabaseCloneAdmin)
+admin.site.register(models.AddInstancesToDatabase, AddInstancesToDatabaseAdmin)

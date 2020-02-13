@@ -8,6 +8,8 @@ from util import build_context_script, exec_remote_command_host, check_ssh
 from workflow.steps.mongodb.util import build_change_oplogsize_script
 from workflow.steps.util.base import BaseInstanceStep
 from workflow.steps.util import test_bash_script_error, monit_script
+from drivers.errors import ReplicationNotRunningError
+
 
 LOG = logging.getLogger(__name__)
 
@@ -326,6 +328,7 @@ class WaitForReplication(DatabaseStep):
             return
 
         not_running = []
+        sleep(CHECK_SECONDS)
         for instance in self.driver.get_database_instances():
             try:
                 if not self.check_replication_ok(instance):
@@ -337,6 +340,7 @@ class WaitForReplication(DatabaseStep):
             self.driver.stop_slave(instance)
             sleep(CHECK_SECONDS)
             self.driver.start_slave(instance)
+            sleep(CHECK_SECONDS)
             if not self.check_replication_ok(instance):
                 raise ReplicationNotRunningError
 
@@ -690,6 +694,51 @@ class Create(DatabaseStep):
         LOG.info("Database destroyed....")
 
 
+class Clone(DatabaseStep):
+
+    def __unicode__(self):
+        return "Cloning database..."
+
+    def do(self):
+        if self.step_manager.database:
+            return
+
+        origin_database = self.step_manager.origin_database
+        database = Database.provision(self.step_manager.name, self.infra)
+        database.team = origin_database.team
+        database.description = origin_database.description
+        database.subscribe_to_email_events = (
+            origin_database.subscribe_to_email_events
+        )
+        database.is_protected = origin_database.is_protected
+
+        if origin_database.project:
+            database.project = origin_database.project
+
+        database.save()
+
+        self.step_manager.database = database
+        self.step_manager.save()
+
+        database.pin_task(self.step_manager.task)
+
+    def undo(self):
+        if not self.step_manager.database:
+            return
+
+        database = self.database
+        if not database.is_in_quarantine:
+            LOG.info("Putting Database in quarentine...")
+            database.is_in_quarantine = True
+            database.quarantine_dt = datetime.now().date()
+            database.subscribe_to_email_events = False
+            database.is_protected = False
+            database.save()
+
+        database.delete()
+        LOG.info("Database destroyed....")
+
+
 class CheckIfInstanceIsMasterRestore(DatabaseStep):
     def __unicode__(self):
         return "Checking if restored instance is master..."
@@ -721,3 +770,89 @@ class CreateExtraDNS(DatabaseStep):
     def undo(self):
         from extra_dns.models import ExtraDns
         ExtraDns.objects.filter(database=self.database).delete()
+
+
+class checkAndFixMySQLReplication(DatabaseStep):
+    def __unicode__(self):
+        return "Check and fix replication if necessary..."
+
+    def __init__(self, instance):
+        super(checkAndFixMySQLReplication, self).__init__(instance)
+        self.instances = self.infra.instances.all()
+
+    @property
+    def is_valid(self):
+        return 'mysql' in self.engine.name.lower() and self.plan.is_ha
+
+    def get_master_instance(self):
+        master_instance = self.driver.get_master_instance()
+        if not master_instance:
+            sleep(CHECK_SECONDS)
+        master_instance = self.driver.get_master_instance()
+        if not master_instance:
+            raise EnvironmentError(
+                "There is no master instance. Check FoxHA and database" \
+                " read-write instances."
+            )
+        return master_instance
+
+    def check_replication_is_running(self, instance):
+        try:
+            self.driver.get_replication_info(instance)
+        except ReplicationNotRunningError:
+            self.driver.stop_slave(instance)
+            sleep(1)
+            self.driver.start_slave(instance)
+            sleep(1)
+            self.driver.get_replication_info(instance)
+
+    def check_replication_delay(self, instance):
+        for _ in range(CHECK_ATTEMPTS):
+            if self.driver.is_replication_ok(instance):
+                return
+            sleep(CHECK_SECONDS)
+        raise EnvironmentError("Maximum number of attempts check replication")
+
+    def check_heartbeat(self):
+        master_instance = self.get_master_instance()
+        hb_ok = self.driver.is_heartbeat_replication_ok(master_instance)
+        if not hb_ok:
+            host = master_instance.hostname
+            self.driver.stop_agents(host)
+            sleep(1)
+            self.driver.start_agents(host)
+            sleep(1)
+            hb_ok = self.driver.is_heartbeat_replication_ok(master_instance)
+            if not hb_ok:
+                raise EnvironmentError("Check heartbeat delay.")
+
+    def do(self):
+        if not self.is_valid:
+            return
+
+        for instance in self.instances:
+            self.check_replication_is_running(instance)
+        for instance in self.instances:
+            self.check_replication_delay(instance)
+        self.check_heartbeat()
+
+
+class checkAndFixMySQLReplicationIfRunning(checkAndFixMySQLReplication):
+    def __unicode__(self):
+        return "Check and fix replication if necessary if is running..."
+
+    @property
+    def is_valid(self):
+        valid = super(checkAndFixMySQLReplicationIfRunning, self).is_valid
+        return valid and self.is_up(attempts=3)
+
+
+class checkAndFixMySQLReplicationRollback(checkAndFixMySQLReplication):
+    def __unicode__(self):
+        return "Check and fix replication if necessary on rollback..."
+
+    def do(self):
+        pass
+
+    def undo(self):
+        return super(checkAndFixReplicationRollback, self).do()

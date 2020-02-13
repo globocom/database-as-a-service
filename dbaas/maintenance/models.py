@@ -625,6 +625,45 @@ class DatabaseCreate(DatabaseMaintenanceTask):
         super(DatabaseCreate, self).save(*args, **kwargs)
 
 
+class DatabaseClone(DatabaseMaintenanceTask):
+    task = models.ForeignKey(
+        TaskHistory, verbose_name="Task History",
+        null=False, unique=False, related_name="create_clone"
+    )
+    database = models.ForeignKey(
+        Database, related_name='databases_clone', null=True, blank=True,
+        on_delete=models.SET_NULL
+    )
+    origin_database = models.ForeignKey(
+        Database, related_name='origin_databases_clone', null=True, blank=True,
+        on_delete=models.SET_NULL
+    )
+    infra = models.ForeignKey(DatabaseInfra, related_name='databases_clone')
+    plan = models.ForeignKey(
+        Plan, null=True, blank=True,
+        related_name='databases_clone', on_delete=models.SET_NULL
+    )
+    environment = models.ForeignKey(
+        Environment, related_name='databases_clone'
+    )
+    name = models.CharField(max_length=200)
+    user = models.CharField(max_length=200)
+
+    def __unicode__(self):
+        return "Cloning {}".format(self.origin_database.name)
+
+    @property
+    def disable_retry_filter(self):
+        return {'infra': self.infra}
+
+    def update_step(self, step):
+        if self.id:
+            maintenance = self.__class__.objects.get(id=self.id)
+            self.database = maintenance.database
+
+        super(DatabaseClone, self).update_step(step)
+
+
 class DatabaseDestroy(DatabaseMaintenanceTask):
     task = models.ForeignKey(
         TaskHistory, verbose_name="Task History",
@@ -967,6 +1006,27 @@ class UpdateSsl(DatabaseMaintenanceTask):
                     step(instance).do()
                 except Exception:
                     pass
+
+
+class AddInstancesToDatabase(DatabaseMaintenanceTask):
+    task = models.ForeignKey(
+        TaskHistory, verbose_name="Task History",
+        null=False, related_name="add_instances_to_database_manager"
+    )
+    database = models.ForeignKey(
+        Database, verbose_name="Database",
+        null=False, unique=False,
+        related_name="add_instances_to_database_manager"
+    )
+    number_of_instances = models.PositiveIntegerField(
+        verbose_name="Number of Instances", null=False, unique=False
+    )
+    number_of_instances_before = models.PositiveIntegerField(
+        verbose_name="Number of Instances Before", null=True, unique=False
+    )
+
+    def __unicode__(self):
+        return "Add instances to database: {}".format(self.database)
 
 
 simple_audit.register(Maintenance)

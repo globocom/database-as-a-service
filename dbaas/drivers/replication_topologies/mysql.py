@@ -45,6 +45,67 @@ class BaseMysql(BaseTopology):
 
 class MySQLSingle(BaseMysql):
 
+    def get_clone_steps(self):
+        return [{
+            'Creating virtual machine': (
+                'workflow.steps.util.host_provider.CreateVirtualMachine',
+            )}, {
+            'Creating dns': (
+                'workflow.steps.util.dns.CreateDNS',
+            )}, {
+            'Creating disk': (
+                'workflow.steps.util.volume_provider.NewVolume',
+            )}, {
+            'Waiting VMs': (
+                'workflow.steps.util.vm.WaitingBeReady',
+                'workflow.steps.util.vm.UpdateOSDescription'
+            )}, {
+            'Check DNS': (
+                'workflow.steps.util.dns.CheckIsReady',
+            )}, {
+            'Configuring database': (
+                'workflow.steps.util.volume_provider.MountDataVolume',
+                'workflow.steps.util.infra.UpdateEndpoint',
+                'workflow.steps.util.plan.InitializationForNewInfra',
+                'workflow.steps.util.metric_collector.ConfigureTelegraf',
+            )}, {
+            'Configure SSL': (
+                'workflow.steps.util.ssl.UpdateOpenSSlLib',
+                'workflow.steps.util.ssl.CreateSSLFolderRollbackIfRunning',
+                'workflow.steps.util.ssl.CreateSSLConfForInfraEndPoint',
+                'workflow.steps.util.ssl.RequestSSLForInfra',
+                'workflow.steps.util.ssl.CreateJsonRequestFileInfra',
+                'workflow.steps.util.ssl.CreateCertificateInfra',
+                'workflow.steps.util.ssl.SetSSLFilesAccessMySQL',
+                'workflow.steps.util.ssl.SetInfraConfiguredSSL',
+                'workflow.steps.util.ssl.UpdateExpireAtDate',
+            )}, {
+            'Starting database': (
+                'workflow.steps.util.plan.ConfigureForNewInfra',
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.metric_collector.RestartTelegraf',
+                'workflow.steps.util.database.StartMonit',
+            )}, {
+            'Creating Database': (
+                'workflow.steps.util.database.Clone',
+                'workflow.steps.util.clone.clone_database.CloneDatabaseData'
+            )}, {
+            'Check ACL': (
+                'workflow.steps.util.acl.BindNewInstance',
+            )}, {
+            'Creating monitoring and alarms': (
+                'workflow.steps.util.zabbix.CreateAlarms',
+                'workflow.steps.util.db_monitor.CreateInfraMonitoring',
+            )}, {
+            'Create Extra DNS': (
+                'workflow.steps.util.database.CreateExtraDNS',
+            )}, {
+            'Update Host Disk Size': (
+                'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
+            )
+        }]
+
     def get_deploy_steps(self):
         return [{
             'Creating virtual machine': (
@@ -419,6 +480,109 @@ class MySQLFoxHA(MySQLSingle):
             )
         }]
 
+    def get_clone_steps(self):
+        return [{
+            'Creating virtual machine': (
+                'workflow.steps.util.host_provider.CreateVirtualMachine',
+            )}, {
+            'Creating VIP': (
+                'workflow.steps.util.vip_provider.CreateVip',
+                'workflow.steps.util.dns.RegisterDNSVip',
+            )}, {
+            'Creating dns': (
+                'workflow.steps.util.dns.CreateDNS',
+            )}, {
+            'Creating disk': (
+                'workflow.steps.util.volume_provider.NewVolume',
+            )}, {
+            'Waiting VMs': (
+                'workflow.steps.util.vm.WaitingBeReady',
+                'workflow.steps.util.vm.UpdateOSDescription',
+                'workflow.steps.util.vm.CheckHostNameAndReboot',
+            )}, {
+            'Check hostname': (
+                'workflow.steps.util.vm.WaitingBeReady',
+                'workflow.steps.util.vm.CheckHostName',
+            )}, {
+             'Check puppet': (
+                 'workflow.steps.util.puppet.WaitingBeStarted',
+                 'workflow.steps.util.puppet.WaitingBeDone',
+                 'workflow.steps.util.puppet.ExecuteIfProblem',
+                 'workflow.steps.util.puppet.WaitingBeDone',
+                 'workflow.steps.util.puppet.CheckStatus',
+             )}, {
+             'Configure foreman': (
+                 'workflow.steps.util.foreman.SetupDSRC',
+             )}, {
+             'Running puppet': (
+                 'workflow.steps.util.puppet.Execute',
+                 'workflow.steps.util.puppet.CheckStatus',
+             )}, {
+            'Check DNS': (
+                'workflow.steps.util.dns.CheckIsReady',
+            )}, {
+            'Configuring database': (
+                'workflow.steps.util.volume_provider.MountDataVolume',
+                'workflow.steps.util.plan.InitializationForNewInfra',
+            )}, {
+            'Configure SSL': (
+                'workflow.steps.util.ssl.UpdateOpenSSlLib',
+                'workflow.steps.util.ssl.CreateSSLFolderRollbackIfRunning',
+                'workflow.steps.util.ssl.CreateSSLConfForInfraEndPoint',
+                'workflow.steps.util.ssl.CreateSSLConfForInstanceIP',
+                'workflow.steps.util.ssl.RequestSSLForInfra',
+                'workflow.steps.util.ssl.RequestSSLForInstance',
+                'workflow.steps.util.ssl.CreateJsonRequestFileInfra',
+                'workflow.steps.util.ssl.CreateJsonRequestFileInstance',
+                'workflow.steps.util.ssl.CreateCertificateInfra',
+                'workflow.steps.util.ssl.CreateCertificateInstance',
+                'workflow.steps.util.ssl.SetSSLFilesAccessMySQL',
+                'workflow.steps.util.ssl.SetInfraConfiguredSSL',
+                'workflow.steps.util.ssl.UpdateExpireAtDate',
+            )}, {
+            'Starting database': (
+                'workflow.steps.util.plan.ConfigureForNewInfra',
+                'workflow.steps.util.metric_collector.ConfigureTelegraf',
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.metric_collector.RestartTelegraf',
+            )}, {
+            'Check database': (
+                'workflow.steps.util.plan.StartReplicationNewInfra',
+                'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.database.StartMonit',
+            )}, {
+            'FoxHA configure': (
+                'workflow.steps.util.fox.ConfigureGroup',
+                'workflow.steps.util.fox.ConfigureNode',
+            )}, {
+            'FoxHA start': (
+                'workflow.steps.util.fox.Start',
+                'workflow.steps.util.fox.IsReplicationOk'
+            )}, {
+            'Configure Replication User': (
+                ('workflow.steps.util.ssl'
+                 '.SetReplicationUserRequireSSLRollbackIfRunning'),
+            )}, {
+            'Creating Database': (
+                'workflow.steps.util.database.Clone',
+                'workflow.steps.util.clone.clone_database.CloneDatabaseData'
+            )}, {
+            'Check ACL': (
+                'workflow.steps.util.acl.BindNewInstance',
+            )}, {
+            'Creating monitoring and alarms': (
+                'workflow.steps.util.mysql.CreateAlarmsVip',
+                'workflow.steps.util.zabbix.CreateAlarms',
+                'workflow.steps.util.db_monitor.CreateInfraMonitoring',
+            )}, {
+            'Create Extra DNS': (
+                'workflow.steps.util.database.CreateExtraDNS',
+            )}, {
+            'Update Host Disk Size': (
+                'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
+            )
+        }]
+
     def get_restore_snapshot_steps(self):
         return [{
             'Disable monitoring': (
@@ -495,6 +659,7 @@ class MySQLFoxHA(MySQLSingle):
             'Migrating': (
                 'workflow.steps.util.zabbix.DisableAlarms',
                 'workflow.steps.util.db_monitor.DisableMonitoring',
+                'workflow.steps.util.database.checkAndFixMySQLReplication',
                 'workflow.steps.util.vm.ChangeMaster',
                 'workflow.steps.util.database.CheckIfSwitchMaster',
                 'workflow.steps.util.volume_provider.NewInactiveVolume',
@@ -533,6 +698,7 @@ class MySQLFoxHA(MySQLSingle):
             ),
         }] + [{
             'Reinstall VM': (
+                'workflow.steps.util.database.checkAndFixMySQLReplicationIfRunning',
                 'workflow.steps.util.vm.ChangeMaster',
                 'workflow.steps.util.database.StopIfRunning',
                 'workflow.steps.util.foreman.DeleteHost',
@@ -565,7 +731,6 @@ class MySQLFoxHA(MySQLSingle):
                 ) + self.get_change_binaries_upgrade_patch_steps() + (
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
-
                 'workflow.steps.util.metric_collector.RestartTelegraf',
             ),
         }] + self.get_reinstallvm_steps_final()
@@ -578,6 +743,7 @@ class MySQLFoxHA(MySQLSingle):
             ),
         }] + [{
             self.get_upgrade_steps_description(): (
+                'workflow.steps.util.database.checkAndFixMySQLReplication',
                 'workflow.steps.util.vm.ChangeMaster',
                 'workflow.steps.util.database.CheckIfSwitchMaster',
                 'workflow.steps.util.database.Stop',
@@ -604,6 +770,7 @@ class MySQLFoxHA(MySQLSingle):
             ),
         }] + [{
             self.get_upgrade_steps_description(): (
+                'workflow.steps.util.database.checkAndFixMySQLReplication',
                 'workflow.steps.util.vm.ChangeMaster',
                 'workflow.steps.util.database.CheckIfSwitchMaster',
                 'workflow.steps.util.database.StopIfRunning',
@@ -684,6 +851,7 @@ class MySQLFoxHA(MySQLSingle):
             ),
         }] + [{
             'Restart Database': (
+                'workflow.steps.util.database.checkAndFixMySQLReplication',
                 'workflow.steps.util.vm.ChangeMaster',
                 'workflow.steps.util.database.CheckIfSwitchMaster',
                 'workflow.steps.util.database.Stop',
@@ -691,6 +859,7 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.metric_collector.RestartTelegraf',
                 'workflow.steps.util.database.CheckIfSwitchMasterRollback',
                 'workflow.steps.util.vm.ChangeMasterRollback',
+                'workflow.steps.util.database.checkAndFixMySQLReplicationRollback',
             ),
         }] + [{
             'Configure Replication User': (
@@ -728,6 +897,7 @@ class MySQLFoxHA(MySQLSingle):
             ),
         }] + [{
             'Restart Database': (
+                'workflow.steps.util.database.checkAndFixMySQLReplication',
                 'workflow.steps.util.vm.ChangeMaster',
                 'workflow.steps.util.database.CheckIfSwitchMaster',
                 'workflow.steps.util.database.Stop',
@@ -736,6 +906,7 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.metric_collector.RestartTelegraf',
                 'workflow.steps.util.database.CheckIfSwitchMasterRollback',
                 'workflow.steps.util.vm.ChangeMasterRollback',
+                'workflow.steps.util.database.checkAndFixMySQLReplicationRollback',
             ),
         }] + [{
             'Enable SSL': (
@@ -797,6 +968,7 @@ class MySQLFoxHA(MySQLSingle):
 
     def get_base_host_migrate_steps(self):
         return (
+            'workflow.steps.util.database.checkAndFixMySQLReplication',
             'workflow.steps.util.vm.ChangeMaster',
             'workflow.steps.util.database.CheckIfSwitchMaster',
             'workflow.steps.util.host_provider.CreateVirtualMachineMigrate',
@@ -861,6 +1033,7 @@ class MySQLFoxHA(MySQLSingle):
 
     def get_base_database_migrate_steps(self):
         return (
+            'workflow.steps.util.database.checkAndFixMySQLReplication',
             'workflow.steps.util.vm.ChangeMasterMigrate',
             'workflow.steps.util.database.CheckIfSwitchMasterMigrate',
             'workflow.steps.util.host_provider.CreateVirtualMachineMigrate',
@@ -1083,6 +1256,99 @@ class MySQLFoxHAAWS(MySQLFoxHA):
             )
         }]
 
+    def get_clone_steps(self):
+        return [{
+            'Creating virtual machine': (
+                'workflow.steps.util.host_provider.CreateVirtualMachine',
+            )}, {
+            'Creating VIP': (
+                'workflow.steps.util.vip_provider.CreateVip',
+                'workflow.steps.util.vip_provider.AddReal',
+                'workflow.steps.util.dns.RegisterDNSVip',
+            )}, {
+            'Creating dns': (
+                'workflow.steps.util.dns.CreateDNS',
+            )}, {
+            'Creating disk': (
+                'workflow.steps.util.volume_provider.NewVolume',
+            )}, {
+            'Waiting VMs': (
+                'workflow.steps.util.vm.WaitingBeReady',
+                'workflow.steps.util.vm.UpdateOSDescription',
+                'workflow.steps.util.vm.CheckHostNameAndReboot',
+            )}, {
+            'Check hostname': (
+                'workflow.steps.util.vm.WaitingBeReady',
+                'workflow.steps.util.vm.CheckHostName',
+            )}, {
+            'Check DNS': (
+                'workflow.steps.util.dns.CheckIsReady',
+            )}, {
+            'Configuring database': (
+                'workflow.steps.util.volume_provider.MountDataVolume',
+                'workflow.steps.util.plan.InitializationForNewInfra',
+            )}, {
+            'Configure SSL': (
+                'workflow.steps.util.ssl.UpdateOpenSSlLib',
+                'workflow.steps.util.ssl.CreateSSLFolderRollbackIfRunning',
+                'workflow.steps.util.ssl.CreateSSLConfForInfraEndPoint',
+                'workflow.steps.util.ssl.CreateSSLConfForInstanceIP',
+                'workflow.steps.util.ssl.RequestSSLForInfra',
+                'workflow.steps.util.ssl.RequestSSLForInstance',
+                'workflow.steps.util.ssl.CreateJsonRequestFileInfra',
+                'workflow.steps.util.ssl.CreateJsonRequestFileInstance',
+                'workflow.steps.util.ssl.CreateCertificateInfra',
+                'workflow.steps.util.ssl.CreateCertificateInstance',
+                'workflow.steps.util.ssl.SetSSLFilesAccessMySQL',
+                'workflow.steps.util.ssl.SetInfraConfiguredSSL',
+                'workflow.steps.util.ssl.UpdateExpireAtDate',
+            )}, {
+            'Starting database': (
+                'workflow.steps.util.plan.ConfigureForNewInfra',
+                'workflow.steps.util.metric_collector.ConfigureTelegraf',
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.metric_collector.RestartTelegraf',
+            )}, {
+            'Check database': (
+                'workflow.steps.util.plan.StartReplicationNewInfra',
+                'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.database.StartMonit',
+            )}, {
+            'FoxHA configure': (
+                'workflow.steps.util.fox.ConfigureGroup',
+                'workflow.steps.util.fox.ConfigureNode',
+            )}, {
+            'FoxHA start': (
+                'workflow.steps.util.fox.Start',
+                'workflow.steps.util.fox.IsReplicationOk'
+            )}, {
+            'Configure Replication User': (
+                ('workflow.steps.util.ssl'
+                 '.SetReplicationUserRequireSSLRollbackIfRunning'),
+            )}, {
+            'Creating Database': (
+                'workflow.steps.util.database.Clone',
+                'workflow.steps.util.clone.clone_database.CloneDatabaseData'
+            )}, {
+            'Check ACL': (
+                'workflow.steps.util.acl.BindNewInstance',
+            )}, {
+            'Creating monitoring and alarms': (
+                'workflow.steps.util.mysql.CreateAlarmsVip',
+                'workflow.steps.util.zabbix.CreateAlarms',
+                'workflow.steps.util.db_monitor.CreateInfraMonitoring',
+            )}, {
+            'Check Vip': (
+                'workflow.steps.util.vip_provider.WaitVipReady',
+            )}, {
+            'Create Extra DNS': (
+                'workflow.steps.util.database.CreateExtraDNS',
+            )}, {
+            'Update Host Disk Size': (
+                'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
+            )
+        }]
+
     def get_host_migrate_steps_cleaning_up(self):
         return (
             'workflow.steps.util.volume_provider.DestroyOldEnvironment',
@@ -1091,6 +1357,7 @@ class MySQLFoxHAAWS(MySQLFoxHA):
 
     def get_base_host_migrate_steps(self):
         return (
+            'workflow.steps.util.database.checkAndFixMySQLReplication',
             'workflow.steps.util.vm.ChangeMaster',
             'workflow.steps.util.database.CheckIfSwitchMaster',
             'workflow.steps.util.host_provider.CreateVirtualMachineMigrate',
@@ -1151,6 +1418,7 @@ class MySQLFoxHAAWS(MySQLFoxHA):
 
     def get_base_database_migrate_steps(self):
         return (
+            'workflow.steps.util.database.checkAndFixMySQLReplication',
             'workflow.steps.util.vm.ChangeMasterMigrate',
             'workflow.steps.util.database.CheckIfSwitchMasterMigrate',
             'workflow.steps.util.host_provider.CreateVirtualMachineMigrate',

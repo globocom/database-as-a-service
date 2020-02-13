@@ -62,7 +62,7 @@ class MaintenanceAdmin(admin.DjangoServicesAdmin):
 
         try:
             workers = celery_inpsect.ping().keys()
-        except Exception, e:
+        except Exception as e:
             LOG.warn("All celery workers are down! {} :(".format(e))
             messages.add_message(
                 request, messages.ERROR,

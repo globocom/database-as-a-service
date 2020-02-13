@@ -29,13 +29,28 @@ urlpatterns = patterns(
 )
 
 if settings.DBAAS_OAUTH2_LOGIN_ENABLE:
-    from backstage_oauth2.views import BackstageOAuthRedirect
+    from backstage_oauth2.views import (BackstageOAuthRedirect,
+                                        BackstageOAuthCallback)
     django_login_view = admin.site.login
     admin.site.login = BackstageOAuthRedirect.as_view(provider='backstage')
     from django.http import HttpResponseRedirect
     from django.core.urlresolvers import reverse
     from django.contrib.auth import logout as auth_logout
     from django.views.generic import View
+
+    class DBaaSBackstageOAuthCallback(BackstageOAuthCallback):
+        @staticmethod
+        def get_user(user_cls, username, email):
+            return user_cls.objects.get(email=email)
+
+        @staticmethod
+        def transform_user_metadata(user_metadata, info, username, email):
+            from allaccess.compat import get_user_model
+            User = get_user_model()
+            user_metadata.update({
+                User.USERNAME_FIELD: email,
+            })
+            return user_metadata
 
     class LDAPLogin(View):
 
@@ -76,6 +91,8 @@ if settings.DBAAS_OAUTH2_LOGIN_ENABLE:
     urlpatterns += patterns(
         '',
         url(r'^accounts/login/ldap/$', LDAPLogin.as_view(), name='ldap_login'),
+        url(r'^accounts/callback/(?P<provider>backstage)/$',
+            DBaaSBackstageOAuthCallback.as_view(), name='allaccess-callback'),
         url(r'^accounts/', include('backstage_oauth2.urls')),
         url(r'', include('glb_version.urls')),
     )

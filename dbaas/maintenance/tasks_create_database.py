@@ -2,19 +2,23 @@ from django.db.models import Q
 from physical.models import DatabaseInfra, Instance
 from util import slugify, gen_infra_names, get_vm_name
 from util.providers import get_deploy_settings, get_deploy_instances
-from util.providers import get_database_configure_ssl_setting
 from workflow.workflow import steps_for_instances, rollback_for_instances_full
 from models import DatabaseCreate
+from logical.forms.database import DatabaseForm
 
 
-def get_or_create_infra(base_name, plan, environment, backup_hour,
-                        maintenance_window, maintenance_day, retry_from=None):
+def get_or_create_infra(base_name, plan, environment, backup_hour=None,
+                        maintenance_window=None, maintenance_day=None,
+                        retry_from=None):
     if retry_from:
         infra = retry_from.infra
         base_name['infra'] = infra.name
         base_name['name_prefix'] = infra.name_prefix
         base_name['name_stamp'] = infra.name_stamp
     else:
+        random_backup_hour, random_maintenance_hour, random_maintenance_day = (
+            DatabaseForm.randomize_backup_and_maintenance_hour()
+        )
         infra = DatabaseInfra()
         infra.name = base_name['infra']
         infra.name_prefix = base_name['name_prefix']
@@ -26,9 +30,11 @@ def get_or_create_infra(base_name, plan, environment, backup_hour,
         infra.environment = environment
         infra.capacity = 1
         infra.per_database_size_mbytes = plan.max_db_size
-        infra.backup_hour = backup_hour or infra.configure_backup_hour
-        infra.maintenance_window = maintenance_window or infra.configure_maintenance_window
-        infra.maintenance_day = maintenance_day or infra.configure_maintenance_day
+        infra.backup_hour = backup_hour or random_backup_hour
+        infra.maintenance_window = (
+            maintenance_window or random_maintenance_hour
+        )
+        infra.maintenance_day = maintenance_day or random_maintenance_day
         infra.engine_patch = plan.engine.default_engine_patch
         infra.save()
 

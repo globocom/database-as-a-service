@@ -118,26 +118,36 @@
             <p>
               {% if is_dba %}
                 <a target="_blank" href="{% url 'admin:physical_host_change' host.id %}">{{ host.description }}</a>
-                {% if last_reinstall_vm and last_reinstall_vm.is_status_error %}
-                  {% if host.id == last_reinstall_vm.instance.hostname.id %}
-                  <span>
-                      <a class="action_button btn btn-danger" href="{{ database.get_reinstallvm_retry_url }}" title="Go to reinstal VM page">Retry Reinstall VM</a>
-                  </span>
+                {% if database.databaseinfra.plan.replication_topology.can_reinstall_vm %}
+                  {% if last_reinstall_vm and last_reinstall_vm.is_status_error %}
+                    {% if host.id == last_reinstall_vm.instance.hostname.id %}
+                      <span>
+                          <a class="action_button btn btn-danger" href="{{ database.get_reinstallvm_retry_url }}" title="Go to reinstal VM page">Retry Reinstall VM</a>
+                      </span>
+                    {% endif %}
+                  {% else %}
+                    <td class="action-red-button">
+                      <a class="action_button btn btn-danger reinstallvm" data-toggle="modal" id="reinstall_vm_btn"
+                        data-target="#reinstall_vm_modal" data-host-id="{{host.id}}" title="Reinstall VM template and reconfigure the instance database."
+                      >Reinstall VM</a>
+                    </td>
                   {% endif %}
-                {% else %}
-                <td class="action-red-button">
-                  <a class="action_button btn btn-danger reinstallvm" data-toggle="modal" id="reinstall_vm_btn"
-                    data-target="#reinstall_vm_modal" data-host-id="{{host.id}}" title="Reinstall VM template and reconfigure the instance database."
-                  >Reinstall VM</a>
-                </td>
-                <td class="action-red-button">
-                  <a style="margin-left: 5px;" class="action_button btn btn-danger recreate-slave" data-toggle="modal" id="recreate_vm_btn"
-                    data-target="#recreate_vm_modal" data-host-id="{{host.id}}" title="Recreate Slave."
-                  >Recreate Slave</a>
-                </td>
                 {% endif %}
-              {% else %}
-                {{ host.description }}
+                {% if database.databaseinfra.plan.replication_topology.can_recreate_slave %}
+                  {% if last_recreat_slave and last_recreat_slave.is_status_error %}
+                    {% if host.id == last_recreat_slave.host.id %}
+                      <td>
+                          <a class="action_button btn btn-danger" href="{% url 'admin:maintenance_recreateslave_change' last_recreat_slave.id %}retry" title="Go to recreate slave page">Retry Recreate Slave</a>
+                      </td>
+                    {% endif %}
+                  {% else %}
+                  <td class="action-red-button">
+                    <a style="margin-left: 5px;" class="action_button btn btn-danger recreate-slave" data-toggle="modal" id="recreate_vm_btn"
+                      data-target="#recreate_vm_modal" data-host-id="{{host.id}}" title="Recreate Slave."
+                    >Recreate Slave</a>
+                  </td>
+                  {% endif %}
+                {% endif %}
               {% endif %}
               <a class="action_button btn btn-danger" href="{{ host.id }}/delete/" onclick="return confirm('Are you sure?')"><i class="icon-trash icon-white"></i></a>
             </p>
@@ -150,13 +160,26 @@
       <div class="control-group">
         <div class="control-label">New instances:</div>
         <div class="controls">
-          <select class="span1" id="id_add_read_qtd" name="add_read_qtd">
-            <option></option>
-            {% for add in enable_host %}
-              <option value="{{ add }}">{{ add }}</option>
-            {% endfor %}
-          </select>
-          <input type="submit" value="Add" name="add_read_only" id="add_read_only_btn" onclick="return confirm('Are you sure?')"/>
+            {% if add_read_only_retry %}
+              <select class="span1" id="id_add_read_qtd" name="add_read_qtd" disabled >
+                <option></option>
+                {% for add in enable_host %}
+                  {% if add == add_read_only_retry.number_of_instances %}
+                    <option value="{{add}}" selected>{{add}}</option>
+                  {% endif %}
+                {% endfor %}
+              </select>
+              <input class="btn btn-warning" type="submit" value="Retry" name="add_read_only_retry" id="add_read_only_btn" onclick="return confirm('Are you sure?')"/>
+              <input class="btn btn-danger" type="submit" value="Rollback" name="add_read_only_rollback" id="add_read_only_rollback_btn" onclick="return confirm('Are you sure?')"/>
+            {% else %}
+              <select class="span1" id="id_add_read_qtd" name="add_read_qtd">
+                <option></option>
+                {% for add in enable_host %}
+                  <option value="{{ add }}">{{ add }}</option>
+                {% endfor %}
+              </select>
+              <input class="btn btn-primary" type="submit" value="Add" name="add_read_only" id="add_read_only_btn" onclick="return confirm('Are you sure?')"/>
+            {% endif %}
         </div>
        </div>
     {% endif %}

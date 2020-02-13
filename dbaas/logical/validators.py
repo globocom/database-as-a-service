@@ -55,7 +55,7 @@ class ParameterValidator(object):
                     return True
 
         return False
-    
+
     @classmethod
     def test_number_range(cls, value, range):
         value = Decimal(value)
@@ -64,7 +64,7 @@ class ParameterValidator(object):
         if nums[1] != "":
           upper_limit = Decimal(nums[1])
           if value >= lower_limit and value <= upper_limit:
-            return True  
+            return True
         else:
             return value >= lower_limit
 
@@ -102,7 +102,7 @@ def database_name_evironment_constraint(database_name, environment_name):
         for database in databases))
 
 
-def check_is_database_enabled(database_id, operation):
+def check_is_database_enabled(database_id, operation, tasks=None):
     from logical.models import Database
     database = Database.objects.get(id=database_id)
 
@@ -110,7 +110,7 @@ def check_is_database_enabled(database_id, operation):
     if database.is_in_quarantine:
         raise DatabaseInQuarantineError(operation, url)
 
-    if database.is_being_used_elsewhere():
+    if database.is_being_used_elsewhere(tasks):
         raise BusyDatabaseError(url)
 
     return database

@@ -20,7 +20,7 @@ class DatabaseMigrateEngineAdmin(DatabaseMaintenanceTaskAdmin):
     readonly_fields = (
         "database", "source_plan", "source_plan_name", "target_plan",
         "target_plan_name", "link_task", "started_at", "finished_at",
-        "current_step", "status", "maintenance_action"
+        "status", "maintenance_action", "task_schedule"
     )
 
     def maintenance_action(self, maintenance_task):

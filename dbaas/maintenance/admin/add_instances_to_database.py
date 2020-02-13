@@ -4,31 +4,34 @@ from django.utils.html import format_html
 from .database_maintenance_task import DatabaseMaintenanceTaskAdmin
 
 
-class DatabaseResizeAdmin(DatabaseMaintenanceTaskAdmin):
-    search_fields = ("database__name", "source_offer__name",
-                     "target_offer__name", "task__id", "task__task_id")
+class AddInstancesToDatabaseAdmin(DatabaseMaintenanceTaskAdmin):
+
+    list_filter = [
+        "database__team", "current_step", "number_of_instances", "status",
+        "number_of_instances_before"
+    ]
 
     list_display = (
-        "database", "database_team", "source_offer_name", "target_offer_name",
+        "database", "database_team", "number_of_instances", "number_of_instances_before",
         "current_step", "friendly_status", "maintenance_action", "link_task",
         "started_at", "finished_at"
     )
 
     readonly_fields = (
-        "database", "source_offer", "source_offer_name", "target_offer",
-        "target_offer_name", "link_task", "started_at", "finished_at",
-        "status", "maintenance_action", "task_schedule"
+        "database", "number_of_instances", "number_of_instances_before",
+        "link_task", "started_at", "finished_at", "current_step", "status",
+        "maintenance_action"
     )
 
     def maintenance_action(self, maintenance):
         if not maintenance.is_status_error or not maintenance.can_do_retry:
             return 'N/A'
 
-        url_retry = maintenance.database.get_resize_retry_url()
+        url_retry = maintenance.database.get_add_instances_database_retry_url()
         html_retry = ("<a title='Retry' class='btn btn-warning' "
                       "href='{}'>Retry</a>").format(url_retry)
 
-        url_rollback = maintenance.database.get_resize_rollback_url()
+        url_rollback = maintenance.database.get_add_instances_database_rollback_url()
         html_rollback = ("<a title='Rollback' class='btn btn-danger' "
                          "href='{}'>Rollback</a>").format(url_rollback)
 
