@@ -1307,6 +1307,26 @@ def _add_read_only_instances(request, database, retry=False):
     TaskRegister.database_add_instances(**add_instances_to_database_kwargs)
 
 
+class AddInstancesDatabaseRetryView(View):
+
+    def get(self, request, *args, **kwargs):
+        services.AddReadOnlyInstanceService(request, self.database, retry=True)
+        services.execute()
+        return HttpResponseRedirect(
+            reverse(
+                'admin:logical_database_hosts',
+                kwargs={'id': self.database.id}
+            )
+        )
+
+    @database_view_class('')
+    def dispatch(self, request, *args, **kwargs):
+        self.context, self.database = args
+        return super(AddInstancesDatabaseRetryView, self).dispatch(
+            request, *args, **kwargs
+        )
+
+
 class DatabaseHostsView(TemplateView):
     template_name = "logical/database/details/hosts_tab.html"
 
