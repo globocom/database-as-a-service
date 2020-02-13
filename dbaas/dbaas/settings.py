@@ -180,6 +180,7 @@ INSTALLED_APPS = (
     'account',
     'admin',
     'adminplus',
+    'djcelery_dbaas',
     'physical',
     'logical',
     'tsuru',
