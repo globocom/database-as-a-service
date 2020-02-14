@@ -216,7 +216,7 @@ def make_databases_backup(self):
 
     # Get all infras with a backup today until the current hour
     infras_with_backup_today = DatabaseInfra.objects.filter(
-        instances__backup_instance__status=2,
+        instances__backup_instance__status=Snapshot.SUCCESS,
         backup_hour__lt=current_hour,
         plan__has_persistence=True,
         instances__backup_instance__end_at__year=current_time.year,
