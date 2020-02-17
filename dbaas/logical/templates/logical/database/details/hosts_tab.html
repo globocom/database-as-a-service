@@ -160,13 +160,26 @@
       <div class="control-group">
         <div class="control-label">New instances:</div>
         <div class="controls">
-          <select class="span1" id="id_add_read_qtd" name="add_read_qtd">
-            <option></option>
-            {% for add in enable_host %}
-              <option value="{{ add }}">{{ add }}</option>
-            {% endfor %}
-          </select>
-          <input type="submit" value="Add" name="add_read_only" id="add_read_only_btn" onclick="return confirm('Are you sure?')"/>
+            {% if add_read_only_retry %}
+              <select class="span1" id="id_add_read_qtd" name="add_read_qtd" disabled >
+                <option></option>
+                {% for add in enable_host %}
+                  {% if add == add_read_only_retry.number_of_instances %}
+                    <option value="{{add}}" selected>{{add}}</option>
+                  {% endif %}
+                {% endfor %}
+              </select>
+              <input class="btn btn-warning" type="submit" value="Retry" name="add_read_only_retry" id="add_read_only_btn" onclick="return confirm('Are you sure?')"/>
+              <input class="btn btn-danger" type="submit" value="Rollback" name="add_read_only_rollback" id="add_read_only_rollback_btn" onclick="return confirm('Are you sure?')"/>
+            {% else %}
+              <select class="span1" id="id_add_read_qtd" name="add_read_qtd">
+                <option></option>
+                {% for add in enable_host %}
+                  <option value="{{ add }}">{{ add }}</option>
+                {% endfor %}
+              </select>
+              <input class="btn btn-primary" type="submit" value="Add" name="add_read_only" id="add_read_only_btn" onclick="return confirm('Are you sure?')"/>
+            {% endif %}
         </div>
        </div>
     {% endif %}
