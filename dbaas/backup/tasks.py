@@ -108,6 +108,19 @@ def make_instance_snapshot_backup(instance, error, group,
         if 'MySQL' in type(driver).__name__:
             mysql_binlog_save(client, instance)
 
+        current_time = datetime.now()
+        if (
+            snapshot_final_status == Snapshot.WARNING and
+            Snapshot.objects.filter(
+                status=Snapshot.WARNING,
+                instance=instance,
+                end_at__year=current_time.year,
+                end_at__month=current_time.month,
+                end_at__day=current_time.day
+            )
+        ):
+            raise Exception("Backup with WARNING already created today.")
+
         response = provider.take_snapshot()
         snapshot.done(response)
     except Exception as e:
