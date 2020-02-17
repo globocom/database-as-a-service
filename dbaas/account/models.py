@@ -17,6 +17,8 @@ from .helper import find_ldap_groups_from_user
 from system.models import Configuration
 from dbaas.celery import app
 
+from physical.models import Environment
+
 LOG = logging.getLogger(__name__)
 
 
@@ -29,9 +31,7 @@ class AccountUser(User):
 
 
 class Role(Group):
-
-    class Meta:
-        proxy = True
+    environments = models.ManyToManyField(Environment, related_name='roles')
 
 
 class TeamUsersManager(models.Manager):
