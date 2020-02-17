@@ -66,22 +66,35 @@ class ChangeMaster(VmStep):
     def __unicode__(self):
         return "Changing master node..."
 
-    def do(self):
-        if not self.infra.plan.is_ha:
-            return
-
+    @property
+    def is_slave(self):
         master = self.driver.get_master_instance()
         if isinstance(master, list):
             if self.instance not in master:
-                return
+                return True
         elif self.instance != master:
-            return
+            return True
 
         if not self.driver.check_instance_is_master(self.instance):
+            return True
+
+        return False
+
+    @property
+    def is_single_instance(self):
+        return not self.infra.plan.is_ha
+
+    def do(self):
+        if self.is_single_instance:
+            return
+
+        if self.is_slave:
             return
 
         error = None
         for _ in range(CHANGE_MASTER_ATTEMPS):
+            if self.is_slave:
+                return
             try:
                 self.driver.check_replication_and_switch(self.instance)
             except Exception as e:

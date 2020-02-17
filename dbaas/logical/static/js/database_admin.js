@@ -140,23 +140,6 @@
         });
         $("#id_engine").change();
 
-        $("#id_team").on("change", function() {
-            var team = document.getElementById('id_team').value;
-            $.ajax({
-                "type": "GET",
-                "url": "/account/team_contacts/" + team
-            }).done(function (response) {
-                var contacts = "";
-                if(response.contacts != null)
-                    contacts = response.contacts;
-
-                document.getElementsByClassName("field-team_contact")[0].innerHTML = "" +
-                    '<div class="control-label"><label>Emergency contacts:</label></div>' +
-                    '<div class="controls">' +
-                    "<p>" + contacts + "</p></div>";
-            });
-        });
-
         $(".plan").on("click", function() {
             $("input", ".plan").removeAttr("checked");
             $("input", $(this)).attr("checked", "checked");
