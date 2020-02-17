@@ -130,6 +130,7 @@ fi
 # Configuration file
 config=/etc/telegraf/telegraf.conf
 confdir=/etc/telegraf/telegraf.d
+command="/usr/bin/telegraf"
 
 # If the daemon is not there, then exit.
 [ -x \$daemon ] || exit 5
@@ -144,6 +145,12 @@ case \$1 in
                 log_failure_msg "\$name process is running"
                 exit 0 # Exit
             fi
+        fi
+        # Check if is really stopped
+        if ps ax | grep -v grep | grep $command > /dev/null
+        then
+            log_failure_msg "$name process is running"
+            exit 0
         fi
 
         # Bump the file limits, before launching the daemon. These will carry over to
@@ -178,8 +185,7 @@ case \$1 in
         else
             log_failure_msg "\$name process is not running"
         fi
-        # Check is is really stopped
-        command="/usr/bin/telegraf"
+        # Check if is really stopped
         if ps ax | grep -v grep | grep \$command > /dev/null
         then
             log_failure_msg "\$name is still running. Sleep 2 seconds and force stop with kill"
