@@ -108,6 +108,19 @@ def make_instance_snapshot_backup(instance, error, group,
         if 'MySQL' in type(driver).__name__:
             mysql_binlog_save(client, instance)
 
+        current_time = datetime.now()
+        if (
+            snapshot_final_status == Snapshot.WARNING and
+            Snapshot.objects.filter(
+                status=Snapshot.WARNING,
+                instance=instance,
+                end_at__year=current_time.year,
+                end_at__month=current_time.month,
+                end_at__day=current_time.day
+            )
+        ):
+            raise Exception("Backup with WARNING already created today.")
+
         response = provider.take_snapshot()
         snapshot.done(response)
     except Exception as e:
@@ -216,7 +229,7 @@ def make_databases_backup(self):
 
     # Get all infras with a backup today until the current hour
     infras_with_backup_today = DatabaseInfra.objects.filter(
-        instances__backup_instance__status=2,
+        instances__backup_instance__status=Snapshot.SUCCESS,
         backup_hour__lt=current_hour,
         plan__has_persistence=True,
         instances__backup_instance__end_at__year=current_time.year,
