@@ -30,7 +30,12 @@ class AccountUser(User):
         verbose_name = _("user")
 
 
-class Role(Group):
+class Role(BaseModel):
+    group = models.OneToOneField(
+        Group,
+        on_delete=models.CASCADE,
+        related_name='role'
+    )
     environments = models.ManyToManyField(Environment, related_name='roles')
 
 
