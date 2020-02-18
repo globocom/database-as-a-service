@@ -30,13 +30,19 @@ class AccountUser(User):
         verbose_name = _("user")
 
 
-class Role(BaseModel):
-    group = models.OneToOneField(
-        Group,
-        on_delete=models.CASCADE,
-        related_name='role'
-    )
-    environments = models.ManyToManyField(Environment, related_name='roles')
+class Role(Group):
+
+    class Meta:
+        proxy = True
+
+
+# class RoleEnvironment(BaseModel):
+#     role = models.OneToOneField(
+#         Role,
+#         on_delete=models.CASCADE,
+#         related_name='role_environment'
+#     )
+#     environments = models.ManyToManyField(Environment, related_name='roles')
 
 
 class TeamUsersManager(models.Manager):
