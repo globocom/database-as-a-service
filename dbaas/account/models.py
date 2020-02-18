@@ -36,13 +36,13 @@ class Role(Group):
         proxy = True
 
 
-# class RoleEnvironment(BaseModel):
-#     role = models.OneToOneField(
-#         Role,
-#         on_delete=models.CASCADE,
-#         related_name='role_environment'
-#     )
-#     environments = models.ManyToManyField(Environment, related_name='roles')
+class RoleEnvironment(BaseModel):
+    role = models.OneToOneField(
+        Role,
+        on_delete=models.CASCADE,
+        related_name='role_environment'
+    )
+    environments = models.ManyToManyField(Environment, related_name='roles')
 
 
 class TeamUsersManager(models.Manager):
