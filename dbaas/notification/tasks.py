@@ -559,6 +559,7 @@ def purge_task_history(self):
 
 
 @app.task(bind=True)
+@only_one(key="checksslexpireattask")
 def check_ssl_expire_at(self):
     LOG.info("Retrieving all SSL MySQL databases")
     today = date.today()
@@ -614,7 +615,7 @@ def check_ssl_expire_at(self):
 
 
 @app.task(bind=True)
-@only_one(key="execute_scheduled_maintenance")
+@only_one(key="executescheduledmaintenance")
 def execute_scheduled_maintenance(self, task=None, user=None,
                                   auto_rollback=True):
     LOG.info("Searching Scheduled tasks")
