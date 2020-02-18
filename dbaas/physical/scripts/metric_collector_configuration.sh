@@ -147,9 +147,9 @@ case \$1 in
             fi
         fi
         # Check if is really stopped
-        if ps ax | grep -v grep | grep $command > /dev/null
+        if ps ax | grep -v grep | grep \$command > /dev/null
         then
-            log_failure_msg "$name process is running"
+            log_failure_msg "\$name process is running"
             exit 0
         fi
 
