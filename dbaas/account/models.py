@@ -42,7 +42,12 @@ class RoleEnvironment(BaseModel):
         on_delete=models.CASCADE,
         related_name='role_environment'
     )
-    environments = models.ManyToManyField(Environment, related_name='roles')
+    environments = models.ManyToManyField(
+        Environment, related_name='roles', blank=True
+    )
+
+    def __unicode__(self):
+        return str(self.role)
 
 
 class TeamUsersManager(models.Manager):
