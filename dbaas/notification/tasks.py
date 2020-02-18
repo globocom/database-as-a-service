@@ -615,7 +615,7 @@ def check_ssl_expire_at(self):
 
 
 @app.task(bind=True)
-@only_one(key="executescheduledmaintenance")
+@only_one(key="executescheduledmaintenancetask")
 def execute_scheduled_maintenance(self, task=None, user=None,
                                   auto_rollback=True):
     LOG.info("Searching Scheduled tasks")
