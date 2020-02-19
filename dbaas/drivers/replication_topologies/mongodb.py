@@ -579,3 +579,55 @@ class MongoDBReplicaset40(MongoDBReplicaset):
 
     def get_resize_oplog_steps_and_retry_steps_back(self):
         return self.get_resize_oplog_steps(), 0
+
+
+class MongoDBReplicaset42(MongoDBReplicaset40):
+
+    def get_upgrade_steps_final(self):
+        return [{
+            'Setting feature compatibility version': (
+                'workflow.steps.mongodb.upgrade.database'
+                '.SetFeatureCompatibilityToNewVersion',
+            ),
+        }] + [{
+            self.get_upgrade_steps_final_description(): (
+                'workflow.steps.util.db_monitor.UpdateInfraVersion',
+                'workflow.steps.util.db_monitor.EnableMonitoring',
+                'workflow.steps.util.zabbix.DestroyAlarms',
+                'workflow.steps.util.zabbix.CreateAlarmsForUpgrade',
+            ),
+        }]
+
+    def get_upgrade_steps_extra(self):
+        return (
+            'workflow.steps.util.volume_provider.MountDataVolume',
+            'workflow.steps.util.plan.InitializationForUpgrade',
+            'workflow.steps.util.plan.ConfigureForUpgrade',
+            'workflow.steps.util.metric_collector.ConfigureTelegraf',
+        )
+
+
+class MongoDBSingle42(MongoDBSingle):
+
+    def get_upgrade_steps_final(self):
+        return [{
+            'Setting feature compatibility version': (
+                'workflow.steps.mongodb.upgrade.database'
+                '.SetFeatureCompatibilityToNewVersion',
+            ),
+        }] + [{
+            self.get_upgrade_steps_final_description(): (
+                'workflow.steps.util.db_monitor.UpdateInfraVersion',
+                'workflow.steps.util.db_monitor.EnableMonitoring',
+                'workflow.steps.util.zabbix.DestroyAlarms',
+                'workflow.steps.util.zabbix.CreateAlarmsForUpgrade',
+            ),
+        }]
+
+    def get_upgrade_steps_extra(self):
+        return (
+            'workflow.steps.util.volume_provider.MountDataVolume',
+            'workflow.steps.util.plan.InitializationForUpgrade',
+            'workflow.steps.util.plan.ConfigureForUpgrade',
+            'workflow.steps.util.metric_collector.ConfigureTelegraf',
+        )
