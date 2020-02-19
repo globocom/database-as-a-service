@@ -20,7 +20,7 @@ from django.utils.html import format_html, escape
 from django.forms.models import modelform_factory
 from django.core.exceptions import FieldError
 from dbaas import constants
-from account.models import Team
+from account.models import Team, RoleEnvironment
 from drivers.errors import DatabaseAlreadyExists
 from notification.tasks import TaskRegister
 from system.models import Configuration
@@ -286,11 +286,19 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         return super(DatabaseAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
     def queryset(self, request):
+        """Queryset returns all of the databases when user has add DatabaseInfra
+        permission. Otherwise, this method looks for databases by team and
+        environment.
+        """
         qs = super(DatabaseAdmin, self).queryset(request)
         if request.user.has_perm(self.perm_add_database_infra):
             return qs
 
-        return qs.filter(team__in=[team.id for team in Team.objects.filter(users=request.user)])
+        from ..utils import databases_by_env
+        teams = Team.objects.filter(users=request.user)
+        qs_by_env = databases_by_env(qs, teams)
+        qs_by_team = qs.filter(team__in=[team.id for team in teams])
+        return (qs_by_env | qs_by_team).distinct().order_by('name')
 
     def has_add_permission(self, request):
         """User must be set to at least one team to be able to add database"""
