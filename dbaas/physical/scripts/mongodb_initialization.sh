@@ -14,11 +14,7 @@ movedatabase()
 {
     echo ""; echo $(date "+%Y-%m-%d %T") "- Moving the database"
     if [ "{{DATABASERULE}}" == "PRIMARY" ]; then
-{% if DISK_SIZE_IN_GB < 5.0 %}
-        mv /opt/dbaas/dbdata_small/* /data/
-{% else %}
         mv /opt/dbaas/dbdata/* /data/
-{% endif %}
     else
          mv /opt/dbaas/dbdata_empty/* /data/
     fi
