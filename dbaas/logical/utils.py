@@ -13,3 +13,8 @@ def databases_by_env(qs, teams):
         environments.extend(role_env.environments.all())
 
     return qs.filter(environment__in=[env.id for env in environments])
+
+
+def can_access_database(database, teams):
+    qs = Database.objects.filter(id=database.id)
+    return databases_by_env(qs, teams)
