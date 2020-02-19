@@ -155,7 +155,9 @@ def check_permission(request, id, tab):
             messages.add_message(
                 request, messages.ERROR,
                 ('This database belong to {} team, you are not member of '
-                 'this team').format(database.team)
+                 "this team or has not access to database's environment").format(
+                     database.team
+                )
             )
             can_access = False
         elif database.is_in_quarantine:
