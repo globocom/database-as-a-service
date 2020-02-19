@@ -147,9 +147,10 @@ def check_permission(request, id, tab):
     database = Database.objects.get(id=id)
     if not is_dba:
         can_access = True
+        teams = request.user.team_set.all()
         if (
-            database.team not in request.user.team_set.all() or
-            utils.can_access_database(database)
+            database.team not in teams and
+            not utils.can_access_database(database, teams)
         ):
             messages.add_message(
                 request, messages.ERROR,
