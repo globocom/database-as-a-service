@@ -294,17 +294,9 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         if request.user.has_perm(self.perm_add_database_infra):
             return qs
 
+        from ..utils import databases_by_env
         teams = Team.objects.filter(users=request.user)
-        roles = [team.role for team in teams]
-        role_environments = RoleEnvironment.objects.filter(
-            role__in=[role.id for role in roles]
-        ).distinct()
-
-        environments = []
-        for role_env in role_environments:
-            environments.extend(role_env.environments.all())
-
-        qs_by_env = qs.filter(environment__in=[env.id for env in environments])
+        qs_by_env = databases_by_env(qs, teams)
         qs_by_team = qs.filter(team__in=[team.id for team in teams])
         return (qs_by_env | qs_by_team).distinct().order_by('name')
 
