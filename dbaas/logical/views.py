@@ -41,6 +41,7 @@ from maintenance.models import (
 )
 from . import services
 from . import exceptions
+from . import utils
 
 
 LOG = logging.getLogger(__name__)
@@ -146,7 +147,10 @@ def check_permission(request, id, tab):
     database = Database.objects.get(id=id)
     if not is_dba:
         can_access = True
-        if database.team not in request.user.team_set.all():
+        if (
+            database.team not in request.user.team_set.all() or
+            utils.can_access_database(database)
+        ):
             messages.add_message(
                 request, messages.ERROR,
                 ('This database belong to {} team, you are not member of '
