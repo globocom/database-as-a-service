@@ -70,3 +70,40 @@ class SetFeatureCompatibilityVersion36(DatabaseStep):
                     )
                 )
 
+class SetFeatureCompatibilityToNewVersion(DatabaseStep):
+
+    def __unicode__(self):
+        return "Setting Compatibility Version new version..."
+
+    @property
+    def is_valid(self):
+        if self.upgrade and self.instance == self.infra.instances.all()[0]:
+            return True
+        return False
+
+    @property
+    def target_version(self):
+        if self.upgrade:
+            engine = self.upgrade.target_plan.engine
+            return "{}.{}".format(engine.major_version, engine.minor_version)
+
+    def getFeatureCompatibilityVersion(self, client):
+        parameters = client.admin.command('getParameter', '*')
+        return parameters['featureCompatibilityVersion']['version']
+
+    def do(self):
+        if not self.is_valid:
+            return
+
+        client = self.driver.get_client(None)
+        target_version = self.target_version
+
+        if self.getFeatureCompatibilityVersion(client) != target_version:
+            client.admin.command('setFeatureCompatibilityVersion',
+                target_version)
+            if self.getFeatureCompatibilityVersion(client) != target_version:
+                raise EnvironmentError(
+                    'Could not set featureCompatibilityVersion on {}'.format(
+                        self.infra.name)
+                )
+

@@ -18,6 +18,7 @@ from .host import HostAPI, CheckIsSlaveAPIView
 from .snapshot import SnapshotAPI
 from .database_history import DatabaseHistoryAPI
 from .database_restore import DatabaseRestoreAPI
+from .database_create import DatabaseCreateAPI
 from .database_change_parameter import DatabaseChangeParameterAPI
 
 
@@ -39,6 +40,7 @@ router.register(r'extra_dns', ExtraDnsAPI)
 router.register(r'task', TaskAPI, base_name="task")
 router.register(r'database_history', DatabaseHistoryAPI)
 router.register(r'database_restore', DatabaseRestoreAPI)
+router.register(r'database_create', DatabaseCreateAPI)
 router.register(r'database_change_parameter', DatabaseChangeParameterAPI)
 
 if settings.CLOUD_STACK_ENABLED:
