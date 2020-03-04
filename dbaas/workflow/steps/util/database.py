@@ -41,7 +41,7 @@ class DatabaseStep(BaseInstanceStep):
             command=script,
             output=output,
             retry=False,
-            get_pty=True)
+            get_pty=self.driver.get_start_pty_default())
         return return_code, output
 
     def _execute_init_script(self, command):
