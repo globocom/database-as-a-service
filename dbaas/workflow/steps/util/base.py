@@ -223,6 +223,14 @@ class BaseInstanceStep(object):
 
         return run_script(self, script, host or self.host)
 
+    @property
+    def is_first_instance(self):
+        return self.instance == self.infra.instances.first()
+
+    @property
+    def is_last_instance(self):
+        return self.instance == self.infra.instances.last()
+
     def do(self):
         raise NotImplementedError
 
