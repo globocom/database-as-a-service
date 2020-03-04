@@ -418,6 +418,9 @@ class BaseDriver(object):
     def get_metric_collector_password(self, password):
         return password
 
+    def get_start_pty_default(self):
+        return False
+
 
 class DatabaseStatus(object):
 
