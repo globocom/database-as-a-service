@@ -492,6 +492,8 @@ class MySQL(BaseDriver):
         drop_user_cmd = "DROP USER '{}'@'{}'".format(username, host)
         self.__query(drop_user_cmd)
 
+    def get_start_pty_default(self):
+        return True
 
 
 class MySQLFOXHA(MySQL):
