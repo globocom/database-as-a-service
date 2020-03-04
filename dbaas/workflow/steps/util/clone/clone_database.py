@@ -15,6 +15,9 @@ class CloneDatabaseData(BaseInstanceStep):
         return "Replicating database data..."
 
     def do(self):
+
+        if not self.is_first_instance:
+            return
         try:
             args = get_clone_args(
                 self.step_manager.origin_database, self.database)
