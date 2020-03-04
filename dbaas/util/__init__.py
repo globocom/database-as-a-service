@@ -240,7 +240,7 @@ def get_mongodb_key_file(infra):
 
 
 def exec_remote_command(server, username, password, command, output={},
-                        retry=False):
+                        retry=False, get_pty=False):
 
     try:
         LOG.info(
@@ -250,7 +250,7 @@ def exec_remote_command(server, username, password, command, output={},
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         client.connect(server, username=username, password=password)
 
-        stdin, stdout, stderr = client.exec_command(command)
+        stdin, stdout, stderr = client.exec_command(command, get_pty=get_pty)
         log_stdout = stdout.readlines()
         log_stderr = stderr.readlines()
         exit_status = stdout.channel.recv_exit_status()
@@ -274,7 +274,8 @@ def exec_remote_command(server, username, password, command, output={},
         return None
 
 
-def exec_remote_command_host(host, command, output=None, retry=False):
+def exec_remote_command_host(host, command, output=None,
+                             retry=False, get_pty=False):
     if output is None:
         output = {}
 
@@ -284,7 +285,8 @@ def exec_remote_command_host(host, command, output=None, retry=False):
         password=host.password,
         command=command,
         output=output,
-        retry=retry
+        retry=retry,
+        get_pty=get_pty
     )
 
 
