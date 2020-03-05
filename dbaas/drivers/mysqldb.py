@@ -12,7 +12,7 @@ from logical.models import Credential
 from system.models import Configuration
 from physical.models import Instance
 from drivers import BaseDriver, DatabaseInfraStatus, DatabaseStatus
-from drivers import driver_errors
+from drivers import errors as driver_errors
 
 
 LOG = logging.getLogger(__name__)
