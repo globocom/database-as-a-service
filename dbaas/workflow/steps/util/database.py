@@ -36,7 +36,12 @@ class DatabaseStep(BaseInstanceStep):
 
     def run_script(self, script):
         output = {}
-        return_code = exec_remote_command_host(self.host, script, output)
+        return_code = exec_remote_command_host(
+            host=self.host,
+            command=script,
+            output=output,
+            retry=False,
+            get_pty=self.driver.get_start_pty_default())
         return return_code, output
 
     def _execute_init_script(self, command):

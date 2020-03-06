@@ -20,14 +20,14 @@ from django.utils.html import format_html, escape
 from django.forms.models import modelform_factory
 from django.core.exceptions import FieldError
 from dbaas import constants
-from account.models import Team
+from account.models import Team, RoleEnvironment
 from drivers.errors import DatabaseAlreadyExists
 from notification.tasks import TaskRegister
 from system.models import Configuration
 from util.html import show_info_popup
 from logical.models import Database
 from physical.models import Engine
-from logical.views import database_details, database_hosts, \
+from logical.views import database_details, DatabaseHostsView, \
     database_credentials, database_resizes, DatabaseMaintenanceView, \
     database_backup, database_dns, database_metrics, database_destroy, \
     database_delete_host, database_upgrade, database_upgrade_retry, \
@@ -37,7 +37,8 @@ from logical.views import database_details, database_hosts, \
     database_switch_write, database_reinstall_vm, database_reinstall_vm_retry,\
     DatabaseParameters, database_configure_ssl_retry, database_configure_ssl, \
     database_migrate, zones_for_environment, ExecuteScheduleTaskView, \
-    DatabaseMigrateEngineRetry, DatabaseUpgradeView
+    DatabaseMigrateEngineRetry, DatabaseUpgradeView, \
+    AddInstancesDatabaseRetryView, AddInstancesDatabaseRollbackView
 
 from logical.forms import DatabaseForm
 from logical.service.database import DatabaseService
@@ -285,11 +286,19 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
         return super(DatabaseAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
 
     def queryset(self, request):
+        """Queryset returns all of the databases when user has add DatabaseInfra
+        permission. Otherwise, this method looks for databases by team and
+        environment.
+        """
         qs = super(DatabaseAdmin, self).queryset(request)
         if request.user.has_perm(self.perm_add_database_infra):
             return qs
 
-        return qs.filter(team__in=[team.id for team in Team.objects.filter(users=request.user)])
+        from ..utils import databases_by_env
+        teams = Team.objects.filter(users=request.user)
+        qs_by_env = databases_by_env(qs, teams)
+        qs_by_team = qs.filter(team__in=[team.id for team in teams])
+        return (qs_by_env | qs_by_team).distinct().order_by('name')
 
     def has_add_permission(self, request):
         """User must be set to at least one team to be able to add database"""
@@ -618,6 +627,16 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 name="resize_rollback"
             ),
             url(
+                r'^/?(?P<id>\d+)/add_instances_database_retry/$',
+                self.admin_site.admin_view(AddInstancesDatabaseRetryView.as_view()),
+                name="add_instances_database_retry"
+            ),
+            url(
+                r'^/?(?P<id>\d+)/add_instances_database_rollback/$',
+                self.admin_site.admin_view(AddInstancesDatabaseRollbackView.as_view()),
+                name="add_instances_database_rollback"
+            ),
+            url(
                 r'^/?(?P<id>\d+)/make_backup/$',
                 self.admin_site.admin_view(database_make_backup),
                 name="logical_database_make_backup"
@@ -635,7 +654,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             ),
             url(
                 r'^/?(?P<id>\d+)/hosts/$',
-                self.admin_site.admin_view(database_hosts),
+                self.admin_site.admin_view(DatabaseHostsView.as_view()),
                 name="logical_database_hosts"
             ),
             url(

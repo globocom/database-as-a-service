@@ -559,6 +559,7 @@ def purge_task_history(self):
 
 
 @app.task(bind=True)
+@only_one(key="checksslexpireattask")
 def check_ssl_expire_at(self):
     LOG.info("Retrieving all SSL MySQL databases")
     today = date.today()
@@ -614,7 +615,7 @@ def check_ssl_expire_at(self):
 
 
 @app.task(bind=True)
-@only_one(key="execute_scheduled_maintenance")
+@only_one(key="executescheduledmaintenancetask")
 def execute_scheduled_maintenance(self, task=None, user=None,
                                   auto_rollback=True):
     LOG.info("Searching Scheduled tasks")
@@ -1025,9 +1026,10 @@ def change_parameters_database(self, database, user, task, since_step=0):
 
 
 @app.task(bind=True)
-def add_instances_to_database(self, database, user, task,
-                              number_of_instances=1):
-    from workflow.workflow import steps_for_instances_with_rollback
+def add_instances_to_database(
+    self, database, user, task, number_of_instances=1,
+    number_of_instances_before_task=0, since_step=0
+):
     from util.providers import get_add_database_instances_steps
     from util import get_vm_name
 
@@ -1041,33 +1043,128 @@ def add_instances_to_database(self, database, user, task,
     class_path = plan.replication_topology.class_path
     steps = get_add_database_instances_steps(class_path)
 
+    add_instances_to_database_obj = maintenance_models.AddInstancesToDatabase()
+    add_instances_to_database_obj.database = database
+    add_instances_to_database_obj.task = task
+    add_instances_to_database_obj.number_of_instances = number_of_instances
+    add_instances_to_database_obj.number_of_instances_before = (
+        number_of_instances_before_task
+    )
+    add_instances_to_database_obj.save()
+
     instances = []
-    last_vm_created = infra.last_vm_created
+    last_vm_created = number_of_instances_before_task
 
     for i in range(number_of_instances):
+        instance = None
         last_vm_created += 1
         vm_name = get_vm_name(
             prefix=infra.name_prefix,
             sufix=infra.name_stamp,
             vm_number=last_vm_created
         )
-        new_instance = Instance(
-            databaseinfra=infra,
-            dns=vm_name,
-            port=driver.get_default_database_port(),
-            instance_type=driver.get_default_instance_type()
-        )
-        new_instance.vm_name = vm_name
-        instances.append(new_instance)
 
-    success = steps_for_instances_with_rollback(
+        try:
+            instance = infra.instances.get(
+                Q(hostname__hostname__startswith=vm_name) |
+                Q(dns__startswith=vm_name),
+                port=driver.get_default_database_port(),
+            )
+        except Instance.DoesNotExist:
+            instance = Instance(
+                databaseinfra=infra,
+                dns=vm_name,
+                port=driver.get_default_database_port(),
+                instance_type=driver.get_default_instance_type()
+            )
+
+        instance.vm_name = instance.dns
+        instances.append(instance)
+
+    success = steps_for_instances(
         steps, instances, task,
+        step_counter_method=add_instances_to_database_obj.update_step,
+        since_step=since_step
     )
 
     if success:
+        add_instances_to_database_obj.set_success()
         task.update_status_for(TaskHistory.STATUS_SUCCESS, 'Done')
     else:
-        task.update_status_for(TaskHistory.STATUS_ERROR, 'Done')
+        add_instances_to_database_obj.set_error()
+        task.update_status_for(
+            TaskHistory.STATUS_ERROR,
+            'Could not do add instance(s) to database.'
+        )
+
+
+@app.task(bind=True)
+def add_instances_to_database_rollback(self, manager_obj, user, task):
+    from util.providers import get_add_database_instances_steps
+    from util import get_vm_name
+
+    worker_name = get_worker_name()
+    task = TaskHistory.register(self.request, user, task, worker_name)
+
+    infra = manager_obj.database.infra
+    plan = infra.plan
+    driver = infra.get_driver()
+
+    class_path = plan.replication_topology.class_path
+    steps = get_add_database_instances_steps(class_path)
+
+    manager_obj.id = None
+    manager_obj.created_at = None
+    manager_obj.finished_at = None
+    manager_obj.task = task
+    manager_obj.current_step -= 1
+    manager_obj.save()
+
+    instances = []
+    last_vm_created = manager_obj.number_of_instances_before
+
+    for i in range(manager_obj.number_of_instances):
+        instance = None
+        last_vm_created += 1
+        vm_name = get_vm_name(
+            prefix=infra.name_prefix,
+            sufix=infra.name_stamp,
+            vm_number=last_vm_created
+        )
+
+        try:
+            instance = infra.instances.get(
+                Q(hostname__hostname__startswith=vm_name) |
+                Q(dns__startswith=vm_name),
+                port=driver.get_default_database_port(),
+            )
+        except Instance.DoesNotExist:
+            instance = Instance(
+                databaseinfra=infra,
+                dns=vm_name,
+                port=driver.get_default_database_port(),
+                instance_type=driver.get_default_instance_type()
+            )
+
+        instance.vm_name = instance.dns
+        instances.append(instance)
+
+    success = rollback_for_instances_full(
+        steps, instances, task,
+        manager_obj.get_current_step, manager_obj.update_step
+    )
+
+    if success:
+        manager_obj.set_rollback()
+        task.update_status_for(TaskHistory.STATUS_SUCCESS, 'Done.')
+    else:
+        manager_obj.current_step += 1
+        manager_obj.set_error()
+        task.update_status_for(
+            TaskHistory.STATUS_ERROR,
+            'Could not do rollback\n'
+            'Please check error message and do retry'
+        )
 
 
 @app.task(bind=True)
@@ -1447,7 +1544,10 @@ class TaskRegister(object):
         resize_database_rollback.delay(from_resize, user, task)
 
     @classmethod
-    def database_add_instances(cls, database, user, number_of_instances):
+    def database_add_instances(
+        cls, database, user, number_of_instances,
+        number_of_instances_before_task, since_step=None
+    ):
         task_params = {
             'task_name': 'add_database_instances',
             'arguments': "Adding instances on database {}".format(database),
@@ -1456,14 +1556,42 @@ class TaskRegister(object):
             'relevance': TaskHistory.RELEVANCE_CRITICAL
         }
 
+        if since_step:
+            task_params['task_name'] = 'add_database_instances_retry'
+            task_params['arguments'] = (
+                'Retrying to add instances to database {}'.format(database)
+            )
+
         task = cls.create_task(task_params)
 
-        add_instances_to_database.delay(
-            database=database,
-            user=user,
-            task=task,
-            number_of_instances=number_of_instances
-        )
+        delay_params = {
+            'database': database,
+            'task': task,
+            'user': user,
+            'number_of_instances': number_of_instances,
+            'number_of_instances_before_task': number_of_instances_before_task
+        }
+
+        delay_params.update(**{'since_step': since_step} if since_step else {})
+
+        add_instances_to_database.delay(**delay_params)
+
+    @classmethod
+    def database_add_instances_rollback(
+        cls, manager_obj, user
+    ):
+        task_params = {
+            'task_name': 'resize_database_rollback',
+            'arguments': "Rollback Add Instance to database {}".format(
+                manager_obj.database
+            ),
+            'user': user,
+            'database': manager_obj.database,
+            'relevance': TaskHistory.RELEVANCE_CRITICAL
+        }
+
+        task = cls.create_task(task_params)
+        add_instances_to_database_rollback.delay(manager_obj, user, task)
 
     @classmethod
     def database_remove_instance(cls, database, user, instance):

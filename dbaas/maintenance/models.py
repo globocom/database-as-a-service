@@ -1008,6 +1008,27 @@ class UpdateSsl(DatabaseMaintenanceTask):
                     pass
 
 
+class AddInstancesToDatabase(DatabaseMaintenanceTask):
+    task = models.ForeignKey(
+        TaskHistory, verbose_name="Task History",
+        null=False, related_name="add_instances_to_database_manager"
+    )
+    database = models.ForeignKey(
+        Database, verbose_name="Database",
+        null=False, unique=False,
+        related_name="add_instances_to_database_manager"
+    )
+    number_of_instances = models.PositiveIntegerField(
+        verbose_name="Number of Instances", null=False, unique=False
+    )
+    number_of_instances_before = models.PositiveIntegerField(
+        verbose_name="Number of Instances Before", null=True, unique=False
+    )
+
+    def __unicode__(self):
+        return "Add instances to database: {}".format(self.database)
+
+
 simple_audit.register(Maintenance)
 simple_audit.register(HostMaintenance)
 simple_audit.register(MaintenanceParameters)

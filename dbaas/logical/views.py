@@ -35,8 +35,13 @@ from logical.validators import (check_is_database_enabled,
                                 check_is_database_dead,
                                 ParameterValidator)
 from workflow.steps.util.host_provider import Provider
-from maintenance.models import (DatabaseUpgradePatch, DatabaseUpgrade,
-                                TaskSchedule, DatabaseMigrateEngine)
+from maintenance.models import (
+    DatabaseUpgradePatch, DatabaseUpgrade, TaskSchedule, DatabaseMigrateEngine,
+    RecreateSlave, AddInstancesToDatabase
+)
+from . import services
+from . import exceptions
+from . import utils
 
 
 LOG = logging.getLogger(__name__)
@@ -142,11 +147,17 @@ def check_permission(request, id, tab):
     database = Database.objects.get(id=id)
     if not is_dba:
         can_access = True
-        if database.team not in request.user.team_set.all():
+        teams = request.user.team_set.all()
+        if (
+            database.team not in teams and
+            not utils.can_access_database(database, teams)
+        ):
             messages.add_message(
                 request, messages.ERROR,
                 ('This database belong to {} team, you are not member of '
-                 'this team').format(database.team)
+                 "this team or has not access to database's environment").format(
+                     database.team
+                )
             )
             can_access = False
         elif database.is_in_quarantine:
@@ -1242,7 +1253,7 @@ class DatabaseUpgradeView(TemplateView):
         )
 
 
-def _add_read_only_instances(request, database):
+def _add_read_only_instances(request, database, retry=False):
     try:
         check_is_database_dead(database.id, 'Add read-only instances')
         check_is_database_enabled(database.id, 'Add read-only instances')
@@ -1275,129 +1286,234 @@ def _add_read_only_instances(request, database):
         )
         return
 
-    TaskRegister.database_add_instances(
+    add_instances_to_database_kwargs = dict(
         database=database,
         user=request.user,
         number_of_instances=qtd_new_hosts
     )
 
+    if retry:
+        error = None
+        last_add_instances_database = AddInstancesToDatabase.objects.filter(
+            database=self.database
+        ).last()
 
-@database_view('hosts')
-def database_hosts(request, context, database):
-    from maintenance.models import RecreateSlave
-    if request.method == 'POST':
-        if 'add_read_only' in request.POST:
-            _add_read_only_instances(request, database)
+        if not last_add_instances_database:
+            error = "Database does not have add_database_instances"
+        elif not last_add_instances_database.is_status_error:
+            error = ("Cannot do retry, last add_instances_to_database. "
+                     "Status is '{}'!").format(
+                        last_add_instances_database.get_status_display())
+        else:
+            since_step = last_add_instances_database.current_step
+            add_instances_to_database_kwargs['since_step'] = since_step
+
+        if error:
+            messages.add_message(self.request, messages.ERROR, error)
+
+    TaskRegister.database_add_instances(**add_instances_to_database_kwargs)
+
+
+class AddInstancesDatabaseRetryView(View):
+
+    def get(self, request, *args, **kwargs):
+        service_obj = services.AddReadOnlyInstanceService(
+            request, self.database, retry=True
+        )
+        service_obj.execute()
+        return HttpResponseRedirect(
             reverse(
                 'admin:logical_database_hosts',
-                kwargs={'id': database.id}
+                kwargs={'id': self.database.id}
             )
-        if 'recreate_slave' in request.POST:
+        )
+
+    @database_view_class('')
+    def dispatch(self, request, *args, **kwargs):
+        self.context, self.database = args
+        return super(AddInstancesDatabaseRetryView, self).dispatch(
+            request, *args, **kwargs
+        )
+
+
+class AddInstancesDatabaseRollbackView(View):
+
+    def get(self, request, *args, **kwargs):
+        service_obj = services.AddReadOnlyInstanceService(
+            request, self.database, rollback=True
+        )
+        service_obj.rollback()
+        return HttpResponseRedirect(
+            reverse(
+                'admin:logical_database_hosts',
+                kwargs={'id': self.database.id}
+            )
+        )
+
+    @database_view_class('')
+    def dispatch(self, request, *args, **kwargs):
+        self.context, self.database = args
+        return super(AddInstancesDatabaseRollbackView, self).dispatch(
+            request, *args, **kwargs
+        )
+
+
+class DatabaseHostsView(TemplateView):
+    template_name = "logical/database/details/hosts_tab.html"
+
+    def is_add_read_only(self):
+        return 'add_read_only' in self.request.POST
+
+    def is_add_read_only_retry(self):
+        return 'add_read_only_retry' in self.request.POST
+
+    def is_add_read_only_rollback(self):
+        return 'add_read_only_rollback' in self.request.POST
+
+    def is_recreate_slave(self):
+        return 'recreate_slave' in self.request.POST
+
+    def post(self, request, *args, **kwargs):
+        if self.is_add_read_only():
+            self.add_instace_to_database(request)
+        elif self.is_add_read_only_retry():
+            self.add_instace_to_database(request, retry=True)
+        elif self.is_add_read_only_rollback():
+            self.add_instace_to_database(request, rollback=True)
+        elif self.is_recreate_slave():
             host_id = request.POST.get('host_id')
-            host = database.infra.instances.filter(
+            host = self.database.infra.instances.filter(
                 hostname__id=host_id
             ).first().hostname
             TaskRegister.recreate_slave(host, request.user)
             return HttpResponseRedirect(
                 reverse(
                     'admin:logical_database_hosts',
-                    kwargs={'id': database.id}
+                    kwargs={'id': self.database.id}
                 )
             )
+        return self.render_to_response(self.get_context_data())
 
-    hosts = OrderedDict()
-    instances = database.infra.instances.all().order_by('shard', 'id')
-    if instances[0].shard:
-        instances_tmp = []
-        instances_slaves = []
-        last_shard = None
-        for instance in instances:
-            if instance.is_current_write:
-                instances_tmp.append(instance)
-                last_shard = instance.shard
-                if instances_slaves:
-                    instances_tmp += instances_slaves
-                    instances_slaves = []
+    def add_instace_to_database(self, request, retry=False, rollback=False):
+        try:
+            service_obj = services.AddReadOnlyInstanceService(
+                request, self.database, retry=retry, rollback=rollback
+            )
+
+            if rollback:
+                service_obj.rollback()
             else:
-                if last_shard == instance.shard:
-                    instances_tmp.append(instance)
-                else:
-                    instances_slaves.append(instance)
-        if instances_slaves:
-            instances_tmp += instances_slaves
+                service_obj.execute()
+        except (
+            exceptions.DatabaseIsNotHA, exceptions.DatabaseNotAvailable,
+            exceptions.ManagerInvalidStatus, exceptions.ManagerNotFound,
+            exceptions.ReadOnlyHostsLimit, exceptions.RequiredNumberOfInstances
+        ) as error:
+            messages.add_message(self.request, messages.ERROR, str(error))
+
+    def get_context_data(self, **kwargs):
+        hosts = OrderedDict()
+        instances = self.database.infra.instances.all().order_by('shard', 'id')
+        if instances[0].shard:
+            instances_tmp = []
             instances_slaves = []
+            last_shard = None
+            for instance in instances:
+                if instance.is_current_write:
+                    instances_tmp.append(instance)
+                    last_shard = instance.shard
+                    if instances_slaves:
+                        instances_tmp += instances_slaves
+                        instances_slaves = []
+                else:
+                    if last_shard == instance.shard:
+                        instances_tmp.append(instance)
+                    else:
+                        instances_slaves.append(instance)
+            if instances_slaves:
+                instances_tmp += instances_slaves
+                instances_slaves = []
 
-        instances = instances_tmp
+            instances = instances_tmp
 
-    for instance in instances:
-        if instance.hostname not in hosts:
-            hosts[instance.hostname] = []
-        hosts[instance.hostname].append(instance)
-
-    context['core_attribute'] = database.engine.write_node_description
-    context['read_only_attribute'] = database.engine.read_node_description
-    context['last_reinstall_vm'] = database.reinstall_vm.last()
-    context['last_recreat_slave'] = RecreateSlave.objects.filter(
-        host__in=database.infra.hosts,
-        can_do_retry=True,
-        status=RecreateSlave.ERROR
-    ).last()
-    context['instances_core'] = []
-    context['instances_read_only'] = []
-    for host, instances in hosts.items():
-        attributes = []
-        is_read_only = False
-        status = ''
-        switch_database = False
         for instance in instances:
-            is_read_only = instance.read_only
-            status = instance.status_html()
+            if instance.hostname not in hosts:
+                hosts[instance.hostname] = []
+            hosts[instance.hostname].append(instance)
 
-            if not instance.is_database:
-                context['non_database_attribute'] = (
-                    instance.get_instance_type_display()
-                )
-                attributes.append(context['non_database_attribute'])
-            elif instance.is_current_write:
-                attributes.append(context['core_attribute'])
-                if database.databaseinfra.plan.is_ha:
-                    switch_database = True
+        self.context['core_attribute'] = self.database.engine.write_node_description
+        self.context['read_only_attribute'] = self.database.engine.read_node_description
+        self.context['last_reinstall_vm'] = self.database.reinstall_vm.last()
+        self.context['last_recreat_slave'] = RecreateSlave.objects.filter(
+            host__in=self.database.infra.hosts,
+            can_do_retry=True,
+            status=RecreateSlave.ERROR
+        ).last()
+        self.context['instances_core'] = []
+        self.context['instances_read_only'] = []
+        for host, instances in hosts.items():
+            attributes = []
+            is_read_only = False
+            status = ''
+            switch_database = False
+            for instance in instances:
+                is_read_only = instance.read_only
+                status = instance.status_html()
+
+                if not instance.is_database:
+                    self.context['non_database_attribute'] = (
+                        instance.get_instance_type_display()
+                    )
+                    attributes.append(self.context['non_database_attribute'])
+                elif instance.is_current_write:
+                    attributes.append(self.context['core_attribute'])
+                    if self.database.databaseinfra.plan.is_ha:
+                        switch_database = True
+                else:
+                    attributes.append(self.context['read_only_attribute'])
+
+            full_description = host.hostname
+
+            padding = False
+            if not instance.is_current_write:
+                if instance.shard:
+                    padding = True
+
+            if len(hosts) > 1:
+                full_description += ' - ' + '/'.join(attributes)
+
+            host_data = {
+                'id': host.id, 'status': status, 'description': full_description,
+                'switch_database': switch_database, 'padding': padding,
+                'is_database': host.is_database
+            }
+
+            if is_read_only:
+                self.context['instances_read_only'].append(host_data)
             else:
-                attributes.append(context['read_only_attribute'])
+                self.context['instances_core'].append(host_data)
 
-        full_description = host.hostname
+        self.context['max_read_hosts'] = Configuration.get_by_name_as_int(
+            'max_read_hosts', 5
+        )
+        enable_host = self.context['max_read_hosts'] - len(
+            self.context['instances_read_only']
+        )
+        self.context['enable_host'] = range(1, enable_host+1)
+        self.context['add_read_only_retry'] = (
+            AddInstancesToDatabase.objects.need_retry(
+                database=self.database
+            )
+        )
 
-        padding = False
-        if not instance.is_current_write:
-            if instance.shard:
-                padding = True
+        return self.context
 
-        if len(hosts) > 1:
-            full_description += ' - ' + '/'.join(attributes)
-
-        host_data = {
-            'id': host.id, 'status': status, 'description': full_description,
-            'switch_database': switch_database, 'padding': padding,
-            'is_database': host.is_database
-        }
-
-        if is_read_only:
-            context['instances_read_only'].append(host_data)
-        else:
-            context['instances_core'].append(host_data)
-
-    context['max_read_hosts'] = Configuration.get_by_name_as_int(
-        'max_read_hosts', 5
-    )
-    enable_host = context['max_read_hosts'] - len(
-        context['instances_read_only']
-    )
-    context['enable_host'] = range(1, enable_host+1)
-
-    return render_to_response(
-        "logical/database/details/hosts_tab.html",
-        context, RequestContext(request)
-    )
+    @database_view_class('hosts')
+    def dispatch(self, request, *args, **kwargs):
+        self.context, self.database = args
+        return super(DatabaseHostsView, self).dispatch(
+            request, *args, **kwargs
+        )
 
 
 def database_delete_host(request, database_id, host_id):

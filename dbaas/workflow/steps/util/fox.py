@@ -202,5 +202,3 @@ class IsReplicationOkMigrate(IsReplicationOk):
     def do(self):
         self.verify_heartbeat = False
         return super(IsReplicationOkMigrate, self).do()
-
-
