@@ -117,9 +117,14 @@ def make_instance_snapshot_backup(instance, error, group,
             end_at__month=current_time.month,
             end_at__day=current_time.day
         )
+        backup_hour_list = Configuration.get_by_name_as_list(
+            'make_database_backup_hour'
+            )
         if (snapshot_final_status == Snapshot.WARNING and has_snapshot):
-            if (current_hour == 12 or current_hour == 23):
-                raise Exception("Backup with WARNING already created today.")
+            if current_hour in [int(hour) for hour in backup_hour_list]:
+                raise Exception(
+                    "Backup with WARNING already created today."
+                    )
         else:
             response = provider.take_snapshot()
             snapshot.done(response)
