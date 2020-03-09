@@ -449,6 +449,10 @@ def get_worker_name():
     return p.initargs[1].split('@')[1]
 
 
+def get_now():
+    import datetime
+    return datetime.datetime.now()
+
 def get_dict_lines(my_dict={}):
     final_str = ''
     for key in my_dict.keys():
