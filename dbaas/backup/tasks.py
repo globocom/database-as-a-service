@@ -11,7 +11,7 @@ from system.models import Configuration
 from util.decorators import only_one
 from workflow.steps.util.volume_provider import VolumeProviderBase
 from models import Snapshot, BackupGroup
-from util import exec_remote_command_host, get_worker_name, get_credentials_for
+from util import exec_remote_command_host, get_worker_name, get_credentials_for, get_now
 
 
 LOG = getLogger(__name__)
@@ -203,6 +203,7 @@ def update_ssl(self):
 @app.task(bind=True)
 @only_one(key="makedatabasebackupkey")
 def make_databases_backup(self):
+    import pdb;pdb.set_trace()
     LOG.info("Making databases backups")
     worker_name = get_worker_name()
     task_history = TaskHistory.register(
@@ -224,7 +225,7 @@ def make_databases_backup(self):
     if not env_names_order:
         env_names_order = [env.name for env in environments]
 
-    current_time = datetime.now()
+    current_time = get_now()
     current_hour = current_time.hour
 
     # Get all infras with a backup today until the current hour
