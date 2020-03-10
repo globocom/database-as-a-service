@@ -1130,7 +1130,7 @@ database pre delete signal. Removes database from the engine
     engine.try_remove_database(database)
 
 
-@receiver(post_save, sender=Database)
+@receiver(post_save, sender=Database, dispatch_uid="database_drive_credentials")
 def database_post_save(sender, **kwargs):
     """
         Database post save signal. Creates the database in the driver and
