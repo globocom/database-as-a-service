@@ -203,7 +203,6 @@ def update_ssl(self):
 @app.task(bind=True)
 @only_one(key="makedatabasebackupkey")
 def make_databases_backup(self):
-    import pdb;pdb.set_trace()
     LOG.info("Making databases backups")
     worker_name = get_worker_name()
     task_history = TaskHistory.register(
