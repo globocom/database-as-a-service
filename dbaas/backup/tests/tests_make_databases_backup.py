@@ -1,5 +1,5 @@
-from unittest import TestCase
-from mock import patch, MagicMock, Mock
+from django.test import TestCase
+from mock import patch
 from datetime import datetime
 
 from django.db.models import signals
@@ -18,7 +18,9 @@ class TestMakeDatabasesBackup(TestCase):
         self.month = 1
         self.day = 1
 
-        signals.post_save.disconnect(sender=Database, dispatch_uid="database_drive_credentials")
+        signals.post_save.disconnect(
+            sender=Database, dispatch_uid="database_drive_credentials"
+        )
 
         mommy.make(
             'Configuration', name='backup_hour', value=str(self.backup_hour)
@@ -59,7 +61,10 @@ class TestMakeDatabasesBackup(TestCase):
         )
         group = BackupGroup()
         save_backup_group.return_value = group
-        make_instance_snapshot_backup.return_value.status.return_value = Snapshot.SUCCESS
+        make_instance_snapshot_backup.return_value.status.return_value = (
+            Snapshot.SUCCESS
+        )
+
         make_databases_backup()
         make_instance_snapshot_backup.assert_called_with(
             instance=self.instance, error={}, group=group
