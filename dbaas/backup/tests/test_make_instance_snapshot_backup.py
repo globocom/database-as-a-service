@@ -208,6 +208,33 @@ class BinlogSaveTestCase(BaseTestCase):
         )
         self.assertFalse(mysql_binlog_save_mock.called)
 
+# @patch('backup.tasks.Snapshot.done',
+#        new=MagicMock())
+# @patch('backup.tasks.lock_instance',
+#        new=MagicMock())
+# @patch('backup.tasks.unlock_instance',
+#        new=MagicMock())
+# @patch('backup.tasks.mysql_binlog_save',
+#        new=MagicMock())
+# @patch('backup.tasks.VolumeProviderBase.take_snapshot',
+#        new=MagicMock())
+# @patch('backup.tasks.register_backup_dbmonitor',
+#        new=MagicMock())
+# @patch('physical.models.DatabaseInfra.get_driver',
+#        new=MagicMock())
+# @patch('system.models.Configuration.get_by_name_as_list')
+# @patch('backup.tasks.exec_remote_command_host',
+#        new=MagicMock())
+# class BackupHourTestCase(BaseTestCase):
+#
+#     def test_snapshot_with(self, get_by_name_mock):
+#         snapshot = make_instance_snapshot_backup(
+#             instance=self.instance,
+#             error={},
+#             group=self.group,
+#         )
+#         self.assertTrue(get_by_name_mock.called)
+
 
 @patch('backup.tasks.Snapshot.done',
        new=MagicMock())
