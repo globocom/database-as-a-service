@@ -809,7 +809,7 @@ def database_upgrade(request, context, database):
         )
     return HttpResponseRedirect(
         reverse(
-            'admin:logical_database_maintenance', kwargs={'id': database.id}
+            'admin:logical_database_upgrade', kwargs={'id': database.id}
         )
     )
 
@@ -843,7 +843,7 @@ def database_upgrade_retry(request, context, database):
         )
     return HttpResponseRedirect(
         reverse(
-            'admin:logical_database_maintenance', kwargs={'id': database.id}
+            'admin:logical_database_upgrade', kwargs={'id': database.id}
         )
     )
 
