@@ -1253,67 +1253,6 @@ class DatabaseUpgradeView(TemplateView):
         )
 
 
-def _add_read_only_instances(request, database, retry=False):
-    try:
-        check_is_database_dead(database.id, 'Add read-only instances')
-        check_is_database_enabled(database.id, 'Add read-only instances')
-    except DisabledDatabase as err:
-        messages.add_message(request, messages.ERROR, err.message)
-        return
-
-    if not database.plan.replication_topology.has_horizontal_scalability:
-        messages.add_message(
-            request, messages.ERROR,
-            'Database topology do not have horizontal scalability'
-        )
-        return
-
-    if 'add_read_qtd' not in request.POST:
-        messages.add_message(request, messages.ERROR, 'Quantity is required')
-        return
-
-    max_read_hosts = Configuration.get_by_name_as_int('max_read_hosts', 5)
-    qtd_new_hosts = int(request.POST['add_read_qtd'])
-    current_read_nodes = len(database.infra.instances.filter(read_only=True))
-    total_read_hosts = qtd_new_hosts + current_read_nodes
-    if total_read_hosts > max_read_hosts:
-        messages.add_message(
-            request, messages.ERROR,
-            ('Current limit of read only hosts is {} and you are trying '
-             'to setup {}').format(
-                max_read_hosts, total_read_hosts
-            )
-        )
-        return
-
-    add_instances_to_database_kwargs = dict(
-        database=database,
-        user=request.user,
-        number_of_instances=qtd_new_hosts
-    )
-
-    if retry:
-        error = None
-        last_add_instances_database = AddInstancesToDatabase.objects.filter(
-            database=self.database
-        ).last()
-
-        if not last_add_instances_database:
-            error = "Database does not have add_database_instances"
-        elif not last_add_instances_database.is_status_error:
-            error = ("Cannot do retry, last add_instances_to_database. "
-                     "Status is '{}'!").format(
-                        last_add_instances_database.get_status_display())
-        else:
-            since_step = last_add_instances_database.current_step
-            add_instances_to_database_kwargs['since_step'] = since_step
-
-        if error:
-            messages.add_message(self.request, messages.ERROR, error)
-
-    TaskRegister.database_add_instances(**add_instances_to_database_kwargs)
-
-
 class AddInstancesDatabaseRetryView(View):
 
     def get(self, request, *args, **kwargs):
