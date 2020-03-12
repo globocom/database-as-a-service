@@ -15,6 +15,9 @@ def fake_exec_remote_command(*args, **kw):
     output['stdout'] = ['978']
 
 
+FAKE_MAKE_DATABASE_BACKUP_HOUR = [12, 23]
+
+
 class BaseTestCase(TestCase):
 
     def setUp(self):
@@ -118,8 +121,8 @@ class CreateSnapshotTestCase(BaseTestCase):
        new=MagicMock())
 class SnapshotStatusTestCase(BaseTestCase):
 
-    def test_snapshot_warning_when_fail_to_lock(self, take_snapshot_mock,
-                                                done_mock):
+    def test_snapshot_warning_when_fail_to_lock(self,
+                                                take_snapshot_mock, done_mock):
         snapshot = make_instance_snapshot_backup(
             instance=self.instance,
             error={},
@@ -129,7 +132,9 @@ class SnapshotStatusTestCase(BaseTestCase):
         self.assertTrue(take_snapshot_mock.called)
         self.assertTrue(done_mock.called)
 
-    def test_snapshot_with_error_when_have_snapshot_warning_same_day(
+    @patch('system.models.Configuration.get_by_name_as_list',
+           new=MagicMock(return_value=FAKE_MAKE_DATABASE_BACKUP_HOUR))
+    def test_snapshot_with_error_when_current_hour_in_backup_hour_list(
             self, take_snapshot_mock, done_mock):
         mommy.make(
             'Snapshot',
@@ -141,11 +146,31 @@ class SnapshotStatusTestCase(BaseTestCase):
             instance=self.instance,
             error={},
             group=self.group,
+            current_hour=FAKE_MAKE_DATABASE_BACKUP_HOUR[0]
         )
         self.assertEqual(snapshot.status, Snapshot.ERROR)
         self.assertFalse(take_snapshot_mock.called)
         self.assertFalse(done_mock.called)
 
+    @patch('system.models.Configuration.get_by_name_as_list',
+           new=MagicMock(return_value=FAKE_MAKE_DATABASE_BACKUP_HOUR))
+    def test_snapshot_with_warning_when_not_in_backup_hour_list(
+            self, take_snapshot_mock, done_mock):
+        mommy.make(
+            'Snapshot',
+            status=Snapshot.WARNING,
+            instance=self.instance,
+            end_at=datetime.now()
+        )
+        snapshot = make_instance_snapshot_backup(
+            instance=self.instance,
+            error={},
+            group=self.group,
+            current_hour=15
+        )
+        self.assertEqual(snapshot.status, Snapshot.WARNING)
+        self.assertFalse(take_snapshot_mock.called)
+        self.assertFalse(done_mock.called)
 
 @patch('backup.tasks.Snapshot',
        new=MagicMock())
@@ -210,34 +235,6 @@ class BinlogSaveTestCase(BaseTestCase):
             group=self.group,
         )
         self.assertFalse(mysql_binlog_save_mock.called)
-
-@patch('backup.tasks.Snapshot.done',
-       new=MagicMock())
-@patch('backup.tasks.lock_instance',
-       new=MagicMock())
-@patch('backup.tasks.unlock_instance',
-       new=MagicMock())
-@patch('backup.tasks.mysql_binlog_save',
-       new=MagicMock())
-@patch('backup.tasks.VolumeProviderBase.take_snapshot',
-       new=MagicMock())
-@patch('backup.tasks.register_backup_dbmonitor',
-       new=MagicMock())
-@patch('physical.models.DatabaseInfra.get_driver',
-       new=MagicMock())
-@patch('system.models.Configuration.get_by_name_as_list')
-@patch('backup.tasks.exec_remote_command_host',
-       new=MagicMock())
-class BackupHourTestCase(BaseTestCase):
-
-    def test_snapshot_with(self, get_by_name_mock):
-        snapshot = make_instance_snapshot_backup(
-            instance=self.instance,
-            error={},
-            group=self.group,
-        )
-        self.assertTrue(get_by_name_mock.called)
-
 
 @patch('backup.tasks.Snapshot.done',
        new=MagicMock())
