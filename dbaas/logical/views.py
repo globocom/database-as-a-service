@@ -1097,6 +1097,12 @@ class DatabaseUpgradeView(TemplateView):
     def is_engine_migration_retry(self):
         return 'migrate_plan_retry' in self.request.POST
 
+    def is_upgrade(self):
+        return 'upgrade_database' in self.request.POST
+
+    def is_upgrade_retry(self):
+        return 'upgrade_database_retry' in self.request.POST
+
     def get_or_none_retry_migrate_engine_plan(self):
         engine_migration = DatabaseMigrateEngine.objects.need_retry(
             database=self.database
@@ -1121,8 +1127,24 @@ class DatabaseUpgradeView(TemplateView):
             self.migrate_engine(target_plan_id)
         elif self.is_engine_migration_retry():
             self.retry_migrate_engine()
+        elif self.is_upgrade():
+            self.upgrade_database(request)
+        elif self.is_upgrade_retry():
+            self.upgrade_database(request, retry=True)
 
         return self.render_to_response(self.get_context_data())
+
+    def upgrade_database(self, request, retry=False):
+        try:
+            service_obj = services.UpgradeDatabaseService(
+                request, self.database, retry=retry, rollback=False
+            )
+            service_obj.execute()
+        except (
+            exceptions.DatabaseNotAvailable, exceptions.ManagerInvalidStatus,
+            exceptions.ManagerNotFound, exceptions.DatabaseUpgradePlanNotFound
+        ) as error:
+            messages.add_message(self.request, messages.ERROR, str(error))
 
     def has_update_mongodb_30(self):
         return (
