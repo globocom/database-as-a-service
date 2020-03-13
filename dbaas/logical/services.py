@@ -137,3 +137,70 @@ class AddReadOnlyInstanceService:
         TaskRegister.database_add_instances_rollback(
             self.manager, self.request.user
         )
+
+
+class UpgradeDatabaseService:
+
+    def __init__(self, request, database, retry=False, rollback=False):
+        self.request = request
+        self.database = database
+        self.manager = None
+        self.retry = retry
+        self._rollback = rollback
+        self.task_params = {}
+
+        self.initialize()
+
+    def initialize(self):
+        self.load_manager()
+
+    def load_manager(self):
+        if self.retry or self._rollback:
+            self.manager = models.DatabaseUpgrade.objects.filter(
+                database=self.database
+            ).last()
+
+            if not self.manager:
+                error = "Database does not have upgrade_database"
+                raise exceptions.ManagerNotFound(error)
+            elif not self.manager.is_status_error:
+                error = ("Cannot do retry/rollback last upgrade_database. "
+                         "Status is '{}'!").format(
+                            self.manager.get_status_display())
+                raise exceptions.ManagerInvalidStatus(error)
+
+    def check_database_status(self):
+        try:
+            check_is_database_dead(self.database.id, 'Upgrade Database')
+            check_is_database_enabled(
+                self.database.id,
+                'Upgrade Database',
+                ['notification.tasks.upgrade_database']
+            )
+            return (True, '')
+        except DisabledDatabase as err:
+            return (False, err.message)
+
+    def execute(self):
+        status, message = self.check_database_status()
+        if not status:
+            raise exceptions.DatabaseNotAvailable(message)
+
+        self.task_params = dict(
+            database=self.database,
+            user=self.request.user
+        )
+
+        if not self.database.infra.plan.engine_equivalent_plan:
+            raise exceptions.DatabaseUpgradePlanNotFound(
+                "Source plan do not has equivalent plan to upgrade."
+            )
+
+        if self.retry:
+            since_step = self.manager.current_step
+            self.task_params['since_step'] = since_step
+
+        TaskRegister.database_upgrade(**self.task_params)
+
+    def rollback(self):
+        pass
