@@ -14,20 +14,25 @@ from backup.models import Snapshot
 
 
 __all__ = ('SingleInstanceBaseTestCase', 'HABaseTestCase',
-           'SingleInstanceTestCase', 'HATestCase')
+           'SMSingleInstanceTestCase', 'SMHATestCase')
 
 
 class SingleInstanceBaseTestCase(TestCase):
     instance_helper = InstanceHelper
+    step_class = TakeSnapshotMigrate
 
     def setUp(self):
         signals.post_save.disconnect(
             sender=Database, dispatch_uid="database_drive_credentials"
         )
-        self.master_future_host = mommy.make('Host')
+        self.master_future_host = mommy.make(
+            'Host',
+            hostname='master_future_host'
+        )
         self.master_host = mommy.make(
             'Host',
-            future_host=self.master_future_host
+            future_host=self.master_future_host,
+            hostname='master_host'
         )
         self.master_volume = mommy.make(
             'Volume',
@@ -44,7 +49,8 @@ class SingleInstanceBaseTestCase(TestCase):
             infra=self.infra,
             hostname=self.master_host
         )[0]
-        self.step = TakeSnapshotMigrate(self.master_instance)
+        self.step = self.step_class(self.master_instance)
+        self.backup_group = mommy.make('BackupGroup')
         self.snapshot = mommy.make(
             Snapshot,
             status=Snapshot.SUCCESS
@@ -65,10 +71,14 @@ class HABaseTestCase(SingleInstanceBaseTestCase):
         self.master_host.save()
         self.master_future_host.delete()
         self.master_furute_volume.delete()
-        self.slave_future_host = mommy.make('Host')
+        self.slave_future_host = mommy.make(
+            'Host',
+            hostname='slave_future_host'
+        )
         self.slave_host = mommy.make(
             'Host',
-            future_host=self.slave_future_host
+            future_host=self.slave_future_host,
+            hostname='slave_host'
         )
         self.slave_volume = mommy.make(
             'Volume',
@@ -87,10 +97,11 @@ class HABaseTestCase(SingleInstanceBaseTestCase):
         )[0]
         self.host_migrate.host = self.slave_host
         self.host_migrate.save()
-        self.step = TakeSnapshotMigrate(self.slave_instance)
+        self.step = self.step_class(self.slave_instance)
+        self.step.step_manager = self.host_migrate
 
 
-class SingleInstanceTestCase(SingleInstanceBaseTestCase):
+class SMSingleInstanceTestCase(SingleInstanceBaseTestCase):
 
     @patch('backup.tasks.make_instance_snapshot_backup')
     def test_dont_make_snapshot_again_if_has_snapshot_on_step_manager(
@@ -139,7 +150,7 @@ class SingleInstanceTestCase(SingleInstanceBaseTestCase):
             self.step.do()
 
 
-class HATestCase(HABaseTestCase, SingleInstanceTestCase):
+class SMHATestCase(HABaseTestCase, SMSingleInstanceTestCase):
 
     @patch('backup.tasks.make_instance_snapshot_backup',
            new=MagicMock())
