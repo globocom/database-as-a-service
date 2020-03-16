@@ -30,7 +30,7 @@ from physical.models import Engine
 from logical.views import database_details, DatabaseHostsView, \
     database_credentials, database_resizes, DatabaseMaintenanceView, \
     database_backup, database_dns, database_metrics, database_destroy, \
-    database_delete_host, database_upgrade, database_upgrade_retry, \
+    database_delete_host, UpgradeDatabaseRetryView, \
     database_upgrade_patch_retry, database_resize_retry, \
     database_resize_rollback, database_make_backup, \
     database_change_parameters, database_change_parameters_retry, \
@@ -594,13 +594,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 name="mongodb_engine_version_upgrade"),
 
             url(
-                r'^/?(?P<id>\d+)/upgrade/$',
-                self.admin_site.admin_view(database_upgrade), name="upgrade"
-            ),
-
-            url(
                 r'^/?(?P<id>\d+)/upgrade_retry/$',
-                self.admin_site.admin_view(database_upgrade_retry),
+                self.admin_site.admin_view(UpgradeDatabaseRetryView.as_view()),
                 name="upgrade_retry"
             ),
 
