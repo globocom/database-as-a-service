@@ -54,7 +54,7 @@ def database_tasks(self, database_id):
         name = task.task_name.split('.')[-1]
         name = name.replace("_", " ")
 
-        step = task.details.split('\n')[-1]
+        step = task.details.split('\n')[-1] if task.details else ''
         if "Step" in step:
             step = step.split(" - ", 1)[1]
 
