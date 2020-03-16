@@ -131,6 +131,51 @@ class RedisSingle(BaseRedis):
             )
         }]
 
+    def get_host_migrate_steps(self):
+        return [{
+            'Migrating': (
+                'workflow.steps.util.host_provider.CreateVirtualMachineMigrate',
+                'workflow.steps.util.volume_provider.NewVolume',
+                'workflow.steps.util.vm.WaitingBeReady',
+                'workflow.steps.util.vm.UpdateOSDescription',
+                'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
+                'workflow.steps.util.volume_provider.MountDataVolume',
+                'workflow.steps.util.plan.Initialization',
+                'workflow.steps.util.plan.Configure',
+                ) + self.get_change_binaries_upgrade_patch_steps() + (
+                'workflow.steps.util.volume_provider.TakeSnapshotFromMaster',
+                ('workflow.steps.util.volume_provider'
+                 '.WaitSnapshotAvailableMigrate'),
+                'workflow.steps.util.disk.CleanDataRecreateSlave',
+                'workflow.steps.util.volume_provider.AddAccessRecreateSlave',
+                ('workflow.steps.util.volume_provider'
+                 '.MountDataVolumeRecreateSlave'),
+                'workflow.steps.util.volume_provider.CopyDataFromSnapShot',
+                ('workflow.steps.util.volume_provider'
+                 '.UmountDataVolumeRecreateSlave'),
+                ('workflow.steps.util.volume_provider'
+                 '.RemoveAccessRecreateSlave'),
+                'workflow.steps.util.volume_provider.RemoveSnapshotMigrate',
+                'workflow.steps.util.disk.RemoveDeprecatedFiles',
+
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.acl.ReplicateAclsMigrate',
+                'workflow.steps.util.zabbix.DestroyAlarms',
+                'workflow.steps.util.dns.ChangeEndpoint',
+                'workflow.steps.util.dns.CheckIsReady',
+                'workflow.steps.util.metric_collector.ConfigureTelegraf',
+                'workflow.steps.util.metric_collector.RestartTelegraf',
+                'workflow.steps.util.zabbix.CreateAlarms',
+                'workflow.steps.util.disk.ChangeSnapshotOwner',
+            )
+        }, {
+            'Cleaning up': (
+                'workflow.steps.util.volume_provider.DestroyOldEnvironment',
+                'workflow.steps.util.host_provider.DestroyVirtualMachineMigrate',
+            )
+        }]
+
     def get_filer_migrate_steps(self):
         return [{
             'Migrating': (
