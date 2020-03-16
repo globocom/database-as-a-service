@@ -1275,6 +1275,35 @@ class DatabaseUpgradeView(TemplateView):
         )
 
 
+class UpgradeDatabaseRetryView(View):
+
+    def get(self, request, *args, **kwargs):
+        try:
+            service_obj = services.UpgradeDatabaseService(
+                request, self.database, retry=True
+            )
+            service_obj.execute()
+        except (
+            exceptions.DatabaseNotAvailable, exceptions.ManagerInvalidStatus,
+            exceptions.ManagerNotFound, exceptions.DatabaseUpgradePlanNotFound
+        ) as error:
+            messages.add_message(self.request, messages.ERROR, str(error))
+
+        return HttpResponseRedirect(
+            reverse(
+                'admin:logical_database_upgrade',
+                kwargs={'id': self.database.id}
+            )
+        )
+
+    @database_view_class('')
+    def dispatch(self, request, *args, **kwargs):
+        self.context, self.database = args
+        return super(UpgradeDatabaseRetryView, self).dispatch(
+            request, *args, **kwargs
+        )
+
+
 class AddInstancesDatabaseRetryView(View):
 
     def get(self, request, *args, **kwargs):
