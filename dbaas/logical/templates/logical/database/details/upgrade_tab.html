@@ -72,10 +72,9 @@
       <div class="control-label"><label>Engine upgrade:</label></div>
       <div class="controls">
         {% if last_upgrade and last_upgrade.is_status_error %}
-          <a href="{{ database.get_upgrade_retry_url }}" id="upgrade_btn" class="btn btn-warning" title="Retry upgrade" onclick="return confirm('Are you sure?')">Retry upgrade {{ database.infra.engine_name }} {{ database.infra.plan.engine.version}} to {{ database.infra.plan.engine_equivalent_plan.engine.version }}</a>
-          <p><a href="{% url 'admin:maintenance_databaseupgrade_change' last_upgrade.id %}" target='_blank'>Last upgrade</a> has an <b>error</b>, please check the <a href="{% url 'admin:notification_taskhistory_change' last_upgrade.task.id %}" target='_blank'>task</a> and retry the database upgrade clicking in button above</p>
+        <button data-toggle="modal" class="btn btn-warning" id="upgrade_database_btn" data-target="#upgrade_database_retry">Retry upgrade  {{ database.infra.engine_name }} {{database.infra.engine_patch.full_version }} to {{ database.infra.plan.engine_equivalent_plan.engine.version }} </button>
         {% else %}
-          <a href="{{ database.get_upgrade_url }}" id="upgrade_btn" class="btn btn-primary" title="Start upgrade" onclick="return confirm('Are you sure?')">Upgrade {{ database.infra.engine_name }} {{database.infra.engine_patch.full_version }} to {{ database.infra.plan.engine_equivalent_plan.engine.version }}</a>
+          <button data-toggle="modal" class="btn btn-primary" id="upgrade_database_btn" data-target="#upgrade_database">Upgrade {{ database.infra.engine_name }} {{database.infra.engine_patch.full_version }} to {{ database.infra.plan.engine_equivalent_plan.engine.version }} </button>
         {% endif %}
       </div>
     </div>
@@ -89,6 +88,10 @@
 {% include "admin/confirmation_modal.html" with modal_id="migrate_plan" confirmation_message="Are you sure you want to migrate plan?" box_title="Migrating plan" button_type="submit" button_value="Migrate Plan" button_name="migrate_plan" id_optional="id=id_migrate_plan_btn_modal" %}
 
 {% include "admin/confirmation_modal.html" with modal_id="migrate_plan_retry" confirmation_message="Are you sure you want to retry migrating plan?" box_title="Retrying to migrate plan" button_type="submit" button_value="Migrate Plan Retry" button_name="migrate_plan_retry" id_optional="id=id_migrate_plan_retry_btn_modal" %}
+
+{% include "admin/confirmation_modal.html" with modal_id="upgrade_database" confirmation_message="Are you sure you want to upgrade database?" box_title="Upgrading database" button_type="submit" button_value="Upgrade Database" button_name="upgrade_database" id_optional="id=id_upgrade_database_btn_modal" %}
+
+{% include "admin/confirmation_modal.html" with modal_id="upgrade_database_retry" confirmation_message="Are you sure you want to retry upgrading database?" box_title="Retrying to upgrade database" button_type="submit" button_value="Upgrade Database Retry" button_name="upgrade_database_retry" id_optional="id=id_upgrade_database_retry_btn_modal" %}
 
 {% endblock %}
 
@@ -120,6 +123,11 @@
 
     $("#migrate_plan_retry_btn").click(function() {
       $("#migrate_plan_retry .modal_message").text('Are you sure you want to retry migrating engine from {{ database.infra.engine_patch.engine.name|title }} {{ database.infra.engine_patch.full_version }} to {{ database.infra.plan.migrate_engine_equivalent_plan.engine.name|title }} {{ database.infra.plan.migrate_engine_equivalent_plan.engine.full_inicial_version }} ?')
+    });
+
+    // Upgrade database
+    $("#upgrade_database_btn").click(function() {
+      $("#upgrade_database .modal_message").text('Are you sure you want to upgrade database from {{ database.infra.engine_name }} {{database.infra.engine_patch.full_version }} to {{ database.infra.plan.engine_equivalent_plan.engine.version }} ?')
     });
 
   });

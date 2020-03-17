@@ -809,7 +809,7 @@ def database_upgrade(request, context, database):
         )
     return HttpResponseRedirect(
         reverse(
-            'admin:logical_database_maintenance', kwargs={'id': database.id}
+            'admin:logical_database_upgrade', kwargs={'id': database.id}
         )
     )
 
@@ -843,7 +843,7 @@ def database_upgrade_retry(request, context, database):
         )
     return HttpResponseRedirect(
         reverse(
-            'admin:logical_database_maintenance', kwargs={'id': database.id}
+            'admin:logical_database_upgrade', kwargs={'id': database.id}
         )
     )
 
@@ -906,7 +906,9 @@ def database_resizes(request, context, database):
     if request.method == 'POST':
         if 'disk_resize' in request.POST and request.POST.get('disk_offering'):
             _disk_resize(request, database)
-        elif 'vm_resize' in request.POST and request.POST.get('vm_offering'):
+        elif (request.POST.get('resize_vm_yes') == 'yes' and request.POST.get(
+                'vm_offering'
+             )):
             _vm_resize(request, database)
         else:
             disk_auto_resize = request.POST.get('disk_auto_resize', False)
@@ -1097,6 +1099,12 @@ class DatabaseUpgradeView(TemplateView):
     def is_engine_migration_retry(self):
         return 'migrate_plan_retry' in self.request.POST
 
+    def is_upgrade(self):
+        return 'upgrade_database' in self.request.POST
+
+    def is_upgrade_retry(self):
+        return 'upgrade_database_retry' in self.request.POST
+
     def get_or_none_retry_migrate_engine_plan(self):
         engine_migration = DatabaseMigrateEngine.objects.need_retry(
             database=self.database
@@ -1121,8 +1129,24 @@ class DatabaseUpgradeView(TemplateView):
             self.migrate_engine(target_plan_id)
         elif self.is_engine_migration_retry():
             self.retry_migrate_engine()
+        elif self.is_upgrade():
+            self.upgrade_database(request)
+        elif self.is_upgrade_retry():
+            self.upgrade_database(request, retry=True)
 
         return self.render_to_response(self.get_context_data())
+
+    def upgrade_database(self, request, retry=False):
+        try:
+            service_obj = services.UpgradeDatabaseService(
+                request, self.database, retry=retry, rollback=False
+            )
+            service_obj.execute()
+        except (
+            exceptions.DatabaseNotAvailable, exceptions.ManagerInvalidStatus,
+            exceptions.ManagerNotFound, exceptions.DatabaseUpgradePlanNotFound
+        ) as error:
+            messages.add_message(self.request, messages.ERROR, str(error))
 
     def has_update_mongodb_30(self):
         return (
@@ -1253,65 +1277,33 @@ class DatabaseUpgradeView(TemplateView):
         )
 
 
-def _add_read_only_instances(request, database, retry=False):
-    try:
-        check_is_database_dead(database.id, 'Add read-only instances')
-        check_is_database_enabled(database.id, 'Add read-only instances')
-    except DisabledDatabase as err:
-        messages.add_message(request, messages.ERROR, err.message)
-        return
+class UpgradeDatabaseRetryView(View):
 
-    if not database.plan.replication_topology.has_horizontal_scalability:
-        messages.add_message(
-            request, messages.ERROR,
-            'Database topology do not have horizontal scalability'
-        )
-        return
+    def get(self, request, *args, **kwargs):
+        try:
+            service_obj = services.UpgradeDatabaseService(
+                request, self.database, retry=True
+            )
+            service_obj.execute()
+        except (
+            exceptions.DatabaseNotAvailable, exceptions.ManagerInvalidStatus,
+            exceptions.ManagerNotFound, exceptions.DatabaseUpgradePlanNotFound
+        ) as error:
+            messages.add_message(self.request, messages.ERROR, str(error))
 
-    if 'add_read_qtd' not in request.POST:
-        messages.add_message(request, messages.ERROR, 'Quantity is required')
-        return
-
-    max_read_hosts = Configuration.get_by_name_as_int('max_read_hosts', 5)
-    qtd_new_hosts = int(request.POST['add_read_qtd'])
-    current_read_nodes = len(database.infra.instances.filter(read_only=True))
-    total_read_hosts = qtd_new_hosts + current_read_nodes
-    if total_read_hosts > max_read_hosts:
-        messages.add_message(
-            request, messages.ERROR,
-            ('Current limit of read only hosts is {} and you are trying '
-             'to setup {}').format(
-                max_read_hosts, total_read_hosts
+        return HttpResponseRedirect(
+            reverse(
+                'admin:logical_database_upgrade',
+                kwargs={'id': self.database.id}
             )
         )
-        return
 
-    add_instances_to_database_kwargs = dict(
-        database=database,
-        user=request.user,
-        number_of_instances=qtd_new_hosts
-    )
-
-    if retry:
-        error = None
-        last_add_instances_database = AddInstancesToDatabase.objects.filter(
-            database=self.database
-        ).last()
-
-        if not last_add_instances_database:
-            error = "Database does not have add_database_instances"
-        elif not last_add_instances_database.is_status_error:
-            error = ("Cannot do retry, last add_instances_to_database. "
-                     "Status is '{}'!").format(
-                        last_add_instances_database.get_status_display())
-        else:
-            since_step = last_add_instances_database.current_step
-            add_instances_to_database_kwargs['since_step'] = since_step
-
-        if error:
-            messages.add_message(self.request, messages.ERROR, error)
-
-    TaskRegister.database_add_instances(**add_instances_to_database_kwargs)
+    @database_view_class('')
+    def dispatch(self, request, *args, **kwargs):
+        self.context, self.database = args
+        return super(UpgradeDatabaseRetryView, self).dispatch(
+            request, *args, **kwargs
+        )
 
 
 class AddInstancesDatabaseRetryView(View):

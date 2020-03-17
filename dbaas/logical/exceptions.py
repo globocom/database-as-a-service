@@ -20,3 +20,7 @@ class DatabaseNotAvailable(Exception):
 
 class DatabaseIsNotHA(Exception):
     pass
+
+
+class DatabaseUpgradePlanNotFound(Exception):
+    pass
