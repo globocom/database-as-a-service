@@ -166,6 +166,55 @@ class MySQLSingle(BaseMysql):
             )
         }]
 
+    def get_host_migrate_steps(self):
+        return [{
+            'Migrating': (
+                ('workflow.steps.util.host_provider'
+                 '.CreateVirtualMachineMigrate'),
+                'workflow.steps.util.vm.WaitingBeReady',
+                'workflow.steps.util.vm.UpdateOSDescription',
+                'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
+                'workflow.steps.util.volume_provider.NewVolume',
+                'workflow.steps.util.volume_provider.MountDataVolume',
+                'workflow.steps.util.volume_provider.TakeSnapshotMigrate',
+                ('workflow.steps.util.volume_provider'
+                 '.WaitSnapshotAvailableMigrate'),
+                'workflow.steps.util.volume_provider.AddAccessMigrate',
+                'workflow.steps.util.volume_provider.MountDataVolumeMigrate',
+                'workflow.steps.util.volume_provider.CopyFilesMigrate',
+                'workflow.steps.util.volume_provider.UmountDataVolumeMigrate',
+                'workflow.steps.util.volume_provider.RemoveAccessMigrate',
+                'workflow.steps.util.volume_provider.RemoveSnapshotMigrate',
+                'workflow.steps.util.disk.RemoveDeprecatedFiles',
+                'workflow.steps.util.plan.ConfigureForNewInfra',
+                'workflow.steps.util.mysql.SetFilePermission',
+                ) + self.get_change_binaries_upgrade_patch_steps() + (
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.acl.ReplicateAclsMigrate',
+                'workflow.steps.util.zabbix.DestroyAlarms',
+                'workflow.steps.util.dns.ChangeEndpoint',
+                'workflow.steps.util.dns.CheckIsReady',
+                'workflow.steps.util.ssl.UpdateOpenSSlLibIfConfigured',
+                'workflow.steps.util.ssl.CreateSSLFolderIfConfigured',
+                ('workflow.steps.util.ssl'
+                 '.CreateSSLConfForInfraEndPointIfConfigured'),
+                'workflow.steps.util.ssl.RequestSSLForInfraIfConfigured',
+                (' workflow.steps.util.ssl'
+                 '.CreateJsonRequestFileInfraIfConfigured'),
+                'workflow.steps.util.ssl.CreateCertificateInfraIfConfigured',
+                'workflow.steps.util.ssl.SetSSLFilesAccessMySQLIfConfigured',
+                'workflow.steps.util.ssl.UpdateExpireAtDate',
+                'workflow.steps.util.metric_collector.ConfigureTelegraf',
+                'workflow.steps.util.metric_collector.RestartTelegraf',
+                'workflow.steps.util.zabbix.CreateAlarms',
+                'workflow.steps.util.disk.ChangeSnapshotOwner',
+                'workflow.steps.util.volume_provider.DestroyOldEnvironment',
+                ('workflow.steps.util.host_provider'
+                 '.DestroyVirtualMachineMigrate'),
+            )
+        }]
+
     def get_update_ssl_steps(self):
         return [{
             'Disable monitoring and alarms': (
