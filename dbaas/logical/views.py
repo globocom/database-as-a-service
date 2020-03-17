@@ -906,7 +906,9 @@ def database_resizes(request, context, database):
     if request.method == 'POST':
         if 'disk_resize' in request.POST and request.POST.get('disk_offering'):
             _disk_resize(request, database)
-        elif 'vm_resize' in request.POST and request.POST.get('vm_offering'):
+        elif (request.POST.get('resize_vm_yes') == 'yes' and request.POST.get(
+                'vm_offering'
+             )):
             _vm_resize(request, database)
         else:
             disk_auto_resize = request.POST.get('disk_auto_resize', False)
