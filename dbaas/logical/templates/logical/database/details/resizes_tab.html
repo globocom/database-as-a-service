@@ -123,6 +123,8 @@
   }
 
   jQuery(document).ready(function($) {
+    var currentForm;
+
     $("#id_disk_offering").on("change", function() {
       status_resize("disk_resize_btn", {{ database.infra.disk_offering.id }}, $(this).val())
     });
@@ -143,6 +145,13 @@
       }
     });
     $("#id_resize_vm_yes").keyup()
+
+    $("#database_form").submit(function (e) {
+        //disable resize vm submit button
+        $("#id_resize_vm_btn_modal").attr("disabled", true);
+
+        return true;
+    });
 
     $("#disk_resize_btn").click(function() {
       var $new_disk_size = $("#id_disk_offering").find(":selected").text().trim()
