@@ -11,6 +11,7 @@ from workflow.steps.util.volume_provider import (
 )
 from maintenance.models import HostMigrate
 from backup.models import Snapshot
+from dbaas.tests.helpers import DatabaseHelper
 
 
 __all__ = ('SingleInstanceBaseTestCase', 'HABaseTestCase',
@@ -22,9 +23,6 @@ class SingleInstanceBaseTestCase(TestCase):
     step_class = TakeSnapshotMigrate
 
     def setUp(self):
-        signals.post_save.disconnect(
-            sender=Database, dispatch_uid="database_drive_credentials"
-        )
         self.master_future_host = mommy.make(
             'Host',
             hostname='master_future_host'
@@ -55,7 +53,11 @@ class SingleInstanceBaseTestCase(TestCase):
             Snapshot,
             status=Snapshot.SUCCESS
         )
-        self.database_migrate = mommy.make('DatabaseMigrate')
+
+        self.database_migrate = mommy.make(
+            'DatabaseMigrate',
+            database=DatabaseHelper.create()
+        )
         self.host_migrate = mommy.make(
             HostMigrate,
             database_migrate=self.database_migrate,
