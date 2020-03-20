@@ -2,12 +2,11 @@ from django.test import TestCase
 from mock import patch, MagicMock
 from datetime import datetime
 
-from django.db.models import signals
 from model_mommy import mommy
 
 from backup.tasks import make_instance_snapshot_backup
 from backup.models import Snapshot, BackupGroup
-from logical.models import Database
+from dbaas.tests.helpers import DatabaseHelper
 
 
 def fake_exec_remote_command(*args, **kw):
@@ -22,10 +21,6 @@ class BaseTestCase(TestCase):
         self.year = 2020
         self.month = 1
         self.day = 1
-
-        signals.post_save.disconnect(
-            sender=Database, dispatch_uid="database_drive_credentials"
-        )
 
         mommy.make(
             'Configuration', name='backup_hour', value=str(self.backup_hour)
@@ -57,7 +52,8 @@ class BaseTestCase(TestCase):
             'DatabaseInfra', backup_hour=self.backup_hour,
             plan__has_persistence=True,
             environment=self.dev_env,
-            plan=self.plan
+            plan=self.plan,
+            endpoint='127.0.0.1:1111'
         )
         self.host = mommy.make('Host')
         self.instance = mommy.make(
@@ -67,8 +63,9 @@ class BaseTestCase(TestCase):
         self.volume = mommy.make(
             'Volume', host=self.host
         )
-        self.database = mommy.make(
-            'Database', databaseinfra=self.infra, environment=self.dev_env
+        self.database = DatabaseHelper.create(
+            environment=self.dev_env,
+            databaseinfra=self.infra
         )
         self.group = BackupGroup()
 

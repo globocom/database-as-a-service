@@ -2,12 +2,11 @@ from django.test import TestCase
 from mock import patch
 from datetime import datetime
 
-from django.db.models import signals
 from model_mommy import mommy
 
 from backup.tasks import make_databases_backup
 from backup.models import Snapshot, BackupGroup
-from logical.models import Database
+from dbaas.tests.helpers import DatabaseHelper, InfraHelper
 
 
 class TestMakeDatabasesBackup(TestCase):
@@ -17,10 +16,6 @@ class TestMakeDatabasesBackup(TestCase):
         self.year = 2020
         self.month = 1
         self.day = 1
-
-        signals.post_save.disconnect(
-            sender=Database, dispatch_uid="database_drive_credentials"
-        )
 
         mommy.make(
             'Configuration', name='backup_hour', value=str(self.backup_hour)
@@ -33,16 +28,17 @@ class TestMakeDatabasesBackup(TestCase):
         )
         self.dev_env = mommy.make('Environment', name='dev')
         mommy.make('Environment', name='prod')
-        self.infra = mommy.make(
-            'DatabaseInfra', backup_hour=self.backup_hour,
+        self.infra = InfraHelper.create(
+            backup_hour=self.backup_hour,
             plan__has_persistence=True,
             environment=self.dev_env
         )
         self.instance = mommy.make(
             'Instance', databaseinfra=self.infra
         )
-        self.database = mommy.make(
-            'Database', databaseinfra=self.infra, environment=self.dev_env
+        self.database = DatabaseHelper.create(
+            databaseinfra=self.infra,
+            environment=self.dev_env
         )
 
     @patch('backup.tasks.make_instance_snapshot_backup')
