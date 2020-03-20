@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
+from mock import patch, MagicMock
 
 from physical.tests.factory import InstanceFactory
+from model_mommy import mommy
 
 
 class UsedAndTotalValidator(object):
@@ -69,3 +71,68 @@ class InstanceHelper(object):
             )
 
         return map(_create, range(1, qt + 1))
+
+
+class DatabaseHelper(object):
+    @staticmethod
+    @patch('logical.models.Database.automatic_create_first_credential',
+           MagicMock())
+    def create(**kwargs):
+        if 'databaseinfra' not in kwargs:
+            kwargs['databaseinfra'] = InfraHelper.create()
+
+        driver = kwargs['databaseinfra'].get_driver()
+        module_path = "{}.{}.create_database".format(
+            driver.__class__.__module__,
+            driver.__class__.__name__
+        )
+        with patch(module_path, MagicMock()):
+            return mommy.make(
+                'Database', **kwargs
+            )
+
+
+class PlanHelper(object):
+    engine_map = {
+        'mysql_single': {
+            'class_path': 'drivers.replication_topologies.mysql.MySQLSingle',
+            'name': 'MySQL Single 5.7.25'
+        }
+    }
+    @classmethod
+    def create(cls, engine, *kwargs):
+        """
+            Engine must be: `NAME`_`TOPOLOGY_TYPE`
+            Ex. mysql_single.The name of engine will be mysql and mysql_single
+            will be used to get topology class_path and name. See `engine_map`
+            class variable
+        """
+        if engine not in cls.engine_map:
+            raise Exception("Engine not mapped. Mapped engines are: {}".format(
+                ', '.join(cls.engine_map.keys())
+            ))
+        engine_conf = cls.engine_map[engine]
+        engine_type = mommy.make(
+            'EngineType', name=engine.split('_')[0]
+        )
+        engine = mommy.make(
+            'Engine', engine_type=engine_type
+        )
+        replication_topology = mommy.make(
+            'ReplicationTopology',
+            name=engine_conf['name'],
+            class_path=engine_conf['class_path']
+        )
+        plan = mommy.make(
+            'Plan', engine=engine,
+            replication_topology=replication_topology
+        )
+        return engine_type, engine, replication_topology, plan
+
+
+class InfraHelper(object):
+    @staticmethod
+    def create(engine='mysql_single', **kwargs):
+        if 'plan' not in kwargs:
+            _, _, _, kwargs['plan'] = PlanHelper.create(engine)
+        return mommy.make('Databaseinfra', **kwargs)
