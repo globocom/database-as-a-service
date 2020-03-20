@@ -18,6 +18,8 @@ class TaskScheduleAdmin(admin.DjangoServicesAdmin):
         "status",
     )
 
+    ordering = ('scheduled_for',)
+
     def link_database(self, task_schedule):
         url = reverse('admin:logical_database_maintenance',
                       args=(task_schedule.database.id,))
