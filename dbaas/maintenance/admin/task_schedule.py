@@ -1,15 +1,29 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
+
+from django.core.urlresolvers import reverse
+from django.utils.html import format_html
+
 from django_services import admin
 from maintenance.service.task_schedule import TaskScheduleService
 
 
 class TaskScheduleAdmin(admin.DjangoServicesAdmin):
     service_class = TaskScheduleService
-    list_display = ("method_path", "database", "status", "scheduled_for",
+    list_display = ("method_path", "link_database", "status", "scheduled_for",
                     "finished_at")
     search_fields = ('method_path', 'database__name')
 
     list_filter = (
         "status",
     )
+
+    def link_database(self, task_schedule):
+        url = reverse('admin:logical_database_maintenance',
+                      args=(task_schedule.database.id,))
+        link_database = """<a href="{}"> {} </a> """.format(
+            url, task_schedule.database.name
+        )
+        return format_html(link_database)
+
+    link_database.short_description = "Database"
