@@ -7,6 +7,7 @@ from model_mommy import mommy
 from util.email_notifications import get_domain, email_from, email_to, \
     disk_resize_notification
 from .base import EmailBaseTest
+from physical.models import DiskOffering
 
 
 __all__ = ('DiskResizeTestCase',)
@@ -21,10 +22,11 @@ SUBJECT_DISK_FINAL_AUTO_RESIZE = (
 class DiskResizeTestCase(EmailBaseTest):
 
     def setUp(self):
+        DiskOffering.objects.all().delete()
         super(DiskResizeTestCase, self).setUp()
         self.greater_disk = mommy.make(
             'DiskOffering',
-            size_kb=100
+            size_kb=200
         )
 
         self.disk = mommy.make(
