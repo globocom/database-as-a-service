@@ -1093,8 +1093,14 @@ def maintenance_post_save(sender, **kwargs):
 def task_schedule_post_save(sender, **kwargs):
     task = kwargs.get("instance")
     is_new = kwargs.get("created")
+    is_task_warning = kwargs.get("execution_warning", False)
     send_email = bool(
         int(Configuration.get_by_name('schedule_send_mail') or 0)
     )
     if send_email:
-        schedule_task_notification(task.database, task, is_new)
+        schedule_task_notification(
+            database=task.database,
+            scheduled_task=task,
+            is_new=is_new,
+            is_task_warning=is_task_warning
+        )
