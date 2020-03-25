@@ -63,5 +63,5 @@ class TestMakeDatabasesBackup(TestCase):
 
         make_databases_backup()
         make_instance_snapshot_backup.assert_called_with(
-            instance=self.instance, error={}, group=group
+            current_hour=5, instance=self.instance, error={}, group=group
         )
