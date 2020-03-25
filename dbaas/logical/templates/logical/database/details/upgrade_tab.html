@@ -72,7 +72,7 @@
       <div class="control-label"><label>Engine upgrade:</label></div>
       <div class="controls">
         {% if last_upgrade and last_upgrade.is_status_error %}
-        <button data-toggle="modal" class="btn btn-warning" id="upgrade_database_btn" data-target="#upgrade_database_retry">Retry upgrade  {{ database.infra.engine_name }} {{database.infra.engine_patch.full_version }} to {{ database.infra.plan.engine_equivalent_plan.engine.version }} </button>
+        <button data-toggle="modal" class="btn btn-warning" id="upgrade_database_retry_btn" data-target="#upgrade_database_retry">Retry upgrade  {{ database.infra.engine_name }} {{database.infra.engine_patch.full_version }} to {{ database.infra.plan.engine_equivalent_plan.engine.version }} </button>
         {% else %}
           <button data-toggle="modal" class="btn btn-primary" id="upgrade_database_btn" data-target="#upgrade_database">Upgrade {{ database.infra.engine_name }} {{database.infra.engine_patch.full_version }} to {{ database.infra.plan.engine_equivalent_plan.engine.version }} </button>
         {% endif %}
@@ -126,7 +126,7 @@
     });
 
     // Upgrade database
-    $("#upgrade_database_btn").click(function() {
+    $("#upgrade_database_btn, #upgrade_database_retry_btn").click(function() {
       $("#upgrade_database .modal_message").text('Are you sure you want to upgrade database from {{ database.infra.engine_name }} {{database.infra.engine_patch.full_version }} to {{ database.infra.plan.engine_equivalent_plan.engine.version }} ?')
     });
 
