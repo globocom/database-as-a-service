@@ -21,5 +21,5 @@ sleep 60
 
 # Run tests
 # make test
-cd dbaas && python manage.py test --settings=dbaas.settings_test --traceback
+cd dbaas && REUSE_DB=1 python manage.py test --settings=dbaas.settings_test --traceback
 # bash
