@@ -20,6 +20,4 @@ python add_user_admin_on_mongo.py
 sleep 60
 
 # Run tests
-# make test
-cd dbaas && REUSE_DB=1 python manage.py test --settings=dbaas.settings_test --traceback
-# bash
+make unit_test
