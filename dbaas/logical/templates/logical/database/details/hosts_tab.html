@@ -78,7 +78,7 @@
                   {% if last_recreat_slave and last_recreat_slave.is_status_error %}
                     {% if host.id == last_recreat_slave.host.id %}
                       <td>
-                          <a class="action_button btn btn-danger" href="{% url 'admin:maintenance_recreateslave_change' last_recreat_slave.id %}retry" title="Go to recreate slave page">Retry Recreate Slave</a>
+                          <a class="action_button btn btn-danger" href="{% url 'admin:maintenance_recreateslave_change' last_recreat_slave.id %}retry" data-host-id="{{host.id}}" title="Go to recreate slave page">Retry Recreate Slave</a>
                       </td>
                     {% endif %}
                   {% else %}
