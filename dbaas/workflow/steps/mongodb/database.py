@@ -53,7 +53,9 @@ class RemoveInstanceFromReplicaSet(DatabaseReplicaSet):
 
     def __init__(self, instance):
         super(DatabaseReplicaSet, self).__init__(instance)
-        self.host_address = self.instance.hostname.address
+        self.host_address = (
+            self.instance.hostname and self.instance.hostname.address
+        )
 
     def do(self):
         script = test_bash_script_error()
