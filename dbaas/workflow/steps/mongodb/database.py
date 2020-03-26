@@ -10,7 +10,7 @@ class DatabaseReplicaSet(DatabaseStep):
 
     def __init__(self, instance):
         super(DatabaseReplicaSet, self).__init__(instance)
-        self.host_address = self.host.address
+        self.host_address = self.host and self.host.address
 
     @property
     def script_variables(self):
