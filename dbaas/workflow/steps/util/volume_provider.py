@@ -363,7 +363,7 @@ class NewVolume(VolumeProviderBase):
         )
 
     def undo(self):
-        if not self.instance.is_database:
+        if not self.instance.is_database or not self.host:
             return
 
         for volume in self.host.volumes.all():
