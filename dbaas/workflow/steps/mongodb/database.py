@@ -10,7 +10,10 @@ class DatabaseReplicaSet(DatabaseStep):
 
     def __init__(self, instance):
         super(DatabaseReplicaSet, self).__init__(instance)
-        self.host_address = self.host and self.host.address
+
+    @property
+    def host_address(self):
+        return self.host.address
 
     @property
     def script_variables(self):
@@ -53,9 +56,10 @@ class RemoveInstanceFromReplicaSet(DatabaseReplicaSet):
 
     def __init__(self, instance):
         super(DatabaseReplicaSet, self).__init__(instance)
-        self.host_address = (
-            self.instance.hostname and self.instance.hostname.address
-        )
+
+    @property
+    def host_address(self):
+        return self.instance.hostname.address
 
     def do(self):
         script = test_bash_script_error()
