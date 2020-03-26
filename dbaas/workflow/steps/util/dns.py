@@ -155,10 +155,11 @@ class CreateDNS(DNSStep):
         self.instance.save()
 
     def undo(self):
-        self.provider.remove_databases_dns_for_ip(
-            databaseinfra=self.infra,
-            ip=self.instance.address
-        )
+        if self.instance.address:
+            self.provider.remove_databases_dns_for_ip(
+                databaseinfra=self.infra,
+                ip=self.instance.address
+            )
 
 
 class RegisterDNSVip(DNSStep):
