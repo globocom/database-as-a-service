@@ -16,47 +16,23 @@ class UserTest(TestCase):
     PASSWORD = "12345"
 
     def setUp(self):
-        # self.role = Role.objects.get_or_create(name="fake_role")[0]
         self.role = mommy.make_recipe('account.role')
-        # self.organization = Organization.objects.get_or_create(
-        #     name='fake_organization')[0]
         self.organization = mommy.make('Organization')
-
-        # self.team_dba = Team.objects.get_or_create(
-        #     name="team_dba",
-        #     role=self.role,
-        #     organization=self.organization
-        # )[0]
         self.team_dba = mommy.make_recipe(
             'account.team',
             role=self.role,
             organization=self.organization
         )
-        # self.team_dev = Team.objects.get_or_create(
-        #     name="team_dev",
-        #     role=self.role,
-        #     organization=self.organization
-        # )[0]
         self.team_dev = mommy.make_recipe(
             'account.team',
             role=self.role,
             organization=self.organization
         )
-        # self.team_ops = Team.objects.get_or_create(
-        #     name="team_ops",
-        #     role=self.role,
-        #     organization=self.organization
-        # )[0]
         self.team_ops = mommy.make_recipe(
             'account.team',
             role=self.role,
             organization=self.organization
         )
-        # self.team_bkp = Team.objects.get_or_create(
-        #     name="team_bkp",
-        #     role=self.role,
-        #     organization=self.organization
-        # )[0]
         self.team_bkp = mommy.make_recipe(
             'account.team',
             role=self.role,
