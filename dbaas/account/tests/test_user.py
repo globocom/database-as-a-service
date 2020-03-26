@@ -2,6 +2,7 @@
 from __future__ import absolute_import, unicode_literals
 
 from django.test import TestCase
+from django.contrib.auth.models import User
 
 from ..admin.user import TeamListFilter, UserAdmin
 from model_mommy import mommy
