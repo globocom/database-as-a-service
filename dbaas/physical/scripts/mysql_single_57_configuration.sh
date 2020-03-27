@@ -108,7 +108,7 @@ explicit_defaults_for_timestamp = {{ configuration.explicit_defaults_for_timesta
 
 # Audit
 audit_log_format                = {{ configuration.audit_log_format.value}}
-audit_log_file                  = {{ configuration.audit_log_file.value}}
+audit_log_file                  = /data/audit/audit.log
 audit_log_rotate_on_size        = {{configuration.audit_log_rotate_on_size.value}}
 audit_log_exclude_accounts      = "{{configuration.audit_log_exclude_accounts.value}}"
 audit_log_policy                = {{configuration.audit_log_policy.value}}
