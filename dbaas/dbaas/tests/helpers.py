@@ -144,4 +144,4 @@ class InfraHelper(object):
     def create(engine_name='mysql_single', **kwargs):
         if 'plan' not in kwargs:
             _, _, _, kwargs['plan'] = PlanHelper.create(engine_name)
-        return mommy.make('Databaseinfra', **kwargs)
+        return mommy.make_recipe('physical.databaseinfra', **kwargs)

@@ -601,12 +601,6 @@ class ConfigurationMySQL(ConfigurationBase):
         return self.get_parameter(parameter_name, default)
 
     @property
-    def audit_log_file(self):
-        parameter_name = inspect.stack()[0][3]
-        default = 'audit.log'
-        return self.get_parameter(parameter_name, default)
-
-    @property
     def audit_log_rotate_on_size(self):
         parameter_name = inspect.stack()[0][3]
         default = 0
