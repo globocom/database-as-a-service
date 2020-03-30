@@ -100,29 +100,38 @@ class PlanHelper(object):
         }
     }
     @classmethod
-    def create(cls, engine, *kwargs):
+    def create(cls, engine_name='mysql_single', *kwargs):
         """
             Engine must be: `NAME`_`TOPOLOGY_TYPE`
             Ex. mysql_single.The name of engine will be mysql and mysql_single
             will be used to get topology class_path and name. See `engine_map`
             class variable
         """
-        if engine not in cls.engine_map:
-            raise Exception("Engine not mapped. Mapped engines are: {}".format(
-                ', '.join(cls.engine_map.keys())
-            ))
-        engine_conf = cls.engine_map[engine]
-        engine_type = mommy.make(
-            'EngineType', name=engine.split('_')[0]
-        )
-        engine = mommy.make(
-            'Engine', engine_type=engine_type
-        )
-        replication_topology = mommy.make(
-            'ReplicationTopology',
-            name=engine_conf['name'],
-            class_path=engine_conf['class_path']
-        )
+        if 'engine' not in kwargs:
+            if engine_name not in cls.engine_map:
+                raise Exception(
+                    "Engine not mapped. Mapped engines are: {}".format(
+                        ', '.join(cls.engine_map.keys())
+                    )
+                )
+            engine_conf = cls.engine_map[engine_name]
+            engine_type = mommy.make(
+                'EngineType', name=engine_name.split('_')[0]
+            )
+            engine = mommy.make(
+                'Engine', engine_type=engine_type
+            )
+            replication_topology = mommy.make(
+                'ReplicationTopology',
+                name=engine_conf['name'],
+                class_path=engine_conf['class_path']
+            )
+        else:
+            engine = kwargs.get('engine')
+            replication_topology = mommy.make(
+                'ReplicationTopology'
+            )
+
         plan = mommy.make(
             'Plan', engine=engine,
             replication_topology=replication_topology
@@ -132,7 +141,7 @@ class PlanHelper(object):
 
 class InfraHelper(object):
     @staticmethod
-    def create(engine='mysql_single', **kwargs):
+    def create(engine_name='mysql_single', **kwargs):
         if 'plan' not in kwargs:
-            _, _, _, kwargs['plan'] = PlanHelper.create(engine)
-        return mommy.make('Databaseinfra', **kwargs)
+            _, _, _, kwargs['plan'] = PlanHelper.create(engine_name)
+        return mommy.make_recipe('physical.databaseinfra', **kwargs)

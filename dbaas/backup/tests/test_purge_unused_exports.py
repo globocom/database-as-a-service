@@ -1,22 +1,27 @@
 from datetime import datetime
 from unittest import TestCase
+
 from mock import patch, MagicMock
-from notification.tests.factory import TaskHistoryFactory
-from physical.tests.factory import InstanceFactory, VolumeFactory
+from model_mommy import mommy
+
 from physical.models import Volume
 from backup.tasks import purge_unused_exports
-from factory import SnapshotFactory
 
 
 class PurgeUnusedExports(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.instance = InstanceFactory(port=1000)
+        cls.instance = mommy.make(
+            'Instance',
+            port=1000
+        )
         cls.environment = cls.instance.databaseinfra.environment
 
     def setUp(self):
-        self.export = VolumeFactory()
+        self.export = mommy.make(
+            'Volume'
+        )
         self.export.host = self.instance.hostname
         self.export.is_active = False
         self.export.save()
@@ -47,14 +52,17 @@ class PurgeUnusedExports(TestCase):
     def test_cannot_delete_inactive_with_active_snapshot(
         self, add_access, clean_up, destroy
     ):
-        snapshot = SnapshotFactory(instance=self.instance)
-        snapshot.volume = self.export
-        snapshot.save()
+        mommy.make(
+            'Snapshot',
+            volume=self.export
+        )
 
-        snapshot = SnapshotFactory(instance=self.instance)
-        snapshot.volume = self.export
-        snapshot.purge_at = datetime.now()
-        snapshot.save()
+        mommy.make(
+            'Snapshot',
+            instance=self.instance,
+            volume=self.export,
+            purge_at=datetime.now()
+        )
 
         self.assertTrue(purge_unused_exports())
 
@@ -68,10 +76,12 @@ class PurgeUnusedExports(TestCase):
     def test_can_delete_inactive_with_inactive_snapshot(
         self, add_access, clean_up, destroy
     ):
-        snapshot = SnapshotFactory(instance=self.instance)
-        snapshot.volume = self.export
-        snapshot.purge_at = datetime.now()
-        snapshot.save()
+        mommy.make(
+            'Snapshot',
+            instance=self.instance,
+            volume=self.export,
+            purge_at=datetime.now()
+        )
 
         self.assertTrue(purge_unused_exports())
 
@@ -83,7 +93,7 @@ class PurgeUnusedExports(TestCase):
     @patch('backup.tasks.VolumeProviderBase.clean_up', new=MagicMock())
     @patch('backup.tasks.VolumeProviderBase.add_access', new=MagicMock())
     def test_task_with_success(self):
-        task = TaskHistoryFactory()
+        task = mommy.make('TaskHistory')
         self.assertIsNone(task.details)
         self.assertTrue(purge_unused_exports(task))
         self.assertIn('Removing: {}'.format(self.export), task.details)
@@ -93,7 +103,7 @@ class PurgeUnusedExports(TestCase):
     def test_task_with_error(self, add_access):
         add_access.side_effect = Exception('Fake error')
 
-        task = TaskHistoryFactory()
+        task = mommy.make('TaskHistory')
         self.assertIsNone(task.details)
         self.assertFalse(purge_unused_exports(task))
         self.assertIn('Removing: {}'.format(self.export), task.details)
