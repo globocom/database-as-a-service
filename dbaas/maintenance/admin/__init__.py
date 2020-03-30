@@ -19,6 +19,7 @@ from .update_ssl import UpdateSslAdmin
 from .migrate_engine import DatabaseMigrateEngineAdmin
 from .database_clone import DatabaseCloneAdmin
 from .add_instances_to_database import AddInstancesToDatabaseAdmin
+from .task_schedule import TaskScheduleAdmin
 
 
 admin.site.register(models.Maintenance, MaintenanceAdmin)
@@ -41,3 +42,4 @@ admin.site.register(models.RecreateSlave, RecreateSlaveAdmin)
 admin.site.register(models.UpdateSsl, UpdateSslAdmin)
 admin.site.register(models.DatabaseClone, DatabaseCloneAdmin)
 admin.site.register(models.AddInstancesToDatabase, AddInstancesToDatabaseAdmin)
+admin.site.register(models.TaskSchedule, TaskScheduleAdmin)
