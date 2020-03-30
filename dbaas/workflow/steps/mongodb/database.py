@@ -10,7 +10,18 @@ class DatabaseReplicaSet(DatabaseStep):
 
     def __init__(self, instance):
         super(DatabaseReplicaSet, self).__init__(instance)
-        self.host_address = self.host.address
+
+        self._host_address = None
+
+    @property
+    def host_address(self):
+        if self._host_address:
+            return self._host_address
+        return self.host and self.host.address
+
+    @host_address.setter
+    def host_address(self, host_address):
+        self._host_address = host_address
 
     @property
     def script_variables(self):
@@ -41,9 +52,10 @@ class AddInstanceToReplicaSet(DatabaseReplicaSet):
         self._execute_script(self.script_variables, script)
 
     def undo(self):
-        remove = RemoveInstanceFromReplicaSet(self.instance)
-        remove.host_address = self.host_address
-        remove.do()
+        if self.host_address:
+            remove = RemoveInstanceFromReplicaSet(self.instance)
+            remove.host_address = self.host_address
+            remove.do()
 
 
 class RemoveInstanceFromReplicaSet(DatabaseReplicaSet):
@@ -53,7 +65,18 @@ class RemoveInstanceFromReplicaSet(DatabaseReplicaSet):
 
     def __init__(self, instance):
         super(DatabaseReplicaSet, self).__init__(instance)
-        self.host_address = self.instance.hostname.address
+
+        self._host_address = None
+
+    @property
+    def host_address(self):
+        if self._host_address:
+            return self._host_address
+        return self.instance.hostname.address
+
+    @host_address.setter
+    def host_address(self, host_address):
+        self._host_address = host_address
 
     def do(self):
         script = test_bash_script_error()

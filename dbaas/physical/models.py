@@ -1,26 +1,27 @@
 #  *- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
-import os
+
 import logging
+import os
+
 import simple_audit
+from django.core.cache import cache
+from django.core.exceptions import ValidationError
+from django.db import models
+from django.db.models import Q
 from django.db.models.signals import post_save, pre_delete
 from django.dispatch import receiver
-from django.core.exceptions import ValidationError
-from django.core.cache import cache
-from django.db import models
 from django.utils.html import format_html
+from django.utils.module_loading import import_by_path
 from django.utils.translation import ugettext_lazy as _
 from django_extensions.db.fields.encrypted import EncryptedCharField
 from slugify import slugify
 
-from util.models import BaseModel
 from drivers import DatabaseInfraStatus
-from system.models import Configuration
 from physical.errors import (NoDiskOfferingGreaterError,
                              NoDiskOfferingLesserError)
-from django.db.models import Q
-from django.utils.module_loading import import_by_path
-
+from system.models import Configuration
+from util.models import BaseModel
 
 LOG = logging.getLogger(__name__)
 
@@ -39,6 +40,7 @@ class Offering(BaseModel):
 
     def __unicode__(self):
         return '{}'.format(self.name)
+
 
 
 class Environment(BaseModel):
@@ -169,6 +171,7 @@ class Engine(BaseModel):
     @property
     def full_inicial_version(self):
         patch = self.patchs.get(is_initial_patch=True)
+
         return "{}.{}.{}".format(
             self.major_version,
             self.minor_version,
@@ -195,6 +198,7 @@ class Engine(BaseModel):
             available_patches = available_patches.filter(
                 patch_version__gt=engine_patch.patch_version
             )
+
         return available_patches
 
 
@@ -316,6 +320,7 @@ class Script(BaseModel):
 
     def _get_content(self, file_name):
         path = file_name
+
         if not os.path.exists(path):
             physical_path = os.path.dirname(os.path.abspath(__file__))
             path = '{}/scripts/{}'.format(physical_path, file_name)
@@ -399,6 +404,7 @@ class ReplicationTopology(BaseModel):
 
     def get_replication_topology_instance(self):
         topology_class = import_by_path(self.class_path)
+
         return topology_class()
 
 
@@ -462,16 +468,19 @@ class DiskOffering(BaseModel):
 
         if not disks:
             raise NoDiskOfferingLesserError(parameter_in_kb)
+
         return disks[0]
 
     def __gt__(self, other):
         if other:
             return self.size_kb > other.size_kb
+
         return True
 
     def __lt__(self, other):
         if other:
             return self.size_kb < other.size_kb
+
         return True
 
     @property
@@ -576,6 +585,7 @@ class Plan(BaseModel):
     def available_plans_for_migration(self):
         if self.migrate_engine_equivalent_plan:
             return [self.migrate_engine_equivalent_plan]
+
         return []
 
 #    @property
@@ -610,11 +620,13 @@ class Plan(BaseModel):
     def cloudstack_attr(self):
         if not self.is_cloudstack:
             return None
+
         return self.cs_plan_attributes.first()
 
     def validate_min_environment_bundles(self, environment):
         if self.is_ha and self.is_cloudstack:
             bundles_actives = self.cloudstack_attr.bundles_actives.count()
+
             if bundles_actives < environment.min_of_zones:
                 raise EnvironmentError(
                     'Plan {} should has at least {} active bundles to {} '
@@ -624,6 +636,7 @@ class Plan(BaseModel):
                         environment.name, bundles_actives
                     )
                 )
+
         return True
 
     @property
@@ -769,6 +782,7 @@ class DatabaseInfra(BaseModel):
         plan_exists = self.plan.environments.filter(
             pk=self.environment_id
         ).exists()
+
         if (not self.environment_id or not self.plan_id) or not plan_exists:
             raise ValidationError({'engine': _("Invalid environment")})
 
@@ -800,6 +814,7 @@ class DatabaseInfra(BaseModel):
     def engine_name(self):
         if self.engine and self.engine.engine_type:
             return self.engine.engine_type.name
+
         return None
 
     @property
@@ -815,6 +830,7 @@ class DatabaseInfra(BaseModel):
     @property
     def used(self):
         """ How many databases is allocated in this datainfra """
+
         return self.databases.count()
 
     @property
@@ -831,6 +847,7 @@ class DatabaseInfra(BaseModel):
             < 0 if datainfra is overcapacity
             > 0 if datainfra can support more databases
         """
+
         return self.capacity - self.used
 
     @classmethod
@@ -840,10 +857,12 @@ class DatabaseInfra(BaseModel):
         """
         i = 0
         name = base_name
+
         while DatabaseInfra.objects.filter(name=name).exists():
             i += 1
             name = "%s-%d" % (base_name, i)
         LOG.info("databaseinfra unique name to be returned: %s" % name)
+
         return name
 
     @classmethod
@@ -858,6 +877,7 @@ class DatabaseInfra(BaseModel):
             ('Total of datainfra with filter plan {} and environment '
              '{}: {}').format(plan, environment, len(datainfras))
         )
+
         return datainfras
 
     @classmethod
@@ -865,12 +885,15 @@ class DatabaseInfra(BaseModel):
         """ Choose the best DatabaseInfra for another database """
         datainfras = list(
             DatabaseInfra.get_active_for(plan=plan, environment=environment))
+
         if not datainfras:
             return None
         datainfras.sort(key=lambda di: -di.available)
         best_datainfra = datainfras[0]
+
         if best_datainfra.available <= 0:
             return None
+
         return best_datainfra
 
     @property
@@ -894,6 +917,7 @@ class DatabaseInfra(BaseModel):
 
     def get_driver(self):
         import drivers
+
         return drivers.factory_for(self)
 
     def get_info(self, force_refresh=False):
@@ -920,20 +944,24 @@ class DatabaseInfra(BaseModel):
                 info.databases_status[db_name].is_alive = False
 
                 cache.set(key, info)
+
         return info
 
     @property
     def disk_used_size_in_kb(self):
         greater_disk = None
+
         for instance in self.instances.all():
             for disk in instance.hostname.volumes.all():
                 if disk.used_size_kb > greater_disk:
                     greater_disk = disk.used_size_kb
+
         return greater_disk
 
     @property
     def disk_used_size_in_gb(self):
         disk_used_size_in_kb = self.disk_used_size_in_kb
+
         if disk_used_size_in_kb:
             return round(disk_used_size_in_kb * (1.0 / 1024.0 / 1024.0), 2)
 
@@ -954,6 +982,7 @@ class DatabaseInfra(BaseModel):
 
     def update_last_vm_created(self):
         hosts = []
+
         for instance in self.instances.all():
             hosts.append(instance.hostname.hostname)
         self.last_vm_created = len(set(hosts))
@@ -967,6 +996,7 @@ class DatabaseInfra(BaseModel):
             # self.cs_dbinfra_offering.get().offering.memory_size_mb
             self.offering.memory_size_mb
         )
+
         return getattr(configuration, parameter_name).default
 
     def get_parameter_value(self, parameter):
@@ -996,9 +1026,11 @@ class DatabaseInfra(BaseModel):
     @property
     def hosts(self):
         hosts = []
+
         for instance in self.instances.all():
             if instance.hostname not in hosts:
                 hosts.append(instance.hostname)
+
         return hosts
 
     @property
@@ -1015,9 +1047,11 @@ class DatabaseInfra(BaseModel):
     def check_rfs_size(self, size):
         """This method checks if hosts size are equal or greater than a given
         value."""
+
         for host in self.hosts:
             if host.root_size_gb < size:
                 return False
+
         return True
 
 
@@ -1073,12 +1107,14 @@ class Host(BaseModel):
         for instance in self.instances.all():
             if instance.is_database:
                 return instance
+
         return None
 
     def non_database_instance(self):
         for instance in self.instances.all():
             if not instance.is_database:
                 return instance
+
         return None
 
     @property
@@ -1095,8 +1131,10 @@ class Volume(BaseModel):
 
     def __unicode__(self):
         name = "Volume: {}".format(self.identifier)
+
         if not self.is_active:
             name = "(Inactive){}".format(name)
+
         return name
 
 
@@ -1200,6 +1238,7 @@ class Instance(BaseModel):
     def clean(self, *args, **kwargs):
         if self.instance_type == self.MONGODB_ARBITER or not self.is_active:
             # no connection check is needed
+
             return
 
         LOG.debug('Checking instance %s (%s) status...',
@@ -1236,6 +1275,7 @@ class Instance(BaseModel):
         try:
             status = self.databaseinfra.get_driver().check_status(
                 instance=self)
+
             return status
         except Exception:
             return False
@@ -1248,6 +1288,7 @@ class Instance(BaseModel):
     def is_current_write(self):
         try:
             driver = self.databaseinfra.get_driver()
+
             return driver.check_instance_is_master(
                 instance=self, default_timeout=True
             )
@@ -1270,6 +1311,7 @@ class Instance(BaseModel):
 
     def update_status(self):
         self.status = Instance.DEAD
+
         if self.check_status():
             self.status = Instance.ALIVE
 
@@ -1306,6 +1348,7 @@ class DatabaseInfraParameter(BaseModel):
                 )
             },
         )
+
         if created:
             return True
 
@@ -1316,6 +1359,7 @@ class DatabaseInfraParameter(BaseModel):
         obj.applied_on_database = False
         obj.reset_default_value = False
         obj.save()
+
         return True
 
     @classmethod
@@ -1332,6 +1376,7 @@ class DatabaseInfraParameter(BaseModel):
                 parameter_name=parameter.name
             )
             obj.save()
+
             return True
 
     @classmethod
@@ -1369,6 +1414,7 @@ class DatabaseInfraParameter(BaseModel):
                         parameter.name
                     )
                 )
+
                 continue
 
             physical_value = str(physical_parameters[parameter.name])
@@ -1390,6 +1436,7 @@ class DatabaseInfraParameter(BaseModel):
                         'reset_default_value': False
                     },
                 )
+
                 if not created:
                     obj.value = physical_value
                     obj.current_value = physical_value
@@ -1439,6 +1486,7 @@ class Vip(BaseModel):
         from workflow.steps.util.base import VipProviderClient
         vip_identifier = cls.objects.get(infra=databaseinfra).identifier
         client = VipProviderClient(databaseinfra.environment)
+
         return client.get_vip(vip_identifier)
 
 
@@ -1470,6 +1518,7 @@ def instance_pre_delete(sender, **kwargs):
 
     snapshots = Snapshot.objects.filter(
         instance=instance, purge_at__isnull=True)
+
     for snapshot in snapshots:
         LOG.debug("Setting snapshopt %s purge_at time" % (snapshot))
         snapshot.purge_at = datetime.datetime.now()

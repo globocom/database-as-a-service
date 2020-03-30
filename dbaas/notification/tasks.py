@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
-import datetime
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 import traceback
 
 from celery.utils.log import get_task_logger
 from django.db.models import Sum, Count, Q
 from simple_audit.models import AuditRequest
+from django.db.models.signals import post_save
+
 
 from account.models import User
 from dbaas.celery import app
@@ -528,7 +529,7 @@ def purge_task_history(self):
             request=self.request, user=None, worker_name=worker_name)
         task_history.relevance = TaskHistory.RELEVANCE_WARNING
 
-        now = datetime.datetime.now()
+        now = datetime.now()
         retention_days = Configuration.get_by_name_as_int(
             'task_history_retention_days')
 
@@ -559,6 +560,48 @@ def purge_task_history(self):
 
 
 @app.task(bind=True)
+@only_one(key="sendmail24hoursbeforeautotask")
+def send_mail_24hours_before_auto_task(self):
+    now = datetime.now()
+    one_day_later = now + timedelta(hours=24)
+    worker_name = get_worker_name()
+    task = TaskHistory.register(
+        request=self.request, user=None, worker_name=worker_name)
+    task.relevance = TaskHistory.RELEVANCE_CRITICAL
+    try:
+        scheudled_tasks = maintenance_models.TaskSchedule.objects.filter(
+            status=maintenance_models.TaskSchedule.SCHEDULED,
+            scheduled_for__day=one_day_later.day,
+            scheduled_for__month=one_day_later.month,
+            scheduled_for__year=one_day_later.year,
+            scheduled_for__hour=one_day_later.hour,
+        )
+        for scheduled_task in scheudled_tasks:
+            task.update_details(
+                "Sendind mail for found for {} at {}...".format(
+                    scheduled_task.database,
+                    scheduled_task.scheduled_for),
+                persist=True
+            )
+            post_save.send(
+                maintenance_models.TaskSchedule,
+                instance=scheduled_task, created=False,
+                execution_warning=True
+            )
+            task.update_details(
+                "OK\n",
+                persist=True
+            )
+
+        task.update_status_for(TaskHistory.STATUS_SUCCESS, details="\nDone")
+    except Exception as err:
+        task.update_status_for(
+            TaskHistory.STATUS_ERROR, details=err
+        )
+        return
+
+
+@app.task(bind=True)
 @only_one(key="checksslexpireattask")
 def check_ssl_expire_at(self):
     LOG.info("Retrieving all SSL MySQL databases")
@@ -581,9 +624,7 @@ def check_ssl_expire_at(self):
         ).distinct()
         for infra in infras:
             database = infra.databases.first()
-            task.update_details(
-                "Checking database {}...".format(database), persist=True
-            )
+
             scheudled_tasks = maintenance_models.TaskSchedule.objects.filter(
                 Q(status=maintenance_models.TaskSchedule.SCHEDULED)
                 | Q(status=maintenance_models.TaskSchedule.ERROR),
@@ -624,7 +665,7 @@ def execute_scheduled_maintenance(self, task=None, user=None,
     if task:
         scheduled_tasks = [task]
     else:
-        now = datetime.datetime.now()
+        now = datetime.now()
         end_date = now.replace(minute=59)
         scheduled_tasks = maintenance_models.TaskSchedule.objects.filter(
             scheduled_for__lte=end_date,

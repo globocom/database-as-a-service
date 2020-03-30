@@ -12,10 +12,7 @@ from logical.models import Credential
 from system.models import Configuration
 from physical.models import Instance
 from drivers import BaseDriver, DatabaseInfraStatus, DatabaseStatus
-from drivers.errors import AuthenticationError, ConnectionError, GenericDriverError, \
-    DatabaseAlreadyExists, InvalidCredential, DatabaseDoesNotExist, \
-    CredentialAlreadyExists, ReplicationNotRunningError, \
-    CredentialDoesNotExists
+from drivers import errors as driver_errors
 
 
 LOG = logging.getLogger(__name__)
@@ -39,7 +36,9 @@ class MySQL(BaseDriver):
 
     USER_ROLES = {
         Credential.OWNER: ["ALL PRIVILEGES"],
-        Credential.READ_WRITE: ["SELECT", "EXECUTE", "UPDATE", "DELETE", "INSERT"],
+        Credential.READ_WRITE: [
+            "SELECT", "EXECUTE", "UPDATE", "DELETE", "INSERT"
+        ],
         Credential.READ_ONLY: ["SELECT", "EXECUTE"]
     }
 
@@ -95,7 +94,8 @@ class MySQL(BaseDriver):
         endpoint = self.databaseinfra.endpoint.split(':')
         return endpoint[0], int(endpoint[1])
 
-    def __mysql_client__(self, instance, database='mysql', default_timeout=False):
+    def __mysql_client__(self, instance, database='mysql',
+                         default_timeout=False):
         connection_address, connection_port = self.__get_admin_connection(
             instance)
         try:
@@ -103,16 +103,29 @@ class MySQL(BaseDriver):
                 'Connecting to mysql databaseinfra %s', self.databaseinfra)
             # mysql uses timeout in seconds
             if default_timeout:
-                connection_timeout_in_seconds = MYSQL_CONNECTION_DEFAULT_TIMEOUT
+                connection_timeout_in_seconds = (
+                    MYSQL_CONNECTION_DEFAULT_TIMEOUT
+                )
             else:
-                connection_timeout_in_seconds = Configuration.get_by_name_as_int(
-                    'mysql_connect_timeout', default=MYSQL_CONNECTION_DEFAULT_TIMEOUT)
+                connection_timeout_in_seconds = (
+                    Configuration.get_by_name_as_int(
+                        'mysql_connect_timeout',
+                        default=MYSQL_CONNECTION_DEFAULT_TIMEOUT
+                    )
+                )
 
-            client = mysqldb.connect(host=connection_address, port=int(connection_port),
-                                     user=self.databaseinfra.user, passwd=self.databaseinfra.password,
-                                     db=database, connect_timeout=connection_timeout_in_seconds)
+            client = mysqldb.connect(
+                host=connection_address,
+                port=int(connection_port),
+                user=self.databaseinfra.user,
+                passwd=self.databaseinfra.password,
+                db=database,
+                connect_timeout=connection_timeout_in_seconds
+            )
             LOG.debug(
-                'Successfully connected to mysql databaseinfra %s' % (self.databaseinfra))
+                'Successfully connected to mysql databaseinfra %s' % (
+                    self.databaseinfra)
+                )
             return client
         except Exception as e:
             raise e
@@ -135,22 +148,27 @@ class MySQL(BaseDriver):
             yield self.__mysql_client__(instance)
         except _mysql_exceptions.OperationalError as e:
             if e.args[0] == ER_ACCESS_DENIED_ERROR:
-                raise AuthenticationError(e.args[1])
+                raise driver_errors.AuthenticationError(e.args[1])
             elif e.args[0] == ER_CAN_NOT_CONNECT:
                 raise ConnectionError(e.args[1])
             elif e.args[0] == LOST_CONNECTION:
                 raise ConnectionError(e.args[1])
             else:
-                raise GenericDriverError(e.args)
+                raise driver_errors.GenericDriverError(e.args)
         finally:
             try:
                 if client:
                     LOG.debug(
-                        'Disconnecting mysql databaseinfra %s', self.databaseinfra)
+                        'Disconnecting mysql databaseinfra %s',
+                        self.databaseinfra
+                    )
                     client.close()
-            except:
-                LOG.warn('Error disconnecting from databaseinfra %s. Ignoring...',
-                         self.databaseinfra, exc_info=True)
+            except Exception:
+                LOG.warn(
+                    'Error disconnecting from databaseinfra %s. Ignoring...',
+                    self.databaseinfra,
+                    exc_info=True
+                )
 
     def __query(self, query_string, instance=None):
         with self.mysqldb(instance=instance) as client:
@@ -163,21 +181,21 @@ class MySQL(BaseDriver):
             except _mysql_exceptions.ProgrammingError as e:
                 LOG.error("__query ProgrammingError: %s" % e)
                 if e.args[0] == ER_DB_CREATE_EXISTS:
-                    raise DatabaseAlreadyExists(e.args[1])
+                    raise driver_errors.DatabaseAlreadyExists(e.args[1])
                 else:
-                    raise GenericDriverError(e.args)
+                    raise driver_errors.GenericDriverError(e.args)
             except _mysql_exceptions.OperationalError as e:
                 LOG.error("__query OperationalError: %s" % e)
                 if e.args[0] == ER_DB_DROP_EXISTS:
-                    raise DatabaseDoesNotExist(e.args[1])
+                    raise driver_errors.DatabaseDoesNotExist(e.args[1])
                 elif e.args[0] == ER_CANNOT_USER:
-                    raise InvalidCredential(e.args[1])
+                    raise driver_errors.InvalidCredential(e.args[1])
                 elif e.args[0] == ER_WRONG_STRING_LENGTH:
-                    raise InvalidCredential(e.args[1])
+                    raise driver_errors.InvalidCredential(e.args[1])
                 else:
-                    raise GenericDriverError(e.args)
+                    raise driver_errors.GenericDriverError(e.args)
             except Exception as e:
-                GenericDriverError(e.args)
+                driver_errors.GenericDriverError(e.args)
 
     def query(self, query_string, instance=None):
         return self.__query(query_string, instance)
@@ -234,7 +252,9 @@ class MySQL(BaseDriver):
                         db_status.is_alive = True
                 except Exception as e:
                     LOG.warning(
-                        "could not retrieve db status for %s: %s" % (database_name, e))
+                        "could not retrieve db status for %s: %s" % (
+                            database_name, e)
+                        )
 
                 db_status.total_size_in_bytes = 0
                 db_status.used_size_in_bytes = all_dbs[database_name]
@@ -254,7 +274,9 @@ class MySQL(BaseDriver):
                 status = True
         except Exception as e:
             LOG.warning(
-                "could not retrieve status for instance %s: %s" % (instance, e))
+                "could not retrieve status for instance %s: %s" % (
+                    instance, e)
+                )
 
         return status
 
@@ -267,13 +289,15 @@ class MySQL(BaseDriver):
             credential.user, credential.database))
 
         if credential.user in self.list_users():
-            raise CredentialAlreadyExists()
+            raise driver_errors.CredentialAlreadyExists()
         query = "CREATE USER '{}'@'%' IDENTIFIED BY '{}'".format(
             credential.user, credential.password)
         self.__query(query)
 
         query = "GRANT {} ON {}.* TO '{}'@'%'".format(
-            ','.join(self.USER_ROLES[credential.privileges]), credential.database, credential.user)
+            ','.join(self.USER_ROLES[credential.privileges]),
+                credential.database, credential.user
+            )
         self.__query(query)
 
         if credential.force_ssl:
@@ -311,7 +335,9 @@ class MySQL(BaseDriver):
     def list_users(self, instance=None):
         LOG.info("listing users in %s" % (self.databaseinfra))
         results = self.__query(
-            "SELECT distinct User FROM mysql.user where User != ''", instance=instance)
+            "SELECT distinct User FROM mysql.user where User != ''",
+            instance=instance
+        )
         return [result["User"] for result in results]
 
     def change_default_pwd(self, instance):
@@ -354,14 +380,18 @@ class MySQL(BaseDriver):
         )
         seconds_behind_master = results[0]['Seconds_Behind_Master']
         if seconds_behind_master is None:
-            raise ReplicationNotRunningError
+            raise driver_errors.ReplicationNotRunningError
         return int(seconds_behind_master)
 
     def get_heartbeat_replication_info(self, instance):
         results = self.__query(
-            query_string="select DATE_FORMAT(ts, '%Y-%m-%d %H:%i:%s') ts, DATE_FORMAT(now(), '%Y-%m-%d %H:%i:%s') now from heartbeat.heartbeat",
+            query_string=("select DATE_FORMAT(ts, '%Y-%m-%d %H:%i:%s') ts, "
+                          "DATE_FORMAT(now(), '%Y-%m-%d %H:%i:%s') now "
+                          "from heartbeat.heartbeat"),
             instance=instance)
-        now = datetime.datetime.strptime(results[0]['now'], '%Y-%m-%d %H:%M:%S')
+        now = datetime.datetime.strptime(
+            results[0]['now'], '%Y-%m-%d %H:%M:%S'
+        )
         ts = datetime.datetime.strptime(results[0]['ts'], '%Y-%m-%d %H:%M:%S')
         datediff = now - ts
         return datediff.seconds
@@ -462,7 +492,7 @@ class MySQL(BaseDriver):
         LOG.info("settint user {} to require SSL".format(credential.user))
 
         if credential.user not in self.list_users():
-            raise CredentialDoesNotExists()
+            raise driver_errors.CredentialDoesNotExists()
 
         query = "GRANT USAGE ON *.* TO '{}'@'%' REQUIRE SSL".format(
             credential.user)
@@ -473,7 +503,7 @@ class MySQL(BaseDriver):
         LOG.info("settint user {} to NOT require SSL".format(credential.user))
 
         if credential.user not in self.list_users():
-            raise CredentialDoesNotExists()
+            raise driver_errors.CredentialDoesNotExists()
 
         query = "GRANT USAGE ON *.* TO '{}'@'%' REQUIRE NONE".format(
             credential.user)
@@ -544,7 +574,7 @@ class MySQLFOXHA(MySQL):
     def set_replication_require_ssl(self, instance=None, ca_path=None):
         LOG.info("settint replication to require SSL")
 
-        query ="stop slave;"
+        query = "stop slave;"
         self.query(query, instance)
 
         query = "CHANGE MASTER TO MASTER_SSL=1, MASTER_SSL_CA = '{}'"
@@ -557,7 +587,7 @@ class MySQLFOXHA(MySQL):
     def set_replication_not_require_ssl(self, instance=None, ca_path=None):
         LOG.info("settint replication to NOT require SSL")
 
-        query ="stop slave;"
+        query = "stop slave;"
         self.query(query, instance)
 
         query = "CHANGE MASTER TO MASTER_SSL=0, MASTER_SSL_CA = ''"

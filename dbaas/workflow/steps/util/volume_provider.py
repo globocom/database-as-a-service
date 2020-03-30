@@ -1,11 +1,12 @@
 from datetime import datetime
+from time import sleep
+
 from requests import post, delete, get
 from backup.models import Snapshot
 from dbaas_credentials.models import CredentialType
 from util import get_credentials_for, exec_remote_command_host
 from physical.models import Volume
 from base import BaseInstanceStep
-from time import sleep
 
 
 class VolumeProviderException(Exception):
@@ -41,6 +42,14 @@ class VolumeProviderRemovePubKeyCommand(VolumeProviderException):
 
 
 class VolumeProviderRemoveHostAllowCommand(VolumeProviderException):
+    pass
+
+
+class VolumeProviderSnapshotHasWarningStatusError(VolumeProviderException):
+    pass
+
+
+class VolumeProviderSnapshotNotFoundError(VolumeProviderException):
     pass
 
 
@@ -354,7 +363,7 @@ class NewVolume(VolumeProviderBase):
         )
 
     def undo(self):
-        if not self.instance.is_database:
+        if not self.instance.is_database or not self.host:
             return
 
         for volume in self.host.volumes.all():
@@ -729,6 +738,10 @@ class TakeSnapshotMigrate(VolumeProviderBase):
     def provider_class(self):
         return VolumeProviderBaseMigrate
 
+    @property
+    def target_volume(self):
+        return None
+
     def do(self):
         from backup.tasks import make_instance_snapshot_backup
         from backup.models import BackupGroup
@@ -742,12 +755,14 @@ class TakeSnapshotMigrate(VolumeProviderBase):
                 self.instance,
                 {},
                 group,
-                provider_class=self.provider_class
+                provider_class=self.provider_class,
+                target_volume=self.target_volume
             )
 
             if not snapshot:
-                raise Exception('Backup was unsuccessful in {}'.format(
-                    self.instance)
+                raise VolumeProviderSnapshotNotFoundError(
+                    'Backup was unsuccessful in {}'.format(
+                        self.instance)
                 )
 
             snapshot.is_automatic = False
@@ -761,7 +776,9 @@ class TakeSnapshotMigrate(VolumeProviderBase):
             self.step_manager.save()
 
         if snapshot.has_warning:
-            raise Exception('Backup was warning')
+            raise VolumeProviderSnapshotHasWarningStatusError(
+                'Backup was warning'
+            )
 
     def undo(self):
         pass
@@ -773,7 +790,11 @@ class TakeSnapshotFromMaster(TakeSnapshotMigrate):
 
     @property
     def provider_class(self):
-        return VolumeProviderBase
+        return TakeSnapshotFromMaster
+
+    @property
+    def target_volume(self):
+        return self.volume
 
     @property
     def host(self):
@@ -790,14 +811,6 @@ class TakeSnapshotFromMaster(TakeSnapshotMigrate):
         driver = self.infra.get_driver()
         self.instance = driver.get_master_instance()
         super(TakeSnapshotFromMaster, self).do()
-        # snapshot = Snapshot.create(self.instance, self.group, self.volume)
-        # response = self.take_snapshot()
-        # snapshot.done(response)
-        # snapshot.status = Snapshot.SUCCESS
-        # snapshot.end_at = datetime.now()
-        # snapshot.save()
-        # self.step_manager.snapshot = snapshot
-        # self.step_manager.save()
 
 
 class RemoveSnapshotMigrate(VolumeProviderBase):

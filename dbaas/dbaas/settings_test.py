@@ -5,11 +5,14 @@ LOGGING = {}
 DEBUG = 0
 TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
 NOSE_ARGS = [
-    '--verbosity=0',
+    '--verbosity=4',
     '--no-byte-compile',
     '--debug-log=error_test.log',
+    '-l',
     '-s',
-    '--nologcapture'
+    # '-x',
+    '--nologcapture',
+    #'--collect-only'
 ]
 
 if CI:
