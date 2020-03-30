@@ -4,12 +4,10 @@ from __future__ import absolute_import, unicode_literals
 from django.core.urlresolvers import reverse
 from django.utils.html import format_html
 
-from django_services import admin
-from maintenance.service.task_schedule import TaskScheduleService
+from django.contrib import admin
 
 
-class TaskScheduleAdmin(admin.DjangoServicesAdmin):
-    service_class = TaskScheduleService
+class TaskScheduleAdmin(admin.ModelAdmin):
     list_display = ("method_path", "link_database", "status", "scheduled_for",
                     "finished_at")
     search_fields = ('method_path', 'database__name')
