@@ -155,10 +155,19 @@ def disk_resize_notification(database, new_disk, usage_percentage):
     )
 
 
-def schedule_task_notification(database, scheduled_task, is_new):
+def schedule_task_notification(database, scheduled_task, is_new,
+                               is_task_warning=False):
 
-    subject = _('[DBaaS] Automatic Task {} for Database {}'.format(
-        'created' if is_new else 'updated',
+    subject_tmpl = '[DBaaS] Automatic Task {} for Database {}'
+    if is_task_warning:
+        action = 'execution warning'
+    elif is_new:
+        action = 'created'
+    else:
+        action = 'updated'
+
+    subject = _(subject_tmpl.format(
+        action,
         database.name,
     ))
 
@@ -173,7 +182,8 @@ def schedule_task_notification(database, scheduled_task, is_new):
             'admin:logical_database_maintenance', kwargs={'id': database.id}
         )),
         'is_new': is_new,
-        'domain': domain
+        'domain': domain,
+        'is_task_warning': is_task_warning
     }
 
     send_mail_template(
