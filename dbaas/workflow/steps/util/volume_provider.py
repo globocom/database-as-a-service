@@ -808,9 +808,10 @@ class TakeSnapshotFromMaster(TakeSnapshotMigrate):
         return group
 
     def do(self):
-        driver = self.infra.get_driver()
-        self.instance = driver.get_master_instance()
-        super(TakeSnapshotFromMaster, self).do()
+        if self.is_persisted:
+            driver = self.infra.get_driver()
+            self.instance = driver.get_master_instance()
+            super(TakeSnapshotFromMaster, self).do()
 
 
 class RemoveSnapshotMigrate(VolumeProviderBase):
