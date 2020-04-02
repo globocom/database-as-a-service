@@ -231,6 +231,10 @@ class BaseInstanceStep(object):
     def is_last_instance(self):
         return self.instance == self.infra.instances.last()
 
+    @property
+    def is_persisted(self):
+        return self.plan.has_persistence is True
+
     def do(self):
         raise NotImplementedError
 
