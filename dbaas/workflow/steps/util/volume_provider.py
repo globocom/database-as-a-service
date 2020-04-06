@@ -596,6 +596,10 @@ class MountDataVolumeRecreateSlave(MountDataVolumeMigrate):
         master_instance = self.infra.get_driver().get_master_instance()
         return master_instance.hostname.volumes.get(is_active=True)
 
+    def do(self):
+        if self.is_database_instance:
+            super(MountDataVolumeRecreateSlave, self).do()
+
 
 class UmountDataVolumeRecreateSlave(MountDataVolumeRecreateSlave):
 
@@ -605,10 +609,12 @@ class UmountDataVolumeRecreateSlave(MountDataVolumeRecreateSlave):
         )
 
     def do(self):
-        super(UmountDataVolumeRecreateSlave, self).undo()
+        if self.is_database_instance:
+            super(UmountDataVolumeRecreateSlave, self).undo()
 
     def undo(self):
-        super(UmountDataVolumeRecreateSlave, self).do()
+        if self.is_database_instance:
+            super(UmountDataVolumeRecreateSlave, self).do()
 
 
 class MountDataVolumeDatabaseMigrate(MountDataVolumeMigrate):
@@ -808,9 +814,10 @@ class TakeSnapshotFromMaster(TakeSnapshotMigrate):
         return group
 
     def do(self):
-        driver = self.infra.get_driver()
-        self.instance = driver.get_master_instance()
-        super(TakeSnapshotFromMaster, self).do()
+        if self.is_database_instance:
+            driver = self.infra.get_driver()
+            self.instance = driver.get_master_instance()
+            super(TakeSnapshotFromMaster, self).do()
 
 
 class RemoveSnapshotMigrate(VolumeProviderBase):
@@ -824,17 +831,18 @@ class RemoveSnapshotMigrate(VolumeProviderBase):
 
     def do(self):
         from backup.tasks import remove_snapshot_backup
-        if self.host_migrate and self.host_migrate.database_migrate:
-            snapshot = self.host_migrate.snapshot
-        else:
-            snapshot = self.step_manager.snapshot
-        if not snapshot:
-            raise VolumeProviderRemoveSnapshotMigrate(
-                'No snapshot found on {} instance for migration'.format(
-                    self.step_manager
+        if self.is_database_instance:
+            if self.host_migrate and self.host_migrate.database_migrate:
+                snapshot = self.host_migrate.snapshot
+            else:
+                snapshot = self.step_manager.snapshot
+            if not snapshot:
+                raise VolumeProviderRemoveSnapshotMigrate(
+                    'No snapshot found on {} instance for migration'.format(
+                        self.step_manager
+                    )
                 )
-            )
-        remove_snapshot_backup(snapshot, self, force=1)
+            remove_snapshot_backup(snapshot, self, force=1)
 
     def undo(self):
         pass
@@ -891,6 +899,10 @@ class CopyDataFromSnapShot(CopyFilesMigrate):
     @property
     def snap_dir(self):
         return "data/"
+
+    def do(self):
+        if self.is_database_instance:
+            super(CopyDataFromSnapShot, self).do()
 
 
 class CopyReplFromSnapShot(CopyDataFromSnapShot):
@@ -1185,12 +1197,13 @@ class AddAccessRecreateSlave(AddAccess):
         return master_instance.hostname.volumes.get(is_active=True)
 
     def do(self):
-        if not self.is_valid:
+        if not self.is_valid and not self.is_database_instance:
             return
         self.add_access(self.volume, self.host, 'read-only')
 
     def undo(self):
-        self.remove_access(self.volume, self.host)
+        if self.is_database_instance:
+            self.remove_access(self.volume, self.host)
 
 
 class RemoveAccessRecreateSlave(AddAccessRecreateSlave):
@@ -1198,10 +1211,12 @@ class RemoveAccessRecreateSlave(AddAccessRecreateSlave):
         return "Removing permission to old master disk..."
 
     def do(self):
-        super(RemoveAccessRecreateSlave, self).undo()
+        if self.is_database_instance:
+            super(RemoveAccessRecreateSlave, self).undo()
 
     def undo(self):
-        super(RemoveAccessRecreateSlave, self).do()
+        if self.is_database_instance:
+            super(RemoveAccessRecreateSlave, self).do()
 
 
 class RemoveAccessMigrate(AddAccessMigrate):
@@ -1403,7 +1418,8 @@ class WaitSnapshotAvailableMigrate(VolumeProviderBase):
             return self.step_manager.snapshot
 
     def do(self):
-        self.waiting_be('available', self.snapshot)
+        if self.is_database_instance:
+            self.waiting_be('available', self.snapshot)
 
 
 class UpdateActiveDisk(VolumeProviderBase):

@@ -125,6 +125,10 @@ class CleanDataRecreateSlave(CleanData):
     def is_valid(self):
         return self.instance.is_slave
 
+    def do(self):
+        if self.is_database_instance:
+            super(CleanDataRecreateSlave, self).do()
+
 
 class CleanReplRecreateSlave(CleanData):
     @property
