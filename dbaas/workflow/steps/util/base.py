@@ -235,6 +235,10 @@ class BaseInstanceStep(object):
     def is_persisted(self):
         return self.plan.has_persistence is True
 
+    @property
+    def is_database_instance(self):
+        return self.instance in self.driver.get_database_instances()
+
     def do(self):
         raise NotImplementedError
 
