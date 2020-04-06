@@ -1,5 +1,5 @@
 {% if is_task_warning %}
-The update SSL of database {{ database }} will be executed within 24 hours.
+The update of the SSL certificate of the database {{ database }} will be executed within 24 hours.
 The task will run at {{ scheduled_for }}.
 If you want change that date go to {{ database_url }}.
 {% elif is_new %}
