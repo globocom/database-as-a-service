@@ -138,12 +138,12 @@ class BodyTestCase(EmailBaseTest):
 
         self.assertEqual(len(mail.outbox), 2)
         self.assertIn(
-            ('The update SSL of database fake_db_name will be executed within '
-             '24 hours.'),
+            ('The update of the SSL certificate of the database fake_db_name '
+             'will be executed within 24 hours.'),
             mail.outbox[0].body,
         )
         self.assertIn(
-            ('The update SSL of database fake_db_name will be executed within '
-             '24 hours.'),
+            ('The update of the SSL certificate of the database fake_db_name '
+             'will be executed within 24 hours.'),
             mail.outbox[1].body,
         )
