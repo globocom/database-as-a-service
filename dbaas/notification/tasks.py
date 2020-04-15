@@ -533,7 +533,7 @@ def purge_task_history(self):
         retention_days = Configuration.get_by_name_as_int(
             'task_history_retention_days')
 
-        n_days_before = now - datetime.timedelta(days=retention_days)
+        n_days_before = now - timedelta(days=retention_days)
 
         tasks_to_purge = TaskHistory.objects.filter(
             task_name__in=[
