@@ -2082,6 +2082,26 @@ class TaskRegister(object):
         )
 
     @classmethod
+    def restart_database(cls, database, user,
+                         since_step=None, step_manager=None,
+                         auto_rollback=False, **kw):
+        task_params = {
+            'task_name': "restart_database",
+            'arguments': "Database: {}".format(
+                database
+            ),
+        }
+        if user:
+            task_params['user'] = user
+        task = cls.create_task(task_params)
+        return maintenace_tasks.restart_database.delay(
+            database=database, task=task,
+            since_step=since_step,
+            step_manager=step_manager,
+            **kw
+        )
+
+    @classmethod
     def host_migrate_rollback(cls, migrate, user):
         task_params = {
             'task_name': "host_migrate",
