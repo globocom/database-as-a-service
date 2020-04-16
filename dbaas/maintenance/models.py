@@ -1029,6 +1029,20 @@ class AddInstancesToDatabase(DatabaseMaintenanceTask):
         return "Add instances to database: {}".format(self.database)
 
 
+class RestartDatabase(DatabaseMaintenanceTask):
+    task = models.ForeignKey(
+        TaskHistory, verbose_name="Task History",
+        null=False, unique=False, related_name="restart_database_manager"
+    )
+    database = models.ForeignKey(
+        Database, related_name='restart_database_manager', null=True,
+        blank=True, on_delete=models.SET_NULL
+    )
+
+    def __unicode__(self):
+        return "Restarting database"
+
+
 simple_audit.register(Maintenance)
 simple_audit.register(HostMaintenance)
 simple_audit.register(MaintenanceParameters)
@@ -1040,6 +1054,7 @@ simple_audit.register(HostMigrate)
 simple_audit.register(DatabaseMigrate)
 simple_audit.register(DatabaseUpgradePatch)
 simple_audit.register(TaskSchedule)
+simple_audit.register(RestartDatabase)
 
 
 #########################################################
