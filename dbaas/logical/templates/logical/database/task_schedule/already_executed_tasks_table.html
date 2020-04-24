@@ -8,7 +8,7 @@
   <tbody>
     {% for task in tasks_executed %}
       <tr class="{% status_color task.status %}">
-        <td>Update SSL certificate</td>
+        <td>{% get_kind_description_for task %}</td>
         <td>{{ task.finished_at|date:"Y-m-d H:i:s" }}</td>
         <td>{{ task.status_label }}</td>
       </tr>

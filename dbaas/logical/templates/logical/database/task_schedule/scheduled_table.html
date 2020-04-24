@@ -10,7 +10,7 @@
     <input type="hidden" name="maintenance_changed" value="0" />
     {% for task in tasks_scheduled %}
       <tr>
-        <td>Update SSL certificate</td>
+        <td>{% get_kind_description_for task %}</td>
         <td>
             <input type="hidden" name="scheduled_id" value="{{ task.id }}" />
             <input type="hidden" name="scheduled_for_date_{{ task.id }}" value="{{ task.scheduled_for|date:"Y-m-d" }}" />

@@ -24,3 +24,14 @@ def get_notes_for(task):
         )
 
     return '-'
+
+
+@register.simple_tag(takes_context=False)
+def get_kind_description_for(task):
+    kind_map = {
+        'update_ssl': 'Update SSL certificate',
+        'restart_database': 'Restart database'
+    }
+    if task.method_path in kind_map:
+        return kind_map[task.method_path]
+    return '-'
