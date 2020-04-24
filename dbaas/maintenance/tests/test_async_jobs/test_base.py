@@ -96,17 +96,52 @@ class RunTestCase(BaseTestCase):
         self.assertTrue(auto_rollback_mock.called)
 
 
+@patch.object(BaseJob, 'instances', new=PropertyMock())
+@patch('maintenance.models.UpdateSsl.cleanup')
+class RunAutoCleanupTestCase(BaseTestCase):
+
+    def setUp(self):
+        super(RunAutoCleanupTestCase, self).setUp()
+        self.base_job.step_manager = self.fake_previous_step_manager
+
+    def test_cleanup_false_force_false(self, cleanup_mock):
+        self.base_job.auto_cleanup = False
+        self.base_job.run_auto_cleanup_if_configured(force=False)
+
+        self.assertFalse(cleanup_mock.called)
+
+    def test_cleanup_true_force_false(self, cleanup_mock):
+        self.base_job.auto_cleanup = True
+        self.base_job.run_auto_cleanup_if_configured(force=False)
+
+        self.assertTrue(cleanup_mock.called)
+
+    def test_cleanup_false_force_true(self, cleanup_mock):
+        self.base_job.auto_cleanup = False
+        self.base_job.run_auto_cleanup_if_configured(force=True)
+
+        self.assertTrue(cleanup_mock.called)
+
+    def test_cleanup_true_force_true(self, cleanup_mock):
+        self.base_job.auto_cleanup = True
+        self.base_job.run_auto_cleanup_if_configured(force=True)
+
+        self.assertTrue(cleanup_mock.called)
+
+
 @patch.object(BaseJob, 'rollback')
+@patch.object(BaseJob, 'run_auto_cleanup_if_configured')
 @patch.object(BaseJob, 'instances', new=PropertyMock())
 class RunAutoRollbackTestCase(BaseTestCase):
 
-    def test_do_not_run_if_not_configured(self, rollback_mock):
+    def test_do_not_run_if_not_configured(self, cleanup_mock, rollback_mock):
         self.base_job.auto_rollback = False
         self.base_job.run_auto_rollback_if_configured()
 
         self.assertFalse(rollback_mock.called)
+        self.assertFalse(cleanup_mock.called)
 
-    def test_params(self, rollback_mock):
+    def test_params(self, cleanup_mock, rollback_mock):
         self.base_job.step_manager = self.fake_previous_step_manager
         self.base_job.task = self.fake_task
         self.base_job.run_auto_rollback_if_configured()
@@ -130,7 +165,8 @@ class RunAutoRollbackTestCase(BaseTestCase):
     @patch('notification.models.TaskHistory.set_status_success')
     @patch('maintenance.models.UpdateSsl.set_success')
     def test_rollback_success(self, manager_set_success_mock,
-                              task_set_success_mock, rollback_mock):
+                              task_set_success_mock, cleanup_mock,
+                              rollback_mock):
         self.base_job.step_manager = self.fake_previous_step_manager
         self.base_job.task = self.fake_task
         rollback_mock.return_value = True
@@ -138,11 +174,12 @@ class RunAutoRollbackTestCase(BaseTestCase):
 
         self.assertTrue(task_set_success_mock.called)
         self.assertTrue(manager_set_success_mock.called)
+        self.assertFalse(cleanup_mock.called)
 
     @patch('notification.models.TaskHistory.set_status_error')
     @patch('maintenance.models.UpdateSsl.set_error')
     def test_rollback_error_without_cleanup(self, manager_set_error_mock,
-                                            task_set_error_mock,
+                                            task_set_error_mock, cleanup_mock,
                                             rollback_mock):
         self.base_job.step_manager = self.fake_previous_step_manager
         self.base_job.task = self.fake_task
@@ -154,10 +191,9 @@ class RunAutoRollbackTestCase(BaseTestCase):
 
     @patch('notification.models.TaskHistory.set_status_error')
     @patch('maintenance.models.UpdateSsl.set_error')
-    @patch('maintenance.models.UpdateSsl.cleanup')
-    def test_rollback_error_with_cleanup(self, cleanup_mock,
-                                         manager_set_error_mock,
+    def test_rollback_error_with_cleanup(self, manager_set_error_mock,
                                          task_set_error_mock,
+                                         cleanup_mock,
                                          rollback_mock):
         self.base_job.step_manager = self.fake_previous_step_manager
         self.base_job.task = self.fake_task
@@ -167,6 +203,9 @@ class RunAutoRollbackTestCase(BaseTestCase):
         self.assertTrue(task_set_error_mock.called)
         self.assertTrue(manager_set_error_mock.called)
         self.assertTrue(cleanup_mock.called)
+        cleanup_call_kwargs = cleanup_mock.call_args[1]
+        self.assertIn('force', cleanup_call_kwargs)
+        self.assertTrue(cleanup_call_kwargs['force'])
 
 
 class CreateStepManagerTestCase(BaseTestCase):
