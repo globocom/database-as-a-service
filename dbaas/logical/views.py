@@ -990,6 +990,7 @@ class DatabaseMaintenanceView(TemplateView):
             if not is_valid:
                 return is_valid, err_msg
             task.save()
+            task.send_mail()
 
         return True, ''
 
@@ -1007,6 +1008,7 @@ class DatabaseMaintenanceView(TemplateView):
         if not is_valid:
             return is_valid, err_msg
         task.save()
+        task.send_mail()
 
         return True, ''
 
