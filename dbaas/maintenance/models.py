@@ -12,6 +12,7 @@ from dateutil import rrule, tz
 from django.db.models.signals import post_save
 from django.db.models.signals import pre_delete
 from django.dispatch import receiver
+from django.core.urlresolvers import reverse
 from celery.task import control
 
 
@@ -28,6 +29,7 @@ from .registered_functions.functools import _get_registered_functions
 from .managers import DatabaseMaintenanceTaskManager
 from util.email_notifications import schedule_task_notification
 from system.models import Configuration
+from dbaas.helpers import EmailHelper
 
 
 LOG = logging.getLogger(__name__)
@@ -157,6 +159,8 @@ class Maintenance(BaseModel):
 
 
 class TaskSchedule(BaseModel):
+    subject_tmpl = '[DBaaS] Automatic Task {} for Database {}'
+    email_helper = EmailHelper
     SCHEDULED = 0
     RUNNING = 1
     SUCCESS = 2
@@ -190,7 +194,7 @@ class TaskSchedule(BaseModel):
         scheduled_date = self.scheduled_for.date()
         expire_at = self.database.infra.earliest_ssl_expire_at
         now = datetime.now()
-        if (scheduled_date >= expire_at):
+        if expire_at and (scheduled_date >= expire_at):
             msg = ('You cant schedule greater or equal then ssl expire. '
                    'Scheduled for: {} Expire at: {}'.format(
                         scheduled_date, expire_at)
@@ -206,11 +210,6 @@ class TaskSchedule(BaseModel):
         permissions = (
             ("view_maintenance", "Can view maintenance"),
         )
-
-    def save_without_signal(self, *args, **kw):
-        post_save.disconnect(task_schedule_post_save, sender=self._meta.model)
-        self.save(*args, **kw)
-        post_save.connect(task_schedule_post_save, sender=self._meta.model)
 
     @staticmethod
     def next_maintenance_window(start_date, maintenance_hour, weekday):
@@ -229,7 +228,7 @@ class TaskSchedule(BaseModel):
 
     def _set_status(self, status):
         self.status = status
-        self.save_without_signal()
+        self.save()
 
     def set_success(self):
         self.finished_at = datetime.now()
@@ -242,6 +241,55 @@ class TaskSchedule(BaseModel):
     def set_running(self):
         self.started_at = datetime.now()
         self._set_status(self.RUNNING)
+
+    def send_mail(self, is_new=False, is_execution_warning=None,
+                  template_name=None):
+        if template_name is None:
+            template_name = '{}_notification'.format(self.method_path)
+
+        if is_execution_warning:
+            action = 'execution warning'
+        elif is_new:
+            action = 'created'
+        else:
+            action = 'updated'
+
+        subject = _(self.subject_tmpl.format(
+            action,
+            self.database.name,
+        ))
+
+        domain = self.email_helper.get_domain()
+        template_context = {
+            'database': self.database,
+            'scheduled_for': self.scheduled_for,
+            'is_execution_warning': is_execution_warning,
+            'ssl_expire_at': self.database.infra.earliest_ssl_expire_at,
+            'database_url': "{}{}".format(
+                domain,
+                reverse(
+                    'admin:logical_database_maintenance',
+                    kwargs={'id': self.database.id}
+                )
+            ),
+            'is_new': is_new,
+            'is_ha': self.database.infra.plan.is_ha,
+            'domain': domain,
+            'include_template_name_txt': 'email_extras/{}.txt'.format(
+                template_name
+            ),
+            'include_template_name_html': 'email_extras/{}.html'.format(
+                template_name
+            ),
+        }
+
+        self.email_helper.send_mail(
+            subject=subject,
+            template_name='schedule_task_notification',
+            template_context=template_context,
+            action=self.method_path,
+            database=self.database,
+        )
 
 
 class HostMaintenance(BaseModel):
@@ -1102,20 +1150,3 @@ def maintenance_post_save(sender, **kwargs):
 
             maintenance.celery_task_id = task.task_id
             maintenance.save()
-
-
-@receiver(post_save, sender=TaskSchedule)
-def task_schedule_post_save(sender, **kwargs):
-    task = kwargs.get("instance")
-    is_new = kwargs.get("created")
-    is_task_warning = kwargs.get("execution_warning", False)
-    send_email = bool(
-        int(Configuration.get_by_name('schedule_send_mail') or 0)
-    )
-    if send_email:
-        schedule_task_notification(
-            database=task.database,
-            scheduled_task=task,
-            is_new=is_new,
-            is_task_warning=is_task_warning
-        )
