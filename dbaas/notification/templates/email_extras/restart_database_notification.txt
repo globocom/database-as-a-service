@@ -1,0 +1,3 @@
+The database {{ database }} needs to be restarted.
+
+{{ extra_explanation }}
