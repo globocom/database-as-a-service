@@ -10,6 +10,8 @@ from dbaas.tests.helpers import DatabaseHelper
 
 
 class EmailBaseTest(TestCase):
+    action = 'update_ssl'
+
     def setUp(self):
         cache.clear()
         mail.outbox = []
@@ -33,4 +35,9 @@ class EmailBaseTest(TestCase):
         )
         self.database = DatabaseHelper.create(
             name='fake_db_name', team=self.team
+        )
+        self.task_schedule = mommy.make(
+            'TaskSchedule',
+            method_path=self.action,
+            database=self.database
         )
