@@ -378,7 +378,7 @@ class BaseTopology(object):
     def get_filer_migrate_steps(self):
         raise NotImplementedError
 
-    def get_restart_db_steps(self):
+    def get_restart_database_steps(self):
         return [{
             'Disable monitoring': (
                 'workflow.steps.util.zabbix.DisableAlarms',
