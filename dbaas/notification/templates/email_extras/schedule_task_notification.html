@@ -1,22 +1,19 @@
-{% if is_task_warning %}
-<h2>The update of the SSL certificate of the database {{ database }} will be executed within 24 hours.</h2><br/>
-The task will run at {{ scheduled_for }}.<br/>
-If you want change that date go to <a target="_blank" href="{{ database_url }}"> {{ database }}</a>.<br/>
+{% if is_execution_warning %}
+{% include "email_extras/task_warning.html" %}
 <br/>
 {% elif is_new %}
-<h2>The SSL of database {{ database }} is about to expire.</h2><br/>
-That will expire at {{ ssl_expire_at }}.<br/>
-We scheduled the update in your maintenance window at {{ scheduled_for }}.<br/>
-If you want change that date go to <a target="_blank" href="{{ database_url }}"> {{ database }}</a>.<br/>
+{% include include_template_name_html %}
+<br/>
+{% if is_ha %}
+Do not worry about that, the database WILL BE available during this process.<br/>
+{% else %}
+The database WILL BE unavailable during this process.<br/>
+{% endif %}
+<br/>
+{% include "email_extras/task_information.html" %}
 <br/>
 {% else %}
-The schedule task of database {{ database }} was changed for {{ scheduled_for }}.<br/>
-If you want change that date go to <a target="_blank" href="{{ database_url }}"> {{ database }}</a><br/>
+{% include "email_extras/task_updated.html" %}
 <br/>
 {% endif %}
-You are receiving this email because in our records you are in team {{ database.team.name }}.<br/>
-If this is not right, contact the Dbaas system administrators.<br/>
-<br><br><br>
-Regards,<br>
-Dbaas notification robot<br>
-{{domain}}
+{% include "email_extras/bottom.html" %}
