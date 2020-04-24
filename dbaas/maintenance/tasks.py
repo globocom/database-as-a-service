@@ -390,6 +390,24 @@ def update_ssl(self, database, task, since_step=None, step_manager=None,
 
 
 @app.task(bind=True)
+def restart_database(self, database, task, since_step=None, step_manager=None,
+                     scheduled_task=None, auto_rollback=False,
+                     auto_cleanup=False):
+    from maintenance.async_jobs import RestartDatabaseJob
+    async_job = RestartDatabaseJob(
+        request=self.request,
+        database=database,
+        task=task,
+        since_step=since_step,
+        step_manager=step_manager,
+        scheduled_task=scheduled_task,
+        auto_rollback=auto_rollback,
+        auto_cleanup=auto_cleanup
+    )
+    async_job.run()
+
+
+@app.task(bind=True)
 def node_zone_migrate_rollback(self, migrate, task):
     task = TaskHistory.register(
         request=self.request, task_history=task, user=task.user,
