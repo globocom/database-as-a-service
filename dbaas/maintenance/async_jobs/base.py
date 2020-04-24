@@ -17,7 +17,8 @@ class BaseJob(object):
     error_auto_rollback_msg = ''
 
     def __init__(self, request, database, task, since_step=None,
-                 step_manager=None, scheduled_task=None, auto_rollback=False):
+                 step_manager=None, scheduled_task=None,
+                 auto_rollback=False, auto_cleanup=False):
 
         self.request = request
         self.database = database
@@ -30,6 +31,7 @@ class BaseJob(object):
         )
         self.current_step = self.step_manager.current_step
         self.auto_rollback = auto_rollback
+        self.auto_cleanup = auto_cleanup
         self.scheduled_task = scheduled_task
 
     @property
@@ -92,6 +94,12 @@ class BaseJob(object):
             rollback_step_manager
         )
 
+    def run_auto_cleanup_if_configured(self, step_manager=None, force=False):
+        if self.auto_cleanup or force:
+            step_manager = step_manager or self.step_manager
+            if hasattr(step_manager, 'cleanup'):
+                step_manager.cleanup(self.instances)
+
     def run_auto_rollback_if_configured(self):
         if self.auto_rollback:
             new_task = copy(self.task)
@@ -114,8 +122,9 @@ class BaseJob(object):
                     self.success_auto_rollback_msg
                 )
             else:
-                if hasattr(rollback_step_manager, 'cleanup'):
-                    rollback_step_manager.cleanup(self.instances)
+                self.run_auto_cleanup_if_configured(
+                    rollback_step_manager, force=True
+                )
                 rollback_step_manager.set_error()
                 self.task.set_status_error(self.error_auto_rollback_msg)
 
@@ -136,3 +145,4 @@ class BaseJob(object):
             self.step_manager.set_error()
             self.task.set_status_error(self.error_msg)
             self.run_auto_rollback_if_configured()
+            self.run_auto_cleanup_if_configured()
