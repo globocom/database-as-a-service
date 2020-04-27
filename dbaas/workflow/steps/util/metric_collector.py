@@ -41,8 +41,7 @@ class MetricsCollector(BaseInstanceStep):
             'PORT': self.instance.port,
             'USER': user,
             'PASSWORD': password,
-            'MYSQL': self.instance.instance_type in (
-                self.instance.MYSQL, self.instance.MYSQL_PERCONA),
+            'MYSQL': self.instance.is_mysql,
             'MONGODB': self.instance.instance_type == self.instance.MONGODB,
             'REDIS': self.instance.instance_type == self.instance.REDIS,
             'CREATE_TELEGRAF_CONFIG': create_telegraf_config,
