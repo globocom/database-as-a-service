@@ -2019,10 +2019,11 @@ class TaskRegister(object):
         configure_ssl_database.delay(**delay_params)
 
     @classmethod
-    def host_migrate(cls, host, zone, new_environment, user,
+    def host_migrate(cls, host, zone, new_environment, user, database,
                      since_step=None, step_manager=None):
         task_params = {
             'task_name': "host_migrate",
+            'database': database,
             'arguments': "Host: {}, Zone: {}, New Environment: {}".format(
                 host, zone, new_environment
             ),
@@ -2062,6 +2063,7 @@ class TaskRegister(object):
                    **kw):
         task_params = {
             'task_name': "update_ssl",
+            'database': database,
             'arguments': "Database: {}".format(
                 database
             ),

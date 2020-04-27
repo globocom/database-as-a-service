@@ -90,9 +90,12 @@ class HostMigrateAdmin(DatabaseMaintenanceTaskAdmin):
         success, redirect = self.check_status(request, retry_from, 'retry')
         if not success:
             return redirect
+        host = retry_from.host
+        database = host.instances.first().databaseinfra.databases.first()
         TaskRegister.host_migrate(
             retry_from.host, retry_from.zone, retry_from.environment,
-            request.user, retry_from.current_step, step_manager=retry_from
+            request.user, database, retry_from.current_step,
+            step_manager=retry_from
         )
         return self.redirect_to_database(retry_from)
 
