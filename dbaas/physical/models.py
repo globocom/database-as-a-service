@@ -1232,6 +1232,10 @@ class Instance(BaseModel):
         return self.instance_type == self.REDIS_SENTINEL
 
     @property
+    def is_mysql(self):
+        return self.instance_type in (self.MYSQL, self.MYSQL_PERCONA)
+
+    @property
     def connection(self):
         return "%s:%s" % (self.address, self.port)
 
