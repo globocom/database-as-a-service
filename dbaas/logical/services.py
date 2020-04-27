@@ -171,7 +171,8 @@ class UpgradeDatabaseService:
 
     def check_database_status(self):
         try:
-            check_is_database_dead(self.database.id, 'Upgrade Database')
+            if not self.retry:
+                check_is_database_dead(self.database.id, 'Upgrade Database')
             check_is_database_enabled(
                 self.database.id,
                 'Upgrade Database',
