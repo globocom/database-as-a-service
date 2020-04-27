@@ -1903,7 +1903,9 @@ def database_migrate(request, context, database):
         elif 'host_id' in request.POST:
             host = get_object_or_404(Host, pk=request.POST.get('host_id'))
             zone = request.POST["new_zone"]
-            TaskRegister.host_migrate(host, zone, environment, request.user)
+            TaskRegister.host_migrate(
+                host, zone, environment, request.user, database
+            )
         elif 'new_environment' in request.POST:
             environment = get_object_or_404(
                 Environment, pk=request.POST.get('new_environment')
