@@ -89,9 +89,9 @@ class BodyUpdateSSLTestCase(EmailBaseTest):
     expected_execution_warn_task_msg = ("Update of fake_db_name&#39;s SSL "
                                         "certificate will be executed "
                                         "within 24 hours.")
-    expected_available_msg = ('Do not worry about that, the database WILL BE '
+    expected_available_msg = ('Do not worry about that, the database will be '
                               'available during this process.')
-    expected_unavailable_msg = ('The database WILL BE unavailable during this '
+    expected_unavailable_msg = ('The database will be unavailable during this '
                                 'process.')
 
     @patch('physical.models.DatabaseInfra.earliest_ssl_expire_at', MagicMock())

@@ -1,2 +1,2 @@
-We scheduled the {{ action }} for your maintenance window on {{ scheduled_for }}.
+We have scheduled the maintenance window to {{ scheduled_for }}.
 To review or change this task go to {{ database_url }}
