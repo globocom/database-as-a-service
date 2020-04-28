@@ -4,9 +4,9 @@
 {% elif is_new %}
 {% include include_template_name_txt %}
 {% if is_ha %}
-Do not worry about that, the database WILL BE available during this process.
+Do not worry about that, the database will be available during this process.
 {% else %}
-The database WILL BE unavailable during this process.
+The database will be unavailable during this process.
 {% endif %}
 
 {% include "email_extras/task_information.txt" %}
