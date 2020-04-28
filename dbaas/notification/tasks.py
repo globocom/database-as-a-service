@@ -533,7 +533,7 @@ def purge_task_history(self):
         retention_days = Configuration.get_by_name_as_int(
             'task_history_retention_days')
 
-        n_days_before = now - datetime.timedelta(days=retention_days)
+        n_days_before = now - timedelta(days=retention_days)
 
         tasks_to_purge = TaskHistory.objects.filter(
             task_name__in=[
@@ -583,10 +583,9 @@ def send_mail_24hours_before_auto_task(self):
                     scheduled_task.scheduled_for),
                 persist=True
             )
-            post_save.send(
-                maintenance_models.TaskSchedule,
-                instance=scheduled_task, created=False,
-                execution_warning=True
+            scheduled_task.send_mail(
+                is_new=False,
+                is_execution_warning=True
             )
             task.update_details(
                 "OK\n",
@@ -625,6 +624,9 @@ def check_ssl_expire_at(self):
         for infra in infras:
             database = infra.databases.first()
 
+            task.update_details(
+                "Checking database {}...".format(database), persist=True
+            )
             scheudled_tasks = maintenance_models.TaskSchedule.objects.filter(
                 Q(status=maintenance_models.TaskSchedule.SCHEDULED)
                 | Q(status=maintenance_models.TaskSchedule.ERROR),
@@ -634,8 +636,7 @@ def check_ssl_expire_at(self):
             if scheudled_tasks:
                 task.update_details("Already scheduled!\n", persist=True)
             else:
-                from django.db.models.signals import post_save
-                instance = maintenance_models.TaskSchedule.objects.create(
+                task_schedule = maintenance_models.TaskSchedule.objects.create(
                     method_path='update_ssl',
                     scheduled_for=maintenance_models.TaskSchedule.next_maintenance_window(  # noqa
                         today + timedelta(days=7),
@@ -644,10 +645,7 @@ def check_ssl_expire_at(self):
                     ),
                     database=database
                 )
-                post_save.send(
-                    maintenance_models.TaskSchedule,
-                    instance=instance, created=True
-                )
+                task_schedule.send_mail(is_new=True)
                 task.update_details("Schedule created!\n", persist=True)
         task.update_status_for(TaskHistory.STATUS_SUCCESS, details="\nDone")
     except Exception as err:
@@ -657,8 +655,7 @@ def check_ssl_expire_at(self):
 
 @app.task(bind=True)
 @only_one(key="executescheduledmaintenancetask")
-def execute_scheduled_maintenance(self, task=None, user=None,
-                                  auto_rollback=True):
+def execute_scheduled_maintenance(self, task=None, user=None):
     LOG.info("Searching Scheduled tasks")
     if user is None:
         user = User.objects.get(username='admin')
@@ -679,7 +676,6 @@ def execute_scheduled_maintenance(self, task=None, user=None,
             scheduled_task.database,
             user=user,
             scheduled_task=scheduled_task,
-            auto_rollback=auto_rollback
         )
 
 
@@ -2023,10 +2019,11 @@ class TaskRegister(object):
         configure_ssl_database.delay(**delay_params)
 
     @classmethod
-    def host_migrate(cls, host, zone, new_environment, user,
+    def host_migrate(cls, host, zone, new_environment, user, database,
                      since_step=None, step_manager=None):
         task_params = {
             'task_name': "host_migrate",
+            'database': database,
             'arguments': "Host: {}, Zone: {}, New Environment: {}".format(
                 host, zone, new_environment
             ),
@@ -2062,22 +2059,55 @@ class TaskRegister(object):
 
     @classmethod
     def update_ssl(cls, database, user,
-                   since_step=None, step_manager=None, auto_rollback=False,
+                   since_step=None, step_manager=None, scheduled_task=None,
                    **kw):
         task_params = {
             'task_name': "update_ssl",
+            'database': database,
             'arguments': "Database: {}".format(
                 database
             ),
         }
+        auto_rollback = False
         if user:
             task_params['user'] = user
+        if scheduled_task:
+            auto_rollback = True
         task = cls.create_task(task_params)
         return maintenace_tasks.update_ssl.delay(
             database=database, task=task,
             since_step=since_step,
             step_manager=step_manager,
             auto_rollback=auto_rollback,
+            scheduled_task=scheduled_task,
+            **kw
+        )
+
+    @classmethod
+    def restart_database(cls, database, user,
+                         since_step=None, step_manager=None,
+                         scheduled_task=None, **kw):
+        task_params = {
+            'task_name': "restart_database",
+            'arguments': "Database: {}".format(
+                database
+            ),
+        }
+        auto_rollback = kw.get('auto_rollback')
+        auto_cleanup = kw.get('auto_cleanup')
+        if user:
+            task_params['user'] = user
+        task = cls.create_task(task_params)
+        if scheduled_task:
+            auto_rollback = False
+            auto_cleanup = True
+        return maintenace_tasks.restart_database.delay(
+            database=database, task=task,
+            since_step=since_step,
+            step_manager=step_manager,
+            auto_rollback=auto_rollback,
+            auto_cleanup=auto_cleanup,
+            scheduled_task=scheduled_task,
             **kw
         )
 

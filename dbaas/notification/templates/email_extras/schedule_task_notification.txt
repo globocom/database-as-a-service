@@ -1,21 +1,18 @@
-{% if is_task_warning %}
-The update of the SSL certificate of the database {{ database }} will be executed within 24 hours.
-The task will run at {{ scheduled_for }}.
-If you want change that date go to {{ database_url }}.
+{% if is_execution_warning %}
+{% include "email_extras/task_warning.txt" %}
+
 {% elif is_new %}
-The SSL of database {{ database }} is about to expire.
-That will expire at {{ ssl_expire_at }}.
-We scheduled the update in your maintenance window at {{ scheduled_for }}.
-If you want change that date go to {{ database_url }}.
+{% include include_template_name_txt %}
+{% if is_ha %}
+Do not worry about that, the database WILL BE available during this process.
+{% else %}
+The database WILL BE unavailable during this process.
+{% endif %}
+
+{% include "email_extras/task_information.txt" %}
 
 {% else %}
-The schedule task of database {{ database }} was changed for {{ scheduled_for }}.
-If you want change that date go to {{ database_url }}
+{% include "email_extras/task_updated.txt" %}
 
 {% endif %}
-You are receiving this email because in our records you are in team {{ database.team.name }}.
-If this is not right, contact the Dbaas system administrators.
-
-Regards,
-Dbaas notification robot
-{{domain}}
+{% include "email_extras/bottom.txt" %}
