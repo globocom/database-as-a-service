@@ -1041,6 +1041,9 @@ class DatabaseInfra(BaseModel):
     def recreate_slave_steps(self):
         return self.topology.get_recreate_slave_steps()
 
+    def restart_database_steps(self):
+        return self.topology.get_restart_database_steps()
+
     def update_ssl_steps(self):
         return self.topology.get_update_ssl_steps()
 
@@ -1227,6 +1230,10 @@ class Instance(BaseModel):
     @property
     def is_sentinel(self):
         return self.instance_type == self.REDIS_SENTINEL
+
+    @property
+    def is_mysql(self):
+        return self.instance_type in (self.MYSQL, self.MYSQL_PERCONA)
 
     @property
     def connection(self):
