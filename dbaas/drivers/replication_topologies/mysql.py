@@ -811,6 +811,18 @@ class MySQLFoxHA(MySQLSingle):
             ),
         }] + self.get_upgrade_steps_final()
 
+    def get_upgrade_steps_final(self):
+        return [{
+            self.get_upgrade_steps_final_description(): (
+                'workflow.steps.util.db_monitor.UpdateInfraVersion',
+                'workflow.steps.util.db_monitor.EnableMonitoring',
+                'workflow.steps.util.zabbix.DestroyAlarms',
+                'workflow.steps.util.zabbix.CreateAlarmsForUpgrade',
+                'workflow.steps.util.mysql.DestroyAlarmsVip',
+                'workflow.steps.util.mysql.CreateAlarmsVipForUpgrade',
+            ),
+        }]
+
     def get_migrate_engines_steps(self):
         return [{
             self.get_upgrade_steps_initial_description(): (
@@ -845,6 +857,18 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.metric_collector.RestartTelegraf',
             ),
         }] + self.get_migrate_engine_steps_final()
+
+    def get_migrate_engine_steps_final(self):
+        return [{
+            self.get_upgrade_steps_final_description(): (
+                'workflow.steps.util.db_monitor.UpdateInfraVersion',
+                'workflow.steps.util.db_monitor.EnableMonitoring',
+                'workflow.steps.util.zabbix.DestroyAlarms',
+                'workflow.steps.util.zabbix.CreateAlarmsForMigrateEngine',
+                'workflow.steps.util.mysql.DestroyAlarmsVip',
+                'workflow.steps.util.mysql.CreateAlarmsVipForMigradeEngine',
+            ),
+        }]
 
     def get_upgrade_steps_extra(self):
         return (
