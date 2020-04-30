@@ -3,7 +3,7 @@ from dbaas_credentials.credential import Credential
 from dbaas_credentials.models import CredentialType
 from dbaas_zabbix import factory_for
 from workflow.steps.util.base import BaseInstanceStep
-
+import copy
 
 class ZabbixStep(BaseInstanceStep):
 
@@ -35,8 +35,15 @@ class ZabbixStep(BaseInstanceStep):
     @property
     def zabbix_provider(self):
         if not self.provider:
+            infra = self.infra
+            if self.plan != self.target_plan:
+                infra = copy.deepcopy(self.infra)
+                target_plan = self.target_plan
+                infra.plan = target_plan
+                infra.engine = target_plan.engine
+                infra.engine_patch = target_plan.engine.default_engine_patch
             self.provider = factory_for(
-                databaseinfra=self.instance.databaseinfra,
+                databaseinfra=infra,
                 credentials=self.credentials
             )
         return self.provider
@@ -54,6 +61,10 @@ class ZabbixStep(BaseInstanceStep):
                     monitors.append(zabbix_extra)
 
         return monitors
+
+    @property
+    def target_plan(self):
+        return self.plan
 
     def __del__(self):
         if self.provider:
@@ -111,15 +122,15 @@ class CreateAlarms(ZabbixStep):
 class CreateAlarmsForUpgrade(CreateAlarms):
 
     @property
-    def engine_version(self):
-        return self.plan.engine_equivalent_plan.engine.version
+    def target_plan(self):
+        return self.plan.engine_equivalent_plan
 
 
 class CreateAlarmsForMigrateEngine(CreateAlarms):
 
     @property
-    def engine_version(self):
-        return self.plan.migrate_engine_equivalent_plan.engine.version
+    def target_plan(self):
+        return self.plan.migrate_engine_equivalent_plan
 
 
 class DisableAlarms(ZabbixStep):
