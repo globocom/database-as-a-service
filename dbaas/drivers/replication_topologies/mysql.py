@@ -858,6 +858,18 @@ class MySQLFoxHA(MySQLSingle):
             ),
         }] + self.get_migrate_engine_steps_final()
 
+    def get_migrate_engine_steps_final(self):
+        return [{
+            self.get_upgrade_steps_final_description(): (
+                'workflow.steps.util.db_monitor.UpdateInfraVersion',
+                'workflow.steps.util.db_monitor.EnableMonitoring',
+                'workflow.steps.util.zabbix.DestroyAlarms',
+                'workflow.steps.util.zabbix.CreateAlarmsForMigrateEngine',
+                'workflow.steps.util.mysql.DestroyAlarmsVip',
+                'workflow.steps.util.mysql.CreateAlarmsVipForMigradeEngine',
+            ),
+        }]
+
     def get_upgrade_steps_extra(self):
         return (
             'workflow.steps.util.volume_provider.MountDataVolume',
