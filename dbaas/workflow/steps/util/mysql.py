@@ -258,6 +258,17 @@ class CreateAlarmsVip(ZabbixVip):
         DestroyAlarmsVip(self.instance).do()
 
 
+class CreateAlarmsVipForUpgrade(CreateAlarmsVip):
+    @property
+    def target_plan(self):
+        return self.plan.engine_equivalent_plan
+
+class CreateAlarmsVipForMigradeEngine(CreateAlarmsVip):
+    @property
+    def target_plan(self):
+        return self.plan.migrate_engine_equivalent_plan
+
+
 class DestroyAlarmsVip(ZabbixVip):
 
     def __unicode__(self):
