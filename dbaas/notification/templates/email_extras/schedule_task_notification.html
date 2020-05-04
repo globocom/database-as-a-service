@@ -7,7 +7,7 @@
 {% if is_ha %}
 Do not worry about that, the database will be available during this process.<br/>
 {% else %}
-The database will be <b>unavailable</b> during this process.<br/>
+During the maintenance the database will be <b>unavailable</b> for the time it takes the instance to failover (usually about 60 seconds).<br/>
 {% endif %}
 <br/>
 {% include "email_extras/task_information.html" %}
