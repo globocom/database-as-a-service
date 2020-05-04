@@ -1,2 +1,2 @@
-This will execute in your maintenance window on {{ scheduled_for }}.<br/>
+This will execute in your maintenance window on {{ task.scheduled_for|date:"F d, Y" }} at {{ task.scheduled_for|date:"h a" }}.<br/>
 To review or change this task go to <a target="_blank" href="{{ database_url }}"> {{ database }}</a>.<br/>

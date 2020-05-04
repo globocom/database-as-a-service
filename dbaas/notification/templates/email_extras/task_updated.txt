@@ -1,2 +1,2 @@
-The schedule task of database {{ database }} was changed for {{ scheduled_for }}.
+The schedule task of database {{ database }} was changed for {{ task.scheduled_for|date:"F d, Y" }} at {{ task.scheduled_for|date:"h a" }}.
 To review or change this task go to <a target="_blank" href="{{ database_url }}"> {{ database }}</a>
