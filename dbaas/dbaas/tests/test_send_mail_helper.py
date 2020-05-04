@@ -82,8 +82,8 @@ class SubjectRestartDatabaseTestCase(SubjectUpdateSSLTestCase):
 class BodyUpdateSSLTestCase(EmailBaseTest):
 
     action = 'update_ssl'
-    expected_new_task_msg = ('The SSL of database fake_db_name is about '
-                             'to expire')
+    expected_new_task_msg = ('Database fake_db_name\'s SSL certificate '
+                             'is about to expire')
     expected_update_task_msg = ('The schedule task of database fake_db_name '
                                 'was changed')
     expected_execution_warn_task_msg = ("Update of fake_db_name&#39;s SSL "
