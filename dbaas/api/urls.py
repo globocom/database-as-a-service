@@ -20,6 +20,10 @@ from .database_history import DatabaseHistoryAPI
 from .database_restore import DatabaseRestoreAPI
 from .database_create import DatabaseCreateAPI
 from .database_change_parameter import DatabaseChangeParameterAPI
+from .add_readonly import AddInstancesToDatabaseAPI
+from .database_resize import DatabaseResizeAPI
+from database_reinstall_vm import DatabaseReinstallVMAPI
+from .recreate_slave import RecreateSlaveAPI
 
 
 router = DefaultRouter()
@@ -42,6 +46,10 @@ router.register(r'database_history', DatabaseHistoryAPI)
 router.register(r'database_restore', DatabaseRestoreAPI)
 router.register(r'database_create', DatabaseCreateAPI)
 router.register(r'database_change_parameter', DatabaseChangeParameterAPI)
+router.register(r'add_instances_to_database', AddInstancesToDatabaseAPI)
+router.register(r'database_resize', DatabaseResizeAPI)
+router.register(r'database_reinstall_vm', DatabaseReinstallVMAPI)
+router.register(r'recreate_slave', RecreateSlaveAPI)
 
 if settings.CLOUD_STACK_ENABLED:
     from .integration_type import CredentialTypeAPI
