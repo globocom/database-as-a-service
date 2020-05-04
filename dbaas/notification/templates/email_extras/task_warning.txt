@@ -1,3 +1,3 @@
 {{ task_warning_title }}
-The task will run on {{ task.scheduled_for|date:"F d, Y" }} at {{ task.scheduled_for|date:"h a" }}.
+The task will run on {{ scheduled_for|date:"F d, Y" }} at {{ scheduled_for|date:"h a" }}.
 To review or change this task go to {{ database_url }}.
