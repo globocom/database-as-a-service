@@ -17,7 +17,9 @@ class DatabaseUpgradePatchSerializer(serializers.ModelSerializer):
             'task',
             'created_at',
             'source_patch',
-            'target_patch'
+            'target_patch',
+            'source_patch_full_version',
+            'target_patch_full_version'
         )
 
 
@@ -34,5 +36,7 @@ class DatabaseUpgradePatchAPI(MaintennanceBaseApi):
         'can_do_retry',
         'database',
         'source_patch',
-        'target_patch'
+        'target_patch',
+        'source_patch_full_version',
+        'target_patch_full_version'
     )
