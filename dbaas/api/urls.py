@@ -24,6 +24,7 @@ from .add_readonly import AddInstancesToDatabaseAPI
 from .database_resize import DatabaseResizeAPI
 from database_reinstall_vm import DatabaseReinstallVMAPI
 from .recreate_slave import RecreateSlaveAPI
+from .database_upgrade import DatabaseUpgradeAPI
 
 
 router = DefaultRouter()
@@ -50,6 +51,7 @@ router.register(r'add_instances_to_database', AddInstancesToDatabaseAPI)
 router.register(r'database_resize', DatabaseResizeAPI)
 router.register(r'database_reinstall_vm', DatabaseReinstallVMAPI)
 router.register(r'recreate_slave', RecreateSlaveAPI)
+router.register(r'database_upgrade', DatabaseUpgradeAPI)
 
 if settings.CLOUD_STACK_ENABLED:
     from .integration_type import CredentialTypeAPI
