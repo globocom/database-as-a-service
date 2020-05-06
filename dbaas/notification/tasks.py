@@ -24,10 +24,11 @@ from workflow.workflow import (steps_for_instances,
                                total_of_steps)
 from maintenance import models as maintenance_models
 from maintenance import tasks as maintenace_tasks
-from maintenance.models import DatabaseDestroy
+from maintenance.models import DatabaseDestroy, RestartDatabase
 from util import slugify, gen_infra_names
 from maintenance.tasks_create_database import (get_or_create_infra,
                                                get_instances_for)
+from notification.scripts import script_mongodb_log_rotate
 
 
 LOG = get_task_logger(__name__)
@@ -647,6 +648,39 @@ def check_ssl_expire_at(self):
                 )
                 task_schedule.send_mail(is_new=True)
                 task.update_details("Schedule created!\n", persist=True)
+        task.update_status_for(TaskHistory.STATUS_SUCCESS, details="\nDone")
+    except Exception as err:
+        task.update_status_for(TaskHistory.STATUS_ERROR, details=err)
+        return
+
+
+@app.task(bind=True)
+@only_one(key="changemongodblogrotate")
+def change_mongodb_log_rotate(self):
+    LOG.info("Retrieving all restarted MongoDB databases")
+    today = date.today()
+    worker_name = get_worker_name()
+    task = TaskHistory.register(
+        request=self.request, user=None, worker_name=worker_name)
+    task.relevance = TaskHistory.RELEVANCE_CRITICAL
+    one_month_later = today + timedelta(days=30)
+    mongodb_rotate_envs = Configuration.get_by_name('mongodb_rotate_envs')
+    extra_filters = {}
+    if mongodb_rotate_envs:
+        extra_filters = {'databaseinfra__environment__name__in': mongodb_rotate_envs.split(',')}
+    try:
+        instances = Instance.objects.filter(
+            instance_type__in=[Instance.MONGODB, Instance.MONGODB_ARBITER]
+        )
+        mongodb_restarted_instances = []
+        restart_database_managers = RestartDatabase.objects.all()
+        for manager in restart_database_managers:
+            current_instances = manager.database.databaseinfra.instances.all()
+            current_instances_pk = [instance.pk for instance in current_instances]
+            mongodb_restarted_instances.append(current_instances)
+
+        script_mongodb_log_rotate.execute(task, mongodb_restarted_instances)
+
         task.update_status_for(TaskHistory.STATUS_SUCCESS, details="\nDone")
     except Exception as err:
         task.update_status_for(TaskHistory.STATUS_ERROR, details=err)
