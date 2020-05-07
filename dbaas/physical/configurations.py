@@ -424,6 +424,13 @@ class ConfigurationMySQL(ConfigurationBase):
         return self.get_parameter(parameter_name, default)
 
     @property
+    def collation_server(self):
+        parameter_name = inspect.stack()[0][3]
+        default = 'utf8_general_ci'
+        return self.get_parameter(parameter_name, default)
+
+
+    @property
     def max_connections(self):
         parameter_name = inspect.stack()[0][3]
         default = 1000
@@ -450,7 +457,7 @@ class ConfigurationMySQL(ConfigurationBase):
     @property
     def query_cache_type(self):
         parameter_name = inspect.stack()[0][3]
-        default = 'ON'
+        default = 'OFF'
         return self.get_parameter(parameter_name, default)
 
     @property
