@@ -429,7 +429,6 @@ class ConfigurationMySQL(ConfigurationBase):
         default = 'utf8_general_ci'
         return self.get_parameter(parameter_name, default)
 
-
     @property
     def max_connections(self):
         parameter_name = inspect.stack()[0][3]
