@@ -1205,37 +1205,23 @@ def add_instances_to_database_rollback(self, manager_obj, user, task):
 
 
 @app.task(bind=True)
-def remove_readonly_instance(self, instance, user, task):
-    from workflow.workflow import steps_for_instances
-    from util.providers import get_remove_readonly_instance_steps
-
-    infra = instance.databaseinfra
-    database = infra.databases.last()
-
-    self.request.kwargs['database'] = database
-    self.request.kwargs['instance'] = instance
-    worker_name = get_worker_name()
-    task = TaskHistory.register(self.request, user, task, worker_name)
-
-    plan = infra.plan
-
-    class_path = plan.replication_topology.class_path
-    steps = get_remove_readonly_instance_steps(class_path)
-
-    instances = []
-    instances.append(instance)
-
-    success = steps_for_instances(
-        list_of_groups_of_steps=steps,
-        instances=instances,
+def remove_readonly_instance(
+    self, database, instance, task, since_step=None, step_manager=None,
+    scheduled_task=None, auto_rollback=False, auto_cleanup=False
+):
+    from maintenance.async_jobs import RemoveInstanceDatabaseJob
+    async_job = RemoveInstanceDatabaseJob(
+        request=self.request,
+        database=database,
         task=task,
-        undo=True
+        instance=instance,
+        since_step=since_step,
+        step_manager=step_manager,
+        scheduled_task=scheduled_task,
+        auto_rollback=auto_rollback,
+        auto_cleanup=auto_cleanup
     )
-
-    if success:
-        task.update_status_for(TaskHistory.STATUS_SUCCESS, 'Done')
-    else:
-        task.update_status_for(TaskHistory.STATUS_ERROR, 'Done')
+    async_job.run()
 
 
 @app.task(bind=True)
@@ -1631,7 +1617,9 @@ class TaskRegister(object):
         add_instances_to_database_rollback.delay(manager_obj, user, task)
 
     @classmethod
-    def database_remove_instance(cls, database, user, instance):
+    def database_remove_instance(
+        cls, database, user, instance, since_step=None, step_manager=None
+    ):
         task_params = {
             'task_name': "remove_database_instance",
             'arguments': "Removing instance {} on database {}".format(
@@ -1644,9 +1632,11 @@ class TaskRegister(object):
         task = cls.create_task(task_params)
 
         remove_readonly_instance.delay(
+            database=database,
             instance=instance,
-            user=user,
             task=task,
+            since_step=since_step,
+            step_manager=step_manager,
         )
 
     @classmethod
