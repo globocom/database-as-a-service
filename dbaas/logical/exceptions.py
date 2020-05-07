@@ -24,3 +24,7 @@ class DatabaseIsNotHA(Exception):
 
 class DatabaseUpgradePlanNotFound(Exception):
     pass
+
+
+class HostIsNotReadOnly(Exception):
+    pass
