@@ -92,9 +92,7 @@ class BodyUpdateSSLTestCase(EmailBaseTest):
     expected_available_msg = ('Do not worry about that, the database will be '
                               'available during this process.')
     expected_unavailable_msg = ('During the maintenance the database will be '
-                                'unavailable for the time it takes the '
-                                'instance to failover (usually about 60 '
-                                'seconds).')
+                                'unavailable.')
 
     @patch('physical.models.DatabaseInfra.earliest_ssl_expire_at', MagicMock())
     def test_body_has_new_task_message(self):
