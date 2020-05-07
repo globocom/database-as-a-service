@@ -1077,6 +1077,25 @@ class AddInstancesToDatabase(DatabaseMaintenanceTask):
         return "Add instances to database: {}".format(self.database)
 
 
+class RemoveInstanceDatabase(DatabaseMaintenanceTask):
+    task = models.ForeignKey(
+        TaskHistory, verbose_name="Task History",
+        null=False, related_name="remove_instances_database_manager"
+    )
+    database = models.ForeignKey(
+        Database, verbose_name="Database",
+        null=False, unique=False,
+        related_name="remove_instances_database_manager"
+    )
+    instance = models.ForeignKey(
+        Instance, verbose_name="Instance", null=False, unique=False,
+        related_name="remove_instances_database_manager"
+    )
+
+    def __unicode__(self):
+        return "Remove instances from database: {}".format(self.database)
+
+
 class RestartDatabase(DatabaseMaintenanceTask):
     task = models.ForeignKey(
         TaskHistory, verbose_name="Task History",
