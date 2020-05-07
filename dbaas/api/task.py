@@ -83,6 +83,12 @@ class TaskSerializer(serializers.ModelSerializer):
                     )
                 except DatabaseHistory.DoesNotExist:
                     return None
+                except DatabaseHistory.MultipleObjectsReturned:
+                    return make_dict_from_history(
+                        DatabaseHistory.objects.filter(
+                            database_id=task.object_id
+                        ).last()
+                    )
                 else:
                     return make_dict_from_history(database_history)
             else:
