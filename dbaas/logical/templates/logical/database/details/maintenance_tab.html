@@ -208,7 +208,8 @@
 <script>
   jQuery(document).ready(function($) {
 
-    $("#execute_scheduled_maintenance_btn").click(function(event) {
+
+    $('button[data-content="Execute now"][data-target="#execute_scheduled_maintenance"]').click(function(event) {
       var $eventTarget = $(event.target);
       var scheduleId = $eventTarget.data('schedule-id') || $eventTarget.parent('button').data('schedule-id');
       $("#id_execute_scheduled_maintenance_btn_modal").attr("href", "execute_schedule_task/"+scheduleId+"/");
