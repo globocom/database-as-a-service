@@ -1499,6 +1499,15 @@ class DatabaseHostsView(TemplateView):
                 database=self.database
             )
         )
+        remove_read_only_retry = RemoveInstanceDatabase.objects.need_retry(
+            database=self.database
+        )
+        if remove_read_only_retry and remove_read_only_retry.instance.hostname:
+            self.context['remove_read_only_retry'] = (
+                RemoveInstanceDatabase.objects.need_retry(
+                    database=self.database
+                ).instance.hostname
+            )
 
         return self.context
 
@@ -1514,26 +1523,16 @@ def database_delete_host(request, database_id, host_id):
     database = Database.objects.get(id=database_id)
     instance = database.infra.instances.get(hostname_id=host_id)
 
-    can_delete = True
-    if not instance.read_only:
-        messages.add_message(
-            request, messages.ERROR,
-            'Host is not read only, cannot be removed.'
+    try:
+        service_obj = services.RemoveReadOnlyInstanceService(
+            request, self.database, instance, retry=retry, rollback=False
         )
-        can_delete = False
-
-    if database.is_being_used_elsewhere():
-        messages.add_message(
-            request, messages.ERROR,
-            ('Host cannot be deleted because database is in use by '
-             'another task.')
-        )
-        can_delete = False
-
-    if can_delete:
-        TaskRegister.database_remove_instance(
-            database=database, instance=instance, user=request.user
-        )
+        service_obj.execute()
+    except (
+        exceptions.DatabaseNotAvailable, exceptions.ManagerInvalidStatus,
+        exceptions.ManagerNotFound, exceptions.HostIsNotReadOnly
+    ) as error:
+        messages.add_message(self.request, messages.ERROR, str(error))
 
     return HttpResponseRedirect(
         reverse('admin:logical_database_hosts', kwargs={'id': database.id})
