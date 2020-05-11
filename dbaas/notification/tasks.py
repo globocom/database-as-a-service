@@ -1207,12 +1207,13 @@ def add_instances_to_database_rollback(self, manager_obj, user, task):
 
 
 @app.task(bind=True)
-def remove_readonly_instance(self, instance, user, task):
+def remove_readonly_instance(
+    self, database, user, task, instance, since_step=None, step_manager=None
+):
     from workflow.workflow import steps_for_instances
     from util.providers import get_remove_readonly_instance_steps
 
     infra = instance.databaseinfra
-    database = infra.databases.last()
 
     self.request.kwargs['database'] = database
     self.request.kwargs['instance'] = instance
@@ -1224,6 +1225,12 @@ def remove_readonly_instance(self, instance, user, task):
     class_path = plan.replication_topology.class_path
     steps = get_remove_readonly_instance_steps(class_path)
 
+    remove_instance_database_obj = maintenance_models.RemoveInstanceDatabase()
+    remove_instance_database_obj.database = database
+    remove_instance_database_obj.task = task
+    remove_instance_database_obj.instance = instance
+    remove_instance_database_obj.save()
+
     instances = []
     instances.append(instance)
 
@@ -1231,13 +1238,20 @@ def remove_readonly_instance(self, instance, user, task):
         list_of_groups_of_steps=steps,
         instances=instances,
         task=task,
-        undo=True
+        undo=True,
+        step_counter_method=remove_instance_database_obj.update_step,
+        since_step=since_step
     )
 
     if success:
+        remove_instance_database_obj.set_success()
         task.update_status_for(TaskHistory.STATUS_SUCCESS, 'Done')
     else:
-        task.update_status_for(TaskHistory.STATUS_ERROR, 'Done')
+        remove_instance_database_obj.set_error()
+        task.update_status_for(
+            TaskHistory.STATUS_ERROR,
+            'Could not remove instance from database.'
+        )
 
 
 @app.task(bind=True)
@@ -1633,7 +1647,9 @@ class TaskRegister(object):
         add_instances_to_database_rollback.delay(manager_obj, user, task)
 
     @classmethod
-    def database_remove_instance(cls, database, user, instance):
+    def database_remove_instance(
+        cls, database, user, instance, since_step=None, step_manager=None
+    ):
         task_params = {
             'task_name': "remove_database_instance",
             'arguments': "Removing instance {} on database {}".format(
@@ -1643,13 +1659,24 @@ class TaskRegister(object):
             'relevance': TaskHistory.RELEVANCE_CRITICAL
         }
 
+        if since_step:
+            task_params['task_name'] = 'remove_database_instance_retry'
+            task_params['arguments'] = (
+                'Retrying to remove instance from database {}'.format(database)
+            )
+
         task = cls.create_task(task_params)
 
-        remove_readonly_instance.delay(
-            instance=instance,
-            user=user,
-            task=task,
-        )
+        delay_params = {
+            'database': database,
+            'task': task,
+            'user': user,
+            'instance': instance
+        }
+
+        delay_params.update(**{'since_step': since_step} if since_step else {})
+
+        remove_readonly_instance.delay(**delay_params)
 
     @classmethod
     def databases_analyze(cls):
