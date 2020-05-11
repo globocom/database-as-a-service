@@ -1206,22 +1206,45 @@ def add_instances_to_database_rollback(self, manager_obj, user, task):
 
 @app.task(bind=True)
 def remove_readonly_instance(
-    self, database, instance, task, since_step=None, step_manager=None,
-    scheduled_task=None, auto_rollback=False, auto_cleanup=False
+    self, database, user, task, instance, since_step=None, step_manager=None
 ):
-    from maintenance.async_jobs import RemoveInstanceDatabaseJob
-    async_job = RemoveInstanceDatabaseJob(
-        request=self.request,
-        database=database,
+    from workflow.workflow import steps_for_instances
+    from util.providers import get_remove_readonly_instance_steps
+
+    infra = instance.databaseinfra
+
+    self.request.kwargs['database'] = database
+    self.request.kwargs['instance'] = instance
+    worker_name = get_worker_name()
+    task = TaskHistory.register(self.request, user, task, worker_name)
+
+    plan = infra.plan
+
+    class_path = plan.replication_topology.class_path
+    steps = get_remove_readonly_instance_steps(class_path)
+
+    remove_instance_database_obj = maintenance_models.RemoveInstanceDatabase()
+    remove_instance_database_obj.database = database
+    remove_instance_database_obj.task = task
+    remove_instance_database_obj.instance = instance
+    remove_instance_database_obj.save()
+
+    instances = []
+    instances.append(instance)
+
+    success = steps_for_instances(
+        list_of_groups_of_steps=steps,
+        instances=instances,
         task=task,
-        instance=instance,
-        since_step=since_step,
-        step_manager=step_manager,
-        scheduled_task=scheduled_task,
-        auto_rollback=auto_rollback,
-        auto_cleanup=auto_cleanup
+        undo=True,
+        step_counter_method=remove_instance_database_obj.update_step,
+        since_step=since_step
     )
-    async_job.run()
+
+    if success:
+        task.update_status_for(TaskHistory.STATUS_SUCCESS, 'Done')
+    else:
+        task.update_status_for(TaskHistory.STATUS_ERROR, 'Done')
 
 
 @app.task(bind=True)
@@ -1629,15 +1652,24 @@ class TaskRegister(object):
             'relevance': TaskHistory.RELEVANCE_CRITICAL
         }
 
+        if since_step:
+            task_params['task_name'] = 'remove_database_instance_retry'
+            task_params['arguments'] = (
+                'Retrying to remove instance from database {}'.format(database)
+            )
+
         task = cls.create_task(task_params)
 
-        remove_readonly_instance.delay(
-            database=database,
-            instance=instance,
-            task=task,
-            since_step=since_step,
-            step_manager=step_manager,
-        )
+        delay_params = {
+            'database': database,
+            'task': task,
+            'user': user,
+            'instance': instance
+        }
+
+        delay_params.update(**{'since_step': since_step} if since_step else {})
+
+        remove_readonly_instance.delay(**delay_params)
 
     @classmethod
     def databases_analyze(cls):
