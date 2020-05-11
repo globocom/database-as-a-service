@@ -209,7 +209,7 @@ class UpgradeDatabaseService:
 
 class RemoveReadOnlyInstanceService:
 
-    def __init__(self, request, database, instance, retry=False, rollback=False):
+    def __init__(self, request, database, instance=None, retry=False, rollback=False):
         self.request = request
         self.database = database
         self.manager = None
@@ -225,7 +225,7 @@ class RemoveReadOnlyInstanceService:
 
     def load_manager(self):
         if self.retry or self._rollback:
-            self.manager = models.RemoveInstance.objects.filter(
+            self.manager = models.RemoveInstanceDatabase.objects.filter(
                 database=self.database
             ).last()
 
@@ -237,6 +237,8 @@ class RemoveReadOnlyInstanceService:
                          "Status is '{}'!").format(
                             self.manager.get_status_display())
                 raise exceptions.ManagerInvalidStatus(error)
+
+            self.instance = self.manager.instance
 
     def check_database_status(self):
         try:
