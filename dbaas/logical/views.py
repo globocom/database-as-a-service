@@ -2018,7 +2018,7 @@ class ExecuteScheduleTaskView(RedirectView):
         execute_scheduled_maintenance.delay(
             task=self.get_object(),
             user=self.request.user,
-            auto_rollback=False
+            is_automatic=False
         )
         self.kwargs.pop('task_id')
         return super(ExecuteScheduleTaskView, self).get(*args, **self.kwargs)
