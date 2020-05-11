@@ -200,7 +200,7 @@ class MySQLSingle(BaseMysql):
                 ('workflow.steps.util.ssl'
                  '.CreateSSLConfForInfraEndPointIfConfigured'),
                 'workflow.steps.util.ssl.RequestSSLForInfraIfConfigured',
-                (' workflow.steps.util.ssl'
+                ('workflow.steps.util.ssl'
                  '.CreateJsonRequestFileInfraIfConfigured'),
                 'workflow.steps.util.ssl.CreateCertificateInfraIfConfigured',
                 'workflow.steps.util.ssl.SetSSLFilesAccessMySQLIfConfigured',

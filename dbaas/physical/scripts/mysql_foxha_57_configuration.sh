@@ -29,6 +29,7 @@ no_auto_rehash
 
 [mysqld]
 log-error                       = /data/logs/mysqld-error.log
+log_timestamps                  = SYSTEM
 {% if SSL_CONFIGURED %}
 ssl                             = ON
 ssl-ca                          = {{ INFRA_SSL_CA }}
@@ -52,6 +53,7 @@ default_storage_engine          = {{ configuration.default_storage_engine.value 
 default_tmp_storage_engine      = {{ configuration.default_tmp_storage_engine.value }}
 
 character_set_server            = {{ configuration.character_set_server.value }}
+collation_server                = {{ configuration.collation_server.value }}
 
 max_connections                 = {{ configuration.max_connections.value }}
 max_connect_errors              = {{ configuration.max_connect_errors.value }}

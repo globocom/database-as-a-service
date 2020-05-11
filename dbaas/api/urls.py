@@ -20,6 +20,16 @@ from .database_history import DatabaseHistoryAPI
 from .database_restore import DatabaseRestoreAPI
 from .database_create import DatabaseCreateAPI
 from .database_change_parameter import DatabaseChangeParameterAPI
+from .add_readonly import AddInstancesToDatabaseAPI
+from .database_resize import DatabaseResizeAPI
+from database_reinstall_vm import DatabaseReinstallVMAPI
+from .recreate_slave import RecreateSlaveAPI
+from .database_upgrade import DatabaseUpgradeAPI
+from .database_upgrade_patch import DatabaseUpgradePatchAPI
+from .database_clone import DatabaseCloneAPI
+from .database_destroy import DatabaseDestroyAPI
+from .update_ssl import UpdateSslAPI
+from .restart_database import RestartDatabaseAPI
 
 
 router = DefaultRouter()
@@ -42,6 +52,16 @@ router.register(r'database_history', DatabaseHistoryAPI)
 router.register(r'database_restore', DatabaseRestoreAPI)
 router.register(r'database_create', DatabaseCreateAPI)
 router.register(r'database_change_parameter', DatabaseChangeParameterAPI)
+router.register(r'add_instances_to_database', AddInstancesToDatabaseAPI)
+router.register(r'database_resize', DatabaseResizeAPI)
+router.register(r'database_reinstall_vm', DatabaseReinstallVMAPI)
+router.register(r'recreate_slave', RecreateSlaveAPI)
+router.register(r'database_upgrade', DatabaseUpgradeAPI)
+router.register(r'database_upgrade_patch', DatabaseUpgradePatchAPI)
+router.register(r'database_clone', DatabaseCloneAPI)
+router.register(r'database_destroy', DatabaseDestroyAPI)
+router.register(r'update_ssl', UpdateSslAPI)
+router.register(r'restart_database', RestartDatabaseAPI)
 
 if settings.CLOUD_STACK_ENABLED:
     from .integration_type import CredentialTypeAPI

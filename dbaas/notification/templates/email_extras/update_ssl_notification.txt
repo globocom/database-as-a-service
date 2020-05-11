@@ -1,2 +1,2 @@
-The SSL of database {{ database }} is about to expire.
-That will expire at {{ ssl_expire_at }}.
+Database {{ database }}'s SSL certificate is about to expire.
+The SSL certificate for this database will expire on {{ ssl_expire_at }}.
