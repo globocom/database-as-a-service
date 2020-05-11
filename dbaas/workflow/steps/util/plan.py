@@ -254,7 +254,9 @@ class InitializationForMigrateEngine(Initialization, PlanStepMigrateEngine):
 
 
 class ConfigureForUpgrade(Configure, PlanStepUpgrade):
-    pass
+    @property
+    def extra_variables(self):
+        return {'need_master': True}
 
 
 class ConfigureForMigrateEngine(Configure, PlanStepMigrateEngine):
