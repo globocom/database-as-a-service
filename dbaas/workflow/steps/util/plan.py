@@ -32,7 +32,11 @@ class PlanStep(BaseInstanceStep):
             'HOST': self.host.hostname.split('.')[0],
             'HOSTADDRESS': self.instance.address,
             'ENGINE': self.plan.engine.engine_type.name,
-            'MOVE_DATA': bool(self.upgrade) or bool(self.reinstall_vm),
+            'MOVE_DATA': (
+                bool(self.upgrade) or
+                bool(self.reinstall_vm) or
+                bool(self.engine_migration)
+            ),
             'DRIVER_NAME': self.infra.get_driver().topology_name(),
             # TODO: Remove that when VP is ready
             'DISK_SIZE_IN_GB': self.disk_offering.size_gb()if self.disk_offering else 8,
