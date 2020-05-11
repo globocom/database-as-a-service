@@ -149,7 +149,11 @@
                   {% endif %}
                 {% endif %}
               {% endif %}
-              <a class="action_button btn btn-danger" href="{{ host.id }}/delete/" onclick="return confirm('Are you sure?')"><i class="icon-trash icon-white"></i></a>
+              {% if remove_read_only_retry and remove_read_only_retry.instance.hostname.id == host.id %}
+                <a class="action_button btn btn-warning" title="Retry" href="{{ host.id }}/delete/?retry=1" onclick="return confirm('Are you sure?')"><i class="icon-trash icon-white"></i></a>
+              {% else %}
+                <a class="action_button btn btn-danger" href="{{ host.id }}/delete/" onclick="return confirm('Are you sure?')"><i class="icon-trash icon-white"></i></a>
+              {% endif %}
             </p>
           </div>
         {% endfor %}
