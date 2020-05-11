@@ -6,7 +6,7 @@
 {% if is_ha %}
 Do not worry about that, the database will be available during this process.
 {% else %}
-The database will be unavailable during this process.
+During the maintenance the database will be unavailable.
 {% endif %}
 
 {% include "email_extras/task_information.txt" %}
