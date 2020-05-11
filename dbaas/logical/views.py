@@ -37,7 +37,7 @@ from logical.validators import (check_is_database_enabled,
 from workflow.steps.util.host_provider import Provider
 from maintenance.models import (
     DatabaseUpgradePatch, DatabaseUpgrade, TaskSchedule, DatabaseMigrateEngine,
-    RecreateSlave, AddInstancesToDatabase
+    RecreateSlave, AddInstancesToDatabase, RemoveInstanceDatabase
 )
 from . import services
 from . import exceptions
@@ -1499,15 +1499,9 @@ class DatabaseHostsView(TemplateView):
                 database=self.database
             )
         )
-        remove_read_only_retry = RemoveInstanceDatabase.objects.need_retry(
-            database=self.database
+        self.context['remove_read_only_retry'] = (
+            RemoveInstanceDatabase.objects.need_retry(database=self.database)
         )
-        if remove_read_only_retry and remove_read_only_retry.instance.hostname:
-            self.context['remove_read_only_retry'] = (
-                RemoveInstanceDatabase.objects.need_retry(
-                    database=self.database
-                ).instance.hostname
-            )
 
         return self.context
 
@@ -1520,12 +1514,17 @@ class DatabaseHostsView(TemplateView):
 
 
 def database_delete_host(request, database_id, host_id):
+    retry_param = request.GET.get('retry', 0)
+    retry = False
+    if retry_param == '1':
+        retry = True
+
     database = Database.objects.get(id=database_id)
     instance = database.infra.instances.get(hostname_id=host_id)
 
     try:
         service_obj = services.RemoveReadOnlyInstanceService(
-            request, self.database, instance, retry=retry, rollback=False
+            request, database, instance, retry=retry, rollback=False
         )
         service_obj.execute()
     except (
