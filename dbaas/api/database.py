@@ -2,12 +2,12 @@
 from __future__ import absolute_import, unicode_literals
 import logging
 
-from rest_framework import viewsets, serializers, status
+from rest_framework import viewsets, serializers, status, filters
 from rest_framework.response import Response
 from django.contrib.sites.models import Site
 
 from dbaas.middleware import UserMiddleware
-from logical import models
+from logical.models import Database
 from logical.forms import DatabaseForm
 from physical.models import Plan, Environment
 from account.models import Team
@@ -48,7 +48,7 @@ class DatabaseSerializer(serializers.HyperlinkedModelSerializer):
     is_locked = serializers.SerializerMethodField('get_is_locked')
 
     class Meta:
-        model = models.Database
+        model = Database
         fields = (
             'url', 'id', 'name', 'infra_endpoint', 'endpoint', 'plan',
             'environment', 'project', 'team', 'quarantine_dt',
@@ -72,6 +72,8 @@ class DatabaseSerializer(serializers.HyperlinkedModelSerializer):
             self.fields['credentials'].read_only = True
 
     def _get_or_none_if_error(self, database, prop_name):
+        if not database:
+            return
         try:
             val = getattr(database, prop_name)
         except Exception as e:
@@ -89,7 +91,9 @@ class DatabaseSerializer(serializers.HyperlinkedModelSerializer):
         return self._get_or_none_if_error(database, 'used_size_in_bytes')
 
     def get_is_locked(self, database):
-        return bool(database.current_locked_task)
+        return bool(
+            self._get_or_none_if_error(database, 'current_locked_task')
+        )
 
 
 class DatabaseAPI(viewsets.ModelViewSet):
@@ -122,8 +126,28 @@ class DatabaseAPI(viewsets.ModelViewSet):
                 "contacts": "{contacts}"
             }
     """
+    model = Database
     serializer_class = DatabaseSerializer
-    queryset = models.Database.objects.all()
+    # queryset = Database.objects.all()
+    filter_backends = (filters.OrderingFilter,)
+    filter_fields = (
+        "name",
+        "project",
+        "team",
+        "engine",
+        "environment"
+    )
+
+    def get_queryset(self):
+        queryset = self.model.objects.all()
+        params = self.request.GET.dict()
+        valid_params = {}
+        for field in params.keys():
+            if field.split('__')[0] in self.filter_fields:
+                valid_params[field] = params[field]
+        if params:
+            return queryset.filter(**valid_params)
+        return queryset
 
     def create(self, request):
         serializer = self.get_serializer(
