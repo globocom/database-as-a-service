@@ -1524,7 +1524,7 @@ def database_delete_host(request, database_id, host_id):
 
     try:
         service_obj = services.RemoveReadOnlyInstanceService(
-            request, database, instance, retry=retry, rollback=False
+            request, database, instance=instance, retry=retry, rollback=False
         )
         service_obj.execute()
     except (
@@ -1537,6 +1537,34 @@ def database_delete_host(request, database_id, host_id):
         reverse('admin:logical_database_hosts', kwargs={'id': database.id})
     )
 
+
+class RemoveInstanceDatabaseRetryView(View):
+
+    def get(self, request, *args, **kwargs):
+        try:
+            service_obj = services.RemoveReadOnlyInstanceService(
+                request, self.database, retry=True, rollback=False
+            )
+            service_obj.execute()
+        except (
+            exceptions.DatabaseNotAvailable, exceptions.ManagerInvalidStatus,
+            exceptions.ManagerNotFound, exceptions.HostIsNotReadOnly
+        ) as error:
+            messages.add_message(self.request, messages.ERROR, str(error))
+
+        return HttpResponseRedirect(
+            reverse(
+                'admin:logical_database_hosts',
+                kwargs={'id': self.database.id}
+            )
+        )
+
+    @database_view_class('')
+    def dispatch(self, request, *args, **kwargs):
+        self.context, self.database = args
+        return super(RemoveInstanceDatabaseRetryView, self).dispatch(
+            request, *args, **kwargs
+        )
 
 def _clone_database(request, database):
     can_be_cloned, error = database.can_be_cloned()
