@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
+from time import sleep
 import logging
 import redis
 from redis.sentinel import Sentinel
@@ -512,7 +513,19 @@ class RedisSentinel(Redis):
 
     def configuration_parameters(self, instance, **kw):
         variables = {}
-
+        if kw.get('need_master', False):
+            for i in range(5):
+                master = self.get_master_instance()
+                if master:
+                    break
+                sleep(10)
+            if not master:
+                raise Exception(
+                    ("Except got master instance but got {} on "
+                     "configuration_parameters").format(
+                        master
+                    )
+                )
         master = self.get_master_instance()
         if master:
             variables.update(self.master_parameters(instance, master))
@@ -543,12 +556,12 @@ class RedisSentinel(Redis):
         }
 
     def master_parameters(self, instance, master):
-        
+
         return {
             'SENTINELMASTER': master.address,
             'SENTINELMASTERPORT': master.port,
             'MASTERNAME': instance.databaseinfra.name
-        } 
+        }
 
     def parameters_sentinel(self, host):
         sentinel = host.non_database_instance()
