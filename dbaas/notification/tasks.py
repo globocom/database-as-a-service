@@ -1242,9 +1242,14 @@ def remove_readonly_instance(
     )
 
     if success:
+        remove_instance_database_obj.set_success()
         task.update_status_for(TaskHistory.STATUS_SUCCESS, 'Done')
     else:
-        task.update_status_for(TaskHistory.STATUS_ERROR, 'Done')
+        remove_instance_database_obj.set_error()
+        task.update_status_for(
+            TaskHistory.STATUS_ERROR,
+            'Could not remove instance from database.'
+        )
 
 
 @app.task(bind=True)
