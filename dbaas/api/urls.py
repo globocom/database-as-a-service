@@ -30,6 +30,7 @@ from .database_clone import DatabaseCloneAPI
 from .database_destroy import DatabaseDestroyAPI
 from .update_ssl import UpdateSslAPI
 from .restart_database import RestartDatabaseAPI
+from .databaase_migrate_engine import DatabaseMigrateEngineAPI
 
 
 router = DefaultRouter()
@@ -62,6 +63,7 @@ router.register(r'database_clone', DatabaseCloneAPI)
 router.register(r'database_destroy', DatabaseDestroyAPI)
 router.register(r'update_ssl', UpdateSslAPI)
 router.register(r'restart_database', RestartDatabaseAPI)
+router.register(r'database_migrate_engine', DatabaseMigrateEngineAPI)
 
 if settings.CLOUD_STACK_ENABLED:
     from .integration_type import CredentialTypeAPI
