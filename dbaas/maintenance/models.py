@@ -499,15 +499,43 @@ class DatabaseUpgrade(DatabaseMaintenanceTask):
         super(DatabaseUpgrade, self).save(*args, **kwargs)
 
 
-class DatabaseMigrateEngine(DatabaseUpgrade):
-
-    current_database = models.ForeignKey(
+class DatabaseMigrateEngine(DatabaseMaintenanceTask):
+    database = models.ForeignKey(
         Database, verbose_name="Database",
         null=False, unique=False, related_name="engine_migrations"
+    )
+    task = models.ForeignKey(
+        TaskHistory, verbose_name="Task History",
+        null=False, unique=False, related_name="database_engine_migrations"
+    )
+    source_plan = models.ForeignKey(
+        Plan, verbose_name="Source", null=True, blank=True, unique=False,
+        related_name="database_engine_migrations_source",
+        on_delete=models.SET_NULL
+    )
+    source_plan_name = models.CharField(
+        verbose_name="Source", max_length=100, null=True, blank=True
+    )
+    target_plan = models.ForeignKey(
+        Plan, verbose_name="Target", null=True, blank=True, unique=False,
+        related_name="database_engine_migrations_target",
+        on_delete=models.SET_NULL
+    )
+    target_plan_name = models.CharField(
+        verbose_name="Target", max_length=100, null=True, blank=True
     )
 
     def __unicode__(self):
         return "{} migrate engine".format(self.database.name)
+
+    def save(self, *args, **kwargs):
+        if self.source_plan:
+            self.source_plan_name = self.source_plan.name
+
+        if self.target_plan:
+            self.target_plan_name = self.target_plan.name
+
+        super(DatabaseMigrateEngine, self).save(*args, **kwargs)
 
 
 class DatabaseUpgradePatch(DatabaseMaintenanceTask):
@@ -1075,6 +1103,25 @@ class AddInstancesToDatabase(DatabaseMaintenanceTask):
 
     def __unicode__(self):
         return "Add instances to database: {}".format(self.database)
+
+
+class RemoveInstanceDatabase(DatabaseMaintenanceTask):
+    task = models.ForeignKey(
+        TaskHistory, verbose_name="Task History",
+        null=False, related_name="remove_instances_database_manager"
+    )
+    database = models.ForeignKey(
+        Database, verbose_name="Database",
+        null=False, unique=False,
+        related_name="remove_instances_database_manager"
+    )
+    instance = models.ForeignKey(
+        Instance, verbose_name="Instance", null=False, unique=False,
+        related_name="remove_instances_database_manager"
+    )
+
+    def __unicode__(self):
+        return "Remove instances from database: {}".format(self.database)
 
 
 class RestartDatabase(DatabaseMaintenanceTask):
