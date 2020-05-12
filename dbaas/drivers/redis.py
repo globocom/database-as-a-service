@@ -521,7 +521,7 @@ class RedisSentinel(Redis):
                 sleep(10)
             if not master:
                 raise Exception(
-                    ("Except got master instance but got {} on "
+                    ("Expect got master instance but got {} on "
                      "configuration_parameters").format(
                         master
                     )
