@@ -342,7 +342,7 @@ class DatabaseMigrateEngineService:
         if self.retry:
             self.task_params['since_step'] = self.manager.current_step
 
-        TaskRegister.database_remove_instance(**self.task_params)
+        TaskRegister.engine_migrate(**self.task_params)
 
     def rollback(self):
         pass
