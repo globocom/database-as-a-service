@@ -78,15 +78,13 @@ create_log_params_script = 'install -m 755 /dev/null /opt/dbaas/scripts/log_rota
 create_profile_file = 'export MONGODB_ADMIN_USER=admindbaas;export MONGODB_ADMIN_PASSWORD=Rt2va8Mc;source /opt/dbaas/scripts/log_rotate_params.sh'
 add_cron_job = '! (crontab -l | grep -q "/opt/dbaas/scripts/mongodb_rotate_script.sh") && (crontab -l; echo "0 0 * * * /opt/dbaas/scripts/mongodb_rotate_script.sh") | crontab -'
 
-def execute(task, mongodb_restarted_instances):
-    for i, instance in enumerate(mongodb_restarted_instances):
-        task.update_details(
-            "Checking restarted instances and executing script...", persist=True
-        )
-
-        host = instance.hostname
-        log = '\n{} of {} - Host '.format(
-            i+1, len(mongodb_restarted_instances), host
+def execute(task, mongodb_restarted_hosts):
+    task.update_details(
+        "Checking restarted instances and executing script...", persist=True
+    )
+    for i, host in enumerate(mongodb_restarted_hosts):
+        log = '\n{} of {} - Host {}'.format(
+            i+1, len(mongodb_restarted_hosts), host
         )
         LOG.info(log)
         task.update_details(log, persist=True)
@@ -94,7 +92,7 @@ def execute(task, mongodb_restarted_instances):
         output = {}
         return_code = exec_remote_command_host(host, script_is_syslog, output)
         if return_code == 0:
-            msg = 'Host {}: SYSLOG'.format(host)
+            msg = '\nHost {}: SYSLOG'.format(host)
             LOG.info(msg)
             task.update_details(msg, persist=True)
         else:
@@ -102,7 +100,7 @@ def execute(task, mongodb_restarted_instances):
                 host, script_is_datalog_empty, output
             )
             if return_code == 0:
-                msg = 'Host {}: Writing to filer, but it needs restart.'.format(host)
+                msg = '\nHost {}: Writing to filer, but it needs restart.'.format(host)
                 LOG.info(msg)
                 task.update_details(msg, persist=True)
             else:
@@ -110,19 +108,45 @@ def execute(task, mongodb_restarted_instances):
                     host, script_rotate_already_executed, output
                 )
                 if return_code == 0:
-                    msg = 'Host {}: Rotate Already updated.'.format(host)
+                    msg = '\nHost {}: Rotate already updated.'.format(host)
                     LOG.info(msg)
                     task.update_details(msg, persist=True)
                 else:
+                    msg = '\nStarting log rotate changes.'
+                    LOG.info(msg)
+                    task.update_details(msg, persist=True)
+
+                    msg = '\nRemoving old rotate file.'
+                    LOG.info(msg)
+                    task.update_details(msg, persist=True)
                     exec_remote_command_host(host, remove_log_rotate_file, output)
+
+                    msg = '\nCreating new rotate scripts.'
+                    LOG.info(msg)
+                    task.update_details(msg, persist=True)
                     exec_remote_command_host(
                         host, create_mongodb_rotate_script, output
                     )
-                    exec_remote_command_host(host, create_log_params_script, output)
-                    exec_remote_command_host(host, script_mongodb_rotate, output)
-                    exec_remote_command_host(host, script_mongodb_log_params, output)
+                    exec_remote_command_host(
+                        host, create_log_params_script, output
+                    )
+                    exec_remote_command_host(
+                        host, script_mongodb_rotate, output
+                    )
+                    exec_remote_command_host(
+                        host, script_mongodb_log_params, output
+                    )
+
+                    msg = '\nCreating profile file.'
+                    LOG.info(msg)
+                    task.update_details(msg, persist=True)
                     exec_remote_command_host(host, create_profile_file, output)
+
+                    msg = '\nCreating cron job.'
+                    LOG.info(msg)
+                    task.update_details(msg, persist=True)
                     exec_remote_command_host(host, add_cron_job, output)
-                    msg = 'Host {}: Rotate script updated.'.format(host)
+
+                    msg = '\nHost {}: Rotate script successfully updated.'.format(host)
                     LOG.info(msg)
                     task.update_details(msg, persist=True)
