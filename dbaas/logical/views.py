@@ -943,9 +943,19 @@ def database_resizes(request, context, database):
 class DatabaseMigrateEngineRetry(View):
 
     def get(self, request, *args, **kwargs):
+        try:
+            service_obj = services.DatabaseMigrateEngineService(
+                request, self.database, retry=True
+            )
+            service_obj.execute()
+        except (
+            exceptions.DatabaseNotAvailable, exceptions.ManagerInvalidStatus,
+            exceptions.ManagerNotFound
+        ) as error:
+            messages.add_message(self.request, messages.ERROR, str(error))
         return HttpResponseRedirect(
             reverse(
-                'admin:logical_database_maintenance',
+                'admin:logical_database_upgrade',
                 kwargs={'id': self.database.id}
             )
         )
