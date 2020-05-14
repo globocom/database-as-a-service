@@ -658,28 +658,35 @@ def check_ssl_expire_at(self):
 @only_one(key="changemongodblogrotate")
 def change_mongodb_log_rotate(self):
     LOG.info("Retrieving all restarted MongoDB databases")
-    today = date.today()
     worker_name = get_worker_name()
     task = TaskHistory.register(
-        request=self.request, user=None, worker_name=worker_name)
+        request=self.request, user=None, worker_name=worker_name
+    )
     task.relevance = TaskHistory.RELEVANCE_CRITICAL
-    one_month_later = today + timedelta(days=30)
     mongodb_rotate_envs = Configuration.get_by_name('mongodb_rotate_envs')
     extra_filters = {}
     if mongodb_rotate_envs:
-        extra_filters = {'databaseinfra__environment__name__in': mongodb_rotate_envs.split(',')}
+        extra_filters = {
+            'database__databaseinfra__environment__name__in': (
+                mongodb_rotate_envs.split(',')
+            )
+        }
     try:
-        instances = Instance.objects.filter(
-            instance_type__in=[Instance.MONGODB, Instance.MONGODB_ARBITER]
+        restart_database_objs = RestartDatabase.objects.filter(
+            database__databaseinfra__instances__instance_type__in=[
+                Instance.MONGODB, Instance.MONGODB_ARBITER
+            ],
+            **extra_filters
         )
-        mongodb_restarted_instances = []
-        restart_database_managers = RestartDatabase.objects.all()
-        for manager in restart_database_managers:
-            current_instances = manager.database.databaseinfra.instances.all()
-            current_instances_pk = [instance.pk for instance in current_instances]
-            mongodb_restarted_instances.append(current_instances)
 
-        script_mongodb_log_rotate.execute(task, mongodb_restarted_instances)
+        mongodb_restarted_hosts = []
+        for manager in restart_database_objs:
+            mongodb_restarted_hosts.extend(manager.database.infra.hosts)
+
+
+        script_mongodb_log_rotate.execute(
+            task, list(set(mongodb_restarted_hosts))
+        )
 
         task.update_status_for(TaskHistory.STATUS_SUCCESS, details="\nDone")
     except Exception as err:
