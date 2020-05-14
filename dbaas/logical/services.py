@@ -346,27 +346,3 @@ class DatabaseMigrateEngineService:
 
     def rollback(self):
         pass
-
-def migrate_engine(self, target_migrate_plan_id, since_step=None):
-    retry = False
-
-    if since_step:
-        retry = True
-
-    can_do_engine_migration, error = self.database.can_do_engine_migration(
-        retry=retry
-    )
-
-    if not can_do_engine_migration:
-        messages.add_message(self.request, messages.ERROR, error)
-    else:
-        target_migrate_plan = Plan.objects.filter(
-            pk=target_migrate_plan_id
-        ).first()
-
-        TaskRegister.engine_migrate(
-            database=self.database,
-            target_plan=target_migrate_plan,
-            user=self.request.user,
-            since_step=since_step
-        )
