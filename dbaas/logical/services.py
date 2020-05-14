@@ -277,3 +277,72 @@ class RemoveReadOnlyInstanceService:
 
     def rollback(self):
         pass
+
+
+class DatabaseMigrateEngineService:
+
+    def __init__(
+        self, request, database, target_plan=None, retry=False, rollback=False
+    ):
+        self.request = request
+        self.database = database
+        self.manager = None
+        self.retry = retry
+        self._rollback = rollback
+        self.task_params = {}
+        self.target_plan = target_plan
+
+        self.initialize()
+
+    def initialize(self):
+        self.load_manager()
+
+    def load_manager(self):
+        if self.retry or self._rollback:
+            self.manager = models.DatabaseMigrateEngine.objects.filter(
+                database=self.database
+            ).last()
+
+            if not self.manager:
+                error = "Database does not have migrate_engine"
+                raise exceptions.ManagerNotFound(error)
+            elif not self.manager.is_status_error:
+                error = ("Cannot do retry/rollback last migrate_engine. "
+                         "Status is '{}'!").format(
+                            self.manager.get_status_display())
+                raise exceptions.ManagerInvalidStatus(error)
+            self.target_plan = self.manager.target_plan
+
+    def check_database_status(self):
+        try:
+            if not self.retry:
+                check_is_database_dead(
+                    self.database.id, 'Database Migrate Engine'
+                )
+            check_is_database_enabled(
+                self.database.id,
+                'Database Migrate Engine',
+                ['notification.tasks.migrate_engine']
+            )
+            return (True, '')
+        except DisabledDatabase as err:
+            return (False, err.message)
+
+    def execute(self):
+        status, message = self.check_database_status()
+        if not status:
+            raise exceptions.DatabaseNotAvailable(message)
+
+        self.task_params = dict(
+            database=self.database,
+            target_plan=self.target_plan,
+            user=self.request.user
+        )
+
+        if self.retry:
+            self.task_params['since_step'] = self.manager.current_step
+
+        TaskRegister.engine_migrate(**self.task_params)
+
+    def rollback(self):
+        pass
