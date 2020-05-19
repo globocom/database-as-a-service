@@ -28,7 +28,7 @@ from maintenance.models import DatabaseDestroy, RestartDatabase
 from util import slugify, gen_infra_names
 from maintenance.tasks_create_database import (get_or_create_infra,
                                                get_instances_for)
-from notification.scripts import script_mongodb_log_rotate
+from notification.scripts import script_mongo_log_rotate
 
 
 LOG = get_task_logger(__name__)
@@ -684,7 +684,7 @@ def change_mongodb_log_rotate(self):
             mongodb_restarted_hosts.extend(manager.database.infra.hosts)
 
 
-        script_mongodb_log_rotate.execute(
+        script_mongo_log_rotate.execute(
             task, list(set(mongodb_restarted_hosts))
         )
 
