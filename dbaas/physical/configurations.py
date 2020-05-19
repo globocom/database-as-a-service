@@ -2,6 +2,7 @@
 import sys
 import inspect
 from models import TopologyParameterCustomValue
+from system.models import Configuration
 
 
 def configuration_factory(databaseinfra, memory_size):
@@ -649,7 +650,9 @@ class ConfigurationMongoDB(ConfigurationBase):
     @property
     def oplogSize(self):
         parameter_name = inspect.stack()[0][3]
-        default = 512
+        default = Configuration.get_by_name_as_int(
+            'parameter_{}'.format(parameter_name), 512
+        )
         return self.get_parameter(parameter_name, default)
 
     @property
