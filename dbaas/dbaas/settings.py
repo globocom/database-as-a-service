@@ -196,7 +196,6 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     'django.contrib.admindocs',
     'raven.contrib.django.raven_compat',
-    'ganalytics',
     'haystack',
     'django.contrib.flatpages',
     'ckeditor',
