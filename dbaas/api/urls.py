@@ -31,6 +31,7 @@ from .database_destroy import DatabaseDestroyAPI
 from .update_ssl import UpdateSslAPI
 from .restart_database import RestartDatabaseAPI
 from .databaase_migrate_engine import DatabaseMigrateEngineAPI
+from .remove_readonly import RemoveInstanceDatabaseAPI
 
 
 router = DefaultRouter()
@@ -54,6 +55,7 @@ router.register(r'database_restore', DatabaseRestoreAPI)
 router.register(r'database_create', DatabaseCreateAPI)
 router.register(r'database_change_parameter', DatabaseChangeParameterAPI)
 router.register(r'add_instances_to_database', AddInstancesToDatabaseAPI)
+router.register(r'remove_instance_database', RemoveInstanceDatabaseAPI)
 router.register(r'database_resize', DatabaseResizeAPI)
 router.register(r'database_reinstall_vm', DatabaseReinstallVMAPI)
 router.register(r'recreate_slave', RecreateSlaveAPI)
