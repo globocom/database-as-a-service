@@ -1,5 +1,4 @@
 {% load admin_static admin_urls menu %}
-{% load ganalytics %}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -28,7 +27,7 @@
 
     <!--Modernizr 3.0-->
     <script src="{% static "assets/js/modernizr-build.min.js" %}"></script>
-    
+
     {% block extrahead %}{% endblock %}
 
     {% block blockbots %}<meta name="robots" content="NONE,NOARCHIVE" />{% endblock %}
@@ -94,14 +93,14 @@
 
         <!-- end header.head -->
       </div><!-- /#top -->
-      
+
       <div id="left">
         {% block menu %}
         <!-- #menu -->
         {% render_menu %}
         {% endblock menu %}
       </div><!-- /#left -->
-    
+
     {% block content %}
     {% endblock content %}
 
@@ -110,8 +109,6 @@
     <script src="{% static "assets/js/bootstrap.min.js" %}"></script>
     <script src="{% static "assets/js/main.min.js" %}"></script>
     {% block extrajs %}{% endblock %}
-    {% if not request.is_ajax %}
-    {% ganalytics %}
-    {% endif %}
+    
   </body>
 </html>
