@@ -1,5 +1,4 @@
 {% load admin_static admin_urls bootstrap_template_tags %}
-{% load ganalytics %}
 {% load flatpages notification_tags %}
 {% get_flatpages as flatpages %}
 
@@ -173,8 +172,5 @@
 
 {% block js_footer %}{% endblock js_footer %}
 <!-- JAVASCRIPTS -->
-{% if not request.is_ajax %}
-{% ganalytics %}
-{% endif %}
 </body>
 </html>

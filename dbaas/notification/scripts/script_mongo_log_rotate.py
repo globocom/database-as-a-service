@@ -68,13 +68,25 @@ remove_log_rotate_file = 'rm -f /etc/logrotate.d/mongodb_rotate'
 create_mongodb_rotate_script = 'install -m 755 /dev/null /opt/dbaas/scripts/mongodb_rotate_script.sh'
 create_log_params_script = 'install -m 755 /dev/null /opt/dbaas/scripts/log_rotate_params.sh'
 
-create_profile_file = 'source /opt/dbaas/scripts/log_rotate_params.sh'
+create_profile_file = 'export MONGODB_ADMIN_USER={};export MONGODB_ADMIN_PASSWORD={};source /opt/dbaas/scripts/log_rotate_params.sh'
 add_cron_job = '! (crontab -l | grep -q "/opt/dbaas/scripts/mongodb_rotate_script.sh") && (crontab -l; echo "0 0 * * * /opt/dbaas/scripts/mongodb_rotate_script.sh") | crontab -'
 
 def execute(task, mongodb_restarted_hosts):
     task.update_details(
         "Checking restarted instances and executing script...", persist=True
     )
+
+    user = password = None
+    if mongodb_restarted_hosts:
+        first_host = mongodb_restarted_hosts[0]
+        infra = first_host.database_instance().databaseinfra
+        driver = infra.get_driver()
+        user, password, _ = driver.build_new_infra_auth()
+
+        if not user or not password:
+            raise Exception("Credentials not found")
+
+
     for i, host in enumerate(mongodb_restarted_hosts):
         log = '\n{} of {} - Host {}'.format(
             i+1, len(mongodb_restarted_hosts), host
@@ -133,7 +145,11 @@ def execute(task, mongodb_restarted_hosts):
                     msg = '\nCreating profile file.'
                     LOG.info(msg)
                     task.update_details(msg, persist=True)
-                    exec_remote_command_host(host, create_profile_file, output)
+                    exec_remote_command_host(
+                        host,
+                        create_profile_file.format(user, password),
+                        output
+                    )
 
                     msg = '\nCreating cron job.'
                     LOG.info(msg)
