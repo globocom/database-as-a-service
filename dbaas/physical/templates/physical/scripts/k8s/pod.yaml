@@ -1,0 +1,34 @@
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  name: {{ POD_NAME }}
+spec:
+  selector:
+    matchLabels:
+      name: {{ LABEL_NAME }}
+  serviceName: {{ SERVICE_NAME }}
+  template:
+    metadata:
+      labels:
+       name: {{ LABEL_NAME }}
+    spec:
+      containers:
+        - name: {{ CONTAINER_NAME|default:"dbaas-container" }}
+          image: {{ IMAGE_NAME }}:{{ IMAGE_TAG }}
+          ports:
+            - containerPort: {{ CONTAINER_PORT }}
+          volumeMounts:
+            - name: {{ VOLUME_NAME }}
+              mountPath: {{ VOLUME_PATH }}
+              subPath: {{ VOLUME_SUBPATH|default:"data" }}
+          resources:
+            requests:
+              cpu: {{ CPU }}m
+              memory: {{ MEMORY }}Mi
+            limits:
+              cpu: {{ CPU_LIMIT }}m
+              memory: {{  MEMORY_LIMIT }}Mi
+      volumes:
+        - name: {{ VOLUME_NAME }}
+          persistentVolumeClaim:
+            claimName: {{ VOLUME_CLAIM_NAME }}
