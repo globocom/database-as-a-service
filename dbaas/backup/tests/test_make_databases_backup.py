@@ -6,7 +6,7 @@ from model_mommy import mommy
 
 from backup.tasks import make_databases_backup
 from backup.models import Snapshot, BackupGroup
-from dbaas.tests.helpers import DatabaseHelper, InfraHelper
+from dbaas.tests.helpers import DatabaseHelper, InfraHelper, PlanHelper
 
 
 FAKE_NOW = datetime(2020, 1, 1, 5, 10, 00)
@@ -37,10 +37,12 @@ class TestMakeDatabasesBackup(TestCase):
         )
         self.dev_env = mommy.make('Environment', name='dev')
         mommy.make('Environment', name='prod')
+        _, _, _, self.plan = PlanHelper.create()
         self.infra = InfraHelper.create(
             backup_hour=self.backup_hour,
             plan__has_persistence=True,
-            environment=self.dev_env
+            environment=self.dev_env,
+            plan=self.plan
         )
         self.instance = mommy.make(
             'Instance', databaseinfra=self.infra
@@ -96,14 +98,17 @@ class TestMakeDatabasesBackup(TestCase):
         self, get_worker_name_mock, task_register, save_backup_group,
         make_instance_snapshot_backup
     ):
-
-        infra_mock = self.infra
-        infra_mock.pk = None
-        infra_mock.name = 'pending_backup_test'
-        infra_mock.backup_hour = self.backup_hour - 1
-        infra_mock.environment = self.dev_env
-        infra_mock.save()
-        print(infra_mock.environment)
+        infra_mock = InfraHelper.create(
+            name='pending_backup_test',
+            backup_hour=self.backup_hour-1,
+            plan__has_persistence=True,
+            environment=self.dev_env,
+            plan=self.plan
+        )
+        database_mock = DatabaseHelper.create(
+            databaseinfra=infra_mock,
+            environment=self.dev_env
+        )
 
         instance_mock = mommy.make(
             'Instance', databaseinfra=infra_mock
@@ -127,7 +132,7 @@ class TestMakeDatabasesBackup(TestCase):
                 error={}, group=group
             )
         ]
-        make_instance_snapshot_backup.assert_has_calls(calls)
+        make_instance_snapshot_backup.assert_has_calls(calls, any_order=True)
 
         # make_instance_snapshot_backup.assert_called_with(
         #     current_hour=self.backup_hour, instance=self.instance, error={},
