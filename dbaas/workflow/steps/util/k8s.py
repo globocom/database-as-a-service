@@ -186,5 +186,6 @@ class NewPodK8S(BaseK8SStep):
     def undo(self):
         self.client.delete_namespaced_stateful_set(
             self.pod_name,
-            'default'
+            'default',
+            orphan_dependents=False
         )
