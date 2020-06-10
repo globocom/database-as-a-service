@@ -7,7 +7,6 @@ from model_mommy import mommy
 from backup.tasks import make_databases_backup
 from backup.models import Snapshot, BackupGroup
 from dbaas.tests.helpers import DatabaseHelper, InfraHelper, PlanHelper
-from physical.models import Volume
 
 
 def assert_not_called_with(self, *args, **kwargs):
@@ -90,12 +89,11 @@ class TestMakeDatabasesBackup(TestCase):
 
     @patch('backup.tasks.make_instance_snapshot_backup')
     @patch('backup.models.BackupGroup.save')
-    @patch('physical.models.Volume.save')
     @patch('backup.tasks.datetime', FakeDatetime)
     @patch('notification.models.TaskHistory.register')
     @patch('backup.tasks.get_worker_name')
     def test_current_hour_without_pending_backup(
-        self, get_worker_name_mock, task_register, volume, save_backup_group,
+        self, get_worker_name_mock, task_register, save_backup_group,
         make_instance_snapshot_backup
     ):
         infra_mock = InfraHelper.create(
@@ -116,28 +114,24 @@ class TestMakeDatabasesBackup(TestCase):
 
         get_worker_name_mock.return_value = 'test'
         group = BackupGroup()
-        provider = Volume()
         save_backup_group.return_value = group
         snapshot_mock = mommy.make(
             'Snapshot', instance=instance_mock, group=group)
         snapshot_mock.status = Snapshot.SUCCESS
         make_instance_snapshot_backup.return_value = snapshot_mock
 
-        # make_databases_backup()
-        # make_instance_snapshot_backup.assert_called_with(
-        #     current_hour=self.backup_hour, instance=instance_mock, error={},
-        #     group=group
-        # )
-        # make_instance_snapshot_backup.assert_called_with(
-        #     current_hour=self.backup_hour, instance=self.instance, error={},
-        #     group=group
-        # )
-
         make_databases_backup()
-        make_instance_snapshot_backup.assert_called_with(
-            current_hour=self.backup_hour, instance=self.instance, error={},
-            group=group
-        )
+        calls = [
+            call(
+                current_hour=self.backup_hour, instance=self.instance,
+                error={}, group=group
+            ),
+            call(
+                current_hour=self.backup_hour, instance=instance_mock,
+                error={}, group=group
+            )
+        ]
+        make_instance_snapshot_backup.assert_has_calls(calls, any_order=True)
 
     @patch('backup.tasks.make_instance_snapshot_backup')
     @patch('backup.models.BackupGroup.save')
