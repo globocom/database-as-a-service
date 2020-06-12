@@ -1,7 +1,13 @@
+from time import sleep
+import logging
+
 import yaml
 from django.template.loader import render_to_string
+
 from base import BaseInstanceStep
 from physical.models import Volume
+
+LOG = logging.getLogger(__name__)
 
 
 class BaseK8SStep(BaseInstanceStep):
@@ -21,8 +27,12 @@ class BaseK8SStep(BaseInstanceStep):
         return 'pvc-{}'.format(self.host.hostname)
 
     @property
-    def pod_name(self):
+    def statefulset_name(self):
         return 'pod-{}'.format(self.host.hostname.split('.')[0])
+
+    @property
+    def pod_name(self):
+        return '{}-0'.format(self.statefulset_name)
 
     @property
     def client_class_name(self):
@@ -160,7 +170,7 @@ class NewPodK8S(BaseK8SStep):
     @property
     def context(self):
         return {
-            'POD_NAME': self.pod_name,
+            'POD_NAME': self.statefulset_name,
             'LABEL_NAME': self.label_name,
             'SERVICE_NAME': self.service_name,
             'IMAGE_NAME': 'mongo',
@@ -185,7 +195,38 @@ class NewPodK8S(BaseK8SStep):
 
     def undo(self):
         self.client.delete_namespaced_stateful_set(
-            self.pod_name,
+            self.statefulset_name,
             'default',
             orphan_dependents=False
         )
+
+
+class WaitingPodBeReady(BaseK8SStep):
+    retries = 30
+    interval = 10
+
+    def __unicode__(self):
+        return "Waiting POD be ready..."
+
+    def do(self):
+        for attempt in range(self.retries):
+            pod_data = self.client.read_namespaced_pod_status(
+                self.pod_name, 'default'
+            )
+            status = all(
+                map(
+                    lambda s: True if s.status == 'True' else False,
+                    pod_data.status.conditions
+                )
+            )
+            if status:
+                return True
+            if attempt == self.retries - 1:
+                LOG.error("Maximum number of login attempts.")
+                raise EnvironmentError('POD {} is not ready'.format(
+                    self.pod_name
+                ))
+
+            LOG.warning("Pod {} not ready.".format(self.pod_name))
+            LOG.info("Wating %i seconds to try again..." % (self.interval))
+            sleep(self.interval)
