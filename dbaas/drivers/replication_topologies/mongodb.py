@@ -654,7 +654,7 @@ class MongoDBReplicaset42(MongoDBReplicaset40):
             'Configure SSL': (
                 'workflow.steps.util.ssl.UpdateOpenSSlLib',
                 'workflow.steps.util.ssl.MongoDBUpdateCertificates',
-                'workflow.steps.util.ssl.CreateSSLFolderRollbackIfRunning',
+                'workflow.steps.util.ssl.CreateSSLFolder',
                 'workflow.steps.util.ssl.MongoDBCreateSSLConfForInstanceDNS',
                 'workflow.steps.util.ssl.RequestSSLForInstance',
                 'workflow.steps.util.ssl.CreateJsonRequestFileInstance',
