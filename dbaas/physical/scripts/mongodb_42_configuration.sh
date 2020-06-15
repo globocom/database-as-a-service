@@ -77,7 +77,7 @@ net:
     tls:
         mode: allowTLS
         #mode: requireTLS
-        PEMKeyFile: /data/ssl/mongodb.pem
+        certificateKeyFile: /data/ssl/mongodb.pem
         CAFile: /etc/ssl/certs/ca-bundle.crt #Esse arquivo sempre existe nos servidores.
         allowConnectionsWithoutCertificates: true
 {% endif %}
