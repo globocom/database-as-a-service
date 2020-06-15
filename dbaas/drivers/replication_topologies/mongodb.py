@@ -60,6 +60,18 @@ class MongoDBSingle(BaseTopology):
                 'workflow.steps.util.metric_collector.RestartTelegraf',
                 'workflow.steps.util.infra.UpdateEndpoint',
             )}, {
+            'Configure SSL': (
+                'workflow.steps.util.ssl.UpdateOpenSSlLib',
+                'workflow.steps.util.ssl.MongoDBUpdateCertificates',
+                'workflow.steps.util.ssl.CreateSSLFolderRollbackIfRunning',
+                'workflow.steps.util.ssl.MongoDBCreateSSLConfForInstanceDNS',
+                'workflow.steps.util.ssl.RequestSSLForInstance',
+                'workflow.steps.util.ssl.CreateJsonRequestFileInstance',
+                'workflow.steps.util.ssl.CreateCertificateInstanceMongoDB',
+                'workflow.steps.util.ssl.SetSSLFilesAccessMongoDB',
+                'workflow.steps.util.ssl.SetInfraConfiguredSSL',
+                'workflow.steps.util.ssl.UpdateExpireAtDate',
+            )}, {
             'Check DNS': (
                 'workflow.steps.util.dns.CheckIsReady',
             )}, {
