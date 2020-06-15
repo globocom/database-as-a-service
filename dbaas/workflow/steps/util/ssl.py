@@ -512,10 +512,11 @@ class CreateCertificateMongoDB(CreateCertificate):
         self.exec_script(script)
 
     def save_mongodb_certificate(self):
-        script = 'cat {key_file} {cert_file} {ca_file} > mongodb.pem'
+        script = "cd {}\n".format(self.ssl_path)
+        script += 'cat {key_file} {cert_file} {ca_file} > mongodb.pem'
         script = script.format(
             key_file=self.key_file_path,
-            cert_file=self.ca_file_path,
+            cert_file=self.cert_file_path,
             ca_file=self.ca_file_path
         )
         self.exec_script(script)
