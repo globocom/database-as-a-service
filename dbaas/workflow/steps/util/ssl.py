@@ -154,6 +154,20 @@ class UpdateOpenSSlLib(SSL):
         self.exec_script(script)
 
 
+class MongoDBUpdateCertificates(SSL):
+
+    def __unicode__(self):
+        return "Updating Certificates..."
+
+    def do(self):
+        if not self.is_valid:
+            return
+        script = """yum update globoi-ca-certificates
+        yum update ca-certificates
+        """
+        self.exec_script(script)
+
+
 class UpdateOpenSSlLibIfConfigured(UpdateOpenSSlLib, IfConguredSSLValidator):
     pass
 
@@ -183,7 +197,7 @@ class CreateSSLFolderIfConfigured(CreateSSLFolder, IfConguredSSLValidator):
     pass
 
 
-class InstanceSSLBaseName(SSL):
+class InstanceSSLBaseNamee(SSL):
     @property
     def ssl_file_basename(self):
         return self.host.hostname.split('.')[0]
