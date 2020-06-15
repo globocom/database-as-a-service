@@ -495,7 +495,45 @@ class CreateCertificate(SSL):
         self.save_certificate_file(certificate, self.cert_file_path)
 
 
+class CreateCertificateMongoDB(CreateCertificate):
+
+    def __unicode__(self):
+        return "Creating MongoDB certificate..."
+
+    def create_certificate_script(self):
+        script = 'curl -d @{json} -H "X-Pki: 42" -H "Content-type: '
+        script += 'application/json" {endpoint}'
+        script = script.format(
+            json=self.json_file_path, endpoint=self.credential.endpoint)
+        return script
+
+    def save_certificate_file(self, certificate, filepath):
+        script = "echo '{}' > {}".format(certificate, filepath)
+        self.exec_script(script)
+
+    def save_mongodb_certificate(self):
+        script = 'cat {key_file} {cert_file} {ca_file} > mongodb.pem'
+        script = script.format(
+            key_file=self.key_file_path,
+            cert_file=self.ca_file_path,
+            ca_file=self.ca_file_path
+        )
+        self.exec_script(script)
+
+    def do(self):
+        super(CreateCertificateMongoDB, self).do()
+
+        self.save_mongodb_certificate()
+
+
+
+
 class CreateCertificateInstance(CreateCertificate, InstanceSSLBaseName):
+    pass
+
+
+class CreateCertificateInstanceMongoDB(CreateCertificateMongoDB,
+                                       InstanceSSLBaseName):
     pass
 
 
@@ -523,6 +561,22 @@ class SetSSLFilesAccessMySQL(SSL):
         script += "chown mysql:mysql .\n"
         script += "chmod 400 *key*.pem\n"
         script += "chmod 444 *cert*.pem\n"
+        script += "chmod 755 ."
+        self.exec_script(script)
+
+    def do(self):
+        if not self.is_valid:
+            return
+        self.sll_file_access_script()
+
+
+class SetSSLFilesAccessMongoDB(SSL):
+    def __unicode__(self):
+        return "Setting SSL Files Access..."
+
+    def sll_file_access_script(self):
+        script = "cd {}\n".format(self.ssl_path)
+        script += "chown mongodb:mongodb *.pem\n"
         script += "chmod 755 ."
         self.exec_script(script)
 
