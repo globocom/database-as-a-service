@@ -34,6 +34,10 @@ class BaseTestCase(TestCase):
         mommy.make(
             'Configuration', name='dev_envs', value='dev,qa2,aws-dev'
         )
+        mommy.make(
+            'Configuration', name='make_database_backup_hour',
+            value=','.join(map(str, FAKE_MAKE_DATABASE_BACKUP_HOUR))
+        )
         self.dev_env = mommy.make('Environment', name='dev')
         mommy.make('Environment', name='prod')
         self.engine_type = mommy.make(
@@ -129,8 +133,6 @@ class SnapshotStatusTestCase(BaseTestCase):
         self.assertTrue(take_snapshot_mock.called)
         self.assertTrue(done_mock.called)
 
-    @patch('system.models.Configuration.get_by_name_as_list',
-           new=MagicMock(return_value=FAKE_MAKE_DATABASE_BACKUP_HOUR))
     def test_snapshot_with_error_when_current_hour_in_backup_hour_list(
             self, take_snapshot_mock, done_mock):
         mommy.make(
@@ -143,14 +145,12 @@ class SnapshotStatusTestCase(BaseTestCase):
             instance=self.instance,
             error={},
             group=self.group,
-            current_hour=FAKE_MAKE_DATABASE_BACKUP_HOUR[0]
+            current_hour=FAKE_MAKE_DATABASE_BACKUP_HOUR[1]
         )
         self.assertEqual(snapshot.status, Snapshot.ERROR)
         self.assertFalse(take_snapshot_mock.called)
         self.assertFalse(done_mock.called)
 
-    @patch('system.models.Configuration.get_by_name_as_list',
-           new=MagicMock(return_value=FAKE_MAKE_DATABASE_BACKUP_HOUR))
     def test_snapshot_with_warning_when_not_in_backup_hour_list(
             self, take_snapshot_mock, done_mock):
         mommy.make(
