@@ -157,7 +157,7 @@ class UpdateOpenSSlLib(SSL):
 class MongoDBUpdateCertificates(SSL):
 
     def __unicode__(self):
-        return "Updating Certificates..."
+        return "Updating Certificates libraries..."
 
     def do(self):
         if not self.is_valid:
