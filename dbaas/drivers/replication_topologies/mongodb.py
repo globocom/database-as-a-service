@@ -53,12 +53,6 @@ class MongoDBSingle(BaseTopology):
             'Configuring database': (
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.InitializationForNewInfra',
-                'workflow.steps.util.plan.ConfigureForNewInfra',
-                'workflow.steps.util.metric_collector.ConfigureTelegraf',
-                'workflow.steps.util.database.Start',
-                'workflow.steps.util.database.CheckIsUp',
-                'workflow.steps.util.metric_collector.RestartTelegraf',
-                'workflow.steps.util.infra.UpdateEndpoint',
             )}, {
             'Configure SSL': (
                 'workflow.steps.util.ssl.UpdateOpenSSlLib',
@@ -71,6 +65,14 @@ class MongoDBSingle(BaseTopology):
                 'workflow.steps.util.ssl.SetSSLFilesAccessMongoDB',
                 'workflow.steps.util.ssl.SetInfraConfiguredSSL',
                 'workflow.steps.util.ssl.UpdateExpireAtDate',
+            )}, {
+            'Starting database': (
+                'workflow.steps.util.plan.ConfigureForNewInfra',
+                'workflow.steps.util.metric_collector.ConfigureTelegraf',
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.metric_collector.RestartTelegraf',
+                'workflow.steps.util.infra.UpdateEndpoint',
             )}, {
             'Check DNS': (
                 'workflow.steps.util.dns.CheckIsReady',
