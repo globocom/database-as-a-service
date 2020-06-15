@@ -197,7 +197,7 @@ class CreateSSLFolderIfConfigured(CreateSSLFolder, IfConguredSSLValidator):
     pass
 
 
-class InstanceSSLBaseNamee(SSL):
+class InstanceSSLBaseName(SSL):
     @property
     def ssl_file_basename(self):
         return self.host.hostname.split('.')[0]
@@ -269,6 +269,47 @@ EOF_SSL
         self.create_ssl_config_file()
 
 
+class MongoDBCreateSSLConfigFile(SSL):
+    def __unicode__(self):
+        return "Creating SSL Config File..."
+
+    def create_ssl_config_file(self):
+
+        script = """(cat <<EOF_SSL
+[req]
+distinguished_name = req_distinguished_name
+req_extensions = v3_req
+prompt = no
+[req_distinguished_name]
+C = BR
+ST = RJ
+L = Rio de Janeiro
+O = Globo Comunicacao e Participacoes SA
+OU = Data Center-Globo.com
+emailAddress = dns-tech\@corp.globo.com
+CN = {dns}
+[v3_req]
+keyUsage = keyEncipherment, dataEncipherment
+extendedKeyUsage = serverAuth, clientAuth
+subjectAltName = @alt_names
+[alt_names]
+DNS.1 = {dns}
+IP.1 = {ip}
+EOF_SSL
+) > {file_path}""".format(
+        dns=self.ssl_dns,
+        file_path=self.conf_file_path,
+        ip=self.host.address
+    )
+
+        self.exec_script(script)
+
+    def do(self):
+        if not self.is_valid:
+            return
+        self.create_ssl_config_file()
+
+
 class CreateSSLConfForInstanceDNS(CreateSSLConfigFile,
                                   InstanceSSLBaseName,
                                   InstanceSSLDNS):
@@ -284,6 +325,12 @@ class CreateSSLConfForInstanceIP(CreateSSLConfigFile,
 class CreateSSLConfForInfraEndPoint(CreateSSLConfigFile,
                                     InfraSSLBaseName,
                                     InfraSSLDNS):
+    pass
+
+
+class MongoDBCreateSSLConfForInstanceDNS(MongoDBCreateSSLConfigFile,
+                                         InstanceSSLBaseName,
+                                         InstanceSSLDNS):
     pass
 
 
