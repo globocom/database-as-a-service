@@ -680,3 +680,57 @@ class MongoDBSingle42(MongoDBSingle):
             'workflow.steps.util.plan.ConfigureForUpgrade',
             'workflow.steps.util.metric_collector.ConfigureTelegraf',
         )
+
+
+class MongoDBSingleK8s(MongoDBSingle):
+
+    def get_deploy_steps(self):
+        return [{
+            'Creating k8s Service': (
+                'workflow.steps.util.k8s.NewServiceK8S',
+            )}, {
+            'Creating dns': (
+                'workflow.steps.util.k8s.SetServiceEndpoint',
+                'workflow.steps.util.dns.CreateDNS',
+            )}, {
+            'Creating disk': (
+                'workflow.steps.util.k8s.NewVolumeK8S',
+            )}, {
+            'Creating Pod': (
+                'workflow.steps.util.k8s.NewPodK8S',
+            )}, {
+            'Waiting VMs': (
+                'workflow.steps.util.k8s.WaitingPodBeReady',
+                # 'workflow.steps.util.vm.UpdateOSDescription'
+            )}, {
+            'Configuring database': (
+                # 'workflow.steps.util.volume_provider.MountDataVolume',
+                # 'workflow.steps.util.plan.InitializationForNewInfra',
+                # 'workflow.steps.util.plan.ConfigureForNewInfra', # Aqui monta os aquivos de conf, vamos fazer com o initContainer ?
+                # 'workflow.steps.util.metric_collector.ConfigureTelegraf',
+                # 'workflow.steps.util.database.Start',
+                # 'workflow.steps.util.database.CheckIsUp',
+                # 'workflow.steps.util.metric_collector.RestartTelegraf',
+                'workflow.steps.util.infra.UpdateEndpoint',
+            )}, {
+            'Check DNS': (
+                'workflow.steps.util.dns.CheckIsReady',
+            # )}, {
+            # 'Creating Database': (
+            #     'workflow.steps.util.database.Create',
+            # )}, {
+            # 'Check ACL': (
+            #     'workflow.steps.util.acl.BindNewInstance',
+            # )}, {
+            # 'Creating monitoring and alarms': (
+            #     'workflow.steps.util.zabbix.CreateAlarms',
+            #     'workflow.steps.util.db_monitor.CreateInfraMonitoring',
+            # )}, {
+            # 'Create Extra DNS': (
+            #     'workflow.steps.util.database.CreateExtraDNS',
+            # )}, {
+            # 'Update Host Disk Size': (
+            #     'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
+            # )
+            )
+        }]
