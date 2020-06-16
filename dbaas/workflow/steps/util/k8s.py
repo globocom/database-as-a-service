@@ -1,16 +1,29 @@
 from time import sleep
 import logging
+import json
 
 import yaml
 from django.template.loader import render_to_string
 
 from base import BaseInstanceStep
-from physical.models import Volume
+from physical.models import Volume, Host
 
 LOG = logging.getLogger(__name__)
 
 
 class BaseK8SStep(BaseInstanceStep):
+
+    def hostname(self):
+        if self.host and self.hostname:
+            hostname = self.host.hostname
+        else:
+            hostname = self.instance.vm_name
+
+        return hostname
+
+    @property
+    def namespace(self):
+        return 'default'
 
     @property
     def label_name(self):
@@ -19,16 +32,16 @@ class BaseK8SStep(BaseInstanceStep):
     @property
     def service_name(self):
         return 'service-{}'.format(
-            self.host.hostname.split('.')[0]
+            self.hostname().split('.')[0]
         )
 
     @property
     def volume_claim_name(self):
-        return 'pvc-{}'.format(self.host.hostname)
+        return 'pvc-{}'.format(self.hostname())
 
     @property
     def statefulset_name(self):
-        return 'pod-{}'.format(self.host.hostname.split('.')[0])
+        return 'pod-{}'.format(self.hostname().split('.')[0])
 
     @property
     def pod_name(self):
@@ -85,7 +98,7 @@ class NewVolumeK8S(BaseK8SStep):
 
     def _remove_volume(self, volume):
         self.client.delete_namespaced_persistent_volume_claim(
-            self.volume_claim_name, 'default'
+            self.volume_claim_name, self.namespace
         )
         volume.delete()
 
@@ -105,7 +118,7 @@ class NewVolumeK8S(BaseK8SStep):
             return
 
         self.client.create_namespaced_persistent_volume_claim(
-            'default', self.yaml_file
+            self.namespace, self.yaml_file
         )
         volume = Volume()
         volume.host = self.host
@@ -137,7 +150,7 @@ class NewServiceK8S(BaseK8SStep):
             'SERVICE_NAME': self.service_name,
             'LABEL_NAME': self.label_name,
             'INSTANCE_PORT': 27017,  # self.instance.port,
-            'NODE_PORT': 30021
+            'NODE_PORT': 30022
         }
 
     def do(self):
@@ -145,13 +158,13 @@ class NewServiceK8S(BaseK8SStep):
             return
 
         self.client.create_namespaced_service(
-            'default', self.yaml_file
+            self.namespace, self.yaml_file
         )
 
     def undo(self):
         self.client.delete_namespaced_service(
             self.service_name,
-            'default'
+            self.namespace
         )
 
 
@@ -190,13 +203,13 @@ class NewPodK8S(BaseK8SStep):
             return
 
         self.client.create_namespaced_stateful_set(
-            'default', self.yaml_file
+            self.namespace, self.yaml_file
         )
 
     def undo(self):
         self.client.delete_namespaced_stateful_set(
             self.statefulset_name,
-            'default',
+            self.namespace,
             orphan_dependents=False
         )
 
@@ -209,9 +222,10 @@ class WaitingPodBeReady(BaseK8SStep):
         return "Waiting POD be ready..."
 
     def do(self):
+        from celery.contrib import rdb;rdb.set_trace()
         for attempt in range(self.retries):
             pod_data = self.client.read_namespaced_pod_status(
-                self.pod_name, 'default'
+                self.pod_name, self.namespace
             )
             status = all(
                 map(
@@ -230,3 +244,38 @@ class WaitingPodBeReady(BaseK8SStep):
             LOG.warning("Pod {} not ready.".format(self.pod_name))
             LOG.info("Wating %i seconds to try again..." % (self.interval))
             sleep(self.interval)
+
+
+class SetServiceEndpoint(BaseK8SStep):
+    def __unicode__(self):
+        return "Update instance with service address and port..."
+
+    def service_metadata(self):
+        return self.client.read_namespaced_service(
+            self.service_name, self.namespace
+        )
+
+    def do(self):
+        service_metadata = self.service_metadata()
+        service_annotations = json.loads(
+            service_metadata.metadata.annotations[
+                'field.cattle.io/publicEndpoints'
+            ]
+        )
+        # TODO: Validate is here the instance already saved on database
+        if service_annotations:
+            service_annotations = service_annotations[0]
+        self.instance.address = service_annotations['addresses'][0]
+        self.instance.port = service_annotations['port']
+        # self.instance.save()
+        host = Host()
+        host.address = self.instance.address
+        host.hostname = self.instance.vm_name
+        host.user = 'TODO'
+        host.password = 'TODO'
+        host.provider = 'k8s'
+        host.identifier = self.pod_name
+        host.offering = None
+        host.save()
+        self.instance.hostname = host
+        self.instance.save()
