@@ -222,7 +222,6 @@ class WaitingPodBeReady(BaseK8SStep):
         return "Waiting POD be ready..."
 
     def do(self):
-        from celery.contrib import rdb;rdb.set_trace()
         for attempt in range(self.retries):
             pod_data = self.client.read_namespaced_pod_status(
                 self.pod_name, self.namespace
