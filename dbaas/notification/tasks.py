@@ -1144,10 +1144,11 @@ def add_instances_to_database(
         )
 
         try:
+            from celery.contrib import rdb;rdb.set_trace() 
             instance = infra.instances.get(
                 Q(hostname__hostname__startswith=vm_name) |
                 Q(dns__startswith=vm_name),
-                port=driver.get_default_database_port(),
+                # port=driver.get_default_database_port(),
             )
         except Instance.DoesNotExist:
             instance = Instance(
