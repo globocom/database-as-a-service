@@ -21,7 +21,6 @@ django-auth-ldap==1.1.4
 django-ckeditor-updated==4.4
 django-email-extras==0.1.13
 django-extensions==1.2.2
-django-ganalytics==0.2
 django-haystack==2.1.0
 django-services==0.0.8
 django-simple-audit==0.1.22

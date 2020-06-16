@@ -1116,12 +1116,18 @@ class RemoveInstanceDatabase(DatabaseMaintenanceTask):
         related_name="remove_instances_database_manager"
     )
     instance = models.ForeignKey(
-        Instance, verbose_name="Instance", null=False, unique=False,
+        Instance, verbose_name="Instance", null=True, blank=True,
+        on_delete=models.SET_NULL,
         related_name="remove_instances_database_manager"
     )
 
     def __unicode__(self):
         return "Remove instances from database: {}".format(self.database)
+
+    def update_final_status(self, status):
+        if status == DatabaseMaintenanceTask.SUCCESS:
+            self.instance = None
+        super(RemoveInstanceDatabase, self).update_final_status(status)
 
 
 class RestartDatabase(DatabaseMaintenanceTask):
