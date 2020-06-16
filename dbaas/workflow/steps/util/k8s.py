@@ -150,7 +150,7 @@ class NewServiceK8S(BaseK8SStep):
             'SERVICE_NAME': self.service_name,
             'LABEL_NAME': self.label_name,
             'INSTANCE_PORT': 27017,  # self.instance.port,
-            'NODE_PORT': 30022
+            # 'NODE_PORT': 30022
         }
 
     def do(self):
@@ -226,14 +226,12 @@ class WaitingPodBeReady(BaseK8SStep):
             pod_data = self.client.read_namespaced_pod_status(
                 self.pod_name, self.namespace
             )
-            status = all(
-                map(
-                    lambda s: True if s.status == 'True' else False,
-                    pod_data.status.conditions
-                )
-            )
-            if status:
-                return True
+            for status_data in pod_data.status.conditions:
+                if status_data.type != 'Ready':
+                    continue
+                else:
+                    if status_data.status == 'True':
+                        return True
             if attempt == self.retries - 1:
                 LOG.error("Maximum number of login attempts.")
                 raise EnvironmentError('POD {} is not ready'.format(

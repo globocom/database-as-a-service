@@ -9,4 +9,3 @@ spec:
   ports:
   - port: {{ INSTANCE_PORT }}
     targetPort: {{ INSTANCE_PORT }}
-    nodePort: {{ NODE_PORT }}
