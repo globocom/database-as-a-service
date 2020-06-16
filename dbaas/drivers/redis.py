@@ -442,6 +442,18 @@ class RedisSentinel(Redis):
 
         return sentinels
 
+    def get_sentinel_instance_client(self, instance, default_timeout=False):
+        if instance.instance_type != Instance.REDIS_SENTINEL:
+            error = 'Instance {} is not Sentinel'.format(instance)
+            raise Exception(error)
+        address, port = instance.address, instance.port
+        client = redis.StrictRedis(
+            host=address, port=int(port),
+            socket_timeout=REDIS_CONNECTION_DEFAULT_TIMEOUT if default_timeout else self.connection_timeout_in_seconds,
+            socket_connect_timeout= REDIS_CONNECTION_SOCKET_TIMEOUT if default_timeout else self.connection_socket_timeout_in_seconds
+        )
+        return client
+
     def get_replication_info(self, instance):
         if self.check_instance_is_master(instance=instance, default_timeout=False):
             return 0
@@ -467,14 +479,30 @@ class RedisSentinel(Redis):
         if instance.instance_type == Instance.REDIS_SENTINEL:
             return False
 
-        with self.redis(instance=instance, default_timeout=default_timeout) as client:
+        masters_for_sentinel = []
+        sentinels = self.get_non_database_instances()
+
+        for sentinel in sentinels:
+            client = self.get_sentinel_instance_client(sentinel)
             try:
-                info = client.info()
-                return info['role'] != 'slave'
+                master = client.sentinel_get_master_addr_by_name(
+                    self.databaseinfra.name)
+                masters_for_sentinel.append(master)
             except Exception as e:
-                raise ConnectionError('Error connection to infra {}: {}'.format(
-                    self.databaseinfra, str(e)
-                ))
+                error = 'Connection error to {}. Error: {}'.format(
+                    sentinel, e)
+                LOG.info(error)
+
+        sentinels_believe_is_master = 0
+        for master_host, master_port in masters_for_sentinel:
+            if (instance.address == master_host and
+                instance.port == master_port):
+                sentinels_believe_is_master += 1
+
+        if sentinels_believe_is_master > 1:
+            return True
+
+        return False
 
     def switch_master(self, instance=None):
         sentinel_instance = self.instances_filtered.first()
