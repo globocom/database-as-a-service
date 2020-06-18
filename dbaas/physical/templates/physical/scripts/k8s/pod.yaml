@@ -17,6 +17,67 @@ spec:
           image: {{ IMAGE_NAME }}:{{ IMAGE_TAG }}
           ports:
             - containerPort: {{ CONTAINER_PORT }}
+          env:
+            - name: MONGO_INITDB_ROOT_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb-users-secrets
+                  key: MONGODB_ADMIN_USER
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb-users-secrets
+                  key: MONGODB_ADMIN_PASSWORD
+            - name: MONGODB_ADMINDBAAS_USER
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb-users-secrets
+                  key: MONGODB_ADMINDBAAS_USER
+            - name: MONGODB_ADMINDBAAS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb-users-secrets
+                  key: MONGODB_ADMINDBAAS_PASSWORD
+            - name: MONGODB_BACKUP_USER
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb-users-secrets
+                  key: MONGODB_BACKUP_USER
+            - name: MONGODB_BACKUP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb-users-secrets
+                  key: MONGODB_BACKUP_PASSWORD
+            - name: MONGODB_DB_ARQ_USER
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb-users-secrets
+                  key: MONGODB_DB_ARQ_USER
+            - name: MONGODB_DB_ARQ_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb-users-secrets
+                  key: MONGODB_DB_ARQ_PASSWORD
+            - name: MONGODB_ZABBIX_USER
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb-users-secrets
+                  key: MONGODB_ZABBIX_USER
+            - name: MONGODB_ZABBIX__PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb-users-secrets
+                  key: MONGODB_ZABBIX__PASSWORD
+            - name: MONGODB_TELEGRAF_USER
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb-users-secrets
+                  key: MONGODB_TELEGRAF_USER
+            - name: MONGODB_TELEGRAF_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb-users-secrets
+                  key: MONGODB_TELEGRAF_PASSWORD
           volumeMounts:
             - name: {{ VOLUME_NAME }}
               mountPath: {{ VOLUME_PATH }}
@@ -28,6 +89,70 @@ spec:
             limits:
               cpu: {{ CPU_LIMIT }}m
               memory: {{  MEMORY_LIMIT }}Mi
+          lifecycle:
+            postStart:
+              exec:
+                command:
+                - bash
+                - "-c"
+                - |
+                  if [ ! -f /data/create_user_script.lock ]; then
+
+                    touch /data/create_user_script.lock
+
+                    sleep 30
+
+                    echo "mongo admin -u${MONGO_INITDB_ROOT_USERNAME} -p${MONGO_INITDB_ROOT_PASSWORD}<< EOF" > /data/create_user_script.sh
+                    echo "db.createUser({" >> /data/create_user_script.sh
+                    echo "'user' : '${MONGODB_ADMINDBAAS_USER}'," >> /data/create_user_script.sh
+                    echo "'pwd' : '${MONGODB_ADMINDBAAS_PASSWORD}'," >> /data/create_user_script.sh
+                    echo "'roles' : ['userAdminAnyDatabase', 'clusterAdmin', 'readWriteAnyDatabase', 'dbAdminAnyDatabase']" >> /data/create_user_script.sh
+                    echo "})" >> /data/create_user_script.sh
+
+                    echo "db.createUser({" >> /data/create_user_script.sh
+                    echo "    'user' : '${MONGODB_BACKUP_USER}'," >> /data/create_user_script.sh
+                    echo "    'pwd' : '${MONGODB_BACKUP_PASSWORD}'," >> /data/create_user_script.sh
+                    echo "    'roles' : ['userAdminAnyDatabase', 'clusterAdmin', 'readWriteAnyDatabase', 'dbAdminAnyDatabase']" >> /data/create_user_script.sh
+                    echo "})" >> /data/create_user_script.sh
+
+                    echo "db.createUser({" >> /data/create_user_script.sh
+                    echo "    'user' : '${MONGODB_DB_ARQ_USER}'," >> /data/create_user_script.sh
+                    echo "    'pwd' : '${MONGODB_DB_ARQ_PASSWORD}'," >> /data/create_user_script.sh
+                    echo "    'roles' : ['readAnyDatabase', 'clusterMonitor']" >> /data/create_user_script.sh
+                    echo "})" >> /data/create_user_script.sh
+
+                    echo "db.createUser({" >> /data/create_user_script.sh
+                    echo "    'user' : '${MONGODB_ZABBIX_USER}'," >> /data/create_user_script.sh
+                    echo "    'pwd' : '${MONGODB_ZABBIX__PASSWORD}'," >> /data/create_user_script.sh
+                    echo "    'roles' : ['readAnyDatabase', 'clusterMonitor']" >> /data/create_user_script.sh
+                    echo "})" >> /data/create_user_script.sh
+
+                    echo "db.createUser({" >> /data/create_user_script.sh
+                    echo "    'user' : '${MONGODB_TELEGRAF_USER}'," >> /data/create_user_script.sh
+                    echo "    'pwd' : '${MONGODB_TELEGRAF_PASSWORD}'," >> /data/create_user_script.sh
+                    echo "    'roles' : ['clusterMonitor']" >> /data/create_user_script.sh
+                    echo "})" >> /data/create_user_script.sh
+
+                    echo "db.createRole({" >> /data/create_user_script.sh
+                    echo "    role: 'dbEvalUser'," >> /data/create_user_script.sh
+                    echo "    privileges: [{" >> /data/create_user_script.sh
+                    echo "        resource: { anyResource: true }," >> /data/create_user_script.sh
+                    echo "        actions: [ 'anyAction' ]}]," >> /data/create_user_script.sh
+                    echo "    roles: []" >> /data/create_user_script.sh
+                    echo "})" >> /data/create_user_script.sh
+
+                    echo "db.grantRolesToUser('${MONGODB_ADMINDBAAS_USER}', [ { role: 'dbEvalUser', db: 'admin' } ])" >> /data/create_user_script.sh
+
+                    echo "exit" >> /data/create_user_script.sh
+
+                    echo "EOF" >> /data/create_user_script.sh
+
+                    chmod u+x /data/create_user_script.sh
+
+                    /data/create_user_script.sh
+                    rm /data/create_user_script.sh
+
+                  fi
       volumes:
         - name: {{ VOLUME_NAME }}
           persistentVolumeClaim:
