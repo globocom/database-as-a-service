@@ -715,12 +715,12 @@ class MongoDBSingleK8s(MongoDBSingle):
             )}, {
             'Check DNS': (
                 'workflow.steps.util.dns.CheckIsReady',
-            # )}, {
-            # 'Creating Database': (
-            #     'workflow.steps.util.database.Create',
-            # )}, {
-            # 'Check ACL': (
-            #     'workflow.steps.util.acl.BindNewInstance',
+             )}, {
+             'Creating Database': (
+                 'workflow.steps.util.database.Create',
+             )}, {
+             'Check ACL': (
+                 'workflow.steps.util.acl.BindNewInstance',
             # )}, {
             # 'Creating monitoring and alarms': (
             #     'workflow.steps.util.zabbix.CreateAlarms',
