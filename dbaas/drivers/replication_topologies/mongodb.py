@@ -696,6 +696,9 @@ class MongoDBSingleK8s(MongoDBSingle):
             'Creating disk': (
                 'workflow.steps.util.k8s.NewVolumeK8S',
             )}, {
+            'Creating Config Map': (
+                'workflow.steps.util.k8s.NewConfigMapK8S',
+            )}, {
             'Creating Pod': (
                 'workflow.steps.util.k8s.NewPodK8S',
             )}, {
@@ -706,7 +709,7 @@ class MongoDBSingleK8s(MongoDBSingle):
             'Configuring database': (
                 # 'workflow.steps.util.volume_provider.MountDataVolume',
                 # 'workflow.steps.util.plan.InitializationForNewInfra',
-                # 'workflow.steps.util.plan.ConfigureForNewInfra', # Aqui monta os aquivos de conf, vamos fazer com o initContainer ?
+                # 'workflow.steps.util.plan.ConfigureForNewInfra',
                 # 'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 # 'workflow.steps.util.database.Start',
                 # 'workflow.steps.util.database.CheckIsUp',
