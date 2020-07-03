@@ -33,6 +33,7 @@ class BaseInstanceStep(object):
         self.instance = instance
         self._vip = None
         self._driver = None
+        self._credential = None
 
     @property
     def infra(self):
