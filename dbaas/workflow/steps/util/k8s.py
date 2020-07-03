@@ -4,12 +4,14 @@ import json
 
 import yaml
 from django.template.loader import render_to_string
+from kubernetes import client, config
+from dbaas_credentials.models import CredentialType
 
 from base import BaseInstanceStep
 from physical.models import Volume, Host, Offering
 from util import get_credentials_for
 from physical.configurations import configuration_factory
-from dbaas_credentials.models import CredentialType
+
 
 LOG = logging.getLogger(__name__)
 
@@ -27,6 +29,36 @@ class BaseK8SStep(BaseInstanceStep):
     @property
     def namespace(self):
         return 'default'
+
+    @property
+    def volume_path_root(self):
+        return '/data'
+
+    @property
+    def volume_path_db(self):
+        return '{}/db'.format(self.volume_path_root)
+
+    @property
+    def database_log_dir(self):
+        return '{}/logs'.format(self.volume_path_root)
+
+    @property
+    def database_log_file_name(self):
+        return 'mongodb.log'
+
+    @property
+    def database_log_full_path(self):
+        return '{}/{}'.format(
+            self.database_log_dir, self.database_log_file_name
+        )
+
+    @property
+    def database_config_name(self):
+        return 'mongodb.conf'
+
+    @property
+    def database_config_full_path(self):
+        return '{}/{}'.format(self.volume_path_root, self.database_config_name)
 
     @property
     def label_name(self):
@@ -59,10 +91,17 @@ class BaseK8SStep(BaseInstanceStep):
         return "CoreV1Api"
 
     @property
+    def credential(self):
+        if not self._credential:
+            self._credential = get_credentials_for(
+                environment=self.environment,
+                credential_type=CredentialType.KUBERNETES)
+        return self._credential
+
+    @property
     def client(self):
-        from kubernetes import client, config
         config.load_kube_config(
-            '/Users/rafael.goncalves/.kube/configRANCHER'
+            self.credential.get_parameter_by_name('kube_config_path')
         )
 
         return getattr(client, self.client_class_name)()
@@ -197,7 +236,14 @@ class NewPodK8S(BaseK8SStep):
             'POD_NAME': self.statefulset_name,
             'LABEL_NAME': self.label_name,
             'SERVICE_NAME': self.service_name,
-            'INIT_CONTAINER_CREATE_CONFIG_COMMANDS': ' cp {0}/mongodb.conf /data/configdb'.format(self.config_map_mount_path),
+            'INIT_CONTAINER_CREATE_CONFIG_COMMANDS': (
+                'cp {}/{} {}; chown mongodb:mongodb {}'.format(
+                    self.config_map_mount_path,
+                    self.database_config_name,
+                    self.volume_path_root,
+                    self.database_config_full_path
+                )
+            ),
             'CONFIG_MAP_MOUNT_PATH': self.config_map_mount_path,
             'IMAGE_NAME': 'mongo',
             'IMAGE_TAG': '4.2',
@@ -205,13 +251,17 @@ class NewPodK8S(BaseK8SStep):
             'VOLUME_NAME': 'data-volume',
             'VOLUME_PATH_ROOT': '/data',
             'VOLUME_PATH_DB': '/data/db',
-            'VOLUME_SUBPATH': 'db',
+            'VOLUME_PATH_CONFIGDB': '/data/configdb',
             'CPU': 100,
             'MEMORY': 200,
             'CPU_LIMIT': 200,
             'MEMORY_LIMIT': 400,
             'VOLUME_CLAIM_NAME': self.volume_claim_name,
-            'CONFIG_MAP_NAME': self.config_map_name
+            'CONFIG_MAP_NAME': self.config_map_name,
+            'CONFIG_FILE_NAME': self.database_config_name,
+            'DATABASE_LOG_DIR': self.database_log_dir,
+            'DATABASE_CONFIG_FULL_PATH': self.database_config_full_path,
+            'DATABASE_LOG_FULL_PATH': self.database_log_full_path
         }
 
     def do(self):
@@ -231,7 +281,7 @@ class NewPodK8S(BaseK8SStep):
 
 class WaitingPodBeReady(BaseK8SStep):
     retries = 30
-    interval = 10
+    interval = 1
 
     def __unicode__(self):
         return "Waiting POD be ready..."
@@ -242,9 +292,7 @@ class WaitingPodBeReady(BaseK8SStep):
                 self.pod_name, self.namespace
             )
             for status_data in pod_data.status.conditions:
-                if status_data.type != 'Ready':
-                    continue
-                else:
+                if status_data.type == 'Ready':
                     if status_data.status == 'True':
                         return True
             if attempt == self.retries - 1:
@@ -317,11 +365,8 @@ class NewConfigMapK8S(BaseK8SStep):
         return {
             'CONFIG_MAP_NAME': self.config_map_name,
             'CONFIG_MAP_LABEL': self.label_name,
-            'CONFIG_FILE_NAME': 'mongodb.conf',
-            'CONFIG_CONTENT': render_to_string(
-                'physical/scripts/database_config_files/mongodb_40.conf',
-                self.script_variables
-            )
+            'CONFIG_FILE_NAME': self.database_config_name,
+            'CONFIG_CONTENT': 'config_content'
         }
 
     @property
@@ -330,7 +375,7 @@ class NewConfigMapK8S(BaseK8SStep):
             'DATABASENAME': self.database.name,
             'DBPASSWORD': self.infra.password,
             'HOST': self.host.hostname.split('.')[0],
-            'HOSTADDRESS': self.instance.address,
+            # 'HOSTADDRESS': self.instance.address,
             'ENGINE': self.plan.engine.engine_type.name,
             'MOVE_DATA': (
                 bool(self.upgrade) or
@@ -344,6 +389,9 @@ class NewConfigMapK8S(BaseK8SStep):
             'HAS_PERSISTENCE': self.infra.plan.has_persistence,
             'IS_READ_ONLY': self.instance.read_only,
             'SSL_CONFIGURED': self.infra.ssl_configured,
+            'DATABASE_LOG_FULL_PATH': self.database_log_full_path,
+            'VOLUME_PATH_ROOT': self.volume_path_root,
+            'VOLUME_PATH_DB': self.volume_path_db
         }
 
         if self.infra.ssl_configured:
@@ -394,8 +442,13 @@ class NewConfigMapK8S(BaseK8SStep):
         if not self.instance.is_database:
             return
 
+        yaml_file = self.yaml_file
+        yaml_file['data']['mongodb.conf'] = render_to_string(
+            'physical/scripts/database_config_files/mongodb_40.conf',
+            self.script_variables
+        )
         self.client.create_namespaced_config_map(
-            self.namespace, self.yaml_file
+            self.namespace, yaml_file
         )
 
     def undo(self):
