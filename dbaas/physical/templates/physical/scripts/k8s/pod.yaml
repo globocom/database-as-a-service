@@ -13,25 +13,33 @@ spec:
        name: {{ LABEL_NAME }}
     spec:
       initContainers:
-      - name: create-config
-        image: {{ IMAGE_NAME }}:{{ IMAGE_TAG }}
-        command:
-        - bash
-        - "-c"
-        - |
-          set -ex;
-          {{ INIT_CONTAINER_CREATE_CONFIG_COMMANDS }}
-        volumeMounts:
-          - name: {{ VOLUME_NAME }}
-            mountPath: {{ VOLUME_PATH_ROOT }}
-          - name: {{ VOLUME_NAME }}
-            mountPath: {{ VOLUME_PATH_DB }}
-            subPath: {{ VOLUME_SUBPATH|default:"db" }}
-          - name: mongodb-config-map
-            mountPath: {{ CONFIG_MAP_MOUNT_PATH }}
+        - name: create-config
+          image: {{ IMAGE_NAME }}:{{ IMAGE_TAG }}
+          command:
+            - bash
+            - "-c"
+            - |
+              set -ex;
+              mkdir -p {{ DATABASE_LOG_DIR }};
+              chown -R mongodb:mongodb {{ DATABASE_LOG_DIR }};
+              {{ INIT_CONTAINER_CREATE_CONFIG_COMMANDS }}
+          volumeMounts:
+            - name: {{ VOLUME_NAME }}
+              mountPath: {{ VOLUME_PATH_ROOT }}
+            - name: {{ VOLUME_NAME }}
+              mountPath: {{ VOLUME_PATH_DB }}
+              subPath: {{ VOLUME_SUBPATH_DB|default:"db" }}
+            - name: {{ VOLUME_NAME }}
+              mountPath: {{ VOLUME_PATH_CONFIGDB }}
+              subPath: {{ VOLUME_SUBPATH_CONFIGDB|default:"configdb" }}
+            - name: mongodb-config-map
+              mountPath: {{ CONFIG_MAP_MOUNT_PATH }}
       containers:
         - name: {{ CONTAINER_NAME|default:"dbaas-container" }}
           image: {{ IMAGE_NAME }}:{{ IMAGE_TAG }}
+          args:
+            - "--config"
+            - "{{ DATABASE_CONFIG_FULL_PATH }}"
           ports:
             - containerPort: {{ CONTAINER_PORT }}
           env:
@@ -100,7 +108,10 @@ spec:
               mountPath: {{ VOLUME_PATH_ROOT }}
             - name: {{ VOLUME_NAME }}
               mountPath: {{ VOLUME_PATH_DB }}
-              subPath: {{ VOLUME_SUBPATH|default:"db" }}
+              subPath: {{ VOLUME_SUBPATH_DB|default:"db" }}
+            - name: {{ VOLUME_NAME }}
+              mountPath: {{ VOLUME_PATH_CONFIGDB }}
+              subPath: {{ VOLUME_SUBPATH_CONFIGDB|default:"configdb" }}
             - name: mongodb-config-map
               mountPath: {{ CONFIG_MAP_MOUNT_PATH }}
           resources:
@@ -174,6 +185,12 @@ spec:
                     rm /data/create_user_script.sh
 
                   fi
+        - name: database-log
+          image: busybox
+          args: [/bin/sh, -c, 'tail -n+1 -f {{ DATABASE_LOG_FULL_PATH }}']
+          volumeMounts:
+            - name: {{ VOLUME_NAME }}
+              mountPath: {{ VOLUME_PATH_ROOT }}
       volumes:
         - name: {{ VOLUME_NAME }}
           persistentVolumeClaim:
