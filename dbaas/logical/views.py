@@ -1760,6 +1760,11 @@ def database_backup(request, context, database):
         database.infra.backup_hour
     )
 
+    context['cant_clone_db'] = False
+    clone_size = Configuration.get_by_name_as_int('clone_size_limit')
+    if database.databaseinfra.disk_offering.size_gb() > clone_size:
+        context['cant_clone_db'] = True
+
     return render_to_response(
         "logical/database/details/backup_tab.html",
         context, RequestContext(request)

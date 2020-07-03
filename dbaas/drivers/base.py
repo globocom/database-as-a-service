@@ -386,7 +386,7 @@ class BaseDriver(object):
         return self.get_master_instance()
 
     def build_new_infra_auth(self):
-        raise NotImplemented
+        raise NotImplementedError()
 
     def set_user_require_ssl(self, credential):
         raise NotImplementedError()
