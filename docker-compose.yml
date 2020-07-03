@@ -39,6 +39,12 @@ services:
         image: mongo:3.4
         container_name: mongo34
 
+    mongodb42:
+      image: mongo:4.2
+      container_name: mongo42
+      ports:
+        - "27018:27017"
+
     redisdb:
         image: redis:3.2
         container_name: redis32
