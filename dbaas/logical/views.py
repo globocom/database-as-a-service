@@ -3,7 +3,6 @@ from __future__ import absolute_import, unicode_literals
 import datetime
 import json
 from collections import OrderedDict
-from operator import itemgetter
 import logging
 from django.contrib import messages
 from django.core.exceptions import ValidationError, PermissionDenied
@@ -20,13 +19,9 @@ from dbaas_credentials.models import CredentialType
 from dbaas import constants
 from account.models import Team
 from drivers.errors import CredentialAlreadyExists
-from physical.models import (
-    Host, DiskOffering, Environment, Plan, Offering,
-    EnginePatch
-)
+from physical.models import (Host, DiskOffering, Environment, Plan, Offering)
 from util import get_credentials_for
 from notification.tasks import TaskRegister, execute_scheduled_maintenance
-from notification.models import TaskHistory
 from system.models import Configuration
 from logical.errors import DisabledDatabase
 from logical.forms.database import DatabaseDetailsForm, DatabaseForm
@@ -36,7 +31,7 @@ from logical.validators import (check_is_database_enabled,
                                 ParameterValidator)
 from workflow.steps.util.host_provider import Provider
 from maintenance.models import (
-    DatabaseUpgradePatch, DatabaseUpgrade, TaskSchedule, DatabaseMigrateEngine,
+    DatabaseUpgradePatch, TaskSchedule, DatabaseMigrateEngine,
     RecreateSlave, AddInstancesToDatabase, RemoveInstanceDatabase
 )
 from . import services
@@ -155,9 +150,8 @@ def check_permission(request, id, tab):
             messages.add_message(
                 request, messages.ERROR,
                 ('This database belong to {} team, you are not member of '
-                 "this team or has not access to database's environment").format(
-                     database.team
-                )
+                 "this team or has not access to database's environment"
+                 ).format(database.team)
             )
             can_access = False
         elif database.is_in_quarantine:
@@ -665,7 +659,8 @@ def database_metrics(request, context, database):
         datasource = credential.get_parameter_by_name('environment')
 
     engine_type = (
-        database.engine_type if not database.engine_type == "mysql_percona" else "mysql"
+        database.engine_type if not database.engine_type == "mysql_percona"
+        else "mysql"
     )
 
     grafana_url_zabbix = '{}/dashboard/{}?{}={}&{}={}&{}={}&{}={}'.format(
@@ -687,7 +682,9 @@ def database_metrics(request, context, database):
 
     print "grafana_url_zabbix:{}", grafana_url_zabbix
 
-    dashboard = credential.get_parameter_by_name('sofia_dbaas_database_dashboard')
+    dashboard = credential.get_parameter_by_name(
+                'sofia_dbaas_database_dashboard'
+                )
 
     dashboard = dashboard.format(engine_type)
     url = "{}/{}?var-host_name={}&var-datasource={}".format(
@@ -990,7 +987,7 @@ class DatabaseMaintenanceView(TemplateView):
         payload = self.request.POST
 
         for pos, scheduled_id in enumerate(payload.getlist('scheduled_id')):
-            task = self.get_object(schedule_id)
+            task = self.get_object(scheduled_id)
             task.scheduled_for = TaskSchedule.next_maintenance_window(
                 datetime.date.today(),
                 int(payload.get('maintenance_window')),
@@ -1183,7 +1180,7 @@ class DatabaseUpgradeView(TemplateView):
         elif not last_migration.is_status_error:
             error = ("Cannot do retry, last engine migration. "
                      "Status is '{}'!").format(
-                        last_upgrade.get_status_display())
+                        last_migration.get_status_display())
         else:
             since_step = last_migration.current_step
 
@@ -1223,7 +1220,6 @@ class DatabaseUpgradeView(TemplateView):
             if self.database.infra.check_rfs_size(required_disk_size_gb):
                 patches_required_disk_size.append(patch)
         return patches_required_disk_size
-
 
     def get_context_data(self, **kwargs):
         # Upgrade region
@@ -1487,7 +1483,8 @@ class DatabaseHostsView(TemplateView):
                 full_description += ' - ' + '/'.join(attributes)
 
             host_data = {
-                'id': host.id, 'status': status, 'description': full_description,
+                'id': host.id, 'status': status,
+                'description': full_description,
                 'switch_database': switch_database, 'padding': padding,
                 'is_database': host.is_database
             }
@@ -1541,7 +1538,7 @@ def database_delete_host(request, database_id, host_id):
         exceptions.DatabaseNotAvailable, exceptions.ManagerInvalidStatus,
         exceptions.ManagerNotFound, exceptions.HostIsNotReadOnly
     ) as error:
-        messages.add_message(self.request, messages.ERROR, str(error))
+        messages.add_message(request, messages.ERROR, str(error))
 
     return HttpResponseRedirect(
         reverse('admin:logical_database_hosts', kwargs={'id': database.id})
@@ -1575,6 +1572,7 @@ class RemoveInstanceDatabaseRetryView(View):
         return super(RemoveInstanceDatabaseRetryView, self).dispatch(
             request, *args, **kwargs
         )
+
 
 def _clone_database(request, database):
     can_be_cloned, error = database.can_be_cloned()
@@ -1760,10 +1758,8 @@ def database_backup(request, context, database):
         database.infra.backup_hour
     )
 
-    context['cant_clone_db'] = False
-    clone_size = Configuration.get_by_name_as_int('clone_size_limit')
-    if database.databaseinfra.disk_offering.size_gb() > clone_size:
-        context['cant_clone_db'] = True
+    clone_size = Configuration.get_by_name_as_int('clone_size_limit', 10)
+    context['cant_clone_db'] = database.databaseinfra.disk_offering.size_gb() > clone_size
 
     return render_to_response(
         "logical/database/details/backup_tab.html",
