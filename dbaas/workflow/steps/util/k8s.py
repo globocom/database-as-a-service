@@ -284,7 +284,7 @@ class NewPodK8S(BaseK8SStep):
 
 class WaitingPodBeReady(BaseK8SStep):
     retries = 30
-    interval = 1
+    interval = 10
 
     def __unicode__(self):
         return "Waiting POD be ready..."
