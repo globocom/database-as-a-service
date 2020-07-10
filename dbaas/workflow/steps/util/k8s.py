@@ -104,7 +104,10 @@ class BaseK8SStep(BaseInstanceStep):
             self.credential.get_parameter_by_name('kube_config_path')
         )
 
-        return getattr(client, self.client_class_name)()
+        conf = client.configuration.Configuration()
+        conf.verify_ssl = False
+
+        return getattr(client, self.client_class_name)(client.ApiClient(conf))
 
     @property
     def template_path(self):
