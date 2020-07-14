@@ -181,7 +181,10 @@ class ServiceAppBind(APIView):
 
         else:
             try:
-                credential = database.credentials.all()[0]
+                credential = (
+                    database.credentials.filter(privileges='Owner')
+                    or database.credentials.all()
+                )[0]
             except IndexError as e:
                 msg = ("Database {} in env {} does not have "
                        "credentials.").format(
