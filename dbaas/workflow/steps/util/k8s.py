@@ -11,6 +11,7 @@ from base import BaseInstanceStep
 from physical.models import Volume, Host, Offering
 from util import get_credentials_for
 from physical.configurations import configuration_factory
+from workflow.steps.util.volume_provider import VolumeProviderBase
 
 
 LOG = logging.getLogger(__name__)
@@ -137,8 +138,8 @@ class NewVolumeK8S(BaseK8SStep):
         return "Creating Volume..."
 
     @property
-    def active_volume(self):
-        return False
+    def provider(self):
+        return VolumeProviderBase(self.instance)
 
     @property
     def has_snapshot_on_step_manager(self):
@@ -151,30 +152,16 @@ class NewVolumeK8S(BaseK8SStep):
         )
         volume.delete()
 
-    @property
-    def template_path(self):
-        return 'physical/scripts/k8s/persistence_volume_claim.yaml'
-
-    @property
-    def context(self):
-        return {
-            'STORAGE_NAME': self.volume_claim_name,
-            'STORAGE_SIZE': 2
-        }
-
     def do(self):
         if not self.instance.is_database:
             return
 
-        self.client.create_namespaced_persistent_volume_claim(
-            self.namespace, self.yaml_file
+        self.provider.create_volume(
+            self.infra.name,
+            self.disk_offering.size_kb,
+            self.host.address,
+            volume_name=self.volume_claim_name,
         )
-        volume = Volume()
-        volume.host = self.host
-        volume.identifier = self.context['STORAGE_NAME']
-        volume.total_size_kb = self.infra.disk_offering.size_kb
-        volume.is_active = self.active_volume
-        volume.save()
 
     def undo(self):
         if not self.instance.is_database or not self.host:
