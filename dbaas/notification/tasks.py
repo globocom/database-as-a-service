@@ -6,8 +6,6 @@ import traceback
 from celery.utils.log import get_task_logger
 from django.db.models import Sum, Count, Q
 from simple_audit.models import AuditRequest
-from django.db.models.signals import post_save
-
 
 from account.models import User
 from dbaas.celery import app
@@ -418,6 +416,42 @@ def update_database_status(self):
 
 
 @app.task(bind=True)
+@only_one(key='check_database_status')
+def check_databases_status(self):
+    LOG.info("Checking all databases")
+    worker_name = get_worker_name()
+    task_history = TaskHistory.register(
+        request=self.request, user=None, worker_name=worker_name
+    )
+    task_history.relevance = TaskHistory.RELEVANCE_WARNING
+    status = [Database.ALIVE, Database.INITIALIZING]
+    databases = Database.objects.exclude(status__in=status).order_by(
+        'status', 'name'
+    )
+    try:
+        if len(databases) == 0:
+            task_history.update_status_for(
+                TaskHistory.STATUS_SUCCESS, details="All databases are alive."
+            )
+            return
+        database_status = -1
+        task_history.update_status_for(TaskHistory.STATUS_ERROR, details='')
+        for database in databases:
+            LOG.info(database)
+            if database.status != database_status:
+                database_status = database.status
+                task_history.update_details(
+                    'Databases with status {}:\n'.format(
+                        database.get_status_display()
+                    )
+                )
+            task_history.update_details("{}\n".format(database), True)
+    except Exception as e:
+        task_history.update_status_for(TaskHistory.STATUS_ERROR, details=e)
+    return
+
+
+@app.task(bind=True)
 @only_one(key="get_databases_used_size")
 def update_database_used_size_old(self):
     LOG.info("Retrieving all databases")
@@ -682,7 +716,6 @@ def change_mongodb_log_rotate(self):
         mongodb_restarted_hosts = []
         for manager in restart_database_objs:
             mongodb_restarted_hosts.extend(manager.database.infra.hosts)
-
 
         script_mongo_log_rotate.execute(
             task, list(set(mongodb_restarted_hosts))
