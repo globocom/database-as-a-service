@@ -124,6 +124,7 @@ class TaskAPI(viewsets.ReadOnlyModelViewSet):
         'maintenance.tasks.recreate_slave',
         'notification.tasks.migrate_engine',
         'maintenance.tasks.restart_database',
+        'notification.tasks.change_database_persistence',
     ]
 
     model = TaskHistory
