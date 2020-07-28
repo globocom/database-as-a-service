@@ -67,6 +67,9 @@
         {% if database.is_host_migrate_available and is_dba %}
           <li role="presentation" {% if current_tab == 'migrate' %} class="active" {% endif %}><a href="{% url 'admin:logical_database_migrate' database.id %}">Migrate</a></li>
         {% endif %}
+        {% if is_dba and database.has_persistense_equivalent_plan %}
+          <li role="presentation" {% if current_tab == 'persistence' %} class="active" {% endif %}><a href="{% url 'admin:logical_database_persistence' database.id %}">Persistence</a></li>
+        {% endif %}
         <li role="presentation" {% if current_tab == 'destroy' %} class="active" {% endif %}><a href="{% url 'admin:logical_database_destroy' database.id %}">Destroy</a></li>
       </ul>
     {% endblock %}
