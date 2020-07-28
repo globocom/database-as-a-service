@@ -30,9 +30,11 @@ class BaseRedis(BaseTopology):
 
     def get_database_change_persistence_steps(self):
         return [{
-            'Change Database Persistence': (
+            'Disable monitoring': (
                 'workflow.steps.util.zabbix.DisableAlarms',
                 'workflow.steps.util.db_monitor.DisableMonitoring',
+            )}, {
+            'Change Database Persistence': (
                 'workflow.steps.util.vm.ChangeMaster',
                 'workflow.steps.util.database.CheckIfSwitchMaster',
                 'workflow.steps.util.database.Stop',
@@ -41,6 +43,8 @@ class BaseRedis(BaseTopology):
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
+            )}, {
+            'Enabling monitoring': (
                 'workflow.steps.util.db_monitor.EnableMonitoring',
                 'workflow.steps.util.zabbix.EnableAlarms',
             )
