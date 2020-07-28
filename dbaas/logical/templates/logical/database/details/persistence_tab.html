@@ -1,0 +1,72 @@
+{% extends "logical/database/details/base.html" %}
+
+
+{% block extrastyle %}
+  {{ block.super }}
+  <style type="text/css">
+    .action_button {
+        margin-left: 20px
+    }
+
+    .bold_red {
+      color: red;
+    }
+  </style>
+{% endblock %}
+
+
+{% block tab %}
+
+  <fieldset class="module aligned ">
+    <div class="control-group">
+      <div class="control-label"></div>
+      <div class="controls">
+
+        {% if last_change_persistence and last_change_persistence.is_status_error %}
+
+          <button class="btn btn-warning" data-toggle="modal" data-target="#retry_change_persistence_modal">Retry {{database.persistence_change_text}}</button>
+
+        {% else %}
+
+          <button class="btn btn-primary" data-toggle="modal" data-target="#persistence_modal">{{database.persistence_change_text}}</button>
+
+        {% endif %}
+
+
+      </div>
+    </div>
+  </fieldset>
+
+  {% include "admin/confirmation_modal_input.html" with modal_id="persistence_modal" title="Change persistence" body_text="logical/modal/persistence_database.html" input_name="database_name" submit_button_value="Apply" submit_button_name="database_change_persistence" submit_button_id="id_persistence_btn"   %}
+
+
+  {% include "admin/confirmation_modal.html" with modal_id="retry_change_persistence_modal" confirmation_message="Do you want to try changing the database persistence again?" box_title="Change persistence" button_type="submit" button_value="Retry Change Persistence" button_name="retry_change_persistence" %}
+
+
+{% endblock %}
+
+{% block database_button_save %}
+{% endblock %}
+
+{% block js_footer %}
+  {{ block.super }}
+
+  <script>
+    jQuery(document).ready(function($) {
+      $("#id_database_name").keyup(function() {
+        btn = document.getElementById('id_persistence_btn')
+        btn.disabled = 'yes' != $(this).val();
+        if (btn.disabled){
+          $(btn).removeClass('btn-primary');
+        } else {
+          $(btn).addClass('btn-primary');
+        }
+      });
+      $("#id_database_name").keyup()
+    })
+  </script>
+
+{% endblock %}
+
+
+

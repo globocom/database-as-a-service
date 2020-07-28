@@ -1,0 +1,10 @@
+<label for="id_database_name">
+{% if database.infra.plan.is_ha %}
+    Change persistence process will switch hosts, and <b class="bold_red">it may cause connections errors</b> during the process.
+{% else %}
+    Change persistence process <b class="bold_red">will stop the database</b> and, consequently, it will be <b class="bold_red">unavailable</b> until the the end of the process.
+{% endif %}
+
+<br><br>
+Please type <u><b>yes</b></u> to confirm:
+</label>
