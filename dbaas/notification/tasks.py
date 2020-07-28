@@ -1509,15 +1509,13 @@ def update_organization_name_monitoring(self, task, database,
         return True
 
 @app.task(bind=True)
-def change_database_persistence(self, database, user, task, since_step=0):
+def change_database_persistence(self, database, user, task,
+        source_plan, target_plan, since_step=0):
 
     worker_name = get_worker_name()
     task = TaskHistory.register(self.request, user, task, worker_name)
 
     infra = database.infra
-    source_plan = infra.plan
-    target_plan = infra.plan.persistense_equivalent_plan
-
     class_path = infra.plan.replication_topology.class_path
     steps = util_providers.get_database_change_persistence_setting(class_path)
 
@@ -2318,11 +2316,17 @@ class TaskRegister(object):
     @classmethod
     def database_change_persistence(cls, database, user, since_step=None):
 
+        infra = database.infra
+        source_plan = infra.plan
+        target_plan = infra.plan.persistense_equivalent_plan
+
         task_params = {
             'task_name': 'change_database_persistence',
             'arguments': 'Changing database persistence {}'.format(database),
             'database': database,
             'user': user,
+            'source_plan': source_plan,
+            'target_plan': target_plan,
             'relevance': TaskHistory.RELEVANCE_CRITICAL
         }
 
@@ -2336,7 +2340,9 @@ class TaskRegister(object):
         delay_params = {
             'database': database,
             'task': task,
-            'user': user
+            'user': user,
+            'source_plan': source_plan,
+            'target_plan': target_plan,
         }
 
         delay_params.update(**{'since_step': since_step} if since_step else {})
