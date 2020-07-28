@@ -28,6 +28,23 @@ class BaseRedis(BaseTopology):
             'workflow.steps.util.database_upgrade_patch.RedisCHGBinStep',
         )
 
+    def get_database_change_persistence_steps(self):
+        return [{
+            'Change Database Persistence': (
+                'workflow.steps.util.zabbix.DisableAlarms',
+                'workflow.steps.util.db_monitor.DisableMonitoring',
+                'workflow.steps.util.vm.ChangeMaster',
+                'workflow.steps.util.database.CheckIfSwitchMaster',
+                'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.CheckIsDown',
+                'workflow.steps.util.plan.ConfigureForChangePersistence',
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.metric_collector.RestartTelegraf',
+                'workflow.steps.util.db_monitor.EnableMonitoring',
+                'workflow.steps.util.zabbix.EnableAlarms',
+            )
+        }]
 
 class RedisSingle(BaseRedis):
 
@@ -518,7 +535,6 @@ class RedisSentinel(BaseRedis):
         }, {
             'Cleaning up': self.get_host_migrate_steps_cleaning_up()
         }]
-
 
 class RedisNoPersistence(RedisSingle):
     pass
