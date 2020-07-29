@@ -41,7 +41,7 @@ class PlanStep(BaseInstanceStep):
             # TODO: Remove that when VP is ready
             'DISK_SIZE_IN_GB': self.disk_offering.size_gb()if self.disk_offering else 8,
             'ENVIRONMENT': self.environment,
-            'HAS_PERSISTENCE': self.infra.plan.has_persistence,
+            'HAS_PERSISTENCE': self.plan.has_persistence,
             'IS_READ_ONLY': self.instance.read_only,
             'SSL_CONFIGURED': self.infra.ssl_configured,
         }
@@ -382,3 +382,27 @@ class ResizeConfigure(ConfigureOnlyDBConfigFile):
     def undo(self):
         self._pack = self.resize.source_offer
         super(ResizeConfigure, self).undo()
+
+class ConfigureForChangePersistence(ConfigureOnlyDBConfigFile):
+
+    @property
+    def change_persistence(self):
+        persistence = self.database.change_persistence.last()
+        if persistence and persistence.is_running:
+            return persistence
+        raise EnvironmentError(
+            "There is not any 'Change Persistence Maintenance' running."
+        )
+
+    @property
+    def plan(self):
+        return self.change_persistence.target_plan
+
+    def get_configuration(self):
+        infra = self.infra
+        infra.plan = self.plan
+        configuration = configuration_factory(
+            infra, self.offering.memory_size_mb
+        )
+        return configuration
+

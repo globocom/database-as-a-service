@@ -560,6 +560,16 @@ class Plan(BaseModel):
         related_name='backwards_engine_plan'
     )
 
+    persistense_equivalent_plan = models.ForeignKey(
+        "Plan", null=True, blank=True,
+        verbose_name=_("Persisted/NoPersisted equivalent plan"),
+        on_delete=models.SET_NULL,
+        related_name='backwards_persisted_plan',
+        help_text=_(("For persisted plans, the equivalent not persisted plan. "
+                     "For not persisted plans, the equivalent persisted plan"
+                   ))
+    )
+
     @property
     def engine_type(self):
         return self.engine.engine_type

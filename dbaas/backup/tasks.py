@@ -11,8 +11,8 @@ from system.models import Configuration
 from util.decorators import only_one
 from workflow.steps.util.volume_provider import VolumeProviderBase
 from models import Snapshot, BackupGroup
-from util import exec_remote_command_host, get_worker_name, get_credentials_for, get_now
-
+from util import (exec_remote_command_host, get_worker_name,
+                  get_credentials_for)
 
 LOG = getLogger(__name__)
 
@@ -88,7 +88,8 @@ def unlock_instance(driver, instance, client):
 
 def make_instance_snapshot_backup(instance, error, group,
                                   provider_class=VolumeProviderBase,
-                                  target_volume=None):
+                                  target_volume=None,
+                                  current_hour=None):
     LOG.info("Make instance backup for {}".format(instance))
     provider = provider_class(instance)
     infra = instance.databaseinfra
@@ -112,20 +113,24 @@ def make_instance_snapshot_backup(instance, error, group,
             mysql_binlog_save(client, instance)
 
         current_time = datetime.now()
-        if (
-            snapshot_final_status == Snapshot.WARNING and
-            Snapshot.objects.filter(
-                status=Snapshot.WARNING,
-                instance=instance,
-                end_at__year=current_time.year,
-                end_at__month=current_time.month,
-                end_at__day=current_time.day
+        has_snapshot = Snapshot.objects.filter(
+            status=Snapshot.WARNING,
+            instance=instance,
+            end_at__year=current_time.year,
+            end_at__month=current_time.month,
+            end_at__day=current_time.day
+        )
+        backup_hour_list = Configuration.get_by_name_as_list(
+            'make_database_backup_hour'
             )
-        ):
-            raise Exception("Backup with WARNING already created today.")
-
-        response = provider.take_snapshot()
-        snapshot.done(response)
+        if (snapshot_final_status == Snapshot.WARNING and has_snapshot):
+            if str(current_hour) in backup_hour_list:
+                raise Exception(
+                    "Backup with WARNING already created today."
+                    )
+        else:
+            response = provider.take_snapshot()
+            snapshot.done(response)
     except Exception as e:
         errormsg = "Error creating snapshot: {}".format(e)
         error['errormsg'] = errormsg
@@ -227,7 +232,7 @@ def make_databases_backup(self):
     if not env_names_order:
         env_names_order = [env.name for env in environments]
 
-    current_time = get_now()
+    current_time = datetime.now()
     current_hour = current_time.hour
 
     # Get all infras with a backup today until the current hour
@@ -307,20 +312,21 @@ def make_databases_backup(self):
                 task_history.update_details(persist=True, details=start_msg)
                 try:
                     snapshot = make_instance_snapshot_backup(
-                        instance=instance, error=error, group=group
+                        instance=instance, error=error, group=group,
+                        current_hour=current_hour
                     )
                     if snapshot and snapshot.was_successful:
                         msg = "Backup for %s was successful" % (str(instance))
                         LOG.info(msg)
-                    elif snapshot and snapshot.has_warning:
-                        status = TaskHistory.STATUS_WARNING
-                        msg = "Backup for %s has warning" % (str(instance))
-                        LOG.info(msg)
-                    else:
+                    elif snapshot and snapshot.was_error:
                         status = TaskHistory.STATUS_ERROR
                         msg = "Backup for %s was unsuccessful. Error: %s" % (
                             str(instance), error['errormsg'])
                         LOG.error(msg)
+                    else:
+                        status = TaskHistory.STATUS_WARNING
+                        msg = "Backup for %s has warning" % (str(instance))
+                        LOG.info(msg)
                     LOG.info(msg)
                 except Exception as e:
                     status = TaskHistory.STATUS_ERROR
