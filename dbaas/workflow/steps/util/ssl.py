@@ -522,6 +522,9 @@ class CreateCertificateMongoDB(CreateCertificate):
         self.exec_script(script)
 
     def do(self):
+        if not self.is_valid:
+            return
+
         super(CreateCertificateMongoDB, self).do()
 
         self.save_mongodb_certificate()
