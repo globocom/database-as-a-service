@@ -16,12 +16,14 @@
 
 
 {% block tab %}
+  <div>
   {% if database.has_persistence %}
-    Currently, the data in this database is persisted on disk. To improve performance, click on the button below to change persistence to memory only. Attention, in case of database restarts, the data will be lost.
+    Currently, the data in this database is <b>persisted on disk</b>. Click on the button below to <b>change persistence to memory only</b>. Be aware that when the data is persisted only in memory, it will be lost if the database restarts.
   {% else %}
-    Currently, the data in this database are kept only in memory. Click on the button below to persist the data on disk, and no data will be lost even if the database restarts.
+    Currently, the data in this database is kept <b>only in memory</b>. Click on the button below to <b>persist the data on disk</b>, and no data will be lost even if the database restarts.
   {% endif %}
   <br><br>
+</div>
 
 
 
