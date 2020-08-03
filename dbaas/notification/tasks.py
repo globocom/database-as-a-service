@@ -423,7 +423,7 @@ def check_databases_status(self):
     task_history = TaskHistory.register(
         request=self.request, user=None, worker_name=worker_name
     )
-    task_history.relevance = TaskHistory.RELEVANCE_WARNING
+    task_history.relevance = TaskHistory.RELEVANCE_CRITICAL
     status = [Database.ALIVE, Database.INITIALIZING]
     databases = Database.objects.exclude(status__in=status).order_by(
         'status', 'name'
