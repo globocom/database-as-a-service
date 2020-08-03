@@ -1541,6 +1541,43 @@ def update_organization_name_monitoring(self, task, database,
         task.set_status_success('Monitoring updated with success')
         return True
 
+@app.task(bind=True)
+def change_database_persistence(self, database, user, task,
+        source_plan, target_plan, since_step=0):
+
+    worker_name = get_worker_name()
+    task = TaskHistory.register(self.request, user, task, worker_name)
+
+    infra = database.infra
+    class_path = infra.plan.replication_topology.class_path
+    steps = util_providers.get_database_change_persistence_setting(class_path)
+
+    db_change_persistence = maintenance_models.DatabaseChangePersistence()
+    db_change_persistence.database = database
+    db_change_persistence.source_plan = source_plan
+    db_change_persistence.target_plan = target_plan
+    db_change_persistence.task = task
+    db_change_persistence.save()
+
+    instances = list(infra.get_driver().get_database_instances())
+
+    success = steps_for_instances(
+        steps, instances, task,
+        db_change_persistence.update_step, since_step
+    )
+
+    if success:
+        infra.plan = target_plan
+        infra.save()
+        db_change_persistence.set_success()
+        task.update_status_for(TaskHistory.STATUS_SUCCESS, 'Done')
+    else:
+        db_change_persistence.set_error()
+        task.update_status_for(
+            TaskHistory.STATUS_ERROR,
+            ('Could not change database persistence.\n'
+             'Database Change Persistence doesn\'t have rollback')
+        )
 
 class TaskRegister(object):
     TASK_CLASS = TaskHistory
@@ -2308,4 +2345,40 @@ class TaskRegister(object):
             organization_name=organization_name
         )
 
+
+    @classmethod
+    def database_change_persistence(cls, database, user, since_step=None):
+
+        infra = database.infra
+        source_plan = infra.plan
+        target_plan = infra.plan.persistense_equivalent_plan
+
+        task_params = {
+            'task_name': 'change_database_persistence',
+            'arguments': 'Changing database persistence {}'.format(database),
+            'database': database,
+            'user': user,
+            'source_plan': source_plan,
+            'target_plan': target_plan,
+            'relevance': TaskHistory.RELEVANCE_CRITICAL
+        }
+
+        if since_step:
+            task_params['task_name'] = 'change_database_persistence_retry'
+            task_params['arguments'] = ('Retrying changing database '
+                                        'persistence {}').format(database)
+
+        task = cls.create_task(task_params)
+
+        delay_params = {
+            'database': database,
+            'task': task,
+            'user': user,
+            'source_plan': source_plan,
+            'target_plan': target_plan,
+        }
+
+        delay_params.update(**{'since_step': since_step} if since_step else {})
+
+        change_database_persistence.delay(**delay_params)
     # ============  END TASKS   ============

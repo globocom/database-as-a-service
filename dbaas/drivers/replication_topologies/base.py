@@ -281,6 +281,9 @@ class BaseTopology(object):
     def get_resize_oplog_steps_and_retry_steps_back(self):
         return self.get_resize_oplog_steps(), 0
 
+    def get_database_change_persistence_steps(self):
+        return ()
+
     def get_switch_write_instance_steps_description(self):
         return "Switch write database instance"
 

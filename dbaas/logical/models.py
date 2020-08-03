@@ -200,6 +200,18 @@ class Database(BaseModel):
         return self.plan.has_persistence
 
     @property
+    def has_persistense_equivalent_plan(self):
+        if self.plan.persistense_equivalent_plan:
+            return True
+        return False
+
+    @property
+    def persistence_change_text(self):
+        if self.has_persistence:
+            return 'Change to Memory Only'
+        return 'Change to Persisted'
+
+    @property
     def infra(self):
         return self.databaseinfra
 
@@ -627,6 +639,14 @@ class Database(BaseModel):
             self.id
         )
 
+    def get_change_persistence_url(self):
+        return "/admin/logical/database/{}/change_persistence/".format(self.id)
+
+    def get_change_persistence_retry_url(self):
+        return "/admin/logical/database/{}/change_persistence_retry/".format(
+            self.id
+        )
+
     def is_mongodb_24(self):
         engine = self.engine
         if engine.name == 'mongodb' and engine.version.startswith('2.4'):
@@ -916,7 +936,7 @@ class Database(BaseModel):
             error = ("Database in quarantine and cannot have the parameters "
                      "changed.")
         elif self.is_dead:
-            error = "Database is dead and cannot be resized."
+            error = "Database is dead and cannot have the parameters changed."
         elif self.is_being_used_elsewhere():
             error = "Database cannot have the parameters changed because" \
                     " it is in use by another task."
@@ -934,6 +954,41 @@ class Database(BaseModel):
         elif self.is_being_used_elsewhere():
             error = ("Database cannot migrate host it is in use "
                      "by another task.")
+
+        if error:
+            return False, error
+        return True, None
+
+    def can_do_change_persistence_retry(self):
+        error = None
+        if self.is_in_quarantine:
+            error = ("Database in quarantine and cannot have the persistence "
+                     "changed.")
+        elif self.is_being_used_elsewhere([('notification.tasks'
+                                            '.change_database_persistence')]):
+            error = "Database cannot have the persistence changed because" \
+                    " it is in use by another task."
+        elif not self.has_persistense_equivalent_plan:
+            error = "Database cannot have the persistence changed because" \
+                    " it has not any persistense equivalent plan "
+
+        if error:
+            return False, error
+        return True, None
+
+    def can_do_change_persistence(self):
+        error = None
+        if self.is_in_quarantine:
+            error = ("Database in quarantine and cannot have the persistence "
+                     "changed.")
+        elif self.is_dead:
+            error = "Database is dead and cannot have the persistence changed."
+        elif self.is_being_used_elsewhere():
+            error = "Database cannot have the persistence changed because" \
+                    " it is in use by another task."
+        elif not self.has_persistense_equivalent_plan:
+            error = "Database cannot have the persistence changed because" \
+                    " it has not any persistense equivalent plan "
 
         if error:
             return False, error

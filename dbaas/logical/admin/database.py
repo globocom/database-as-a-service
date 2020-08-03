@@ -30,6 +30,7 @@ from physical.models import Engine
 from logical.views import database_details, DatabaseHostsView, \
     database_credentials, database_resizes, DatabaseMaintenanceView, \
     database_backup, database_dns, database_metrics, database_destroy, \
+    database_persistence, change_persistence, change_persistence_retry, \
     database_delete_host, UpgradeDatabaseRetryView, \
     database_upgrade_patch_retry, database_resize_retry, \
     database_resize_rollback, database_make_backup, \
@@ -718,6 +719,29 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 self.admin_site.admin_view(database_change_parameters_retry),
                 name="change_parameters_retry"
             ),
+
+
+            url(
+                r'^/?(?P<id>\d+)/persistence/$',
+                self.admin_site.admin_view(database_persistence),
+                name="logical_database_persistence"
+            ),
+
+            url(
+                r'^/?(?P<id>\d+)/change_persistence/$',
+                self.admin_site.admin_view(change_persistence),
+                name="logical_database_change_persistence"
+            ),
+            url(
+                r'^/?(?P<id>\d+)/change_persistence_retry/$',
+                self.admin_site.admin_view(change_persistence_retry),
+                name="logical_database_change_persistence_retry"
+            ),
+
+
+
+
+
             url(
                 r'^/?(?P<database_id>\d+)/hosts/(?P<host_id>\d+)/switch/$',
                 self.admin_site.admin_view(database_switch_write),

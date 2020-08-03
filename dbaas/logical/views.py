@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
-import datetime
+import datetime, time
 import json
 from collections import OrderedDict
 import logging
@@ -2033,3 +2033,83 @@ class ExecuteScheduleTaskView(RedirectView):
         )
         self.kwargs.pop('task_id')
         return super(ExecuteScheduleTaskView, self).get(*args, **self.kwargs)
+
+@database_view("")
+def change_persistence_retry(request, context, database):
+
+    can_do_chg_persistence, error = database.can_do_change_persistence_retry()
+
+    if can_do_chg_persistence:
+        last_change_persistence = database.change_persistence.last()
+        if not last_change_persistence:
+            error = "Database does not have change persistence task!"
+        elif not last_change_persistence.is_status_error:
+            error = ("Cannot do retry, last change persistence status "
+                     "is '{}'!").format(
+                        last_change_persistence.get_status_display()
+            )
+        else:
+            since_step = last_change_persistence.current_step
+
+    if error:
+        messages.add_message(request, messages.ERROR, error)
+    else:
+        TaskRegister.database_change_persistence(
+            database=database,
+            user=request.user,
+            since_step=since_step
+        )
+        time.sleep(1)
+
+    return HttpResponseRedirect(
+        reverse(
+            'admin:logical_database_persistence',
+            kwargs={'id': database.id}
+        )
+    )
+
+
+@database_view("")
+def change_persistence(request, context, database):
+
+    can_do_change_persistence, error = database.can_do_change_persistence()
+
+    if not can_do_change_persistence:
+        messages.add_message(request, messages.ERROR, error)
+    else:
+        TaskRegister.database_change_persistence(
+            database=database,
+            user=request.user
+        )
+        time.sleep(1)
+
+    return HttpResponseRedirect(
+        reverse(
+            'admin:logical_database_persistence',
+            kwargs={'id': database.id}
+        )
+    )
+
+
+@database_view('persistence')
+def database_persistence(request, context, database):
+
+    if request.method == 'POST':
+
+        if 'retry_change_persistence' in request.POST:
+            return HttpResponseRedirect(
+                    reverse('admin:logical_database_change_persistence_retry',
+                            kwargs={'id': database.id})
+                )
+        elif 'database_change_persistence' in request.POST:
+            return HttpResponseRedirect(
+                    reverse('admin:logical_database_change_persistence',
+                            kwargs={'id': database.id})
+                )
+
+    context['last_change_persistence'] = database.change_persistence.last()
+
+    return render_to_response(
+        "logical/database/details/persistence_tab.html",
+        context, RequestContext(request)
+    )

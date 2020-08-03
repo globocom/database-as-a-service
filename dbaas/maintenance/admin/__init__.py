@@ -22,6 +22,7 @@ from .add_instances_to_database import AddInstancesToDatabaseAdmin
 from .task_schedule import TaskScheduleAdmin
 from .restart_database import RestartDatabaseAdmin
 from .remove_instance_database import RemoveInstanceDatabaseAdmin
+from .database_change_persistence import DatabaseChangePersistenceAdmin
 
 
 admin.site.register(models.Maintenance, MaintenanceAdmin)
@@ -47,3 +48,6 @@ admin.site.register(models.AddInstancesToDatabase, AddInstancesToDatabaseAdmin)
 admin.site.register(models.RemoveInstanceDatabase, RemoveInstanceDatabaseAdmin)
 admin.site.register(models.TaskSchedule, TaskScheduleAdmin)
 admin.site.register(models.RestartDatabase, RestartDatabaseAdmin)
+admin.site.register(
+    models.DatabaseChangePersistence, DatabaseChangePersistenceAdmin
+)
