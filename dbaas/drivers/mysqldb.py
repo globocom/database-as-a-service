@@ -79,7 +79,7 @@ class MySQL(BaseDriver):
             try:
                 if self.check_instance_is_master(instance):
                     return instance
-            except ConnectionError:
+            except driver_errors.ConnectionError:
                 continue
 
         return None
@@ -150,9 +150,9 @@ class MySQL(BaseDriver):
             if e.args[0] == ER_ACCESS_DENIED_ERROR:
                 raise driver_errors.AuthenticationError(e.args[1])
             elif e.args[0] == ER_CAN_NOT_CONNECT:
-                raise ConnectionError(e.args[1])
+                raise driver_errors.ConnectionError(e.args[1])
             elif e.args[0] == LOST_CONNECTION:
-                raise ConnectionError(e.args[1])
+                raise driver_errors.ConnectionError(e.args[1])
             else:
                 raise driver_errors.GenericDriverError(e.args)
         finally:
@@ -195,7 +195,7 @@ class MySQL(BaseDriver):
                 else:
                     raise driver_errors.GenericDriverError(e.args)
             except Exception as e:
-                driver_errors.GenericDriverError(e.args)
+                raise driver_errors.GenericDriverError(e.args)
 
     def query(self, query_string, instance=None):
         return self.__query(query_string, instance)
