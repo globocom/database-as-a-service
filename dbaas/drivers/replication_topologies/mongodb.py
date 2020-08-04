@@ -3,7 +3,86 @@ from physical.models import Instance
 from .base import BaseTopology, InstanceDeploy
 
 
-class MongoDBSingle(BaseTopology):
+class BaseMongoDB(BaseTopology):
+
+    def get_configure_ssl_steps(self):
+        return [{
+            'Disable monitoring and alarms': (
+                'workflow.steps.util.zabbix.DisableAlarms',
+                'workflow.steps.util.db_monitor.DisableMonitoring',
+            ),
+        }] + [{
+            'Configure SSL': (
+                'workflow.steps.util.ssl.UpdateOpenSSlLib',
+                'workflow.steps.util.ssl.MongoDBUpdateCertificates',
+                'workflow.steps.util.ssl.CreateSSLFolder',
+                'workflow.steps.util.ssl.MongoDBCreateSSLConfForInfra',
+                'workflow.steps.util.ssl.RequestSSLForInfra',
+                'workflow.steps.util.ssl.CreateJsonRequestFileInfra',
+                'workflow.steps.util.ssl.CreateCertificateInfraMongoDB',
+                'workflow.steps.util.ssl.SetSSLFilesAccessMongoDB',
+                'workflow.steps.util.ssl.SetInfraConfiguredSSL',
+                'workflow.steps.util.plan.Configure',
+                'workflow.steps.util.metric_collector.ConfigureTelegraf',
+                'workflow.steps.util.ssl.UpdateExpireAtDate',
+            ),
+        }] + [{
+            'Restart Database': (
+                'workflow.steps.util.vm.ChangeMaster',
+                'workflow.steps.util.database.CheckIfSwitchMaster',
+                'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.CheckIsDown',
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.metric_collector.RestartTelegraf',
+                'workflow.steps.util.database.CheckIfSwitchMasterRollback',
+                'workflow.steps.util.vm.ChangeMasterRollback',
+            ),
+        }] + [{
+            'Enabling monitoring and alarms': (
+                'workflow.steps.util.db_monitor.EnableMonitoring',
+                'workflow.steps.util.zabbix.EnableAlarms',
+            ),
+        }]
+
+    def get_update_ssl_steps(self):
+        return [{
+            'Disable monitoring and alarms': (
+                'workflow.steps.util.zabbix.DisableAlarms',
+                'workflow.steps.util.db_monitor.DisableMonitoring',
+                'workflow.steps.util.ssl.UpdateExpireAtDateRollback',
+                'workflow.steps.util.ssl.BackupSSLFolder',
+            ),
+        }] + [{
+            'Configure SSL': (
+                'workflow.steps.util.ssl.UpdateSSLForInfra',
+                'workflow.steps.util.ssl.CreateJsonRequestFileInfra',
+                'workflow.steps.util.ssl.CreateCertificateInfraMongoDB',
+                'workflow.steps.util.ssl.SetSSLFilesAccessMongoDB',
+                'workflow.steps.util.ssl.SetInfraConfiguredSSL',
+                'workflow.steps.util.ssl.UpdateExpireAtDate',
+            ),
+        }] + [{
+            'Restart Database': (
+                'workflow.steps.util.vm.ChangeMaster',
+                'workflow.steps.util.database.CheckIfSwitchMaster',
+                'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.CheckIsDown',
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.util.metric_collector.RestartTelegraf',
+                'workflow.steps.util.database.CheckIfSwitchMasterRollback',
+                'workflow.steps.util.vm.ChangeMasterRollback',
+            ),
+        }] + [{
+            'Enabling monitoring and alarms': (
+                'workflow.steps.util.db_monitor.EnableMonitoring',
+                'workflow.steps.util.zabbix.EnableAlarms',
+            ),
+        }]
+
+
+class MongoDBSingle(BaseMongoDB):
 
     def get_upgrade_steps_extra(self):
         return ('workflow.steps.mongodb.upgrade.vm.ChangeBinaryTo36',) + \
@@ -248,7 +327,7 @@ class MongoDBSingle(BaseTopology):
         )
 
 
-class MongoDBReplicaset(BaseTopology):
+class MongoDBReplicaset(BaseMongoDB):
 
     def get_upgrade_steps_description(self):
         return 'Upgrading to MongoDB 3.6'
@@ -654,11 +733,11 @@ class MongoDBReplicaset42(MongoDBReplicaset40):
             'Configure SSL': (
                 'workflow.steps.util.ssl.UpdateOpenSSlLib',
                 'workflow.steps.util.ssl.MongoDBUpdateCertificates',
-                'workflow.steps.util.ssl.CreateSSLFolder',
-                'workflow.steps.util.ssl.MongoDBCreateSSLConfForInstanceDNS',
-                'workflow.steps.util.ssl.RequestSSLForInstance',
-                'workflow.steps.util.ssl.CreateJsonRequestFileInstance',
-                'workflow.steps.util.ssl.CreateCertificateInstanceMongoDB',
+                'workflow.steps.util.ssl.CreateSSLFolderRollbackIfRunning',
+                'workflow.steps.util.ssl.MongoDBCreateSSLConfForInfra',
+                'workflow.steps.util.ssl.RequestSSLForInfra',
+                'workflow.steps.util.ssl.CreateJsonRequestFileInfra',
+                'workflow.steps.util.ssl.CreateCertificateInfraMongoDB',
                 'workflow.steps.util.ssl.SetSSLFilesAccessMongoDB',
                 'workflow.steps.util.ssl.SetInfraConfiguredSSL',
                 'workflow.steps.util.ssl.UpdateExpireAtDate',
@@ -744,10 +823,10 @@ class MongoDBSingle42(MongoDBSingle):
                 'workflow.steps.util.ssl.UpdateOpenSSlLib',
                 'workflow.steps.util.ssl.MongoDBUpdateCertificates',
                 'workflow.steps.util.ssl.CreateSSLFolderRollbackIfRunning',
-                'workflow.steps.util.ssl.MongoDBCreateSSLConfForInstanceDNS',
-                'workflow.steps.util.ssl.RequestSSLForInstance',
-                'workflow.steps.util.ssl.CreateJsonRequestFileInstance',
-                'workflow.steps.util.ssl.CreateCertificateInstanceMongoDB',
+                'workflow.steps.util.ssl.MongoDBCreateSSLConfForInfra',
+                'workflow.steps.util.ssl.RequestSSLForInfra',
+                'workflow.steps.util.ssl.CreateJsonRequestFileInfra',
+                'workflow.steps.util.ssl.CreateCertificateInfraMongoDB',
                 'workflow.steps.util.ssl.SetSSLFilesAccessMongoDB',
                 'workflow.steps.util.ssl.SetInfraConfiguredSSL',
                 'workflow.steps.util.ssl.UpdateExpireAtDate',
