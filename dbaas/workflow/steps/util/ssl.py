@@ -32,6 +32,9 @@ class SSLFiles(object):
     def cert_file(self, basename):
         return basename + "-cert.pem "
 
+    def crt_file(self, basename):
+        return basename + "-cert.crt "
+
 
 class SSL(BaseInstanceStep):
 
@@ -80,6 +83,10 @@ class SSL(BaseInstanceStep):
         return self.ssl_files.cert_file(self.ssl_file_basename)
 
     @property
+    def crt_file(self):
+        return self.ssl_files.crt_file(self.ssl_file_basename)
+
+    @property
     def conf_file_path(self):
         return self.ssl_path + '/' + self.conf_file
 
@@ -102,6 +109,10 @@ class SSL(BaseInstanceStep):
     @property
     def cert_file_path(self):
         return self.ssl_path + '/' + self.cert_file
+
+    @property
+    def crt_file_path(self):
+        return self.ssl_path + '/' + self.crt_file
 
     @property
     def ssl_dns(self):
@@ -333,6 +344,16 @@ class MongoDBCreateSSLConfForInstanceDNS(MongoDBCreateSSLConfigFile,
                                          InstanceSSLDNS):
     pass
 
+class MongoDBCreateSSLConfForInfraEndPoint(MongoDBCreateSSLConfigFile,
+                                         InfraSSLBaseName,
+                                         InfraSSLDNS):
+    pass
+
+class MongoDBCreateSSLConfForInfra(MongoDBCreateSSLConfigFile,
+                                         InfraSSLBaseName,
+                                         InstanceSSLDNS):
+    pass
+
 
 class CreateSSLConfForInfraEndPointIfConfigured(CreateSSLConfForInfraEndPoint,
                                                 IfConguredSSLValidator):
@@ -497,27 +518,14 @@ class CreateCertificate(SSL):
 
 class CreateCertificateMongoDB(CreateCertificate):
 
-    def __unicode__(self):
-        return "Creating MongoDB certificate..."
-
-    def create_certificate_script(self):
-        script = 'curl -d @{json} -H "X-Pki: 42" -H "Content-type: '
-        script += 'application/json" {endpoint}'
-        script = script.format(
-            json=self.json_file_path, endpoint=self.credential.endpoint)
-        return script
-
-    def save_certificate_file(self, certificate, filepath):
-        script = "echo '{}' > {}".format(certificate, filepath)
-        self.exec_script(script)
-
-    def save_mongodb_certificate(self):
+    def save_mongodb_certificate(self, key_file, crt_file, ca_file, cert_file):
         script = "cd {}\n".format(self.ssl_path)
-        script += 'cat {key_file} {cert_file} {ca_file} > mongodb.pem'
+        script += 'cat {key_file} {crt_file} {ca_file} > {cert_file}'
         script = script.format(
-            key_file=self.key_file_path,
-            cert_file=self.cert_file_path,
-            ca_file=self.ca_file_path
+            key_file=key_file,
+            crt_file=crt_file,
+            ca_file=ca_file,
+            cert_file=cert_file
         )
         self.exec_script(script)
 
@@ -525,11 +533,21 @@ class CreateCertificateMongoDB(CreateCertificate):
         if not self.is_valid:
             return
 
-        super(CreateCertificateMongoDB, self).do()
+        script = self.create_certificate_script()
+        output = self.exec_script(script)
+        certificates = json.loads(output['stdout'][0])
 
-        self.save_mongodb_certificate()
+        ca_chain = certificates['ca_chain'][0]
+        self.save_certificate_file(ca_chain, self.ca_file_path)
 
+        certificate = certificates['certificate']
+        self.save_certificate_file(certificate, self.crt_file_path)
 
+        self.save_mongodb_certificate(
+            self.key_file_path,
+            self.crt_file_path,
+            self.ca_file_path,
+            self.cert_file_path)
 
 
 class CreateCertificateInstance(CreateCertificate, InstanceSSLBaseName):
@@ -538,6 +556,10 @@ class CreateCertificateInstance(CreateCertificate, InstanceSSLBaseName):
 
 class CreateCertificateInstanceMongoDB(CreateCertificateMongoDB,
                                        InstanceSSLBaseName):
+    pass
+
+class CreateCertificateInfraMongoDB(CreateCertificateMongoDB,
+                                    InfraSSLBaseName):
     pass
 
 
