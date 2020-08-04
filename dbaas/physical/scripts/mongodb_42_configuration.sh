@@ -64,21 +64,13 @@ net:
 {% if PORT %}
     port: {{ PORT }}
 {% endif %}
-{% if 'mongodb_replica_set' in DRIVER_NAME %}
+{% if SSL_CONFIGURED %}
     tls:
         mode: allowTLS #step 1
         #mode: preferTLS #step 2
         #mode: requireTLS #step 3
-        certificateKeyFile: /data/ssl/mongodb.pem
-        #clusterFile: #NÃO USADO POIS É O MESMO que PEMKeyFile
-        CAFile: /etc/ssl/certs/ca-bundle.crt #Esse arquivo sempre existe nos servidores.
-        allowConnectionsWithoutCertificates: true
-{% else %}
-    tls:
-        mode: allowTLS
-        #mode: requireTLS
-        certificateKeyFile: /data/ssl/mongodb.pem
-        CAFile: /etc/ssl/certs/ca-bundle.crt #Esse arquivo sempre existe nos servidores.
+        certificateKeyFile: {{ INFRA_SSL_CERT }}
+        CAFile: {{ MASTER_SSL_CA }}
         allowConnectionsWithoutCertificates: true
 {% endif %}
 
@@ -89,9 +81,11 @@ security:
 {% if 'mongodb_replica_set' in DRIVER_NAME %}
     # File used to authenticate in replica set environment
     keyFile: /data/mongodb.key
+    {% if SSL_CONFIGURED %}
     clusterAuthMode: sendKeyFile #step 1
     #clusterAuthMode: sendX509 #setp 2
     #clusterAuthMode: x509 #step 3
+    {% endif %}
 {% else %}
     authorization: enabled
 {% endif %}
