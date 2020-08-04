@@ -54,6 +54,7 @@ class PlanStep(BaseInstanceStep):
             variables['INFRA_SSL_CA'] = infra_ssl.ca_file_path
             variables['INFRA_SSL_CERT'] = infra_ssl.cert_file_path
             variables['INFRA_SSL_KEY'] = infra_ssl.key_file_path
+            variables['MASTER_SSL_CA'] = infra_ssl.master_ssl_ca
             variables['INSTANCE_SSL_CA'] = instance_ssl.ca_file_path
             variables['INSTANCE_SSL_CERT'] = instance_ssl.cert_file_path
             variables['INSTANCE_SSL_KEY'] = instance_ssl.key_file_path
