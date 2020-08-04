@@ -4,6 +4,7 @@ from util import get_credentials_for
 from util import build_context_script
 from util import exec_remote_command_host
 import logging
+from system.models import Configuration
 
 LOG = logging.getLogger(__name__)
 
@@ -35,6 +36,11 @@ class MetricsCollector(BaseInstanceStep):
         create_default_file = self.instance.instance_type in (
             self.instance.MYSQL, self.instance.MONGODB, self.instance.REDIS,
             self.instance.MYSQL_PERCONA)
+        master_ssl_ca = None
+        if self.infra.ssl_configured:
+            from workflow.steps.util.ssl import InfraSSLBaseName
+            infra_ssl = InfraSSLBaseName(self.instance)
+            master_ssl_ca = infra_ssl.master_ssl_ca
         variables = {
             'HOSTNAME': self.host.hostname.split('.')[0],
             'HOSTADDRESS': self.host.address,
@@ -48,6 +54,8 @@ class MetricsCollector(BaseInstanceStep):
             'CREATE_DEFAULT_FILE': create_default_file,
             'KAFKA_ENDPOINT': self.credential.endpoint,
             'KAFKA_TOPIC': self.kafka_topic,
+            'SSL_CONFIGURED': self.infra.ssl_configured,
+            'MASTER_SSL_CA':master_ssl_ca
         }
         return variables
 
