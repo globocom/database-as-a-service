@@ -1155,6 +1155,7 @@ class RestartDatabase(DatabaseMaintenanceTask):
                 except Exception:
                     pass
 
+
 class DatabaseChangePersistence(DatabaseMaintenanceTask):
     database = models.ForeignKey(
         Database, verbose_name="Database",
@@ -1178,6 +1179,35 @@ class DatabaseChangePersistence(DatabaseMaintenanceTask):
     def __unicode__(self):
         return "{} change persistence".format(self.database.name)
 
+
+class DatabaseSetSSLRequired(DatabaseMaintenanceTask):
+    database = models.ForeignKey(
+        Database, verbose_name="Database",
+        null=False, unique=False, related_name="set_require_ssl"
+    )
+    task = models.ForeignKey(
+        TaskHistory, verbose_name="Task History",
+        null=False, unique=False, related_name="database_ssl_require"
+    )
+
+    def __unicode__(self):
+        return "{} set SSL Required".format(self.database.name)
+
+
+class DatabaseSetSSLNotRequired(DatabaseMaintenanceTask):
+    database = models.ForeignKey(
+        Database, verbose_name="Database",
+        null=False, unique=False, related_name="set_not_require_ssl"
+    )
+    task = models.ForeignKey(
+        TaskHistory, verbose_name="Task History",
+        null=False, unique=False, related_name="database_ssl_not_require"
+    )
+
+    def __unicode__(self):
+        return "{} set SSL Not Required".format(self.database.name)
+
+
 simple_audit.register(Maintenance)
 simple_audit.register(HostMaintenance)
 simple_audit.register(MaintenanceParameters)
@@ -1191,6 +1221,8 @@ simple_audit.register(DatabaseUpgradePatch)
 simple_audit.register(TaskSchedule)
 simple_audit.register(RestartDatabase)
 simple_audit.register(DatabaseChangePersistence)
+simple_audit.register(DatabaseSetSSLRequired)
+simple_audit.register(DatabaseSetSSLNotRequired)
 
 
 #########################################################
