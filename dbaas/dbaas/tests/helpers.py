@@ -4,8 +4,7 @@ from mock import patch, MagicMock
 
 from physical.tests.factory import InstanceFactory
 from model_mommy import mommy
-from model_mommy.recipe import seq
-from physical.models import Engine, EngineType
+from physical.models import EngineType
 
 
 class UsedAndTotalValidator(object):
