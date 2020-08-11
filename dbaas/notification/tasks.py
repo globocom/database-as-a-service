@@ -604,7 +604,7 @@ def send_mail_24hours_before_auto_task(self):
 @app.task(bind=True)
 @only_one(key="checksslexpireattask")
 def check_ssl_expire_at(self):
-    LOG.info("Retrieving all SSL MySQL databases")
+    #LOG.info("Retrieving all SSL MySQL databases")
     today = date.today()
     worker_name = get_worker_name()
     task = TaskHistory.register(
@@ -618,7 +618,6 @@ def check_ssl_expire_at(self):
     try:
         infras = DatabaseInfra.objects.filter(
             ssl_configured=True,
-            engine__engine_type__name__contains='mysql',
             instances__hostname__ssl_expire_at__lte=one_month_later,
             **extra_filters
         ).distinct()
@@ -1508,6 +1507,7 @@ def update_organization_name_monitoring(self, task, database,
         task.set_status_success('Monitoring updated with success')
         return True
 
+
 @app.task(bind=True)
 def change_database_persistence(self, database, user, task,
         source_plan, target_plan, since_step=0):
@@ -1545,6 +1545,76 @@ def change_database_persistence(self, database, user, task,
             ('Could not change database persistence.\n'
              'Database Change Persistence doesn\'t have rollback')
         )
+
+
+@app.task(bind=True)
+def database_set_ssl_required(self, database, user, task, since_step=0):
+
+    worker_name = get_worker_name()
+    task = TaskHistory.register(self.request, user, task, worker_name)
+
+    infra = database.infra
+    class_path = infra.plan.replication_topology.class_path
+    steps = util_providers.get_database_set_ssl_required_setting(class_path)
+
+    db_ssl = maintenance_models.DatabaseSetSSLRequired()
+    db_ssl.database = database
+    db_ssl.task = task
+    db_ssl.save()
+
+    instances = list(infra.get_driver().get_database_instances())
+
+    success = steps_for_instances(
+        steps, instances, task,
+        db_ssl.update_step, since_step
+    )
+
+    if success:
+        db_ssl.set_success()
+        task.update_status_for(TaskHistory.STATUS_SUCCESS, 'Done')
+    else:
+        db_ssl.set_error()
+        task.update_status_for(
+            TaskHistory.STATUS_ERROR,
+            ('Could not set database SSL required.\n'
+             'This task doesn\'t have rollback')
+        )
+
+
+@app.task(bind=True)
+def database_set_ssl_not_required(self, database, user, task, since_step=0):
+
+    worker_name = get_worker_name()
+    task = TaskHistory.register(self.request, user, task, worker_name)
+
+    infra = database.infra
+    class_path = infra.plan.replication_topology.class_path
+    steps = util_providers.get_database_set_ssl_not_required_setting(
+        class_path)
+
+    db_ssl = maintenance_models.DatabaseSetSSLNotRequired()
+    db_ssl.database = database
+    db_ssl.task = task
+    db_ssl.save()
+
+    instances = list(infra.get_driver().get_database_instances())
+
+    success = steps_for_instances(
+        steps, instances, task,
+        db_ssl.update_step, since_step
+    )
+
+    if success:
+        db_ssl.set_success()
+        task.update_status_for(TaskHistory.STATUS_SUCCESS, 'Done')
+    else:
+        db_ssl.set_error()
+        task.update_status_for(
+            TaskHistory.STATUS_ERROR,
+            ('Could not set database SSL required.\n'
+             'This task doesn\'t have rollback')
+        )
+
 
 class TaskRegister(object):
     TASK_CLASS = TaskHistory
@@ -2348,4 +2418,66 @@ class TaskRegister(object):
         delay_params.update(**{'since_step': since_step} if since_step else {})
 
         change_database_persistence.delay(**delay_params)
+
+
+    @classmethod
+    def database_set_ssl_required(cls, database, user, since_step=None):
+
+        infra = database.infra
+        task_params = {
+            'task_name': 'database_set_ssl_required',
+            'arguments': 'Setting database SSL Required {}'.format(database),
+            'database': database,
+            'user': user,
+            'relevance': TaskHistory.RELEVANCE_CRITICAL
+        }
+
+        if since_step:
+            task_params['task_name'] = 'database_set_ssl_required_retry'
+            task_params['arguments'] = ('Retrying setting database SSL'
+                                        ' Required {}').format(database)
+
+        task = cls.create_task(task_params)
+
+        delay_params = {
+            'database': database,
+            'task': task,
+            'user': user,
+        }
+
+        delay_params.update(**{'since_step': since_step} if since_step else {})
+
+        database_set_ssl_required.delay(**delay_params)
+
+
+    @classmethod
+    def database_set_ssl_not_required(cls, database, user, since_step=None):
+
+        infra = database.infra
+        task_params = {
+            'task_name': 'database_set_ssl_not)required',
+            'arguments': 'Setting database SSL Not Required {}'.format(
+                database),
+            'database': database,
+            'user': user,
+            'relevance': TaskHistory.RELEVANCE_CRITICAL
+        }
+
+        if since_step:
+            task_params['task_name'] = 'database_set_ssl_required_retry'
+            task_params['arguments'] = ('Retrying setting database SSL'
+                                        ' Not Required {}').format(database)
+
+        task = cls.create_task(task_params)
+
+        delay_params = {
+            'database': database,
+            'task': task,
+            'user': user,
+        }
+
+        delay_params.update(**{'since_step': since_step} if since_step else {})
+
+        database_set_ssl_not_required.delay(**delay_params)
+
     # ============  END TASKS   ============
