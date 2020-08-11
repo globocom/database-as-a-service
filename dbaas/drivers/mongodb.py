@@ -42,6 +42,10 @@ class MongoDB(BaseDriver):
     def ports(self):
         return (27017,)
 
+    @property
+    def set_require_ssl_for_databaseinfra(self):
+        return True
+
     def get_replica_name(self):
         """ Get replica name from databaseinfra. Use cache """
         if not self.databaseinfra.pk:

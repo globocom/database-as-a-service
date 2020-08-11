@@ -70,6 +70,14 @@ class BaseDriver(object):
         """
         return self._masters_size_in_bytes('used_size_in_bytes')
 
+    @property
+    def set_require_ssl_for_users(self):
+        return False
+
+    @property
+    def set_require_ssl_for_databaseinfra(self):
+        return False
+
     def test_connection(self, credential=None):
         """ Tests the connection to the database """
         raise NotImplementedError()

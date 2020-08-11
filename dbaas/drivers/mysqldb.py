@@ -46,6 +46,10 @@ class MySQL(BaseDriver):
     def ports(self):
         return (3306,)
 
+    @property
+    def set_require_ssl_for_users(self):
+        return True
+
     def get_connection(self, database=None):
         # my_instance = self.databaseinfra.instances.all()[0]
         uri = "mysql://<user>:<password>@%s" % (self.databaseinfra.endpoint)
