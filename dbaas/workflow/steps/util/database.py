@@ -861,3 +861,15 @@ class checkAndFixMySQLReplicationRollback(checkAndFixMySQLReplication):
 
     def undo(self):
         return super(checkAndFixReplicationRollback, self).do()
+
+
+class StopNonDatabaseInstance(Stop):
+    @property
+    def is_valid(self):
+        return not self.instance.is_database
+
+
+class StartNonDatabaseInstance(Start):
+    @property
+    def is_valid(self):
+        return not self.instance.is_database
