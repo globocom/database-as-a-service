@@ -636,6 +636,42 @@ class SetInfraConfiguredSSL(SSL):
         infra.save()
 
 
+class SetInfraSSLModeAllowTLS(SSL):
+    def __unicode__(self):
+        return "Setting infra SSL Mode to allow TLS..."
+
+    def do(self):
+        if not self.is_valid:
+            return
+        infra = self.infra
+        infra.ssl_mode = infra.ALLOWTLS
+        infra.save()
+
+
+class SetInfraSSLModePreferTLS(SSL):
+    def __unicode__(self):
+        return "Setting infra SSL Mode to prefer TLS..."
+
+    def do(self):
+        if not self.is_valid:
+            return
+        infra = self.infra
+        infra.ssl_mode = infra.PREFERTLS
+        infra.save()
+
+
+class SetInfraSSLModeRequireTLS(SSL):
+    def __unicode__(self):
+        return "Setting infra SSL Mode to require TLS..."
+
+    def do(self):
+        if not self.is_valid:
+            return
+        infra = self.infra
+        infra.ssl_mode = infra.REQUIRETLS
+        infra.save()
+
+
 class UpdateExpireAtDate(SSL):
     def __unicode__(self):
         return "Updating expire_at date..."
@@ -747,3 +783,38 @@ class RestoreSSLFolder4Rollback(BackupSSLFolder):
 
     def do(self):
         pass
+
+
+class SetMongoDBTSLParameter(SSL):
+    @property
+    def is_valid(self):
+        return self.instance.instance_type == self.instance.MONGODB
+
+    @property
+    def client(self):
+        return self.driver.get_client(self.instance)
+
+
+class SetMongoDBPreferTLSParameter(SetMongoDBTSLParameter):
+    def __unicode__(self):
+        return "Setting MongoDB parameters to preffer TSL..."
+
+    def do(self):
+        if not self.is_valid:
+            return
+        self.client.admin.command('setParameter', 1, tlsMode='preferTLS')
+        if self.plan.is_ha:
+            self.client.admin.command(
+                'setParameter', 1, clusterAuthMode='sendX509')
+
+class SetMongoDBRequireTLSParameter(SetMongoDBTSLParameter):
+    def __unicode__(self):
+        return "Setting MongoDB parameters to require TSL..."
+
+    def do(self):
+        if not self.is_valid:
+            return
+        self.client.admin.command('setParameter', 1, tlsMode='requireTLS')
+        if self.plan.is_ha:
+            self.client.admin.command(
+                'setParameter', 1, clusterAuthMode='x509')
