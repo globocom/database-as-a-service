@@ -44,6 +44,9 @@ class PlanStep(BaseInstanceStep):
             'HAS_PERSISTENCE': self.plan.has_persistence,
             'IS_READ_ONLY': self.instance.read_only,
             'SSL_CONFIGURED': self.infra.ssl_configured,
+            'SSL_MODE_ALLOW': self.infra.ssl_mode == self.infra.ALLOWTLS,
+            'SSL_MODE_PREFER': self.infra.ssl_mode == self.infra.PREFERTLS,
+            'SSL_MODE_REQUIRE': self.infra.ssl_mode == self.infra.REQUIRETLS,
         }
 
         if self.infra.ssl_configured:
