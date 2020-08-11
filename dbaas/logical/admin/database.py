@@ -40,7 +40,9 @@ from logical.views import database_details, DatabaseHostsView, \
     database_migrate, zones_for_environment, ExecuteScheduleTaskView, \
     DatabaseMigrateEngineRetry, DatabaseUpgradeView, \
     AddInstancesDatabaseRetryView, AddInstancesDatabaseRollbackView, \
-    RemoveInstanceDatabaseRetryView
+    RemoveInstanceDatabaseRetryView, \
+    database_set_ssl_required, database_set_ssl_required_retry, \
+    database_set_ssl_not_required, database_set_ssl_not_required_retry
 
 from logical.forms import DatabaseForm
 from logical.service.database import DatabaseService
@@ -719,14 +721,11 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 self.admin_site.admin_view(database_change_parameters_retry),
                 name="change_parameters_retry"
             ),
-
-
             url(
                 r'^/?(?P<id>\d+)/persistence/$',
                 self.admin_site.admin_view(database_persistence),
                 name="logical_database_persistence"
             ),
-
             url(
                 r'^/?(?P<id>\d+)/change_persistence/$',
                 self.admin_site.admin_view(change_persistence),
@@ -737,11 +736,6 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 self.admin_site.admin_view(change_persistence_retry),
                 name="logical_database_change_persistence_retry"
             ),
-
-
-
-
-
             url(
                 r'^/?(?P<database_id>\d+)/hosts/(?P<host_id>\d+)/switch/$',
                 self.admin_site.admin_view(database_switch_write),
@@ -776,6 +770,26 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
                 r'^/?(?P<id>\d+)/configure_ssl_retry/$',
                 self.admin_site.admin_view(database_configure_ssl_retry),
                 name="logical_database_configure_ssl_retry"
+            ),
+            url(
+                r'^/?(?P<id>\d+)/set_ssl_required/$',
+                self.admin_site.admin_view(database_set_ssl_required),
+                name="logical_database_set_ssl_required"
+            ),
+            url(
+                r'^/?(?P<id>\d+)/set_ssl_required_retry/$',
+                self.admin_site.admin_view(database_set_ssl_required_retry),
+                name="logical_database_set_ssl_required_retry"
+            ),
+            url(
+                r'^/?(?P<id>\d+)/set_ssl_not_required/$',
+                self.admin_site.admin_view(database_set_ssl_not_required),
+                name="logical_database_set_ssl_not_required"
+            ),
+            url(
+                r'^/?(?P<id>\d+)/set_ssl_not_required_retry/$',
+                self.admin_site.admin_view(database_set_ssl_not_required_retry),
+                name="logical_database_set_ssl_not_required_retry"
             ),
 
         )
