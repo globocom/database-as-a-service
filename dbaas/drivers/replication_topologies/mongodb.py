@@ -191,6 +191,21 @@ class MongoDBSingle(BaseMongoDB):
             'Configuring database': (
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.InitializationForNewInfra',
+            )}, {
+            'Configure SSL': (
+                'workflow.steps.util.ssl.UpdateOpenSSlLib',
+                'workflow.steps.util.ssl.MongoDBUpdateCertificates',
+                'workflow.steps.util.ssl.CreateSSLFolderRollbackIfRunning',
+                'workflow.steps.util.ssl.MongoDBCreateSSLConfForInfra',
+                'workflow.steps.util.ssl.RequestSSLForInfra',
+                'workflow.steps.util.ssl.CreateJsonRequestFileInfra',
+                'workflow.steps.util.ssl.CreateCertificateInfraMongoDB',
+                'workflow.steps.util.ssl.SetSSLFilesAccessMongoDB',
+                'workflow.steps.util.ssl.SetInfraConfiguredSSL',
+                'workflow.steps.util.ssl.SetInfraSSLModeAllowTLS',
+                'workflow.steps.util.ssl.UpdateExpireAtDate',
+            )}, {
+            'Starting database': (
                 'workflow.steps.util.plan.ConfigureForNewInfra',
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 'workflow.steps.util.database.Start',
@@ -523,6 +538,21 @@ class MongoDBReplicaset(BaseMongoDB):
             'Configuring database': (
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.InitializationForNewInfra',
+            )}, {
+            'Configure SSL': (
+                'workflow.steps.util.ssl.UpdateOpenSSlLib',
+                'workflow.steps.util.ssl.MongoDBUpdateCertificates',
+                'workflow.steps.util.ssl.CreateSSLFolderRollbackIfRunning',
+                'workflow.steps.util.ssl.MongoDBCreateSSLConfForInfra',
+                'workflow.steps.util.ssl.RequestSSLForInfra',
+                'workflow.steps.util.ssl.CreateJsonRequestFileInfra',
+                'workflow.steps.util.ssl.CreateCertificateInfraMongoDB',
+                'workflow.steps.util.ssl.SetSSLFilesAccessMongoDB',
+                'workflow.steps.util.ssl.SetInfraConfiguredSSL',
+                'workflow.steps.util.ssl.SetInfraSSLModeAllowTLS',
+                'workflow.steps.util.ssl.UpdateExpireAtDate',
+            )}, {
+            'Starting database': (
                 'workflow.steps.util.plan.ConfigureForNewInfra',
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 'workflow.steps.util.database.Start',
@@ -770,70 +800,6 @@ class MongoDBReplicaset40(MongoDBReplicaset):
 
 class MongoDBReplicaset42(MongoDBReplicaset40):
 
-    def get_deploy_steps(self):
-        return [{
-            'Creating virtual machine': (
-                'workflow.steps.util.host_provider.CreateVirtualMachine',
-            )}, {
-            'Creating dns': (
-                'workflow.steps.util.dns.CreateDNS',
-            )}, {
-            'Creating disk': (
-                'workflow.steps.util.volume_provider.NewVolume',
-            )}, {
-            'Waiting VMs': (
-                'workflow.steps.util.vm.WaitingBeReady',
-                'workflow.steps.util.vm.UpdateOSDescription'
-            )}, {
-            'Configuring database': (
-                'workflow.steps.util.volume_provider.MountDataVolume',
-                'workflow.steps.util.plan.InitializationForNewInfra',
-            )}, {
-            'Configure SSL': (
-                'workflow.steps.util.ssl.UpdateOpenSSlLib',
-                'workflow.steps.util.ssl.MongoDBUpdateCertificates',
-                'workflow.steps.util.ssl.CreateSSLFolderRollbackIfRunning',
-                'workflow.steps.util.ssl.MongoDBCreateSSLConfForInfra',
-                'workflow.steps.util.ssl.RequestSSLForInfra',
-                'workflow.steps.util.ssl.CreateJsonRequestFileInfra',
-                'workflow.steps.util.ssl.CreateCertificateInfraMongoDB',
-                'workflow.steps.util.ssl.SetSSLFilesAccessMongoDB',
-                'workflow.steps.util.ssl.SetInfraConfiguredSSL',
-                'workflow.steps.util.ssl.SetInfraSSLModeAllowTLS',
-                'workflow.steps.util.ssl.UpdateExpireAtDate',
-            )}, {
-            'Starting database': (
-                'workflow.steps.util.plan.ConfigureForNewInfra',
-                'workflow.steps.util.metric_collector.ConfigureTelegraf',
-                'workflow.steps.util.database.Start',
-                'workflow.steps.util.metric_collector.RestartTelegraf',
-            )}, {
-            'Check Database': (
-                'workflow.steps.util.plan.StartReplicationFirstNodeNewInfra',
-                'workflow.steps.util.database.CheckIsUp',
-                'workflow.steps.util.infra.UpdateEndpoint',
-            )}, {
-            'Check DNS': (
-                'workflow.steps.util.dns.CheckIsReady',
-            )}, {
-            'Creating Database': (
-                'workflow.steps.util.database.Create',
-            )}, {
-            'Check ACL': (
-                'workflow.steps.util.acl.BindNewInstance',
-            )}, {
-            'Creating monitoring and alarms': (
-                'workflow.steps.util.zabbix.CreateAlarms',
-                'workflow.steps.util.db_monitor.CreateInfraMonitoring',
-            )}, {
-            'Create Extra DNS': (
-                'workflow.steps.util.database.CreateExtraDNS',
-            )}, {
-            'Update Host Disk Size': (
-                'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
-            )
-        }]
-
     def get_upgrade_steps_final(self):
         return [{
             'Setting feature compatibility version': (
@@ -859,67 +825,6 @@ class MongoDBReplicaset42(MongoDBReplicaset40):
 
 
 class MongoDBSingle42(MongoDBSingle):
-
-    def get_deploy_steps(self):
-        return [{
-            'Creating virtual machine': (
-                'workflow.steps.util.host_provider.CreateVirtualMachine',
-            )}, {
-            'Creating dns': (
-                'workflow.steps.util.dns.CreateDNS',
-            )}, {
-            'Creating disk': (
-                'workflow.steps.util.volume_provider.NewVolume',
-            )}, {
-            'Waiting VMs': (
-                'workflow.steps.util.vm.WaitingBeReady',
-                'workflow.steps.util.vm.UpdateOSDescription'
-            )}, {
-            'Configuring database': (
-                'workflow.steps.util.volume_provider.MountDataVolume',
-                'workflow.steps.util.plan.InitializationForNewInfra',
-            )}, {
-            'Configure SSL': (
-                'workflow.steps.util.ssl.UpdateOpenSSlLib',
-                'workflow.steps.util.ssl.MongoDBUpdateCertificates',
-                'workflow.steps.util.ssl.CreateSSLFolderRollbackIfRunning',
-                'workflow.steps.util.ssl.MongoDBCreateSSLConfForInfra',
-                'workflow.steps.util.ssl.RequestSSLForInfra',
-                'workflow.steps.util.ssl.CreateJsonRequestFileInfra',
-                'workflow.steps.util.ssl.CreateCertificateInfraMongoDB',
-                'workflow.steps.util.ssl.SetSSLFilesAccessMongoDB',
-                'workflow.steps.util.ssl.SetInfraConfiguredSSL',
-                'workflow.steps.util.ssl.SetInfraSSLModeAllowTLS',
-                'workflow.steps.util.ssl.UpdateExpireAtDate',
-            )}, {
-            'Starting database': (
-                'workflow.steps.util.plan.ConfigureForNewInfra',
-                'workflow.steps.util.metric_collector.ConfigureTelegraf',
-                'workflow.steps.util.database.Start',
-                'workflow.steps.util.database.CheckIsUp',
-                'workflow.steps.util.metric_collector.RestartTelegraf',
-                'workflow.steps.util.infra.UpdateEndpoint',
-            )}, {
-            'Check DNS': (
-                'workflow.steps.util.dns.CheckIsReady',
-            )}, {
-            'Creating Database': (
-                'workflow.steps.util.database.Create',
-            )}, {
-            'Check ACL': (
-                'workflow.steps.util.acl.BindNewInstance',
-            )}, {
-            'Creating monitoring and alarms': (
-                'workflow.steps.util.zabbix.CreateAlarms',
-                'workflow.steps.util.db_monitor.CreateInfraMonitoring',
-            )}, {
-            'Create Extra DNS': (
-                'workflow.steps.util.database.CreateExtraDNS',
-            )}, {
-            'Update Host Disk Size': (
-                'workflow.steps.util.host_provider.UpdateHostRootVolumeSize',
-            )
-        }]
 
     def get_upgrade_steps_final(self):
         return [{
