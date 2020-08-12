@@ -1423,7 +1423,13 @@ def configure_ssl_database(self, database, user, task, since_step=0):
     database_configure_ssl.task = task
     database_configure_ssl.save()
 
-    instances = list(infra.get_driver().get_database_instances())
+    hosts = []
+    for instance in infra.instances.all():
+        if instance.hostname not in hosts:
+            hosts.append(instance.hostname)
+    instances = []
+    for host in hosts:
+        instances.append(host.instances.all()[0])
 
     success = steps_for_instances(
         steps, instances, task,
@@ -1562,7 +1568,13 @@ def database_set_ssl_required(self, database, user, task, since_step=0):
     db_ssl.task = task
     db_ssl.save()
 
-    instances = list(infra.get_driver().get_database_instances())
+    hosts = []
+    for instance in infra.instances.all():
+        if instance.hostname not in hosts:
+            hosts.append(instance.hostname)
+    instances = []
+    for host in hosts:
+        instances.append(host.instances.all()[0])
 
     success = steps_for_instances(
         steps, instances, task,
@@ -1597,7 +1609,13 @@ def database_set_ssl_not_required(self, database, user, task, since_step=0):
     db_ssl.task = task
     db_ssl.save()
 
-    instances = list(infra.get_driver().get_database_instances())
+    hosts = []
+    for instance in infra.instances.all():
+        if instance.hostname not in hosts:
+            hosts.append(instance.hostname)
+    instances = []
+    for host in hosts:
+        instances.append(host.instances.all()[0])
 
     success = steps_for_instances(
         steps, instances, task,
