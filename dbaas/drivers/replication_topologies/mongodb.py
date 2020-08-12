@@ -88,9 +88,7 @@ class BaseMongoDB(BaseTopology):
                 'workflow.steps.util.plan.Configure',
                 'workflow.steps.util.ssl.SetMongoDBPreferTLSParameter',
                 'workflow.steps.util.database.StopNonDatabaseInstance',
-                #'workflow.steps.util.database.CheckIsDownNonDatabaseInstance',
                 'workflow.steps.util.database.StartNonDatabaseInstance',
-                #'workflow.steps.util.database.CheckIsUpNonDatabaseInstance',
             ),
         }] + [{
             'Setting SSL Mode to Require': (
@@ -98,9 +96,7 @@ class BaseMongoDB(BaseTopology):
                 'workflow.steps.util.plan.Configure',
                 'workflow.steps.util.ssl.SetMongoDBRequireTLSParameter',
                 'workflow.steps.util.database.StopNonDatabaseInstance',
-                #'workflow.steps.util.database.CheckIsDownNonDatabaseInstance',
                 'workflow.steps.util.database.StartNonDatabaseInstance',
-                #'workflow.steps.util.database.CheckIsUpNonDatabaseInstance',
             ),
         }] + [{
             'Enabling monitoring and alarms': (
@@ -803,6 +799,7 @@ class MongoDBReplicaset42(MongoDBReplicaset40):
                 'workflow.steps.util.ssl.CreateCertificateInfraMongoDB',
                 'workflow.steps.util.ssl.SetSSLFilesAccessMongoDB',
                 'workflow.steps.util.ssl.SetInfraConfiguredSSL',
+                'workflow.steps.util.ssl.SetInfraSSLModeAllowTLS',
                 'workflow.steps.util.ssl.UpdateExpireAtDate',
             )}, {
             'Starting database': (
@@ -892,6 +889,7 @@ class MongoDBSingle42(MongoDBSingle):
                 'workflow.steps.util.ssl.CreateCertificateInfraMongoDB',
                 'workflow.steps.util.ssl.SetSSLFilesAccessMongoDB',
                 'workflow.steps.util.ssl.SetInfraConfiguredSSL',
+                'workflow.steps.util.ssl.SetInfraSSLModeAllowTLS',
                 'workflow.steps.util.ssl.UpdateExpireAtDate',
             )}, {
             'Starting database': (
