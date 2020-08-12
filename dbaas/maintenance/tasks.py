@@ -348,11 +348,11 @@ def update_ssl(self, database, task, since_step=None, step_manager=None,
     step_manager.save()
 
     steps = database.databaseinfra.update_ssl_steps()
+
     hosts = []
     for instance in database.infra.instances.all():
         if instance.hostname not in hosts:
             hosts.append(instance.hostname)
-
     instances = []
     for host in hosts:
         instances.append(host.instances.all()[0])
