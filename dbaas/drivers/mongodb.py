@@ -187,7 +187,8 @@ class MongoDB(BaseDriver):
                         default=MONGO_SOCKET_TIMEOUT) * 1000
                 )
 
-            if self.databaseinfra.ssl_configured:
+            if self.databaseinfra.ssl_configured and \
+               self.databaseinfra.ssl_mode >= self.databaseinfra.PREFERTLS:
                 tls = True
                 tlsCAFile = Configuration.get_by_name('root_cert_file')
             else:
