@@ -165,6 +165,10 @@ class UpdateOpenSSlLib(SSL):
         self.exec_script(script)
 
 
+class UpdateOpenSSlLibIfConfigured(UpdateOpenSSlLib, IfConguredSSLValidator):
+    pass
+
+
 class MongoDBUpdateCertificates(SSL):
 
     def __unicode__(self):
@@ -179,7 +183,8 @@ class MongoDBUpdateCertificates(SSL):
         self.exec_script(script)
 
 
-class UpdateOpenSSlLibIfConfigured(UpdateOpenSSlLib, IfConguredSSLValidator):
+class MongoDBUpdateCertificatesIfConfigured(MongoDBUpdateCertificates,
+                                            IfConguredSSLValidator):
     pass
 
 
@@ -339,24 +344,31 @@ class CreateSSLConfForInfraEndPoint(CreateSSLConfigFile,
     pass
 
 
+class CreateSSLConfForInfraEndPointIfConfigured(CreateSSLConfForInfraEndPoint,
+                                                IfConguredSSLValidator):
+    pass
+
+
 class MongoDBCreateSSLConfForInstanceDNS(MongoDBCreateSSLConfigFile,
                                          InstanceSSLBaseName,
                                          InstanceSSLDNS):
     pass
 
+
 class MongoDBCreateSSLConfForInfraEndPoint(MongoDBCreateSSLConfigFile,
-                                         InfraSSLBaseName,
-                                         InfraSSLDNS):
+                                           InfraSSLBaseName,
+                                           InfraSSLDNS):
     pass
+
 
 class MongoDBCreateSSLConfForInfra(MongoDBCreateSSLConfigFile,
-                                         InfraSSLBaseName,
-                                         InstanceSSLDNS):
+                                   InfraSSLBaseName,
+                                   InstanceSSLDNS):
     pass
 
 
-class CreateSSLConfForInfraEndPointIfConfigured(CreateSSLConfForInfraEndPoint,
-                                                IfConguredSSLValidator):
+class MongoDBCreateSSLConfForInfraIfConfigured(MongoDBCreateSSLConfForInfra,
+                                               IfConguredSSLValidator):
     pass
 
 
@@ -568,6 +580,11 @@ class CreateCertificateInstanceIfConfigured(CreateCertificateInstance,
     pass
 
 
+class CreateCertificateInfraMongoDBIfConfigured(CreateCertificateInfraMongoDB,
+                                                IfConguredSSLValidator):
+    pass
+
+
 class CreateCertificateInfra(CreateCertificate, InfraSSLBaseName):
     pass
 
@@ -596,6 +613,11 @@ class SetSSLFilesAccessMySQL(SSL):
         self.sll_file_access_script()
 
 
+class SetSSLFilesAccessMySQLIfConfigured(SetSSLFilesAccessMySQL,
+                                         IfConguredSSLValidator):
+    pass
+
+
 class SetSSLFilesAccessMongoDB(SSL):
     def __unicode__(self):
         return "Setting SSL Files Access..."
@@ -612,8 +634,8 @@ class SetSSLFilesAccessMongoDB(SSL):
         self.sll_file_access_script()
 
 
-class SetSSLFilesAccessMySQLIfConfigured(SetSSLFilesAccessMySQL,
-                                         IfConguredSSLValidator):
+class SetSSLFilesAccessMongoDBIfConfigured(SetSSLFilesAccessMongoDB,
+                                           IfConguredSSLValidator):
     pass
 
 

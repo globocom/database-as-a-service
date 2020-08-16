@@ -188,6 +188,9 @@ class MongoDBSingle(BaseMongoDB):
                 'workflow.steps.util.vm.WaitingBeReady',
                 'workflow.steps.util.vm.UpdateOSDescription'
             )}, {
+            'Check DNS': (
+                'workflow.steps.util.dns.CheckIsReady',
+            )}, {
             'Configuring database': (
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.InitializationForNewInfra',
@@ -212,9 +215,6 @@ class MongoDBSingle(BaseMongoDB):
                 'workflow.steps.util.database.CheckIsUp',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
                 'workflow.steps.util.infra.UpdateEndpoint',
-            )}, {
-            'Check DNS': (
-                'workflow.steps.util.dns.CheckIsReady',
             )}, {
             'Creating Database': (
                 'workflow.steps.util.database.Create',
@@ -272,6 +272,19 @@ class MongoDBSingle(BaseMongoDB):
                 'workflow.steps.util.zabbix.DestroyAlarms',
                 'workflow.steps.util.dns.ChangeEndpoint',
                 'workflow.steps.util.dns.CheckIsReady',
+                'workflow.steps.util.ssl.UpdateOpenSSlLibIfConfigured',
+                ('workflow.steps.util.ssl'
+                    '.MongoDBUpdateCertificatesIfConfigured'),
+                'workflow.steps.util.ssl.CreateSSLFolderIfConfigured',
+                ('workflow.steps.util.ssl'
+                 '.MongoDBCreateSSLConfForInfraIfConfigured'),
+                'workflow.steps.util.ssl.RequestSSLForInfraIfConfigured',
+                ('workflow.steps.util.ssl'
+                 '.CreateJsonRequestFileInfraIfConfigured'),
+                ('workflow.steps.util.ssl'
+                 '.CreateCertificateInfraMongoDBIfConfigured'),
+                'workflow.steps.util.ssl.SetSSLFilesAccessMongoDBIfConfigured',
+                'workflow.steps.util.ssl.UpdateExpireAtDate',
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
                 'workflow.steps.util.zabbix.CreateAlarms',
@@ -298,18 +311,33 @@ class MongoDBSingle(BaseMongoDB):
                 'workflow.steps.util.vm.WaitingBeReady',
                 'workflow.steps.util.vm.UpdateOSDescription'
             )}, {
+            'Check DNS': (
+                'workflow.steps.util.dns.CheckIsReady',
+            )}, {
             'Configuring database': (
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.InitializationForNewInfra',
+            )}, {
+            'Configure SSL': (
+                'workflow.steps.util.ssl.UpdateOpenSSlLib',
+                'workflow.steps.util.ssl.MongoDBUpdateCertificates',
+                'workflow.steps.util.ssl.CreateSSLFolderRollbackIfRunning',
+                'workflow.steps.util.ssl.MongoDBCreateSSLConfForInfra',
+                'workflow.steps.util.ssl.RequestSSLForInfra',
+                'workflow.steps.util.ssl.CreateJsonRequestFileInfra',
+                'workflow.steps.util.ssl.CreateCertificateInfraMongoDB',
+                'workflow.steps.util.ssl.SetSSLFilesAccessMongoDB',
+                'workflow.steps.util.ssl.SetInfraConfiguredSSL',
+                'workflow.steps.util.ssl.SetInfraSSLModeAllowTLS',
+                'workflow.steps.util.ssl.UpdateExpireAtDate',
+            )}, {
+            'Starting database': (
                 'workflow.steps.util.plan.ConfigureForNewInfra',
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
                 'workflow.steps.util.infra.UpdateEndpoint',
-            )}, {
-            'Check DNS': (
-                'workflow.steps.util.dns.CheckIsReady',
             )}, {
             'Creating Database': (
                 'workflow.steps.util.database.Clone',
@@ -350,6 +378,18 @@ class MongoDBSingle(BaseMongoDB):
                 'workflow.steps.util.volume_provider.MountDataVolumeRestored',
                 'workflow.steps.util.plan.ConfigureRestore',
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
+            )}, {
+            'Configure SSL': (
+                'workflow.steps.util.disk.CleanSSLDir',
+                ('workflow.steps.util.ssl'
+                 '.MongoDBCreateSSLConfForInfraIfConfigured'),
+                'workflow.steps.util.ssl.RequestSSLForInfraIfConfigured',
+                ('workflow.steps.util.ssl'
+                 '.CreateJsonRequestFileInfraIfConfigured'),
+                ('workflow.steps.util.ssl'
+                 '.CreateCertificateInfraMongoDBIfConfigured'),
+                'workflow.steps.util.ssl.SetSSLFilesAccessMongoDBIfConfigured',
+                'workflow.steps.util.ssl.UpdateExpireAtDate',
             )}, {
             'Starting database': (
                 'workflow.steps.util.database.Start',
@@ -535,6 +575,9 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.util.vm.WaitingBeReady',
                 'workflow.steps.util.vm.UpdateOSDescription'
             )}, {
+            'Check DNS': (
+                'workflow.steps.util.dns.CheckIsReady',
+            )}, {
             'Configuring database': (
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.InitializationForNewInfra',
@@ -562,9 +605,6 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.util.plan.StartReplicationFirstNodeNewInfra',
                 'workflow.steps.util.database.CheckIsUp',
                 'workflow.steps.util.infra.UpdateEndpoint',
-            )}, {
-            'Check DNS': (
-                'workflow.steps.util.dns.CheckIsReady',
             )}, {
             'Creating Database': (
                 'workflow.steps.util.database.Create',
@@ -599,9 +639,27 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.util.vm.WaitingBeReady',
                 'workflow.steps.util.vm.UpdateOSDescription'
             )}, {
+            'Check DNS': (
+                'workflow.steps.util.dns.CheckIsReady',
+            )}, {
             'Configuring database': (
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.plan.InitializationForNewInfra',
+            )}, {
+            'Configure SSL': (
+                'workflow.steps.util.ssl.UpdateOpenSSlLib',
+                'workflow.steps.util.ssl.MongoDBUpdateCertificates',
+                'workflow.steps.util.ssl.CreateSSLFolderRollbackIfRunning',
+                'workflow.steps.util.ssl.MongoDBCreateSSLConfForInfra',
+                'workflow.steps.util.ssl.RequestSSLForInfra',
+                'workflow.steps.util.ssl.CreateJsonRequestFileInfra',
+                'workflow.steps.util.ssl.CreateCertificateInfraMongoDB',
+                'workflow.steps.util.ssl.SetSSLFilesAccessMongoDB',
+                'workflow.steps.util.ssl.SetInfraConfiguredSSL',
+                'workflow.steps.util.ssl.SetInfraSSLModeAllowTLS',
+                'workflow.steps.util.ssl.UpdateExpireAtDate',
+            )}, {
+            'Starting database': (
                 'workflow.steps.util.plan.ConfigureForNewInfra',
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 'workflow.steps.util.database.Start',
@@ -611,9 +669,6 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.util.plan.StartReplicationFirstNodeNewInfra',
                 'workflow.steps.util.database.CheckIsUp',
                 'workflow.steps.util.infra.UpdateEndpoint',
-            )}, {
-            'Check DNS': (
-                'workflow.steps.util.dns.CheckIsReady',
             )}, {
             'Creating Database': (
                 'workflow.steps.util.database.Clone',
@@ -656,6 +711,18 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.util.disk.CleanDataArbiter',
                 'workflow.steps.util.plan.ConfigureRestore',
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
+            )}, {
+            'Configure SSL': (
+                'workflow.steps.util.disk.CleanSSLDir',
+                ('workflow.steps.util.ssl'
+                 '.MongoDBCreateSSLConfForInfraIfConfigured'),
+                'workflow.steps.util.ssl.RequestSSLForInfraIfConfigured',
+                ('workflow.steps.util.ssl'
+                 '.CreateJsonRequestFileInfraIfConfigured'),
+                ('workflow.steps.util.ssl'
+                 '.CreateCertificateInfraMongoDBIfConfigured'),
+                'workflow.steps.util.ssl.SetSSLFilesAccessMongoDBIfConfigured',
+                'workflow.steps.util.ssl.UpdateExpireAtDate',
             )}, {
             'Starting database': (
                 'workflow.steps.util.database.Start',
@@ -756,6 +823,18 @@ class MongoDBReplicaset(BaseMongoDB):
             'workflow.steps.util.zabbix.DestroyAlarms',
             'workflow.steps.util.dns.ChangeEndpoint',
             'workflow.steps.util.dns.CheckIsReady',
+            'workflow.steps.util.ssl.UpdateOpenSSlLibIfConfigured',
+            'workflow.steps.util.ssl.MongoDBUpdateCertificatesIfConfigured',
+            'workflow.steps.util.ssl.CreateSSLFolderIfConfigured',
+            ('workflow.steps.util.ssl'
+             '.MongoDBCreateSSLConfForInfraIfConfigured'),
+            'workflow.steps.util.ssl.RequestSSLForInfraIfConfigured',
+            ('workflow.steps.util.ssl'
+             '.CreateJsonRequestFileInfraIfConfigured'),
+            ('workflow.steps.util.ssl'
+             '.CreateCertificateInfraMongoDBIfConfigured'),
+            'workflow.steps.util.ssl.SetSSLFilesAccessMongoDBIfConfigured',
+            'workflow.steps.util.ssl.UpdateExpireAtDate',
             'workflow.steps.util.metric_collector.ConfigureTelegraf',
             'workflow.steps.util.metric_collector.RestartTelegraf',
             'workflow.steps.util.zabbix.CreateAlarms',
