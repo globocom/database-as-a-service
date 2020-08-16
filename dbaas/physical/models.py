@@ -767,9 +767,6 @@ class DatabaseInfra(BaseModel):
     ssl_configured = models.BooleanField(
         verbose_name=_("SSL is Configured"),
         default=False)
-    #ssl_mode = models.BooleanField(
-    #    verbose_name=_("SSL is Required"),
-    #    default=False)
     ssl_mode = models.IntegerField(
         choices=SSL_MODE,
         verbose_name=_("SSL Mode"),
