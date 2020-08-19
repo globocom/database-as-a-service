@@ -372,6 +372,17 @@ class MongoDBCreateSSLConfForInfraIfConfigured(MongoDBCreateSSLConfForInfra,
     pass
 
 
+class MongoDBCreateSSLConfForInfraIP(MongoDBCreateSSLConfigFile,
+                                     InfraSSLBaseName,
+                                     InstanceSSLDNSIp):
+    pass
+
+
+class MongoDBCreateSSLConfForInfraIPIfConfigured(
+    MongoDBCreateSSLConfForInfraIP, IfConguredSSLValidator):
+    pass
+
+
 class CreateSSLConfForInstanceIPIfConfigured(CreateSSLConfForInstanceIP,
                                              IfConguredSSLValidator):
     pass

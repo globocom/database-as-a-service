@@ -410,3 +410,13 @@ class ConfigureForChangePersistence(ConfigureOnlyDBConfigFile):
         )
         return configuration
 
+
+class ConfigureWithoutSSL(Configure):
+
+    def get_variables_specifics(self):
+        base = super(ConfigureWithoutSSL, self).get_variables_specifics()
+        base['SSL_CONFIGURED'] = False
+        base['SSL_MODE_ALLOW'] = False
+        base['SSL_MODE_PREFER'] = False
+        base['SSL_MODE_REQUIRE'] = False
+        return base

@@ -25,11 +25,17 @@ class DatabaseReplicaSet(DatabaseStep):
 
     @property
     def script_variables(self):
+        if self.infra.ssl_mode == self.infra.REQUIRETLS:
+            ssl_connect = '--tls --tlsCAFile {}'.format(
+                self.root_certificate_file)
+        else:
+            ssl_connect = ''
         variables = {
             'CONNECT_ADMIN_URI': self.driver.get_admin_connection(),
             'HOSTADDRESS': self.host_address,
             'PORT': self.instance.port,
-            'REPLICA_ID': self.driver.get_max_replica_id() + 1
+            'REPLICA_ID': self.driver.get_max_replica_id() + 1,
+            'SSL_CONN_STRING': ssl_connect,
         }
         return variables
 
@@ -100,10 +106,16 @@ class SetNotEligible(DatabaseReplicaSet):
 
     @property
     def script_variables(self):
+        if self.infra.ssl_mode == self.infra.REQUIRETLS:
+            ssl_connect = '--tls --tlsCAFile {}'.format(
+                self.root_certificate_file)
+        else:
+            ssl_connect = ''
         variables = {
             'CONNECT_ADMIN_URI': self.driver.get_admin_connection(),
             'HOST_ADDRESS': "{}:{}".format(self.instance.address, self.instance.port),
-            'PRIORITY': self.priority
+            'PRIORITY': self.priority,
+            'SSL_CONN_STRING': ssl_connect,
         }
         return variables
 

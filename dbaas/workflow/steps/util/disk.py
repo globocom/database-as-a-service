@@ -130,6 +130,12 @@ class CleanDataRecreateSlave(CleanData):
             super(CleanDataRecreateSlave, self).do()
 
 
+class CleanDataMigrate(CleanData):
+    @property
+    def is_valid(self):
+        return True
+
+
 class CleanReplRecreateSlave(CleanData):
     @property
     def is_valid(self):
