@@ -192,3 +192,19 @@ class ChangeSnapshotOwner(Disk):
         if volume:
             volume.is_active = True
             volume.save()
+
+
+class CleanDataNonDatabaseInstanceRollback(CleanData):
+    @property
+    def is_valid(self):
+        return not self.instance.is_database
+
+    @property
+    def host(self):
+        return self.instance.hostname
+
+    def do(self):
+        pass
+
+    def undo(self):
+        return super(CleanDataNonDatabaseInstanceRollback, self).do()
