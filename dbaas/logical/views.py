@@ -256,32 +256,10 @@ def database_details(request, context, database):
     context['projects'] = Project.objects.all()
     context['teams'] = Team.objects.all()
 
-    databaseinfra = database.databaseinfra
-    driver = databaseinfra.get_driver()
-    if databaseinfra.ssl_configured:
-        if driver.set_require_ssl_for_databaseinfra:
-            if databaseinfra.ssl_mode == databaseinfra.REQUIRETLS:
-                ssl = 'SSL is configured and it\'s required for all users.'
-            else:
-                ssl = 'SSL is configured and it\'s allowed for all users.'
-        elif driver.set_require_ssl_for_users:
-            ssl = 'SSL is configured. ' \
-                  'Required SSL must be configured per user.'
-        else:
-            ssl = 'SSL is configured.'
-
-        ssl_expire_at = None
-        for instance in databaseinfra.instances.all():
-            host = instance.hostname
-            if not ssl_expire_at:
-                ssl_expire_at = host.ssl_expire_at
-            else:
-                if ssl_expire_at > host.ssl_expire_at:
-                    ssl_expire_at = host.ssl_expire_at
-        ssl += ' The SSL certificate will expire on {}.'.format(ssl_expire_at)
+    if database.databaseinfra.ssl_configured:
+        context['ssl_detail'] = 'SSL is configured.'
     else:
-        ssl = 'SSL is not configured.'
-    context['ssl'] = ssl
+        context['ssl_detail'] = 'SSL is not configured.'
 
     return render_to_response(
         "logical/database/details/details_tab.html",
@@ -357,6 +335,33 @@ def database_credentials(request, context, database):
     context['can_set_ssl_not_required_retry'] = can_set_ssl_not_required_retry
     context['last_set_ssl_required'] = last_set_ssl_required
     context['last_set_ssl_not_required'] = last_set_ssl_not_required
+
+    databaseinfra = database.databaseinfra
+    driver = databaseinfra.get_driver()
+    if databaseinfra.ssl_configured:
+        if driver.set_require_ssl_for_databaseinfra:
+            if databaseinfra.ssl_mode == databaseinfra.REQUIRETLS:
+                ssl = 'SSL is configured and it\'s required for all users.'
+            else:
+                ssl = 'SSL is configured and it\'s allowed for all users.'
+        elif driver.set_require_ssl_for_users:
+            ssl = 'SSL is configured. ' \
+                  'Required SSL must be configured per user.'
+        else:
+            ssl = 'SSL is configured.'
+
+        ssl_expire_at = None
+        for instance in databaseinfra.instances.all():
+            host = instance.hostname
+            if not ssl_expire_at:
+                ssl_expire_at = host.ssl_expire_at
+            else:
+                if ssl_expire_at > host.ssl_expire_at:
+                    ssl_expire_at = host.ssl_expire_at
+        ssl += ' The SSL certificate will expire on {}.'.format(ssl_expire_at)
+    else:
+        ssl = 'SSL is not configured.'
+    context['ssl_detail'] = ssl
 
     return render_to_response(
         "logical/database/details/credentials_tab.html",
