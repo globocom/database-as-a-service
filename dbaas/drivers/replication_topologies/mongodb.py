@@ -97,6 +97,7 @@ class BaseMongoDB(BaseTopology):
                 'workflow.steps.util.ssl.SetMongoDBRequireTLSParameter',
                 'workflow.steps.util.database.StopNonDatabaseInstance',
                 'workflow.steps.util.database.StartNonDatabaseInstance',
+                'workflow.steps.mongodb.database.RecreateMongoLogRotateScript',
             ),
         }] + [{
             'Enabling monitoring and alarms': (
@@ -132,6 +133,7 @@ class BaseMongoDB(BaseTopology):
                 'workflow.steps.util.database.CheckIsDown',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
+                'workflow.steps.mongodb.database.RecreateMongoLogRotateScript',
             ),
         }] + [{
             'Enabling monitoring and alarms': (

@@ -6,7 +6,17 @@ from workflow.steps.mongodb.util import build_remove_read_only_replica_set_membe
 from workflow.steps.mongodb.util import build_change_priority_script
 
 
-class DatabaseReplicaSet(DatabaseStep):
+class MongoDBDatabaseStep(DatabaseStep):
+    @property
+    def ssl_conn_string(self):
+        if self.infra.ssl_mode == self.infra.REQUIRETLS:
+            return '--tls --tlsCAFile {}'.format(
+                self.root_certificate_file)
+        else:
+            return ''
+
+
+class DatabaseReplicaSet(MongoDBDatabaseStep):
 
     def __init__(self, instance):
         super(DatabaseReplicaSet, self).__init__(instance)
@@ -25,17 +35,12 @@ class DatabaseReplicaSet(DatabaseStep):
 
     @property
     def script_variables(self):
-        if self.infra.ssl_mode == self.infra.REQUIRETLS:
-            ssl_connect = '--tls --tlsCAFile {}'.format(
-                self.root_certificate_file)
-        else:
-            ssl_connect = ''
         variables = {
             'CONNECT_ADMIN_URI': self.driver.get_admin_connection(),
             'HOSTADDRESS': self.host_address,
             'PORT': self.instance.port,
             'REPLICA_ID': self.driver.get_max_replica_id() + 1,
-            'SSL_CONN_STRING': ssl_connect,
+            'SSL_CONN_STRING': self.ssl_conn_string,
         }
         return variables
 
@@ -127,3 +132,15 @@ class SetNotEligible(DatabaseReplicaSet):
     def undo(self):
         self.priority = 1
         self.do()
+
+class RecreateMongoLogRotateScript(MongoDBDatabaseStep):
+    def __unicode__(self):
+        return "Recreating MongoDB log rotate script..."
+
+    def do(self):
+        from notification.scripts.script_mongo_log_rotate import (
+            script_mongodb_rotate)
+        script = script_mongodb_rotate % (
+            self.ssl_conn_string, self.ssl_conn_string, self.ssl_conn_string)
+        self._execute_script({}, script)
+

@@ -360,7 +360,10 @@ def database_credentials(request, context, database):
                     ssl_expire_at = host.ssl_expire_at
         ssl += ' The SSL certificate will expire on {}.'.format(ssl_expire_at)
     else:
-        ssl = 'SSL is not configured.'
+        ssl = 'SSL is not configured'
+        if not infra.plan.replication_topology.can_setup_ssl:
+            ssl += ' and its setup is not available'
+        ssl += '.'
     context['ssl_detail'] = ssl
 
     return render_to_response(
