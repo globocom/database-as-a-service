@@ -16,3 +16,4 @@ dump.rdb
 .cache/
 .ropeproject/
 node_modules/
+.vscode/
