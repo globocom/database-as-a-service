@@ -32,8 +32,9 @@ def get_notifications(username):
 
     notification_menu_tmpl = '''
         <a class="dropdown-toggle uni" id="dLabel" role="button" data-toggle="dropdown" data-target="#" href="#">
-            <i class="icon-bell icon-white"></i>
-            Notifications <span class="badge badge-{} notification-cnt">{}</span>
+            <span class="badge badge-{} notification-cnt">{}</span>
+            <span class="text-{} notify-text">Notifications
+            <i class="fa fa-bell text-{}"></i></span>
         </a>
         <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel" >
             {}
@@ -53,7 +54,7 @@ def get_notifications(username):
 
     tasks = UserTasks.get_notifications(username)
     lis_html = ''
-    notification_count = 0
+    notification_count = 1
     for task in tasks:
         task.update({
             'li_class': '' if int(task.get('read')) else 'new',
@@ -68,7 +69,9 @@ def get_notifications(username):
     if not tasks:
         lis_html = '<li class="no-notification">No tasks found.</li>'
     return mark_safe(notification_menu_tmpl.format(
-        'info' if notification_count else 'default',
+        'warning' if notification_count else 'default',
         notification_count,
+        'warning' if notification_count else 'default',
+        'warning' if notification_count else 'white',
         lis_html)
     )

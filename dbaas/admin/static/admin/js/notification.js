@@ -84,7 +84,7 @@ Base.DbaasNotification = {};
     function resetNotificationCnt() {
       var $notificationContainer = $("#dropdown-menu-notification");
       var $notificationCnt = $notificationContainer.find(".notification-cnt");
-      replaceCssClass($notificationCnt, "badge-info", "badge-default");
+      replaceCssClass($notificationCnt, "badge-warning", "badge-default");
       $notificationCnt.text("0");
     }
 
@@ -191,7 +191,7 @@ Base.DbaasNotification = {};
       if ($("#dropdown-menu-notification.open").length === 0) {
         if (notificationQuantity != parseInt($notificationCount.text())) {
           $notificationCount.text(view.notificationQuantity());
-          replaceCssClass($notificationCount, "badge-default", "badge-info");
+          replaceCssClass($notificationCount, "badge-default", "badge-warning");
         }
       }
       else {
