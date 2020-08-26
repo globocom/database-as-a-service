@@ -1,6 +1,5 @@
 from time import sleep
 import logging
-import json
 
 import yaml
 from django.template.loader import render_to_string
@@ -12,6 +11,8 @@ from physical.models import Volume, Host, Offering
 from util import get_credentials_for
 from physical.configurations import configuration_factory
 from workflow.steps.util.volume_provider import VolumeProviderBase
+from workflow.steps.util.host_provider import Provider as HostProvider
+from workflow.steps.util.base import HostProviderClient
 
 
 LOG = logging.getLogger(__name__)
@@ -77,7 +78,7 @@ class BaseK8SStep(BaseInstanceStep):
 
     @property
     def statefulset_name(self):
-        return 'pod-{}'.format(self.hostname().split('.')[0])
+        return self.hostname().split('.')[0]
 
     @property
     def pod_name(self):
@@ -147,10 +148,11 @@ class NewVolumeK8S(BaseK8SStep):
                 and self.host_migrate == self.step_manager)
 
     def _remove_volume(self, volume):
-        self.client.delete_namespaced_persistent_volume_claim(
-            self.volume_claim_name, self.namespace
-        )
-        volume.delete()
+        # self.client.delete_namespaced_persistent_volume_claim(
+        #     self.volume_claim_name, self.namespace
+        # )
+        # volume.delete()
+        self.provider.destroy_volume(volume)
 
     def do(self):
         if not self.instance.is_database:
@@ -159,15 +161,14 @@ class NewVolumeK8S(BaseK8SStep):
         self.provider.create_volume(
             self.infra.name,
             self.disk_offering.size_kb,
-            self.host.address,
             volume_name=self.volume_claim_name,
         )
 
     def undo(self):
-        if not self.instance.is_database or not self.host:
+        if not self.instance.is_database:
             return
         volume = Volume.objects.get(
-            identifier=self.volume_claim_name, host=self.host
+            identifier=self.volume_claim_name
         )
         self._remove_volume(volume)
 
@@ -185,8 +186,7 @@ class NewServiceK8S(BaseK8SStep):
         return {
             'SERVICE_NAME': self.service_name,
             'LABEL_NAME': self.label_name,
-            'INSTANCE_PORT': 27017,  # self.instance.port,
-            # 'NODE_PORT': 30022
+            'INSTANCE_PORT': self.driver.default_port,
         }
 
     def do(self):
@@ -209,6 +209,10 @@ class NewPodK8S(BaseK8SStep):
         return "Creating POD on kubernetes..."
 
     @property
+    def provider(self):
+        return HostProvider(self.instance, self.environment)
+
+    @property
     def client_class_name(self):
         return "AppsV1beta1Api"
 
@@ -223,7 +227,8 @@ class NewPodK8S(BaseK8SStep):
     @property
     def context(self):
         return {
-            'POD_NAME': self.statefulset_name,
+            'STATEFULSET_NAME': self.statefulset_name,
+            'POD_NAME': self.pod_name,
             'LABEL_NAME': self.label_name,
             'SERVICE_NAME': self.service_name,
             'INIT_CONTAINER_CREATE_CONFIG_COMMANDS': (
@@ -254,19 +259,76 @@ class NewPodK8S(BaseK8SStep):
             'DATABASE_LOG_FULL_PATH': self.database_log_full_path
         }
 
+    @property
+    def team(self):
+        if self.has_database:
+            return self.database.team.name
+        elif self.create:
+            return self.create.team.name
+        elif (self.step_manager
+              and hasattr(self.step_manager, 'origin_database')):
+            return self.step_manager.origin_database.team.name
+
+    @property
+    def stronger_offering(self):
+        return self.plan.stronger_offering
+
+    @property
+    def weaker_offering(self):
+        return self.plan.weaker_offering
+
+    @property
+    def database_offering(self):
+        if self.host_migrate and self.host_migrate.database_migrate:
+            return self.host_migrate.database_migrate.offering
+        if self.has_database:
+            return self.infra.offering
+        return self.stronger_offering
+
+    @property
+    def offering(self):
+        if self.instance.is_database:
+            return self.database_offering
+        return self.weaker_offering
+
+    def update_databaseinfra_last_vm_created(self):
+        last_vm_created = self.infra.last_vm_created
+        last_vm_created += 1
+        self.infra.last_vm_created = last_vm_created
+        self.infra.save()
+
+    def delete_instance(self):
+        if self.instance.id:
+            self.instance.delete()
+
     def do(self):
         if not self.instance.is_database:
             return
-        self.client.create_namespaced_stateful_set(
-            self.namespace, self.yaml_file
+        self.provider.create_host(
+            self.infra, self.offering, self.instance.vm_name, self.team,
+            zone=None, yaml_context=self.context, host_obj=self.host
         )
 
     def undo(self):
-        self.client.delete_namespaced_stateful_set(
-            self.statefulset_name,
-            self.namespace,
-            orphan_dependents=False
-        )
+        try:
+            host = self.instance.hostname
+        except self.instance.DoesNotExist:
+            self.delete_instance()
+            return
+
+        try:
+            pass
+            self.provider.destroy_host(self.host)
+        except (Host.DoesNotExist, IndexError):
+            pass
+        self.delete_instance()
+        if host.id:
+            host.delete()
+        # self.client.delete_namespaced_stateful_set(
+        #     self.statefulset_name,
+        #     self.namespace,
+        #     orphan_dependents=False
+        # )
 
 
 class WaitingPodBeReady(BaseK8SStep):
@@ -281,7 +343,7 @@ class WaitingPodBeReady(BaseK8SStep):
             pod_data = self.client.read_namespaced_pod_status(
                 self.pod_name, self.namespace
             )
-            for status_data in pod_data.status.conditions:
+            for status_data in pod_data.status.conditions or []:
                 if status_data.type == 'Ready':
                     if status_data.status == 'True':
                         return True
@@ -296,35 +358,35 @@ class WaitingPodBeReady(BaseK8SStep):
             sleep(self.interval)
 
 
-class SetServiceEndpoint(BaseK8SStep):
+class UpdateHostMetadata(BaseK8SStep):
     def __unicode__(self):
-        return "Update instance with service address and port..."
-
-    def service_metadata(self):
-        return self.client.read_namespaced_service(
-            self.service_name, self.namespace
-        )
+        return "Update address of instance and host with pod ip..."
 
     def do(self):
-        service_metadata = self.service_metadata()
-        service_annotations = json.loads(
-            service_metadata.metadata.annotations[
-                'field.cattle.io/publicEndpoints'
-            ]
+        pod_metadata = self.client.read_namespaced_pod(
+            self.pod_name, 'default'
         )
-        # TODO: Validate is here the instance already saved on database
-        if service_annotations:
-            service_annotations = service_annotations[0]
-        self.instance.address = service_annotations['addresses'][0]
-        self.instance.port = service_annotations['port']
-        # self.instance.save()
-        host = Host()
+        self.instance.address = pod_metadata.status.pod_ip
+        self.instance.port = self.driver.default_port
+
+        host = self.host
         host.address = self.instance.address
+        host.save()
+        hp_client = HostProviderClient(self.environment)
+        hp_client.edit_host(host.identifier, payload={'address': host.address})
+
+
+class CreateHostMetadata(BaseK8SStep):
+    def __unicode__(self):
+        return "Create host metadata on database..."
+
+    def do(self):
+        host = Host()
+        host.address = self.instance.vm_name
         host.hostname = self.instance.vm_name
         host.user = 'TODO'
         host.password = 'TODO'
         host.provider = 'k8s'
-        host.identifier = self.pod_name
         host.offering = None
         host.save()
         self.instance.hostname = host
