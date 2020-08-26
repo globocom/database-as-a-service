@@ -689,11 +689,8 @@ class MongoDBSingleK8s(MongoDBSingle):
             'Creating k8s Service': (
                 'workflow.steps.util.k8s.NewServiceK8S',
             )}, {
-            'Creating dns': (
-                'workflow.steps.util.k8s.SetServiceEndpoint',
-                'workflow.steps.util.dns.CreateDNS',
-            )}, {
             'Creating disk': (
+                'workflow.steps.util.k8s.CreateHostMetadata',
                 'workflow.steps.util.k8s.NewVolumeK8S',
             )}, {
             'Creating Config Map': (
@@ -705,6 +702,10 @@ class MongoDBSingleK8s(MongoDBSingle):
             'Waiting VMs': (
                 'workflow.steps.util.k8s.WaitingPodBeReady',
                 # 'workflow.steps.util.vm.UpdateOSDescription'
+            )}, {
+            'Creating dns': (
+                'workflow.steps.util.k8s.UpdateHostMetadata',
+                'workflow.steps.util.dns.CreateDNS',
             )}, {
             'Configuring database': (
                 # 'workflow.steps.util.volume_provider.MountDataVolume',
