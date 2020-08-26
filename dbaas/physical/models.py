@@ -42,7 +42,6 @@ class Offering(BaseModel):
         return '{}'.format(self.name)
 
 
-
 class Environment(BaseModel):
     name = models.CharField(
         verbose_name=_("Environment"), max_length=100, unique=True)
@@ -1129,7 +1128,11 @@ class Host(BaseModel):
 
 
 class Volume(BaseModel):
-    host = models.ForeignKey(Host, related_name="volumes")
+    host = models.ForeignKey(
+        Host, related_name="volumes",
+        null=True,
+        on_delete=models.SET_NULL
+    )
     identifier = models.CharField(max_length=255)
     is_active = models.BooleanField(default=True)
     total_size_kb = models.IntegerField(null=True, blank=True)
