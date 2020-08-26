@@ -54,7 +54,7 @@ def get_notifications(username):
 
     tasks = UserTasks.get_notifications(username)
     lis_html = ''
-    notification_count = 1
+    notification_count = 0
     for task in tasks:
         task.update({
             'li_class': '' if int(task.get('read')) else 'new',
