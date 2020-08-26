@@ -940,6 +940,7 @@ class MySQLFoxHA(MySQLSingle):
             ),
         }] + [{
             'Enabling monitoring and alarms': (
+                'workflow.steps.util.db_monitor.UpdateInfraSSLMonitor',
                 'workflow.steps.util.db_monitor.EnableMonitoring',
                 'workflow.steps.util.zabbix.EnableAlarms',
             ),

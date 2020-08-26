@@ -41,6 +41,7 @@ class BaseMongoDB(BaseTopology):
             ),
         }] + [{
             'Enabling monitoring and alarms': (
+                'workflow.steps.util.db_monitor.UpdateInfraSSLMonitor',
                 'workflow.steps.util.db_monitor.EnableMonitoring',
                 'workflow.steps.util.zabbix.EnableAlarms',
             ),
@@ -64,8 +65,13 @@ class BaseMongoDB(BaseTopology):
             ),
         }] + [{
             'Restart Database': (
+                'workflow.steps.util.vm.ChangeMaster',
+                'workflow.steps.util.database.CheckIfSwitchMaster',
                 'workflow.steps.util.database.Stop',
+                'workflow.steps.util.database.CheckIsDown',
                 'workflow.steps.util.ssl.RestoreSSLFolder4Rollback',
+                'workflow.steps.util.database.Start',
+                'workflow.steps.util.database.CheckIsUp',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
             ),
@@ -101,6 +107,7 @@ class BaseMongoDB(BaseTopology):
             ),
         }] + [{
             'Enabling monitoring and alarms': (
+                'workflow.steps.util.db_monitor.UpdateInfraSSLMonitor',
                 'workflow.steps.util.db_monitor.EnableMonitoring',
                 'workflow.steps.util.zabbix.EnableAlarms',
             ),
@@ -137,6 +144,7 @@ class BaseMongoDB(BaseTopology):
             ),
         }] + [{
             'Enabling monitoring and alarms': (
+                'workflow.steps.util.db_monitor.UpdateInfraSSLMonitor',
                 'workflow.steps.util.db_monitor.EnableMonitoring',
                 'workflow.steps.util.zabbix.EnableAlarms',
             ),
