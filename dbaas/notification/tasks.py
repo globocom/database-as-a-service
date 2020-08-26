@@ -6,7 +6,6 @@ import traceback
 from celery.utils.log import get_task_logger
 from django.db.models import Sum, Count, Q
 from simple_audit.models import AuditRequest
-from django.db.models.signals import post_save
 
 
 from account.models import User
@@ -683,7 +682,6 @@ def change_mongodb_log_rotate(self):
         for manager in restart_database_objs:
             mongodb_restarted_hosts.extend(manager.database.infra.hosts)
 
-
         script_mongo_log_rotate.execute(
             task, list(set(mongodb_restarted_hosts))
         )
@@ -1144,7 +1142,6 @@ def add_instances_to_database(
         )
 
         try:
-            from celery.contrib import rdb;rdb.set_trace() 
             instance = infra.instances.get(
                 Q(hostname__hostname__startswith=vm_name) |
                 Q(dns__startswith=vm_name),
