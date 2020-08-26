@@ -364,11 +364,29 @@ class HostProviderClient(object):
         )
         resp = self._request(
             requests.get,
-            '{}{}'.format(self.credential.endpoint, api_host_url
-        ))
+            '{}{}'.format(self.credential.endpoint, api_host_url)
+        )
         if resp.ok:
             data = resp.json()
             return data.get('offering_id')
+
+    def edit_host(self, host_id, payload):
+        api_host_url = '/{}/{}/host/{}'.format(
+            self.credential.project,
+            self.env.name,
+            host_id
+        )
+        resp = self._request(
+            requests.patch,
+            '{}{}'.format(self.credential.endpoint, api_host_url),
+            json=payload
+        )
+        if not resp.ok:
+            raise Exception(
+                "Cannot update host on host provider. Reason: {}".format(
+                    resp.reason
+                )
+            )
 
 
 class ACLFromHellClient(object):
@@ -411,10 +429,8 @@ class ACLFromHellClient(object):
         if extra_params:
             params.update(extra_params)
 
-
         LOG.debug("Tsuru get rule for {} params:{}".format(
             database.name, params))
-
         return self._request(
             requests.get,
             self.credential.endpoint,
@@ -452,10 +468,12 @@ class ACLFromHellClient(object):
                 vip_dns
             )
             if not vip_resp:
-                raise CantSetACLError("Cant set acl for VIP {} error: {}".format(
-                    vip_dns,
-                    vip_resp.content
-                ))
+                raise CantSetACLError(
+                    "Cant set acl for VIP {} error: {}".format(
+                        vip_dns,
+                        vip_resp.content
+                    )
+                )
 
     def add_acl(self, database, app_name, hostname):
         infra = database.infra
@@ -516,7 +534,9 @@ class ACLFromHellClient(object):
         rules = resp.json()
         for rule in rules:
             rule_id = rule.get('RuleID')
-            host = rule.get('Destination', {}).get('ExternalDNS', {}).get('Name')
+            host = (rule.get('Destination', {})
+                    .get('ExternalDNS', {})
+                    .get('Name'))
             if rule_id:
                 LOG.info('Tsuru Unbind App removing rule for {}'.format(host))
                 resp = self._request(
