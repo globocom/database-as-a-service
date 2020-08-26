@@ -89,7 +89,7 @@ class VolumeProviderBase(BaseInstanceStep):
             self.credential.endpoint, self.provider, self.environment
         )
 
-    def create_volume(self, group, size_kb, to_address, volume_name='',
+    def create_volume(self, group, size_kb, to_address='', volume_name='',
                       snapshot_id=None, is_active=True):
         url = self.base_url + "volume/new"
         data = {
