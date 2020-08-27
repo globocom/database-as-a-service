@@ -107,11 +107,11 @@ describe("DbaasNotification test case", function() {
       expect($notificationCnt.text()).toBe("0")
     });
 
-    it("Has badge-info when count greater than 0", function() {
+    it("Has badge-warning when count greater than 0", function() {
 
 
       updateNotification([fake_task_1]);
-      var $notificationCnt = $(".badge-info.notification-cnt");
+      var $notificationCnt = $(".badge-warning.notification-cnt");
 
       expect($notificationCnt.length).toBe(1);
     });
