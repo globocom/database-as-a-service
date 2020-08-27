@@ -1,0 +1,10 @@
+<label>
+    The Set SSL Not Required process will change the Database SSL mode to <b class="bold_red">Allow SSL</b>.<br>
+    {% if database.infra.plan.is_ha %}
+        This process will switch hosts, and <b class="bold_red">it may cause connections errors</b> during the process.
+    {% else %}
+        This process <b class="bold_red">will stop the database</b> and, consequently, it will be <b class="bold_red"> unavailable</b> until the the end of the process.
+    {% endif %}
+    <br><br>
+    Please type <u><b>yes</b></u> to confirm:
+</label>

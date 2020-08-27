@@ -600,6 +600,10 @@ class MountDataVolumeRecreateSlave(MountDataVolumeMigrate):
         if self.is_database_instance:
             super(MountDataVolumeRecreateSlave, self).do()
 
+    def undo(self):
+        if self.is_database_instance:
+            super(MountDataVolumeRecreateSlave, self).undo()
+
 
 class UmountDataVolumeRecreateSlave(MountDataVolumeRecreateSlave):
 
@@ -1197,7 +1201,7 @@ class AddAccessRecreateSlave(AddAccess):
         return master_instance.hostname.volumes.get(is_active=True)
 
     def do(self):
-        if not self.is_valid and not self.is_database_instance:
+        if not self.is_valid or not self.is_database_instance:
             return
         self.add_access(self.volume, self.host, 'read-only')
 

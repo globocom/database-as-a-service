@@ -348,7 +348,14 @@ def update_ssl(self, database, task, since_step=None, step_manager=None,
     step_manager.save()
 
     steps = database.databaseinfra.update_ssl_steps()
-    instances = database.infra.get_driver().get_database_instances()
+
+    hosts = []
+    for instance in database.infra.instances.all():
+        if instance.hostname not in hosts:
+            hosts.append(instance.hostname)
+    instances = []
+    for host in hosts:
+        instances.append(host.instances.all()[0])
 
     result = steps_for_instances(
         steps, instances, task, step_manager.update_step, since_step,

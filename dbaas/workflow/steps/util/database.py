@@ -9,6 +9,7 @@ from workflow.steps.mongodb.util import build_change_oplogsize_script
 from workflow.steps.util.base import BaseInstanceStep
 from workflow.steps.util import test_bash_script_error, monit_script
 from drivers.errors import ReplicationNotRunningError
+from workflow.steps.util.ssl import InfraSSLBaseName
 
 
 LOG = logging.getLogger(__name__)
@@ -123,6 +124,10 @@ class DatabaseStep(BaseInstanceStep):
             sleep(CHECK_SECONDS)
 
         return True
+
+    @property
+    def root_certificate_file(self):
+        return InfraSSLBaseName(self.instance).master_ssl_ca
 
 
 class Stop(DatabaseStep):
@@ -861,3 +866,46 @@ class checkAndFixMySQLReplicationRollback(checkAndFixMySQLReplication):
 
     def undo(self):
         return super(checkAndFixReplicationRollback, self).do()
+
+
+class StopNonDatabaseInstance(Stop):
+    @property
+    def is_valid(self):
+        return not self.instance.is_database
+
+
+class StartNonDatabaseInstance(Start):
+    @property
+    def is_valid(self):
+        return not self.instance.is_database
+
+class StartNonDatabaseInstanceRollback(Start):
+    @property
+    def is_valid(self):
+        return not self.instance.is_database
+
+    @property
+    def host(self):
+        return self.instance.hostname
+
+    def do(self):
+        pass
+
+    def undo(self):
+        return super(StartNonDatabaseInstanceRollback, self).do()
+
+
+class StopNonDatabaseInstanceRollback(Stop):
+    @property
+    def is_valid(self):
+        return not self.instance.is_database
+
+    @property
+    def host(self):
+        return self.instance.hostname
+
+    def do(self):
+        pass
+
+    def undo(self):
+        return super(StopNonDatabaseInstanceRollback, self).do()

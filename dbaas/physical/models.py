@@ -682,6 +682,15 @@ class DatabaseInfra(BaseModel):
         (DEAD, "Dead"),
         (ALERT, "Alert"))
 
+    ALLOWTLS = 1
+    PREFERTLS = 2
+    REQUIRETLS = 3
+
+    SSL_MODE = (
+        (ALLOWTLS, "allowTLS"),
+        (PREFERTLS, "preferTLS"),
+        (REQUIRETLS, "requireTLS"))
+
     name = models.CharField(
         verbose_name=_("DatabaseInfra Name"),
         max_length=100,
@@ -722,7 +731,6 @@ class DatabaseInfra(BaseModel):
         blank=True,
         null=True
     )
-
     endpoint_dns = models.CharField(
         verbose_name=_("DatabaseInfra Endpoint (DNS)"),
         max_length=255,
@@ -759,6 +767,12 @@ class DatabaseInfra(BaseModel):
     ssl_configured = models.BooleanField(
         verbose_name=_("SSL is Configured"),
         default=False)
+    ssl_mode = models.IntegerField(
+        choices=SSL_MODE,
+        verbose_name=_("SSL Mode"),
+        null=True,
+        blank=True,
+        default=None)
     backup_hour = models.IntegerField(
         verbose_name=_("Backup hour"),
         blank=False,
@@ -859,6 +873,15 @@ class DatabaseInfra(BaseModel):
         """
 
         return self.capacity - self.used
+
+    @property
+    def set_require_ssl_for_users(self):
+        return self.get_driver().set_require_ssl_for_users
+
+    @property
+    def set_require_ssl_for_databaseinfra(self):
+        return self.get_driver().set_require_ssl_for_databaseinfra
+
 
     @classmethod
     def get_unique_databaseinfra_name(cls, base_name):

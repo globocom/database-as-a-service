@@ -104,6 +104,14 @@ def get_database_change_persistence_setting(class_path):
     return get_replication_topology_instance(class_path).get_database_change_persistence_steps()
 
 
+def get_database_set_ssl_required_setting(class_path):
+    return get_replication_topology_instance(class_path).get_set_require_ssl_steps()
+
+
+def get_database_set_ssl_not_required_setting(class_path):
+    return get_replication_topology_instance(class_path).get_set_not_require_ssl_steps()
+
+
 def get_engine_credentials(engine, environment):
     engine = engine.lower()
 

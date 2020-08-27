@@ -23,6 +23,8 @@ from .task_schedule import TaskScheduleAdmin
 from .restart_database import RestartDatabaseAdmin
 from .remove_instance_database import RemoveInstanceDatabaseAdmin
 from .database_change_persistence import DatabaseChangePersistenceAdmin
+from .database_set_ssl_required import DatabaseSetSSLRequiredAdmin
+from .database_set_ssl_not_required import DatabaseSetSSLNotRequiredAdmin
 
 
 admin.site.register(models.Maintenance, MaintenanceAdmin)
@@ -50,4 +52,10 @@ admin.site.register(models.TaskSchedule, TaskScheduleAdmin)
 admin.site.register(models.RestartDatabase, RestartDatabaseAdmin)
 admin.site.register(
     models.DatabaseChangePersistence, DatabaseChangePersistenceAdmin
+)
+admin.site.register(
+    models.DatabaseSetSSLRequired, DatabaseSetSSLRequiredAdmin
+)
+admin.site.register(
+    models.DatabaseSetSSLNotRequired, DatabaseSetSSLNotRequiredAdmin
 )

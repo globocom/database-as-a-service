@@ -42,6 +42,10 @@ class MongoDB(BaseDriver):
     def ports(self):
         return (27017,)
 
+    @property
+    def set_require_ssl_for_databaseinfra(self):
+        return True
+
     def get_replica_name(self):
         """ Get replica name from databaseinfra. Use cache """
         if not self.databaseinfra.pk:
@@ -183,11 +187,21 @@ class MongoDB(BaseDriver):
                         default=MONGO_SOCKET_TIMEOUT) * 1000
                 )
 
+            if self.databaseinfra.ssl_configured and \
+               self.databaseinfra.ssl_mode >= self.databaseinfra.PREFERTLS:
+                tls = True
+                tlsCAFile = Configuration.get_by_name('root_cert_file')
+            else:
+                tls = False
+                tlsCAFile = None
+
             client = pymongo.MongoClient(
                 connection_address,
                 connectTimeoutMS=connection_timeout_in_miliseconds,
                 serverSelectionTimeoutMS=server_selection_timeout_in_seconds,
-                socketTimeoutMS=socket_timeout_in_miliseconds
+                socketTimeoutMS=socket_timeout_in_miliseconds,
+                tls=tls,
+                tlsCAFile=tlsCAFile
             )
             if (not instance) or (instance and instance.instance_type != instance.MONGODB_ARBITER):  # noqa
                 if self.databaseinfra.user and self.databaseinfra.password:

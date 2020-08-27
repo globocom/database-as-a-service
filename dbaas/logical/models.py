@@ -639,6 +639,23 @@ class Database(BaseModel):
             self.id
         )
 
+    def get_set_ssl_required_url(self):
+        return "/admin/logical/database/{}/set_ssl_required/".format(self.id)
+
+    def get_set_ssl_required_retry_url(self):
+        return "/admin/logical/database/{}/set_ssl_required_retry/".format(
+            self.id
+        )
+
+    def get_set_ssl_not_required_url(self):
+        return "/admin/logical/database/{}/set_ssl_not_required/".format(
+            self.id)
+
+    def get_set_ssl_not_required_retry_url(self):
+        return "/admin/logical/database/{}/set_ssl_not_required_retry/".format(
+            self.id
+        )
+
     def get_change_persistence_url(self):
         return "/admin/logical/database/{}/change_persistence/".format(self.id)
 
@@ -1033,6 +1050,63 @@ class Database(BaseModel):
         if error:
             return False, error
         return True, None
+
+
+    def can_do_set_ssl_required_retry(self):
+        error = None
+        if self.is_in_quarantine:
+            error = "Database in quarantine and cannot have set SSL " \
+                    "required."
+        elif self.is_being_used_elsewhere([('notification.tasks'
+                                            '.database_set_ssl_required')]):
+            error = "Database cannot have set SSL required " \
+                    "because it is in use by another task."
+        if error:
+            return False, error
+        return True, None
+
+    def can_do_set_ssl_required(self):
+        can_do_set_ssl_required, error = self.can_do_set_ssl_required_retry()
+
+        if can_do_set_ssl_required:
+            if self.is_dead:
+                error = "Database is dead and cannot have set SSL required."
+            elif self.is_being_used_elsewhere():
+                error = "Database cannot have set SSL required " \
+                        "because it is in use by another task."
+
+        if error:
+            return False, error
+        return True, None
+
+    def can_do_set_ssl_not_required_retry(self):
+        error = None
+        if self.is_in_quarantine:
+            error = "Database in quarantine and cannot have set SSL not " \
+                    "required."
+        elif self.is_being_used_elsewhere(
+            [('notification.tasks.database_set_ssl_not_required')]):
+            error = "Database cannot have set SSL not required " \
+                    "because it is in use by another task."
+        if error:
+            return False, error
+        return True, None
+
+    def can_do_set_ssl_not_required(self):
+        can_do_ssl, error = self.can_do_set_ssl_not_required_retry()
+
+        if can_do_ssl:
+            if self.is_dead:
+                error = "Database is dead and cannot have set SSL not " \
+                        "required."
+            elif self.is_being_used_elsewhere():
+                error = "Database cannot have set SSL not required " \
+                        "because it is in use by another task."
+
+        if error:
+            return False, error
+        return True, None
+
 
     def destroy(self, user):
         if not self.is_in_quarantine:

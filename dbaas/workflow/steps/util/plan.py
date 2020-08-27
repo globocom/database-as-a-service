@@ -44,6 +44,9 @@ class PlanStep(BaseInstanceStep):
             'HAS_PERSISTENCE': self.plan.has_persistence,
             'IS_READ_ONLY': self.instance.read_only,
             'SSL_CONFIGURED': self.infra.ssl_configured,
+            'SSL_MODE_ALLOW': self.infra.ssl_mode == self.infra.ALLOWTLS,
+            'SSL_MODE_PREFER': self.infra.ssl_mode == self.infra.PREFERTLS,
+            'SSL_MODE_REQUIRE': self.infra.ssl_mode == self.infra.REQUIRETLS,
         }
 
         if self.infra.ssl_configured:
@@ -54,6 +57,7 @@ class PlanStep(BaseInstanceStep):
             variables['INFRA_SSL_CA'] = infra_ssl.ca_file_path
             variables['INFRA_SSL_CERT'] = infra_ssl.cert_file_path
             variables['INFRA_SSL_KEY'] = infra_ssl.key_file_path
+            variables['MASTER_SSL_CA'] = infra_ssl.master_ssl_ca
             variables['INSTANCE_SSL_CA'] = instance_ssl.ca_file_path
             variables['INSTANCE_SSL_CERT'] = instance_ssl.cert_file_path
             variables['INSTANCE_SSL_KEY'] = instance_ssl.key_file_path
@@ -406,3 +410,13 @@ class ConfigureForChangePersistence(ConfigureOnlyDBConfigFile):
         )
         return configuration
 
+
+class ConfigureWithoutSSL(Configure):
+
+    def get_variables_specifics(self):
+        base = super(ConfigureWithoutSSL, self).get_variables_specifics()
+        base['SSL_CONFIGURED'] = False
+        base['SSL_MODE_ALLOW'] = False
+        base['SSL_MODE_PREFER'] = False
+        base['SSL_MODE_REQUIRE'] = False
+        return base
