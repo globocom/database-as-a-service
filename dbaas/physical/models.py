@@ -14,7 +14,8 @@ from django.dispatch import receiver
 from django.utils.html import format_html
 from django.utils.module_loading import import_by_path
 from django.utils.translation import ugettext_lazy as _
-from django_extensions.db.fields.encrypted import EncryptedCharField
+from django_extensions.db.fields.encrypted import (EncryptedCharField,
+                                                   EncryptedTextField)
 from slugify import slugify
 
 from drivers import DatabaseInfraStatus
@@ -22,6 +23,7 @@ from physical.errors import (NoDiskOfferingGreaterError,
                              NoDiskOfferingLesserError)
 from system.models import Configuration
 from util.models import BaseModel
+
 
 LOG = logging.getLogger(__name__)
 
@@ -1509,6 +1511,32 @@ class Cloud(BaseModel):
 
     def __unicode__(self):
         return self.name
+
+
+class Pool(BaseModel):
+    name = models.CharField(
+        verbose_name=_("Pool Name"), max_length=200)
+
+    environment = models.ForeignKey(
+        'Environment', related_name='pools'
+    )
+
+    config = EncryptedTextField(
+        verbose_name=_("Config"), blank=True, null=True
+    )
+
+    key = EncryptedCharField(
+        verbose_name=_("Key"), max_length=255, blank=True, null=False
+    )
+
+    secret = EncryptedCharField(
+        verbose_name=_("Secret"), max_length=255, blank=True, null=False
+    )
+
+    teams = models.ManyToManyField('account.Team')
+
+    def __unicode__(self):
+        return '%s' % (self.name)
 
 
 ##########################################################################
