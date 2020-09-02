@@ -7,6 +7,9 @@ from account.templatetags import team as team_templatetag
 import logging
 
 from ..models import Role
+from django_services import admin
+from account.forms.team import TeamAdminForm
+from account.service.team import TeamService
 
 LOG = logging.getLogger(__name__)
 
@@ -30,8 +33,10 @@ class RoleListFilter(SimpleListFilter):
                 return queryset.filter(role_id=self.value())
 
 
-class TeamAdmin(admin.ModelAdmin):
+class TeamAdmin(admin.DjangoServicesAdmin):
 
+    form = TeamAdminForm
+    service_class = TeamService
     list_display = ["name", "role", "database_limit", "email", "organization"]
     filter_horizontal = ['users']
     list_filter = (RoleListFilter, "organization", )
