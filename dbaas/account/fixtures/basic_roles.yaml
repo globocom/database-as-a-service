@@ -74,6 +74,7 @@
     - [delete_auditrequest, simple_audit, auditrequest]
     - [upgrade_mongo24_to_30, logical, database]
     - [upgrade_database, logical, database]
+    - [view_team, account, team]
   model: auth.group
   pk: 3
 - fields:
@@ -91,5 +92,6 @@
     - [change_project, logical, project]
     - [delete_project, logical, project]
     - [view_project, logical, project]
+    - [view_team, account, team]
   model: auth.group
   pk: 4

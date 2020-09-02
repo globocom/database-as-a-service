@@ -154,6 +154,7 @@ class Team(BaseModel):
             ("change_role", "Can change role"),
             ("add_role", "Can add role"),
             ("delete_role", "Can delete role"),
+            ("view_team", "Can view team"),
         )
         ordering = ['name']
 
