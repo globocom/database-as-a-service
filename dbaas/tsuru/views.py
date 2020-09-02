@@ -23,7 +23,7 @@ from physical.models import Plan, Environment
 from account.models import AccountUser, Team
 from notification.models import TaskHistory
 from notification.tasks import TaskRegister
-from system import models
+from system.models import Configuration
 from workflow.steps.util.base import ACLFromHellClient
 from maintenance.models import DatabaseCreate
 
@@ -257,7 +257,16 @@ class ServiceAdd(APIView):
         user = data['user']
         team = data['team']
         env = get_url_env(request)
-
+        k8s_envs = Configuration.get_by_name_as_list('k8s_envs')
+        if env in k8s_envs and 'parameters.pool' not in data:
+            msg = ("To create database on kubernetes you must pass the "
+                   "pool name. Add the parameter "
+                   "--plan-param pool=<POOL_NAME>"
+            )
+            return log_and_response(
+                msg=msg, http_status=status.HTTP_400_BAD_REQUEST
+            )
+        raise Exception("O_O")
         try:
             description = data['description']
             if not description:
@@ -590,12 +599,12 @@ def get_network_from_ip(ip, database_environment):
 
 
 def get_database(name, env):
-    if env in models.Configuration.get_by_name_as_list('dev_envs'):
+    if env in Configuration.get_by_name_as_list('dev_envs'):
         database = Database.objects.filter(
             name=name, environment__name=env
         ).exclude(is_in_quarantine=True)[0]
     else:
-        prod_envs = models.Configuration.get_by_name_as_list('prod_envs')
+        prod_envs = Configuration.get_by_name_as_list('prod_envs')
         database = Database.objects.filter(
             name=name, environment__name__in=prod_envs
         ).exclude(is_in_quarantine=True)[0]
