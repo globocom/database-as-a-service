@@ -2082,7 +2082,7 @@ def database_reinstall_vm(request, database_id, host_id):
 
 @database_view("")
 def database_reinstall_vm_retry(request, context, database):
-    last_reinstall_vm = database.reinstall_vm.last()
+    last_reinstall_vm = database.reinstall_vm.last_available_retry()
     can_reinstall_vm = True
 
     if not last_reinstall_vm:

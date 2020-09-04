@@ -17,3 +17,8 @@ class DatabaseMaintenanceTaskManager(models.Manager):
             return last_task
 
         return False
+
+    def last_available_retry(self, **kwargs):
+        retry_filter = {"can_do_retry": True}
+        retry_filter.update(kwargs)
+        return self.filter(**retry_filter).last()
