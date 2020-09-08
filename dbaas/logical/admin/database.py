@@ -222,7 +222,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             engine_info += " - " + topology.details
 
         upgrades = database.upgrades.filter(source_plan=database.infra.plan)
-        last_upgrade = upgrades.last_available_retry
+        last_upgrade = upgrades.last()
         if not(last_upgrade and last_upgrade.is_status_error):
             return engine_info
 
