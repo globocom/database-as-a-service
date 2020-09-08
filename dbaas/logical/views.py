@@ -387,14 +387,12 @@ def database_configure_ssl(request, context, database):
 
 def database_configure_ssl_retry(request, context=None, database=None,
                                  id=None):
-
     if database is None:
         database = Database.objects.get(id=id)
 
     can_do_configure_ssl, error = database.can_do_configure_ssl_retry()
-
     if can_do_configure_ssl:
-        last_configure_ssl = database.configure_ssl.last()
+        last_configure_ssl = database.configure_ssl.last_available_retry
         if not last_configure_ssl:
             error = "Database does not have configure SSL task!"
         elif not last_configure_ssl.is_status_error:
@@ -444,14 +442,12 @@ def database_set_ssl_required(request, context, database):
 
 def database_set_ssl_required_retry(request, context=None, database=None,
                                  id=None):
-
     if database is None:
         database = Database.objects.get(id=id)
 
     can_do_ssl, error = database.can_do_set_ssl_required_retry()
-
     if can_do_ssl:
-        last_configure_ssl = database.set_require_ssl.last()
+        last_configure_ssl = database.set_require_ssl.last_available_retry
         if not last_configure_ssl:
             error = "Database does not have set SSL required task!"
         elif not last_configure_ssl.is_status_error:
@@ -501,14 +497,12 @@ def database_set_ssl_not_required(request, context, database):
 
 def database_set_ssl_not_required_retry(request, context=None, database=None,
                                  id=None):
-
     if database is None:
         database = Database.objects.get(id=id)
 
     can_do_ssl, error = database.can_do_set_ssl_not_required_retry()
-
     if can_do_ssl:
-        last_configure_ssl = database.set_not_require_ssl.last()
+        last_configure_ssl = database.set_not_require_ssl.last_available_retry
         if not last_configure_ssl:
             error = "Database does not have set SSL not required task!"
         elif not last_configure_ssl.is_status_error:
@@ -777,7 +771,6 @@ def database_change_parameters_retry(request, context, database):
                 request.POST, database
             )
         )
-
         if parameter_error:
             messages.add_message(request, messages.ERROR, error)
             return HttpResponseRedirect(
@@ -785,8 +778,7 @@ def database_change_parameters_retry(request, context, database):
                         kwargs={'id': database.id})
             )
 
-        last_change_parameters = database.change_parameters.last()
-
+        last_change_parameters = database.change_parameters.last_available_retry
         if not last_change_parameters.is_status_error:
             error = ("Cannot do retry, last change parameters status is"
                      " '{}'!").format(
@@ -1010,8 +1002,7 @@ def database_upgrade_retry(request, context, database):
     can_do_upgrade, error = database.can_do_upgrade_retry()
     if can_do_upgrade:
         source_plan = database.databaseinfra.plan
-        upgrades = database.upgrades.filter(source_plan=source_plan)
-        last_upgrade = upgrades.last()
+        last_upgrade = database.upgrades.filter(source_plan=source_plan).last_available_retry
         if not last_upgrade:
             error = "Database does not have upgrades from {} {}!".format(
                 source_plan.engine.engine_type, source_plan.engine.version
@@ -1069,8 +1060,7 @@ def database_upgrade_patch_retry(request, context, database):
 def _upgrade_patch_retry(request, database):
     can_do_upgrade, error = database.can_do_upgrade_patch_retry()
     if can_do_upgrade:
-        upgrades = database.upgrades_patch.all()
-        last_upgrade = upgrades.last()
+        last_upgrade = database.upgrades_patch.last_available_retry
         if not last_upgrade:
             error = "Database does not have upgrades"
         elif not last_upgrade.is_status_error:
@@ -1083,7 +1073,6 @@ def _upgrade_patch_retry(request, database):
     if error:
         messages.add_message(request, messages.ERROR, error)
     else:
-
         TaskRegister.database_upgrade_patch(
             database=database,
             patch=last_upgrade.target_patch,
@@ -2061,7 +2050,6 @@ def database_reinstall_vm(request, database_id, host_id):
             break
 
     can_reinstall_vm = True
-
     if database.is_being_used_elsewhere():
         messages.add_message(
             request, messages.ERROR,
@@ -2082,9 +2070,8 @@ def database_reinstall_vm(request, database_id, host_id):
 
 @database_view("")
 def database_reinstall_vm_retry(request, context, database):
-    last_reinstall_vm = database.reinstall_vm.last()
+    last_reinstall_vm = database.reinstall_vm.last_available_retry
     can_reinstall_vm = True
-
     if not last_reinstall_vm:
         messages.add_message(
             request, messages.ERROR,
@@ -2092,7 +2079,6 @@ def database_reinstall_vm_retry(request, context, database):
              'task in progress.')
         )
         can_reinstall_vm = False
-
     elif database.is_being_used_elsewhere(
             ['notification.tasks.reinstall_vm_database']):
         messages.add_message(
@@ -2101,7 +2087,6 @@ def database_reinstall_vm_retry(request, context, database):
              'another task.')
         )
         can_reinstall_vm = False
-
     else:
         instance = last_reinstall_vm.instance
         since_step = last_reinstall_vm.current_step
@@ -2234,7 +2219,7 @@ def change_persistence_retry(request, context, database):
     can_do_chg_persistence, error = database.can_do_change_persistence_retry()
 
     if can_do_chg_persistence:
-        last_change_persistence = database.change_persistence.last()
+        last_change_persistence = database.change_persistence.last_available_retry
         if not last_change_persistence:
             error = "Database does not have change persistence task!"
         elif not last_change_persistence.is_status_error:
