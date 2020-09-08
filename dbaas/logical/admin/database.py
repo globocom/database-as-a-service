@@ -222,7 +222,7 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
             engine_info += " - " + topology.details
 
         upgrades = database.upgrades.filter(source_plan=database.infra.plan)
-        last_upgrade = upgrades.last()
+        last_upgrade = upgrades.last_available_retry
         if not(last_upgrade and last_upgrade.is_status_error):
             return engine_info
 
@@ -243,8 +243,8 @@ class DatabaseAdmin(admin.DjangoServicesAdmin):
     engine_html.admin_order_field = "databaseinfra__engine"
 
     def offering_html(self, database):
-        last_resize = database.resizes.last()
-        last_reinstallvm = database.reinstall_vm.last()
+        last_resize = database.resizes.last_available_retry
+        last_reinstallvm = database.reinstall_vm.last_available_retry
         if last_resize and last_resize.is_status_error:
             resize_url = reverse('admin:maintenance_databaseresize_change', args=[last_resize.id])
             task_url = reverse('admin:notification_taskhistory_change', args=[last_resize.task.id])
