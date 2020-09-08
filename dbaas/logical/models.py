@@ -446,7 +446,7 @@ class Database(BaseModel):
         if not search_field:
             return ""
         time_query = "_g=(filters:!(),refreshInterval:(pause:!t,value:0),time:(from:now-6h,to:now))"
-        filter_query = "_a=(columns:!(_source),filters:!(),interval:auto,query:(language:lucene,query:'{}:{}')".format(
+        filter_query = "_a=(columns:!(_source),filters:!(),interval:auto,query:(language:lucene,query:'{}:{}'))".format(
             search_field, self.name
         )
         return "{}/app/kibana#/discover?{}&{}".format(
