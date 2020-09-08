@@ -156,11 +156,11 @@ EOF_DBAAS_CONFIGDBFILE
     die_if_error "Error setting mysql.conf"
 }
 
-configure_graylog()
+configure_log()
 {
     echo "\$EscapeControlCharactersOnReceive off" >> /etc/rsyslog.d/dbaaslog.conf
     sed -i "\$a \$template db-log, \"<%PRI%>%TIMESTAMP% %HOSTNAME% %syslogtag%%msg%	tags: INFRA,DBAAS,MYSQL,{{DATABASENAME}}\"" /etc/rsyslog.d/dbaaslog.conf
-    sed -i "\$a*.*                    @{{ GRAYLOG_ENDPOINT }}; db-log" /etc/rsyslog.d/dbaaslog.conf
+    sed -i "\$a*.*                    @{{ LOG_ENDPOINT }}; db-log" /etc/rsyslog.d/dbaaslog.conf
     /etc/init.d/rsyslog restart
 }
 
@@ -169,7 +169,7 @@ configure_graylog()
 {% else %}
     createconfigdbfile
     createconfigdbrsyslogfile
-    configure_graylog
+    configure_log
 {% endif %}
 
 exit 0
