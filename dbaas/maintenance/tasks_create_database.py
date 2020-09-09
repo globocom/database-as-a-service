@@ -77,57 +77,6 @@ def get_instances_for(infra, topology_path):
     return instances
 
 
-def create_database(
-    name, plan, environment, team, project, description, task,
-    backup_hour, maintenance_window, maintenance_day,
-    subscribe_to_email_events=True, is_protected=False,
-    user=None, retry_from=None
-):
-    topology_path = plan.replication_topology.class_path
-
-    name = slugify(name)
-    base_name = gen_infra_names(name, 0)
-    infra = get_or_create_infra(base_name, plan, environment, backup_hour,
-                                maintenance_window, maintenance_day,
-                                retry_from)
-    instances = get_instances_for(infra, topology_path)
-
-    database_create = DatabaseCreate()
-    database_create.task = task
-    database_create.name = name
-    database_create.plan = plan
-    database_create.environment = environment
-    database_create.team = team
-    database_create.project = project
-    database_create.description = description
-    database_create.subscribe_to_email_events = subscribe_to_email_events
-    database_create.is_protected = is_protected
-    database_create.user = user.username if user else task.user
-    database_create.infra = infra
-    database_create.database = infra.databases.first()
-    database_create.save()
-
-    steps = get_deploy_settings(topology_path)
-
-    since_step = None
-    if retry_from:
-        since_step = retry_from.current_step
-
-    if steps_for_instances(
-        steps, instances, task, database_create.update_step,
-        since_step=since_step
-    ):
-        database_create.set_success()
-        task.set_status_success('Database created')
-        database_create.database.finish_task()
-    else:
-        database_create.set_error()
-        task.set_status_error(
-            'Could not create database\n'
-            'Please check error message and do retry'
-        )
-
-
 def rollback_create(maintenance, task, user=None, instances=None):
     topology_path = maintenance.plan.replication_topology.class_path
     steps = get_deploy_settings(topology_path)

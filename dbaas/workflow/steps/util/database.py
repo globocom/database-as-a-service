@@ -670,6 +670,7 @@ class Create(DatabaseStep):
         database.description = creating.description
         database.subscribe_to_email_events = creating.subscribe_to_email_events
         database.is_protected = creating.is_protected
+        database.pool = creating.pool
 
         if creating.project:
             database.project = creating.project

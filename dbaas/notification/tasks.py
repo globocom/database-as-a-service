@@ -28,6 +28,8 @@ from util import slugify, gen_infra_names
 from maintenance.tasks_create_database import (get_or_create_infra,
                                                get_instances_for)
 from notification.scripts import script_mongo_log_rotate
+from maintenance.models import DatabaseCreate
+from util.providers import get_deploy_settings
 
 
 LOG = get_task_logger(__name__)
@@ -47,20 +49,60 @@ def rollback_database(dest_database):
     dest_database.delete()
 
 
-def create_database_with_retry(
-    name, plan, environment, team, project, description,
+@app.task(bind=True)
+def create_database(
+    self, name, plan, environment, team, project, description,
     task, backup_hour, maintenance_window, maintenance_day,
-    subscribe_to_email_events, is_protected, user, retry_from
+    subscribe_to_email_events, is_protected, user, retry_from, **kw
 ):
-    from maintenance.tasks import create_database
-    return create_database.delay(
-        name=name, plan=plan, environment=environment, team=team,
-        project=project, description=description, task=task,
-        backup_hour=backup_hour, maintenance_window=maintenance_window,
-        maintenance_day=maintenance_day,
-        subscribe_to_email_events=subscribe_to_email_events,
-        is_protected=is_protected, user=user, retry_from=retry_from
+    task = TaskHistory.register(
+        request=self.request, task_history=task, user=user,
+        worker_name=get_worker_name()
     )
+    topology_path = plan.replication_topology.class_path
+
+    name = slugify(name)
+    base_name = gen_infra_names(name, 0)
+    infra = get_or_create_infra(base_name, plan, environment, backup_hour,
+                                maintenance_window, maintenance_day,
+                                retry_from)
+    instances = get_instances_for(infra, topology_path)
+
+    database_create = DatabaseCreate()
+    database_create.task = task
+    database_create.name = name
+    database_create.plan = plan
+    database_create.environment = environment
+    database_create.team = team
+    database_create.project = project
+    database_create.description = description
+    database_create.subscribe_to_email_events = subscribe_to_email_events
+    database_create.is_protected = is_protected
+    database_create.user = user.username if user else task.user
+    database_create.infra = infra
+    database_create.database = infra.databases.first()
+    database_create.pool = kw.get('pool')
+    database_create.save()
+
+    steps = get_deploy_settings(topology_path)
+
+    since_step = None
+    if retry_from:
+        since_step = retry_from.current_step
+
+    if steps_for_instances(
+        steps, instances, task, database_create.update_step,
+        since_step=since_step
+    ):
+        database_create.set_success()
+        task.set_status_success('Database created')
+        database_create.database.finish_task()
+    else:
+        database_create.set_error()
+        task.set_status_error(
+            'Could not create database\n'
+            'Please check error message and do retry'
+        )
 
 
 @app.task(bind=True)
@@ -1752,7 +1794,7 @@ class TaskRegister(object):
                         project, description, backup_hour=2,
                         maintenance_window=1, maintenance_day=1,
                         subscribe_to_email_events=True, register_user=True,
-                        is_protected=False, retry_from=None):
+                        is_protected=False, retry_from=None, **kw):
         task_params = {
             'task_name': "create_database",
             'arguments': "Database name: {}".format(name),
@@ -1761,14 +1803,13 @@ class TaskRegister(object):
         }
         task_params.update(**{'user': user} if register_user else {})
         task = cls.create_task(task_params)
-
-        return create_database_with_retry(
+        return create_database.delay(
             name=name, plan=plan, environment=environment, team=team,
             project=project, description=description, task=task,
             backup_hour=backup_hour, maintenance_window=maintenance_window,
             maintenance_day=maintenance_day,
             subscribe_to_email_events=subscribe_to_email_events,
-            is_protected=is_protected, user=user, retry_from=retry_from
+            is_protected=is_protected, user=user, retry_from=retry_from, **kw
         )
 
     @classmethod
