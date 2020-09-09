@@ -1521,16 +1521,14 @@ class Pool(BaseModel):
         'Environment', related_name='pools'
     )
 
-    config = EncryptedTextField(
-        verbose_name=_("Config"), blank=True, null=True
-    )
+    endpoint = models.CharField(
+        verbose_name=_("EndPoint"), max_length=255)
 
-    key = EncryptedCharField(
+    cluster_id = models.CharField(
+        verbose_name=_("Cluster ID"), max_length=255)
+
+    token = EncryptedCharField(
         verbose_name=_("Key"), max_length=255, blank=True, null=False
-    )
-
-    secret = EncryptedCharField(
-        verbose_name=_("Secret"), max_length=255, blank=True, null=False
     )
 
     teams = models.ManyToManyField('account.Team')
