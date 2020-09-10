@@ -38,8 +38,10 @@ class PoolAPI(viewsets.ModelViewSet):
         data = serializer.init_data
         env_name = data.get('environment', '')
         k8s_envs = Configuration.get_by_name_as_list('k8s_envs')
-        env = Environment.objects.get(name=env_name if env_name else k8s_envs[0])
-        
+        env = Environment.objects.get(
+            name=env_name if env_name else k8s_envs[0]
+        )
+
         teams_names = data.pop('teams') if 'teams' in data else []
         teams = Team.objects.filter(name__in=teams_names)
         headers = self.get_success_headers(data)

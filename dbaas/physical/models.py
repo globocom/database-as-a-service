@@ -14,8 +14,7 @@ from django.dispatch import receiver
 from django.utils.html import format_html
 from django.utils.module_loading import import_by_path
 from django.utils.translation import ugettext_lazy as _
-from django_extensions.db.fields.encrypted import (EncryptedCharField,
-                                                   EncryptedTextField)
+from django_extensions.db.fields.encrypted import EncryptedCharField
 from slugify import slugify
 
 from drivers import DatabaseInfraStatus

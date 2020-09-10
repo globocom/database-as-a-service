@@ -722,6 +722,7 @@ def get_database(name, env):
 
 def check_acl_service_and_get_unit_network(database, data,
                                            ignore_ip_error=False):
+
     try:
         acl_credential = get_credentials_for(
             environment=database.environment,
