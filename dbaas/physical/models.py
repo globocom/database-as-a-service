@@ -1528,7 +1528,7 @@ class Pool(BaseModel):
         verbose_name=_("Cluster ID"), max_length=255)
 
     token = EncryptedCharField(
-        verbose_name=_("Key"), max_length=255, blank=True, null=False
+        verbose_name=_("Token"), max_length=255, blank=True, null=False
     )
 
     teams = models.ManyToManyField('account.Team')
