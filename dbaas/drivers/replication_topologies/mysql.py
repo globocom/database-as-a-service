@@ -66,7 +66,7 @@ class MySQLSingle(BaseMysql):
             'Configuring database': (
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.infra.UpdateEndpoint',
-                'workflow.steps.util.plan.InitializationForNewInfra',
+                'workflow.steps.util.plan.Initialization',
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
             )}, {
             'Configure SSL': (
@@ -81,7 +81,7 @@ class MySQLSingle(BaseMysql):
                 'workflow.steps.util.ssl.UpdateExpireAtDate',
             )}, {
             'Starting database': (
-                'workflow.steps.util.plan.ConfigureForNewInfra',
+                'workflow.steps.util.plan.Configure',
                 'workflow.steps.util.plan.ConfigureLog',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
@@ -128,7 +128,7 @@ class MySQLSingle(BaseMysql):
             'Configuring database': (
                 'workflow.steps.util.volume_provider.MountDataVolume',
                 'workflow.steps.util.infra.UpdateEndpoint',
-                'workflow.steps.util.plan.InitializationForNewInfra',
+                'workflow.steps.util.plan.Initialization',
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
             )}, {
             'Configure SSL': (
@@ -143,7 +143,7 @@ class MySQLSingle(BaseMysql):
                 'workflow.steps.util.ssl.UpdateExpireAtDate',
             )}, {
             'Starting database': (
-                'workflow.steps.util.plan.ConfigureForNewInfra',
+                'workflow.steps.util.plan.Configure',
                 'workflow.steps.util.plan.ConfigureLog',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.database.CheckIsUp',
@@ -188,7 +188,7 @@ class MySQLSingle(BaseMysql):
                 'workflow.steps.util.volume_provider.RemoveAccessMigrate',
                 'workflow.steps.util.volume_provider.RemoveSnapshotMigrate',
                 'workflow.steps.util.disk.RemoveDeprecatedFiles',
-                'workflow.steps.util.plan.ConfigureForNewInfra',
+                'workflow.steps.util.plan.Configure',
                 'workflow.steps.util.plan.ConfigureLog',
                 'workflow.steps.util.mysql.SetFilePermission',
                 ) + self.get_change_binaries_upgrade_patch_steps() + (
@@ -476,7 +476,7 @@ class MySQLFoxHA(MySQLSingle):
             )}, {
             'Configuring database': (
                 'workflow.steps.util.volume_provider.MountDataVolume',
-                'workflow.steps.util.plan.InitializationForNewInfra',
+                'workflow.steps.util.plan.Initialization',
             )}, {
             'Configure SSL': (
                 'workflow.steps.util.ssl.UpdateOpenSSlLib',
@@ -494,14 +494,14 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.ssl.UpdateExpireAtDate',
             )}, {
             'Starting database': (
-                'workflow.steps.util.plan.ConfigureForNewInfra',
+                'workflow.steps.util.plan.Configure',
                 'workflow.steps.util.plan.ConfigureLog',
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
             )}, {
             'Check database': (
-                'workflow.steps.util.plan.StartReplicationNewInfra',
+                'workflow.steps.util.plan.StartReplication',
                 'workflow.steps.util.database.CheckIsUp',
                 'workflow.steps.util.database.StartMonit',
             )}, {
@@ -579,7 +579,7 @@ class MySQLFoxHA(MySQLSingle):
             )}, {
             'Configuring database': (
                 'workflow.steps.util.volume_provider.MountDataVolume',
-                'workflow.steps.util.plan.InitializationForNewInfra',
+                'workflow.steps.util.plan.Initialization',
             )}, {
             'Configure SSL': (
                 'workflow.steps.util.ssl.UpdateOpenSSlLib',
@@ -597,14 +597,14 @@ class MySQLFoxHA(MySQLSingle):
                 'workflow.steps.util.ssl.UpdateExpireAtDate',
             )}, {
             'Starting database': (
-                'workflow.steps.util.plan.ConfigureForNewInfra',
+                'workflow.steps.util.plan.Configure',
                 'workflow.steps.util.plan.ConfigureLog',
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
             )}, {
             'Check database': (
-                'workflow.steps.util.plan.StartReplicationNewInfra',
+                'workflow.steps.util.plan.StartReplication',
                 'workflow.steps.util.database.CheckIsUp',
                 'workflow.steps.util.database.StartMonit',
             )}, {
@@ -1082,7 +1082,7 @@ class MySQLFoxHA(MySQLSingle):
             'workflow.steps.util.volume_provider.RemoveAccessMigrate',
             'workflow.steps.util.volume_provider.RemoveSnapshotMigrate',
             'workflow.steps.util.disk.RemoveDeprecatedFiles',
-            'workflow.steps.util.plan.ConfigureForNewInfra',
+            'workflow.steps.util.plan.Configure',
             'workflow.steps.util.plan.ConfigureLog',
             'workflow.steps.util.mysql.SetFilePermission',
             ) + self.get_change_binaries_upgrade_patch_steps() + (
@@ -1141,7 +1141,7 @@ class MySQLFoxHA(MySQLSingle):
              '.RemoveHostsAllowDatabaseMigrate'),
             'workflow.steps.util.volume_provider.RemovePubKeyMigrate',
             'workflow.steps.util.disk.RemoveDeprecatedFiles',
-            'workflow.steps.util.plan.ConfigureForNewInfra',
+            'workflow.steps.util.plan.Configure',
             'workflow.steps.util.plan.ConfigureLog',
             'workflow.steps.util.mysql.SetServeridMigrate',
             'workflow.steps.util.mysql.SetFilePermission',
@@ -1284,7 +1284,7 @@ class MySQLFoxHAAWS(MySQLFoxHA):
             )}, {
             'Configuring database': (
                 'workflow.steps.util.volume_provider.MountDataVolume',
-                'workflow.steps.util.plan.InitializationForNewInfra',
+                'workflow.steps.util.plan.Initialization',
             )}, {
             'Configure SSL': (
                 'workflow.steps.util.ssl.UpdateOpenSSlLib',
@@ -1302,14 +1302,14 @@ class MySQLFoxHAAWS(MySQLFoxHA):
                 'workflow.steps.util.ssl.UpdateExpireAtDate',
             )}, {
             'Starting database': (
-                'workflow.steps.util.plan.ConfigureForNewInfra',
+                'workflow.steps.util.plan.Configure',
                 'workflow.steps.util.plan.ConfigureLog',
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
             )}, {
             'Check database': (
-                'workflow.steps.util.plan.StartReplicationNewInfra',
+                'workflow.steps.util.plan.StartReplication',
                 'workflow.steps.util.database.CheckIsUp',
                 'workflow.steps.util.database.StartMonit',
             )}, {
@@ -1377,7 +1377,7 @@ class MySQLFoxHAAWS(MySQLFoxHA):
             )}, {
             'Configuring database': (
                 'workflow.steps.util.volume_provider.MountDataVolume',
-                'workflow.steps.util.plan.InitializationForNewInfra',
+                'workflow.steps.util.plan.Initialization',
             )}, {
             'Configure SSL': (
                 'workflow.steps.util.ssl.UpdateOpenSSlLib',
@@ -1395,14 +1395,14 @@ class MySQLFoxHAAWS(MySQLFoxHA):
                 'workflow.steps.util.ssl.UpdateExpireAtDate',
             )}, {
             'Starting database': (
-                'workflow.steps.util.plan.ConfigureForNewInfra',
+                'workflow.steps.util.plan.Configure',
                 'workflow.steps.util.plan.ConfigureLog',
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
             )}, {
             'Check database': (
-                'workflow.steps.util.plan.StartReplicationNewInfra',
+                'workflow.steps.util.plan.StartReplication',
                 'workflow.steps.util.database.CheckIsUp',
                 'workflow.steps.util.database.StartMonit',
             )}, {
@@ -1462,7 +1462,7 @@ class MySQLFoxHAAWS(MySQLFoxHA):
             'workflow.steps.util.volume_provider.MountDataVolume',
             'workflow.steps.util.volume_provider.RemoveSnapshotMigrate',
             'workflow.steps.util.disk.RemoveDeprecatedFiles',
-            'workflow.steps.util.plan.ConfigureForNewInfra',
+            'workflow.steps.util.plan.Configure',
             'workflow.steps.util.plan.ConfigureLog',
             'workflow.steps.util.mysql.SetFilePermission',
             ) + self.get_change_binaries_upgrade_patch_steps() + (
@@ -1537,7 +1537,7 @@ class MySQLFoxHAAWS(MySQLFoxHA):
              '.RemoveHostsAllowDatabaseMigrate'),
             'workflow.steps.util.volume_provider.RemovePubKeyMigrate',
             'workflow.steps.util.disk.RemoveDeprecatedFiles',
-            'workflow.steps.util.plan.ConfigureForNewInfra',
+            'workflow.steps.util.plan.Configure',
             'workflow.steps.util.plan.ConfigureLog',
             'workflow.steps.util.mysql.SetServeridMigrate',
             'workflow.steps.util.mysql.SetFilePermission',

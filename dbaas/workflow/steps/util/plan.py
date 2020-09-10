@@ -128,21 +128,7 @@ class PlanStep(BaseInstanceStep):
         return output
 
 
-class PlanStepNewInfra(PlanStep):
-
-    @property
-    def database(self):
-        from logical.models import Database
-        if self.infra.databases.exists():
-            return self.infra.databases.first()
-        database = Database()
-        step_manager = self.infra.databases_create.last()
-        database.name = (step_manager.name
-                         if step_manager else self.step_manager.name)
-        return database
-
-
-class PlanStepNewInfraSentinel(PlanStepNewInfra):
+class PlanStepNewInfraSentinel(PlanStep):
 
     @property
     def is_valid(self):
@@ -279,14 +265,6 @@ class ConfigureForMigrateEngine(Configure, PlanStepMigrateEngine):
     pass
 
 
-class InitializationForNewInfra(Initialization, PlanStepNewInfra):
-    pass
-
-
-class ConfigureForNewInfra(Configure, PlanStepNewInfra):
-    pass
-
-
 class ConfigureLog(Configure):
 
     def __unicode__(self):
@@ -302,16 +280,6 @@ class ConfigureLog(Configure):
 
 
 class ConfigureLogMigrateEngine(ConfigureLog, PlanStepMigrateEngine):
-    pass
-
-
-class StartReplicationNewInfra(StartReplication, PlanStepNewInfra):
-    pass
-
-
-class StartReplicationFirstNodeNewInfra(
-    StartReplicationFirstNode, PlanStepNewInfra
-):
     pass
 
 

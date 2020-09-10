@@ -204,7 +204,7 @@ class MongoDBSingle(BaseMongoDB):
             )}, {
             'Configuring database': (
                 'workflow.steps.util.volume_provider.MountDataVolume',
-                'workflow.steps.util.plan.InitializationForNewInfra',
+                'workflow.steps.util.plan.Initialization',
             )}, {
             'Configure SSL': (
                 'workflow.steps.util.ssl.UpdateOpenSSlLib',
@@ -220,7 +220,7 @@ class MongoDBSingle(BaseMongoDB):
                 'workflow.steps.util.ssl.UpdateExpireAtDate',
             )}, {
             'Starting database': (
-                'workflow.steps.util.plan.ConfigureForNewInfra',
+                'workflow.steps.util.plan.Configure',
                 'workflow.steps.util.plan.ConfigureLog',
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 'workflow.steps.util.database.Start',
@@ -359,7 +359,7 @@ class MongoDBSingle(BaseMongoDB):
             )}, {
             'Configuring database': (
                 'workflow.steps.util.volume_provider.MountDataVolume',
-                'workflow.steps.util.plan.InitializationForNewInfra',
+                'workflow.steps.util.plan.Initialization',
             )}, {
             'Configure SSL': (
                 'workflow.steps.util.ssl.UpdateOpenSSlLib',
@@ -375,7 +375,7 @@ class MongoDBSingle(BaseMongoDB):
                 'workflow.steps.util.ssl.UpdateExpireAtDate',
             )}, {
             'Starting database': (
-                'workflow.steps.util.plan.ConfigureForNewInfra',
+                'workflow.steps.util.plan.Configure',
                 'workflow.steps.util.plan.ConfigureLog',
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 'workflow.steps.util.database.Start',
@@ -628,7 +628,7 @@ class MongoDBReplicaset(BaseMongoDB):
             )}, {
             'Configuring database': (
                 'workflow.steps.util.volume_provider.MountDataVolume',
-                'workflow.steps.util.plan.InitializationForNewInfra',
+                'workflow.steps.util.plan.Initialization',
             )}, {
             'Configure SSL': (
                 'workflow.steps.util.ssl.UpdateOpenSSlLib',
@@ -644,14 +644,14 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.util.ssl.UpdateExpireAtDate',
             )}, {
             'Starting database': (
-                'workflow.steps.util.plan.ConfigureForNewInfra',
+                'workflow.steps.util.plan.Configure',
                 'workflow.steps.util.plan.ConfigureLog',
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
             )}, {
             'Check Database': (
-                'workflow.steps.util.plan.StartReplicationFirstNodeNewInfra',
+                'workflow.steps.util.plan.StartReplicationFirstNode',
                 'workflow.steps.util.database.CheckIsUp',
                 'workflow.steps.util.infra.UpdateEndpoint',
             )}, {
@@ -693,7 +693,7 @@ class MongoDBReplicaset(BaseMongoDB):
             )}, {
             'Configuring database': (
                 'workflow.steps.util.volume_provider.MountDataVolume',
-                'workflow.steps.util.plan.InitializationForNewInfra',
+                'workflow.steps.util.plan.Initialization',
             )}, {
             'Configure SSL': (
                 'workflow.steps.util.ssl.UpdateOpenSSlLib',
@@ -709,14 +709,14 @@ class MongoDBReplicaset(BaseMongoDB):
                 'workflow.steps.util.ssl.UpdateExpireAtDate',
             )}, {
             'Starting database': (
-                'workflow.steps.util.plan.ConfigureForNewInfra',
+                'workflow.steps.util.plan.Configure',
                 'workflow.steps.util.plan.ConfigureLog',
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 'workflow.steps.util.database.Start',
                 'workflow.steps.util.metric_collector.RestartTelegraf',
             )}, {
             'Check Database': (
-                'workflow.steps.util.plan.StartReplicationFirstNodeNewInfra',
+                'workflow.steps.util.plan.StartReplicationFirstNode',
                 'workflow.steps.util.database.CheckIsUp',
                 'workflow.steps.util.infra.UpdateEndpoint',
             )}, {

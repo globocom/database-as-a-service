@@ -77,8 +77,8 @@ class RedisSingle(BaseRedis):
             )}, {
             'Configuring database': (
                 'workflow.steps.util.volume_provider.MountDataVolume',
-                'workflow.steps.util.plan.InitializationForNewInfra',
-                'workflow.steps.util.plan.ConfigureForNewInfra',
+                'workflow.steps.util.plan.Initialization',
+                'workflow.steps.util.plan.Configure',
                 'workflow.steps.util.plan.ConfigureLog',
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 'workflow.steps.util.database.Start',
@@ -124,8 +124,8 @@ class RedisSingle(BaseRedis):
             )}, {
             'Configuring database': (
                 'workflow.steps.util.volume_provider.MountDataVolume',
-                'workflow.steps.util.plan.InitializationForNewInfra',
-                'workflow.steps.util.plan.ConfigureForNewInfra',
+                'workflow.steps.util.plan.Initialization',
+                'workflow.steps.util.plan.Configure',
                 'workflow.steps.util.plan.ConfigureLog',
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 'workflow.steps.util.database.Start',
@@ -587,8 +587,8 @@ class RedisCluster(BaseRedis):
             )}, {
             'Configuring database': (
                 'workflow.steps.util.volume_provider.MountDataVolume',
-                'workflow.steps.util.plan.InitializationForNewInfra',
-                'workflow.steps.util.plan.ConfigureForNewInfra',
+                'workflow.steps.util.plan.Initialization',
+                'workflow.steps.util.plan.Configure',
                 'workflow.steps.util.plan.ConfigureLog',
                 'workflow.steps.util.metric_collector.ConfigureTelegraf',
                 'workflow.steps.util.database.Start',
