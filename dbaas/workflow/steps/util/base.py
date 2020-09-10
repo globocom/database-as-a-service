@@ -50,10 +50,12 @@ class BaseInstanceStep(object):
         from logical.models import Database
         if self.infra.databases.exists():
             return self.infra.databases.first()
-        database = Database()
         step_manager = self.infra.databases_create.last()
-        database.name = step_manager.name if step_manager else self.step_manager.name
-        return database
+        if step_manager:
+            database = Database()
+            database.name = step_manager.name
+            return database
+        return None
 
     @property
     def plan(self):
