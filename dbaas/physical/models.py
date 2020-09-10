@@ -314,9 +314,12 @@ class Script(BaseModel):
     start_replication = models.CharField(
         max_length=300, help_text="File path", null=True, blank=True
     )
-
     metric_collector = models.CharField(
-        max_length=300, help_text="File path", null=True, blank=True)
+        max_length=300, help_text="File path", null=True, blank=True
+    )
+    configure_log = models.CharField(
+        max_length=300, help_text="File path", null=True, blank=True
+    )
 
     def _get_content(self, file_name):
         path = file_name
